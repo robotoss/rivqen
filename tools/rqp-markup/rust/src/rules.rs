@@ -131,8 +131,9 @@ pub(crate) fn run(input: &[u8], start: usize) -> Result<Vec<RawBlock>, MarkupErr
             Token::EndTag(tag) => pass.end_tag(&tag)?,
             Token::Comment(_) => pass.not_character()?,
             Token::Doctype(_) => pass.doctype()?,
+            // E5 (H-21): a CDATA section that satisfies M-12 is allowed
+            // also where M-07.3 and M-07.4 allow character tokens only.
             Token::Cdata { well_formed, .. } => {
-                pass.not_character()?;
                 if !well_formed {
                     return Err(structure("M-12"));
                 }
@@ -208,8 +209,8 @@ impl<'a> Pass<'a> {
         Some(elem)
     }
 
-    /// M-07.3, M-07.4: a token that is not a character token while a
-    /// foreign text-only element is open.
+    /// M-07.3, M-07.4: a token that is not a character token (and not a
+    /// CDATA section, E5) while a foreign text-only element is open.
     fn not_character(&self) -> Result<(), MarkupError> {
         if self.text_only.is_some() {
             Err(structure("M-07"))
@@ -554,8 +555,9 @@ const NOSCRIPT_FORBIDDEN: &[&[u8]] = &[
     b"template",
 ];
 
-/// M-11: tokenize the content of a `noscript` element followed by
-/// `</noscript>` from the data state, in HTML context.
+/// M-11 (and M-13 for C, E8): tokenize the content of a `noscript` element
+/// followed by `</noscript>` from the data state, in HTML context. When the
+/// `noscript` element has no end tag, C is the rest of the input (E3).
 fn check_noscript(content: &[u8]) -> Result<(), MarkupError> {
     let mut text = Vec::with_capacity(content.len().saturating_add(11));
     text.extend_from_slice(content);
@@ -565,6 +567,15 @@ fn check_noscript(content: &[u8]) -> Result<(), MarkupError> {
         match tokens.next_token() {
             Token::StartTag(tag) => {
                 let name = text.get(tag.name.start..tag.name.end).unwrap_or_default();
+                // E8 (H-22): M-13 applies to C too. A reader with scripting
+                // disabled parses C as markup and would see a manifest.
+                if name.eq_ignore_ascii_case(b"script")
+                    && tag.type_attr.is_some_and(|value| {
+                        is_reserved_type(text.get(value.start..value.end).unwrap_or_default())
+                    })
+                {
+                    return Err(MarkupError::new(ErrorCode::Reserved, "M-13"));
+                }
                 if tag.block_attr.is_some()
                     || NOSCRIPT_FORBIDDEN
                         .iter()

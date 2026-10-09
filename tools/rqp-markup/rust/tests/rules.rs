@@ -299,7 +299,6 @@ fn m07_integration_points_have_text_only() {
         "M-07",
     );
     assert_invalid("<svg><desc><!-- c --></desc></svg>", STRUCTURE, "M-07");
-    assert_invalid("<svg><desc><![CDATA[x]]></desc></svg>", STRUCTURE, "M-07");
     assert_invalid("<math><mi><!DOCTYPE x></mi></math>", STRUCTURE, "M-07");
     assert_invalid("<math><mi>x</mo></math>", STRUCTURE, "M-07");
     assert_invalid(
@@ -309,6 +308,47 @@ fn m07_integration_points_have_text_only() {
     );
     assert_valid("<svg><desc>a &amp; b</desc><foreignObject/></svg>");
     assert_valid("<math><mi>x</mi><mo>=</mo><mn>2</mn><ms>s</ms><mtext>t</mtext></math>");
+}
+
+/// E5 (H-21): a CDATA section that satisfies M-12 is allowed in foreign
+/// TEXT content and in integration points. M-12 still applies there.
+#[test]
+fn m07_e5_cdata_in_foreign_text_content() {
+    for body in [
+        "<svg><style><![CDATA[.a{fill:red}]]></style></svg>",
+        "<svg><script><![CDATA[if(a<b){}]]></script></svg>",
+        "<svg><desc><![CDATA[a<b]]></desc></svg>",
+        "<svg><title>t<![CDATA[x]]>u</title></svg>",
+        "<math><mi><![CDATA[x]]></mi></math>",
+        "<svg><foreignObject><![CDATA[]]></foreignObject></svg>",
+        "<svg><desc><![CDATA[a]]><![CDATA[b]]></desc></svg>",
+    ] {
+        assert_eq!(
+            blocks(&format!("{body}<p data-rq-block=\"a\">x</p>")),
+            [html("a", "x")],
+            "{body}"
+        );
+    }
+    // M-12 is not relaxed: the first `>` must end a `]]>`.
+    assert_invalid(
+        "<svg><style><![CDATA[a>b]]></style></svg>",
+        STRUCTURE,
+        "M-12",
+    );
+    assert_invalid("<svg><desc><![CDATA[a]>]]></desc></svg>", STRUCTURE, "M-12");
+    // Only CDATA is new: other non-character tokens stay invalid.
+    assert_invalid("<svg><style><!--c--></style></svg>", STRUCTURE, "M-07");
+    assert_invalid(
+        "<svg><desc><![CDATA[x]]><b>y</b></desc></svg>",
+        STRUCTURE,
+        "M-07",
+    );
+    // The CDATA section does not end the text-only state.
+    assert_invalid(
+        "<svg><desc><![CDATA[x]]></g></desc></svg>",
+        STRUCTURE,
+        "M-07",
+    );
 }
 
 #[test]
@@ -339,41 +379,6 @@ fn m08_select() {
     assert_invalid("<select><option>a</div></select>", STRUCTURE, "M-08");
     // No explicit end tag.
     assert_eq!(error_of(b"<select><option>a"), (STRUCTURE, "M-08"));
-}
-
-#[test]
-fn m09_table_parts() {
-    assert_valid(
-        "<table><caption>c</caption><colgroup><col></colgroup><col><thead><tr><th>h</th></tr></thead><tbody><tr><td>a</td><td>b</td></tr></tbody><tfoot></tfoot><tr><td>x</td></tr></table>",
-    );
-    assert_invalid("<table><tr><td>a<td>b</td></tr></table>", STRUCTURE, "M-09");
-    assert_invalid("<table><tr><td><col></td></tr></table>", STRUCTURE, "M-09");
-    assert_invalid(
-        "<table><tr><caption>c</caption></tr></table>",
-        STRUCTURE,
-        "M-09",
-    );
-    assert_invalid(
-        "<table><tbody><tbody></tbody></tbody></table>",
-        STRUCTURE,
-        "M-09",
-    );
-    assert_invalid("<table><tr><tr></tr></tr></table>", STRUCTURE, "M-09");
-    assert_invalid(
-        "<table><colgroup><tr></tr></colgroup></table>",
-        STRUCTURE,
-        "M-09",
-    );
-    assert_invalid(
-        "<table><caption><td></td></caption></table>",
-        STRUCTURE,
-        "M-09",
-    );
-    assert_invalid("<table><thead><col></thead></table>", STRUCTURE, "M-09");
-    // No table-family element open: allowed by M-09.
-    assert_valid("<td>a</td><tr></tr><col>");
-    // The search stops at template.
-    assert_valid("<table><tr><td><template><td>a</td></template></td></tr></table>");
 }
 
 /// M-08 applies to a `select` pushed in HTML context only (defect found by
@@ -419,6 +424,41 @@ fn m08_does_not_apply_to_a_foreign_select() {
         error_of(b"<svg><select></select></svg><select><option>a"),
         (STRUCTURE, "M-08")
     );
+}
+
+#[test]
+fn m09_table_parts() {
+    assert_valid(
+        "<table><caption>c</caption><colgroup><col></colgroup><col><thead><tr><th>h</th></tr></thead><tbody><tr><td>a</td><td>b</td></tr></tbody><tfoot></tfoot><tr><td>x</td></tr></table>",
+    );
+    assert_invalid("<table><tr><td>a<td>b</td></tr></table>", STRUCTURE, "M-09");
+    assert_invalid("<table><tr><td><col></td></tr></table>", STRUCTURE, "M-09");
+    assert_invalid(
+        "<table><tr><caption>c</caption></tr></table>",
+        STRUCTURE,
+        "M-09",
+    );
+    assert_invalid(
+        "<table><tbody><tbody></tbody></tbody></table>",
+        STRUCTURE,
+        "M-09",
+    );
+    assert_invalid("<table><tr><tr></tr></tr></table>", STRUCTURE, "M-09");
+    assert_invalid(
+        "<table><colgroup><tr></tr></colgroup></table>",
+        STRUCTURE,
+        "M-09",
+    );
+    assert_invalid(
+        "<table><caption><td></td></caption></table>",
+        STRUCTURE,
+        "M-09",
+    );
+    assert_invalid("<table><thead><col></thead></table>", STRUCTURE, "M-09");
+    // No table-family element open: allowed by M-09.
+    assert_valid("<td>a</td><tr></tr><col>");
+    // The search stops at template.
+    assert_valid("<table><tr><td><template><td>a</td></template></td></tr></table>");
 }
 
 #[test]
@@ -472,7 +512,7 @@ fn m11_noscript() {
         STRUCTURE,
         "M-11",
     );
-    // At EOF the content is checked too.
+    // E3: without an end tag, C is the rest of the input.
     assert!(analyze(b"<noscript><img src=x>").is_ok());
     assert_eq!(
         error_of(b"<noscript><p data-rq-block=\"a\">"),
@@ -481,6 +521,52 @@ fn m11_noscript() {
     // In a foreign region noscript is not RAWTEXT; M-11 does not apply, M-07.4 does.
     assert_valid("<svg><noscript>x &lt;</noscript></svg>");
     assert_invalid("<svg><noscript><g></g></noscript></svg>", STRUCTURE, "M-07");
+}
+
+/// E8 (H-22): M-13 also applies to the content C of `noscript` (M-11). A
+/// reader with scripting disabled parses C as markup.
+#[test]
+fn m11_m13_reserved_manifest_in_noscript() {
+    let reserved = ErrorCode::Reserved;
+    for script in [
+        "<script type=\"application/rivqen-manifest+json\">{}</script>",
+        "<SCRIPT TYPE=\"X-Rivqen-Manifest\"></SCRIPT>",
+        "<script type=application/rivqen-manifest&#43;json></script>",
+        "<script type='&'></script>",
+        "<img src=x><script type=\"rivqen-manifest\" data-rq-block=\"a\"></script>",
+    ] {
+        assert_invalid(&format!("<noscript>{script}</noscript>"), reserved, "M-13");
+    }
+    // In head, and at EOF (E3).
+    assert_eq!(
+        error_of(
+            b"<html><head><noscript><script type=\"application/rivqen-manifest+json\">{}</script></noscript></head></html>"
+        ),
+        (reserved, "M-13")
+    );
+    assert_eq!(
+        error_of(b"<noscript><script type=\"rivqen-manifest\"></script>"),
+        (reserved, "M-13")
+    );
+    // Not a script start tag with a reserved first `type`: valid.
+    for content in [
+        "<script>var a = 1;</script>",
+        "<script type=\"text/javascript\" type=\"rivqen-manifest\"></script>",
+        "<div type=\"rivqen-manifest\"></div>",
+        "rivqen-manifest &amp;",
+        "<!-- <script type=\"rivqen-manifest\"> -->",
+        "<style><script type=\"rivqen-manifest\"></style>",
+        "<script>\"<script type='rivqen-manifest'>\"</script>",
+        "</script type=\"rivqen-manifest\">",
+    ] {
+        assert_eq!(
+            blocks(&format!(
+                "<noscript>{content}</noscript><p data-rq-block=\"a\">x</p>"
+            )),
+            [html("a", "x")],
+            "{content}"
+        );
+    }
 }
 
 #[test]
@@ -1055,8 +1141,16 @@ fn readings_where_the_rules_leave_room() {
     assert!(analyze(b"<p data-rq-block=\"a\">x</p><math><mi>").is_ok());
     // M-10 and M-07.1 apply in a foreign region without exceptions.
     assert_invalid("<svg><font>x</font></svg>", STRUCTURE, "M-07");
-    // M-12: no `>` after `<![CDATA[`.
+    // M-12: no `>` after `<![CDATA[` (E4), also in a foreign integration
+    // point (E4 with E5).
     assert!(analyze(b"<p data-rq-block=\"a\">x</p><![CDATA[ x").is_ok());
+    assert!(analyze(b"<p data-rq-block=\"a\">x</p><svg><desc><![CDATA[ x").is_ok());
+    // E6: `<?` to EOF is a comment, so it is invalid in an integration point.
+    assert!(analyze(b"<p data-rq-block=\"a\">x</p><?php echo 1;").is_ok());
+    assert_eq!(
+        error_of(b"<p data-rq-block=\"a\">x</p><svg><desc><?x"),
+        (STRUCTURE, "M-07")
+    );
     // M-11: a noscript without an end tag is checked up to EOF.
     assert!(analyze(b"<noscript><img src=x>").is_ok());
 }

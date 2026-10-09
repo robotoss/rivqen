@@ -1,0 +1,55 @@
+# Fast checks for code outside the docs site.
+#
+# - examples/server-demo: unit tests of the RQP reference behavior
+# - tools/mutation: tests of the diff-to-mutation-arguments helper
+# - .claude: every rules checklist points to an existing standards page
+#
+# Language toolchains (Rust, Gradle, Swift, PHP) are added by the WPs that
+# create those packages (WP-05, WP-10, WP-11, WP-14, WP-15).
+name: Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node:
+    name: Node.js tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Server demo tests
+        working-directory: examples/server-demo
+        run: |
+          npm ci
+          npm test
+
+      - name: Mutation helper tests
+        working-directory: tools/mutation
+        run: node --test
+
+      - name: AI rules point to existing pages
+        run: |
+          status=0
+          for f in .claude/rules/*.md; do
+            for s in $(grep -o 'docs/[A-Za-z0-9/._-]*\.md' "$f"); do
+              if [ ! -f "$s" ]; then echo "::error file=$f::missing source page $s"; status=1; fi
+            done
+          done
+          exit $status

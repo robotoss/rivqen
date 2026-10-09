@@ -1,6 +1,6 @@
 # CI/CD
 
-This page defines the build, test and release pipeline. Today only the documentation workflow exists (`.github/workflows/docs.yml`).
+This page defines the build, test and release pipeline. Two workflows exist today: the documentation workflow (`.github/workflows/docs.yml`) and the fast checks (`.github/workflows/checks.yml`).
 
 **Status:** <Badge type="info" text="DESIGN" /> for code pipelines. <Badge type="tip" text="FACT" /> for the docs workflow (it exists in the repository).
 
@@ -26,13 +26,13 @@ flowchart TD
 
 | Ecosystem | Checks |
 |---|---|
-| Rust | `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo deny check` (licenses, bans, advisories, sources), `cargo audit`, Miri on `rivqen-ffi`, fuzz smoke (60 s per target), coverage |
+| Rust | `cargo fmt --check`, `cargo clippy -D warnings`, `cargo nextest run` + `cargo test --doc`, `cargo deny check` (licenses, bans, advisories, sources), Miri on `rivqen-ffi`, fuzz smoke (60 s per target), coverage |
 | Kotlin | ktlint/detekt, Android Lint, unit tests, instrumented WebView tests, Gradle dependency verification |
 | Swift | SwiftLint, XCTest / Swift Testing, build for device and simulator |
 | TypeScript | `tsc --noEmit`, ESLint, Vitest, Playwright tests |
 | Java | Build + tests on supported JDKs |
 | PHP | PHPStan, PHPUnit on supported PHP versions |
-| All | DCO check, license header check (REUSE), secret scanning, SBOM generation |
+| All | DCO check, license header check (REUSE), secret scanning, SBOM generation, mutation check on the PR diff ([Mutation testing](/engineering/quality/mutation)) |
 
 ## 3. Supply chain
 
@@ -54,6 +54,16 @@ flowchart TD
 | Pull request touching `docs/` | Build only; the PR shows a failure if the site does not build or a link is dead |
 | Push to `main` | Build and deploy to GitHub Pages |
 | Manual run | Same as push |
+
+## 5. Checks workflow (exists)
+
+| Job step | What it checks |
+|---|---|
+| Server demo tests | `examples/server-demo`: `npm ci && npm test` |
+| Mutation helper tests | `tools/mutation`: `node --test` |
+| AI rules point to existing pages | Every `docs/…md` path in `.claude/rules/*.md` exists |
+
+Runs on every pull request, on push to `main`, and manually. Each WP that adds a language package adds its checks here (the tool versions are on the [standards](/engineering/standards/) pages).
 
 ## Related
 

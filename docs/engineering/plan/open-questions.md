@@ -22,6 +22,7 @@ This page lists questions that block or shape decisions. Each question has a way
 | Q-13 | Can Compression Dictionary Transport replace or complement block patches in RQP? | Benchmark on real pages; platform support check | RQP wire format | WP-17 |
 | Q-14 | Which legacy server behavior is the "canonical profile" when Java, Node.js and PHP differ? | Divergence analysis + usage evidence | ADR-005 | WP-01 |
 | Q-15 | RQP patch overhead: per-block SHA-256 (64 hex) and envelope fields make a patch of four tiny blocks larger than the legacy data body (869 B vs 512 B raw, measured). Use truncated hashes, hashes only in the manifest, or a compact encoding? | Measure variants with `examples/server-demo/scripts/measure.js` on several real pages | RQP wire format | WP-17 |
+| Q-16 | Use the Arcmutate plugins (line-level git scope for PIT, Kotlin-aware mutation, Android)? They are commercial; a free licence for open-source projects is announced but not verified | Confirm licence terms in writing; compare with class-scoped PIT on the first JVM/Kotlin WP | JVM/Kotlin mutation gate | WP-14, WP-10 |
 
 ## 2. Closed
 

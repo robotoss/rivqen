@@ -21,12 +21,16 @@ Rivqen is built by a team of AI agents under a human owner. This section is the 
 ```mermaid
 flowchart TD
   H[Human owner<br/>critical decisions] --- A[Architect<br/>main session]
-  A --> S[Senior<br/>opus]
-  A --> M[Middle<br/>sonnet]
-  A --> J[Junior<br/>haiku]
-  A --> R[Researcher<br/>sonnet]
-  A --> D[Docs steward<br/>sonnet]
-  A --> X[Security reviewer<br/>opus]
+  A --> E
+  A --> X
+  subgraph E[Executors]
+    direction TB
+    S[Senior · opus] ~~~ M[Middle · sonnet] ~~~ J[Junior · haiku]
+  end
+  subgraph X[Specialists]
+    direction TB
+    R[Researcher · sonnet] ~~~ D[Docs steward · sonnet] ~~~ SR[Security reviewer · opus]
+  end
 ```
 
 | Role | Model tier | Does | Does not |

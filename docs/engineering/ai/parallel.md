@@ -39,8 +39,8 @@ Example ownership table:
 
 | Lane | Tier | Owns | Reads |
 |---|---|---|---|
-| L1 markup parser | Senior | `core/rivqen-template/src/markup/**`, its tests | `core/rivqen-types/**` |
-| L2 header codec | Middle | `core/rivqen-protocol/src/headers/**`, its tests | `core/rivqen-types/**` |
+| L1 markup parser | Senior | `crates/rivqen-template/src/markup/**`, its tests | `crates/rivqen-integrity/**` |
+| L2 header codec | Middle | `crates/rivqen-proto/src/headers/**`, its tests | `crates/rivqen-integrity/**` |
 | L3 fixtures | Junior | `fixtures/rqp/markup/**` | Spec pages |
 | L4 docs | Docs steward | `docs/engineering/protocol/markup.md` | Lane reports |
 

@@ -44,11 +44,11 @@ source_of_truth:
   - docs/engineering/protocol/markup.md §3
   - ADR-006
 owns:                    # the only paths this lane may change
-  - core/rivqen-template/src/markup/**
+  - crates/rivqen-template/src/markup/**
 reads:
-  - core/rivqen-types/**
+  - crates/rivqen-integrity/**
 contracts:               # fixed before the lane starts; do not change
-  - core/rivqen-types/src/block.rs (BlockId, BlockFormat)
+  - crates/rivqen-template/src/block.rs (BlockId, BlockFormat)
 acceptance:
   - Behaviors that must be true, each with a test name
 tests:

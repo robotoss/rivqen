@@ -8,7 +8,7 @@ This page defines the two RQP documents: the **page manifest** (what a page vers
 
 ## 1. Page manifest
 
-The server sends the manifest with a full document (inline `<script type="application/rivqen-manifest+json">` in the head, or a header link — decided in ADR-006).
+The server sends the manifest with a full document, inline in `<head>`: `<script type="application/rivqen-manifest+json">`. There is no other delivery form ([ADR-006](/engineering/architecture/adr/#adr-006)).
 
 ```json
 {

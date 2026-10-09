@@ -234,6 +234,7 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'Open questions', link: '/engineering/plan/open-questions' },
       { text: 'Decision log', link: '/engineering/plan/decision-log' },
       { text: 'Sprint records', link: '/engineering/plan/sprints/' },
+      { text: 'WP-17 S1', link: '/engineering/plan/sprints/WP-17-S1' },
       { text: 'Sprint record template', link: '/engineering/plan/sprints/template' }
     ]
   }

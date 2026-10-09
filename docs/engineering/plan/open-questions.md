@@ -19,14 +19,14 @@ This page lists questions that block or shape decisions. Each question has a way
 | Q-10 | What does "exact copy" mean where upstream behavior is unsafe? | Compatibility/security review; exception policy | legacy release | WP-18, ADR-005 |
 | Q-11 | How CDN compression and caching interact with legacy/RQP headers | Proxy conformance lab | Server release | WP-13…15 |
 | Q-12 | Who owns cookies and auth during native early fetch on Android and iOS? | Cookie isolation tests; API mapping | Sensitive pages | WP-04 |
-| Q-13 | Can Compression Dictionary Transport replace or complement block patches in RQP? | Benchmark on real pages; platform support check | RQP wire format | WP-17 |
-| Q-14 | Which legacy server behavior is the "canonical profile" when Java, Node.js and PHP differ? | Divergence analysis + usage evidence | ADR-005 | WP-01 |
-| Q-15 | RQP patch overhead: per-block SHA-256 (64 hex) and envelope fields make a patch of four tiny blocks larger than the legacy data body (869 B vs 512 B raw, measured). Use truncated hashes, hashes only in the manifest, or a compact encoding? | Measure variants with `examples/server-demo/scripts/measure.js` on several real pages | RQP wire format | WP-17 |
+| Q-13 | Can Compression Dictionary Transport replace or complement block patches in RQP? | Benchmark on real pages; platform support check | Nothing in P1 (human, 2026-10-09: moved to P8; RQP 1 reserves the capability token `dict-compression`) | WP-16 |
 | Q-16 | Use the Arcmutate plugins (line-level git scope for PIT, Kotlin-aware mutation, Android)? They are commercial; a free licence for open-source projects is announced but not verified | Confirm licence terms in writing; compare with class-scoped PIT on the first JVM/Kotlin WP | JVM/Kotlin mutation gate | WP-14, WP-10 |
 
 ## 2. Closed
 
 | ID | Question | Answer | Evidence |
 |---|---|---|---|
+| Q-15 | RQP patch overhead from 64-hex SHA-256 per block | Full SHA-256 in base64url without padding (43 characters); no truncation. Decided by the human, 2026-10-09 | [ADR-006](/engineering/architecture/adr/#adr-006), [WP-17 S1](/engineering/plan/sprints/WP-17-S1) |
+| Q-14 | Canonical legacy server profile | "Rivqen canonical" column + profiles `legacy-java`, `legacy-node`, `legacy-php`. Decided by the human, 2026-10-09 | [ADR-005](/engineering/architecture/adr/#adr-005) |
 | Q-01 | Exact byte-level rules of legacy template/data split and hashing in each upstream **server** | Confirmed by code audit + 115 trace checks; documented with divergences D-01…D-13 | [Server trace report](/engineering/protocol/legacy-traces) |
 | Q-00 | Which upstream commit is the reference? | `Tencent/VasSonic@59936beff656d4b5718ff6444d6c5e001a2c5231` (2019-04-15), the last commit on `master` | [Upstream audit](/research/upstream-vassonic) |

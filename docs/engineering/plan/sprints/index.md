@@ -8,7 +8,7 @@ Each sprint has one record. The record is the shared memory of the work: the pla
 
 | Sprint | WP | Goal | State |
 |---|---|---|---|
-| — | — | No sprint has started yet. The first sprint starts with P1. | — |
+| [WP-17-S1](/engineering/plan/sprints/WP-17-S1) | WP-17 | Kickoff: research, human decisions, gap list | Planned |
 
 ## How to add a record
 

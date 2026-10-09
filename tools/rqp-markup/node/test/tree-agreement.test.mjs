@@ -33,11 +33,14 @@ const RAW = [
   ['xmp', '<b>'],
   ['noscript', '<img src="a.png">'],
   ['noscript', '<p>x</p>'],
+  ['noscript', '<script type="application/rivqen-manifest+json">{}</script>'], // E8
 ];
 const BLOCK_NAMES = ['div', 'p', 'span', 'h1', 'section', 'title', 'nav', 'li', 'td'];
 const IDS = ['a', 'b', 'c', 'd', 'e', 'f'];
 const SVG_CHILDREN = ['g', 'path', 'title', 'desc', 'text', 'a', 'style', 'foreignObject', 'svg'];
 const MATH_CHILDREN = ['mi', 'mo', 'mn', 'mrow', 'mtext'];
+// Content of a foreign child: text, a tag (M-07), CDATA (E5, also with '>' for M-12).
+const FOREIGN_TEXT = ['t', 't', 't', 'a < b', '<b>x</b>', '<![CDATA[a<b]]>', '<![CDATA[a>b]]>'];
 
 function generate(r) {
   const out = [];
@@ -63,7 +66,7 @@ function generate(r) {
       out.push(`<${root}>`);
       for (let i = r.int(3); i > 0; i--) {
         const k = pick(kids);
-        out.push(r.next() < 0.3 ? `<${k}/>` : `<${k}>${r.next() < 0.8 ? 't' : '<b>x</b>'}</${k}>`);
+        out.push(r.next() < 0.3 ? `<${k}/>` : `<${k}>${pick(FOREIGN_TEXT)}</${k}>`);
       }
       out.push(r.next() < 0.95 ? `</${root}>` : '');
       return;

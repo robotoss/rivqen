@@ -93,8 +93,14 @@ export const TABLE_PARENTS = Object.freeze(new Map([
 /** M-19: allowed F for a block start tag (none is also allowed). */
 export const BLOCK_FAMILY = set('td', 'th', 'caption');
 
-/** M-24 c: list containers. */
+/** M-24 c and j: list containers. */
 export const LISTS = set('ul', 'ol', 'menu', 'dl');
+
+/** M-24 c and j: list items. */
+export const LIST_ITEMS = set('li', 'dd', 'dt');
+
+/** M-24 k: values of F (M-09) where the WHATWG parser foster-parents content. */
+export const TABLE_CONTEXT = set('table', 'tbody', 'thead', 'tfoot', 'tr', 'colgroup');
 
 /** M-11 rule 3: start tags not allowed in noscript content. */
 export const NOSCRIPT_FORBIDDEN = set(

@@ -104,6 +104,48 @@ describe('name sets of markup.md section 2.1', () => {
     }
   });
 
+  describe('list items and lists (M-24 j)', () => {
+    const block = (content) => doc(`<div data-rq-block="a">${content}</div>`);
+    for (const outer of ['li', 'dd', 'dt']) {
+      for (const inner of ['li', 'dd', 'dt']) {
+        it(`rejects ${inner} while ${outer} is the nearest list or item`, () => {
+          assert.equal(errorOf(block(`<ul><${outer}><${inner}>x</${inner}></${outer}></ul>`)), STRUCTURE);
+        });
+      }
+    }
+    for (const list of ['ul', 'ol', 'menu', 'dl']) {
+      it(`accepts li in an li when ${list} is the nearest list`, () => {
+        assert.equal(errorOf(block(`<ul><li><${list}><li>x</li></${list}></li></ul>`)), null);
+      });
+    }
+    for (const name of ['div', 'section', 'b', 'span', 'address', 'nav']) {
+      it(`does not count ${name} as a list item`, () => {
+        assert.equal(errorOf(block(`<ul><${name}><li>x</li></${name}></ul>`)), null);
+      });
+    }
+  });
+
+  describe('table context (M-24 k)', () => {
+    const shapes = {
+      table: ['<table>', '</table>'],
+      tbody: ['<table><tbody>', '</tbody></table>'],
+      thead: ['<table><thead>', '</thead></table>'],
+      tfoot: ['<table><tfoot>', '</tfoot></table>'],
+      tr: ['<table><tr>', '</tr></table>'],
+      colgroup: ['<table><colgroup>', '</colgroup></table>'],
+      td: ['<table><tr><td>', '</td></tr></table>'],
+      th: ['<table><tr><th>', '</th></tr></table>'],
+      caption: ['<table><caption>', '</caption></table>'],
+    };
+    const context = ['table', 'tbody', 'thead', 'tfoot', 'tr', 'colgroup'];
+    for (const [f, [open, close]] of Object.entries(shapes)) {
+      const ok = !context.includes(f);
+      it(`${ok ? 'accepts' : 'rejects'} a b start tag when F is ${f}`, () => {
+        assert.equal(errorOf(doc(`<div data-rq-block="a">${open}<b>x</b>${close}</div>`)), ok ? null : STRUCTURE);
+      });
+    }
+  });
+
   describe('GUARDED (M-06)', () => {
     // svg and math open a foreign region and select has its own rule (M-08):
     // these make the end tag invalid before crossing is checked.

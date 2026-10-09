@@ -192,9 +192,9 @@ final class Tokenizer
             // In HTML content: bogus comment to the first '>'. In foreign
             // content: CDATA section to the first ']]>'. M-12 requires that
             // both end at the same byte; cdataClosed says if they do.
+            // `]]` cannot overlap `<![CDATA[`: its last byte is `[`.
             $gt = strpos($in, '>', $q + 7);
-            $closed = $gt !== false && $gt - 2 >= $q + 7
-                && $in[$gt - 1] === ']' && $in[$gt - 2] === ']';
+            $closed = $gt !== false && $in[$gt - 1] === ']' && $in[$gt - 2] === ']';
             $end = $gt === false ? $this->length : $gt + 1;
             return $this->emit(new Token(TokenType::Cdata, $lt, $end, cdataClosed: $closed));
         }
@@ -220,9 +220,10 @@ final class Tokenizer
         return $this->emit(new Token(TokenType::Comment, $lt, $this->endAtGt($from)));
     }
 
+    /** $from is at most the input length (callers pass an offset after `<!` or `<?`). */
     private function endAtGt(int $from): int
     {
-        $gt = $from < $this->length ? strpos($this->input, '>', $from) : false;
+        $gt = strpos($this->input, '>', $from);
         return $gt === false ? $this->length : $gt + 1;
     }
 
@@ -379,7 +380,7 @@ final class Tokenizer
                 case self::AFTER_ATTR_NAME:
                     $i += strspn($in, self::WS, $i);
                     if ($i >= $len) {
-                        break 2;
+                        return $this->eof();
                     }
                     $c = $in[$i];
                     if ($st === self::BEFORE_ATTR_NAME && ($c === '/' || $c === '>')) {
@@ -412,7 +413,7 @@ final class Tokenizer
                         $attrs[$current] = '';
                     }
                     if ($i >= $len) {
-                        break 2;
+                        return $this->eof();
                     }
                     if ($in[$i] === '=') {
                         $st = self::BEFORE_ATTR_VALUE;
@@ -424,13 +425,13 @@ final class Tokenizer
                 case self::BEFORE_ATTR_VALUE:
                     $i += strspn($in, self::WS, $i);
                     if ($i >= $len) {
-                        break 2;
+                        return $this->eof();
                     }
                     $c = $in[$i];
                     if ($c === '"' || $c === "'") {
                         $close = strpos($in, $c, $i + 1);
                         if ($close === false) {
-                            break 2;
+                            return $this->eof();
                         }
                         if ($current !== null) {
                             $attrs[$current] = substr($in, $i + 1, $close - $i - 1);
@@ -450,13 +451,13 @@ final class Tokenizer
                     }
                     $i += $n;
                     if ($i >= $len) {
-                        break 2;
+                        return $this->eof();
                     }
                     if ($in[$i] === '>') {
                         return $this->emitTag($lt, $i + 1, $name, $isStart, false, $attrs);
                     }
+                    // White space: the before attribute name state skips it.
                     $st = self::BEFORE_ATTR_NAME;
-                    $i++;
                     break;
                 case self::AFTER_ATTR_VALUE_QUOTED:
                     $c = $in[$i];
@@ -532,7 +533,7 @@ final class Tokenizer
             }
             $q = $lt + 2;
             $after = $this->appropriateEndTag($q);
-            if ($after >= 0) {
+            if ($after !== null) {
                 $this->state = ContentState::Data;
                 return $this->tagRest($lt, $after, $this->endTagName, false);
             }
@@ -547,20 +548,20 @@ final class Tokenizer
      * End tag name states of RCDATA, RAWTEXT and script data: at $q (after
      * `</`), read ASCII letters. Return the offset of the byte after them if
      * they form the appropriate end tag name and are followed by white space,
-     * '/' or '>'. Else return -1.
+     * '/' or '>'. Else return null. (The end tag name is never empty.)
      */
-    private function appropriateEndTag(int $q): int
+    private function appropriateEndTag(int $q): ?int
     {
         $n = strspn($this->input, self::ALPHA, $q);
         $after = $q + $n;
-        if ($n === 0 || $n !== strlen($this->endTagName) || $after >= $this->length) {
-            return -1;
+        if ($n !== strlen($this->endTagName) || $after >= $this->length) {
+            return null;
         }
         if (strpos(self::TAG_NAME_END, $this->input[$after]) === false) {
-            return -1;
+            return null;
         }
         if (strtolower(substr($this->input, $q, $n)) !== $this->endTagName) {
-            return -1;
+            return null;
         }
         return $after;
     }
@@ -583,7 +584,7 @@ final class Tokenizer
                 case self::SCRIPT:
                     $found = strpos($in, '<', $i);
                     if ($found === false) {
-                        break 2;
+                        return $this->eof();
                     }
                     $lt = $found;
                     $i = $found + 1;
@@ -592,7 +593,7 @@ final class Tokenizer
                 case self::SCRIPT_LT:
                     if ($c === '/') {
                         $after = $this->appropriateEndTag($i + 1);
-                        if ($after >= 0) {
+                        if ($after !== null) {
                             $this->state = ContentState::Data;
                             return $this->tagRest($lt, $after, $this->endTagName, false);
                         }
@@ -650,7 +651,7 @@ final class Tokenizer
                 case self::SCRIPT_ESCAPED_LT:
                     if ($c === '/') {
                         $after = $this->appropriateEndTag($i + 1);
-                        if ($after >= 0) {
+                        if ($after !== null) {
                             $this->state = ContentState::Data;
                             return $this->tagRest($lt, $after, $this->endTagName, false);
                         }
@@ -667,7 +668,7 @@ final class Tokenizer
                     $n = strspn($in, self::ALPHA, $i);
                     $j = $i + $n;
                     if ($j >= $len) {
-                        break 2;
+                        return $this->eof();
                     }
                     $start = $st === self::SCRIPT_DOUBLE_ESCAPE_START;
                     if (strpos(self::TAG_NAME_END, $in[$j]) !== false) {

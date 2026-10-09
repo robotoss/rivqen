@@ -74,6 +74,9 @@ final class TokenizerTest extends TestCase
         yield 'text only' => ['hello world', []];
         yield 'empty input' => ['', []];
         yield 'less-than before a non-letter is text' => ['a < b <3 <-', []];
+        yield 'letters at the ends of the ASCII ranges start tags' => ['<a><z><A><Z>', ['S:a@0-3', 'S:z@3-6', 'S:a@6-9', 'S:z@9-12']];
+        yield 'bytes next to the letter ranges are text' => ['<@><[><`><{></@></[></`></{>', ['C@12-16', 'C@16-20', 'C@20-24', 'C@24-28']];
+        yield 'end tags with letters at the ends of the ranges' => ['</a></z></A></Z>', ['E:a@0-4', 'E:z@4-8', 'E:a@8-12', 'E:z@12-16']];
         yield 'less-than at EOF' => ['abc<', []];
         yield 'end tag open at EOF' => ['abc</', []];
         yield 'missing end tag name is dropped' => ['</><b>', ['S:b@3-6']];

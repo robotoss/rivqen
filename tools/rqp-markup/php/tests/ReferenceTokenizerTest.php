@@ -37,6 +37,13 @@ final class ReferenceTokenizerTest extends TestCase
     {
         $out = [];
         foreach (TokenizerTest::tokenize($html) as $t) {
+            if ($t->type === TokenType::Cdata) {
+                // M-12: the first '>' after `<![CDATA[` ends a `]]>` that starts after it.
+                $text = substr($html, $t->start, $t->end - $t->start);
+                self::assertSame(strlen($text) >= 12 && str_ends_with($text, ']]>'), $t->cdataClosed, bin2hex($html));
+            } else {
+                self::assertFalse($t->cdataClosed);
+            }
             $out[] = [self::type($t), $t->start, $t->end, $t->name, $t->selfClosing, $t->attributes];
         }
         return $out;
@@ -92,6 +99,61 @@ final class ReferenceTokenizerTest extends TestCase
     public function testAgreesOnExamples(string $html): void
     {
         self::assertSameTokens($html, 'example');
+    }
+
+    /**
+     * Every string of up to 6 characters over the comment alphabet, after `<!--`.
+     */
+    public function testAgreesOnAllShortCommentBodies(): void
+    {
+        $alphabet = ['-', '!', '<', '>', 'x'];
+        $bodies = [''];
+        for ($length = 1; $length <= 6; $length++) {
+            $next = [];
+            foreach ($bodies as $body) {
+                if (strlen($body) === $length - 1) {
+                    foreach ($alphabet as $ch) {
+                        $next[] = $body . $ch;
+                    }
+                }
+            }
+            foreach ($next as $body) {
+                self::assertSameTokens('<!--' . $body, 'comment');
+                self::assertSameTokens('<!--' . $body . '-->', 'comment');
+            }
+            $bodies = array_merge($bodies, $next);
+        }
+        self::assertCount(1 + 5 + 25 + 125 + 625 + 3125 + 15625, $bodies);
+    }
+
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function denseContexts(): iterable
+    {
+        yield 'start tag attributes' => ['<p', [' ', "\t", '/', '=', '"', "'", '>', 'x', 'type', 'data-rq-block', '<', "\r\n"]];
+        yield 'end tag' => ['</p', [' ', '/', '=', '"', "'", '>', 'x', "\n"]];
+        yield 'script data' => ['<script>', ['<', '!', '-', '>', '/', 'script', 'SCRIPT', 'scrip', 'x', ' ', "\t"]];
+        yield 'RCDATA' => ['<title>', ['<', '/', 'title', 'TITLE', 'titl', '>', ' ', 'x', "\r"]];
+        yield 'markup declaration' => ['<!', ['D', 'DOCTYPE', '[CDATA[', '[', ']', '-', '>', 'x', ' ', '"', "'", 'PUBLIC', 'system']];
+        yield 'processing instruction' => ['<?', ['x', 'xml', 'xml-stylesheet', '?', '>', '-', '_', '1', ' ', '<']];
+    }
+
+    /**
+     * @param list<string> $alphabet
+     */
+    #[DataProvider('denseContexts')]
+    public function testAgreesOnDenseInputs(string $prefix, array $alphabet): void
+    {
+        $random = new Randomizer(new Mt19937(crc32($prefix)));
+        for ($n = 0; $n < 20000; $n++) {
+            $html = $prefix;
+            $count = $random->getInt(0, 12);
+            for ($i = 0; $i < $count; $i++) {
+                $html .= $alphabet[$random->getInt(0, count($alphabet) - 1)];
+            }
+            self::assertSameTokens($html, "input $n");
+        }
     }
 
     public function testAgreesOnRandomInputs(): void

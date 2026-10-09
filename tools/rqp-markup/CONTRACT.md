@@ -11,12 +11,12 @@ Normative rules for markup validity and block extraction: `docs/engineering/prot
 
 | Name | Path | Language | HTML library |
 |---|---|---|---|
-| `rust` | `tools/rqp-markup/rust/` | Rust | `lol_html` (BSD-3-Clause), or a tokenizer with byte spans |
-| `node` | `tools/rqp-markup/node/` | JavaScript (Node.js ≥ 22, ESM) | `parse5` 8.0.1 (MIT) |
-| `java` | `tools/rqp-markup/java/` | Java 21 | `jsoup` ≥ 1.23.2 (MIT), position tracking on |
-| `php` | `tools/rqp-markup/php/` | PHP ≥ 8.3 | Own tokenizer, no runtime dependency |
+| `rust` | `tools/rqp-markup/rust/` | Rust | Own tokenizer, no HTML library (DL-012, DL-013) |
+| `node` | `tools/rqp-markup/node/` | JavaScript (Node.js ≥ 22, ESM) | Own tokenizer, no runtime dependency; `parse5` 8.0.1 (MIT) is a test oracle only (DL-012, DL-016) |
+| `java` | `tools/rqp-markup/java/` | Java 21 | Own tokenizer, no runtime dependency (DL-012, DL-014) |
+| `php` | `tools/rqp-markup/php/` | PHP ≥ 8.3 | Own tokenizer, no runtime dependency (H-13, DL-015) |
 
-Each candidate directory has a `README.md` with the build command and the test command.
+Each candidate directory has a `README.md` with the build command and the test command. The decisions DL-012…DL-016 are in `docs/engineering/plan/decision-log.md`. DL-012 allows a library tokenizer with exact source positions (Allowed license class) or an own tokenizer; all four candidates use an own tokenizer.
 
 ## 2. Command line
 
@@ -90,6 +90,19 @@ A UTF-8 byte order mark at the start of the input is part of the input bytes and
 | `RQP_MARKUP_RESERVED` | The input already contains a manifest script (`type="application/rivqen-manifest+json"`) |
 
 When a document has more than one error, a candidate may report any of them. Fixtures with an error contain exactly one error. The differential runner compares the error code only on fixtures.
+
+The codes above are results for a document (exit code `0`). There is no error code for a defect in a candidate.
+
+**Note: exit codes for internal defects.** An exit code other than `0` and `2` means an internal defect of the candidate (section 2, item 5). The differential runner reports every exit code other than `0` as `CRASH` for that candidate. The code value is not part of this contract. The candidates use these values today; both `3` and `70` are accepted:
+
+| Candidate | Exit code for an internal defect |
+|---|---|
+| `rust` | None of its own. Panics are denied by lints; a panic would end the process with the Rust runtime code `101`. |
+| `node` | `70` |
+| `java` | `3` |
+| `php` | `70` |
+
+A candidate that finds a defect for one input can still print a fail-closed result for it (`node` prints `RQP_MARKUP_STRUCTURE`). The runner reports `CRASH` all the same, because the exit code is not `0`.
 
 ## 6. Differential runner
 

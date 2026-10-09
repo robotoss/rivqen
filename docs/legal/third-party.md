@@ -17,6 +17,7 @@ This page defines which third-party licenses Rivqen accepts, how they are checke
 | Component | License | Why | Conditions |
 |---|---|---|---|
 | UniFFI (`uniffi*` crates) | MPL-2.0 | Standard Rust → Kotlin/Swift bindings tool | No modification of UniFFI files without publishing them; check generated-code status in WP-09 |
+| JUnit Jupiter (`org.junit:junit-bom` 5.14.4) | EPL-2.0 | Standard Java test framework; test scope only, never in a distributed artifact | Test dependency only. Approved by the human on 2026-10-09 ([WP-17 S1](/engineering/plan/sprints/WP-17-S1) H-19) |
 
 ## 3. Per-ecosystem checks
 

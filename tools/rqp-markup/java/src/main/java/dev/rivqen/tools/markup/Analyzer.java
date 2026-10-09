@@ -140,7 +140,7 @@ public final class Analyzer {
     if (k == Name.FRAMESET) {
       throw structure("M-10");
     }
-    if (k == Name.SCRIPT && reservedType()) {
+    if (k == Name.SCRIPT && reservedType(in, tok)) {
       throw new Reject(ErrorCode.RESERVED, "M-13");
     }
     if (stack.open(Name.SELECT) > 0 && k != Name.OPTION && k != Name.OPTGROUP && k != Name.HR) {
@@ -220,8 +220,7 @@ public final class Analyzer {
     if (stack.open(Name.TEMPLATE) > 0 || stack.open(Name.SELECT) > 0) {
       throw structure("M-19");
     }
-    Name f = stack.tableFamily();
-    if (f != null && f != Name.TD && f != Name.TH && f != Name.CAPTION) {
+    if (tableContext()) {
       throw structure("M-19");
     }
     String id = new String(in, from, to - from, StandardCharsets.US_ASCII);
@@ -242,6 +241,10 @@ public final class Analyzer {
     if (selfClosing && !Name.is(k, Name.Set.VOID)) {
       throw structure("M-22");
     }
+    // M-24 k: in table context only table parts and col; also for names that no set knows.
+    if (tableContext() && !Name.is(k, Name.Set.TABLE_PART) && k != Name.COL) {
+      throw structure("M-24");
+    }
     if (k == null) {
       return;
     }
@@ -249,7 +252,7 @@ public final class Analyzer {
     boolean invalid =
         switch (k) {
           case H1, H2, H3, H4, H5, H6 -> Name.is(block, Name.Set.HEADING) || headingInContent();
-          case LI, DD, DT -> !listInContent();
+          case LI, DD, DT -> listItemImplied();
           case BUTTON, A, NOBR -> stack.open(k) > 0;
           case CAPTION, COLGROUP, TBODY, TD, TFOOT, TH, THEAD, TR, COL ->
               stack.openInContent(Name.TABLE) == 0;
@@ -273,12 +276,26 @@ public final class Analyzer {
         > 0;
   }
 
-  private boolean listInContent() {
-    return stack.openInContent(Name.UL)
-            + stack.openInContent(Name.OL)
-            + stack.openInContent(Name.MENU)
-            + stack.openInContent(Name.DL)
-        > 0;
+  /**
+   * M-24 c and j for an {@code li}, {@code dd} or {@code dt} start tag in the content: invalid when
+   * no list opened in the content is open (c), or when an {@code li}, {@code dd} or {@code dt} is
+   * above the nearest list (j). Elements opened in the content are above every element opened
+   * before the block, so the nearest list is the nearest list opened in the content when there is
+   * one, and an item above it was opened in the content.
+   */
+  private boolean listItemImplied() {
+    int list = stack.nearestList();
+    return list < 0 || !stack.inContent(list) || stack.nearestListItem() > list;
+  }
+
+  /**
+   * True when F of M-09 is {@code table}, {@code tbody}, {@code thead}, {@code tfoot}, {@code tr}
+   * or {@code colgroup}: the table context of M-19 rule 2 and M-24 k, where the WHATWG parser moves
+   * an element out of the table (foster parenting).
+   */
+  private boolean tableContext() {
+    Name f = stack.tableFamily();
+    return f != null && f != Name.TD && f != Name.TH && f != Name.CAPTION;
   }
 
   private boolean rubyPartOpen(boolean withRtc) {
@@ -384,8 +401,13 @@ public final class Analyzer {
   }
 
   private void comment() {
-    if (tok.cdata() && !tok.cdataClosed()) {
-      throw structure("M-12");
+    if (tok.cdata()) {
+      if (!tok.cdataClosed()) {
+        throw structure("M-12");
+      }
+      // M-07 rules 3 and 4 (E5, H-21): a CDATA section that satisfies M-12 is allowed in text-only
+      // content. A CDATA section and the bogus comment of this tokenizer end at the same byte.
+      return;
     }
     if (textOnly >= 0) {
       throw structure("M-07");
@@ -438,7 +460,9 @@ public final class Analyzer {
 
   /**
    * M-11: tokenize the content of a {@code noscript} element and a following {@code </noscript>}
-   * alone, from the data state, in HTML context.
+   * alone, from the data state, in HTML context. M-13 applies to the start tags of this pass too
+   * (E8). When the {@code noscript} element has no end tag, the content is the rest of the input
+   * (E3).
    */
   private static void noscript(byte[] in, int from, int to) {
     int length = to - from;
@@ -450,6 +474,10 @@ public final class Analyzer {
       switch (sub.next()) {
         case START_TAG -> {
           Name k = Name.of(sub.name());
+          // M-13 applies also to C (E8, H-22): a reader with scripting disabled sees this script.
+          if (k == Name.SCRIPT && reservedType(c, sub)) {
+            throw new Reject(ErrorCode.RESERVED, "M-13");
+          }
           if (sub.hasBlockAttribute()) {
             throw structure("M-11");
           }
@@ -517,13 +545,19 @@ public final class Analyzer {
     return true;
   }
 
-  /** M-13: the first {@code type} raw value contains {@code rivqen-manifest} (any case) or '&'. */
-  private boolean reservedType() {
-    if (!tok.hasTypeAttribute()) {
+  /**
+   * M-13: the first {@code type} raw value of the start tag that {@code t} just returned contains
+   * {@code rivqen-manifest} (any case) or '&'.
+   *
+   * @param in the bytes that {@code t} reads
+   * @param t the tokenizer
+   */
+  private static boolean reservedType(byte[] in, Tokenizer t) {
+    if (!t.hasTypeAttribute()) {
       return false;
     }
-    int from = tok.typeValueStart();
-    int to = tok.typeValueEnd();
+    int from = t.typeValueStart();
+    int to = t.typeValueEnd();
     for (int i = from; i < to; i++) {
       if (in[i] == '&') {
         return true;

@@ -57,6 +57,13 @@ class RulesTest {
     }
 
     @Test
+    void processingInstructionToEndOfInputIsAComment() {
+      // E6 (H-21): a "<?" without ">" is a comment that ends at the end of the input.
+      assertEquals(List.of("a:html:x"), blocks(P + "<?php echo 1; <p data-rq-block=b"));
+      assertStructure(P + "<svg><desc><?x", "M-07");
+    }
+
+    @Test
     void doctypeEndsAtFirstGreaterThan() {
       assertEquals(List.of("a:html:x"), blocks("<!DOCTYPE html \"<p data-rq-block=b>\">" + P));
     }
@@ -336,8 +343,9 @@ class RulesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"<b>", "</g>", "<!-- c -->", "<![CDATA[x]]>", "<!DOCTYPE x>", "<g/>"})
+    @ValueSource(strings = {"<b>", "</g>", "<!-- c -->", "<![cdata[x]]>", "<!DOCTYPE x>", "<g/>"})
     void integrationPointContentIsTextOnly(String token) {
+      // A lower-case "<![cdata[" is a bogus comment, not a CDATA section.
       assertStructure(body("<svg><foreignObject>a" + token + "</foreignObject></svg>"), "M-07");
     }
 
@@ -374,6 +382,43 @@ class RulesTest {
     void textElementContentInRegionIsTextOnly() {
       assertStructure(body("<svg><script>if (a<b) x()</script></svg>"), "M-07");
       assertValid(body("<svg><script>if (a < b) x()</script></svg>" + P));
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "annotation-xml",
+          "desc",
+          "foreignObject",
+          "mi",
+          "mn",
+          "mo",
+          "ms",
+          "mtext",
+          "title",
+          "style",
+          "script",
+          "noscript",
+          "textarea",
+          "xmp"
+        })
+    void cdataInTextOnlyContent(String name) {
+      // E5 (H-21): a CDATA section that satisfies M-12 is allowed in text-only content.
+      assertValid(body("<svg><" + name + ">a<![CDATA[x<y]]>b</" + name + "></svg>" + P));
+      assertValid(body("<math><" + name + "><![CDATA[]]><![CDATA[1]]></" + name + "></math>" + P));
+      assertStructure(body("<svg><" + name + "><![CDATA[a>b]]></" + name + "></svg>" + P), "M-12");
+    }
+
+    @Test
+    void cdataInTextOnlyContentToEndOfInput() {
+      // E4 and E5: no ">" after "<![CDATA[": both readings end at the end of the input.
+      assertValid(P + "<svg><style><![CDATA[a{}");
+    }
+
+    @Test
+    void lessThanAsTextInForeignTextContent() {
+      // E1 (H-21): a "<" that the tokenizer emits as a character is allowed.
+      assertValid(body("<svg><desc>a < b <1 <= 2</desc><style>a<{}</style></svg>" + P));
     }
 
     @Test
@@ -523,6 +568,36 @@ class RulesTest {
     void noscriptWithoutEndTagChecksTheRestOfTheInput() {
       assertValid(body("<noscript><img src=x>"));
       assertStructure(body("<noscript><!-- x"), "M-11");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<script type=\"application/rivqen-manifest+json\">{}</script>",
+          "<SCRIPT TYPE='X/RIVQEN-Manifest'></SCRIPT>",
+          "<script type=application/rivqen-manifest&#43;json></script>",
+          "<script type=\"&amp;\"></script>",
+          "<img src=x><script defer type=rivqen-manifest data-x=1></script>"
+        })
+    void reservedScriptInNoscript(String markup) {
+      // E8 (H-22): M-13 applies also to C; a reader with scripting disabled sees the script.
+      assertInvalid(body("<noscript>" + markup + "</noscript>" + P), ErrorCode.RESERVED, "M-13");
+    }
+
+    @Test
+    void reservedScriptInNoscriptWithoutEndTag() {
+      assertInvalid(
+          P + "<noscript><script type=rivqen-manifest>{}</script>", ErrorCode.RESERVED, "M-13");
+    }
+
+    @Test
+    void otherScriptsInNoscript() {
+      assertValid(
+          body(
+              "<noscript><script>a()</script><script type=text/javascript type=rivqen-manifest>"
+                  + "</script><div type=rivqen-manifest></div>"
+                  + "<style><script type=rivqen-manifest></style></noscript>"
+                  + P));
     }
 
     @Test
@@ -956,7 +1031,8 @@ class RulesTest {
 
     @Test
     void optionalEndTagsMustBeExplicitInContent() {
-      assertStructure(body("<div data-rq-block=a><ul><li>a<li>b</ul></div>"), "M-23");
+      assertStructure(body("<div data-rq-block=a><ul><li>a</ul></div>"), "M-23");
+      assertStructure(body("<div data-rq-block=a><table><tr><td>a</tr></table></div>"), "M-23");
       assertValid(body("<div data-rq-block=a><ul><li>a</li><li>b</li></ul></div>"));
     }
   }
@@ -1021,6 +1097,69 @@ class RulesTest {
     }
 
     @Test
+    void listItemWithListOpenedOnlyBeforeBlock() {
+      assertStructure(body("<ul><div data-rq-block=a><li>x</li></div></ul>"), "M-24");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "ul,li,li",
+          "ol,li,dd",
+          "menu,li,dt",
+          "dl,dd,dd",
+          "dl,dd,dt",
+          "dl,dt,li",
+          "ul,li,dt"
+        })
+    void listItemWhileItemIsOpenAboveList(String names) {
+      // M-24 j (H-18 A1): the WHATWG parser would close the open item and the div in it.
+      String[] n = names.split(",", -1);
+      String list = n[0];
+      String open = n[1];
+      String item = n[2];
+      assertStructure(
+          body(
+              "<div data-rq-block=a><"
+                  + list
+                  + "><"
+                  + open
+                  + "><div><"
+                  + item
+                  + ">x</"
+                  + item
+                  + "></div></"
+                  + open
+                  + "></"
+                  + list
+                  + "></div>"),
+          "M-24");
+      assertStructure(
+          body("<div data-rq-block=a><" + list + "><" + open + "><" + item + ">x"), "M-24");
+    }
+
+    @Test
+    void listItemInNestedListInsideItem() {
+      assertValid(
+          body(
+              "<div data-rq-block=a><ul><li><ol><li>x</li></ol><div><dl><dt>y</dt><dd>z</dd>"
+                  + "</dl></div></li></ul></div>"));
+    }
+
+    @Test
+    void listItemOpenedBeforeBlockIsBelowTheList() {
+      assertValid(body("<ul><li><div data-rq-block=a><ul><li>x</li></ul></div></li></ul>"));
+      assertValid(body("<dl><dd><div data-rq-block=a><dl><dt>x</dt></dl></div></dd></dl>"));
+    }
+
+    @Test
+    void listItemInListAfterNestedListClosed() {
+      assertStructure(
+          body("<div data-rq-block=a><ul><li><ol><li>x</li></ol><li>y</li></li></ul></div>"),
+          "M-24");
+    }
+
+    @Test
     void listItemAfterListClosed() {
       assertStructure(body("<div data-rq-block=a><ul></ul><li>x</li></div>"), "M-24");
     }
@@ -1070,6 +1209,44 @@ class RulesTest {
         strings = {"caption", "colgroup", "tbody", "td", "tfoot", "th", "thead", "tr", "col"})
     void tablePartWithoutTableInContent(String name) {
       assertStructure(body("<div data-rq-block=a><" + name + "></div>"), "M-24");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<table>",
+          "<table><tbody>",
+          "<table><thead>",
+          "<table><tfoot>",
+          "<table><tr>",
+          "<table><tbody><tr>",
+          "<table><colgroup>"
+        })
+    void startTagInTableContext(String context) {
+      // M-24 k (H-18 B1): foster parenting; a table start tag closes the open table.
+      for (String tag : List.of("<div>", "<x-y>", "<table>", "<b>", "<br>", "<input>", "<p>")) {
+        assertStructure(body("<div data-rq-block=a>" + context + tag), "M-24");
+      }
+    }
+
+    @Test
+    void tablePartInTableContextIsCheckedByM09() {
+      assertStructure(body("<div data-rq-block=a><table><tr><tbody>"), "M-09");
+      assertStructure(body("<div data-rq-block=a><table><tr><col>"), "M-09");
+    }
+
+    @Test
+    void textCommentsAndCellContentInTableContext() {
+      assertValid(
+          body(
+              "<div data-rq-block=a><table>t<!-- c --><caption><div>c</div></caption>"
+                  + "<colgroup><col></colgroup><tbody> <tr><td><div>d</div><table><tr><th><p>e</p>"
+                  + "</th></tr></table></td></tr></tbody></table></div>"));
+    }
+
+    @Test
+    void tableContextOutsideContentIsNotChecked() {
+      assertValid(body("<table><div>x</div><b>y</b></table>" + P));
     }
 
     @Test

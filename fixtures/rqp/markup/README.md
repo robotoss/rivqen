@@ -38,7 +38,7 @@ Invalid document: `"expect": { "valid": false, "error": "RQP_MARKUP_DUPLICATE" }
 | `content` | The exact block content (the text between the start tag and the end tag). Optional `content_file` instead: a file name in the fixture directory (for large or binary-sensitive content). |
 | `rules` | The rule IDs of `markup.md` that the fixture covers |
 
-The generator finds `start_tag`, checks that `content` follows it, computes the byte offsets, the hashes and the revisions (algorithm: `tools/rqp-markup/CONTRACT.md` §4), and writes `expected.json`. The generator does not parse HTML. It is an independent oracle: the expected blocks come from a person, not from a parser.
+The generator finds `start_tag`, checks that `content` follows it, computes the byte offsets, the hashes and the revisions (algorithm: `tools/rqp-markup/CONTRACT.md` §4), and writes `expected.json`. The generator does not parse HTML. It is an independent oracle: the expected blocks come from a person, not from a parser. Exception: a few large inputs and the 256-block `fixture.json` are made by recipes in `gen.py`; `gen.py --check` also checks them against their recipes.
 
 ## Rules
 

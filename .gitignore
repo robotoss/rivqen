@@ -26,3 +26,6 @@ tools/rqp-markup/java/build/
 tools/rqp-markup/java/.gradle/
 tools/rqp-markup/java/target/
 tools/rqp-markup/php/vendor/
+
+# Python bytecode
+__pycache__/

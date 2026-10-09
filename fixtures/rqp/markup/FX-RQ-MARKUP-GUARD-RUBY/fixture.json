@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-MARKUP-GUARD-RUBY",
-  "description": "An rt start tag in the content without a ruby opened in the content",
+  "description": "An rt start tag in a p block inside a ruby, without a ruby opened in the content",
   "rules": [
     "M-24"
   ],

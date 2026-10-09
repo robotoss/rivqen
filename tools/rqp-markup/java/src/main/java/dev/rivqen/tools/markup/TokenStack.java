@@ -48,11 +48,6 @@ final class TokenStack {
     return known[index];
   }
 
-  /** True when the element was pushed in a foreign region. */
-  boolean foreign(int index) {
-    return foreign[index];
-  }
-
   /** Index of the {@code svg} or {@code math} element of the foreign region, or -1. */
   int regionRoot() {
     return regionRoot;

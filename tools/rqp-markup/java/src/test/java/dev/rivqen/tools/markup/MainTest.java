@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -26,7 +27,9 @@ class MainTest {
 
   @TempDir Path tmp;
 
-  private final StringWriter out = new StringWriter();
+  private final StringWriter written = new StringWriter();
+  // Buffered as in Main.main: output that run() does not flush is lost.
+  private final BufferedWriter out = new BufferedWriter(written);
   private final ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
   private final PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
@@ -49,7 +52,7 @@ class MainTest {
   void singleModePrintsOneResultLine() throws IOException {
     Path f = write("a.html", "<p data-rq-block=price>120</p>");
     assertEquals(0, run(f.toString()));
-    String line = out.toString();
+    String line = written.toString();
     assertTrue(line.endsWith("}\n"));
     assertEquals(1, line.lines().count());
     Map<String, Object> r = MiniJson.object(line);
@@ -75,7 +78,7 @@ class MainTest {
     assertEquals(
         "{\"valid\":false,\"error\":\"RQP_MARKUP_STRUCTURE\",\"blocks\":[],"
             + "\"template_revision\":null,\"page_revision\":null}\n",
-        out.toString());
+        written.toString());
     assertEquals("", err());
   }
 
@@ -87,14 +90,14 @@ class MainTest {
     write("fx/c/other.html", "");
     write("fx/file.txt", "x");
     assertEquals(0, run("--batch", tmp.resolve("fx").toString()));
-    List<String> lines = out.toString().lines().toList();
+    List<String> lines = written.toString().lines().toList();
     assertEquals(3, lines.size());
     assertEquals("B", MiniJson.object(lines.get(0)).get("fixture"));
     assertEquals("a\"\\", MiniJson.object(lines.get(1)).get("fixture"));
     assertEquals("b", MiniJson.object(lines.get(2)).get("fixture"));
     assertTrue(lines.get(0).startsWith("{\"fixture\":\"B\",\"valid\":false,"));
     assertEquals(true, MiniJson.object(lines.get(2)).get("valid"));
-    assertFalse(out.toString().contains(SECRET));
+    assertFalse(written.toString().contains(SECRET));
   }
 
   @Test
@@ -104,7 +107,7 @@ class MainTest {
     assertEquals(2, run("--help"));
     assertEquals(2, run("a", "b"));
     assertEquals(2, run("--batch", "a", "b"));
-    assertEquals("", out.toString());
+    assertEquals("", written.toString());
     assertTrue(err().startsWith("usage: rqp-markup"));
   }
 
@@ -140,7 +143,7 @@ class MainTest {
     Files.write(f, big);
     assertEquals(Analyzer.MAX_INPUT_BYTES + 1, Main.read(f).length);
     assertEquals(0, run(f.toString()));
-    assertTrue(out.toString().contains("RQP_MARKUP_LIMIT"));
+    assertTrue(written.toString().contains("RQP_MARKUP_LIMIT"));
   }
 
   @Test
@@ -151,9 +154,17 @@ class MainTest {
   }
 
   @Test
+  void loneSurrogatesAtTheEndsAreEscaped() {
+    StringBuilder s = new StringBuilder();
+    ResultJson.string(s, "\uD800");
+    ResultJson.string(s, "\uDC00x");
+    assertEquals("\"\\ud800\"\"\\udc00x\"", s.toString());
+  }
+
+  @Test
   void jsonStringEscaping() {
     StringBuilder s = new StringBuilder();
-    ResultJson.string(s, "a\"b\\c\n\r\t\u0001\u001f\u007fé😀\uD800x\uDC00");
-    assertEquals("\"a\\\"b\\\\c\\n\\r\\t\\u0001\\u001f\u007fé😀\\ud800x\\udc00\"", s.toString());
+    ResultJson.string(s, " a\"b\\c\n\r\t\u0001\u001f\u007fé😀\uD800x\uDC00");
+    assertEquals("\" a\\\"b\\\\c\\n\\r\\t\\u0001\\u001f\u007fé😀\\ud800x\\udc00\"", s.toString());
   }
 }

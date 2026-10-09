@@ -60,7 +60,7 @@ class LimitsTest {
 
   @Test
   void byteOrderMarkHidesNoTag() {
-    // Without the skip, the tokenizer would see the BOM bytes as text: same tags, same blocks.
+    // The BOM bytes are text to the tokenizer: they cannot hide or start a tag.
     assertEquals(java.util.List.of("a:html:x"), Docs.blocks(Docs.BOM + "<p data-rq-block=a>x</p>"));
   }
 

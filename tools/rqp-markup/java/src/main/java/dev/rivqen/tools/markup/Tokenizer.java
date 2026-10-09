@@ -179,10 +179,6 @@ final class Tokenizer {
     }
   }
 
-  Type type() {
-    return type;
-  }
-
   /** Offset of the first byte of the token (its {@code <}). */
   int start() {
     return start;
@@ -450,7 +446,8 @@ final class Tokenizer {
       int gt = indexOf((byte) '>', contentStart);
       untilGreaterThan(lt, contentStart, Type.COMMENT);
       cdata = true;
-      cdataClosed = gt < 0 || (gt - 2 >= contentStart && in[gt - 1] == ']' && in[gt - 2] == ']');
+      // The "]]" cannot overlap the opener: the byte before contentStart is '['.
+      cdataClosed = gt < 0 || (in[gt - 1] == ']' && in[gt - 2] == ']');
       return Type.COMMENT;
     }
     return bogusComment(lt, p);

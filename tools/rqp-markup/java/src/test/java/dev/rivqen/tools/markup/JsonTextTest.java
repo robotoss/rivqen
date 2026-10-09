@@ -40,7 +40,12 @@ class JsonTextTest {
         "[1,2,[3,{}]]",
         " \t\r\n{ \"a\" : [ 1 , true ] , \"a\" : null } \n",
         "{\"\":{\"\":[]}}",
-        "[\"\\u0000\"]"
+        "[\"\\u0000\"]",
+        "[ ]",
+        "{ }",
+        "\" \"",
+        "\"\\uD800\\uDC00\"",
+        "\"\\uDBFF\\uDFFF\""
       })
   void validTexts(String s) {
     assertTrue(valid(s), s);
@@ -99,10 +104,66 @@ class JsonTextTest {
         "{\"a\":1}x",
         "[-]",
         "[1,,2]",
-        "[,1]"
+        "[,1]",
+        "{1}",
+        "{true}",
+        "[\"\t]",
+        "\"\\uDFFF\"",
+        "trux",
+        "nulL",
+        "fals0"
       })
   void invalidTexts(String s) {
     assertFalse(valid(s), s);
+  }
+
+  /** The range ends at the end of the array: the validator must not read after it. */
+  private static boolean validToEnd(String s) {
+    byte[] b = Docs.utf8(s);
+    return JsonText.isValid(b, 0, b.length);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"1", "-0.5e+1", "[1]", "[ ]", "{ }", "\"a\"", "true", "{\"a\":[]}"})
+  void validTextsAtTheEndOfTheArray(String s) {
+    assertTrue(validToEnd(s), s);
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "[1",
+        "[1,",
+        "[",
+        "{",
+        "{\"a\"",
+        "{\"a\":1,",
+        "{\"a\":",
+        "-",
+        "1e",
+        "1e+",
+        "1.",
+        "tru",
+        "\"a",
+        "\"\\",
+        "\"\\u12",
+        "\"\\uD800",
+        "\"\\uD800\\",
+        "[1 ",
+        " ",
+        "{\"a\" "
+      })
+  void truncatedTextsAtTheEndOfTheArray(String s) {
+    assertFalse(validToEnd(s), s);
+  }
+
+  @Test
+  void rangeEndIsRespectedWhenMoreJsonFollows() {
+    byte[] b = Docs.utf8("[12]");
+    assertFalse(JsonText.isValid(b, 0, 2));
+    assertTrue(JsonText.isValid(b, 1, 2));
+    assertFalse(JsonText.isValid(b, 0, 3));
+    assertTrue(JsonText.isValid(b, 0, 4));
   }
 
   @Test

@@ -79,7 +79,11 @@ public final class Analyzer {
 
   private Analyzer(byte[] in) {
     this.in = in;
-    this.tok = new Tokenizer(in, hasBom(in) ? 3 : 0, in.length);
+    // M-02: the tokenizer does not see a byte order mark at offset 0. Its bytes (EF BB BF) are not
+    // ASCII, so in the data state they are characters that can neither start nor end a token:
+    // starting at offset 0 gives the same tokens as starting after the mark. Offsets always count
+    // the mark.
+    this.tok = new Tokenizer(in, 0, in.length);
   }
 
   /**
@@ -354,7 +358,9 @@ public final class Analyzer {
       Name crossed = stack.known(i);
       boolean tableException =
           Name.isAny(k, Name.Set.TABLE_FAMILY) && Name.is(crossed, Name.Set.TABLE_PART);
-      if (!stack.foreign(i) && Name.is(crossed, Name.Set.GUARDED) && !tableException) {
+      // HTML context: no foreign region is open, so every crossed element was pushed in HTML
+      // context (M-06 guards only those).
+      if (Name.is(crossed, Name.Set.GUARDED) && !tableException) {
         throw structure("M-06");
       }
     }
@@ -557,13 +563,6 @@ public final class Analyzer {
     r.update(p.toString().getBytes(StandardCharsets.UTF_8));
     String pageRevision = "r1." + base64Url(r.digest());
     return new Result(null, null, blocks, templateRevision, pageRevision);
-  }
-
-  private static boolean hasBom(byte[] in) {
-    return in.length >= 3
-        && (in[0] & 0xFF) == 0xEF
-        && (in[1] & 0xFF) == 0xBB
-        && (in[2] & 0xFF) == 0xBF;
   }
 
   private static Reject structure(String rule) {

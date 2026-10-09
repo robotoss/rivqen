@@ -80,6 +80,19 @@ class TokenizerTest {
   }
 
   @Test
+  void tagNamesStartWithAnyAsciiLetter() {
+    assertEquals(
+        List.of(
+            "START_TAG[a]@0-3",
+            "START_TAG[z]@3-6",
+            "START_TAG[z]@6-9",
+            "END_TAG[za]@9-14",
+            "EOF@14-14"),
+        tokens("<A><Z><z></Za>"));
+    assertEquals(List.of("START_TAG[a]@0-6", "EOF@6-6"), tokens("<a b=>"));
+  }
+
+  @Test
   void lessThanSignVariants() {
     assertEquals(List.of("EOF@7-7"), tokens("< <1 <<"));
     assertEquals(List.of("START_TAG[a]@1-4", "EOF@4-4"), tokens("<<a>"));
@@ -170,8 +183,16 @@ class TokenizerTest {
     assertEquals(List.of("COMMENT@0-5", "EOF@5-5"), tokens("<!-- "));
   }
 
+  @ParameterizedTest
+  @CsvSource({"<!---!>x-->", "<!--a->b-->", "<!--a--x>y-->", "<!--a--!x->y-->", "<!--!>x-->"})
+  void commentsThatDoNotEndEarly(String s) {
+    assertEquals(
+        List.of("COMMENT@0-" + s.length(), "EOF@" + s.length() + "-" + s.length()), tokens(s));
+  }
+
   @Test
   void endOfInputInsideCommentStates() {
+    assertEquals(List.of("COMMENT@0-3", "EOF@3-3"), tokens("<!-"));
     assertEquals(List.of("COMMENT@0-4", "EOF@4-4"), tokens("<!--"));
     assertEquals(List.of("COMMENT@0-5", "EOF@5-5"), tokens("<!---"));
     assertEquals(List.of("COMMENT@0-7", "EOF@7-7"), tokens("<!--a--"));
@@ -212,6 +233,7 @@ class TokenizerTest {
     t = first("<![CDATA[a");
     assertTrue(t.cdata());
     assertTrue(t.cdataClosed());
+    assertTrue(first("<![CDATA[").cdata());
     assertFalse(first("<![CDATA").cdata());
     assertFalse(first("<!x>").cdata());
   }
@@ -259,6 +281,24 @@ class TokenizerTest {
     assertEquals(
         List.of("START_TAG[script]@0-8", "END_TAG[script]@16-25", "EOF@25-25"),
         tokens("<script><!---->x</script>"));
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "<script><!--a-><script></script>x</script>",
+    "<script><!--a>b<script></script>c</script>",
+    "<script><!--a--b<script></script>c</script>",
+    "<script><!--a-b<script></script>c</script>"
+  })
+  void scriptDataEscapedStateEndsOnlyAtDashDashGreaterThan(String s) {
+    // Still escaped: <script> starts the double-escaped state, so the first </script> is text.
+    int end = s.lastIndexOf("</script>");
+    assertEquals(
+        List.of(
+            "START_TAG[script]@0-8",
+            "END_TAG[script]@" + end + "-" + s.length(),
+            "EOF@" + s.length() + "-" + s.length()),
+        tokens(s));
   }
 
   @Test

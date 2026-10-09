@@ -83,6 +83,8 @@ pitest {
         .map { it.split(",").map(String::trim).filter(String::isNotEmpty) }
         .orElse(listOf("dev.rivqen.tools.markup.*"))
     targetTests = setOf("dev.rivqen.tools.markup.*")
+    // Performance only (5 MiB inputs); it checks time, not behavior, and would slow every mutant.
+    excludedTestClasses = setOf("dev.rivqen.tools.markup.LinearTimeTest")
     threads = 4
     outputFormats = setOf("HTML", "XML")
     timestampedReports = false

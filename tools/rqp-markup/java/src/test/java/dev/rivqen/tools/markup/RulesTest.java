@@ -73,6 +73,16 @@ class RulesTest {
     }
 
     @Test
+    void startTagEndsAfterMissingAttributeValue() {
+      assertEquals(List.of("a:html:x"), blocks(body("<p data-rq-block=a b=>x</p>")));
+    }
+
+    @Test
+    void attributeDirectlyAfterQuotedValue() {
+      assertEquals(List.of("a:html:y"), blocks(body("<p data-rq-block=\"a\"class=x>y</p>")));
+    }
+
+    @Test
     void emptyEndTagEmitsNothing() {
       assertEquals(List.of("a:html:x</>"), blocks(body("<p data-rq-block=a>x</></p>")));
     }
@@ -162,6 +172,30 @@ class RulesTest {
     @Test
     void selfClosingForeignElementIsNotPushed() {
       assertValid(body("<svg><g/><path/></svg>" + P));
+    }
+
+    @Test
+    void elementAtTheBottomOfTheStackIsPoppedByItsEndTag() {
+      // No html or body tags: the first element is at index 0 of the token stack.
+      assertValid("<button></button><div data-rq-block=a><button>x</button></div>");
+      assertValid("<a><a></a></a><div data-rq-block=k><a>x</a></div>");
+    }
+
+    @Test
+    void blockAtTheBottomOfTheStack() {
+      assertStructure("<div data-rq-block=a><span/></div>", "M-22");
+      assertStructure("<div data-rq-block=a><!DOCTYPE x></div>", "M-22");
+    }
+
+    @Test
+    void regionAtTheBottomOfTheStack() {
+      assertStructure("<svg><p></svg>", "M-07");
+      assertStructure("<svg></div></svg>", "M-07");
+    }
+
+    @Test
+    void tableAtTheBottomOfTheStack() {
+      assertStructure("<table><div data-rq-block=a>x</div>", "M-19");
     }
 
     @Test
@@ -280,6 +314,11 @@ class RulesTest {
     }
 
     @Test
+    void endTagAfterClosedIntegrationPointIsStray() {
+      assertStructure(body("<svg><title>t</title></title></svg>"), "M-07");
+    }
+
+    @Test
     void endTagOfHtmlElementOutsideRegion() {
       assertStructure(body("<div><svg></div>"), "M-07");
     }
@@ -320,12 +359,19 @@ class RulesTest {
     @Test
     void textElementInRegionMustNotBeSelfClosing() {
       assertStructure(body("<svg><style/></svg>"), "M-07");
+      // title is in TEXT and in INTEGRATION; the TEXT rule applies.
+      assertStructure(body("<svg><title/></svg>"), "M-07");
     }
 
     @Test
     void textElementContentInRegionIsTextOnly() {
       assertStructure(body("<svg><script>if (a<b) x()</script></svg>"), "M-07");
       assertValid(body("<svg><script>if (a < b) x()</script></svg>" + P));
+    }
+
+    @Test
+    void endOfInputInIntegrationPointIsNoErrorByItself() {
+      assertValid(P + "<svg><foreignObject>abc");
     }
 
     @Test
@@ -933,6 +979,13 @@ class RulesTest {
     @Test
     void headingInHeadingOpenedInContent() {
       assertStructure(body("<div data-rq-block=a><h2>x<h3>y</h3></h2></div>"), "M-24");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"h1", "h2", "h3", "h4", "h5", "h6"})
+    void headingWhileAnyHeadingLevelIsOpenInContent(String open) {
+      assertStructure(
+          body("<div data-rq-block=a><" + open + ">x<h1>y</h1></" + open + "></div>"), "M-24");
     }
 
     @Test

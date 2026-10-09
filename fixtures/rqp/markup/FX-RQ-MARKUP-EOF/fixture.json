@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-EOF",
+  "description": "The input ends in the content of an html block",
+  "rules": [
+    "M-20"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

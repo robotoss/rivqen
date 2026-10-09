@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-GUARD-LI",
+  "description": "An li start tag in the content without a list opened in the content",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

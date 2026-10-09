@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-GUARD-BUTTON",
+  "description": "A button start tag in the content while a button is open",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-GUARD-P-SPAN",
+  "description": "A span block contains a start tag that closes a p (div)",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

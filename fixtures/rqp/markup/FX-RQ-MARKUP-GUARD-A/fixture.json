@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-GUARD-A",
+  "description": "An a start tag in the content while an a is open",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

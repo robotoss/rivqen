@@ -116,7 +116,7 @@ The token stack is not the DOM. It does not do implied end tags, foster parentin
 
 These rules apply to the whole document, also when it has no block. They remove the cases where the token stack and the WHATWG tree disagree about an element that matters for blocks. Error for all of them, except M-13: `RQP_MARKUP_STRUCTURE`.
 
-**M-06 Crossing.** An end tag MUST NOT cross (M-05, step 3) an element whose name is in `GUARDED`. Exception: an end tag with a name in `TABLE_FAMILY` can cross elements with a name in `TABLE_PART`.
+**M-06 Crossing.** An end tag MUST NOT cross (M-05, step 3) an element that was pushed in HTML context and whose name is in `GUARDED`. (Elements pushed in a foreign region, for example an SVG `a`, are not guarded; M-07 applies to them.) Exception: an end tag with a name in `TABLE_FAMILY` can cross elements with a name in `TABLE_PART`.
 
 - Allowed: `<div><span>a</div>` (crosses `span`), `<ul><li>a</ul>` (crosses `li`), `<tr><td>a</tr>` (crosses `td`).
 - Invalid: `<div><button>a</div>` (crosses `button`), `<td><a href="#">a</td>` (crosses `a`).
@@ -128,7 +128,7 @@ These rules apply to the whole document, also when it has no block. They remove 
 3. After the start tag of an element with a name in `INTEGRATION` (without the self-closing flag), the tokens up to the end tag of that element MUST be character tokens only. Thus, the content contains no `<`: no tags, no comments, no CDATA.
 4. A start tag with a name in `TEXT` MUST NOT have the self-closing flag. Its content (up to its end tag) MUST be character tokens only. The name `plaintext` is not allowed.
 
-**M-08 Select.** Inside a `select` element (HTML context, from its start tag to its end tag), the only allowed tokens are characters, comments, the start tags `option`, `optgroup`, `hr`, and the end tags `option`, `optgroup`. The `select` element MUST have an explicit end tag `</select>`.
+**M-08 Select.** Inside a `select` element (HTML context, from its start tag to its end tag), the only allowed tokens are characters, comments, the start tags `option`, `optgroup`, `hr`, and the end tags `option`, `optgroup`, `select`. The `select` element MUST have an explicit end tag `</select>`.
 
 **M-09 Table parts.** Let F be the nearest element on the token stack with a name in `TABLE_FAMILY`; the search stops at a `template` element. A start tag in HTML context with one of these names is allowed only when F is none or is in the list:
 

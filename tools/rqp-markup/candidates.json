@@ -1,0 +1,26 @@
+[
+  {
+    "name": "rust",
+    "cwd": "tools/rqp-markup/rust",
+    "build": ["cargo", "build", "--release", "--quiet"],
+    "run": ["target/release/rqp-markup", "--batch", "{dir}"]
+  },
+  {
+    "name": "node",
+    "cwd": "tools/rqp-markup/node",
+    "build": ["npm", "ci", "--ignore-scripts", "--silent"],
+    "run": ["node", "src/cli.mjs", "--batch", "{dir}"]
+  },
+  {
+    "name": "java",
+    "cwd": "tools/rqp-markup/java",
+    "build": ["gradle", "--quiet", "installDist"],
+    "run": ["build/install/rqp-markup/bin/rqp-markup", "--batch", "{dir}"]
+  },
+  {
+    "name": "php",
+    "cwd": "tools/rqp-markup/php",
+    "build": null,
+    "run": ["php", "bin/rqp-markup", "--batch", "{dir}"]
+  }
+]

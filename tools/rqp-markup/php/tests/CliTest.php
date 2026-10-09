@@ -87,6 +87,8 @@ final class CliTest extends TestCase
         $this->file('fx/a/input.html', '<p data-rq-block="a">1</p>');
         $this->file('fx/B/input.html', '');
         $this->file('fx/c/other.html', 'x');
+        $this->file('fx/A0/other.html', 'x');
+        $this->file('fx/input.html', 'not a fixture');
         $this->file('fx/file', 'x');
         self::assertTrue(mkdir($this->tmp . '/fx/d/input.html', 0o700, true));
         [$code, $out, $err] = self::cli(['--batch', $this->tmp . '/fx']);

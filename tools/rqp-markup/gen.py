@@ -283,7 +283,16 @@ def _block_size() -> bytes:
     return _HEAD + b'<div data-rq-block="big">' + b"a" * (1024 * 1024 + 1) + b"</div>\n" + _TAIL
 
 
+def _input_size() -> bytes:
+    # 5 242 881 bytes: one byte more than the limit of M-01. The padding is a comment.
+    total = 5 * 1024 * 1024 + 1
+    head = _HEAD + b'<p data-rq-block="real">r</p>\n<!--'
+    tail = b"-->\n" + _TAIL
+    return head + b"a" * (total - len(head) - len(tail)) + tail
+
+
 GENERATED: dict[str, dict[str, Callable[[], bytes]]] = {
+    "FX-RQ-MARKUP-LIMIT-INPUT-SIZE": {"input.html": _input_size},
     "FX-RQ-MARKUP-LIMIT-256": {"input.html": lambda: _many_blocks(256), "fixture.json": _limit_256_fixture},
     "FX-RQ-MARKUP-LIMIT-257": {"input.html": lambda: _many_blocks(257)},
     "FX-RQ-MARKUP-LIMIT-BLOCK-SIZE": {"input.html": _block_size},

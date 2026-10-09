@@ -1,0 +1,19 @@
+GET /p/titleattr HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+
+--- response ---
+HTTP 200
+Content-Type: text/html; charset=utf-8
+Content-Encoding: gzip
+Etag: e69a5a005441836fb419c6cce29007f5310c7f04
+template-tag: c2c61b5c6b733e5bcbf902f14acf9ebe96386431
+Cache-Offline: true
+template-change: true
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+[body decoded from content-encoding=gzip]
+<!DOCTYPE html><html><head><title lang="en">Shop</title></head><body><!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end--></body></html>

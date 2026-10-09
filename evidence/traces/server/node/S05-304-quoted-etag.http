@@ -1,0 +1,21 @@
+GET /p/a HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+template-tag: 3c771bf015df2c410a41a6012804f645b3acc1bc
+
+--- response ---
+HTTP 200
+Content-Type: text/html; charset=utf-8
+Content-Encoding: gzip
+Etag: 3e3184cbd12e5294959effe6f2d9985f50f4ea5d
+template-tag: 3c771bf015df2c410a41a6012804f645b3acc1bc
+Cache-Offline: true
+template-change: false
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+[body decoded from content-encoding=gzip]
+{"data":{"{title}":"<title>Shop</title>","{price}":"<!--sonicdiff-price--><p class=\"price\">120.00</p><!--sonicdiff-price-end-->","{stock}":"<!--sonicdiff-stock--><p>In stock: 5</p><!--sonicdiff-stock-end-->"},"diff":"","html-sha1":"3e3184cbd12e5294959effe6f2d9985f50f4ea5d","template-tag":"3c771bf015df2c410a41a6012804f645b3acc1bc"}

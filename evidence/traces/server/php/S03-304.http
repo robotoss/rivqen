@@ -1,0 +1,18 @@
+GET /p/a HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 3e3184cbd12e5294959effe6f2d9985f50f4ea5d
+template-tag: 3c771bf015df2c410a41a6012804f645b3acc1bc
+
+--- response ---
+HTTP 304
+Host: 127.0.0.1:18082
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: close
+X-Powered-By: PHP/8.3.35
+Cache-Control: no-cache
+Cache-Offline: store
+Content-Length: 0
+Content-type: text/html; charset=UTF-8
+
+[body decoded from content-encoding=identity]

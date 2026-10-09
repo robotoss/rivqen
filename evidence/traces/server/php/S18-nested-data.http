@@ -1,0 +1,22 @@
+GET /p/nested HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: 091908fd77ee9eead277a667f48310990632d285
+
+--- response ---
+HTTP 200
+Host: 127.0.0.1:18082
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: close
+X-Powered-By: PHP/8.3.35
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: 29f85b405ef34d1be234b87023e35b34554b621c
+template-tag: 091908fd77ee9eead277a667f48310990632d285
+template-change: false
+Content-Length: 264
+Content-type: text/html; charset=UTF-8
+
+[body decoded from content-encoding=identity]
+{"data":{"{title}":"<title>Shop<\/title>","{outer}":"<!--sonicdiff-outer--><div><!--sonicdiff-inner--><p>in<\/p><!--sonicdiff-inner-end-->"},"template-tag":"091908fd77ee9eead277a667f48310990632d285","html-sha1":"29f85b405ef34d1be234b87023e35b34554b621c","diff":""}

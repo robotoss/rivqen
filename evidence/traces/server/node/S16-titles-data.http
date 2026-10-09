@@ -1,0 +1,21 @@
+GET /p/titles HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: 15d30184ec1fc0f39dbb196e47311709a86e0b5d
+
+--- response ---
+HTTP 200
+Content-Type: text/html; charset=utf-8
+Content-Encoding: gzip
+Etag: 429e1afc55f9b2241b0b03450b8779c88c85ff85
+template-tag: 15d30184ec1fc0f39dbb196e47311709a86e0b5d
+Cache-Offline: true
+template-change: false
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+[body decoded from content-encoding=gzip]
+{"data":{"{title}":"<TITLE>Upper</TITLE>","{p}":"<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->"},"diff":"","html-sha1":"429e1afc55f9b2241b0b03450b8779c88c85ff85","template-tag":"15d30184ec1fc0f39dbb196e47311709a86e0b5d"}

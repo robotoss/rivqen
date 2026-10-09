@@ -1,0 +1,19 @@
+GET /p/titles HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: adb5e40dd0a955603f0eb184d6555bdf4c99f068
+
+--- response ---
+HTTP 200
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: 429e1afc55f9b2241b0b03450b8779c88c85ff85
+template-tag: adb5e40dd0a955603f0eb184d6555bdf4c99f068
+template-change: false
+Content-Type: text/html;charset=utf-8
+Content-Length: 283
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+
+[body decoded from content-encoding=identity]
+{"data":{"{p}":"\u003c!--sonicdiff-p--\u003e\u003cp\u003e1\u003c/p\u003e\u003c!--sonicdiff-p-end--\u003e","{title}":"\u003cTITLE\u003eUpper\u003c/TITLE\u003e"},"template-tag":"adb5e40dd0a955603f0eb184d6555bdf4c99f068","diff":"","html-sha1":"429e1afc55f9b2241b0b03450b8779c88c85ff85"}

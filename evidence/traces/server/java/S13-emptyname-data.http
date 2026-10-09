@@ -1,0 +1,19 @@
+GET /p/emptyname HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: cb9e61d48580a1ecf19e2ec8a026447fcf884bbd
+
+--- response ---
+HTTP 200
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: 1b352cba28f1e80bf26454c090a00dd61505a1f2
+template-tag: cb9e61d48580a1ecf19e2ec8a026447fcf884bbd
+template-change: false
+Content-Type: text/html;charset=utf-8
+Content-Length: 284
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+
+[body decoded from content-encoding=identity]
+{"data":{"{}":"\u003c!--sonicdiff--\u003e\u003cp\u003eanon two\u003c/p\u003e\u003c!--sonicdiff-end--\u003e","{title}":"\u003ctitle\u003eShop\u003c/title\u003e"},"template-tag":"cb9e61d48580a1ecf19e2ec8a026447fcf884bbd","diff":"","html-sha1":"1b352cba28f1e80bf26454c090a00dd61505a1f2"}

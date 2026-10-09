@@ -1,0 +1,16 @@
+Rivqen
+Copyright 2026 The Rivqen Authors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Rivqen is an independent, community-developed project. It provides a
+compatibility mode for the Tencent VasSonic legacy protocol. Rivqen is not
+affiliated with, sponsored by, or endorsed by Tencent. "Tencent" and
+"VasSonic" are referenced solely to identify the compatible protocol and
+for attribution.
+
+Rivqen is developed under a clean-room policy (see
+docs/legal/provenance.md). It does not contain source code copied from
+Tencent VasSonic. If such material is ever incorporated, its original
+copyright and license notices will be retained and listed in
+THIRD_PARTY_NOTICES.md.

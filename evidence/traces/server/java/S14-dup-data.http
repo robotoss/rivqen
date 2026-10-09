@@ -1,0 +1,19 @@
+GET /p/dup HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: 1f6bedb753922036a15a293f7c60fe22176b68d7
+
+--- response ---
+HTTP 200
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: fb7e2e2be40bc84bf33555feb86f9c4960b938d8
+template-tag: 1f6bedb753922036a15a293f7c60fe22176b68d7
+template-change: false
+Content-Type: text/html;charset=utf-8
+Content-Length: 287
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+
+[body decoded from content-encoding=identity]
+{"data":{"{x}":"\u003c!--sonicdiff-x--\u003e\u003cp\u003esecond\u003c/p\u003e\u003c!--sonicdiff-x-end--\u003e","{title}":"\u003ctitle\u003eShop\u003c/title\u003e"},"template-tag":"1f6bedb753922036a15a293f7c60fe22176b68d7","diff":"","html-sha1":"fb7e2e2be40bc84bf33555feb86f9c4960b938d8"}

@@ -1,0 +1,21 @@
+GET /p/nomark HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: da98efe1f784a71546ad3f20cf8a7d2dbb03f07e
+
+--- response ---
+HTTP 200
+Content-Type: text/html; charset=utf-8
+Content-Encoding: gzip
+Etag: df1595f719efdf5660cbd2fcdbadfd70b0d77c36
+template-tag: da98efe1f784a71546ad3f20cf8a7d2dbb03f07e
+Cache-Offline: true
+template-change: true
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+[body decoded from content-encoding=gzip]
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Shop</title></head><body><header>Static header</header><p>No markers here</p><footer>Static footer</footer></body></html>

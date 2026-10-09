@@ -1,0 +1,22 @@
+GET /p/dup HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: 1f6bedb753922036a15a293f7c60fe22176b68d7
+
+--- response ---
+HTTP 200
+Host: 127.0.0.1:18082
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: close
+X-Powered-By: PHP/8.3.35
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: fb7e2e2be40bc84bf33555feb86f9c4960b938d8
+template-tag: 1f6bedb753922036a15a293f7c60fe22176b68d7
+template-change: false
+Content-Length: 229
+Content-type: text/html; charset=UTF-8
+
+[body decoded from content-encoding=identity]
+{"data":{"{title}":"<title>Shop<\/title>","{x}":"<!--sonicdiff-x--><p>second<\/p><!--sonicdiff-x-end-->"},"template-tag":"1f6bedb753922036a15a293f7c60fe22176b68d7","html-sha1":"fb7e2e2be40bc84bf33555feb86f9c4960b938d8","diff":""}

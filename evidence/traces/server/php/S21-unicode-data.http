@@ -1,0 +1,22 @@
+GET /p/unicode HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: ee51e7f9036de8d2371120ec5ec8879305a0f97c
+
+--- response ---
+HTTP 200
+Host: 127.0.0.1:18082
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: close
+X-Powered-By: PHP/8.3.35
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: e09fd8f012724730e24291f9701424a6f5753f87
+template-tag: ee51e7f9036de8d2371120ec5ec8879305a0f97c
+template-change: false
+Content-Length: 375
+Content-type: text/html; charset=UTF-8
+
+[body decoded from content-encoding=identity]
+{"data":{"{title}":"<title>\u041c\u0430\u0433\u0430\u0437\u0438\u043d<\/title>","{msg}":"<!--sonicdiff-msg--><p>\u0426\u0435\u043d\u0430: 120 \u20bd \u2014 \u00ab\u0442\u0435\u0441\u0442\u00bb &amp; <b>bold<\/b> \/ slash<\/p><!--sonicdiff-msg-end-->"},"template-tag":"ee51e7f9036de8d2371120ec5ec8879305a0f97c","html-sha1":"e09fd8f012724730e24291f9701424a6f5753f87","diff":""}

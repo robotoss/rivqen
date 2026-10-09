@@ -1,0 +1,17 @@
+{
+  "name": "@rivqen-examples/server-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reference demo server for the Rivqen protocol (RQP): data-rq-block markup, manifest, Rq-* headers, 304 and block patches.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test",
+    "measure": "node scripts/measure.js"
+  },
+  "dependencies": {
+    "parse5": "8.0.1"
+  }
+}

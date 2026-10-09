@@ -1,0 +1,22 @@
+GET /p/emptyname HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: cb9e61d48580a1ecf19e2ec8a026447fcf884bbd
+
+--- response ---
+HTTP 200
+Host: 127.0.0.1:18082
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: close
+X-Powered-By: PHP/8.3.35
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: 1b352cba28f1e80bf26454c090a00dd61505a1f2
+template-tag: cb9e61d48580a1ecf19e2ec8a026447fcf884bbd
+template-change: false
+Content-Length: 226
+Content-type: text/html; charset=UTF-8
+
+[body decoded from content-encoding=identity]
+{"data":{"{title}":"<title>Shop<\/title>","{}":"<!--sonicdiff--><p>anon two<\/p><!--sonicdiff-end-->"},"template-tag":"cb9e61d48580a1ecf19e2ec8a026447fcf884bbd","html-sha1":"1b352cba28f1e80bf26454c090a00dd61505a1f2","diff":""}

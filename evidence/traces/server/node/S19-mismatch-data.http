@@ -1,0 +1,21 @@
+GET /p/mismatch HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: 0ba8b8bbfb74d870558693053fc2976d1ce571dc
+
+--- response ---
+HTTP 200
+Content-Type: text/html; charset=utf-8
+Content-Encoding: gzip
+Etag: aafeac2963624985f8873b7868ad934ca069f460
+template-tag: 0ba8b8bbfb74d870558693053fc2976d1ce571dc
+Cache-Offline: true
+template-change: false
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+[body decoded from content-encoding=gzip]
+{"data":{"{title}":"<title>Shop</title>","{aaa}":"<!--sonicdiff-aaa--><p>m</p><!--sonicdiff-bbb-end-->"},"diff":"","html-sha1":"aafeac2963624985f8873b7868ad934ca069f460","template-tag":"0ba8b8bbfb74d870558693053fc2976d1ce571dc"}

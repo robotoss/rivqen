@@ -1,0 +1,20 @@
+GET /p/spaces HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+
+--- response ---
+HTTP 200
+Host: 127.0.0.1:18082
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: close
+X-Powered-By: PHP/8.3.35
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: 5088f729fb80551a5b7383f9359848e776f1e2fb
+template-tag: 77cedfca026e0466ce061e542942e54ae2432388
+template-change: true
+Content-Length: 220
+Content-type: text/html; charset=UTF-8
+
+[body decoded from content-encoding=identity]
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Shop</title></head><body><header>Static header</header><!-- sonicdiff-price --><p>spaces</p><!-- sonicdiff-price-end --><footer>Static footer</footer></body></html>

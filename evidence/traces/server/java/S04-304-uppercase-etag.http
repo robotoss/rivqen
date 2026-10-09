@@ -1,0 +1,14 @@
+GET /p/a HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 3E3184CBD12E5294959EFFE6F2D9985F50F4EA5D
+template-tag: 3c771bf015df2c410a41a6012804f645b3acc1bc
+
+--- response ---
+HTTP 304
+Cache-Control: no-cache
+Cache-Offline: true
+Cache-Offline: store
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+
+[body decoded from content-encoding=identity]

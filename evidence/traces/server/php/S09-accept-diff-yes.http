@@ -1,0 +1,16 @@
+GET /p/b HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: yes
+If-None-Match: 3e3184cbd12e5294959effe6f2d9985f50f4ea5d
+template-tag: 3c771bf015df2c410a41a6012804f645b3acc1bc
+
+--- response ---
+HTTP 200
+Host: 127.0.0.1:18082
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: close
+X-Powered-By: PHP/8.3.35
+Content-type: text/html; charset=UTF-8
+
+[body decoded from content-encoding=identity]
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Shop</title></head><body><header>Static header</header><!--sonicdiff-price--><p class="price">130.00</p><!--sonicdiff-price-end--><!--sonicdiff-stock--><p>In stock: 5</p><!--sonicdiff-stock-end--><footer>Static footer</footer></body></html>

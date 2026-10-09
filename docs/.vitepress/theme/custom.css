@@ -1,0 +1,98 @@
+/* -------------------------------------------------------------------------
+ * Rivqen documentation theme
+ * Brand: teal "river" accent. Works in light and dark mode.
+ * ---------------------------------------------------------------------- */
+:root {
+  --vp-c-brand-1: #0e7c86;
+  --vp-c-brand-2: #12939f;
+  --vp-c-brand-3: #16a8b5;
+  --vp-c-brand-soft: rgba(14, 124, 134, 0.14);
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(120deg, #0e7c86 20%, #3b82f6);
+  --vp-home-hero-image-background-image: linear-gradient(-45deg, #16a8b5 50%, #3b82f6 50%);
+  --vp-home-hero-image-filter: blur(56px);
+}
+
+.dark {
+  --vp-c-brand-1: #3cc4cf;
+  --vp-c-brand-2: #26b3bf;
+  --vp-c-brand-3: #16a8b5;
+  --vp-c-brand-soft: rgba(60, 196, 207, 0.16);
+}
+
+/* ---- Diagrams --------------------------------------------------------
+ * Wide diagrams scroll inside their own box. They never push the page
+ * wider than the screen, and the text inside them does not overflow. */
+.vp-doc .mermaid,
+.vp-doc .rq-diagram {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 20px 0;
+  padding: 16px 8px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  background: var(--vp-c-bg-soft);
+  text-align: center;
+  -webkit-overflow-scrolling: touch;
+}
+
+.vp-doc .mermaid svg {
+  max-width: 100% !important;
+  height: auto;
+}
+
+/* Small screens: keep a readable minimum width and let the box scroll. */
+@media (max-width: 640px) {
+  .vp-doc .mermaid svg {
+    max-width: none !important;
+    min-width: 560px;
+  }
+}
+
+/* ---- Tables ----------------------------------------------------------
+ * Long identifiers (headers, crate names) break instead of overflowing. */
+.vp-doc table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.vp-doc td,
+.vp-doc th {
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+
+.vp-doc td code {
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* Long inline identifiers (file paths, header values) wrap in running text
+ * so that they never push the page wider than a phone screen. */
+.vp-doc :not(pre) > code {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* ---- Status labels ---------------------------------------------------
+ * <Badge type="tip" text="FACT" />  → verified fact with a source
+ * <Badge type="info" text="DESIGN" /> → proposed design, not built
+ * <Badge type="warning" text="RESEARCH" /> → must be confirmed
+ * <Badge type="danger" text="GATE" /> → blocking release gate */
+.vp-doc .VPBadge {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Procedure steps (ASD-STE100 style): clear numbers, more space. */
+.vp-doc ol > li {
+  margin-top: 6px;
+}
+
+/* Requirement ID chips in tables, e.g. `SEC-01`. */
+.vp-doc td:first-child code {
+  white-space: nowrap;
+}

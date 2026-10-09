@@ -1,0 +1,19 @@
+GET /p/spaces HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: 77cedfca026e0466ce061e542942e54ae2432388
+
+--- response ---
+HTTP 200
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: 5088f729fb80551a5b7383f9359848e776f1e2fb
+template-tag: 77cedfca026e0466ce061e542942e54ae2432388
+template-change: false
+Content-Type: text/html;charset=utf-8
+Content-Length: 185
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+
+[body decoded from content-encoding=identity]
+{"data":{"{title}":"\u003ctitle\u003eShop\u003c/title\u003e"},"template-tag":"77cedfca026e0466ce061e542942e54ae2432388","diff":"","html-sha1":"5088f729fb80551a5b7383f9359848e776f1e2fb"}

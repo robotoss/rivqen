@@ -1,0 +1,6658 @@
+{
+  "results": {
+    "node": {
+      "S01-non-sonic": {
+        "page": "a",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 296,
+        "body_sha1": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+      },
+      "S02-first-load": {
+        "page": "a",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 296,
+        "body_sha1": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+      },
+      "meta": {
+        "etag_a": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d",
+        "tag_a": "3c771bf015df2c410a41a6012804f645b3acc1bc",
+        "cache_control": null,
+        "content_type": "text/html; charset=utf-8",
+        "sonic_etag_key": null
+      },
+      "S03-304": {
+        "page": "a",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 304,
+        "headers": [
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Cache-Offline",
+            "store"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 0,
+        "body_sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+      },
+      "S04-304-uppercase-etag": {
+        "page": "a",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3E3184CBD12E5294959EFFE6F2D9985F50F4EA5D"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 334,
+        "body_sha1": "7a6b4cafe9cc58b6c64bc63d1fbe84d6397692b6",
+        "note": "documented: Java case-insensitive, Node/PHP case-sensitive"
+      },
+      "S05-304-quoted-etag": {
+        "page": "a",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "\"3e3184cbd12e5294959effe6f2d9985f50f4ea5d\""
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 334,
+        "body_sha1": "7a6b4cafe9cc58b6c64bc63d1fbe84d6397692b6"
+      },
+      "S06-data-change": {
+        "page": "b",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "4c33dabea7ea65c6255b9e6a6539976674886a2c"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 334,
+        "body_sha1": "66ab52dbfbc3fa6d7bf37d61a002325bb80c5456",
+        "json_keys": [
+          "data",
+          "diff",
+          "html-sha1",
+          "template-tag"
+        ],
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>Shop</title>\",\"{price}\":\"<!--sonicdiff-price--><p class=\\\"price\\\">130.00</p><!--sonicdiff-price-end-->\",\"{stock}\":\"<!--sonicdiff-stock--><p>In stock: 5</p><!--sonicdiff-stock-end-->\"},\"diff\":\"\",\"html-sha1\":\"4c33dabea7ea65c6255b9e6a6539976674886a2c\",\"template-tag\":\"3c771bf015df2c410a41a6012804f645b3acc1bc\"}"
+      },
+      "S07-template-change": {
+        "page": "c",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "065e5deb7844c1d1fc95b16962612171ba0efe83"
+          ],
+          [
+            "template-tag",
+            "35a722c60318e949635024423385fd6c417a6bb5"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 315,
+        "body_sha1": "065e5deb7844c1d1fc95b16962612171ba0efe83"
+      },
+      "S08-accept-diff-false": {
+        "page": "b",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "false"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "4c33dabea7ea65c6255b9e6a6539976674886a2c"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 334,
+        "body_sha1": "66ab52dbfbc3fa6d7bf37d61a002325bb80c5456",
+        "is_json": true
+      },
+      "S09-accept-diff-yes": {
+        "page": "b",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "yes"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "4c33dabea7ea65c6255b9e6a6539976674886a2c"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 334,
+        "body_sha1": "66ab52dbfbc3fa6d7bf37d61a002325bb80c5456",
+        "is_json": true
+      },
+      "S10-header-capitalized": {
+        "page": "b",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "Accept-Diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "Template-Tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "4c33dabea7ea65c6255b9e6a6539976674886a2c"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 334,
+        "body_sha1": "66ab52dbfbc3fa6d7bf37d61a002325bb80c5456",
+        "is_json": true
+      },
+      "S11-identity-encoding": {
+        "page": "b",
+        "request": [
+          [
+            "Accept-Encoding",
+            "identity"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 296,
+        "body_sha1": "4c33dabea7ea65c6255b9e6a6539976674886a2c",
+        "is_json": false
+      },
+      "S12-nomark-first": {
+        "page": "nomark",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "df1595f719efdf5660cbd2fcdbadfd70b0d77c36"
+          ],
+          [
+            "template-tag",
+            "da98efe1f784a71546ad3f20cf8a7d2dbb03f07e"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 177,
+        "body_sha1": "df1595f719efdf5660cbd2fcdbadfd70b0d77c36"
+      },
+      "S12-nomark-data": {
+        "page": "nomark",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "da98efe1f784a71546ad3f20cf8a7d2dbb03f07e"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "df1595f719efdf5660cbd2fcdbadfd70b0d77c36"
+          ],
+          [
+            "template-tag",
+            "da98efe1f784a71546ad3f20cf8a7d2dbb03f07e"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 177,
+        "body_sha1": "df1595f719efdf5660cbd2fcdbadfd70b0d77c36",
+        "is_json": false,
+        "template_change": "true"
+      },
+      "S13-emptyname-first": {
+        "page": "emptyname",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "1b352cba28f1e80bf26454c090a00dd61505a1f2"
+          ],
+          [
+            "template-tag",
+            "3abaaf0fbd449206c1c3d953f0219f39cde7d8a2"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 257,
+        "body_sha1": "1b352cba28f1e80bf26454c090a00dd61505a1f2"
+      },
+      "S13-emptyname-data": {
+        "page": "emptyname",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "3abaaf0fbd449206c1c3d953f0219f39cde7d8a2"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "1b352cba28f1e80bf26454c090a00dd61505a1f2"
+          ],
+          [
+            "template-tag",
+            "3abaaf0fbd449206c1c3d953f0219f39cde7d8a2"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 293,
+        "body_sha1": "f29741761659e194cee181ffd0a280177ab214bb",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Shop</title>",
+          "{auto0}": "<!--sonicdiff--><p>anon one</p><!--sonicdiff-end-->",
+          "{auto1}": "<!--sonicdiff--><p>anon two</p><!--sonicdiff-end-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>Shop</title>\",\"{auto0}\":\"<!--sonicdiff--><p>anon one</p><!--sonicdiff-end-->\",\"{auto1}\":\"<!--sonicdiff--><p>anon two</p><!--sonicdiff-end-->\"},\"diff\":\"\",\"html-sha1\":\"1b352cba28f1e80bf26454c090a00dd61505a1f2\",\"template-tag\":\"3abaaf0fbd449206c1c3d953f0219f39cde7d8a2\"}"
+      },
+      "S14-dup-first": {
+        "page": "dup",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "fb7e2e2be40bc84bf33555feb86f9c4960b938d8"
+          ],
+          [
+            "template-tag",
+            "1f6bedb753922036a15a293f7c60fe22176b68d7"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 260,
+        "body_sha1": "fb7e2e2be40bc84bf33555feb86f9c4960b938d8"
+      },
+      "S14-dup-data": {
+        "page": "dup",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "1f6bedb753922036a15a293f7c60fe22176b68d7"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "fb7e2e2be40bc84bf33555feb86f9c4960b938d8"
+          ],
+          [
+            "template-tag",
+            "1f6bedb753922036a15a293f7c60fe22176b68d7"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 227,
+        "body_sha1": "6cf7ee602b86dd8aa3bbd1a584158444926e9be3",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Shop</title>",
+          "{x}": "<!--sonicdiff-x--><p>second</p><!--sonicdiff-x-end-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>Shop</title>\",\"{x}\":\"<!--sonicdiff-x--><p>second</p><!--sonicdiff-x-end-->\"},\"diff\":\"\",\"html-sha1\":\"fb7e2e2be40bc84bf33555feb86f9c4960b938d8\",\"template-tag\":\"1f6bedb753922036a15a293f7c60fe22176b68d7\"}"
+      },
+      "S15-titleattr-first": {
+        "page": "titleattr",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "e69a5a005441836fb419c6cce29007f5310c7f04"
+          ],
+          [
+            "template-tag",
+            "c2c61b5c6b733e5bcbf902f14acf9ebe96386431"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 131,
+        "body_sha1": "e69a5a005441836fb419c6cce29007f5310c7f04"
+      },
+      "S15-titleattr-data": {
+        "page": "titleattr",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "c2c61b5c6b733e5bcbf902f14acf9ebe96386431"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "e69a5a005441836fb419c6cce29007f5310c7f04"
+          ],
+          [
+            "template-tag",
+            "c2c61b5c6b733e5bcbf902f14acf9ebe96386431"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 234,
+        "body_sha1": "46ca940b08fd660dfea914b398b45b58c7253458",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title lang=\"en\">Shop</title>",
+          "{p}": "<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title lang=\\\"en\\\">Shop</title>\",\"{p}\":\"<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->\"},\"diff\":\"\",\"html-sha1\":\"e69a5a005441836fb419c6cce29007f5310c7f04\",\"template-tag\":\"c2c61b5c6b733e5bcbf902f14acf9ebe96386431\"}"
+      },
+      "S16-titles-first": {
+        "page": "titles",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "429e1afc55f9b2241b0b03450b8779c88c85ff85"
+          ],
+          [
+            "template-tag",
+            "15d30184ec1fc0f39dbb196e47311709a86e0b5d"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 152,
+        "body_sha1": "429e1afc55f9b2241b0b03450b8779c88c85ff85"
+      },
+      "S16-titles-data": {
+        "page": "titles",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "15d30184ec1fc0f39dbb196e47311709a86e0b5d"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "429e1afc55f9b2241b0b03450b8779c88c85ff85"
+          ],
+          [
+            "template-tag",
+            "15d30184ec1fc0f39dbb196e47311709a86e0b5d"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 223,
+        "body_sha1": "0b91393f92f0e28d01122213f06baf243d6e5cd0",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<TITLE>Upper</TITLE>",
+          "{p}": "<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<TITLE>Upper</TITLE>\",\"{p}\":\"<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->\"},\"diff\":\"\",\"html-sha1\":\"429e1afc55f9b2241b0b03450b8779c88c85ff85\",\"template-tag\":\"15d30184ec1fc0f39dbb196e47311709a86e0b5d\"}"
+      },
+      "S17-spaces-first": {
+        "page": "spaces",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "5088f729fb80551a5b7383f9359848e776f1e2fb"
+          ],
+          [
+            "template-tag",
+            "77cedfca026e0466ce061e542942e54ae2432388"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 220,
+        "body_sha1": "5088f729fb80551a5b7383f9359848e776f1e2fb"
+      },
+      "S17-spaces-data": {
+        "page": "spaces",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "77cedfca026e0466ce061e542942e54ae2432388"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "5088f729fb80551a5b7383f9359848e776f1e2fb"
+          ],
+          [
+            "template-tag",
+            "77cedfca026e0466ce061e542942e54ae2432388"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 220,
+        "body_sha1": "5088f729fb80551a5b7383f9359848e776f1e2fb",
+        "is_json": false,
+        "template_change": "true"
+      },
+      "S18-nested-first": {
+        "page": "nested",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "29f85b405ef34d1be234b87023e35b34554b621c"
+          ],
+          [
+            "template-tag",
+            "091908fd77ee9eead277a667f48310990632d285"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 271,
+        "body_sha1": "29f85b405ef34d1be234b87023e35b34554b621c"
+      },
+      "S18-nested-data": {
+        "page": "nested",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "091908fd77ee9eead277a667f48310990632d285"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "29f85b405ef34d1be234b87023e35b34554b621c"
+          ],
+          [
+            "template-tag",
+            "091908fd77ee9eead277a667f48310990632d285"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 262,
+        "body_sha1": "db60ca004f7b26ea56d967e9efa59bf5f694d078",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Shop</title>",
+          "{outer}": "<!--sonicdiff-outer--><div><!--sonicdiff-inner--><p>in</p><!--sonicdiff-inner-end-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>Shop</title>\",\"{outer}\":\"<!--sonicdiff-outer--><div><!--sonicdiff-inner--><p>in</p><!--sonicdiff-inner-end-->\"},\"diff\":\"\",\"html-sha1\":\"29f85b405ef34d1be234b87023e35b34554b621c\",\"template-tag\":\"091908fd77ee9eead277a667f48310990632d285\"}"
+      },
+      "S19-mismatch-first": {
+        "page": "mismatch",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "aafeac2963624985f8873b7868ad934ca069f460"
+          ],
+          [
+            "template-tag",
+            "0ba8b8bbfb74d870558693053fc2976d1ce571dc"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 207,
+        "body_sha1": "aafeac2963624985f8873b7868ad934ca069f460"
+      },
+      "S19-mismatch-data": {
+        "page": "mismatch",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "0ba8b8bbfb74d870558693053fc2976d1ce571dc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "aafeac2963624985f8873b7868ad934ca069f460"
+          ],
+          [
+            "template-tag",
+            "0ba8b8bbfb74d870558693053fc2976d1ce571dc"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 228,
+        "body_sha1": "0f41976657fcb6024007a4421b0405e8c4e48e8f",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Shop</title>",
+          "{aaa}": "<!--sonicdiff-aaa--><p>m</p><!--sonicdiff-bbb-end-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>Shop</title>\",\"{aaa}\":\"<!--sonicdiff-aaa--><p>m</p><!--sonicdiff-bbb-end-->\"},\"diff\":\"\",\"html-sha1\":\"aafeac2963624985f8873b7868ad934ca069f460\",\"template-tag\":\"0ba8b8bbfb74d870558693053fc2976d1ce571dc\"}"
+      },
+      "S20-uppercase-first": {
+        "page": "uppercase",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "3221d28e64cde8e10237641a98ee45a68c500448"
+          ],
+          [
+            "template-tag",
+            "91d8247e85ec35632e6ddcfdfafb10b61571907a"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 209,
+        "body_sha1": "3221d28e64cde8e10237641a98ee45a68c500448"
+      },
+      "S20-uppercase-data": {
+        "page": "uppercase",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "91d8247e85ec35632e6ddcfdfafb10b61571907a"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "3221d28e64cde8e10237641a98ee45a68c500448"
+          ],
+          [
+            "template-tag",
+            "91d8247e85ec35632e6ddcfdfafb10b61571907a"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 229,
+        "body_sha1": "48235e2f971680979ece095752dd23e860f9b522",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Shop</title>",
+          "{Up}": "<!--SONICDIFF-Up--><p>upper</p><!--SONICDIFF-Up-END-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>Shop</title>\",\"{Up}\":\"<!--SONICDIFF-Up--><p>upper</p><!--SONICDIFF-Up-END-->\"},\"diff\":\"\",\"html-sha1\":\"3221d28e64cde8e10237641a98ee45a68c500448\",\"template-tag\":\"91d8247e85ec35632e6ddcfdfafb10b61571907a\"}"
+      },
+      "S21-unicode-first": {
+        "page": "unicode",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "e09fd8f012724730e24291f9701424a6f5753f87"
+          ],
+          [
+            "template-tag",
+            "ee51e7f9036de8d2371120ec5ec8879305a0f97c"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 216,
+        "body_sha1": "e09fd8f012724730e24291f9701424a6f5753f87"
+      },
+      "S21-unicode-data": {
+        "page": "unicode",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "ee51e7f9036de8d2371120ec5ec8879305a0f97c"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Content-Type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Content-Encoding",
+            "gzip"
+          ],
+          [
+            "Etag",
+            "e09fd8f012724730e24291f9701424a6f5753f87"
+          ],
+          [
+            "template-tag",
+            "ee51e7f9036de8d2371120ec5ec8879305a0f97c"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "keep-alive"
+          ],
+          [
+            "Keep-Alive",
+            "timeout=5"
+          ],
+          [
+            "Transfer-Encoding",
+            "chunked"
+          ]
+        ],
+        "encoding": "gzip",
+        "body_len": 297,
+        "body_sha1": "56b05f93514e8a8ae00c31c1735f9ded24931f4a",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Магазин</title>",
+          "{msg}": "<!--sonicdiff-msg--><p>Цена: 120 ₽ — «тест» &amp; <b>bold</b> / slash</p><!--sonicdiff-msg-end-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>Магазин</title>\",\"{msg}\":\"<!--sonicdiff-msg--><p>Цена: 120 ₽ — «тест» &amp; <b>bold</b> / slash</p><!--sonicdiff-msg-end-->\"},\"diff\":\"\",\"html-sha1\":\"e09fd8f012724730e24291f9701424a6f5753f87\",\"template-tag\":\"ee51e7f9036de8d2371120ec5ec8879305a0f97c\"}"
+      }
+    },
+    "php": {
+      "S01-non-sonic": {
+        "page": "a",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 296,
+        "body_sha1": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+      },
+      "S02-first-load": {
+        "page": "a",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Length",
+            "296"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 296,
+        "body_sha1": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+      },
+      "meta": {
+        "etag_a": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d",
+        "tag_a": "3c771bf015df2c410a41a6012804f645b3acc1bc",
+        "cache_control": "no-cache",
+        "content_type": "text/html; charset=UTF-8",
+        "sonic_etag_key": null
+      },
+      "S03-304": {
+        "page": "a",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 304,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "store"
+          ],
+          [
+            "Content-Length",
+            "0"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 0,
+        "body_sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+      },
+      "S04-304-uppercase-etag": {
+        "page": "a",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3E3184CBD12E5294959EFFE6F2D9985F50F4EA5D"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Length",
+            "337"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 337,
+        "body_sha1": "9ea432a6b8877c2f495beefaf6a591cfaadba865",
+        "note": "documented: Java case-insensitive, Node/PHP case-sensitive"
+      },
+      "S05-304-quoted-etag": {
+        "page": "a",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "\"3e3184cbd12e5294959effe6f2d9985f50f4ea5d\""
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Length",
+            "337"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 337,
+        "body_sha1": "9ea432a6b8877c2f495beefaf6a591cfaadba865"
+      },
+      "S06-data-change": {
+        "page": "b",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "4c33dabea7ea65c6255b9e6a6539976674886a2c"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Length",
+            "337"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 337,
+        "body_sha1": "a5969b24ce7443f48f22d0b405914722d1062459",
+        "json_keys": [
+          "data",
+          "template-tag",
+          "html-sha1",
+          "diff"
+        ],
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>Shop<\\/title>\",\"{price}\":\"<!--sonicdiff-price--><p class=\\\"price\\\">130.00<\\/p><!--sonicdiff-price-end-->\",\"{stock}\":\"<!--sonicdiff-stock--><p>In stock: 5<\\/p><!--sonicdiff-stock-end-->\"},\"template-tag\":\"3c771bf015df2c410a41a6012804f645b3acc1bc\",\"html-sha1\":\"4c33dabea7ea65c6255b9e6a6539976674886a2c\",\"diff\":\"\"}"
+      },
+      "S07-template-change": {
+        "page": "c",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "065e5deb7844c1d1fc95b16962612171ba0efe83"
+          ],
+          [
+            "template-tag",
+            "35a722c60318e949635024423385fd6c417a6bb5"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Length",
+            "315"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 315,
+        "body_sha1": "065e5deb7844c1d1fc95b16962612171ba0efe83"
+      },
+      "S08-accept-diff-false": {
+        "page": "b",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "false"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 296,
+        "body_sha1": "4c33dabea7ea65c6255b9e6a6539976674886a2c",
+        "is_json": false
+      },
+      "S09-accept-diff-yes": {
+        "page": "b",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "yes"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 296,
+        "body_sha1": "4c33dabea7ea65c6255b9e6a6539976674886a2c",
+        "is_json": false
+      },
+      "S10-header-capitalized": {
+        "page": "b",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "Accept-Diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "Template-Tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 296,
+        "body_sha1": "4c33dabea7ea65c6255b9e6a6539976674886a2c",
+        "is_json": false
+      },
+      "S11-identity-encoding": {
+        "page": "b",
+        "request": [
+          [
+            "Accept-Encoding",
+            "identity"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "4c33dabea7ea65c6255b9e6a6539976674886a2c"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Length",
+            "337"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 337,
+        "body_sha1": "a5969b24ce7443f48f22d0b405914722d1062459",
+        "is_json": true
+      },
+      "S12-nomark-first": {
+        "page": "nomark",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "df1595f719efdf5660cbd2fcdbadfd70b0d77c36"
+          ],
+          [
+            "template-tag",
+            "da98efe1f784a71546ad3f20cf8a7d2dbb03f07e"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Length",
+            "177"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 177,
+        "body_sha1": "df1595f719efdf5660cbd2fcdbadfd70b0d77c36"
+      },
+      "S12-nomark-data": {
+        "page": "nomark",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "da98efe1f784a71546ad3f20cf8a7d2dbb03f07e"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "df1595f719efdf5660cbd2fcdbadfd70b0d77c36"
+          ],
+          [
+            "template-tag",
+            "da98efe1f784a71546ad3f20cf8a7d2dbb03f07e"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Length",
+            "166"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 166,
+        "body_sha1": "056893d3548ae4dcad8e92535f13674ad13ef357",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Shop</title>"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>Shop<\\/title>\"},\"template-tag\":\"da98efe1f784a71546ad3f20cf8a7d2dbb03f07e\",\"html-sha1\":\"df1595f719efdf5660cbd2fcdbadfd70b0d77c36\",\"diff\":\"\"}"
+      },
+      "S13-emptyname-first": {
+        "page": "emptyname",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "1b352cba28f1e80bf26454c090a00dd61505a1f2"
+          ],
+          [
+            "template-tag",
+            "cb9e61d48580a1ecf19e2ec8a026447fcf884bbd"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Length",
+            "257"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 257,
+        "body_sha1": "1b352cba28f1e80bf26454c090a00dd61505a1f2"
+      },
+      "S13-emptyname-data": {
+        "page": "emptyname",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "cb9e61d48580a1ecf19e2ec8a026447fcf884bbd"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "1b352cba28f1e80bf26454c090a00dd61505a1f2"
+          ],
+          [
+            "template-tag",
+            "cb9e61d48580a1ecf19e2ec8a026447fcf884bbd"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Length",
+            "226"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 226,
+        "body_sha1": "ea6b5f04811ad2457542766f37a8420ef7f2cb0d",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Shop</title>",
+          "{}": "<!--sonicdiff--><p>anon two</p><!--sonicdiff-end-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>Shop<\\/title>\",\"{}\":\"<!--sonicdiff--><p>anon two<\\/p><!--sonicdiff-end-->\"},\"template-tag\":\"cb9e61d48580a1ecf19e2ec8a026447fcf884bbd\",\"html-sha1\":\"1b352cba28f1e80bf26454c090a00dd61505a1f2\",\"diff\":\"\"}"
+      },
+      "S14-dup-first": {
+        "page": "dup",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "fb7e2e2be40bc84bf33555feb86f9c4960b938d8"
+          ],
+          [
+            "template-tag",
+            "1f6bedb753922036a15a293f7c60fe22176b68d7"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Length",
+            "260"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 260,
+        "body_sha1": "fb7e2e2be40bc84bf33555feb86f9c4960b938d8"
+      },
+      "S14-dup-data": {
+        "page": "dup",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "1f6bedb753922036a15a293f7c60fe22176b68d7"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "fb7e2e2be40bc84bf33555feb86f9c4960b938d8"
+          ],
+          [
+            "template-tag",
+            "1f6bedb753922036a15a293f7c60fe22176b68d7"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Length",
+            "229"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 229,
+        "body_sha1": "47d084c1274575d4c5b6199025c9afaf186d7390",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Shop</title>",
+          "{x}": "<!--sonicdiff-x--><p>second</p><!--sonicdiff-x-end-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>Shop<\\/title>\",\"{x}\":\"<!--sonicdiff-x--><p>second<\\/p><!--sonicdiff-x-end-->\"},\"template-tag\":\"1f6bedb753922036a15a293f7c60fe22176b68d7\",\"html-sha1\":\"fb7e2e2be40bc84bf33555feb86f9c4960b938d8\",\"diff\":\"\"}"
+      },
+      "S15-titleattr-first": {
+        "page": "titleattr",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "e69a5a005441836fb419c6cce29007f5310c7f04"
+          ],
+          [
+            "template-tag",
+            "c2c61b5c6b733e5bcbf902f14acf9ebe96386431"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Length",
+            "131"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 131,
+        "body_sha1": "e69a5a005441836fb419c6cce29007f5310c7f04"
+      },
+      "S15-titleattr-data": {
+        "page": "titleattr",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "c2c61b5c6b733e5bcbf902f14acf9ebe96386431"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "e69a5a005441836fb419c6cce29007f5310c7f04"
+          ],
+          [
+            "template-tag",
+            "c2c61b5c6b733e5bcbf902f14acf9ebe96386431"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Length",
+            "236"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 236,
+        "body_sha1": "db82052415cb25869ff5f15c778a04e7d5680bf1",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title lang=\"en\">Shop</title>",
+          "{p}": "<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title lang=\\\"en\\\">Shop<\\/title>\",\"{p}\":\"<!--sonicdiff-p--><p>1<\\/p><!--sonicdiff-p-end-->\"},\"template-tag\":\"c2c61b5c6b733e5bcbf902f14acf9ebe96386431\",\"html-sha1\":\"e69a5a005441836fb419c6cce29007f5310c7f04\",\"diff\":\"\"}"
+      },
+      "S16-titles-first": {
+        "page": "titles",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "429e1afc55f9b2241b0b03450b8779c88c85ff85"
+          ],
+          [
+            "template-tag",
+            "3f311c1e042b7209e870e9767836668bb4173dd6"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Length",
+            "152"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 152,
+        "body_sha1": "429e1afc55f9b2241b0b03450b8779c88c85ff85"
+      },
+      "S16-titles-data": {
+        "page": "titles",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "3f311c1e042b7209e870e9767836668bb4173dd6"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "429e1afc55f9b2241b0b03450b8779c88c85ff85"
+          ],
+          [
+            "template-tag",
+            "3f311c1e042b7209e870e9767836668bb4173dd6"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Length",
+            "225"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 225,
+        "body_sha1": "8e5336c442d195d060c42cebbbd14cd5994261be",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<TITLE>Upper</TITLE>",
+          "{p}": "<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<TITLE>Upper<\\/TITLE>\",\"{p}\":\"<!--sonicdiff-p--><p>1<\\/p><!--sonicdiff-p-end-->\"},\"template-tag\":\"3f311c1e042b7209e870e9767836668bb4173dd6\",\"html-sha1\":\"429e1afc55f9b2241b0b03450b8779c88c85ff85\",\"diff\":\"\"}"
+      },
+      "S17-spaces-first": {
+        "page": "spaces",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "5088f729fb80551a5b7383f9359848e776f1e2fb"
+          ],
+          [
+            "template-tag",
+            "77cedfca026e0466ce061e542942e54ae2432388"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Length",
+            "220"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 220,
+        "body_sha1": "5088f729fb80551a5b7383f9359848e776f1e2fb"
+      },
+      "S17-spaces-data": {
+        "page": "spaces",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "77cedfca026e0466ce061e542942e54ae2432388"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "5088f729fb80551a5b7383f9359848e776f1e2fb"
+          ],
+          [
+            "template-tag",
+            "77cedfca026e0466ce061e542942e54ae2432388"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Length",
+            "166"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 166,
+        "body_sha1": "65e3d3ac3d8117c0fd83e26efecb5a53b6c8346c",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Shop</title>"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>Shop<\\/title>\"},\"template-tag\":\"77cedfca026e0466ce061e542942e54ae2432388\",\"html-sha1\":\"5088f729fb80551a5b7383f9359848e776f1e2fb\",\"diff\":\"\"}"
+      },
+      "S18-nested-first": {
+        "page": "nested",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "29f85b405ef34d1be234b87023e35b34554b621c"
+          ],
+          [
+            "template-tag",
+            "091908fd77ee9eead277a667f48310990632d285"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Length",
+            "271"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 271,
+        "body_sha1": "29f85b405ef34d1be234b87023e35b34554b621c"
+      },
+      "S18-nested-data": {
+        "page": "nested",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "091908fd77ee9eead277a667f48310990632d285"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "29f85b405ef34d1be234b87023e35b34554b621c"
+          ],
+          [
+            "template-tag",
+            "091908fd77ee9eead277a667f48310990632d285"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Length",
+            "264"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 264,
+        "body_sha1": "f806d822bf9e2eb4f9b14adcfdee1adea6fe7d10",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Shop</title>",
+          "{outer}": "<!--sonicdiff-outer--><div><!--sonicdiff-inner--><p>in</p><!--sonicdiff-inner-end-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>Shop<\\/title>\",\"{outer}\":\"<!--sonicdiff-outer--><div><!--sonicdiff-inner--><p>in<\\/p><!--sonicdiff-inner-end-->\"},\"template-tag\":\"091908fd77ee9eead277a667f48310990632d285\",\"html-sha1\":\"29f85b405ef34d1be234b87023e35b34554b621c\",\"diff\":\"\"}"
+      },
+      "S19-mismatch-first": {
+        "page": "mismatch",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "aafeac2963624985f8873b7868ad934ca069f460"
+          ],
+          [
+            "template-tag",
+            "0ba8b8bbfb74d870558693053fc2976d1ce571dc"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Length",
+            "207"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 207,
+        "body_sha1": "aafeac2963624985f8873b7868ad934ca069f460"
+      },
+      "S19-mismatch-data": {
+        "page": "mismatch",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "0ba8b8bbfb74d870558693053fc2976d1ce571dc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "aafeac2963624985f8873b7868ad934ca069f460"
+          ],
+          [
+            "template-tag",
+            "0ba8b8bbfb74d870558693053fc2976d1ce571dc"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Length",
+            "230"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 230,
+        "body_sha1": "e7833b942e2e6dadde9d627954eadf8a6ed7f3a3",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Shop</title>",
+          "{aaa}": "<!--sonicdiff-aaa--><p>m</p><!--sonicdiff-bbb-end-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>Shop<\\/title>\",\"{aaa}\":\"<!--sonicdiff-aaa--><p>m<\\/p><!--sonicdiff-bbb-end-->\"},\"template-tag\":\"0ba8b8bbfb74d870558693053fc2976d1ce571dc\",\"html-sha1\":\"aafeac2963624985f8873b7868ad934ca069f460\",\"diff\":\"\"}"
+      },
+      "S20-uppercase-first": {
+        "page": "uppercase",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "3221d28e64cde8e10237641a98ee45a68c500448"
+          ],
+          [
+            "template-tag",
+            "91d8247e85ec35632e6ddcfdfafb10b61571907a"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Length",
+            "209"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 209,
+        "body_sha1": "3221d28e64cde8e10237641a98ee45a68c500448"
+      },
+      "S20-uppercase-data": {
+        "page": "uppercase",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "91d8247e85ec35632e6ddcfdfafb10b61571907a"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "3221d28e64cde8e10237641a98ee45a68c500448"
+          ],
+          [
+            "template-tag",
+            "91d8247e85ec35632e6ddcfdfafb10b61571907a"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Length",
+            "231"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 231,
+        "body_sha1": "6ec7da81ae5ea5b1ba8792243132f6d9551c974a",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Shop</title>",
+          "{Up}": "<!--SONICDIFF-Up--><p>upper</p><!--SONICDIFF-Up-END-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>Shop<\\/title>\",\"{Up}\":\"<!--SONICDIFF-Up--><p>upper<\\/p><!--SONICDIFF-Up-END-->\"},\"template-tag\":\"91d8247e85ec35632e6ddcfdfafb10b61571907a\",\"html-sha1\":\"3221d28e64cde8e10237641a98ee45a68c500448\",\"diff\":\"\"}"
+      },
+      "S21-unicode-first": {
+        "page": "unicode",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "e09fd8f012724730e24291f9701424a6f5753f87"
+          ],
+          [
+            "template-tag",
+            "ee51e7f9036de8d2371120ec5ec8879305a0f97c"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Length",
+            "216"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 216,
+        "body_sha1": "e09fd8f012724730e24291f9701424a6f5753f87"
+      },
+      "S21-unicode-data": {
+        "page": "unicode",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "ee51e7f9036de8d2371120ec5ec8879305a0f97c"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Host",
+            "127.0.0.1:18082"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ],
+          [
+            "Connection",
+            "close"
+          ],
+          [
+            "X-Powered-By",
+            "PHP/8.3.35"
+          ],
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "e09fd8f012724730e24291f9701424a6f5753f87"
+          ],
+          [
+            "template-tag",
+            "ee51e7f9036de8d2371120ec5ec8879305a0f97c"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Length",
+            "375"
+          ],
+          [
+            "Content-type",
+            "text/html; charset=UTF-8"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 375,
+        "body_sha1": "d2e357f130d5c4cf84dbb40308bf6fab830ef7ed",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Магазин</title>",
+          "{msg}": "<!--sonicdiff-msg--><p>Цена: 120 ₽ — «тест» &amp; <b>bold</b> / slash</p><!--sonicdiff-msg-end-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"<title>\\u041c\\u0430\\u0433\\u0430\\u0437\\u0438\\u043d<\\/title>\",\"{msg}\":\"<!--sonicdiff-msg--><p>\\u0426\\u0435\\u043d\\u0430: 120 \\u20bd \\u2014 \\u00ab\\u0442\\u0435\\u0441\\u0442\\u00bb &amp; <b>bold<\\/b> \\/ slash<\\/p><!--sonicdiff-msg-end-->\"},\"template-tag\":\"ee51e7f9036de8d2371120ec5ec8879305a0f97c\",\"html-sha1\":\"e09fd8f012724730e24291f9701424a6f5753f87\",\"diff\":\"\"}"
+      }
+    },
+    "java": {
+      "S01-non-sonic": {
+        "page": "a",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Etag",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "296"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 296,
+        "body_sha1": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+      },
+      "S02-first-load": {
+        "page": "a",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "296"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 296,
+        "body_sha1": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+      },
+      "meta": {
+        "etag_a": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d",
+        "tag_a": "3c771bf015df2c410a41a6012804f645b3acc1bc",
+        "cache_control": "no-cache",
+        "content_type": "text/html;charset=utf-8",
+        "sonic_etag_key": null
+      },
+      "S03-304": {
+        "page": "a",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 304,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Cache-Offline",
+            "store"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 0,
+        "body_sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+      },
+      "S04-304-uppercase-etag": {
+        "page": "a",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3E3184CBD12E5294959EFFE6F2D9985F50F4EA5D"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 304,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Cache-Offline",
+            "store"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 0,
+        "body_sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+        "note": "documented: Java case-insensitive, Node/PHP case-sensitive"
+      },
+      "S05-304-quoted-etag": {
+        "page": "a",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "\"3e3184cbd12e5294959effe6f2d9985f50f4ea5d\""
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "439"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 439,
+        "body_sha1": "70eff3298e1420f3ca2bd7b2fea70ff932c07433"
+      },
+      "S06-data-change": {
+        "page": "b",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "4c33dabea7ea65c6255b9e6a6539976674886a2c"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "439"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 439,
+        "body_sha1": "4455165e302b84813585d2e7c95e40b948ae7559",
+        "json_keys": [
+          "data",
+          "template-tag",
+          "diff",
+          "html-sha1"
+        ],
+        "raw_json_text": "{\"data\":{\"{stock}\":\"\\u003c!--sonicdiff-stock--\\u003e\\u003cp\\u003eIn stock: 5\\u003c/p\\u003e\\u003c!--sonicdiff-stock-end--\\u003e\",\"{price}\":\"\\u003c!--sonicdiff-price--\\u003e\\u003cp class\\u003d\\\"price\\\"\\u003e130.00\\u003c/p\\u003e\\u003c!--sonicdiff-price-end--\\u003e\",\"{title}\":\"\\u003ctitle\\u003eShop\\u003c/title\\u003e\"},\"template-tag\":\"3c771bf015df2c410a41a6012804f645b3acc1bc\",\"diff\":\"\",\"html-sha1\":\"4c33dabea7ea65c6255b9e6a6539976674886a2c\"}"
+      },
+      "S07-template-change": {
+        "page": "c",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "065e5deb7844c1d1fc95b16962612171ba0efe83"
+          ],
+          [
+            "template-tag",
+            "35a722c60318e949635024423385fd6c417a6bb5"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "315"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 315,
+        "body_sha1": "065e5deb7844c1d1fc95b16962612171ba0efe83"
+      },
+      "S08-accept-diff-false": {
+        "page": "b",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "false"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Etag",
+            "4c33dabea7ea65c6255b9e6a6539976674886a2c"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "439"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 439,
+        "body_sha1": "4455165e302b84813585d2e7c95e40b948ae7559",
+        "is_json": true
+      },
+      "S09-accept-diff-yes": {
+        "page": "b",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "yes"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Etag",
+            "4c33dabea7ea65c6255b9e6a6539976674886a2c"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "439"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 439,
+        "body_sha1": "4455165e302b84813585d2e7c95e40b948ae7559",
+        "is_json": true
+      },
+      "S10-header-capitalized": {
+        "page": "b",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "Accept-Diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "Template-Tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "4c33dabea7ea65c6255b9e6a6539976674886a2c"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "439"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 439,
+        "body_sha1": "4455165e302b84813585d2e7c95e40b948ae7559",
+        "is_json": true
+      },
+      "S11-identity-encoding": {
+        "page": "b",
+        "request": [
+          [
+            "Accept-Encoding",
+            "identity"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "4c33dabea7ea65c6255b9e6a6539976674886a2c"
+          ],
+          [
+            "template-tag",
+            "3c771bf015df2c410a41a6012804f645b3acc1bc"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "439"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 439,
+        "body_sha1": "4455165e302b84813585d2e7c95e40b948ae7559",
+        "is_json": true
+      },
+      "S12-nomark-first": {
+        "page": "nomark",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "df1595f719efdf5660cbd2fcdbadfd70b0d77c36"
+          ],
+          [
+            "template-tag",
+            "da98efe1f784a71546ad3f20cf8a7d2dbb03f07e"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "177"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 177,
+        "body_sha1": "df1595f719efdf5660cbd2fcdbadfd70b0d77c36"
+      },
+      "S12-nomark-data": {
+        "page": "nomark",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "da98efe1f784a71546ad3f20cf8a7d2dbb03f07e"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "df1595f719efdf5660cbd2fcdbadfd70b0d77c36"
+          ],
+          [
+            "template-tag",
+            "da98efe1f784a71546ad3f20cf8a7d2dbb03f07e"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "185"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 185,
+        "body_sha1": "5dd857fbc8949a6278f1d4f48904f763599751b4",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Shop</title>"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"\\u003ctitle\\u003eShop\\u003c/title\\u003e\"},\"template-tag\":\"da98efe1f784a71546ad3f20cf8a7d2dbb03f07e\",\"diff\":\"\",\"html-sha1\":\"df1595f719efdf5660cbd2fcdbadfd70b0d77c36\"}"
+      },
+      "S13-emptyname-first": {
+        "page": "emptyname",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "1b352cba28f1e80bf26454c090a00dd61505a1f2"
+          ],
+          [
+            "template-tag",
+            "cb9e61d48580a1ecf19e2ec8a026447fcf884bbd"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "257"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 257,
+        "body_sha1": "1b352cba28f1e80bf26454c090a00dd61505a1f2"
+      },
+      "S13-emptyname-data": {
+        "page": "emptyname",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "cb9e61d48580a1ecf19e2ec8a026447fcf884bbd"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "1b352cba28f1e80bf26454c090a00dd61505a1f2"
+          ],
+          [
+            "template-tag",
+            "cb9e61d48580a1ecf19e2ec8a026447fcf884bbd"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "284"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 284,
+        "body_sha1": "4cfa56d8e5e2b7edbd505dcc59b5085f2b08acde",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{}": "<!--sonicdiff--><p>anon two</p><!--sonicdiff-end-->",
+          "{title}": "<title>Shop</title>"
+        },
+        "raw_json_text": "{\"data\":{\"{}\":\"\\u003c!--sonicdiff--\\u003e\\u003cp\\u003eanon two\\u003c/p\\u003e\\u003c!--sonicdiff-end--\\u003e\",\"{title}\":\"\\u003ctitle\\u003eShop\\u003c/title\\u003e\"},\"template-tag\":\"cb9e61d48580a1ecf19e2ec8a026447fcf884bbd\",\"diff\":\"\",\"html-sha1\":\"1b352cba28f1e80bf26454c090a00dd61505a1f2\"}"
+      },
+      "S14-dup-first": {
+        "page": "dup",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "fb7e2e2be40bc84bf33555feb86f9c4960b938d8"
+          ],
+          [
+            "template-tag",
+            "1f6bedb753922036a15a293f7c60fe22176b68d7"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "260"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 260,
+        "body_sha1": "fb7e2e2be40bc84bf33555feb86f9c4960b938d8"
+      },
+      "S14-dup-data": {
+        "page": "dup",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "1f6bedb753922036a15a293f7c60fe22176b68d7"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "fb7e2e2be40bc84bf33555feb86f9c4960b938d8"
+          ],
+          [
+            "template-tag",
+            "1f6bedb753922036a15a293f7c60fe22176b68d7"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "287"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 287,
+        "body_sha1": "eccfd8f8267afda1223634eaeeb3d37d353eb104",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{x}": "<!--sonicdiff-x--><p>second</p><!--sonicdiff-x-end-->",
+          "{title}": "<title>Shop</title>"
+        },
+        "raw_json_text": "{\"data\":{\"{x}\":\"\\u003c!--sonicdiff-x--\\u003e\\u003cp\\u003esecond\\u003c/p\\u003e\\u003c!--sonicdiff-x-end--\\u003e\",\"{title}\":\"\\u003ctitle\\u003eShop\\u003c/title\\u003e\"},\"template-tag\":\"1f6bedb753922036a15a293f7c60fe22176b68d7\",\"diff\":\"\",\"html-sha1\":\"fb7e2e2be40bc84bf33555feb86f9c4960b938d8\"}"
+      },
+      "S15-titleattr-first": {
+        "page": "titleattr",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "e69a5a005441836fb419c6cce29007f5310c7f04"
+          ],
+          [
+            "template-tag",
+            "c2c61b5c6b733e5bcbf902f14acf9ebe96386431"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "131"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 131,
+        "body_sha1": "e69a5a005441836fb419c6cce29007f5310c7f04"
+      },
+      "S15-titleattr-data": {
+        "page": "titleattr",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "c2c61b5c6b733e5bcbf902f14acf9ebe96386431"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "e69a5a005441836fb419c6cce29007f5310c7f04"
+          ],
+          [
+            "template-tag",
+            "c2c61b5c6b733e5bcbf902f14acf9ebe96386431"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "299"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 299,
+        "body_sha1": "cfd22a6729624b888b6ca491339fc373cc052e2e",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{p}": "<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->",
+          "{title}": "<title lang=\"en\">Shop</title>"
+        },
+        "raw_json_text": "{\"data\":{\"{p}\":\"\\u003c!--sonicdiff-p--\\u003e\\u003cp\\u003e1\\u003c/p\\u003e\\u003c!--sonicdiff-p-end--\\u003e\",\"{title}\":\"\\u003ctitle lang\\u003d\\\"en\\\"\\u003eShop\\u003c/title\\u003e\"},\"template-tag\":\"c2c61b5c6b733e5bcbf902f14acf9ebe96386431\",\"diff\":\"\",\"html-sha1\":\"e69a5a005441836fb419c6cce29007f5310c7f04\"}"
+      },
+      "S16-titles-first": {
+        "page": "titles",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "429e1afc55f9b2241b0b03450b8779c88c85ff85"
+          ],
+          [
+            "template-tag",
+            "adb5e40dd0a955603f0eb184d6555bdf4c99f068"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "152"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 152,
+        "body_sha1": "429e1afc55f9b2241b0b03450b8779c88c85ff85"
+      },
+      "S16-titles-data": {
+        "page": "titles",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "adb5e40dd0a955603f0eb184d6555bdf4c99f068"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "429e1afc55f9b2241b0b03450b8779c88c85ff85"
+          ],
+          [
+            "template-tag",
+            "adb5e40dd0a955603f0eb184d6555bdf4c99f068"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "283"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 283,
+        "body_sha1": "2d06d400b42e8d7176ffc18284642b662dbb331d",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{p}": "<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->",
+          "{title}": "<TITLE>Upper</TITLE>"
+        },
+        "raw_json_text": "{\"data\":{\"{p}\":\"\\u003c!--sonicdiff-p--\\u003e\\u003cp\\u003e1\\u003c/p\\u003e\\u003c!--sonicdiff-p-end--\\u003e\",\"{title}\":\"\\u003cTITLE\\u003eUpper\\u003c/TITLE\\u003e\"},\"template-tag\":\"adb5e40dd0a955603f0eb184d6555bdf4c99f068\",\"diff\":\"\",\"html-sha1\":\"429e1afc55f9b2241b0b03450b8779c88c85ff85\"}"
+      },
+      "S17-spaces-first": {
+        "page": "spaces",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "5088f729fb80551a5b7383f9359848e776f1e2fb"
+          ],
+          [
+            "template-tag",
+            "77cedfca026e0466ce061e542942e54ae2432388"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "220"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 220,
+        "body_sha1": "5088f729fb80551a5b7383f9359848e776f1e2fb"
+      },
+      "S17-spaces-data": {
+        "page": "spaces",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "77cedfca026e0466ce061e542942e54ae2432388"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "5088f729fb80551a5b7383f9359848e776f1e2fb"
+          ],
+          [
+            "template-tag",
+            "77cedfca026e0466ce061e542942e54ae2432388"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "185"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 185,
+        "body_sha1": "f372094026c44b50ef94dd8291d784d63d1e7eb5",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Shop</title>"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"\\u003ctitle\\u003eShop\\u003c/title\\u003e\"},\"template-tag\":\"77cedfca026e0466ce061e542942e54ae2432388\",\"diff\":\"\",\"html-sha1\":\"5088f729fb80551a5b7383f9359848e776f1e2fb\"}"
+      },
+      "S18-nested-first": {
+        "page": "nested",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "29f85b405ef34d1be234b87023e35b34554b621c"
+          ],
+          [
+            "template-tag",
+            "091908fd77ee9eead277a667f48310990632d285"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "271"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 271,
+        "body_sha1": "29f85b405ef34d1be234b87023e35b34554b621c"
+      },
+      "S18-nested-data": {
+        "page": "nested",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "091908fd77ee9eead277a667f48310990632d285"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "29f85b405ef34d1be234b87023e35b34554b621c"
+          ],
+          [
+            "template-tag",
+            "091908fd77ee9eead277a667f48310990632d285"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "342"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 342,
+        "body_sha1": "a0a569a0f82311fb57a25687598a468e9a8fd65b",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{outer}": "<!--sonicdiff-outer--><div><!--sonicdiff-inner--><p>in</p><!--sonicdiff-inner-end-->",
+          "{title}": "<title>Shop</title>"
+        },
+        "raw_json_text": "{\"data\":{\"{outer}\":\"\\u003c!--sonicdiff-outer--\\u003e\\u003cdiv\\u003e\\u003c!--sonicdiff-inner--\\u003e\\u003cp\\u003ein\\u003c/p\\u003e\\u003c!--sonicdiff-inner-end--\\u003e\",\"{title}\":\"\\u003ctitle\\u003eShop\\u003c/title\\u003e\"},\"template-tag\":\"091908fd77ee9eead277a667f48310990632d285\",\"diff\":\"\",\"html-sha1\":\"29f85b405ef34d1be234b87023e35b34554b621c\"}"
+      },
+      "S19-mismatch-first": {
+        "page": "mismatch",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "aafeac2963624985f8873b7868ad934ca069f460"
+          ],
+          [
+            "template-tag",
+            "0ba8b8bbfb74d870558693053fc2976d1ce571dc"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "207"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 207,
+        "body_sha1": "aafeac2963624985f8873b7868ad934ca069f460"
+      },
+      "S19-mismatch-data": {
+        "page": "mismatch",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "0ba8b8bbfb74d870558693053fc2976d1ce571dc"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "aafeac2963624985f8873b7868ad934ca069f460"
+          ],
+          [
+            "template-tag",
+            "0ba8b8bbfb74d870558693053fc2976d1ce571dc"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "288"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 288,
+        "body_sha1": "4b66264261a12d8f6074081114f0516e67d27f70",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{aaa}": "<!--sonicdiff-aaa--><p>m</p><!--sonicdiff-bbb-end-->",
+          "{title}": "<title>Shop</title>"
+        },
+        "raw_json_text": "{\"data\":{\"{aaa}\":\"\\u003c!--sonicdiff-aaa--\\u003e\\u003cp\\u003em\\u003c/p\\u003e\\u003c!--sonicdiff-bbb-end--\\u003e\",\"{title}\":\"\\u003ctitle\\u003eShop\\u003c/title\\u003e\"},\"template-tag\":\"0ba8b8bbfb74d870558693053fc2976d1ce571dc\",\"diff\":\"\",\"html-sha1\":\"aafeac2963624985f8873b7868ad934ca069f460\"}"
+      },
+      "S20-uppercase-first": {
+        "page": "uppercase",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "3221d28e64cde8e10237641a98ee45a68c500448"
+          ],
+          [
+            "template-tag",
+            "91d8247e85ec35632e6ddcfdfafb10b61571907a"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "209"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 209,
+        "body_sha1": "3221d28e64cde8e10237641a98ee45a68c500448"
+      },
+      "S20-uppercase-data": {
+        "page": "uppercase",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "91d8247e85ec35632e6ddcfdfafb10b61571907a"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "3221d28e64cde8e10237641a98ee45a68c500448"
+          ],
+          [
+            "template-tag",
+            "91d8247e85ec35632e6ddcfdfafb10b61571907a"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "289"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 289,
+        "body_sha1": "b4273bb32b71716b3a6d3307d8a7091d0c75615c",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Shop</title>",
+          "{Up}": "<!--SONICDIFF-Up--><p>upper</p><!--SONICDIFF-Up-END-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"\\u003ctitle\\u003eShop\\u003c/title\\u003e\",\"{Up}\":\"\\u003c!--SONICDIFF-Up--\\u003e\\u003cp\\u003eupper\\u003c/p\\u003e\\u003c!--SONICDIFF-Up-END--\\u003e\"},\"template-tag\":\"91d8247e85ec35632e6ddcfdfafb10b61571907a\",\"diff\":\"\",\"html-sha1\":\"3221d28e64cde8e10237641a98ee45a68c500448\"}"
+      },
+      "S21-unicode-first": {
+        "page": "unicode",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "e09fd8f012724730e24291f9701424a6f5753f87"
+          ],
+          [
+            "template-tag",
+            "ee51e7f9036de8d2371120ec5ec8879305a0f97c"
+          ],
+          [
+            "template-change",
+            "true"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "216"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 216,
+        "body_sha1": "e09fd8f012724730e24291f9701424a6f5753f87"
+      },
+      "S21-unicode-data": {
+        "page": "unicode",
+        "request": [
+          [
+            "Accept-Encoding",
+            "gzip"
+          ],
+          [
+            "accept-diff",
+            "true"
+          ],
+          [
+            "If-None-Match",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "template-tag",
+            "ee51e7f9036de8d2371120ec5ec8879305a0f97c"
+          ]
+        ],
+        "status": 200,
+        "headers": [
+          [
+            "Cache-Control",
+            "no-cache"
+          ],
+          [
+            "Cache-Offline",
+            "true"
+          ],
+          [
+            "Etag",
+            "e09fd8f012724730e24291f9701424a6f5753f87"
+          ],
+          [
+            "template-tag",
+            "ee51e7f9036de8d2371120ec5ec8879305a0f97c"
+          ],
+          [
+            "template-change",
+            "false"
+          ],
+          [
+            "Content-Type",
+            "text/html;charset=utf-8"
+          ],
+          [
+            "Content-Length",
+            "382"
+          ],
+          [
+            "Date",
+            "Fri, 09 Oct 2026 10:31:36 GMT"
+          ]
+        ],
+        "encoding": "",
+        "body_len": 382,
+        "body_sha1": "226b403ac19813dd08e16eaefb0de35700a0654d",
+        "is_json": true,
+        "template_change": "false",
+        "data": {
+          "{title}": "<title>Магазин</title>",
+          "{msg}": "<!--sonicdiff-msg--><p>Цена: 120 ₽ — «тест» &amp; <b>bold</b> / slash</p><!--sonicdiff-msg-end-->"
+        },
+        "raw_json_text": "{\"data\":{\"{title}\":\"\\u003ctitle\\u003eМагазин\\u003c/title\\u003e\",\"{msg}\":\"\\u003c!--sonicdiff-msg--\\u003e\\u003cp\\u003eЦена: 120 ₽ — «тест» \\u0026amp; \\u003cb\\u003ebold\\u003c/b\\u003e / slash\\u003c/p\\u003e\\u003c!--sonicdiff-msg-end--\\u003e\"},\"template-tag\":\"ee51e7f9036de8d2371120ec5ec8879305a0f97c\",\"diff\":\"\",\"html-sha1\":\"e09fd8f012724730e24291f9701424a6f5753f87\"}"
+      }
+    }
+  },
+  "checks": [
+    {
+      "server": "node",
+      "scenario": "S01",
+      "check": "body unchanged for non-legacy client",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "server": "node",
+      "scenario": "S01",
+      "check": "no legacy headers for non-legacy client",
+      "ok": true,
+      "detail": "{\"etag\": null, \"template-tag\": null, \"template-change\": null, \"cache-offline\": null}"
+    },
+    {
+      "server": "node",
+      "scenario": "S02",
+      "check": "status 200 + full HTML",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "server": "node",
+      "scenario": "S02",
+      "check": "etag = lowercase hex SHA-1 of HTML, unquoted",
+      "ok": true,
+      "detail": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+    },
+    {
+      "server": "node",
+      "scenario": "S02",
+      "check": "template-tag = SHA-1 of modeled template",
+      "ok": true,
+      "detail": "3c771bf015df2c410a41a6012804f645b3acc1bc vs 3c771bf015df2c410a41a6012804f645b3acc1bc"
+    },
+    {
+      "server": "node",
+      "scenario": "S02",
+      "check": "template-change: true",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "server": "node",
+      "scenario": "S02",
+      "check": "Cache-Offline: true",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "server": "node",
+      "scenario": "S03",
+      "check": "304 when If-None-Match equals SHA-1",
+      "ok": true,
+      "detail": "304"
+    },
+    {
+      "server": "node",
+      "scenario": "S03",
+      "check": "304 has Cache-Offline: store",
+      "ok": true,
+      "detail": "store"
+    },
+    {
+      "server": "node",
+      "scenario": "S03",
+      "check": "304 has no body",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "server": "node",
+      "scenario": "S04",
+      "check": "uppercase etag -> 304 only in Java",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "server": "node",
+      "scenario": "S05",
+      "check": "quoted etag is NOT recognized (no 304)",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "server": "node",
+      "scenario": "S06",
+      "check": "JSON data equals modeled data map",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\", \"{price}\": \"<!--sonicdiff-price--><p class=\\\"price\\\">130.00</p><!--sonicdiff-price-end-->\", \"{stock}\": \"<!--sonicdiff-stock--><p>In stock: 5</p><!--sonicdiff-stock-end-->\"}"
+    },
+    {
+      "server": "node",
+      "scenario": "S06",
+      "check": "html-sha1 = SHA-1 of new HTML",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "server": "node",
+      "scenario": "S06",
+      "check": "diff is empty string",
+      "ok": true,
+      "detail": "''"
+    },
+    {
+      "server": "node",
+      "scenario": "S06",
+      "check": "template-tag in body equals header",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "server": "node",
+      "scenario": "S06",
+      "check": "body is JSON",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "server": "node",
+      "scenario": "S06",
+      "check": "template-change: false",
+      "ok": true,
+      "detail": "false"
+    },
+    {
+      "server": "node",
+      "scenario": "S07",
+      "check": "template change -> full HTML + template-change: true",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "server": "node",
+      "scenario": "S12",
+      "check": "nomark: template-tag matches model",
+      "ok": true,
+      "detail": "da98efe1f784a71546ad3f20cf8a7d2dbb03f07e vs da98efe1f784a71546ad3f20cf8a7d2dbb03f07e"
+    },
+    {
+      "server": "node",
+      "scenario": "S13",
+      "check": "emptyname: template-tag matches model",
+      "ok": true,
+      "detail": "3abaaf0fbd449206c1c3d953f0219f39cde7d8a2 vs 3abaaf0fbd449206c1c3d953f0219f39cde7d8a2"
+    },
+    {
+      "server": "node",
+      "scenario": "S13",
+      "check": "emptyname: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\", \"{auto0}\": \"<!--sonicdiff--><p>anon one</p><!--sonicdiff-end-->\", \"{auto1}\": \"<!--sonicdiff--><p>anon two</p><!--sonicdiff-end-->\"}"
+    },
+    {
+      "server": "node",
+      "scenario": "S14",
+      "check": "dup: template-tag matches model",
+      "ok": true,
+      "detail": "1f6bedb753922036a15a293f7c60fe22176b68d7 vs 1f6bedb753922036a15a293f7c60fe22176b68d7"
+    },
+    {
+      "server": "node",
+      "scenario": "S14",
+      "check": "dup: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\", \"{x}\": \"<!--sonicdiff-x--><p>second</p><!--sonicdiff-x-end-->\"}"
+    },
+    {
+      "server": "node",
+      "scenario": "S15",
+      "check": "titleattr: template-tag matches model",
+      "ok": true,
+      "detail": "c2c61b5c6b733e5bcbf902f14acf9ebe96386431 vs c2c61b5c6b733e5bcbf902f14acf9ebe96386431"
+    },
+    {
+      "server": "node",
+      "scenario": "S15",
+      "check": "titleattr: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title lang=\\\"en\\\">Shop</title>\", \"{p}\": \"<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->\"}"
+    },
+    {
+      "server": "node",
+      "scenario": "S16",
+      "check": "titles: template-tag matches model",
+      "ok": true,
+      "detail": "15d30184ec1fc0f39dbb196e47311709a86e0b5d vs 15d30184ec1fc0f39dbb196e47311709a86e0b5d"
+    },
+    {
+      "server": "node",
+      "scenario": "S16",
+      "check": "titles: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<TITLE>Upper</TITLE>\", \"{p}\": \"<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->\"}"
+    },
+    {
+      "server": "node",
+      "scenario": "S17",
+      "check": "spaces: template-tag matches model",
+      "ok": true,
+      "detail": "77cedfca026e0466ce061e542942e54ae2432388 vs 77cedfca026e0466ce061e542942e54ae2432388"
+    },
+    {
+      "server": "node",
+      "scenario": "S18",
+      "check": "nested: template-tag matches model",
+      "ok": true,
+      "detail": "091908fd77ee9eead277a667f48310990632d285 vs 091908fd77ee9eead277a667f48310990632d285"
+    },
+    {
+      "server": "node",
+      "scenario": "S18",
+      "check": "nested: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\", \"{outer}\": \"<!--sonicdiff-outer--><div><!--sonicdiff-inner--><p>in</p><!--sonicdiff-inner-end-->\"}"
+    },
+    {
+      "server": "node",
+      "scenario": "S19",
+      "check": "mismatch: template-tag matches model",
+      "ok": true,
+      "detail": "0ba8b8bbfb74d870558693053fc2976d1ce571dc vs 0ba8b8bbfb74d870558693053fc2976d1ce571dc"
+    },
+    {
+      "server": "node",
+      "scenario": "S19",
+      "check": "mismatch: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\", \"{aaa}\": \"<!--sonicdiff-aaa--><p>m</p><!--sonicdiff-bbb-end-->\"}"
+    },
+    {
+      "server": "node",
+      "scenario": "S20",
+      "check": "uppercase: template-tag matches model",
+      "ok": true,
+      "detail": "91d8247e85ec35632e6ddcfdfafb10b61571907a vs 91d8247e85ec35632e6ddcfdfafb10b61571907a"
+    },
+    {
+      "server": "node",
+      "scenario": "S20",
+      "check": "uppercase: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\", \"{Up}\": \"<!--SONICDIFF-Up--><p>upper</p><!--SONICDIFF-Up-END-->\"}"
+    },
+    {
+      "server": "node",
+      "scenario": "S21",
+      "check": "unicode: template-tag matches model",
+      "ok": true,
+      "detail": "ee51e7f9036de8d2371120ec5ec8879305a0f97c vs ee51e7f9036de8d2371120ec5ec8879305a0f97c"
+    },
+    {
+      "server": "node",
+      "scenario": "S21",
+      "check": "unicode: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Магазин</title>\", \"{msg}\": \"<!--sonicdiff-msg--><p>Цена: 120 ₽ — «тест» &amp; <b>bold</b> / slash</p><!--sonicdiff-msg-end-->\"}"
+    },
+    {
+      "server": "php",
+      "scenario": "S01",
+      "check": "body unchanged for non-legacy client",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "server": "php",
+      "scenario": "S01",
+      "check": "no legacy headers for non-legacy client",
+      "ok": true,
+      "detail": "{\"etag\": null, \"template-tag\": null, \"template-change\": null, \"cache-offline\": null}"
+    },
+    {
+      "server": "php",
+      "scenario": "S02",
+      "check": "status 200 + full HTML",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "server": "php",
+      "scenario": "S02",
+      "check": "etag = lowercase hex SHA-1 of HTML, unquoted",
+      "ok": true,
+      "detail": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+    },
+    {
+      "server": "php",
+      "scenario": "S02",
+      "check": "template-tag = SHA-1 of modeled template",
+      "ok": true,
+      "detail": "3c771bf015df2c410a41a6012804f645b3acc1bc vs 3c771bf015df2c410a41a6012804f645b3acc1bc"
+    },
+    {
+      "server": "php",
+      "scenario": "S02",
+      "check": "template-change: true",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "server": "php",
+      "scenario": "S02",
+      "check": "Cache-Offline: true",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "server": "php",
+      "scenario": "S03",
+      "check": "304 when If-None-Match equals SHA-1",
+      "ok": true,
+      "detail": "304"
+    },
+    {
+      "server": "php",
+      "scenario": "S03",
+      "check": "304 has Cache-Offline: store",
+      "ok": true,
+      "detail": "store"
+    },
+    {
+      "server": "php",
+      "scenario": "S03",
+      "check": "304 has no body",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "server": "php",
+      "scenario": "S04",
+      "check": "uppercase etag -> 304 only in Java",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "server": "php",
+      "scenario": "S05",
+      "check": "quoted etag is NOT recognized (no 304)",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "server": "php",
+      "scenario": "S06",
+      "check": "JSON data equals modeled data map",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\", \"{price}\": \"<!--sonicdiff-price--><p class=\\\"price\\\">130.00</p><!--sonicdiff-price-end-->\", \"{stock}\": \"<!--sonicdiff-stock--><p>In stock: 5</p><!--sonicdiff-stock-end-->\"}"
+    },
+    {
+      "server": "php",
+      "scenario": "S06",
+      "check": "html-sha1 = SHA-1 of new HTML",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "server": "php",
+      "scenario": "S06",
+      "check": "diff is empty string",
+      "ok": true,
+      "detail": "''"
+    },
+    {
+      "server": "php",
+      "scenario": "S06",
+      "check": "template-tag in body equals header",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "server": "php",
+      "scenario": "S06",
+      "check": "body is JSON",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "server": "php",
+      "scenario": "S06",
+      "check": "template-change: false",
+      "ok": true,
+      "detail": "false"
+    },
+    {
+      "server": "php",
+      "scenario": "S07",
+      "check": "template change -> full HTML + template-change: true",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "server": "php",
+      "scenario": "S12",
+      "check": "nomark: template-tag matches model",
+      "ok": true,
+      "detail": "da98efe1f784a71546ad3f20cf8a7d2dbb03f07e vs da98efe1f784a71546ad3f20cf8a7d2dbb03f07e"
+    },
+    {
+      "server": "php",
+      "scenario": "S12",
+      "check": "nomark: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\"}"
+    },
+    {
+      "server": "php",
+      "scenario": "S13",
+      "check": "emptyname: template-tag matches model",
+      "ok": true,
+      "detail": "cb9e61d48580a1ecf19e2ec8a026447fcf884bbd vs cb9e61d48580a1ecf19e2ec8a026447fcf884bbd"
+    },
+    {
+      "server": "php",
+      "scenario": "S13",
+      "check": "emptyname: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\", \"{}\": \"<!--sonicdiff--><p>anon two</p><!--sonicdiff-end-->\"}"
+    },
+    {
+      "server": "php",
+      "scenario": "S14",
+      "check": "dup: template-tag matches model",
+      "ok": true,
+      "detail": "1f6bedb753922036a15a293f7c60fe22176b68d7 vs 1f6bedb753922036a15a293f7c60fe22176b68d7"
+    },
+    {
+      "server": "php",
+      "scenario": "S14",
+      "check": "dup: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\", \"{x}\": \"<!--sonicdiff-x--><p>second</p><!--sonicdiff-x-end-->\"}"
+    },
+    {
+      "server": "php",
+      "scenario": "S15",
+      "check": "titleattr: template-tag matches model",
+      "ok": true,
+      "detail": "c2c61b5c6b733e5bcbf902f14acf9ebe96386431 vs c2c61b5c6b733e5bcbf902f14acf9ebe96386431"
+    },
+    {
+      "server": "php",
+      "scenario": "S15",
+      "check": "titleattr: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title lang=\\\"en\\\">Shop</title>\", \"{p}\": \"<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->\"}"
+    },
+    {
+      "server": "php",
+      "scenario": "S16",
+      "check": "titles: template-tag matches model",
+      "ok": true,
+      "detail": "3f311c1e042b7209e870e9767836668bb4173dd6 vs 3f311c1e042b7209e870e9767836668bb4173dd6"
+    },
+    {
+      "server": "php",
+      "scenario": "S16",
+      "check": "titles: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<TITLE>Upper</TITLE>\", \"{p}\": \"<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->\"}"
+    },
+    {
+      "server": "php",
+      "scenario": "S17",
+      "check": "spaces: template-tag matches model",
+      "ok": true,
+      "detail": "77cedfca026e0466ce061e542942e54ae2432388 vs 77cedfca026e0466ce061e542942e54ae2432388"
+    },
+    {
+      "server": "php",
+      "scenario": "S17",
+      "check": "spaces: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\"}"
+    },
+    {
+      "server": "php",
+      "scenario": "S18",
+      "check": "nested: template-tag matches model",
+      "ok": true,
+      "detail": "091908fd77ee9eead277a667f48310990632d285 vs 091908fd77ee9eead277a667f48310990632d285"
+    },
+    {
+      "server": "php",
+      "scenario": "S18",
+      "check": "nested: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\", \"{outer}\": \"<!--sonicdiff-outer--><div><!--sonicdiff-inner--><p>in</p><!--sonicdiff-inner-end-->\"}"
+    },
+    {
+      "server": "php",
+      "scenario": "S19",
+      "check": "mismatch: template-tag matches model",
+      "ok": true,
+      "detail": "0ba8b8bbfb74d870558693053fc2976d1ce571dc vs 0ba8b8bbfb74d870558693053fc2976d1ce571dc"
+    },
+    {
+      "server": "php",
+      "scenario": "S19",
+      "check": "mismatch: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\", \"{aaa}\": \"<!--sonicdiff-aaa--><p>m</p><!--sonicdiff-bbb-end-->\"}"
+    },
+    {
+      "server": "php",
+      "scenario": "S20",
+      "check": "uppercase: template-tag matches model",
+      "ok": true,
+      "detail": "91d8247e85ec35632e6ddcfdfafb10b61571907a vs 91d8247e85ec35632e6ddcfdfafb10b61571907a"
+    },
+    {
+      "server": "php",
+      "scenario": "S20",
+      "check": "uppercase: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\", \"{Up}\": \"<!--SONICDIFF-Up--><p>upper</p><!--SONICDIFF-Up-END-->\"}"
+    },
+    {
+      "server": "php",
+      "scenario": "S21",
+      "check": "unicode: template-tag matches model",
+      "ok": true,
+      "detail": "ee51e7f9036de8d2371120ec5ec8879305a0f97c vs ee51e7f9036de8d2371120ec5ec8879305a0f97c"
+    },
+    {
+      "server": "php",
+      "scenario": "S21",
+      "check": "unicode: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Магазин</title>\", \"{msg}\": \"<!--sonicdiff-msg--><p>Цена: 120 ₽ — «тест» &amp; <b>bold</b> / slash</p><!--sonicdiff-msg-end-->\"}"
+    },
+    {
+      "server": "java",
+      "scenario": "S01",
+      "check": "body unchanged for non-legacy client",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "server": "java",
+      "scenario": "S01",
+      "check": "no legacy headers for non-legacy client",
+      "ok": false,
+      "detail": "{\"etag\": \"3e3184cbd12e5294959effe6f2d9985f50f4ea5d\", \"template-tag\": \"3c771bf015df2c410a41a6012804f645b3acc1bc\", \"template-change\": \"true\", \"cache-offline\": null}"
+    },
+    {
+      "server": "java",
+      "scenario": "S02",
+      "check": "status 200 + full HTML",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "server": "java",
+      "scenario": "S02",
+      "check": "etag = lowercase hex SHA-1 of HTML, unquoted",
+      "ok": true,
+      "detail": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+    },
+    {
+      "server": "java",
+      "scenario": "S02",
+      "check": "template-tag = SHA-1 of modeled template",
+      "ok": true,
+      "detail": "3c771bf015df2c410a41a6012804f645b3acc1bc vs 3c771bf015df2c410a41a6012804f645b3acc1bc"
+    },
+    {
+      "server": "java",
+      "scenario": "S02",
+      "check": "template-change: true",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "server": "java",
+      "scenario": "S02",
+      "check": "Cache-Offline: true",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "server": "java",
+      "scenario": "S03",
+      "check": "304 when If-None-Match equals SHA-1",
+      "ok": true,
+      "detail": "304"
+    },
+    {
+      "server": "java",
+      "scenario": "S03",
+      "check": "304 has Cache-Offline: store",
+      "ok": false,
+      "detail": "true, store"
+    },
+    {
+      "server": "java",
+      "scenario": "S03",
+      "check": "304 has no body",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "server": "java",
+      "scenario": "S04",
+      "check": "uppercase etag -> 304 only in Java",
+      "ok": true,
+      "detail": "304"
+    },
+    {
+      "server": "java",
+      "scenario": "S05",
+      "check": "quoted etag is NOT recognized (no 304)",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "server": "java",
+      "scenario": "S06",
+      "check": "JSON data equals modeled data map",
+      "ok": true,
+      "detail": "{\"{stock}\": \"<!--sonicdiff-stock--><p>In stock: 5</p><!--sonicdiff-stock-end-->\", \"{price}\": \"<!--sonicdiff-price--><p class=\\\"price\\\">130.00</p><!--sonicdiff-price-end-->\", \"{title}\": \"<title>Shop</title>\"}"
+    },
+    {
+      "server": "java",
+      "scenario": "S06",
+      "check": "html-sha1 = SHA-1 of new HTML",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "server": "java",
+      "scenario": "S06",
+      "check": "diff is empty string",
+      "ok": true,
+      "detail": "''"
+    },
+    {
+      "server": "java",
+      "scenario": "S06",
+      "check": "template-tag in body equals header",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "server": "java",
+      "scenario": "S06",
+      "check": "body is JSON",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "server": "java",
+      "scenario": "S06",
+      "check": "template-change: false",
+      "ok": true,
+      "detail": "false"
+    },
+    {
+      "server": "java",
+      "scenario": "S07",
+      "check": "template change -> full HTML + template-change: true",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "server": "java",
+      "scenario": "S12",
+      "check": "nomark: template-tag matches model",
+      "ok": true,
+      "detail": "da98efe1f784a71546ad3f20cf8a7d2dbb03f07e vs da98efe1f784a71546ad3f20cf8a7d2dbb03f07e"
+    },
+    {
+      "server": "java",
+      "scenario": "S12",
+      "check": "nomark: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\"}"
+    },
+    {
+      "server": "java",
+      "scenario": "S13",
+      "check": "emptyname: template-tag matches model",
+      "ok": true,
+      "detail": "cb9e61d48580a1ecf19e2ec8a026447fcf884bbd vs cb9e61d48580a1ecf19e2ec8a026447fcf884bbd"
+    },
+    {
+      "server": "java",
+      "scenario": "S13",
+      "check": "emptyname: data map matches model",
+      "ok": true,
+      "detail": "{\"{}\": \"<!--sonicdiff--><p>anon two</p><!--sonicdiff-end-->\", \"{title}\": \"<title>Shop</title>\"}"
+    },
+    {
+      "server": "java",
+      "scenario": "S14",
+      "check": "dup: template-tag matches model",
+      "ok": true,
+      "detail": "1f6bedb753922036a15a293f7c60fe22176b68d7 vs 1f6bedb753922036a15a293f7c60fe22176b68d7"
+    },
+    {
+      "server": "java",
+      "scenario": "S14",
+      "check": "dup: data map matches model",
+      "ok": true,
+      "detail": "{\"{x}\": \"<!--sonicdiff-x--><p>second</p><!--sonicdiff-x-end-->\", \"{title}\": \"<title>Shop</title>\"}"
+    },
+    {
+      "server": "java",
+      "scenario": "S15",
+      "check": "titleattr: template-tag matches model",
+      "ok": true,
+      "detail": "c2c61b5c6b733e5bcbf902f14acf9ebe96386431 vs c2c61b5c6b733e5bcbf902f14acf9ebe96386431"
+    },
+    {
+      "server": "java",
+      "scenario": "S15",
+      "check": "titleattr: data map matches model",
+      "ok": true,
+      "detail": "{\"{p}\": \"<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->\", \"{title}\": \"<title lang=\\\"en\\\">Shop</title>\"}"
+    },
+    {
+      "server": "java",
+      "scenario": "S16",
+      "check": "titles: template-tag matches model",
+      "ok": true,
+      "detail": "adb5e40dd0a955603f0eb184d6555bdf4c99f068 vs adb5e40dd0a955603f0eb184d6555bdf4c99f068"
+    },
+    {
+      "server": "java",
+      "scenario": "S16",
+      "check": "titles: data map matches model",
+      "ok": true,
+      "detail": "{\"{p}\": \"<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->\", \"{title}\": \"<TITLE>Upper</TITLE>\"}"
+    },
+    {
+      "server": "java",
+      "scenario": "S17",
+      "check": "spaces: template-tag matches model",
+      "ok": true,
+      "detail": "77cedfca026e0466ce061e542942e54ae2432388 vs 77cedfca026e0466ce061e542942e54ae2432388"
+    },
+    {
+      "server": "java",
+      "scenario": "S17",
+      "check": "spaces: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\"}"
+    },
+    {
+      "server": "java",
+      "scenario": "S18",
+      "check": "nested: template-tag matches model",
+      "ok": true,
+      "detail": "091908fd77ee9eead277a667f48310990632d285 vs 091908fd77ee9eead277a667f48310990632d285"
+    },
+    {
+      "server": "java",
+      "scenario": "S18",
+      "check": "nested: data map matches model",
+      "ok": true,
+      "detail": "{\"{outer}\": \"<!--sonicdiff-outer--><div><!--sonicdiff-inner--><p>in</p><!--sonicdiff-inner-end-->\", \"{title}\": \"<title>Shop</title>\"}"
+    },
+    {
+      "server": "java",
+      "scenario": "S19",
+      "check": "mismatch: template-tag matches model",
+      "ok": true,
+      "detail": "0ba8b8bbfb74d870558693053fc2976d1ce571dc vs 0ba8b8bbfb74d870558693053fc2976d1ce571dc"
+    },
+    {
+      "server": "java",
+      "scenario": "S19",
+      "check": "mismatch: data map matches model",
+      "ok": true,
+      "detail": "{\"{aaa}\": \"<!--sonicdiff-aaa--><p>m</p><!--sonicdiff-bbb-end-->\", \"{title}\": \"<title>Shop</title>\"}"
+    },
+    {
+      "server": "java",
+      "scenario": "S20",
+      "check": "uppercase: template-tag matches model",
+      "ok": true,
+      "detail": "91d8247e85ec35632e6ddcfdfafb10b61571907a vs 91d8247e85ec35632e6ddcfdfafb10b61571907a"
+    },
+    {
+      "server": "java",
+      "scenario": "S20",
+      "check": "uppercase: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Shop</title>\", \"{Up}\": \"<!--SONICDIFF-Up--><p>upper</p><!--SONICDIFF-Up-END-->\"}"
+    },
+    {
+      "server": "java",
+      "scenario": "S21",
+      "check": "unicode: template-tag matches model",
+      "ok": true,
+      "detail": "ee51e7f9036de8d2371120ec5ec8879305a0f97c vs ee51e7f9036de8d2371120ec5ec8879305a0f97c"
+    },
+    {
+      "server": "java",
+      "scenario": "S21",
+      "check": "unicode: data map matches model",
+      "ok": true,
+      "detail": "{\"{title}\": \"<title>Магазин</title>\", \"{msg}\": \"<!--sonicdiff-msg--><p>Цена: 120 ₽ — «тест» &amp; <b>bold</b> / slash</p><!--sonicdiff-msg-end-->\"}"
+    }
+  ]
+}

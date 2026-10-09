@@ -1,0 +1,6 @@
+<web-app version="3.1" xmlns="http://xmlns.jcp.org/xml/ns/javaee">
+  <filter><filter-name>SonicFilter</filter-name><filter-class>com.github.tencent.SonicFilter</filter-class></filter>
+  <filter-mapping><filter-name>SonicFilter</filter-name><url-pattern>/*</url-pattern></filter-mapping>
+  <servlet><servlet-name>page</servlet-name><servlet-class>PageServlet</servlet-class></servlet>
+  <servlet-mapping><servlet-name>page</servlet-name><url-pattern>/p/*</url-pattern></servlet-mapping>
+</web-app>

@@ -1,0 +1,22 @@
+GET /p/spaces HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: 77cedfca026e0466ce061e542942e54ae2432388
+
+--- response ---
+HTTP 200
+Host: 127.0.0.1:18082
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: close
+X-Powered-By: PHP/8.3.35
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: 5088f729fb80551a5b7383f9359848e776f1e2fb
+template-tag: 77cedfca026e0466ce061e542942e54ae2432388
+template-change: false
+Content-Length: 166
+Content-type: text/html; charset=UTF-8
+
+[body decoded from content-encoding=identity]
+{"data":{"{title}":"<title>Shop<\/title>"},"template-tag":"77cedfca026e0466ce061e542942e54ae2432388","html-sha1":"5088f729fb80551a5b7383f9359848e776f1e2fb","diff":""}

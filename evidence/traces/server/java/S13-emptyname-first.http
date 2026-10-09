@@ -1,0 +1,17 @@
+GET /p/emptyname HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+
+--- response ---
+HTTP 200
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: 1b352cba28f1e80bf26454c090a00dd61505a1f2
+template-tag: cb9e61d48580a1ecf19e2ec8a026447fcf884bbd
+template-change: true
+Content-Type: text/html;charset=utf-8
+Content-Length: 257
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+
+[body decoded from content-encoding=identity]
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Shop</title></head><body><header>Static header</header><!--sonicdiff--><p>anon one</p><!--sonicdiff-end--><!--sonicdiff--><p>anon two</p><!--sonicdiff-end--><footer>Static footer</footer></body></html>

@@ -1,0 +1,21 @@
+GET /p/unicode HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: ee51e7f9036de8d2371120ec5ec8879305a0f97c
+
+--- response ---
+HTTP 200
+Content-Type: text/html; charset=utf-8
+Content-Encoding: gzip
+Etag: e09fd8f012724730e24291f9701424a6f5753f87
+template-tag: ee51e7f9036de8d2371120ec5ec8879305a0f97c
+Cache-Offline: true
+template-change: false
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+[body decoded from content-encoding=gzip]
+{"data":{"{title}":"<title>Магазин</title>","{msg}":"<!--sonicdiff-msg--><p>Цена: 120 ₽ — «тест» &amp; <b>bold</b> / slash</p><!--sonicdiff-msg-end-->"},"diff":"","html-sha1":"e09fd8f012724730e24291f9701424a6f5753f87","template-tag":"ee51e7f9036de8d2371120ec5ec8879305a0f97c"}

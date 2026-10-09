@@ -1,0 +1,57 @@
+name: Engineering task
+description: A task inside a work package. Use this format for human and AI-agent tasks.
+title: "[WP-XX] "
+labels: ["task"]
+body:
+  - type: input
+    id: wp
+    attributes:
+      label: Work package
+      placeholder: WP-04
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: One observable behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source of truth
+      description: Upstream file and line at the pinned commit, a standard, an ADR, or a fixture.
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Compatibility mode
+      options: ["Sonic v1", "Rivqen v2", "Both", "Not protocol-related"]
+    validations:
+      required: true
+  - type: textarea
+    id: io
+    attributes:
+      label: Inputs and expected outputs
+      description: Fixtures, requests, cache state → actions, HTTP, state transitions, errors.
+  - type: textarea
+    id: nongoals
+    attributes:
+      label: Non-goals
+  - type: textarea
+    id: security
+    attributes:
+      label: Security invariants
+      placeholder: No auth leak. No wrong-origin update. No cross-account cache read.
+  - type: textarea
+    id: tests
+    attributes:
+      label: Tests and benchmarks
+      placeholder: Unit, golden, property, fuzz, device E2E, benchmark or N/A.
+  - type: input
+    id: reviewers
+    attributes:
+      label: Required reviewers
+      placeholder: protocol + platform + security

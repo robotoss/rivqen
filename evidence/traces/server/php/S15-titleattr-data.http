@@ -1,0 +1,22 @@
+GET /p/titleattr HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: c2c61b5c6b733e5bcbf902f14acf9ebe96386431
+
+--- response ---
+HTTP 200
+Host: 127.0.0.1:18082
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: close
+X-Powered-By: PHP/8.3.35
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: e69a5a005441836fb419c6cce29007f5310c7f04
+template-tag: c2c61b5c6b733e5bcbf902f14acf9ebe96386431
+template-change: false
+Content-Length: 236
+Content-type: text/html; charset=UTF-8
+
+[body decoded from content-encoding=identity]
+{"data":{"{title}":"<title lang=\"en\">Shop<\/title>","{p}":"<!--sonicdiff-p--><p>1<\/p><!--sonicdiff-p-end-->"},"template-tag":"c2c61b5c6b733e5bcbf902f14acf9ebe96386431","html-sha1":"e69a5a005441836fb419c6cce29007f5310c7f04","diff":""}

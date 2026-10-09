@@ -1,0 +1,19 @@
+GET /p/b HTTP/1.1
+Accept-Encoding: identity
+accept-diff: true
+If-None-Match: 3e3184cbd12e5294959effe6f2d9985f50f4ea5d
+template-tag: 3c771bf015df2c410a41a6012804f645b3acc1bc
+
+--- response ---
+HTTP 200
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: 4c33dabea7ea65c6255b9e6a6539976674886a2c
+template-tag: 3c771bf015df2c410a41a6012804f645b3acc1bc
+template-change: false
+Content-Type: text/html;charset=utf-8
+Content-Length: 439
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+
+[body decoded from content-encoding=identity]
+{"data":{"{stock}":"\u003c!--sonicdiff-stock--\u003e\u003cp\u003eIn stock: 5\u003c/p\u003e\u003c!--sonicdiff-stock-end--\u003e","{price}":"\u003c!--sonicdiff-price--\u003e\u003cp class\u003d\"price\"\u003e130.00\u003c/p\u003e\u003c!--sonicdiff-price-end--\u003e","{title}":"\u003ctitle\u003eShop\u003c/title\u003e"},"template-tag":"3c771bf015df2c410a41a6012804f645b3acc1bc","diff":"","html-sha1":"4c33dabea7ea65c6255b9e6a6539976674886a2c"}

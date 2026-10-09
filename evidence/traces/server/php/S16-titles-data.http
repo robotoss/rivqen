@@ -1,0 +1,22 @@
+GET /p/titles HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: 3f311c1e042b7209e870e9767836668bb4173dd6
+
+--- response ---
+HTTP 200
+Host: 127.0.0.1:18082
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: close
+X-Powered-By: PHP/8.3.35
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: 429e1afc55f9b2241b0b03450b8779c88c85ff85
+template-tag: 3f311c1e042b7209e870e9767836668bb4173dd6
+template-change: false
+Content-Length: 225
+Content-type: text/html; charset=UTF-8
+
+[body decoded from content-encoding=identity]
+{"data":{"{title}":"<TITLE>Upper<\/TITLE>","{p}":"<!--sonicdiff-p--><p>1<\/p><!--sonicdiff-p-end-->"},"template-tag":"3f311c1e042b7209e870e9767836668bb4173dd6","html-sha1":"429e1afc55f9b2241b0b03450b8779c88c85ff85","diff":""}

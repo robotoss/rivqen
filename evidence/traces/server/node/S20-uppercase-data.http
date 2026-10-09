@@ -1,0 +1,21 @@
+GET /p/uppercase HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: 91d8247e85ec35632e6ddcfdfafb10b61571907a
+
+--- response ---
+HTTP 200
+Content-Type: text/html; charset=utf-8
+Content-Encoding: gzip
+Etag: 3221d28e64cde8e10237641a98ee45a68c500448
+template-tag: 91d8247e85ec35632e6ddcfdfafb10b61571907a
+Cache-Offline: true
+template-change: false
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+[body decoded from content-encoding=gzip]
+{"data":{"{title}":"<title>Shop</title>","{Up}":"<!--SONICDIFF-Up--><p>upper</p><!--SONICDIFF-Up-END-->"},"diff":"","html-sha1":"3221d28e64cde8e10237641a98ee45a68c500448","template-tag":"91d8247e85ec35632e6ddcfdfafb10b61571907a"}

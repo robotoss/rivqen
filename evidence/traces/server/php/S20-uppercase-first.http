@@ -1,0 +1,20 @@
+GET /p/uppercase HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+
+--- response ---
+HTTP 200
+Host: 127.0.0.1:18082
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+Connection: close
+X-Powered-By: PHP/8.3.35
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: 3221d28e64cde8e10237641a98ee45a68c500448
+template-tag: 91d8247e85ec35632e6ddcfdfafb10b61571907a
+template-change: true
+Content-Length: 209
+Content-type: text/html; charset=UTF-8
+
+[body decoded from content-encoding=identity]
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Shop</title></head><body><header>Static header</header><!--SONICDIFF-Up--><p>upper</p><!--SONICDIFF-Up-END--><footer>Static footer</footer></body></html>

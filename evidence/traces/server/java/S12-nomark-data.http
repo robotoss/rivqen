@@ -1,0 +1,19 @@
+GET /p/nomark HTTP/1.1
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 0000000000000000000000000000000000000000
+template-tag: da98efe1f784a71546ad3f20cf8a7d2dbb03f07e
+
+--- response ---
+HTTP 200
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: df1595f719efdf5660cbd2fcdbadfd70b0d77c36
+template-tag: da98efe1f784a71546ad3f20cf8a7d2dbb03f07e
+template-change: false
+Content-Type: text/html;charset=utf-8
+Content-Length: 185
+Date: Fri, 09 Oct 2026 10:31:36 GMT
+
+[body decoded from content-encoding=identity]
+{"data":{"{title}":"\u003ctitle\u003eShop\u003c/title\u003e"},"template-tag":"da98efe1f784a71546ad3f20cf8a7d2dbb03f07e","diff":"","html-sha1":"df1595f719efdf5660cbd2fcdbadfd70b0d77c36"}

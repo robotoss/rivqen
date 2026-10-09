@@ -224,6 +224,13 @@ Comments, bogus comments, character references and all other elements are allowe
 | g | name in `TABLE_PART` or `col` | no `table` opened in the content is open (M-09 also applies) |
 | h | `rb`, `rtc` | no `ruby` opened in the content is open, or an `rb`, `rp`, `rt` or `rtc` is open |
 | i | `rp`, `rt` | no `ruby` opened in the content is open, or an `rb`, `rp` or `rt` is open |
+| j | `li`, `dd`, `dt` | an `li`, `dd` or `dt` opened in the content is on the token stack above the nearest `ul`, `ol`, `menu` or `dl` opened in the content |
+| k | every name that is not in `TABLE_PART` and is not `col` | F (M-09) is `table`, `tbody`, `thead`, `tfoot`, `tr` or `colgroup` |
+
+"Above" means nearer to the current node. Items j and k were added by the human decision H-18 ([WP-17 S1](/engineering/plan/sprints/WP-17-S1)), after a differential run against the WHATWG tree builder:
+
+- Item j: in `<ul><li><div><li>`, the WHATWG parser closes the first `li` and the `div` in it. Item c alone accepts this, because a list is open in the content. Item j rejects every `li`, `dd` or `dt` start tag that could find an earlier `li`, `dd` or `dt` before it finds the list.
+- Item k: in table context (`table`, `tbody`, `thead`, `tfoot`, `tr`, `colgroup`), the WHATWG parser moves an element out of the table (foster parenting), and a `table` start tag closes the open table. Character tokens and comments stay allowed: moved text does not change the content bytes or the block end tag.
 
 `option` and `optgroup` are in `FORBIDDEN_CONTENT` (M-22) for the same reason.
 
@@ -321,7 +328,8 @@ All loops run once per input byte or per token; all memory is bounded by the inp
 | M-20, M-23 | An element closed by an implied end tag or at EOF has no end tag position; parsers report different ends (research R-1). |
 | M-24 a | "Close a `p` element": a start tag in `PCLOSE` pops the open `p` and every element above it. |
 | M-24 b | A heading start tag pops a current heading. A heading end tag pops to any open heading. |
-| M-24 c | `li`, `dd`, `dt` pop an earlier `li`, `dd`, `dt` up to the first special element other than `address`, `div`, `p`. |
+| M-24 c, j | `li`, `dd`, `dt` pop an earlier `li`, `dd`, `dt` up to the first special element other than `address`, `div`, `p`. |
+| M-24 k | In table context, a start tag other than a table part is foster-parented, and a `table` start tag closes the open `table`. |
 | M-24 d, e, f | `button`, `a` and `nobr` close an open element of the same name (`a` and `nobr` with the adoption agency algorithm). |
 | M-24 h, i | Ruby start tags generate implied end tags when a `ruby` is in scope. |
 | M-22 (`option`, `optgroup`) | `option` and `optgroup` pop a current `option`. |

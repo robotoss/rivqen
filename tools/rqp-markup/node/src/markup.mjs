@@ -65,10 +65,6 @@ export function invalid(code) {
   return { valid: false, error: code, blocks: [], template_revision: null, page_revision: null };
 }
 
-function hasBom(b) {
-  return b.length >= 3 && b[0] === 0xef && b[1] === 0xbb && b[2] === 0xbf;
-}
-
 // M-15: ^[a-z0-9][a-z0-9_-]{0,63}$ on the raw value bytes.
 function isValidId(b, span) {
   const len = span.end - span.start;
@@ -134,7 +130,9 @@ export function checkNoscript(content) {
 class Scanner {
   constructor(bytes) {
     this.b = bytes;
-    this.tok = new Tokenizer(bytes, hasBom(bytes) ? 3 : 0);
+    // M-02: the tokenizer must not see a BOM at offset 0. Its bytes EF BB BF are
+    // not ASCII, so they never change a token boundary and need no skip.
+    this.tok = new Tokenizer(bytes);
     // Token stack (M-05), one entry per index in each array.
     this.names = [];
     this.inHtml = []; // pushed in HTML context

@@ -13,7 +13,7 @@
   },
   "scripts": {
     "test": "node --test \"test/*.test.mjs\"",
-    "test:fast": "node --test \"test/*.test.mjs\" --test-skip-pattern=\"5 MiB\"",
+    "test:mutation": "RQP_FUZZ_ITERATIONS=400 RQP_TREE_ITERATIONS=300 RQP_PROP_ITERATIONS=300 node --test --test-skip-pattern=\"\\[perf\\]\" \"test/*.test.mjs\"",
     "mutation": "stryker run"
   },
   "devDependencies": {

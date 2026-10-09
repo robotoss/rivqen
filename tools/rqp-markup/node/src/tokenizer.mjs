@@ -169,17 +169,13 @@ const DESC_END = 15;
 /** Pull tokenizer over a byte buffer. */
 export class Tokenizer {
   #b;
-  #pos;
+  #pos = 0;
   #mode = TextMode.DATA;
   #rawName = '';
 
-  /**
-   * @param {Buffer} bytes valid UTF-8
-   * @param {number} start first byte to tokenize (3 after a BOM, M-02)
-   */
-  constructor(bytes, start = 0) {
+  /** @param {Buffer} bytes valid UTF-8 */
+  constructor(bytes) {
     this.#b = bytes;
-    this.#pos = start;
   }
 
   /**

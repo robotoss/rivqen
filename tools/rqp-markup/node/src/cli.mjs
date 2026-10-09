@@ -70,7 +70,7 @@ export function readBounded(file, limit = LIMITS.maxDocumentBytes) {
  */
 function analyzeSafely(bytes, label, io) {
   try {
-    return { result: analyze(bytes), defect: false };
+    return { result: io.analyze(bytes), defect: false };
   } catch (error) {
     const kind = error instanceof Error ? error.name : typeof error;
     io.stderr(`rqp-markup: internal error (${kind}) for ${label}; the result fails closed\n`);
@@ -118,9 +118,11 @@ function runBatch(dir, io) {
  * Run the command. Returns the exit code.
  *
  * @param {string[]} argv arguments after the script name
- * @param {{ stdout: (s: string) => void, stderr: (s: string) => void }} io
+ * @param {{ stdout: (s: string) => void, stderr: (s: string) => void }} streams
+ * @param {(bytes: Buffer) => object} analyzer replaceable for tests of the defect path
  */
-export function main(argv, io) {
+export function main(argv, streams, analyzer = analyze) {
+  const io = { ...streams, analyze: analyzer };
   try {
     if (argv.length === 2 && argv[0] === '--batch') return runBatch(argv[1], io);
     if (argv.length === 1 && !argv[0].startsWith('--')) return runSingle(argv[0], io);

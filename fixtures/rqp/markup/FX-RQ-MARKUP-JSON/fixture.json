@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-MARKUP-JSON",
+  "description": "A json block in a script element with type application/json",
+  "rules": [
+    "M-16",
+    "M-20",
+    "M-25"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "cart",
+        "format": "json",
+        "start_tag": "<script type=\"application/json\" data-rq-block=\"cart\">",
+        "content": "{\"items\":3,\"total\":\"120.00\"}"
+      }
+    ]
+  }
+}

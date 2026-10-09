@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-GUARD-P-BLOCK",
+  "description": "A p block contains a start tag that closes a p (ul)",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "FX-RQ-MARKUP-ID-EDGE",
+  "description": "Shortest id, id with _ and -, and an id of 64 characters",
+  "rules": [
+    "M-15"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "0",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"0\">",
+        "content": "a"
+      },
+      {
+        "id": "a_b-c",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"a_b-c\">",
+        "content": "b"
+      },
+      {
+        "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\">",
+        "content": "c"
+      }
+    ]
+  }
+}

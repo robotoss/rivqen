@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-MARKUP-SVG-TITLE",
+  "description": "An svg title and svg style are not the page title and not RCDATA/RAWTEXT",
+  "rules": [
+    "M-05",
+    "M-07",
+    "M-16"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "title",
+        "format": "html",
+        "start_tag": "<title data-rq-block=\"title\">",
+        "content": "Shop"
+      }
+    ]
+  }
+}

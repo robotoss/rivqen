@@ -1,0 +1,15 @@
+{
+  "valid": true,
+  "error": null,
+  "blocks": [
+    {
+      "id": "price",
+      "format": "html",
+      "start": 96,
+      "end": 124,
+      "sha256": "pKnOl49rxiGnih1r6RS2m_FRCLTXI_OhylFUQPI228o"
+    }
+  ],
+  "template_revision": "t1.sUh7ljNnkHZmHXbRj7u5m1-7HyFNOb0CzRVSqMqxYh8",
+  "page_revision": "r1.iyDFYKQioZVF2eoG7q6Hu5LF7N_xyTm_rW-1G25HutE"
+}

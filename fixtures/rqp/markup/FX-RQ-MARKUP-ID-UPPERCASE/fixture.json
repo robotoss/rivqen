@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-ID-UPPERCASE",
+  "description": "Upper-case letter in the id",
+  "rules": [
+    "M-15"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_INVALID_ID"
+  }
+}

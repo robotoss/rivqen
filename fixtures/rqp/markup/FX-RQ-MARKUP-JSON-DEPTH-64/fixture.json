@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-MARKUP-JSON-DEPTH-64",
+  "description": "JSON with nesting depth 64 (the maximum)",
+  "rules": [
+    "M-25"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "deep",
+        "format": "json",
+        "start_tag": "<script type=\"application/json\" data-rq-block=\"deep\">",
+        "content": "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]"
+      }
+    ]
+  }
+}

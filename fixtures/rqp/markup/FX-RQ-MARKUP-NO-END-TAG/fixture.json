@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-NO-END-TAG",
+  "description": "A p block closed by an implied end tag (next p): no explicit end tag",
+  "rules": [
+    "M-20",
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

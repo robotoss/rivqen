@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-FRAMESET",
+  "description": "A frameset start tag in the document",
+  "rules": [
+    "M-10"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-ID-NO-VALUE",
+  "description": "Attribute without a value (empty id)",
+  "rules": [
+    "M-15"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_INVALID_ID"
+  }
+}

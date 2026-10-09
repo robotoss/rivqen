@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-MARKUP-JSON-EDGE",
+  "description": "JSON with CR LF white space, a huge number, duplicate names, a surrogate pair and an escaped slash",
+  "rules": [
+    "M-25"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "edge",
+        "format": "json",
+        "start_tag": "<script type=\"application/json\" data-rq-block=\"edge\">",
+        "content": "\r\n {\"n\": 1e400, \"a\": 1, \"a\": 2, \"s\": \"\\u00e9\\ud83d\\ude00\", \"e\": \"<\\/script>\", \"z\": [true, false, null]}\n"
+      }
+    ]
+  }
+}

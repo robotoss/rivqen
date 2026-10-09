@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-GUARD-HEADING-NESTED",
+  "description": "Nested headings in the content of a div block inside a heading",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-ENCODING-OVERLONG",
+  "description": "Overlong UTF-8 form (C0 AF)",
+  "rules": [
+    "M-02"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_ENCODING"
+  }
+}

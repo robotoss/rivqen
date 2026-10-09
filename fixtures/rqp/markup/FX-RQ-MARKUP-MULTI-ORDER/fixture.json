@@ -1,0 +1,44 @@
+{
+  "id": "FX-RQ-MARKUP-MULTI-ORDER",
+  "description": "Several blocks of all kinds, reported in document order",
+  "rules": [
+    "M-16",
+    "M-21",
+    "M-27"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "title",
+        "format": "html",
+        "start_tag": "<title data-rq-block=\"title\">",
+        "content": "Shop"
+      },
+      {
+        "id": "header",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"header\">",
+        "content": "<h1>Shop</h1>"
+      },
+      {
+        "id": "price",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"price\">",
+        "content": "120.00"
+      },
+      {
+        "id": "cart",
+        "format": "json",
+        "start_tag": "<script type=\"application/json\" data-rq-block=\"cart\">",
+        "content": "{\"items\":3}"
+      },
+      {
+        "id": "footer",
+        "format": "html",
+        "start_tag": "<footer data-rq-block=\"footer\">",
+        "content": "© 2026 Example"
+      }
+    ]
+  }
+}

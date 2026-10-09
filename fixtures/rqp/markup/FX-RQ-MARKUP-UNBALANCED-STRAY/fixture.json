@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-UNBALANCED-STRAY",
+  "description": "A stray end tag in the content",
+  "rules": [
+    "M-23"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

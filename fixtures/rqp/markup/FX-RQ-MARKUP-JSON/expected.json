@@ -1,0 +1,15 @@
+{
+  "valid": true,
+  "error": null,
+  "blocks": [
+    {
+      "id": "cart",
+      "format": "json",
+      "start": 111,
+      "end": 139,
+      "sha256": "XiK2pxi0UFHMAX1BwkkDhGDH-IBNoYKKcS4G-HNNXdY"
+    }
+  ],
+  "template_revision": "t1.VpXutn-3p2hE3jrtIixuOhuXUWdnlhs-41FlPp0LDVU",
+  "page_revision": "r1.Z9luCubXDktfon4kZsUkcIzjgzwpQ7mFwcWUPZTBHOs"
+}

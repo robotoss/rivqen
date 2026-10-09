@@ -1,0 +1,22 @@
+{
+  "valid": true,
+  "error": null,
+  "blocks": [
+    {
+      "id": "empty",
+      "format": "html",
+      "start": 85,
+      "end": 85,
+      "sha256": "47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU"
+    },
+    {
+      "id": "empty2",
+      "format": "html",
+      "start": 120,
+      "end": 120,
+      "sha256": "47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU"
+    }
+  ],
+  "template_revision": "t1.HcH615BN0eYLeIN4pC25KF0YFR4LL6f7vmm-xOcrE4A",
+  "page_revision": "r1.bDxvGIgkySn-s6ZvxaxW4V7-yg01GrtRX3M3jaVbeAI"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-GUARD-RUBY",
+  "description": "An rt start tag in a p block inside a ruby, without a ruby opened in the content",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

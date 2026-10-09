@@ -1,0 +1,31 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-CELL",
+  "description": "Blocks inside a caption, a td and a th",
+  "rules": [
+    "M-09",
+    "M-19"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "cap",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"cap\">",
+        "content": "Prices"
+      },
+      {
+        "id": "cell",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"cell\">",
+        "content": "120"
+      },
+      {
+        "id": "head",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"head\">",
+        "content": "H"
+      }
+    ]
+  }
+}

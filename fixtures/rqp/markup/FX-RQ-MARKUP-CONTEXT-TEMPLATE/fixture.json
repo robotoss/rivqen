@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTEXT-TEMPLATE",
+  "description": "A block inside a template element",
+  "rules": [
+    "M-19"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

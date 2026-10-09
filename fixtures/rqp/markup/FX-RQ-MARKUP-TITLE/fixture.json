@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-MARKUP-TITLE",
+  "description": "The page title is a block; its RCDATA content is kept as raw bytes",
+  "rules": [
+    "M-04",
+    "M-16",
+    "M-20"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "title",
+        "format": "html",
+        "start_tag": "<title data-rq-block=\"title\">",
+        "content": "Shop &amp; more"
+      }
+    ]
+  }
+}

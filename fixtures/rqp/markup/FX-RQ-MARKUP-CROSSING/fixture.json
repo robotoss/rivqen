@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CROSSING",
+  "description": "An end tag crosses an open button",
+  "rules": [
+    "M-06"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

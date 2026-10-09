@@ -1,0 +1,38 @@
+{
+  "id": "FX-RQ-MARKUP-ATTR-QUOTES",
+  "description": "Double-quoted, single-quoted and unquoted attribute values",
+  "rules": [
+    "M-03",
+    "M-14",
+    "M-15"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "dq",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"dq\">",
+        "content": "1"
+      },
+      {
+        "id": "sq",
+        "format": "html",
+        "start_tag": "<p data-rq-block='sq'>",
+        "content": "2"
+      },
+      {
+        "id": "uq",
+        "format": "html",
+        "start_tag": "<p data-rq-block=uq>",
+        "content": "3"
+      },
+      {
+        "id": "uq2",
+        "format": "html",
+        "start_tag": "<p class=x data-rq-block=uq2 id=y>",
+        "content": "4"
+      }
+    ]
+  }
+}

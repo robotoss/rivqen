@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-BAD-JSON-WHITESPACE",
+  "description": "A no-break space is not JSON white space",
+  "rules": [
+    "M-25"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_BAD_JSON"
+  }
+}

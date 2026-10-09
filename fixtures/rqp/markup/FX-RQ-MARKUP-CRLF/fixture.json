@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-CRLF",
+  "description": "CR LF line ends; offsets count both bytes and the content keeps CR",
+  "rules": [
+    "M-03",
+    "M-27"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "\r\n  <b>120.00</b>\r\n"
+      }
+    ]
+  }
+}

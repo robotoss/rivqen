@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-FORBIDDEN-OTHER",
+  "description": "An element outside the allowlist (li) cannot be a block",
+  "rules": [
+    "M-16"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_FORBIDDEN_ELEMENT"
+  }
+}

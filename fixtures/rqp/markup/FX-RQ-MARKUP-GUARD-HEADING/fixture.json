@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-GUARD-HEADING",
+  "description": "A heading block contains a heading start tag",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

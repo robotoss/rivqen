@@ -153,7 +153,7 @@ Typical tracking fallbacks such as `<noscript><iframe src="…"></iframe></noscr
 
 **M-12 CDATA.** For every `<![CDATA[` that the tokenizer reads in the data state, the first `>` after it MUST be the last character of a `]]>` that starts after `<![CDATA[`. Then a CDATA section (ends at the first `]]>`) and a bogus comment (ends at the first `>`) end at the same byte.
 
-**M-13 Reserved manifest.** A start tag `script` (in any context, outside raw text) MUST NOT have a first `type` attribute whose raw value contains `rivqen-manifest` (ASCII case-insensitive) or contains `&`. The server SDK adds the manifest; a document that already has one, or a script type that could decode to it, is not accepted. Error: `RQP_MARKUP_RESERVED`. <Badge type="info" text="DESIGN — open" /> The `&` part is a proposal (fail closed without a character reference decoder).
+**M-13 Reserved manifest.** A start tag `script` (in any context, outside raw text) MUST NOT have a first `type` attribute whose raw value contains `rivqen-manifest` (ASCII case-insensitive) or contains `&`. The server SDK adds the manifest; a document that already has one, or a script type that could decode to it, is not accepted. Error: `RQP_MARKUP_RESERVED`. The `&` part fails closed, so no character reference decoder is needed (decided by the human, 2026-10-09; [WP-17 S1](/engineering/plan/sprints/WP-17-S1) H-17).
 
 ### 2.5 Blocks
 
@@ -235,7 +235,7 @@ Comments, bogus comments, character references and all other elements are allowe
 - numbers follow the grammar; their size is not limited (`1e400` is valid);
 - duplicate member names are allowed;
 - a `\u` escape of a high surrogate MUST be followed by a `\u` escape of a low surrogate; a lone surrogate escape is invalid;
-- the nesting depth (arrays and objects open at the same time) MUST NOT be more than 64 (RFC 8259 §9 allows such a limit). <Badge type="info" text="DESIGN — open" /> The value 64 is a proposal; the architect confirms it.
+- the nesting depth (arrays and objects open at the same time) MUST NOT be more than 64 (RFC 8259 §9 allows such a limit). The value 64 was decided by the human (2026-10-09; [WP-17 S1](/engineering/plan/sprints/WP-17-S1) H-16).
 
 Error: `RQP_MARKUP_BAD_JSON`. The hash is over the raw content bytes; RQP does not normalize JSON (H-11).
 

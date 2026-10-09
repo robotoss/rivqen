@@ -168,6 +168,16 @@ describe('M-05 token stack', () => {
     assert.deepEqual(blocksOf(`<div><span>a</div>${P('b')}`).map((b) => b[0]), ['b']);
   });
 
+  it('pushes a self-closing non-void element', () => {
+    // The span is open, so </span> crosses the guarded a (M-06).
+    assert.equal(errorOf(doc('<span/><a>x</span></a>')), STRUCTURE);
+  });
+
+  it('pops the block element at the block end tag', () => {
+    // If the span stayed open, </span> would cross the guarded a (M-06).
+    assert.equal(errorOf(doc('<span data-rq-block="a">x</span><a></span></a>')), null);
+  });
+
   it('ignores a self-closing flag on a non-void name outside blocks', () => {
     // <div/> pushes a div; the following </div> pops it and nothing else.
     assert.equal(errorOf(`<button><div/></div>${P('a')}</button>`), null);
@@ -216,6 +226,10 @@ describe('M-07 foreign regions', () => {
 
   it('rejects a stray end tag in a foreign region', () => {
     assert.equal(errorOf(doc('<svg><g></x></g></svg>')), STRUCTURE);
+  });
+
+  it('rejects an end tag in a foreign region after its element was closed', () => {
+    assert.equal(errorOf(doc('<svg><g></g></g></svg>')), STRUCTURE);
   });
 
   it('rejects an end tag in a foreign region that matches an element outside it', () => {

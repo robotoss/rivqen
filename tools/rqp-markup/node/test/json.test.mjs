@@ -10,7 +10,11 @@ import { MAX_DEPTH, isJsonText } from '../src/json.mjs';
 
 // Bytes around the range that would make a wrong check pass or fail: a parser
 // that reads outside [start, end) gives another answer for some of them.
-const SURROUNDINGS = [['', ''], ['[', ']'], ['"', '0e+5]}"'], ['{', '}'], ['1', '1'], ['', 'ue']];
+const SURROUNDINGS = [
+  ['', ''], ['[', ']'], ['"', '0e+5]}"'], ['{', '}'], ['1', '1'], ['', 'ue'], ['', '"'], ['', ' '],
+  ['', '.5'], ['', 'e5'], ['', '+5'], ['', '-'], ['', ':1}'], ['', '\\u0041"'], ['', 'u0041"'],
+  ['', 'dc00"'], ['xxxxxxxx', ']'],
+];
 
 function check(text) {
   const results = new Set();

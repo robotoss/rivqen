@@ -64,7 +64,7 @@ RQP_PROP_ITERATIONS=200000 RQP_PROP_SEED=7 npm test        # properties
 
 ### Mutation check
 
-StrykerJS 10.0.0 with the command runner (`stryker.config.json`). Each mutant runs `npm run test:mutation`: the same tests with fewer random cases and without the `[perf]` tests. Run it in this directory:
+StrykerJS 10.0.0 with the command runner (`stryker.config.json`). Each mutant runs `npm run test:mutation`: the same tests with fewer random cases, without the `[perf]` tests, and one test file at a time. The mutant timeout is 15 s plus 1.5 times the initial run. With parallel test files and a short timeout, CPU contention made killed mutants show as "Timeout". A full run of all 2097 mutants takes about 1.5 hours on 4 CPUs. Many mutants stop a scanning loop from advancing; they show as "Timeout" and count as detected. Run it in this directory:
 
 ```sh
 npx stryker run --mutate "$(node ../../mutation/diff-ranges.mjs --base main --ext .mjs --format stryker)" --incremental

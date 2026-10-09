@@ -92,6 +92,11 @@ describe('cli', () => {
     assert.match(r.stderr, /cannot open .*missing\.html \(ENOENT\)/);
   });
 
+  it('does not turn a defect into a usage error', () => {
+    const failingOutput = { stdout: () => { throw new TypeError('defect'); }, stderr: () => {} };
+    assert.throws(() => main([path.join(dir, 'valid.html')], failingOutput), TypeError);
+  });
+
   it('keeps the I/O error as the cause', () => {
     assert.throws(() => readBounded(path.join(dir, 'missing.html')), (error) => {
       assert.ok(error instanceof CliError);

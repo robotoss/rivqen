@@ -172,7 +172,7 @@ The element of a block start tag is the **block element**. Its **block end tag**
 
 Every other element, also every element in a foreign region (for example `<svg><title data-rq-block="x">`), is not a block element. Error: `RQP_MARKUP_FORBIDDEN_ELEMENT`.
 
-**M-17 Nesting.** A block start tag MUST NOT be in the content of another block. Error: `RQP_MARKUP_NESTED`. This error has priority over M-15 and M-16 for the inner start tag.
+**M-17 Nesting.** A block start tag MUST NOT be in the content of another block. Error: `RQP_MARKUP_NESTED`. Check M-17 before M-15 and M-16 for the inner start tag (recommended order, section 2.10).
 
 **M-18 Start tag form.** A block start tag MUST NOT have the self-closing flag (`<div data-rq-block="x"/>`). Error: `RQP_MARKUP_STRUCTURE`.
 

@@ -8,7 +8,9 @@ import java.util.Random;
 
 /**
  * Generates random documents that are valid for RQP by construction: balanced explicit tags, blocks
- * only where M-16 to M-24 allow them, valid JSON in json blocks.
+ * only where M-16 to M-24 allow them, valid JSON in json blocks. It also produces the shapes that
+ * M-24 j and k and the edge-case decisions (H-21) keep valid: text and comments directly in a
+ * table, lists inside list items, CDATA sections in SVG text elements.
  */
 final class DocumentGenerator {
   private static final List<String> TEXT =
@@ -89,7 +91,11 @@ final class DocumentGenerator {
         s.append("</td></tr></tbody></table>");
       }
       case 7 -> {
-        s.append("<svg viewBox=\"0 0 1 1\"><title>i</title><path d=\"M0 0\"/></svg>");
+        s.append("<svg viewBox=\"0 0 1 1\"><title>i</title>");
+        if (r.nextBoolean()) {
+          s.append("<style><![CDATA[.a{fill:red}]]></style><desc>a < b<![CDATA[c]]></desc>");
+        }
+        s.append("<path d=\"M0 0\"/></svg>");
         block();
       }
       default -> {
@@ -130,14 +136,22 @@ final class DocumentGenerator {
         s.append("</div>");
       }
       case 5 -> {
-        s.append("<ul><li>");
-        content(false, depth + 1);
-        s.append("</li><li>x</li></ul>");
+        if (r.nextBoolean()) {
+          s.append("<ul><li>");
+          content(false, depth + 1);
+          s.append("</li><li>x</li></ul>");
+        } else {
+          s.append("<dl><dt>t</dt><dd>");
+          content(false, depth + 1);
+          s.append("</dd></dl>");
+        }
       }
       case 6 -> {
-        s.append("<table><tbody><tr><td>");
+        boolean body = r.nextBoolean();
+        s.append(body ? "<table><tbody><tr><td>" : "<table>t<!-- c --><tr> <td>");
         content(false, depth + 1);
-        s.append("</td><th>h</th></tr></tbody></table>");
+        s.append("</td><th>h</th></tr>");
+        s.append(body ? "</tbody></table>" : "</table>");
       }
       default -> {
         s.append("<p>");

@@ -12,9 +12,10 @@ import org.jspecify.annotations.Nullable;
  * The token stack of {@code markup.md} M-05, with constant-time queries.
  *
  * <p>Every query that a rule needs runs in O(1): the nearest element with a name (a chain of
- * same-name entries), the nearest table-family element (M-09), the foreign region (M-05 step 4) and
- * "is an element with this name open" (counters). Each entry is pushed once and popped once, so the
- * total work is linear in the number of tokens.
+ * same-name entries), the nearest table-family, list and list-item element (M-09, M-24 c and j; one
+ * "nearest at or below" index per entry), the foreign region (M-05 step 4) and "is an element with
+ * this name open" (counters). Each entry is pushed once and popped once, so the total work is
+ * linear in the number of tokens.
  *
  * <p>The counters are arrays indexed by {@link Enum#ordinal()}, as in {@link java.util.EnumMap}:
  * the index never leaves this process and needs no boxing.
@@ -29,6 +30,8 @@ final class TokenStack {
   private boolean[] content = new boolean[16];
   private int[] previousSameName = new int[16];
   private int[] tableContext = new int[16];
+  private int[] listContext = new int[16];
+  private int[] listItemContext = new int[16];
   private int size;
 
   private final Map<String, Integer> topByName = new HashMap<>();
@@ -38,6 +41,11 @@ final class TokenStack {
 
   int size() {
     return size;
+  }
+
+  /** True when the element at {@code index} was pushed in the content of an html block. */
+  boolean inContent(int index) {
+    return content[index];
   }
 
   String name(int index) {
@@ -78,9 +86,14 @@ final class TokenStack {
     content[i] = inContent;
     Integer previous = topByName.put(name, i);
     previousSameName[i] = previous == null ? -1 : previous;
-    boolean tableBoundary =
-        !inForeign && k != null && (k.inAny(Name.Set.TABLE_FAMILY) || k == Name.TEMPLATE);
-    tableContext[i] = tableBoundary ? i : (i == 0 ? -1 : tableContext[i - 1]);
+    chain(
+        tableContext,
+        i,
+        !inForeign && (Name.isAny(k, Name.Set.TABLE_FAMILY) || k == Name.TEMPLATE));
+    // List and list-item names are in BREAKOUT: M-07 rejects them in a foreign region before a
+    // push, so every such entry was pushed in HTML context.
+    chain(listContext, i, Name.is(k, Name.Set.LIST));
+    chain(listItemContext, i, Name.is(k, Name.Set.LIST_ITEM));
     if (k != null && !inForeign) {
       openHtml[k.ordinal()]++;
       if (inContent) {
@@ -88,6 +101,11 @@ final class TokenStack {
       }
     }
     return i;
+  }
+
+  /** Sets {@code context[i]} to {@code i} on a hit, else to the value of the entry below. */
+  private static void chain(int[] context, int i, boolean hit) {
+    context[i] = hit ? i : (i == 0 ? -1 : context[i - 1]);
   }
 
   /** Index of the nearest element (from the top) with this name, or -1. */
@@ -153,6 +171,22 @@ final class TokenStack {
     return k == Name.TEMPLATE ? null : k;
   }
 
+  /**
+   * Index of the nearest {@code ul}, {@code ol}, {@code menu} or {@code dl} element pushed in HTML
+   * context (M-24 c, j), or -1.
+   */
+  int nearestList() {
+    return size == 0 ? -1 : listContext[size - 1];
+  }
+
+  /**
+   * Index of the nearest {@code li}, {@code dd} or {@code dt} element pushed in HTML context (M-24
+   * j), or -1.
+   */
+  int nearestListItem() {
+    return size == 0 ? -1 : listItemContext[size - 1];
+  }
+
   private void grow() {
     int n = names.length * 2;
     names = Arrays.copyOf(names, n);
@@ -161,5 +195,7 @@ final class TokenStack {
     content = Arrays.copyOf(content, n);
     previousSameName = Arrays.copyOf(previousSameName, n);
     tableContext = Arrays.copyOf(tableContext, n);
+    listContext = Arrays.copyOf(listContext, n);
+    listItemContext = Arrays.copyOf(listItemContext, n);
   }
 }

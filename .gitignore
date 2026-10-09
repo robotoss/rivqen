@@ -19,3 +19,10 @@ npm-debug.log*
 # Claude Code
 .claude/worktrees/
 .claude/settings.local.json
+
+# Build output of the RQP markup parser candidates
+tools/rqp-markup/rust/target/
+tools/rqp-markup/java/build/
+tools/rqp-markup/java/.gradle/
+tools/rqp-markup/java/target/
+tools/rqp-markup/php/vendor/

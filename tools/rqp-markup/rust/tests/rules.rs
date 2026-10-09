@@ -867,6 +867,93 @@ fn m24_implied_end_tags() {
     }
 }
 
+/// M-24 item j (H-18): an `li`, `dd` or `dt` opened in the content is above
+/// the nearest list opened in the content.
+#[test]
+fn m24_j_list_item_above_the_nearest_list() {
+    let invalid = [
+        "<ul><li><div><li>a</li></div></li></ul>",
+        "<ul><li>a<li>b</li></li></ul>",
+        "<ol><li><span><li>a</li></span></li></ol>",
+        "<menu><li><p><li>a</li></p></li></menu>",
+        "<dl><dd><dt>a</dt></dd></dl>",
+        "<dl><dt><span><dd>a</dd></span></dt></dl>",
+        "<dl><dd><dd>a</dd></dd></dl>",
+        "<ol><li><dd>a</dd></li></ol>",
+        "<dl><dt><li>a</li></dt></dl>",
+        "<ul><li><ul><li>a</li></ul><div><li>b</li></div></li></ul>",
+    ];
+    for content in invalid {
+        let body = format!("<div data-rq-block=\"b\">{content}</div>");
+        assert_invalid(&body, STRUCTURE, "M-24");
+    }
+    let valid = [
+        "<ul><li>a</li><li>b</li></ul>",
+        "<ul><li><ul><li>a</li></ul></li><li>b</li></ul>",
+        "<ul><li><dl><dt>a</dt><dd>b</dd></dl></li></ul>",
+        "<dl><dd><ol><li>a</li></ol></dd></dl>",
+        "<menu><li>a</li></menu><dl><dt>b</dt></dl>",
+    ];
+    for content in valid {
+        let body = format!("<div data-rq-block=\"b\">{content}</div>");
+        assert_eq!(blocks(&body), [html("b", content)]);
+    }
+    // An item outside the content is below the list of the content.
+    assert_eq!(
+        blocks("<ul><li><div data-rq-block=\"b\"><ul><li>a</li></ul></div></li></ul>").len(),
+        1
+    );
+    // Outside a block, j does not apply (a content rule).
+    assert_valid("<ul><li><div><li>a</li></div></li></ul>");
+}
+
+/// M-24 item k (H-18): in table context, only table parts and `col` start
+/// tags are allowed in the content. Text and comments stay allowed.
+#[test]
+fn m24_k_table_context() {
+    let invalid = [
+        "<table><div>a</div></table>",
+        "<table><table></table></table>",
+        "<table><br></table>",
+        "<table><tbody><span>a</span></tbody></table>",
+        "<table><thead><p>a</p></thead></table>",
+        "<table><tfoot><b>a</b></tfoot></table>",
+        "<table><tr><img src=x></tr></table>",
+        "<table><colgroup><span></span></colgroup></table>",
+        "<table><caption>c</caption><div>a</div></table>",
+        "<table><tr><td>a</td><x-y></x-y></tr></table>",
+    ];
+    for content in invalid {
+        let body = format!("<div data-rq-block=\"b\">{content}</div>");
+        assert_invalid(&body, STRUCTURE, "M-24");
+    }
+    let valid = [
+        "<table>Total<!-- c --><![CDATA[x]]><tbody><tr><td><div>a</div><p>b</p></td></tr></tbody></table>",
+        "<table><caption><p>c</p></caption><colgroup><col></colgroup><col></table>",
+        "<table><thead><tr><th><span>h</span></th></tr></thead><tfoot></tfoot></table>",
+        "<table><tr><td><table><tr><td>x</td></tr></table></td></tr></table>",
+        "<table></table><div>a</div>",
+    ];
+    for content in valid {
+        let body = format!("<div data-rq-block=\"b\">{content}</div>");
+        assert_eq!(blocks(&body), [html("b", content)]);
+    }
+    // A table part in the wrong table context is M-09, not k.
+    assert_invalid(
+        "<div data-rq-block=\"b\"><table><tbody><col></tbody></table></div>",
+        STRUCTURE,
+        "M-09",
+    );
+    // A block in a cell: k looks at F, and F is the cell.
+    assert_eq!(
+        blocks("<table><tr><td><div data-rq-block=\"b\"><b>a</b></div></td></tr></table>"),
+        [html("b", "<b>a</b>")]
+    );
+    // Outside a block, k does not apply (a content rule; M-19 keeps blocks
+    // out of table context).
+    assert_valid("<table><div>a</div></table>");
+}
+
 // ---- 2.7 JSON, 2.8 Limits, 2.9 Result -------------------------------------
 
 #[test]

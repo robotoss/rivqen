@@ -383,8 +383,8 @@ impl<'a> Pass<'a> {
 
     /// M-22 and M-24 for a start tag in the content of a markup block.
     fn content_start(&self, tag: &Tag, name: NameId, block: OpenBlock) -> Result<(), MarkupError> {
-        use Known::{A, Button, Col, Dd, Dl, Dt, H1, H2, H3, H4, H5, H6, Li, Menu, Nobr, Ol, P};
-        use Known::{Rb, Rp, Rt, Rtc, Ruby, Span, Table, Ul};
+        use Known::{A, Button, Col, Colgroup, Dd, Dl, Dt, H1, H2, H3, H4, H5, H6, Li, Menu};
+        use Known::{Nobr, Ol, P, Rb, Rp, Rt, Rtc, Ruby, Span, Table, Tbody, Tfoot, Thead, Tr, Ul};
         if self.names.has(name, flag::FORBIDDEN_CONTENT)
             || (tag.self_closing && !self.names.has(name, flag::VOID))
         {
@@ -393,7 +393,11 @@ impl<'a> Pass<'a> {
         let elem = block.elem;
         let in_content = |names: &[Known]| names.iter().any(|&k| self.open_in_content(k, elem));
         let open = |names: &[Known]| names.iter().any(|&k| self.is_open(k));
+        // The stack index of the nearest open element with one of the names.
+        let nearest = |names: &[Known]| names.iter().filter_map(|&k| self.names.top(k.id())).max();
         let no_ruby = !in_content(&[Ruby]);
+        let list_item = is_any(name, &[Li, Dd, Dt]);
+        let part = self.names.has(name, flag::TABLE_PART) || name == Col.id();
         let implied = [
             // a
             self.names.has(name, flag::PCLOSE) && is_any(block.name, &[P, Span]),
@@ -402,15 +406,23 @@ impl<'a> Pass<'a> {
                 && (self.names.has(block.name, flag::HEADING)
                     || in_content(&[H1, H2, H3, H4, H5, H6])),
             // c
-            is_any(name, &[Li, Dd, Dt]) && !in_content(&[Ul, Ol, Menu, Dl]),
+            list_item && !in_content(&[Ul, Ol, Menu, Dl]),
+            // j: an item opened in the content is above the nearest list. When
+            // the nearest list is outside the content, item c applies.
+            list_item && nearest(&[Li, Dd, Dt]) > nearest(&[Ul, Ol, Menu, Dl]),
             // d, e, f
             is_any(name, &[Button, A, Nobr]) && self.names.top(name).is_some(),
             // g
-            (self.names.has(name, flag::TABLE_PART) || name == Col.id()) && !in_content(&[Table]),
+            part && !in_content(&[Table]),
             // h
             is_any(name, &[Rb, Rtc]) && (no_ruby || open(&[Rb, Rp, Rt, Rtc])),
             // i
             is_any(name, &[Rp, Rt]) && (no_ruby || open(&[Rb, Rp, Rt])),
+            // k: table context (foster parenting; `table` closes the table)
+            !part
+                && self
+                    .table_context()
+                    .is_some_and(|f| is_any(f, &[Table, Tbody, Thead, Tfoot, Tr, Colgroup])),
         ];
         if implied.contains(&true) {
             return Err(structure("M-24"));

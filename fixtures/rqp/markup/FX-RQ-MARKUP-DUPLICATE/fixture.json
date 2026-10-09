@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-DUPLICATE",
+  "description": "Two blocks with the same id",
+  "rules": [
+    "M-21"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_DUPLICATE"
+  }
+}

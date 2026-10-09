@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-FORBIDDEN-SCRIPT-TYPE-CASE",
+  "description": "The json script type is case-sensitive (Application/JSON)",
+  "rules": [
+    "M-16"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_FORBIDDEN_ELEMENT"
+  }
+}

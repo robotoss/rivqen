@@ -22,10 +22,12 @@ import {
   HEADINGS,
   INTEGRATION,
   LISTS,
+  LIST_ITEMS,
   NOSCRIPT_FORBIDDEN,
   PCLOSE,
   SELECT_END,
   SELECT_START,
+  TABLE_CONTEXT,
   TABLE_FAMILY,
   TABLE_PARENTS,
   TABLE_PART,
@@ -108,12 +110,19 @@ function decrement(map, key) {
 /**
  * M-11: tokenize the noscript content C followed by "</noscript>" alone from
  * the data state (HTML context). Returns an error code or null.
+ *
+ * M-13 also applies to the start tags of C (decision H-22, edge case E8): a
+ * reader with scripting disabled parses C as markup and would see a manifest.
  */
 export function checkNoscript(content) {
-  const tok = new Tokenizer(Buffer.concat([content, NOSCRIPT_END]));
+  const b = Buffer.concat([content, NOSCRIPT_END]);
+  const tok = new Tokenizer(b);
   for (;;) {
     const t = tok.next();
     if (t.type === TokenType.START_TAG) {
+      if (t.name === 'script' && t.typeAttr !== null && isReservedType(b, t.typeAttr)) {
+        return ErrorCode.RESERVED; // M-13 in C (E8)
+      }
       if (t.blockAttr !== null || NOSCRIPT_FORBIDDEN.has(t.name)) return STRUCTURE;
       const mode = TEXT_MODE.get(t.name);
       if (mode !== undefined) tok.switchTo(mode, t.name);
@@ -136,6 +145,7 @@ class Scanner {
     this.names = [];
     this.inHtml = []; // pushed in HTML context
     this.family = []; // nearest TABLE_FAMILY name at or below the entry, null after template (M-09)
+    this.listMark = []; // nearest LISTS or LIST_ITEMS name at or below the entry (M-24 j)
     this.byName = new Map(); // name -> stack indices, for the nearest match of an end tag
     this.htmlOpen = new Map(); // name -> count of open elements pushed in HTML context
     this.contentOpen = new Map(); // name -> count of open elements opened in the block content
@@ -201,6 +211,12 @@ class Scanner {
     this.inHtml.push(inHtml);
     const below = this.currentFamily();
     this.family.push(inHtml && TABLE_FAMILY.has(name) ? name : name === 'template' ? null : below);
+    // M-24 j. The entry can come from outside the block content: j is checked
+    // only after c, which needs a list opened in the content, so the nearest
+    // entry from the top is then always an element opened in the content.
+    // svg and math regions never push these names (they are in BREAKOUT).
+    const mark = LISTS.has(name) || LIST_ITEMS.has(name) ? name : this.listMark.at(-1);
+    this.listMark.push(mark); // undefined for none
     const list = this.byName.get(name);
     if (list === undefined) this.byName.set(name, [i]);
     else list.push(i);
@@ -214,6 +230,7 @@ class Scanner {
     const name = this.names.pop();
     const inHtml = this.inHtml.pop();
     this.family.pop();
+    this.listMark.pop();
     this.byName.get(name).pop();
     if (inHtml) decrement(this.htmlOpen, name);
     if (this.block !== null && i > this.block.index) decrement(this.contentOpen, name);
@@ -317,15 +334,20 @@ class Scanner {
     if (HEADINGS.has(name) && (HEADINGS.has(blockName) || this.headingInContent())) {
       return STRUCTURE; // b
     }
-    if ((name === 'li' || name === 'dd' || name === 'dt') && !this.listInContent()) {
-      return STRUCTURE; // c
+    if (LIST_ITEMS.has(name)) {
+      if (!this.listInContent()) return STRUCTURE; // c
+      // j: the nearest list or list item opened in the content is an item, so
+      // the WHATWG parser could close it (and the elements above it).
+      if (LIST_ITEMS.has(this.listMark.at(-1))) return STRUCTURE;
     }
     if ((name === 'button' || name === 'a' || name === 'nobr') && this.isOpen(name)) {
       return STRUCTURE; // d, e, f
     }
-    if ((TABLE_PART.has(name) || name === 'col') && !this.isOpenInContent('table')) {
-      return STRUCTURE; // g
-    }
+    const tablePart = TABLE_PART.has(name) || name === 'col';
+    if (tablePart && !this.isOpenInContent('table')) return STRUCTURE; // g
+    // k: in table context the WHATWG parser foster-parents every other start
+    // tag, and a table start tag closes the open table.
+    if (!tablePart && TABLE_CONTEXT.has(this.currentFamily())) return STRUCTURE;
     if (name === 'rb' || name === 'rtc' || name === 'rp' || name === 'rt') {
       if (!this.isOpenInContent('ruby')) return STRUCTURE; // h, i
       const open = this.isOpen('rb') || this.isOpen('rp') || this.isOpen('rt');
@@ -400,8 +422,13 @@ class Scanner {
   }
 
   comment(t) {
+    if (t.cdata) {
+      // M-12. A CDATA section that holds M-12 is allowed also in the content
+      // of M-07 rules 3 and 4 (decision H-21, edge case E5): it ends at the
+      // same byte as a bogus comment, and its characters are text.
+      return isCdataSafe(this.b, t) ? null : STRUCTURE;
+    }
     if (this.charsOnly !== null) return STRUCTURE; // M-07 rules 3 and 4
-    if (t.cdata && !isCdataSafe(this.b, t)) return STRUCTURE; // M-12
     return null;
   }
 

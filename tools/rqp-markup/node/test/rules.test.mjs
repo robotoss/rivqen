@@ -245,7 +245,7 @@ describe('M-07 foreign regions', () => {
   it('rejects tags and comments in an integration point', () => {
     assert.equal(errorOf(doc('<svg><foreignObject><div>a</div></foreignObject></svg>')), STRUCTURE);
     assert.equal(errorOf(doc('<svg><desc><!-- c --></desc></svg>')), STRUCTURE);
-    assert.equal(errorOf(doc('<math><mi><![CDATA[x]]></mi></math>')), STRUCTURE);
+    assert.equal(errorOf(doc('<math><mi><![cdata[x]]></mi></math>')), STRUCTURE); // a bogus comment, not CDATA
     assert.equal(errorOf(doc('<svg><title><!DOCTYPE x></title></svg>')), STRUCTURE);
   });
 
@@ -646,6 +646,25 @@ describe('M-24 no implied end tags', () => {
     ['i: rp while an rb is open', DIV('a', '<ruby><rb>a<rp>(</rp></rb></ruby>'), STRUCTURE],
     ['i: rt inside an rtc', DIV('a', '<ruby>a<rtc><rt>b</rt></rtc></ruby>'), null],
     ['h, i: ruby parts after each other', DIV('a', '<ruby><rb>a</rb><rt>b</rt><rp>(</rp><rtc>c</rtc></ruby>'), null],
+    ['j: li in a div in an li', DIV('a', '<ul><li><div><li>a</li></div></li></ul>'), STRUCTURE],
+    ['j: li directly in an li', DIV('a', '<ul><li><li>a</li></li></ul>'), STRUCTURE],
+    ['j: dt in a dd', DIV('a', '<dl><dd><dt>a</dt></dd></dl>'), STRUCTURE],
+    ['j: dd in a dt', DIV('a', '<dl><dt><span><dd>a</dd></span></dt></dl>'), STRUCTURE],
+    ['j: li in an li after a closed inner list', DIV('a', '<ul><li><ol><li>x</li></ol><li>y</li></li></ul>'), STRUCTURE],
+    ['j: dd in an li of a list outside the block', `<ul><li>${DIV('a', '<dl><dd><dt>a</dt></dd></dl>')}</li></ul>`, STRUCTURE],
+    ['j: li in a list in an li', DIV('a', '<ul><li>a<ol><li>b</li></ol></li></ul>'), null],
+    ['j: li in a list in a div in an li', DIV('a', '<ul><li><div><menu><li>b</li></menu></div></li></ul>'), null],
+    ['j: items one after another', DIV('a', '<ul><li>a</li><li>b</li></ul><dl><dt>t</dt><dd>d</dd></dl>'), null],
+    ['j: li in the content of an li outside the block', `<ul><li>${DIV('a', '<ul><li>x</li></ul>')}</li></ul>`, null],
+    ['k: div in a table', DIV('a', '<table><div>x</div></table>'), STRUCTURE],
+    ['k: table in a table', DIV('a', '<table><table></table></table>'), STRUCTURE],
+    ['k: void element in a table', DIV('a', '<table><input type="hidden"></table>'), STRUCTURE],
+    ['k: span in a row', DIV('a', '<table><tr><span>x</span></tr></table>'), STRUCTURE],
+    ['k: b in a column group', DIV('a', '<table><colgroup><b>x</b></colgroup></table>'), STRUCTURE],
+    ['k: table parts and col in a table', DIV('a', '<table><colgroup><col></colgroup><col><tbody><tr><td>x</td></tr></tbody></table>'), null],
+    ['k: text and comments in a table', DIV('a', '<table>Total<!-- c --><tr>r<td>x</td></tr></table>'), null],
+    ['k: elements in a cell and in a caption', DIV('a', '<table><caption><b>c</b></caption><tr><th><div>h</div></th><td><table><tr><td>x</td></tr></table></td></tr></table>'), null],
+    ['k: a div after the table is closed', DIV('a', '<table><tr><td>x</td></tr></table><div>y</div>'), null],
   ];
   for (const [name, body, code] of cases) {
     it(`${code === null ? 'accepts' : 'rejects'} ${name}`, () => {
@@ -659,6 +678,105 @@ describe('M-24 no implied end tags', () => {
 
   it('accepts a span block inside a paragraph', () => {
     assert.deepEqual(blocksOf(doc(`<p>a <span data-rq-block="s">b</span> c</p>`)).map((b) => b[0]), ['s']);
+  });
+});
+
+describe('M-24 j and k: same block bytes as the WHATWG tree builder', () => {
+  it('ends the block at the same end tag as a tree builder for nested lists and tables', () => {
+    const content = '<ul><li>a<ul><li>b</li></ul></li><li>c</li></ul><table>t<tr><td><p>x</p></td></tr></table>';
+    assert.deepEqual(blocksOf(doc(DIV('a', content))), [['a', 'html', content]]);
+  });
+});
+
+describe('edge cases E1 to E8 (decisions H-21, H-22)', () => {
+  it('E1: accepts < as a character in foreign text content', () => {
+    const body = `<svg><desc>a < b</desc><style>a < b</style></svg><math><mi>1 <2</mi></math>${P('a')}`;
+    assert.deepEqual(blocksOf(doc(body)).map((b) => b[0]), ['a']);
+    assert.equal(errorOf(doc('<svg><desc>a <b>x</b></desc></svg>')), STRUCTURE);
+  });
+
+  it('E2: accepts the end of the input in a foreign region after all blocks', () => {
+    assert.equal(errorOf(`${P('a')}<svg><title>Icon`), null);
+    assert.equal(errorOf(`${P('a')}<math><mi>x`), null);
+    assert.equal(errorOf(`${P('a')}<svg><g>`), null);
+  });
+
+  it('E3: checks noscript content without an end tag as the rest of the input', () => {
+    assert.equal(errorOf(`${P('a')}<noscript><img src="p.gif" alt="">`), null);
+    assert.equal(errorOf(`${P('a')}<noscript>${P('b')}`), STRUCTURE);
+    assert.equal(errorOf(`${P('a')}<noscript><!-- x`), STRUCTURE);
+  });
+
+  it('E4: accepts <![CDATA[ without > before the end of the input, outside a block', () => {
+    assert.equal(errorOf(`${P('a')}<![CDATA[x`), null);
+    assert.equal(errorOf('<p data-rq-block="a">x<![CDATA[x'), STRUCTURE); // M-20
+  });
+
+  for (const [where, body] of [
+    ['an svg style', '<svg><style><![CDATA[.a{fill:red}]]></style></svg>'],
+    ['an svg script', '<svg><script><![CDATA[if (a<b) f();]]></script></svg>'],
+    ['an svg desc', '<svg><desc><![CDATA[a<b]]></desc></svg>'],
+    ['an svg title', '<svg><title>x<![CDATA[y]]>z</title></svg>'],
+    ['an svg foreignObject', '<svg><foreignObject><![CDATA[a]]></foreignObject></svg>'],
+    ['a math mi', '<math><mi><![CDATA[x]]></mi></math>'],
+    ['a math annotation-xml', '<math><annotation-xml><![CDATA[x]]><![CDATA[y]]></annotation-xml></math>'],
+  ]) {
+    it(`E5: accepts a CDATA section that holds M-12 in ${where}`, () => {
+      assert.deepEqual(blocksOf(doc(`${body}${P('a', 'r')}`)), [['a', 'html', 'r']]);
+    });
+  }
+
+  it('E5: still applies M-12 to CDATA in foreign text content', () => {
+    assert.equal(errorOf(doc(`<svg><style><![CDATA[a>b{}]]></style></svg>${P('a')}`)), STRUCTURE);
+    assert.equal(errorOf(doc(`<svg><desc><![CDATA[a]>b]]></desc></svg>${P('a')}`)), STRUCTURE);
+  });
+
+  it('E5: keeps other tokens out of foreign text content', () => {
+    assert.equal(errorOf(doc('<svg><style><![CDATA[a]]><g></g></style></svg>')), STRUCTURE);
+    assert.equal(errorOf(doc('<svg><style><![CDATA[a]]><!-- c --></style></svg>')), STRUCTURE);
+    assert.equal(errorOf(doc('<svg><desc><![CDATA[a]]><!x></desc></svg>')), STRUCTURE);
+  });
+
+  it('E5: reads a tag-like text in a CDATA section as text', () => {
+    const body = `<svg><style><![CDATA[</style <b ]]></style></svg>${P('a', 'r')}`;
+    assert.deepEqual(blocksOf(doc(body)), [['a', 'html', 'r']]);
+  });
+
+  it('E5 and E4: accepts a CDATA section in foreign text content that runs to the end', () => {
+    assert.equal(errorOf(`${P('a')}<svg><style><![CDATA[x`), null);
+  });
+
+  it('E6: reads <? that reaches the end of the input as a comment', () => {
+    assert.equal(errorOf(`${P('a')}<?php echo 1;`), null);
+    assert.equal(errorOf(`${P('a')}<svg><desc><?x`), STRUCTURE);
+  });
+
+  it('E7: rejects frameset in a foreign region', () => {
+    assert.equal(errorOf(doc(`<svg><frameset/></svg>${P('a')}`)), STRUCTURE);
+    assert.equal(errorOf(doc(`<math><frameset></frameset></math>${P('a')}`)), STRUCTURE);
+  });
+
+  it('E8: rejects a manifest script in noscript content', () => {
+    const manifest = '<script type="application/rivqen-manifest+json">{"v":1}</script>';
+    assert.equal(errorOf(doc(`<noscript>${manifest}</noscript>${P('a')}`)), RESERVED);
+    assert.equal(errorOf(doc(`<noscript><img alt="">${manifest}</noscript>`)), RESERVED);
+    assert.equal(errorOf(`${P('a')}<noscript>${manifest}`), RESERVED); // E3: C runs to the end
+    assert.equal(checkNoscript(Buffer.from(manifest)), RESERVED);
+  });
+
+  it('E8: applies all of M-13 in noscript content', () => {
+    assert.equal(errorOf(doc('<noscript><SCRIPT Type="X-RIVQEN-MANIFEST">1</script></noscript>')), RESERVED);
+    assert.equal(errorOf(doc('<noscript><script type="application/rivqen&#45;manifest+json">1</script></noscript>')), RESERVED);
+    assert.equal(errorOf(doc('<noscript><script type=&>1</script></noscript>')), RESERVED);
+  });
+
+  it('E8: accepts other scripts and manifest text that is raw text in the markup view', () => {
+    assert.equal(errorOf(doc('<noscript><script type="text/javascript">1</script></noscript>')), null);
+    assert.equal(errorOf(doc('<noscript><script>1</script></noscript>')), null);
+    assert.equal(errorOf(doc('<noscript><script type="x" type="rivqen-manifest">1</script></noscript>')), null);
+    assert.equal(errorOf(doc('<noscript><style><script type="rivqen-manifest"></style></noscript>')), null);
+    assert.equal(errorOf(doc('<noscript><script>"<script type=&>"</script></noscript>')), null);
+    assert.equal(errorOf(doc('<noscript><p type="rivqen-manifest">x</p></noscript>')), null);
   });
 });
 

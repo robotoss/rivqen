@@ -131,8 +131,9 @@ pub(crate) fn run(input: &[u8], start: usize) -> Result<Vec<RawBlock>, MarkupErr
             Token::EndTag(tag) => pass.end_tag(&tag)?,
             Token::Comment(_) => pass.not_character()?,
             Token::Doctype(_) => pass.doctype()?,
+            // E5 (H-21): a CDATA section that satisfies M-12 is allowed
+            // also where M-07.3 and M-07.4 allow character tokens only.
             Token::Cdata { well_formed, .. } => {
-                pass.not_character()?;
                 if !well_formed {
                     return Err(structure("M-12"));
                 }
@@ -149,6 +150,18 @@ impl<'a> Pass<'a> {
 
     fn is_open(&self, name: Known) -> bool {
         self.names.top(name.id()).is_some()
+    }
+
+    /// M-08 applies to a `select` element pushed in HTML context only. A
+    /// `select` in a foreign region is a foreign element (M-07 applies).
+    /// Inside an HTML `select` no `svg` or `math` can start (M-08), and a
+    /// foreign region ends with all its elements, so the nearest `select` is
+    /// the HTML one whenever one is open.
+    fn html_select_open(&self) -> bool {
+        self.names
+            .top(Known::Select.id())
+            .and_then(|index| self.stack.get(index))
+            .is_some_and(|elem| elem.html)
     }
 
     /// An element with this name was opened in the content of the block
@@ -196,8 +209,8 @@ impl<'a> Pass<'a> {
         Some(elem)
     }
 
-    /// M-07.3, M-07.4: a token that is not a character token while a
-    /// foreign text-only element is open.
+    /// M-07.3, M-07.4: a token that is not a character token (and not a
+    /// CDATA section, E5) while a foreign text-only element is open.
     fn not_character(&self) -> Result<(), MarkupError> {
         if self.text_only.is_some() {
             Err(structure("M-07"))
@@ -208,7 +221,7 @@ impl<'a> Pass<'a> {
 
     fn doctype(&self) -> Result<(), MarkupError> {
         self.not_character()?;
-        if self.is_open(Known::Select) {
+        if self.html_select_open() {
             return Err(structure("M-08"));
         }
         if self.block.is_some_and(|b| b.content == Content::Markup) {
@@ -223,9 +236,7 @@ impl<'a> Pass<'a> {
         let foreign = self.foreign_root.is_some();
 
         self.not_character()?;
-        if self.is_open(Known::Select)
-            && !is_any(name, &[Known::Option, Known::Optgroup, Known::Hr])
-        {
+        if self.html_select_open() && !is_any(name, &[Known::Option, Known::Optgroup, Known::Hr]) {
             return Err(structure("M-08"));
         }
         if name == Known::Frameset.id() {
@@ -373,8 +384,8 @@ impl<'a> Pass<'a> {
 
     /// M-22 and M-24 for a start tag in the content of a markup block.
     fn content_start(&self, tag: &Tag, name: NameId, block: OpenBlock) -> Result<(), MarkupError> {
-        use Known::{A, Button, Col, Dd, Dl, Dt, H1, H2, H3, H4, H5, H6, Li, Menu, Nobr, Ol, P};
-        use Known::{Rb, Rp, Rt, Rtc, Ruby, Span, Table, Ul};
+        use Known::{A, Button, Col, Colgroup, Dd, Dl, Dt, H1, H2, H3, H4, H5, H6, Li, Menu};
+        use Known::{Nobr, Ol, P, Rb, Rp, Rt, Rtc, Ruby, Span, Table, Tbody, Tfoot, Thead, Tr, Ul};
         if self.names.has(name, flag::FORBIDDEN_CONTENT)
             || (tag.self_closing && !self.names.has(name, flag::VOID))
         {
@@ -383,7 +394,11 @@ impl<'a> Pass<'a> {
         let elem = block.elem;
         let in_content = |names: &[Known]| names.iter().any(|&k| self.open_in_content(k, elem));
         let open = |names: &[Known]| names.iter().any(|&k| self.is_open(k));
+        // The stack index of the nearest open element with one of the names.
+        let nearest = |names: &[Known]| names.iter().filter_map(|&k| self.names.top(k.id())).max();
         let no_ruby = !in_content(&[Ruby]);
+        let list_item = is_any(name, &[Li, Dd, Dt]);
+        let part = self.names.has(name, flag::TABLE_PART) || name == Col.id();
         let implied = [
             // a
             self.names.has(name, flag::PCLOSE) && is_any(block.name, &[P, Span]),
@@ -392,15 +407,23 @@ impl<'a> Pass<'a> {
                 && (self.names.has(block.name, flag::HEADING)
                     || in_content(&[H1, H2, H3, H4, H5, H6])),
             // c
-            is_any(name, &[Li, Dd, Dt]) && !in_content(&[Ul, Ol, Menu, Dl]),
+            list_item && !in_content(&[Ul, Ol, Menu, Dl]),
+            // j: an item opened in the content is above the nearest list. When
+            // the nearest list is outside the content, item c applies.
+            list_item && nearest(&[Li, Dd, Dt]) > nearest(&[Ul, Ol, Menu, Dl]),
             // d, e, f
             is_any(name, &[Button, A, Nobr]) && self.names.top(name).is_some(),
             // g
-            (self.names.has(name, flag::TABLE_PART) || name == Col.id()) && !in_content(&[Table]),
+            part && !in_content(&[Table]),
             // h
             is_any(name, &[Rb, Rtc]) && (no_ruby || open(&[Rb, Rp, Rt, Rtc])),
             // i
             is_any(name, &[Rp, Rt]) && (no_ruby || open(&[Rb, Rp, Rt])),
+            // k: table context (foster parenting; `table` closes the table)
+            !part
+                && self
+                    .table_context()
+                    .is_some_and(|f| is_any(f, &[Table, Tbody, Thead, Tfoot, Tr, Colgroup])),
         ];
         if implied.contains(&true) {
             return Err(structure("M-24"));
@@ -422,7 +445,7 @@ impl<'a> Pass<'a> {
             }
             self.text_only = None;
         }
-        if self.is_open(Known::Select)
+        if self.html_select_open()
             && !name.is_some_and(|n| is_any(n, &[Known::Option, Known::Optgroup, Known::Select]))
         {
             return Err(structure("M-08"));
@@ -514,7 +537,7 @@ impl<'a> Pass<'a> {
         if self.block.is_some() {
             return Err(structure("M-20"));
         }
-        if self.is_open(Known::Select) {
+        if self.html_select_open() {
             return Err(structure("M-08"));
         }
         Ok(self.blocks)
@@ -532,8 +555,9 @@ const NOSCRIPT_FORBIDDEN: &[&[u8]] = &[
     b"template",
 ];
 
-/// M-11: tokenize the content of a `noscript` element followed by
-/// `</noscript>` from the data state, in HTML context.
+/// M-11 (and M-13 for C, E8): tokenize the content of a `noscript` element
+/// followed by `</noscript>` from the data state, in HTML context. When the
+/// `noscript` element has no end tag, C is the rest of the input (E3).
 fn check_noscript(content: &[u8]) -> Result<(), MarkupError> {
     let mut text = Vec::with_capacity(content.len().saturating_add(11));
     text.extend_from_slice(content);
@@ -543,6 +567,15 @@ fn check_noscript(content: &[u8]) -> Result<(), MarkupError> {
         match tokens.next_token() {
             Token::StartTag(tag) => {
                 let name = text.get(tag.name.start..tag.name.end).unwrap_or_default();
+                // E8 (H-22): M-13 applies to C too. A reader with scripting
+                // disabled parses C as markup and would see a manifest.
+                if name.eq_ignore_ascii_case(b"script")
+                    && tag.type_attr.is_some_and(|value| {
+                        is_reserved_type(text.get(value.start..value.end).unwrap_or_default())
+                    })
+                {
+                    return Err(MarkupError::new(ErrorCode::Reserved, "M-13"));
+                }
                 if tag.block_attr.is_some()
                     || NOSCRIPT_FORBIDDEN
                         .iter()

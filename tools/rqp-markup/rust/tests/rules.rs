@@ -299,7 +299,6 @@ fn m07_integration_points_have_text_only() {
         "M-07",
     );
     assert_invalid("<svg><desc><!-- c --></desc></svg>", STRUCTURE, "M-07");
-    assert_invalid("<svg><desc><![CDATA[x]]></desc></svg>", STRUCTURE, "M-07");
     assert_invalid("<math><mi><!DOCTYPE x></mi></math>", STRUCTURE, "M-07");
     assert_invalid("<math><mi>x</mo></math>", STRUCTURE, "M-07");
     assert_invalid(
@@ -309,6 +308,47 @@ fn m07_integration_points_have_text_only() {
     );
     assert_valid("<svg><desc>a &amp; b</desc><foreignObject/></svg>");
     assert_valid("<math><mi>x</mi><mo>=</mo><mn>2</mn><ms>s</ms><mtext>t</mtext></math>");
+}
+
+/// E5 (H-21): a CDATA section that satisfies M-12 is allowed in foreign
+/// TEXT content and in integration points. M-12 still applies there.
+#[test]
+fn m07_e5_cdata_in_foreign_text_content() {
+    for body in [
+        "<svg><style><![CDATA[.a{fill:red}]]></style></svg>",
+        "<svg><script><![CDATA[if(a<b){}]]></script></svg>",
+        "<svg><desc><![CDATA[a<b]]></desc></svg>",
+        "<svg><title>t<![CDATA[x]]>u</title></svg>",
+        "<math><mi><![CDATA[x]]></mi></math>",
+        "<svg><foreignObject><![CDATA[]]></foreignObject></svg>",
+        "<svg><desc><![CDATA[a]]><![CDATA[b]]></desc></svg>",
+    ] {
+        assert_eq!(
+            blocks(&format!("{body}<p data-rq-block=\"a\">x</p>")),
+            [html("a", "x")],
+            "{body}"
+        );
+    }
+    // M-12 is not relaxed: the first `>` must end a `]]>`.
+    assert_invalid(
+        "<svg><style><![CDATA[a>b]]></style></svg>",
+        STRUCTURE,
+        "M-12",
+    );
+    assert_invalid("<svg><desc><![CDATA[a]>]]></desc></svg>", STRUCTURE, "M-12");
+    // Only CDATA is new: other non-character tokens stay invalid.
+    assert_invalid("<svg><style><!--c--></style></svg>", STRUCTURE, "M-07");
+    assert_invalid(
+        "<svg><desc><![CDATA[x]]><b>y</b></desc></svg>",
+        STRUCTURE,
+        "M-07",
+    );
+    // The CDATA section does not end the text-only state.
+    assert_invalid(
+        "<svg><desc><![CDATA[x]]></g></desc></svg>",
+        STRUCTURE,
+        "M-07",
+    );
 }
 
 #[test]
@@ -339,6 +379,51 @@ fn m08_select() {
     assert_invalid("<select><option>a</div></select>", STRUCTURE, "M-08");
     // No explicit end tag.
     assert_eq!(error_of(b"<select><option>a"), (STRUCTURE, "M-08"));
+}
+
+/// M-08 applies to a `select` pushed in HTML context only (defect found by
+/// T-07: a foreign `select` was checked by M-08).
+#[test]
+fn m08_does_not_apply_to_a_foreign_select() {
+    for body in [
+        "<math><select><th></th></select></math>",
+        "<svg><select><style></style></select></svg>",
+        "<svg><select><g><text>t</text></g></select></svg>",
+        "<svg><select><!DOCTYPE x></select></svg>",
+    ] {
+        assert_eq!(
+            blocks(&format!("{body}<p data-rq-block=\"a\">x</p>")),
+            [html("a", "x")],
+            "{body}"
+        );
+    }
+    // E2: the input can end in a foreign region, also with a foreign select open.
+    assert!(analyze(b"<p data-rq-block=\"a\">x</p><svg><select>").is_ok());
+    // M-07 still applies inside the foreign select: breakout names and
+    // stray end tags (M-08 would allow `</option>`).
+    assert_invalid("<svg><select><p>a</p></select></svg>", STRUCTURE, "M-07");
+    assert_invalid("<svg><select></g-x></select></svg>", STRUCTURE, "M-07");
+    assert_invalid("<math><select></option></select></math>", STRUCTURE, "M-07");
+    // An HTML select after a foreign one is checked by M-08.
+    assert_invalid(
+        "<svg><select></select></svg><select><b>a</b></select>",
+        STRUCTURE,
+        "M-08",
+    );
+    assert_invalid(
+        "<svg><select></select></svg><select><option>a</div></select>",
+        STRUCTURE,
+        "M-08",
+    );
+    assert_invalid(
+        "<svg><select></svg><select><!DOCTYPE x></select>",
+        STRUCTURE,
+        "M-08",
+    );
+    assert_eq!(
+        error_of(b"<svg><select></select></svg><select><option>a"),
+        (STRUCTURE, "M-08")
+    );
 }
 
 #[test]
@@ -427,7 +512,7 @@ fn m11_noscript() {
         STRUCTURE,
         "M-11",
     );
-    // At EOF the content is checked too.
+    // E3: without an end tag, C is the rest of the input.
     assert!(analyze(b"<noscript><img src=x>").is_ok());
     assert_eq!(
         error_of(b"<noscript><p data-rq-block=\"a\">"),
@@ -436,6 +521,52 @@ fn m11_noscript() {
     // In a foreign region noscript is not RAWTEXT; M-11 does not apply, M-07.4 does.
     assert_valid("<svg><noscript>x &lt;</noscript></svg>");
     assert_invalid("<svg><noscript><g></g></noscript></svg>", STRUCTURE, "M-07");
+}
+
+/// E8 (H-22): M-13 also applies to the content C of `noscript` (M-11). A
+/// reader with scripting disabled parses C as markup.
+#[test]
+fn m11_m13_reserved_manifest_in_noscript() {
+    let reserved = ErrorCode::Reserved;
+    for script in [
+        "<script type=\"application/rivqen-manifest+json\">{}</script>",
+        "<SCRIPT TYPE=\"X-Rivqen-Manifest\"></SCRIPT>",
+        "<script type=application/rivqen-manifest&#43;json></script>",
+        "<script type='&'></script>",
+        "<img src=x><script type=\"rivqen-manifest\" data-rq-block=\"a\"></script>",
+    ] {
+        assert_invalid(&format!("<noscript>{script}</noscript>"), reserved, "M-13");
+    }
+    // In head, and at EOF (E3).
+    assert_eq!(
+        error_of(
+            b"<html><head><noscript><script type=\"application/rivqen-manifest+json\">{}</script></noscript></head></html>"
+        ),
+        (reserved, "M-13")
+    );
+    assert_eq!(
+        error_of(b"<noscript><script type=\"rivqen-manifest\"></script>"),
+        (reserved, "M-13")
+    );
+    // Not a script start tag with a reserved first `type`: valid.
+    for content in [
+        "<script>var a = 1;</script>",
+        "<script type=\"text/javascript\" type=\"rivqen-manifest\"></script>",
+        "<div type=\"rivqen-manifest\"></div>",
+        "rivqen-manifest &amp;",
+        "<!-- <script type=\"rivqen-manifest\"> -->",
+        "<style><script type=\"rivqen-manifest\"></style>",
+        "<script>\"<script type='rivqen-manifest'>\"</script>",
+        "</script type=\"rivqen-manifest\">",
+    ] {
+        assert_eq!(
+            blocks(&format!(
+                "<noscript>{content}</noscript><p data-rq-block=\"a\">x</p>"
+            )),
+            [html("a", "x")],
+            "{content}"
+        );
+    }
 }
 
 #[test]
@@ -822,6 +953,93 @@ fn m24_implied_end_tags() {
     }
 }
 
+/// M-24 item j (H-18): an `li`, `dd` or `dt` opened in the content is above
+/// the nearest list opened in the content.
+#[test]
+fn m24_j_list_item_above_the_nearest_list() {
+    let invalid = [
+        "<ul><li><div><li>a</li></div></li></ul>",
+        "<ul><li>a<li>b</li></li></ul>",
+        "<ol><li><span><li>a</li></span></li></ol>",
+        "<menu><li><p><li>a</li></p></li></menu>",
+        "<dl><dd><dt>a</dt></dd></dl>",
+        "<dl><dt><span><dd>a</dd></span></dt></dl>",
+        "<dl><dd><dd>a</dd></dd></dl>",
+        "<ol><li><dd>a</dd></li></ol>",
+        "<dl><dt><li>a</li></dt></dl>",
+        "<ul><li><ul><li>a</li></ul><div><li>b</li></div></li></ul>",
+    ];
+    for content in invalid {
+        let body = format!("<div data-rq-block=\"b\">{content}</div>");
+        assert_invalid(&body, STRUCTURE, "M-24");
+    }
+    let valid = [
+        "<ul><li>a</li><li>b</li></ul>",
+        "<ul><li><ul><li>a</li></ul></li><li>b</li></ul>",
+        "<ul><li><dl><dt>a</dt><dd>b</dd></dl></li></ul>",
+        "<dl><dd><ol><li>a</li></ol></dd></dl>",
+        "<menu><li>a</li></menu><dl><dt>b</dt></dl>",
+    ];
+    for content in valid {
+        let body = format!("<div data-rq-block=\"b\">{content}</div>");
+        assert_eq!(blocks(&body), [html("b", content)]);
+    }
+    // An item outside the content is below the list of the content.
+    assert_eq!(
+        blocks("<ul><li><div data-rq-block=\"b\"><ul><li>a</li></ul></div></li></ul>").len(),
+        1
+    );
+    // Outside a block, j does not apply (a content rule).
+    assert_valid("<ul><li><div><li>a</li></div></li></ul>");
+}
+
+/// M-24 item k (H-18): in table context, only table parts and `col` start
+/// tags are allowed in the content. Text and comments stay allowed.
+#[test]
+fn m24_k_table_context() {
+    let invalid = [
+        "<table><div>a</div></table>",
+        "<table><table></table></table>",
+        "<table><br></table>",
+        "<table><tbody><span>a</span></tbody></table>",
+        "<table><thead><p>a</p></thead></table>",
+        "<table><tfoot><b>a</b></tfoot></table>",
+        "<table><tr><img src=x></tr></table>",
+        "<table><colgroup><span></span></colgroup></table>",
+        "<table><caption>c</caption><div>a</div></table>",
+        "<table><tr><td>a</td><x-y></x-y></tr></table>",
+    ];
+    for content in invalid {
+        let body = format!("<div data-rq-block=\"b\">{content}</div>");
+        assert_invalid(&body, STRUCTURE, "M-24");
+    }
+    let valid = [
+        "<table>Total<!-- c --><![CDATA[x]]><tbody><tr><td><div>a</div><p>b</p></td></tr></tbody></table>",
+        "<table><caption><p>c</p></caption><colgroup><col></colgroup><col></table>",
+        "<table><thead><tr><th><span>h</span></th></tr></thead><tfoot></tfoot></table>",
+        "<table><tr><td><table><tr><td>x</td></tr></table></td></tr></table>",
+        "<table></table><div>a</div>",
+    ];
+    for content in valid {
+        let body = format!("<div data-rq-block=\"b\">{content}</div>");
+        assert_eq!(blocks(&body), [html("b", content)]);
+    }
+    // A table part in the wrong table context is M-09, not k.
+    assert_invalid(
+        "<div data-rq-block=\"b\"><table><tbody><col></tbody></table></div>",
+        STRUCTURE,
+        "M-09",
+    );
+    // A block in a cell: k looks at F, and F is the cell.
+    assert_eq!(
+        blocks("<table><tr><td><div data-rq-block=\"b\"><b>a</b></div></td></tr></table>"),
+        [html("b", "<b>a</b>")]
+    );
+    // Outside a block, k does not apply (a content rule; M-19 keeps blocks
+    // out of table context).
+    assert_valid("<table><div>a</div></table>");
+}
+
 // ---- 2.7 JSON, 2.8 Limits, 2.9 Result -------------------------------------
 
 #[test]
@@ -923,8 +1141,16 @@ fn readings_where_the_rules_leave_room() {
     assert!(analyze(b"<p data-rq-block=\"a\">x</p><math><mi>").is_ok());
     // M-10 and M-07.1 apply in a foreign region without exceptions.
     assert_invalid("<svg><font>x</font></svg>", STRUCTURE, "M-07");
-    // M-12: no `>` after `<![CDATA[`.
+    // M-12: no `>` after `<![CDATA[` (E4), also in a foreign integration
+    // point (E4 with E5).
     assert!(analyze(b"<p data-rq-block=\"a\">x</p><![CDATA[ x").is_ok());
+    assert!(analyze(b"<p data-rq-block=\"a\">x</p><svg><desc><![CDATA[ x").is_ok());
+    // E6: `<?` to EOF is a comment, so it is invalid in an integration point.
+    assert!(analyze(b"<p data-rq-block=\"a\">x</p><?php echo 1;").is_ok());
+    assert_eq!(
+        error_of(b"<p data-rq-block=\"a\">x</p><svg><desc><?x"),
+        (STRUCTURE, "M-07")
+    );
     // M-11: a noscript without an end tag is checked up to EOF.
     assert!(analyze(b"<noscript><img src=x>").is_ok());
 }
@@ -975,4 +1201,32 @@ fn large_adversarial_inputs_finish() {
     ]
     .concat();
     assert!(analyze(&json).is_ok());
+    // M-24 j and k and the M-13 check of noscript content (T-08).
+    // Five blocks, each just under the 1 MiB content limit (M-26).
+    let five_blocks = |open: &[u8], close: &[u8], n: usize| -> Vec<u8> {
+        (0..5)
+            .flat_map(|i| {
+                [
+                    format!("<div data-rq-block=\"b{i}\">").into_bytes(),
+                    open.repeat(n),
+                    close.repeat(n),
+                    b"</div>".to_vec(),
+                ]
+                .concat()
+            })
+            .collect()
+    };
+    let lists = five_blocks(b"<ul><li>", b"</li></ul>", 58_000);
+    assert!(lists.len() > 5_000_000);
+    assert_eq!(analyze(&lists).unwrap().blocks.len(), 5);
+    let tables = five_blocks(b"<table><tr><td>", b"</td></tr></table>", 31_000);
+    assert!(tables.len() > 5_000_000);
+    assert_eq!(analyze(&tables).unwrap().blocks.len(), 5);
+    let scripts: Vec<u8> = [
+        &b"<noscript>"[..],
+        &b"<script type=\"a\"></script>".repeat(190_000),
+        b"</noscript>",
+    ]
+    .concat();
+    assert!(analyze(&scripts).is_ok());
 }

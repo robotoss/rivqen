@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
-The Rust candidate of WP-17 S1 (task T-03). It implements the rules M-01…M-27 of `docs/engineering/protocol/markup.md` (rqp/1) and the interface of `tools/rqp-markup/CONTRACT.md`. It is a tool for the differential test, not the production crate (`rivqen-proto`, P3).
+The Rust candidate of WP-17 S1 (tasks T-03 and T-08). It implements the rules M-01…M-27 of `docs/engineering/protocol/markup.md` (rqp/1), with M-24 items j and k (human decision H-18) and the decided edge cases E1…E8 (H-21, H-22), and the interface of `tools/rqp-markup/CONTRACT.md`. It is a tool for the differential test, not the production crate (`rivqen-proto`, P3).
 
 ## Build
 
@@ -46,7 +46,7 @@ cargo test
 | Test file | What it checks |
 |---|---|
 | `src/*.rs` (`mod tests`) | Tokenizer states and spans, name sets, JSON grammar, hashes |
-| `tests/rules.rs` | One or more tests for each rule M-01…M-27 and each error code; each invalid case checks the code and the rule |
+| `tests/rules.rs` | One or more tests for each rule M-01…M-27 and each error code; each invalid case checks the code and the rule. Separate tests for M-24 items j and k, for M-08 with a foreign `select`, and for the edge cases E1…E8 |
 | `tests/fixtures.rs` | Every fixture of `fixtures/rqp/markup/` against its `expected.json` |
 | `tests/cli.rs` | Command line: modes, exit codes, batch order, skipped directories, size limit, no content on stderr |
 | `tests/props.rs` | proptest: no panic on arbitrary bytes and text; for valid results the offsets ascend and stay in the input, content hash = SHA-256 of `input[start..end]`, tags around the content; a markup "soup" generator reaches valid documents with blocks |
@@ -73,6 +73,22 @@ Result (cargo-mutants 27.1.0, whole package, 2026-10-09): 402 mutants, 30 unviab
 | Comment state arms: `<` and `!` in the comment and less-than-sign states, `-` in the comment end bang state | The removed arm reconsumes into a state that makes the same transition; the less-than-sign states only add parse errors |
 | Tag state arms: `/` `>` in before attribute name, `>` in before attribute value, `/` `>` and white space in after attribute value (quoted) | The removed arm reconsumes into the before attribute name state, which makes the same transition |
 | Escaped less-than sign state: letter guard → `true` | A non-letter then goes to the escaped state in both paths |
+
+To check only the lines that changed since a base commit `BASE`, run this in `tools/rqp-markup/rust`. The package is its own workspace, so the diff paths must be relative to this directory (`--relative`):
+
+```sh
+D=$(mktemp)
+git -c core.quotePath=false diff --relative --src-prefix=a/ --dst-prefix=b/ \
+  --no-ext-diff BASE -- '*.rs' > "$D"
+RQP_MARKUP_FIXTURES="$(git rev-parse --show-toplevel)/fixtures/rqp/markup" \
+  cargo mutants --in-diff "$D" --no-shuffle -j 3 --timeout 120
+```
+
+Result for T-08 (cargo-mutants 27.1.0, `--in-diff` against `4c90861`, 2026-10-09): 27 mutants, 2 unviable, 24 caught, 1 missed. Kill rate 24/25 = 96.0 %. The missed mutant is equivalent:
+
+| Mutant | Why equivalent |
+|---|---|
+| `>` → `>=` in M-24 item j (`nearest(items) > nearest(lists)`) | Two elements never have the same stack index, so the two sides are equal only when both are `None`. Then no list is open in the content, and item c rejects the same start tag |
 
 ## Design
 
@@ -113,7 +129,7 @@ The tokenizer follows the WHATWG state descriptions (HTML Living Standard §13.2
 | Item | Bound |
 |---|---|
 | Input | M-01 is checked first. The command reads at most 5 MiB + 1 byte of a file. |
-| Time | Linear in the input size. The nearest open element with a name is found through a per-name pointer (O(1)); each element is popped once; raw text end tags scan each letter once. `tests/rules.rs` runs near-limit adversarial inputs (deep stacks, many names, many failed end tags, comment and script patterns). |
+| Time | Linear in the input size. The nearest open element with a name is found through a per-name pointer (O(1)); M-24 items j and k use the same pointers and the table-family marks (O(1) per start tag); each element is popped once; raw text end tags scan each letter once. `tests/rules.rs` runs near-limit adversarial inputs (deep stacks, many names, many failed end tags, comment and script patterns, deep lists and tables in a block, many scripts in `noscript`). |
 | Memory | Linear in the input size: token stack, interned names, at most 257 block ids, one copy of each `noscript` content (M-11), JSON depth stack ≤ 64 |
 | Recursion | None |
 | Panics | `unwrap`, `expect`, `panic`, indexing and unchecked arithmetic are denied by lints outside tests. `#![forbid(unsafe_code)]`. |
@@ -121,18 +137,36 @@ The tokenizer follows the WHATWG state descriptions (HTML Living Standard §13.2
 
 ### How the rules are read
 
-These places needed a choice. Each one follows the text of `markup.md`; where the text leaves room, the choice is the conservative one or the one that cannot change a block.
+These places needed a choice. Each one follows the text of `markup.md`. Where the human decided an edge case of `markup-edge-cases.md` (H-21, H-22), the table names the case. Elsewhere, where the text leaves room, the choice is the conservative one or the one that cannot change a block.
 
 | Rule | Reading |
 |---|---|
-| M-07.3, M-07.4 | "Character tokens only" is checked on tokens. `a < b` inside `<svg><desc>` is valid (the `<` is a character token), although the rule adds "the content contains no `<`". `</>` emits no token. |
-| M-07.3, M-07.4 | EOF before the end tag of a foreign text-only element (`<svg><title>x` at EOF) is not an error. EOF in a foreign region is not an error. |
-| M-07, M-10, M-13 | `frameset` and the reserved `script` type are checked in every context, also in a foreign region. `BREAKOUT` includes `font` with or without attributes. `INTEGRATION` names apply in `svg` and in `math` alike. |
-| M-08 | A `<![CDATA[` in `select` content is a bogus comment (HTML context), so it is allowed as a comment. |
-| M-11 | When `noscript` has no end tag, C is the rest of the input. The second tokenization runs in HTML context; `<![CDATA[` there is a bogus comment and M-12 does not apply to it. |
-| M-12 | `<![CDATA[` with no `>` after it is not an error: a CDATA section and a bogus comment both end at EOF. |
+| M-07.3, M-07.4 (E1) | "Character tokens only" is checked on tokens. `a < b` inside `<svg><desc>` is valid (the `<` is a character token). `</>` emits no token. |
+| M-07.3, M-07.4 (E2) | EOF before the end tag of a foreign text-only element (`<svg><title>x` at EOF) is not an error. EOF in a foreign region is not an error, also with a foreign `select` open. |
+| M-07.3, M-07.4, M-12 (E5) | A `<![CDATA[` that satisfies M-12 is allowed in foreign TEXT content and in integration points (`<svg><style><![CDATA[a{}]]></style>`). M-12 still applies there. Comments, DOCTYPE tokens and tags stay invalid. |
+| M-03, M-07 (E6) | `<?` without `>` is a comment that ends at EOF. In a foreign text-only element it is therefore invalid. |
+| M-07, M-10, M-13 (E7) | `frameset` and the reserved `script` type are checked in every context, also in a foreign region. `BREAKOUT` includes `font` with or without attributes. `INTEGRATION` names apply in `svg` and in `math` alike. |
+| M-08 | M-08 applies only to a `select` pushed in HTML context. A `select` in a foreign region is a foreign element: M-07 applies to it (`<math><select><th></th></select></math>` is valid). The nearest open `select` decides, because an HTML `select` cannot contain `svg` or `math`, and a foreign region ends with all its elements. A `<![CDATA[` in HTML `select` content is a bogus comment, so it is allowed as a comment. |
+| M-11 (E3) | When `noscript` has no end tag, C is the rest of the input, and M-11 applies to it. The second tokenization runs in HTML context; `<![CDATA[` there is a bogus comment that ends at the first `>`, the same byte as the token of this tokenizer. |
+| M-11, M-13 (E8) | M-13 also applies to the start tags of C: a `script` whose first `type` raw value contains `rivqen-manifest` (ASCII case-insensitive) or `&` gives `RQP_MARKUP_RESERVED`. M-13 is checked before the M-11 checks of the same start tag, as in the main pass. Text in raw text sections of C (`<style>`, `<script>`) and in comments is not checked. |
+| M-12 (E4) | `<![CDATA[` with no `>` after it is not an error: a CDATA section and a bogus comment both end at EOF. With E5, this is also valid in a foreign integration point (`<svg><desc><![CDATA[x` at EOF). |
 | M-19 | F is computed from elements pushed in HTML context. A block start tag is always in HTML context when M-19 is checked (M-16 first). |
+| M-24 j | Checked with the per-name pointers: the stack index of the nearest open `li`, `dd` or `dt` against the index of the nearest open `ul`, `ol`, `menu` or `dl`. When the nearest list was opened before the block, item c rejects the start tag, so item j needs no "opened in the content" test of its own. All combinations count (for example `dd` above `ol`), as the rule says. |
+| M-24 k | Checked on every start tag in the content, also void names (`<br>`, `<img>`) and `table`. F is the M-09 value. At the block start F is none, `td`, `th` or `caption` (M-19), so a table context in the content is always opened in the content. Outside block content, k does not apply. |
 | M-26 | The block count is checked when the 257th block start tag is read; the size when the block end tag is read. |
+
+### Cross-check against parse5
+
+Run the sweeps of `tools/rqp-markup/crosscheck/README.md` with `--only rust` and `TMPDIR=/dev/shm`. Result (T-08, 2026-10-09, release build):
+
+| Sweep | Documents | Valid with blocks | Findings |
+|---|---|---|---|
+| seed 4, `--max-tokens 20`, scripting enabled | 200 000 | 23 785 | 0 |
+| seed 5, `--max-tokens 20`, both views | 100 000 | 11 921 | 0 |
+| seed 6, `--max-tokens 40`, both views | 100 000 | 7 036 | 0 |
+| All 133 fixtures, both views (`check`) | 133 | — | 0 |
+
+Before T-08, seeds 4 and 5 gave 9 block-byte disagreements (all M-24 j or k shapes) and manifest findings in the scripting-disabled view (E8).
 
 ## Dependencies
 

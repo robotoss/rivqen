@@ -2,7 +2,7 @@
 
 This page specifies how a page marks its data blocks in the Rivqen protocol (RQP), when a document is valid for RQP, and which bytes are the content of each block. The markup is valid HTML. It replaces the legacy comment markers.
 
-**Status:** <Badge type="info" text="DESIGN" /> Normative for `rqp/1` from WP-17 S1. Decisions: attribute markup and inline manifest ([ADR-006](/engineering/architecture/adr/#adr-006)); a block without an explicit end tag is invalid (human decision H-12, [sprint record WP-17 S1](/engineering/plan/sprints/WP-17-S1)). Parser interface, hashes and revisions: `tools/rqp-markup/CONTRACT.md`. Golden fixtures: [`FX-RQ-MARKUP-*`](/engineering/protocol/fixtures#_4-2-markup-fixtures-fx-rq-markup).
+**Status:** <Badge type="info" text="DESIGN" /> Normative for `rqp/1` from WP-17 S1. Decisions: attribute markup and inline manifest ([ADR-006](/engineering/architecture/adr/#adr-006)); a block without an explicit end tag is invalid (human decision H-12, [sprint record WP-17 S1](/engineering/plan/sprints/WP-17-S1)); M-24 items j and k (H-18); edge cases E1–E7 (H-21) and E8 (H-22), section 2.11. Parser interface, hashes and revisions: `tools/rqp-markup/CONTRACT.md`. Golden fixtures: [`FX-RQ-MARKUP-*`](/engineering/protocol/fixtures#_4-2-markup-fixtures-fx-rq-markup).
 
 [[toc]]
 
@@ -81,8 +81,9 @@ The parser decodes the input as UTF-8 always. It ignores `<meta charset>` and th
 
 - A start tag ends at its `>`. A `>` inside a quoted attribute value does not end the tag.
 - Comments follow the WHATWG comment states, including `<!-->`, `<!--->` and the end `--!>`.
-- `<!` followed by anything other than `--`, `DOCTYPE` (ASCII case-insensitive) or `[CDATA[` starts a bogus comment. `</` followed by a character that is not an ASCII letter and not `>` starts a bogus comment. A bogus comment ends at the first `>`.
-- `<?` starts a bogus comment in older parsers and a processing instruction in newer ones. <Badge type="tip" text="FACT" /> Both end at the first `>` (WHATWG "processing instruction data state" and "bogus comment state"). RQP treats them the same. Open: E6, a `<?` without `>` (§2.11).
+- `<!` followed by anything other than `--`, `DOCTYPE` (ASCII case-insensitive) or `[CDATA[` starts a bogus comment. `</` followed by a character that is not an ASCII letter and not `>` starts a bogus comment. A bogus comment ends at the first `>`. If there is no `>`, it ends at the end of the input.
+- `<?` starts a bogus comment in older parsers and a processing instruction in newer ones. <Badge type="tip" text="FACT" /> Both end at the first `>` (WHATWG "processing instruction data state" and "bogus comment state"). RQP treats them the same: a comment.
+- A `<?` with no `>` before the end of the input is a comment that ends at the end of the input (E6, H-21). <Badge type="warning" text="RESEARCH" /> The current WHATWG text probably emits no token for a processing instruction that reaches the end of the input ([edge cases](/engineering/protocol/markup-edge-cases), E6). The comment reading is the stricter one: every rule that allows a comment also allows no token.
 - A DOCTYPE token ends at the first `>`.
 - An end tag can have attributes and a self-closing flag. They have no effect.
 - When a start tag has two attributes with the same name, the first one is used and the second is dropped (WHATWG "attribute name state").
@@ -114,7 +115,7 @@ The token stack is not the DOM. It does not do implied end tags, foster parentin
 
 ### 2.4 Document rules
 
-These rules apply to the whole document, also when it has no block. They remove the cases where the token stack and the WHATWG tree disagree about an element that matters for blocks. Error for all of them, except M-13: `RQP_MARKUP_STRUCTURE`.
+These rules apply to the whole document, also when it has no block. They remove the cases where the token stack and the WHATWG tree disagree about an element that matters for blocks. Error for all of them, except M-11 item 4 and M-13: `RQP_MARKUP_STRUCTURE`.
 
 **M-06 Crossing.** An end tag MUST NOT cross (M-05, step 3) an element that was pushed in HTML context and whose name is in `GUARDED`. (Elements pushed in a foreign region, for example an SVG `a`, are not guarded; M-07 applies to them.) Exception: an end tag with a name in `TABLE_FAMILY` can cross elements with a name in `TABLE_PART`.
 
@@ -124,11 +125,13 @@ These rules apply to the whole document, also when it has no block. They remove 
 **M-07 Foreign regions.** In a foreign region:
 
 1. A start tag MUST NOT have a name in `BREAKOUT`.
-2. An end tag MUST match the `svg` or `math` element of the region or an element pushed inside the region. It can cross other elements of the region. A stray end tag (no match) is not allowed. A region ends only with the end tag of its own `svg` or `math` element.
-3. After the start tag of an element with a name in `INTEGRATION` (without the self-closing flag), the tokens up to the end tag of that element MUST be character tokens only. Thus, the content contains no `<`: no tags, no comments, no CDATA.
-4. A start tag with a name in `TEXT` MUST NOT have the self-closing flag. Its content (up to its end tag) MUST be character tokens only. The name `plaintext` is not allowed.
+2. An end tag MUST match the `svg` or `math` element of the region or an element pushed inside the region. It can cross other elements of the region. A stray end tag (no match) is not allowed. A region ends only with the end tag of its own `svg` or `math` element, or at the end of the input (item 6).
+3. After the start tag of an element with a name in `INTEGRATION` (without the self-closing flag), the tokens up to the end tag of that element MUST be character tokens and CDATA sections (item 5) only. Thus, the content contains no tags, no comments, no DOCTYPE tokens and no CDATA other than the CDATA sections of item 5. A `<` that the tokenizer emits as a character token is allowed, for example `a < b` or `1 <2` (E1, H-21).
+4. A start tag with a name in `TEXT` MUST NOT have the self-closing flag. Its content (up to its end tag) MUST be character tokens and CDATA sections (item 5) only, as in item 3. The name `plaintext` is not allowed.
+5. **CDATA sections.** In the content of items 3 and 4, a `<![CDATA[` is allowed when M-12 holds for it. It is a CDATA section. A parser that reads it as a bogus comment (M-04) counts that comment as a CDATA section. This includes a `<![CDATA[` with no `>` before the end of the input (M-12). Every other comment, also a `<?` comment (M-03), is not allowed (E5, H-21).
+6. **End of input.** The input can end in a foreign region, also in the content of an element of items 3 and 4, before its end tag. This is not an error by itself (E2, H-21). All other rules still apply. A block cannot be open at that point: a block start tag in a foreign region is invalid (M-16), and the content of an `html` block cannot contain `svg` or `math` (M-22).
 
-Open: E1, E2, E5, E6 (§2.11).
+Examples: `<svg><desc>a < b</desc></svg>` and `<svg><style><![CDATA[.a{fill:red}]]></style></svg>` are valid. `<svg><desc><b>x</b></desc></svg>`, `<svg><desc><!--x--></desc></svg>` and `<svg><style><![CDATA[a>b{}]]></style></svg>` (M-12) are invalid.
 
 **M-08 Select.** Inside a `select` element (HTML context, from its start tag to its end tag), the only allowed tokens are characters, comments, the start tags `option`, `optgroup`, `hr`, and the end tags `option`, `optgroup`, `select`. The `select` element MUST have an explicit end tag `</select>`.
 
@@ -143,19 +146,20 @@ Open: E1, E2, E5, E6 (§2.11).
 
 So a cell, a row or a row group must be closed explicitly before the next one starts: `<td>a</td><td>b</td>` is valid, `<td>a<td>b` is not.
 
-**M-10 Frameset.** The document MUST NOT contain a `frameset` start tag. Open: E7 (§2.11).
+**M-10 Frameset.** The document MUST NOT contain a `frameset` start tag. This applies in every context: in HTML context and in a foreign region, for example `<svg><frameset/></svg>` (E7, H-21). For the content of `noscript`, M-11 item 3 applies.
 
-**M-11 Noscript.** Let C be the RAWTEXT content of a `noscript` element in HTML context (the bytes from the end of its start tag to the start of its end tag). Tokenize the bytes of C followed by `</noscript>` alone, from the data state, with M-03 and M-04 (HTML context). Then:
+**M-11 Noscript.** Let C be the RAWTEXT content of a `noscript` element in HTML context (the bytes from the end of its start tag to the start of its end tag). If the `noscript` element has no end tag, C is the rest of the input: the bytes from the end of its start tag to the end of the input. All items below apply to this C too (E3, H-21). Tokenize the bytes of C followed by `</noscript>` alone, from the data state, with M-03 and M-04 (HTML context). Then:
 
 1. The first end tag `noscript` MUST start exactly at the end of C. (C must not end inside a tag, a comment, a DOCTYPE or a RAWTEXT, RCDATA, script data or PLAINTEXT section.)
 2. C MUST NOT contain a start tag with a `data-rq-block` attribute.
 3. C MUST NOT contain a start tag named `frameset`, `math`, `noscript`, `plaintext`, `select`, `svg` or `template`.
+4. C MUST NOT contain a start tag `script` that M-13 rejects: a first `type` attribute whose raw value contains `rivqen-manifest` (ASCII case-insensitive) or contains `&`. Error: `RQP_MARKUP_RESERVED` (E8, H-22).
 
-Typical tracking fallbacks such as `<noscript><iframe src="…"></iframe></noscript>` and `<noscript><img src="…"></noscript>` are valid. Open: E3, E8 (§2.11).
+Items 1 to 3: error `RQP_MARKUP_STRUCTURE`. Typical tracking fallbacks such as `<noscript><iframe src="…"></iframe></noscript>` and `<noscript><img src="…"></noscript>` are valid. A `noscript` without an end tag whose rest of the input is `<img src="…">` is valid. `<noscript><script type="application/rivqen-manifest+json">…</script></noscript>` is invalid (item 4): a reader with scripting disabled (a crawler, a server-side HTML tool, a native HTML parser) would see a second manifest.
 
-**M-12 CDATA.** For every `<![CDATA[` that the tokenizer reads in the data state, the first `>` after it MUST be the last character of a `]]>` that starts after `<![CDATA[`. Then a CDATA section (ends at the first `]]>`) and a bogus comment (ends at the first `>`) end at the same byte. Open: E4, E5 (§2.11).
+**M-12 CDATA.** For every `<![CDATA[` that the tokenizer reads in the data state, the first `>` after it MUST be the last character of a `]]>` that starts after `<![CDATA[`. Then a CDATA section (ends at the first `]]>`) and a bogus comment (ends at the first `>`) end at the same byte. If there is no `>` after the `<![CDATA[` before the end of the input, the rule holds: a CDATA section and a bogus comment both end at the end of the input (E4, H-21). M-12 applies in HTML context and in a foreign region. In the content of a foreign `INTEGRATION` or `TEXT` element, M-07 item 5 applies too.
 
-**M-13 Reserved manifest.** A start tag `script` (in any context, outside raw text) MUST NOT have a first `type` attribute whose raw value contains `rivqen-manifest` (ASCII case-insensitive) or contains `&`. The server SDK adds the manifest; a document that already has one, or a script type that could decode to it, is not accepted. Error: `RQP_MARKUP_RESERVED`. The `&` part fails closed, so no character reference decoder is needed (decided by the human, 2026-10-09; [WP-17 S1](/engineering/plan/sprints/WP-17-S1) H-17).
+**M-13 Reserved manifest.** A start tag `script` (in any context, outside raw text) MUST NOT have a first `type` attribute whose raw value contains `rivqen-manifest` (ASCII case-insensitive) or contains `&`. The server SDK adds the manifest; a document that already has one, or a script type that could decode to it, is not accepted. Error: `RQP_MARKUP_RESERVED`. The `&` part fails closed, so no character reference decoder is needed (decided by the human, 2026-10-09; [WP-17 S1](/engineering/plan/sprints/WP-17-S1) H-17). The only raw text where M-13 also applies is the `noscript` content C, tokenized as in M-11 (M-11 item 4, H-22).
 
 ### 2.5 Blocks
 
@@ -267,33 +271,42 @@ Error: `RQP_MARKUP_BAD_JSON`. The hash is over the raw content bytes; RQP does n
 | `RQP_MARKUP_NESTED` | M-17 |
 | `RQP_MARKUP_DUPLICATE` | M-21 |
 | `RQP_MARKUP_BAD_JSON` | M-25 |
-| `RQP_MARKUP_RESERVED` | M-13 |
-| `RQP_MARKUP_STRUCTURE` | M-06 to M-12, M-18 to M-20, M-22 to M-24 |
+| `RQP_MARKUP_RESERVED` | M-11 item 4, M-13 |
+| `RQP_MARKUP_STRUCTURE` | M-06 to M-12 (M-11 items 1 to 3), M-18 to M-20, M-22 to M-24 |
 
 `RQP_MARKUP_STRUCTURE` is the one code for all structure failures: no explicit end tag, implied end tag, unbalanced content, forbidden content element, block context, and the document rules.
 
 **Recommended check order.** M-01, M-02, then one pass over the tokens. For a block start tag: M-17, M-15, M-16, M-18, M-19, M-21, M-26 (count). At the block end: M-26 (size), M-25. A fixture never depends on this order, because a fixture with an error has exactly one error.
 
-### 2.11 Open edge cases
+### 2.11 Decided edge cases
 
-<Badge type="info" text="DESIGN" /> **Open, see [edge cases E1–E8](/engineering/protocol/markup-edge-cases).** The text of the rules below does not decide these cases exactly, or the candidates read it in different ways. The human decides each case after the risk study. Until then, a parser can give either result for these inputs, and the draft fixtures `FX-RQ-MARKUP-EDGE-*` are not normative.
+<Badge type="info" text="DESIGN" /> The rules above decide the eight edge cases of the [edge case study](/engineering/protocol/markup-edge-cases). The human decided E1–E7 (H-21, all as recommended) and E8 (H-22, reject), [WP-17 S1](/engineering/plan/sprints/WP-17-S1). The fixtures `FX-RQ-MARKUP-EDGE-*` are normative ([catalog](/engineering/protocol/fixtures#_4-2-markup-fixtures-fx-rq-markup)).
 
-| Case | Rules | Input |
-|---|---|---|
-| E1 | M-07 | `<` as a character in a foreign text element or integration point |
-| E2 | M-07 | End of input in a foreign region, after all blocks |
-| E3 | M-11 | `noscript` without an end tag |
-| E4 | M-12 | `<![CDATA[` without `>` before the end of input |
-| E5 | M-07, M-12 | CDATA in a foreign text element or integration point |
-| E6 | M-03, M-07 | `<?` that reaches the end of input |
-| E7 | M-10 | `frameset` start tag in a foreign region |
-| E8 | M-11, M-13 | Manifest script in `noscript` content |
+| Case | Input | Rule | Result |
+|---|---|---|---|
+| E1 | `<` as a character in a foreign text element or integration point | M-07 items 3, 4 | Valid |
+| E2 | End of input in a foreign region | M-07 item 6 | Not an error by itself |
+| E3 | `noscript` without an end tag | M-11 | C is the rest of the input; M-11 applies |
+| E4 | `<![CDATA[` without `>` before the end of input | M-12 | Valid |
+| E5 | CDATA in a foreign text element or integration point | M-07 item 5, M-12 | Valid when M-12 holds |
+| E6 | `<?` that reaches the end of input | M-03 | A comment to the end of the input |
+| E7 | `frameset` start tag in a foreign region | M-10 | Invalid (`STRUCTURE`) |
+| E8 | Manifest script in `noscript` content | M-11 item 4, M-13 | Invalid (`RESERVED`) |
 
 ## 3. Implementation notes
 
 <Badge type="info" text="DESIGN" /> Four parser candidates implement section 2 in WP-17: Rust, Node.js, Java and PHP (`tools/rqp-markup/CONTRACT.md` §1). All of them use the same token stack (M-05). A tree is never the source of truth for validity.
 
-### 3.1 Parsers with a tokenizer only (Rust, PHP)
+<Badge type="tip" text="FACT" /> All four candidates use an own tokenizer over the input bytes and no HTML library at run time (decision log DL-012…DL-016). No candidate has a tree builder.
+
+| Candidate | Tokenizer | Why not a library | Decision |
+|---|---|---|---|
+| Rust | Own | `lol_html` cannot be driven by the M-04/M-05 foreign-region flag and cannot tokenize `noscript` content again (M-11); `html5gum` raw attribute spans are not documented | DL-013 |
+| Node.js | Own | The parse5 8.0.1 tokenizer is quadratic in the attribute count of one tag (below) | DL-016 |
+| Java | Own | jsoup `Tokeniser` and `Token` are package-private; jsoup works on UTF-16 and builds `noscript` content as elements | DL-014 |
+| PHP | Own | No PHP library gives byte offsets (research R-1) | H-13, DL-015 |
+
+### 3.1 Tokenizer
 
 The tokenizer must implement these WHATWG states exactly:
 
@@ -302,21 +315,24 @@ The tokenizer must implement these WHATWG states exactly:
 | Data, tag open, end tag open, tag name | Find tags and their byte spans |
 | Before/after attribute name, attribute name, attribute value (double-quoted, single-quoted, unquoted), after attribute value (quoted), self-closing start tag | `>` inside quoted values; duplicate attributes; raw values (M-15, M-16, M-13); self-closing flag (M-05, M-18, M-22) |
 | Markup declaration open, comment start, comment, comment end dash, comment end, comment end bang, and the comment less-than-sign states | Comments, including `<!-->`, `<!--->` and `--!>` |
-| Bogus comment; processing instruction states (or bogus comment for `<?`) | `<!x …>`, `</ …>`, `<?…>`: all end at the first `>` |
+| Bogus comment; processing instruction states (or bogus comment for `<?`) | `<!x …>`, `</ …>`, `<?…>`: all end at the first `>`, or at the end of the input (M-03, E6) |
 | DOCTYPE states | A DOCTYPE ends at the first `>` |
 | RCDATA, RAWTEXT, script data with the escaped and double-escaped states, PLAINTEXT, and their end tag states | Raw text (M-04). The script data states decide where `</script>` ends a script that contains `<!--<script>` |
-| CDATA section (optional) | M-12 lets the tokenizer treat `<![CDATA[` as a bogus comment |
+| CDATA section (optional) | M-12 lets the tokenizer treat `<![CDATA[` as a bogus comment. M-07 item 5 then counts that comment as a CDATA section |
 
 Character references need not be decoded: no rule depends on decoded text. The state after a start tag comes from M-04 and the foreign-region flag of the token stack (M-05), not from a tree builder.
 
-<Badge type="warning" text="RESEARCH" /> `lol_html` gives byte spans of tags (research R-1). Whether its own text-type logic agrees with M-04 in every case (foreign regions, `noscript`, `plaintext`) is NOT FOUND. The Rust lane checks this with the fixtures; where it differs, the candidate must follow M-04.
+All structural characters of the tokenizer are ASCII, and a byte of a UTF-8 multi-byte sequence is never ASCII. So for valid UTF-8 (M-02), a scan over bytes finds the same token boundaries as a scan over code points. Offsets are then UTF-8 byte offsets without a conversion. The input preprocessing (CR and CR LF become LF) does not change a token boundary when the tokenizer treats CR as white space.
 
-### 3.2 Parsers with a tree builder (Node.js, Java)
+### 3.2 Test oracles with a tree builder
 
-- Get start and end offsets from source locations (parse5 `sourceCodeLocation`; jsoup `sourceRange()` and `endSourceRange()`), and convert UTF-16 offsets to UTF-8 byte offsets exactly (non-BMP characters are 2 UTF-16 units and 4 bytes; CR LF stays 2 bytes).
-- The rules need tokens that the tree does not keep: stray end tags, start tags that the tree builder ignores, raw attribute values, self-closing flags. Use the library tokenizer if it is public, or the parse error positions and the source text. A candidate must not decide validity from the tree alone.
-- Use scripting enabled. <Badge type="tip" text="FACT" /> parse5 has the option `scriptingEnabled` (content of `noscript` is text when it is true). jsoup (current `master`) inserts the children of `noscript` as elements (`HtmlTreeBuilder.startNoscript`); a jsoup candidate must treat the content of `noscript` as text and rely on M-11.
+A tree builder is used only to test the candidates, never to decide validity.
+
+- <Badge type="tip" text="FACT" /> parse5 8.0.1 (MIT) is a development dependency of the Node.js candidate (tokenizer differential test and tree agreement test) and of the cross-check tool `tools/rqp-markup/crosscheck/` (DL-016). Use scripting enabled: with the option `scriptingEnabled`, the content of `noscript` is text.
+- <Badge type="tip" text="FACT" /> The parse5 8.0.1 tokenizer is quadratic in the attribute count of one tag. For each attribute name it searches the earlier attributes of the same tag linearly (`_leaveAttrName` calls `getTokenAttr`, a loop over `token.attrs`, in `dist/common/token.js`). The Node.js lane measured 26 s for one tag of 432 KB (`tools/rqp-markup/node/README.md`). So parse5 is not used to parse untrusted input of up to 5 MiB (M-01).
+- <Badge type="tip" text="FACT" /> jsoup (current `master`) inserts the children of `noscript` as elements (`HtmlTreeBuilder.startNoscript`): this is the scripting-disabled view. Source locations of a tree are in UTF-16 units (parse5 `sourceCodeLocation`; jsoup `sourceRange()` and `endSourceRange()`). A tool that compares them with candidate results converts them to UTF-8 byte offsets exactly (non-BMP characters are 2 UTF-16 units and 4 bytes; CR LF stays 2 bytes).
 - <Badge type="tip" text="FACT" /> The WHATWG parser changed in 2025–2026: `select` content is parsed in the "in body" mode (customizable `select`) and `<?target …>` gives a processing instruction. Parsers that implement an older version give a different tree for such input. M-08 and M-03 make the result the same for valid documents.
+- <Badge type="warning" text="RESEARCH" /> A tree is not a perfect oracle. parse5 8.0.1 gives a comment for CDATA in an integration point (M-07 item 5) and the older `<?` behavior (M-03). A false accept that the oracle shares with all candidates is not found by a cross-check ([edge cases](/engineering/protocol/markup-edge-cases) §4).
 
 ### 3.3 Order of work in one pass
 

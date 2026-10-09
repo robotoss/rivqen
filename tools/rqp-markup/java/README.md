@@ -15,7 +15,7 @@ Requirements: JDK 21 and Gradle 8.14 (`gradle` on `PATH`). There is no Gradle wr
 2. Run `gradle --quiet installDist`.
 3. The command is `build/install/rqp-markup/bin/rqp-markup`.
 
-The differential runner (`tools/rqp-markup/diff.mjs`) runs the same two steps.
+The differential runner (`tools/rqp-markup/diff.mjs`) runs the same two steps. A clean build with a cold Gradle daemon takes about 46 s (most of it is Error Prone); the runner allows 120 s.
 
 When Maven Central rejects the requests of your host (HTTP 429), set a mirror of Maven Central for one command. The build uses Maven Central and the Gradle Plugin Portal when the property is not set.
 
@@ -50,6 +50,8 @@ Run these commands in `tools/rqp-markup/java`:
 | Mutation testing (PIT) | `gradle pitest -Ppitest.targetClasses="$(node <root>/tools/mutation/diff-ranges.mjs --base main --ext .java --format pit-classes)"` |
 
 The PIT report is in `build/reports/pitest/index.html`. The PIT run leaves out `LinearTimeTest`: it checks time on 5 MiB inputs, not behavior.
+
+Last mutation result (2026-10-09, all classes of the package): 885 of 916 mutants killed (96.6 %). The other 31: 28 are equivalent (the task report lists each with its reason) and 3 are accepted (`Main.main` calls `System.exit`; the differential runner runs it on every fixture).
 
 | Test class | What it checks |
 |---|---|

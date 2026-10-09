@@ -994,6 +994,39 @@ mod tests {
     }
 
     #[test]
+    fn comment_ends_before_the_next_token() {
+        // A token after the comment shows that the comment does not run
+        // to EOF.
+        assert_eq!(tokens("<!----><p>"), ["comment 0..7", "<p>7..10"]);
+        assert_eq!(tokens("<!-- a ---><p>"), ["comment 0..11", "<p>11..14"]);
+        assert_eq!(tokens("<!-- a --!><p>"), ["comment 0..11", "<p>11..14"]);
+        assert_eq!(tokens("<!--><p>"), ["comment 0..5", "<p>5..8"]);
+        assert_eq!(tokens("<!---><p>"), ["comment 0..6", "<p>6..9"]);
+    }
+
+    #[test]
+    fn comment_less_than_sign_states_do_not_end_a_comment_early() {
+        // `<!x-` and `<!-x` inside a comment: the `>` after them is text.
+        assert_eq!(tokens("<!--<!x-><p>--><b>"), ["comment 0..15", "<b>15..18"]);
+        assert_eq!(tokens("<!--<!-x><p>--><b>"), ["comment 0..15", "<b>15..18"]);
+        // `<!--` inside a comment, then `>`: the comment ends.
+        assert_eq!(tokens("<!--<!--><b>"), ["comment 0..9", "<b>9..12"]);
+    }
+
+    #[test]
+    fn equals_sign_before_an_attribute_name() {
+        // `=` starts an attribute named `=`; the next attribute is a new one.
+        assert_eq!(
+            tokens("<p = data-rq-block=\"b\">"),
+            ["<p>0..23 block=\"b\""]
+        );
+        assert_eq!(
+            tokens("<p  = data-rq-block=\"b\">"),
+            ["<p>0..24 block=\"b\""]
+        );
+    }
+
+    #[test]
     fn comment_less_than_sign_states() {
         assert_eq!(tokens("<!--<!-->"), ["comment 0..9"]);
         assert_eq!(tokens("<!--<!--->"), ["comment 0..10"]);

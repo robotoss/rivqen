@@ -303,7 +303,12 @@ pub fn result_json(result: &Result<Document, MarkupError>, fixture: Option<&str>
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::indexing_slicing)]
+#[allow(
+    clippy::unwrap_used,
+    clippy::indexing_slicing,
+    clippy::arithmetic_side_effects,
+    clippy::format_push_string
+)]
 mod tests {
     use super::*;
 

@@ -476,7 +476,12 @@ pub(crate) fn raw_kind(raw_name: &[u8]) -> Option<(RawKind, &'static [u8])> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::indexing_slicing)]
+#[allow(
+    clippy::unwrap_used,
+    clippy::indexing_slicing,
+    clippy::arithmetic_side_effects,
+    clippy::format_push_string
+)]
 mod tests {
     use super::*;
 

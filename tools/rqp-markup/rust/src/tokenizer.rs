@@ -775,3 +775,358 @@ fn set_value(attr: Attr, value: Span, block: &mut Option<Span>, ty: &mut Option<
         Attr::Other => {}
     }
 }
+
+#[cfg(test)]
+#[allow(
+    clippy::unwrap_used,
+    clippy::indexing_slicing,
+    clippy::arithmetic_side_effects,
+    clippy::format_push_string
+)]
+mod tests {
+    use super::*;
+    use crate::names::raw_kind;
+
+    /// Tokens of `input` as short strings. Start tags switch the raw text
+    /// state as M-04 does in HTML context.
+    fn tokens(input: &str) -> Vec<String> {
+        let mut tokenizer = Tokenizer::new(input.as_bytes(), 0);
+        let text = |span: Span| &input[span.start..span.end];
+        let mut out = Vec::new();
+        loop {
+            match tokenizer.next_token() {
+                Token::StartTag(tag) => {
+                    let name = text(tag.name);
+                    let mut d = format!("<{name}>{}..{}", tag.span.start, tag.span.end);
+                    if tag.self_closing {
+                        d.push_str(" /");
+                    }
+                    if let Some(v) = tag.block_attr {
+                        d.push_str(" block=");
+                        d += &format!("{:?}", text(v));
+                    }
+                    if let Some(v) = tag.type_attr {
+                        d.push_str(" type=");
+                        d += &format!("{:?}", text(v));
+                    }
+                    out.push(d);
+                    if let Some((kind, end_name)) = raw_kind(name.as_bytes()) {
+                        tokenizer.set_raw(kind, end_name);
+                    }
+                }
+                Token::EndTag(tag) => out.push(format!(
+                    "</{}>{}..{}",
+                    text(tag.name),
+                    tag.span.start,
+                    tag.span.end
+                )),
+                Token::Comment(span) => out.push(format!("comment {}..{}", span.start, span.end)),
+                Token::Doctype(span) => out.push(format!("doctype {}..{}", span.start, span.end)),
+                Token::Cdata { span, well_formed } => out.push(format!(
+                    "cdata {}..{} {}",
+                    span.start,
+                    span.end,
+                    if well_formed { "ok" } else { "bad" }
+                )),
+                Token::Eof => return out,
+            }
+        }
+    }
+
+    #[test]
+    fn start_and_end_tags_have_exact_spans() {
+        assert_eq!(tokens("ab<p>c</p>"), ["<p>2..5", "</p>6..10"]);
+        assert_eq!(tokens("<DiV\tclass=x\n>"), ["<DiV>0..14"]);
+        assert_eq!(tokens("<a\rb=c>"), ["<a>0..7"], "CR is white space");
+        assert_eq!(tokens("<a\x0Cb>"), ["<a>0..5"], "FF is white space");
+        assert_eq!(tokens("</p class=\"a>b\" x>"), ["</p>0..18"]);
+        assert_eq!(tokens("<p\0q>"), ["<p\0q>0..5"]);
+    }
+
+    #[test]
+    fn bom_offset_is_skipped_by_the_caller() {
+        let input = "\u{feff}<p>";
+        let mut tokenizer = Tokenizer::new(input.as_bytes(), 3);
+        let Token::StartTag(tag) = tokenizer.next_token() else {
+            unreachable!("a start tag");
+        };
+        assert_eq!(tag.span, Span { start: 3, end: 6 });
+        assert_eq!(tokenizer.next_token(), Token::Eof);
+        assert_eq!(tokenizer.next_token(), Token::Eof);
+    }
+
+    #[test]
+    fn attribute_values_are_raw_and_quoted_gt_does_not_end_a_tag() {
+        assert_eq!(
+            tokens("<p title=\"a>b\" data-rq-block=\"x&amp;\">"),
+            ["<p>0..38 block=\"x&amp;\""]
+        );
+        assert_eq!(
+            tokens("<p data-rq-block='s>q'>"),
+            ["<p>0..23 block=\"s>q\""]
+        );
+        assert_eq!(
+            tokens("<p data-rq-block='a\"b'>"),
+            ["<p>0..23 block=\"a\\\"b\""]
+        );
+        assert_eq!(
+            tokens("<p data-rq-block=uq id=y>"),
+            ["<p>0..25 block=\"uq\""]
+        );
+        assert_eq!(tokens("<p data-rq-block=uq>"), ["<p>0..20 block=\"uq\""]);
+        assert_eq!(
+            tokens("<p data-rq-block=u'q\">"),
+            ["<p>0..22 block=\"u'q\\\"\""]
+        );
+        assert_eq!(
+            tokens("<p data-rq-block = \"v\" >"),
+            ["<p>0..24 block=\"v\""]
+        );
+        assert_eq!(tokens("<p data-rq-block>"), ["<p>0..17 block=\"\""]);
+        assert_eq!(tokens("<p data-rq-block x>"), ["<p>0..19 block=\"\""]);
+        assert_eq!(tokens("<p data-rq-block=>"), ["<p>0..18 block=\"\""]);
+        assert_eq!(tokens("<p data-rq-block=\"\"x>"), ["<p>0..21 block=\"\""]);
+        assert_eq!(tokens("<p data-rq-block/>"), ["<p>0..18 / block=\"\""]);
+        assert_eq!(
+            tokens("<p a=1 data-rq-block=\"b\">"),
+            ["<p>0..25 block=\"b\""]
+        );
+    }
+
+    #[test]
+    fn first_attribute_with_a_name_wins() {
+        assert_eq!(
+            tokens("<p DATA-RQ-BLOCK=\"a\" data-rq-block=\"b\">"),
+            ["<p>0..39 block=\"a\""]
+        );
+        assert_eq!(
+            tokens("<p data-rq-block data-rq-block=\"b\">"),
+            ["<p>0..35 block=\"\""]
+        );
+        assert_eq!(
+            tokens("<script type=a TYPE=b data-rq-block-x=c>"),
+            ["<script>0..40 type=\"a\""]
+        );
+        assert_eq!(
+            tokens("<script type data-rq-block=a type=b>"),
+            ["<script>0..36 block=\"a\" type=\"\""]
+        );
+        assert_eq!(tokens("<p =data-rq-block=x>"), ["<p>0..20"]);
+        assert_eq!(tokens("<p data-rq-blocks=x>"), ["<p>0..20"]);
+        assert_eq!(tokens("<p xtype=x>"), ["<p>0..11"]);
+    }
+
+    #[test]
+    fn self_closing_flag_needs_slash_gt() {
+        assert_eq!(tokens("<br/>"), ["<br>0..5 /"]);
+        assert_eq!(tokens("<br / >"), ["<br>0..7"]);
+        assert_eq!(tokens("<br a=\"1\"/>"), ["<br>0..11 /"]);
+        assert_eq!(tokens("<br a/>"), ["<br>0..7 /"]);
+        assert_eq!(
+            tokens("<br a=1/>"),
+            ["<br>0..9"],
+            "the slash is part of the value"
+        );
+        assert_eq!(tokens("<br/x>"), ["<br>0..6"]);
+        assert_eq!(tokens("<a b=\"1\"c=2>"), ["<a>0..12"]);
+    }
+
+    #[test]
+    fn eof_in_a_tag_emits_nothing() {
+        for input in [
+            "<div data-rq-block=\"x\"",
+            "<div a='x>",
+            "<div a=",
+            "<div a= ",
+            "<div a",
+            "<div a ",
+            "<div a=x",
+            "<div /",
+            "<div ",
+            "<div",
+            "</div",
+            "<div a=\"b\"",
+        ] {
+            assert!(tokens(input).is_empty(), "{input:?}");
+        }
+    }
+
+    #[test]
+    fn less_than_that_is_text() {
+        assert_eq!(tokens("a < b <<p> <1 <"), ["<p>7..10"]);
+        assert!(tokens("</").is_empty());
+        assert_eq!(tokens("</><p>"), ["<p>3..6"], "`</>` is dropped");
+    }
+
+    #[test]
+    fn bogus_comments_end_at_the_first_gt() {
+        assert_eq!(tokens("<!x <p a=\"b\">c"), ["comment 0..13"]);
+        assert_eq!(tokens("</ <p>x"), ["comment 0..6"]);
+        assert_eq!(tokens("</1>"), ["comment 0..4"]);
+        assert_eq!(tokens("<?xml a=\">\"?>"), ["comment 0..10"]);
+        assert_eq!(tokens("<!-x>"), ["comment 0..5"]);
+        assert_eq!(tokens("<!>"), ["comment 0..3"]);
+        assert_eq!(tokens("<!"), ["comment 0..2"]);
+        assert_eq!(tokens("<?"), ["comment 0..2"]);
+        assert_eq!(tokens("</ x"), ["comment 0..4"]);
+        assert_eq!(tokens("<![cdata[x]]>"), ["comment 0..13"]);
+    }
+
+    #[test]
+    fn comment_states() {
+        assert_eq!(tokens("<!---->"), ["comment 0..7"]);
+        assert_eq!(tokens("<!-->x"), ["comment 0..5"]);
+        assert_eq!(tokens("<!--->x"), ["comment 0..6"]);
+        assert_eq!(tokens("<!-- a --!><p>"), ["comment 0..11", "<p>11..14"]);
+        assert_eq!(tokens("<!-- a -- b -->"), ["comment 0..15"]);
+        assert_eq!(tokens("<!-- a --->"), ["comment 0..11"]);
+        assert_eq!(tokens("<!-- a --!x -->"), ["comment 0..15"]);
+        assert_eq!(tokens("<!-- a --!-->"), ["comment 0..13"]);
+        assert_eq!(tokens("<!-- <p> -> --x>-->"), ["comment 0..19"]);
+        assert_eq!(tokens("<!--x-y-->"), ["comment 0..10"]);
+        assert_eq!(tokens("<!---x-->"), ["comment 0..9"]);
+        assert_eq!(tokens("<!-- x"), ["comment 0..6"]);
+        assert_eq!(tokens("<!--"), ["comment 0..4"]);
+        assert_eq!(tokens("<!---"), ["comment 0..5"]);
+        assert_eq!(tokens("<!-- --"), ["comment 0..7"]);
+        assert_eq!(tokens("<!-- --!"), ["comment 0..8"]);
+        assert_eq!(tokens("<!-- -"), ["comment 0..6"]);
+    }
+
+    #[test]
+    fn comment_less_than_sign_states() {
+        assert_eq!(tokens("<!--<!-->"), ["comment 0..9"]);
+        assert_eq!(tokens("<!--<!--->"), ["comment 0..10"]);
+        assert_eq!(tokens("<!--<!-x-->"), ["comment 0..11"]);
+        assert_eq!(tokens("<!--<!x-->"), ["comment 0..10"]);
+        assert_eq!(tokens("<!--<<!-->"), ["comment 0..10"]);
+        assert_eq!(tokens("<!--<x-->"), ["comment 0..9"]);
+        assert_eq!(tokens("<!--<!--x-->"), ["comment 0..12"]);
+        assert_eq!(tokens("<!--<!--!>"), ["comment 0..10"]);
+    }
+
+    #[test]
+    fn doctype_ends_at_the_first_gt() {
+        assert_eq!(tokens("<!DOCTYPE html>"), ["doctype 0..15"]);
+        assert_eq!(tokens("<!doctype html PUBLIC \"a>b\">"), ["doctype 0..25"]);
+        assert_eq!(tokens("<!DocType>"), ["doctype 0..10"]);
+        assert_eq!(tokens("<!DOCTYPE html"), ["doctype 0..14"]);
+        assert_eq!(tokens("<!DOCTYP>"), ["comment 0..9"]);
+    }
+
+    #[test]
+    fn cdata_condition_of_m12() {
+        assert_eq!(tokens("<![CDATA[ a < b ]]>"), ["cdata 0..19 ok"]);
+        assert_eq!(tokens("<![CDATA[]]>"), ["cdata 0..12 ok"]);
+        assert_eq!(tokens("<![CDATA[ a > b ]]>"), ["cdata 0..13 bad"]);
+        assert_eq!(tokens("<![CDATA[]>"), ["cdata 0..11 bad"]);
+        assert_eq!(tokens("<![CDATA[>"), ["cdata 0..10 bad"]);
+        assert_eq!(tokens("<![CDATA[x]>"), ["cdata 0..12 bad"]);
+        assert_eq!(tokens("<![CDATA[x"), ["cdata 0..10 ok"]);
+    }
+
+    #[test]
+    fn rcdata_and_rawtext_end_at_the_appropriate_end_tag() {
+        assert_eq!(
+            tokens("<title><p a=b></titlex></TITLE ><p>"),
+            ["<title>0..7", "</TITLE>23..32", "<p>32..35"]
+        );
+        assert_eq!(
+            tokens("<textarea></textarea/></p>"),
+            ["<textarea>0..10", "</textarea>10..22", "</p>22..26"]
+        );
+        assert_eq!(
+            tokens("<style></style a=\">\"><p>"),
+            ["<style>0..7", "</style>7..21", "<p>21..24"]
+        );
+        assert_eq!(tokens("<xmp></xm></xmp1></ xmp>"), ["<xmp>0..5"]);
+        assert_eq!(tokens("<title></title"), ["<title>0..7"]);
+        assert_eq!(tokens("<title></title a"), ["<title>0..7"]);
+        assert_eq!(
+            tokens("<iframe><</</iframe\n>"),
+            ["<iframe>0..8", "</iframe>11..21"]
+        );
+        assert_eq!(tokens("<title>a<"), ["<title>0..7"]);
+    }
+
+    #[test]
+    fn plaintext_never_ends() {
+        assert_eq!(tokens("<plaintext></plaintext><p>"), ["<plaintext>0..11"]);
+    }
+
+    #[test]
+    fn script_data_states() {
+        // (input, which occurrence of `</script` ends the script data, if any)
+        let cases: &[(&str, Option<usize>)] = &[
+            ("<script>a<b</p></script>", Some(0)),
+            // Escaped: `</script>` still ends the script.
+            ("<script><!-- </script>", Some(0)),
+            // Double escaped: `</script>` returns to escaped, `-->` to data.
+            ("<script><!--<script>a</script>b--></script>", Some(1)),
+            ("<script><!--<SCRIPT/></script\t>--></script>", Some(1)),
+            // Not double escaped: `<scripts>` and `<p>`.
+            ("<script><!--<scripts></script>", Some(0)),
+            ("<script><!--<p></script>", Some(0)),
+            // `<!-` alone or `<!x` does not start an escape.
+            ("<script><!-<script></script>", Some(0)),
+            ("<script><!x<script></script>", Some(0)),
+            ("<script><<!--<script></script>--></script>", Some(1)),
+            // `-->` ends the escape; `<!--` must start it again.
+            ("<script><!-- --><script></script>", Some(0)),
+            ("<script><!--><script></script>", Some(0)),
+            ("<script><!---><script></script>", Some(0)),
+            ("<script><!-- -x-<script></script>--></script>", Some(1)),
+            ("<script><!-- --x<script></script>--></script>", Some(1)),
+            ("<script><!-- -<script></script>--></script>", Some(1)),
+            ("<script><!-- --<script></script>--></script>", Some(1)),
+            ("<script><!-- ---<script></script>--></script>", Some(1)),
+            ("<script><!--x<script></script>--></script>", Some(1)),
+            // Escaped end tag names that are not `script`.
+            ("<script><!-- </scrip></script1></script>", Some(1)),
+            ("<script><!-- <1</ </script>", Some(0)),
+            // In the double-escaped state.
+            (
+                "<script><!--<script>-<!-</scrip></script x>--></script>",
+                Some(1),
+            ),
+            ("<script><!--<script>--<-></ script>--></script>", Some(0)),
+            ("<script><!--<script>--></script>", Some(0)),
+            ("<script><!--<script>---></script>", Some(0)),
+            ("<script><!--<script>-></script>--></script>", Some(1)),
+            ("<script><!--<script>-x</script>--></script>", Some(1)),
+            ("<script><!--<script>--x</script>--></script>", Some(1)),
+            ("<script><!--<script><</script>--></script>", Some(1)),
+            ("<script><!--<script><x</script>--></script>", Some(1)),
+            ("<script><!--<script></script\n--></script>", Some(1)),
+            (
+                "<script><!--<script></script1></script>--></script>",
+                Some(2),
+            ),
+            ("<script><!--<script></scriptx --></script>", Some(1)),
+            ("<script><!--<script></script", None),
+            ("<script></", None),
+            ("<script><!--<scr", None),
+            ("<script></script", None),
+            ("<script></scriptx>", None),
+            ("<script></1></ script></script>", Some(0)),
+        ];
+        for (input, which) in cases {
+            let expected: Vec<String> = which
+                .iter()
+                .map(|&n| {
+                    let start = input.match_indices("</script").nth(n).unwrap().0;
+                    let end = start + input[start..].find('>').unwrap() + 1;
+                    format!("</script>{start}..{end}")
+                })
+                .collect();
+            let got = tokens(input);
+            assert_eq!(got[0], "<script>0..8", "{input}");
+            assert_eq!(got[1..], expected, "{input}");
+        }
+        // After the end tag the data state continues.
+        assert_eq!(
+            tokens("<script>x</script><p>"),
+            ["<script>0..8", "</script>9..18", "<p>18..21"]
+        );
+    }
+}

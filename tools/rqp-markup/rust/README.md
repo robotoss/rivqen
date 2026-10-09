@@ -62,6 +62,18 @@ RQP_MARKUP_FIXTURES="$(git rev-parse --show-toplevel)/fixtures/rqp/markup" \
   cargo mutants --no-shuffle -j 3 --timeout 90 --output /tmp/rqp-markup-mutants
 ```
 
+Each job needs about 450 MB of disk space for its copy of the package and its build.
+
+Result (cargo-mutants 27.1.0, whole package, 2026-10-09): 402 mutants, 30 unviable, 348 caught, 10 timeouts (infinite loops, counted as detected), 14 missed. Kill rate 358/372 = 96.2 %. All 14 missed mutants are equivalent:
+
+| Mutants | Why equivalent |
+|---|---|
+| `\|` → `^` in three flag masks (`names.rs`, `rules.rs` ×2) | The flags are different single bits, so OR and XOR give the same mask |
+| `>` → `>=` in `open_in_content` | The block element never has a name that is searched there (lists, `table`, `ruby`; a heading block is caught by the clause before) |
+| Comment state arms: `<` and `!` in the comment and less-than-sign states, `-` in the comment end bang state | The removed arm reconsumes into a state that makes the same transition; the less-than-sign states only add parse errors |
+| Tag state arms: `/` `>` in before attribute name, `>` in before attribute value, `/` `>` and white space in after attribute value (quoted) | The removed arm reconsumes into the before attribute name state, which makes the same transition |
+| Escaped less-than sign state: letter guard → `true` | A non-letter then goes to the escaped state in both paths |
+
 ## Design
 
 ### Library choice

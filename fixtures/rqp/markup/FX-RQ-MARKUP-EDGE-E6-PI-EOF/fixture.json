@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-E6-PI-EOF",
+  "description": "DRAFT (edge case E6, open): a <? that reaches the end of the input counts as a comment to EOF; in a foreign integration point this is invalid",
+  "rules": [
+    "M-03",
+    "M-07"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

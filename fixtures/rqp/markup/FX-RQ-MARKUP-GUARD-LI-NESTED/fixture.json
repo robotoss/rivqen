@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-GUARD-LI-NESTED",
+  "description": "An li start tag in the content while an li opened in the content is open above the nearest list (the WHATWG parser closes the first li and the div in it)",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

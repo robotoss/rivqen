@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-E8-NOSCRIPT-MANIFEST",
+  "description": "DRAFT (edge case E8, open): a manifest script inside noscript (markup when scripting is disabled) is reserved",
+  "rules": [
+    "M-11",
+    "M-13"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_RESERVED"
+  }
+}

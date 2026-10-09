@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-E3-NOSCRIPT-EOF",
+  "description": "DRAFT (edge case E3, open): a noscript without an end tag; its content is the rest of the input and passes the checks of M-11",
+  "rules": [
+    "M-11"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

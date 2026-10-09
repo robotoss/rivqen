@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-E2-FOREIGN-EOF",
+  "description": "DRAFT (edge case E2, open): the input ends inside a foreign text element after all blocks; this is valid",
+  "rules": [
+    "M-07",
+    "M-20"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

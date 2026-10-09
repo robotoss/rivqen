@@ -82,7 +82,7 @@ The parser decodes the input as UTF-8 always. It ignores `<meta charset>` and th
 - A start tag ends at its `>`. A `>` inside a quoted attribute value does not end the tag.
 - Comments follow the WHATWG comment states, including `<!-->`, `<!--->` and the end `--!>`.
 - `<!` followed by anything other than `--`, `DOCTYPE` (ASCII case-insensitive) or `[CDATA[` starts a bogus comment. `</` followed by a character that is not an ASCII letter and not `>` starts a bogus comment. A bogus comment ends at the first `>`.
-- `<?` starts a bogus comment in older parsers and a processing instruction in newer ones. <Badge type="tip" text="FACT" /> Both end at the first `>` (WHATWG "processing instruction data state" and "bogus comment state"). RQP treats them the same.
+- `<?` starts a bogus comment in older parsers and a processing instruction in newer ones. <Badge type="tip" text="FACT" /> Both end at the first `>` (WHATWG "processing instruction data state" and "bogus comment state"). RQP treats them the same. Open: E6, a `<?` without `>` (§2.11).
 - A DOCTYPE token ends at the first `>`.
 - An end tag can have attributes and a self-closing flag. They have no effect.
 - When a start tag has two attributes with the same name, the first one is used and the second is dropped (WHATWG "attribute name state").
@@ -128,6 +128,8 @@ These rules apply to the whole document, also when it has no block. They remove 
 3. After the start tag of an element with a name in `INTEGRATION` (without the self-closing flag), the tokens up to the end tag of that element MUST be character tokens only. Thus, the content contains no `<`: no tags, no comments, no CDATA.
 4. A start tag with a name in `TEXT` MUST NOT have the self-closing flag. Its content (up to its end tag) MUST be character tokens only. The name `plaintext` is not allowed.
 
+Open: E1, E2, E5, E6 (§2.11).
+
 **M-08 Select.** Inside a `select` element (HTML context, from its start tag to its end tag), the only allowed tokens are characters, comments, the start tags `option`, `optgroup`, `hr`, and the end tags `option`, `optgroup`, `select`. The `select` element MUST have an explicit end tag `</select>`.
 
 **M-09 Table parts.** Let F be the nearest element on the token stack with a name in `TABLE_FAMILY`; the search stops at a `template` element. A start tag in HTML context with one of these names is allowed only when F is none or is in the list:
@@ -141,7 +143,7 @@ These rules apply to the whole document, also when it has no block. They remove 
 
 So a cell, a row or a row group must be closed explicitly before the next one starts: `<td>a</td><td>b</td>` is valid, `<td>a<td>b` is not.
 
-**M-10 Frameset.** The document MUST NOT contain a `frameset` start tag.
+**M-10 Frameset.** The document MUST NOT contain a `frameset` start tag. Open: E7 (§2.11).
 
 **M-11 Noscript.** Let C be the RAWTEXT content of a `noscript` element in HTML context (the bytes from the end of its start tag to the start of its end tag). Tokenize the bytes of C followed by `</noscript>` alone, from the data state, with M-03 and M-04 (HTML context). Then:
 
@@ -149,9 +151,9 @@ So a cell, a row or a row group must be closed explicitly before the next one st
 2. C MUST NOT contain a start tag with a `data-rq-block` attribute.
 3. C MUST NOT contain a start tag named `frameset`, `math`, `noscript`, `plaintext`, `select`, `svg` or `template`.
 
-Typical tracking fallbacks such as `<noscript><iframe src="…"></iframe></noscript>` and `<noscript><img src="…"></noscript>` are valid.
+Typical tracking fallbacks such as `<noscript><iframe src="…"></iframe></noscript>` and `<noscript><img src="…"></noscript>` are valid. Open: E3, E8 (§2.11).
 
-**M-12 CDATA.** For every `<![CDATA[` that the tokenizer reads in the data state, the first `>` after it MUST be the last character of a `]]>` that starts after `<![CDATA[`. Then a CDATA section (ends at the first `]]>`) and a bogus comment (ends at the first `>`) end at the same byte.
+**M-12 CDATA.** For every `<![CDATA[` that the tokenizer reads in the data state, the first `>` after it MUST be the last character of a `]]>` that starts after `<![CDATA[`. Then a CDATA section (ends at the first `]]>`) and a bogus comment (ends at the first `>`) end at the same byte. Open: E4, E5 (§2.11).
 
 **M-13 Reserved manifest.** A start tag `script` (in any context, outside raw text) MUST NOT have a first `type` attribute whose raw value contains `rivqen-manifest` (ASCII case-insensitive) or contains `&`. The server SDK adds the manifest; a document that already has one, or a script type that could decode to it, is not accepted. Error: `RQP_MARKUP_RESERVED`. The `&` part fails closed, so no character reference decoder is needed (decided by the human, 2026-10-09; [WP-17 S1](/engineering/plan/sprints/WP-17-S1) H-17).
 
@@ -224,6 +226,13 @@ Comments, bogus comments, character references and all other elements are allowe
 | g | name in `TABLE_PART` or `col` | no `table` opened in the content is open (M-09 also applies) |
 | h | `rb`, `rtc` | no `ruby` opened in the content is open, or an `rb`, `rp`, `rt` or `rtc` is open |
 | i | `rp`, `rt` | no `ruby` opened in the content is open, or an `rb`, `rp` or `rt` is open |
+| j | `li`, `dd`, `dt` | an `li`, `dd` or `dt` opened in the content is on the token stack above the nearest `ul`, `ol`, `menu` or `dl` opened in the content |
+| k | every name that is not in `TABLE_PART` and is not `col` | F (M-09) is `table`, `tbody`, `thead`, `tfoot`, `tr` or `colgroup` |
+
+"Above" means nearer to the current node. Items j and k were added by the human decision H-18 ([WP-17 S1](/engineering/plan/sprints/WP-17-S1)), after a differential run against the WHATWG tree builder:
+
+- Item j: in `<ul><li><div><li>`, the WHATWG parser closes the first `li` and the `div` in it. Item c alone accepts this, because a list is open in the content. Item j rejects every `li`, `dd` or `dt` start tag that could find an earlier `li`, `dd` or `dt` before it finds the list.
+- Item k: in table context (`table`, `tbody`, `thead`, `tfoot`, `tr`, `colgroup`), the WHATWG parser moves an element out of the table (foster parenting), and a `table` start tag closes the open table. Character tokens and comments stay allowed: moved text does not change the content bytes or the block end tag.
 
 `option` and `optgroup` are in `FORBIDDEN_CONTENT` (M-22) for the same reason.
 
@@ -264,6 +273,21 @@ Error: `RQP_MARKUP_BAD_JSON`. The hash is over the raw content bytes; RQP does n
 `RQP_MARKUP_STRUCTURE` is the one code for all structure failures: no explicit end tag, implied end tag, unbalanced content, forbidden content element, block context, and the document rules.
 
 **Recommended check order.** M-01, M-02, then one pass over the tokens. For a block start tag: M-17, M-15, M-16, M-18, M-19, M-21, M-26 (count). At the block end: M-26 (size), M-25. A fixture never depends on this order, because a fixture with an error has exactly one error.
+
+### 2.11 Open edge cases
+
+<Badge type="info" text="DESIGN" /> **Open, see [edge cases E1–E8](/engineering/protocol/markup-edge-cases).** The text of the rules below does not decide these cases exactly, or the candidates read it in different ways. The human decides each case after the risk study. Until then, a parser can give either result for these inputs, and the draft fixtures `FX-RQ-MARKUP-EDGE-*` are not normative.
+
+| Case | Rules | Input |
+|---|---|---|
+| E1 | M-07 | `<` as a character in a foreign text element or integration point |
+| E2 | M-07 | End of input in a foreign region, after all blocks |
+| E3 | M-11 | `noscript` without an end tag |
+| E4 | M-12 | `<![CDATA[` without `>` before the end of input |
+| E5 | M-07, M-12 | CDATA in a foreign text element or integration point |
+| E6 | M-03, M-07 | `<?` that reaches the end of input |
+| E7 | M-10 | `frameset` start tag in a foreign region |
+| E8 | M-11, M-13 | Manifest script in `noscript` content |
 
 ## 3. Implementation notes
 
@@ -321,7 +345,8 @@ All loops run once per input byte or per token; all memory is bounded by the inp
 | M-20, M-23 | An element closed by an implied end tag or at EOF has no end tag position; parsers report different ends (research R-1). |
 | M-24 a | "Close a `p` element": a start tag in `PCLOSE` pops the open `p` and every element above it. |
 | M-24 b | A heading start tag pops a current heading. A heading end tag pops to any open heading. |
-| M-24 c | `li`, `dd`, `dt` pop an earlier `li`, `dd`, `dt` up to the first special element other than `address`, `div`, `p`. |
+| M-24 c, j | `li`, `dd`, `dt` pop an earlier `li`, `dd`, `dt` up to the first special element other than `address`, `div`, `p`. |
+| M-24 k | In table context, a start tag other than a table part is foster-parented, and a `table` start tag closes the open `table`. |
 | M-24 d, e, f | `button`, `a` and `nobr` close an open element of the same name (`a` and `nobr` with the adoption agency algorithm). |
 | M-24 h, i | Ruby start tags generate implied end tags when a `ruby` is in scope. |
 | M-22 (`option`, `optgroup`) | `option` and `optgroup` pop a current `option`. |
@@ -359,6 +384,7 @@ Template authors do not write the manifest. Server SDKs compute it:
 
 - Golden fixtures `FX-RQ-MARKUP-*` in `fixtures/rqp/markup/`: the [catalog](/engineering/protocol/fixtures#_4-2-markup-fixtures-fx-rq-markup) maps each fixture to its rules. `tools/rqp-markup/gen.py` computes each `expected.json` from the bytes that a person wrote in `fixture.json`; it does not parse HTML.
 - Differential test: the four parser candidates must give the same `expected.json` result for every fixture (`tools/rqp-markup/CONTRACT.md` §6).
+- Cross-check against the WHATWG tree builder: `tools/rqp-markup/crosscheck/` compares the blocks of each valid candidate result with the parse5 tree (scripting enabled, optionally also disabled), on the fixtures and on a seeded generator sweep. Its `README.md` has the commands. <Badge type="tip" text="FACT" /> On 2026-10-09, every valid `expected.json` agreed with parse5 8.0.1 in both views, and every block-byte disagreement that the sweeps found was a shape that M-24 items j or k reject ([edge cases §2](/engineering/protocol/markup-edge-cases#_2-method-and-evidence)).
 
 To regenerate or check the expected results:
 

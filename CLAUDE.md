@@ -30,6 +30,6 @@ The shared rules are in `AGENTS.md` (imported above). This part maps them to Cla
 | `/decide <question>` | Classify and record a decision, or escalate to the human |
 | `/doc-sync` | Update the docs that the current change affects |
 | `/mutation-check [base]` | Mutation testing on changed lines only |
-| `/sprint-close <WP> <sprint>` | Full tests, mutation, `/code-review high`, docs, commit |
+| `/sprint-close <WP> <sprint>` | Full tests, mutation, `/code-review high`, docs, commit, push `wp/<WP>`; at WP end give the human the MR text and stop (never push `main`) |
 
 `/code-review` is the built-in Claude Code review command. Use `/code-review high` on the sprint diff at sprint close.

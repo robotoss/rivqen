@@ -33,8 +33,9 @@ Rivqen is an independent, clean-room re-implementation of the ideas of Tencent V
 
 - Commit with `git commit -s` (DCO). Use the configured user identity.
 - Do not add `Co-Authored-By` or other AI attribution trailers. Do not write which AI or model produced a change (model names or IDs, session links) in commits, code comments or docs. The model tiers in `.claude/agents/` and in the role tables are configuration, not attribution.
-- One squash commit per WP on `main`. Integration branch `wp/<WP-ID>`; lane worktrees are local only.
-- Never force-push `main` without an explicit request from the human.
+- Delivery to `main` is only through a merge request (MR) that the human opens and merges. An agent pushes only its own branch: the integration branch `wp/<WP-ID>` or a `chore/<name>` branch. At the end of a WP, the architect pushes `wp/<WP-ID>`, gives the human the MR text and stops. The human deletes the branch after the merge. Lane worktrees are local only.
+- Agents never push to `main`.
+- Agents never force-push.
 
 ## Commands
 
@@ -50,4 +51,4 @@ Per-language checks and mutation commands: `docs/engineering/standards/` and `do
 
 ## Workflow
 
-WP kickoff → sprint plan → contracts → parallel lanes → integration → sprint close (all tests, mutation check on the diff, code review, docs) → one commit to `main`. See `docs/engineering/ai/sprint.md`.
+WP kickoff → sprint plan → contracts → parallel lanes → integration → sprint close (all tests, mutation check on the diff, code review, docs) → push `wp/<WP-ID>` → MR to `main`, merged by the human. See `docs/engineering/ai/sprint.md`.

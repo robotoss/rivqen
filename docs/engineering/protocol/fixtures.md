@@ -87,7 +87,7 @@ The exact expected outputs are derived from the upstream audit and confirmed wit
 
 ### 4.2 Markup fixtures (`FX-RQ-MARKUP-*`)
 
-<Badge type="tip" text="FACT" /> 122 fixtures (44 valid, 78 invalid) in `fixtures/rqp/markup/`. Each fixture tests the rules of [RQP markup](/engineering/protocol/markup) §2 that it lists. Layout and `fixture.json` format: `fixtures/rqp/markup/README.md`. Result format: `tools/rqp-markup/CONTRACT.md` §3.
+<Badge type="tip" text="FACT" /> 122 fixtures (44 valid, 78 invalid) in `fixtures/rqp/markup/`, plus 11 draft fixtures `EDGE-*` for the open edge cases (table "Draft fixtures" below). Each fixture tests the rules of [RQP markup](/engineering/protocol/markup) §2 that it lists. Layout and `fixture.json` format: `fixtures/rqp/markup/README.md`. Result format: `tools/rqp-markup/CONTRACT.md` §3.
 
 | File | Written by |
 |---|---|
@@ -232,6 +232,22 @@ In the table, the prefix `FX-RQ-MARKUP-` is not shown.
 | `UNICODE-BMP` | valid, 1 block | M-02, M-27 | Cyrillic, CJK and symbols (2 and 3 byte UTF-8) before and in a block |
 | `UPPERCASE` | valid, 4 blocks | M-03, M-14, M-16 | Upper-case and mixed-case tag and attribute names |
 | `ZERO-BLOCKS` | valid, 0 blocks | M-27 | A document without blocks is valid and has an empty block list |
+
+**Draft fixtures.** <Badge type="info" text="DESIGN" /> Open edge cases E1–E8 ([markup §2.11](/engineering/protocol/markup#_2-11-open-edge-cases)). Each fixture uses the recommended reading of the [edge case study](/engineering/protocol/markup-edge-cases). They are not normative until the human decides the case; then each one stays, changes or is removed.
+
+| Fixture | Result | Rules | Scenario |
+|---|---|---|---|
+| `EDGE-E1-FOREIGN-LT` | valid, 1 block | M-07 | A &lt; emitted as a character in svg desc, svg style and math mi |
+| `EDGE-E2-FOREIGN-EOF` | valid, 1 block | M-07, M-20 | The input ends inside svg title, after all blocks |
+| `EDGE-E3-NOSCRIPT-EOF` | valid, 1 block | M-11 | noscript without an end tag; the rest of the input passes M-11 |
+| `EDGE-E3-NOSCRIPT-EOF-BLOCK` | `STRUCTURE` | M-11 | noscript without an end tag; the rest of the input has block markup |
+| `EDGE-E4-CDATA-EOF` | valid, 1 block | M-12 | &lt;![CDATA[ without > before the end of the input |
+| `EDGE-E5-FOREIGN-CDATA` | valid, 1 block | M-07, M-12 | CDATA sections in svg style and svg desc |
+| `EDGE-E5-FOREIGN-CDATA-GT` | `STRUCTURE` | M-12 | A CDATA section with > inside, in svg style |
+| `EDGE-E6-PI-EOF` | `STRUCTURE` | M-03, M-07 | &lt;? to the end of the input inside svg desc (a comment) |
+| `EDGE-E6-PI-EOF-HTML` | valid, 1 block | M-03 | &lt;? to the end of the input in HTML context |
+| `EDGE-E7-FOREIGN-FRAMESET` | `STRUCTURE` | M-10 | A frameset start tag inside svg |
+| `EDGE-E8-NOSCRIPT-MANIFEST` | `RESERVED` | M-11, M-13 | A manifest script inside noscript |
 
 ## 5. Conformance runner
 

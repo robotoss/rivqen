@@ -45,6 +45,9 @@ node src/cli.mjs check --only rust,java,php --scripting both
 # One document: prints the parse5 views and the result of each candidate
 node src/cli.mjs check --input path/to/input.html --only rust
 
+# The golden fixtures themselves: every valid expected.json against parse5
+node src/cli.mjs check --expected --scripting both
+
 # Results that you already have (one JSON line per fixture, with the field "fixture")
 node src/cli.mjs check --fixtures path/to/dir --results results.jsonl
 
@@ -65,6 +68,7 @@ TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,java,php --seed 5 --count 100
 | `--fixtures dir` | `check` | Directory with `<name>/input.html` | `fixtures/rqp/markup` |
 | `--input file` | `check` | One document | — |
 | `--results file` | `check` | Use these results instead of running candidates | — |
+| `--expected` | `check` | Use the `expected.json` of each fixture as the result: checks the golden fixtures themselves | — |
 | `--cases file` | `cases` | JSON list of `{ "id", "input" }` | `cases/edge-cases.json` |
 | `--seed n` | `sweep` | Seed of the sweep (0 … 2^32 − 1) | 1 |
 | `--count n` | `sweep` | Number of documents (at most 10 000 000) | 1000 |
@@ -99,7 +103,7 @@ The batch runs write one file for each document. On a slow temporary file system
 ## 4. Limits
 
 1. parse5 is one implementation of the WHATWG parser, not the specification. A false accept that parse5 shares with a candidate is not found. Known differences of parse5 8.0.1 (RESEARCH, see `docs/engineering/protocol/markup-edge-cases.md`):
-   - `<![CDATA[` in an SVG or MathML integration point (`desc`, `mi`, …) gives a comment in parse5; html5ever gives a CDATA section. The end byte is the same when `markup.md` M-12 holds.
+   - `<![CDATA[` in an SVG or MathML integration point (`desc`, `mi`, …) gives a comment in parse5. The WHATWG check is on the namespace of the adjusted current node, which gives a CDATA section there. The end byte is the same when `markup.md` M-12 holds.
    - `<?` gives a bogus comment in parse5. The WHATWG standard parses processing instructions since whatwg/html PR #12118 (merged 2026-06-25).
 2. parse5 needs time that grows faster than the nesting depth (about 25 s for 50 000 nested elements). Sweep documents are small; do not run the tool on large untrusted documents in a time-limited job.
 3. The generator (`src/generator.mjs`) is tag soup with list and table patterns. It does not reach every shape. A sweep without findings is evidence, not a proof.

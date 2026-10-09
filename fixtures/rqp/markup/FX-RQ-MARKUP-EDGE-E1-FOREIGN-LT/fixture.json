@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-E1-FOREIGN-LT",
+  "description": "DRAFT (edge case E1, open): a < that the tokenizer emits as a character in a foreign integration point and a foreign text element is valid",
+  "rules": [
+    "M-07"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

@@ -90,6 +90,22 @@ test("check: --results reads candidate output from a file", async () => {
   assert.match(bad.out, /end: candidate \d+, parse5 \d+/);
 });
 
+test("check --expected: the expected.json of each fixture is checked against parse5", async () => {
+  const dir = fixturesDir("expected", { a: DOCS.a, b: DOCS.b });
+  const start = Buffer.byteLength('<!DOCTYPE html><div data-rq-block="a">');
+  const good = { valid: true, error: null, blocks: [{ id: "a", format: "html", start, end: start + SECRET.length, sha256: "x" }] };
+  writeFileSync(path.join(dir, "a", "expected.json"), JSON.stringify(good));
+  writeFileSync(path.join(dir, "b", "expected.json"), JSON.stringify({ valid: false, error: "RQP_MARKUP_STRUCTURE", blocks: [] }));
+  const ok = await run(["check", "--fixtures", dir, "--expected"]);
+  assert.equal(ok.code, 0);
+  assert.match(ok.out, /expected: 2 document\(s\), 1 valid/);
+  writeFileSync(path.join(dir, "a", "expected.json"), JSON.stringify({ ...good, blocks: [{ ...good.blocks[0], start: start - 1 }] }));
+  const bad = await run(["check", "--fixtures", dir, "--expected"]);
+  assert.equal(bad.code, 1);
+  writeFileSync(path.join(dir, "a", "expected.json"), "{");
+  assert.equal((await run(["check", "--fixtures", dir, "--expected"])).code, 2);
+});
+
 test("check: a missing result line is a finding", async () => {
   const dir = fixturesDir("missing", { a: DOCS.a });
   const file = path.join(TMP, "empty.jsonl");

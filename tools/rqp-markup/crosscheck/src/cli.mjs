@@ -25,7 +25,7 @@ const DEFAULTS = {
 const MAX_COUNT = 10_000_000;
 const MAX_DETAIL_LINES = 6;
 const USAGE = `usage:
-  node src/cli.mjs check [--fixtures dir | --input file] [--results file.jsonl] [common options]
+  node src/cli.mjs check [--fixtures dir | --input file] [--results file.jsonl | --expected] [common options]
   node src/cli.mjs cases [--cases file.json] [common options]
   node src/cli.mjs sweep [--seed n] [--count n] [--max-tokens n] [--chunk n] [--out dir] [--keep n] [common options]
 common options: --only name,... --candidates file --timeout seconds --build --scripting enabled|disabled|both`;
@@ -53,6 +53,7 @@ export function parseArgs(argv) {
     fixtures: DEFAULTS.fixtures,
     input: null,
     results: null,
+    expected: false,
     cases: DEFAULTS.cases,
     seed: 1,
     count: 1000,
@@ -92,6 +93,9 @@ export function parseArgs(argv) {
         break;
       case "--input":
         o.input = path.resolve(value());
+        break;
+      case "--expected":
+        o.expected = true;
         break;
       case "--results":
         o.results = path.resolve(value());
@@ -190,6 +194,10 @@ async function candidateResults(o, dir, write) {
     out.set("results", readResultsFile(o.results));
     return { out, failed: 0 };
   }
+  if (o.expected) {
+    out.set("expected", readExpected(dir));
+    return { out, failed: 0 };
+  }
   let failed = 0;
   for (const c of loadCandidates(o.candidates, o.only)) {
     const r = await runBatch(c, dir, { repoRoot: REPO_ROOT, timeoutMs: o.timeoutMs });
@@ -202,8 +210,23 @@ async function candidateResults(o, dir, write) {
   return { out, failed };
 }
 
+/** The expected.json of each fixture as a result: checks the golden fixtures themselves. */
+function readExpected(dir) {
+  const out = new Map();
+  for (const name of readdirSync(dir)) {
+    const file = path.join(dir, name, "expected.json");
+    if (!existsSync(file)) continue;
+    try {
+      out.set(name, JSON.parse(readFileSync(file, "utf8")));
+    } catch (cause) {
+      throw new CrosscheckError(`${name}: expected.json is not valid JSON`, { cause });
+    }
+  }
+  return out;
+}
+
 async function buildAll(o, write) {
-  if (!o.build || o.results !== null) return 0;
+  if (!o.build || o.results !== null || o.expected) return 0;
   let failed = 0;
   for (const c of loadCandidates(o.candidates, o.only)) {
     const reason = await buildCandidate(c, { repoRoot: REPO_ROOT, timeoutMs: o.timeoutMs });

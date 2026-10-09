@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-E5-FOREIGN-CDATA-GT",
+  "description": "DRAFT (edge case E5, open): a CDATA section with > inside, in a foreign text element; M-12 still applies",
+  "rules": [
+    "M-12"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

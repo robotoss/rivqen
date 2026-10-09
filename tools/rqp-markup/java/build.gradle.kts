@@ -55,9 +55,13 @@ application {
     applicationDefaultJvmArgs = listOf("-Xmx512m", "-Xss1m", "-XX:+UseSerialGC", "-XX:TieredStopAtLevel=1")
 }
 
+val fixturesDir = layout.projectDirectory.dir("../../../fixtures/rqp/markup").asFile.canonicalPath
+
 tasks.test {
     useJUnitPlatform()
     maxHeapSize = "1g"
+    systemProperty("rqp.fixtures", fixturesDir)
+    inputs.dir(fixturesDir).withPathSensitivity(PathSensitivity.RELATIVE)
     testLogging {
         events("failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
@@ -83,5 +87,5 @@ pitest {
     outputFormats = setOf("HTML", "XML")
     timestampedReports = false
     mutationThreshold = 80
-    jvmArgs = listOf("-Xmx1g")
+    jvmArgs = listOf("-Xmx1g", "-Drqp.fixtures=$fixturesDir")
 }

@@ -74,6 +74,8 @@ npx stryker run --mutate "$(node ../../mutation/diff-ranges.mjs --base main --ex
 
 The reports go to `reports/` (ignored by git).
 
+T-08 (M-24 j, k, E5, E8; changed lines against `4c90861`): 53 of 54 mutants killed (98.1 %). The survivor is equivalent: it puts a string at the bottom of the list-mark array (`this.listMark = ["Stryker was here"]`). That value is never a list item, and M-24 j reads the array only after M-24 c has found a list opened in the content above it.
+
 ## Design
 
 ### Tokenizer: own, byte level (DL-012)

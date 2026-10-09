@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-FOREIGN-TEXT-ELEMENT",
+  "description": "Markup inside an svg style element (RAWTEXT in HTML, markup in svg)",
+  "rules": [
+    "M-07"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

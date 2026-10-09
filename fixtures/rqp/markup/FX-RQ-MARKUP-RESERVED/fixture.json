@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-RESERVED",
+  "description": "The document already contains a manifest script",
+  "rules": [
+    "M-13"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_RESERVED"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CDATA-HTML",
+  "description": "A CDATA section with > inside, in HTML content",
+  "rules": [
+    "M-12"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

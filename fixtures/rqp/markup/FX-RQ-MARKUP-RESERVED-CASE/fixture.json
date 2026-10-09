@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-RESERVED-CASE",
+  "description": "A manifest script type with other case and white space",
+  "rules": [
+    "M-13"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_RESERVED"
+  }
+}

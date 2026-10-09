@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-NESTING",
+  "description": "A td start tag while a td is open (implied end of the cell)",
+  "rules": [
+    "M-09"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

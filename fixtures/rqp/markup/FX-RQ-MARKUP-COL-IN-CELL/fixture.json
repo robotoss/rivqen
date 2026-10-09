@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-COL-IN-CELL",
+  "description": "A col start tag inside a td",
+  "rules": [
+    "M-09"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

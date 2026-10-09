@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+/vendor/
+/.phpunit.cache/
+/build/
+/infection.log
+/composer.local.json
+/composer.local.lock

@@ -21,7 +21,7 @@
 - [ ] New statements in docs are labeled FACT, DESIGN or RESEARCH.
 - [ ] Tests cover each new behavior; the mutation check on the diff passes (critical modules ≥ 80 %).
 - [ ] The docs that this change affects are updated; `npm run docs:build` passes.
-- [ ] No AI attribution trailers; no model names in commits, code or docs.
+- [ ] No AI attribution (trailers, model names, session links) in commits, code comments or docs.
 - [ ] Security impact is described below, or "none".
 
 ## Security impact

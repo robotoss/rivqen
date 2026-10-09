@@ -32,7 +32,7 @@ Rivqen is an independent, clean-room re-implementation of the ideas of Tencent V
 ## Git
 
 - Commit with `git commit -s` (DCO). Use the configured user identity.
-- Do not add `Co-Authored-By` or other AI attribution trailers. Do not put model names or IDs in commits, code or docs.
+- Do not add `Co-Authored-By` or other AI attribution trailers. Do not write which AI or model produced a change (model names or IDs, session links) in commits, code comments or docs. The model tiers in `.claude/agents/` and in the role tables are configuration, not attribution.
 - One squash commit per WP on `main`. Integration branch `wp/<WP-ID>`; lane worktrees are local only.
 - Never force-push `main` without an explicit request from the human.
 

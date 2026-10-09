@@ -38,26 +38,29 @@ A test that kills a mutant must check a behavior that matters. If the only way t
 
 ### Helper: changed lines
 
-`tools/mutation/diff-ranges.mjs` converts `git diff` into the arguments that the tools need. It skips test files and warns about untracked files.
+`tools/mutation/diff-ranges.mjs` converts `git diff` into the arguments that the tools need. It compares `merge-base(base, HEAD)` with the working tree, follows renames, skips test files and warns about untracked files. Run it in the directory where the mutation tool runs: it prints paths relative to that directory and includes only files below it.
 
 ```bash
-node tools/mutation/diff-ranges.mjs --base main --ext .ts,.tsx --format stryker      # file:start-end,…
-node tools/mutation/diff-ranges.mjs --base main --ext .swift --format files          # file,file
-node tools/mutation/diff-ranges.mjs --base main --ext .java,.kt --format pit-classes # pkg.Class,…
+ROOT=$(git rev-parse --show-toplevel)
+node $ROOT/tools/mutation/diff-ranges.mjs --base main --ext .ts,.tsx,.js,.mjs --format stryker  # file:start-end,…
+node $ROOT/tools/mutation/diff-ranges.mjs --base main --ext .swift --format files              # file,file
+node $ROOT/tools/mutation/diff-ranges.mjs --base main --ext .java,.kt --format pit-classes     # pkg.Class*,…
 ```
 
 ### Per language
 
+`$ROOT` is the repository root, set as shown above.
+
 | Language | Tool (version, license) | Scope | Command |
 |---|---|---|---|
-| Rust | cargo-mutants 27.1.0, MIT | Lines | `git diff main... > /tmp/m.diff && cargo mutants --in-diff /tmp/m.diff --no-shuffle` |
-| TypeScript | StrykerJS 10.0.0 + vitest-runner 10.0.0, Apache-2.0 | Lines | `npx stryker run --mutate "$(node tools/mutation/diff-ranges.mjs --base main --ext .ts,.tsx --format stryker)" --incremental` |
+| Rust | cargo-mutants 27.1.0, MIT | Lines | `git diff $(git merge-base main HEAD) > m.diff && cargo mutants --in-diff m.diff --no-shuffle` |
+| TypeScript | StrykerJS 10.0.0 + vitest-runner 10.0.0, Apache-2.0 | Lines | `npx stryker run --mutate "$(node $ROOT/tools/mutation/diff-ranges.mjs --base main --ext .ts,.tsx,.mts,.cts,.js,.jsx,.mjs,.cjs --format stryker)" --incremental` |
 | PHP | Infection 0.35.6, BSD-3-Clause | Lines | `vendor/bin/infection --git-diff-lines --git-diff-base=main --min-msi=80 --threads=max` |
-| Java | PIT 1.30.0 + Gradle plugin `info.solidsoft.pitest` 1.19.0, Apache-2.0 | Classes | `./gradlew pitest -Ppitest.targetClasses="$(node tools/mutation/diff-ranges.mjs --base main --ext .java --format pit-classes)"` |
+| Java | PIT 1.30.0 + Gradle plugin `info.solidsoft.pitest` 1.19.0, Apache-2.0 | Classes | `./gradlew pitest -Ppitest.targetClasses="$(node $ROOT/tools/mutation/diff-ranges.mjs --base main --ext .java --format pit-classes)"` |
 | Kotlin | PIT (as Java) | Classes | Same as Java with `--ext .kt`. Advisory until [Q-16](/engineering/plan/open-questions) is closed. |
-| Swift | Muter (tag 16, MIT) | Files | `muter --files-to-mutate "$(node tools/mutation/diff-ranges.mjs --base main --ext .swift --format files)"`. Advisory, no gate. |
+| Swift | Muter (tag 16, MIT) | Files | `muter --files-to-mutate "$(node $ROOT/tools/mutation/diff-ranges.mjs --base main --ext .swift --format files)"`. Advisory, no gate. |
 
-The exact Gradle property for `targetClasses` is set up in WP-14 / WP-10. The command above shows the intent.
+The exact Gradle property for `targetClasses` is set up in WP-14 / WP-10. The command above shows the intent. The class globs (`pkg.Class*`) also cover inner classes, lambdas and Kotlin file facades (`ClassKt`).
 
 ### Notes per tool
 

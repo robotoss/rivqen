@@ -1,6 +1,6 @@
 # Sprint record template
 
-Copy this page to `<WP-ID>-S<n>.md`. Replace each `<…>`. Delete sections that do not apply.
+Copy this page to `<WP-ID>-S<n>.md`. Replace each `<…>`. Delete sections that do not apply. The **State** row is one of `Planned` (after the plan), `Running` (from the first lane until the close) and `Closed`. The session-start hook shows every record that is not `Closed`.
 
 **Status:** <Badge type="info" text="DESIGN" />
 
@@ -14,7 +14,7 @@ Copy this page to `<WP-ID>-S<n>.md`. Replace each `<…>`. Delete sections that 
 | Sprint | `S<n>` |
 | Integration branch | `wp/<WP-ID>` |
 | Base commit | `<sha of main>` |
-| State | Planned / Running / Closed |
+| State | Planned |
 | Goal | `<one sentence>` |
 
 ## 1. Kickoff (first sprint only)

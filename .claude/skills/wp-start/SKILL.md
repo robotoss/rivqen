@@ -15,7 +15,7 @@ You are the architect. Follow `docs/engineering/ai/sprint.md` §1. Do not write 
 6. **How best.** For each gap, write the approach: the pattern from `docs/engineering/standards/`, existing code to reuse, libraries (license class!). For facts outside the repository, delegate to the `researcher` agent; run several research questions in parallel.
 7. **Risks and questions.** Classify each question with `docs/engineering/ai/decisions.md`. Decide architect questions now and add them to `docs/engineering/plan/decision-log.md`. Ask the human the critical ones with `AskUserQuestion` (max 4 per call, recommended option first).
 8. Create the integration branch: `git checkout -b wp/$ARGUMENTS main`.
-9. Copy `docs/engineering/plan/sprints/template.md` to `docs/engineering/plan/sprints/$ARGUMENTS-S1.md`. Fill in the header and the kickoff section. Add the record to `docs/engineering/plan/sprints/index.md` and to the sidebar.
+9. Copy `docs/engineering/plan/sprints/template.md` to `docs/engineering/plan/sprints/$ARGUMENTS-S1.md`. Fill in the header (State: `Planned`) and the kickoff section. Add the record to `docs/engineering/plan/sprints/index.md` and to the sidebar.
 10. Set the WP status to "In progress" in `docs/engineering/plan/work-packages.md`.
 11. Commit on `wp/$ARGUMENTS` with `git commit -s`.
 

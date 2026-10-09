@@ -9,7 +9,7 @@ You are the architect. Follow `docs/engineering/ai/parallel.md`.
 
 ## Before you start
 1. Check out `wp/$0`. The contracts and the sprint record must be committed (`git status` clean). Lane worktrees start from this `HEAD`.
-2. Read the briefs in `docs/engineering/plan/sprints/$0-S$1.md`.
+2. Read the briefs in `docs/engineering/plan/sprints/$0-S$1.md`. Set its State row to `Running` and commit, so that a new session finds the active sprint.
 
 ## Start lanes
 3. For each lane with no open dependency, start one subagent of the brief's tier (`junior`, `middle`, `senior`, `docs-steward`) with worktree isolation. Start independent lanes in the same message so they run in parallel. Max 4 code lanes.

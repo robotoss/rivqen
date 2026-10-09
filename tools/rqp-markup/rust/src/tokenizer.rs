@@ -1014,6 +1014,18 @@ mod tests {
     }
 
     #[test]
+    fn missing_white_space_after_a_quoted_value_starts_a_new_attribute() {
+        assert_eq!(
+            tokens("<p a=\"1\"data-rq-block=\"b\">"),
+            ["<p>0..26 block=\"b\""]
+        );
+        assert_eq!(
+            tokens("<script type='x'TYPE=y data-rq-block=c>"),
+            ["<script>0..39 block=\"c\" type=\"x\""]
+        );
+    }
+
+    #[test]
     fn equals_sign_before_an_attribute_name() {
         // `=` starts an attribute named `=`; the next attribute is a new one.
         assert_eq!(

@@ -44,6 +44,12 @@ final class Parser
     private array $contentCount = [];
     /** @var list<int> Stack indexes of HTML elements in TABLE_FAMILY or `template` (for F, M-09). */
     private array $tableIndex = [];
+    /**
+     * @var list<int> Stack indexes of the lists (LIST) and list items
+     *      (LIST_ITEM) opened in the content (M-24 item j). The top entry is
+     *      the nearest of them to the current node.
+     */
+    private array $listIndex = [];
     /** Stack index of the `svg`/`math` element of the foreign region, or null. */
     private ?int $region = null;
     /**
@@ -112,8 +118,10 @@ final class Parser
                     $this->endTag($token);
                     break;
                 case TokenType::Comment:
+                    $this->comment();
+                    break;
                 case TokenType::Cdata:
-                    $this->comment($token);
+                    $this->cdata($token);
                     break;
                 case TokenType::Doctype:
                     $this->doctype();
@@ -129,15 +137,25 @@ final class Parser
     // Tokens
     // ----------------------------------------------------------------------
 
-    private function comment(Token $token): void
+    private function comment(): void
     {
-        if ($token->type === TokenType::Cdata && !$token->cdataClosed) {
-            throw new MarkupError(ErrorCode::Structure, 'M-12');
-        }
         if ($this->charsOnly !== null) {
             throw new MarkupError(ErrorCode::Structure, 'M-07');
         }
         // Comments are allowed in `select` (M-08) and in content (M-22).
+    }
+
+    /**
+     * `<![CDATA[`: a CDATA section in foreign content, a bogus comment in
+     * HTML content (M-04). M-12 makes both end at the same byte. Then it is
+     * allowed wherever a comment is allowed, and also in the content of a
+     * foreign INTEGRATION or TEXT element (M-07 items 3 and 4, edge case E5).
+     */
+    private function cdata(Token $token): void
+    {
+        if (!$token->cdataSameEnd) {
+            throw new MarkupError(ErrorCode::Structure, 'M-12');
+        }
     }
 
     private function doctype(): void
@@ -164,12 +182,7 @@ final class Parser
         if ($name === 'frameset') {
             throw new MarkupError(ErrorCode::Structure, 'M-10');
         }
-        if ($name === 'script') {
-            $type = $token->attribute('type');
-            if ($type !== null && (stripos($type, 'rivqen-manifest') !== false || str_contains($type, '&'))) {
-                throw new MarkupError(ErrorCode::Reserved, 'M-13');
-            }
-        }
+        self::checkReserved($token);
         if (!$foreign) {
             if ($this->selects > 0 && !isset(Names::SELECT_START[$name])) {
                 throw new MarkupError(ErrorCode::Structure, 'M-08');
@@ -206,6 +219,21 @@ final class Parser
             $this->region = $index;
         }
         $this->switchState($name, $token->end);
+    }
+
+    /**
+     * M-13: a `script` start tag whose first `type` attribute has a raw value
+     * that contains `rivqen-manifest` (ASCII case-insensitive) or `&`.
+     */
+    private static function checkReserved(Token $startTag): void
+    {
+        if ($startTag->name !== 'script') {
+            return;
+        }
+        $type = $startTag->attribute('type');
+        if ($type !== null && (stripos($type, 'rivqen-manifest') !== false || str_contains($type, '&'))) {
+            throw new MarkupError(ErrorCode::Reserved, 'M-13');
+        }
     }
 
     private function foreignStartTag(Token $token): void
@@ -296,11 +324,19 @@ final class Parser
         if ($token->selfClosing && !$void) {
             throw new MarkupError(ErrorCode::Structure, 'M-22');
         }
+        // Item k: in table context the WHATWG parser foster-parents every
+        // start tag except the table parts (a `table` start tag closes the
+        // open table). Text and comments stay allowed.
+        $f = $this->tableContext();
+        if ($f !== null && isset(Names::TABLE_CONTEXT[$f]) && !isset(Names::TABLE_PART[$name]) && $name !== 'col') {
+            throw new MarkupError(ErrorCode::Structure, 'M-24');
+        }
         $invalid = match (true) {
             isset(Names::PCLOSE[$name]) && ($blockName === 'p' || $blockName === 'span') => true,
             isset(Names::HEADING[$name]) => isset(Names::HEADING[$blockName])
                 || $this->openedInContent('h1', 'h2', 'h3', 'h4', 'h5', 'h6'),
-            $name === 'li', $name === 'dd', $name === 'dt' => !$this->openedInContent('ul', 'ol', 'menu', 'dl'),
+            isset(Names::LIST_ITEM[$name]) => !$this->openedInContent('ul', 'ol', 'menu', 'dl') // item c
+                || $this->listItemAboveList(), // item j
             $name === 'button', $name === 'a', $name === 'nobr' => $this->open($name),
             isset(Names::TABLE_PART[$name]), $name === 'col' => !$this->openedInContent('table'),
             $name === 'rb', $name === 'rtc' => !$this->openedInContent('ruby') || $this->open('rb', 'rp', 'rt', 'rtc'),
@@ -433,6 +469,9 @@ final class Parser
             if ($token->type !== TokenType::StartTag) {
                 continue;
             }
+            // M-13 applies also in C (edge case E8, human decision H-22): a
+            // reader with scripting disabled sees this `script` as an element.
+            self::checkReserved($token);
             if ($token->attribute(self::BLOCK_ATTR) !== null || isset(Names::NOSCRIPT_FORBIDDEN[$token->name])) {
                 throw new MarkupError(ErrorCode::Structure, 'M-11');
             }
@@ -454,6 +493,9 @@ final class Parser
         if ($this->blockIndex !== null) {
             $flags |= self::CONTENT;
             $this->contentCount[$name] = ($this->contentCount[$name] ?? 0) + 1;
+            if (isset(Names::LIST[$name]) || isset(Names::LIST_ITEM[$name])) {
+                $this->listIndex[] = $index;
+            }
         }
         $this->names[] = $name;
         $this->flags[] = $flags;
@@ -484,6 +526,9 @@ final class Parser
             if ($this->tableIndex !== [] && $this->tableIndex[count($this->tableIndex) - 1] === $i) {
                 array_pop($this->tableIndex);
             }
+            if ($this->listIndex !== [] && $this->listIndex[count($this->listIndex) - 1] === $i) {
+                array_pop($this->listIndex);
+            }
             if ($name === 'select' && ($flags & self::FOREIGN) === 0) {
                 $this->selects--;
             }
@@ -503,6 +548,17 @@ final class Parser
         }
         $name = $this->names[$this->tableIndex[count($this->tableIndex) - 1]];
         return $name === 'template' ? null : $name;
+    }
+
+    /**
+     * M-24 item j: a list item opened in the content is above the nearest
+     * list opened in the content. That is: the top entry of $listIndex is a
+     * list item. Call only when a list opened in the content is open (item c),
+     * so $listIndex is not empty.
+     */
+    private function listItemAboveList(): bool
+    {
+        return isset(Names::LIST_ITEM[$this->names[$this->listIndex[count($this->listIndex) - 1]]]);
     }
 
     /** True when an element with one of the names is on the token stack. */

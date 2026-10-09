@@ -37,6 +37,7 @@ final class Harness
         '<p data-rq-block="d"/>', '<p data-rq-block="BAD">', '<li data-rq-block="e">', '<!--<script>',
         '<script type="rivqen-manifest">', "\xC3\xA9", "\xF0\x9F\x98\x80", "\0", "\xEF\xBB\xBF", '</ x>', '</>',
         '<P DATA-RQ-BLOCK=f>', '<p data-rq-block=g data-rq-block=h>', '<iframe>', '</iframe>',
+        '<dd>', '</dd>', '<ol>', '</ol>', '<tbody>', '<div>', '<![CDATA[a]]>', '<style><![CDATA[',
     ];
 
     private function __construct() {}
@@ -198,6 +199,10 @@ final class Harness
         for ($i = 0; $i < $count; $i++) {
             $html .= self::outside($random, $blocks, 0);
         }
+        // Valid ends of input after all blocks: edge cases E2, E3, E4 and E6.
+        if ($random->getInt(0, 5) === 0) {
+            $html .= self::pick($random, ['<![CDATA[x', '<?php echo 1;', '<noscript><img src="x">', '<svg><desc>a < b', '<svg><style><![CDATA[a{}']);
+        }
         return [$html, $blocks];
     }
 
@@ -208,7 +213,7 @@ final class Harness
      */
     private static function outside(Randomizer $random, array &$blocks, int $depth): string
     {
-        $choice = $random->getInt(0, $depth > 3 ? 4 : 16);
+        $choice = $random->getInt(0, $depth > 3 ? 4 : 18);
         return match ($choice) {
             0 => self::text($random),
             1 => '<!-- ' . self::text($random) . ' -->',
@@ -224,6 +229,8 @@ final class Harness
             11 => '<math><mi>x</mi><mo>+</mo><mn>1</mn></math>',
             12 => '<ul><li>' . self::text($random) . '<li>' . self::text($random) . '</ul>',
             13 => '<template><p>t</p></template>',
+            14 => '<svg><desc>a < b</desc><style><![CDATA[.a{fill:red}]]></style><title><![CDATA[t]]></title></svg>',
+            15 => '<noscript><script type="text/javascript">1</script><style><script type="rivqen-manifest"></style></noscript>',
             default => self::block($random, $blocks),
         };
     }
@@ -263,7 +270,7 @@ final class Harness
     /** Content of an html block (balanced, allowed tokens only). */
     private static function content(Randomizer $random, bool $phrasing, int $depth): string
     {
-        $max = $phrasing ? 7 : 11;
+        $max = $phrasing ? 7 : 13;
         $choice = $random->getInt(0, $depth > 2 ? 3 : $max);
         return match ($choice) {
             0 => self::text($random),
@@ -277,6 +284,11 @@ final class Harness
             8 => '<div>' . self::content($random, false, $depth + 1) . '</div>',
             9 => '<ul><li>' . self::content($random, false, $depth + 1) . '</li></ul>',
             10 => '<table><tbody><tr><td>' . self::text($random) . '</td></tr></tbody></table>',
+            // M-24 items j and k: nested lists, and text and comments in table context.
+            11 => '<dl><dt>t</dt><dd>' . self::content($random, false, $depth + 1) . '<dl><dd>d</dd></dl></dd></dl>'
+                . '<ul><li><ol><li>' . self::text($random) . '</li></ol></li><li>x</li></ul>',
+            12 => '<table>' . self::text($random) . '<!-- c --><colgroup><col></colgroup><tr><td>'
+                . self::content($random, false, $depth + 1) . '</td></tr></table>',
             default => '<p>' . self::content($random, true, $depth + 1) . '</p>',
         };
     }

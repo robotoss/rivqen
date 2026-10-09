@@ -38,11 +38,13 @@ final class ReferenceTokenizerTest extends TestCase
         $out = [];
         foreach (TokenizerTest::tokenize($html) as $t) {
             if ($t->type === TokenType::Cdata) {
-                // M-12: the first '>' after `<![CDATA[` ends a `]]>` that starts after it.
+                // M-12: the first '>' after `<![CDATA[` ends a `]]>` that starts
+                // after it, or there is no '>' and the token ends at EOF (E4).
                 $text = substr($html, $t->start, $t->end - $t->start);
-                self::assertSame(strlen($text) >= 12 && str_ends_with($text, ']]>'), $t->cdataClosed, bin2hex($html));
+                $sameEnd = !str_contains($text, '>') || (strlen($text) >= 12 && str_ends_with($text, ']]>'));
+                self::assertSame($sameEnd, $t->cdataSameEnd, bin2hex($html));
             } else {
-                self::assertFalse($t->cdataClosed);
+                self::assertFalse($t->cdataSameEnd);
             }
             $out[] = [self::type($t), $t->start, $t->end, $t->name, $t->selfClosing, $t->attributes];
         }

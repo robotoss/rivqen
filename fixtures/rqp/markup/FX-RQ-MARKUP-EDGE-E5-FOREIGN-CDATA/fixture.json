@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-MARKUP-EDGE-E5-FOREIGN-CDATA",
-  "description": "DRAFT (edge case E5, open): CDATA sections that satisfy M-12 in a foreign text element (svg style) and a foreign integration point (svg desc) are valid",
+  "description": "Edge case E5 (H-21): CDATA sections that satisfy M-12 in a foreign text element (svg style) and a foreign integration point (svg desc) are valid (M-07 item 5)",
   "rules": [
     "M-07",
     "M-12"

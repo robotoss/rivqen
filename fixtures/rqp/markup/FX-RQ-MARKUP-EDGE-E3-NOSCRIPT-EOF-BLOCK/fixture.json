@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-MARKUP-EDGE-E3-NOSCRIPT-EOF-BLOCK",
-  "description": "DRAFT (edge case E3, open): a noscript without an end tag whose content (the rest of the input) has block markup",
+  "description": "Edge case E3 (H-21): a noscript without an end tag whose content C (the rest of the input) has block markup (M-11 item 2)",
   "rules": [
     "M-11"
   ],

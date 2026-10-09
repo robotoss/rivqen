@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-ATTR-GT",
+  "description": "The character > inside quoted attribute values does not end the tag",
+  "rules": [
+    "M-03",
+    "M-14"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p title=\"a>b\" data-rq-block=\"real\" data-x='c>d'>",
+        "content": "v"
+      }
+    ]
+  }
+}

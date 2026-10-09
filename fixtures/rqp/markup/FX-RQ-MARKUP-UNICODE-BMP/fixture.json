@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-UNICODE-BMP",
+  "description": "Cyrillic, CJK and symbols (2 and 3 byte UTF-8) before and in a block",
+  "rules": [
+    "M-02",
+    "M-27"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "price",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"price\">",
+        "content": "Цена: 120 ₽ — 価格"
+      }
+    ]
+  }
+}

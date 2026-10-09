@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-NUL-CONTROL",
+  "description": "U+0000 and other control characters are valid content bytes",
+  "rules": [
+    "M-02",
+    "M-03"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "ctl",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"ctl\">",
+        "content": "a\u0000b\u0001c"
+      }
+    ]
+  }
+}

@@ -13,7 +13,7 @@ Follow `docs/engineering/quality/mutation.md`. Base ref: `$ARGUMENTS` if given, 
 
 | Language | Command |
 |---|---|
-| Rust | `git diff $(git merge-base BASE HEAD) > "$TMPDIR/m.diff"` then `cargo mutants --in-diff "$TMPDIR/m.diff" --no-shuffle` (default test tool, so doctests count) |
+| Rust | `D=$(mktemp) && git -c core.quotePath=false diff --src-prefix=a/ --dst-prefix=b/ --no-ext-diff $(git merge-base BASE HEAD) -- '*.rs' > "$D" && cargo mutants --in-diff "$D" --no-shuffle` (temporary file outside the tree; fixed prefixes; default test tool, so doctests count) |
 | TypeScript/JS | `npx stryker run --mutate "$(node $ROOT/tools/mutation/diff-ranges.mjs --base BASE --ext .ts,.tsx,.mts,.cts,.js,.jsx,.mjs,.cjs --format stryker)" --incremental` |
 | PHP | `vendor/bin/infection --git-diff-lines --git-diff-base=BASE --min-msi=80 --threads=max` |
 | Java / Kotlin | `node $ROOT/tools/mutation/diff-ranges.mjs --base BASE --ext .java,.kt --format pit-classes` → pass the globs as PIT `targetClasses` (see the module's Gradle config); Kotlin is advisory (Q-16) |

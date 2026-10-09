@@ -53,7 +53,7 @@ node $ROOT/tools/mutation/diff-ranges.mjs --base main --ext .java,.kt --format p
 
 | Language | Tool (version, license) | Scope | Command |
 |---|---|---|---|
-| Rust | cargo-mutants 27.1.0, MIT | Lines | `git diff $(git merge-base main HEAD) > m.diff && cargo mutants --in-diff m.diff --no-shuffle` |
+| Rust | cargo-mutants 27.1.0, MIT | Lines | `D=$(mktemp) && git -c core.quotePath=false diff --src-prefix=a/ --dst-prefix=b/ --no-ext-diff $(git merge-base main HEAD) -- '*.rs' > "$D" && cargo mutants --in-diff "$D" --no-shuffle` |
 | TypeScript | StrykerJS 10.0.0 + vitest-runner 10.0.0, Apache-2.0 | Lines | `npx stryker run --mutate "$(node $ROOT/tools/mutation/diff-ranges.mjs --base main --ext .ts,.tsx,.mts,.cts,.js,.jsx,.mjs,.cjs --format stryker)" --incremental` |
 | PHP | Infection 0.35.6, BSD-3-Clause | Lines | `vendor/bin/infection --git-diff-lines --git-diff-base=main --min-msi=80 --threads=max` |
 | Java | PIT 1.30.0 + Gradle plugin `info.solidsoft.pitest` 1.19.0, Apache-2.0 | Classes | `./gradlew pitest -Ppitest.targetClasses="$(node $ROOT/tools/mutation/diff-ranges.mjs --base main --ext .java --format pit-classes)"` |

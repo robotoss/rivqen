@@ -69,11 +69,24 @@ test('unquotes C-style quoted paths', () => {
   assert.deepEqual([...parseDiff(diff).keys()], ['src/é.ts']);
 });
 
-test('maps JVM paths to PIT class globs, including KMP source sets', () => {
-  assert.equal(toClassGlob('sdk/x/src/main/kotlin/dev/rivqen/Engine.kt'), 'dev.rivqen.Engine*');
-  assert.equal(toClassGlob('sdk/x/src/jvmMain/kotlin/dev/rivqen/Io.kt'), 'dev.rivqen.Io*');
-  assert.equal(toClassGlob('src/test/java/dev/rivqen/CodecTest.java'), null);
-  assert.equal(format(filterFiles(parseDiff(DIFF), ['.java']), 'pit-classes'), 'dev.rivqen.Codec*');
+test('maps JVM paths to exact PIT class patterns, not sibling classes', () => {
+  assert.equal(toClassGlob('sdk/x/src/main/kotlin/dev/rivqen/Engine.kt'), 'dev.rivqen.Engine,dev.rivqen.Engine$*,dev.rivqen.EngineKt');
+  assert.equal(toClassGlob('sdk/x/src/jvmMain/kotlin/dev/rivqen/Io.kt'), 'dev.rivqen.Io,dev.rivqen.Io$*,dev.rivqen.IoKt');
+  assert.equal(format(filterFiles(parseDiff(DIFF), ['.java']), 'pit-classes'), 'dev.rivqen.Codec,dev.rivqen.Codec$*');
+});
+
+test('test source sets and tool configuration are not mutation targets', () => {
+  for (const f of ['src/test/java/a/B.java', 'x/src/jvmTest/kotlin/a/B.kt', 'src/testFixtures/java/a/Builder.java', 'x/src/commonTest/kotlin/a/F.kt']) {
+    assert.equal(toClassGlob(f), null, f);
+    assert.equal(filterFiles(new Map([[f, [[1, 1]]]]), ['.java', '.kt']).size, 0, f);
+  }
+  for (const f of ['vitest.config.ts', 'pkg/eslint.config.js', 'stryker.config.mjs']) {
+    assert.equal(filterFiles(new Map([[f, [[1, 1]]]]), ['.ts', '.js', '.mjs']).size, 0, f);
+  }
+});
+
+test('a path with a comma fails loudly instead of building a wrong list', () => {
+  assert.throws(() => format(new Map([['src/a,b.ts', [[1, 2]]]]), 'stryker'), /comma/);
 });
 
 test('rejects an unknown format', () => {

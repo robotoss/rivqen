@@ -17,13 +17,13 @@
 // Formats:
 //   stryker      src/a.ts:10-42,src/b.ts:7-7      (StrykerJS --mutate with line ranges)
 //   files        Sources/A.swift,Sources/B.swift  (Muter --files-to-mutate)
-//   pit-classes  dev.rivqen.server.Codec*,...     (PIT targetClasses; the glob also
-//                                                  covers inner classes and Kotlin
-//                                                  file facades such as CodecKt)
+//   pit-classes  dev.rivqen.Codec,dev.rivqen.Codec$*,...  (PIT targetClasses: the class,
+//                                                  its inner classes and, for Kotlin,
+//                                                  the file facade CodecKt)
 //
 // The diff is: merge-base(base, HEAD) → working tree. Committed, staged and
 // unstaged changes to tracked files are included; renamed and copied files too.
-// Test files are excluded. Deleted lines are ignored (nothing to mutate).
+// Test files, test source sets and tool configuration (*.config.*) are excluded. Deleted lines are ignored (nothing to mutate).
 // Untracked files are not part of a git diff; the tool warns about them on stderr
 // (`git add -N <file>` makes them visible).
 // Exit code 0 with empty output means: no changed source lines.
@@ -32,7 +32,9 @@ import { execFileSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-const TEST_PATH = /(^|\/)(test|tests|__tests__|androidTest|Tests)\/|\.(test|spec)\.[cm]?[jt]sx?$|Tests?\.(kt|java|swift)$/;
+const TEST_PATH = /(^|\/)(test|tests|__tests__|androidTest|Tests)\/|(^|\/)src\/[A-Za-z]*[Tt]est[A-Za-z]*\/|\.(test|spec)\.[cm]?[jt]sx?$|Tests?\.(kt|java|swift)$/;
+// Tool and build configuration is not product code (vite.config.ts, eslint.config.js, …).
+const CONFIG_PATH = /(^|\/)[^/]*\.config\.[cm]?[jt]sx?$/;
 
 /** Undo git's C-style quoting of a path ("a\303\251.ts" → "aé.ts"). */
 export function unquotePath(raw) {
@@ -85,25 +87,36 @@ export function parseDiff(diffText) {
   return result;
 }
 
-/** Keep source files with the given extensions; drop tests. */
+/** Keep source files with the given extensions; drop tests and tool configuration. */
 export function filterFiles(ranges, exts) {
   const out = new Map();
   for (const [file, r] of ranges) {
     if (!exts.some((e) => file.endsWith(e))) continue;
-    if (TEST_PATH.test(file)) continue;
+    if (TEST_PATH.test(file) || CONFIG_PATH.test(file)) continue;
     out.set(file, r);
   }
   return out;
 }
 
-/** Map a JVM source path to a PIT class glob ("pkg.Class*"), or null. */
+/**
+ * Map a JVM source path to PIT class patterns, or null for test source sets.
+ * "pkg/Codec.kt" → "pkg.Codec,pkg.Codec$*,pkg.CodecKt": the class, its inner
+ * classes and lambdas, and the Kotlin file facade — not sibling classes.
+ */
 export function toClassGlob(file) {
-  const m = /(?:^|\/)src\/(?!test\/|androidTest\/)[A-Za-z]+\/(?:java|kotlin)\/(.+)\.(?:java|kt)$/.exec(file);
-  return m ? `${m[1].replace(/\//g, '.')}*` : null;
+  const m = /(?:^|\/)src\/([A-Za-z]+)\/(?:java|kotlin)\/(.+)\.(java|kt)$/.exec(file);
+  if (!m || /[Tt]est/.test(m[1])) return null;
+  const cls = m[2].replace(/\//g, '.');
+  return m[3] === 'kt' ? `${cls},${cls}$*,${cls}Kt` : `${cls},${cls}$*`;
 }
 
 export function format(ranges, kind) {
   const files = [...ranges.keys()];
+  const bad = files.filter((f) => f.includes(','));
+  if (bad.length > 0) {
+    // The tools split their lists on commas; such a path cannot be passed safely.
+    throw new Error(`path contains a comma, cannot build a list: ${bad.join(' | ')}`);
+  }
   switch (kind) {
     case 'stryker':
       return [...ranges].flatMap(([f, rs]) => rs.map(([a, b]) => `${f}:${a}-${b}`)).join(',');
@@ -149,7 +162,7 @@ function main() {
     // Fixed prefixes override diff.noprefix / diff.mnemonicPrefix; --relative limits
     // the diff to the current directory and prints paths relative to it.
     diff = git(['diff', '-U0', '--no-color', '--no-ext-diff', '--relative', '--src-prefix=a/', '--dst-prefix=b/',
-      '--find-renames', '--diff-filter=ACMR', mergeBase]);
+      '--find-renames', '--find-copies', '--diff-filter=ACMR', mergeBase]);
     untrackedRaw = git(['ls-files', '--others', '--exclude-standard']);
   } catch (err) {
     console.error(`error: cannot read git diff against ${base}: ${err.message}`);
@@ -159,7 +172,12 @@ function main() {
   if (untracked.length > 0) {
     console.error(`warning: ${untracked.length} untracked source file(s) are not included; run \`git add -N <file>\` or commit them: ${untracked.join(', ')}`);
   }
-  process.stdout.write(format(filterFiles(parseDiff(diff), exts), kind) + '\n');
+  try {
+    process.stdout.write(format(filterFiles(parseDiff(diff), exts), kind) + '\n');
+  } catch (err) {
+    console.error(`error: ${err.message}`);
+    process.exit(2);
+  }
 }
 
 if (isMain()) main();

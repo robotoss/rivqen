@@ -73,13 +73,42 @@ Golden fixtures are the shared truth for every implementation. See [Golden fixtu
 Simulators do not show real performance, memory or streaming behavior. Release decisions need device results.
 :::
 
-## 6. Rules for AI and humans
+## 6. Tests in the sprint cycle
+
+| When | What runs | Scope |
+|---|---|---|
+| Each small step of a task | The new test and its neighbors | The unit under work |
+| End of a task (lane) | Package tests + mutation check | Package; mutation on the task diff |
+| Integration of a lane | Fast checks of the affected packages | Affected packages |
+| Sprint close | **All** tests, all linters, mutation check, `/code-review` | Whole repository; mutation on the sprint diff |
+| Phase gate | All suites of this page that exist, device E2E | Whole product |
+
+See [Sprint workflow](/engineering/ai/sprint) and [Mutation testing](/engineering/quality/mutation).
+
+## 7. What a good test is
+
+1. It checks one **behavior** that a user, a caller or an invariant needs, not an implementation detail.
+2. It fails when the behavior breaks. Mutation testing checks this.
+3. It is deterministic: fake clock, fake transport, fixed seeds. No sleeps, no real network in unit tests.
+4. Its name says the behavior: `patch_with_stale_base_is_rejected`.
+5. It is small. Shared setup lives in one helper, not copied.
+
+Do not write:
+
+- Tests for trivial getters, generated code or third-party code.
+- Snapshot tests of large outputs when a few assertions say the same.
+- Several tests for the same behavior with different names.
+- Tests whose only purpose is to raise coverage or kill an unimportant mutant.
+
+## 8. Rules for AI and humans
 
 - Do not change a legacy fixture to make new code pass.
 - Do not mark a task done because the code compiles.
 - Do not count unit tests as a substitute for a required device test.
+- Do not skip, disable or quarantine a failing test to get green. Fix the cause or record a blocker.
 
 ## Related
 
+- [Mutation testing](/engineering/quality/mutation)
 - [Benchmarks](/engineering/quality/benchmarks)
 - [Golden fixtures](/engineering/protocol/fixtures)

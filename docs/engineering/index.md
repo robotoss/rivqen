@@ -8,7 +8,7 @@ No production code exists yet. These pages are the **specification and plan** fo
 
 ## How the engineering docs are organized
 
-The engineering layer has eleven areas. Each area maps to one or more [work packages](/engineering/plan/work-packages).
+The engineering layer has thirteen areas. Each area maps to one or more [work packages](/engineering/plan/work-packages).
 
 | Area | What it defines | Main work packages |
 |---|---|---|
@@ -22,7 +22,9 @@ The engineering layer has eleven areas. Each area maps to one or more [work pack
 | [Security](/engineering/security/) | Threat model, controls, platform hardening, release profiles, crypto, vulnerability management | WP-18 |
 | [Quality](/engineering/quality/testing) | Test strategy, benchmarks, observability | WP-19 |
 | [Delivery](/engineering/delivery/repository) | Repository layout, CI/CD, release and packaging, docs site | WP-20, WP-21 |
-| [Plan and governance](/engineering/plan/roadmap) | Phases, work packages, gates, risks, open questions, AI-agent workflow | WP-00 |
+| [Plan and governance](/engineering/plan/roadmap) | Phases, work packages, gates, risks, open questions, decision log, sprint records | WP-00 |
+| [AI development](/engineering/ai/) | Architect and executor roles, sprints, parallel work, decisions, docs as you go | WP-24 |
+| [Coding standards](/engineering/standards/) | Architecture, patterns, per-language rules and tools | WP-24 |
 
 ## The project formula
 
@@ -80,4 +82,4 @@ Only the architecture lead (or the maintainers group) approves:
 - Security exceptions.
 - Releases.
 
-AI agents and contributors propose and review. They are not the final source of truth. See [AI agent workflow](/engineering/plan/ai-agents).
+AI agents and contributors propose and review. They are not the final source of truth. See [AI development](/engineering/ai/).

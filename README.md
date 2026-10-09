@@ -33,7 +33,7 @@ Rivqen makes HTML pages inside mobile apps open faster and use less traffic:
 - **Full stack.** Kotlin, Swift and TypeScript/React clients. Node.js, Java and PHP server SDKs.
 - **Own protocol.** A versioned Rivqen protocol (RQP) with `data-rq-block` markup, plus a temporary legacy mode (until 1.5) for migration from Tencent VasSonic.
 
-## Repository layout (documentation phase)
+## Repository layout
 
 | Path | Content |
 |---|---|
@@ -41,7 +41,11 @@ Rivqen makes HTML pages inside mobile apps open faster and use less traffic:
 | `docs/engineering/` | Layer 2 — for people who build Rivqen (architecture, core, protocol, platforms, servers, security, quality, delivery, plan) |
 | `docs/research/` | Upstream audit, standards, platform baselines, literature |
 | `docs/legal/` | Licensing, third-party policy, clean-room provenance, brand |
-| `.github/workflows/docs.yml` | Builds the site and deploys it to GitHub Pages |
+| `examples/server-demo/` | Runnable RQP reference server (Node.js) with tests and byte measurements |
+| `tools/upstream-lab/`, `evidence/` | Lab that traces the upstream servers; captured traces and measurements |
+| `tools/mutation/` | Helper that turns a git diff into mutation-testing arguments |
+| `AGENTS.md`, `CLAUDE.md`, `.claude/` | Rules, roles and skills for AI coding agents |
+| `.github/workflows/` | `docs.yml` builds and deploys the site; `checks.yml` runs the fast checks |
 
 The planned monorepo layout for code is in [docs/engineering/delivery/repository.md](docs/engineering/delivery/repository.md).
 

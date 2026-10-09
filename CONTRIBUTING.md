@@ -74,7 +74,8 @@ You can use AI tools. You are responsible for the result.
 1. Review every generated line yourself.
 2. Do not paste secrets, private code, or user data into AI prompts.
 3. Check that generated code is not a copy of third-party code.
-4. Follow the [AI agent workflow](docs/engineering/plan/ai-agents.md) for agent-driven tasks.
+4. AI coding tools read [`AGENTS.md`](AGENTS.md) (Claude Code also reads [`CLAUDE.md`](CLAUDE.md) and `.claude/`). Agent-driven work follows [AI development](docs/engineering/ai/index.md): roles, sprints, decisions, tests and docs.
+5. Do not add AI attribution trailers (for example `Co-Authored-By`) to commits. The human who signs off (`-s`) is the author.
 
 ## 5. Commit messages
 

@@ -34,6 +34,7 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | [WP-21](#wp-21) | Release, packaging, legal and brand | P7 | Release owner | WP-20 | M | Planned |
 | [WP-22](#wp-22) | Demos and examples | P1–P6 | Platform engineers | WP-17 (server demo), WP-10…12 | M | **Server demo started** |
 | [WP-23](#wp-23) | Legacy modules, migration tool, end of life | P3–P9 | Protocol designer | WP-02, WP-05 | M | Planned |
+| [WP-24](#wp-24) | AI development foundation | P0 → P1 bridge | Architect | WP-00 | S | **Done** |
 
 ## 2. Dependency map
 
@@ -247,10 +248,19 @@ flowchart TD
 | Acceptance | Legacy fixtures pass in every legacy module; the core builds and passes all tests without the legacy feature; migration tool round-trips all legacy fixtures. |
 | Policy | [Modes and legacy deprecation](/engineering/protocol/versioning) |
 
+### WP-24 — AI development foundation {#wp-24}
+
+| Field | Content |
+|---|---|
+| Goal | A repeatable way for an AI architect and AI executors to build Rivqen: roles, sprints, parallel work without conflicts, decisions, tests, docs. |
+| Deliverables | `AGENTS.md`, `CLAUDE.md`; `.claude/agents/` (junior, middle, senior, researcher, docs steward, security reviewer); `.claude/skills/` (wp-start, sprint-plan, dispatch, decide, doc-sync, mutation-check, sprint-close); `.claude/rules/`; `.claude/settings.json`; [AI development](/engineering/ai/); [Coding standards](/engineering/standards/); [Mutation testing](/engineering/quality/mutation); sprint record template; decision log. |
+| Acceptance | Every WP from P1 on can start with `/wp-start` and close with `/sprint-close`; rules exist for each language in the plan; docs build. |
+| Status | **Done.** |
+
 ## 4. Rules for every work package
 
 1. Spec and tests come **before** code.
-2. Each issue uses the task template: goal, source of truth, mode, inputs/outputs, non-goals, security invariants, tests, reviewers.
+2. Each task has a brief: goal, source of truth, owned paths, contracts, acceptance, tests, checks, docs, non-goals, security ([Sprint workflow](/engineering/ai/sprint#_3-task-brief)).
 3. A WP is done only when its acceptance criteria are met **with evidence** (test results, reports, recordings).
 4. A WP that finds a platform limit writes an ADR with `PARITY-CONDITIONAL` or `PLATFORM-UNSUPPORTED`. It is never closed silently.
 
@@ -258,4 +268,4 @@ flowchart TD
 
 - [Roadmap and phases](/engineering/plan/roadmap)
 - [Gates and Definition of Done](/engineering/plan/gates)
-- [AI agent workflow](/engineering/plan/ai-agents)
+- [AI development](/engineering/ai/)

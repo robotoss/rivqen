@@ -28,9 +28,22 @@ body:
     id: mode
     attributes:
       label: Compatibility mode
-      options: ["Sonic v1", "Rivqen v2", "Both", "Not protocol-related"]
+      options: ["RQP", "Legacy", "Both", "Not protocol-related"]
     validations:
       required: true
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Tier
+      description: Who does it — see docs/engineering/ai/roles.md §4.
+      options: ["Junior", "Middle", "Senior", "Researcher", "Docs steward", "Human"]
+    validations:
+      required: true
+  - type: textarea
+    id: owns
+    attributes:
+      label: Owned paths
+      description: The only paths this task may change. Shared files belong to the architect.
   - type: textarea
     id: io
     attributes:
@@ -49,7 +62,12 @@ body:
     id: tests
     attributes:
       label: Tests and benchmarks
-      placeholder: Unit, golden, property, fuzz, device E2E, benchmark or N/A.
+      placeholder: Unit, golden, property, fuzz, device E2E, mutation on the diff (critical modules ≥ 80 %), benchmark or N/A.
+  - type: textarea
+    id: docs
+    attributes:
+      label: Docs to update
+      placeholder: docs/engineering/core/template-engine.md §4
   - type: input
     id: reviewers
     attributes:

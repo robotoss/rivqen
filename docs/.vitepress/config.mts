@@ -184,6 +184,7 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
     items: [
       { text: 'Test strategy', link: '/engineering/quality/testing' },
       { text: 'Benchmarks', link: '/engineering/quality/benchmarks' },
+      { text: 'Mutation testing', link: '/engineering/quality/mutation' },
       { text: 'Observability', link: '/engineering/quality/observability' }
     ]
   },
@@ -198,6 +199,31 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
     ]
   },
   {
+    text: 'AI development',
+    collapsed: true,
+    items: [
+      { text: 'Overview', link: '/engineering/ai/' },
+      { text: 'Roles and routing', link: '/engineering/ai/roles' },
+      { text: 'Sprint workflow', link: '/engineering/ai/sprint' },
+      { text: 'Parallel work', link: '/engineering/ai/parallel' },
+      { text: 'Decisions', link: '/engineering/ai/decisions' },
+      { text: 'Documentation as you go', link: '/engineering/ai/documentation' }
+    ]
+  },
+  {
+    text: 'Coding standards',
+    collapsed: true,
+    items: [
+      { text: 'Overview and architecture', link: '/engineering/standards/' },
+      { text: 'Rust', link: '/engineering/standards/rust' },
+      { text: 'Kotlin', link: '/engineering/standards/kotlin' },
+      { text: 'Swift', link: '/engineering/standards/swift' },
+      { text: 'TypeScript', link: '/engineering/standards/typescript' },
+      { text: 'Java', link: '/engineering/standards/java' },
+      { text: 'PHP', link: '/engineering/standards/php' }
+    ]
+  },
+  {
     text: 'Plan and governance',
     collapsed: false,
     items: [
@@ -206,7 +232,9 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'Gates and Definition of Done', link: '/engineering/plan/gates' },
       { text: 'Risk register', link: '/engineering/plan/risks' },
       { text: 'Open questions', link: '/engineering/plan/open-questions' },
-      { text: 'AI agent workflow', link: '/engineering/plan/ai-agents' }
+      { text: 'Decision log', link: '/engineering/plan/decision-log' },
+      { text: 'Sprint records', link: '/engineering/plan/sprints/' },
+      { text: 'Sprint record template', link: '/engineering/plan/sprints/template' }
     ]
   }
 ]

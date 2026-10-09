@@ -2,7 +2,7 @@
 
 Rivqen is a monorepo. One repository keeps the core, the SDKs, the servers, the fixtures and the documentation in sync. This page shows the planned layout.
 
-**Status:** <Badge type="info" text="DESIGN" /> Today only `docs/` and the root files exist. Each directory is created by the work package listed next to it.
+**Status:** <Badge type="info" text="DESIGN" /> Today `docs/`, the root files, `.claude/`, `examples/server-demo/`, `tools/` and `evidence/` exist. Each directory is created by the work package listed next to it.
 
 ## 1. Tree
 
@@ -10,6 +10,8 @@ Rivqen is a monorepo. One repository keeps the core, the SDKs, the servers, the 
 rivqen/
 ├── README.md  LICENSE  NOTICE  THIRD_PARTY_NOTICES.md
 ├── SECURITY.md  CONTRIBUTING.md  CODE_OF_CONDUCT.md
+├── AGENTS.md  CLAUDE.md          # rules for AI coding agents      (WP-24)
+├── .claude/                      # agents, skills, rules, settings (WP-24)
 ├── Cargo.toml                    # Rust workspace                 (WP-05)
 ├── rust-toolchain.toml           # pinned stable toolchain        (WP-05)
 ├── deny.toml                     # cargo-deny policy              (WP-20)
@@ -49,6 +51,9 @@ rivqen/
 │   ├── source-manifest.lock      # pinned upstream SHA + file hashes (WP-01)
 │   └── traces/                   # captured upstream behavior        (WP-01)
 ├── docs/                         # this site                         (WP-00)
+├── tools/
+│   ├── upstream-lab/             # traces of upstream servers        (WP-01)
+│   └── mutation/                 # diff → mutation tool arguments    (WP-24)
 ├── scripts/
 └── .github/workflows/
 ```

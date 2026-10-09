@@ -10,12 +10,15 @@ Several agents work at the same time. This page explains how their work comes to
 
 | Branch | Lifetime | Pushed | Owner |
 |---|---|---|---|
-| `main` | Permanent | Yes | Human. One squash commit per WP. |
-| `wp/<WP-ID>` (integration) | One WP | Only as a backup between sessions | Architect |
+| `main` | Permanent | Never by an agent | Human. Merged by the human through an MR. |
+| `wp/<WP-ID>` (integration) | One WP | At the end of each sprint and at the end of the WP | Architect |
+| `chore/<name>` | One process or tooling change | When the change is ready for an MR | Architect |
 | Lane worktree branch | One task | Never | One subagent |
 
+At the end of a WP, the architect pushes `wp/<WP-ID>` and gives the human the MR text. The human opens the MR, merges it into `main` and deletes the branch after the merge. Agents never push to `main` and never force-push ([DL-006](/engineering/plan/decision-log)).
+
 ::: warning Cloud sessions are temporary
-A cloud container can be removed when the session is idle. Push `wp/<WP-ID>` at the end of each sprint so that no work is lost. Delete it after the WP is squashed into `main`.
+A cloud container can be removed when the session is idle. Push `wp/<WP-ID>` at the end of each sprint so that no work is lost.
 :::
 
 ## 2. Before the lanes start

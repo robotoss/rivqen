@@ -55,7 +55,7 @@ flowchart LR
   E --> I[Integrate<br/>one lane at a time]
   I --> Z[Sprint close<br/>all tests, mutation,<br/>review, docs]
   Z -->|more sprints| P
-  Z -->|WP done| Q[1 commit to main]
+  Z -->|WP done| Q[MR to main<br/>human]
 ```
 
 | Step | Skill | Page |

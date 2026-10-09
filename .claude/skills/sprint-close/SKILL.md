@@ -1,6 +1,6 @@
 ---
 name: sprint-close
-description: Close a Rivqen sprint — run all tests and linters, mutation check on the sprint diff, /code-review, security review where needed, docs build, update records, push the wp/ branch; when the WP is complete, squash it into one commit on main. Use when all lanes of a sprint are integrated.
+description: Close a Rivqen sprint — run all tests and linters, mutation check on the sprint diff, /code-review, security review where needed, docs build, update records, push the wp/ branch; when the WP is complete, give the human the merge request text and stop. Use when all lanes of a sprint are integrated.
 argument-hint: <WP-ID> <sprint number>
 ---
 # Sprint close: $ARGUMENTS
@@ -18,8 +18,9 @@ You are the architect. Follow `docs/engineering/ai/sprint.md` §6. Work on `wp/$
 
 If the WP is complete:
 
-9. Check each acceptance item of the WP with evidence (paths, test names, results) in the sprint record. Ask the human to confirm acceptance items that need a human (gate).
-10. Squash into one commit on `main`: `git checkout main && git merge --squash wp/$0 && git commit -s` with a message that lists the deliverables.
-11. Push `main`. Delete `wp/$0` locally and on the remote (if the remote deletion fails, ask the human to delete it).
+9. Check each acceptance item of the WP. Write the evidence (paths, test names, results) in the sprint record. Ask the human to confirm acceptance items that need a human (gate).
+10. Commit the sprint record with `git commit -s`. Push `wp/$0`.
+11. Give the human the merge request (MR) title and description: deliverables, test results, mutation score, review findings, changed pages.
+12. Stop. The human opens and merges the MR into `main` and deletes `wp/$0`. Never push to `main`. Never force-push.
 
 Give the human a short report: tests, mutation score, review findings, docs changed, what is next.

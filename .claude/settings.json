@@ -34,6 +34,8 @@
       "Bash(vendor/bin/infection *)"
     ],
     "ask": [
+      "Bash(git push * main*)",
+      "Bash(git push origin main*)",
       "Bash(git push --force *)",
       "Bash(git push -f *)",
       "Bash(git reset --hard *)",

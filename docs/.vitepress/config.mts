@@ -113,6 +113,7 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
     items: [
       { text: 'Overview', link: '/engineering/protocol/' },
       { text: 'RQP: block markup', link: '/engineering/protocol/markup' },
+      { text: 'RQP markup: edge cases', link: '/engineering/protocol/markup-edge-cases' },
       { text: 'RQP: negotiation', link: '/engineering/protocol/negotiation' },
       { text: 'RQP: manifest and patch', link: '/engineering/protocol/manifest-patch' },
       { text: 'Versioning and legacy end of life', link: '/engineering/protocol/versioning' },

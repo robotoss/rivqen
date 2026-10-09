@@ -67,9 +67,11 @@ export function isAlpha(c) {
   return l >= 0x61 && l <= 0x7a;
 }
 
-/** ASCII case-insensitive match of the bytes at p with a lower-case ASCII string. */
+/**
+ * ASCII case-insensitive match of the bytes at p with a lower-case ASCII string.
+ * A byte after the end of the buffer reads as undefined and never matches.
+ */
 export function matchesLower(b, p, lower) {
-  if (p + lower.length > b.length) return false;
   for (let i = 0; i < lower.length; i++) {
     let c = b[p + i];
     if (c >= 0x41 && c <= 0x5a) c |= 0x20;

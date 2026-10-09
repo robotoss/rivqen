@@ -5,12 +5,13 @@
 
 import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { EXIT_INTERNAL, EXIT_OK, EXIT_USAGE, main, readBounded, sortedSubdirs } from '../src/cli.mjs';
+import { CliError, EXIT_INTERNAL, EXIT_OK, EXIT_USAGE, main, readBounded, sortedSubdirs } from '../src/cli.mjs';
+import { LIMITS } from '../src/markup.mjs';
 
 const CLI = fileURLToPath(new URL('../src/cli.mjs', import.meta.url));
 const SECRET = 'secret-content-7f3a';
@@ -37,6 +38,9 @@ before(() => {
   writeFileSync(path.join(batch, 'Z', 'input.html'), VALID);
   writeFileSync(path.join(batch, 'file-not-dir'), VALID);
   mkdirSync(path.join(dir, 'broken', 'x', 'input.html'), { recursive: true });
+  mkdirSync(path.join(dir, 'dangling'));
+  symlinkSync(path.join(dir, 'nowhere'), path.join(dir, 'dangling', 'link'));
+  writeFileSync(path.join(dir, 'too-large.html'), Buffer.alloc(LIMITS.maxDocumentBytes + 1, 0x61));
 });
 after(() => rmSync(dir, { recursive: true, force: true }));
 
@@ -88,6 +92,28 @@ describe('cli', () => {
     assert.match(r.stderr, /cannot open .*missing\.html \(ENOENT\)/);
   });
 
+  it('keeps the I/O error as the cause', () => {
+    assert.throws(() => readBounded(path.join(dir, 'missing.html')), (error) => {
+      assert.ok(error instanceof CliError);
+      assert.equal(error.code, 'RQP_CLI_USAGE');
+      assert.equal(error.cause.code, 'ENOENT');
+      return true;
+    });
+  });
+
+  it('exits 2 when a directory entry cannot be read', () => {
+    const r = capture(['--batch', path.join(dir, 'dangling')]);
+    assert.equal(r.code, EXIT_USAGE);
+    assert.match(r.stderr, /cannot read .*link \(ENOENT\)/);
+  });
+
+  it('reports RQP_MARKUP_LIMIT for a file of 5 MiB + 1 byte', () => {
+    assert.equal(readBounded(path.join(dir, 'too-large.html')).length, LIMITS.maxDocumentBytes + 1);
+    const r = capture([path.join(dir, 'too-large.html')]);
+    assert.equal(r.code, EXIT_OK);
+    assert.equal(JSON.parse(r.stdout).error, 'RQP_MARKUP_LIMIT');
+  });
+
   it('exits 2 for a missing fixtures directory', () => {
     const r = capture(['--batch', path.join(dir, 'missing')]);
     assert.equal(r.code, EXIT_USAGE);
@@ -131,7 +157,22 @@ describe('cli', () => {
     assert.equal(ok.stderr, '');
     const usage = spawnSync(process.execPath, [CLI], { encoding: 'utf8' });
     assert.equal(usage.status, EXIT_USAGE);
+    assert.match(usage.stderr, /^rqp-markup: usage:/);
     const batch = execFileSync(process.execPath, [CLI, '--batch', path.join(dir, 'batch')], { encoding: 'utf8' });
     assert.equal(batch.trimEnd().split('\n').length, 4);
+  });
+
+  it('exits 2 with a reason when stdout is closed', async () => {
+    const child = spawn(process.execPath, [CLI, '--batch', path.join(dir, 'batch')], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    child.stdout.destroy();
+    let stderr = '';
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk;
+    });
+    const code = await new Promise((resolve) => child.on('close', resolve));
+    assert.equal(code, EXIT_USAGE);
+    assert.match(stderr, /cannot write output \(EPIPE\)/);
   });
 });

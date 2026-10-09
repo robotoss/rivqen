@@ -11,7 +11,19 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { analyze } from '../src/markup.mjs';
 
-const FIXTURES = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../fixtures/rqp/markup');
+// The nearest fixtures/rqp/markup above this file (also from a mutation sandbox).
+function findFixtures() {
+  let dir = path.dirname(fileURLToPath(import.meta.url));
+  for (;;) {
+    const candidate = path.join(dir, 'fixtures', 'rqp', 'markup');
+    if (existsSync(candidate)) return candidate;
+    const parent = path.dirname(dir);
+    if (parent === dir) throw new Error('fixtures/rqp/markup not found');
+    dir = parent;
+  }
+}
+
+const FIXTURES = findFixtures();
 const names = readdirSync(FIXTURES).filter((n) => existsSync(path.join(FIXTURES, n, 'expected.json'))).sort();
 
 describe('golden fixtures', () => {

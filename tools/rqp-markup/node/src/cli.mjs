@@ -53,7 +53,7 @@ export function readBounded(file, limit = LIMITS.maxDocumentBytes) {
       const chunk = Buffer.alloc(Math.min(CHUNK, limit + 1 - total));
       const n = readSync(fd, chunk, 0, chunk.length, null);
       if (n === 0) break;
-      chunks.push(n === chunk.length ? chunk : chunk.subarray(0, n));
+      chunks.push(chunk.subarray(0, n));
       total += n;
     }
   } catch (cause) {

@@ -188,6 +188,11 @@ describe('tokenizer', () => {
       }
     });
 
+    it('accepts every ASCII letter as the first character of a tag name', () => {
+      assert.deepEqual(kinds('<a></Z><z></A>'), ['start:a', 'end:z', 'start:z', 'end:a']);
+      assert.deepEqual(kinds('<@><[><`><{>'), []);
+    });
+
     it('replaces U+0000 in a tag name with U+FFFD and lowers only ASCII letters', () => {
       assert.equal(tagName(Buffer.from('A\0É'), 0, 5), 'a�É');
       assert.equal(tagName(Buffer.from('ab'), 0, 2), 'ab');

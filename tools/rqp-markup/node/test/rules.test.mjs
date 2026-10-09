@@ -158,6 +158,11 @@ describe('M-05 token stack', () => {
     assert.deepEqual(blocksOf(`</span></div>${P('a')}`).map((b) => b[0]), ['a']);
   });
 
+  it('ignores an unmatched end tag also on a deep stack', () => {
+    // If the end tag popped anything, it would cross the guarded button (M-06).
+    assert.equal(errorOf(doc('<div><span><button></x></button></span></div>')), null);
+  });
+
   it('pops crossed elements', () => {
     // After </div> the span is closed, so the block is not inside an open span.
     assert.deepEqual(blocksOf(`<div><span>a</div>${P('b')}`).map((b) => b[0]), ['b']);
@@ -361,6 +366,11 @@ describe('M-12 CDATA', () => {
     assert.equal(errorOf(doc('<![CDATA[]>')), STRUCTURE);
   });
 
+  it('rejects a CDATA section whose first > follows only one ]', () => {
+    assert.equal(errorOf(doc('<![CDATA[x x]>')), STRUCTURE);
+    assert.equal(errorOf(doc('<![CDATA[x]x>')), STRUCTURE);
+  });
+
   it('accepts a CDATA section that runs to the end of the input', () => {
     assert.equal(errorOf('<![CDATA[ a < b'), null);
   });
@@ -381,6 +391,12 @@ describe('M-13 reserved manifest', () => {
 
   it('applies also in a foreign region', () => {
     assert.equal(errorOf(doc('<svg><script type="rivqen-manifest">x</script></svg>')), RESERVED);
+  });
+
+  it('folds only ASCII letters when it matches the type', () => {
+    // CR (0x0D) | 0x20 is '-': a wrong case fold would see "rivqen-manifest".
+    assert.equal(errorOf(doc('<script type="rivqen\rmanifest">1</script>')), null);
+    assert.equal(errorOf(doc('<script type="x RIVQEN-MANIFEST">1</script>')), RESERVED);
   });
 
   it('uses only the first type attribute', () => {

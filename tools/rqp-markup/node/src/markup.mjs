@@ -79,23 +79,22 @@ function isValidId(b, span) {
 
 // M-13: the raw type value contains '&' or "rivqen-manifest" (ASCII case-insensitive).
 function isReservedType(b, span) {
-  const last = span.end - MANIFEST_MARK.length;
-  for (let i = span.start; i < span.end; i++) {
-    if (b[i] === AMPERSAND) return true;
-    if (i <= last && matchesLower(b, i, MANIFEST_MARK)) return true;
+  if (b.subarray(span.start, span.end).includes(AMPERSAND)) return true;
+  for (let i = span.start; i + MANIFEST_MARK.length <= span.end; i++) {
+    if (matchesLower(b, i, MANIFEST_MARK)) return true;
   }
   return false;
 }
 
 function isJsonType(b, span) {
-  return span.end - span.start === JSON_TYPE.length && b.subarray(span.start, span.end).equals(JSON_TYPE);
+  return b.subarray(span.start, span.end).equals(JSON_TYPE);
 }
 
-// M-12: a closed '<![CDATA[' bogus comment must end with a ']]>' that starts
-// after '<![CDATA[' (9 bytes). A comment that runs to EOF has no '>'.
+// M-12: a closed '<![CDATA[' bogus comment must end with ']]>'. That ']]>'
+// always starts after '<![CDATA[': the bytes before its '>' at offsets 7 and 8
+// are 'A' and '['. A comment that runs to EOF has no '>' (no rule applies).
 function isCdataSafe(b, t) {
-  if (!t.closed) return true;
-  return t.end - 3 >= t.start + 9 && b[t.end - 3] === 0x5d && b[t.end - 2] === 0x5d;
+  return !t.closed || (b[t.end - 3] === 0x5d && b[t.end - 2] === 0x5d);
 }
 
 function increment(map, key) {
@@ -144,7 +143,7 @@ class Scanner {
     this.charsOnly = null; // M-07: name of the element whose content must be text only
     this.noscriptStart = -1; // M-11: offset of the noscript content
     this.pending = null; // block of the start tag that is processed now
-    this.block = null; // open block: { id, format, start, index, raw }
+    this.block = null; // open block: { id, format, start, index }
     this.blocks = [];
     this.ids = new Set();
   }
@@ -303,7 +302,6 @@ class Scanner {
         format,
         start: t.end,
         index: this.names.length - 1,
-        raw: name === 'title' || format === 'json',
       };
     }
     return null;
@@ -378,20 +376,21 @@ class Scanner {
   }
 
   // End tag while a block is open: M-20, M-22 rule 4, M-23.
+  //
+  // M-23: the end tag must have the name of the current node. This also gives
+  // M-22 rule 4: a void element is never on the stack, so its end tag never
+  // matches. A title or json block has no tags in its content (RCDATA, script
+  // data), so its appropriate end tag has the name of the block element, which
+  // is the current node.
   contentEnd(t) {
     const top = this.names.length - 1;
-    if (!this.block.raw) {
-      if (VOID.has(t.name)) return STRUCTURE; // M-22 rule 4
-      if (this.names[top] !== t.name) return STRUCTURE; // M-23
-      if (top !== this.block.index) {
-        this.pop();
-        return null;
-      }
+    if (this.names[top] !== t.name) return STRUCTURE; // M-23
+    if (top !== this.block.index) {
+      this.pop();
+      return null;
     }
-    // Block end tag. A raw (title, json) block ends at its appropriate end tag,
-    // which is the only end tag that the tokenizer gives in RCDATA and script data.
     const { id, format, start } = this.block;
-    const end = t.start;
+    const end = t.start; // the '<' of the block end tag (M-20)
     if (end - start > LIMITS.maxBlockBytes) return ErrorCode.LIMIT; // M-26
     if (format === 'json' && !isJsonText(this.b, start, end)) return ErrorCode.BAD_JSON; // M-25
     this.blocks.push({ id, format, start, end });

@@ -1201,4 +1201,32 @@ fn large_adversarial_inputs_finish() {
     ]
     .concat();
     assert!(analyze(&json).is_ok());
+    // M-24 j and k and the M-13 check of noscript content (T-08).
+    // Five blocks, each just under the 1 MiB content limit (M-26).
+    let five_blocks = |open: &[u8], close: &[u8], n: usize| -> Vec<u8> {
+        (0..5)
+            .flat_map(|i| {
+                [
+                    format!("<div data-rq-block=\"b{i}\">").into_bytes(),
+                    open.repeat(n),
+                    close.repeat(n),
+                    b"</div>".to_vec(),
+                ]
+                .concat()
+            })
+            .collect()
+    };
+    let lists = five_blocks(b"<ul><li>", b"</li></ul>", 58_000);
+    assert!(lists.len() > 5_000_000);
+    assert_eq!(analyze(&lists).unwrap().blocks.len(), 5);
+    let tables = five_blocks(b"<table><tr><td>", b"</td></tr></table>", 31_000);
+    assert!(tables.len() > 5_000_000);
+    assert_eq!(analyze(&tables).unwrap().blocks.len(), 5);
+    let scripts: Vec<u8> = [
+        &b"<noscript>"[..],
+        &b"<script type=\"a\"></script>".repeat(190_000),
+        b"</noscript>",
+    ]
+    .concat();
+    assert!(analyze(&scripts).is_ok());
 }

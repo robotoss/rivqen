@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: The Rivqen Authors
+{
+    "$schema": "vendor/infection/infection/resources/schema.json",
+    "source": {
+        "directories": ["src"],
+        "excludes": ["autoload.php"]
+    },
+    "phpUnit": {
+        "configDir": "."
+    },
+    // The 5 MiB resource tests are slow and do not kill extra mutants.
+    "testFrameworkOptions": "--exclude-group=limits",
+    "timeout": 30,
+    "minMsi": 80,
+    "logs": {
+        "text": "build/infection.log"
+    }
+}

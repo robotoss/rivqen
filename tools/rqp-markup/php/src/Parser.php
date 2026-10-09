@@ -46,7 +46,11 @@ final class Parser
     private array $tableIndex = [];
     /** Stack index of the `svg`/`math` element of the foreign region, or -1. */
     private int $region = -1;
-    /** Number of `select` elements pushed in HTML context. */
+    /**
+     * Number of `select` elements pushed in HTML context. Inside such a
+     * `select` the position is always in HTML context: M-08 rejects the
+     * `svg` and `math` start tags that would open a foreign region.
+     */
     private int $selects = 0;
     /** Stack index of the foreign INTEGRATION/TEXT element whose content must be characters only (M-07), or -1. */
     private int $charsOnly = -1;
@@ -141,7 +145,7 @@ final class Parser
         if ($this->charsOnly >= 0) {
             throw new MarkupError(ErrorCode::Structure, 'M-07');
         }
-        if ($this->selects > 0 && $this->region < 0) {
+        if ($this->selects > 0) {
             throw new MarkupError(ErrorCode::Structure, 'M-08');
         }
         if ($this->blockIndex >= 0) {
@@ -332,7 +336,7 @@ final class Parser
             return;
         }
         $foreign = $this->region >= 0;
-        if ($this->selects > 0 && !$foreign && !isset(Names::SELECT_END[$name])) {
+        if ($this->selects > 0 && !isset(Names::SELECT_END[$name])) {
             throw new MarkupError(ErrorCode::Structure, 'M-08');
         }
         // M-05 step 3.
@@ -473,29 +477,26 @@ final class Parser
     private function popTo(int $index): void
     {
         for ($i = count($this->names) - 1; $i >= $index; $i--) {
-            $name = array_pop($this->names);
-            $flags = array_pop($this->flags);
-            if ($name === null || $flags === null) {
-                throw new \LogicException('token stack underflow');
-            }
+            $name = $this->names[$i];
+            $flags = $this->flags[$i];
             if (--$this->count[$name] === 0) {
                 unset($this->count[$name]);
             }
             if (($flags & self::CONTENT) !== 0 && --$this->contentCount[$name] === 0) {
                 unset($this->contentCount[$name]);
             }
-            if (($flags & self::FOREIGN) === 0) {
-                if ($this->tableIndex !== [] && $this->tableIndex[count($this->tableIndex) - 1] === $i) {
-                    array_pop($this->tableIndex);
-                }
-                if ($name === 'select') {
-                    $this->selects--;
-                }
+            if ($this->tableIndex !== [] && $this->tableIndex[count($this->tableIndex) - 1] === $i) {
+                array_pop($this->tableIndex);
+            }
+            if ($name === 'select' && ($flags & self::FOREIGN) === 0) {
+                $this->selects--;
             }
             if ($i === $this->region) {
                 $this->region = -1;
             }
         }
+        array_splice($this->names, $index);
+        array_splice($this->flags, $index);
     }
 
     /** F of M-09 and M-19: the nearest TABLE_FAMILY element; the search stops at `template`. */

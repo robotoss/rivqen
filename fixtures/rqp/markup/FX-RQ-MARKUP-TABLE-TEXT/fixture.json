@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-TEXT",
+  "description": "Text and a comment directly in a table in the content, and elements inside a cell, are valid",
+  "rules": [
+    "M-09",
+    "M-24"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "<table>Total<!-- c --><tbody><tr><td><div>a</div><p>b</p></td></tr></tbody></table>"
+      }
+    ]
+  }
+}

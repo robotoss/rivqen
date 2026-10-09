@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-LIST-NESTED",
+  "description": "Nested lists in the content: each li, dd or dt has its own list above any earlier li, dd or dt",
+  "rules": [
+    "M-23",
+    "M-24"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "<ul><li>a<ul><li>b</li></ul></li><li>c</li></ul><dl><dt>t</dt><dd>d<dl><dt>u</dt><dd>e</dd></dl></dd></dl><ol><li><div>f</div></li></ol>"
+      }
+    ]
+  }
+}

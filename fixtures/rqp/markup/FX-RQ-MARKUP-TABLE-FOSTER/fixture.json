@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-FOSTER",
+  "description": "Start tags that are not table parts directly in a table in the content (foster parenting; a table start tag closes the open table)",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

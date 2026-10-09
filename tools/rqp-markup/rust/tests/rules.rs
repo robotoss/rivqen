@@ -376,6 +376,51 @@ fn m09_table_parts() {
     assert_valid("<table><tr><td><template><td>a</td></template></td></tr></table>");
 }
 
+/// M-08 applies to a `select` pushed in HTML context only (defect found by
+/// T-07: a foreign `select` was checked by M-08).
+#[test]
+fn m08_does_not_apply_to_a_foreign_select() {
+    for body in [
+        "<math><select><th></th></select></math>",
+        "<svg><select><style></style></select></svg>",
+        "<svg><select><g><text>t</text></g></select></svg>",
+        "<svg><select><!DOCTYPE x></select></svg>",
+    ] {
+        assert_eq!(
+            blocks(&format!("{body}<p data-rq-block=\"a\">x</p>")),
+            [html("a", "x")],
+            "{body}"
+        );
+    }
+    // E2: the input can end in a foreign region, also with a foreign select open.
+    assert!(analyze(b"<p data-rq-block=\"a\">x</p><svg><select>").is_ok());
+    // M-07 still applies inside the foreign select: breakout names and
+    // stray end tags (M-08 would allow `</option>`).
+    assert_invalid("<svg><select><p>a</p></select></svg>", STRUCTURE, "M-07");
+    assert_invalid("<svg><select></g-x></select></svg>", STRUCTURE, "M-07");
+    assert_invalid("<math><select></option></select></math>", STRUCTURE, "M-07");
+    // An HTML select after a foreign one is checked by M-08.
+    assert_invalid(
+        "<svg><select></select></svg><select><b>a</b></select>",
+        STRUCTURE,
+        "M-08",
+    );
+    assert_invalid(
+        "<svg><select></select></svg><select><option>a</div></select>",
+        STRUCTURE,
+        "M-08",
+    );
+    assert_invalid(
+        "<svg><select></svg><select><!DOCTYPE x></select>",
+        STRUCTURE,
+        "M-08",
+    );
+    assert_eq!(
+        error_of(b"<svg><select></select></svg><select><option>a"),
+        (STRUCTURE, "M-08")
+    );
+}
+
 #[test]
 fn m10_frameset() {
     assert_invalid(

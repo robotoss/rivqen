@@ -151,6 +151,18 @@ impl<'a> Pass<'a> {
         self.names.top(name.id()).is_some()
     }
 
+    /// M-08 applies to a `select` element pushed in HTML context only. A
+    /// `select` in a foreign region is a foreign element (M-07 applies).
+    /// Inside an HTML `select` no `svg` or `math` can start (M-08), and a
+    /// foreign region ends with all its elements, so the nearest `select` is
+    /// the HTML one whenever one is open.
+    fn html_select_open(&self) -> bool {
+        self.names
+            .top(Known::Select.id())
+            .and_then(|index| self.stack.get(index))
+            .is_some_and(|elem| elem.html)
+    }
+
     /// An element with this name was opened in the content of the block
     /// whose element is at `block_elem`, and it is still open.
     fn open_in_content(&self, name: Known, block_elem: usize) -> bool {
@@ -208,7 +220,7 @@ impl<'a> Pass<'a> {
 
     fn doctype(&self) -> Result<(), MarkupError> {
         self.not_character()?;
-        if self.is_open(Known::Select) {
+        if self.html_select_open() {
             return Err(structure("M-08"));
         }
         if self.block.is_some_and(|b| b.content == Content::Markup) {
@@ -223,9 +235,7 @@ impl<'a> Pass<'a> {
         let foreign = self.foreign_root.is_some();
 
         self.not_character()?;
-        if self.is_open(Known::Select)
-            && !is_any(name, &[Known::Option, Known::Optgroup, Known::Hr])
-        {
+        if self.html_select_open() && !is_any(name, &[Known::Option, Known::Optgroup, Known::Hr]) {
             return Err(structure("M-08"));
         }
         if name == Known::Frameset.id() {
@@ -422,7 +432,7 @@ impl<'a> Pass<'a> {
             }
             self.text_only = None;
         }
-        if self.is_open(Known::Select)
+        if self.html_select_open()
             && !name.is_some_and(|n| is_any(n, &[Known::Option, Known::Optgroup, Known::Select]))
         {
             return Err(structure("M-08"));
@@ -514,7 +524,7 @@ impl<'a> Pass<'a> {
         if self.block.is_some() {
             return Err(structure("M-20"));
         }
-        if self.is_open(Known::Select) {
+        if self.html_select_open() {
             return Err(structure("M-08"));
         }
         Ok(self.blocks)

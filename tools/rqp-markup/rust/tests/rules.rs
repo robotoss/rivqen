@@ -911,6 +911,24 @@ fn m27_result_offsets_hashes_and_revisions() {
     assert!(analyze(b"").unwrap().blocks.is_empty());
 }
 
+/// The readings of README section "How the rules are read". The rules
+/// leave room here; these tests pin the choice of this candidate.
+#[test]
+fn readings_where_the_rules_leave_room() {
+    // M-07.3: a `<` that is a character token is allowed in an
+    // integration point; `</>` emits no token.
+    assert_valid("<svg><desc>a < b </> c</desc></svg>");
+    // M-07: EOF in a foreign text-only element and in a foreign region.
+    assert!(analyze(b"<p data-rq-block=\"a\">x</p><svg><title>x").is_ok());
+    assert!(analyze(b"<p data-rq-block=\"a\">x</p><math><mi>").is_ok());
+    // M-10 and M-07.1 apply in a foreign region without exceptions.
+    assert_invalid("<svg><font>x</font></svg>", STRUCTURE, "M-07");
+    // M-12: no `>` after `<![CDATA[`.
+    assert!(analyze(b"<p data-rq-block=\"a\">x</p><![CDATA[ x").is_ok());
+    // M-11: a noscript without an end tag is checked up to EOF.
+    assert!(analyze(b"<noscript><img src=x>").is_ok());
+}
+
 #[test]
 fn error_codes_have_wire_names() {
     let codes = [

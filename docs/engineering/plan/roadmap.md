@@ -48,9 +48,10 @@ flowchart TD
 
 | Item | Content |
 |---|---|
-| Work packages | WP-00, WP-01 |
+| Work packages | WP-00, WP-01, WP-24 |
 | Outputs | This documentation site; pinned upstream SHA and source manifest; behavioral audit; **server traces** of the upstream Java, Node.js and PHP implementations; risk register; ADR register |
 | Milestone **M1 "init docs"** | ✅ Documentation site, two layers, plan, audit, server trace report |
+| Milestone **M2 "AI foundation"** (WP-24) | ✅ Agent roles, sprint workflow, coding standards, mutation testing policy |
 | Gate **G0** ✅ passed | Upstream pinned (`59936bef`); licenses inventoried; audit evidence for headers, markers, hashing, `cache-offline`, FSM, cache; divergences listed and confirmed by traces |
 
 ### P1 — Contracts

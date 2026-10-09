@@ -19,7 +19,9 @@
 - [ ] Every commit has a `Signed-off-by` line (DCO).
 - [ ] No code is copied from Tencent VasSonic or from incompatible-license projects (clean-room policy).
 - [ ] New statements in docs are labeled FACT, DESIGN or RESEARCH.
-- [ ] `npm run docs:build` passes (for documentation changes).
+- [ ] Tests cover each new behavior; the mutation check on the diff passes (critical modules ≥ 80 %).
+- [ ] The docs that this change affects are updated; `npm run docs:build` passes.
+- [ ] No AI attribution trailers; no model names in commits, code or docs.
 - [ ] Security impact is described below, or "none".
 
 ## Security impact

@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
-The Node.js candidate of WP-17 S1 (task T-04). It implements the RQP markup rules rqp/1 (`docs/engineering/protocol/markup.md` section 2, rules M-01 to M-27) and the interface of `../CONTRACT.md`. It is a conformance tool, not the server SDK.
+The Node.js candidate of WP-17 S1 (tasks T-04 and T-08). It implements the RQP markup rules rqp/1 (`docs/engineering/protocol/markup.md` section 2, rules M-01 to M-27, with M-24 items j and k of decision H-18) and the interface of `../CONTRACT.md`. It reads the edge cases E1 to E8 as the human decided them (H-21, H-22; see [Edge cases E1 to E8](#edge-cases-e1-to-e8)). It is a conformance tool, not the server SDK.
 
 ## Requirements
 
@@ -46,7 +46,9 @@ The library function is `analyze(bytes)` in `src/markup.mjs`. It takes a `Uint8A
 
 | File | What it checks |
 |---|---|
-| `test/rules.test.mjs` | One group for each rule M-01 to M-27 and each error code |
+| `test/rules.test.mjs` | One group for each rule M-01 to M-27 and each error code; one group for the edge cases E1 to E8 |
+| `test/name-sets.test.mjs` | The name sets of `markup.md` section 2.1 by behavior, with lists copied from `markup.md` as an independent oracle; list items (M-24 j) and table context (M-24 k) |
+| `test/json.test.mjs` | M-25 JSON grammar, surrogate escapes, depth limit |
 | `test/fixtures.test.mjs` | All `FX-RQ-MARKUP-*` fixtures, in process |
 | `test/tokenizer.test.mjs` | Tokenizer states; differential test against the parse5 8.0.1 tokenizer (4000 random inputs) |
 | `test/tree-agreement.test.mjs` | For each valid random document: the same blocks and offsets as the parse5 8.0.1 tree builder (scripting enabled) |
@@ -85,7 +87,7 @@ Reasons:
 3. **Raw attribute values (DL-010).** The tokenizer gives the source span of a value. Character references are never decoded.
 4. **Control of the state changes (M-04).** The rules code sets RCDATA, RAWTEXT, script data and PLAINTEXT after a start tag. The tokenizer never changes the text mode by itself.
 
-The tokenizer does not emit character tokens, does not decode character references and does not do the CR LF preprocessing (CR counts as white space). None of these change a token boundary (`markup.md` section 3.1). It tokenizes `<![CDATA[` as a bogus comment, which M-04 allows; M-12 is checked on that token.
+The tokenizer does not emit character tokens, does not decode character references and does not do the CR LF preprocessing (CR counts as white space). None of these change a token boundary (`markup.md` section 3.1). It tokenizes `<![CDATA[` as a bogus comment, which M-04 allows; M-12 is checked on that token. In foreign text content (M-07 rules 3 and 4) such a token counts as a CDATA section, not as a comment (E5).
 
 Evidence that the tokenizer is the WHATWG tokenizer: the differential test against the parse5 tokenizer compares every tag, comment and DOCTYPE token, with names, byte offsets, self-closing flags and attribute values. 300 000 random inputs (3 seeds) gave no difference. The test corrects two parse5 8.0.1 location quirks: the end offset of a comment or DOCTYPE at EOF is one after the input, and the start of a comment or DOCTYPE is one UTF-16 unit late when a non-BMP character follows `</` or `<!`.
 
@@ -98,12 +100,15 @@ Evidence that the tokenizer is the WHATWG tokenizer: the differential test again
 | Stack indexes for each name | Nearest match of an end tag (M-05 rule 3) |
 | Count of open elements for each name (HTML context) | M-08, M-19, M-24 d, e, f, h, i |
 | Count of elements opened in the block content | M-24 b, c, g, h, i |
-| Nearest table-family name for each entry, reset at `template` | F of M-09 and M-19 |
+| Nearest list (`ul`, `ol`, `menu`, `dl`) or list item (`li`, `dd`, `dt`) for each entry | M-24 j |
+| Nearest table-family name for each entry, reset at `template` | F of M-09, M-19 and M-24 k |
 | Stack index of the foreign region root | M-05 rule 4, M-07 |
 
 Every element is pushed and popped once, so the crossing check of M-06 and the pops are linear in total. The first rule violation ends the pass. The check order follows `markup.md` section 2.10.
 
-M-11 tokenizes the `noscript` content again with a second tokenizer. Each byte is in at most one `noscript` content, so this is linear too.
+M-11 tokenizes the `noscript` content again with a second tokenizer. Each byte is in at most one `noscript` content, so this is linear too. The second pass also checks M-13 on each `script` start tag of the content (E8).
+
+M-24 j is checked after M-24 c. When c holds, a list opened in the content is open, so the nearest list or list item from the top of the stack is always an element opened in the content. The index for j therefore needs no separate "opened in the content" flag.
 
 `src/json.mjs` checks M-25 without recursion: the nesting depth is a counter with the limit 64.
 
@@ -113,15 +118,27 @@ M-11 tokenizes the `noscript` content again with a second tokenizer. Each byte i
 2. M-02 uses `isUtf8()` of `node:buffer` (strict: no overlong forms, no surrogates, no code point above U+10FFFF, no truncated sequence).
 3. Memory is linear in the input size: the token stack has at most one entry per start tag. The largest measured time at 5 MiB is less than 1 s (`test/perf.test.mjs`).
 
-### Cases where the rules are not explicit
+### Edge cases E1 to E8
 
-The candidate makes these choices. They are reported to the architect.
+The human decided these cases (H-21, H-22 in the sprint record `docs/engineering/plan/sprints/WP-17-S1.md`; study: `docs/engineering/protocol/markup-edge-cases.md`). The fixtures `FX-RQ-MARKUP-EDGE-*` and the group "edge cases E1 to E8" of `test/rules.test.mjs` check each one.
+
+| Case | Input | Result | Code |
+|---|---|---|---|
+| E1 | `<` as a character in foreign text content (`<svg><desc>a < b`) | Valid | The tokenizer emits no token for it |
+| E2 | End of input in a foreign region, after all blocks | Valid | `eof()` checks only `noscript`, an open block and `select` |
+| E3 | `noscript` without an end tag | C is the rest of the input; M-11 applies | `eof()` calls `checkNoscript()` |
+| E4 | `<![CDATA[` without `>` before the end of input | Valid; inside a block, M-20 fails | `isCdataSafe()` |
+| E5 | CDATA in a foreign `TEXT` element or integration point | Valid when M-12 holds | `comment()` |
+| E6 | `<?` that reaches the end of input | A comment to the end of input (invalid in foreign text content) | Tokenizer, `comment()` |
+| E7 | `frameset` start tag in a foreign region | Invalid (`RQP_MARKUP_STRUCTURE`) | `startTag()`, before the context test |
+| E8 | Manifest `script` in `noscript` content | Invalid (`RQP_MARKUP_RESERVED`): M-13 applies to the start tags of C | `checkNoscript()` |
+
+An E5 CDATA section that runs to the end of input in foreign text content is valid (E2 and E4 together). No fixture covers this combination; the rules test does.
+
+### Other choices
 
 | Case | Choice | Reason |
 |---|---|---|
-| EOF inside an integration point or a `TEXT` element of a foreign region (M-07 rules 3, 4) | Valid | No rule names EOF. No block can follow, so the block result cannot change. |
-| `<![CDATA[` without `>` before EOF (M-12) | Valid | "The first `>` after it" does not exist; a CDATA section and a bogus comment both end at EOF. |
-| `noscript` content that runs to EOF (M-11) | C is the rest of the input; M-11 is checked on it | C is defined only up to an end tag. This choice keeps rule 2 (no block markup in C). |
 | An internal exception | Fail closed, exit 70 | CONTRACT.md has no code for a defect. |
 
 ## Dependencies

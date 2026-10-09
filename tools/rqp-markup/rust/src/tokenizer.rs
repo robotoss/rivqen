@@ -1154,6 +1154,14 @@ mod tests {
             ("<script></script", None),
             ("<script></scriptx>", None),
             ("<script></1></ script></script>", Some(0)),
+            // `</script>` in the double-escaped state returns to the escaped
+            // state, where the next `</script>` ends the script.
+            ("<script><!--<script>a</script></script>-->", Some(1)),
+            ("<script><!--<script>-</script></script>-->", Some(1)),
+            ("<script><!--<script>--</script></script>-->", Some(1)),
+            ("<script><!--<script></x</script></script>-->", Some(1)),
+            // A `<` after a non-`script` name is reconsumed.
+            ("<script><!--<x<script></script>--></script>", Some(1)),
         ];
         for (input, which) in cases {
             let expected: Vec<String> = which

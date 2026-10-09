@@ -83,6 +83,13 @@ class RulesTest {
     }
 
     @Test
+    void equalsSignStartsAnAttributeNameAfterAValue() {
+      // WHATWG "before attribute name state": '=' starts a new attribute named "=".
+      assertEquals(List.of("z:html:y"), blocks(body("<p a=\"x\" = data-rq-block=z>y</p>")));
+      assertEquals(List.of("z:html:y"), blocks(body("<p a=x = data-rq-block=z>y</p>")));
+    }
+
+    @Test
     void emptyEndTagEmitsNothing() {
       assertEquals(List.of("a:html:x</>"), blocks(body("<p data-rq-block=a>x</></p>")));
     }

@@ -151,7 +151,10 @@ class JsonTextTest {
         "\"\\uD800\\",
         "[1 ",
         " ",
-        "{\"a\" "
+        "{\"a\" ",
+        "[tru",
+        "[nul",
+        "[fals"
       })
   void truncatedTextsAtTheEndOfTheArray(String s) {
     assertFalse(validToEnd(s), s);

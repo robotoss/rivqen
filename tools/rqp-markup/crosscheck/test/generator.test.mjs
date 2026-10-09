@@ -23,6 +23,17 @@ test("known answer: the first values of seed 1 do not change between versions", 
   assert.deepEqual([r(), r()].map((x) => Math.floor(x * 2 ** 32)), [2693262067, 11749833]);
 });
 
+test("known answer: docSeed does not change between versions", () => {
+  // Saved findings name (seed, index); the document seed must stay the same.
+  assert.deepEqual([docSeed(0, 0), docSeed(1, 0), docSeed(5, 11420)], [docSeedRef(0, 0), docSeedRef(1, 0), docSeedRef(5, 11420)]);
+});
+
+/** Reference computation with BigInt (independent of Math.imul). */
+function docSeedRef(seed, index) {
+  const m = (a, b) => Number((BigInt(a) * BigInt(b)) % 2n ** 32n);
+  return ((m(seed, 0x9e3779b1) ^ m(index + 1, 0x85ebca6b)) >>> 0);
+}
+
 test("docSeed gives different seeds for different indexes and sweeps", () => {
   const seen = new Set();
   for (let s = 0; s < 4; s++) for (let i = 0; i < 1000; i++) seen.add(docSeed(s, i));

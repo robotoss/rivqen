@@ -96,4 +96,6 @@ test("candidates that differ in validity or blocks are grouped", () => {
 test("show never returns more than 80 characters", () => {
   assert.equal(show("a".repeat(200)).length, 80);
   assert.equal(show("ab"), '"ab"');
+  // Exactly 80 characters with the quotes: shown in full.
+  assert.equal(show("c".repeat(78)), `"${"c".repeat(78)}"`);
 });

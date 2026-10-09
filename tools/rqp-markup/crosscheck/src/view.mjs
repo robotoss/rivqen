@@ -53,7 +53,8 @@ export function parse5View(bytes, { scripting = true } = {}) {
       const attrs = Array.isArray(node.attrs) ? node.attrs : [];
       const html = node.namespaceURI === HTML_NS;
       const type = attrValue(attrs, "type");
-      if (node.tagName === "script" && html && type !== null && type.toLowerCase().includes("rivqen-manifest")) {
+      // Every namespace: M-13 applies in every context, and a CSS selector script[type] also matches an SVG script.
+      if (node.tagName === "script" && type !== null && type.toLowerCase().includes("rivqen-manifest")) {
         manifests++;
       }
       const id = attrValue(attrs, "data-rq-block");

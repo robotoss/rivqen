@@ -63,6 +63,22 @@ test("manifest-like scripts are counted (case-insensitive type, decoded referenc
   assert.equal(v.manifests, 2);
 });
 
+test("a manifest-like script in SVG counts too", () => {
+  const v = parse5View(b('<svg><script type="application/rivqen-manifest+json"></script></svg>'));
+  assert.equal(v.manifests, 1);
+});
+
+test("a namespaced attribute (xlink:type) is not the type attribute", () => {
+  const v = parse5View(b('<svg><script xlink:type="application/rivqen-manifest+json"></script></svg>'));
+  assert.equal(v.manifests, 0);
+});
+
+test("blocks are in source order, also when the tree moves an element (foster parenting)", () => {
+  // The div is moved before the table in the tree, but its source position is after the cell.
+  const v = parse5View(b('<table><tr><td><span data-rq-block="a">x</span></td></tr><div data-rq-block="b">y</div></table>'));
+  assert.deepEqual(v.blocks.map((x) => x.id), ["a", "b"]);
+});
+
 test("invalid UTF-8 and inputs over 5 MiB have no view", () => {
   assert.deepEqual(parse5View(Buffer.from([0x3c, 0xc3, 0x28])).ok, false);
   assert.deepEqual(parse5View(Buffer.alloc(5 * 1024 * 1024 + 1, 0x61)).ok, false);

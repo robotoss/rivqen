@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-MARKUP-EDGE-E4-CDATA-EOF",
-  "description": "DRAFT (edge case E4, open): a <![CDATA[ with no > before the end of the input, after all blocks; a CDATA section and a bogus comment both end at EOF, so this is valid",
+  "description": "Edge case E4 (H-21): a <![CDATA[ with no > before the end of the input, after all blocks; a CDATA section and a bogus comment both end at EOF, so M-12 holds and this is valid",
   "rules": [
     "M-12"
   ],

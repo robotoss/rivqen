@@ -1,8 +1,8 @@
 # RQP markup: edge cases E1–E8
 
-This page is a short risk study of eight edge cases of the [RQP markup rules](/engineering/protocol/markup) (rqp/1). For each case it gives the evidence, the options, the risk and one recommended reading. The human decides each case (protocol decision; E8 is also a security decision). Until then, the cases are open in `markup.md` §2.11.
+This page is a short risk study of eight edge cases of the [RQP markup rules](/engineering/protocol/markup) (rqp/1). For each case it gives the evidence, the options, the risk and one recommended reading. The human decided each case (protocol decision; E8 is also a security decision). The decided rule text is in [`markup.md`](/engineering/protocol/markup) §2; the cases are listed in [§2.11](/engineering/protocol/markup#_2-11-decided-edge-cases).
 
-**Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-09, task WP-17/S1/T-07 ([sprint record](/engineering/plan/sprints/WP-17-S1)). <Badge type="info" text="DESIGN" /> The recommendations are proposals.
+**Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-09, task WP-17/S1/T-07 ([sprint record](/engineering/plan/sprints/WP-17-S1)). <Badge type="info" text="DESIGN" /> **Decided on 2026-10-09:** E1–E7 as recommended (human decision H-21), E8 option A, reject with `RQP_MARKUP_RESERVED` (human decision H-22). The evidence below is the state before the decision ("Today" = the candidates before task T-08).
 
 [[toc]]
 
@@ -12,16 +12,16 @@ Order of preference (from the brief): first **no false accept** (never accept a 
 
 "Today" is the result of the three built candidates: Rust / Java / PHP. The Node.js candidate (T-04) was not available.
 
-| Case | Today | Can block bytes differ? | Recommendation |
-|---|---|---|---|
-| E1 `<` as text in a foreign text element or integration point | valid / valid / valid | No | **Valid.** Keep "character tokens only"; delete "no `<`" |
-| E2 End of input in a foreign region, after all blocks | valid / valid / valid | No | **Valid** |
-| E3 `noscript` without an end tag | valid / valid / valid, with the M-11 checks on the rest of the input | No | **Valid**: C is the rest of the input, M-11 applies |
-| E4 `<![CDATA[` without `>` before the end of input | valid / valid / **invalid** | No | **Valid** (PHP changes) |
-| E5 CDATA in a foreign text element or integration point (`<svg><style><![CDATA[…]]>`) | **invalid** / **invalid** / **invalid** | No, when M-12 holds | **Valid** when M-12 holds (all three change) |
-| E6 `<?` that reaches the end of input | comment / comment / comment | No | **Comment to EOF** (no change) |
-| E7 `frameset` start tag in a foreign region | invalid / invalid / invalid | No | **Invalid** in every context (no change) |
-| E8 Manifest script in `noscript` | **valid** / **valid** / **valid** | No, but a scripting-disabled reader sees a second manifest | **Invalid, `RQP_MARKUP_RESERVED`** (all three change). Security decision. |
+| Case | Today | Can block bytes differ? | Recommendation | Decision |
+|---|---|---|---|---|
+| E1 `<` as text in a foreign text element or integration point | valid / valid / valid | No | **Valid.** Keep "character tokens only"; delete "no `<`" | A, H-21 |
+| E2 End of input in a foreign region, after all blocks | valid / valid / valid | No | **Valid** | A, H-21 |
+| E3 `noscript` without an end tag | valid / valid / valid, with the M-11 checks on the rest of the input | No | **Valid**: C is the rest of the input, M-11 applies | A, H-21 |
+| E4 `<![CDATA[` without `>` before the end of input | valid / valid / **invalid** | No | **Valid** (PHP changes) | A, H-21 |
+| E5 CDATA in a foreign text element or integration point (`<svg><style><![CDATA[…]]>`) | **invalid** / **invalid** / **invalid** | No, when M-12 holds | **Valid** when M-12 holds (all three change) | A, H-21 |
+| E6 `<?` that reaches the end of input | comment / comment / comment | No | **Comment to EOF** (no change) | A, H-21 |
+| E7 `frameset` start tag in a foreign region | invalid / invalid / invalid | No | **Invalid** in every context (no change) | A, H-21 |
+| E8 Manifest script in `noscript` | **valid** / **valid** / **valid** | No, but a scripting-disabled reader sees a second manifest | **Invalid, `RQP_MARKUP_RESERVED`** (all three change). Security decision. | A, H-22 |
 
 In plain words:
 
@@ -59,6 +59,8 @@ No sweep found a block-byte disagreement that M-24 j or k does not explain. In t
 
 ### E1 — `<` as text in foreign text content
 
+**Decided: A, H-21.** Normative text: `markup.md` M-07 items 3 and 4 ("character tokens and CDATA sections only"; a `<` that the tokenizer emits as a character is allowed). Fixture: `EDGE-E1-FOREIGN-LT`.
+
 Example: `<svg><desc>a < b</desc></svg>`, `<math><mi>1 <2</mi></math>`.
 
 - **WHATWG:** in the tag open state, `<` followed by a character that is not an ASCII letter, `!`, `/` or `?` is a parse error. The tokenizer emits `<` as a character token and reconsumes in the data state. <Badge type="tip" text="FACT" /> parse5 8.0.1 does this (`_stateTagOpen`, default branch).
@@ -74,6 +76,8 @@ Example: `<svg><desc>a < b</desc></svg>`, `<math><mi>1 <2</mi></math>`.
 
 ### E2 — End of input in a foreign region
 
+**Decided: A, H-21.** Normative text: `markup.md` M-07 item 6 (the end of the input in a foreign region, also in an element of items 3 and 4, is not an error by itself). Fixture: `EDGE-E2-FOREIGN-EOF`.
+
 Example: `…<p data-rq-block="a">x</p><svg><title>abc` and the input ends.
 
 - **WHATWG:** EOF in foreign content is handled by the "in body" EOF rules: the parser stops. The elements stay open without an end tag.
@@ -86,6 +90,8 @@ Example: `…<p data-rq-block="a">x</p><svg><title>abc` and the input ends.
 - **Draft fixture:** `EDGE-E2-FOREIGN-EOF` (valid).
 
 ### E3 — `noscript` without an end tag
+
+**Decided: A, H-21.** Normative text: `markup.md` M-11 (C is the rest of the input; all items of M-11 apply). Fixtures: `EDGE-E3-NOSCRIPT-EOF`, `EDGE-E3-NOSCRIPT-EOF-BLOCK`.
 
 Example: `…<noscript><img src="…">` and the input ends.
 
@@ -100,6 +106,8 @@ Example: `…<noscript><img src="…">` and the input ends.
 
 ### E4 — `<![CDATA[` without `>`
 
+**Decided: A, H-21.** Normative text: `markup.md` M-12 (with no `>`, both token forms end at the end of the input; the rule holds). Fixture: `EDGE-E4-CDATA-EOF`.
+
 Example: `…<p data-rq-block="a">x</p><![CDATA[abc` and the input ends.
 
 - **WHATWG:** in HTML content, `<![CDATA[` starts a bogus comment ("cdata-in-html-content" parse error). In foreign content it starts a CDATA section. Both end at EOF when there is no `>` (a bogus comment) or no `]]>` (a CDATA section). <Badge type="tip" text="FACT" /> parse5 8.0.1: comment `[CDATA[abc` in HTML content, text `abc` in `svg`.
@@ -111,6 +119,8 @@ Example: `…<p data-rq-block="a">x</p><![CDATA[abc` and the input ends.
 - **Draft fixture:** `EDGE-E4-CDATA-EOF` (valid).
 
 ### E5 — CDATA in foreign text content
+
+**Decided: A, H-21.** Normative text: `markup.md` M-07 item 5 (a CDATA section that satisfies M-12 is allowed in foreign `TEXT` and `INTEGRATION` content). Fixtures: `EDGE-E5-FOREIGN-CDATA`, `EDGE-E5-FOREIGN-CDATA-GT`.
 
 Example: `<svg><style><![CDATA[.a{fill:red}]]></style></svg>`; also `<svg><script><![CDATA[…]]></script>`, `<svg><desc><![CDATA[…]]></desc>`, `<math><mi><![CDATA[…]]></mi>`.
 
@@ -128,6 +138,8 @@ Example: `<svg><style><![CDATA[.a{fill:red}]]></style></svg>`; also `<svg><scrip
 
 ### E6 — `<?` that reaches the end of input
 
+**Decided: A, H-21.** Normative text: `markup.md` M-03 (a `<?` with no `>` is a comment to the end of the input). Fixtures: `EDGE-E6-PI-EOF`, `EDGE-E6-PI-EOF-HTML`.
+
 Example: `…<p data-rq-block="a">x</p><?php echo 1;` and the input ends; `…<svg><desc><?x` and the input ends.
 
 - **WHATWG (old):** `<?` starts a bogus comment; at EOF the comment is emitted. <Badge type="tip" text="FACT" /> parse5 8.0.1 does this (comment `?php echo 1;`).
@@ -141,6 +153,8 @@ Example: `…<p data-rq-block="a">x</p><?php echo 1;` and the input ends; `…<s
 
 ### E7 — `frameset` in a foreign region
 
+**Decided: A, H-21.** Normative text: `markup.md` M-10 (no `frameset` start tag in any context, also in a foreign region). Fixture: `EDGE-E7-FOREIGN-FRAMESET`.
+
 Example: `<svg><frameset/></svg>`.
 
 - **WHATWG:** `frameset` is not a breakout name in foreign content, so it is an SVG (or MathML) element with no effect. <Badge type="tip" text="FACT" /> parse5 8.0.1: an element `frameset` in the SVG namespace.
@@ -152,6 +166,8 @@ Example: `<svg><frameset/></svg>`.
 - **Draft fixture:** `EDGE-E7-FOREIGN-FRAMESET` (invalid).
 
 ### E8 — Manifest script inside `noscript`
+
+**Decided: A, H-22.** Normative text: `markup.md` M-11 item 4 and M-13 (a `script` start tag in C that M-13 rejects is invalid; error `RQP_MARKUP_RESERVED`). Fixture: `EDGE-E8-NOSCRIPT-MANIFEST`.
 
 Example: `<noscript><script type="application/rivqen-manifest+json">{…}</script></noscript>`.
 
@@ -173,23 +189,23 @@ Example: `<noscript><script type="application/rivqen-manifest+json">{…}</scrip
 2. **parse5 is not a perfect oracle.** It gives a comment for CDATA in integration points (E5) and the old `<?` behavior (E6). A false accept that parse5 shares with all candidates is not found by the cross-check.
 3. **parse5 time on deep nesting.** 50 000 nested elements take about 25 s in parse5 8.0.1. The cross-check is a test tool; this does not affect the candidates.
 
-## 5. Draft fixtures
+## 5. Fixtures
 
-<Badge type="info" text="DESIGN" /> The draft fixtures `FX-RQ-MARKUP-EDGE-*` follow the recommendations above. After the human decision, drop or change each fixture whose case is decided in another way. The catalog lists them in [Golden fixtures §4.2](/engineering/protocol/fixtures#_4-2-markup-fixtures-fx-rq-markup).
+<Badge type="info" text="DESIGN" /> The fixtures `FX-RQ-MARKUP-EDGE-*` were drafts that follow the recommendations above. All decisions took the recommended option, so every fixture stays with the same input and the same result. They are normative now. The catalog lists them in [Golden fixtures §4.2](/engineering/protocol/fixtures#_4-2-markup-fixtures-fx-rq-markup).
 
-| Fixture | Result | If the decision is the other option |
-|---|---|---|
-| `EDGE-E1-FOREIGN-LT` | valid | B: change to `STRUCTURE` |
-| `EDGE-E2-FOREIGN-EOF` | valid | B: change to `STRUCTURE` |
-| `EDGE-E3-NOSCRIPT-EOF` | valid | B: change to `STRUCTURE` |
-| `EDGE-E3-NOSCRIPT-EOF-BLOCK` | `STRUCTURE` | B: no change (also invalid) |
-| `EDGE-E4-CDATA-EOF` | valid | B: change to `STRUCTURE` |
-| `EDGE-E5-FOREIGN-CDATA` | valid | B: split into a valid `style` fixture and an invalid `desc` fixture; C: change to `STRUCTURE` |
-| `EDGE-E5-FOREIGN-CDATA-GT` | `STRUCTURE` | No change |
-| `EDGE-E6-PI-EOF` | `STRUCTURE` | B: change to valid; C: drop |
-| `EDGE-E6-PI-EOF-HTML` | valid | No change |
-| `EDGE-E7-FOREIGN-FRAMESET` | `STRUCTURE` | B: change to valid |
-| `EDGE-E8-NOSCRIPT-MANIFEST` | `RESERVED` | B: change to `STRUCTURE`; C: change to valid |
+| Fixture | Result | Rules | Decision |
+|---|---|---|---|
+| `EDGE-E1-FOREIGN-LT` | valid | M-07 | E1: A, H-21 |
+| `EDGE-E2-FOREIGN-EOF` | valid | M-07, M-20 | E2: A, H-21 |
+| `EDGE-E3-NOSCRIPT-EOF` | valid | M-11 | E3: A, H-21 |
+| `EDGE-E3-NOSCRIPT-EOF-BLOCK` | `STRUCTURE` | M-11 | E3: A, H-21 |
+| `EDGE-E4-CDATA-EOF` | valid | M-12 | E4: A, H-21 |
+| `EDGE-E5-FOREIGN-CDATA` | valid | M-07, M-12 | E5: A, H-21 |
+| `EDGE-E5-FOREIGN-CDATA-GT` | `STRUCTURE` | M-07, M-12 | E5: A, H-21 |
+| `EDGE-E6-PI-EOF` | `STRUCTURE` | M-03, M-07 | E6: A, H-21 |
+| `EDGE-E6-PI-EOF-HTML` | valid | M-03 | E6: A, H-21 |
+| `EDGE-E7-FOREIGN-FRAMESET` | `STRUCTURE` | M-10 | E7: A, H-21 |
+| `EDGE-E8-NOSCRIPT-MANIFEST` | `RESERVED` | M-11, M-13 | E8: A, H-22 |
 
 ## Related
 

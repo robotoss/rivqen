@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-MARKUP-EDGE-E8-NOSCRIPT-MANIFEST",
-  "description": "DRAFT (edge case E8, open): a manifest script inside noscript (markup when scripting is disabled) is reserved",
+  "description": "Edge case E8 (H-22): a manifest script inside noscript content C (markup when scripting is disabled) is reserved (M-11 item 4, M-13)",
   "rules": [
     "M-11",
     "M-13"

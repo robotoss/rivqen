@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-MARKUP-EDGE-E6-PI-EOF-HTML",
-  "description": "DRAFT (edge case E6, open): a <? that reaches the end of the input in HTML context, after all blocks, is valid",
+  "description": "Edge case E6 (H-21): a <? that reaches the end of the input in HTML context, after all blocks, is a comment to EOF (M-03) and is valid",
   "rules": [
     "M-03"
   ],

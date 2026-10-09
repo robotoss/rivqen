@@ -1,0 +1,33 @@
+{
+    "name": "rivqen/rqp-markup-php",
+    "description": "RQP markup parser candidate (PHP): own WHATWG tokenizer subset with byte offsets. Tool for WP-17; not a released package.",
+    "type": "project",
+    "license": "Apache-2.0",
+    "require": {
+        "php": ">=8.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "12.5.38",
+        "phpstan/phpstan": "2.3.1",
+        "infection/infection": "0.35.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rivqen\\Tools\\RqpMarkup\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Rivqen\\Tools\\RqpMarkup\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "8.3.6"
+        },
+        "sort-packages": true,
+        "allow-plugins": {
+            "infection/extension-installer": false
+        }
+    }
+}

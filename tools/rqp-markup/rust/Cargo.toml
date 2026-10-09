@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+
+[package]
+name = "rqp-markup"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "Apache-2.0"
+description = "RQP markup parser candidate (rqp/1): finds data blocks with an own WHATWG tokenizer subset"
+publish = false
+
+# Own workspace: this candidate is not part of a repository workspace.
+[workspace]
+
+[[bin]]
+name = "rqp-markup"
+path = "src/main.rs"
+
+[dependencies]
+base64 = { version = "=0.23.1", default-features = false, features = ["alloc"] }
+sha2 = { version = "=0.11.0", default-features = false }
+
+[dev-dependencies]
+proptest = { version = "=1.11.0", default-features = false, features = ["std"] }
+serde_json = "=1.0.151"
+
+[lints.rust]
+unsafe_code = "forbid"
+unsafe_op_in_unsafe_fn = "deny"
+unused_must_use = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+let_underscore_must_use = "deny"
+let_underscore_future = "deny"
+todo = "deny"
+unimplemented = "deny"
+dbg_macro = "deny"
+# Parser code reads untrusted input (docs/engineering/standards/rust.md section 3).
+indexing_slicing = "deny"
+arithmetic_side_effects = "deny"
+print_stdout = "deny"
+print_stderr = "deny"
+
+[profile.release]
+panic = "unwind"

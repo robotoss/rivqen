@@ -60,6 +60,8 @@ final class RulesTest extends TestCase
         yield 'M-07.1 breakout when self-closing' => ['<svg><br/></svg>', 'M-07', $S];
         yield 'M-07.2 stray end tag' => ['<svg></g></svg>', 'M-07', $S];
         yield 'M-07.2 end tag of an element outside the region' => ['<div><svg></div>', 'M-07', $S];
+        yield 'M-07.2 stray end tag after a closed integration point' => ['<svg><desc>a</desc></desc></svg>', 'M-07', $S];
+        yield 'M-07.2 stray end tag after a closed text element' => ['<svg><style>a</style></style></svg>', 'M-07', $S];
         yield 'M-07.3 tag in foreignObject' => ['<svg><foreignObject><b>x</b></foreignObject></svg>', 'M-07', $S];
         yield 'M-07.3 comment in desc' => ['<svg><desc><!-- c --></desc></svg>', 'M-07', $S];
         yield 'M-07.3 CDATA in mi' => ['<math><mi><![CDATA[x]]></mi></math>', 'M-07', $S];
@@ -455,15 +457,14 @@ final class RulesTest extends TestCase
 
     public function testM26BlockAtTheSizeLimitIsAccepted(): void
     {
-        $content = str_repeat('a', Parser::MAX_BLOCK_BYTES);
-        $result = Parser::parse('<p data-rq-block="a">' . $content . '</p>');
+        $result = Parser::parse('<p data-rq-block="a">' . str_repeat('a', 1_048_576) . '</p>');
         self::assertTrue($result->valid);
-        self::assertSame(Parser::MAX_BLOCK_BYTES, $result->blocks[0]->end - $result->blocks[0]->start);
+        self::assertSame(1_048_576, $result->blocks[0]->end - $result->blocks[0]->start);
     }
 
     public function testM26BlockOverTheSizeLimit(): void
     {
-        $result = Parser::parse('<p data-rq-block="a">' . str_repeat('a', Parser::MAX_BLOCK_BYTES + 1) . '</p>');
+        $result = Parser::parse('<p data-rq-block="a">' . str_repeat('a', 1_048_577) . '</p>');
         self::assertSame(ErrorCode::Limit, $result->error);
         self::assertSame('M-26', $result->rule);
     }

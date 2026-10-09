@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT",
+  "description": "Typical noscript fallbacks (iframe, img) are valid",
+  "rules": [
+    "M-04",
+    "M-11"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

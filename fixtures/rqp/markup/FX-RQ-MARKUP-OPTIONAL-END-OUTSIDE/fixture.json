@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-OPTIONAL-END-OUTSIDE",
+  "description": "Omitted optional end tags (li, p) outside blocks are allowed",
+  "rules": [
+    "M-06",
+    "M-23"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "z"
+      }
+    ]
+  }
+}

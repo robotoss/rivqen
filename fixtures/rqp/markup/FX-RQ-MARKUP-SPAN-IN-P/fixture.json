@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-MARKUP-SPAN-IN-P",
+  "description": "A span block inside a paragraph",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "price",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"price\">",
+        "content": "120"
+      }
+    ]
+  }
+}

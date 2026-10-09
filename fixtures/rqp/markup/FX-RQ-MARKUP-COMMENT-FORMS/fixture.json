@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-MARKUP-COMMENT-FORMS",
+  "description": "Tag-like text in a comment is not a block; <!--> and --!> end comments early",
+  "rules": [
+    "M-03",
+    "M-14"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "a",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"a\">",
+        "content": "A"
+      },
+      {
+        "id": "b",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"b\">",
+        "content": "B"
+      }
+    ]
+  }
+}

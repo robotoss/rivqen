@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-MARKUP-MATH",
+  "description": "MathML with text in mi, mo, mn",
+  "rules": [
+    "M-07"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

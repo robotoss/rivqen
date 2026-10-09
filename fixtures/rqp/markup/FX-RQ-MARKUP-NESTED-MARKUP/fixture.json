@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-MARKUP-NESTED-MARKUP",
+  "description": "Balanced content with lists, a table, links, a button and ruby",
+  "rules": [
+    "M-22",
+    "M-23",
+    "M-24"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "rich",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"rich\">",
+        "content": "<ul><li><a href=\"#\">One</a></li><li><b>Two</b></li></ul><table><tr><td>a</td><td>b</td></tr></table><p>Text<br><img src=\"a.png\" alt=\"\"></p><button type=\"button\">Buy</button><ruby>漢<rt>kan</rt></ruby><!-- note -->"
+      }
+    ]
+  }
+}

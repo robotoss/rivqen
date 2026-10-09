@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-CDATA-SVG",
+  "description": "A CDATA section in svg without > inside",
+  "rules": [
+    "M-07",
+    "M-12"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

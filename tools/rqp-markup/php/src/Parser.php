@@ -44,21 +44,21 @@ final class Parser
     private array $contentCount = [];
     /** @var list<int> Stack indexes of HTML elements in TABLE_FAMILY or `template` (for F, M-09). */
     private array $tableIndex = [];
-    /** Stack index of the `svg`/`math` element of the foreign region, or -1. */
-    private int $region = -1;
+    /** Stack index of the `svg`/`math` element of the foreign region, or null. */
+    private ?int $region = null;
     /**
      * Number of `select` elements pushed in HTML context. Inside such a
      * `select` the position is always in HTML context: M-08 rejects the
      * `svg` and `math` start tags that would open a foreign region.
      */
     private int $selects = 0;
-    /** Stack index of the foreign INTEGRATION/TEXT element whose content must be characters only (M-07), or -1. */
-    private int $charsOnly = -1;
-    /** Offset after the start tag of a `noscript` in HTML context (M-11), or -1. */
-    private int $noscriptStart = -1;
+    /** Stack index of the foreign INTEGRATION/TEXT element whose content must be characters only (M-07), or null. */
+    private ?int $charsOnly = null;
+    /** Offset after the start tag of a `noscript` in HTML context (M-11), or null. */
+    private ?int $noscriptStart = null;
 
-    /** Stack index of the open block element, or -1. */
-    private int $blockIndex = -1;
+    /** Stack index of the open block element, or null. */
+    private ?int $blockIndex = null;
     private string $blockId = '';
     private string $blockFormat = '';
     private int $blockStart = 0;
@@ -134,7 +134,7 @@ final class Parser
         if ($token->type === TokenType::Cdata && !$token->cdataClosed) {
             throw new MarkupError(ErrorCode::Structure, 'M-12');
         }
-        if ($this->charsOnly >= 0) {
+        if ($this->charsOnly !== null) {
             throw new MarkupError(ErrorCode::Structure, 'M-07');
         }
         // Comments are allowed in `select` (M-08) and in content (M-22).
@@ -142,24 +142,24 @@ final class Parser
 
     private function doctype(): void
     {
-        if ($this->charsOnly >= 0) {
+        if ($this->charsOnly !== null) {
             throw new MarkupError(ErrorCode::Structure, 'M-07');
         }
         if ($this->selects > 0) {
             throw new MarkupError(ErrorCode::Structure, 'M-08');
         }
-        if ($this->blockIndex >= 0) {
+        if ($this->blockIndex !== null) {
             throw new MarkupError(ErrorCode::Structure, 'M-22');
         }
     }
 
     private function startTag(Token $token): void
     {
-        if ($this->charsOnly >= 0) {
+        if ($this->charsOnly !== null) {
             throw new MarkupError(ErrorCode::Structure, 'M-07');
         }
         $name = $token->name;
-        $foreign = $this->region >= 0;
+        $foreign = $this->region !== null;
 
         if ($name === 'frameset') {
             throw new MarkupError(ErrorCode::Structure, 'M-10');
@@ -187,8 +187,8 @@ final class Parser
             $this->blockStartTag($token, $foreign);
             return;
         }
-        if ($this->blockIndex >= 0) {
-            $this->contentStartTag($token);
+        if ($this->blockIndex !== null) {
+            $this->contentStartTag($token, $this->names[$this->blockIndex]);
         }
 
         if ($foreign) {
@@ -243,7 +243,7 @@ final class Parser
     private function blockStartTag(Token $token, bool $foreign): void
     {
         // Recommended order (markup.md 2.10): M-17, M-15, M-16, M-18, M-19, M-21, M-26.
-        if ($this->blockIndex >= 0) {
+        if ($this->blockIndex !== null) {
             throw new MarkupError(ErrorCode::Nested, 'M-17');
         }
         $id = (string) $token->attribute(self::BLOCK_ATTR);
@@ -286,7 +286,7 @@ final class Parser
     }
 
     /** M-22 and M-24 for a start tag in the content of an html block. */
-    private function contentStartTag(Token $token): void
+    private function contentStartTag(Token $token, string $blockName): void
     {
         $name = $token->name;
         if (isset(Names::FORBIDDEN_CONTENT[$name])) {
@@ -296,18 +296,15 @@ final class Parser
         if ($token->selfClosing && !$void) {
             throw new MarkupError(ErrorCode::Structure, 'M-22');
         }
-        $blockName = $this->names[$this->blockIndex];
         $invalid = match (true) {
             isset(Names::PCLOSE[$name]) && ($blockName === 'p' || $blockName === 'span') => true,
-            isset(Names::HEADING[$name]) => isset(Names::HEADING[$blockName]) || $this->contentHeadings() > 0,
-            $name === 'li', $name === 'dd', $name === 'dt' => $this->openedInContent('ul') + $this->openedInContent('ol')
-                + $this->openedInContent('menu') + $this->openedInContent('dl') === 0,
-            $name === 'button', $name === 'a', $name === 'nobr' => $this->open($name) > 0,
-            isset(Names::TABLE_PART[$name]), $name === 'col' => $this->openedInContent('table') === 0,
-            $name === 'rb', $name === 'rtc' => $this->openedInContent('ruby') === 0
-                || $this->open('rb') + $this->open('rp') + $this->open('rt') + $this->open('rtc') > 0,
-            $name === 'rp', $name === 'rt' => $this->openedInContent('ruby') === 0
-                || $this->open('rb') + $this->open('rp') + $this->open('rt') > 0,
+            isset(Names::HEADING[$name]) => isset(Names::HEADING[$blockName])
+                || $this->openedInContent('h1', 'h2', 'h3', 'h4', 'h5', 'h6'),
+            $name === 'li', $name === 'dd', $name === 'dt' => !$this->openedInContent('ul', 'ol', 'menu', 'dl'),
+            $name === 'button', $name === 'a', $name === 'nobr' => $this->open($name),
+            isset(Names::TABLE_PART[$name]), $name === 'col' => !$this->openedInContent('table'),
+            $name === 'rb', $name === 'rtc' => !$this->openedInContent('ruby') || $this->open('rb', 'rp', 'rt', 'rtc'),
+            $name === 'rp', $name === 'rt' => !$this->openedInContent('ruby') || $this->open('rb', 'rp', 'rt'),
             default => false,
         };
         if ($invalid) {
@@ -318,24 +315,24 @@ final class Parser
     private function endTag(Token $token): void
     {
         $name = $token->name;
-        if ($this->charsOnly >= 0) {
+        if ($this->charsOnly !== null) {
             // M-07 items 3 and 4: only the end tag of that element may follow.
             if ($name !== $this->names[$this->charsOnly]) {
                 throw new MarkupError(ErrorCode::Structure, 'M-07');
             }
-            $this->charsOnly = -1;
+            $this->charsOnly = null;
             $this->popTo(count($this->names) - 1);
             return;
         }
-        if ($this->noscriptStart >= 0) {
+        if ($this->noscriptStart !== null) {
             // The end tag that ends the RAWTEXT of `noscript` (M-11).
-            $this->checkNoscript($token->start);
+            $this->checkNoscript($this->noscriptStart, $token->start);
         }
-        if ($this->blockIndex >= 0) {
+        if ($this->blockIndex !== null) {
             $this->contentEndTag($token);
             return;
         }
-        $foreign = $this->region >= 0;
+        $foreign = $this->region !== null;
         if ($this->selects > 0 && !isset(Names::SELECT_END[$name])) {
             throw new MarkupError(ErrorCode::Structure, 'M-08');
         }
@@ -350,7 +347,7 @@ final class Parser
         while ($this->names[$match] !== $name) {
             $match--;
         }
-        if ($foreign && $match < $this->region) {
+        if ($this->region !== null && $match < $this->region) {
             throw new MarkupError(ErrorCode::Structure, 'M-07');
         }
         // M-06: crossed elements, from the top down to the match.
@@ -393,15 +390,15 @@ final class Parser
             throw new MarkupError(ErrorCode::BadJson, 'M-25');
         }
         $this->blocks[] = new Block($this->blockId, $this->blockFormat, $start, $end, Revision::b64uSha256($content));
-        $this->blockIndex = -1;
+        $this->blockIndex = null;
     }
 
     private function eof(): void
     {
-        if ($this->noscriptStart >= 0) {
-            $this->checkNoscript(strlen($this->input));
+        if ($this->noscriptStart !== null) {
+            $this->checkNoscript($this->noscriptStart, strlen($this->input));
         }
-        if ($this->blockIndex >= 0) {
+        if ($this->blockIndex !== null) {
             throw new MarkupError(ErrorCode::Structure, 'M-20');
         }
         if ($this->selects > 0) {
@@ -417,10 +414,9 @@ final class Parser
      * Tokenize the `noscript` content C followed by `</noscript>` alone, from
      * the data state, in HTML context (M-11).
      */
-    private function checkNoscript(int $contentEnd): void
+    private function checkNoscript(int $start, int $contentEnd): void
     {
-        $start = $this->noscriptStart;
-        $this->noscriptStart = -1;
+        $this->noscriptStart = null;
         $length = $contentEnd - $start;
         $sub = new Tokenizer(substr($this->input, $start, $length) . '</noscript>');
         while (true) {
@@ -455,7 +451,7 @@ final class Parser
     {
         $index = count($this->names);
         $flags = $foreign ? self::FOREIGN : 0;
-        if ($this->blockIndex >= 0) {
+        if ($this->blockIndex !== null) {
             $flags |= self::CONTENT;
             $this->contentCount[$name] = ($this->contentCount[$name] ?? 0) + 1;
         }
@@ -492,7 +488,7 @@ final class Parser
                 $this->selects--;
             }
             if ($i === $this->region) {
-                $this->region = -1;
+                $this->region = null;
             }
         }
         array_splice($this->names, $index);
@@ -509,20 +505,26 @@ final class Parser
         return $name === 'template' ? null : $name;
     }
 
-    private function open(string $name): int
+    /** True when an element with one of the names is on the token stack. */
+    private function open(string ...$names): bool
     {
-        return $this->count[$name] ?? 0;
+        foreach ($names as $name) {
+            if (isset($this->count[$name])) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    private function openedInContent(string $name): int
+    /** True when an element with one of the names, opened in the content, is on the token stack. */
+    private function openedInContent(string ...$names): bool
     {
-        return $this->contentCount[$name] ?? 0;
-    }
-
-    private function contentHeadings(): int
-    {
-        return $this->openedInContent('h1') + $this->openedInContent('h2') + $this->openedInContent('h3')
-            + $this->openedInContent('h4') + $this->openedInContent('h5') + $this->openedInContent('h6');
+        foreach ($names as $name) {
+            if (isset($this->contentCount[$name])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** M-15: `^[a-z0-9][a-z0-9_-]{0,63}$` on the raw value, without a regex. */

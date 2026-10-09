@@ -531,7 +531,8 @@ final class Parser
     public static function isValidId(string $id): bool
     {
         $n = strlen($id);
-        return $n >= 1 && $n <= self::ID_MAX
+        // The first-character check also rejects the empty value.
+        return $n <= self::ID_MAX
             && strspn($id, self::ID_FIRST_CHARS, 0, 1) === 1
             && strspn($id, self::ID_CHARS) === $n;
     }

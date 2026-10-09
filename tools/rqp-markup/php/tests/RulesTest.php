@@ -266,6 +266,7 @@ final class RulesTest extends TestCase
 
         // M-03
         yield 'M-03 greater-than in quoted value' => ['<p title="a>b" data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        yield 'M-03 block attribute without white space before it' => ['<p class="x"data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-03 duplicate attribute' => ['<p data-rq-block="a" data-rq-block="b">x</p>', [['a', 'html', 'x']]];
         yield 'M-03 CRLF' => ["<p\r\ndata-rq-block=\"a\">x\r\ny</p>", [['a', 'html', "x\r\ny"]]];
         yield 'M-03 bogus comments' => ['<!x <p data-rq-block="b">></ <p data-rq-block="c">><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];

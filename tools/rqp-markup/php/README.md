@@ -43,6 +43,7 @@ Do these steps in this directory:
 | Test file | What it checks |
 |---|---|
 | `tests/TokenizerTest.php` | Token spans in each tokenizer state |
+| `tests/ReferenceTokenizerTest.php` | Differential test against `tests/Fuzz/ReferenceTokenizer.php`, a literal one-character-at-a-time transcription of the WHATWG states (with CR/LF preprocessing, all DOCTYPE states and the processing instruction states): exhaustive short comment bodies, dense inputs per state, 100 000 random inputs |
 | `tests/RulesTest.php` | Each rule M-01 to M-27 and each error code (error code and rule ID) |
 | `tests/JsonValidatorTest.php` | RFC 8259 rules of M-25 |
 | `tests/RevisionTest.php` | Hashes and revisions of `CONTRACT.md` section 4 |
@@ -85,6 +86,8 @@ Equivalences that the code uses (each one keeps the token boundaries):
 - Character tokens are not emitted. No rule depends on them.
 - Character references are not decoded. No character reference state reads `<`, `>`, a quote or white space.
 - Only `data-rq-block` and `type` attribute values are kept. Memory per token is constant.
+
+`tests/ReferenceTokenizerTest.php` checks these equivalences: the reference tokenizer does not use them, and both must give the same tokens.
 
 ### Parser (`src/Parser.php`)
 

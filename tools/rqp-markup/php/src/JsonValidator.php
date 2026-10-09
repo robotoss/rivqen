@@ -56,7 +56,7 @@ final class JsonValidator
                         $expectValue = false;
                     } elseif ($c === '{') {
                         $i = self::memberName($s, $i);
-                        if ($i < 0) {
+                        if ($i === null) {
                             return false;
                         }
                     }
@@ -68,9 +68,9 @@ final class JsonValidator
                     $c === 't' => self::literal($s, $i, 'true'),
                     $c === 'f' => self::literal($s, $i, 'false'),
                     $c === 'n' => self::literal($s, $i, 'null'),
-                    default => -1,
+                    default => null,
                 };
-                if ($i < 0) {
+                if ($i === null) {
                     return false;
                 }
                 $expectValue = false;
@@ -92,7 +92,7 @@ final class JsonValidator
                 $i += strspn($s, self::WS, $i);
                 if ($inObject) {
                     $i = self::memberName($s, $i);
-                    if ($i < 0) {
+                    if ($i === null) {
                         return false;
                     }
                 }
@@ -110,96 +110,96 @@ final class JsonValidator
 
     /**
      * A member name, white space, ':' and white space. Return the offset of
-     * the value, or -1.
+     * the value, or null.
      */
-    private static function memberName(string $s, int $i): int
+    private static function memberName(string $s, int $i): ?int
     {
-        if ($i >= strlen($s) || $s[$i] !== '"') {
-            return -1;
+        if (($s[$i] ?? '') !== '"') {
+            return null;
         }
         $i = self::string($s, $i);
-        if ($i < 0) {
-            return -1;
+        if ($i === null) {
+            return null;
         }
         $i += strspn($s, self::WS, $i);
-        if ($i >= strlen($s) || $s[$i] !== ':') {
-            return -1;
+        if (($s[$i] ?? '') !== ':') {
+            return null;
         }
         $i++;
         return $i + strspn($s, self::WS, $i);
     }
 
-    /** A string that starts at $i (the '"'). Return the offset after it, or -1. */
-    private static function string(string $s, int $i): int
+    /** A string that starts at $i (the '"'). Return the offset after it, or null. */
+    private static function string(string $s, int $i): ?int
     {
         $len = strlen($s);
         $i++;
         while (true) {
             $i += strcspn($s, self::STRING_STOP, $i);
             if ($i >= $len) {
-                return -1;
+                return null;
             }
             $c = $s[$i];
             if ($c === '"') {
                 return $i + 1;
             }
             if ($c !== '\\') {
-                return -1; // unescaped control character
+                return null; // unescaped control character
             }
             $e = $s[$i + 1] ?? '';
             if ($e === 'u') {
                 $unit = self::hex4($s, $i + 2);
-                if ($unit < 0) {
-                    return -1;
+                if ($unit === null) {
+                    return null;
                 }
                 $i += 6;
                 if ($unit >= 0xDC00 && $unit <= 0xDFFF) {
-                    return -1; // lone low surrogate
+                    return null; // lone low surrogate
                 }
                 if ($unit >= 0xD800 && $unit <= 0xDBFF) {
                     // A high surrogate must be followed by a low surrogate escape.
                     if (substr($s, $i, 2) !== '\\u') {
-                        return -1;
+                        return null;
                     }
                     $low = self::hex4($s, $i + 2);
-                    if ($low < 0xDC00 || $low > 0xDFFF) {
-                        return -1;
+                    if ($low === null || $low < 0xDC00 || $low > 0xDFFF) {
+                        return null;
                     }
                     $i += 6;
                 }
                 continue;
             }
             if ($e === '' || !str_contains('"\\/bfnrt', $e)) {
-                return -1;
+                return null;
             }
             $i += 2;
         }
     }
 
-    /** Four hex digits at $i as an integer, or -1. */
-    private static function hex4(string $s, int $i): int
+    /** Four hex digits at $i as an integer, or null. */
+    private static function hex4(string $s, int $i): ?int
     {
-        if ($i + 4 > strlen($s) || strspn($s, self::HEX, $i, 4) !== 4) {
-            return -1;
+        if (strspn($s, self::HEX, $i, 4) !== 4) {
+            return null;
         }
         return (int) hexdec(substr($s, $i, 4));
     }
 
-    /** A number that starts at $i. Return the offset after it, or -1. */
-    private static function number(string $s, int $i): int
+    /** A number that starts at $i. Return the offset after it, or null. */
+    private static function number(string $s, int $i): ?int
     {
         if ($s[$i] === '-') {
             $i++;
         }
         $int = strspn($s, self::DIGITS, $i);
         if ($int === 0 || ($int > 1 && $s[$i] === '0')) {
-            return -1;
+            return null;
         }
         $i += $int;
         if (($s[$i] ?? '') === '.') {
             $frac = strspn($s, self::DIGITS, $i + 1);
             if ($frac === 0) {
-                return -1;
+                return null;
             }
             $i += 1 + $frac;
         }
@@ -212,15 +212,15 @@ final class JsonValidator
             }
             $exp = strspn($s, self::DIGITS, $i);
             if ($exp === 0) {
-                return -1;
+                return null;
             }
             $i += $exp;
         }
         return $i;
     }
 
-    private static function literal(string $s, int $i, string $word): int
+    private static function literal(string $s, int $i, string $word): ?int
     {
-        return substr($s, $i, strlen($word)) === $word ? $i + strlen($word) : -1;
+        return substr($s, $i, strlen($word)) === $word ? $i + strlen($word) : null;
     }
 }

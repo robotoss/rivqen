@@ -236,6 +236,9 @@ final class TokenizerTest extends TestCase
         yield 'script escaped dash dash less-than' => ['<script><!--a--</script>', ['S:script@0-8', 'E:script@15-24']];
         yield 'script escaped less-than other' => ['<script><!--<1</script>', ['S:script@0-8', 'E:script@14-23']];
         yield 'script escaped end tag with other name' => ['<script><!--</b></script>', ['S:script@0-8', 'E:script@16-25']];
+        yield 'script end tag after a lone end tag open' => ['<script></</script>', ['S:script@0-8', 'E:script@10-19']];
+        yield 'script escaped end tag after a lone end tag open' => ['<script><!--</</script>', ['S:script@0-8', 'E:script@14-23']];
+        yield 'RCDATA end tag after a lone end tag open' => ['<title></</title>', ['S:title@0-7', 'E:title@9-17']];
         yield 'script less-than other' => ['<script>a<1</script>', ['S:script@0-8', 'E:script@11-20']];
         yield 'script end tag at EOF' => ['<script>a</script', ['S:script@0-8']];
         yield 'script in escape at EOF' => ['<script><!--a', ['S:script@0-8']];
@@ -282,6 +285,13 @@ final class TokenizerTest extends TestCase
     {
         $tokens = self::tokenize('<p data-rq-block="a" data-rq-block>');
         self::assertSame(['data-rq-block' => 'a'], $tokens[0]->attributes);
+    }
+
+    public function testAttributeAfterQuotedValueWithoutWhiteSpace(): void
+    {
+        // missing-whitespace-between-attributes: the next attribute starts at once.
+        $tokens = self::tokenize('<p x="1"data-rq-block="a"type=\'b\'>');
+        self::assertSame(['data-rq-block' => 'a', 'type' => 'b'], $tokens[0]->attributes);
     }
 
     public function testOnlyWatchedAttributesAreKept(): void

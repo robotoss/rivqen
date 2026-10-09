@@ -38,6 +38,11 @@ final class JsonValidatorTest extends TestCase
         yield 'escapes' => ['"\\" \\\\ \\/ \\b \\f \\n \\r \\t \\u00e9 \\u0000"'];
         yield 'surrogate pair' => ['"\\ud83d\\ude00"'];
         yield 'surrogate pair upper case' => ['"\\uD83D\\uDE00"'];
+        yield 'code point below the surrogates' => ['"\\ud7ff"'];
+        yield 'code point above the surrogates' => ['"\\ue000"'];
+        yield 'lowest surrogate pair' => ['"\\ud800\\udc00"'];
+        yield 'highest surrogate pair' => ['"\\udbff\\udfff"'];
+        yield 'surrogate pair then text' => ['"a\\ud800\\udc00b"'];
         yield 'non-ASCII bytes' => ["\"\u{00E9}\u{1F600}\u{2028}\""];
         yield 'DEL is not a control character in JSON' => ["\"\x7F\""];
         yield 'empty array' => ['[]'];
@@ -119,6 +124,13 @@ final class JsonValidatorTest extends TestCase
         yield 'high surrogate then high surrogate' => ['"\\ud83d\\ud83d"'];
         yield 'high surrogate then bad escape' => ['"\\ud83d\\uZZZZ"'];
         yield 'high surrogate then other escape' => ['"\\ud83d\\n"'];
+        yield 'lone lowest low surrogate' => ['"\\udc00"'];
+        yield 'lone highest low surrogate' => ['"\\udfff"'];
+        yield 'lone lowest high surrogate' => ['"\\ud800"'];
+        yield 'lone highest high surrogate' => ['"\\udbff x"'];
+        yield 'high surrogate then the highest high surrogate' => ['"\\ud800\\udbff"'];
+        yield 'high surrogate then the first code point above' => ['"\\ud800\\ue000"'];
+        yield 'high surrogate then a short escape' => ['"\\ud800\\udc0"'];
         yield 'lone low surrogate' => ['"\\ude00"'];
         yield 'low surrogate first' => ['"\\udfff\\ud800"'];
         yield 'depth 65 arrays' => [str_repeat('[', 65) . str_repeat(']', 65)];

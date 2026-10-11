@@ -10,19 +10,25 @@
 //! ```
 //!
 //! Exit code 0 when results are printed; 2 for a usage error or an I/O
-//! error. Messages on stderr name paths and error kinds, never document
+//! error; 70 when an internal defect was found for an input (the result for
+//! that input fails closed, `CONTRACT.md` section 5, note). Messages on
+//! stderr name paths, fixture names and error kinds, never document
 //! content.
 
 #![forbid(unsafe_code)]
 
+use std::ffi::OsString;
 use std::fs;
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use rqp_markup::{MAX_INPUT_BYTES, analyze, result_json};
+use rqp_markup::{Document, MAX_INPUT_BYTES, MarkupError, analyze, result_json};
 
 const USAGE: &str = "usage: rqp-markup <input.html> | rqp-markup --batch <fixtures-dir>";
+
+/// Exit code when the analysis of an input found an internal defect.
+const EXIT_INTERNAL: u8 = 70;
 
 /// A failure that ends the command with exit code 2.
 #[derive(Debug)]
@@ -73,12 +79,45 @@ fn write_line(out: &mut impl Write, line: &str) -> Result<(), CliError> {
         .map_err(CliError::Output)
 }
 
-fn single(path: &Path, out: &mut impl Write) -> Result<(), CliError> {
-    let input = read_input(path)?;
-    write_line(out, &result_json(&analyze(&input), None))
+/// Where the outputs go, and whether an internal defect was found.
+struct Sink<O, E> {
+    out: O,
+    err: E,
+    defect: bool,
 }
 
-fn batch(dir: &Path, out: &mut impl Write) -> Result<(), CliError> {
+impl<O: Write, E: Write> Sink<O, E> {
+    /// Analyzes one input and prints its result line.
+    fn result(&mut self, input: &[u8], fixture: Option<&str>, label: &str) -> Result<(), CliError> {
+        self.report(&analyze(input), fixture, label)
+    }
+
+    /// Prints the result line. An internal defect prints the fail-closed
+    /// result, a message without document content, and sets `defect`.
+    fn report(
+        &mut self,
+        result: &Result<Document, MarkupError>,
+        fixture: Option<&str>,
+        label: &str,
+    ) -> Result<(), CliError> {
+        if result.as_ref().is_err_and(MarkupError::is_internal) {
+            self.defect = true;
+            writeln!(
+                self.err,
+                "rqp-markup: internal error for {label}; the result fails closed"
+            )
+            .map_err(CliError::Output)?;
+        }
+        write_line(&mut self.out, &result_json(result, fixture))
+    }
+}
+
+fn single(path: &Path, sink: &mut Sink<impl Write, impl Write>) -> Result<(), CliError> {
+    let input = read_input(path)?;
+    sink.result(&input, None, &path.display().to_string())
+}
+
+fn batch(dir: &Path, sink: &mut Sink<impl Write, impl Write>) -> Result<(), CliError> {
     let io_error = |op, path: &Path, source| CliError::Io {
         op,
         path: path.to_path_buf(),
@@ -100,28 +139,40 @@ fn batch(dir: &Path, out: &mut impl Write) -> Result<(), CliError> {
         }
         let input = read_input(&input_path)?;
         let fixture = name.to_string_lossy();
-        write_line(out, &result_json(&analyze(&input), Some(&fixture)))?;
+        sink.result(&input, Some(&fixture), &format!("fixture {fixture}"))?;
     }
     Ok(())
 }
 
-fn run(args: &[String]) -> Result<(), CliError> {
+/// Runs the command. Returns true when an internal defect was found.
+/// Arguments are OS strings: a path that is not UTF-8 is a path like any
+/// other (L-2: no panic on a non-UTF-8 argument).
+fn run(args: &[OsString], err: impl Write) -> Result<bool, CliError> {
     let stdout = io::stdout();
-    let mut out = io::BufWriter::new(stdout.lock());
+    let mut sink = Sink {
+        out: io::BufWriter::new(stdout.lock()),
+        err,
+        defect: false,
+    };
     match args {
-        [flag, dir] if flag == "--batch" => batch(Path::new(dir), &mut out)?,
-        [path] if !path.starts_with("--") => single(Path::new(path), &mut out)?,
+        [flag, dir] if flag == "--batch" => batch(Path::new(dir), &mut sink)?,
+        [path] if !path.as_encoded_bytes().starts_with(b"--") => {
+            single(Path::new(path), &mut sink)?;
+        }
         _ => return Err(CliError::Usage),
     }
-    out.flush().map_err(CliError::Output)
+    sink.out.flush().map_err(CliError::Output)?;
+    Ok(sink.defect)
 }
 
 fn main() -> ExitCode {
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    match run(&args) {
-        Ok(()) => ExitCode::SUCCESS,
+    let args: Vec<OsString> = std::env::args_os().skip(1).collect();
+    match run(&args, io::stderr()) {
+        Ok(false) => ExitCode::SUCCESS,
+        Ok(true) => ExitCode::from(EXIT_INTERNAL),
         Err(error) => {
-            // The only diagnostic output; it never contains document content.
+            // The only other diagnostic output; it never contains document
+            // content.
             let mut stderr = io::stderr().lock();
             if writeln!(stderr, "{error}").is_err() {
                 // Nothing else can report the failure; the exit code still does.
@@ -129,5 +180,70 @@ fn main() -> ExitCode {
             }
             ExitCode::from(2)
         }
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::indexing_slicing)]
+mod tests {
+    use super::*;
+
+    fn sink() -> Sink<Vec<u8>, Vec<u8>> {
+        Sink {
+            out: Vec::new(),
+            err: Vec::new(),
+            defect: false,
+        }
+    }
+
+    #[test]
+    fn results_without_a_defect_print_one_line_and_nothing_on_stderr() {
+        let mut sink = sink();
+        sink.result(b"<p data-rq-block=\"a\">x</p>", Some("f"), "fixture f")
+            .unwrap();
+        sink.result(b"<p data-rq-block=\"A\">x</p>", None, "in.html")
+            .unwrap();
+        assert!(!sink.defect);
+        assert!(sink.err.is_empty());
+        let out = String::from_utf8(sink.out).unwrap();
+        let lines: Vec<&str> = out.lines().collect();
+        assert_eq!(lines.len(), 2);
+        assert!(lines[0].starts_with("{\"fixture\":\"f\",\"valid\":true"));
+        assert!(lines[1].contains("RQP_MARKUP_INVALID_ID"));
+    }
+
+    /// L-3: an internal defect gives the fail-closed result line, a message
+    /// without content on stderr, and the defect flag (exit code 70).
+    #[test]
+    fn report_of_an_internal_defect() {
+        // No input gives an internal defect today; the error is made here.
+        let error = MarkupError {
+            code: rqp_markup::ErrorCode::Structure,
+            rule: rqp_markup::INTERNAL_RULE,
+        };
+        let mut sink = sink();
+        sink.report(&Err(error), Some("secret-name"), "fixture x")
+            .unwrap();
+        assert!(sink.defect);
+        let out = String::from_utf8(sink.out).unwrap();
+        assert_eq!(
+            out,
+            "{\"fixture\":\"secret-name\",\"valid\":false,\"error\":\"RQP_MARKUP_STRUCTURE\",\
+             \"blocks\":[],\"template_revision\":null,\"page_revision\":null}\n"
+        );
+        let err = String::from_utf8(sink.err).unwrap();
+        assert_eq!(
+            err,
+            "rqp-markup: internal error for fixture x; the result fails closed\n"
+        );
+        // A rule error is not a defect.
+        let mut sink = super::tests::sink();
+        let rule = MarkupError {
+            code: rqp_markup::ErrorCode::Structure,
+            rule: "M-23",
+        };
+        sink.report(&Err(rule), None, "in.html").unwrap();
+        assert!(!sink.defect);
+        assert!(sink.err.is_empty());
     }
 }

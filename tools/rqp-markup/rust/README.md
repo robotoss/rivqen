@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
-The Rust candidate of WP-17 S1 (tasks T-03, T-08, T-09 and T-11). It implements the rules M-01…M-27 of `docs/engineering/protocol/markup.md` (rqp/1), with M-24 items j and k (human decision H-18), the decided edge cases E1…E8 (H-21, H-22), the token stack depth limit of M-26 (H-25), and the interface of `tools/rqp-markup/CONTRACT.md`. It is a tool for the differential test, not the production crate (`rivqen-proto`, P3).
+The Rust candidate of WP-17 S1 (tasks T-03, T-08, T-09, T-11 and T-13). It implements the rules M-01…M-27 of `docs/engineering/protocol/markup.md` (rqp/1), with M-24 items j and k (human decision H-18), the decided edge cases E1…E8 (H-21, H-22), the rules of the security review (M-06 items 2 to 4: H-26, H-30, H-32; M-11 item 5: H-27; M-13 item 3: H-28), the depth counter D of M-26 (H-25, H-31), and the interface of `tools/rqp-markup/CONTRACT.md`. It is a tool for the differential test, not the production crate (`rivqen-proto`, P3).
 
 ## Build
 
@@ -24,8 +24,9 @@ target/release/rqp-markup --batch <fixtures-dir> # one JSON line per fixture, wi
 |---|---|
 | 0 | Results are printed (valid and invalid documents) |
 | 2 | Usage error or I/O error; the reason is on stderr |
+| 70 | Internal defect: for at least one input the analysis found an internal error (for example an offset outside the input). The result line for that input fails closed (`RQP_MARKUP_STRUCTURE`); stderr names the path or the fixture. The other results are printed as usual. `CONTRACT.md` section 5, note |
 
-stderr names paths and error kinds only. It never contains document content.
+stderr names paths, fixture names and error kinds only. It never contains document content. Arguments are read as OS strings: a path that is not UTF-8 is opened like any other path, so it gives a result or exit code 2, never a panic (L-2 of the security review).
 
 To compare the candidate with the golden fixtures, run this from the repository root:
 
@@ -45,11 +46,11 @@ cargo test
 
 | Test file | What it checks |
 |---|---|
-| `src/*.rs` (`mod tests`) | Tokenizer states and spans, name sets, JSON grammar, hashes |
-| `tests/rules.rs` | One or more tests for each rule M-01…M-27 and each error code; each invalid case checks the code and the rule. Separate tests for M-24 items j and k, for M-08 with a foreign `select`, and for the edge cases E1…E8. M-26 depth (`m26_depth_*`): 256 elements are valid and 257 are `RQP_MARKUP_LIMIT` in HTML context, in a foreign region, for a block element and in block content; elements that M-05 does not push do not count; the depth recovers after pops; the place of the check; `noscript` content. Two tests run near-limit inputs that take minutes when the work grows with the input history (`large_adversarial_inputs_finish`, `large_nested_inputs_closed_by_end_tags_finish`) |
+| `src/*.rs` (`mod tests`) | Tokenizer states and spans, name sets, JSON grammar, hashes; spans outside the input fail closed (`lib.rs`, `rules.rs`); name comparison in `noscript` content; the report of an internal defect (`main.rs`) |
+| `tests/rules.rs` | One or more tests for each rule M-01…M-27 and each error code; each invalid case checks the code and the rule. Separate tests for M-24 items j and k, for M-08 with a foreign `select`, and for the edge cases E1…E8. The security review: one test for each of M-06 items 2, 3 and 4, M-11 item 5 and M-13 item 3, each with the review repros and valid neighbors. M-26 depth counter D (`m26_depth_*`, `m26_d_*`): D = 256 is valid and 257 is `RQP_MARKUP_LIMIT` in HTML context, in a foreign region, for a block element and in block content; elements that M-05 does not push do not count; exact pops give units back; crossings, dirty elements, `html` and `body` keep their units; implied table parts count once per F; the place of the check; `noscript` content. Two tests run near-limit inputs that take minutes when the work grows with the input history (`large_adversarial_inputs_finish`, `large_nested_inputs_closed_by_end_tags_finish`) |
 | `tests/fixtures.rs` | Every fixture of `fixtures/rqp/markup/` against its `expected.json` |
-| `tests/cli.rs` | Command line: modes, exit codes, batch order, skipped directories, size limit, no content on stderr |
-| `tests/props.rs` | proptest: no panic on arbitrary bytes and text; for valid results the offsets ascend and stay in the input, content hash = SHA-256 of `input[start..end]`, tags around the content; a markup "soup" generator reaches valid documents with blocks; well-nested documents with 240 to 271 elements (HTML context, foreign region, block content, with tokens that are not pushed) are valid when the token stack has at most 256 elements, else `RQP_MARKUP_LIMIT` (M-26) |
+| `tests/cli.rs` | Command line: modes, exit codes, batch order, skipped directories, size limit, no content on stderr, arguments that are not UTF-8 |
+| `tests/props.rs` | proptest: no panic on arbitrary bytes and text; for valid results the offsets ascend and stay in the input, content hash = SHA-256 of `input[start..end]`, tags around the content; a markup "soup" generator reaches valid documents with blocks; well-nested documents with 240 to 271 elements (HTML context, foreign region, block content, with tokens that are not pushed) are valid when the token stack has at most 256 elements, else `RQP_MARKUP_LIMIT` (M-26); 120 to 279 shapes with known costs of D (exact pops, implied parts, crossings, dirty elements, `body`, `html`) give the result of a small model of M-26; balanced `noscript` content of any depth is valid and is `RQP_MARKUP_STRUCTURE` (M-11) without one of its end tags |
 
 `tests/fixtures.rs` reads `$RQP_MARKUP_FIXTURES` when it is set, else `../../../fixtures/rqp/markup`.
 
@@ -92,6 +93,15 @@ Result for T-08 (cargo-mutants 27.1.0, `--in-diff` against `4c90861`, 2026-10-09
 
 Result for T-11 (cargo-mutants 27.1.0, `--in-diff` against `edab313`, 2026-10-11): 8 mutants, 1 unviable, 7 caught, 0 missed. Kill rate 7/7 = 100 %. cargo-mutants does not make the off-by-one mutant `>=` → `>` of the depth check; a manual run of it fails the fixture test, the depth property test and 7 unit tests.
 
+Result for T-13 (cargo-mutants 27.1.0, `--in-diff` against `4fff64f`, `-j 3 --timeout 120`, 2026-10-11): 129 mutants, 10 unviable, 115 caught, 2 timeouts (`end_name_at` mutants that loop forever, counted as detected), 2 missed. Kill rate 117/119 = 98.3 %. Both missed mutants are equivalent:
+
+| Mutant | Why equivalent |
+|---|---|
+| `\|` → `^` in `ROW_GROUP \| ROW` (`implied_parts`) | The two parts are different single bits, so OR and XOR give the same mask |
+| `Tokenizer::defect` → `false` | The defect flag is set only when an internal offset is outside the input. The callers never pass such an offset (`from` and the attribute start are at most the current position), so no input sets it. It is a fail-closed guard for a future defect |
+
+The guard `index >= self.depth` in `Pass::push` is of the same kind: D is never smaller than the stack size, so the guard never fires. cargo-mutants makes only `>=` → `<` there (caught).
+
 ## Design
 
 ### Library choice
@@ -111,8 +121,8 @@ The tokenizer follows the WHATWG state descriptions (HTML Living Standard §13.2
 | Module | Content |
 |---|---|
 | `tokenizer.rs` | Data, tag open, end tag open, tag name, attribute states, self-closing, markup declaration open, comment states (with the less-than-sign states), bogus comment, `<?`, DOCTYPE (ends at the first `>`), `<![CDATA[` (M-12 check), RCDATA, RAWTEXT, script data with the escaped and double-escaped states, PLAINTEXT |
-| `names.rs` | Name normalization (ASCII lower case, U+0000 → U+FFFD), the name sets of `markup.md` section 2.1, the per-name pointer to the nearest open element |
-| `rules.rs` | One pass: token stack (M-05), document rules (M-06…M-13), block rules (M-14…M-26) |
+| `names.rs` | Name normalization (ASCII lower case, U+0000 → U+FFFD), the name sets of `markup.md` section 2.1 (with `SPECIAL` and `FORMATTING` as fixed lists), the per-name pointer to the nearest open element |
+| `rules.rs` | One pass: token stack (M-05) with the state per entry (dirty mark, special-crossed mark, implied parts), the depth counter D (M-26), document rules (M-06…M-13), block rules (M-14…M-26), the second tokenization of `noscript` content with its own stack (M-11) |
 | `json.rs` | RFC 8259 JSON text check (M-25), depth ≤ 64, without recursion |
 | `lib.rs` | `analyze()` (M-01, M-02, the pass, M-27 hashes and revisions), `result_json()` |
 | `main.rs` | Command line (`CONTRACT.md` section 2) |
@@ -125,17 +135,21 @@ The tokenizer follows the WHATWG state descriptions (HTML Living Standard §13.2
 - Character references are never decoded. Raw attribute values are used (DL-010).
 - The first attribute with a name wins (`data-rq-block`, `type`).
 - A valid result has blocks in document order; for each block `input[start - 1] == '>'`, `input[end..end + 2] == "</"`, and `sha256` is the hash of `input[start..end]` (property tests).
+- The depth counter D (M-26) is at most 256 after every token. Each element on the token stack holds at least one unit of D (its push; an exact pop gives back only its own units), so the stack never has more than D elements. A push checks this too and fails closed when it does not hold.
+- Each token-stack entry has three parts of state besides its name: the dirty mark (M-26 item 5), the special-crossed mark (M-06 item 4) and its implied parts (M-26 item 3, three bits). Marks are set only on the new current node after an end tag pops; they leave with their element.
+- An offset outside the input is an internal defect, never a reason to use empty bytes. The pass, the result and the tokenizer return an internal error (`MarkupError::is_internal`); the document fails closed (L-3 of the security review).
 
 ### Resource limits and failure modes
 
 | Item | Bound |
 |---|---|
 | Input | M-01 is checked first. The command reads at most 5 MiB + 1 byte of a file. |
-| Time | Linear in the input size. The nearest open element with a name is found through a per-name pointer (O(1)); M-24 items j and k use the same pointers and the table-family marks (O(1) per start tag); each element is popped once; raw text end tags scan each letter once. The token stack has at most 256 elements (M-26), so work per token that grows with the stack depth is bounded too. `tests/rules.rs` runs near-limit adversarial inputs: many failed end tags on a full stack, more than 500 000 names in groups of 256 nested names, comment and script patterns, lists and tables at the maximum depth in five blocks, many scripts in `noscript`. `large_nested_inputs_closed_by_end_tags_finish` (T-09, T-11) fills the stack to the maximum depth and closes it with matching end tags, again and again up to 5 MiB: one name, two names, short elements on a full stack, one end tag that pops all elements, `template` (table marks), `svg` (foreign root, one region and many regions) and five blocks just under 1 MiB. For each shape, the old deep input (up to 1.7 million elements) is now `RQP_MARKUP_LIMIT` at the 257th element. The two tests take about 4 s and 7 s in a debug build and 0.3 s each in a release build. A cost that grows with the number of earlier tokens (for example a scan of all interned names at each push or pop) makes `large_adversarial_inputs_finish` take 90 s in a release build. A pop cost that grows with the stack depth now costs at most 256 steps (0.7 s). |
-| Memory | Linear in the input size: interned names, at most 257 block ids, one copy of each `noscript` content (M-11). Token stack and table marks ≤ 256 elements (M-26), JSON depth stack ≤ 64 |
+| Time | Linear in the input size. The nearest open element with a name is found through a per-name pointer (O(1)); M-24 items j and k use the same pointers and the table-family marks (O(1) per start tag); each element is popped once, and the pops of an end tag also check M-06 items 1, 2 and 4 and set the marks (O(1) per popped element); D and the implied parts are O(1) per token; raw text end tags scan each letter once; the `noscript` content is tokenized once more, and an end tag in it compares only with the top of its stack. D ≤ 256 (M-26) bounds the token stack, so work per token that grows with the stack depth is bounded too. A crossing keeps its units of D, so all crossings of one document pop at most 256 elements together. `tests/rules.rs` runs near-limit adversarial inputs: many failed end tags on a full stack, more than 250 000 names in groups of 256 nested names closed by exact end tags, more than 500 000 names of self-closing elements in a foreign region on a full stack, comment and script patterns, lists and tables at the maximum depth in five blocks, many scripts in `noscript`. `large_nested_inputs_closed_by_end_tags_finish` (T-09, T-11, T-13) fills the stack to the maximum depth and closes it with matching end tags, again and again up to 5 MiB: one name, two names, short elements on a full stack, one end tag that pops 254 elements followed by short elements up to 5 MiB (the same crossing twice is `RQP_MARKUP_LIMIT`), `template` (table marks), `svg` (foreign root, one region and many regions) and five blocks just under 1 MiB. For each shape, the old deep input (up to 1.7 million elements) is now `RQP_MARKUP_LIMIT` at the 257th unit of D. The two tests take about 5 s and 6 s in a debug build and 0.4 s and 0.3 s in a release build (T-13). A cost that grows with the number of earlier tokens (for example a scan of all interned names at each push or pop) makes `large_adversarial_inputs_finish` take 90 s in a release build. A pop cost that grows with the stack depth now costs at most 256 steps (0.7 s). |
+| Memory | Linear in the input size: interned names, at most 257 block ids, one copy of each `noscript` content and a stack of the open elements of that content (M-11 item 5; one span per start tag of C, so at most one entry per 3 bytes of C; C is not counted in D). Token stack and table marks ≤ 256 elements (D ≤ 256, M-26), JSON depth stack ≤ 64 |
 | Recursion | None |
-| Panics | `unwrap`, `expect`, `panic`, indexing and unchecked arithmetic are denied by lints outside tests. `#![forbid(unsafe_code)]`. |
-| Errors | `analyze()` returns the code and the rule (`M-xx`) that failed first. The command prints only the code. |
+| Panics | `unwrap`, `expect`, `panic`, indexing and unchecked arithmetic are denied by lints outside tests. `#![forbid(unsafe_code)]`. Command line arguments are OS strings (no panic on non-UTF-8 arguments). |
+| Errors | `analyze()` returns the code and the rule (`M-xx`) that failed first. The command prints only the code. An internal defect has the rule `internal` and the code `RQP_MARKUP_STRUCTURE`; the command then exits with 70 after all results. No input is known to cause one. |
+| Hash flooding | Tag names map to ids through the standard `HashMap` (SipHash with a random key per process). The name sets, also `SPECIAL` and `FORMATTING`, are fixed lists; their flags are bits on the interned id. The stack of M-11 item 5 has no name index: an end tag compares only with its top. |
 
 ### How the rules are read
 
@@ -150,12 +164,18 @@ These places needed a choice. Each one follows the text of `markup.md`. Where th
 | M-07, M-10, M-13 (E7) | `frameset` and the reserved `script` type are checked in every context, also in a foreign region. `BREAKOUT` includes `font` with or without attributes. `INTEGRATION` names apply in `svg` and in `math` alike. |
 | M-08 | M-08 applies only to a `select` pushed in HTML context. A `select` in a foreign region is a foreign element: M-07 applies to it (`<math><select><th></th></select></math>` is valid). The nearest open `select` decides, because an HTML `select` cannot contain `svg` or `math`, and a foreign region ends with all its elements. A `<![CDATA[` in HTML `select` content is a bogus comment, so it is allowed as a comment. |
 | M-11 (E3) | When `noscript` has no end tag, C is the rest of the input, and M-11 applies to it. The second tokenization runs in HTML context; `<![CDATA[` there is a bogus comment that ends at the first `>`, the same byte as the token of this tokenizer. |
-| M-11, M-13 (E8) | M-13 also applies to the start tags of C: a `script` whose first `type` raw value contains `rivqen-manifest` (ASCII case-insensitive) or `&` gives `RQP_MARKUP_RESERVED`. M-13 is checked before the M-11 checks of the same start tag, as in the main pass. Text in raw text sections of C (`<style>`, `<script>`) and in comments is not checked. |
+| M-11, M-13 (E8) | M-13 also applies to the start tags of C: a `script` whose first `type` raw value contains `rivqen-manifest` (ASCII case-insensitive), `&` or a byte ≥ 0x80 (H-28) gives `RQP_MARKUP_RESERVED`. M-13 is checked before the M-11 checks of the same start tag, as in the main pass. Text in raw text sections of C (`<style>`, `<script>`) and in comments is not checked. |
 | M-12 (E4) | `<![CDATA[` with no `>` after it is not an error: a CDATA section and a bogus comment both end at EOF. With E5, this is also valid in a foreign integration point (`<svg><desc><![CDATA[x` at EOF). |
 | M-19 | F is computed from elements pushed in HTML context. A block start tag is always in HTML context when M-19 is checked (M-16 first). |
 | M-24 j | Checked with the per-name pointers: the stack index of the nearest open `li`, `dd` or `dt` against the index of the nearest open `ul`, `ol`, `menu` or `dl`. When the nearest list was opened before the block, item c rejects the start tag, so item j needs no "opened in the content" test of its own. All combinations count (for example `dd` above `ol`), as the rule says. |
 | M-24 k | Checked on every start tag in the content, also void names (`<br>`, `<img>`) and `table`. F is the M-09 value. At the block start F is none, `td`, `th` or `caption` (M-19), so a table context in the content is always opened in the content. Outside block content, k does not apply. |
-| M-26 | The block count is checked when the 257th block start tag is read; the size when the block end tag is read. The depth is checked in the one function that pushes to the token stack, after all other checks of the same start tag: for a block start tag after M-15…M-21 and the block count, in block content after M-22 and M-24, in a foreign region after M-07, in HTML context after M-09. The second tokenization of `noscript` content (M-11) keeps no token stack, so the depth limit does not apply to the tags of C; the `noscript` element itself is pushed and counts. |
+| M-06.1, M-06.2, M-06.4 | Checked in one loop over the popped elements of an end tag (`Pass::close`), in pop order from the current node down to the matching element; the first failure returns. Item 4 checks the matching element too. In block content every end tag pops exactly the current node (M-23); the same function runs, so item 4 and D apply there in the same way. |
+| M-06.2 | `SPECIAL` applies to elements pushed in HTML context; every element pushed in a foreign region counts, whatever its name (`<svg><a><g></a>` is invalid). |
+| M-06.3 | Applies only when no element matches and the position is in HTML context. In a foreign region M-07.2 rejects every stray end tag first; in block content M-23 rejects it first. ASCII case does not matter (`</TBODY>`). |
+| M-06.4 | Item (a) and item (b) set the same flag on the new current node after the pops. A no-match end tag returns before the pops, so it does not change a mark. |
+| M-11.5 (H-27) | The stack of C holds the name spans of the start tags that M-05 item 1 pushes: every name that is not in `VOID` (`svg` and `math` are forbidden in C, item 3). A self-closing non-void start tag opens an element (`<noscript><span/></noscript>` is invalid). Names compare as the tokenizer emits them (ASCII lower case, U+0000 as U+FFFD). The end tag `noscript` of item 1 also needs an empty stack. An end tag in a raw text section of C is text. |
+| M-13.3 (H-28) | Any byte ≥ 0x80 in the first `type` raw value of a `script` start tag, quoted or unquoted, in the main pass and in C. A non-ASCII value in another attribute, or in a second `type` attribute, is not checked. M-13 comes before M-16, so `<script type="application/jsön" data-rq-block="j">` is `RQP_MARKUP_RESERVED`. |
+| M-26 | The block count is checked when the 257th block start tag is read; the size when the block end tag is read. D is checked at each unit (`Pass::raise`): implied parts after M-09 and before the push of the start tag; the push after all other checks of the same start tag: for a block start tag after M-15…M-21 and the block count, in block content after M-22 and M-24, in a foreign region after M-07, in HTML context after M-09. Implied parts use F of M-09 (HTML elements only, the search stops at `template`), so table parts in a foreign region have none. The exception of item 4 for `html` and `body` uses the name of the popped element, in both contexts, as the rule text and the cross-check do. The second tokenization of `noscript` content (M-11) does not change D (item 7); the `noscript` element itself is pushed and counts. |
 
 ### Cross-check against parse5
 
@@ -169,6 +189,18 @@ Run the sweeps of `tools/rqp-markup/crosscheck/README.md` with `--only rust` and
 | All 133 fixtures, both views (`check`) | 133 | — | 0 |
 
 Before T-08, seeds 4 and 5 gave 9 block-byte disagreements (all M-24 j or k shapes) and manifest findings in the scripting-disabled view (E8).
+
+Result for T-13 (2026-10-11, release build, both views, `TMPDIR` on disk). "With a class" counts the documents that a rule class of the cross-check (`src/depth.mjs`: M-06 items 2 to 4, M-11 item 5, M-13 item 3, M-26) rejects and that the candidate accepts; it must be 0. "Depth invariant" counts the documents where parse5 is deeper than the claim of M-26 allows, and how many of them the candidate accepts.
+
+| Sweep | Documents | Valid | Valid with blocks | Findings | Accepted with a class | Depth invariant |
+|---|---|---|---|---|---|---|
+| seed 31, `review` (16 pieces) | 20 000 | 4 203 | 2 221 | 0 | 0 | 97, none accepted |
+| seed 21, `review`, `--max-tokens 20` | 50 000 | 8 645 | 4 635 | 0 | 0 | 313, none accepted |
+| seed 23, `review`, `--max-tokens 80` | 20 000 | 938 | 514 | 0 | 0 | 354, none accepted |
+| seed 24, `classic`, `--max-tokens 20` | 100 000 | 35 242 | 11 126 | 0 | 0 | 222, none accepted |
+| All 180 fixtures (`check`) | 180 | 67 | — | 0 | — | — |
+
+The review cases (`cases/review-cases.json`): every repro is rejected with the code of its rule (`H26-*`, `Q1-*`, `H27-*`: `STRUCTURE`; `H28-*`: `RESERVED`; `H30-*`: `STRUCTURE`; `H31-*`: `LIMIT`), and every control case is valid with the parse5 blocks. Before T-13 (study at `27ae1b5`, edge cases §6.6), seed 21 gave 15 591 valid documents for each candidate and 6 762 findings for the Rust, Node.js and PHP candidates together.
 
 ## Dependencies
 

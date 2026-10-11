@@ -384,11 +384,9 @@ class Scanner {
       if (parents !== undefined && !parents.has(fName)) return STRUCTURE; // M-09
       // M-26 item 3: each implied part counts once for each F.
       const parts = impliedParts(name, fName) & ~this.state[f];
-      if (parts !== 0) {
-        const error = this.addDepth(partCount(parts));
-        if (error !== null) return error;
-        this.state[f] |= parts;
-      }
+      const error = this.addDepth(partCount(parts));
+      if (error !== null) return error;
+      this.state[f] |= parts;
     }
     const foreignRoot = name === 'svg' || name === 'math';
     if (!(foreignRoot && t.selfClosing) && !VOID.has(name)) {

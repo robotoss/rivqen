@@ -362,6 +362,11 @@ describe('M-07 foreign regions', () => {
     assert.equal(errorOf(doc('<svg><g></x></g></svg>')), STRUCTURE);
   });
 
+  it('rejects a stray end tag in a region whose svg is the first element of the document', () => {
+    assert.equal(errorOf('<svg></x></svg>'), STRUCTURE);
+    assert.equal(errorOf('<math></x></math>'), STRUCTURE);
+  });
+
   it('rejects an end tag in a foreign region after its element was closed', () => {
     assert.equal(errorOf(doc('<svg><g></g></g></svg>')), STRUCTURE);
   });
@@ -498,6 +503,9 @@ describe('M-11 noscript', () => {
   it('requires the first noscript end tag exactly at the end of the content', () => {
     assert.equal(checkNoscript(Buffer.from('<p>a</p>')), null);
     assert.equal(checkNoscript(Buffer.from('<title></noscript>')), STRUCTURE);
+    // The main pass never gives such a content (raw text ends at </noscript>),
+    // but checkNoscript() checks item 1 by itself.
+    assert.equal(checkNoscript(Buffer.from('</noscript>x')), STRUCTURE);
   });
 });
 
@@ -772,6 +780,21 @@ describe('M-19 block context', () => {
 
   it('accepts a block after the template is closed', () => {
     assert.deepEqual(blocksOf(doc(`<template><p>x</p></template>${P('a')}`)).map((b) => b[0]), ['a']);
+  });
+
+  it('accepts a block after nested elements of the same name are closed', () => {
+    const nested = `<template><template></template></template>${P('a')}`;
+    assert.deepEqual(blocksOf(doc(nested)).map((b) => b[0]), ['a']);
+  });
+
+  it('finds F also when it is the first element of the document', () => {
+    assert.equal(errorOf(`<table>${DIV('a')}</table>`), STRUCTURE);
+    assert.equal(errorOf(`<table><td>${DIV('a')}</td></table>`), null);
+  });
+
+  it('finds F through elements that are not in the table family', () => {
+    assert.equal(errorOf(doc(`<table><span><form>${DIV('a')}</form></span></table>`)), STRUCTURE);
+    assert.equal(errorOf(doc(`<table><td><span>${DIV('a')}</span></td></table>`)), null);
   });
 });
 
@@ -1196,9 +1219,11 @@ describe('M-26 depth counter D (H-31)', () => {
 
   it('counts the implied row of a cell in a row group', () => {
     for (const group of ['tbody', 'thead', 'tfoot']) {
-      const table = `<table><${group}>${'<td>x</td>'.repeat(3)}</${group}></table>`;
-      assert.equal(errorOf(deep(MAX - 4, table)), null, group);
-      assert.equal(errorOf(deep(MAX - 3, table)), LIMIT, group);
+      for (const cell of ['td', 'th']) {
+        const table = `<table><${group}>${`<${cell}>x</${cell}>`.repeat(3)}</${group}></table>`;
+        assert.equal(errorOf(deep(MAX - 4, table)), null, `${group} ${cell}`);
+        assert.equal(errorOf(deep(MAX - 3, table)), LIMIT, `${group} ${cell}`);
+      }
     }
   });
 

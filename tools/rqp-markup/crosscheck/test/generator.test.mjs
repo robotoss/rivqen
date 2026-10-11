@@ -87,6 +87,21 @@ test("the review profile reaches the shapes of the security review", () => {
   assert.ok(has(/(<table><td>){60}/), "deep nested tables");
 });
 
+test("the review profile does not change with review2: a saved finding of seed 21 still reproduces", () => {
+  // Seed 21, index 6906 (edge cases §6.6): an a, a crossing by span, then 8 or more ul elements.
+  assert.match(generateDocument(docSeed(21, 6906), { maxTokens: 20, profile: "review" }), /<a><span>(<ul>){8}/);
+});
+
+test("the review2 profile reaches the shapes of round 2 of the security review", () => {
+  const docs = Array.from({ length: 3000 }, (_, i) => generateDocument(docSeed(1, i), { profile: "review2", maxTokens: 20 }));
+  const has = (re) => docs.some((d) => re.test(d));
+  assert.ok(has(/(<form><object><form><\/form><\/object><\/form>){9}/), "nested forms in object, repeated");
+  assert.ok(has(/<template><col><title><\/template><p data-rq-block/), "template, col and raw text");
+  assert.ok(has(/<table><marquee><table><\/table><\/marquee><\/table>/), "foster-parented marquee with a table");
+  assert.ok(has(/<td><noscript><td><\/td><\/noscript>/), "noscript in a cell with a table part");
+  assert.ok(has(/<caption><noscript><col><\/noscript>/), "noscript in a caption with col");
+});
+
 test("review documents are bounded", () => {
   for (let i = 0; i < 1000; i++) {
     assert.ok(generateDocument(docSeed(9, i), { profile: "review", maxTokens: 200 }).length < 200 * 8000);

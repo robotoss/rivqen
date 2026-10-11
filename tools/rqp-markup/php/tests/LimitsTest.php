@@ -21,10 +21,13 @@ use Rivqen\Tools\RqpMarkup\Result;
  * far below what a quadratic algorithm needs on these inputs, so they detect
  * a complexity defect without timing noise.
  *
- * Inputs deeper than the token stack limit (M-26, 256 elements) must stop
- * at the 257th push. The valid inputs give the maximum stack work within
- * that limit: stacks of 256 elements that are opened and closed again and
- * again until the input has 5 MiB.
+ * Inputs where the depth counter D (M-26) gets larger than 256 must stop
+ * there. The valid inputs give the maximum stack work within D <= 256:
+ * stacks of 256 elements that are opened and closed again and again (exact
+ * pops give the units back) until the input has 5 MiB. A crossing keeps its
+ * units, so crossings pop at most 256 elements in one document. The stack
+ * of the noscript content (M-11 item 5) is not counted in D; it is bounded
+ * by the input size only.
  */
 #[Group('limits')]
 final class LimitsTest extends TestCase
@@ -156,9 +159,25 @@ final class LimitsTest extends TestCase
             }
         }];
         yield 'stray end tags at depth 256' => [static fn(): string => self::fill(str_repeat('<b>', $d), '</i>')];
-        yield 'one end tag crosses 255 elements, repeated' => [static fn(): string => self::fill('', '<html>' . str_repeat('<div>', $d - 1) . '</html>')];
+        // A crossing keeps the units of D (M-26 item 5), so all crossings of
+        // one document pop at most 256 elements together. The largest one:
+        // one end tag pops 255 elements, then D = 255 stays for the rest.
+        yield 'one end tag crosses 254 elements, then exact pops at D = 256' => [static fn(): string => self::fill('<html>' . str_repeat('<div>', $d - 2) . '</html>', '<b></b>')];
         yield 'foreign region of depth 256, repeated' => [static fn(): string => self::fill('<svg>', str_repeat('<g>', $d - 1) . str_repeat('</g>', $d - 1), '</svg>')];
-        yield 'tables of depth 255, repeated' => [static fn(): string => self::fill('', str_repeat('<table><tr><td>', 85) . str_repeat('</table>', 85))];
+        // Each level holds 4 units: table, implied row group, tr, td (M-26 item 3).
+        yield 'tables of D = 256, repeated' => [static fn(): string => self::fill('', str_repeat('<table><tr><td>', $d / 4) . str_repeat('</td></tr></table>', $d / 4))];
+        // 251 + table + row group + tr + td = 256; the column group fits
+        // because the row and the cell are popped before it.
+        yield 'implied parts once per table, many rows' => [static fn(): string => self::fill(str_repeat('<div>', $d - 5) . '<table>', '<tr><td>a</td></tr><col>', '</table>')];
+        // M-06 item 4: formatting end tags above a marked element.
+        yield 'formatting end tags above a marked element' => [static fn(): string => self::fill('<p><span><div></span>', '<b><i></i></b>', '</p>')];
+        // M-11 item 5: the stack of the noscript content is not bounded by D.
+        yield 'deep balanced noscript content' => [static function (): string {
+            $n = intdiv(Parser::MAX_INPUT_BYTES - 21, 9);
+            return '<noscript>' . str_repeat('<ab>', $n) . str_repeat('</ab>', $n) . '</noscript>';
+        }];
+        yield 'deep noscript content with names with one hash' => [static fn(): string => '<noscript>'
+            . self::nameStacks(self::COLLIDING, 71_000, Parser::MAX_INPUT_BYTES - 21) . '</noscript>'];
         // M-24 item j keeps one index stack of the lists and list items in
         // the content: the block element and 254 list elements.
         yield 'nested lists of depth 255 in blocks' => [static fn(): string => self::blocks(str_repeat('<ul><li>', 127) . str_repeat('</li></ul>', 127))];
@@ -179,7 +198,7 @@ final class LimitsTest extends TestCase
     }
 
     /**
-     * Inputs deeper than the token stack limit (M-26).
+     * Inputs where D gets larger than 256 (M-26).
      *
      * @return iterable<string, array{\Closure(): string}>
      */
@@ -199,6 +218,10 @@ final class LimitsTest extends TestCase
         yield 'deep nesting then matching end tags' => [static fn(): string => str_repeat('<b>', 740_000) . str_repeat('</b>', 740_000)];
         yield 'deep foreign region' => [static fn(): string => self::fill('<svg>', '<g>', '</svg>')];
         yield 'deep tables' => [static fn(): string => self::fill('', '<table><tr><td>')];
+        // M-26 item 5: the token stack is empty after each group, D is not.
+        yield 'crossings keep their units' => [static fn(): string => self::fill('', '<span><div></span>')];
+        yield 'end tags of body keep the unit' => [static fn(): string => self::fill('', '<body></body>')];
+        yield 'crossed tables keep their implied parts' => [static fn(): string => self::fill('', '<table><tr><td>a</table>')];
         yield 'deep nested lists in a block' => [static fn(): string => '<div data-rq-block="a">'
             . str_repeat('<ul><li>', 58_000) . str_repeat('</li></ul>', 58_000) . '</div>'];
         yield 'nested names with one hash' => [static function (): string {

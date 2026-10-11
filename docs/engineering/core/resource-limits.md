@@ -15,6 +15,7 @@ Every input to the core is bounded. Limits protect the app from memory exhaustio
 | `maxBlocks` | 256 | Data blocks per page | Protocol error |
 | `maxBlockKeyBytes` | 128 | Block key length | Protocol error |
 | `maxBlockBytes` | 1 MiB | One data block | Protocol error |
+| `maxOpenElements` | 256 | Token stack of the RQP markup analysis ([markup](/engineering/protocol/markup) M-26, H-25) | `RQP_MARKUP_LIMIT` → normal HTML without RQP |
 | `maxPatchBytes` | 256 KiB | One RQP patch envelope | `PATCH_TOO_LARGE` |
 | `maxJsonDepth` | 16 | legacy data JSON, RQP envelopes | Protocol error |
 | `maxHeaderBytes` | 16 KiB per header, 64 KiB total | Response headers parsed by the core | Protocol error |

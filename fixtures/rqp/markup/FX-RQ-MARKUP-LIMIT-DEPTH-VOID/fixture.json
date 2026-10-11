@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-LIMIT-DEPTH-VOID",
+  "description": "256 nested div elements; void elements and self-closing svg and math at the deepest level are not pushed (M-05 item 1), so the token stack has 256 elements",
+  "rules": [
+    "M-05",
+    "M-26"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "deep",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"deep\">",
+        "content": "x"
+      }
+    ]
+  }
+}

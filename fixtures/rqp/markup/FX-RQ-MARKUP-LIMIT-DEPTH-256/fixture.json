@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-LIMIT-DEPTH-256",
+  "description": "255 nested div elements and a div block inside them: the token stack has 256 elements, the maximum (M-26, H-25)",
+  "rules": [
+    "M-05",
+    "M-26"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "deep",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"deep\">",
+        "content": "x"
+      }
+    ]
+  }
+}

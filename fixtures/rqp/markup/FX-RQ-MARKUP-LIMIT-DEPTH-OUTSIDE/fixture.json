@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-LIMIT-DEPTH-OUTSIDE",
+  "description": "257 nested b elements before the block, closed by matching end tags: the depth limit applies outside blocks too (M-26)",
+  "rules": [
+    "M-26"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_LIMIT"
+  }
+}

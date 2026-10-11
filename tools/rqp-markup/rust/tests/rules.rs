@@ -435,6 +435,13 @@ fn m06_4_special_crossed_mark() {
     );
     // An end tag that matches nothing, and a start tag, do not change it.
     assert_invalid("<b><span><div>x</span></q><i></i></b>", STRUCTURE, "M-06");
+    // A second crossing keeps the mark (the mark is never removed).
+    assert_invalid(
+        "<a><span><div>x</span><span><div>y</span></a>",
+        STRUCTURE,
+        "M-06",
+    );
+    assert_invalid("<a><li><ul></li><li><ul></li></a>", STRUCTURE, "M-06");
     // Valid neighbors.
     for body in [
         // `</span>` crosses only `i` (not special): nothing gets the mark.
@@ -1603,6 +1610,10 @@ fn m26_d_dirty_elements_keep_their_units() {
     let unit = "<span><span><div></span></span>";
     depth_valid(&units_then_block(unit, 85));
     depth_limit(&units_then_block(unit, 86));
+    // A second crossing keeps the dirty mark: each unit keeps 5.
+    let unit = "<div><span><b></span><span><b></span></div>";
+    depth_valid(&units_then_block(unit, 51));
+    depth_limit(&units_then_block(unit, 52));
     // Without the crossing nothing is dirty.
     depth_valid(&units_then_block(
         "<span><span><span><div></div></span></span></span>",

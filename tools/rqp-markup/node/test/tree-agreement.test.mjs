@@ -20,7 +20,8 @@ const CONTAINERS = [
   'div', 'p', 'span', 'b', 'i', 'em', 'a', 'button', 'ul', 'ol', 'li', 'dl', 'dt', 'dd', 'section',
   'h1', 'h2', 'table', 'tbody', 'tr', 'td', 'th', 'caption', 'colgroup', 'select', 'option',
   'optgroup', 'ruby', 'rt', 'rp', 'rb', 'rtc', 'nobr', 'template', 'form', 'center', 'pre',
-  'font', 'small', 'main', 'header', 'article', 'object', 'marquee', 'label', 'menu',
+  'font', 'small', 'main', 'header', 'article', 'object', 'marquee', 'label', 'menu', 'thead',
+  'tfoot', 'applet',
 ];
 const VOIDS = ['br', 'img', 'hr', 'input', 'col', 'wbr', 'embed', 'meta', 'link'];
 const RAW = [
@@ -39,6 +40,9 @@ const RAW = [
   ['noscript', '<b><i>x</b></i>'],
   ['noscript', '</div><b>x</b>'],
   ['noscript', '<div><a href="#">x</a></div><table><tr><td>a</td></tr></table>'],
+  ['noscript', '<td>x</td>'], // M-11 item 6 (H-38)
+  ['noscript', '<col>'],
+  ['noscript', '<table><caption>c</caption><tr><th>h</th></tr></table>'],
   ['script', ''],
 ];
 // Shapes of the security review (markup.md section 2.12), with a repeat count.
@@ -62,6 +66,24 @@ const REVIEW = [
   (n) => '<li><ul></li>'.repeat(n * 16),
   (n) => '<p><b>x</p>y'.repeat(n * 16),
   (n) => '<table><td>x</table>'.repeat(n * 8),
+  // Security review round 2. M-09 condition 1 (H-35): raw text after <template><col>.
+  () => '<template><col><title></template><p data-rq-block="g">fake</p></title></template>',
+  () => '<template><col><textarea></template><script type="application/rivqen-manifest+json">{}</script></textarea></template>',
+  () => '<template><colgroup><title></template><p data-rq-block="g">x</p></title></colgroup></template>',
+  // M-10 item 2 (H-36): the form element pointer.
+  (n) => '<form><object><form></form></object></form>'.repeat(n + 1),
+  () => '<div><form></div><form>x</form>',
+  // M-09 condition 2 (H-37): foster-parented elements above F.
+  (n) => '<object><b><table><marquee><table></table></marquee></table></b></object>'.repeat(n + 1),
+  () => '<object><a href="1"><table><marquee><table></table></marquee></table>x</a></object>',
+  () => '<table><tr><object><td>x</td></object></tr></table>',
+  () => '<table><form><tr><td>x</td></tr></form></table>',
+  () => '<table><div></div><tr><td>x</td></tr></table>',
+  // M-11 item 6 (H-38): table parts in noscript content in a cell or caption.
+  () => '<table><tr><td><noscript><td></td></noscript><div data-rq-block="m">a<table></table>b</div></td></tr></table>',
+  () => '<table><tr><td><noscript><col></noscript><div data-rq-block="m">a<table></table>b</div></td></tr></table>',
+  () => '<table><caption><noscript><tr></tr></noscript><div data-rq-block="m">a<table></table>b</div></caption></table>',
+  () => '<table><tr><td><noscript><table><tr><td>x</td></tr></table></noscript><div data-rq-block="n">a<table></table>b</div></td></tr></table>',
 ];
 const BLOCK_NAMES = ['div', 'p', 'span', 'h1', 'section', 'title', 'nav', 'li', 'td'];
 const IDS = ['a', 'b', 'c', 'd', 'e', 'f'];

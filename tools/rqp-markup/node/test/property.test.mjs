@@ -25,15 +25,22 @@ const pieces = [
   '<div>', '<span>', '<i>', '</i>', '<nobr>', '</nobr>', '<q>', '</q>', '</li>', '<tbody>', '</tbody>',
   '<th>', '<col>', '<body>', '</body>', '</thead>', '<noscript><b>', '</b></noscript>',
   '<script type="rıvqen">', '<span><div></span>', '<div><div><div><div><div><div><div><div>',
+  // Rules of security review round 2 (M-09 conditions 1 and 2, M-10 item 2, M-11 item 6).
+  '<form>', '</form>', '<object>', '</object>', '<marquee>', '</marquee>', '<colgroup>', '</colgroup>',
+  '<caption>', '</caption>', '<template><col>', '<noscript><td></td></noscript>', '<noscript><col></noscript>',
+  '<noscript><table><tr><td>x</td></tr></table></noscript>', '<form><object><form></form></object></form>',
 ];
 
 /**
  * Elements of many kinds, all closed exactly. After it the token stack is
- * empty again, D is 0 (M-26), and no mark or name count is left.
+ * empty again, D is 0 (M-26), and no mark or name count is left (also the
+ * count of open forms of M-10 item 2).
  */
 const CLOSED_PREFIX = '<b><i><select><option></option></select><template></template>'
   + '<table><td></td><col></table><ruby><rt></rt></ruby><button></button><a></a><nobr></nobr>'
-  + '<svg><g></g></svg><noscript><p>x</p></noscript><ul><li></li></ul><h1></h1></i></b>';
+  + '<svg><g></g></svg><noscript><p>x</p></noscript><ul><li></li></ul><h1></h1></i></b>'
+  + '<form><div></div></form><template><table><colgroup><col></colgroup></table></template>'
+  + '<noscript><table><caption><table></table></caption><tr><td>x</td></tr></table></noscript>';
 
 function generatePieces(r) {
   const n = r.int(60);

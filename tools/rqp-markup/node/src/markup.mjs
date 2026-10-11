@@ -77,6 +77,10 @@ const ROW_GROUP = 4; // M-26 item 3: implied parts of F
 const ROW = 8;
 const COLUMN_GROUP = 16;
 
+// Values of the per-entry F index (M-09) that are not a stack index.
+const NO_FAMILY = -1; // no TABLE_FAMILY entry below
+const IN_TEMPLATE = -2; // a template entry is nearer than every TABLE_FAMILY entry (M-09 condition 1)
+
 /** M-26 item 3: implied parts that a start tag in HTML context gives to F. */
 function impliedParts(name, f) {
   if (f === 'table') {
@@ -160,6 +164,7 @@ export function checkNoscript(content) {
   const b = Buffer.concat([content, NOSCRIPT_END]);
   const tok = new Tokenizer(b);
   const open = [];
+  let tables = 0; // item 6: table elements on the stack of C
   for (;;) {
     const t = tok.next();
     if (t.type === TokenType.START_TAG) {
@@ -168,8 +173,15 @@ export function checkNoscript(content) {
         return ErrorCode.RESERVED; // item 4: M-13 in C (E8, H-28)
       }
       if (t.blockAttr !== null || NOSCRIPT_FORBIDDEN.has(name)) return STRUCTURE; // items 2, 3
+      // Item 6 (H-38): a table part needs a table of C, or with scripting
+      // disabled it closes a cell or caption around the noscript element.
+      // The keys of TABLE_PARENTS are the names of TABLE_PART and col.
+      if (tables === 0 && TABLE_PARENTS.has(name)) return STRUCTURE;
       // Item 5. svg and math are forbidden (item 3), so only VOID is not pushed.
-      if (!VOID.has(name)) open.push(name);
+      if (!VOID.has(name)) {
+        open.push(name);
+        if (name === 'table') tables++;
+      }
       const mode = TEXT_MODE.get(name);
       if (mode !== undefined) tok.switchTo(mode, name);
     } else if (t.type === TokenType.END_TAG) {
@@ -178,7 +190,7 @@ export function checkNoscript(content) {
         return t.start === content.length && open.length === 0 ? null : STRUCTURE;
       }
       if (open.at(-1) !== t.name) return STRUCTURE; // item 5: crossing or stray end tag
-      open.pop();
+      if (open.pop() === 'table') tables--;
     } else if (t.type === TokenType.EOF) {
       return STRUCTURE;
     }
@@ -195,7 +207,7 @@ class Scanner {
     // Token stack (M-05), one entry per index in each array.
     this.names = [];
     this.inHtml = []; // pushed in HTML context
-    this.family = []; // index of the nearest TABLE_FAMILY entry at or below the entry, -1 for none or after template (M-09)
+    this.family = []; // index of F at or below the entry (M-09): a stack index, NO_FAMILY or IN_TEMPLATE
     this.listMark = []; // nearest LISTS or LIST_ITEMS name at or below the entry (M-24 j)
     this.state = []; // DIRTY, MARKED and implied-part bits (M-06 item 4, M-26)
     this.depth = 0; // the depth counter D of M-26
@@ -254,10 +266,10 @@ class Scanner {
     return this.isOpen('select');
   }
 
-  // Index of F of M-09 and M-19, or -1.
+  // Index of F of M-09 and M-19, else NO_FAMILY or IN_TEMPLATE (both < 0).
   familyIndex() {
     const n = this.family.length;
-    return n === 0 ? -1 : this.family[n - 1];
+    return n === 0 ? NO_FAMILY : this.family[n - 1];
   }
 
   // Name of F of M-09 and M-19, or null.
@@ -283,7 +295,7 @@ class Scanner {
     this.names.push(name);
     this.inHtml.push(inHtml);
     this.state.push(0);
-    this.family.push(inHtml && TABLE_FAMILY.has(name) ? i : name === 'template' ? -1 : below);
+    this.family.push(inHtml && TABLE_FAMILY.has(name) ? i : name === 'template' ? IN_TEMPLATE : below);
     // M-24 j. The entry can come from outside the block content: j is checked
     // only after c, which needs a list opened in the content, so the nearest
     // entry from the top is then always an element opened in the content.
@@ -370,18 +382,28 @@ class Scanner {
     return null;
   }
 
-  // M-05 rule 1, M-04, M-09, M-26 item 3, and M-22 to M-24 in block content.
+  // M-05 rule 1, M-04, M-09, M-10 item 2, M-26 item 3, and M-22 to M-24 in
+  // block content. All checks come before the implied parts and the push.
   htmlStart(t) {
     const name = t.name;
     if (this.block !== null) {
       const error = this.contentStart(t);
       if (error !== null) return error;
     }
+    // M-10 item 2 (H-36): the form element pointer of the tree builder.
+    if (name === 'form' && this.isOpen('form')) return STRUCTURE;
     const f = this.familyIndex();
+    // M-09 condition 1 (H-35): "in column group" in a template ignores the
+    // later start tags, also the raw text ones.
+    if (name === 'col' && f === IN_TEMPLATE) return STRUCTURE;
     if (f >= 0) {
       const fName = this.names[f];
       const parents = TABLE_PARENTS.get(name);
       if (parents !== undefined && !parents.has(fName)) return STRUCTURE; // M-09
+      // M-09 condition 2 (H-37): a table part, col or table start tag must not
+      // make the tree builder pop foster-parented elements above F.
+      const clears = parents !== undefined || name === 'table';
+      if (clears && TABLE_CONTEXT.has(fName) && f !== this.names.length - 1) return STRUCTURE;
       // M-26 item 3: each implied part counts once for each F.
       const parts = impliedParts(name, fName) & ~this.state[f];
       const error = this.addDepth(partCount(parts));

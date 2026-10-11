@@ -123,6 +123,15 @@ const inputs = {
     nested('<em>', '</em>', '<noscript>', '</noscript>'),
   'noscript content nested to 5 MiB, unbalanced at its end': () =>
     fill('<noscript>', '<em>', '</noscript>'),
+  // Rules of security review round 2 (H-35 to H-38).
+  'forms one after another': () => fill('', '<form><div></div></form>'),
+  'table parts after foster-parented elements that are closed': () =>
+    fill('<table>', '<div></div><tr><td>x</td></tr>', '</table>'),
+  'cols in a table in a template': () => fill('<template><table>', '<colgroup><col></colgroup><col>', '</table></template>'),
+  'noscript content with tables nested to 5 MiB and balanced': () =>
+    nested('<table><tr><td>', '</td></tr></table>', '<noscript>', '</noscript>'),
+  'noscript content with table parts after its tables are closed': () =>
+    fill('<noscript>', '<table></table>', '<tr></tr></noscript>'),
 };
 
 // The expected result of each input. A valid input must give its block count:
@@ -163,6 +172,11 @@ const expected = new Map([
   ['tables with implied parts, popped exactly', VALID],
   ['noscript content nested to 5 MiB and balanced', VALID],
   ['noscript content nested to 5 MiB, unbalanced at its end', STRUCTURE],
+  ['forms one after another', VALID],
+  ['table parts after foster-parented elements that are closed', VALID],
+  ['cols in a table in a template', VALID],
+  ['noscript content with tables nested to 5 MiB and balanced', VALID],
+  ['noscript content with table parts after its tables are closed', STRUCTURE], // M-11 item 6
 ]);
 
 describe('[perf] linear time at 5 MiB', () => {

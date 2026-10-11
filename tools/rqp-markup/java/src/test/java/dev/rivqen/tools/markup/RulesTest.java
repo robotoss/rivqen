@@ -268,6 +268,216 @@ class RulesTest {
     void elementsPushedInForeignRegionAreNotGuarded() {
       assertValid(body("<svg><a><g></svg>" + P));
     }
+
+    // Item 2 (H-26): a FORMATTING end tag crosses no special and no foreign element.
+
+    @Test
+    void formattingEndTagCanCrossPhrasingElements() {
+      assertValid(body("<a href=\"#\"><span>a</a><b><i>a</b><p><b>a</p><s><q><em>x</s>" + P));
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "a", "b", "big", "code", "em", "font", "i", "nobr", "s", "small", "strike", "strong",
+          "tt", "u"
+        })
+    void formattingEndTagMustNotCrossSpecialElement(String name) {
+      assertStructure(body("<" + name + "><div>a</" + name + ">"), "M-06");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "address",
+          "article",
+          "aside",
+          "blockquote",
+          "body",
+          "center",
+          "dd",
+          "details",
+          "dir",
+          "div",
+          "dl",
+          "dt",
+          "fieldset",
+          "figcaption",
+          "figure",
+          "footer",
+          "form",
+          "h1",
+          "h6",
+          "head",
+          "header",
+          "hgroup",
+          "html",
+          "li",
+          "listing",
+          "main",
+          "menu",
+          "nav",
+          "ol",
+          "p",
+          "pre",
+          "search",
+          "section",
+          "summary",
+          "ul"
+        })
+    void everySpecialElementStopsAFormattingEndTag(String special) {
+      assertStructure(body("<b><" + special + ">a</b>"), "M-06");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"dialog", "span", "q", "ruby", "sub", "x-y", "option", "desc"})
+    void otherElementsDoNotStopAFormattingEndTag(String name) {
+      assertValid(body("<b><" + name + ">a</b>" + P));
+    }
+
+    @Test
+    void otherEndTagsCanCrossSpecialElements() {
+      // Item 2 is about FORMATTING end tags only (p, span and div are not in the set).
+      assertValid(body("<span><div>a</span><q><p>b</q>" + P));
+    }
+
+    @Test
+    void reviewReproEightDivsUnderA() {
+      // Security review (H-26): </a> over 8 div elements; a later <a> cuts the block in parse5.
+      String html = "<a>" + "<div>".repeat(8) + "x</a><span data-rq-block=\"x\">y<a>z</a>w</span>";
+      assertStructure(body(html), "M-06");
+      assertStructure(body(html.replace("a>", "nobr>")), "M-06");
+    }
+
+    @Test
+    void formattingEndTagMustNotCrossForeignElement() {
+      assertStructure(body("<svg><a><text>t</a></svg>"), "M-06");
+      assertStructure(body("<math><a><mrow></a></math>"), "M-06");
+    }
+
+    @Test
+    void formattingEndTagInForeignRegionWithoutCrossing() {
+      assertValid(body("<svg><a><text>t</text></a><g><path></g></svg>" + P));
+    }
+
+    // Item 3 (H-30): table end tags that match nothing.
+
+    @ParameterizedTest
+    @ValueSource(strings = {"tbody", "thead", "tfoot", "tr"})
+    void strayTableEndTagInCell(String name) {
+      assertStructure(body("<table><td>a</" + name + ">"), "M-06");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"tbody", "thead", "tfoot", "tr", "table"})
+    void strayTableEndTagOutsideTables(String name) {
+      assertStructure(body("<div>a</" + name + "></div>"), "M-06");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"td", "th", "caption", "colgroup", "col"})
+    void otherStrayTableEndTagsAreIgnored(String name) {
+      assertValid(body("<table><td>a</" + name + "></td></table></" + name + ">" + P));
+    }
+
+    @Test
+    void impliedRowGroupAndRowStayAllowed() {
+      assertValid(body("<table><td>a</td></table><table><tr><td>b</td></tr></table>" + P));
+    }
+
+    @Test
+    void tableEndTagThatMatchesIsNotStray() {
+      assertValid(
+          body(
+              "<table><tbody><tr><td>a</td></tr></tbody></table><table><thead></thead>"
+                  + "<tfoot></tfoot></table>"
+                  + P));
+    }
+
+    @Test
+    void tableEndTagCanCrossTheCell() {
+      // The table end tag matches the table: it is not stray (item 1 allows the crossing).
+      assertValid(body("<table><td>a</table>" + P));
+    }
+
+    @Test
+    void strayTableEndTagInForeignRegionIsM07() {
+      assertStructure(body("<svg></tbody></svg>"), "M-07");
+    }
+
+    @Test
+    void strayTableEndTagInBlockContentIsM23() {
+      assertStructure(body("<div data-rq-block=a></tr></div>"), "M-23");
+    }
+
+    // Item 4 (H-32): the special-crossed mark.
+
+    @Test
+    void formattingEndTagMustNotPopAMarkedElement() {
+      // </span> crosses the div and marks the a (markup.md examples).
+      assertStructure(body("<a><span><div>a</span></a>"), "M-06");
+      assertStructure(body("<a><li><ul></li></a>"), "M-06");
+    }
+
+    @Test
+    void reviewReproCrossingBelowAFormattingElement() {
+      // Q-T12-1: </span> crosses 8 div elements; the exact </a> runs the adoption agency with 8
+      // furthest blocks in the browser, and a later <a> cuts the block.
+      String tail = "x</span></a><span data-rq-block=\"x\">y<a>z</a>w</span>";
+      assertStructure(body("<a><span>" + "<div>".repeat(8) + tail), "M-06");
+      String nobr = "<nobr><span>" + "<div>".repeat(8) + "x</span></nobr>";
+      assertStructure(body(nobr + "<span data-rq-block=\"x\">y<nobr>z</nobr>w</span>"), "M-06");
+      String list = "<a>" + "<li><ul>".repeat(4) + "</li>".repeat(4) + "x</a>";
+      assertStructure(body(list + "<span data-rq-block=\"x\">y<a>z</a>w</span>"), "M-06");
+    }
+
+    @Test
+    void crossingOfPhrasingElementsSetsNoMark() {
+      // </span> crosses only i (not special): nothing gets the mark.
+      assertValid(body("<a href=\"#\"><b><span><i>a</span></b></a>" + P));
+    }
+
+    @Test
+    void markPassesDownOnEachPop() {
+      // The q gets the mark, its pop passes it to the b.
+      assertStructure(body("<b><q><span><div>a</span></q></b>"), "M-06");
+      assertStructure(body("<b><q><span><div>a</span></q>x</b>"), "M-06");
+    }
+
+    @Test
+    void formattingEndTagMustNotCrossAMarkedElement() {
+      // The q is marked; </b> crosses it (q and i are not special: item 2 alone allows this).
+      assertStructure(body("<b><q><span><div>a</span><i>x</b>"), "M-06");
+      assertValid(body("<b><q><span>a</span><i>x</b>" + P));
+    }
+
+    @Test
+    void crossingOfForeignElementSetsTheMark() {
+      assertStructure(body("<b><svg><g></svg></b>"), "M-06");
+      assertValid(body("<b><svg><g></g></svg></b>" + P));
+    }
+
+    @Test
+    void markedElementCanBePoppedByOtherEndTags() {
+      // The div gets the mark, a non-formatting end tag pops it, and the mark goes with it.
+      assertValid(body("<div><span><div>a</span></div><b>x</b>" + P));
+    }
+
+    @Test
+    void elementPushedAfterTheCrossingHasNoMark() {
+      assertValid(body("<q><span><div>a</span><b>x</b></q>" + P));
+    }
+
+    @Test
+    void markAloneIsNoError() {
+      // The b gets the mark, but no formatting end tag pops it (</body> is not in FORMATTING).
+      assertValid(body("<b><q><span><div>a</span></q></x>"));
+    }
+
+    @Test
+    void strayEndTagKeepsTheMark() {
+      assertStructure(body("<b><q><span><div>a</span></q></i></b>"), "M-06");
+    }
   }
 
   @Nested
@@ -600,6 +810,74 @@ class RulesTest {
                   + P));
     }
 
+    // Item 5 (H-27): C is balanced, on its own stack.
+
+    @Test
+    void balancedContentIsValid() {
+      assertValid(
+          body(
+              "<noscript><div><b>a</b><span/></span><x-y></X-Y><br><img src=x></div>"
+                  + "<textarea><b></textarea><script><i></script></noscript>"
+                  + P));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"<button>", "<table>", "<div>", "<b>", "<span/>", "<x-y>"})
+    void unclosedElementInContent(String start) {
+      // Security review: with scripting disabled, </noscript> is ignored over an open button.
+      assertStructure(body("<noscript>" + start + "</noscript>" + P), "M-11");
+    }
+
+    @Test
+    void reviewReproButtonInNoscript() {
+      String html =
+          "<noscript><button></noscript><div data-rq-block=\"a\">x<button>y</button>z</div>";
+      assertStructure(body(html), "M-11");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"</p>", "</br>", "</div>", "<b></i></b>"})
+    void strayEndTagInContent(String markup) {
+      assertStructure(body("<noscript>" + markup + "</noscript>" + P), "M-11");
+    }
+
+    @Test
+    void crossingInContent() {
+      assertStructure(body("<noscript><b><i>a</b></i></noscript>" + P), "M-11");
+      assertStructure(body("<noscript><div><span>a</div></noscript>" + P), "M-11");
+    }
+
+    @Test
+    void contentWithoutEndTagMustBeBalanced() {
+      // E3: C is the rest of the input.
+      assertValid(P + "<noscript><b>a</b><img src=x>");
+      assertStructure(P + "<noscript><b>a", "M-11");
+      assertStructure(body("<noscript><img src=x>"), "M-11"); // </body> and </html> are in C
+    }
+
+    @Test
+    void contentStackStartsEmptyForEachNoscript() {
+      assertValid(body("<noscript><b></b></noscript><noscript><i></i></noscript>" + P));
+      assertStructure(body("<noscript><b></noscript><noscript></b></noscript>" + P), "M-11");
+    }
+
+    @Test
+    void contentElementsAreNotOnTheTokenStack() {
+      // The b of C does not match the </b> after the noscript element in the main pass.
+      assertValid(body("<b><noscript><b></b></noscript></b>" + P));
+    }
+
+    @Test
+    void namesAfterTheInternTableIsFullStillMatch() {
+      StringBuilder c = new StringBuilder();
+      for (int i = 0; i < Analyzer.MAX_INTERNED_NAMES + 100; i++) {
+        c.append("<e").append(i).append("></e").append(i).append('>');
+      }
+      assertValid(body("<noscript>" + c + "</noscript>" + P));
+      assertStructure(body("<noscript>" + c + "<e1></e2></noscript>" + P), "M-11");
+      assertValid(body(c + "<e2000><e1></e1></e2000>" + P));
+    }
+
     @Test
     void noscriptInForeignRegionIsATextElement() {
       // Not RAWTEXT (M-04), but a TEXT name in a foreign region: text only (M-07 rule 4).
@@ -695,6 +973,45 @@ class RulesTest {
     @Test
     void scriptMarkupInRawText() {
       assertValid(body("<textarea><script type=\"rivqen-manifest\"></textarea>" + P));
+    }
+
+    // Item 3 (H-28): a byte of 0x80 or more in the raw type value.
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "application/rıvqen-manifest+json", // dotless i
+          "application/rivqen-manifeſt+json", // long s
+          "text/jävascript",
+          "module ",
+          "😀"
+        })
+    void nonAsciiTypeIsReserved(String type) {
+      assertInvalid(body("<script type=\"" + type + "\"></script>"), ErrorCode.RESERVED, "M-13");
+      assertInvalid(body("<script type=" + type + "></script>"), ErrorCode.RESERVED, "M-13");
+    }
+
+    @Test
+    void nonAsciiTypeInNoscriptContentIsReserved() {
+      assertInvalid(
+          body("<noscript><script type=\"application/rıvqen-manifest+json\"></script>"),
+          ErrorCode.RESERVED,
+          "M-13");
+    }
+
+    @Test
+    void nonAsciiTypeInForeignRegionIsReserved() {
+      assertInvalid(body("<svg><script type=\"é\"></script></svg>"), ErrorCode.RESERVED, "M-13");
+    }
+
+    @Test
+    void nonAsciiOutsideTheFirstScriptTypeIsAllowed() {
+      assertValid(
+          body(
+              "<script data-x=\"é\" type=text/javascript type=\"é\">é</script>"
+                  + "<div type=\"ı\"></div><script type=module>'ſ'</script>"
+                  + "<noscript><p type=\"é\">é</p></noscript>"
+                  + P));
     }
   }
 

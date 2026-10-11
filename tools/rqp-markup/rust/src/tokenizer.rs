@@ -21,6 +21,8 @@
 //! Every loop moves the position forward or changes to a state that moves it
 //! forward on the same byte, so the work is linear in the input size.
 
+use std::cell::Cell;
+
 use crate::names::RawKind;
 
 /// A byte range `[start, end)` of the input.
@@ -81,6 +83,9 @@ pub(crate) struct Tokenizer<'a> {
     mode: Mode,
     /// Lower-case name of the appropriate end tag in raw text modes.
     end_name: &'static [u8],
+    /// Set when an internal offset is outside the input: a defect of this
+    /// tokenizer. The caller fails closed (see [`Tokenizer::defect`]).
+    defect: Cell<bool>,
 }
 
 /// White space of the tokenizer (CR included, see the module comment).
@@ -100,6 +105,25 @@ impl<'a> Tokenizer<'a> {
             pos: start,
             mode: Mode::Data,
             end_name: b"",
+            defect: Cell::new(false),
+        }
+    }
+
+    /// True when the tokenizer found an internal offset outside the input
+    /// (a defect, never caused by the input alone). Tokens after it are not
+    /// reliable: the caller must fail closed.
+    pub(crate) fn defect(&self) -> bool {
+        self.defect.get()
+    }
+
+    /// The bytes of `[from, to)`. Records a defect and returns no bytes when
+    /// the range is outside the input.
+    fn slice(&self, from: usize, to: usize) -> &'a [u8] {
+        if let Some(bytes) = self.input.get(from..to) {
+            bytes
+        } else {
+            self.defect.set(true);
+            &[]
         }
     }
 
@@ -415,7 +439,7 @@ impl<'a> Tokenizer<'a> {
                     if c == b'/' || c == b'>' || c == b'=' || is_ws(c) {
                         // Leaving the attribute name state: the first
                         // attribute with a name wins (M-03).
-                        let name = self.input.get(attr_start..i).unwrap_or_default();
+                        let name = self.slice(attr_start, i);
                         attr = if block_attr.is_none()
                             && name.eq_ignore_ascii_case(b"data-rq-block")
                         {
@@ -532,7 +556,7 @@ impl<'a> Tokenizer<'a> {
     /// whether they are the appropriate end tag name `name` followed by
     /// white space, `/` or `>`.
     fn end_name_at(&self, from: usize, name: &[u8]) -> (usize, bool) {
-        let rest = self.input.get(from..).unwrap_or_default();
+        let rest = self.slice(from, self.len());
         let letters = rest
             .iter()
             .position(|b| !b.is_ascii_alphabetic())

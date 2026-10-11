@@ -558,7 +558,9 @@ fn m11_m13_reserved_manifest_in_noscript() {
         "<!-- <script type=\"rivqen-manifest\"> -->",
         "<style><script type=\"rivqen-manifest\"></style>",
         "<script>\"<script type='rivqen-manifest'>\"</script>",
-        "</script type=\"rivqen-manifest\">",
+        // An end tag with attributes is not a start tag. (A stray end tag in
+        // C is invalid by M-11 item 5, so the end tag closes a script.)
+        "<script></script type=\"rivqen-manifest\">",
     ] {
         assert_eq!(
             blocks(&format!(
@@ -1092,8 +1094,8 @@ fn m26_block_size() {
     assert_invalid(&json, ErrorCode::Limit, "M-26");
 }
 
-// M-26 depth (H-25). These inputs do not use `page()`: its `html` and `body`
-// elements stay on the token stack and would change the counts.
+// M-26 depth counter D (H-25, H-31). These inputs do not use `page()`: its
+// `html` and `body` elements hold units of D and would change the counts.
 
 const LIMIT: (ErrorCode, &str) = (ErrorCode::Limit, "M-26");
 
@@ -1212,17 +1214,15 @@ fn m26_elements_that_are_not_pushed_do_not_count() {
 }
 
 #[test]
-fn m26_depth_recovers_after_pops() {
-    // 256 elements, all closed, then 256 elements again.
+fn m26_depth_recovers_after_exact_pops() {
+    // M-26 item 4: 256 elements, all closed by exact pops, then 256
+    // elements again.
     let fill = "<div>".repeat(256);
     let close = "</div>".repeat(256);
     depth_valid(&format!("{fill}{close}{fill}"));
     depth_limit(&format!("{fill}{close}{fill}<div>"));
-    // One end tag pops all elements above its target (M-05 step 3).
-    let crossed = format!("<div>{}</div>", "<span>".repeat(255));
-    depth_valid(&format!("{crossed}{crossed}{fill}"));
-    // The end of a foreign region pops the region.
-    let region = format!("<svg>{}</svg>", "<g>".repeat(255));
+    // A foreign region closed element by element.
+    let region = format!("<svg>{}{}</svg>", "<g>".repeat(255), "</g>".repeat(255));
     depth_valid(&format!("{region}{region}{fill}"));
     // In block content each end tag pops the current node (M-23); after the
     // block end tag the stack is empty again.
@@ -1235,6 +1235,134 @@ fn m26_depth_recovers_after_pops() {
     };
     let input = format!("{}{}{fill}", block("a"), block("b"));
     assert_eq!(blocks_of(input.as_bytes()).len(), 2);
+}
+
+/// `n` copies of `unit`, then a block. The block element adds 1 to D.
+fn units_then_block(unit: &str, n: usize) -> String {
+    format!("{}<p data-rq-block=\"z\">x</p>", unit.repeat(n))
+}
+
+/// M-26 item 5 (H-31): an end tag that crosses elements gives no units
+/// back. The review repro: 300 × `<span><div></span>` before a block gives a
+/// WHATWG stack of 603 elements while the token stack is empty
+/// (FX-RQ-MARKUP-LIMIT-DEPTH-IGNORED-END, -127).
+#[test]
+fn m26_d_crossings_keep_their_units() {
+    let unit = "<span><div></span>";
+    depth_limit(&units_then_block(unit, 300));
+    // Each unit keeps 2: 127 units and the block are 255, 128 units are 256
+    // and the block element is the 257th unit.
+    assert_eq!(
+        blocks_of(units_then_block(unit, 127).as_bytes()),
+        vec![html("z", "x")]
+    );
+    depth_limit(&units_then_block(unit, 128));
+    // The same element closed explicitly gives everything back.
+    depth_valid(&units_then_block("<span><div></div></span>", 1000));
+    // The shapes where the tree builder ignores an end tag that the token
+    // stack uses (FX-RQ-MARKUP-LIMIT-DEPTH-MIXED): each keeps 2 or 3.
+    for (unit, kept) in [
+        ("<h1><span><h2>x</h1>", 3),
+        ("<li><ul></li>", 2),
+        ("<form><div></form>", 2),
+        ("<p><b>x</p>y", 2),
+    ] {
+        let n = 255 / kept;
+        depth_valid(&units_then_block(unit, n));
+        depth_limit(&units_then_block(unit, n + 1));
+    }
+    // A crossing in a foreign region keeps its units too.
+    depth_valid(&units_then_block("<svg><g></svg>", 127));
+    depth_limit(&units_then_block("<svg><g></svg>", 128));
+}
+
+/// M-26 item 5: after a crossing, the new current node is dirty; its own
+/// exact end tag then gives nothing back (FX-RQ-MARKUP-LIMIT-DEPTH-DIRTY,
+/// -DIRTY-CLEAN).
+#[test]
+fn m26_d_dirty_elements_keep_their_units() {
+    // `</span>` crosses the `div`: the middle `span` is dirty, its pop makes
+    // the outer `span` dirty. Each unit keeps 4.
+    let unit = "<span><span><span><div></span></span></span>";
+    depth_valid(&units_then_block(unit, 63));
+    depth_limit(&units_then_block(unit, 64));
+    // Two levels: each unit keeps 3 (markup.md M-26 example).
+    let unit = "<span><span><div></span></span>";
+    depth_valid(&units_then_block(unit, 85));
+    depth_limit(&units_then_block(unit, 86));
+    // Without the crossing nothing is dirty.
+    depth_valid(&units_then_block(
+        "<span><span><span><div></div></span></span></span>",
+        1000,
+    ));
+    // The dirty mark goes away with its element: a new element with the
+    // same name is clean.
+    depth_valid(&format!(
+        "<div><span><b></span></div>{}",
+        "<div></div>".repeat(1000)
+    ));
+}
+
+/// M-26 items 4 and 5: the pop of `html` or `body` gives nothing back, also
+/// as an exact pop, and makes the new current node dirty.
+#[test]
+fn m26_d_html_and_body_keep_their_units() {
+    for unit in ["<body></body>", "<html></html>"] {
+        depth_valid(&units_then_block(unit, 255));
+        depth_limit(&units_then_block(unit, 256));
+    }
+    let unit = "<div><body></body></div>";
+    depth_valid(&units_then_block(unit, 127));
+    depth_limit(&units_then_block(unit, 128));
+    // Other names pop exactly.
+    depth_valid(&units_then_block("<head></head><main></main>", 1000));
+}
+
+/// M-26 item 3: implied table parts (row group, row, column group) count
+/// once per F element and come back with the exact pop of F
+/// (FX-RQ-MARKUP-LIMIT-DEPTH-TABLE, -TABLE-63).
+#[test]
+fn m26_d_implied_table_parts() {
+    let divs = |n: usize| "<div>".repeat(n);
+    // `table`, row group, row and `td`: 4.
+    for table in [
+        "<table><td>a</td></table>",
+        "<table><tr><td>a</td></tr></table>",
+        "<table><tbody><td>a</td></tbody></table>",
+        "<table><tbody><tr><td>a</td></tr></tbody></table>",
+        "<table><thead><th>a</th></thead></table>",
+    ] {
+        depth_valid(&format!("{}{table}", divs(252)));
+        depth_limit(&format!("{}{table}", divs(253)));
+        // Each part comes back with its F.
+        depth_valid(&format!("{}{}", table.repeat(1000), divs(256)));
+    }
+    // Each part counts once per F: many cells and rows.
+    let cells = format!("<table>{}</table>", "<td>a</td>".repeat(500));
+    depth_valid(&format!("{}{cells}", divs(252)));
+    let rows = format!("<table>{}</table>", "<tr><td>a</td></tr>".repeat(500));
+    depth_valid(&format!("{}{rows}", divs(252)));
+    // `col` is not pushed, but its implied column group counts.
+    depth_valid(&format!("{}<table><col><col>", divs(254)));
+    depth_limit(&format!("{}<table><col>", divs(255)));
+    depth_valid(&format!("{}<table><colgroup><col>", divs(254)));
+    // Nested tables: each `<table><td>` adds 4 (in a `td` there is no
+    // implied part), so 64 of them give D = 256.
+    depth_valid(&"<table><td>".repeat(64));
+    depth_limit(
+        &"<table><td>"
+            .repeat(64)
+            .replacen("<table>", "<div><table>", 1),
+    );
+    // A table that a crossing closes keeps all its units: `</tr>` crosses the
+    // `td` and makes the `table` dirty.
+    let unit = "<table><tr><td>a</tr></table>";
+    depth_valid(&units_then_block(unit, 63));
+    depth_limit(&units_then_block(unit, 64));
+    // Table parts in a foreign region have no implied parts (`table` itself
+    // is a breakout name there, M-07).
+    depth_valid(&format!("<svg>{}", "<tr><td>".repeat(127)));
+    depth_limit(&format!("<svg>{}", "<tr><td>".repeat(128)));
 }
 
 /// The place of the depth check among the other checks of a start tag. A
@@ -1271,19 +1399,24 @@ fn m26_depth_is_checked_at_the_push() {
         (STRUCTURE, "M-24")
     );
     depth_limit(&format!("{content}<i>"));
-    // HTML context: M-09 comes first.
+    // HTML context: M-09 comes first. 252 `div`, `table`, the implied row
+    // group, `tr` and `td` give D = 256; the second `tr` fails M-09 before
+    // its push.
     assert_eq!(
-        error_of(format!("{}<table><tr><td><tr>", "<div>".repeat(253)).as_bytes()),
+        error_of(format!("{}<table><tr><td><tr>", "<div>".repeat(252)).as_bytes()),
         (STRUCTURE, "M-09")
     );
+    // The implied parts of a start tag count before its push.
+    depth_limit(&format!("{}<table><td>", "<div>".repeat(253)));
 }
 
-/// M-26 limits the token stack of M-05. The second tokenization of
-/// `noscript` content (M-11) keeps no token stack, so the limit does not
-/// apply to the tags of C. The `noscript` element itself is pushed.
+/// M-26 item 7: the tags of the `noscript` content C (M-11) are not part of
+/// the main pass and do not change D. The `noscript` element itself is
+/// pushed and counts (FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT and -ELEMENT).
 #[test]
 fn m26_depth_does_not_apply_to_noscript_content() {
-    let content = "<b>".repeat(300);
+    // C is balanced (M-11 item 5) and 300 elements deep.
+    let content = format!("{}{}", "<b>".repeat(300), "</b>".repeat(300));
     depth_valid(&format!("<noscript>{content}</noscript>"));
     depth_valid(&format!(
         "{}<noscript>{content}</noscript>",
@@ -1409,19 +1542,22 @@ fn large_adversarial_inputs_finish() {
     assert!(near_limit(&full));
     assert!(analyze(&full).is_ok());
     // Many different names (the name table grows with the input). Nested
-    // without end tags, the 257th name stops the pass. Groups of 256 nested
-    // names, each group closed by the end tag of its first name, keep the
-    // stack full and intern more than 500 000 names.
+    // without end tags, the 257th name stops the pass.
     let names: Vec<u8> = (0..300_000u32)
-        .flat_map(|i| format!("<x{i}>").into_bytes())
+        .flat_map(|i| format!("<x{i:x}>").into_bytes())
         .collect();
     assert_eq!(error_of(&names), (ErrorCode::Limit, "M-26"));
+    // Groups of 256 nested names, each closed by its end tags in reverse
+    // order (exact pops, M-26 item 4), keep D at the limit and intern more
+    // than 250 000 names. (A group closed by the end tag of its first name
+    // crosses 255 elements and keeps their units, M-26 item 5.)
     let mut groups: Vec<u8> = Vec::new();
     let mut next = 0u32;
     loop {
         let group: Vec<u8> = (next..next + 256)
-            .flat_map(|i| format!("<x{i}>").into_bytes())
-            .chain(format!("</x{next}>").into_bytes())
+            .map(|i| format!("<x{i:x}>"))
+            .chain((next..next + 256).rev().map(|i| format!("</x{i:x}>")))
+            .flat_map(String::into_bytes)
             .collect();
         if groups.len() + group.len() > MAX_INPUT_BYTES {
             break;
@@ -1429,8 +1565,22 @@ fn large_adversarial_inputs_finish() {
         groups.extend_from_slice(&group);
         next += 256;
     }
-    assert!(near_limit(&groups) && next > 500_000, "{next} names");
+    assert!(near_limit(&groups) && next > 250_000, "{next} names");
     assert!(analyze(&groups).is_ok());
+    // More than 500 000 names on a full stack: in a foreign region a
+    // self-closing element is not pushed (M-05 item 2), but its name is new.
+    let mut foreign = [b"<div>".repeat(MAX_OPEN_ELEMENTS - 1), b"<svg>".to_vec()].concat();
+    let mut count = 0u32;
+    loop {
+        let tag = format!("<x{count:x}/>");
+        if foreign.len() + tag.len() > MAX_INPUT_BYTES {
+            break;
+        }
+        foreign.extend_from_slice(tag.as_bytes());
+        count += 1;
+    }
+    assert!(near_limit(&foreign) && count > 500_000, "{count} names");
+    assert!(analyze(&foreign).is_ok());
     let raw: Vec<u8> = [&b"<title>"[..], &b"</titl</titlex".repeat(n / 3)].concat();
     assert!(analyze(&raw).is_ok());
     let script: Vec<u8> = [&b"<script><!--"[..], &b"<script</scrip".repeat(n / 3)].concat();
@@ -1473,15 +1623,16 @@ fn large_adversarial_inputs_finish() {
     );
     assert_eq!(error_of(&deep_tables), (ErrorCode::Limit, "M-26"));
     // Many lists and tables at the maximum depth: the block element and
-    // 127 `ul` + `li` pairs (255 elements), or 85 `table` + `tr` + `td`
-    // triples (256 elements), repeated to fill each block.
+    // 127 `ul` + `li` pairs (D = 255), or 63 `table` + `tr` + `td` triples
+    // with the implied row group of each table (D = 1 + 63 × 4 = 253),
+    // repeated to fill each block.
     let unit = [b"<ul><li>".repeat(127), b"</li></ul>".repeat(127)].concat();
     let lists = five_blocks(&fill(b"", &unit, b"", MAX_BLOCK_BYTES));
     assert!(near_limit(&lists), "{} bytes", lists.len());
     assert_eq!(analyze(&lists).unwrap().blocks.len(), 5);
     let unit = [
-        b"<table><tr><td>".repeat(85),
-        b"</td></tr></table>".repeat(85),
+        b"<table><tr><td>".repeat(63),
+        b"</td></tr></table>".repeat(63),
     ]
     .concat();
     let tables = five_blocks(&fill(b"", &unit, b"", MAX_BLOCK_BYTES));
@@ -1497,6 +1648,7 @@ fn large_adversarial_inputs_finish() {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)] // One list of shapes; each has its comment.
 fn large_nested_inputs_closed_by_end_tags_finish() {
     // A full token stack that end tags close again, many times. Each input
     // is close to the size limit (M-01) and would take minutes if a pop cost
@@ -1543,11 +1695,16 @@ fn large_nested_inputs_closed_by_end_tags_finish() {
         &suffix,
         MAX_INPUT_BYTES,
     ));
-    // One end tag pops all elements above its target.
+    // One end tag pops all elements above its target. A crossing keeps its
+    // units of D (M-26 item 5), so all crossings of one document pop at most
+    // 256 elements together: the same crossing again is a limit error.
     let n = 1_740_000;
     limit(&[&b"<div>"[..], &b"<b>".repeat(n), b"</div>", tail].concat());
-    let unit = [&b"<div>"[..], &b"<b>".repeat(max - 1), b"</div>"].concat();
-    only_tail(&fill(b"", &unit, tail, MAX_INPUT_BYTES));
+    let unit = [&b"<div>"[..], &b"<b>".repeat(max - 2), b"</div>"].concat();
+    limit(&[unit.as_slice(), &unit, tail].concat());
+    // After one crossing of 254 elements (D = 255), many short elements
+    // pop exactly up to the size limit.
+    only_tail(&fill(&unit, b"<i></i>", tail, MAX_INPUT_BYTES));
     // Table marks (M-09, M-19): `template` is pushed and popped with a mark.
     let n = 247_000;
     limit(

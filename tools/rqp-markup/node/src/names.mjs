@@ -106,3 +106,38 @@ export const TABLE_CONTEXT = set('table', 'tbody', 'thead', 'tfoot', 'tr', 'colg
 export const NOSCRIPT_FORBIDDEN = set(
   'frameset', 'math', 'noscript', 'plaintext', 'select', 'svg', 'template',
 );
+
+/** M-06 items 2 and 4: the WHATWG "formatting" category (decisions H-26, H-32). */
+export const FORMATTING = set(
+  'a', 'b', 'big', 'code', 'em', 'font', 'i', 'nobr', 's', 'small', 'strike', 'strong', 'tt', 'u',
+);
+
+/** M-06 items 2 and 4: the HTML part of the WHATWG "special" category. */
+export const SPECIAL = set(
+  'address', 'applet', 'area', 'article', 'aside', 'base', 'basefont', 'bgsound', 'blockquote',
+  'body', 'br', 'button', 'caption', 'center', 'col', 'colgroup', 'dd', 'details', 'dir', 'div',
+  'dl', 'dt', 'embed', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'frame', 'frameset',
+  ...HEADINGS, 'head', 'header', 'hgroup', 'hr', 'html', 'iframe', 'img', 'input', 'keygen', 'li',
+  'link', 'listing', 'main', 'marquee', 'menu', 'meta', 'nav', 'noembed', 'noframes', 'noscript',
+  'object', 'ol', 'p', 'param', 'plaintext', 'pre', 'script', 'search', 'section', 'select',
+  'source', 'style', 'summary', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th',
+  'thead', 'title', 'tr', 'track', 'ul', 'wbr', 'xmp',
+);
+
+/** M-06 item 3: end tags that must match an element in HTML context (decision H-30). */
+export const STRAY_TABLE_END = set('tbody', 'thead', 'tfoot', 'tr', 'table');
+
+/**
+ * Constant strings for the names of the sets above. A tag name from the input
+ * is replaced by its constant, so a stack does not keep one string per tag
+ * (security review F-4). Interning has no effect on a result.
+ */
+const KNOWN_NAMES = Object.freeze(new Map([
+  ...VOID, ...TEXT, ...PCLOSE, ...GUARDED, ...BREAKOUT, ...INTEGRATION, ...BLOCK_HTML,
+  ...FORBIDDEN_CONTENT, ...FORMATTING, ...SPECIAL,
+].map((name) => [name, name])));
+
+/** The constant string for a known name, else the name itself. */
+export function internName(name) {
+  return KNOWN_NAMES.get(name) ?? name;
+}

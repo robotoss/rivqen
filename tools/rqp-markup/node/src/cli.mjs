@@ -13,7 +13,7 @@
 // (the result for that input is printed and fails closed).
 // Document content is never printed to stderr.
 
-import { closeSync, existsSync, openSync, readSync, readdirSync, statSync } from 'node:fs';
+import { closeSync, constants, existsSync, fstatSync, openSync, readSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ErrorCode, LIMITS, analyze, invalid } from './markup.mjs';
@@ -24,6 +24,9 @@ export const EXIT_INTERNAL = 70;
 
 const USAGE = 'usage: node src/cli.mjs <input.html> | node src/cli.mjs --batch <fixtures-dir>';
 const CHUNK = 64 * 1024;
+// O_NONBLOCK: the open of a FIFO without a writer does not wait (security
+// review F-7). It has no effect on a regular file. Windows has no O_NONBLOCK.
+const OPEN_FLAGS = constants.O_RDONLY | (constants.O_NONBLOCK ?? 0);
 
 /** A usage or I/O error. */
 export class CliError extends Error {
@@ -35,20 +38,24 @@ export class CliError extends Error {
 }
 
 /**
- * Read at most `limit + 1` bytes of a file. A longer file gives `limit + 1`
- * bytes, which is enough for the size check of M-01. Memory stays bounded for
- * any file, also a device or a FIFO.
+ * Read at most `limit + 1` bytes of a regular file. A longer file gives
+ * `limit + 1` bytes, which is enough for the size check of M-01. Memory stays
+ * bounded for any file. A path that is not a regular file after the open
+ * (a FIFO, a device, a directory, a socket) is an I/O error: the read could
+ * wait without end.
  */
 export function readBounded(file, limit = LIMITS.maxDocumentBytes) {
   let fd;
   try {
-    fd = openSync(file, 'r');
+    fd = openSync(file, OPEN_FLAGS);
   } catch (cause) {
     throw new CliError(`cannot open ${file} (${cause.code ?? 'error'})`, { cause });
   }
   const chunks = [];
   let total = 0;
   try {
+    // fstat on the open descriptor: the path cannot change between the check and the read.
+    if (!fstatSync(fd).isFile()) throw new CliError(`cannot read ${file} (not a regular file)`);
     while (total <= limit) {
       const chunk = Buffer.alloc(Math.min(CHUNK, limit + 1 - total));
       const n = readSync(fd, chunk, 0, chunk.length, null);
@@ -57,6 +64,7 @@ export function readBounded(file, limit = LIMITS.maxDocumentBytes) {
       total += n;
     }
   } catch (cause) {
+    if (cause instanceof CliError) throw cause;
     throw new CliError(`cannot read ${file} (${cause.code ?? 'error'})`, { cause });
   } finally {
     closeSync(fd);

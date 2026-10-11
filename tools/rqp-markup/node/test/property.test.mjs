@@ -21,7 +21,19 @@ const pieces = [
   '</a>', '<li>', '<ul>', '</ul>', '<![CDATA[', ']]>', '<!DOCTYPE html>', '<?x?>', '<', '>', '"', "'",
   '=', ' ', '\r\n', 'text', 'é', '\u{1F600}', '\0', '&amp;', '﻿', '<h1>', '</h1>',
   '<ruby>', '<rt>', '</rt>', '</ruby>', '<button>', '</button>', '<style>', '</style>', '<frameset>',
+  // Rules of the security review (markup.md section 2.12).
+  '<div>', '<span>', '<i>', '</i>', '<nobr>', '</nobr>', '<q>', '</q>', '</li>', '<tbody>', '</tbody>',
+  '<th>', '<col>', '<body>', '</body>', '</thead>', '<noscript><b>', '</b></noscript>',
+  '<script type="rıvqen">', '<span><div></span>', '<div><div><div><div><div><div><div><div>',
 ];
+
+/**
+ * Elements of many kinds, all closed exactly. After it the token stack is
+ * empty again, D is 0 (M-26), and no mark or name count is left.
+ */
+const CLOSED_PREFIX = '<b><i><select><option></option></select><template></template>'
+  + '<table><td></td><col></table><ruby><rt></rt></ruby><button></button><a></a><nobr></nobr>'
+  + '<svg><g></g></svg><noscript><p>x</p></noscript><ul><li></li></ul><h1></h1></i></b>';
 
 function generatePieces(r) {
   const n = r.int(60);
@@ -57,6 +69,24 @@ describe('properties', () => {
       const input = generateBytes(r);
       checkResult(input, analyze(input));
     }
+  });
+
+  it('gives the same result after a prefix whose elements are all closed exactly', (t) => {
+    const prefix = Buffer.from(CLOSED_PREFIX.repeat(20), 'utf8');
+    const r = rng(SEED + 3);
+    let valid = 0;
+    for (let i = 0; i < ITERATIONS; i++) {
+      const input = generatePieces(r);
+      const alone = analyze(input);
+      const after = analyze(Buffer.concat([prefix, input]));
+      assert.equal(after.error, alone.error, JSON.stringify(input.toString('utf8')));
+      if (!alone.valid) continue;
+      valid++;
+      const shift = (b) => [b.id, b.start + prefix.length, b.end + prefix.length, b.sha256];
+      assert.deepEqual(after.blocks.map((b) => [b.id, b.start, b.end, b.sha256]), alone.blocks.map(shift));
+    }
+    t.diagnostic(`${valid} of ${ITERATIONS} inputs are valid`);
+    assert.ok(valid > ITERATIONS / 10);
   });
 
   it('gives the same result for the same input', () => {

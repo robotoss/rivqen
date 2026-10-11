@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
-The Node.js candidate of WP-17 S1 (tasks T-04, T-08 and T-09). It implements the RQP markup rules rqp/1 (`docs/engineering/protocol/markup.md` section 2, rules M-01 to M-27, with M-24 items j and k of decision H-18) and the interface of `../CONTRACT.md`. It reads the edge cases E1 to E8 as the human decided them (H-21, H-22; see [Edge cases E1 to E8](#edge-cases-e1-to-e8)). It is a conformance tool, not the server SDK.
+The Node.js candidate of WP-17 S1 (tasks T-04, T-08, T-09 and T-13). It implements the RQP markup rules rqp/1 (`docs/engineering/protocol/markup.md` section 2, rules M-01 to M-27, with M-24 items j and k of decision H-18) and the interface of `../CONTRACT.md`. It reads the edge cases E1 to E8 as the human decided them (H-21, H-22; see [Edge cases E1 to E8](#edge-cases-e1-to-e8)). It implements the rules of the security review (H-26 to H-28, H-30 to H-32; see [Rules of the security review](#rules-of-the-security-review)). It is a conformance tool, not the server SDK.
 
 ## Requirements
 
@@ -28,7 +28,7 @@ node src/cli.mjs --batch <fixtures-dir>
 | Exit code | Meaning |
 |---|---|
 | 0 | Results are printed (valid and invalid documents) |
-| 2 | Usage error or I/O error. The reason is on stderr. |
+| 2 | Usage error or I/O error. The reason is on stderr. An input path that is not a regular file after the open (a FIFO, a device, a directory, a socket) is an I/O error. |
 | 70 | Internal defect: the analyzer threw for an input. The result for that input is printed and fails closed (`RQP_MARKUP_STRUCTURE`). stderr names the input and the error class, never the content. |
 
 To compare the candidate with the golden fixtures, run this command from the repository root:
@@ -46,15 +46,15 @@ The library function is `analyze(bytes)` in `src/markup.mjs`. It takes a `Uint8A
 
 | File | What it checks |
 |---|---|
-| `test/rules.test.mjs` | One group for each rule M-01 to M-27 and each error code; one group for the edge cases E1 to E8 |
-| `test/name-sets.test.mjs` | The name sets of `markup.md` section 2.1 by behavior, with lists copied from `markup.md` as an independent oracle; list items (M-24 j) and table context (M-24 k) |
+| `test/rules.test.mjs` | One group for each rule M-01 to M-27 and each error code; one group for the edge cases E1 to E8; one group for each rule item of the security review (M-06 items 2 to 4, M-11 item 5, M-13 item 3, the depth counter D of M-26), with the review repros, the review controls and a valid neighbor for each invalid case |
+| `test/name-sets.test.mjs` | The name sets of `markup.md` section 2.1 by behavior, with lists copied from `markup.md` as an independent oracle; list items (M-24 j), table context (M-24 k), `FORMATTING` and `SPECIAL` (M-06 items 2 and 4) |
 | `test/json.test.mjs` | M-25 JSON grammar, surrogate escapes, depth limit |
 | `test/fixtures.test.mjs` | All `FX-RQ-MARKUP-*` fixtures, in process |
 | `test/tokenizer.test.mjs` | Tokenizer states; differential test against the parse5 8.0.1 tokenizer (4000 random inputs) |
-| `test/tree-agreement.test.mjs` | For each valid random document: the same blocks and offsets as the parse5 8.0.1 tree builder (scripting enabled) |
-| `test/property.test.mjs` | No exception on random markup and random bytes; result invariants (content bytes equal input bytes `[start, end)`, template, revisions) |
-| `test/cli.test.mjs` | Single and batch mode, byte order, exit codes, no content on stderr, bounded read |
-| `test/perf.test.mjs` | `[perf]` 27 adversarial inputs of about 5 MiB finish in less than 10 s each (measured: less than 1 s). Eight go beyond the depth limit and must give `RQP_MARKUP_LIMIT`. Seven fill the stack to 256 elements again and again (top level, block content, svg, unmatched end tags) and must be valid with the expected block count |
+| `test/tree-agreement.test.mjs` | For each valid random document, in both scripting views of parse5 8.0.1: the same blocks and offsets as the tree builder, no `script` whose decoded type contains `rivqen-manifest` after Unicode upper-case mapping (M-13), and no element deeper than 259 (M-26). The generator also makes the shapes of the security review |
+| `test/property.test.mjs` | No exception on random markup and random bytes; result invariants (content bytes equal input bytes `[start, end)`, template, revisions); a prefix whose elements are all closed exactly does not change the result of the rest (D, marks and name counts come back to their start values) |
+| `test/cli.test.mjs` | Single and batch mode, byte order, exit codes, no content on stderr, bounded read, only regular files (a FIFO without a writer gives exit 2 at once) |
+| `test/perf.test.mjs` | `[perf]` 31 adversarial inputs of about 5 MiB finish in less than 10 s each (measured: less than 0.25 s each). Each input has an expected result. Eight go beyond the depth limit and must give `RQP_MARKUP_LIMIT`. Others keep D at 256 again and again (top level, block content, svg, unmatched end tags, one crossing at the limit, implied table parts) and must be valid. Two nest the `noscript` content to 5 MiB (balanced: valid; unbalanced: `RQP_MARKUP_STRUCTURE`) |
 
 The random tests use fixed seeds. For a deeper run, set more iterations or another seed:
 
@@ -75,6 +75,19 @@ npx stryker run --mutate "$(node ../../mutation/diff-ranges.mjs --base main --ex
 The reports go to `reports/` (ignored by git).
 
 T-08 (M-24 j, k, E5, E8; changed lines against `4c90861`): 53 of 54 mutants killed (98.1 %). The survivor is equivalent: it puts a string at the bottom of the list-mark array (`this.listMark = ["Stryker was here"]`). That value is never a list item, and M-24 j reads the array only after M-24 c has found a list opened in the content above it.
+
+With the command runner, Stryker has no coverage for each test. An `--incremental` run after a change of the tests only can keep old "Survived" results. Run without `--incremental` to check new tests.
+
+T-13 (rules of the security review, F-4, F-7; changed lines against `4fff64f`, without `--incremental`): 358 killed and 4 timeouts of 369 mutants (98.1 %). The timeouts are real hangs (for example, without `O_NONBLOCK` the FIFO test waits for its 20 s limit). The 7 survivors:
+
+| Location | Mutant | Status | Reason |
+|---|---|---|---|
+| `markup.mjs` `isReservedType()` | `i < span.end` → `i <= span.end` | Equivalent | The byte at `span.end` is a quote, white space or `>`: none of them is `&` or ≥ 0x80 |
+| `markup.mjs` `isReservedType()` | `>= 0x80` → `> 0x80` | Equivalent | The input is valid UTF-8 (M-02) and the span starts at an ASCII boundary, so the first non-ASCII byte of a value is a lead byte ≥ 0xC2 |
+| `markup.mjs` `checkNoscript()` | `if (mode !== undefined)` → `if (true)` | Equivalent | `switchTo(undefined)` gives the default branch of `next()`: the data state |
+| `markup.mjs` `close()` | `if (current >= 0)` → `if (true)` | Equivalent | With an empty stack it writes the property `"-1"` of the state array, which is never read |
+| `names.mjs` `KNOWN_NAMES` (2) | the interning list → `[]` | Equivalent | Interning changes only which string object is kept, never a result |
+| `cli.mjs` `readBounded()` | `if (cause instanceof CliError)` → `if (true)` | Accepted | Reached only by a read error on an open regular file (for example `EIO`); a test needs fault injection |
 
 ## Design
 
@@ -103,12 +116,16 @@ Evidence that the tokenizer is the WHATWG tokenizer: the differential test again
 | Count of open elements for each name (HTML context) | M-08, M-19, M-24 d, e, f, h, i |
 | Count of elements opened in the block content | M-24 b, c, g, h, i |
 | Nearest list (`ul`, `ol`, `menu`, `dl`) or list item (`li`, `dd`, `dt`) for each entry | M-24 j |
-| Nearest table-family name for each entry, reset at `template` | F of M-09, M-19 and M-24 k |
+| Stack index of the nearest table-family entry for each entry, reset at `template` | F of M-09, M-19, M-24 k and M-26 item 3 |
+| State bits for each entry: dirty, special-crossed mark, implied row group, row and column group | M-06 item 4, M-26 |
+| Depth counter D | M-26 |
 | Stack index of the foreign region root | M-05 rule 4, M-07 |
 
-Every element is pushed and popped once, so the crossing check of M-06 and the pops are linear in total. A pop takes constant time: it removes the last entry of each per-entry array and of the stack indexes for its name, and it changes two counters. The nearest match of an end tag is the last entry of the stack indexes for its name, so no end tag searches the stack. The first rule violation ends the pass. The check order follows `markup.md` section 2.10.
+Every element is pushed and popped once, so the crossing checks of M-06 and the pops are linear in total. A pop takes constant time: it removes the last entry of each per-entry array and of the stack indexes for its name, and it changes two counters. The nearest match of an end tag is the last entry of the stack indexes for its name, so no end tag searches the stack. A name map removes a name when its last element is popped, so each map has at most one key for each element on the token stack. The first rule violation ends the pass. The check order follows `markup.md` section 2.10.
 
-M-11 tokenizes the `noscript` content again with a second tokenizer. Each byte is in at most one `noscript` content, so this is linear too. The second pass also checks M-13 on each `script` start tag of the content (E8).
+All checks of an end tag (`close()` in `src/markup.mjs`) are in one loop over the entries that the end tag pops: M-06 item 1 (guarded), item 2 (a `FORMATTING` end tag over a special element pushed in HTML context or over any element pushed in a foreign region) and item 4 (a `FORMATTING` end tag that pops a marked entry). Only after all checks, the entries are popped and D and the marks change. In block content, M-23 allows only exact pops, so this loop has no crossed entry there.
+
+M-11 tokenizes the `noscript` content again with a second tokenizer. Each byte is in at most one `noscript` content, so this is linear too. The second pass also checks M-13 on each `script` start tag of the content (E8), and keeps a separate stack of names for item 5: an end tag compares only with its top.
 
 M-24 j is checked after M-24 c. When c holds, a list opened in the content is open, so the nearest list or list item from the top of the stack is always an element opened in the content. The index for j therefore needs no separate "opened in the content" flag.
 
@@ -118,9 +135,10 @@ M-24 j is checked after M-24 c. When c holds, a list opened in the content is op
 
 1. M-01 is checked first, on the byte length. The CLI reads at most 5 MiB + 1 bytes of a file, so memory stays bounded for any file.
 2. M-02 uses `isUtf8()` of `node:buffer` (strict: no overlong forms, no surrogates, no code point above U+10FFFF, no truncated sequence).
-3. M-26 depth (H-25): the token stack has at most 256 elements (`LIMITS.maxOpenElements`). `push()` checks the limit before it changes any state; a push of element 257 gives `RQP_MARKUP_LIMIT`. The limit applies in HTML context and in a foreign region, inside and outside blocks. Elements that M-05 does not push (void elements, self-closing `svg` and `math` in HTML context, self-closing elements in a foreign region) do not count.
-4. The limit applies to the token stack of the main pass only. The M-11 check of the `noscript` content has no token stack: it only tokenizes.
-5. Memory is linear in the input size; the token stack and its indexes are bounded by the depth limit. The largest measured time at 5 MiB is less than 1 s (`test/perf.test.mjs`).
+3. M-26 depth counter D (H-31, which amends H-25): `addDepth()` adds 1 for each push and 1 for each new implied part of F, and checks `D <= 256` (`LIMITS.maxOpenElements`) before it changes any state. An end tag gives units back only when it pops exactly one clean element that is not `html` or `body`; else the new current node gets the dirty bit. The limit applies in HTML context and in a foreign region, inside and outside blocks. Elements that M-05 does not push (void elements, self-closing `svg` and `math` in HTML context, self-closing elements in a foreign region) do not count, but an implied column group of a `col` does.
+4. Each entry of the token stack holds at least 1 of D, so the token stack, its per-entry arrays and its name maps have at most 256 entries. The tags of the `noscript` content are not counted in D (M-26 item 7): its stack of M-11 item 5 is bounded only by the size of the content (5 MiB of `<em>` is about 1.3 million entries).
+5. The names of the sets of `markup.md` section 2.1 are interned (`internName()` in `src/names.mjs`): for such a name, a stack entry keeps a constant string, not one string per tag (security review F-4). Interning does not change a result.
+6. Memory is linear in the input size. The largest measured time at 5 MiB is less than 0.25 s (`test/perf.test.mjs`).
 
 ### Edge cases E1 to E8
 
@@ -138,6 +156,29 @@ The human decided these cases (H-21, H-22 in the sprint record `docs/engineering
 | E8 | Manifest `script` in `noscript` content | Invalid (`RQP_MARKUP_RESERVED`): M-13 applies to the start tags of C | `checkNoscript()` |
 
 An E5 CDATA section that runs to the end of input in foreign text content is valid (E2 and E4 together). No fixture covers this combination; the rules test does.
+
+### Rules of the security review
+
+The human decided these rules after the security review of 2026-10-11 (H-25 to H-32 in the sprint record; rule text: `markup.md` sections 2.4 and 2.8; study: `markup-edge-cases.md` section 6). Task T-13 implemented them.
+
+| Decision | Rule | Code |
+|---|---|---|
+| H-26 | M-06 item 2: a `FORMATTING` end tag does not cross a `SPECIAL` element pushed in HTML context or any element pushed in a foreign region | `close()` |
+| H-30 | M-06 item 3: in HTML context, `</tbody>`, `</thead>`, `</tfoot>`, `</tr>`, `</table>` must match an element | `endTag()` (`STRAY_TABLE_END`) |
+| H-32 | M-06 item 4: special-crossed mark on the new current node; a `FORMATTING` end tag does not pop a marked entry | `close()` (`MARKED` bit) |
+| H-27 | M-11 item 5: the `noscript` content is balanced, also when it runs to the end of the input (E3) | `checkNoscript()` |
+| H-28 | M-13 item 3: a byte ≥ 0x80 in the raw `type` value of a `script` start tag gives `RQP_MARKUP_RESERVED`, in the main pass and in the `noscript` content | `isReservedType()` |
+| H-31 | M-26: the depth counter D with the dirty bit and the implied parts; it replaces the stack-size limit of H-25 | `addDepth()`, `htmlStart()`, `close()` |
+
+`FORMATTING` and `SPECIAL` are fixed sets in `src/names.mjs`. Not every member of `SPECIAL` changes a result today: void elements are never pushed in HTML context, raw text elements have no end tag in their content, the other `GUARDED` elements and `table` cannot be crossed (M-06 item 1), and `frameset` is rejected (M-10). `test/name-sets.test.mjs` checks the other members by behavior and the full set against the list of `markup.md`.
+
+Choices of this candidate inside the rules:
+
+| Case | Choice | Reason |
+|---|---|---|
+| End tag in block content | The same `close()` as outside: checks of M-06 items 2 and 4, D, marks | M-23 allows only exact pops of elements that were pushed in the content, so the checks never fail there and D always gives the units back. One code path for all pops. |
+| M-11 item 5, start tag `svg` or `math` with the self-closing flag | Not handled separately | M-11 item 3 rejects every `svg` and `math` start tag in the content first. |
+| Implied parts and M-09 | M-09 is checked first; the implied parts of a rejected start tag are not counted | A rejected start tag ends the pass, so the order changes only which error code a document with two errors gets (`CONTRACT.md` section 5). |
 
 ### Other choices
 
@@ -163,3 +204,5 @@ All are development dependencies, pinned to exact versions, installed with `--ig
 - Untrusted input never throws: `analyze()` returns a result for every byte sequence (property tests).
 - Every loop advances the input position or pops the stack; no recursion.
 - The CLI never prints document content to stderr.
+- The CLI reads only regular files. It opens the input with `O_NONBLOCK` and checks `fstat` on the descriptor, so a FIFO without a writer cannot make it wait (security review F-7).
+- The token stack and its name maps have at most 256 entries (D ≤ 256), so tag names from the input cannot fill a map (hash flooding, security review F-4). The `noscript` stack of M-11 item 5 has no name map.

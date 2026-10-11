@@ -214,6 +214,140 @@ describe('M-06 crossing', () => {
   });
 });
 
+describe('M-06 item 2 formatting end tags (H-26)', () => {
+  const divs = (n) => '<div>'.repeat(n);
+
+  it('rejects the review repro: </a> or </nobr> over 8 div elements, then a block with the same tag', () => {
+    const a = `<a>${divs(8)}x</a><span data-rq-block="x">y<a>z</a>w</span>`;
+    const nobr = `<nobr>${divs(8)}x</nobr><span data-rq-block="x">y<nobr>z</nobr>w</span>`;
+    assert.equal(errorOf(doc(a)), STRUCTURE);
+    assert.equal(errorOf(doc(nobr)), STRUCTURE);
+  });
+
+  it('rejects a formatting end tag over one special element', () => {
+    assert.equal(errorOf(doc(`<a>${divs(1)}x</a>`)), STRUCTURE);
+    assert.equal(errorOf(doc('<b><div>x</b>y</div><p data-rq-block="a">z</p>')), STRUCTURE);
+    assert.equal(errorOf(doc('<em><p>x</em>')), STRUCTURE);
+  });
+
+  it('rejects a formatting end tag over an element pushed in a foreign region', () => {
+    assert.equal(errorOf(doc('<svg><a href="#"><text>t</a></svg><p data-rq-block="a">z</p>')), STRUCTURE);
+    assert.equal(errorOf(doc('<math><b><mrow></b></math>')), STRUCTURE);
+  });
+
+  it('accepts a formatting end tag over phrasing elements (the review control)', () => {
+    const body = '<a href="#"><span>x</a><b><i>y</b><p><b>z</p>w'
+      + '<span data-rq-block="x">y<a href="#">z</a>w</span>';
+    assert.deepEqual(blocksOf(doc(body)).map((b) => b[0]), ['x']);
+  });
+
+  it('accepts a non-formatting end tag over special and foreign elements', () => {
+    assert.equal(errorOf(doc('<span><div>x</span><svg><g><text>t</g></svg>')), null);
+  });
+
+  it('accepts formatting end tags that pop exactly, also in a foreign region', () => {
+    assert.equal(errorOf(doc('<b><div>x</div></b><svg><a><text>t</text></a></svg>')), null);
+  });
+
+  it('accepts the formatting start tag shapes of the review', () => {
+    const body = '<a href="#">x<div>y<a href="#">z</a></div></a>'
+      + '<nobr>x<div>y<nobr>z</nobr></div></nobr><p data-rq-block="b">w</p>';
+    assert.deepEqual(blocksOf(doc(body)).map((b) => b[0]), ['b']);
+  });
+});
+
+describe('M-06 item 3 stray table end tags (H-30)', () => {
+  it('rejects the review repros: </tbody> and </tr> in a cell without a match', () => {
+    const tbody = '<table><td></tbody><div data-rq-block="x"><table></table>y</div></td></table>';
+    const tr = '<table><td></tr><div data-rq-block="x">plain</div></td></table>';
+    assert.equal(errorOf(doc(tbody)), STRUCTURE);
+    assert.equal(errorOf(doc(tr)), STRUCTURE);
+  });
+
+  for (const name of ['tbody', 'thead', 'tfoot', 'tr', 'table']) {
+    it(`rejects </${name}> that matches nothing in HTML context, also outside a table`, () => {
+      assert.equal(errorOf(doc(`<table><td>x</${name}></td></table>`)), STRUCTURE);
+      assert.equal(errorOf(`</${name.toUpperCase()}>`), STRUCTURE);
+    });
+
+    it(`accepts </${name}> that matches an element`, () => {
+      const table = name === 'table' ? '<table></table>' : `<table><${name}></${name}></table>`;
+      assert.equal(errorOf(doc(table)), null);
+    });
+  }
+
+  it('accepts the other stray table end tags (the review control)', () => {
+    const body = '<table><caption>c</caption></caption><col></colgroup><tr><td>a</td></td></th></col>'
+      + '<td><span data-rq-block="c">x</span></td></tr></table>';
+    assert.deepEqual(blocksOf(doc(body)).map((b) => b[0]), ['c']);
+  });
+
+  it('accepts implied row groups and rows', () => {
+    assert.equal(errorOf(doc('<table><td>a</td></table><table><tr><td>b</td></tr></table>')), null);
+  });
+
+  it('rejects a stray table end tag also inside a template', () => {
+    assert.equal(errorOf(doc('<template></tbody></template>')), STRUCTURE);
+  });
+});
+
+describe('M-06 item 4 special-crossed mark (H-32)', () => {
+  const divs = (n) => '<div>'.repeat(n);
+
+  it('rejects the review repros: an earlier crossing over special elements, then the formatting end tag', () => {
+    const span = `<a><span>${divs(8)}x</span></a><span data-rq-block="x">y<a>z</a>w</span>`;
+    const nobr = `<nobr><span>${divs(8)}x</span></nobr><span data-rq-block="x">y<nobr>z</nobr>w</span>`;
+    const list = '<a><li><ul><li><ul><li><ul><li><ul></li></li></li></li>x</a>'
+      + '<span data-rq-block="x">y<a>z</a>w</span>';
+    for (const body of [span, nobr, list]) assert.equal(errorOf(doc(body)), STRUCTURE);
+  });
+
+  it('rejects the examples of markup.md', () => {
+    assert.equal(errorOf(doc('<a><span><div>a</span></a>')), STRUCTURE);
+    assert.equal(errorOf(doc('<a><li><ul></li></a>')), STRUCTURE);
+  });
+
+  it('marks the new current node when a crossed element was pushed in a foreign region', () => {
+    // </g> crosses the path: the svg gets the mark, </svg> passes it to the b.
+    assert.equal(errorOf(doc('<b><svg><g><path></g></svg></b>')), STRUCTURE);
+    assert.equal(errorOf(doc('<b><svg><g><path/></g></svg></b>')), null);
+  });
+
+  it('passes the mark down when an end tag pops exactly one marked element', () => {
+    assert.equal(errorOf(doc('<b><q><span><div></span></q></b>')), STRUCTURE);
+    assert.equal(errorOf(doc('<b><i><span><div></span></i></b>')), STRUCTURE);
+  });
+
+  it('rejects a formatting end tag that crosses a marked element', () => {
+    // The q is marked; </b> crosses the q and the i (neither is special).
+    assert.equal(errorOf(doc('<b><q><span><div></span><i>x</b>')), STRUCTURE);
+  });
+
+  it('does not mark for a crossing over elements that are not special (the review control)', () => {
+    const body = '<a href="#"><b><span><i>x</span></b></a><span data-rq-block="x">y<a href="#">z</a>w</span>';
+    assert.deepEqual(blocksOf(doc(body)).map((b) => b[0]), ['x']);
+  });
+
+  it('allows an end tag that is not in FORMATTING to pop a marked element', () => {
+    assert.equal(errorOf(doc('<div><span><p></span>x</div>')), null);
+  });
+
+  it('pushes each element without the mark', () => {
+    // The div is marked; the i above it is not.
+    assert.equal(errorOf(doc('<div><span><p></span><i>x</i></div>')), null);
+  });
+
+  it('removes the mark with the popped element', () => {
+    // The mark goes from the div to the section, never to the later b.
+    assert.equal(errorOf(doc('<section><div><span><p></span></div><b>x</b></section>')), null);
+  });
+
+  it('does not change the mark for an end tag that matches nothing', () => {
+    assert.equal(errorOf(doc('<b><span><i>x</span></x></b>')), null);
+    assert.equal(errorOf(doc('<b><span><div>x</span></x></b>')), STRUCTURE);
+  });
+});
+
 describe('M-07 foreign regions', () => {
   it('rejects a BREAKOUT start tag in svg and in math', () => {
     assert.equal(errorOf(doc('<svg><p>x</p></svg>')), STRUCTURE);
@@ -226,6 +360,11 @@ describe('M-07 foreign regions', () => {
 
   it('rejects a stray end tag in a foreign region', () => {
     assert.equal(errorOf(doc('<svg><g></x></g></svg>')), STRUCTURE);
+  });
+
+  it('rejects a stray end tag in a region whose svg is the first element of the document', () => {
+    assert.equal(errorOf('<svg></x></svg>'), STRUCTURE);
+    assert.equal(errorOf('<math></x></math>'), STRUCTURE);
   });
 
   it('rejects an end tag in a foreign region after its element was closed', () => {
@@ -364,6 +503,70 @@ describe('M-11 noscript', () => {
   it('requires the first noscript end tag exactly at the end of the content', () => {
     assert.equal(checkNoscript(Buffer.from('<p>a</p>')), null);
     assert.equal(checkNoscript(Buffer.from('<title></noscript>')), STRUCTURE);
+    // The main pass never gives such a content (raw text ends at </noscript>),
+    // but checkNoscript() checks item 1 by itself.
+    assert.equal(checkNoscript(Buffer.from('</noscript>x')), STRUCTURE);
+  });
+});
+
+describe('M-11 item 5 balanced noscript content (H-27)', () => {
+  it('rejects the review repros: a button or a table left open in the content', () => {
+    const button = '<noscript><button></noscript><div data-rq-block="a">x<button>y</button>z</div>';
+    const table = '<noscript><table></noscript><div data-rq-block="a">x</div>';
+    assert.equal(errorOf(doc(button)), STRUCTURE);
+    assert.equal(errorOf(doc(table)), STRUCTURE);
+  });
+
+  it('accepts balanced content (the review controls)', () => {
+    const balanced = '<noscript><div><a href="#">x</a></div><table><tr><td>a</td></tr></table></noscript>'
+      + '<p data-rq-block="a">x</p>';
+    assert.deepEqual(blocksOf(doc(balanced)).map((b) => b[0]), ['a']);
+    const head = '<head><noscript><div>q</div></noscript><title data-rq-block="t">T</title></head>'
+      + '<body><div data-rq-block="a">x</div>';
+    assert.deepEqual(blocksOf(head).map((b) => b[0]), ['t', 'a']);
+  });
+
+  it('rejects an element of the content that an end tag crosses', () => {
+    assert.equal(errorOf(doc('<noscript><b><i>x</b></i></noscript>')), STRUCTURE);
+    assert.equal(errorOf(doc('<noscript><div><span>x</div></noscript>')), STRUCTURE);
+  });
+
+  it('rejects a stray end tag in the content, also one that matches an element outside it', () => {
+    assert.equal(errorOf(doc('<noscript></div><img src="p.gif"></noscript>')), STRUCTURE);
+    assert.equal(errorOf(doc('<span><noscript></span></noscript></span>')), STRUCTURE);
+    assert.equal(errorOf(doc('<noscript><b>x</b></b></noscript>')), STRUCTURE);
+  });
+
+  it('rejects an end tag of a void element in the content', () => {
+    assert.equal(errorOf(doc('<noscript><br></br></noscript>')), STRUCTURE);
+  });
+
+  it('does not open an element for a void start tag, also with the self-closing flag', () => {
+    assert.equal(errorOf(doc('<noscript><img src="p.gif"><br/><hr></noscript>')), null);
+  });
+
+  it('opens an element for a self-closing start tag that is not void', () => {
+    assert.equal(errorOf(doc('<noscript><div/></noscript>')), STRUCTURE);
+    assert.equal(errorOf(doc('<noscript><div/></div></noscript>')), null);
+  });
+
+  it('opens an element for raw text elements and closes it at their end tag', () => {
+    const body = '<noscript><style>p{}</style><title>t</title><script>1</script><textarea>x</textarea></noscript>';
+    assert.equal(errorOf(doc(body)), null);
+  });
+
+  it('applies to content that runs to the end of the input (E3)', () => {
+    assert.equal(errorOf('<noscript><b>x</b>'), null);
+    assert.equal(errorOf('<noscript><b>x'), STRUCTURE);
+  });
+
+  it('uses a stack that is separate from the token stack and has no depth limit', () => {
+    const deep = `${'<b>'.repeat(300)}x${'</b>'.repeat(300)}`;
+    // The noscript element is element 256 and its content adds nothing.
+    assert.equal(errorOf(`${'<div>'.repeat(255)}<noscript>${deep}</noscript>${P('a')}`), null);
+    assert.equal(errorOf(`${'<div>'.repeat(256)}<noscript>${deep}</noscript>`), LIMIT);
+    assert.equal(checkNoscript(Buffer.from(deep)), null);
+    assert.equal(checkNoscript(Buffer.from(`${deep}<b>`)), STRUCTURE);
   });
 });
 
@@ -420,6 +623,40 @@ describe('M-13 reserved manifest', () => {
 
   it('does not check other elements or raw text', () => {
     assert.equal(errorOf(doc('<p type="rivqen-manifest">x</p><style><script type="&"></style>')), null);
+  });
+});
+
+describe('M-13 item 3 non-ASCII script types (H-28)', () => {
+  it('rejects the review repros: dotless i and long s', () => {
+    const dotless = '<script type="application/rıvqen-manifest+json">{}</script><p data-rq-block="a">x</p>';
+    const longS = '<script type="application/rivqen-manifeſt+json">{}</script><p data-rq-block="a">x</p>';
+    assert.equal(errorOf(doc(dotless)), RESERVED);
+    assert.equal(errorOf(doc(longS)), RESERVED);
+  });
+
+  it('rejects any byte >= 0x80, also in a harmless type and in an unquoted value', () => {
+    assert.equal(errorOf(doc('<script type="text/jävascript">1</script>')), RESERVED);
+    assert.equal(errorOf(doc('<script type=\u{1F600}>1</script>')), RESERVED);
+    assert.equal(errorOf(doc('<script type="text/javascript\u0080">1</script>')), RESERVED);
+  });
+
+  it('accepts an ASCII type and non-ASCII bytes outside the type value', () => {
+    assert.equal(errorOf(doc('<script data-x="é" type="text/javascript">"é"</script>')), null);
+    assert.equal(errorOf(doc('<p type="é">x</p><script type="\u007f">1</script>')), null);
+  });
+
+  it('applies before the json block check', () => {
+    assert.equal(errorOf(doc('<script type="application/json " data-rq-block="j">[]</script>')), RESERVED);
+  });
+
+  it('applies in the noscript content', () => {
+    const body = '<noscript><script type="application/rıvqen-manifest+json">{}</script></noscript>';
+    assert.equal(errorOf(doc(body)), RESERVED);
+    assert.equal(checkNoscript(Buffer.from('<script type="é">')), RESERVED);
+  });
+
+  it('uses only the first type attribute', () => {
+    assert.equal(errorOf(doc('<script type="text/javascript" type="é">1</script>')), null);
   });
 });
 
@@ -543,6 +780,21 @@ describe('M-19 block context', () => {
 
   it('accepts a block after the template is closed', () => {
     assert.deepEqual(blocksOf(doc(`<template><p>x</p></template>${P('a')}`)).map((b) => b[0]), ['a']);
+  });
+
+  it('accepts a block after nested elements of the same name are closed', () => {
+    const nested = `<template><template></template></template>${P('a')}`;
+    assert.deepEqual(blocksOf(doc(nested)).map((b) => b[0]), ['a']);
+  });
+
+  it('finds F also when it is the first element of the document', () => {
+    assert.equal(errorOf(`<table>${DIV('a')}</table>`), STRUCTURE);
+    assert.equal(errorOf(`<table><td>${DIV('a')}</td></table>`), null);
+  });
+
+  it('finds F through elements that are not in the table family', () => {
+    assert.equal(errorOf(doc(`<table><span><form>${DIV('a')}</form></span></table>`)), STRUCTURE);
+    assert.equal(errorOf(doc(`<table><td><span>${DIV('a')}</span></td></table>`)), null);
   });
 });
 
@@ -861,12 +1113,10 @@ describe('M-26 token stack depth (H-25)', () => {
     assert.equal(errorOf(`<svg>${nest('g', MAX - 1, '<path/><circle/>')}</svg>`), null);
   });
 
-  it('frees the depth when elements are popped', () => {
+  it('frees the depth when an end tag pops exactly the current node', () => {
     const full = nest('b', MAX);
     assert.equal(errorOf(full + full + full), null);
-    // An end tag that closes many elements at once (M-05 rule 3) frees all of them.
-    assert.equal(errorOf(`<div>${open('span', MAX - 1)}</div>`.repeat(3)), null);
-    // The end of a foreign region frees its elements.
+    // Exact pops in a foreign region free their units too.
     assert.equal(errorOf(`<svg>${nest('g', MAX - 1)}</svg>`.repeat(3) + nest('b', MAX)), null);
   });
 
@@ -875,9 +1125,139 @@ describe('M-26 token stack depth (H-25)', () => {
     assert.equal(run(block('a') + block('b')).blocks.length, 2);
   });
 
-  it('does not apply to the noscript content of M-11 (no token stack)', () => {
+  it('does not count the tags of the noscript content (M-26 item 7)', () => {
     // In the main pass the content is raw text: only the noscript element is pushed.
     assert.equal(errorOf(`<noscript>${nest('b', MAX + 10)}</noscript>`), null);
+  });
+
+  it('counts the noscript element', () => {
+    assert.equal(errorOf(nest('div', MAX - 1, '<noscript><b>x</b></noscript>')), null);
+    assert.equal(errorOf(nest('div', MAX, '<noscript><b>x</b></noscript>')), LIMIT);
+  });
+});
+
+describe('M-26 depth counter D (H-31)', () => {
+  const MAX = 256; // markup.md M-26, independent of LIMITS
+  const nest = (name, n, inner = '') => `<${name}>`.repeat(n) + inner + `</${name}>`.repeat(n);
+  const deep = (n, inner) => nest('div', n, inner);
+
+  it('keeps the units of the elements that a crossing pops', () => {
+    // <div> and 255 <span>: D = 256. </div> crosses them and gives nothing back.
+    const crossing = `<div>${'<span>'.repeat(MAX - 1)}</div>`;
+    assert.equal(errorOf(`${crossing}text`), null); // no push after the crossing
+    assert.equal(errorOf(`${crossing}<b>x</b>`), LIMIT);
+    assert.equal(errorOf(`${crossing}<br>`), null); // a void element is not pushed
+  });
+
+  it('adds 2 for each <span><div></span> (the review repro)', () => {
+    assert.equal(errorOf('<span><div></span>'.repeat(128)), null);
+    assert.equal(errorOf(`${'<span><div></span>'.repeat(128)}<b>`), LIMIT);
+    assert.equal(errorOf(`${'<span><div></span>'.repeat(300)}${DIV('x')}`), LIMIT);
+  });
+
+  it('rejects the depth shapes of the review that the tree builder keeps open', () => {
+    // markup-edge-cases.md section 6.5: each unit keeps 2 or 3 of D.
+    const shapes = [
+      ['<h1><span><h2>x</h1>', 3], // a heading end tag stops at the other heading
+      ['<li><ul></li>', 2], // </li> needs an li in list item scope
+      ['<body><div></body>', 2], // </body> does not pop
+      ['<form><div></form>', 2], // </form> removes only the form
+      ['<p><b>x</p>y', 2], // the text reconstructs the b
+    ];
+    for (const [unit, units] of shapes) {
+      const fit = Math.floor((MAX - 1) / units);
+      assert.equal(errorOf(unit.repeat(fit) + P('a')), null, unit);
+      assert.equal(errorOf(unit.repeat(fit + 1) + P('a')), LIMIT, unit);
+    }
+  });
+
+  it('makes the new current node dirty after a crossing, so its exact pop gives nothing back', () => {
+    const unit = '<span><span><div></span></span>'; // adds 3
+    assert.equal(errorOf(unit.repeat(85) + DIV('a')), null); // 255 + 1
+    assert.equal(errorOf(unit.repeat(86) + DIV('a')), LIMIT);
+  });
+
+  it('passes the dirty mark down when a dirty element is popped', () => {
+    // Adds 4: </label> pops a dirty label, then q is dirty.
+    const unit = '<q><label><span><div></span></label></q>';
+    assert.equal(errorOf(unit.repeat(64)), null);
+    assert.equal(errorOf(`${unit.repeat(64)}<p>`), LIMIT);
+  });
+
+  it('gives back the units of elements pushed above a dirty element', () => {
+    // The dirty mark is on the entry: b elements pushed after it pop exactly.
+    const dirty = `${'<div>'.repeat(MAX - 3)}<span><p></span>`; // D = 255, the last div is dirty
+    assert.equal(errorOf(`${dirty}${'<b>x</b>'.repeat(300)}`), null);
+    assert.equal(errorOf(`${dirty}<b><i>`), LIMIT);
+  });
+
+  it('never gives back the units of html and body', () => {
+    assert.equal(errorOf('<body></body>'.repeat(MAX)), null);
+    assert.equal(errorOf('<body></body>'.repeat(MAX + 1)), LIMIT);
+    assert.equal(errorOf('<html></html>'.repeat(MAX + 1)), LIMIT);
+    assert.equal(errorOf('<head></head>'.repeat(MAX + 1)), null);
+  });
+
+  it('makes the element below a popped body dirty', () => {
+    // </body> makes the b dirty, so </b> gives nothing back: 2 units for each.
+    assert.equal(errorOf('<b><body></body></b>'.repeat(128)), null);
+    assert.equal(errorOf('<b><body></body></b>'.repeat(129)), LIMIT);
+  });
+
+  it('counts the implied row group and row of a cell in a table once for each table', () => {
+    // table, row group, row and td: 4 units.
+    assert.equal(errorOf(deep(MAX - 4, `<table>${'<td>x</td>'.repeat(300)}</table>`)), null);
+    assert.equal(errorOf(deep(MAX - 3, '<table><td>x</td></table>')), LIMIT);
+    assert.equal(errorOf(deep(MAX - 4, '<table><th>x</th></table>')), null);
+    assert.equal(errorOf(deep(MAX - 3, '<table><th>x</th></table>')), LIMIT);
+  });
+
+  it('counts the implied row group of a row in a table', () => {
+    assert.equal(errorOf(deep(MAX - 3, `<table>${'<tr></tr>'.repeat(300)}</table>`)), null);
+    assert.equal(errorOf(deep(MAX - 2, '<table><tr></tr></table>')), LIMIT);
+  });
+
+  it('counts the implied row of a cell in a row group', () => {
+    for (const group of ['tbody', 'thead', 'tfoot']) {
+      for (const cell of ['td', 'th']) {
+        const table = `<table><${group}>${`<${cell}>x</${cell}>`.repeat(3)}</${group}></table>`;
+        assert.equal(errorOf(deep(MAX - 4, table)), null, `${group} ${cell}`);
+        assert.equal(errorOf(deep(MAX - 3, table)), LIMIT, `${group} ${cell}`);
+      }
+    }
+  });
+
+  it('counts no implied part for a cell in a row and for a row in a row group', () => {
+    assert.equal(errorOf(deep(MAX - 4, '<table><tbody><tr><td>x</td></tr></tbody></table>')), null);
+    assert.equal(errorOf(deep(MAX - 3, '<table><tbody><tr></tr></tbody></table>')), null);
+  });
+
+  it('counts the implied column group of a col in a table, although col is not pushed', () => {
+    assert.equal(errorOf(deep(MAX - 2, '<table><col><col></table>')), null);
+    assert.equal(errorOf(deep(MAX - 1, '<table><col></table>')), LIMIT);
+    // In an explicit colgroup a col implies nothing.
+    assert.equal(errorOf(deep(MAX - 2, '<table><colgroup><col><col></colgroup></table>')), null);
+  });
+
+  it('gives the implied parts back when the table is popped exactly', () => {
+    const table = '<table><td>x</td><col></table>'; // 5 units while open
+    assert.equal(errorOf(deep(MAX - 5, table.repeat(100))), null);
+  });
+
+  it('keeps the units of a table that a crossing closes', () => {
+    const unit = '<table><td>x</table>'; // </table> crosses the td: 4 units stay
+    assert.equal(errorOf(unit.repeat(64)), null);
+    assert.equal(errorOf(`${unit.repeat(64)}<b>`), LIMIT);
+  });
+
+  it('counts implied parts in block content', () => {
+    const content = '<table><td>x</td></table>';
+    assert.equal(errorOf(deep(MAX - 5, DIV('a', content))), null);
+    assert.equal(errorOf(deep(MAX - 4, DIV('a', content))), LIMIT);
+  });
+
+  it('does not change D for an end tag that matches nothing', () => {
+    assert.equal(errorOf(deep(MAX, '</span></b></x>')), null);
   });
 });
 

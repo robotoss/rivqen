@@ -218,6 +218,8 @@ test("the depth invariant excludes template contents (H-35): implied parts there
   // In "in table" mode inside a template, <tr> inserts a tbody; M-09 F stops at template, so D does not count it.
   const a = run(`<template><caption></caption>${"<tr><td>".repeat(5)}</template><p>x</p>`);
   assert.deepEqual(a.violations, []);
+  // Only an HTML template switches the check off: an SVG template does not.
+  assert.ok(run("<svg><template><desc><table><tr>x").violations.length > 0);
 });
 
 test("class H-36: a form start tag while an HTML form is on the token stack", () => {
@@ -230,6 +232,7 @@ test("class H-37: a table part, col or table start tag while F is not the curren
   assert.deepEqual(run("<object><a href=1><table><marquee><table></table></marquee></table>x</a></object>").classes, [CLASSES.tableCurrent]);
   assert.deepEqual(run("<table><tr><object><td>x</td></object></tr></table>").classes, [CLASSES.tableCurrent]);
   assert.deepEqual(run("<table><form><tr><td>x</td></tr></form></table>").classes, [CLASSES.tableCurrent]);
+  assert.deepEqual(run("<table><div><col></div></table>").classes, [CLASSES.tableCurrent]);
   assert.deepEqual(run("<table><div></div><tr><td><table><tr><td>x</td></tr></table></td></tr></table><table><col></table>").classes, []);
 });
 

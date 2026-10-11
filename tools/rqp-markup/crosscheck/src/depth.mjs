@@ -138,7 +138,7 @@ export class DepthCounter {
         if (TABLE_FAMILY.has(n)) break;
       }
     }
-    if (name === "form" && this.stack.some((e) => !e.foreign && e.name === "form")) this.classes.add(CLASSES.form);
+    if (name === "form" && this.stack.some((e) => e.name === "form")) this.classes.add(CLASSES.form);
     const top = this.stack[this.stack.length - 1];
     if ((TABLE_PART.has(name) || name === "col" || name === "table") && f !== null && TABLE_CONTEXT.has(f.name) && f !== top) {
       this.classes.add(CLASSES.tableCurrent);

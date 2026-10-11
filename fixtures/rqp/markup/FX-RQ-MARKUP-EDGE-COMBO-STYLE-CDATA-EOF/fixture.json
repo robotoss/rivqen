@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-COMBO-STYLE-CDATA-EOF",
+  "description": "Combination of E2 and E5 (H-21): a complete CDATA section in svg style, then the input ends inside svg style, after all blocks",
+  "rules": [
+    "M-07",
+    "M-12",
+    "M-20"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

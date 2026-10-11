@@ -87,7 +87,7 @@ The exact expected outputs are derived from the upstream audit and confirmed wit
 
 ### 4.2 Markup fixtures (`FX-RQ-MARKUP-*`)
 
-<Badge type="tip" text="FACT" /> 133 fixtures (50 valid, 83 invalid) in `fixtures/rqp/markup/`. All are normative. The 11 fixtures `EDGE-*` cover the edge cases E1–E8 ([markup §2.11](/engineering/protocol/markup#_2-11-decided-edge-cases)), decided by the human (H-21, H-22). Each fixture tests the rules of [RQP markup](/engineering/protocol/markup) §2 that it lists. Layout and `fixture.json` format: `fixtures/rqp/markup/README.md`. Result format: `tools/rqp-markup/CONTRACT.md` §3.
+<Badge type="tip" text="FACT" /> 140 fixtures (55 valid, 85 invalid) in `fixtures/rqp/markup/`. All are normative. The 18 fixtures `EDGE-*` cover the edge cases E1–E8, their combinations and the case of the CDATA opener ([markup §2.11](/engineering/protocol/markup#_2-11-decided-edge-cases)), decided by the human (H-21, H-22). Each fixture tests the rules of [RQP markup](/engineering/protocol/markup) §2 that it lists. Layout and `fixture.json` format: `fixtures/rqp/markup/README.md`. Result format: `tools/rqp-markup/CONTRACT.md` §3.
 
 | File | Written by |
 |---|---|
@@ -138,6 +138,13 @@ In the table, the prefix `FX-RQ-MARKUP-` is not shown.
 | `CROSSING` | `STRUCTURE` | M-06 | An end tag crosses an open button |
 | `DIV-AFTER-OPEN-P` | valid, 1 block | M-19, M-24 | A div block after an open p: the p closes before the div |
 | `DUPLICATE` | `DUPLICATE` | M-21 | Two blocks with the same id |
+| `EDGE-CDATA-LOWERCASE-FOREIGN` | `STRUCTURE` | M-04, M-07, M-12 | &lt;![cdata[ in svg desc is a bogus comment, not a CDATA section |
+| `EDGE-CDATA-LOWERCASE-HTML` | valid, 1 block | M-04, M-12 | &lt;![cdata[a>b]]> in HTML context is a bogus comment; M-12 does not apply |
+| `EDGE-COMBO-DESC-CDATA-EOF` | valid, 1 block | M-07, M-12, M-20 | E2 + E4 + E5: the input ends inside a CDATA section in svg desc |
+| `EDGE-COMBO-DESC-EMPTY-END-TAG` | valid, 1 block | M-07 | E1: &lt;/> in svg desc gives no token |
+| `EDGE-COMBO-NOSCRIPT-MANIFEST-EOF` | `RESERVED` | M-11, M-13 | E3 + E8: a manifest script in noscript without an end tag |
+| `EDGE-COMBO-NOSCRIPT-STYLE-SCRIPT` | valid, 1 block | M-11, M-13 | E8: a manifest script start tag inside style text in noscript is not a tag |
+| `EDGE-COMBO-STYLE-CDATA-EOF` | valid, 1 block | M-07, M-12, M-20 | E2 + E5: the input ends inside svg style after a CDATA section |
 | `EDGE-E1-FOREIGN-LT` | valid, 1 block | M-07 | E1: a &lt; emitted as a character in svg desc, svg style and math mi |
 | `EDGE-E2-FOREIGN-EOF` | valid, 1 block | M-07, M-20 | E2: the input ends inside svg title, after all blocks |
 | `EDGE-E3-NOSCRIPT-EOF` | valid, 1 block | M-11 | E3: noscript without an end tag; the rest of the input passes M-11 |

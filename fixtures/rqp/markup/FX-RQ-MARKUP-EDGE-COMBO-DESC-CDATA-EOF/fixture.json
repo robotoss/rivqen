@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-COMBO-DESC-CDATA-EOF",
+  "description": "Combination of E2, E4 and E5 (H-21): the input ends inside a CDATA section without > in svg desc, after all blocks; M-12 holds (no >), M-07 item 5 allows the section",
+  "rules": [
+    "M-07",
+    "M-12",
+    "M-20"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

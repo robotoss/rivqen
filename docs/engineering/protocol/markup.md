@@ -81,7 +81,7 @@ The parser decodes the input as UTF-8 always. It ignores `<meta charset>` and th
 
 - A start tag ends at its `>`. A `>` inside a quoted attribute value does not end the tag.
 - Comments follow the WHATWG comment states, including `<!-->`, `<!--->` and the end `--!>`.
-- `<!` followed by anything other than `--`, `DOCTYPE` (ASCII case-insensitive) or `[CDATA[` starts a bogus comment. `</` followed by a character that is not an ASCII letter and not `>` starts a bogus comment. A bogus comment ends at the first `>`. If there is no `>`, it ends at the end of the input.
+- `<!` followed by anything other than `--`, `DOCTYPE` (ASCII case-insensitive) or `[CDATA[` starts a bogus comment. A CDATA section starts only with the exact, case-sensitive `<![CDATA[`. A `<![cdata[` or any other case is a bogus comment: M-12 does not apply to it, and M-07 item 5 does not allow it. `</` followed by a character that is not an ASCII letter and not `>` starts a bogus comment. A bogus comment ends at the first `>`. If there is no `>`, it ends at the end of the input.
 - `<?` starts a bogus comment in older parsers and a processing instruction in newer ones. <Badge type="tip" text="FACT" /> Both end at the first `>` (WHATWG "processing instruction data state" and "bogus comment state"). RQP treats them the same: a comment.
 - A `<?` with no `>` before the end of the input is a comment that ends at the end of the input (E6, H-21). <Badge type="warning" text="RESEARCH" /> The current WHATWG text probably emits no token for a processing instruction that reaches the end of the input ([edge cases](/engineering/protocol/markup-edge-cases), E6). The comment reading is the stricter one: every rule that allows a comment also allows no token.
 - A DOCTYPE token ends at the first `>`.

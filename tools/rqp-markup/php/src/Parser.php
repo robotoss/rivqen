@@ -511,7 +511,13 @@ final class Parser
         return $index;
     }
 
-    /** Pop all elements above $index, then the element at $index. */
+    /**
+     * Pop all elements above $index, then the element at $index.
+     *
+     * Cost: O(number of popped elements). Do not use array_splice() here: it
+     * rebuilds the whole array, so a document with many matching end tags
+     * (`<b>` x n, then `</b>` x n) would take O(n^2) time.
+     */
     private function popTo(int $index): void
     {
         for ($i = count($this->names) - 1; $i >= $index; $i--) {
@@ -535,9 +541,9 @@ final class Parser
             if ($i === $this->region) {
                 $this->region = null;
             }
+            array_pop($this->names);
+            array_pop($this->flags);
         }
-        array_splice($this->names, $index);
-        array_splice($this->flags, $index);
     }
 
     /** F of M-09 and M-19: the nearest TABLE_FAMILY element; the search stops at `template`. */

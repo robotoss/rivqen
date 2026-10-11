@@ -84,6 +84,8 @@ final class RulesTest extends TestCase
         yield 'M-06.4 mark stays after a start tag' => ['<a><span><div></span><b>x</b></a>', 'M-06', $S];
         yield 'M-06.4 mark stays after a stray end tag' => ['<a><span><div></span></x></a>', 'M-06', $S];
         yield 'M-06.4 formatting end tag crosses a marked element' => ['<b><i><span><div></span><u>x</b>', 'M-06', $S];
+        yield 'M-06.4 mark stays after a later crossing that does not mark' => ['<a><span><div></span><b><i></b></a>', 'M-06', $S];
+        yield 'M-06 crosses a table after a start tag in table context' => ['<div><table><b>x</div>', 'M-06', $S];
 
         // M-07
         yield 'M-07.1 breakout in svg' => ['<svg><p>', 'M-07', $S];
@@ -412,6 +414,7 @@ final class RulesTest extends TestCase
         yield 'M-06.4 formatting element above a marked element' => ['<p><span><div></span><b>x</b></p>' . $aBlock, $Y];
         yield 'M-06.4 self-closing foreign elements are not crossed' => ['<a><svg><g><rect/></g></svg></a>' . $aBlock, $Y];
         yield 'M-06.4 mark goes away with the element' => ['<span><div></span><a>x</a>' . $aBlock, $Y];
+        yield 'M-06 crosses a foreign a that became the current node by a crossing' => ['<svg><a><g><rect></g></svg>' . $aBlock, $Y];
 
         // M-07
         yield 'M-07 text in integration points' => ['<svg><foreignObject>t</foreignObject><desc>d</desc><title>t</title></svg><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
@@ -692,6 +695,10 @@ final class RulesTest extends TestCase
         yield 'end tags of html and body keep the unit' => [
             str_repeat('<body></body><html></html>', 128),
             str_repeat('<body></body><html></html>', 128) . '<b>',
+        ];
+        yield 'a crossing does not remove the implied parts of the new current node' => [
+            $div(250) . '<table><col><caption><b><i></caption><col><b>',
+            $div(251) . '<table><col><caption><b><i></caption><col><b>',
         ];
         yield 'a crossing keeps the implied parts of F' => [
             str_repeat('<table><tr><td>a</table>', 64),

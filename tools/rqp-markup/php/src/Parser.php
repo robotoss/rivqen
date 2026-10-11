@@ -333,9 +333,6 @@ final class Parser
         $f = $this->tableIndex[count($this->tableIndex) - 1];
         $parts = self::IMPLIED_PARTS[$this->names[$f]][$name] ?? 0;
         $new = $parts & ~$this->flags[$f];
-        if ($new === 0) {
-            return;
-        }
         $this->flags[$f] |= $new;
         $this->raise(self::partCount($new));
     }

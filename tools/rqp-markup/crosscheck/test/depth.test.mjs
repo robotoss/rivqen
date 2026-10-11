@@ -70,6 +70,19 @@ test("implied tbody and tr count once per table and come back with the table", (
   assert.deepEqual(feed(["<table>", "<col>", "<col>", "</table>"]).ds, [1, 2, 2, 0]);
 });
 
+test("implied parts are not counted inside a template in a table (M-09 stops at template)", () => {
+  assert.deepEqual(feed(["<table>", "<template>", "<td>"]).ds, [1, 2, 3]);
+});
+
+test("the invariant check is exact: a WHATWG stack of D + 3 is reported, D + 2 is not", () => {
+  // Tags in an svg integration point (invalid by M-07): parse5 inserts an implied tbody that D does not see.
+  const a = run("<svg><desc><table><tr>x");
+  assert.ok(a.violations.includes("stack 7 > D 4 + 2 after <tr> at 18"), a.violations.join("; "));
+  assert.ok(a.violations.some((v) => v.startsWith("open <tr> depth 7 > D 4 + 2")));
+  assert.ok(a.violations.some((v) => v.startsWith("<tr> depth 7 > D 4 + 2")));
+  assert.deepEqual(run("<svg><desc><table>x").violations, []);
+});
+
 test("a table popped by a crossing keeps its implied units", () => {
   assert.deepEqual(feed(["<div>", "<table>", "<td>", "</div>"]).ds, [1, 2, 5, 5]);
 });
@@ -130,6 +143,13 @@ test("class H-26: a formatting end tag over a special or foreign element", () =>
   assert.deepEqual(run("<b><div>x</b></div>").classes, [CLASSES.formatting]);
   assert.deepEqual(run("<svg><a><text>t</a></svg>").classes, [CLASSES.formatting]);
   assert.deepEqual(run("<a href=x><span>x</a><b><i>y</b><p><b>z</p>").classes, []);
+  // The matching element itself may be foreign: an svg a closed in order is valid.
+  assert.deepEqual(run("<svg><a>t</a></svg>").classes, []);
+});
+
+test("rule classes for HTML context only: a stray tr end tag and a noscript element in svg", () => {
+  assert.deepEqual(run("<svg></tr></svg>").classes, []);
+  assert.deepEqual(run("<svg><noscript><g></noscript></svg>").classes, []);
 });
 
 test("class open question: a formatting end tag that pops a dirty element", () => {

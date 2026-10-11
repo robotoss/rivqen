@@ -72,11 +72,13 @@ export class DepthCounter {
     if (this.d > MAX_D) this.classes.add(CLASSES.depth);
   }
 
-  /** Nearest TABLE_FAMILY element (M-09); the search stops at a template element. */
+  /**
+   * Nearest TABLE_FAMILY element (M-09); the search stops at a template element.
+   * Called in HTML context only, so no element on the stack was pushed in a foreign region.
+   */
   #tableContext() {
     for (let i = this.stack.length - 1; i >= 0; i--) {
       const e = this.stack[i];
-      if (e.foreign) continue;
       if (e.name === "template") return null;
       if (TABLE_FAMILY.has(e.name)) return e;
     }

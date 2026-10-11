@@ -551,6 +551,71 @@ final class RulesTest extends TestCase
         self::assertSame('M-26', $over->rule);
     }
 
+    public function testM05EndTagMatchesOnlyTheSameNameAlsoWhenHashesCollide(): void
+    {
+        // 'a~' and 'b]' have the same PHP string hash (33 * 97 + 126 === 33 * 98 + 93).
+        self::assertSame(33 * ord('a') + ord('~'), 33 * ord('b') + ord(']'));
+        // No open element is named 'b]': step 3 ignores the end tag.
+        self::assertTrue(Parser::parse('<a~><button></b]></button></a~>')->valid);
+        // The end tag matches 'b]' and crosses the button (M-06).
+        $crossed = Parser::parse('<a~><b]><button></b]>');
+        self::assertSame(ErrorCode::Structure, $crossed->error);
+        self::assertSame('M-06', $crossed->rule);
+    }
+
+    public function testM26TokenStackOf256ElementsIsAccepted(): void
+    {
+        self::assertSame(256, Parser::MAX_OPEN_ELEMENTS);
+        $html = str_repeat('<div>', 255) . '<p data-rq-block="a">x</p>';
+        $result = Parser::parse($html);
+        self::assertTrue($result->valid, (string) $result->rule);
+        self::assertSame('x', substr($html, $result->blocks[0]->start, 1));
+        self::assertTrue(Parser::parse(str_repeat('<b>', 256))->valid);
+        self::assertTrue(Parser::parse('<svg>' . str_repeat('<g>', 255))->valid);
+        self::assertTrue(Parser::parse('<div data-rq-block="a">' . str_repeat('<b>', 255) . str_repeat('</b>', 255) . '</div>')->valid);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function tooDeepCases(): iterable
+    {
+        yield 'block element is the 257th' => [str_repeat('<div>', 256) . '<p data-rq-block="a">x</p>'];
+        yield 'outside blocks' => [str_repeat('<b>', 257) . str_repeat('</b>', 257)];
+        yield 'foreign region' => ['<svg>' . str_repeat('<g>', 256)];
+        yield 'block content' => ['<div data-rq-block="a">' . str_repeat('<b>', 256) . str_repeat('</b>', 256) . '</div>'];
+        yield 'after the stack was full and then empty' => [str_repeat('<b>', 256) . str_repeat('</b>', 256) . str_repeat('<i>', 257)];
+    }
+
+    #[DataProvider('tooDeepCases')]
+    public function testM26PushOfThe257thElementIsALimitError(string $html): void
+    {
+        $result = Parser::parse($html);
+        self::assertSame(ErrorCode::Limit, $result->error);
+        self::assertSame('M-26', $result->rule);
+    }
+
+    public function testM26ElementsThatAreNotPushedDoNotCount(): void
+    {
+        $full = str_repeat('<div>', 255);
+        // Void elements and self-closing svg/math in HTML context (M-05 item 1).
+        self::assertTrue(Parser::parse($full . '<b><br><img><input><svg/><math/></b>')->valid);
+        // Self-closing elements in a foreign region (M-05 item 2).
+        self::assertTrue(Parser::parse($full . '<svg><g/><rect/><path/></svg>')->valid);
+        // The M-11 check tokenizes noscript content without a token stack.
+        self::assertTrue(Parser::parse($full . '<noscript>' . str_repeat('<b>', 300) . '</noscript>')->valid);
+    }
+
+    public function testM26DepthRecoversAfterPops(): void
+    {
+        $cycle = str_repeat('<b>', 256) . str_repeat('</b>', 256);
+        self::assertTrue(Parser::parse(str_repeat($cycle, 3))->valid);
+        // One end tag pops 256 elements (M-05 step 3); then 256 fit again.
+        $crossed = '<html>' . str_repeat('<div>', 255) . '</html>';
+        self::assertTrue(Parser::parse($crossed . str_repeat('<b>', 256))->valid);
+        self::assertSame(ErrorCode::Limit, Parser::parse($crossed . str_repeat('<b>', 257))->error);
+    }
+
     public function testM27OffsetsAndHashes(): void
     {
         $html = "\xEF\xBB\xBF<p data-rq-block=\"b\">\u{1F600}</p>\r\n<title data-rq-block=\"a\">T</title>";

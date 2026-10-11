@@ -7,7 +7,7 @@ The PHP candidate of WP-17 (decision H-13). It has its own subset of the WHATWG 
 
 ## Run
 
-The command needs PHP 8.3 or later with the `json` and `pcre` extensions (both are always present). It needs no build step and no `composer install`.
+The command needs PHP 8.3 or later with the `json`, `pcre`, `hash` and `random` extensions (all are always present). It needs no build step and no `composer install`.
 
 ```sh
 php bin/rqp-markup <input.html>
@@ -38,7 +38,7 @@ Do these steps in this directory:
 4. Optional: run the fuzz target for 10 minutes: `php tests/fuzz.php --seconds 600`.
 5. Optional: run the mutation test: `vendor/bin/infection --git-diff-lines --git-diff-base=main --min-msi=80 --threads=max`. Infection needs a coverage driver (PCOV, Xdebug or phpdbg).
 
-`vendor/bin/phpunit --exclude-group limits` skips the 5 MiB resource tests (about 25 s).
+`vendor/bin/phpunit --exclude-group limits` skips the 5 MiB resource tests (about 40 s).
 
 | Test file | What it checks |
 |---|---|
@@ -50,7 +50,7 @@ Do these steps in this directory:
 | `tests/FixturesTest.php` | Every fixture of `fixtures/rqp/markup/` against `expected.json` |
 | `tests/CliTest.php` | Command line, exit codes, batch order, bounded read |
 | `tests/PropertyTest.php` | Seeded random documents: invariants, and an oracle for generated valid documents |
-| `tests/LimitsTest.php` | Linear time and bounded memory on adversarial 5 MiB inputs |
+| `tests/LimitsTest.php` | Linear time and bounded memory on adversarial 5 MiB inputs within the depth limit (also names with one PHP string hash); fast `M-26` stop for deeper inputs |
 | `tests/fuzz.php` | Fuzz target (time-limited; writes a failing input to a file) |
 
 ### Dev tools
@@ -91,12 +91,14 @@ Equivalences that the code uses (each one keeps the token boundaries):
 
 ### Parser (`src/Parser.php`)
 
-One pass over the tokens with the token stack of M-05. The stack is two lists (names, flags). These counters make the work for each token constant:
+One pass over the tokens with the token stack of M-05. The stack is two lists (names, flags). It has at most 256 elements (M-26, H-25): a push that makes it larger gives `RQP_MARKUP_LIMIT` with rule `M-26`. This applies in HTML context and in a foreign region, inside and outside blocks. Elements that M-05 does not push (void elements, self-closing `svg` and `math` in HTML context, self-closing elements in a foreign region) do not count. The M-11 check tokenizes `noscript` content without a token stack, so the limit does not apply to that second pass.
+
+These structures make the work for each token constant:
 
 | Structure | Use |
 |---|---|
-| Count of open elements by name | Ignore an end tag without a match in O(1) (M-05 step 3); "is open" checks of M-24 |
-| Count of elements opened in the content, by name | "Opened in the content" checks of M-24 |
+| Count of open elements by name key (see "Hash flooding") | Ignore an end tag without a match in O(1) (M-05 step 3) |
+| 11 counters by slot for the names that M-19 and M-24 query (`template`, `select`, `button`, `a`, `nobr`, `rb`/`rp`/`rt`, `rtc`, `h1`…`h6`, `ul`/`ol`/`menu`/`dl`, `table`, `ruby`): open elements and elements opened in the content | "Is open" and "opened in the content" checks of M-19 and M-24 |
 | Stack of indexes of `table`, table parts and `template` | F of M-09 and M-19 |
 | Stack of indexes of the lists (`ul`, `ol`, `menu`, `dl`) and list items (`li`, `dd`, `dt`) opened in the content | M-24 item j: the top entry is a list item |
 | Index of the foreign region element | M-05 step 4, M-07 |
@@ -104,21 +106,42 @@ One pass over the tokens with the token stack of M-05. The stack is two lists (n
 
 An end tag that matches an element pops the elements above it. Each element is pushed once and popped once (`array_pop()`, O(1); `array_splice()` would copy the stack for each pop), so all end tags together cost O(number of start tags). M-24 item k uses F of M-09 (the top of the table index stack). The M-11 check tokenizes the content of each `noscript` once more and applies M-13 to its start tags (E8). The JSON validator (`src/JsonValidator.php`) is iterative and builds no value. UTF-8 validity (M-02) is one PCRE check (`preg_match('//u')`) that cannot backtrack.
 
+### Hash flooding
+
+PHP hashes string array keys with DJBX33A. This hash has no seed, so an attacker can make many tag names with the same hash. Example: `a~` and `b]` have the same hash (33 × 97 + 126 = 33 × 98 + 93), so all names made of these two units have the same hash. In a PHP array with such keys, each lookup walks one long collision chain. Before the fix, 131 072 nested names of this kind (4.5 MiB) took 34.8 s; names of the same shape without collisions took 0.34 s.
+
+The parser has no array whose keys are raw tag names from the input:
+
+| Array | Keys | Why the chain is short |
+|---|---|---|
+| Name index (M-05 step 3) | Name + 8-byte xxh3 hash of the name with a random 192-byte secret, new for each parse | DJBX33A(name + h) = DJBX33A(name) × 33⁸ + (sum over the bytes of h). Names with the same DJBX33A hash get random buckets. The key contains the full name, so the match stays exact. |
+| Slot counters | Integers 0 to 10 | No string keys. The slot of a name comes from a constant array: a lookup probes one chain of constant keys. |
+| Name sets (`src/Names.php`, `Tokenizer::WATCHED`) | Constant names | Same: one chain of constant keys |
+| Block ids | At most 256 ids (M-26) of `[a-z0-9_-]` (M-15) | Bounded |
+| Watched attributes of a token | `type`, `data-rq-block` only | Bounded |
+
+With the fix and the depth limit removed (a test build only), the 131 072 nested names took 0.30 s (0.33 s without collisions). With the depth limit, the same input stops at the 257th start tag. The xxh3 hash adds about 0.15 µs for each push, pop and end tag lookup.
+
 ### Limits
 
-Measured on PHP 8.3 with 5 MiB inputs (`tests/LimitsTest.php` checks that each one is below 30 s and 256 MiB; all inputs of that test are measured again on 2026-10-11):
+Measured on PHP 8.5.11 with inputs of up to 5 MiB on 2026-10-11. `tests/LimitsTest.php` checks that each valid input takes less than 30 s and 256 MiB, and that each input deeper than 256 elements stops with `M-26` in less than 2 s.
 
 | Input | Time | Peak memory |
 |---|---|---|
-| 1.7 million nested `<b>` | 2.6 s | 64 MiB |
-| 0.6 million nested elements with different names | 1.0 s | 108 MiB |
-| 1 million elements nested as `<table><tr><td>` groups | 2.1 s | 80 MiB |
-| One end tag that pops 1 million elements | 2.3 s | 64 MiB |
-| 740 000 nested `<b>`, then 740 000 `</b>` (one pop for each end tag) | 2.1 s | 32 MiB |
-| Five blocks of almost 1 MiB with 58 000 nested `<ul><li>` each (M-24 item j) | 2.3 s | 10 MiB |
-| 2.6 million attributes in one tag | 0.6 s | 5 MiB |
+| `<b>` × 256, then `</b>` × 256, repeated | 3.1 s | 5 MiB |
+| Stacks of 256 elements with different names, repeated | 1.2 s | 5 MiB |
+| `<b>` × 256, then `</i>` × 1.3 million (end tags without a match) | 1.8 s | 5 MiB |
+| `<html>`, `<div>` × 255, `</html>` (one end tag pops 256 elements), repeated | 2.6 s | 5 MiB |
+| `<svg>`, then `<g>` × 255 and `</g>` × 255, repeated | 2.9 s | 5 MiB |
+| `<table><tr><td>` × 85, then `</table>` × 85, repeated | 2.4 s | 5 MiB |
+| Five blocks of almost 1 MiB with 127 nested `<ul><li>` groups, repeated (M-24 item j) | 2.7 s | 1 MiB |
+| Names with one DJBX33A hash in stacks of 256, repeated | 0.3 s | 5 MiB |
+| Names with one DJBX33A hash: 256 open, then end tags of other such names | 0.2 s | 5 MiB |
+| Names with one DJBX33A hash in five blocks of almost 1 MiB | 0.3 s | 1 MiB |
+| 2.6 million attributes in one tag | 0.8 s | 5 MiB |
+| 1.7 million nested `<b>`, or 131 072 nested names with one hash (`M-26`) | < 0.01 s | < 1 MiB |
 
-`bin/rqp-markup` sets `memory_limit` to 512 MiB.
+The peak memory is the memory that the parse adds to the input string. `bin/rqp-markup` sets `memory_limit` to 512 MiB.
 
 ### Edge cases E1 to E8
 
@@ -140,6 +163,8 @@ The human decided these cases (decisions H-21 and H-22 in the WP-17 S1 sprint re
 | Case | Choice | Reason |
 |---|---|---|
 | `select` in M-19 | Kept, but not reachable | M-08 rejects a block start tag inside `select` first |
+| Order of the M-26 depth check | In the push, after the other checks of the start tag | `markup.md` section 2.10: "On each push to the token stack". A fixture has one error only, so the order does not change a fixture result. |
+| Key of the name index | xxh3 with a random secret from `random_bytes()`, new for each parse | `hash` and `random` are always present in PHP 8.3, so there is no new dependency. SipHash (`sodium_crypto_shorthash()`) is faster (0.10 µs against 0.15 µs) but needs the optional `sodium` extension. |
 
 ## Related
 

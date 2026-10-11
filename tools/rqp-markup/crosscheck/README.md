@@ -27,7 +27,7 @@ When the candidate says **valid**, these must be true. Else the tool reports a f
 | Class | Rule | Shape |
 |---|---|---|
 | `M-06-formatting` | M-06 item 2 (H-26) | A formatting end tag crosses a special or foreign element |
-| `M-06-formatting-dirty` | Open question Q-T12-1 | A formatting end tag pops a dirty element (M-26) |
+| `M-06-formatting-marked` | M-06 item 4 (H-32) | A formatting end tag pops an element with the special-crossed mark |
 | `M-05-stray-table-end` | M-06 item 3 (H-30) | A `tbody`, `thead`, `tfoot`, `tr` or `table` end tag matches nothing |
 | `M-11-balance` | M-11 item 5 (H-27) | The `noscript` content is not balanced |
 | `M-13-non-ascii` | M-13 item 3 (H-28) | A script `type` value has a non-ASCII character |

@@ -40,7 +40,7 @@ const RAWTEXT = names("iframe noembed noframes noscript style xmp");
 /** Rule classes that the classifier reports. */
 export const CLASSES = {
   formatting: "M-06-formatting", // H-26: a FORMATTING end tag crosses a special or foreign element
-  formattingDirty: "M-06-formatting-dirty", // open question: a FORMATTING end tag pops a dirty element
+  formattingMarked: "M-06-formatting-marked", // H-32: a FORMATTING end tag pops a special-crossed element
   strayTable: "M-05-stray-table-end", // H-30
   noscriptBalance: "M-11-balance", // H-27
   typeNonAscii: "M-13-non-ascii", // H-28
@@ -49,11 +49,12 @@ export const CLASSES = {
 
 /**
  * The depth counter D of markup.md M-26 over the token stack of M-05.
- * Each stack entry: name, foreign (pushed in a foreign region), dirty, implied flags.
+ * Each stack entry: name, foreign (pushed in a foreign region), dirty, marked (special-crossed,
+ * markup.md M-06 item 4), implied flags.
  */
 export class DepthCounter {
   constructor() {
-    /** @type {{ name: string, foreign: boolean, dirty: boolean, implied: Set<string> }[]} */
+    /** @type {{ name: string, foreign: boolean, dirty: boolean, marked: boolean, implied: Set<string> }[]} */
     this.stack = [];
     this.d = 0;
     this.maxD = 0;
@@ -89,7 +90,7 @@ export class DepthCounter {
   startTag(name, selfClosing) {
     if (this.inForeign) {
       if (!selfClosing) {
-        this.stack.push({ name, foreign: true, dirty: false, implied: new Set() });
+        this.stack.push({ name, foreign: true, dirty: false, marked: false, implied: new Set() });
         this.#raise(1);
       }
       return;
@@ -113,7 +114,7 @@ export class DepthCounter {
     }
     if ((name === "svg" || name === "math") && selfClosing) return;
     if (VOID.has(name)) return;
-    this.stack.push({ name, foreign: false, dirty: false, implied: new Set() });
+    this.stack.push({ name, foreign: false, dirty: false, marked: false, implied: new Set() });
     if (name === "svg" || name === "math") this.roots++;
     this.#raise(1);
   }
@@ -127,9 +128,15 @@ export class DepthCounter {
       return;
     }
     const popped = this.stack.splice(i);
+    const crossesSpecial = popped.slice(1).some((e) => e.foreign || SPECIAL.has(e.name));
     if (FORMATTING.has(name)) {
-      if (popped.slice(1).some((e) => e.foreign || SPECIAL.has(e.name))) this.classes.add(CLASSES.formatting);
-      if (popped.some((e) => e.dirty)) this.classes.add(CLASSES.formattingDirty);
+      if (crossesSpecial) this.classes.add(CLASSES.formatting);
+      if (popped.some((e) => e.marked)) this.classes.add(CLASSES.formattingMarked);
+    }
+    // M-06 item 4: a crossing over a special or foreign element, or the pop of a marked element,
+    // marks the new current node.
+    if ((crossesSpecial || popped.some((e) => e.marked)) && this.stack.length > 0) {
+      this.stack[this.stack.length - 1].marked = true;
     }
     for (const e of popped) if (!e.foreign && (e.name === "svg" || e.name === "math")) this.roots--;
     const top = popped[0];

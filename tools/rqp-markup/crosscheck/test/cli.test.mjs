@@ -232,10 +232,10 @@ test("evaluateDocs: a valid result for a document that breaks the depth invarian
 test("countByClass counts each class, findings without a class, and findings of the open question only", () => {
   const m = new Map();
   countByClass(m, "k", []);
-  countByClass(m, "k", ["M-06-formatting-dirty"]);
-  countByClass(m, "k", ["M-06-formatting", "M-06-formatting-dirty"]);
+  countByClass(m, "k", ["M-06-formatting-marked"]);
+  countByClass(m, "k", ["M-06-formatting", "M-06-formatting-marked"]);
   const c = m.get("k");
-  assert.deepEqual([c.total, c.none, c.onlyOpen, [...c.classes.entries()]], [3, 1, 1, [["M-06-formatting-dirty", 2], ["M-06-formatting", 1]]]);
+  assert.deepEqual([c.total, c.none, c.onlyOpen, [...c.classes.entries()]], [3, 1, 1, [["M-06-formatting-marked", 2], ["M-06-formatting", 1]]]);
 });
 
 test("sweep --profile review prints the rule classes and the depth invariant line", async () => {

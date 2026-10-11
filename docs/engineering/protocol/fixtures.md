@@ -87,7 +87,7 @@ The exact expected outputs are derived from the upstream audit and confirmed wit
 
 ### 4.2 Markup fixtures (`FX-RQ-MARKUP-*`)
 
-<Badge type="tip" text="FACT" /> 176 fixtures (66 valid, 110 invalid) in `fixtures/rqp/markup/`. All are normative. The 18 fixtures `EDGE-*` cover the edge cases E1–E8, their combinations and the case of the CDATA opener ([markup §2.11](/engineering/protocol/markup#_2-11-decided-edge-cases)), decided by the human (H-21, H-22). The fixtures `FORMATTING-*`, `NOSCRIPT-BALANCED`, `NOSCRIPT-CROSSING`, `NOSCRIPT-EOF-UNBALANCED`, `NOSCRIPT-STRAY-END`, `NOSCRIPT-UNBALANCED*`, `*-NON-ASCII*`, `TABLE-STRAY-*`, `TABLE-IMPLIED-PARTS` and `LIMIT-DEPTH-*` cover the rules of the security review (H-25 to H-31, [markup §2.12](/engineering/protocol/markup#_2-12-rules-from-the-security-review)). Each fixture tests the rules of [RQP markup](/engineering/protocol/markup) §2 that it lists. Layout and `fixture.json` format: `fixtures/rqp/markup/README.md`. Result format: `tools/rqp-markup/CONTRACT.md` §3.
+<Badge type="tip" text="FACT" /> 180 fixtures (67 valid, 113 invalid) in `fixtures/rqp/markup/`. All are normative. The 18 fixtures `EDGE-*` cover the edge cases E1–E8, their combinations and the case of the CDATA opener ([markup §2.11](/engineering/protocol/markup#_2-11-decided-edge-cases)), decided by the human (H-21, H-22). The fixtures `FORMATTING-*`, `NOSCRIPT-BALANCED`, `NOSCRIPT-CROSSING`, `NOSCRIPT-EOF-UNBALANCED`, `NOSCRIPT-STRAY-END`, `NOSCRIPT-UNBALANCED*`, `*-NON-ASCII*`, `TABLE-STRAY-*`, `TABLE-IMPLIED-PARTS` and `LIMIT-DEPTH-*` cover the rules of the security review (H-25 to H-32, [markup §2.12](/engineering/protocol/markup#_2-12-rules-from-the-security-review)). Each fixture tests the rules of [RQP markup](/engineering/protocol/markup) §2 that it lists. Layout and `fixture.json` format: `fixtures/rqp/markup/README.md`. Result format: `tools/rqp-markup/CONTRACT.md` §3.
 
 | File | Written by |
 |---|---|
@@ -181,6 +181,10 @@ In the table, the prefix `FX-RQ-MARKUP-` is not shown.
 | `FORMATTING-CROSS-PHRASING` | valid, 1 block | M-06, M-24 | Formatting end tags over phrasing elements, &lt;/p> over b, 8 div elements closed in order in an a (H-26: valid) |
 | `FORMATTING-CROSS-SPECIAL` | `STRUCTURE` | M-06 | An a end tag crosses 8 div elements; a later a cuts a span block (H-26, review repro) |
 | `FORMATTING-CROSS-SPECIAL-NOBR` | `STRUCTURE` | M-06 | A nobr end tag crosses 8 div elements (H-26) |
+| `FORMATTING-MARKED-LIST` | `STRUCTURE` | M-06 | Four li end tags cross a ul; the mark passes down to the a; the a end tag pops it (H-32) |
+| `FORMATTING-MARKED-NOBR` | `STRUCTURE` | M-06 | A span end tag crosses 8 div elements and marks the nobr; the nobr end tag pops it (H-32) |
+| `FORMATTING-MARKED-PHRASING` | valid, 1 block | M-06, M-24 | Mis-nesting of phrasing elements sets no special-crossed mark (H-32: valid) |
+| `FORMATTING-MARKED-SPAN` | `STRUCTURE` | M-06 | A span end tag crosses 8 div elements and marks the a; the a end tag pops it; a later a cuts a block (H-32) |
 | `FORMATTING-START-AAA` | valid, 1 block | M-06, M-24 | a and nobr start tags run the adoption agency outside blocks; the later block is not changed |
 | `FRAMESET` | `STRUCTURE` | M-10 | A frameset start tag in the document |
 | `GUARD-A` | `STRUCTURE` | M-24 | An a start tag in the content while an a is open |

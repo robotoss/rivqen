@@ -732,6 +732,12 @@ describe('M-11 item 6 table parts in noscript content (H-38)', () => {
   it('accepts a table of the content under other elements', () => {
     assert.equal(checkNoscript(Buffer.from('<div><table><tr><td><b>x</b></td></tr></table></div>')), null);
   });
+
+  it('does not count other elements of the content as a table', () => {
+    const body = `<table><tr><td><noscript><div><td></td></div></noscript>${block}</td></tr></table>`;
+    assert.equal(errorOf(doc(body)), STRUCTURE);
+    assert.equal(checkNoscript(Buffer.from('<div><span><tr></tr></span></div>')), STRUCTURE);
+  });
 });
 
 describe('M-12 CDATA', () => {

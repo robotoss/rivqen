@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
-The Node.js candidate of WP-17 S1 (tasks T-04, T-08, T-09 and T-13). It implements the RQP markup rules rqp/1 (`docs/engineering/protocol/markup.md` section 2, rules M-01 to M-27, with M-24 items j and k of decision H-18) and the interface of `../CONTRACT.md`. It reads the edge cases E1 to E8 as the human decided them (H-21, H-22; see [Edge cases E1 to E8](#edge-cases-e1-to-e8)). It implements the rules of the security review (H-26 to H-28, H-30 to H-32; see [Rules of the security review](#rules-of-the-security-review)). It is a conformance tool, not the server SDK.
+The Node.js candidate of WP-17 S1 (tasks T-04, T-08, T-09, T-13 and T-16). It implements the RQP markup rules rqp/1 (`docs/engineering/protocol/markup.md` section 2, rules M-01 to M-27, with M-24 items j and k of decision H-18) and the interface of `../CONTRACT.md`. It reads the edge cases E1 to E8 as the human decided them (H-21, H-22; see [Edge cases E1 to E8](#edge-cases-e1-to-e8)). It implements the rules of the security review (H-26 to H-28, H-30 to H-32) and of its round 2 (H-35 to H-38); see [Rules of the security review](#rules-of-the-security-review). It is a conformance tool, not the server SDK.
 
 ## Requirements
 
@@ -46,15 +46,15 @@ The library function is `analyze(bytes)` in `src/markup.mjs`. It takes a `Uint8A
 
 | File | What it checks |
 |---|---|
-| `test/rules.test.mjs` | One group for each rule M-01 to M-27 and each error code; one group for the edge cases E1 to E8; one group for each rule item of the security review (M-06 items 2 to 4, M-11 item 5, M-13 item 3, the depth counter D of M-26), with the review repros, the review controls and a valid neighbor for each invalid case |
+| `test/rules.test.mjs` | One group for each rule M-01 to M-27 and each error code; one group for the edge cases E1 to E8; one group for each rule item of the security review (M-06 items 2 to 4, M-11 item 5, M-13 item 3, the depth counter D of M-26) and of round 2 (M-09 conditions 1 and 2, M-10 item 2, M-11 item 6), with the review repros, the review controls and a valid neighbor for each invalid case |
 | `test/name-sets.test.mjs` | The name sets of `markup.md` section 2.1 by behavior, with lists copied from `markup.md` as an independent oracle; list items (M-24 j), table context (M-24 k), `FORMATTING` and `SPECIAL` (M-06 items 2 and 4) |
 | `test/json.test.mjs` | M-25 JSON grammar, surrogate escapes, depth limit |
 | `test/fixtures.test.mjs` | All `FX-RQ-MARKUP-*` fixtures, in process |
 | `test/tokenizer.test.mjs` | Tokenizer states; differential test against the parse5 8.0.1 tokenizer (4000 random inputs) |
-| `test/tree-agreement.test.mjs` | For each valid random document, in both scripting views of parse5 8.0.1: the same blocks and offsets as the tree builder, no `script` whose decoded type contains `rivqen-manifest` after Unicode upper-case mapping (M-13), and no element deeper than 259 (M-26). The generator also makes the shapes of the security review |
-| `test/property.test.mjs` | No exception on random markup and random bytes; result invariants (content bytes equal input bytes `[start, end)`, template, revisions); a prefix whose elements are all closed exactly does not change the result of the rest (D, marks and name counts come back to their start values) |
+| `test/tree-agreement.test.mjs` | For each valid random document, in both scripting views of parse5 8.0.1: the same blocks and offsets as the tree builder, no `script` whose decoded type contains `rivqen-manifest` after Unicode upper-case mapping (M-13), and no element deeper than 259 (M-26). The generator also makes the shapes of the security review and of its round 2 |
+| `test/property.test.mjs` | No exception on random markup and random bytes; result invariants (content bytes equal input bytes `[start, end)`, template, revisions); a prefix whose elements are all closed exactly does not change the result of the rest (D, marks, name counts and the count of open forms come back to their start values) |
 | `test/cli.test.mjs` | Single and batch mode, byte order, exit codes, no content on stderr, bounded read, only regular files (a FIFO without a writer gives exit 2 at once) |
-| `test/perf.test.mjs` | `[perf]` 31 adversarial inputs of about 5 MiB finish in less than 10 s each (measured: less than 0.25 s each). Each input has an expected result. Eight go beyond the depth limit and must give `RQP_MARKUP_LIMIT`. Others keep D at 256 again and again (top level, block content, svg, unmatched end tags, one crossing at the limit, implied table parts) and must be valid. Two nest the `noscript` content to 5 MiB (balanced: valid; unbalanced: `RQP_MARKUP_STRUCTURE`) |
+| `test/perf.test.mjs` | `[perf]` 36 adversarial inputs of about 5 MiB finish in less than 10 s each (measured: less than 0.25 s each). Each input has an expected result. Eight go beyond the depth limit and must give `RQP_MARKUP_LIMIT`. Others keep D at 256 again and again (top level, block content, svg, unmatched end tags, one crossing at the limit, implied table parts) and must be valid. Two nest the `noscript` content to 5 MiB (balanced: valid; unbalanced: `RQP_MARKUP_STRUCTURE`). Five use the round 2 rules: forms one after another, closed elements before table parts, `col` in a table in a template, tables nested in the `noscript` content, and table parts after the tables of the content are closed (`RQP_MARKUP_STRUCTURE`) |
 
 The random tests use fixed seeds. For a deeper run, set more iterations or another seed:
 
@@ -89,6 +89,8 @@ T-13 (rules of the security review, F-4, F-7; changed lines against `4fff64f`, w
 | `names.mjs` `KNOWN_NAMES` (2) | the interning list → `[]` | Equivalent | Interning changes only which string object is kept, never a result |
 | `cli.mjs` `readBounded()` | `if (cause instanceof CliError)` → `if (true)` | Accepted | Reached only by a read error on an open regular file (for example `EIO`); a test needs fault injection |
 
+T-16 (rules of round 2, H-35 to H-38; changed lines against `5224828`, without `--incremental`): 65 of 65 mutants killed (100 %). The first run had one survivor in `checkNoscript()`: `if (name === 'table') tables++` → `if (true) tables++` (every element of the content counts as a table). A behavior test now covers it: `<td><noscript><div><td></td></div></noscript>` is invalid, because with scripting disabled that `td` closes the cell around the `noscript`.
+
 ## Design
 
 ### Tokenizer: own, byte level (DL-012)
@@ -113,10 +115,10 @@ Evidence that the tokenizer is the WHATWG tokenizer: the differential test again
 | Index | Used by |
 |---|---|
 | Stack indexes for each name | Nearest match of an end tag (M-05 rule 3) |
-| Count of open elements for each name (HTML context) | M-08, M-19, M-24 d, e, f, h, i |
+| Count of open elements for each name (HTML context) | M-08, M-10 item 2 (`form`), M-19, M-24 d, e, f, h, i |
 | Count of elements opened in the block content | M-24 b, c, g, h, i |
 | Nearest list (`ul`, `ol`, `menu`, `dl`) or list item (`li`, `dd`, `dt`) for each entry | M-24 j |
-| Stack index of the nearest table-family entry for each entry, reset at `template` | F of M-09, M-19, M-24 k and M-26 item 3 |
+| Stack index of the nearest table-family entry for each entry, or `NO_FAMILY` (-1), or `IN_TEMPLATE` (-2) when a `template` entry is nearer | F of M-09 (with conditions 1 and 2), M-19, M-24 k and M-26 item 3 |
 | State bits for each entry: dirty, special-crossed mark, implied row group, row and column group | M-06 item 4, M-26 |
 | Depth counter D | M-26 |
 | Stack index of the foreign region root | M-05 rule 4, M-07 |
@@ -125,7 +127,7 @@ Every element is pushed and popped once, so the crossing checks of M-06 and the 
 
 All checks of an end tag (`close()` in `src/markup.mjs`) are in one loop over the entries that the end tag pops: M-06 item 1 (guarded), item 2 (a `FORMATTING` end tag over a special element pushed in HTML context or over any element pushed in a foreign region) and item 4 (a `FORMATTING` end tag that pops a marked entry). Only after all checks, the entries are popped and D and the marks change. In block content, M-23 allows only exact pops, so this loop has no crossed entry there.
 
-M-11 tokenizes the `noscript` content again with a second tokenizer. Each byte is in at most one `noscript` content, so this is linear too. The second pass also checks M-13 on each `script` start tag of the content (E8), and keeps a separate stack of names for item 5: an end tag compares only with its top.
+M-11 tokenizes the `noscript` content again with a second tokenizer. Each byte is in at most one `noscript` content, so this is linear too. The second pass also checks M-13 on each `script` start tag of the content (E8), and keeps a separate stack of names for item 5: an end tag compares only with its top. For item 6 it counts the `table` entries of that stack: +1 when a `table` is pushed, −1 when an end tag pops one. A start tag in `TABLE_PART` or `col` needs a count above 0.
 
 M-24 j is checked after M-24 c. When c holds, a list opened in the content is open, so the nearest list or list item from the top of the stack is always an element opened in the content. The index for j therefore needs no separate "opened in the content" flag.
 
@@ -159,7 +161,7 @@ An E5 CDATA section that runs to the end of input in foreign text content is val
 
 ### Rules of the security review
 
-The human decided these rules after the security review of 2026-10-11 (H-25 to H-32 in the sprint record; rule text: `markup.md` sections 2.4 and 2.8; study: `markup-edge-cases.md` section 6). Task T-13 implemented them.
+The human decided these rules after the security review of 2026-10-11 (H-25 to H-32 in the sprint record; rule text: `markup.md` sections 2.4 and 2.8; study: `markup-edge-cases.md` section 6) and after its round 2 (H-35 to H-38; rule text: `markup.md` M-09, M-10, M-11; study: `markup-edge-cases.md` section 7). Task T-13 implemented the first rules, task T-16 the rules of round 2.
 
 | Decision | Rule | Code |
 |---|---|---|
@@ -169,6 +171,10 @@ The human decided these rules after the security review of 2026-10-11 (H-25 to H
 | H-27 | M-11 item 5: the `noscript` content is balanced, also when it runs to the end of the input (E3) | `checkNoscript()` |
 | H-28 | M-13 item 3: a byte ≥ 0x80 in the raw `type` value of a `script` start tag gives `RQP_MARKUP_RESERVED`, in the main pass and in the `noscript` content | `isReservedType()` |
 | H-31 | M-26: the depth counter D with the dirty bit and the implied parts; it replaces the stack-size limit of H-25 | `addDepth()`, `htmlStart()`, `close()` |
+| H-35 | M-09 condition 1: no `col` start tag when a `template` is nearer than every `TABLE_FAMILY` element | `htmlStart()` (`IN_TEMPLATE`) |
+| H-36 | M-10 item 2: no `form` start tag in HTML context while an HTML `form` is on the token stack. A crossing that pops the form also decrements its count | `htmlStart()` |
+| H-37 | M-09 condition 2: a start tag in `TABLE_PART`, `col` or `table` while F is `table`, `tbody`, `thead`, `tfoot`, `tr` or `colgroup` needs F as the current node | `htmlStart()` |
+| H-38 | M-11 item 6: a start tag in `TABLE_PART` or `col` in the `noscript` content needs an open `table` of the content | `checkNoscript()` |
 
 `FORMATTING` and `SPECIAL` are fixed sets in `src/names.mjs`. Not every member of `SPECIAL` changes a result today: void elements are never pushed in HTML context, raw text elements have no end tag in their content, the other `GUARDED` elements and `table` cannot be crossed (M-06 item 1), and `frameset` is rejected (M-10). `test/name-sets.test.mjs` checks the other members by behavior and the full set against the list of `markup.md`.
 
@@ -178,7 +184,10 @@ Choices of this candidate inside the rules:
 |---|---|---|
 | End tag in block content | The same `close()` as outside: checks of M-06 items 2 and 4, D, marks | M-23 allows only exact pops of elements that were pushed in the content, so the checks never fail there and D always gives the units back. One code path for all pops. |
 | M-11 item 5, start tag `svg` or `math` with the self-closing flag | Not handled separately | M-11 item 3 rejects every `svg` and `math` start tag in the content first. |
-| Implied parts and M-09 | M-09 is checked first; the implied parts of a rejected start tag are not counted | A rejected start tag ends the pass, so the order changes only which error code a document with two errors gets (`CONTRACT.md` section 5). |
+| Implied parts and M-09 | M-09 with conditions 1 and 2, and M-10 item 2, are checked first; the implied parts of a rejected start tag are not counted, and it is not pushed | A rejected start tag ends the pass, so the order changes only which error code a document with two errors gets (`CONTRACT.md` section 5). |
+| M-09 condition 1 and the F index | The per-entry F index has a second negative value, `IN_TEMPLATE`, instead of a walk down the stack | It keeps the check O(1). All other users of F read only indexes ≥ 0, so they see `IN_TEMPLATE` as "no F", as before. A `template` pushed in a foreign region also sets it; that entry is popped with its region before the next start tag in HTML context, so it never changes a result. |
+| M-10 item 2 in a `template` | A `form` start tag in a `template` under an open HTML `form` is rejected | The rule text has no exception for template contents (the tree builder does not use the form element pointer there). Stricter than needed; the rule text decides. |
+| M-11 item 6, order in a start tag of the content | Items 4, 2 and 3 first, then item 6, then the push of item 5 | One error ends the check, so the order changes only the error code of a document with two errors. |
 
 ### Other choices
 

@@ -175,6 +175,7 @@ export function checkNoscript(content) {
       if (t.blockAttr !== null || NOSCRIPT_FORBIDDEN.has(name)) return STRUCTURE; // items 2, 3
       // Item 6 (H-38): a table part needs a table of C, or with scripting
       // disabled it closes a cell or caption around the noscript element.
+      // The keys of TABLE_PARENTS are the names of TABLE_PART and col.
       if (tables === 0 && TABLE_PARENTS.has(name)) return STRUCTURE;
       // Item 5. svg and math are forbidden (item 3), so only VOID is not pushed.
       if (!VOID.has(name)) {

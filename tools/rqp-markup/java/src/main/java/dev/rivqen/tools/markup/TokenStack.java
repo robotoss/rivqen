@@ -3,7 +3,6 @@
 
 package dev.rivqen.tools.markup;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
@@ -17,21 +16,29 @@ import org.jspecify.annotations.Nullable;
  * this name open" (counters). Each entry is pushed once and popped once, so the total work is
  * linear in the number of tokens.
  *
+ * <p>The capacity is fixed: M-26 allows at most {@link #CAPACITY} elements (H-25). The caller
+ * checks {@link #full()} before each push and rejects the document when the stack is full; a push
+ * on a full stack is a defect and throws {@link IllegalStateException}. So the memory of the stack
+ * does not depend on the input, and the name index has at most {@link #CAPACITY} entries.
+ *
  * <p>The counters are arrays indexed by {@link Enum#ordinal()}, as in {@link java.util.EnumMap}:
  * the index never leaves this process and needs no boxing.
  */
 @SuppressWarnings("EnumOrdinal")
 final class TokenStack {
+  /** M-26: the maximum number of elements ({@link Analyzer#MAX_OPEN_ELEMENTS}). */
+  static final int CAPACITY = Analyzer.MAX_OPEN_ELEMENTS;
+
   private static final int NAMES = Name.values().length;
 
-  private String[] names = new String[16];
-  private @Nullable Name[] known = new Name[16];
-  private boolean[] foreign = new boolean[16];
-  private boolean[] content = new boolean[16];
-  private int[] previousSameName = new int[16];
-  private int[] tableContext = new int[16];
-  private int[] listContext = new int[16];
-  private int[] listItemContext = new int[16];
+  private final String[] names = new String[CAPACITY];
+  private final @Nullable Name[] known = new Name[CAPACITY];
+  private final boolean[] foreign = new boolean[CAPACITY];
+  private final boolean[] content = new boolean[CAPACITY];
+  private final int[] previousSameName = new int[CAPACITY];
+  private final int[] tableContext = new int[CAPACITY];
+  private final int[] listContext = new int[CAPACITY];
+  private final int[] listItemContext = new int[CAPACITY];
   private int size;
 
   private final Map<String, Integer> topByName = new HashMap<>();
@@ -41,6 +48,11 @@ final class TokenStack {
 
   int size() {
     return size;
+  }
+
+  /** True when a push would make the stack larger than {@link #CAPACITY} elements (M-26). */
+  boolean full() {
+    return size >= CAPACITY;
   }
 
   /** True when the element at {@code index} was pushed in the content of an html block. */
@@ -67,17 +79,18 @@ final class TokenStack {
   }
 
   /**
-   * Pushes an element.
+   * Pushes an element. The caller checks {@link #full()} first (M-26).
    *
    * @param name the tag name
    * @param k the known name, or null
    * @param inForeign true when pushed in a foreign region
    * @param inContent true when pushed in the content of an html block
    * @return the index of the new element
+   * @throws IllegalStateException when the stack is full (a defect of the caller)
    */
   int push(String name, @Nullable Name k, boolean inForeign, boolean inContent) {
-    if (size == names.length) {
-      grow();
+    if (full()) {
+      throw new IllegalStateException("token stack is full");
     }
     int i = size++;
     names[i] = name;
@@ -185,17 +198,5 @@ final class TokenStack {
    */
   int nearestListItem() {
     return size == 0 ? -1 : listItemContext[size - 1];
-  }
-
-  private void grow() {
-    int n = names.length * 2;
-    names = Arrays.copyOf(names, n);
-    known = Arrays.copyOf(known, n);
-    foreign = Arrays.copyOf(foreign, n);
-    content = Arrays.copyOf(content, n);
-    previousSameName = Arrays.copyOf(previousSameName, n);
-    tableContext = Arrays.copyOf(tableContext, n);
-    listContext = Arrays.copyOf(listContext, n);
-    listItemContext = Arrays.copyOf(listItemContext, n);
   }
 }

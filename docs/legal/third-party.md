@@ -18,6 +18,8 @@ This page defines which third-party licenses Rivqen accepts, how they are checke
 |---|---|---|---|
 | UniFFI (`uniffi*` crates) | MPL-2.0 | Standard Rust → Kotlin/Swift bindings tool | No modification of UniFFI files without publishing them; check generated-code status in WP-09 |
 | JUnit Jupiter (`org.junit:junit-bom` 5.14.4) | EPL-2.0 | Standard Java test framework; test scope only, never in a distributed artifact | Test dependency only. Approved by the human on 2026-10-09 ([WP-17 S1](/engineering/plan/sprints/WP-17-S1) H-19) |
+| `caniuse-lite` 1.0.30001815 (npm, via `@stryker-mutator/core`) | CC-BY-4.0 | Browser data used by the mutation test tool of `tools/rqp-markup/node` | Dev only; never in a distributed artifact. Approved by the human on 2026-10-11 ([WP-17 S1](/engineering/plan/sprints/WP-17-S1) H-29) |
+| `minimatch` 10.2.6 (npm, via `@stryker-mutator/core`) | BlueOak-1.0.0 | Glob matching in the mutation test tool of `tools/rqp-markup/node` | Dev only; never in a distributed artifact. Approved by the human on 2026-10-11 (H-29) |
 | PCOV (PHP extension `pcov` 1.0.12) | PHP-3.01 | Code coverage driver for PHPUnit 12 and Infection; PHPUnit 12 (`php-code-coverage`) supports only PCOV and Xdebug | Developer and CI machines only (installed with `pecl`); never a Composer dependency and never in a distributed artifact. Approved by the human on 2026-10-11 ([WP-17 S1](/engineering/plan/sprints/WP-17-S1) H-24) |
 
 ## 3. Per-ecosystem checks

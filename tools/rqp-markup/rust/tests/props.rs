@@ -18,7 +18,7 @@ use base64::Engine as _;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use proptest::prelude::*;
 use proptest::strategy::ValueTree as _;
-use rqp_markup::{Document, analyze, result_json};
+use rqp_markup::{Document, ErrorCode, MAX_OPEN_ELEMENTS, MarkupError, analyze, result_json};
 use sha2::{Digest, Sha256};
 
 /// Markup pieces that reach many rules: block tags, raw text elements,
@@ -141,8 +141,103 @@ fn check(input: &[u8]) {
     assert_eq!(value["valid"], first.is_ok());
 }
 
+/// Names that M-06…M-24 accept at any depth, nested in any order, in HTML
+/// context and in the content of a `div` block.
+const HTML_NAMES: &[&str] = &["div", "span", "b", "i", "em", "section", "article"];
+/// Names for the content of an `svg` region.
+const SVG_NAMES: &[&str] = &["g", "a", "symbol", "defs", "mask"];
+/// Tokens that M-05 does not push: in HTML context outside blocks, in the
+/// content of an `html` block (M-22 forbids `<svg/>` there), and in a
+/// foreign region.
+const NOT_PUSHED: [&[&str]; 3] = [
+    &[
+        "<br>",
+        "<img src=\"x\">",
+        "<wbr>",
+        "<svg/>",
+        "<math/>",
+        "<!-- c -->",
+        "t",
+    ],
+    &[
+        "<br>",
+        "<img src=\"x\">",
+        "<wbr>",
+        "<hr/>",
+        "<!-- c -->",
+        "t",
+    ],
+    &["<g/>", "<rect/>", "<!-- c -->", "t"],
+];
+
+/// A well-nested input: an optional block element (HTML context only; the
+/// content of an `html` block cannot contain `svg`, M-22), an optional `svg`
+/// element, one element per entry of `nested`, each followed by an optional
+/// token that is not pushed, then the end tags in reverse order. Returns the
+/// input and the largest number of elements on the token stack.
+fn nested_input(
+    nested: &[(usize, Option<usize>)],
+    foreign: bool,
+    in_block: bool,
+) -> (String, usize) {
+    let in_block = in_block && !foreign;
+    let context = if foreign { 2 } else { usize::from(in_block) };
+    let names = if foreign { SVG_NAMES } else { HTML_NAMES };
+    let mut open = Vec::new();
+    if in_block {
+        open.push(("<div data-rq-block=\"p\">".to_owned(), "div"));
+    }
+    if foreign {
+        open.push(("<svg>".to_owned(), "svg"));
+    }
+    for &(name, _) in nested {
+        let name = names[name % names.len()];
+        open.push((format!("<{name}>"), name));
+    }
+    let mut input = String::new();
+    for (index, (start_tag, _)) in open.iter().enumerate() {
+        input.push_str(start_tag);
+        let fill = index
+            .checked_sub(open.len() - nested.len())
+            .and_then(|i| nested[i].1);
+        if let Some(fill) = fill {
+            let tokens = NOT_PUSHED[context];
+            input.push_str(tokens[fill % tokens.len()]);
+        }
+    }
+    for (_, name) in open.iter().rev() {
+        input.push_str("</");
+        input.push_str(name);
+        input.push('>');
+    }
+    (input, open.len())
+}
+
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(2000))]
+
+    /// M-26 depth (H-25): a well-nested document is valid when its deepest
+    /// point has at most 256 elements on the token stack, and is
+    /// `RQP_MARKUP_LIMIT` (M-26) otherwise. Tokens that M-05 does not push
+    /// never count.
+    #[test]
+    fn depth_limit_holds_for_nested_documents(
+        nested in prop::collection::vec((any::<usize>(), prop::option::of(any::<usize>())), 240..270),
+        foreign in any::<bool>(),
+        in_block in any::<bool>(),
+    ) {
+        let (input, depth) = nested_input(&nested, foreign, in_block);
+        let result = analyze(input.as_bytes());
+        if depth <= MAX_OPEN_ELEMENTS {
+            prop_assert!(result.is_ok(), "depth {depth}: {result:?}");
+            prop_assert_eq!(result.unwrap().blocks.len(), usize::from(in_block && !foreign));
+        } else {
+            prop_assert_eq!(
+                result.map(|_| ()),
+                Err(MarkupError { code: ErrorCode::Limit, rule: "M-26" })
+            );
+        }
+    }
 
     #[test]
     fn arbitrary_bytes_never_panic(input in prop::collection::vec(any::<u8>(), 0..512)) {

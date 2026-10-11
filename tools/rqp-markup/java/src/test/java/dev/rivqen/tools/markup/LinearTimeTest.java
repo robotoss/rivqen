@@ -21,6 +21,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  */
 class LinearTimeTest {
   private static final int SIZE = Analyzer.MAX_INPUT_BYTES - 64;
+  private static final int MAX = Analyzer.MAX_OPEN_ELEMENTS;
 
   /** {@code head} + {@code unit} repeated to almost 5 MiB + {@code tail}. */
   private static byte[] repeat(String head, String unit, String tail) {
@@ -31,16 +32,20 @@ class LinearTimeTest {
     return b;
   }
 
+  /** {@code tag} start tags, {@code n} times. */
+  private static String open(String tag, int n) {
+    return ("<" + tag + ">").repeat(n);
+  }
+
+  /** {@code tag} end tags, {@code n} times. */
+  private static String close(String tag, int n) {
+    return ("</" + tag + ">").repeat(n);
+  }
+
   static Stream<Arguments> inputs() {
-    String half = "<div>".repeat(SIZE / 10);
     return Stream.of(
-        Arguments.of("deep nesting", repeat("", "<div>", ""), null),
-        Arguments.of(
-            "stray end tags over a deep stack",
-            (half + "</x>".repeat(SIZE / 8)).getBytes(StandardCharsets.US_ASCII),
-            null),
-        Arguments.of("one end tag pops a deep stack", repeat("<div>", "<b>", "</div>"), null),
-        Arguments.of("unique names", uniqueNames(), null),
+        Arguments.of("deep nesting", repeat("", "<div>", ""), ErrorCode.LIMIT),
+        Arguments.of("unique names", uniqueNames(), ErrorCode.LIMIT),
         Arguments.of("many attributes", repeat("<p ", "a=1 ", ">"), null),
         Arguments.of("long attribute value", repeat("<p title=\"", "x", "\">"), null),
         Arguments.of("long tag name", repeat("<p", "x", ">"), null),
@@ -54,7 +59,7 @@ class LinearTimeTest {
             repeat("<script><!--", "<script></script>", "--></script>"),
             null),
         Arguments.of("noscript content", repeat("<noscript>", "<img src=x>", "</noscript>"), null),
-        Arguments.of("svg region", repeat("<svg>", "<g>", "</svg>"), null),
+        Arguments.of("svg region", repeat("<svg>", "<g>", "</svg>"), ErrorCode.LIMIT),
         Arguments.of(
             "table rows",
             repeat("<table><tbody>", "<tr><td>x</td></tr>", "</tbody></table>"),
@@ -96,37 +101,108 @@ class LinearTimeTest {
   }
 
   /**
-   * Valid inputs where each end tag pops one element of a deep token stack. A pop that costs time
-   * in proportion to the stack size (an array shift, a scan or a rebuild of the name index) makes
-   * these inputs quadratic. The block content cases also do this for the end tags in content (M-23)
-   * and for the list queries of M-24 c and j; one case puts a deep stack below the block, because
-   * M-26 keeps the stack in one block small. The expected block count makes sure that the analysis
-   * reads the whole input and does not stop early.
+   * Valid inputs that keep the token stack at or near its limit of 256 elements (M-26) for the
+   * whole input, and pop it with one end tag at a time or with one end tag for many elements. A
+   * push, a pop or a stack query that costs time in proportion to the stack size (an array shift, a
+   * scan or a rebuild of the name index) makes these inputs about 256 times slower; a cost in
+   * proportion to the number of names seen so far makes them quadratic. The block content cases
+   * also do this for the end tags in content (M-23) and for the list queries of M-24 c and j. The
+   * expected block count makes sure that the analysis reads the whole input and does not stop
+   * early.
    */
   static Stream<Arguments> deepStacks() {
     return Stream.of(
-        Arguments.of("deep nesting closed by matching end tags", balanced("<b>", "</b>"), 0),
-        Arguments.of("mixed names closed by matching end tags", balanced("<b><i>", "</i></b>"), 0),
-        Arguments.of("nested lists in block content", blocks("", 5, "<ul><li>", "</li></ul>"), 5),
         Arguments.of(
-            "nested elements in block content closed by matching end tags",
-            blocks("", 5, "<b>", "</b>"),
+            "full stack closed by matching end tags",
+            repeat("", open("b", MAX) + close("b", MAX), ""),
+            0),
+        Arguments.of(
+            "mixed names closed by matching end tags",
+            repeat("", "<b><i>".repeat(MAX / 2) + "</i></b>".repeat(MAX / 2), ""),
+            0),
+        Arguments.of(
+            "pushes and pops on a full stack", repeat(open("div", MAX - 1), "<b></b>", ""), 0),
+        Arguments.of("stray end tags over a full stack", repeat(open("div", MAX), "</x>", ""), 0),
+        Arguments.of(
+            "one end tag pops a full stack",
+            repeat("", "<div>" + open("b", MAX - 1) + "</div>", ""),
+            0),
+        Arguments.of(
+            "nested lists in block content",
+            blocks("", 5, "<ul><li>".repeat(127) + "</li></ul>".repeat(127)),
             5),
         Arguments.of(
-            "nested lists in block content over a deep stack",
-            blocks(
-                "<b>".repeat((SIZE - Analyzer.MAX_BLOCK_BYTES) / 3), 1, "<ul><li>", "</li></ul>"),
-            1),
-        Arguments.of("names with one hash code closed by matching end tags", collidingNames(), 0));
+            "nested elements in block content closed by matching end tags",
+            blocks("", 5, open("b", MAX - 1) + close("b", MAX - 1)),
+            5),
+        Arguments.of(
+            "nested lists in block content over lists opened before the block",
+            blocks("<ul><li>".repeat(64), 5, "<ul><li>".repeat(63) + "</li></ul>".repeat(63)),
+            5),
+        Arguments.of(
+            "svg region at the depth limit",
+            repeat("<svg>", open("g", MAX - 1) + close("g", MAX - 1), "</svg>"),
+            0),
+        Arguments.of("unique names within the depth limit", uniqueNamesInGroups(MAX), 0),
+        Arguments.of("names with one hash code within the depth limit", collidingNames(MAX), 0));
   }
 
   /**
-   * 2^16 different tag names with the same {@link String#hashCode()}, opened, then closed in
-   * reverse order. The pairs {@code "a~"} and {@code "b_"} have the same hash code, so every name
-   * of the same number of pairs has the same hash code. All names go to one bucket of the name
-   * index.
+   * Deep inputs of the same shapes without the limit: they push more than 256 elements. The
+   * analysis stops at the 257th push (M-26).
    */
-  private static byte[] collidingNames() {
+  static Stream<Arguments> deepStacksAboveTheLimit() {
+    return Stream.of(
+        Arguments.of("deep nesting closed by matching end tags", balanced("<b>", "</b>")),
+        Arguments.of("mixed names closed by matching end tags", balanced("<b><i>", "</i></b>")),
+        Arguments.of("one end tag pops a deep stack", repeat("<div>", "<b>", "</div>")),
+        Arguments.of(
+            "stray end tags over a deep stack",
+            ("<div>".repeat(SIZE / 10) + "</x>".repeat(SIZE / 8))
+                .getBytes(StandardCharsets.US_ASCII)),
+        Arguments.of("nested lists in block content", deepBlocks("", 5, "<ul><li>", "</li></ul>")),
+        Arguments.of(
+            "nested elements in block content closed by matching end tags",
+            deepBlocks("", 5, "<b>", "</b>")),
+        Arguments.of(
+            "nested lists in block content over a deep stack",
+            deepBlocks(
+                "<b>".repeat((SIZE - Analyzer.MAX_BLOCK_BYTES) / 3), 1, "<ul><li>", "</li></ul>")),
+        Arguments.of("svg region closed by matching end tags", balanced("<svg><g>", "</g></svg>")),
+        Arguments.of(
+            "names with one hash code closed by matching end tags", collidingNames(1 << 16)));
+  }
+
+  /**
+   * Unique tag names in groups: {@code group} names opened, then closed in reverse order, to almost
+   * 5 MiB. Each name is new, so the name index adds and removes a key for each element.
+   */
+  private static byte[] uniqueNamesInGroups(int group) {
+    StringBuilder s = new StringBuilder();
+    int next = 0;
+    while (true) {
+      StringBuilder opens = new StringBuilder();
+      StringBuilder closes = new StringBuilder();
+      for (int i = 0; i < group; i++) {
+        String n = "e" + Integer.toString(next++, 36);
+        opens.append('<').append(n).append('>');
+        closes.insert(0, "</" + n + ">");
+      }
+      if (s.length() + opens.length() + closes.length() > SIZE) {
+        break;
+      }
+      s.append(opens).append(closes);
+    }
+    return s.toString().getBytes(StandardCharsets.US_ASCII);
+  }
+
+  /**
+   * 2^16 different tag names with the same {@link String#hashCode()}. They are opened in groups of
+   * {@code group} names, and each group is closed in reverse order. The pairs {@code "a~"} and
+   * {@code "b_"} have the same hash code, so every name of the same number of pairs has the same
+   * hash code. All open names go to one bucket of the name index.
+   */
+  private static byte[] collidingNames(int group) {
     int bits = 16;
     String[] names = new String[1 << bits];
     for (int i = 0; i < names.length; i++) {
@@ -138,11 +214,14 @@ class LinearTimeTest {
       assertEquals(names[0].hashCode(), names[i].hashCode());
     }
     StringBuilder s = new StringBuilder();
-    for (String n : names) {
-      s.append('<').append(n).append('>');
-    }
-    for (int i = names.length - 1; i >= 0; i--) {
-      s.append("</").append(names[i]).append('>');
+    for (int from = 0; from < names.length; from += group) {
+      int to = Math.min(names.length, from + group);
+      for (int i = from; i < to; i++) {
+        s.append('<').append(names[i]).append('>');
+      }
+      for (int i = to - 1; i >= from; i--) {
+        s.append("</").append(names[i]).append('>');
+      }
     }
     byte[] b = s.toString().getBytes(StandardCharsets.US_ASCII);
     assertTrue(b.length <= Analyzer.MAX_INPUT_BYTES);
@@ -156,14 +235,13 @@ class LinearTimeTest {
   }
 
   /**
-   * {@code before}, then {@code count} html blocks. The content of each block is {@code open}
-   * repeated n times, then {@code close} repeated n times, just under the limit of M-26 and the
-   * input limit of M-01. The elements that {@code before} opens stay open below the blocks.
+   * {@code before}, then {@code count} html blocks. The content of each block is {@code unit}
+   * repeated, just under the limit of M-26 and the input limit of M-01. The elements that {@code
+   * before} opens stay open below the blocks.
    */
-  private static byte[] blocks(String before, int count, String open, String close) {
+  private static byte[] blocks(String before, int count, String unit) {
     int content = Math.min(Analyzer.MAX_BLOCK_BYTES, (SIZE - before.length()) / count - 32);
-    int n = content / (open.length() + close.length());
-    String body = open.repeat(n) + close.repeat(n);
+    String body = unit.repeat(content / unit.length());
     assertTrue(body.length() <= Analyzer.MAX_BLOCK_BYTES);
     StringBuilder s = new StringBuilder(before);
     for (int i = 0; i < count; i++) {
@@ -172,6 +250,16 @@ class LinearTimeTest {
     byte[] b = s.toString().getBytes(StandardCharsets.US_ASCII);
     assertTrue(b.length <= Analyzer.MAX_INPUT_BYTES);
     return b;
+  }
+
+  /**
+   * {@code before}, then {@code count} html blocks whose content is {@code open} repeated n times,
+   * then {@code close} repeated n times, just under the block and input limits.
+   */
+  private static byte[] deepBlocks(String before, int count, String open, String close) {
+    int content = Math.min(Analyzer.MAX_BLOCK_BYTES, (SIZE - before.length()) / count - 32);
+    int n = content / (open.length() + close.length());
+    return blocks(before, count, open.repeat(n) + close.repeat(n));
   }
 
   @ParameterizedTest(name = "{0}")
@@ -187,10 +275,20 @@ class LinearTimeTest {
   @ParameterizedTest(name = "{0}")
   @MethodSource("deepStacks")
   void popsDeepStackQuickly(String name, byte[] input, int blocks) {
+    // More than 4 MiB: the stack work covers almost the whole input limit.
+    assertTrue(input.length > Analyzer.MAX_INPUT_BYTES - Analyzer.MAX_BLOCK_BYTES);
     Result r = analyzeQuickly(input);
     assertEquals(null, r.error(), r::rule);
     assertEquals(blocks, r.blocks().size());
     PropertyTest.checkInvariants(input, r);
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("deepStacksAboveTheLimit")
+  void rejectsTooDeepStackQuickly(String name, byte[] input) {
+    Result r = analyzeQuickly(input);
+    assertEquals(ErrorCode.LIMIT, r.error(), r::rule);
+    assertEquals("M-26", r.rule());
   }
 
   private static Result analyzeQuickly(byte[] input) {

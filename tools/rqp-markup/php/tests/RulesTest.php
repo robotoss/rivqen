@@ -392,6 +392,10 @@ final class RulesTest extends TestCase
 
         // M-13
         yield 'M-13 manifest text in a script is not a tag' => ['<script>"<script type=rivqen-manifest>"</script>', []];
+        yield 'M-13 applies only to script start tags' => [
+            '<link type="application/rivqen-manifest+json"><style type="a&amp;b"></style><noscript><link type="rivqen-manifest"></noscript><p data-rq-block="a">x</p>',
+            [['a', 'html', 'x']],
+        ];
         yield 'M-13 other type' => ['<script type="module"></script><script type="text/javascript" type="rivqen-manifest"></script>', []];
 
         // M-14

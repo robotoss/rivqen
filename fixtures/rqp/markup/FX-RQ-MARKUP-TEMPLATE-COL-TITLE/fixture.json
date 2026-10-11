@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-TEMPLATE-COL-TITLE",
+  "description": "A col start tag directly in a template (H-35): the tree builder ignores the later title start tag, so the text that the token stack reads as RCDATA is markup with a second block z in the browser (security review round 2 repro)",
+  "rules": [
+    "M-09"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

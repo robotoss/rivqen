@@ -287,6 +287,12 @@ class DepthRecipeTest(unittest.TestCase):
         self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT", 256)
         self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ELEMENT", 257)
 
+    def test_structure_rule_depth_inputs_keep_d_small(self) -> None:
+        # H-36, H-37: the tree builder keeps one element per unit open, but every pop is exact, so D
+        # does not grow; a structure rule must reject these inputs, not M-26.
+        self.check("FX-RQ-MARKUP-FORM-NESTED-DEPTH", 3)
+        self.check("FX-RQ-MARKUP-TABLE-FOSTER-MARKER-DEPTH", 5)
+
     def test_counter_examples(self) -> None:
         self.assertEqual(max_depth_counter(b"<table><td></td><td></td></table><table><td></td></table>"), 4)
         self.assertEqual(max_depth_counter(b"<div><span><i></span></div><p></p>"), 4)

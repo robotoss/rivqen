@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-TEMPLATE-COL-TEXTAREA",
+  "description": "A col start tag directly in a template in the head (H-35): the ignored textarea hides a manifest script from the token stack, but not from the browser (security review round 2 repro)",
+  "rules": [
+    "M-09"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

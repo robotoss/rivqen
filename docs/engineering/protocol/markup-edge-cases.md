@@ -265,6 +265,8 @@ The cross-check reports the shape as the class `M-06-formatting-marked`.
 
 <Badge type="info" text="DESIGN" /> Why item 5 makes `markup.md` §5 item 2 true again: see that item. Additional parse5 checks with balanced C, both views equal: `H27-balanced`, `H27-head-noscript` (the "in head noscript" mode leaves the head at a `div`), `H27-p-closed-by-c` (a `div` in C closes the open `p` in the scripting-disabled view only). The content C is not counted in D (architect decision, `markup.md` M-26 item 7); fixture `LIMIT-DEPTH-NOSCRIPT` has 300 nested elements in C after 255 `div` elements. With scripting disabled such a document is deeper than 512 inside the `noscript`; the flattening of the browser happens only there, and the stack of open elements stays the same, so the later block is not changed.
 
+<Badge type="tip" text="FACT" /> Correction (round 2, H-38): item 5 alone did not make both views equal. A balanced C with a table part and no table of its own, in a cell or a caption, closes that cell or caption in the scripting-disabled view (`<td><noscript><td></td></noscript>`). M-11 item 6 closes this gap (§7.4).
+
 ### 6.3 M-13 item 3: non-ASCII script types (H-28)
 
 <Badge type="tip" text="FACT" /> In JavaScript, `"ı".toUpperCase()` is `"I"` and `"ſ".toUpperCase()` is `"S"` (Unicode case mapping). The cross-check now counts a script type as manifest-like also after this mapping (`src/view.mjs`, `looksLikeManifest`): the cases `H28-dotless-i` and `H28-long-s` give one manifest-like element in both views, and all three candidates accept them today.
@@ -309,7 +311,7 @@ The false text "1.5 × 256 + 2 = 386" of H-25 is removed: the token stack is not
 | Implied `tbody`, `tr` ("clear the stack back to a table (body) context", then insert), `colgroup` | at most one of each kind open per F | Implied parts (item 3), given back with F |
 | Reconstruct the active formatting elements (§13.2.4.3) | clones of entries whose element is not on the stack | The entry comes from a formatting start tag (a unit). The tree builder popped its element without its own end tag; the token stack crossed it (the unit stays, item 5) or still has it (the unit is live) |
 | Implied end tags, "close a p element", "pop until", the adoption agency without a furthest block | fewer elements | No element gets deeper |
-| An end tag that the tree builder ignores or uses only in part: "any other end tag" at a special element, `</li>` outside list item scope, a heading end tag that stops at another heading, `</form>` (removes only the form), `</body>`, `</html>` | elements stay open that the token stack popped | The token stack popped them by a crossing (no decrease) or they are `html`/`body`. After that the elements below are dirty, so their later exact pops give nothing back |
+| An end tag that the tree builder ignores or uses only in part: "any other end tag" at a special element, `</li>` outside list item scope, a heading end tag that stops at another heading, `</form>` (ignored when the form element pointer is null or its form is not in scope, else it removes only that form; M-10 item 2 allows one form on the token stack), `</body>`, `</html>` | elements stay open that the token stack popped | The token stack popped them by a crossing (no decrease) or they are `html`/`body`. After that the elements below are dirty, so their later exact pops give nothing back |
 | Exact pop of a clean element e | — | No crossing happened above e since its push, so above e the tree builder has only elements that are already closed and reconstructed formatting elements (not special): the end tag of e pops them too |
 | The adoption agency with a furthest block | moves elements | The WHATWG stack does not grow, no element gets deeper |
 | Foster parenting | the element goes before the table | Not deeper than the table |
@@ -360,6 +362,77 @@ For comparison, the accepted documents that only one other class rejects in seed
 <Badge type="tip" text="FACT" /> **After T-13** (all four candidates implement H-25…H-32, wp/WP-17 at `cf88837`; both scripting views): every candidate gives 180/180 on the golden fixtures and 0 parse5 findings on them. Review sweeps per lane: Rust seed 31, Node.js seed 32, Java seed 33, PHP seed 34 (20 000 documents each): 0 findings, no accepted document that only one rule class rejects, 0 depth-invariant violations on valid documents. Joint sweep of the four candidates, seed 41 (`review`, 20 pieces, 20 000 documents): 3 539 valid documents (1 886 with blocks) in each candidate, identical results, 0 findings, 0 depth-invariant violations on valid documents.
 
 To repeat a sweep, run in `tools/rqp-markup/crosscheck`: `node src/cli.mjs sweep --only rust,node,php --seed 21 --count 50000 --chunk 10000 --max-tokens 20 --profile review --scripting both`.
+
+## 7. Security review round 2 (H-35 to H-38)
+
+**Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-11, task WP-17/S1/T-14-spec. The human decided H-35 to H-38 before this study ([sprint record](/engineering/plan/sprints/WP-17-S1)). Rule text: `markup.md` M-09 conditions 1 and 2, M-10 item 2, M-11 item 6, and the M-26 claim. Sources: the WHATWG text as in §6, parse5 8.0.1 through `tools/rqp-markup/crosscheck` (`cases/review2-cases.json`, `src/depth.mjs`), and the four candidates at `65d4b98` (they implement H-25 to H-32, not the rules of this section). The Java candidate was built with a cached Gradle 9.5.1.
+
+| Decision | Repro (case) | parse5 today | Candidates today | Rule |
+|---|---|---|---|---|
+| H-35 | `<template><col><title>` … fake block (`H35-template-col-title`) | 2 blocks | valid, 1 block | M-09 condition 1 |
+| H-35 | `<template><col><textarea>` … manifest script (`H35-template-col-textarea`) | 1 manifest | valid | M-09 condition 1 |
+| H-36 | `<a>`, 9 × `<form><object><form></form></object></form>`, block with `<a>` (`H36-form-object-a`) | no end tag for the block; WHATWG stack 13 with D = 4 | valid | M-10 item 2 |
+| H-36 | 600 × the same unit, block (`H36-form-object-depth`) | WHATWG stack 603 with D = 3 | valid | M-10 item 2 |
+| H-37 | `<object><a><table><marquee><table></table></marquee></table>x</a></object>`, block with `<a>` (`H37-marquee-table`) | no end tag for the block | valid | M-09 condition 2 |
+| H-37 | 600 × `<object><b><table><marquee><table></table></marquee></table></b></object>`, block (`H37-foster-depth`) | WHATWG stack 605 with D = 5 | valid | M-09 condition 2 |
+| H-38 | `<td><noscript><td></td></noscript>`, block with a `table` (`H38-td`; also `col`, `th`, `caption` variants) | scripting disabled: no end tag for the block | valid | M-11 item 6 |
+
+### 7.1 M-09: col in a template (H-35)
+
+<Badge type="tip" text="FACT" /> "in template" (§13.2.6.4.16) sends `col` to "in column group", and there "Anything else: If the current node is not a colgroup element, then this is a parse error; ignore the token" (§13.2.6.4.12). In a template the current node is the `template`, so the tree builder ignores the later start tags, also the raw-text ones.
+
+**Check of the other paths.** In a template, "in template" sends `caption`, `colgroup`, `tbody`, `tfoot`, `thead` to "in table", `tr` to "in table body", `td` and `th` to "in row", and every other start tag to "in body". In "in table" (§13.2.6.4.9), `style`, `script` and `template` go to "in head", and every other start tag is foster-parented "using the rules for the "in body" insertion mode"; "in table body" and "in row" send other start tags to "in table"; "in caption" uses "in body"; "in column group" with a `colgroup` as the current node pops it and reprocesses the token in "in table". So `title`, `textarea`, `style`, `script`, `xmp`, `iframe`, `noembed`, `noframes`, `noscript` and `plaintext` are inserted (and switch the tokenizer) in all these paths. "in column group" with a `template` as the current node is the only path in a template that ignores them. Outside a template, "in column group" always has a `colgroup` as the current node (except in the fragment case). Two other modes ignore start tags: "in select" (older parsers; M-08 allows only `option`, `optgroup` and `hr` in a `select`) and "in frameset" / "after frameset" (M-10 item 1). Control: `<template><colgroup><title>…</title></colgroup></template>` gives the same result in parse5 and the candidates (`H35-control-template-colgroup-title`).
+
+The M-26 claim now excludes template contents. Inside a template, "in table" inserts an implied `tbody` for `tr` ("Clear the stack back to a table context", then insert a `tbody`), while the M-09 search for F stops at the `template`, so D does not count it (low finding of round 2). Template contents are inert and hold no block (M-19). After the `template` closes, the WHATWG stack holds none of their elements. The cross-check does not check the invariant while a `template` element is open.
+
+### 7.2 M-10 item 2: nested forms (H-36)
+
+<Badge type="tip" text="FACT" /> "in body", `form` start tag: "If the form element pointer is not null, and the parser is not parsing template contents, then this is a parse error; ignore the token." `form` end tag: the pointer is set to null, and the token is ignored when "node is null or … the stack of open elements does not have node in scope"; else only node is removed (§13.2.6.4.7). The earlier FACT text ("`</form>` removes only the form") left out the two ignore cases; `markup.md` M-06 item 4 and §6.5 are corrected.
+
+<Badge type="info" text="DESIGN" /> **Re-check of the H-32 argument with item 2.** With at most one HTML `form` on the token stack:
+
+| Situation | Tree builder | Token stack | Result |
+|---|---|---|---|
+| The tree builder inserted the form; `</form>` pops it exactly | The pointer names it, and it is in scope (a scope boundary above it needs a `GUARDED` crossing, M-06 item 1) → removed | exact pop | Mirrored |
+| The same, but `</form>` crosses elements | Removes only the form; the crossed elements stay open | Crossing: D keeps its units; a crossed special element sets the special-crossed mark | Covered by M-26 and M-06 item 4 |
+| An earlier crossing closed the form (`<div><form></div>`), the pointer still names it; then a new `<form>` | Ignored: no element | Pushed (no form on the token stack) | Nothing stays open. The next `</form>` is ignored (node not in scope), and the token stack pops an element that the tree builder never had |
+| A `template` is open | The pointer is not used; `</form>` pops "until a form element has been popped" | as usual | Mirrored |
+
+So `</form>` is mirrored when the token stack pops the form exactly, and no `form` can stay open in the tree builder after an exact pop. `H36-control-stale-pointer` and the fixture `FORM-SEQUENTIAL` agree with parse5.
+
+### 7.3 M-09: F is the current node (H-37)
+
+<Badge type="tip" text="FACT" /> "Clear the stack back to a table context": "while the current node is not a table, template, or html element, pop elements from the stack of open elements". "… a table body context" stops at `tbody`, `tfoot`, `thead`, `template`, `html`; "… a table row context" stops at `tr`, `template`, `html` (§13.2.6.4.9, §13.2.6.4.13, §13.2.6.4.14). Start tags that run these steps: `caption`, `colgroup`, `col`, `tbody`, `tfoot`, `thead`, `td`, `th`, `tr` (in the three modes), and `table` ("Pop elements from this stack until a table element has been popped"). Condition 2 covers all of them: F must be the current node, so the steps pop nothing.
+
+**End tags.** The end tags that pop down to a table element are `</table>` ("pop elements from this stack until a table element has been popped"), `</tbody>`, `</tfoot>`, `</thead>` (clear back to a table body context, then pop) and `</tr>` (clear back to a table row context, then pop). On the token stack, such an end tag crosses the foster-parented elements above F:
+
+| Foster-parented element above F | Covered by |
+|---|---|
+| `applet`, `marquee`, `object`, `template` (the elements that insert a marker) | M-06 item 1: they are in `GUARDED`, and a `TABLE_FAMILY` end tag may cross only `TABLE_PART` elements |
+| `button`, `a`, `nobr`, `select`, `svg`, `math` | M-06 item 1 (`GUARDED`) |
+| `form` | The pop closes it in both. The form element pointer stays set: §7.2 covers that path |
+| Other elements (`div`, `b`, `span`, …) | Popped in both (mirrored). Formatting elements stay in the list of active formatting elements and are reconstructed later (`markup.md` §5 item 1). D keeps their units (crossing). A crossed special element sets the special-crossed mark (M-06 item 4) |
+
+`H37-end-table-over-b` agrees with parse5; `H37-end-table-over-div-a` is rejected by M-06 item 4. No further rule is proposed for end tags.
+
+**Cost.** Condition 2 also rejects shapes that parse5 parses the same as the token stack, for example `<table><tr><object><td>x</td></object></tr></table>` and the old pattern `<table><form><tr>…</tr></form></table>` (`H37-object-td`, `H37-form-in-table`). The corpus measurement (H-39) shows how often real pages have them.
+
+### 7.4 M-11 item 6: table parts in noscript content (H-38)
+
+<Badge type="tip" text="FACT" /> With scripting disabled, a `noscript` element in a cell or a caption does not change the insertion mode ("in cell" or "in caption"). "in cell" (§13.2.6.4.15): "A start tag whose tag name is one of: "caption", "col", "colgroup", "tbody", "td", "tfoot", "th", "thead", "tr"" → "Close the cell (see below) and reprocess the token." "in caption" (§13.2.6.4.11) closes the caption for the same names. So a table part in C closes the cell or the caption around the `noscript`, and the rest is parsed in another cell or row; the block of `H38-td` is cut in the scripting-disabled view. With a `table` opened in C, the table part is parsed in the modes of that table. Both views agree for `H38-control-table-in-c` and the fixture `NOSCRIPT-TABLE-IN-CELL`.
+
+### 7.5 Sweeps
+
+<Badge type="tip" text="FACT" /> Sweeps of 2026-10-11 with the four candidates at `65d4b98` (Rust, Node.js, Java, PHP), profile `review2` (the `review` motifs plus form pointer cycles, template with `col` and raw text, foster-parented elements in tables, and `noscript` in cells and captions with table parts), both scripting views. The candidates do not implement H-35 to H-38 yet; the four gave identical results.
+
+| Sweep | Documents | Valid (each) | Findings (per candidate × view) | Without a class | Depth invariant: accepted documents with a violation |
+|---|---|---|---|---|---|
+| seed 51, 20 pieces | 30 000 | 5 728 | 3 180 | 0 | 165, all with `M-10-form` |
+| seed 52, 60 pieces | 10 000 | 671 | 312 | 0 | 18, all with `M-10-form` |
+
+Documents that a candidate accepts and that only one rule class rejects (seed 51): `M-09-table-current` 443, `M-11-table-part` 349, `M-09-template-col` 141, `M-10-form` 131. Findings by class (seed 51; a finding counts once for each class of its document): block disagreements in the scripting-enabled view 372 (`M-09-template-col` 364, `M-09-table-current` 48, `M-11-table-part` 28, `M-10-form` 20) and in the scripting-disabled view 2 148 (`M-11-table-part` 1 804, `M-09-template-col` 436, `M-09-table-current` 316, `M-10-form` 108). The generator makes these shapes on purpose; the numbers do not estimate real pages (H-39).
+
+To repeat a sweep, run in `tools/rqp-markup/crosscheck`: `node src/cli.mjs sweep --only rust,node,java,php --seed 51 --count 30000 --chunk 10000 --max-tokens 20 --profile review2 --scripting both`.
 
 ## Related
 

@@ -170,6 +170,8 @@ test("the special-crossed mark passes down when a marked element is popped, also
   const { c } = feed(["<a>", "<em>", "<span>", "<div>", "</span>", "</em>"]);
   assert.deepEqual(c.stack.map((e) => [e.name, e.marked]), [["a", true]]);
   assert.deepEqual(feed(["<p>", "<a>", "<span>", "<div>", "</span>", "</a>"]).c.classes, new Set([CLASSES.formattingMarked]));
+  // A formatting end tag that crosses a marked element (not only the matching one) is caught.
+  assert.deepEqual(run("<a><em><span><div></span></a>").classes, [CLASSES.formattingMarked]);
   // A crossing over a foreign element marks too (H-32).
   assert.deepEqual(run("<a><svg><g><text></g></svg></a>").classes, [CLASSES.formattingMarked]);
 });

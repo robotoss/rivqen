@@ -290,8 +290,134 @@ fn balanced_content(ops: &[Option<usize>]) -> (String, Vec<(usize, usize)>) {
     (out, ends)
 }
 
+/// A well-nested sequence of elements from `names` (as
+/// [`balanced_content`], without void elements): `ops` opens an element
+/// (`Some`) or closes the current one (`None`). Returns the markup and
+/// whether `rule` held at each start tag: `rule(name, open)` sees the names
+/// that are open before the start tag.
+fn nested_names(
+    ops: &[Option<usize>],
+    names: &[&'static str],
+    rule: impl Fn(&str, &[&str]) -> bool,
+) -> (String, bool) {
+    let mut out = String::new();
+    let mut open: Vec<&str> = Vec::new();
+    let mut holds = true;
+    for op in ops {
+        match op {
+            Some(index) => {
+                let name = names[index % names.len()];
+                holds &= rule(name, &open);
+                out.push_str(&format!("<{name}>"));
+                open.push(name);
+            }
+            None => {
+                if let Some(name) = open.pop() {
+                    out.push_str(&format!("</{name}>"));
+                }
+            }
+        }
+    }
+    while let Some(name) = open.pop() {
+        out.push_str(&format!("</{name}>"));
+    }
+    (out, holds)
+}
+
+/// The ops of [`nested_names`] for `names` names.
+fn nested_ops(names: usize) -> impl Strategy<Value = Vec<Option<usize>>> {
+    prop::collection::vec(prop::option::weighted(0.6, 0..names), 1..40)
+}
+
+/// Elements that the tree builder foster-parents in a table, and table
+/// parts that a table can hold (M-09 condition 2).
+const FOSTERED: &[&str] = &["div", "b", "span", "i", "object", "marquee"];
+const TABLE_CONTENT: &[&str] = &[
+    "<tr><td>x</td></tr>",
+    "<tbody><tr><th>h</th></tr></tbody>",
+    "<colgroup><col></colgroup>",
+    "<col>",
+    "<caption>c</caption>",
+    "<table></table>",
+];
+
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(2000))]
+
+    /// M-10 item 2 (H-36): a well-nested document is valid exactly when no
+    /// `form` start tag is inside a `form`; else `RQP_MARKUP_STRUCTURE`
+    /// (M-10).
+    #[test]
+    fn a_form_start_tag_inside_a_form_is_invalid(
+        ops in nested_ops(4),
+    ) {
+        let (markup, holds) =
+            nested_names(&ops, &["form", "div", "b", "span"], |name, open| {
+                name != "form" || !open.contains(&"form")
+            });
+        let result = analyze(format!("{markup}<p data-rq-block=\"z\">x</p>").as_bytes())
+            .map(|doc| doc.blocks.len());
+        if holds {
+            prop_assert_eq!(result, Ok(1));
+        } else {
+            prop_assert_eq!(result, Err(MarkupError { code: ErrorCode::Structure, rule: "M-10" }));
+        }
+    }
+
+    /// M-11 item 6 (H-38): balanced `noscript` content in a cell is valid
+    /// exactly when every table part in it has a `table` of the content
+    /// open; else `RQP_MARKUP_STRUCTURE` (M-11).
+    #[test]
+    fn table_parts_in_noscript_need_an_open_table(
+        ops in nested_ops(6),
+    ) {
+        let names = ["div", "table", "td", "tr", "caption", "span"];
+        let (content, holds) = nested_names(&ops, &names, |name, open| {
+            !["td", "tr", "caption"].contains(&name) || open.contains(&"table")
+        });
+        let input = format!(
+            "<table><tr><td><noscript>{content}</noscript><div data-rq-block=\"z\">x</div></td></tr></table>"
+        );
+        let result = analyze(input.as_bytes()).map(|doc| doc.blocks.len());
+        if holds {
+            prop_assert_eq!(result, Ok(1));
+        } else {
+            prop_assert_eq!(result, Err(MarkupError { code: ErrorCode::Structure, rule: "M-11" }));
+        }
+    }
+
+    /// M-09 condition 2 (H-37): in a table, elements that the tree builder
+    /// foster-parents are allowed when they are closed before the next table
+    /// part. A table part while one of them is open is
+    /// `RQP_MARKUP_STRUCTURE` (M-09).
+    #[test]
+    fn a_table_part_needs_its_table_as_the_current_node(
+        wrappers in prop::collection::vec((0..FOSTERED.len(), any::<bool>()), 0..12),
+        part in 0..TABLE_CONTENT.len(),
+    ) {
+        let mut input = String::from("<table>");
+        let mut open = Vec::new();
+        for &(index, left_open) in &wrappers {
+            let name = FOSTERED[index];
+            input.push_str(&format!("<{name}>"));
+            if left_open {
+                open.push(name);
+            } else {
+                input.push_str(&format!("</{name}>"));
+            }
+        }
+        input.push_str(TABLE_CONTENT[part]);
+        for name in open.iter().rev() {
+            input.push_str(&format!("</{name}>"));
+        }
+        input.push_str("</table><p data-rq-block=\"z\">x</p>");
+        let result = analyze(input.as_bytes()).map(|doc| doc.blocks.len());
+        if open.is_empty() {
+            prop_assert_eq!(result, Ok(1));
+        } else {
+            prop_assert_eq!(result, Err(MarkupError { code: ErrorCode::Structure, rule: "M-09" }));
+        }
+    }
 
     /// M-26 (H-31): for shapes with known costs, the document is valid
     /// exactly when D stays at most 256, else `RQP_MARKUP_LIMIT` (M-26).
@@ -404,6 +530,29 @@ fn depth_model_reaches_both_results() {
         }
     }
     assert!(valid > 50 && limit > 50, "{valid} valid, {limit} limit");
+}
+
+#[test]
+fn nested_name_models_reach_both_results() {
+    // Guard against an op generator for the M-10 and M-11 properties that
+    // never breaks the rule, or always does.
+    let mut runner = proptest::test_runner::TestRunner::deterministic();
+    let (mut forms, mut parts) = ([0, 0], [0, 0]);
+    for _ in 0..500 {
+        let ops = nested_ops(4).new_tree(&mut runner).unwrap().current();
+        let (_, holds) = nested_names(&ops, &["form", "div", "b", "span"], |name, open| {
+            name != "form" || !open.contains(&"form")
+        });
+        forms[usize::from(holds)] += 1;
+        let ops = nested_ops(6).new_tree(&mut runner).unwrap().current();
+        let names = ["div", "table", "td", "tr", "caption", "span"];
+        let (_, holds) = nested_names(&ops, &names, |name, open| {
+            !["td", "tr", "caption"].contains(&name) || open.contains(&"table")
+        });
+        parts[usize::from(holds)] += 1;
+    }
+    assert!(forms.iter().all(|&n| n > 50), "forms {forms:?}");
+    assert!(parts.iter().all(|&n| n > 50), "parts {parts:?}");
 }
 
 #[test]

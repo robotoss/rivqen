@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-MARKUP-EDGE-COMBO-NOSCRIPT-MANIFEST-EOF",
-  "description": "Combination of E3 and E8 (H-21, H-22): noscript without an end tag; its content C (the rest of the input) has a manifest script start tag",
+  "description": "Combination of E3 and E8 (H-21, H-22): noscript without an end tag; its content C (the rest of the input) has a manifest script element. The script is closed, so C ends in the data state (M-11 item 1) and is balanced (M-11 item 5, H-27): RESERVED is the only error",
   "rules": [
     "M-11",
     "M-13"

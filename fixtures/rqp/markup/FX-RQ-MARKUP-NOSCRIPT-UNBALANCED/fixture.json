@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-UNBALANCED",
+  "description": "noscript content leaves a button open (H-27). With scripting disabled, the noscript end tag is ignored and the next block is parsed inside the button (security review repro)",
+  "rules": [
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-FORMATTING-CROSS-PHRASING",
+  "description": "Formatting end tags that cross only phrasing elements (span, i), a p end tag over b, eight div elements closed in order inside an a, and an svg a closed in order: all valid (H-26); a later a in a block is not cut",
+  "rules": [
+    "M-06",
+    "M-24"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "x",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"x\">",
+        "content": "y<a href=\"#\">z</a>w"
+      }
+    ]
+  }
+}

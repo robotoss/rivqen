@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-RESERVED-NON-ASCII-OTHER",
+  "description": "Any non-ASCII character in a script type is rejected, also in a type that is not like the manifest type (H-28, fail closed)",
+  "rules": [
+    "M-13"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_RESERVED"
+  }
+}

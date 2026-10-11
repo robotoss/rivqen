@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-RESERVED-NON-ASCII",
+  "description": "A script type with a dotless i in noscript content (M-11 item 4 uses M-13, H-28)",
+  "rules": [
+    "M-11",
+    "M-13"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_RESERVED"
+  }
+}

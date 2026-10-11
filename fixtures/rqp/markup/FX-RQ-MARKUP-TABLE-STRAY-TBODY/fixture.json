@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-STRAY-TBODY",
+  "description": "A stray tbody end tag after an implied tbody (H-30): the browser closes the cell, and the block is moved before the table and cut by its inner table (security review repro)",
+  "rules": [
+    "M-06"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

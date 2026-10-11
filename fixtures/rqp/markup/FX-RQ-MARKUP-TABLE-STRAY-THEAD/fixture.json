@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-STRAY-THEAD",
+  "description": "A thead end tag with no thead on the token stack (H-30)",
+  "rules": [
+    "M-06"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

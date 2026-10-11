@@ -7,6 +7,7 @@ from __future__ import annotations
 import importlib.util
 import io
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -218,6 +219,77 @@ class CheckModeTest(unittest.TestCase):
     def test_missing_fixtures_dir_is_usage_error(self) -> None:
         out, err = io.StringIO(), io.StringIO()
         self.assertEqual(gen.run(self.fx.root / "none", None, True, generated={}, out=out, err=err), 2)
+
+
+_TAG = re.compile(rb"<(/?)([a-z0-9]+)[^>]*>")
+_VOID = {b"br", b"col", b"img", b"input", b"hr", b"meta", b"link"}
+
+
+def max_depth_counter(data: bytes) -> int:
+    """Largest D of markup.md M-26 for the simple recipe inputs (tags only, HTML context,
+    no raw text except noscript). Independent of the candidates and of the cross-check tool."""
+    stack: list[dict] = []
+    d = best = 0
+    pos = 0
+    while True:
+        m = _TAG.search(data, pos)
+        if m is None:
+            return best
+        pos = m.end()
+        end, name = m.group(1) == b"/", m.group(2)
+        if not end:
+            f = next((e for e in reversed(stack) if e["name"] in (b"table", b"tbody", b"tr", b"td")), None)
+            parts = {b"td": ("rowgroup", "row")} if f is not None and f["name"] == b"table" else {}
+            for part in parts.get(name, ()):
+                if part not in f["implied"]:
+                    f["implied"].add(part)
+                    d += 1
+            if name not in _VOID:
+                stack.append({"name": name, "dirty": False, "implied": set()})
+                d += 1
+            best = max(best, d)
+            if name == b"noscript":  # C is not part of the main pass (M-11, M-26)
+                pos = data.index(b"</noscript>", pos)
+            continue
+        idx = next((i for i in range(len(stack) - 1, -1, -1) if stack[i]["name"] == name), None)
+        if idx is None:
+            continue
+        popped = stack[idx:]
+        del stack[idx:]
+        if len(popped) == 1 and not popped[0]["dirty"] and name not in (b"html", b"body"):
+            d -= 1 + len(popped[0]["implied"])
+        elif stack:
+            stack[-1]["dirty"] = True
+
+
+class DepthRecipeTest(unittest.TestCase):
+    """The generated depth fixtures sit at the boundary of D (markup.md M-26)."""
+
+    def check(self, fixture: str, want: int) -> None:
+        self.assertEqual(max_depth_counter(gen.GENERATED[fixture]["input.html"]()), want, fixture)
+
+    def test_ignored_end_tags(self) -> None:
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-IGNORED-END", 601)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-IGNORED-END-127", 256)
+
+    def test_dirty_mark(self) -> None:
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-DIRTY", 281)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-DIRTY-CLEAN", 4)
+
+    def test_implied_table_parts(self) -> None:
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-TABLE", 257)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-TABLE-63", 253)
+
+    def test_mixed_shapes(self) -> None:
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-MIXED", 262)
+
+    def test_noscript_content_does_not_count(self) -> None:
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT", 256)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ELEMENT", 257)
+
+    def test_counter_examples(self) -> None:
+        self.assertEqual(max_depth_counter(b"<table><td></td><td></td></table><table><td></td></table>"), 4)
+        self.assertEqual(max_depth_counter(b"<div><span><i></span></div><p></p>"), 4)
 
 
 if __name__ == "__main__":

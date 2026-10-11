@@ -19,7 +19,8 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>One pass over the tokens of {@link Tokenizer}: the token stack (M-05) is the only structure.
  * There is no tree builder (DL-008). The work is linear in the input size; the memory is bounded by
- * the input size, and the input size is checked first (M-01).
+ * the input size, and the input size is checked first (M-01). The token stack has a fixed capacity
+ * of {@link #MAX_OPEN_ELEMENTS} (M-26).
  */
 public final class Analyzer {
   /** M-01: maximum input size in bytes. */
@@ -30,6 +31,13 @@ public final class Analyzer {
 
   /** M-26: maximum content size of one block in bytes. */
   public static final int MAX_BLOCK_BYTES = 1024 * 1024;
+
+  /**
+   * M-26: maximum number of elements on the token stack (M-05) at any point of the document, in
+   * HTML context and in a foreign region, inside and outside blocks ({@code maxOpenElements},
+   * H-25).
+   */
+  public static final int MAX_OPEN_ELEMENTS = 256;
 
   /** M-15: maximum id length. */
   static final int MAX_ID_LENGTH = 64;
@@ -159,7 +167,7 @@ public final class Analyzer {
     tablePart(k);
     boolean region = k == Name.SVG || k == Name.MATH;
     if (!(region && selfClosing) && !Name.is(k, Name.Set.VOID)) {
-      int index = stack.push(name, k, false, inContent);
+      int index = push(name, k, false, inContent);
       if (region) {
         stack.startRegion(index);
       }
@@ -190,10 +198,22 @@ public final class Analyzer {
     if (selfClosing) {
       return;
     }
-    int index = stack.push(name, k, true, false);
+    int index = push(name, k, true, false);
     if (text || Name.is(k, Name.Set.INTEGRATION)) {
       textOnly = index;
     }
+  }
+
+  /**
+   * M-05 push with the depth limit of M-26: a push that makes the token stack larger than {@link
+   * #MAX_OPEN_ELEMENTS} elements is an error. The caller checks the other rules of the start tag
+   * first (markup.md §2.10: "on each push to the token stack").
+   */
+  private int push(String name, @Nullable Name k, boolean inForeign, boolean inContent) {
+    if (stack.full()) {
+      throw new Reject(ErrorCode.LIMIT, "M-26");
+    }
+    return stack.push(name, k, inForeign, inContent);
   }
 
   /** M-14 to M-19, M-21 and the block count of M-26, in the order of markup.md §2.10. */

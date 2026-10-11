@@ -8,10 +8,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
-/** M-01 (input size), M-02 (encoding) and M-26 (block limits). */
+/** M-01 (input size), M-02 (encoding) and M-26 (blocks, block size, token stack depth). */
 class LimitsTest {
+  private static final int DEPTH = Analyzer.MAX_OPEN_ELEMENTS;
 
   @Test
   void inputAtTheSizeLimitIsRead() {
@@ -95,6 +99,163 @@ class LimitsTest {
   @Test
   void rawTextBlockAboveTheContentLimit() {
     assertEquals("M-26", Analyzer.analyze(bigBlock("title", Analyzer.MAX_BLOCK_BYTES + 1)).rule());
+  }
+
+  // M-26: token stack depth (H-25). A push that makes the stack larger than 256 elements fails.
+
+  private static String open(String tag, int n) {
+    return ("<" + tag + ">").repeat(n);
+  }
+
+  private static String close(String tag, int n) {
+    return ("</" + tag + ">").repeat(n);
+  }
+
+  private static void assertDepthLimit(String html) {
+    Docs.assertInvalid(html, ErrorCode.LIMIT, "M-26");
+  }
+
+  @Test
+  void blockElementAtTheDepthLimit() {
+    String html = open("div", DEPTH - 1) + "<div data-rq-block=a>x</div>" + close("div", DEPTH - 1);
+    assertEquals(List.of("a:html:x"), Docs.blocks(html));
+  }
+
+  @Test
+  void blockElementAboveTheDepthLimit() {
+    assertDepthLimit(open("div", DEPTH) + "<div data-rq-block=a>x</div>" + close("div", DEPTH));
+  }
+
+  @Test
+  void depthLimitOutsideBlocks() {
+    Docs.assertValid(open("b", DEPTH) + close("b", DEPTH) + "<p data-rq-block=a>x</p>");
+    assertDepthLimit(open("b", DEPTH + 1) + close("b", DEPTH + 1) + "<p data-rq-block=a>x</p>");
+  }
+
+  @Test
+  void depthLimitInBlockContent() {
+    int n = DEPTH - 1; // the block element is the first element
+    assertEquals(
+        List.of("a:html:" + open("b", n) + close("b", n)),
+        Docs.blocks("<div data-rq-block=a>" + open("b", n) + close("b", n) + "</div>"));
+    assertDepthLimit("<div data-rq-block=a>" + open("b", n + 1) + close("b", n + 1) + "</div>");
+  }
+
+  @Test
+  void depthLimitInBlockContentOverElementsOpenedBefore() {
+    String content = open("b", 99) + close("b", 99);
+    Docs.assertValid(open("div", 156) + "<div data-rq-block=a>" + content + "</div>");
+    assertDepthLimit(open("div", 157) + "<div data-rq-block=a>" + content + "</div>");
+  }
+
+  @Test
+  void depthLimitInForeignRegion() {
+    // The input can end in a foreign region (E2): only the depth decides.
+    Docs.assertValid("<svg>" + open("g", DEPTH - 1));
+    assertDepthLimit("<svg>" + open("g", DEPTH));
+  }
+
+  @Test
+  void htmlAndForeignElementsCountTogether() {
+    Docs.assertValid(open("div", 200) + "<math>" + open("mrow", 55));
+    assertDepthLimit(open("div", 200) + "<math>" + open("mrow", 56));
+  }
+
+  @Test
+  void foreignRootCounts() {
+    Docs.assertValid(open("div", DEPTH - 1) + "<svg></svg>");
+    assertDepthLimit(open("div", DEPTH) + "<svg></svg>");
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "<br>",
+        "<img src=x>",
+        "<input/>",
+        "<hr>",
+        "<wbr>",
+        "<svg/>",
+        "<math/>",
+        "<svg />"
+      })
+  void elementsThatAreNotPushedDoNotCount(String tag) {
+    // The stack is full: any push would fail.
+    Docs.assertValid(open("div", DEPTH) + tag.repeat(3) + close("div", DEPTH));
+  }
+
+  @Test
+  void voidElementsInBlockContentDoNotCount() {
+    String html = open("div", DEPTH - 1) + "<div data-rq-block=a><br><img src=x></div>";
+    assertEquals(List.of("a:html:<br><img src=x>"), Docs.blocks(html));
+  }
+
+  @Test
+  void selfClosingForeignElementsDoNotCount() {
+    Docs.assertValid("<svg>" + open("g", DEPTH - 1) + "<rect/><path d=\"x\"/><g/>" + "</svg>");
+  }
+
+  @Test
+  void selfClosingFlagOnOtherHtmlElementCounts() {
+    // M-05 item 1: the flag is ignored, so the element is pushed.
+    Docs.assertValid(open("div", DEPTH - 1) + "<span/>");
+    assertDepthLimit(open("div", DEPTH) + "<span/>");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"<title>t</title>", "<script>s</script>", "<textarea></textarea>"})
+  void textElementsCount(String element) {
+    Docs.assertValid(open("div", DEPTH - 1) + element);
+    assertDepthLimit(open("div", DEPTH) + element);
+  }
+
+  @Test
+  void rawTextContentIsNotCounted() {
+    Docs.assertValid(open("div", DEPTH - 1) + "<textarea>" + open("b", 300) + "</textarea>");
+  }
+
+  @Test
+  void noscriptContentIsNotCounted() {
+    // M-26 limits the token stack of M-05. The M-11 pass over the noscript content has none.
+    Docs.assertValid(open("div", DEPTH - 1) + "<noscript>" + open("div", 300) + "</noscript>");
+  }
+
+  @Test
+  void depthRecoversAfterMatchingEndTags() {
+    Docs.assertValid((open("b", DEPTH) + close("b", DEPTH)).repeat(3));
+    Docs.assertValid(open("b", DEPTH) + "</b>" + "<i>" + "</i></b>");
+  }
+
+  @Test
+  void depthRecoversAfterOneEndTagPopsManyElements() {
+    Docs.assertValid("<div>" + open("span", DEPTH - 1) + "</div>" + open("div", DEPTH));
+    assertDepthLimit("<div>" + open("span", DEPTH - 1) + "</div>" + open("div", DEPTH + 1));
+  }
+
+  @Test
+  void depthRecoversAfterForeignRegionEnds() {
+    Docs.assertValid("<svg>" + open("g", DEPTH - 1) + "</svg>" + open("b", DEPTH));
+  }
+
+  @Test
+  void depthRecoversAfterBlockEnds() {
+    String block = "<div data-rq-block=b%d>" + open("b", DEPTH - 1) + close("b", DEPTH - 1);
+    Docs.assertValid(String.format(block, 1) + "</div>" + String.format(block, 2) + "</div>");
+  }
+
+  @Test
+  void strayEndTagOnAFullStack() {
+    Docs.assertValid(open("div", DEPTH) + "</x>" + close("div", DEPTH));
+  }
+
+  @Test
+  void otherRulesOfTheStartTagAreCheckedBeforeTheDepth() {
+    // Placement in this candidate: the depth check is the last check before the push.
+    Docs.assertInvalid(
+        open("div", DEPTH) + "<div data-rq-block=A>x</div>", ErrorCode.INVALID_ID, "M-15");
+    Docs.assertStructure(open("div", DEPTH) + "<frameset>", "M-10");
+    Docs.assertStructure("<table><tr>" + open("div", DEPTH - 2) + "<tr>", "M-09");
+    Docs.assertStructure("<svg>" + open("g", DEPTH - 1) + "<p>", "M-07");
   }
 
   private static byte[] blocks(int n) {

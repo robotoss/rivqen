@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -216,6 +217,92 @@ class PropertyTest {
         }
       }
     }
+  }
+
+  /**
+   * M-26 against a model stack. Each document is a random walk around the depth limit: divs opened
+   * before, then HTML context, block content or a foreign region with start tags that M-05 pushes,
+   * matching end tags, and tokens that M-05 does not push (void elements, self-closing svg, math
+   * and foreign elements, text, comments). The document is valid when the model stack never has
+   * more than 256 elements; else it is RQP_MARKUP_LIMIT with rule M-26.
+   */
+  @Test
+  void depthLimitMatchesAModelStack() {
+    Random r = new Random(256L);
+    int above = 0;
+    int atLimit = 0;
+    for (int i = 0; i < 3_000; i++) {
+      int context = r.nextInt(3); // 0: HTML context, 1: block content, 2: foreign region
+      List<String> pushed =
+          List.of(
+                  List.of("b", "i", "span/", "div"),
+                  List.of("b", "i", "div"),
+                  List.of("g", "text", "mrow"))
+              .get(context);
+      List<String> notPushed =
+          List.of(
+                  List.of("<br>", "<img src=x>", "<svg/>", "<math />", "x", "<!--c-->"),
+                  List.of("<br>", "<img src=x>", "<wbr>", "x", "<!--c-->"),
+                  List.of("<rect/>", "<g/>", "x", "<!--c-->"))
+              .get(context);
+      StringBuilder s = new StringBuilder();
+      ArrayDeque<String> stack = new ArrayDeque<>();
+      // Half of the walks start near the limit, so that a maximum of exactly 256 is frequent.
+      int prefix =
+          r.nextBoolean()
+              ? r.nextInt(Analyzer.MAX_OPEN_ELEMENTS)
+              : Analyzer.MAX_OPEN_ELEMENTS - 1 - r.nextInt(64);
+      for (int j = 0; j < prefix; j++) {
+        s.append("<div>");
+        stack.push("div");
+      }
+      if (context == 1) {
+        s.append("<div data-rq-block=a>");
+        stack.push("div");
+      } else if (context == 2) {
+        s.append("<svg>");
+        stack.push("svg");
+      }
+      int base = stack.size();
+      int max = base;
+      // A capped walk never pushes on a full model stack, so it often stays exactly at the limit.
+      boolean capped = r.nextInt(3) == 0;
+      int steps = 100 + r.nextInt(400);
+      for (int j = 0; j < steps; j++) {
+        int k = r.nextInt(20);
+        if (k < 8 && !(capped && stack.size() >= Analyzer.MAX_OPEN_ELEMENTS)) {
+          String name = pushed.get(r.nextInt(pushed.size()));
+          boolean selfClosing = name.endsWith("/");
+          String tag = selfClosing ? name.substring(0, name.length() - 1) : name;
+          s.append('<').append(tag).append(selfClosing ? "/>" : ">");
+          stack.push(tag);
+        } else if (k < 15 && stack.size() > base) {
+          s.append("</").append(stack.pop()).append('>');
+        } else {
+          s.append(notPushed.get(r.nextInt(notPushed.size())));
+        }
+        max = Math.max(max, stack.size());
+      }
+      while (!stack.isEmpty()) {
+        s.append("</").append(stack.pop()).append('>');
+      }
+      byte[] in = Docs.utf8(s.toString());
+      Result res = Analyzer.analyze(in);
+      int depth = max;
+      if (max > Analyzer.MAX_OPEN_ELEMENTS) {
+        above++;
+        assertEquals(ErrorCode.LIMIT, res.error(), () -> res.rule() + " at max depth " + depth);
+        assertEquals("M-26", res.rule());
+      } else {
+        atLimit += max == Analyzer.MAX_OPEN_ELEMENTS ? 1 : 0;
+        assertEquals(null, res.error(), () -> res.rule() + " at max depth " + depth);
+        assertEquals(context == 1 ? 1 : 0, res.blocks().size());
+      }
+      checkInvariants(in, res);
+    }
+    // Both sides of the limit and the limit itself must occur often, else the property says little.
+    assertTrue(above > 300, "above the limit " + above);
+    assertTrue(atLimit > 100, "at the limit " + atLimit);
   }
 
   @Test

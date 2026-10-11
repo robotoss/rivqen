@@ -209,7 +209,7 @@ Example: `<noscript><script type="application/rivqen-manifest+json">{…}</scrip
 
 ## 6. Security review (H-25 to H-31)
 
-**Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-11, task WP-17/S1/T-12-spec. The human decided H-25 to H-31 before this study ([sprint record](/engineering/plan/sprints/WP-17-S1)). The rule text is in [`markup.md`](/engineering/protocol/markup) §2 (summary in §2.12). This section gives the WHATWG reasoning, the parse5 evidence, the refinements of the depth counter D, and one open question (§6.1).
+**Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-11, task WP-17/S1/T-12-spec. The human decided H-25 to H-31 before this study, and H-32 (option B of the question in §6.1) after it ([sprint record](/engineering/plan/sprints/WP-17-S1)). The rule text is in [`markup.md`](/engineering/protocol/markup) §2 (summary in §2.12). This section gives the WHATWG reasoning, the parse5 evidence, the refinements of the depth counter D, and the question Q-T12-1 with its decision (§6.1).
 
 Sources: the WHATWG HTML Living Standard (`html.spec.whatwg.org`, multipage `parsing.html`, read on 2026-10-11), parse5 8.0.1 through `tools/rqp-markup/crosscheck` (`cases/review-cases.json`, `src/depth.mjs`), and the Rust, Node.js and PHP candidates at `27ae1b5` (they implement H-25, not the rules of this section). The Java candidate was not run: Gradle is not installed in this sandbox.
 
@@ -236,17 +236,28 @@ With a furthest block, the algorithm moves the furthest block to the common ance
 | `H26-a-div7`: 7 × `<div>` | same as candidates | valid | M-06 item 2 (one special element is enough) |
 | `H26-control-phrasing`: `</a>` over `span`, `</b>` over `i`, `</p>` over `b` | same | valid | valid |
 
-**Formatting start tags.** <Badge type="tip" text="FACT" /> Two start tags also run the adoption agency: `a` "if the list of active formatting elements contains an a element between the end of the list and the last marker", and `nobr` "if the stack of open elements has a nobr element in scope" (§13.2.6.4.7). These runs can have a furthest block. <Badge type="info" text="DESIGN" /> In block content, M-24 items e and f reject these start tags whenever an `a` or `nobr` is open on the token stack. The token stack never closes an `a` or `nobr` by a crossing (both are in `GUARDED`), so outside the cases of the open question below, an `a` or `nobr` in the list of the tree builder is also on the token stack. Outside block content, no block is open: the algorithm moves the furthest block with its whole subtree, so the content bytes of an earlier block do not change. The algorithm does not make the WHATWG stack larger and does not make an element deeper: the furthest block moves below the common ancestor, at most as deep as before; the new formatting element takes the place of the removed one. Evidence: `H26-start-a-aaa`, `H26-start-nobr-aaa`, `H26-start-a-div9-aaa` and the fixture `FORMATTING-START-AAA` agree with parse5. No new rule is needed for the start tag paths.
+**Formatting start tags.** <Badge type="tip" text="FACT" /> Two start tags also run the adoption agency: `a` "if the list of active formatting elements contains an a element between the end of the list and the last marker", and `nobr` "if the stack of open elements has a nobr element in scope" (§13.2.6.4.7). These runs can have a furthest block. <Badge type="info" text="DESIGN" /> In block content, M-24 items e and f reject these start tags whenever an `a` or `nobr` is open on the token stack. The token stack never closes an `a` or `nobr` by a crossing (both are in `GUARDED`), so with M-06 item 4 (H-32, below), an `a` or `nobr` in the list of the tree builder is also on the token stack. Outside block content, no block is open: the algorithm moves the furthest block with its whole subtree, so the content bytes of an earlier block do not change. The algorithm does not make the WHATWG stack larger and does not make an element deeper: the furthest block moves below the common ancestor, at most as deep as before; the new formatting element takes the place of the removed one. Evidence: `H26-start-a-aaa`, `H26-start-nobr-aaa`, `H26-start-a-div9-aaa` and the fixture `FORMATTING-START-AAA` agree with parse5. No new rule is needed for the start tag paths.
 
-**Open question Q-T12-1 (gap in H-26).** <Badge type="tip" text="FACT" /> The WHATWG stack can hold special elements that the token stack has already popped. Example: `<a><span>`, 8 × `<div>`, `x</span></a><span data-rq-block="x">y<a>z</a>w</span>`. The `</span>` crosses the `div` elements (allowed: `span` is not in `FORMATTING`). The tree builder ignores it ("any other end tag" stops at the special `div`). Then `</a>` is an exact pop on the token stack and crosses nothing, so item 2 does not apply. The tree builder runs the adoption agency with 8 furthest blocks, stops, and the later `<a>` cuts the block (parse5: no end tag for the block, cases `Q1-span-div8-a`, `Q1-span-div8-nobr`). The same works with `</li>` over `ul` (`Q1-li-ul-a`). All three candidates accept these documents. In each case the formatting element is **dirty** in the sense of M-26 (a crossing happened above it). Options for the human:
+**Question Q-T12-1 (gap in H-26), decided: option B, H-32.** <Badge type="tip" text="FACT" /> The WHATWG stack can hold special elements that the token stack has already popped. Example: `<a><span>`, 8 × `<div>`, `x</span></a><span data-rq-block="x">y<a>z</a>w</span>`. The `</span>` crosses the `div` elements (allowed: `span` is not in `FORMATTING`). The tree builder ignores it ("any other end tag" stops at the special `div`). Then `</a>` is an exact pop on the token stack and crosses nothing, so item 2 does not apply. The tree builder runs the adoption agency with 8 furthest blocks, stops, and the later `<a>` cuts the block (parse5: no end tag for the block, cases `Q1-span-div8-a`, `Q1-span-div8-nobr`). The same works with `</li>` over `ul` (`Q1-li-ul-a`). All three candidates at `27ae1b5` accept these documents. Options that were given to the human:
 
 | Option | Rule | Cost |
 |---|---|---|
-| A (recommended) | M-06 item 2 also: an end tag with a name in `FORMATTING` MUST NOT pop a dirty element (M-26). `STRUCTURE`. | Same state as D; one check. Also rejects harmless shapes such as `<a href="#"><b><span><i>x</span></b></a>` (`Q1-control-b-span-i`). |
-| B | A second mark, set only by a crossing over an element in `SPECIAL` or a foreign element, passed down like the dirty mark; a formatting end tag MUST NOT pop an element with this mark. | Fewer false rejects; one more flag per element in each candidate. |
-| C | No change | Leaves a false accept with the same impact as H-26. |
+| A | An end tag with a name in `FORMATTING` MUST NOT pop a dirty element (M-26) | Same state as D. Also rejects harmless shapes such as `<a href="#"><b><span><i>x</span></b></a>` |
+| B (decided, H-32) | A second mark, set only by a crossing over an element in `SPECIAL` or a foreign element, passed down like the dirty mark; a formatting end tag MUST NOT pop an element with this mark | Fewer false rejects; one more flag per element in each candidate |
+| C | No change | Leaves a false accept with the same impact as H-26 |
 
-This is a protocol and security decision. The fixtures do not cover it yet. The cross-check marks the shape as the class `M-06-formatting-dirty`.
+<Badge type="info" text="DESIGN" /> **Rule (H-32):** `markup.md` M-06 item 4, the **special-crossed mark**. After an end tag pops elements, the new current node gets the mark when a crossed element is in `SPECIAL` (pushed in HTML context) or was pushed in a foreign region, or when a popped element has the mark. An end tag with a name in `FORMATTING` MUST NOT pop a marked element. Error: `RQP_MARKUP_STRUCTURE`.
+
+How it covers the three routes (the WHATWG reasoning is in `markup.md` M-06, item 4 note):
+
+| Case | Crossing that sets the mark | Why the tree builder keeps elements open (WHATWG §13.2.6.4.7) | Fixture |
+|---|---|---|---|
+| `Q1-span-div8-a` | `</span>` crosses 8 `div` (special) → `a` marked | "any other end tag": "if node is in the special category, then this is a parse error; ignore the token" | `FORMATTING-MARKED-SPAN` |
+| `Q1-span-div8-nobr` | the same → `nobr` marked | the same | `FORMATTING-MARKED-NOBR` |
+| `Q1-li-ul-a` | each `</li>` crosses a `ul` (special); the mark passes down through the next `ul` to `a` | `</li>`: "If the stack of open elements does not have an li element in list item scope, … ignore the token"; `ul` ends list item scope | `FORMATTING-MARKED-LIST` |
+| `Q1-control-b-span-i` | `</span>` crosses only `i` (not special): no mark | "any other end tag" passes `i` and pops `i` and `span`: the tree builder keeps nothing open | `FORMATTING-MARKED-PHRASING` (valid) |
+
+The cross-check reports the shape as the class `M-06-formatting-marked`.
 
 ### 6.2 M-11 item 5: balanced noscript content (H-27)
 
@@ -328,14 +339,23 @@ The invariant check on the fixtures: 0 violations on the 66 valid fixtures (`che
 
 <Badge type="tip" text="FACT" /> Sweeps of 2026-10-11 with the Rust, Node.js and PHP candidates at `27ae1b5`, both scripting views. The candidates do not implement the rules of this section yet, so findings are expected; each finding is counted once per candidate (the three candidates gave the same results). "Without a class" means that no rule class of the cross-check (§6, `src/depth.mjs`) explains the finding.
 
-| Sweep | Documents | Valid (each candidate) | Findings | Without a class | Only the open question | Depth invariant: violations on valid documents |
+| Sweep | Documents | Valid (each candidate) | Findings | Without a class | Only Q-T12-1 (now H-32) | Depth invariant: violations on valid documents |
 |---|---|---|---|---|---|---|
 | seed 21, `review`, 20 pieces | 50 000 | 15 591 | 6 762 | 0 | 30 (5 documents × 3 candidates × 2 views) | 0 (313 on invalid documents) |
 | seed 22, `review`, 40 pieces | 50 000 | 8 216 | 4 290 | 0 | 0 | 0 (522 on invalid documents) |
 | seed 23, `review`, 80 pieces | 20 000 | 1 697 | 816 | 0 | 6 (1 document) | 0 (354 on invalid documents) |
 | seed 24, `classic`, 20 pieces | 100 000 | 37 318 | 0 | — | — | 0 (222 on invalid documents) |
 
-Findings by kind in seed 21 (per candidate × view): block disagreements 102 (scripting enabled) and 252 (disabled), manifest-like scripts (all `M-13-non-ascii`) 2 634 and 3 735, both kinds in one document 9 and 30. The 5 documents that only the open question explains are all of the form `<a>` or `<nobr>`, a crossing by `span` or `q`, then 8 or more `div` or `ul` elements (seed 21, indexes 6906, 17594, 24445, 35189, 49124). Of the 2 486 documents of seed 21 whose only class is the open question, the Rust candidate accepts 711; option A of §6.1 would reject them all, and 5 of them are real cuts. The depth invariant fails only on documents that the candidates reject (tags in SVG integration points, M-07; table parts after an explicit `colgroup`, M-09). The classic profile gives 0 findings: the change of the manifest check (Unicode look-alikes) adds no finding there.
+Findings by kind in seed 21 (per candidate × view): block disagreements 102 (scripting enabled) and 252 (disabled), manifest-like scripts (all `M-13-non-ascii`) 2 634 and 3 735, both kinds in one document 9 and 30. The 5 documents that only Q-T12-1 explains are all of the form `<a>` or `<nobr>`, a crossing by `span` or `q`, then 8 or more `div` or `ul` elements (seed 21, indexes 6906, 17594, 24445, 35189, 49124). Of the 2 486 documents of seed 21 whose only class was the dirty-mark class of option A, the Rust candidate accepts 711; option A would reject them all, and 5 of them are real cuts.
+
+<Badge type="tip" text="FACT" /> **Re-run with the H-32 class** (`M-06-formatting-marked`, option B; same candidates, same seeds):
+
+| Sweep | Findings | Without a class | Only H-32 | Documents that a candidate accepts and only H-32 rejects |
+|---|---|---|---|---|
+| seed 21, `review`, 20 pieces | 6 762 | 0 | 30 (the same 5 documents) | 681 (option A: 711) |
+| seed 23, `review`, 80 pieces | 816 | 0 | 6 (1 document) | 73 |
+
+For comparison, the accepted documents that only one other class rejects in seed 21: M-06 item 2 1 060, M-11 item 5 888, M-13 item 3 933, M-06 item 3 670, M-26 229. The generator makes the H-32 shape on purpose (a crossing below a formatting element over special elements), so these numbers do not estimate real pages. The depth invariant fails only on documents that the candidates reject (tags in SVG integration points, M-07; table parts after an explicit `colgroup`, M-09). The classic profile gives 0 findings: the change of the manifest check (Unicode look-alikes) adds no finding there.
 
 To repeat a sweep, run in `tools/rqp-markup/crosscheck`: `node src/cli.mjs sweep --only rust,node,php --seed 21 --count 50000 --chunk 10000 --max-tokens 20 --profile review --scripting both`.
 

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-FORMATTING-MARKED-SPAN",
+  "description": "A span end tag crosses 8 div elements and marks the a (H-32); the a end tag then pops a special-crossed element. The browser keeps the div elements, its adoption agency stops after 8 passes, and the a start tag in the later block cuts the block",
+  "rules": [
+    "M-06"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-FORMATTING-MARKED-NOBR",
+  "description": "The same with nobr: a span end tag crosses 8 div elements and marks the nobr, then the nobr end tag pops it (H-32)",
+  "rules": [
+    "M-06"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

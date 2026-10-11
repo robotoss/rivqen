@@ -211,7 +211,7 @@ Example: `<noscript><script type="application/rivqen-manifest+json">{…}</scrip
 
 **Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-11, task WP-17/S1/T-12-spec. The human decided H-25 to H-31 before this study, and H-32 (option B of the question in §6.1) after it ([sprint record](/engineering/plan/sprints/WP-17-S1)). The rule text is in [`markup.md`](/engineering/protocol/markup) §2 (summary in §2.12). This section gives the WHATWG reasoning, the parse5 evidence, the refinements of the depth counter D, and the question Q-T12-1 with its decision (§6.1).
 
-Sources: the WHATWG HTML Living Standard (`html.spec.whatwg.org`, multipage `parsing.html`, read on 2026-10-11), parse5 8.0.1 through `tools/rqp-markup/crosscheck` (`cases/review-cases.json`, `src/depth.mjs`), and the Rust, Node.js and PHP candidates at `27ae1b5` (they implement H-25, not the rules of this section). The Java candidate was not run: Gradle is not installed in this sandbox.
+Sources: the WHATWG HTML Living Standard (`html.spec.whatwg.org`, multipage `parsing.html`, read on 2026-10-11), parse5 8.0.1 through `tools/rqp-markup/crosscheck` (`cases/review-cases.json`, `src/depth.mjs`), and the Rust, Node.js and PHP candidates at `27ae1b5` (they implemented H-25, not the rules of this section; the Java candidate was not run in that study). All four candidates implement the rules since T-13 (§6.6, last paragraph).
 
 ### 6.1 M-06 item 2: formatting end tags (H-26)
 
@@ -356,6 +356,8 @@ Findings by kind in seed 21 (per candidate × view): block disagreements 102 (sc
 | seed 23, `review`, 80 pieces | 816 | 0 | 6 (1 document) | 73 |
 
 For comparison, the accepted documents that only one other class rejects in seed 21: M-06 item 2 1 060, M-11 item 5 888, M-13 item 3 933, M-06 item 3 670, M-26 229. The generator makes the H-32 shape on purpose (a crossing below a formatting element over special elements), so these numbers do not estimate real pages. The depth invariant fails only on documents that the candidates reject (tags in SVG integration points, M-07; table parts after an explicit `colgroup`, M-09). The classic profile gives 0 findings: the change of the manifest check (Unicode look-alikes) adds no finding there.
+
+<Badge type="tip" text="FACT" /> **After T-13** (all four candidates implement H-25…H-32, wp/WP-17 at `cf88837`; both scripting views): every candidate gives 180/180 on the golden fixtures and 0 parse5 findings on them. Review sweeps per lane: Rust seed 31, Node.js seed 32, Java seed 33, PHP seed 34 (20 000 documents each): 0 findings, no accepted document that only one rule class rejects, 0 depth-invariant violations on valid documents. Joint sweep of the four candidates, seed 41 (`review`, 20 pieces, 20 000 documents): 3 539 valid documents (1 886 with blocks) in each candidate, identical results, 0 findings, 0 depth-invariant violations on valid documents.
 
 To repeat a sweep, run in `tools/rqp-markup/crosscheck`: `node src/cli.mjs sweep --only rust,node,php --seed 21 --count 50000 --chunk 10000 --max-tokens 20 --profile review --scripting both`.
 

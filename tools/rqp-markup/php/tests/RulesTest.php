@@ -64,13 +64,16 @@ final class RulesTest extends TestCase
         yield 'M-07.2 stray end tag after a closed text element' => ['<svg><style>a</style></style></svg>', 'M-07', $S];
         yield 'M-07.3 tag in foreignObject' => ['<svg><foreignObject><b>x</b></foreignObject></svg>', 'M-07', $S];
         yield 'M-07.3 comment in desc' => ['<svg><desc><!-- c --></desc></svg>', 'M-07', $S];
-        yield 'M-07.3 CDATA in mi' => ['<math><mi><![CDATA[x]]></mi></math>', 'M-07', $S];
+        yield 'M-07.3 lower-case cdata in mi is a bogus comment' => ['<math><mi><![cdata[x]]></mi></math>', 'M-07', $S];
+        yield 'M-07.3 comment after CDATA in desc' => ['<svg><desc><![CDATA[x]]><!--c--></desc></svg>', 'M-07', $S];
+        yield 'M-07.3 processing instruction to EOF in desc (E6)' => ['<p data-rq-block="a">x</p><svg><desc><?x', 'M-07', $S];
         yield 'M-07.3 doctype in mtext' => ['<math><mtext><!DOCTYPE html></mtext></math>', 'M-07', $S];
         yield 'M-07.3 other end tag in annotation-xml' => ['<math><annotation-xml></math>', 'M-07', $S];
         yield 'M-07.4 tag in svg style' => ['<svg><style><g></g></style></svg>', 'M-07', $S];
         yield 'M-07.4 self-closing svg script' => ['<svg><script/></svg>', 'M-07', $S];
         yield 'M-07.4 plaintext in svg' => ['<svg><plaintext>', 'M-07', $S];
         yield 'M-07.4 comment in svg script' => ['<svg><script><!-- x --></script></svg>', 'M-07', $S];
+        yield 'M-07.4 tag after CDATA in svg style' => ['<svg><style><![CDATA[a{}]]><g></g></style></svg>', 'M-07', $S];
 
         // M-08
         yield 'M-08 b in select' => ['<select><b>x</b></select>', 'M-08', $S];
@@ -94,7 +97,8 @@ final class RulesTest extends TestCase
 
         // M-10
         yield 'M-10 frameset' => ['<html><frameset></frameset></html>', 'M-10', $S];
-        yield 'M-10 frameset in svg' => ['<svg><frameset/></svg>', 'M-10', $S];
+        yield 'M-10 frameset in svg (E7)' => ['<svg><frameset/></svg>', 'M-10', $S];
+        yield 'M-10 frameset in math' => ['<math><frameset></frameset></math>', 'M-10', $S];
 
         // M-11
         yield 'M-11 block in noscript' => ['<noscript><p data-rq-block="a">x</p></noscript>', 'M-11', $S];
@@ -115,7 +119,9 @@ final class RulesTest extends TestCase
         // M-12
         yield 'M-12 greater-than inside CDATA in HTML' => ['<p><![CDATA[a>b]]></p>', 'M-12', $S];
         yield 'M-12 greater-than inside CDATA in svg' => ['<svg><![CDATA[a>b]]></svg>', 'M-12', $S];
-        yield 'M-12 CDATA without greater-than' => ['<![CDATA[x', 'M-12', $S];
+        yield 'M-12 greater-than inside CDATA in svg style (E5)' => ['<svg><style><![CDATA[a>b{}]]></style></svg>', 'M-12', $S];
+        yield 'M-12 greater-than inside CDATA in desc (E5)' => ['<svg><desc><![CDATA[a>b]]></desc></svg>', 'M-12', $S];
+        yield 'M-12 CDATA to EOF in a block (E4, M-20)' => [$P . 'x<![CDATA[x', 'M-20', $S];
         yield 'M-12 CDATA with one bracket' => ['<![CDATA[x]>', 'M-12', $S];
         yield 'M-12 CDATA in block content' => [$P . '<![CDATA[>]]></p>', 'M-12', $S];
 
@@ -127,6 +133,14 @@ final class RulesTest extends TestCase
         yield 'M-13 in svg' => ['<svg><script type="rivqen-manifest"></script></svg>', 'M-13', ErrorCode::Reserved];
         yield 'M-13 first type counts' => ['<script type="rivqen-manifest" type="text/javascript"></script>', 'M-13', ErrorCode::Reserved];
         yield 'M-13 on a json block' => ['<script type="rivqen-manifest" data-rq-block="a">{}</script>', 'M-13', ErrorCode::Reserved];
+        $R = ErrorCode::Reserved;
+        yield 'M-13 in noscript (E8)' => ['<noscript><script type="application/rivqen-manifest+json">{}</script></noscript>', 'M-13', $R];
+        yield 'M-13 in noscript, case-insensitive' => ['<noscript><script type=RIVQEN-MANIFEST></script></noscript>', 'M-13', $R];
+        yield 'M-13 in noscript, character reference' => ['<noscript><script type="a&#43;b"></script></noscript>', 'M-13', $R];
+        yield 'M-13 in noscript, first type counts' => ['<noscript><script type="rivqen-manifest" type="module"></script></noscript>', 'M-13', $R];
+        yield 'M-13 in noscript after other tags' => ['<noscript><img src="x"><script>1</script><script type="rivqen-manifest"></script></noscript>', 'M-13', $R];
+        yield 'M-13 in noscript without end tag (E3)' => ['<p data-rq-block="a">x</p><noscript><script type="rivqen-manifest">', 'M-13', $R];
+        yield 'M-13 in noscript in a table cell' => ['<table><tr><td><noscript><script type="rivqen-manifest"></script></noscript></td></tr></table>', 'M-13', $R];
 
         // M-15
         yield 'M-15 empty' => ['<p data-rq-block="">x</p>', 'M-15', ErrorCode::InvalidId];
@@ -232,6 +246,28 @@ final class RulesTest extends TestCase
         yield 'M-24.i rt while rb is open' => ['<div data-rq-block="a"><ruby><rb><rt></rt></rb></ruby></div>', 'M-24', $S];
         yield 'M-24.i rp while rp is open' => ['<div data-rq-block="a"><ruby><rp><rp></rp></rp></ruby></div>', 'M-24', $S];
         yield 'M-24.i rt while rt is open' => ['<div data-rq-block="a"><ruby><rt><rt></rt></rt></ruby></div>', 'M-24', $S];
+        $D = '<div data-rq-block="a">';
+        yield 'M-24.j li in a div in li' => [$D . '<ul><li><div><li>a</li></div></li></ul></div>', 'M-24', $S];
+        yield 'M-24.j li in li' => [$D . '<ul><li>a<li>b</li></li></ul></div>', 'M-24', $S];
+        yield 'M-24.j dt in dd' => [$D . '<dl><dd><dt>a</dt></dd></dl></div>', 'M-24', $S];
+        yield 'M-24.j dd in dt' => [$D . '<dl><dt><b><dd>a</dd></b></dt></dl></div>', 'M-24', $S];
+        yield 'M-24.j li in dd' => [$D . '<dl><dd><li>a</li></dd></dl></div>', 'M-24', $S];
+        yield 'M-24.j li in li of an inner list' => [$D . '<ol><li><menu><li><p><li>a</li></p></li></menu></li></ol></div>', 'M-24', $S];
+        yield 'M-24.j li after an inner list closed' => [$D . '<ul><li><ul><li>a</li></ul><li>b</li></li></ul></div>', 'M-24', $S];
+        yield 'M-24.j dd nested in a list of the fixture' => ['<dl><dd><div data-rq-block="a"><dl><dd><dt>a</dt></dd></dl></div></dd></dl>', 'M-24', $S];
+        yield 'M-24.k div in table' => [$D . '<table><div>a</div></table></div>', 'M-24', $S];
+        yield 'M-24.k table in table' => [$D . '<table><table></table></table></div>', 'M-24', $S];
+        yield 'M-24.k span in tbody' => [$D . '<table><tbody><span>a</span></tbody></table></div>', 'M-24', $S];
+        yield 'M-24.k b in thead' => [$D . '<table><thead><b>a</b></thead></table></div>', 'M-24', $S];
+        yield 'M-24.k p in tfoot' => [$D . '<table><tfoot><p>a</p></tfoot></table></div>', 'M-24', $S];
+        yield 'M-24.k a in tr' => [$D . '<table><tr><a>a</a></tr></table></div>', 'M-24', $S];
+        yield 'M-24.k void br in tr' => [$D . '<table><tr><br></tr></table></div>', 'M-24', $S];
+        yield 'M-24.k void img in table' => [$D . '<table><img src="x"></table></div>', 'M-24', $S];
+        yield 'M-24.k input in colgroup' => [$D . '<table><colgroup><input></colgroup></table></div>', 'M-24', $S];
+        yield 'M-24.k div in a nested table in a cell' => [$D . '<table><tr><td><table><div></div></table></td></tr></table></div>', 'M-24', $S];
+        yield 'M-24.k table of the fixture' => [$D . '<table><div><table>a</table></div></table></div>', 'M-24', $S];
+        yield 'M-24.k li in table' => [$D . '<ul><li><table><li></li></table></li></ul></div>', 'M-24', $S];
+        yield 'M-24.k block cell, table in content' => ['<table><tr><td><div data-rq-block="a"><table><tr><td>a</td></tr><em>x</em></table></div></td></tr></table>', 'M-24', $S];
 
         // M-25
         yield 'M-25 trailing comma' => ['<script type="application/json" data-rq-block="a">[1,]</script>', 'M-25', ErrorCode::BadJson];
@@ -271,6 +307,7 @@ final class RulesTest extends TestCase
         yield 'M-03 CRLF' => ["<p\r\ndata-rq-block=\"a\">x\r\ny</p>", [['a', 'html', "x\r\ny"]]];
         yield 'M-03 bogus comments' => ['<!x <p data-rq-block="b">></ <p data-rq-block="c">><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-03 processing instruction' => ['<?pi <p data-rq-block="b">?><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        yield 'M-03 processing instruction to EOF is a comment (E6)' => ['<p data-rq-block="a">x</p><?php echo 1; <p data-rq-block="b">', [['a', 'html', 'x']]];
         yield 'M-03 doctype' => ['<!DOCTYPE html "<p data-rq-block=b>"><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-03 comment forms' => [
             '<!--><p data-rq-block="a">x</p><!---><!-- <p data-rq-block="c"> --!><p data-rq-block="b">y</p>',
@@ -316,6 +353,13 @@ final class RulesTest extends TestCase
         yield 'M-07 comment in svg' => ['<svg><!-- c --><g></g></svg><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-07 math' => ['<math><mi>x</mi><mo>=</mo><mn>1</mn></math><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-07 integration point at EOF' => ['<p data-rq-block="a">x</p><svg><desc>text', [['a', 'html', 'x']]];
+        $X = [['a', 'html', 'x']];
+        yield 'M-07 less-than as text in foreign text content (E1)' => ['<svg><desc>a < b</desc><style>a < b</style></svg><math><mi>1 <2</mi></math><p data-rq-block="a">x</p>', $X];
+        yield 'M-07 text element at EOF (E2)' => ['<p data-rq-block="a">x</p><svg><style>a{}', $X];
+        yield 'M-07 CDATA in svg style and script (E5)' => ['<svg><style><![CDATA[.a{fill:red}]]></style><script><![CDATA[if (a < b) {}]]></script></svg><p data-rq-block="a">x</p>', $X];
+        yield 'M-07 CDATA in integration points (E5)' => ['<svg><desc><![CDATA[a<b]]></desc><foreignObject><![CDATA[]]></foreignObject></svg><math><mi><![CDATA[x]]></mi></math><p data-rq-block="a">x</p>', $X];
+        yield 'M-07 text and CDATA sections mixed (E5)' => ['<svg><title>a<![CDATA[b]]>c<![CDATA[d]]></title></svg><p data-rq-block="a">x</p>', $X];
+        yield 'M-07 CDATA to EOF in svg style (E2, E4, E5)' => ['<p data-rq-block="a">x</p><svg><style><![CDATA[a{}', $X];
 
         // M-08
         yield 'M-08 select' => ['<select><option>a</option><optgroup><option>b</optgroup><hr><!-- c --></select><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
@@ -334,15 +378,24 @@ final class RulesTest extends TestCase
         yield 'M-11 empty noscript' => ['<noscript></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-11 self-closing noscript' => ['<noscript/></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-11 script in noscript' => ['<noscript><script>1</script></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        yield 'M-11 typed scripts in noscript' => ['<noscript><script type="text/javascript">1</script><script type="application/json">{}</script></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        yield 'M-11 manifest text in raw text of noscript content' => ['<noscript><style><script type="rivqen-manifest"></style><script>"<script type=rivqen-manifest>"</script></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        yield 'M-11 manifest type on an end tag in noscript' => ['<noscript></script type="rivqen-manifest"></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
 
         // M-12
         yield 'M-12 CDATA in svg' => ['<svg><![CDATA[a]]></svg><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-12 CDATA in block content' => ['<p data-rq-block="a"><![CDATA[x]]></p>', [['a', 'html', '<![CDATA[x]]>']]];
         yield 'M-12 CDATA in select' => ['<select><![CDATA[x]]></select>', []];
         yield 'M-12 CDATA text in raw text' => ['<style><![CDATA[a>b</style>', []];
+        yield 'M-12 CDATA without greater-than ends at EOF (E4)' => ['<p data-rq-block="a">x</p><![CDATA[x', [['a', 'html', 'x']]];
+        yield 'M-12 CDATA without greater-than in svg (E4)' => ['<p data-rq-block="a">x</p><svg><![CDATA[x]]', [['a', 'html', 'x']]];
 
         // M-13
         yield 'M-13 manifest text in a script is not a tag' => ['<script>"<script type=rivqen-manifest>"</script>', []];
+        yield 'M-13 applies only to script start tags' => [
+            '<link type="application/rivqen-manifest+json"><style type="a&amp;b"></style><noscript><link type="rivqen-manifest"></noscript><p data-rq-block="a">x</p>',
+            [['a', 'html', 'x']],
+        ];
         yield 'M-13 other type' => ['<script type="module"></script><script type="text/javascript" type="rivqen-manifest"></script>', []];
 
         // M-14
@@ -415,6 +468,19 @@ final class RulesTest extends TestCase
         yield 'M-24.d,e,f after close' => ['<div data-rq-block="a"><button>1</button><button>2</button><a>3</a><a>4</a><nobr>5</nobr><nobr>6</nobr></div>', [['a', 'html', '<button>1</button><button>2</button><a>3</a><a>4</a><nobr>5</nobr><nobr>6</nobr>']]];
         yield 'M-24.g table in content' => ['<div data-rq-block="a"><table><caption>c</caption><colgroup><col></colgroup><tbody><tr><td>1</td></tr></tbody></table></div>', [['a', 'html', '<table><caption>c</caption><colgroup><col></colgroup><tbody><tr><td>1</td></tr></tbody></table>']]];
         yield 'M-24.h,i ruby' => ['<div data-rq-block="a"><ruby>x<rb>b</rb><rt>t</rt><rp>(</rp><rtc>c</rtc></ruby></div>', [['a', 'html', '<ruby>x<rb>b</rb><rt>t</rt><rp>(</rp><rtc>c</rtc></ruby>']]];
+        yield 'M-24.j nested lists' => [
+            '<div data-rq-block="a"><ul><li>a<ul><li>b</li></ul></li><li>c</li></ul><dl><dt>t</dt><dd>d<dl><dt>u</dt><dd>e</dd></dl></dd></dl><ol><li><div><menu><li>f</li></menu></div></li></ol></div>',
+            [['a', 'html', '<ul><li>a<ul><li>b</li></ul></li><li>c</li></ul><dl><dt>t</dt><dd>d<dl><dt>u</dt><dd>e</dd></dl></dd></dl><ol><li><div><menu><li>f</li></menu></div></li></ol>']],
+        ];
+        yield 'M-24.j list items outside the content do not count' => ['<ul><li><div data-rq-block="a"><ul><li>x</li></ul></div></li></ul>', [['a', 'html', '<ul><li>x</li></ul>']]];
+        yield 'M-24.j list items in sequence after a nested list' => ['<div data-rq-block="a"><ul><li><ol><li>1</li></ol></li><li>2</li></ul></div>', [['a', 'html', '<ul><li><ol><li>1</li></ol></li><li>2</li></ul>']]];
+        yield 'M-24.k text and comments in table context' => [
+            '<div data-rq-block="a"><table>T<!-- c --><colgroup> <col></colgroup><tbody>b<tr>r<td><div>a</div><p>b</p></td></tr></tbody></table></div>',
+            [['a', 'html', '<table>T<!-- c --><colgroup> <col></colgroup><tbody>b<tr>r<td><div>a</div><p>b</p></td></tr></tbody></table>']],
+        ];
+        yield 'M-24.k elements in caption and cells' => ['<div data-rq-block="a"><table><caption><b>c</b></caption><tr><th><em>h</em></th><td><table><tr><td><i>x</i></td></tr></table></td></tr></table></div>', [['a', 'html', '<table><caption><b>c</b></caption><tr><th><em>h</em></th><td><table><tr><td><i>x</i></td></tr></table></td></tr></table>']]];
+        yield 'M-24.k elements after the table end' => ['<div data-rq-block="a"><table><tr><td>a</td></tr></table><div>b</div></div>', [['a', 'html', '<table><tr><td>a</td></tr></table><div>b</div>']]];
+        yield 'M-24.k does not apply outside content' => ['<table><div>t</div><tr><td><p data-rq-block="a">x</p></td></tr></table>', [['a', 'html', 'x']]];
         yield 'M-24 guards do not apply outside content' => ['<a><a><button><button><nobr><nobr><li><rb><rt></nobr></nobr></button></button></a></a><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
 
         // M-25

@@ -18,8 +18,8 @@ use Rivqen\Tools\RqpMarkup\TokenType;
 /**
  * Tokenizer state tests (WHATWG HTML 13.2.5). Each token is written as a
  * compact string: "S:name@start-end", "E:name@start-end", "C@start-end",
- * "D@start-end", "X@start-end" (CDATA, closed) or "X!@start-end" (not
- * closed). A self-closing start tag gets "/" after the name. EOF is not listed.
+ * "D@start-end", "X@start-end" (CDATA, M-12 holds) or "X!@start-end"
+ * (M-12 fails). A self-closing start tag gets "/" after the name. EOF is not listed.
  */
 final class TokenizerTest extends TestCase
 {
@@ -59,7 +59,7 @@ final class TokenizerTest extends TestCase
                 TokenType::EndTag => 'E:' . $t->name . $span,
                 TokenType::Comment => 'C' . $span,
                 TokenType::Doctype => 'D' . $span,
-                TokenType::Cdata => ($t->cdataClosed ? 'X' : 'X!') . $span,
+                TokenType::Cdata => ($t->cdataSameEnd ? 'X' : 'X!') . $span,
                 TokenType::Eof => 'EOF',
             };
         }, self::tokenize($html, $start));
@@ -152,7 +152,10 @@ final class TokenizerTest extends TestCase
         yield 'CDATA with greater-than inside' => ['<![CDATA[a>b]]>', ['X!@0-11']];
         yield 'CDATA greater-than right after the start' => ['<![CDATA[>', ['X!@0-10']];
         yield 'CDATA brackets overlap the start' => ['<![CDATA[]>', ['X!@0-11']];
-        yield 'CDATA at EOF' => ['<![CDATA[x', ['X!@0-10']];
+        yield 'CDATA at EOF' => ['<![CDATA[x', ['X@0-10']];
+        yield 'CDATA at EOF right after the start' => ['<![CDATA[', ['X@0-9']];
+        yield 'CDATA at EOF after brackets' => ['<![CDATA[x]]', ['X@0-12']];
+        yield 'CDATA greater-than as the last byte' => ['<![CDATA[x>', ['X!@0-11']];
         yield 'CDATA is case-sensitive' => ['<![cdata[x]]>', ['C@0-13']];
         // RCDATA (title, textarea).
         yield 'title content is text' => ['<title>a<b>c</title>', ['S:title@0-7', 'E:title@12-20']];

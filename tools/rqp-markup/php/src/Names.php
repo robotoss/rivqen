@@ -96,6 +96,17 @@ final class Names
         'h1' => true, 'h2' => true, 'h3' => true, 'h4' => true, 'h5' => true, 'h6' => true,
     ];
 
+    /** M-24 items c and j: lists. */
+    public const LIST = ['ul' => true, 'ol' => true, 'menu' => true, 'dl' => true];
+
+    /** M-24 items c and j: list items. */
+    public const LIST_ITEM = ['li' => true, 'dd' => true, 'dt' => true];
+
+    /** M-24 item k: values of F (M-09) where only TABLE_PART and `col` start tags are allowed. */
+    public const TABLE_CONTEXT = [
+        'table' => true, 'tbody' => true, 'thead' => true, 'tfoot' => true, 'tr' => true, 'colgroup' => true,
+    ];
+
     /** M-08: start tags allowed inside `select`. */
     public const SELECT_START = ['option' => true, 'optgroup' => true, 'hr' => true];
 

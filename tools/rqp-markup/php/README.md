@@ -44,7 +44,7 @@ Do these steps in this directory:
 |---|---|
 | `tests/TokenizerTest.php` | Token spans in each tokenizer state |
 | `tests/ReferenceTokenizerTest.php` | Differential test against `tests/Fuzz/ReferenceTokenizer.php`, a literal one-character-at-a-time transcription of the WHATWG states (with CR/LF preprocessing, all DOCTYPE states and the processing instruction states): exhaustive short comment bodies, dense inputs per state, 100 000 random inputs |
-| `tests/RulesTest.php` | Each rule M-01 to M-27 and each error code (error code and rule ID) |
+| `tests/RulesTest.php` | Each rule M-01 to M-27, each item of M-24 (also j and k), each edge case E1 to E8, and each error code (error code and rule ID) |
 | `tests/JsonValidatorTest.php` | RFC 8259 rules of M-25 |
 | `tests/RevisionTest.php` | Hashes and revisions of `CONTRACT.md` section 4 |
 | `tests/FixturesTest.php` | Every fixture of `fixtures/rqp/markup/` against `expected.json` |
@@ -77,7 +77,7 @@ The tokenizer follows the state descriptions of the WHATWG HTML Living Standard,
 | Bogus comment | `<!x>`, `</ x>` |
 | Processing instruction (or bogus comment for `<?`) | Ends at the first `>` |
 | DOCTYPE | Ends at the first `>` (every DOCTYPE state does, also in quoted identifiers) |
-| CDATA (M-12) | One token from `<![CDATA[` to the first `>`; a flag says if that `>` ends a `]]>` |
+| CDATA (M-12) | One token from `<![CDATA[` to the first `>`, or to EOF when there is no `>`. The flag `cdataSameEnd` says if a CDATA section and a bogus comment end at the same byte: the `>` ends a `]]>`, or there is no `>` (E4). |
 | RCDATA, RAWTEXT, script data with escape and double-escape states, PLAINTEXT, and their end tag states | Set by the parser after a start tag (M-04) |
 
 Equivalences that the code uses (each one keeps the token boundaries):
@@ -98,33 +98,47 @@ One pass over the tokens with the token stack of M-05. The stack is two lists (n
 | Count of open elements by name | Ignore an end tag without a match in O(1) (M-05 step 3); "is open" checks of M-24 |
 | Count of elements opened in the content, by name | "Opened in the content" checks of M-24 |
 | Stack of indexes of `table`, table parts and `template` | F of M-09 and M-19 |
+| Stack of indexes of the lists (`ul`, `ol`, `menu`, `dl`) and list items (`li`, `dd`, `dt`) opened in the content | M-24 item j: the top entry is a list item |
 | Index of the foreign region element | M-05 step 4, M-07 |
 | Index of a foreign INTEGRATION or TEXT element | M-07 items 3 and 4 |
 
-An end tag that matches an element pops the elements above it. Each element is pushed once and popped once, so all end tags together cost O(number of start tags). The M-11 check tokenizes the content of each `noscript` once more. The JSON validator (`src/JsonValidator.php`) is iterative and builds no value. UTF-8 validity (M-02) is one PCRE check (`preg_match('//u')`) that cannot backtrack.
+An end tag that matches an element pops the elements above it. Each element is pushed once and popped once (`array_pop()`, O(1); `array_splice()` would copy the stack for each pop), so all end tags together cost O(number of start tags). M-24 item k uses F of M-09 (the top of the table index stack). The M-11 check tokenizes the content of each `noscript` once more and applies M-13 to its start tags (E8). The JSON validator (`src/JsonValidator.php`) is iterative and builds no value. UTF-8 validity (M-02) is one PCRE check (`preg_match('//u')`) that cannot backtrack.
 
 ### Limits
 
-Measured on PHP 8.3 with 5 MiB inputs (`tests/LimitsTest.php` checks that each one is below 30 s and 256 MiB):
+Measured on PHP 8.3 with 5 MiB inputs (`tests/LimitsTest.php` checks that each one is below 30 s and 256 MiB; all inputs of that test are measured again on 2026-10-11):
 
 | Input | Time | Peak memory |
 |---|---|---|
-| 1.7 million nested `<b>` | 3.5 s | 64 MiB |
+| 1.7 million nested `<b>` | 2.6 s | 64 MiB |
 | 0.6 million nested elements with different names | 1.0 s | 108 MiB |
-| 1 million elements nested as `<table><tr><td>` groups | 2.4 s | 80 MiB |
+| 1 million elements nested as `<table><tr><td>` groups | 2.1 s | 80 MiB |
 | One end tag that pops 1 million elements | 2.3 s | 64 MiB |
-| 2.6 million attributes in one tag | 1.1 s | 5 MiB |
+| 740 000 nested `<b>`, then 740 000 `</b>` (one pop for each end tag) | 2.1 s | 32 MiB |
+| Five blocks of almost 1 MiB with 58 000 nested `<ul><li>` each (M-24 item j) | 2.3 s | 10 MiB |
+| 2.6 million attributes in one tag | 0.6 s | 5 MiB |
 
 `bin/rqp-markup` sets `memory_limit` to 512 MiB.
 
-### Choices where `markup.md` leaves room
+### Edge cases E1 to E8
+
+The human decided these cases (decisions H-21 and H-22 in the WP-17 S1 sprint record; study: `docs/engineering/protocol/markup-edge-cases.md`). The candidate implements the decided reading. The fixtures `FX-RQ-MARKUP-EDGE-*` and `tests/RulesTest.php` check each one.
+
+| Case | Input | Result |
+|---|---|---|
+| E1 | `<` as text in a foreign text element or integration point (`<svg><desc>a < b</desc>`) | Valid: the tokenizer emits no tag for it |
+| E2 | End of input in a foreign region, after all blocks | Valid |
+| E3 | `noscript` without an end tag | C of M-11 is the rest of the input; M-11 and M-13 apply to it |
+| E4 | `<![CDATA[` without `>` before EOF | Valid: the token ends at EOF and M-12 holds |
+| E5 | CDATA section in a foreign INTEGRATION or TEXT element (`<svg><style><![CDATA[a{}]]></style>`) | Valid when M-12 holds. Comments, tags and DOCTYPE stay invalid there (M-07). |
+| E6 | `<?` that reaches EOF | A comment token to EOF (invalid in foreign text content, M-07) |
+| E7 | `frameset` start tag in a foreign region | Invalid (M-10, every context) |
+| E8 | `script` start tag with a reserved `type` in `noscript` content | Invalid, `RQP_MARKUP_RESERVED` (M-13). A `script` tag that is raw text in C (for example inside `style`) is not a start tag and is not checked. |
+
+### Other choices
 
 | Case | Choice | Reason |
 |---|---|---|
-| `<![CDATA[` without a `>` before EOF (M-12) | Invalid (M-12) | Fail closed: "the first `>`" does not exist |
-| `<?` that reaches EOF | A comment token to EOF | The current WHATWG text emits no token, older parsers emit a comment. A comment is the stricter choice: every rule that accepts a comment also accepts no token. |
-| CDATA in the content of a foreign INTEGRATION or TEXT element (M-07 items 3 and 4) | Invalid | M-04 lets a tokenizer read CDATA as a bogus comment, and M-07 item 3 says "no CDATA". The same reading is used for item 4. Example: `<svg><style><![CDATA[a{}]]></style></svg>` is invalid. |
-| `frameset` start tag in a foreign region (M-10) | Invalid | M-10 says "the document" without a context |
 | `select` in M-19 | Kept, but not reachable | M-08 rejects a block start tag inside `select` first |
 
 ## Related

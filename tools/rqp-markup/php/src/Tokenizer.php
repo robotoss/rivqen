@@ -191,12 +191,15 @@ final class Tokenizer
         if ($word === '[CDATA[') {
             // In HTML content: bogus comment to the first '>'. In foreign
             // content: CDATA section to the first ']]>'. M-12 requires that
-            // both end at the same byte; cdataClosed says if they do.
+            // both end at the same byte; cdataSameEnd says if they do.
             // `]]` cannot overlap `<![CDATA[`: its last byte is `[`.
+            // Without a '>' there is no ']]>' either: both end at EOF (E4).
             $gt = strpos($in, '>', $q + 7);
-            $closed = $gt !== false && $in[$gt - 1] === ']' && $in[$gt - 2] === ']';
-            $end = $gt === false ? $this->length : $gt + 1;
-            return $this->emit(new Token(TokenType::Cdata, $lt, $end, cdataClosed: $closed));
+            if ($gt === false) {
+                return $this->emit(new Token(TokenType::Cdata, $lt, $this->length, cdataSameEnd: true));
+            }
+            $sameEnd = $in[$gt - 1] === ']' && $in[$gt - 2] === ']';
+            return $this->emit(new Token(TokenType::Cdata, $lt, $gt + 1, cdataSameEnd: $sameEnd));
         }
         // incorrectly-opened-comment: bogus comment, nothing consumed.
         return $this->bogusComment($lt, $q);

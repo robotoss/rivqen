@@ -48,6 +48,8 @@ final class LimitsTest extends TestCase
             return implode('', $parts);
         }];
         yield 'deep nesting then stray end tags' => [static fn(): string => str_repeat('<b>', 800_000) . str_repeat('</i>', 700_000)];
+        // Each end tag pops one element: every pop must cost O(1).
+        yield 'deep nesting then matching end tags' => [static fn(): string => str_repeat('<b>', 740_000) . str_repeat('</b>', 740_000)];
         yield 'one end tag crosses everything' => [static fn(): string => self::fill('<html>', '<div>', '</html>')];
         yield 'deep foreign region' => [static fn(): string => self::fill('<svg>', '<g>', '</svg>')];
         yield 'deep tables' => [static fn(): string => self::fill('', '<table><tr><td>')];
@@ -59,6 +61,17 @@ final class LimitsTest extends TestCase
         yield 'noscript content' => [static fn(): string => self::fill('<noscript>', '<img src=x>', '</noscript>')];
         yield 'less-than flood' => [static fn(): string => self::fill('', '<')];
         yield 'CDATA flood' => [static fn(): string => self::fill('<svg>', '<![CDATA[]]>', '</svg>')];
+        // M-24 item j keeps one index stack of the lists and list items in
+        // the content: five blocks of almost 1 MiB (M-26) with deep lists.
+        yield 'nested lists in block content' => [static function (): string {
+            $depth = 58_000;
+            $block = str_repeat('<ul><li>', $depth) . str_repeat('</li></ul>', $depth);
+            $html = '';
+            for ($i = 0; $i < 5; $i++) {
+                $html .= '<div data-rq-block="b' . $i . '">' . $block . '</div>';
+            }
+            return $html;
+        }];
         yield 'large json block' => [static fn(): string => '<script type="application/json" data-rq-block="j">['
             . str_repeat('1,', 500_000) . '1]</script>'];
     }

@@ -5,9 +5,13 @@
 // A quadratic step on any of these inputs takes minutes, not seconds. The time
 // limit is generous so that a slow machine does not fail the test.
 //
-// The depth limit of M-26 (256 elements on the token stack) bounds the cost of
-// one pop or one end-tag search. A step that is linear in the stack depth is
-// then at most 256 times slower, not quadratic in the input length.
+// The depth counter D of M-26 (D <= 256, H-31) bounds the token stack, and so
+// the cost of one pop or one end-tag search. A step that is linear in the
+// stack depth is then at most 256 times slower, not quadratic in the input
+// length. A crossing keeps its units in D, so a document can cross at most
+// 256 elements in total; the crossing shapes below cross once, at the limit.
+// The noscript content C has its own stack (M-11 item 5), bounded by the size
+// of C only.
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -107,16 +111,39 @@ const inputs = {
   'nested elements to the depth limit in block content': () => blocks(nest('<b>', '</b>', DEPTH - 1)),
   'nesting to the depth limit in svg closed by matching end tags': () =>
     fill('<svg>', nest('<g>', '</g>', DEPTH - 1), '</svg>'),
-  'crossable elements to the depth limit, each run closed by one end tag': () =>
-    fill('', `<div>${'<span>'.repeat(DEPTH - 1)}</div>`),
+  'one crossing of the depth limit, then unmatched end tags': () =>
+    fill(`<div>${'<span>'.repeat(DEPTH - 1)}</div>`, '</span></div>'),
   'unmatched end tags on a stack at the depth limit': () => fill('<div>'.repeat(DEPTH), '</x>'),
+  // M-26 item 3: implied parts count once for each table.
+  'table cells without rows, at the depth limit': () =>
+    fill('<div>'.repeat(DEPTH - 4) + '<table>', '<td>x</td><th>y</th>', '</table>'),
+  'tables with implied parts, popped exactly': () => fill('', '<table><td>x</td><col></table>'),
+  // M-11 item 5: one noscript content, nested to 5 MiB and closed again.
+  'noscript content nested to 5 MiB and balanced': () =>
+    nested('<em>', '</em>', '<noscript>', '</noscript>'),
+  'noscript content nested to 5 MiB, unbalanced at its end': () =>
+    fill('<noscript>', '<em>', '</noscript>'),
 };
 
-// The expected result of an input. A valid input must give its block count:
+// The expected result of each input. A valid input must give its block count:
 // if it became invalid, the pass would end early and the test would not
 // measure the stack work.
 const LIMIT = { error: ErrorCode.LIMIT };
+const VALID = { error: null, blocks: 0 };
+const STRUCTURE = { error: ErrorCode.STRUCTURE };
 const expected = new Map([
+  ['one tag with distinct attributes', VALID],
+  ['one tag with repeated data-rq-block attributes', STRUCTURE], // no block end tag (M-20)
+  ['unmatched end tags', VALID],
+  ['a comment with many dashes and bangs', VALID],
+  ['script data with escape openers', VALID],
+  ['RCDATA with near end tags', VALID],
+  ['many noscript elements', VALID],
+  ['JSON blocks of 1 MiB', { error: null, blocks: 4 }],
+  ['html blocks of 1 MiB', { error: null, blocks: 4 }],
+  ['svg with many elements', VALID],
+  ['table rows with cells', VALID],
+  ['many CDATA sections', VALID],
   ['deep nesting', LIMIT],
   ['deep nesting of crossable elements, then one end tag', LIMIT],
   ['deep nesting closed by matching end tags, beyond the depth limit', LIMIT],
@@ -130,8 +157,12 @@ const expected = new Map([
   ['nested lists to the depth limit in block content', { error: null, blocks: 5 }],
   ['nested elements to the depth limit in block content', { error: null, blocks: 5 }],
   ['nesting to the depth limit in svg closed by matching end tags', { error: null, blocks: 0 }],
-  ['crossable elements to the depth limit, each run closed by one end tag', { error: null, blocks: 0 }],
-  ['unmatched end tags on a stack at the depth limit', { error: null, blocks: 0 }],
+  ['one crossing of the depth limit, then unmatched end tags', VALID],
+  ['unmatched end tags on a stack at the depth limit', VALID],
+  ['table cells without rows, at the depth limit', VALID],
+  ['tables with implied parts, popped exactly', VALID],
+  ['noscript content nested to 5 MiB and balanced', VALID],
+  ['noscript content nested to 5 MiB, unbalanced at its end', STRUCTURE],
 ]);
 
 describe('[perf] linear time at 5 MiB', () => {
@@ -145,10 +176,9 @@ describe('[perf] linear time at 5 MiB', () => {
       t.diagnostic(`${Math.round(ms)} ms, ${result.valid ? 'valid' : result.error}`);
       assert.ok(ms < LIMIT_MS, `${Math.round(ms)} ms`);
       const want = expected.get(name);
-      if (want !== undefined) {
-        assert.equal(result.error, want.error);
-        if (want.blocks !== undefined) assert.equal(result.blocks.length, want.blocks);
-      }
+      assert.ok(want !== undefined, 'every input has an expected result');
+      assert.equal(result.error, want.error);
+      if (want.blocks !== undefined) assert.equal(result.blocks.length, want.blocks);
     });
   }
 });

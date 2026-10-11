@@ -7,8 +7,9 @@
 // One pass over the tokens of src/tokenizer.mjs with the token stack of M-05.
 // Validity is decided on tokens only (DL-008). The first rule violation ends the
 // pass. Time is linear in the input length: every stack entry is pushed and
-// popped once, and each check is a constant number of map lookups. The token
-// stack has at most LIMITS.maxOpenElements entries (M-26).
+// popped once, and each check is a constant number of map lookups. Every entry
+// of the token stack holds at least one unit of the depth counter D, and
+// D <= LIMITS.maxOpenElements (M-26), so the stack has at most 256 entries.
 
 import { createHash } from 'node:crypto';
 import { isUtf8 } from 'node:buffer';
@@ -19,6 +20,7 @@ import {
   BLOCK_HTML,
   BREAKOUT,
   FORBIDDEN_CONTENT,
+  FORMATTING,
   GUARDED,
   HEADINGS,
   INTEGRATION,
@@ -28,6 +30,8 @@ import {
   PCLOSE,
   SELECT_END,
   SELECT_START,
+  SPECIAL,
+  STRAY_TABLE_END,
   TABLE_CONTEXT,
   TABLE_FAMILY,
   TABLE_PARENTS,
@@ -35,6 +39,7 @@ import {
   TEXT,
   TEXT_MODE,
   VOID,
+  internName,
 } from './names.mjs';
 
 /** Limits of M-01 and M-26 (docs/engineering/core/resource-limits.md). */
@@ -42,7 +47,7 @@ export const LIMITS = Object.freeze({
   maxDocumentBytes: 5 * 1024 * 1024,
   maxBlocks: 256,
   maxBlockBytes: 1024 * 1024,
-  maxOpenElements: 256, // token stack depth (H-25)
+  maxOpenElements: 256, // the largest value of the depth counter D (H-31)
 });
 
 /** Error codes of CONTRACT.md section 5. */
@@ -63,6 +68,31 @@ const JSON_TYPE = Buffer.from('application/json', 'latin1');
 const MANIFEST_MARK = 'rivqen-manifest';
 const NOSCRIPT_END = Buffer.from('</noscript>', 'latin1');
 const AMPERSAND = 0x26;
+const NON_ASCII = 0x80;
+
+// State bits of a token-stack entry.
+const DIRTY = 1; // M-26 item 5
+const MARKED = 2; // M-06 item 4: special-crossed mark
+const ROW_GROUP = 4; // M-26 item 3: implied parts of F
+const ROW = 8;
+const COLUMN_GROUP = 16;
+
+/** M-26 item 3: implied parts that a start tag in HTML context gives to F. */
+function impliedParts(name, f) {
+  if (f === 'table') {
+    if (name === 'tr') return ROW_GROUP;
+    if (name === 'td' || name === 'th') return ROW_GROUP | ROW;
+    if (name === 'col') return COLUMN_GROUP;
+    return 0;
+  }
+  if ((name === 'td' || name === 'th') && (f === 'tbody' || f === 'thead' || f === 'tfoot')) return ROW;
+  return 0;
+}
+
+/** Number of implied parts in the state bits of an entry. */
+function partCount(state) {
+  return ((state & ROW_GROUP) >> 2) + ((state & ROW) >> 3) + ((state & COLUMN_GROUP) >> 4);
+}
 
 /** The invalid result object (CONTRACT.md section 3). */
 export function invalid(code) {
@@ -81,9 +111,12 @@ function isValidId(b, span) {
   return true;
 }
 
-// M-13: the raw type value contains '&' or "rivqen-manifest" (ASCII case-insensitive).
+// M-13: the raw type value contains '&' (item 2), a byte >= 0x80 (item 3,
+// decision H-28) or "rivqen-manifest" in ASCII case-insensitive form (item 1).
 function isReservedType(b, span) {
-  if (b.subarray(span.start, span.end).includes(AMPERSAND)) return true;
+  for (let i = span.start; i < span.end; i++) {
+    if (b[i] === AMPERSAND || b[i] >= NON_ASCII) return true;
+  }
   for (let i = span.start; i + MANIFEST_MARK.length <= span.end; i++) {
     if (matchesLower(b, i, MANIFEST_MARK)) return true;
   }
@@ -105,8 +138,12 @@ function increment(map, key) {
   map.set(key, (map.get(key) ?? 0) + 1);
 }
 
+// A count that becomes 0 is removed, so a map has at most one key for each
+// element on the token stack.
 function decrement(map, key) {
-  map.set(key, (map.get(key) ?? 0) - 1);
+  const count = (map.get(key) ?? 0) - 1;
+  if (count > 0) map.set(key, count);
+  else map.delete(key);
 }
 
 /**
@@ -115,21 +152,33 @@ function decrement(map, key) {
  *
  * M-13 also applies to the start tags of C (decision H-22, edge case E8): a
  * reader with scripting disabled parses C as markup and would see a manifest.
+ * C must be balanced (item 5, decision H-27): a separate stack of names, with
+ * one entry for each element of C that M-05 item 1 would push. Its size is
+ * bounded by the size of C; it is not part of the depth counter D (M-26 item 7).
  */
 export function checkNoscript(content) {
   const b = Buffer.concat([content, NOSCRIPT_END]);
   const tok = new Tokenizer(b);
+  const open = [];
   for (;;) {
     const t = tok.next();
     if (t.type === TokenType.START_TAG) {
-      if (t.name === 'script' && t.typeAttr !== null && isReservedType(b, t.typeAttr)) {
-        return ErrorCode.RESERVED; // M-13 in C (E8)
+      const name = internName(t.name);
+      if (name === 'script' && t.typeAttr !== null && isReservedType(b, t.typeAttr)) {
+        return ErrorCode.RESERVED; // item 4: M-13 in C (E8, H-28)
       }
-      if (t.blockAttr !== null || NOSCRIPT_FORBIDDEN.has(t.name)) return STRUCTURE;
-      const mode = TEXT_MODE.get(t.name);
-      if (mode !== undefined) tok.switchTo(mode, t.name);
+      if (t.blockAttr !== null || NOSCRIPT_FORBIDDEN.has(name)) return STRUCTURE; // items 2, 3
+      // Item 5. svg and math are forbidden (item 3), so only VOID is not pushed.
+      if (!VOID.has(name)) open.push(name);
+      const mode = TEXT_MODE.get(name);
+      if (mode !== undefined) tok.switchTo(mode, name);
     } else if (t.type === TokenType.END_TAG) {
-      if (t.name === 'noscript') return t.start === content.length ? null : STRUCTURE;
+      if (t.name === 'noscript') {
+        // Item 1, and item 5: no element of C is open at its end.
+        return t.start === content.length && open.length === 0 ? null : STRUCTURE;
+      }
+      if (open.at(-1) !== t.name) return STRUCTURE; // item 5: crossing or stray end tag
+      open.pop();
     } else if (t.type === TokenType.EOF) {
       return STRUCTURE;
     }
@@ -146,8 +195,10 @@ class Scanner {
     // Token stack (M-05), one entry per index in each array.
     this.names = [];
     this.inHtml = []; // pushed in HTML context
-    this.family = []; // nearest TABLE_FAMILY name at or below the entry, null after template (M-09)
+    this.family = []; // index of the nearest TABLE_FAMILY entry at or below the entry, -1 for none or after template (M-09)
     this.listMark = []; // nearest LISTS or LIST_ITEMS name at or below the entry (M-24 j)
+    this.state = []; // DIRTY, MARKED and implied-part bits (M-06 item 4, M-26)
+    this.depth = 0; // the depth counter D of M-26
     this.byName = new Map(); // name -> stack indices, for the nearest match of an end tag
     this.htmlOpen = new Map(); // name -> count of open elements pushed in HTML context
     this.contentOpen = new Map(); // name -> count of open elements opened in the block content
@@ -167,9 +218,11 @@ class Scanner {
       let error;
       switch (t.type) {
         case TokenType.START_TAG:
+          t.name = internName(t.name);
           error = this.startTag(t);
           break;
         case TokenType.END_TAG:
+          t.name = internName(t.name);
           error = this.endTag(t);
           break;
         case TokenType.COMMENT:
@@ -187,11 +240,11 @@ class Scanner {
   }
 
   isOpen(name) {
-    return (this.htmlOpen.get(name) ?? 0) > 0;
+    return this.htmlOpen.has(name);
   }
 
   isOpenInContent(name) {
-    return (this.contentOpen.get(name) ?? 0) > 0;
+    return this.contentOpen.has(name);
   }
 
   // M-08. Only a select pushed in HTML context counts. While it is open, no
@@ -201,22 +254,36 @@ class Scanner {
     return this.isOpen('select');
   }
 
-  // F of M-09 and M-19.
-  currentFamily() {
+  // Index of F of M-09 and M-19, or -1.
+  familyIndex() {
     const n = this.family.length;
-    return n === 0 ? null : this.family[n - 1];
+    return n === 0 ? -1 : this.family[n - 1];
   }
 
-  // M-26: a push that makes the stack larger than maxOpenElements is an error.
-  // The check comes first, so a rejected push changes no state. Elements that
-  // M-05 does not push never come here, so they do not count.
+  // Name of F of M-09 and M-19, or null.
+  currentFamily() {
+    const f = this.familyIndex();
+    return f < 0 ? null : this.names[f];
+  }
+
+  // M-26: add n units to D. A step that makes D larger than the limit is an
+  // error. The check comes first, so a rejected step changes no state.
+  addDepth(n) {
+    if (this.depth + n > LIMITS.maxOpenElements) return ErrorCode.LIMIT;
+    this.depth += n;
+    return null;
+  }
+
+  // M-05 push and M-26 item 2. Elements that M-05 does not push never come here.
   push(name, inHtml) {
+    const error = this.addDepth(1);
+    if (error !== null) return error;
     const i = this.names.length;
-    if (i >= LIMITS.maxOpenElements) return ErrorCode.LIMIT;
+    const below = this.familyIndex();
     this.names.push(name);
     this.inHtml.push(inHtml);
-    const below = this.currentFamily();
-    this.family.push(inHtml && TABLE_FAMILY.has(name) ? name : name === 'template' ? null : below);
+    this.state.push(0);
+    this.family.push(inHtml && TABLE_FAMILY.has(name) ? i : name === 'template' ? -1 : below);
     // M-24 j. The entry can come from outside the block content: j is checked
     // only after c, which needs a list opened in the content, so the nearest
     // entry from the top is then always an element opened in the content.
@@ -238,7 +305,10 @@ class Scanner {
     const inHtml = this.inHtml.pop();
     this.family.pop();
     this.listMark.pop();
-    this.byName.get(name).pop();
+    this.state.pop();
+    const list = this.byName.get(name);
+    list.pop();
+    if (list.length === 0) this.byName.delete(name);
     if (inHtml) decrement(this.htmlOpen, name);
     if (this.block !== null && i > this.block.index) decrement(this.contentOpen, name);
     if (i === this.region) this.region = -1;
@@ -246,7 +316,7 @@ class Scanner {
 
   nearest(name) {
     const list = this.byName.get(name);
-    return list === undefined || list.length === 0 ? -1 : list[list.length - 1];
+    return list === undefined ? -1 : list[list.length - 1];
   }
 
   startTag(t) {
@@ -300,17 +370,25 @@ class Scanner {
     return null;
   }
 
-  // M-05 rule 1, M-04, M-09, and M-22 to M-24 in block content.
+  // M-05 rule 1, M-04, M-09, M-26 item 3, and M-22 to M-24 in block content.
   htmlStart(t) {
     const name = t.name;
     if (this.block !== null) {
       const error = this.contentStart(t);
       if (error !== null) return error;
     }
-    const parents = TABLE_PARENTS.get(name);
-    if (parents !== undefined) {
-      const f = this.currentFamily();
-      if (f !== null && !parents.has(f)) return STRUCTURE; // M-09
+    const f = this.familyIndex();
+    if (f >= 0) {
+      const fName = this.names[f];
+      const parents = TABLE_PARENTS.get(name);
+      if (parents !== undefined && !parents.has(fName)) return STRUCTURE; // M-09
+      // M-26 item 3: each implied part counts once for each F.
+      const parts = impliedParts(name, fName) & ~this.state[f];
+      if (parts !== 0) {
+        const error = this.addDepth(partCount(parts));
+        if (error !== null) return error;
+        this.state[f] |= parts;
+      }
     }
     const foreignRoot = name === 'svg' || name === 'math';
     if (!(foreignRoot && t.selfClosing) && !VOID.has(name)) {
@@ -390,21 +468,47 @@ class Scanner {
       this.charsOnly = null;
     }
     if (this.inSelect() && !SELECT_END.has(name)) return STRUCTURE; // M-08
-    const foreign = this.region >= 0;
     if (this.block !== null) return this.contentEnd(t);
     const idx = this.nearest(name);
-    if (foreign) {
+    if (this.region >= 0) {
       if (idx < this.region) return STRUCTURE; // M-07 rule 2: stray end tag
-    } else {
-      if (idx < 0) return null; // M-05 rule 3: no match, ignored
-      for (let i = this.names.length - 1; i > idx; i--) {
-        const crossed = this.names[i];
-        if (this.inHtml[i] && GUARDED.has(crossed) && !(TABLE_FAMILY.has(name) && TABLE_PART.has(crossed))) {
-          return STRUCTURE; // M-06
-        }
-      }
+    } else if (idx < 0) {
+      // M-06 item 3 (H-30); other end tags without a match are ignored (M-05 rule 3).
+      return STRAY_TABLE_END.has(name) ? STRUCTURE : null;
     }
+    return this.close(idx, name);
+  }
+
+  // M-05 rule 3 for the matching entry idx: M-06 items 1, 2 and 4, then the
+  // pops, then the change of D (M-26 items 4 and 5) and of the marks (M-06
+  // item 4). The loop visits only the entries that the end tag pops.
+  close(idx, name) {
+    const top = this.names.length - 1;
+    const formatting = FORMATTING.has(name);
+    const tableEnd = TABLE_FAMILY.has(name);
+    let crossesSpecial = false;
+    let marked = (this.state[idx] & MARKED) !== 0;
+    for (let i = top; i > idx; i--) {
+      const crossed = this.names[i];
+      const html = this.inHtml[i];
+      if (html && GUARDED.has(crossed) && !(tableEnd && TABLE_PART.has(crossed))) {
+        return STRUCTURE; // M-06 item 1
+      }
+      // M-06 item 2: a special element pushed in HTML context, or any element
+      // pushed in a foreign region.
+      if (!html || SPECIAL.has(crossed)) crossesSpecial = true;
+      if ((this.state[i] & MARKED) !== 0) marked = true;
+    }
+    if (formatting && (crossesSpecial || marked)) return STRUCTURE; // M-06 items 2 and 4
+    const state = this.state[idx];
+    const exact = idx === top && (state & DIRTY) === 0 && name !== 'html' && name !== 'body';
+    if (exact) this.depth -= 1 + partCount(state); // M-26 item 4
     while (this.names.length > idx) this.pop();
+    const current = this.names.length - 1;
+    if (current >= 0) {
+      if (!exact) this.state[current] |= DIRTY; // M-26 item 5
+      if (crossesSpecial || marked) this.state[current] |= MARKED; // M-06 item 4
+    }
     return null;
   }
 
@@ -414,22 +518,19 @@ class Scanner {
   // M-22 rule 4: a void element is never on the stack, so its end tag never
   // matches. A title or json block has no tags in its content (RCDATA, script
   // data), so its appropriate end tag has the name of the block element, which
-  // is the current node.
+  // is the current node. A stray table end tag (M-06 item 3) never matches.
   contentEnd(t) {
     const top = this.names.length - 1;
     if (this.names[top] !== t.name) return STRUCTURE; // M-23
-    if (top !== this.block.index) {
-      this.pop();
-      return null;
+    if (top === this.block.index) {
+      const { id, format, start } = this.block;
+      const end = t.start; // the '<' of the block end tag (M-20)
+      if (end - start > LIMITS.maxBlockBytes) return ErrorCode.LIMIT; // M-26
+      if (format === 'json' && !isJsonText(this.b, start, end)) return ErrorCode.BAD_JSON; // M-25
+      this.blocks.push({ id, format, start, end });
+      this.block = null;
     }
-    const { id, format, start } = this.block;
-    const end = t.start; // the '<' of the block end tag (M-20)
-    if (end - start > LIMITS.maxBlockBytes) return ErrorCode.LIMIT; // M-26
-    if (format === 'json' && !isJsonText(this.b, start, end)) return ErrorCode.BAD_JSON; // M-25
-    this.blocks.push({ id, format, start, end });
-    this.block = null;
-    this.pop();
-    return null;
+    return this.close(top, t.name);
   }
 
   comment(t) {

@@ -861,12 +861,10 @@ describe('M-26 token stack depth (H-25)', () => {
     assert.equal(errorOf(`<svg>${nest('g', MAX - 1, '<path/><circle/>')}</svg>`), null);
   });
 
-  it('frees the depth when elements are popped', () => {
+  it('frees the depth when an end tag pops exactly the current node', () => {
     const full = nest('b', MAX);
     assert.equal(errorOf(full + full + full), null);
-    // An end tag that closes many elements at once (M-05 rule 3) frees all of them.
-    assert.equal(errorOf(`<div>${open('span', MAX - 1)}</div>`.repeat(3)), null);
-    // The end of a foreign region frees its elements.
+    // Exact pops in a foreign region free their units too.
     assert.equal(errorOf(`<svg>${nest('g', MAX - 1)}</svg>`.repeat(3) + nest('b', MAX)), null);
   });
 
@@ -875,9 +873,121 @@ describe('M-26 token stack depth (H-25)', () => {
     assert.equal(run(block('a') + block('b')).blocks.length, 2);
   });
 
-  it('does not apply to the noscript content of M-11 (no token stack)', () => {
+  it('does not count the tags of the noscript content (M-26 item 7)', () => {
     // In the main pass the content is raw text: only the noscript element is pushed.
     assert.equal(errorOf(`<noscript>${nest('b', MAX + 10)}</noscript>`), null);
+  });
+
+  it('counts the noscript element', () => {
+    assert.equal(errorOf(nest('div', MAX - 1, '<noscript><b>x</b></noscript>')), null);
+    assert.equal(errorOf(nest('div', MAX, '<noscript><b>x</b></noscript>')), LIMIT);
+  });
+});
+
+describe('M-26 depth counter D (H-31)', () => {
+  const MAX = 256; // markup.md M-26, independent of LIMITS
+  const nest = (name, n, inner = '') => `<${name}>`.repeat(n) + inner + `</${name}>`.repeat(n);
+  const deep = (n, inner) => nest('div', n, inner);
+
+  it('keeps the units of the elements that a crossing pops', () => {
+    // <div> and 255 <span>: D = 256. </div> crosses them and gives nothing back.
+    const crossing = `<div>${'<span>'.repeat(MAX - 1)}</div>`;
+    assert.equal(errorOf(`${crossing}text`), null); // no push after the crossing
+    assert.equal(errorOf(`${crossing}<b>x</b>`), LIMIT);
+    assert.equal(errorOf(`${crossing}<br>`), null); // a void element is not pushed
+  });
+
+  it('adds 2 for each <span><div></span> (the review repro)', () => {
+    assert.equal(errorOf('<span><div></span>'.repeat(128)), null);
+    assert.equal(errorOf(`${'<span><div></span>'.repeat(128)}<b>`), LIMIT);
+    assert.equal(errorOf(`${'<span><div></span>'.repeat(300)}${DIV('x')}`), LIMIT);
+  });
+
+  it('makes the new current node dirty after a crossing, so its exact pop gives nothing back', () => {
+    const unit = '<span><span><div></span></span>'; // adds 3
+    assert.equal(errorOf(unit.repeat(85) + DIV('a')), null); // 255 + 1
+    assert.equal(errorOf(unit.repeat(86) + DIV('a')), LIMIT);
+  });
+
+  it('passes the dirty mark down when a dirty element is popped', () => {
+    // Adds 4: </label> pops a dirty label, then q is dirty.
+    const unit = '<q><label><span><div></span></label></q>';
+    assert.equal(errorOf(unit.repeat(64)), null);
+    assert.equal(errorOf(`${unit.repeat(64)}<p>`), LIMIT);
+  });
+
+  it('gives back the units of elements pushed above a dirty element', () => {
+    // The dirty mark is on the entry: b elements pushed after it pop exactly.
+    const dirty = `${'<div>'.repeat(MAX - 3)}<span><p></span>`; // D = 255, the last div is dirty
+    assert.equal(errorOf(`${dirty}${'<b>x</b>'.repeat(300)}`), null);
+    assert.equal(errorOf(`${dirty}<b><i>`), LIMIT);
+  });
+
+  it('never gives back the units of html and body', () => {
+    assert.equal(errorOf('<body></body>'.repeat(MAX)), null);
+    assert.equal(errorOf('<body></body>'.repeat(MAX + 1)), LIMIT);
+    assert.equal(errorOf('<html></html>'.repeat(MAX + 1)), LIMIT);
+    assert.equal(errorOf('<head></head>'.repeat(MAX + 1)), null);
+  });
+
+  it('makes the element below a popped body dirty', () => {
+    // </body> makes the b dirty, so </b> gives nothing back: 2 units for each.
+    assert.equal(errorOf('<b><body></body></b>'.repeat(128)), null);
+    assert.equal(errorOf('<b><body></body></b>'.repeat(129)), LIMIT);
+  });
+
+  it('counts the implied row group and row of a cell in a table once for each table', () => {
+    // table, row group, row and td: 4 units.
+    assert.equal(errorOf(deep(MAX - 4, `<table>${'<td>x</td>'.repeat(300)}</table>`)), null);
+    assert.equal(errorOf(deep(MAX - 3, '<table><td>x</td></table>')), LIMIT);
+    assert.equal(errorOf(deep(MAX - 4, '<table><th>x</th></table>')), null);
+    assert.equal(errorOf(deep(MAX - 3, '<table><th>x</th></table>')), LIMIT);
+  });
+
+  it('counts the implied row group of a row in a table', () => {
+    assert.equal(errorOf(deep(MAX - 3, `<table>${'<tr></tr>'.repeat(300)}</table>`)), null);
+    assert.equal(errorOf(deep(MAX - 2, '<table><tr></tr></table>')), LIMIT);
+  });
+
+  it('counts the implied row of a cell in a row group', () => {
+    for (const group of ['tbody', 'thead', 'tfoot']) {
+      const table = `<table><${group}>${'<td>x</td>'.repeat(3)}</${group}></table>`;
+      assert.equal(errorOf(deep(MAX - 4, table)), null, group);
+      assert.equal(errorOf(deep(MAX - 3, table)), LIMIT, group);
+    }
+  });
+
+  it('counts no implied part for a cell in a row and for a row in a row group', () => {
+    assert.equal(errorOf(deep(MAX - 4, '<table><tbody><tr><td>x</td></tr></tbody></table>')), null);
+    assert.equal(errorOf(deep(MAX - 3, '<table><tbody><tr></tr></tbody></table>')), null);
+  });
+
+  it('counts the implied column group of a col in a table, although col is not pushed', () => {
+    assert.equal(errorOf(deep(MAX - 2, '<table><col><col></table>')), null);
+    assert.equal(errorOf(deep(MAX - 1, '<table><col></table>')), LIMIT);
+    // In an explicit colgroup a col implies nothing.
+    assert.equal(errorOf(deep(MAX - 2, '<table><colgroup><col><col></colgroup></table>')), null);
+  });
+
+  it('gives the implied parts back when the table is popped exactly', () => {
+    const table = '<table><td>x</td><col></table>'; // 5 units while open
+    assert.equal(errorOf(deep(MAX - 5, table.repeat(100))), null);
+  });
+
+  it('keeps the units of a table that a crossing closes', () => {
+    const unit = '<table><td>x</table>'; // </table> crosses the td: 4 units stay
+    assert.equal(errorOf(unit.repeat(64)), null);
+    assert.equal(errorOf(`${unit.repeat(64)}<b>`), LIMIT);
+  });
+
+  it('counts implied parts in block content', () => {
+    const content = '<table><td>x</td></table>';
+    assert.equal(errorOf(deep(MAX - 5, DIV('a', content))), null);
+    assert.equal(errorOf(deep(MAX - 4, DIV('a', content))), LIMIT);
+  });
+
+  it('does not change D for an end tag that matches nothing', () => {
+    assert.equal(errorOf(deep(MAX, '</span></b></x>')), null);
   });
 });
 

@@ -7,13 +7,14 @@
 //! The pass returns at the first rule that fails. Each token costs O(1)
 //! amortized work: the nearest element with a name is found through the
 //! per-name pointer of [`NameTable`], and every element is popped at most
-//! once.
+//! once. The token stack never has more than [`MAX_OPEN_ELEMENTS`] elements
+//! (M-26): every push goes through `Pass::push`, which checks the depth.
 
 use std::collections::HashSet;
 
 use crate::names::{Known, NameId, NameTable, RawKind, flag, raw_kind};
 use crate::tokenizer::{Span, Tag, Token, Tokenizer};
-use crate::{ErrorCode, Format, MAX_BLOCK_BYTES, MAX_BLOCKS, MarkupError, json};
+use crate::{ErrorCode, Format, MAX_BLOCK_BYTES, MAX_BLOCKS, MAX_OPEN_ELEMENTS, MarkupError, json};
 
 /// A block found by the pass.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -111,7 +112,7 @@ pub(crate) fn run(input: &[u8], start: usize) -> Result<Vec<RawBlock>, MarkupErr
     let mut pass = Pass {
         input,
         names: NameTable::new(),
-        stack: Vec::new(),
+        stack: Vec::with_capacity(MAX_OPEN_ELEMENTS),
         table_marks: Vec::new(),
         foreign_root: None,
         text_only: None,
@@ -182,8 +183,15 @@ impl<'a> Pass<'a> {
         }
     }
 
-    fn push(&mut self, name: NameId, html: bool) -> usize {
+    /// M-05 push. M-26 (depth, H-25): a push that makes the stack larger
+    /// than [`MAX_OPEN_ELEMENTS`] elements fails. This is the only place
+    /// that pushes, so the limit holds in HTML context, in a foreign region,
+    /// for a block element and in block content.
+    fn push(&mut self, name: NameId, html: bool) -> Result<usize, MarkupError> {
         let index = self.stack.len();
+        if index >= MAX_OPEN_ELEMENTS {
+            return Err(MarkupError::new(ErrorCode::Limit, "M-26"));
+        }
         let prev_same = self.names.replace_top(name, Some(index));
         self.stack.push(Elem {
             name,
@@ -193,7 +201,7 @@ impl<'a> Pass<'a> {
         if html && self.names.has(name, flag::TABLE_FAMILY | flag::TEMPLATE) {
             self.table_marks.push(index);
         }
-        index
+        Ok(index)
     }
 
     fn pop(&mut self) -> Option<Elem> {
@@ -273,7 +281,7 @@ impl<'a> Pass<'a> {
         if foreign {
             // M-05 step 2.
             if !tag.self_closing {
-                self.push(name, false);
+                self.push(name, false)?;
                 if self.names.has(name, flag::INTEGRATION | flag::TEXT) {
                     self.text_only = Some(name);
                 }
@@ -287,7 +295,7 @@ impl<'a> Pass<'a> {
         if (is_root && tag.self_closing) || self.names.has(name, flag::VOID) {
             return Ok(None);
         }
-        let index = self.push(name, true);
+        let index = self.push(name, true)?;
         if is_root {
             self.foreign_root = Some(index);
         }
@@ -319,7 +327,8 @@ impl<'a> Pass<'a> {
     }
 
     /// M-15, M-16, M-18, M-19, M-21 and the block count of M-26 for a block
-    /// start tag outside block content.
+    /// start tag outside block content. The push of the block element then
+    /// checks the depth of M-26.
     fn block_start(
         &mut self,
         tag: &Tag,
@@ -370,7 +379,7 @@ impl<'a> Pass<'a> {
         if self.blocks.len() >= MAX_BLOCKS {
             return Err(MarkupError::new(ErrorCode::Limit, "M-26"));
         }
-        let elem = self.push(name, true);
+        let elem = self.push(name, true)?;
         self.block = Some(OpenBlock {
             id: attr,
             format,

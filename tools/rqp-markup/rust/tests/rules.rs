@@ -15,7 +15,8 @@
 )]
 
 use rqp_markup::{
-    Document, ErrorCode, Format, MAX_BLOCK_BYTES, MAX_INPUT_BYTES, MarkupError, analyze,
+    Document, ErrorCode, Format, MAX_BLOCK_BYTES, MAX_INPUT_BYTES, MAX_OPEN_ELEMENTS, MarkupError,
+    analyze,
 };
 
 const HEAD: &str = "<!DOCTYPE html>\n<html><head><title>T</title></head><body>\n";
@@ -1091,6 +1092,209 @@ fn m26_block_size() {
     assert_invalid(&json, ErrorCode::Limit, "M-26");
 }
 
+// M-26 depth (H-25). These inputs do not use `page()`: its `html` and `body`
+// elements stay on the token stack and would change the counts.
+
+const LIMIT: (ErrorCode, &str) = (ErrorCode::Limit, "M-26");
+
+fn depth_valid(input: &str) {
+    if let Err(e) = analyze(input.as_bytes()) {
+        panic!("{} bytes: expected valid, got {e}", input.len());
+    }
+}
+
+fn depth_limit(input: &str) {
+    assert_eq!(error_of(input.as_bytes()), LIMIT, "{} bytes", input.len());
+}
+
+#[test]
+fn m26_depth_in_html_context_outside_blocks() {
+    // A push that makes the stack larger than 256 elements fails.
+    depth_valid(&"<div>".repeat(256));
+    depth_limit(&"<div>".repeat(257));
+    // Every name counts, also elements that end tags close later and raw
+    // text elements (M-04).
+    depth_limit(&format!("{}{}", "<b>".repeat(257), "</b>".repeat(257)));
+    depth_valid(&format!("{}<title>x</title>", "<b>".repeat(255)));
+    depth_limit(&format!("{}<title>x</title>", "<b>".repeat(256)));
+    depth_limit(&format!("{}<noscript></noscript>", "<b>".repeat(256)));
+    // A self-closing flag on a name that is not void has no effect: the
+    // element is pushed (M-05 item 1).
+    depth_valid(&format!("{}<span/>", "<div>".repeat(255)));
+    depth_limit(&format!("{}<span/>", "<div>".repeat(256)));
+}
+
+#[test]
+fn m26_depth_of_a_block_element() {
+    // FX-RQ-MARKUP-LIMIT-DEPTH-256 and -257: the block element is the 256th
+    // or the 257th element.
+    let block = |n: usize| {
+        format!(
+            "{}<div data-rq-block=\"deep\">x</div>{}",
+            "<div>".repeat(n),
+            "</div>".repeat(n)
+        )
+    };
+    let input = block(255);
+    assert_eq!(blocks_of(input.as_bytes()), vec![html("deep", "x")]);
+    depth_limit(&block(256));
+}
+
+#[test]
+fn m26_depth_in_block_content() {
+    // The block element and 255 elements in the content: 256 elements.
+    let content = |open: &str, close: &str, n: usize| {
+        format!(
+            "<div data-rq-block=\"c\">{}{}</div>",
+            open.repeat(n),
+            close.repeat(n)
+        )
+    };
+    let input = content("<b>", "</b>", 255);
+    assert_eq!(blocks_of(input.as_bytes()).len(), 1);
+    depth_limit(&content("<b>", "</b>", 256));
+    // Elements around the block count too.
+    let around = format!(
+        "{}{}{}",
+        "<section>".repeat(100),
+        content("<b>", "</b>", 155),
+        "</section>".repeat(100)
+    );
+    assert_eq!(blocks_of(around.as_bytes()).len(), 1);
+    let around = format!("{}{}", "<section>".repeat(100), content("<b>", "</b>", 156));
+    depth_limit(&around);
+    // Lists in the content: the block element and 127 `ul` + `li` pairs are
+    // 255 elements; the `li` of the 128th pair is the 257th element.
+    let input = content("<ul><li>", "</li></ul>", 127);
+    assert_eq!(blocks_of(input.as_bytes()).len(), 1);
+    depth_limit(&format!(
+        "<div data-rq-block=\"c\">{}",
+        "<ul><li>".repeat(128)
+    ));
+}
+
+#[test]
+fn m26_depth_in_a_foreign_region() {
+    // FX-RQ-MARKUP-LIMIT-DEPTH-FOREIGN: `svg` and 255 or 256 `g` elements.
+    depth_valid(&format!("<svg>{}", "<g>".repeat(255)));
+    depth_limit(&format!("<svg>{}", "<g>".repeat(256)));
+    depth_limit(&format!("<math>{}", "<mrow>".repeat(256)));
+    // HTML elements before the region count.
+    depth_valid(&format!("{}<svg>{}", "<div>".repeat(200), "<g>".repeat(55)));
+    depth_limit(&format!("{}<svg>{}", "<div>".repeat(200), "<g>".repeat(56)));
+    // The `svg` element itself is the 257th element.
+    depth_limit(&format!("{}<svg>", "<div>".repeat(256)));
+}
+
+#[test]
+fn m26_elements_that_are_not_pushed_do_not_count() {
+    // FX-RQ-MARKUP-LIMIT-DEPTH-VOID: at 256 elements, void elements and
+    // self-closing `svg` and `math` are not pushed (M-05 item 1).
+    let full = "<div>".repeat(256);
+    depth_valid(&format!(
+        "{full}<br><img src=\"x\"><input><hr/><wbr><svg/><math/><svg/>"
+    ));
+    // In a foreign region, a self-closing element is not pushed (M-05 item 2).
+    depth_valid(&format!(
+        "<svg>{}<g/><path d=\"M0\"/><rect/>",
+        "<g>".repeat(255)
+    ));
+    // In block content, void elements are not pushed.
+    let content = format!(
+        "{}<br><img src=\"x\">{}",
+        "<b>".repeat(255),
+        "</b>".repeat(255)
+    );
+    let input = format!("<div data-rq-block=\"v\">{content}</div>");
+    assert_eq!(blocks_of(input.as_bytes()), vec![html("v", &content)]);
+    // Characters, comments and DOCTYPE tokens do not change the stack.
+    depth_valid(&format!("{full}text<!-- c --><!DOCTYPE html><?pi?>"));
+}
+
+#[test]
+fn m26_depth_recovers_after_pops() {
+    // 256 elements, all closed, then 256 elements again.
+    let fill = "<div>".repeat(256);
+    let close = "</div>".repeat(256);
+    depth_valid(&format!("{fill}{close}{fill}"));
+    depth_limit(&format!("{fill}{close}{fill}<div>"));
+    // One end tag pops all elements above its target (M-05 step 3).
+    let crossed = format!("<div>{}</div>", "<span>".repeat(255));
+    depth_valid(&format!("{crossed}{crossed}{fill}"));
+    // The end of a foreign region pops the region.
+    let region = format!("<svg>{}</svg>", "<g>".repeat(255));
+    depth_valid(&format!("{region}{region}{fill}"));
+    // In block content each end tag pops the current node (M-23); after the
+    // block end tag the stack is empty again.
+    let block = |id: &str| {
+        format!(
+            "<div data-rq-block=\"{id}\">{}{}</div>",
+            "<b>".repeat(255),
+            "</b>".repeat(255)
+        )
+    };
+    let input = format!("{}{}{fill}", block("a"), block("b"));
+    assert_eq!(blocks_of(input.as_bytes()).len(), 2);
+}
+
+/// The place of the depth check among the other checks of a start tag. A
+/// fixture never depends on it (a fixture has one error); these tests pin
+/// the choice of this candidate (README "How the rules are read").
+#[test]
+fn m26_depth_is_checked_at_the_push() {
+    let full = "<div>".repeat(256);
+    // Block start tag: M-15…M-21 and the block count come first, then the
+    // push of the block element.
+    assert_eq!(
+        error_of(format!("{full}<p data-rq-block=\"A\">x</p>").as_bytes()),
+        (ErrorCode::InvalidId, "M-15")
+    );
+    assert_eq!(
+        error_of(format!("{full}<p data-rq-block=\"a\"/>").as_bytes()),
+        (STRUCTURE, "M-18")
+    );
+    depth_limit(&format!("{full}<p data-rq-block=\"a\">x</p>"));
+    // A foreign region: M-07 comes first.
+    let region = format!("<svg>{}", "<g>".repeat(255));
+    assert_eq!(
+        error_of(format!("{region}<p>").as_bytes()),
+        (STRUCTURE, "M-07")
+    );
+    // Block content: M-22 and M-24 come first.
+    let content = format!("<div data-rq-block=\"c\">{}", "<b>".repeat(255));
+    assert_eq!(
+        error_of(format!("{content}<option>").as_bytes()),
+        (STRUCTURE, "M-22")
+    );
+    assert_eq!(
+        error_of(format!("{content}<li>").as_bytes()),
+        (STRUCTURE, "M-24")
+    );
+    depth_limit(&format!("{content}<i>"));
+    // HTML context: M-09 comes first.
+    assert_eq!(
+        error_of(format!("{}<table><tr><td><tr>", "<div>".repeat(253)).as_bytes()),
+        (STRUCTURE, "M-09")
+    );
+}
+
+/// M-26 limits the token stack of M-05. The second tokenization of
+/// `noscript` content (M-11) keeps no token stack, so the limit does not
+/// apply to the tags of C. The `noscript` element itself is pushed.
+#[test]
+fn m26_depth_does_not_apply_to_noscript_content() {
+    let content = "<b>".repeat(300);
+    depth_valid(&format!("<noscript>{content}</noscript>"));
+    depth_valid(&format!(
+        "{}<noscript>{content}</noscript>",
+        "<div>".repeat(255)
+    ));
+    depth_limit(&format!(
+        "{}<noscript>{content}</noscript>",
+        "<div>".repeat(256)
+    ));
+}
+
 #[test]
 fn m27_result_offsets_hashes_and_revisions() {
     let input = b"<p data-rq-block=\"price\">120.00</p>";
@@ -1175,17 +1379,58 @@ fn error_codes_have_wire_names() {
     assert_eq!(Format::Json.as_str(), "json");
 }
 
+/// `prefix`, then `unit` as many times as the total stays at most `max`
+/// bytes, then `suffix`.
+fn fill(prefix: &[u8], unit: &[u8], suffix: &[u8], max: usize) -> Vec<u8> {
+    let count = (max - prefix.len() - suffix.len()) / unit.len();
+    [prefix, &unit.repeat(count), suffix].concat()
+}
+
+fn near_limit(input: &[u8]) -> bool {
+    input.len() > 5_000_000 && input.len() <= MAX_INPUT_BYTES
+}
+
 #[test]
 fn large_adversarial_inputs_finish() {
     // Each input is close to the size limit and would take minutes with
     // quadratic work.
     let n = 1_000_000;
+    // Many failed end tag searches (`</i>` has no open element). Before the
+    // depth limit (M-26) the stack had one million elements; now the
+    // 257th `<b>` stops the pass, and the same search runs on a full stack.
     let deep: Vec<u8> = [b"<b>".repeat(n), b"</i>".repeat(n / 2)].concat();
-    assert!(analyze(&deep).is_ok());
+    assert_eq!(error_of(&deep), (ErrorCode::Limit, "M-26"));
+    let full = fill(
+        &b"<b>".repeat(MAX_OPEN_ELEMENTS),
+        b"</i>",
+        b"",
+        MAX_INPUT_BYTES,
+    );
+    assert!(near_limit(&full));
+    assert!(analyze(&full).is_ok());
+    // Many different names (the name table grows with the input). Nested
+    // without end tags, the 257th name stops the pass. Groups of 256 nested
+    // names, each group closed by the end tag of its first name, keep the
+    // stack full and intern more than 500 000 names.
     let names: Vec<u8> = (0..300_000u32)
         .flat_map(|i| format!("<x{i}>").into_bytes())
         .collect();
-    assert!(analyze(&names).is_ok());
+    assert_eq!(error_of(&names), (ErrorCode::Limit, "M-26"));
+    let mut groups: Vec<u8> = Vec::new();
+    let mut next = 0u32;
+    loop {
+        let group: Vec<u8> = (next..next + 256)
+            .flat_map(|i| format!("<x{i}>").into_bytes())
+            .chain(format!("</x{next}>").into_bytes())
+            .collect();
+        if groups.len() + group.len() > MAX_INPUT_BYTES {
+            break;
+        }
+        groups.extend_from_slice(&group);
+        next += 256;
+    }
+    assert!(near_limit(&groups) && next > 500_000, "{next} names");
+    assert!(analyze(&groups).is_ok());
     let raw: Vec<u8> = [&b"<title>"[..], &b"</titl</titlex".repeat(n / 3)].concat();
     assert!(analyze(&raw).is_ok());
     let script: Vec<u8> = [&b"<script><!--"[..], &b"<script</scrip".repeat(n / 3)].concat();
@@ -1203,24 +1448,44 @@ fn large_adversarial_inputs_finish() {
     assert!(analyze(&json).is_ok());
     // M-24 j and k and the M-13 check of noscript content (T-08).
     // Five blocks, each just under the 1 MiB content limit (M-26).
-    let five_blocks = |open: &[u8], close: &[u8], n: usize| -> Vec<u8> {
+    let five_blocks = |content: &[u8]| -> Vec<u8> {
         (0..5)
             .flat_map(|i| {
                 [
                     format!("<div data-rq-block=\"b{i}\">").into_bytes(),
-                    open.repeat(n),
-                    close.repeat(n),
+                    content.to_vec(),
                     b"</div>".to_vec(),
                 ]
                 .concat()
             })
             .collect()
     };
-    let lists = five_blocks(b"<ul><li>", b"</li></ul>", 58_000);
-    assert!(lists.len() > 5_000_000);
+    // One deep list or table in each block: the depth limit stops it.
+    let deep_lists =
+        five_blocks(&[b"<ul><li>".repeat(58_000), b"</li></ul>".repeat(58_000)].concat());
+    assert_eq!(error_of(&deep_lists), (ErrorCode::Limit, "M-26"));
+    let deep_tables = five_blocks(
+        &[
+            b"<table><tr><td>".repeat(31_000),
+            b"</td></tr></table>".repeat(31_000),
+        ]
+        .concat(),
+    );
+    assert_eq!(error_of(&deep_tables), (ErrorCode::Limit, "M-26"));
+    // Many lists and tables at the maximum depth: the block element and
+    // 127 `ul` + `li` pairs (255 elements), or 85 `table` + `tr` + `td`
+    // triples (256 elements), repeated to fill each block.
+    let unit = [b"<ul><li>".repeat(127), b"</li></ul>".repeat(127)].concat();
+    let lists = five_blocks(&fill(b"", &unit, b"", MAX_BLOCK_BYTES));
+    assert!(near_limit(&lists), "{} bytes", lists.len());
     assert_eq!(analyze(&lists).unwrap().blocks.len(), 5);
-    let tables = five_blocks(b"<table><tr><td>", b"</td></tr></table>", 31_000);
-    assert!(tables.len() > 5_000_000);
+    let unit = [
+        b"<table><tr><td>".repeat(85),
+        b"</td></tr></table>".repeat(85),
+    ]
+    .concat();
+    let tables = five_blocks(&fill(b"", &unit, b"", MAX_BLOCK_BYTES));
+    assert!(near_limit(&tables), "{} bytes", tables.len());
     assert_eq!(analyze(&tables).unwrap().blocks.len(), 5);
     let scripts: Vec<u8> = [
         &b"<noscript>"[..],
@@ -1233,10 +1498,11 @@ fn large_adversarial_inputs_finish() {
 
 #[test]
 fn large_nested_inputs_closed_by_end_tags_finish() {
-    // A deep token stack that end tags close again. Each input is close to
-    // the size limit (M-01) and would take minutes if a pop cost grew with
-    // the stack size (T-09).
-    let near_limit = |input: &[u8]| input.len() > 5_000_000 && input.len() <= MAX_INPUT_BYTES;
+    // A full token stack that end tags close again, many times. Each input
+    // is close to the size limit (M-01) and would take minutes if a pop cost
+    // grew with the number of earlier pushes and pops (T-09). The depth
+    // limit (M-26) stops each deep shape at its 257th element, so each shape
+    // is repeated at the maximum depth instead.
     // A block after the closed elements: its start tag fails M-16 or M-19
     // when a pop leaves a name pointer, a table mark or the foreign root
     // behind.
@@ -1245,17 +1511,23 @@ fn large_nested_inputs_closed_by_end_tags_finish() {
         assert!(near_limit(input), "{} bytes", input.len());
         assert_eq!(blocks_of(input), vec![html("end", "x")]);
     };
+    let limit = |input: &[u8]| assert_eq!(error_of(input), (ErrorCode::Limit, "M-26"));
+    let max = MAX_OPEN_ELEMENTS;
     // Each end tag pops one element (M-05 step 3).
     let n = 740_000;
-    only_tail(&[b"<b>".repeat(n), b"</b>".repeat(n), tail.to_vec()].concat());
+    limit(&[b"<b>".repeat(n), b"</b>".repeat(n), tail.to_vec()].concat());
+    let unit = [b"<b>".repeat(max), b"</b>".repeat(max)].concat();
+    only_tail(&fill(b"", &unit, tail, MAX_INPUT_BYTES));
     // Two names: the pointer of each name goes back to the previous element
     // with the same name.
     let n = 370_000;
-    only_tail(&[b"<b><i>".repeat(n), b"</i></b>".repeat(n), tail.to_vec()].concat());
-    // Many short elements on top of a deep stack: the pop of `i` restores
+    limit(&[b"<b><i>".repeat(n), b"</i></b>".repeat(n), tail.to_vec()].concat());
+    let unit = [b"<b><i>".repeat(max / 2), b"</i></b>".repeat(max / 2)].concat();
+    only_tail(&fill(b"", &unit, tail, MAX_INPUT_BYTES));
+    // Many short elements on top of a full stack: the pop of `i` restores
     // "no open `i`" without a search through the stack.
     let n = 370_000;
-    only_tail(
+    limit(
         &[
             b"<b>".repeat(n),
             b"<i></i>".repeat(n),
@@ -1264,12 +1536,21 @@ fn large_nested_inputs_closed_by_end_tags_finish() {
         ]
         .concat(),
     );
+    let suffix = [b"</div>".repeat(max - 1), tail.to_vec()].concat();
+    only_tail(&fill(
+        &b"<div>".repeat(max - 1),
+        b"<b></b>",
+        &suffix,
+        MAX_INPUT_BYTES,
+    ));
     // One end tag pops all elements above its target.
     let n = 1_740_000;
-    only_tail(&[&b"<div>"[..], &b"<b>".repeat(n), b"</div>", tail].concat());
+    limit(&[&b"<div>"[..], &b"<b>".repeat(n), b"</div>", tail].concat());
+    let unit = [&b"<div>"[..], &b"<b>".repeat(max - 1), b"</div>"].concat();
+    only_tail(&fill(b"", &unit, tail, MAX_INPUT_BYTES));
     // Table marks (M-09, M-19): `template` is pushed and popped with a mark.
     let n = 247_000;
-    only_tail(
+    limit(
         &[
             b"<template>".repeat(n),
             b"</template>".repeat(n),
@@ -1277,9 +1558,11 @@ fn large_nested_inputs_closed_by_end_tags_finish() {
         ]
         .concat(),
     );
+    let unit = [b"<template>".repeat(max), b"</template>".repeat(max)].concat();
+    only_tail(&fill(b"", &unit, tail, MAX_INPUT_BYTES));
     // The foreign root (M-07) is reset when `svg` is popped.
     let n = 740_000;
-    only_tail(
+    limit(
         &[
             &b"<svg>"[..],
             &b"<g>".repeat(n),
@@ -1289,21 +1572,42 @@ fn large_nested_inputs_closed_by_end_tags_finish() {
         ]
         .concat(),
     );
+    let unit = [b"<g>".repeat(max - 1), b"</g>".repeat(max - 1)].concat();
+    only_tail(&fill(
+        b"<svg>",
+        &unit,
+        &[&b"</svg>"[..], tail].concat(),
+        MAX_INPUT_BYTES,
+    ));
+    // Many regions, each at the maximum depth.
+    let unit = [
+        &b"<svg>"[..],
+        &b"<g>".repeat(max - 1),
+        &b"</g>".repeat(max - 1),
+        b"</svg>",
+    ]
+    .concat();
+    only_tail(&fill(b"", &unit, tail, MAX_INPUT_BYTES));
     // In block content each end tag pops the current node (M-23). Five
     // blocks, each just under the 1 MiB content limit (M-26).
+    let five = |content: &[u8]| -> Vec<u8> {
+        (0..5)
+            .flat_map(|i| {
+                [
+                    format!("<div data-rq-block=\"b{i}\">").into_bytes(),
+                    content.to_vec(),
+                    b"</div>".to_vec(),
+                ]
+                .concat()
+            })
+            .collect()
+    };
     let n = 149_000;
-    let content = [b"<b>".repeat(n), b"</b>".repeat(n)].concat();
-    assert!(content.len() <= MAX_BLOCK_BYTES);
-    let nested: Vec<u8> = (0..5)
-        .flat_map(|i| {
-            [
-                format!("<div data-rq-block=\"b{i}\">").into_bytes(),
-                content.clone(),
-                b"</div>".to_vec(),
-            ]
-            .concat()
-        })
-        .collect();
+    limit(&five(&[b"<b>".repeat(n), b"</b>".repeat(n)].concat()));
+    // The block element and 255 elements in the content.
+    let unit = [b"<b>".repeat(max - 1), b"</b>".repeat(max - 1)].concat();
+    let content = fill(b"", &unit, b"", MAX_BLOCK_BYTES);
+    let nested = five(&content);
     assert!(near_limit(&nested), "{} bytes", nested.len());
     let found = blocks_of(&nested);
     assert_eq!(found.len(), 5);

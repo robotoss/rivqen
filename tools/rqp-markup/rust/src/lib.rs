@@ -11,8 +11,9 @@
 //! Validity is decided on tokens only (DL-008). The crate has its own
 //! tokenizer for the WHATWG states that the rules need (DL-012).
 //!
-//! Resource limits: the input size is checked first (M-01); memory is
-//! linear in the input size; the work is linear in the input size.
+//! Resource limits: the input size is checked first (M-01); the token stack
+//! has at most [`MAX_OPEN_ELEMENTS`] elements (M-26); memory is linear in the
+//! input size; the work is linear in the input size.
 
 #![forbid(unsafe_code)]
 
@@ -33,6 +34,9 @@ pub const MAX_INPUT_BYTES: usize = 5_242_880;
 pub const MAX_BLOCKS: usize = 256;
 /// Maximum content size of one block in bytes (M-26): 1 MiB.
 pub const MAX_BLOCK_BYTES: usize = 1_048_576;
+/// Maximum number of elements on the token stack (M-05) at any point of the
+/// document (M-26, H-25). A push that makes the stack larger fails.
+pub const MAX_OPEN_ELEMENTS: usize = 256;
 
 const BOM: &[u8] = b"\xEF\xBB\xBF";
 

@@ -129,6 +129,12 @@ final class Parser
      * `svg` and `math` start tags that would open a foreign region.
      */
     private int $selects = 0;
+    /**
+     * M-10 item 2 (H-36): number of `form` elements pushed in HTML context
+     * that are on the token stack. Every pop updates it, also a pop by a
+     * crossing. The rule keeps it at 0 or 1.
+     */
+    private int $forms = 0;
     /** Stack index of the foreign INTEGRATION/TEXT element whose content must be characters only (M-07), or null. */
     private ?int $charsOnly = null;
     /** Offset after the start tag of a `noscript` in HTML context (M-11), or null. */
@@ -270,6 +276,9 @@ final class Parser
                 throw new MarkupError(ErrorCode::Structure, 'M-08');
             }
             $this->tableStartTag($name);
+            if ($name === 'form' && $this->forms > 0) {
+                throw new MarkupError(ErrorCode::Structure, 'M-10'); // item 2
+            }
         }
 
         if ($token->attribute(self::BLOCK_ATTR) !== null) {
@@ -738,6 +747,8 @@ final class Parser
             }
             if ($name === 'select') {
                 $this->selects++;
+            } elseif ($name === 'form') {
+                $this->forms++;
             }
         }
         return $index;
@@ -772,8 +783,12 @@ final class Parser
             if ($this->listIndex !== [] && $this->listIndex[count($this->listIndex) - 1] === $i) {
                 array_pop($this->listIndex);
             }
-            if ($name === 'select' && ($flags & self::FOREIGN) === 0) {
-                $this->selects--;
+            if (($flags & self::FOREIGN) === 0) {
+                if ($name === 'select') {
+                    $this->selects--;
+                } elseif ($name === 'form') {
+                    $this->forms--;
+                }
             }
             if ($i === $this->region) {
                 $this->region = null;

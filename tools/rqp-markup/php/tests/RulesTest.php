@@ -165,6 +165,20 @@ final class RulesTest extends TestCase
         yield 'M-10 frameset' => ['<html><frameset></frameset></html>', 'M-10', $S];
         yield 'M-10 frameset in svg (E7)' => ['<svg><frameset/></svg>', 'M-10', $S];
         yield 'M-10 frameset in math' => ['<math><frameset></frameset></math>', 'M-10', $S];
+        // M-10 item 2 (H-36): a `form` start tag in HTML context while an
+        // HTML `form` is on the token stack.
+        yield 'M-10.2 nested forms in object (review repro)' => [
+            '<a href="1">' . str_repeat('<form><object><form></form></object></form>', 9) . 'x</a><span data-rq-block="k">y<a href="2">z</a>w</span>', 'M-10', $S,
+        ];
+        yield 'M-10.2 form in a form' => ['<form><form></form></form>', 'M-10', $S];
+        yield 'M-10.2 form in a div in a form' => ['<form><div><form>', 'M-10', $S];
+        yield 'M-10.2 form in a cell in a form' => ['<form><table><tr><td><form>', 'M-10', $S];
+        yield 'M-10.2 form in a template in a form' => ['<form><template><form></form></template></form>', 'M-10', $S];
+        yield 'M-10.2 form in block content in a form' => ['<form><div data-rq-block="a"><form></form></div></form>', 'M-10', $S];
+        yield 'M-10.2 form in a form in block content' => ['<div data-rq-block="a"><form><form></form></form></div>', 'M-10', $S];
+        yield 'M-10.2 form after a foreign form closed in a form' => ['<form><svg><form></form></svg><form>', 'M-10', $S];
+        yield 'M-10.2 form after a foreign form popped by a crossing' => ['<svg><form></svg><form><form>', 'M-10', $S];
+        yield 'M-10.2 form after an end tag without a match' => ['<form></b><form>', 'M-10', $S];
 
         // M-11
         yield 'M-11 block in noscript' => ['<noscript><p data-rq-block="a">x</p></noscript>', 'M-11', $S];
@@ -490,6 +504,14 @@ final class RulesTest extends TestCase
         yield 'M-09.2 text, comments and void elements above F' => ['<table>x<!-- c --><input type="hidden"><tr>y<br><td>a</td></tr></table><p data-rq-block="a">x</p>', $A];
         yield 'M-09.2 foreign region in a table closed before the row' => ['<table><svg><g></g></svg><tr></tr></table><p data-rq-block="a">x</p>', $A];
         yield 'M-09.2 table parts in a foreign region in a table' => ['<table><svg><tr><td></td></tr></svg></table><p data-rq-block="a">x</p>', $A];
+
+        // M-10 item 2 (H-36): valid neighbors.
+        yield 'M-10.2 sequential forms' => ['<form>a</form><form><input name="q"></form><div><form></form></div><p data-rq-block="a">x</p>', $A];
+        yield 'M-10.2 form after a crossing popped the form' => ['<div><form></div><form></form><p data-rq-block="a">x</p>', $A];
+        yield 'M-10.2 form after a form end tag that crosses' => ['<form><span></form><form></form><p data-rq-block="a">x</p>', $A];
+        yield 'M-10.2 foreign form in a form' => ['<form><svg><form></form></svg></form><p data-rq-block="a">x</p>', $A];
+        yield 'M-10.2 form in a block after a form' => ['<form></form><div data-rq-block="a"><form>x</form></div>', [['a', 'html', '<form>x</form>']]];
+        yield 'M-10.2 form in noscript content in a form' => ['<form><noscript><form></form></noscript></form><p data-rq-block="a">x</p>', $A];
 
         // M-11
         yield 'M-11 iframe in noscript' => ['<noscript><iframe src="https://example.com/t"></iframe></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];

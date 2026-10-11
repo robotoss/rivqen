@@ -17,7 +17,9 @@
 
 use std::collections::HashSet;
 
-use crate::names::{Known, NameId, NameTable, RawKind, VOID_NAMES, flag, raw_kind};
+use crate::names::{
+    Known, NameId, NameTable, RawKind, TABLE_PART_NAMES, VOID_NAMES, flag, raw_kind,
+};
 use crate::tokenizer::{Span, Tag, Token, Tokenizer};
 use crate::{ErrorCode, Format, MAX_BLOCK_BYTES, MAX_BLOCKS, MAX_OPEN_ELEMENTS, MarkupError, json};
 
@@ -146,6 +148,10 @@ struct Pass<'a> {
     /// Stack indices of the elements pushed in HTML context whose name is in
     /// `TABLE_FAMILY` or is `template` (M-09, M-19).
     table_marks: Vec<usize>,
+    /// M-10 item 2 (H-36): the number of `form` elements pushed in HTML
+    /// context that are on the token stack. Every pop changes it, also a pop
+    /// by a crossing. Never larger than the stack size.
+    html_forms: usize,
     /// Stack index of the `svg` or `math` element that opened the current
     /// foreign region.
     foreign_root: Option<usize>,
@@ -169,6 +175,7 @@ pub(crate) fn run(input: &[u8], start: usize) -> Result<Vec<RawBlock>, MarkupErr
         stack: Vec::with_capacity(MAX_OPEN_ELEMENTS),
         depth: 0,
         table_marks: Vec::new(),
+        html_forms: 0,
         foreign_root: None,
         text_only: None,
         block: None,
@@ -322,12 +329,27 @@ impl<'a> Pass<'a> {
         if html && self.names.has(name, flag::TABLE_FAMILY | flag::TEMPLATE) {
             self.table_marks.push(index);
         }
+        if html && name == Known::Form.id() {
+            self.html_forms = self
+                .html_forms
+                .checked_add(1)
+                .ok_or_else(MarkupError::internal)?;
+        }
         Ok(index)
     }
 
-    fn pop(&mut self) -> Option<Elem> {
-        let elem = self.stack.pop()?;
+    /// Pops the current node. This is the only place that pops. An empty
+    /// stack, or a count of HTML forms that does not agree with the stack,
+    /// is a defect of this candidate.
+    fn pop(&mut self) -> Result<Elem, MarkupError> {
+        let elem = self.stack.pop().ok_or_else(MarkupError::internal)?;
         let index = self.stack.len();
+        if elem.html && elem.name == Known::Form.id() {
+            self.html_forms = self
+                .html_forms
+                .checked_sub(1)
+                .ok_or_else(MarkupError::internal)?;
+        }
         self.names.replace_top(elem.name, elem.prev_same);
         if self.table_marks.last() == Some(&index) {
             self.table_marks.pop();
@@ -335,7 +357,7 @@ impl<'a> Pass<'a> {
         if self.foreign_root == Some(index) {
             self.foreign_root = None;
         }
-        Some(elem)
+        Ok(elem)
     }
 
     /// M-07.3, M-07.4: a token that is not a character token (and not a
@@ -369,6 +391,12 @@ impl<'a> Pass<'a> {
             return Err(structure("M-08"));
         }
         if name == Known::Frameset.id() {
+            return Err(structure("M-10"));
+        }
+        // M-10 item 2 (H-36): the tree builder ignores a nested `form` start
+        // tag (form element pointer). A `form` in a foreign region is a
+        // foreign element.
+        if !foreign && name == Known::Form.id() && self.html_forms > 0 {
             return Err(structure("M-10"));
         }
         if name == Known::Script.id() {
@@ -428,9 +456,36 @@ impl<'a> Pass<'a> {
         Ok(raw_kind(raw_name))
     }
 
-    /// M-09 for a start tag in HTML context.
+    /// M-09 with conditions 1 and 2 for a start tag in HTML context. It runs
+    /// before the implied parts of M-26 and before the push.
     fn table_part(&self, name: NameId) -> Result<(), MarkupError> {
         use Known::{Caption, Col, Colgroup, Table, Tbody, Td, Tfoot, Th, Thead, Tr};
+        let part = self.names.has(name, flag::TABLE_PART) || name == Col.id();
+        if !part && name != Table.id() {
+            return Ok(());
+        }
+        // Condition 1 (H-35): the nearest element in `TABLE_FAMILY` or
+        // `template` is a `template`. Then "in column group" ignores every
+        // later start tag, also the raw text ones.
+        if name == Col.id()
+            && self
+                .table_marks
+                .last()
+                .and_then(|&index| self.stack.get(index))
+                .is_some_and(|elem| self.names.has(elem.name, flag::TEMPLATE))
+        {
+            return Err(structure("M-09"));
+        }
+        let Some((index, context)) = self.table_context_at() else {
+            return Ok(());
+        };
+        // Condition 2 (H-37): "clear the stack back to a table context" must
+        // pop nothing, so F is the current node.
+        if is_any(context, &[Table, Tbody, Thead, Tfoot, Tr, Colgroup])
+            && index.checked_add(1) != Some(self.stack.len())
+        {
+            return Err(structure("M-09"));
+        }
         let allowed: &[Known] = if is_any(name, &[Caption, Colgroup, Tbody, Thead, Tfoot]) {
             &[Table]
         } else if name == Col.id() {
@@ -440,11 +495,13 @@ impl<'a> Pass<'a> {
         } else if is_any(name, &[Td, Th]) {
             &[Table, Tbody, Thead, Tfoot, Tr]
         } else {
+            // `table`: only condition 2.
             return Ok(());
         };
-        match self.table_context() {
-            Some(context) if !is_any(context, allowed) => Err(structure("M-09")),
-            _ => Ok(()),
+        if is_any(context, allowed) {
+            Ok(())
+        } else {
+            Err(structure("M-09"))
         }
     }
 
@@ -628,7 +685,7 @@ impl<'a> Pass<'a> {
         let mut crossed = false;
         let mut mark = false;
         let matched = loop {
-            let elem = self.pop().ok_or_else(MarkupError::internal)?;
+            let elem = self.pop()?;
             // M-06 item 4: a formatting end tag pops no marked element. A
             // popped mark goes down to the new current node (item 4 (b)).
             if elem.marked {
@@ -775,12 +832,15 @@ fn normalized(raw: &[u8]) -> impl Iterator<Item = u8> + '_ {
 /// Item 5 (H-27) keeps a separate stack of the elements of C, as name spans
 /// of the tokenized text. It grows only with the start tags of C (at least
 /// 3 bytes each), so it is bounded by the input size (M-01). C is not
-/// counted in D (M-26 item 7).
+/// counted in D (M-26 item 7). Item 6 (H-38) counts the `table` elements on
+/// that stack.
 fn check_noscript(content: &[u8]) -> Result<(), MarkupError> {
     let mut text = Vec::with_capacity(content.len().saturating_add(11));
     text.extend_from_slice(content);
     text.extend_from_slice(b"</noscript>");
     let mut open: Vec<Span> = Vec::new();
+    // Item 6: the number of `table` elements on `open`.
+    let mut tables: usize = 0;
     let mut tokens = Tokenizer::new(&text, 0);
     loop {
         let token = tokens.next_token();
@@ -807,11 +867,24 @@ fn check_noscript(content: &[u8]) -> Result<(), MarkupError> {
                 {
                     return Err(structure("M-11"));
                 }
+                // Item 6 (H-38): with scripting disabled, a table part outside
+                // a table of C closes the cell or caption around `noscript`.
+                if tables == 0
+                    && (name.eq_ignore_ascii_case(b"col")
+                        || TABLE_PART_NAMES
+                            .iter()
+                            .any(|n| n.eq_ignore_ascii_case(name)))
+                {
+                    return Err(structure("M-11"));
+                }
                 // Item 5: a start tag that M-05 item 1 pushes opens an
                 // element of C. `svg` and `math` are forbidden above, so
                 // only the VOID names are not pushed.
                 if !VOID_NAMES.iter().any(|v| v.eq_ignore_ascii_case(name)) {
                     open.push(tag.name);
+                    if name.eq_ignore_ascii_case(b"table") {
+                        tables = tables.checked_add(1).ok_or_else(MarkupError::internal)?;
+                    }
                 }
                 if let Some((kind, end_name)) = raw_kind(name) {
                     tokens.set_raw(kind, end_name);
@@ -833,6 +906,9 @@ fn check_noscript(content: &[u8]) -> Result<(), MarkupError> {
                 };
                 if !normalized(slice(&text, last)?).eq(normalized(name)) {
                     return Err(structure("M-11"));
+                }
+                if name.eq_ignore_ascii_case(b"table") {
+                    tables = tables.checked_sub(1).ok_or_else(MarkupError::internal)?;
                 }
             }
             Token::Eof => return Err(structure("M-11")),

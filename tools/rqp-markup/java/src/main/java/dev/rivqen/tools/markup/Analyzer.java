@@ -9,10 +9,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import org.jspecify.annotations.Nullable;
@@ -44,13 +42,6 @@ public final class Analyzer {
    */
   public static final int MAX_OPEN_ELEMENTS = 256;
 
-  /**
-   * Per document, at most this many different unknown tag names are interned (F-2). A later new
-   * name is used as the tokenizer gives it. The bound keeps the intern table from holding the names
-   * of a whole 5 MiB input.
-   */
-  static final int MAX_INTERNED_NAMES = 1024;
-
   /** Prefix of {@link Result#rule()} for an internal error (a defect) at the boundary (F-4). */
   static final String INTERNAL_ERROR = "internal-error:";
 
@@ -70,12 +61,8 @@ public final class Analyzer {
   private final List<Result.Block> blocks = new ArrayList<>();
   private final Set<String> ids = new HashSet<>();
 
-  /**
-   * Interned unknown tag names of this document (F-2), at most {@link #MAX_INTERNED_NAMES}. Known
-   * names use the constant of {@link Name}. The keys are tag names from the input; {@link HashMap}
-   * keeps a large bucket of {@link String} keys as a tree, so equal hash codes cost O(log n).
-   */
-  private final Map<String, String> internedNames = new HashMap<>();
+  /** Tag names of this document (F-2): the stacks keep these strings. */
+  private final NameTable names = new NameTable();
 
   /** M-26: the depth counter D. */
   private int depth;
@@ -182,7 +169,7 @@ public final class Analyzer {
   private void startTag() {
     String raw = tok.name();
     Name k = Name.of(raw);
-    String name = intern(raw, k);
+    String name = names.intern(raw, k);
     boolean html = stack.regionRoot() < 0;
     boolean inContent = blockIndex >= 0;
     boolean selfClosing = tok.selfClosing();
@@ -288,24 +275,6 @@ public final class Analyzer {
           default -> 0;
         };
     addDepth(stack.addParts(f, parts));
-  }
-
-  /**
-   * F-2: the name to keep on a stack. A known name is the constant of {@link Name}; an unknown name
-   * is one string per document, while the table has room.
-   */
-  private String intern(String raw, @Nullable Name k) {
-    if (k != null) {
-      return k.tag;
-    }
-    String interned = internedNames.get(raw);
-    if (interned != null) {
-      return interned;
-    }
-    if (internedNames.size() < MAX_INTERNED_NAMES) {
-      internedNames.put(raw, raw);
-    }
-    return raw;
   }
 
   /** M-14 to M-19, M-21 and the block count of M-26, in the order of markup.md §2.10. */
@@ -445,7 +414,7 @@ public final class Analyzer {
   private void endTag() {
     String raw = tok.name();
     Name k = Name.of(raw);
-    String name = intern(raw, k);
+    String name = names.intern(raw, k);
     if (textOnly >= 0) {
       // M-07 rules 3 and 4: only the end tag of the element ends its text content.
       if (stack.size() - 1 == textOnly && stack.name(textOnly).equals(name)) {
@@ -661,7 +630,7 @@ public final class Analyzer {
             if (size == open.length) {
               open = Arrays.copyOf(open, size * 2);
             }
-            open[size++] = intern(raw, k);
+            open[size++] = names.intern(raw, k);
           }
           if (k != null && k.text != null) {
             sub.enterText(k.text, k.tag);
@@ -678,7 +647,7 @@ public final class Analyzer {
             throw structure("M-11");
           }
           // Item 5: every end tag closes the last open element of C.
-          if (size == 0 || !open[size - 1].equals(intern(raw, k))) {
+          if (size == 0 || !open[size - 1].equals(names.intern(raw, k))) {
             throw structure("M-11");
           }
           open[--size] = null;

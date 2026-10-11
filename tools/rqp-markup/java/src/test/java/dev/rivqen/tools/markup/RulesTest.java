@@ -870,7 +870,7 @@ class RulesTest {
     @Test
     void namesAfterTheInternTableIsFullStillMatch() {
       StringBuilder c = new StringBuilder();
-      for (int i = 0; i < Analyzer.MAX_INTERNED_NAMES + 100; i++) {
+      for (int i = 0; i < NameTable.CAPACITY + 100; i++) {
         c.append("<e").append(i).append("></e").append(i).append('>');
       }
       assertValid(body("<noscript>" + c + "</noscript>" + P));
@@ -1002,6 +1002,12 @@ class RulesTest {
     @Test
     void nonAsciiTypeInForeignRegionIsReserved() {
       assertInvalid(body("<svg><script type=\"é\"></script></svg>"), ErrorCode.RESERVED, "M-13");
+    }
+
+    @Test
+    void asciiControlCharactersInTypeAreNotReserved() {
+      // Item 3 is about bytes of 0x80 or more only; U+0000 and U+007F are ASCII.
+      assertValid(body("<script type=\"text/javascript\u0000\u0001\u007F\"></script>" + P));
     }
 
     @Test

@@ -78,7 +78,7 @@ The other 7 equivalent mutants in the two classes are `x >= 0` → `x > 0` on `t
 | `FixturesTest` | Every fixture equals its `expected.json`; for an invalid fixture, the reported rule is in `fixture.json` |
 | `MainTest` | Command line, exit codes, batch order, JSON escaping, no document content in messages |
 | `PropertyTest` | Random input with fixed seeds (own generator, no extra dependency): no exception for any bytes; for valid results, ordered blocks inside the input, and `sha256`, `template_revision`, `page_revision` equal an independent computation; replacing each block content with plain text keeps the document valid and keeps the template revision. The generator also makes the shapes that M-24 j and k, E1 and E5 keep valid (lists in list items, text and comments directly in a table, CDATA in SVG `style` and `desc`). |
-| `LinearTimeTest` | 21 worst-case inputs of almost 5 MiB finish quickly (a quadratic step would take hours) |
+| `LinearTimeTest` | 27 worst-case inputs of almost 5 MiB finish quickly (a quadratic step would take hours). Six of them are valid and pop a deep stack with one matching end tag at a time: in HTML context, in block content, with nested lists over a deep stack (M-24 c, j), and with 2^16 tag names that have the same hash code. They make sure that a pop or a stack query stays O(1). |
 
 ### 3.1 Cross-check against parse5
 
@@ -139,7 +139,7 @@ A tag that the input ends inside is dropped, as in WHATWG ("EOF in tag").
 
 ### 4.4 Invariants
 
-1. Every loop advances. The tokenizer reads each byte a bounded number of times. Each stack entry is pushed once and popped once. The total work is O(n) for an input of n bytes.
+1. Every loop advances. The tokenizer reads each byte a bounded number of times. Each stack entry is pushed once and popped once, and a push, a pop and each stack query are O(1) amortized (`TokenStack`). The index of the nearest element by name is a `HashMap`: names with the same hash code make a lookup O(log n), because `HashMap` keeps a large bucket of `String` keys as a tree. The total work is O(n) for an input of n bytes.
 2. The memory is O(n): the token stack, one name string per open element, the copy of each `noscript` content (the contents do not overlap) and the blocks. Measured: the worst inputs of 5 MiB need less than 96 MiB of heap.
 3. M-01 is checked before anything else; the command reads at most 5 MiB + 1 byte.
 4. No recursion (JSON uses a fixed array of 64 entries).

@@ -152,9 +152,26 @@ test("rule classes for HTML context only: a stray tr end tag and a noscript elem
   assert.deepEqual(run("<svg><noscript><g></noscript></svg>").classes, []);
 });
 
-test("class open question: a formatting end tag that pops a dirty element", () => {
-  const doc = '<a><span><div><div><div><div><div><div><div><div>x</span></a><span data-rq-block="x">y<a>z</a>w</span>';
-  assert.deepEqual(run(doc).classes, [CLASSES.formattingDirty]);
+test("class H-32: a formatting end tag pops an element that an earlier crossing over a special element marked", () => {
+  const D8 = "<div>".repeat(8);
+  const block = (f) => `<span data-rq-block="x">y<${f}>z</${f}>w</span>`;
+  assert.deepEqual(run(`<a><span>${D8}x</span></a>${block("a")}`).classes, [CLASSES.formattingMarked]);
+  assert.deepEqual(run(`<nobr><span>${D8}x</span></nobr>${block("nobr")}`).classes, [CLASSES.formattingMarked]);
+  assert.deepEqual(run(`<a>${"<li><ul>".repeat(4)}${"</li>".repeat(4)}x</a>${block("a")}`).classes, [CLASSES.formattingMarked]);
+});
+
+test("class H-32: a crossing over phrasing elements only does not mark (harmless mis-nesting stays valid)", () => {
+  assert.deepEqual(run('<a href="#"><b><span><i>x</span></b></a>').classes, []);
+  const { c } = feed(["<a>", "<b>", "<span>", "<i>", "</span>"]);
+  assert.deepEqual(c.stack.map((e) => [e.name, e.dirty, e.marked]), [["a", false, false], ["b", true, false]]);
+});
+
+test("the special-crossed mark passes down when a marked element is popped, also by an exact pop", () => {
+  const { c } = feed(["<a>", "<em>", "<span>", "<div>", "</span>", "</em>"]);
+  assert.deepEqual(c.stack.map((e) => [e.name, e.marked]), [["a", true]]);
+  assert.deepEqual(feed(["<p>", "<a>", "<span>", "<div>", "</span>", "</a>"]).c.classes, new Set([CLASSES.formattingMarked]));
+  // A crossing over a foreign element marks too (H-32).
+  assert.deepEqual(run("<a><svg><g><text></g></svg></a>").classes, [CLASSES.formattingMarked]);
 });
 
 test("class H-30: a stray tbody, thead, tfoot, tr or table end tag in HTML context", () => {

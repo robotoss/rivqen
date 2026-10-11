@@ -197,7 +197,7 @@ export function evaluateDocs(docs, resultsByCandidate, views, { rules = false } 
 
 /**
  * Count a finding by the rule classes of its document (a finding counts once for each class).
- * "onlyOpen": the only class is the open question M-06-formatting-dirty (no decided rule explains it).
+ * "onlyOpen": the only class is M-06-formatting-marked (H-32; no earlier rule explains it).
  * @param {Map<string, { total: number, none: number, onlyOpen: number, classes: Map<string, number> }>} byClass
  * @param {string} kind
  * @param {string[]} classes
@@ -206,7 +206,7 @@ export function countByClass(byClass, kind, classes) {
   const c = byClass.get(kind) ?? { total: 0, none: 0, onlyOpen: 0, classes: new Map() };
   c.total++;
   if (classes.length === 0) c.none++;
-  else if (classes.every((x) => x === CLASSES.formattingDirty)) c.onlyOpen++;
+  else if (classes.every((x) => x === CLASSES.formattingMarked)) c.onlyOpen++;
   for (const x of classes) c.classes.set(x, (c.classes.get(x) ?? 0) + 1);
   byClass.set(kind, c);
 }
@@ -390,6 +390,7 @@ async function cmdSweep(o, write) {
   const classDocs = new Map();
   const byClass = new Map();
   const invariant = { docs: 0, accepted: 0 };
+  const onlyBy = new Map(); // class → documents that a candidate accepts and that only this class rejects
   // One batch directory with fixed slot names, reused by every chunk: creating and deleting
   // directories is the slowest part on some file systems.
   const dir = path.join(tmp, "batch");
@@ -417,6 +418,8 @@ async function cmdSweep(o, write) {
           if (e.findings.some((f) => f.kind === "depth-invariant")) invariant.accepted++;
         }
         for (const f of e.findings) countByClass(byClass, f.kind, e.depth.classes);
+        const accepted = [...run.out.values()].some((results) => results.get(doc.name)?.valid === true);
+        if (accepted && e.depth.classes.length === 1) onlyBy.set(e.depth.classes[0], (onlyBy.get(e.depth.classes[0]) ?? 0) + 1);
         for (const [cand, results] of run.out) {
           const s = stats.get(cand) ?? { docs: 0, valid: 0, withBlocks: 0, findings: 0 };
           const r = results.get(doc.name);
@@ -454,9 +457,11 @@ async function cmdSweep(o, write) {
   // by class ("none" = a finding that no class explains).
   const cls = [...classDocs.entries()].sort().map(([k, v]) => `${k}=${v}`).join(" ");
   write(`documents by rule class: ${cls === "" ? "none" : cls}`);
+  const only = [...onlyBy.entries()].sort().map(([k, v]) => `${k}=${v}`).join(" ");
+  write(`accepted documents that only one rule class rejects: ${only === "" ? "none" : only}`);
   for (const [kind, c] of [...byClass.entries()].sort()) {
     const parts = [...c.classes.entries()].sort().map(([k, v]) => `${k}=${v}`).join(" ");
-    write(`finding ${kind}: ${c.total} total, ${c.none} without a rule class, ${c.onlyOpen} only ${CLASSES.formattingDirty}; ${parts}`);
+    write(`finding ${kind}: ${c.total} total, ${c.none} without a rule class, ${c.onlyOpen} only ${CLASSES.formattingMarked}; ${parts}`);
   }
   write(`depth invariant: ${invariant.docs} document(s) with a violation, ${invariant.accepted} of them valid for a candidate`);
   const kinds = [...totals.entries()].map(([k, v]) => `${k}=${v}`).join(" ");

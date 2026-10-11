@@ -10,23 +10,42 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * A second, plain implementation of the token stack of {@code markup.md} M-05 with the depth
- * counter D of M-26 (dirty mark, implied parts) and M-06 items 1 to 4 (guarded elements, formatting
- * end tags, stray table end tags, special-crossed mark). It is written from the rule text only,
- * with lists and linear searches, and knows only the few names that {@link PropertyTest} generates.
- * It is a test oracle; it does not share code with {@link Analyzer}.
+ * counter D of M-26 (dirty mark, implied parts), M-06 items 1 to 4 (guarded elements, formatting
+ * end tags, stray table end tags, special-crossed mark), M-09 conditions 1 and 2 ({@code col} in a
+ * template, F is the current node; H-35, H-37) and M-10 item 2 (nested forms; H-36). It is written
+ * from the rule text only, with lists and linear searches, and knows only the few names that {@link
+ * PropertyTest} generates. It is a test oracle; it does not share code with {@link Analyzer}.
  */
 final class StackModel {
   static final int LIMIT = 256;
 
   /** The names of markup.md §2.1 that the generated documents use. */
   private static final Set<String> SPECIAL =
-      Set.of("body", "div", "html", "li", "p", "table", "tbody", "td", "tr", "ul");
+      Set.of(
+          "body",
+          "colgroup",
+          "div",
+          "form",
+          "html",
+          "li",
+          "p",
+          "table",
+          "tbody",
+          "td",
+          "template",
+          "tr",
+          "ul");
 
   private static final Set<String> FORMATTING = Set.of("a", "b", "em", "i");
-  private static final Set<String> GUARDED = Set.of("a", "table", "tbody", "td", "tr");
-  private static final Set<String> TABLE_PART = Set.of("tbody", "td", "tr");
-  private static final Set<String> TABLE_FAMILY = Set.of("table", "tbody", "td", "tr");
+  private static final Set<String> GUARDED =
+      Set.of("a", "colgroup", "table", "tbody", "td", "template", "tr");
+  private static final Set<String> TABLE_PART = Set.of("colgroup", "tbody", "td", "tr");
+  private static final Set<String> TABLE_FAMILY = Set.of("colgroup", "table", "tbody", "td", "tr");
   private static final Set<String> STRAY_TABLE_END = Set.of("table", "tbody", "tr");
+
+  /** The values of F (M-09) where the WHATWG parser moves other elements out of the table. */
+  private static final Set<String> TABLE_CONTEXT =
+      Set.of("table", "tbody", "thead", "tfoot", "tr", "colgroup");
 
   /** One element of the token stack. */
   private static final class Entry {
@@ -49,7 +68,9 @@ final class StackModel {
   /** The rule of the first error, or null. */
   private @Nullable String error;
 
-  /** The item of M-06 of the first error (1 to 4), or 0. */
+  /**
+   * The item of the first error: M-06 item 1 to 4 or M-09 condition 1 or 2; 0 for M-10 and M-26.
+   */
   private int item;
 
   int depth() {
@@ -86,20 +107,32 @@ final class StackModel {
     return -1;
   }
 
-  /** F of M-09 (no template in these documents), or null. */
+  /** F of M-09, or null. */
   @Nullable String tableFamily() {
     int f = tableFamilyIndex();
     return f < 0 ? null : stack.get(f).name;
   }
 
+  /** The search for F (M-09): the nearest TABLE_FAMILY element; it stops at a template. */
   private int tableFamilyIndex() {
+    int i = nearestTableOrTemplate();
+    return i >= 0 && stack.get(i).name.equals("template") ? -1 : i;
+  }
+
+  /** The nearest element pushed in HTML context with a name in TABLE_FAMILY or "template". */
+  private int nearestTableOrTemplate() {
     for (int i = stack.size() - 1; i >= 0; i--) {
       Entry e = stack.get(i);
-      if (!e.foreign && TABLE_FAMILY.contains(e.name)) {
+      if (!e.foreign && (TABLE_FAMILY.contains(e.name) || e.name.equals("template"))) {
         return i;
       }
     }
     return -1;
+  }
+
+  private void fail(String rule, int ruleItem) {
+    error = rule;
+    item = ruleItem;
   }
 
   private void add(int units) {
@@ -123,6 +156,24 @@ final class StackModel {
     }
     if (!foreign) {
       int f = tableFamilyIndex();
+      int t = nearestTableOrTemplate();
+      boolean tablePart = TABLE_FAMILY.contains(name) || name.equals("col");
+      if (name.equals("col") && t >= 0 && stack.get(t).name.equals("template")) {
+        fail("M-09", 1); // condition 1 (H-35)
+        return;
+      }
+      if (tablePart
+          && f >= 0
+          && TABLE_CONTEXT.contains(stack.get(f).name)
+          && f != stack.size() - 1) {
+        fail("M-09", 2); // condition 2 (H-37)
+        return;
+      }
+      if (name.equals("form")
+          && stack.stream().anyMatch(e -> !e.foreign && e.name.equals("form"))) {
+        fail("M-10", 0); // item 2 (H-36)
+        return;
+      }
       if (f >= 0) {
         Entry fe = stack.get(f);
         List<String> implied = new ArrayList<>();

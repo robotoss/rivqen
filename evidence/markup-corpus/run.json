@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-11",
+  "pages": 867,
+  "crosscheck_pages": "findings: 0",
+  "variants": {
+    "small": {
+      "documents": 736,
+      "crosscheck": "findings: 0"
+    },
+    "main": {
+      "documents": 473,
+      "crosscheck": "findings: 0"
+    }
+  }
+}

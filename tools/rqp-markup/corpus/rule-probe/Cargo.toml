@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+
+# Measurement helper of the markup corpus (WP-17 S1 T-15): prints the rule ID of the
+# first violation that the Rust candidate library finds. The candidate command line
+# prints only the error code (CONTRACT.md section 3). No new dependency: only the
+# candidate crate by path.
+
+[package]
+name = "rqp-markup-rule-probe"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.85"
+license = "Apache-2.0"
+publish = false
+
+# Own workspace: not part of a repository workspace.
+[workspace]
+
+[dependencies]
+rqp-markup = { path = "../../rust" }
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"

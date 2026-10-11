@@ -97,7 +97,7 @@ The codes above are results for a document (exit code `0`). There is no error co
 
 | Candidate | Exit code for an internal defect |
 |---|---|
-| `rust` | None of its own. Panics are denied by lints; a panic would end the process with the Rust runtime code `101`. |
+| `rust` | `70`: an internal error found for an input; the result line fails closed with `RQP_MARKUP_STRUCTURE` (rule `internal`). Panics are denied by lints; a panic would still end the process with the Rust runtime code `101`. |
 | `node` | `70` |
 | `java` | `3` |
 | `php` | `70` |

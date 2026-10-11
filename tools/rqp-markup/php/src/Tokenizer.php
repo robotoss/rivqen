@@ -116,6 +116,16 @@ final class Tokenizer
         };
     }
 
+    /**
+     * Length of the raw tag name that starts at $nameStart: up to white
+     * space, `/` or `>` (tag name state, 13.2.5.8). The name of a tag token
+     * is normalizeName() of these bytes.
+     */
+    public static function tagNameLength(string $input, int $nameStart): int
+    {
+        return strcspn($input, self::TAG_NAME_END, $nameStart);
+    }
+
     /** Lower-case ASCII and replace U+0000 by U+FFFD, as the tokenizer does for names. */
     public static function normalizeName(string $raw): string
     {
@@ -350,7 +360,7 @@ final class Tokenizer
 
     private function tag(int $lt, int $nameStart, bool $isStart): Token
     {
-        $n = strcspn($this->input, self::TAG_NAME_END, $nameStart);
+        $n = self::tagNameLength($this->input, $nameStart);
         $name = self::normalizeName(substr($this->input, $nameStart, $n));
         return $this->tagRest($lt, $nameStart + $n, $name, $isStart);
     }

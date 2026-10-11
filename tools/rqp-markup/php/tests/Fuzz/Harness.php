@@ -42,6 +42,10 @@ final class Harness
         '</tbody>', '<thead>', '</thead>', '<th>', '</th>', '</nobr>', '<i>', '</i>', '<em>', '</em>',
         '<body>', '</body>', '<html>', '</html>', '<form>', '</form>', '<rect>', '<text>', '</text>',
         "<script type=\"\u{0131}\">", "<script type=\"a\x7F\">", '<span><div></span>', '<a><span><div></span>',
+        // Rules of round 2: M-09 conditions 1 and 2, M-10 item 2, M-11 item 6.
+        '<template><col>', '<col/>', '<marquee>', '</marquee>', '<object>', '</object>', '<applet>',
+        '<form><object><form></form></object></form>', '<noscript><td></td></noscript>', '<noscript><col>',
+        '<noscript><table><tr><td>', '</td></tr></table></noscript>', '<TD>', '<tfoot>', '<thead>', '</caption>',
     ];
 
     private function __construct() {}
@@ -217,7 +221,7 @@ final class Harness
      */
     private static function outside(Randomizer $random, array &$blocks, int $depth): string
     {
-        $choice = $random->getInt(0, $depth > 3 ? 4 : 23);
+        $choice = $random->getInt(0, $depth > 3 ? 4 : 27);
         return match ($choice) {
             0 => self::text($random),
             1 => '<!-- ' . self::text($random) . ' -->',
@@ -240,6 +244,13 @@ final class Harness
             17 => '<table><td>a</td><td>b</td></table><table><col><col><tr><td>c</td></tr></table>', // M-26: implied parts
             18 => '<noscript><div><a href="#"><img src="x"></a><p>t<br></p></div></noscript>', // M-11 item 5
             19 => '<span><div>' . self::outside($random, $blocks, $depth + 1) . '</span>', // a crossing that keeps 2 units of D
+            // Valid neighbors of the rules of round 2 of the security review.
+            20 => '<template><tr><td>t</td></tr></template><template><table><col></table></template>', // M-09 condition 1
+            21 => '<table><div>f</div><tr><td>' . self::outside($random, $blocks, $depth + 1) . '</td></tr></table>', // M-09 condition 2
+            // M-10 item 2. A block, not outside(): a nested form is invalid.
+            22 => '<form><input name="q"></form><form>' . self::block($random, $blocks) . '</form>',
+            23 => '<table><tr><td><noscript><table><tr><td>n</td></tr></table></noscript>'
+                . self::outside($random, $blocks, $depth + 1) . '</td></tr></table>', // M-11 item 6
             default => self::block($random, $blocks),
         };
     }

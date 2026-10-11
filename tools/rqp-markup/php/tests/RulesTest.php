@@ -205,6 +205,29 @@ final class RulesTest extends TestCase
         yield 'M-11.5 self-closing flag does not close an element' => ['<noscript><b/></noscript>', 'M-11', $S];
         yield 'M-11.5 element open at EOF (E3)' => ['<p data-rq-block="a">x</p><noscript><div>x', 'M-11', $S];
         yield 'M-11.5 stray end tag at EOF (E3)' => ['<p data-rq-block="a">x</p><noscript></b>', 'M-11', $S];
+        yield 'M-11.5 end tag with a prefix of the open name' => ['<noscript><ab></a></noscript>', 'M-11', $S];
+        yield 'M-11.5 end tag with a longer name than the open one' => ['<noscript><a></ab></noscript>', 'M-11', $S];
+        yield 'M-11.5 end tag does not match a name below the top' => ['<noscript><div><span></div></span></noscript>', 'M-11', $S];
+        yield 'M-11.5 end tag of a raw U+FFFD does not match a different name' => ["<noscript><a\0b></a\u{FFFD}></noscript>", 'M-11', $S];
+        // M-11 item 6 (H-38): a TABLE_PART or `col` start tag in C needs a
+        // `table` of C on the stack of C.
+        yield 'M-11.6 td in noscript in a cell (review repro)' => [
+            '<table><tr><td><noscript><td></td></noscript><div data-rq-block="x">a<table></table>b</div></td></tr></table>', 'M-11', $S,
+        ];
+        yield 'M-11.6 th in noscript in a cell' => ['<table><tr><td><noscript><th></th></noscript></td></tr></table>', 'M-11', $S];
+        yield 'M-11.6 caption in noscript in a caption' => ['<table><caption><noscript><caption></caption></noscript></caption></table>', 'M-11', $S];
+        yield 'M-11.6 col in noscript' => ['<noscript><col></noscript>', 'M-11', $S];
+        yield 'M-11.6 colgroup in noscript' => ['<noscript><colgroup></colgroup></noscript>', 'M-11', $S];
+        yield 'M-11.6 tbody in noscript' => ['<noscript><tbody></tbody></noscript>', 'M-11', $S];
+        yield 'M-11.6 thead in noscript' => ['<noscript><thead></thead></noscript>', 'M-11', $S];
+        yield 'M-11.6 tfoot in noscript' => ['<noscript><tfoot></tfoot></noscript>', 'M-11', $S];
+        yield 'M-11.6 tr in noscript' => ['<noscript><tr></tr></noscript>', 'M-11', $S];
+        yield 'M-11.6 upper-case TD in noscript' => ['<noscript><TD></td></noscript>', 'M-11', $S];
+        yield 'M-11.6 tr after the table of C is closed' => ['<noscript><table></table><tr></tr></noscript>', 'M-11', $S];
+        yield 'M-11.6 td after nested tables of C are closed' => ['<noscript><table><tr><td><table></table></td></tr></table><td></td></noscript>', 'M-11', $S];
+        yield 'M-11.6 td in a div in noscript' => ['<noscript><div><td></td></div></noscript>', 'M-11', $S];
+        yield 'M-11.6 col at EOF (E3)' => ['<p data-rq-block="a">x</p><noscript><col>', 'M-11', $S];
+        yield 'M-11.6 td in noscript outside a table' => ['<noscript><td>x</td></noscript><p data-rq-block="a">x</p>', 'M-11', $S];
 
         // M-12
         yield 'M-12 greater-than inside CDATA in HTML' => ['<p><![CDATA[a>b]]></p>', 'M-12', $S];
@@ -525,6 +548,24 @@ final class RulesTest extends TestCase
         yield 'M-11.5 balanced content' => ['<noscript><div><a href="#"><img src="x"></a><table><tr><td>t</td></tr></table><p>t<br></p></div></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-11.5 raw text elements are closed by their end tags' => ['<noscript><style>a</b></style><textarea><b></textarea><script>"</b>"</script><iframe></iframe></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-11.5 balanced content at EOF (E3)' => ['<p data-rq-block="a">x</p><noscript><b>x</b><br>', [['a', 'html', 'x']]];
+        // M-11 item 5: names are compared as the tokenizer gives them.
+        yield 'M-11.5 upper-case start tag, lower-case end tag' => ['<noscript><DIV><Span>x</SPAN></div></noscript><p data-rq-block="a">x</p>', $A];
+        yield 'M-11.5 names end at white space, slash and greater-than' => ["<noscript><b\nclass=x><i/x><u\t></u ></i></b></noscript><p data-rq-block=\"a\">x</p>", $A];
+        yield 'M-11.5 NUL in a name matches U+FFFD' => ["<noscript><a\0b></a\u{FFFD}b><c\0></c\0></noscript><p data-rq-block=\"a\">x</p>", $A];
+        yield 'M-11.5 deep balanced content' => ['<noscript>' . str_repeat('<b><i>', 3000) . str_repeat('</i></b>', 3000) . '</noscript><p data-rq-block="a">x</p>', $A];
+        // M-11 item 6 (H-38): valid neighbors.
+        yield 'M-11.6 table in noscript in a cell' => [
+            '<table><tr><td><noscript><table><tr><td>x</td></tr></table></noscript><div data-rq-block="x">a<table></table>b</div></td></tr></table>',
+            [['x', 'html', 'a<table></table>b']],
+        ];
+        yield 'M-11.6 every table part in a table of C' => [
+            '<noscript><table><caption>c</caption><colgroup><col></colgroup><col><thead><tr><th>h</th></tr></thead><tbody><tr><td>d</td></tr></tbody><tfoot></tfoot></table></noscript><p data-rq-block="a">x</p>',
+            $A,
+        ];
+        yield 'M-11.6 table part in a div in a table of C' => ['<noscript><table><tr><td><div><table><tr><td>x</td></tr></table></div></td></tr></table></noscript><p data-rq-block="a">x</p>', $A];
+        yield 'M-11.6 td after a nested table of C is closed' => ['<noscript><table><tr><td><table></table></td><td>y</td></tr></table></noscript><p data-rq-block="a">x</p>', $A];
+        yield 'M-11.6 table part names in raw text of C' => ['<noscript><style><td></style><textarea><col></textarea><script>"<tr>"</script></noscript><p data-rq-block="a">x</p>', $A];
+        yield 'M-11.6 closed table of C in a cell' => ['<table><tr><td><noscript><table></table></noscript></td></tr></table><p data-rq-block="a">x</p>', $A];
         yield 'M-11 manifest type on an end tag in noscript' => ['<noscript><script></script type="rivqen-manifest"></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
 
         // M-12

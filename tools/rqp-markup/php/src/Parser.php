@@ -30,8 +30,8 @@ namespace Rivqen\Tools\RqpMarkup;
  *   chain of constant keys.
  * - The name index of M-05 step 3 ($byName) uses nameKey(): the name and a
  *   keyed hash of it with a random key for each parse.
- * - The stack of the `noscript` content (M-11 item 5) is a list: an end tag
- *   compares only with its top.
+ * - The stack of the `noscript` content (M-11 item 5) is an OffsetStack of
+ *   name offsets (no keys): an end tag compares only with its top.
  * - Block ids ($ids) are at most MAX_BLOCKS (M-26), in [a-z0-9_-] (M-15).
  */
 final class Parser
@@ -657,18 +657,24 @@ final class Parser
      * Tokenize the `noscript` content C followed by `</noscript>` alone, from
      * the data state, in HTML context (M-11).
      *
-     * Item 5 (H-27): C is balanced. $open is the stack of C: a list of names
-     * (no name keys, see the class comment). Each start tag adds at most one
-     * entry and has at least 3 bytes, so the list is bounded by the size of
-     * C. C is not counted in D (M-26 item 7).
+     * Item 5 (H-27): C is balanced. $open is the stack of C. C is not
+     * counted in D (M-26 item 7), so the stack is bounded only by the size
+     * of C: each start tag adds at most one entry and has at least 3 bytes.
+     * An entry is the offset of the raw tag name in $c (4 bytes, OffsetStack);
+     * the name is normalized again only for the comparison with an end tag.
+     * There are no name keys (see the class comment).
+     *
+     * Item 6 (H-38): $tables is the number of `table` elements on the stack
+     * of C. A TABLE_PART or `col` start tag in C needs one.
      */
     private function checkNoscript(int $start, int $contentEnd): void
     {
         $this->noscriptStart = null;
         $length = $contentEnd - $start;
-        $sub = new Tokenizer(substr($this->input, $start, $length) . '</noscript>');
-        /** @var list<string> $open */
-        $open = [];
+        $c = substr($this->input, $start, $length) . '</noscript>';
+        $sub = new Tokenizer($c);
+        $open = new OffsetStack();
+        $tables = 0;
         while (true) {
             $token = $sub->next();
             if ($token->type === TokenType::Eof) {
@@ -677,14 +683,18 @@ final class Parser
             if ($token->type === TokenType::EndTag) {
                 if ($token->name === 'noscript') {
                     // Item 1, and item 5: no element of C is open at the end of C.
-                    if ($token->start !== $length || $open !== []) {
+                    if ($token->start !== $length || $open->count() !== 0) {
                         throw new MarkupError(ErrorCode::Structure, 'M-11');
                     }
                     return;
                 }
                 // Item 5: an end tag closes the last open element of C.
-                if (array_pop($open) !== $token->name) {
+                $top = $open->pop();
+                if ($top === null || self::nameAt($c, $top) !== $token->name) {
                     throw new MarkupError(ErrorCode::Structure, 'M-11');
+                }
+                if ($token->name === 'table') {
+                    $tables--;
                 }
                 continue;
             }
@@ -698,16 +708,31 @@ final class Parser
             if ($token->attribute(self::BLOCK_ATTR) !== null || isset(Names::NOSCRIPT_FORBIDDEN[$name])) {
                 throw new MarkupError(ErrorCode::Structure, 'M-11');
             }
+            // Item 6: a table part in C needs a table of C (also `col`, which
+            // is not pushed).
+            if ((isset(Names::TABLE_PART[$name]) || $name === 'col') && $tables === 0) {
+                throw new MarkupError(ErrorCode::Structure, 'M-11');
+            }
             // M-05 item 1 pushes every name that is not in VOID. Item 3 has
-            // already rejected `svg` and `math`.
+            // already rejected `svg` and `math`. A start tag starts with `<`,
+            // so its raw name starts at the next byte.
             if (!isset(Names::VOID[$name])) {
-                $open[] = $name;
+                $open->push($token->start + 1);
+                if ($name === 'table') {
+                    $tables++;
+                }
             }
             $state = Names::TEXT[$name] ?? null;
             if ($state !== null) {
                 $sub->switchTo($state, $name);
             }
         }
+    }
+
+    /** The name of the start tag whose raw name starts at $offset of $c (as the tokenizer gives it). */
+    private static function nameAt(string $c, int $offset): string
+    {
+        return Tokenizer::normalizeName(substr($c, $offset, Tokenizer::tagNameLength($c, $offset)));
     }
 
     // ----------------------------------------------------------------------

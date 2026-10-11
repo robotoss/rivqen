@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Random\Engine\Mt19937;
 use Random\Randomizer;
 use Rivqen\Tools\RqpMarkup\ErrorCode;
+use Rivqen\Tools\RqpMarkup\Names;
 use Rivqen\Tools\RqpMarkup\Parser;
 use Rivqen\Tools\RqpMarkup\Tests\Fuzz\Harness;
 
@@ -20,8 +21,8 @@ use Rivqen\Tools\RqpMarkup\Tests\Fuzz\Harness;
  * in document order, inside the input, between a start tag and an end tag,
  * with unique valid ids, sha256 = hash of input[start, end), and the
  * revisions match CONTRACT.md section 4; tokens are in order, inside the
- * input, and fewer than the bytes. Two model tests check the depth counter
- * D (M-26) and the balance of the noscript content (M-11 item 5) against a
+ * input, and fewer than the bytes. Model tests check the depth counter
+ * D (M-26) and the noscript content (M-11 items 5 and 6) against a
  * model that the test computes from the generated parts.
  */
 final class PropertyTest extends TestCase
@@ -97,6 +98,9 @@ final class PropertyTest extends TestCase
         ['<a href="#"><b><span><i>x</span></b></a>', 4, 4],
         ['<p><span><div></span></p>', 3, 3],
         ['<select><option>a<option>b</select>', 3, 3],
+        ['<div><form></div>', 2, 2], // a crossing pops the form (M-10 item 2: the next form is allowed)
+        ['<form></form>', 0, 1],
+        ['<table><div></div><tr></tr></table>', 0, 3], // M-09 condition 2 holds
     ];
 
     public function testDepthCounterMatchesTheShapeModel(): void
@@ -154,10 +158,7 @@ final class PropertyTest extends TestCase
                 }
             }
             $balanced = $balanced && $open === [];
-            $block = '<p data-rq-block="a">x</p>';
-            // E3: without an end tag, C is the rest of the input.
-            $html = $random->getInt(0, 1) === 0 ? '<noscript>' . $c . '</noscript>' . $block : $block . '<noscript>' . $c;
-            $result = Parser::parse($html);
+            $result = Parser::parse(self::withNoscript($random, $c));
             if ($balanced) {
                 self::assertTrue($result->valid, "document $n: " . ($result->rule ?? ''));
                 $valid++;
@@ -166,6 +167,58 @@ final class PropertyTest extends TestCase
             }
         }
         self::assertGreaterThan(300, $valid);
+    }
+
+    /**
+     * M-11 item 6 (H-38): balanced noscript content is valid exactly when
+     * each TABLE_PART or `col` start tag in it has a `table` of the content
+     * on the stack of the content.
+     */
+    public function testNoscriptTablePartsNeedATableOfTheContent(): void
+    {
+        $names = ['table', 'table', 'td', 'th', 'tr', 'tbody', 'thead', 'tfoot', 'caption', 'colgroup', 'col', 'div', 'b'];
+        $random = new Randomizer(new Mt19937(self::SEED + 7));
+        $valids = 0;
+        for ($n = 0; $n < 3000; $n++) {
+            $c = '';
+            $open = [];
+            $valid = true;
+            $count = $random->getInt(0, 10);
+            for ($k = 0; $k < $count; $k++) {
+                if ($open !== [] && $random->getInt(0, 2) === 0) {
+                    $c .= '</' . array_pop($open) . '>';
+                    continue;
+                }
+                $name = $names[$random->getInt(0, count($names) - 1)];
+                if (isset(Names::TABLE_PART[$name]) || $name === 'col') {
+                    $valid = $valid && in_array('table', $open, true);
+                }
+                $c .= '<' . ($random->getInt(0, 3) === 0 ? strtoupper($name) : $name) . '>x';
+                if ($name !== 'col') {
+                    $open[] = $name;
+                }
+            }
+            while ($open !== []) {
+                $c .= '</' . array_pop($open) . '>';
+            }
+            $result = Parser::parse(self::withNoscript($random, $c));
+            if ($valid) {
+                self::assertTrue($result->valid, "document $n: " . ($result->rule ?? ''));
+            } else {
+                self::assertSame(['M-11', ErrorCode::Structure], [$result->rule, $result->error], "document $n");
+            }
+            $valids += $valid ? 1 : 0;
+        }
+        // Both results are reached often.
+        self::assertGreaterThan(500, $valids);
+        self::assertLessThan(2500, $valids);
+    }
+
+    /** $c as noscript content before a block, or (E3) as the rest of the input after a block. */
+    private static function withNoscript(Randomizer $random, string $c): string
+    {
+        $block = '<p data-rq-block="a">x</p>';
+        return $random->getInt(0, 1) === 0 ? '<noscript>' . $c . '</noscript>' . $block : $block . '<noscript>' . $c;
     }
 
     public function testMutatedFixturesKeepTheInvariants(): void

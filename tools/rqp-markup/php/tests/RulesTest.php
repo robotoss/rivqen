@@ -127,6 +127,39 @@ final class RulesTest extends TestCase
         yield 'M-09 thead in tr' => ['<table><tr><thead>', 'M-09', $S];
         yield 'M-09 th in caption' => ['<table><caption><th>', 'M-09', $S];
         yield 'M-09 col in tbody' => ['<table><tbody><col>', 'M-09', $S];
+        // M-09 condition 1 (H-35): `col` while the nearest TABLE_FAMILY or
+        // `template` element is a `template`.
+        yield 'M-09.1 col in a template, fake block in title (review repro)' => [
+            '<p data-rq-block="z">real</p><template><col><title></template><p data-rq-block="z">fake</p></title></template>', 'M-09', $S,
+        ];
+        yield 'M-09.1 col in a template, manifest in textarea (review repro)' => [
+            '<template><col><textarea></template><script type="application/json" data-rq-block="m">{}</script></textarea></template>', 'M-09', $S,
+        ];
+        yield 'M-09.1 col in a div in a template' => ['<template><div><col></div></template>', 'M-09', $S];
+        yield 'M-09.1 col in a template after a closed table' => ['<template><table></table><col></template>', 'M-09', $S];
+        yield 'M-09.1 col in a template in a cell' => ['<table><tr><td><template><col></template></td></tr></table>', 'M-09', $S];
+        yield 'M-09.1 self-closing col in a template' => ['<template><col/></template>', 'M-09', $S];
+        // M-09 condition 2 (H-37): F in table context must be the current node.
+        yield 'M-09.2 table in marquee in table (review repro)' => [
+            '<object><a><table><marquee><table></table></marquee></table>x</a></object><span data-rq-block="x">y<a>z</a>w</span>', 'M-09', $S,
+        ];
+        yield 'M-09.2 foster-parented marquee tables (review repro, short)' => [
+            str_repeat('<object><b><table><marquee><table></table></marquee></table></b></object>', 3) . '<p data-rq-block="a">x</p>', 'M-09', $S,
+        ];
+        yield 'M-09.2 table in marquee in table' => ['<table><marquee><table>', 'M-09', $S];
+        yield 'M-09.2 td in object in tr' => ['<table><tr><object><td>', 'M-09', $S];
+        yield 'M-09.2 tr in form in table' => ['<table><form><tr>', 'M-09', $S];
+        yield 'M-09.2 tbody in div in table' => ['<table><div><tbody>', 'M-09', $S];
+        yield 'M-09.2 caption in span in table' => ['<table><span><caption>', 'M-09', $S];
+        yield 'M-09.2 colgroup in b in table' => ['<table><b><colgroup>', 'M-09', $S];
+        yield 'M-09.2 col in b in table' => ['<table><b><col>', 'M-09', $S];
+        yield 'M-09.2 col in b in colgroup' => ['<table><colgroup><b><col>', 'M-09', $S];
+        yield 'M-09.2 th in div in thead' => ['<table><thead><div><th>', 'M-09', $S];
+        yield 'M-09.2 tr in i in tfoot' => ['<table><tfoot><i><tr>', 'M-09', $S];
+        yield 'M-09.2 td in applet in tbody' => ['<table><tbody><applet><td>', 'M-09', $S];
+        yield 'M-09.2 table in p in tr' => ['<table><tr><p><table>', 'M-09', $S];
+        yield 'M-09.2 table in div in colgroup' => ['<table><colgroup><div><table>', 'M-09', $S];
+        yield 'M-09.2 two elements above F' => ['<table><tr><div><span><td>', 'M-09', $S];
 
         // M-10
         yield 'M-10 frameset' => ['<html><frameset></frameset></html>', 'M-10', $S];
@@ -441,6 +474,22 @@ final class RulesTest extends TestCase
         yield 'M-09 template stops the search' => ['<table><tr><td><template><td></td></template></td></tr></table><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-09 nested table in a cell' => ['<table><tr><td><table><tr><td>a</td></tr></table></td></tr></table><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-09 table part outside a table' => ['<td>a</td><tr></tr><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        // Valid neighbors of M-09 condition 1 (H-35).
+        yield 'M-09.1 table parts in a template' => ['<template><tr><td>x</td></tr></template><template><caption>c</caption><tbody></tbody></template><p data-rq-block="a">x</p>', $A];
+        yield 'M-09.1 col in a table in a template' => ['<template><table><col></table></template><p data-rq-block="a">x</p>', $A];
+        yield 'M-09.1 col in a colgroup in a template' => ['<template><colgroup><col></colgroup></template><p data-rq-block="a">x</p>', $A];
+        yield 'M-09.1 col after the template' => ['<template></template><table><col></table><col><p data-rq-block="a">x</p>', $A];
+        yield 'M-09.1 foreign col in a template' => ['<template><svg><col></col></svg></template><p data-rq-block="a">x</p>', $A];
+        yield 'M-09.1 template in a table, col after it' => ['<table><template><tr></tr></template><col></table><p data-rq-block="a">x</p>', $A];
+        // Valid neighbors of M-09 condition 2 (H-37).
+        yield 'M-09.2 foster-parented element closed before the row' => ['<table><div></div><tr><td>a</td></tr></table><p data-rq-block="a">x</p>', $A];
+        yield 'M-09.2 table in a cell' => ['<table><tr><td><table></table></td></tr></table><p data-rq-block="a">x</p>', $A];
+        yield 'M-09.2 table in a div in a caption' => ['<table><caption><div><table></table></div></caption></table><p data-rq-block="a">x</p>', $A];
+        yield 'M-09.2 table in a table' => ['<table><table></table></table><p data-rq-block="a">x</p>', $A];
+        yield 'M-09.2 table parts in an element outside a table' => ['<div><tr></tr><col><td></td></div><p data-rq-block="a">x</p>', $A];
+        yield 'M-09.2 text, comments and void elements above F' => ['<table>x<!-- c --><input type="hidden"><tr>y<br><td>a</td></tr></table><p data-rq-block="a">x</p>', $A];
+        yield 'M-09.2 foreign region in a table closed before the row' => ['<table><svg><g></g></svg><tr></tr></table><p data-rq-block="a">x</p>', $A];
+        yield 'M-09.2 table parts in a foreign region in a table' => ['<table><svg><tr><td></td></tr></svg></table><p data-rq-block="a">x</p>', $A];
 
         // M-11
         yield 'M-11 iframe in noscript' => ['<noscript><iframe src="https://example.com/t"></iframe></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];

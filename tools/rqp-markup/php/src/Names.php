@@ -102,7 +102,11 @@ final class Names
     /** M-24 items c and j: list items. */
     public const LIST_ITEM = ['li' => true, 'dd' => true, 'dt' => true];
 
-    /** M-24 item k: values of F (M-09) where only TABLE_PART and `col` start tags are allowed. */
+    /**
+     * Values of F (M-09) of table context. M-24 item k: only TABLE_PART and
+     * `col` start tags are allowed in the content. M-09 condition 2: a
+     * TABLE_PART, `col` or `table` start tag needs F as the current node.
+     */
     public const TABLE_CONTEXT = [
         'table' => true, 'tbody' => true, 'thead' => true, 'tfoot' => true, 'tr' => true, 'colgroup' => true,
     ];

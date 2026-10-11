@@ -269,13 +269,7 @@ final class Parser
             if ($this->selects > 0 && !isset(Names::SELECT_START[$name])) {
                 throw new MarkupError(ErrorCode::Structure, 'M-08');
             }
-            $allowed = Names::TABLE_START_ALLOWED_F[$name] ?? null;
-            if ($allowed !== null) {
-                $f = $this->tableContext();
-                if ($f !== null && !isset($allowed[$f])) {
-                    throw new MarkupError(ErrorCode::Structure, 'M-09');
-                }
-            }
+            $this->tableStartTag($name);
         }
 
         if ($token->attribute(self::BLOCK_ATTR) !== null) {
@@ -302,6 +296,41 @@ final class Parser
             $this->region = $index;
         }
         $this->switchState($name, $token->end);
+    }
+
+    /**
+     * M-09 for a start tag in HTML context, before the implied parts and the
+     * push (M-26). The top entry of $tableIndex is the nearest element in
+     * TABLE_FAMILY or `template`.
+     *
+     * - The table of allowed F for TABLE_PART and `col`.
+     * - Condition 1 (H-35): no `col` while that element is a `template`.
+     * - Condition 2 (H-37): a TABLE_PART, `col` or `table` start tag while F
+     *   is in TABLE_CONTEXT needs F as the current node, so the tree
+     *   builder pops nothing when it clears the stack back to a table, table
+     *   body or table row context.
+     */
+    private function tableStartTag(string $name): void
+    {
+        $allowed = Names::TABLE_START_ALLOWED_F[$name] ?? null;
+        if (($allowed === null && $name !== 'table') || $this->tableIndex === []) {
+            return;
+        }
+        $index = $this->tableIndex[count($this->tableIndex) - 1];
+        $f = $this->names[$index];
+        if ($f === 'template') {
+            // The search for F stops at `template`: F is none.
+            if ($name === 'col') {
+                throw new MarkupError(ErrorCode::Structure, 'M-09'); // condition 1
+            }
+            return;
+        }
+        if ($allowed !== null && !isset($allowed[$f])) {
+            throw new MarkupError(ErrorCode::Structure, 'M-09');
+        }
+        if (isset(Names::TABLE_CONTEXT[$f]) && $index !== count($this->names) - 1) {
+            throw new MarkupError(ErrorCode::Structure, 'M-09'); // condition 2
+        }
     }
 
     /**

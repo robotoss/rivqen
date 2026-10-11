@@ -59,6 +59,23 @@ class LinearTimeTest {
             repeat("<script><!--", "<script></script>", "--></script>"),
             null),
         Arguments.of("noscript content", repeat("<noscript>", "<img src=x>", "</noscript>"), null),
+        // M-11 item 5: the stack of the noscript content C is bounded by the size of C only.
+        Arguments.of(
+            "deep balanced noscript content",
+            wrap("<noscript>", balanced("<b>", "</b>", 32), "</noscript>"),
+            null),
+        Arguments.of(
+            "deep noscript content to the end of input",
+            repeat("<noscript>", "<b>", ""),
+            ErrorCode.STRUCTURE),
+        Arguments.of(
+            "unique names in noscript content",
+            wrap("<noscript>", uniqueNamesInGroups(4096, 32), "</noscript>"),
+            null),
+        Arguments.of(
+            "names with one hash code in noscript content",
+            wrap("<noscript>", collidingNames(4096, 32), "</noscript>"),
+            null),
         Arguments.of("svg region", repeat("<svg>", "<g>", "</svg>"), ErrorCode.LIMIT),
         Arguments.of(
             "table rows",
@@ -101,14 +118,13 @@ class LinearTimeTest {
   }
 
   /**
-   * Valid inputs that keep the token stack at or near its limit of 256 elements (M-26) for the
-   * whole input, and pop it with one end tag at a time or with one end tag for many elements. A
-   * push, a pop or a stack query that costs time in proportion to the stack size (an array shift, a
-   * scan or a rebuild of the name index) makes these inputs about 256 times slower; a cost in
-   * proportion to the number of names seen so far makes them quadratic. The block content cases
-   * also do this for the end tags in content (M-23) and for the list queries of M-24 c and j. The
-   * expected block count makes sure that the analysis reads the whole input and does not stop
-   * early.
+   * Valid inputs that keep the token stack and D at or near the limit of 256 (M-26) for the whole
+   * input, and pop it with one end tag at a time or with one end tag for many elements. A push, a
+   * pop or a stack query that costs time in proportion to the stack size (an array shift, a scan or
+   * a rebuild of the name index) makes these inputs about 256 times slower; a cost in proportion to
+   * the number of names seen so far makes them quadratic. The block content cases also do this for
+   * the end tags in content (M-23) and for the list queries of M-24 c and j. The expected block
+   * count makes sure that the analysis reads the whole input and does not stop early.
    */
   static Stream<Arguments> deepStacks() {
     return Stream.of(
@@ -123,9 +139,11 @@ class LinearTimeTest {
         Arguments.of(
             "pushes and pops on a full stack", repeat(open("div", MAX - 1), "<b></b>", ""), 0),
         Arguments.of("stray end tags over a full stack", repeat(open("div", MAX), "</x>", ""), 0),
+        // A crossing keeps its units (M-26), so a valid document crosses at most 256 elements in
+        // total. This one does it with one end tag, then reads stray end tags at D = 256.
         Arguments.of(
-            "one end tag pops a full stack",
-            repeat("", "<div>" + open("b", MAX - 1) + "</div>", ""),
+            "one end tag pops 255 elements, then stray end tags",
+            repeat("<p><div>" + open("b", MAX - 2) + "</div>", "</i>", ""),
             0),
         Arguments.of(
             "nested lists in block content",
@@ -148,14 +166,19 @@ class LinearTimeTest {
   }
 
   /**
-   * Deep inputs of the same shapes without the limit: they push more than 256 elements. The
-   * analysis stops at the 257th push (M-26).
+   * Deep inputs of the same shapes without the limit: D becomes larger than 256 (pushes, implied
+   * parts or crossings that keep their units). The analysis stops at that step (M-26).
    */
   static Stream<Arguments> deepStacksAboveTheLimit() {
     return Stream.of(
         Arguments.of("deep nesting closed by matching end tags", balanced("<b>", "</b>")),
         Arguments.of("mixed names closed by matching end tags", balanced("<b><i>", "</i></b>")),
         Arguments.of("one end tag pops a deep stack", repeat("<div>", "<b>", "</div>")),
+        Arguments.of(
+            "one end tag pops a full stack, many times",
+            repeat("", "<div>" + open("b", MAX - 1) + "</div>", "")),
+        Arguments.of("span over div crossings", repeat("", "<span><div></span>", "")),
+        Arguments.of("tables in cells", repeat("", "<table><td>", "<div data-rq-block=a>x</div>")),
         Arguments.of(
             "stray end tags over a deep stack",
             ("<div>".repeat(SIZE / 10) + "</x>".repeat(SIZE / 8))
@@ -178,6 +201,11 @@ class LinearTimeTest {
    * 5 MiB. Each name is new, so the name index adds and removes a key for each element.
    */
   private static byte[] uniqueNamesInGroups(int group) {
+    return uniqueNamesInGroups(group, 0);
+  }
+
+  /** As {@link #uniqueNamesInGroups(int)}, with {@code reserve} bytes left for a head and tail. */
+  private static byte[] uniqueNamesInGroups(int group, int reserve) {
     StringBuilder s = new StringBuilder();
     int next = 0;
     while (true) {
@@ -188,7 +216,7 @@ class LinearTimeTest {
         opens.append('<').append(n).append('>');
         closes.insert(0, "</" + n + ">");
       }
-      if (s.length() + opens.length() + closes.length() > SIZE) {
+      if (s.length() + opens.length() + closes.length() > SIZE - reserve) {
         break;
       }
       s.append(opens).append(closes);
@@ -203,6 +231,11 @@ class LinearTimeTest {
    * hash code. All open names go to one bucket of the name index.
    */
   private static byte[] collidingNames(int group) {
+    return collidingNames(group, 0);
+  }
+
+  /** As {@link #collidingNames(int)}; the result has at most 5 MiB - {@code reserve} bytes. */
+  private static byte[] collidingNames(int group, int reserve) {
     int bits = 16;
     String[] names = new String[1 << bits];
     for (int i = 0; i < names.length; i++) {
@@ -224,14 +257,31 @@ class LinearTimeTest {
       }
     }
     byte[] b = s.toString().getBytes(StandardCharsets.US_ASCII);
-    assertTrue(b.length <= Analyzer.MAX_INPUT_BYTES);
+    assertTrue(b.length <= Analyzer.MAX_INPUT_BYTES - reserve);
     return b;
   }
 
   /** {@code open} repeated n times, then {@code close} repeated n times, to almost 5 MiB. */
   private static byte[] balanced(String open, String close) {
-    int n = SIZE / (open.length() + close.length());
+    return balanced(open, close, 0);
+  }
+
+  /** As {@link #balanced(String, String)}, with {@code reserve} bytes left for a head and tail. */
+  private static byte[] balanced(String open, String close, int reserve) {
+    int n = (SIZE - reserve) / (open.length() + close.length());
     return (open.repeat(n) + close.repeat(n)).getBytes(StandardCharsets.US_ASCII);
+  }
+
+  /** {@code head}, {@code body} and {@code tail}: at most 5 MiB. */
+  private static byte[] wrap(String head, byte[] body, String tail) {
+    byte[] h = head.getBytes(StandardCharsets.US_ASCII);
+    byte[] t = tail.getBytes(StandardCharsets.US_ASCII);
+    byte[] b = new byte[h.length + body.length + t.length];
+    System.arraycopy(h, 0, b, 0, h.length);
+    System.arraycopy(body, 0, b, h.length, body.length);
+    System.arraycopy(t, 0, b, h.length + body.length, t.length);
+    assertTrue(b.length <= Analyzer.MAX_INPUT_BYTES);
+    return b;
   }
 
   /**

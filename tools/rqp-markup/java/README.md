@@ -3,13 +3,13 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
-The Java 21 candidate of WP-17 S1 (tasks T-05, T-08 and T-11). It implements the RQP markup rules of `docs/engineering/protocol/markup.md` §2 (rqp/1, rules M-01 to M-27, with M-24 items j and k and the token stack depth limit of M-26), the human decisions on the edge cases E1 to E8 (H-21, H-22; `docs/engineering/protocol/markup-edge-cases.md`), the depth limit of 256 elements (H-25) and the command line of `tools/rqp-markup/CONTRACT.md`.
+The Java 21 candidate of WP-17 S1 (tasks T-05, T-08, T-11 and T-13). It implements the RQP markup rules of `docs/engineering/protocol/markup.md` §2 (rqp/1, rules M-01 to M-27, with M-24 items j and k), the human decisions on the edge cases E1 to E8 (H-21, H-22; `docs/engineering/protocol/markup-edge-cases.md`), the rules of the security review (H-26 to H-28, H-30 to H-32: M-06 items 2 to 4, M-11 item 5, M-13 item 3, and the depth counter D of M-26) and the command line of `tools/rqp-markup/CONTRACT.md`.
 
-**Status:** DESIGN (tool for the differential test). All 145 golden fixtures pass (`diff.mjs --only java`: 145/145 OK). The parse5 cross-check finds no block disagreement (section 3.1; last run in T-08, before the depth limit).
+**Status:** DESIGN (tool for the differential test). All 180 golden fixtures pass (`diff.mjs --only java`: 180/180 OK). The parse5 cross-check finds no disagreement (section 3.1; last run in T-13).
 
 ## 1. Build
 
-Requirements: JDK 21 and Gradle 8.14 (`gradle` on `PATH`). There is no Gradle wrapper.
+Requirements: JDK 21 and Gradle (`gradle` on `PATH`). T-13 used Gradle 9.7.1; T-05 to T-11 used Gradle 8.14. There is no Gradle wrapper.
 
 1. Go to `tools/rqp-markup/java`.
 2. Run `gradle --quiet installDist`.
@@ -34,7 +34,7 @@ rqp-markup --batch <fixtures-dir>
 |---|---|
 | 0 | Results are printed, for valid and invalid documents |
 | 2 | Usage error or I/O error. stderr has the reason (the exception class, never a path or document content). |
-| 3 | Internal error (a defect). stderr has the exception class only. |
+| 3 | Internal error (a defect). For a defect in the analysis of a document, the command still prints a fail-closed result for it (`RQP_MARKUP_STRUCTURE`, `CONTRACT.md` §5), prints the results of the other documents of a batch, and stderr has the number of such documents. For other defects, stderr has the exception class only. |
 
 The command reads at most 5 MiB + 1 byte of a file. The start script sets `-Xmx512m`.
 
@@ -51,6 +51,21 @@ Run these commands in `tools/rqp-markup/java`:
 | Mutation testing (PIT) | `gradle pitest -Ppitest.targetClasses="$(node <root>/tools/mutation/diff-ranges.mjs --base main --ext .java --format pit-classes)"` |
 
 Until WP-17 is merged, use `--base wp/WP-17`: against `main` the whole package is new. The PIT report is in `build/reports/pitest/index.html`. The PIT run leaves out `LinearTimeTest`: it checks time on 5 MiB inputs, not behavior.
+
+Mutation results of T-13 (2026-10-11; base `4fff64f`; PIT 1.30.0):
+
+| Scope | Detected (killed, time-out or memory error) | Rate | Not detected |
+|---|---|---|---|
+| T-13 changed lines | 109 of 110 | 99.1 % | 1 equivalent (`TokenStack.tableFamilyIndex`, below) |
+| T-13 changed classes (`Analyzer`, `Main`, `Name`, `NameTable`, `Result`, `TokenStack`) | 460 of 473 | 97.3 % | 10 equivalent, 3 accepted |
+
+The not-detected mutants of T-13:
+
+1. `TokenStack.tableFamilyIndex`: `return -1` → `return 0` for an empty stack. Equivalent: a pop clears `known[0]`, so `tableFamily()` gives null and `impliedParts` gives no part for index 0 of an empty stack, as for -1.
+2. The 9 equivalent mutants of T-08 and T-11 in `Analyzer` (below): the `&` scan of M-13 now also finds a byte of 0x80 or more; the byte at `to` is still ASCII, so `i < to` → `i <= to` stays equivalent.
+3. The 3 accepted mutants in `Main.main`, which calls `System.exit`.
+
+Two survivors of the first T-13 run were fixed: a test for ASCII control characters in a script `type` (M-13 item 3 is about bytes of 0x80 or more only), and the `NameTable` class with its own tests (the interning of F-2 has no effect on results, so only a unit test sees it).
 
 Mutation results of T-11 (2026-10-11; base `edab313`):
 
@@ -79,19 +94,32 @@ The other 7 equivalent mutants in the two classes are `x >= 0` → `x > 0` on `t
 
 | Test class | What it checks |
 |---|---|
-| `RulesTest` | One group of tests for each rule M-03 to M-27, on small documents, including M-24 items j and k and the decided edge cases E1 to E8. Each invalid case checks the error code and the rule ID. |
-| `LimitsTest` | M-01, M-02 and M-26 at their limits. Token stack depth (M-26, H-25): 256 elements are valid and 257 are `RQP_MARKUP_LIMIT` in HTML context, in a foreign region, outside blocks and in block content. Void elements, self-closing `svg` and `math`, self-closing foreign elements, raw text and `noscript` content do not count. A self-closing flag on another HTML name and the TEXT elements count. The depth recovers after matching end tags, after one end tag that pops many elements, after the end of a foreign region and after a block. The other rules of a start tag come before the depth check. |
-| `TokenStackTest` | The fixed capacity of 256: the stack is full after 256 pushes, a push on a full stack throws `IllegalStateException` (a defect of the caller), a pop makes room |
+| `RulesTest` | One group of tests for each rule M-03 to M-27, on small documents, including M-24 items j and k, the decided edge cases E1 to E8 and the rules of the security review: M-06 items 2 to 4 (every FORMATTING name, every pushed SPECIAL name, foreign elements, stray table end tags, the mark and how it passes down), M-11 item 5 (unclosed elements, stray end tags, crossings, E3, names after the intern table is full) and M-13 item 3 (dotless i, long s, other non-ASCII values, also in `noscript` content and in a foreign region). Each rule item has a valid neighbor and the review repros. Each invalid case checks the error code and the rule ID. |
+| `NameTest` | The name sets `SPECIAL` and `FORMATTING` of the `Name` enum equal the lists of `markup.md` §2.1 (copied into the test) |
+| `NameTableTest` | F-2: a known name is the enum constant, equal unknown names share one string, the table keeps at most 1 024 names |
+| `LimitsTest` | M-01, M-02 and M-26 at their limits. Depth counter D (M-26, H-25, H-31): D = 256 is valid and 257 is `RQP_MARKUP_LIMIT` in HTML context, in a foreign region, outside blocks and in block content. Void elements, self-closing `svg` and `math`, self-closing foreign elements, raw text and `noscript` content do not count; the `noscript` element, a self-closing flag on another HTML name and the TEXT elements count. D comes back after exact pops (matching end tags, the end of a foreign region, a block). A crossing keeps its units (`<span><div></span>` keeps 2, the review repro with 300 of them is `LIMIT`), the dirty mark passes down on each pop, and the pop of `html` or `body` gives nothing back. Implied parts: the row group, row and column group count once for each F and come back with F; a `template` hides the table; an implied part above the limit fails before the push; 64 levels of `<table><td>` and a block are `LIMIT`. The other rules of a start tag come before the D check. |
+| `TokenStackTest` | The fixed capacity of 256 (the stack never has more elements than D): the stack is full after 256 pushes, a push on a full stack throws `IllegalStateException` (a defect of the caller), a pop makes room |
 | `TokenizerTest` | Token boundaries of every tokenizer state, attribute raw values, self-closing flags |
 | `JsonTextTest`, `Utf8Test` | M-25 and M-02 on their own |
 | `FixturesTest` | Every fixture equals its `expected.json`; for an invalid fixture, the reported rule is in `fixture.json` |
-| `MainTest` | Command line, exit codes, batch order, JSON escaping, no document content in messages |
-| `PropertyTest` | Random input with fixed seeds (own generator, no extra dependency): no exception for any bytes; for valid results, ordered blocks inside the input, and `sha256`, `template_revision`, `page_revision` equal an independent computation; replacing each block content with plain text keeps the document valid and keeps the template revision. M-26 depth against a model stack: 3 000 random walks around the limit in HTML context, block content and a foreign region (473 go above 256, 315 stay exactly at 256). The generator also makes the shapes that M-24 j and k, E1 and E5 keep valid (lists in list items, text and comments directly in a table, CDATA in SVG `style` and `desc`). |
-| `LinearTimeTest` | 39 worst-case inputs of almost 5 MiB finish quickly (a quadratic step would take hours). Eleven of them are valid and keep the token stack at or near its limit of 256 for the whole input: matching end tags in HTML context, pushes and pops on a full stack, stray end tags over a full stack, one end tag that pops 255 elements, nested lists in block content (also over lists opened before the block, M-24 c, j), an `svg` region at the limit, unique names, and 2^16 tag names that have the same hash code. They make sure that a push, a pop or a stack query stays O(1). Nine deep inputs of the same shapes without the limit must give `RQP_MARKUP_LIMIT` (M-26) quickly. |
+| `MainTest` | Command line, exit codes, batch order, JSON escaping, no document content in messages. F-4: an unexpected exception in the analysis gives a fail-closed invalid result with the exception class only; the command prints it, keeps the other results of a batch and exits with code 3 |
+| `PropertyTest` | Random input with fixed seeds (own generator, no extra dependency): no exception for any bytes; for valid results, ordered blocks inside the input, and `sha256`, `template_revision`, `page_revision` equal an independent computation; replacing each block content with plain text keeps the document valid and keeps the template revision. M-26 depth against a model stack: 3 000 random walks with exact pops around the limit in HTML context, block content and a foreign region (473 go above 256, 315 stay exactly at 256). M-06 items 1 to 4 and D (dirty mark, implied parts) against `StackModel`, a plain implementation of the rule text with lists: 6 000 random walks with crossings, stray end tags, table parts, `html` and `body` in HTML context, exact pops in block content, and crossings in a foreign region (seed 32: 3 548 valid, 267 of them with D of 248 or more; errors: 305 `LIMIT`, M-06 item 1 1 098, item 2 214, item 3 687, item 4 148). The analyzer must give the same rule as the model at the same token. The generator also makes the shapes that M-24 j and k, E1 and E5 keep valid (lists in list items, text and comments directly in a table, CDATA in SVG `style` and `desc`). |
+| `LinearTimeTest` | 46 worst-case inputs of almost 5 MiB finish quickly (a quadratic step would take hours). Eleven of them are valid and keep D and the token stack at or near 256 for the whole input: matching end tags in HTML context, pushes and pops on a full stack, stray end tags over a full stack, one end tag that pops 255 elements (once: a crossing keeps its units, so a valid document crosses at most 256 elements in total), nested lists in block content (also over lists opened before the block, M-24 c, j), an `svg` region at the limit, unique names, and 2^16 tag names that have the same hash code. They make sure that a push, a pop or a stack query stays O(1). Four inputs put the stack of the `noscript` content (M-11 item 5) through up to 1.7 million elements (balanced, and open to the end of the input), unique names and names with one hash code. Twelve deep inputs without the limit must give `RQP_MARKUP_LIMIT` (M-26) quickly, also repeated crossings and tables in cells. |
 
 ### 3.1 Cross-check against parse5
 
-Run the commands of `tools/rqp-markup/crosscheck/README.md` §3 with `--only java` and `TMPDIR=/dev/shm`. Results on 2026-10-09 (T-08):
+Run the commands of `tools/rqp-markup/crosscheck/README.md` §3 with `--only java` and a memory file system for `TMPDIR` (`/dev/shm` on Linux). Results on 2026-10-11 (T-13, after the rules of the security review):
+
+| Run | Documents | Valid (valid with blocks) | Findings |
+|---|---|---|---|
+| `check --scripting both` (all fixtures) | 180 | 67 | 0 |
+| `cases --cases cases/review-cases.json` | 30 | 9 | 0: each case gives the result of its rule class |
+| `sweep --seed 33 --count 20000 --chunk 10000 --max-tokens 20 --profile review --scripting both` | 20 000 | 3 441 (1 886) | 0 |
+| `sweep --seed 5 --count 50000 --chunk 10000 --scripting both` (classic profile) | 50 000 | 20 573 (6 167) | 0 |
+
+In the seed 33 sweep, the rule classes of the cross-check reject 3 123 (`M-05-stray-table-end`), 5 372 (`M-06-formatting`), 4 284 (`M-06-formatting-marked`), 5 800 (`M-11-balance`), 3 508 (`M-13-non-ascii`) and 1 499 (`M-26-depth`) documents. The candidate accepts no document that only one class rejects. The depth invariant fails on 122 documents; the candidate accepts none of them.
+
+Results on 2026-10-09 (T-08):
 
 | Run | Documents | Valid with blocks | Findings |
 |---|---|---|---|
@@ -122,10 +150,11 @@ A tree may not be the source of truth for validity (DL-008). A tree library woul
 |---|---|
 | `Utf8` | M-02: strict RFC 3629 validation |
 | `Tokenizer` | WHATWG tokenizer subset over UTF-8 bytes (section 4.3). Reports start tags, end tags, comments (also bogus comments, processing instructions and CDATA) and DOCTYPE with byte offsets. It does not report character tokens: no rule needs them. |
-| `TokenStack` | The token stack of M-05 with O(1) queries: nearest element with a name (a chain of same-name entries); F of M-09 and the nearest list and list item of M-24 c and j (each entry keeps the index of the nearest such entry at or below it); the foreign region; open-element counters. Fixed capacity of 256 entries (M-26): the arrays do not grow. |
-| `Analyzer` | One pass over the tokens: M-01 to M-27, then the hashes and revisions of `CONTRACT.md` §4 |
+| `TokenStack` | The token stack of M-05 with O(1) queries: nearest element with a name (a chain of same-name entries); F of M-09 and the nearest list and list item of M-24 c and j (each entry keeps the index of the nearest such entry at or below it); the foreign region; open-element counters. Per entry also the state of M-26 (dirty flag, implied parts) and M-06 item 4 (special-crossed mark). Fixed capacity of 256 entries (M-26): the arrays do not grow. |
+| `Analyzer` | One pass over the tokens: M-01 to M-27 with the depth counter D, then the hashes and revisions of `CONTRACT.md` §4. Its `analyze` method is the fail-closed boundary (F-4). |
+| `NameTable` | Tag names of one document, interned (F-2) |
 | `JsonText` | M-25: RFC 8259 validation without recursion, depth at most 64 |
-| `Name` | The name sets of `markup.md` §2.1 as flags |
+| `Name` | The name sets of `markup.md` §2.1 as flags, also `SPECIAL` and `FORMATTING` (no hash keyed by input for the sets) |
 | `Result`, `ResultJson`, `ErrorCode` | Result object and its JSON form |
 | `Main` | Command line |
 
@@ -148,12 +177,14 @@ A tag that the input ends inside is dropped, as in WHATWG ("EOF in tag").
 
 ### 4.4 Invariants
 
-1. Every loop advances. The tokenizer reads each byte a bounded number of times. Each stack entry is pushed once and popped once, and a push, a pop and each stack query are O(1) (`TokenStack`). The index of the nearest element by name is a `HashMap` with at most 256 keys (M-26). Names with the same hash code make a lookup O(log 256) at most, because `HashMap` keeps a large bucket of `String` keys as a tree. One end tag pops at most 256 elements, and M-06 checks at most 256 crossed elements. The total work is O(n) for an input of n bytes.
-2. The token stack has a fixed capacity of 256 entries (M-26): 8 arrays of 256 entries and at most 256 name strings, for every input. `Analyzer` checks the depth before each push and rejects the document (`RQP_MARKUP_LIMIT`, rule M-26). A push on a full stack is a defect and throws `IllegalStateException`. The other memory is O(n): the copy of each `noscript` content (the contents do not overlap) and the blocks. Measured before T-11: the worst inputs of 5 MiB need less than 96 MiB of heap.
-3. M-01 is checked before anything else; the command reads at most 5 MiB + 1 byte.
-4. No recursion (JSON uses a fixed array of 64 entries).
-5. A failed rule throws an internal `Reject` that `Analyzer.analyze` catches. No other exception is expected. `Main.main` catches every `Throwable`, prints its class name only, and exits with code 3.
-6. Messages never contain document content or paths.
+1. Every loop advances. The tokenizer reads each byte a bounded number of times. Each stack entry is pushed once and popped once, and a push, a pop and each stack query are O(1) (`TokenStack`). The index of the nearest element by name is a `HashMap` with at most 256 keys (M-26). Names with the same hash code make a lookup O(log 256) at most, because `HashMap` keeps a large bucket of `String` keys as a tree. One end tag pops at most 256 elements. M-06 items 1, 2 and 4 and the marks of item 4 look only at the elements that the end tag pops, in the same loop. The total work is O(n) for an input of n bytes.
+2. D (M-26) is checked after each push and after each implied part; D > 256 rejects the document (`RQP_MARKUP_LIMIT`, rule M-26). Each element on the token stack holds at least 1 of D (its push), and only an exact pop of that element gives it back, so the stack never has more elements than D. The token stack has a fixed capacity of 256 entries: 2 reference arrays, 4 int arrays, 4 boolean arrays and 1 byte array of 256 entries each, and at most 256 name references, for every input. A push on a full stack is a defect and throws `IllegalStateException`.
+3. Tag names are interned for each document (`NameTable`, F-2): a known name is the constant of `Name`, an unknown name is one string while the table has fewer than 1 024 names. So the token stack keeps at most 256 name references and the table at most 1 024 strings. The stack of a `noscript` content C (M-11 item 5) is a growing array of name references, bounded by the size of C (a start tag has at least 3 bytes); it is dropped at the end of C.
+4. The other memory is O(n): the copy of each `noscript` content (the contents do not overlap) and the blocks. Measured in T-13 with the installed command (`JAVA_OPTS=-Xmx…`, 5 MiB inputs): about 700 000 different unknown names left open in `noscript` content need 64 MiB of heap (48 MiB is not enough); 1.7 million `<b>` left open in `noscript` content need 32 MiB; unique names in the main pass need less than 24 MiB. The start script allows 512 MiB.
+5. M-01 is checked before anything else; the command reads at most 5 MiB + 1 byte.
+6. No recursion (JSON uses a fixed array of 64 entries).
+7. A failed rule throws an internal `Reject` that the analysis catches. No other exception is expected. If one occurs (a defect), `Analyzer.analyze` catches every `RuntimeException` and returns an invalid result (`RQP_MARKUP_STRUCTURE`) whose rule is `internal-error:` and the exception class name (F-4): a caller never uses blocks of a document that was not checked to the end. `Main` prints this fail-closed result and exits with code 3. `Main.main` catches every other `Throwable` (for example `OutOfMemoryError`), prints its class name only, and exits with code 3.
+8. Messages never contain document content or paths.
 
 ### 4.5 How the rules are read
 
@@ -175,7 +206,14 @@ These points are where the text of `markup.md` needed an interpretation, or wher
 | M-19 rule 1 (`select`) | Not reachable: inside `select`, M-08 allows only `option`, `optgroup` and `hr`, and none of them can be a block. The check stays for clarity. |
 | M-24 a | Only the block element (`p` or `span`) is checked, as the table says. |
 | M-24 c, j | One check: let L be the nearest `ul`, `ol`, `menu` or `dl` on the stack. Invalid when there is no L, when L was opened before the block (c), or when an `li`, `dd` or `dt` is above L (j). An item above L was opened in the content, because L was. |
-| M-26 (depth) | The depth check is the last check of a start tag, just before the push (markup.md §2.10: "on each push to the token stack"). A start tag that breaks another rule (M-07 to M-10, M-13, M-15 to M-22, M-24) reports that rule, also on a full stack. Elements that M-05 does not push do not count: `VOID` names and self-closing `svg` and `math` in HTML context, self-closing elements in a foreign region. A self-closing flag on another HTML name is ignored, so `<span/>` counts. M-26 limits the token stack of M-05 in the main pass only. The M-11 pass over `noscript` content has no token stack, so tags in that content do not count. |
+| M-26 (D) | The D checks are the last checks of a start tag: first the implied parts, then the push (markup.md §2.10: "on each push to the token stack and each implied part"). A start tag that breaks another rule (M-07 to M-10, M-13, M-15 to M-22, M-24) reports that rule, also when D is 256. Elements that M-05 does not push do not count: `VOID` names and self-closing `svg` and `math` in HTML context, self-closing elements in a foreign region. A self-closing flag on another HTML name is ignored, so `<span/>` counts. A `col` is not pushed, but its column group counts. The tags of the `noscript` content C do not count (item 7). |
+| M-26 items 4, 5 (`html`, `body`) | By the name of the popped element, also for an element pushed in a foreign region (a foreign `html` element). This is the literal text and is stricter than needed. |
+| M-26 items 4, 5 (pops) | Every pop path uses the same step: an end tag in HTML context, in a foreign region, in block content (M-23) and the end tag of a foreign text-only element (M-07). |
+| M-06 item 2 | The crossed elements of an end tag in a foreign region are all foreign, so a `FORMATTING` end tag there (in practice `</a>`; the other names are in `BREAKOUT`) must pop exactly the current node. |
+| M-06 item 3 | Checked only in HTML context and outside block content. In a foreign region a stray end tag is M-07; in block content it is M-23. |
+| M-06 item 4 | The mark goes to the new current node after every end tag that pops, also after the exact pop of a marked element. An end tag that matches nothing, a start tag, and the tags of the `noscript` content do not change it. |
+| M-11 item 5 | A start tag of C opens an element unless its name is in `VOID` (self-closing `svg` and `math` are already rejected by item 3). Names are compared after the lower-case step of the tokenizer. Items 2 to 4 are checked at each start tag; item 5 at each end tag and at the end tag `noscript` (after item 1), so a document with an unclosed element and a manifest script in C reports `RQP_MARKUP_RESERVED`. |
+| M-13 item 3 | A byte of 0x80 or more in the raw first `type` value of a `script` start tag. ASCII control characters (U+0000 to U+001F, U+007F) are not in item 3. |
 | M-24 k | Applies to every start tag in the content, also to names that no set of §2.1 contains (`<x-y>`). Table parts and `col` pass item k; M-09 then checks them. Text and comments are not checked. Item k does not apply outside block content. |
 
 ## 5. Dependencies

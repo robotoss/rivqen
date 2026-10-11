@@ -7,20 +7,23 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import org.jspecify.annotations.Nullable;
 
 /**
  * Decides whether a document is valid for RQP (rqp/1) and finds its blocks ({@code
  * docs/engineering/protocol/markup.md} §2, rules M-01 to M-27).
  *
- * <p>One pass over the tokens of {@link Tokenizer}: the token stack (M-05) is the only structure.
- * There is no tree builder (DL-008). The work is linear in the input size; the memory is bounded by
- * the input size, and the input size is checked first (M-01). The token stack has a fixed capacity
- * of {@link #MAX_OPEN_ELEMENTS} (M-26).
+ * <p>One pass over the tokens of {@link Tokenizer}: the token stack (M-05) with its depth counter D
+ * (M-26) and special-crossed marks (M-06 item 4) is the only structure. There is no tree builder
+ * (DL-008). The work is linear in the input size; the memory is bounded by the input size, and the
+ * input size is checked first (M-01). D is at most {@link #MAX_OPEN_ELEMENTS}, and the token stack
+ * never has more elements than D, so it has a fixed capacity (M-26).
  */
 public final class Analyzer {
   /** M-01: maximum input size in bytes. */
@@ -33,11 +36,14 @@ public final class Analyzer {
   public static final int MAX_BLOCK_BYTES = 1024 * 1024;
 
   /**
-   * M-26: maximum number of elements on the token stack (M-05) at any point of the document, in
-   * HTML context and in a foreign region, inside and outside blocks ({@code maxOpenElements},
-   * H-25).
+   * M-26: maximum value of the depth counter D at any point of the document, in HTML context and in
+   * a foreign region, inside and outside blocks ({@code maxOpenElements}; H-25, amended by H-31).
+   * The token stack (M-05) never has more elements than D.
    */
   public static final int MAX_OPEN_ELEMENTS = 256;
+
+  /** Prefix of {@link Result#rule()} for an internal error (a defect) at the boundary (F-4). */
+  static final String INTERNAL_ERROR = "internal-error:";
 
   /** M-15: maximum id length. */
   static final int MAX_ID_LENGTH = 64;
@@ -54,6 +60,12 @@ public final class Analyzer {
   private final TokenStack stack = new TokenStack();
   private final List<Result.Block> blocks = new ArrayList<>();
   private final Set<String> ids = new HashSet<>();
+
+  /** Tag names of this document (F-2): the stacks keep these strings. */
+  private final NameTable names = new NameTable();
+
+  /** M-26: the depth counter D. */
+  private int depth;
 
   /** The block whose content is being read, or null. */
   private @Nullable Pending pending;
@@ -99,9 +111,28 @@ public final class Analyzer {
    *
    * @param input the document bytes; only the length is read when it is above {@link
    *     #MAX_INPUT_BYTES}
-   * @return the result; never null; no exception for any input
+   * @return the result; never null; no exception for any input. An internal error (a defect) gives
+   *     an invalid result whose rule starts with {@link #INTERNAL_ERROR} (fail closed, F-4).
    */
   public static Result analyze(byte[] input) {
+    return failClosed(() -> analyzeOrThrow(input));
+  }
+
+  /**
+   * The boundary of {@link #analyze} (F-4): an unexpected {@link RuntimeException} is a defect. It
+   * gives an invalid result ({@code RQP_MARKUP_STRUCTURE}), so a caller never uses blocks of a
+   * document that was not checked to the end. The result keeps only the exception class name: a
+   * message can contain document content. {@link Main} exits with code 3 for such a result.
+   */
+  static Result failClosed(Supplier<Result> work) {
+    try {
+      return work.get();
+    } catch (RuntimeException e) {
+      return Result.invalid(ErrorCode.STRUCTURE, INTERNAL_ERROR + e.getClass().getName());
+    }
+  }
+
+  private static Result analyzeOrThrow(byte[] input) {
     if (input.length > MAX_INPUT_BYTES) {
       return Result.invalid(ErrorCode.LIMIT, "M-01");
     }
@@ -138,7 +169,7 @@ public final class Analyzer {
   private void startTag() {
     String raw = tok.name();
     Name k = Name.of(raw);
-    String name = k == null ? raw : k.tag;
+    String name = names.intern(raw, k);
     boolean html = stack.regionRoot() < 0;
     boolean inContent = blockIndex >= 0;
     boolean selfClosing = tok.selfClosing();
@@ -165,6 +196,7 @@ public final class Analyzer {
       return;
     }
     tablePart(k);
+    impliedParts(k);
     boolean region = k == Name.SVG || k == Name.MATH;
     if (!(region && selfClosing) && !Name.is(k, Name.Set.VOID)) {
       int index = push(name, k, false, inContent);
@@ -205,15 +237,44 @@ public final class Analyzer {
   }
 
   /**
-   * M-05 push with the depth limit of M-26: a push that makes the token stack larger than {@link
-   * #MAX_OPEN_ELEMENTS} elements is an error. The caller checks the other rules of the start tag
-   * first (markup.md §2.10: "on each push to the token stack").
+   * M-05 push with M-26 item 2: each push adds 1 to D. The caller checks the other rules of the
+   * start tag first (markup.md §2.10: "on each push to the token stack").
    */
   private int push(String name, @Nullable Name k, boolean inForeign, boolean inContent) {
-    if (stack.full()) {
+    addDepth(1);
+    return stack.push(name, k, inForeign, inContent);
+  }
+
+  /** M-26: adds {@code units} to D; D larger than {@link #MAX_OPEN_ELEMENTS} is an error. */
+  private void addDepth(int units) {
+    depth += units;
+    if (depth > MAX_OPEN_ELEMENTS) {
       throw new Reject(ErrorCode.LIMIT, "M-26");
     }
-    return stack.push(name, k, inForeign, inContent);
+  }
+
+  /**
+   * M-26 item 3: the parts that the tree builder inserts implicitly for a start tag in HTML context
+   * (a row group, a row, a column group) count once for each F of M-09. {@code col} is not pushed,
+   * but its column group counts.
+   */
+  private void impliedParts(@Nullable Name k) {
+    int f = stack.tableFamilyIndex();
+    if (f < 0 || k == null) {
+      return;
+    }
+    Name fk = stack.known(f);
+    int parts =
+        switch (k) {
+          case TR -> fk == Name.TABLE ? TokenStack.ROW_GROUP : 0;
+          case TD, TH ->
+              fk == Name.TABLE
+                  ? TokenStack.ROW_GROUP | TokenStack.ROW
+                  : (fk == Name.TBODY || fk == Name.THEAD || fk == Name.TFOOT ? TokenStack.ROW : 0);
+          case COL -> fk == Name.TABLE ? TokenStack.COLUMN_GROUP : 0;
+          default -> 0;
+        };
+    addDepth(stack.addParts(f, parts));
   }
 
   /** M-14 to M-19, M-21 and the block count of M-26, in the order of markup.md §2.10. */
@@ -353,11 +414,11 @@ public final class Analyzer {
   private void endTag() {
     String raw = tok.name();
     Name k = Name.of(raw);
-    String name = k == null ? raw : k.tag;
+    String name = names.intern(raw, k);
     if (textOnly >= 0) {
       // M-07 rules 3 and 4: only the end tag of the element ends its text content.
       if (stack.size() - 1 == textOnly && stack.name(textOnly).equals(name)) {
-        stack.pop();
+        popTo(textOnly, k);
         textOnly = -1;
         return;
       }
@@ -385,10 +446,18 @@ public final class Analyzer {
       if (index < root) {
         throw structure("M-07");
       }
-      stack.popTo(index);
+      popTo(index, k);
       return;
     }
     if (index < 0) {
+      // M-06 item 3 (H-30): the tree builder can close an implied row group or row, and the cell.
+      if (k == Name.TBODY
+          || k == Name.THEAD
+          || k == Name.TFOOT
+          || k == Name.TR
+          || k == Name.TABLE) {
+        throw structure("M-06");
+      }
       return;
     }
     for (int i = stack.size() - 1; i > index; i--) {
@@ -401,7 +470,45 @@ public final class Analyzer {
         throw structure("M-06");
       }
     }
+    popTo(index, k);
+  }
+
+  /**
+   * M-05 step 3 for an end tag with the known name {@code k} that matches the element at {@code
+   * index}: M-06 items 2 and 4, then the pops, the change of D (M-26 items 4 and 5) and of the
+   * special-crossed mark (M-06 item 4). The loop visits each popped element once, so the checks add
+   * no extra pass.
+   */
+  private void popTo(int index, @Nullable Name k) {
+    int top = stack.size() - 1;
+    boolean formatting = Name.is(k, Name.Set.FORMATTING);
+    boolean mark = false;
+    for (int i = top; i >= index; i--) {
+      // A crossed element sets the mark when it is special (pushed in HTML context) or foreign.
+      boolean special =
+          i > index && (stack.foreign(i) || Name.is(stack.known(i), Name.Set.SPECIAL));
+      boolean marked = stack.marked(i);
+      if (formatting && (special || marked)) {
+        throw structure("M-06"); // item 2 (special or foreign), item 4 (marked)
+      }
+      mark |= special || marked;
+    }
+    // M-26 item 4: an exact pop of a clean element gives its units back. The matched element has
+    // the name of the end tag.
+    boolean exact = index == top && !stack.dirty(index) && k != Name.HTML && k != Name.BODY;
+    if (exact) {
+      depth -= 1 + stack.partCount(index);
+    }
     stack.popTo(index);
+    int current = stack.size() - 1;
+    if (current >= 0) {
+      if (!exact) {
+        stack.setDirty(current); // M-26 item 5
+      }
+      if (mark) {
+        stack.mark(current); // M-06 item 4
+      }
+    }
   }
 
   /** M-22 rule 4, M-23 and the block end tag of M-20. */
@@ -417,7 +524,7 @@ public final class Analyzer {
       finishBlock(tok.start());
       blockIndex = -1;
     }
-    stack.pop();
+    popTo(top, k);
   }
 
   private void comment() {
@@ -479,21 +586,28 @@ public final class Analyzer {
   }
 
   /**
-   * M-11: tokenize the content of a {@code noscript} element and a following {@code </noscript>}
+   * M-11: tokenize the content C of a {@code noscript} element and a following {@code </noscript>}
    * alone, from the data state, in HTML context. M-13 applies to the start tags of this pass too
-   * (E8). When the {@code noscript} element has no end tag, the content is the rest of the input
-   * (E3).
+   * (E8). When the {@code noscript} element has no end tag, C is the rest of the input (E3).
+   *
+   * <p>Item 5 (H-27): C is balanced. A separate stack, which starts empty, holds the elements of C;
+   * an end tag compares only with its top, so this stack needs no name index. The tags of C do not
+   * change the token stack or D (M-26 item 7). The stack of C is bounded by the size of C only: a
+   * start tag has at least 3 bytes, and each entry is a reference to an interned name (F-2).
    */
-  private static void noscript(byte[] in, int from, int to) {
+  private void noscript(int from, int to) {
     int length = to - from;
     byte[] c = new byte[length + NOSCRIPT_END.length];
     System.arraycopy(in, from, c, 0, length);
     System.arraycopy(NOSCRIPT_END, 0, c, length, NOSCRIPT_END.length);
     Tokenizer sub = new Tokenizer(c, 0, c.length);
+    String[] open = new String[16];
+    int size = 0;
     while (true) {
       switch (sub.next()) {
         case START_TAG -> {
-          Name k = Name.of(sub.name());
+          String raw = sub.name();
+          Name k = Name.of(raw);
           // M-13 applies also to C (E8, H-22): a reader with scripting disabled sees this script.
           if (k == Name.SCRIPT && reservedType(c, sub)) {
             throw new Reject(ErrorCode.RESERVED, "M-13");
@@ -510,26 +624,38 @@ public final class Analyzer {
               || k == Name.TEMPLATE) {
             throw structure("M-11");
           }
+          // Item 5: a start tag that M-05 item 1 pushes opens an element of C. Self-closing svg
+          // and math are rejected above, so only VOID names are not pushed.
+          if (!Name.is(k, Name.Set.VOID)) {
+            if (size == open.length) {
+              open = Arrays.copyOf(open, size * 2);
+            }
+            open[size++] = names.intern(raw, k);
+          }
           if (k != null && k.text != null) {
             sub.enterText(k.text, k.tag);
           }
         }
         case END_TAG -> {
-          if (sub.name().equals(Name.NOSCRIPT.tag)) {
-            if (sub.start() == length) {
+          String raw = sub.name();
+          Name k = Name.of(raw);
+          if (k == Name.NOSCRIPT) {
+            // Item 1, then item 5: no element of C is open at the end of C.
+            if (sub.start() == length && size == 0) {
               return;
             }
             throw structure("M-11");
           }
+          // Item 5: every end tag closes the last open element of C.
+          if (size == 0 || !open[size - 1].equals(names.intern(raw, k))) {
+            throw structure("M-11");
+          }
+          open[--size] = null;
         }
         case EOF -> throw structure("M-11");
         case COMMENT, DOCTYPE -> {}
       }
     }
-  }
-
-  private void noscript(int from, int to) {
-    noscript(in, from, to);
   }
 
   /** M-15: {@code ^[a-z0-9][a-z0-9_-]{0,63}$} on the raw value. */
@@ -567,7 +693,7 @@ public final class Analyzer {
 
   /**
    * M-13: the first {@code type} raw value of the start tag that {@code t} just returned contains
-   * {@code rivqen-manifest} (any case) or '&'.
+   * {@code rivqen-manifest} (ASCII case-insensitive), '&' or a byte of 0x80 or more (H-28).
    *
    * @param in the bytes that {@code t} reads
    * @param t the tokenizer
@@ -579,7 +705,8 @@ public final class Analyzer {
     int from = t.typeValueStart();
     int to = t.typeValueEnd();
     for (int i = from; i < to; i++) {
-      if (in[i] == '&') {
+      // A Java byte of 0x80 or more is negative: a byte of a non-ASCII character (item 3).
+      if (in[i] == '&' || in[i] < 0) {
         return true;
       }
     }

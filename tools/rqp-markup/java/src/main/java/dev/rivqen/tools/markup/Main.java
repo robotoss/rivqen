@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Command line of the Java candidate ({@code tools/rqp-markup/CONTRACT.md} §2).
@@ -30,7 +31,10 @@ import java.util.List;
  * </pre>
  *
  * <p>Exit codes: 0 when results are printed (valid and invalid documents), 2 for a usage or I/O
- * error, 3 for an internal error (a defect). Messages on stderr never contain document content.
+ * error, 3 for an internal error (a defect). For a defect in the analysis of one document, the
+ * command still prints a fail-closed result for it ({@code RQP_MARKUP_STRUCTURE}, CONTRACT.md §5),
+ * goes on with the other documents of a batch, and exits with code 3. Messages on stderr never
+ * contain document content.
  */
 public final class Main {
   static final int EXIT_OK = 0;
@@ -74,18 +78,35 @@ public final class Main {
    * @return the exit code
    */
   static int run(String[] args, Writer out, PrintStream err) {
+    return run(args, out, err, Analyzer::analyze);
+  }
+
+  /**
+   * Runs one command with another analysis (tests give one with a defect).
+   *
+   * @param analyzer the analysis of one document; it never throws
+   * @return the exit code
+   */
+  static int run(String[] args, Writer out, PrintStream err, Function<byte[], Result> analyzer) {
     try {
+      int defects;
       if (args.length == 1 && !args[0].startsWith("--")) {
-        Result r = Analyzer.analyze(read(Path.of(args[0])));
+        Result r = analyzer.apply(read(Path.of(args[0])));
         out.write(ResultJson.format(r, null));
         out.write('\n');
+        defects = r.internalError() ? 1 : 0;
       } else if (args.length == 2 && args[0].equals("--batch")) {
-        batch(Path.of(args[1]), out);
+        defects = batch(Path.of(args[1]), out, analyzer);
       } else {
         err.println(USAGE);
         return EXIT_USAGE_OR_IO;
       }
       out.flush();
+      if (defects > 0) {
+        // The count only: the rule text has the exception class, never a message or content.
+        err.println("rqp-markup: internal error in " + defects + " document(s)");
+        return EXIT_INTERNAL;
+      }
       return EXIT_OK;
     } catch (IOException | InvalidPathException | DirectoryIteratorException e) {
       // The class name only: a message can contain a path or input data.
@@ -94,7 +115,9 @@ public final class Main {
     }
   }
 
-  private static void batch(Path dir, Writer out) throws IOException {
+  /** Prints one result line for each fixture; returns the number of internal errors. */
+  private static int batch(Path dir, Writer out, Function<byte[], Result> analyzer)
+      throws IOException {
     List<Path> fixtures = new ArrayList<>();
     try (DirectoryStream<Path> entries = Files.newDirectoryStream(dir)) {
       for (Path p : entries) {
@@ -104,15 +127,18 @@ public final class Main {
       }
     }
     fixtures.sort((a, b) -> Arrays.compareUnsigned(nameBytes(a), nameBytes(b)));
+    int defects = 0;
     for (Path p : fixtures) {
       Path input = p.resolve("input.html");
       if (!Files.exists(input)) {
         continue;
       }
-      Result r = Analyzer.analyze(read(input));
+      Result r = analyzer.apply(read(input));
       out.write(ResultJson.format(r, String.valueOf(p.getFileName())));
       out.write('\n');
+      defects += r.internalError() ? 1 : 0;
     }
+    return defects;
   }
 
   private static byte[] nameBytes(Path p) {

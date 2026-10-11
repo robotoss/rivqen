@@ -808,6 +808,7 @@ class RulesTest {
           "<table><caption><div><table></table></div></caption></table>",
           "<table><tr><th><b><table></table></b></th></tr></table>",
           "<table><template><div></div></template><tr></tr></table>",
+          "<table><table></table></table>",
           "<div><b><table><tbody><tr><td>x</td></tr></tbody></table></b></div>"
         })
     void tablePartWhereFIsTheCurrentNode(String markup) {

@@ -142,7 +142,8 @@ fn batch_mode_sorts_by_name_and_skips_directories_without_input() {
     for (name, input) in [
         ("b", &b"<p data-rq-block=\"b\">x</p>"[..]),
         ("a", b"<p data-rq-block=\"a\">x</p>"),
-        ("B", b"\xFF"),
+        // "Z" and not "B": on a case-insensitive file system "B" and "b" are one directory.
+        ("Z", b"\xFF"),
         ("a\"q", b""),
     ] {
         fs::create_dir(dir.join(name)).unwrap();
@@ -160,7 +161,7 @@ fn batch_mode_sorts_by_name_and_skips_directories_without_input() {
         .iter()
         .map(|r| r["fixture"].as_str().unwrap())
         .collect();
-    assert_eq!(fixtures, ["B", "a", "a\"q", "b"]);
+    assert_eq!(fixtures, ["Z", "a", "a\"q", "b"]);
     assert_eq!(results[0]["error"], "RQP_MARKUP_ENCODING");
     assert_eq!(results[1]["blocks"][0]["id"], "a");
     assert_eq!(results[2]["valid"], true);

@@ -266,6 +266,30 @@ final class LimitsTest extends TestCase
     }
 
     /**
+     * M-11 item 5: the stack of the noscript content is not bounded by D
+     * (M-26 item 7). Its largest size comes from content that only opens
+     * elements; the result is an M-11 error at the end of the content.
+     *
+     * @return iterable<string, array{string}>
+     */
+    public static function unbalancedNoscriptInputs(): iterable
+    {
+        yield 'two-byte names' => ['<ab>'];
+        yield 'one-byte names' => ['<a>'];
+        yield 'names with one hash' => ['<a~b]a~>'];
+    }
+
+    #[DataProvider('unbalancedNoscriptInputs')]
+    public function testUnbalancedNoscriptContentHasBoundedTimeAndMemory(string $unit): void
+    {
+        [$result, $seconds, $peak] = self::measure(self::fill('<noscript>', $unit));
+        self::assertSame(ErrorCode::Structure, $result->error);
+        self::assertSame('M-11', $result->rule);
+        self::assertLessThan(self::MAX_SECONDS, $seconds);
+        self::assertLessThan(self::MAX_PEAK_BYTES, $peak);
+    }
+
+    /**
      * @return array{Result, float, int}
      */
     private static function measure(string $input): array

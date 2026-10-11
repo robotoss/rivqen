@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
-The Rust candidate of WP-17 S1 (tasks T-03 and T-08). It implements the rules M-01…M-27 of `docs/engineering/protocol/markup.md` (rqp/1), with M-24 items j and k (human decision H-18) and the decided edge cases E1…E8 (H-21, H-22), and the interface of `tools/rqp-markup/CONTRACT.md`. It is a tool for the differential test, not the production crate (`rivqen-proto`, P3).
+The Rust candidate of WP-17 S1 (tasks T-03, T-08, T-09 and T-11). It implements the rules M-01…M-27 of `docs/engineering/protocol/markup.md` (rqp/1), with M-24 items j and k (human decision H-18), the decided edge cases E1…E8 (H-21, H-22), the token stack depth limit of M-26 (H-25), and the interface of `tools/rqp-markup/CONTRACT.md`. It is a tool for the differential test, not the production crate (`rivqen-proto`, P3).
 
 ## Build
 
@@ -46,10 +46,10 @@ cargo test
 | Test file | What it checks |
 |---|---|
 | `src/*.rs` (`mod tests`) | Tokenizer states and spans, name sets, JSON grammar, hashes |
-| `tests/rules.rs` | One or more tests for each rule M-01…M-27 and each error code; each invalid case checks the code and the rule. Separate tests for M-24 items j and k, for M-08 with a foreign `select`, and for the edge cases E1…E8. Two tests run near-limit inputs that take minutes when the work is quadratic (`large_adversarial_inputs_finish`, `large_nested_inputs_closed_by_end_tags_finish`) |
+| `tests/rules.rs` | One or more tests for each rule M-01…M-27 and each error code; each invalid case checks the code and the rule. Separate tests for M-24 items j and k, for M-08 with a foreign `select`, and for the edge cases E1…E8. M-26 depth (`m26_depth_*`): 256 elements are valid and 257 are `RQP_MARKUP_LIMIT` in HTML context, in a foreign region, for a block element and in block content; elements that M-05 does not push do not count; the depth recovers after pops; the place of the check; `noscript` content. Two tests run near-limit inputs that take minutes when the work grows with the input history (`large_adversarial_inputs_finish`, `large_nested_inputs_closed_by_end_tags_finish`) |
 | `tests/fixtures.rs` | Every fixture of `fixtures/rqp/markup/` against its `expected.json` |
 | `tests/cli.rs` | Command line: modes, exit codes, batch order, skipped directories, size limit, no content on stderr |
-| `tests/props.rs` | proptest: no panic on arbitrary bytes and text; for valid results the offsets ascend and stay in the input, content hash = SHA-256 of `input[start..end]`, tags around the content; a markup "soup" generator reaches valid documents with blocks |
+| `tests/props.rs` | proptest: no panic on arbitrary bytes and text; for valid results the offsets ascend and stay in the input, content hash = SHA-256 of `input[start..end]`, tags around the content; a markup "soup" generator reaches valid documents with blocks; well-nested documents with 240 to 271 elements (HTML context, foreign region, block content, with tokens that are not pushed) are valid when the token stack has at most 256 elements, else `RQP_MARKUP_LIMIT` (M-26) |
 
 `tests/fixtures.rs` reads `$RQP_MARKUP_FIXTURES` when it is set, else `../../../fixtures/rqp/markup`.
 
@@ -90,6 +90,8 @@ Result for T-08 (cargo-mutants 27.1.0, `--in-diff` against `4c90861`, 2026-10-09
 |---|---|
 | `>` → `>=` in M-24 item j (`nearest(items) > nearest(lists)`) | Two elements never have the same stack index, so the two sides are equal only when both are `None`. Then no list is open in the content, and item c rejects the same start tag |
 
+Result for T-11 (cargo-mutants 27.1.0, `--in-diff` against `edab313`, 2026-10-11): 8 mutants, 1 unviable, 7 caught, 0 missed. Kill rate 7/7 = 100 %. cargo-mutants does not make the off-by-one mutant `>=` → `>` of the depth check; a manual run of it fails the fixture test, the depth property test and 7 unit tests.
+
 ## Design
 
 ### Library choice
@@ -129,8 +131,8 @@ The tokenizer follows the WHATWG state descriptions (HTML Living Standard §13.2
 | Item | Bound |
 |---|---|
 | Input | M-01 is checked first. The command reads at most 5 MiB + 1 byte of a file. |
-| Time | Linear in the input size. The nearest open element with a name is found through a per-name pointer (O(1)); M-24 items j and k use the same pointers and the table-family marks (O(1) per start tag); each element is popped once; raw text end tags scan each letter once. `tests/rules.rs` runs near-limit adversarial inputs (deep stacks, many names, many failed end tags, comment and script patterns, deep lists and tables in a block, many scripts in `noscript`). `large_nested_inputs_closed_by_end_tags_finish` (T-09) closes deep stacks with matching end tags: one name, two names, short elements on a deep stack, one end tag that pops all elements, `template` (table marks), `svg` (foreign root) and five blocks just under 1 MiB. Each pop is O(1). The test takes about 5 s in a debug build and 0.3 s in a release build. A pop cost that grows with the stack size makes it take from 20 s to more than 5 min in a release build. |
-| Memory | Linear in the input size: token stack, interned names, at most 257 block ids, one copy of each `noscript` content (M-11), JSON depth stack ≤ 64 |
+| Time | Linear in the input size. The nearest open element with a name is found through a per-name pointer (O(1)); M-24 items j and k use the same pointers and the table-family marks (O(1) per start tag); each element is popped once; raw text end tags scan each letter once. The token stack has at most 256 elements (M-26), so work per token that grows with the stack depth is bounded too. `tests/rules.rs` runs near-limit adversarial inputs: many failed end tags on a full stack, more than 500 000 names in groups of 256 nested names, comment and script patterns, lists and tables at the maximum depth in five blocks, many scripts in `noscript`. `large_nested_inputs_closed_by_end_tags_finish` (T-09, T-11) fills the stack to the maximum depth and closes it with matching end tags, again and again up to 5 MiB: one name, two names, short elements on a full stack, one end tag that pops all elements, `template` (table marks), `svg` (foreign root, one region and many regions) and five blocks just under 1 MiB. For each shape, the old deep input (up to 1.7 million elements) is now `RQP_MARKUP_LIMIT` at the 257th element. The two tests take about 4 s and 7 s in a debug build and 0.3 s each in a release build. A cost that grows with the number of earlier tokens (for example a scan of all interned names at each push or pop) makes `large_adversarial_inputs_finish` take 90 s in a release build. A pop cost that grows with the stack depth now costs at most 256 steps (0.7 s). |
+| Memory | Linear in the input size: interned names, at most 257 block ids, one copy of each `noscript` content (M-11). Token stack and table marks ≤ 256 elements (M-26), JSON depth stack ≤ 64 |
 | Recursion | None |
 | Panics | `unwrap`, `expect`, `panic`, indexing and unchecked arithmetic are denied by lints outside tests. `#![forbid(unsafe_code)]`. |
 | Errors | `analyze()` returns the code and the rule (`M-xx`) that failed first. The command prints only the code. |
@@ -153,7 +155,7 @@ These places needed a choice. Each one follows the text of `markup.md`. Where th
 | M-19 | F is computed from elements pushed in HTML context. A block start tag is always in HTML context when M-19 is checked (M-16 first). |
 | M-24 j | Checked with the per-name pointers: the stack index of the nearest open `li`, `dd` or `dt` against the index of the nearest open `ul`, `ol`, `menu` or `dl`. When the nearest list was opened before the block, item c rejects the start tag, so item j needs no "opened in the content" test of its own. All combinations count (for example `dd` above `ol`), as the rule says. |
 | M-24 k | Checked on every start tag in the content, also void names (`<br>`, `<img>`) and `table`. F is the M-09 value. At the block start F is none, `td`, `th` or `caption` (M-19), so a table context in the content is always opened in the content. Outside block content, k does not apply. |
-| M-26 | The block count is checked when the 257th block start tag is read; the size when the block end tag is read. |
+| M-26 | The block count is checked when the 257th block start tag is read; the size when the block end tag is read. The depth is checked in the one function that pushes to the token stack, after all other checks of the same start tag: for a block start tag after M-15…M-21 and the block count, in block content after M-22 and M-24, in a foreign region after M-07, in HTML context after M-09. The second tokenization of `noscript` content (M-11) keeps no token stack, so the depth limit does not apply to the tags of C; the `noscript` element itself is pushed and counts. |
 
 ### Cross-check against parse5
 

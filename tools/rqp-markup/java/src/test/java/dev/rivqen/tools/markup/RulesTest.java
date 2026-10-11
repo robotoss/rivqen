@@ -566,7 +566,7 @@ class RulesTest {
 
     @Test
     void noscriptWithoutEndTagChecksTheRestOfTheInput() {
-      assertValid(body("<noscript><img src=x>"));
+      assertValid("<p data-rq-block=a>x</p><noscript><img src=x>");
       assertStructure(body("<noscript><!-- x"), "M-11");
     }
 

@@ -216,8 +216,14 @@ class LimitsTest {
 
   @Test
   void noscriptContentIsNotCounted() {
-    // M-26 limits the token stack of M-05. The M-11 pass over the noscript content has none.
-    Docs.assertValid(open("div", DEPTH - 1) + "<noscript>" + open("div", 300) + "</noscript>");
+    // M-26 item 7: the tags of the noscript content C are not part of the main pass.
+    String c = open("div", 300) + close("div", 300);
+    Docs.assertValid(open("div", DEPTH - 1) + "<noscript>" + c + "</noscript>");
+  }
+
+  @Test
+  void noscriptElementCounts() {
+    assertDepthLimit(open("div", DEPTH) + "<noscript><img src=x></noscript>");
   }
 
   @Test
@@ -226,15 +232,157 @@ class LimitsTest {
     Docs.assertValid(open("b", DEPTH) + "</b>" + "<i>" + "</i></b>");
   }
 
+  // M-26 items 4 to 6 (H-31): only an exact pop of a clean element gives units back.
+
   @Test
-  void depthRecoversAfterOneEndTagPopsManyElements() {
-    Docs.assertValid("<div>" + open("span", DEPTH - 1) + "</div>" + open("div", DEPTH));
-    assertDepthLimit("<div>" + open("span", DEPTH - 1) + "</div>" + open("div", DEPTH + 1));
+  void crossingKeepsTheUnitsOfThePoppedElements() {
+    // The tree builder ignores </div> over a span only when a special element is above; the
+    // token stack cannot know, so a crossing never gives units back.
+    String crossed = "<div>" + open("span", DEPTH - 1) + "</div>";
+    // D stays 256: tokens that do not push are still allowed, a push is not.
+    Docs.assertValid(crossed + "</x></div>x<!--c--><br>");
+    assertDepthLimit(crossed + "<b>");
+  }
+
+  @Test
+  void eachSpanOverDivCrossingKeepsTwoUnits() {
+    // markup.md M-26 example; 300 of them is the review repro (WHATWG stack of 603 in parse5).
+    String unit = "<span><div></span>";
+    Docs.assertValid(unit.repeat(DEPTH / 2));
+    assertDepthLimit(unit.repeat(DEPTH / 2) + "<b>");
+    assertDepthLimit(Docs.body(unit.repeat(300) + "<div data-rq-block=a>x</div>"));
+  }
+
+  @Test
+  void crossingMakesTheNewCurrentNodeDirty() {
+    // The first </span> crosses the div and makes the outer span dirty: the second </span> is an
+    // exact pop that gives nothing back. Each unit keeps 3.
+    String unit = "<span><span><div></span></span>";
+    Docs.assertValid(unit.repeat(85) + "<b></b>");
+    assertDepthLimit(unit.repeat(85) + "<b><b>");
+    // Without the dirty mark the second unit would give 1 back.
+    Docs.assertValid("<q><span><div></span></q>".repeat(85) + "<b></b>");
+    assertDepthLimit("<q><span><div></span></q>".repeat(85) + "<b><b>");
+  }
+
+  @Test
+  void dirtyMarkPassesDownOnEachPop() {
+    // The pop of a dirty element makes the element below it dirty too.
+    String unit = "<q><q><span><div></span></q></q>";
+    Docs.assertValid(unit.repeat(64));
+    assertDepthLimit(unit.repeat(64) + "<b>");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"html", "body"})
+  void popOfHtmlOrBodyGivesNothingBack(String name) {
+    // The tree builder never pops html for </html> and body for </body>.
+    String unit = "<" + name + "></" + name + ">";
+    Docs.assertValid(unit.repeat(DEPTH));
+    assertDepthLimit(unit.repeat(DEPTH) + "<b>");
+    assertDepthLimit("<div>" + unit + "</div>" + open("b", DEPTH - 1));
+    Docs.assertValid("<div></div>".repeat(DEPTH) + "<div>" + unit + open("b", DEPTH - 2));
+  }
+
+  @Test
+  void strayEndTagDoesNotChangeTheDepth() {
+    Docs.assertValid(open("b", DEPTH) + "</x></i>" + close("b", DEPTH) + open("b", DEPTH));
   }
 
   @Test
   void depthRecoversAfterForeignRegionEnds() {
-    Docs.assertValid("<svg>" + open("g", DEPTH - 1) + "</svg>" + open("b", DEPTH));
+    String region = "<svg>" + open("g", DEPTH - 1) + close("g", DEPTH - 1) + "</svg>";
+    Docs.assertValid(region + open("b", DEPTH));
+  }
+
+  @Test
+  void regionEndThatCrossesKeepsTheUnits() {
+    String region = "<svg>" + open("g", DEPTH - 1) + "</svg>";
+    Docs.assertValid(region + "x");
+    assertDepthLimit(region + "<b>");
+  }
+
+  // M-26 item 3: implied parts, once for each F of M-09.
+
+  @Test
+  void cellInTableCountsTheImpliedRowGroupAndRow() {
+    // table, row group, row, td: 4 (markup.md M-26 example).
+    String table = "<table><tr><td>a</td><td>b</td></tr></table>";
+    Docs.assertValid(open("div", DEPTH - 4) + table + table);
+    assertDepthLimit(open("div", DEPTH - 3) + table);
+    String cell = "<table><td>a</td></table>";
+    Docs.assertValid(open("div", DEPTH - 4) + cell);
+    assertDepthLimit(open("div", DEPTH - 3) + cell);
+  }
+
+  @Test
+  void impliedPartsCountOncePerTable() {
+    String cells = "<td>a</td>".repeat(300);
+    Docs.assertValid(open("div", DEPTH - 4) + "<table>" + cells + "</table>");
+    String rows = "<tr><td>a</td></tr>".repeat(300);
+    Docs.assertValid(open("div", DEPTH - 4) + "<table>" + rows + "</table>");
+    Docs.assertValid(open("div", DEPTH - 2) + "<table>" + "<col>".repeat(300) + "</table>");
+  }
+
+  @Test
+  void impliedPartsComeBackWithTheirTable() {
+    Docs.assertValid("<table><tr><td>a</td></tr></table><table><col></table>".repeat(300));
+  }
+
+  @Test
+  void rowInTableCountsTheImpliedRowGroup() {
+    Docs.assertValid(open("div", DEPTH - 3) + "<table><tr></tr></table>");
+    assertDepthLimit(open("div", DEPTH - 2) + "<table><tr></tr></table>");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"tbody", "thead", "tfoot"})
+  void cellInRowGroupCountsTheImpliedRow(String group) {
+    String table = "<table><" + group + "><td>a</td></" + group + "></table>";
+    Docs.assertValid(open("div", DEPTH - 4) + table);
+    assertDepthLimit(open("div", DEPTH - 3) + table);
+  }
+
+  @Test
+  void cellInRowAndRowInRowGroupImplyNothing() {
+    Docs.assertValid(open("div", DEPTH - 4) + "<table><tbody><tr><td>a</td></tr></tbody></table>");
+  }
+
+  @Test
+  void columnInTableCountsTheImpliedColumnGroup() {
+    // col is not pushed, but its column group counts.
+    Docs.assertValid(open("div", DEPTH - 2) + "<table><col></table>");
+    assertDepthLimit(open("div", DEPTH - 1) + "<table><col></table>");
+    Docs.assertValid(open("div", DEPTH - 2) + "<table><colgroup><col></colgroup></table>");
+  }
+
+  @Test
+  void templateHidesTheTable() {
+    // F of M-09 stops at a template: the cell has no F, so nothing is implied.
+    Docs.assertValid(open("div", DEPTH - 3) + "<table><template><td>a</td></template></table>");
+  }
+
+  @Test
+  void impliedPartAboveTheLimit() {
+    // The table makes D 255; the td adds the row group (256) and the row (257) before its push.
+    assertDepthLimit(open("div", DEPTH - 2) + "<table><td>");
+    assertDepthLimit(open("div", DEPTH - 1) + "<table><col>");
+  }
+
+  @Test
+  void tablesInCellsAddFourForEachLevel() {
+    // Fixture LIMIT-DEPTH-TABLE: 64 levels of <table><td> and a block make D 257.
+    String block = "<div data-rq-block=a>x</div>";
+    Docs.assertValid("<table><td>".repeat(63) + block);
+    assertDepthLimit("<table><td>".repeat(64) + block);
+  }
+
+  @Test
+  void crossedTableKeepsItsImpliedParts() {
+    // </table> crosses the cell (allowed, M-06 item 1): no units come back.
+    String table = "<table><td>a</table>";
+    Docs.assertValid(table.repeat(64));
+    assertDepthLimit(table.repeat(64) + "<b>");
   }
 
   @Test
@@ -254,7 +402,8 @@ class LimitsTest {
     Docs.assertInvalid(
         open("div", DEPTH) + "<div data-rq-block=A>x</div>", ErrorCode.INVALID_ID, "M-15");
     Docs.assertStructure(open("div", DEPTH) + "<frameset>", "M-10");
-    Docs.assertStructure("<table><tr>" + open("div", DEPTH - 2) + "<tr>", "M-09");
+    // table, implied row group, tr: 3.
+    Docs.assertStructure("<table><tr>" + open("div", DEPTH - 3) + "<tr>", "M-09");
     Docs.assertStructure("<svg>" + open("g", DEPTH - 1) + "<p>", "M-07");
   }
 

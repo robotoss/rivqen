@@ -16,10 +16,15 @@ import org.jspecify.annotations.Nullable;
  * this name open" (counters). Each entry is pushed once and popped once, so the total work is
  * linear in the number of tokens.
  *
- * <p>The capacity is fixed: M-26 allows at most {@link #CAPACITY} elements (H-25). The caller
- * checks {@link #full()} before each push and rejects the document when the stack is full; a push
- * on a full stack is a defect and throws {@link IllegalStateException}. So the memory of the stack
- * does not depend on the input, and the name index has at most {@link #CAPACITY} entries.
+ * <p>Each entry also keeps the state of the depth counter D of M-26 (a dirty flag and its implied
+ * parts) and the special-crossed mark of M-06 item 4. The rules that use this state are in {@link
+ * Analyzer}.
+ *
+ * <p>The capacity is fixed at {@link #CAPACITY} entries. Every element on the stack holds at least
+ * 1 of D (M-26), and the caller rejects the document before D becomes larger than 256, so the stack
+ * never has more than 256 elements (H-25, H-31). A push on a full stack is a defect of the caller
+ * and throws {@link IllegalStateException}. So the memory of the stack does not depend on the
+ * input, and the name index has at most {@link #CAPACITY} entries.
  *
  * <p>The counters are arrays indexed by {@link Enum#ordinal()}, as in {@link java.util.EnumMap}:
  * the index never leaves this process and needs no boxing.
@@ -31,6 +36,15 @@ final class TokenStack {
 
   private static final int NAMES = Name.values().length;
 
+  /** M-26 implied part: a row group ({@code tbody}). */
+  static final int ROW_GROUP = 1;
+
+  /** M-26 implied part: a row ({@code tr}). */
+  static final int ROW = 1 << 1;
+
+  /** M-26 implied part: a column group ({@code colgroup}). */
+  static final int COLUMN_GROUP = 1 << 2;
+
   private final String[] names = new String[CAPACITY];
   private final @Nullable Name[] known = new Name[CAPACITY];
   private final boolean[] foreign = new boolean[CAPACITY];
@@ -39,6 +53,9 @@ final class TokenStack {
   private final int[] tableContext = new int[CAPACITY];
   private final int[] listContext = new int[CAPACITY];
   private final int[] listItemContext = new int[CAPACITY];
+  private final boolean[] dirty = new boolean[CAPACITY];
+  private final boolean[] marked = new boolean[CAPACITY];
+  private final byte[] parts = new byte[CAPACITY];
   private int size;
 
   private final Map<String, Integer> topByName = new HashMap<>();
@@ -53,6 +70,48 @@ final class TokenStack {
   /** True when a push would make the stack larger than {@link #CAPACITY} elements (M-26). */
   boolean full() {
     return size >= CAPACITY;
+  }
+
+  /** True when the element at {@code index} was pushed in a foreign region. */
+  boolean foreign(int index) {
+    return foreign[index];
+  }
+
+  /** M-26: true when the element at {@code index} has the dirty mark. */
+  boolean dirty(int index) {
+    return dirty[index];
+  }
+
+  /** M-26: sets the dirty mark of the element at {@code index}. It stays until the pop. */
+  void setDirty(int index) {
+    dirty[index] = true;
+  }
+
+  /** M-06 item 4: true when the element at {@code index} has the special-crossed mark. */
+  boolean marked(int index) {
+    return marked[index];
+  }
+
+  /** M-06 item 4: sets the special-crossed mark of the element at {@code index}. */
+  void mark(int index) {
+    marked[index] = true;
+  }
+
+  /**
+   * M-26 item 3: gives the implied parts {@code bits} to the element at {@code index}.
+   *
+   * @param bits a combination of {@link #ROW_GROUP}, {@link #ROW} and {@link #COLUMN_GROUP}
+   * @return the number of parts that the element did not have before (each adds 1 to D)
+   */
+  int addParts(int index, int bits) {
+    int added = bits & ~parts[index];
+    parts[index] = (byte) (parts[index] | added);
+    return Integer.bitCount(added);
+  }
+
+  /** M-26 item 4: the number of implied parts of the element at {@code index}. */
+  int partCount(int index) {
+    return Integer.bitCount(parts[index]);
   }
 
   /** True when the element at {@code index} was pushed in the content of an html block. */
@@ -97,6 +156,9 @@ final class TokenStack {
     known[i] = k;
     foreign[i] = inForeign;
     content[i] = inContent;
+    dirty[i] = false;
+    marked[i] = false;
+    parts[i] = 0;
     Integer previous = topByName.put(name, i);
     previousSameName[i] = previous == null ? -1 : previous;
     chain(
@@ -173,15 +235,20 @@ final class TokenStack {
    * {@code template} element. Null when there is none.
    */
   @Nullable Name tableFamily() {
+    int i = tableFamilyIndex();
+    return i < 0 ? null : known[i];
+  }
+
+  /** Index of F of M-09 (see {@link #tableFamily()}), or -1 when there is none. */
+  int tableFamilyIndex() {
     if (size == 0) {
-      return null;
+      return -1;
     }
     int i = tableContext[size - 1];
-    if (i < 0) {
-      return null;
+    if (i < 0 || known[i] == Name.TEMPLATE) {
+      return -1;
     }
-    Name k = known[i];
-    return k == Name.TEMPLATE ? null : k;
+    return i;
   }
 
   /**

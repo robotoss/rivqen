@@ -32,7 +32,7 @@ final class LimitsTest extends TestCase
     private const MAX_SECONDS = 30;
     private const MAX_LIMIT_SECONDS = 2;
     private const MAX_PEAK_BYTES = 256 * 1024 * 1024;
-    private const DEPTH = Parser::MAX_OPEN_ELEMENTS;
+    private const DEPTH = Parser::MAX_DEPTH;
 
     /**
      * Two-byte units with the same PHP string hash (DJBX33A, no seed):

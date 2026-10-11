@@ -53,6 +53,37 @@ final class RulesTest extends TestCase
         yield 'M-06 crosses select' => ['<optgroup><select></optgroup>', 'M-06', $S];
         yield 'M-06 crosses svg' => ['<div><svg></svg><object></div>', 'M-06', $S];
         yield 'M-06 td end crosses table' => ['<table><tr><td><table></td>', 'M-06', $S];
+        // M-06 item 2 (H-26): a FORMATTING end tag crosses a special or foreign element.
+        $div8 = str_repeat('<div>', 8);
+        yield 'M-06.2 b crosses div' => ['<b><div>a</b>', 'M-06', $S];
+        yield 'M-06.2 i crosses p' => ['<i><p>a</i>', 'M-06', $S];
+        yield 'M-06.2 em crosses li' => ['<ul><em><li>a</em></ul>', 'M-06', $S];
+        yield 'M-06.2 crosses a special element below a phrasing one' => ['<b><div><span>a</b>', 'M-06', $S];
+        yield 'M-06.2 a crosses 8 div (review repro)' => ['<a>' . $div8 . 'x</a><span data-rq-block="x">y<a>z</a>w</span>', 'M-06', $S];
+        yield 'M-06.2 nobr crosses 8 div (review repro)' => ['<nobr>' . $div8 . 'x</nobr><span data-rq-block="x">y<nobr>z</nobr>w</span>', 'M-06', $S];
+        yield 'M-06.2 crosses a foreign element' => ['<svg><a><text>t</a></svg>', 'M-06', $S];
+        yield 'M-06.2 crosses a foreign non-special name' => ['<svg><a><g></g><g></a></svg>', 'M-06', $S];
+
+        // M-06 item 3 (H-30): stray table end tags in HTML context.
+        yield 'M-06.3 stray tbody in a cell (review repro)' => ['<table><td></tbody><div data-rq-block="x"><table></table>y</div></td></table>', 'M-06', $S];
+        yield 'M-06.3 stray tr in a cell' => ['<table><td></tr><div data-rq-block="x">p</div></td></table>', 'M-06', $S];
+        yield 'M-06.3 stray thead' => ['<table><tbody><tr><td>x</td></tr></tbody></thead></table>', 'M-06', $S];
+        yield 'M-06.3 stray tfoot outside a table' => ['</tfoot><p data-rq-block="a">x</p>', 'M-06', $S];
+        yield 'M-06.3 stray table' => ['<p>a</table>b</p>', 'M-06', $S];
+        yield 'M-06.3 stray table end tag after the table' => ['<table></table></table>', 'M-06', $S];
+
+        // M-06 item 4 (H-32): a FORMATTING end tag pops a special-crossed element.
+        yield 'M-06.4 a over span over div' => ['<a><span><div>a</span></a>', 'M-06', $S];
+        yield 'M-06.4 span crosses 8 div (review repro)' => ['<a><span>' . $div8 . 'x</span></a><span data-rq-block="x">y<a>z</a>w</span>', 'M-06', $S];
+        yield 'M-06.4 nobr variant (review repro)' => ['<nobr><span>' . $div8 . 'x</span></nobr><span data-rq-block="x">y<nobr>z</nobr>w</span>', 'M-06', $S];
+        yield 'M-06.4 li crosses ul' => ['<a><li><ul></li></a>', 'M-06', $S];
+        yield 'M-06.4 nested lists (review repro)' => ['<a>' . str_repeat('<li><ul>', 4) . str_repeat('</li>', 4) . 'x</a><span data-rq-block="x">y<a>z</a>w</span>', 'M-06', $S];
+        yield 'M-06.4 mark passes down through an exact pop' => ['<a><p><span><div></span></p></a>', 'M-06', $S];
+        yield 'M-06.4 mark passes down through a dirty exact pop' => ['<b><span><span><div></span></span></b>', 'M-06', $S];
+        yield 'M-06.4 mark from a foreign crossing' => ['<a><svg><g><rect></g></svg></a>', 'M-06', $S];
+        yield 'M-06.4 mark stays after a start tag' => ['<a><span><div></span><b>x</b></a>', 'M-06', $S];
+        yield 'M-06.4 mark stays after a stray end tag' => ['<a><span><div></span></x></a>', 'M-06', $S];
+        yield 'M-06.4 formatting end tag crosses a marked element' => ['<b><i><span><div></span><u>x</b>', 'M-06', $S];
 
         // M-07
         yield 'M-07.1 breakout in svg' => ['<svg><p>', 'M-07', $S];
@@ -115,6 +146,16 @@ final class RulesTest extends TestCase
         yield 'M-11 frameset in noscript' => ['<noscript><frameset></noscript>', 'M-11', $S];
         yield 'M-11 bad content at EOF' => ['<noscript><!--', 'M-11', $S];
         yield 'M-11 bad content at EOF in a block' => ['<div data-rq-block="a">x</div><noscript><svg>', 'M-11', $S];
+        // M-11 item 5 (H-27): C is balanced.
+        yield 'M-11.5 button left open (review repro)' => ['<noscript><button></noscript><div data-rq-block="a">x<button>y</button>z</div>', 'M-11', $S];
+        yield 'M-11.5 table left open' => ['<noscript><table></noscript><div data-rq-block="a">x</div>', 'M-11', $S];
+        yield 'M-11.5 crossing' => ['<noscript><a href="#"><span>x</a></span></noscript>', 'M-11', $S];
+        yield 'M-11.5 stray end tag' => ['<noscript></div><img src="x"></noscript>', 'M-11', $S];
+        yield 'M-11.5 end tag of a void element' => ['<noscript></br></noscript>', 'M-11', $S];
+        yield 'M-11.5 end tag after its element is closed' => ['<noscript><b></b></b></noscript>', 'M-11', $S];
+        yield 'M-11.5 self-closing flag does not close an element' => ['<noscript><b/></noscript>', 'M-11', $S];
+        yield 'M-11.5 element open at EOF (E3)' => ['<p data-rq-block="a">x</p><noscript><div>x', 'M-11', $S];
+        yield 'M-11.5 stray end tag at EOF (E3)' => ['<p data-rq-block="a">x</p><noscript></b>', 'M-11', $S];
 
         // M-12
         yield 'M-12 greater-than inside CDATA in HTML' => ['<p><![CDATA[a>b]]></p>', 'M-12', $S];
@@ -141,6 +182,16 @@ final class RulesTest extends TestCase
         yield 'M-13 in noscript after other tags' => ['<noscript><img src="x"><script>1</script><script type="rivqen-manifest"></script></noscript>', 'M-13', $R];
         yield 'M-13 in noscript without end tag (E3)' => ['<p data-rq-block="a">x</p><noscript><script type="rivqen-manifest">', 'M-13', $R];
         yield 'M-13 in noscript in a table cell' => ['<table><tr><td><noscript><script type="rivqen-manifest"></script></noscript></td></tr></table>', 'M-13', $R];
+        // M-13 item 3 (H-28): a byte >= 0x80 in the type value.
+        yield 'M-13.3 dotless i' => ["<script type=\"application/r\u{0131}vqen-manifest+json\">{}</script>", 'M-13', $R];
+        yield 'M-13.3 long s' => ["<script type=\"application/rivqen-manife\u{017F}t+json\">{}</script>", 'M-13', $R];
+        yield 'M-13.3 harmless non-ASCII value' => ["<script type=\"text/j\u{00E4}vascript\">1</script>", 'M-13', $R];
+        yield 'M-13.3 four-byte character, unquoted' => ["<script type=\u{1F600}></script>", 'M-13', $R];
+        yield 'M-13.3 no-break space at the end' => ["<script type=\"module\u{00A0}\"></script>", 'M-13', $R];
+        yield 'M-13.3 in svg' => ["<svg><script type=\"\u{00E9}\"></script></svg>", 'M-13', $R];
+        yield 'M-13.3 on a json block' => ["<script type=\"application/json\u{00E9}\" data-rq-block=\"a\">{}</script>", 'M-13', $R];
+        yield 'M-13.3 in noscript' => ["<noscript><script type=\"application/r\u{0131}vqen-manifest+json\">{}</script></noscript>", 'M-13', $R];
+        yield 'M-13.3 in noscript without end tag (E3)' => ["<p data-rq-block=\"a\">x</p><noscript><script type='\u{017F}'>", 'M-13', $R];
 
         // M-15
         yield 'M-15 empty' => ['<p data-rq-block="">x</p>', 'M-15', ErrorCode::InvalidId];
@@ -344,6 +395,23 @@ final class RulesTest extends TestCase
         yield 'M-06 tr crosses td' => ['<table><tr><td>a</tr></table><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-06 table crosses table parts' => ['<table><caption>c</table><table><colgroup><col></table><table><tbody><tr><th>h</table><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-06 crosses foreign a' => ['<svg><a><g></svg><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        $div8 = str_repeat('<div>', 8);
+        $end8 = str_repeat('</div>', 8);
+        $aBlock = '<span data-rq-block="x">y<a>z</a>w</span>';
+        $Y = [['x', 'html', 'y<a>z</a>w']];
+        $A = [['a', 'html', 'x']];
+        yield 'M-06.2 formatting end tags cross phrasing elements' => ['<a href="#"><span>a</a><b><i>b</b><p><b>c</p>' . $aBlock, $Y];
+        yield 'M-06.2 other end tags cross special elements' => ['<span><div>a</span><q><p>b</q>' . $aBlock, $Y];
+        yield 'M-06.2 special elements closed before the formatting end tag' => ['<a href="#">' . $div8 . 'x' . $end8 . '</a>' . $aBlock, $Y];
+        yield 'M-06.2 foreign elements closed before the formatting end tag' => ['<svg><a><text>t</text><g/></a></svg>' . $aBlock, $Y];
+        yield 'M-06.3 implied tbody and tr' => ['<table><td>a</td><td><span data-rq-block="c">x</span></td></table>', [['c', 'html', 'x']]];
+        yield 'M-06.3 table end tags that match' => ['<table><thead><tr><th>h</th></tr></thead><tbody><tr><td>a</td></tr></tbody><tfoot></tfoot></table><p data-rq-block="a">x</p>', $A];
+        yield 'M-06.3 other stray table end tags' => ['</td></th></caption></colgroup></col><table><caption>c</caption></caption><col></colgroup><tr><td>a</td></td></th></col></tr></table><p data-rq-block="a">x</p>', $A];
+        yield 'M-06.4 phrasing crossing sets no mark' => ['<a href="#"><b><span><i>x</span></b></a>' . $aBlock, $Y];
+        yield 'M-06.4 marked element popped by an end tag that is not formatting' => ['<div><span><div>a</span></div><a>b</a>' . $aBlock, $Y];
+        yield 'M-06.4 formatting element above a marked element' => ['<p><span><div></span><b>x</b></p>' . $aBlock, $Y];
+        yield 'M-06.4 self-closing foreign elements are not crossed' => ['<a><svg><g><rect/></g></svg></a>' . $aBlock, $Y];
+        yield 'M-06.4 mark goes away with the element' => ['<span><div></span><a>x</a>' . $aBlock, $Y];
 
         // M-07
         yield 'M-07 text in integration points' => ['<svg><foreignObject>t</foreignObject><desc>d</desc><title>t</title></svg><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
@@ -380,7 +448,10 @@ final class RulesTest extends TestCase
         yield 'M-11 script in noscript' => ['<noscript><script>1</script></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-11 typed scripts in noscript' => ['<noscript><script type="text/javascript">1</script><script type="application/json">{}</script></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-11 manifest text in raw text of noscript content' => ['<noscript><style><script type="rivqen-manifest"></style><script>"<script type=rivqen-manifest>"</script></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
-        yield 'M-11 manifest type on an end tag in noscript' => ['<noscript></script type="rivqen-manifest"></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        yield 'M-11.5 balanced content' => ['<noscript><div><a href="#"><img src="x"></a><table><tr><td>t</td></tr></table><p>t<br></p></div></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        yield 'M-11.5 raw text elements are closed by their end tags' => ['<noscript><style>a</b></style><textarea><b></textarea><script>"</b>"</script><iframe></iframe></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        yield 'M-11.5 balanced content at EOF (E3)' => ['<p data-rq-block="a">x</p><noscript><b>x</b><br>', [['a', 'html', 'x']]];
+        yield 'M-11 manifest type on an end tag in noscript' => ['<noscript><script></script type="rivqen-manifest"></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
 
         // M-12
         yield 'M-12 CDATA in svg' => ['<svg><![CDATA[a]]></svg><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
@@ -396,6 +467,12 @@ final class RulesTest extends TestCase
             '<link type="application/rivqen-manifest+json"><style type="a&amp;b"></style><noscript><link type="rivqen-manifest"></noscript><p data-rq-block="a">x</p>',
             [['a', 'html', 'x']],
         ];
+        yield 'M-13.3 non-ASCII outside a script type value' => [
+            "<script>var s = \"\u{0131}\u{017F}\";</script><style type=\"\u{00E9}\"></style><link type=\"\u{0131}\">"
+            . "<script type=\"application/json\" data-rq-block=\"j\" data-note=\"\u{00E9}\">{\"n\":\"\u{00E9}\"}</script>",
+            [['j', 'json', "{\"n\":\"\u{00E9}\"}"]],
+        ];
+        yield 'M-13.3 ASCII control bytes in a type value' => ["<script type=\"a\x7Fb\x01\">1</script><noscript><script type=\"\x7F\"></script></noscript>", []];
         yield 'M-13 other type' => ['<script type="module"></script><script type="text/javascript" type="rivqen-manifest"></script>', []];
 
         // M-14
@@ -481,7 +558,7 @@ final class RulesTest extends TestCase
         yield 'M-24.k elements in caption and cells' => ['<div data-rq-block="a"><table><caption><b>c</b></caption><tr><th><em>h</em></th><td><table><tr><td><i>x</i></td></tr></table></td></tr></table></div>', [['a', 'html', '<table><caption><b>c</b></caption><tr><th><em>h</em></th><td><table><tr><td><i>x</i></td></tr></table></td></tr></table>']]];
         yield 'M-24.k elements after the table end' => ['<div data-rq-block="a"><table><tr><td>a</td></tr></table><div>b</div></div>', [['a', 'html', '<table><tr><td>a</td></tr></table><div>b</div>']]];
         yield 'M-24.k does not apply outside content' => ['<table><div>t</div><tr><td><p data-rq-block="a">x</p></td></tr></table>', [['a', 'html', 'x']]];
-        yield 'M-24 guards do not apply outside content' => ['<a><a><button><button><nobr><nobr><li><rb><rt></nobr></nobr></button></button></a></a><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        yield 'M-24 guards do not apply outside content' => ['<a><a><button><button><nobr><nobr><li><rb><rt></rt></rb></li></nobr></nobr></button></button></a></a><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
 
         // M-25
         yield 'M-25 json edge' => ["<script type=\"application/json\" data-rq-block=\"j\">\r\n{\"a\":1e400,\"a\":\"\\ud83d\\ude00\\/\"}\r\n</script>", [['j', 'json', "\r\n{\"a\":1e400,\"a\":\"\\ud83d\\ude00\\/\"}\r\n"]]];
@@ -563,57 +640,95 @@ final class RulesTest extends TestCase
         self::assertSame('M-06', $crossed->rule);
     }
 
-    public function testM26TokenStackOf256ElementsIsAccepted(): void
+    public function testM26DepthOf256IsAccepted(): void
     {
-        self::assertSame(256, Parser::MAX_OPEN_ELEMENTS);
+        self::assertSame(256, Parser::MAX_DEPTH);
         $html = str_repeat('<div>', 255) . '<p data-rq-block="a">x</p>';
         $result = Parser::parse($html);
         self::assertTrue($result->valid, (string) $result->rule);
         self::assertSame('x', substr($html, $result->blocks[0]->start, 1));
-        self::assertTrue(Parser::parse(str_repeat('<b>', 256))->valid);
-        self::assertTrue(Parser::parse('<svg>' . str_repeat('<g>', 255))->valid);
-        self::assertTrue(Parser::parse('<div data-rq-block="a">' . str_repeat('<b>', 255) . str_repeat('</b>', 255) . '</div>')->valid);
     }
 
     /**
-     * @return iterable<string, array{string}>
+     * Pairs of documents for each step of the depth counter D: the first one
+     * reaches D = 256 (valid), the second one D = 257 (LIMIT).
+     *
+     * @return iterable<string, array{string, string}>
      */
-    public static function tooDeepCases(): iterable
+    public static function depthPairs(): iterable
     {
-        yield 'block element is the 257th' => [str_repeat('<div>', 256) . '<p data-rq-block="a">x</p>'];
-        yield 'outside blocks' => [str_repeat('<b>', 257) . str_repeat('</b>', 257)];
-        yield 'foreign region' => ['<svg>' . str_repeat('<g>', 256)];
-        yield 'block content' => ['<div data-rq-block="a">' . str_repeat('<b>', 256) . str_repeat('</b>', 256) . '</div>'];
-        yield 'after the stack was full and then empty' => [str_repeat('<b>', 256) . str_repeat('</b>', 256) . str_repeat('<i>', 257)];
+        $div = static fn(int $n): string => str_repeat('<div>', $n);
+        $b = static fn(int $n): string => str_repeat('<b>', $n);
+        $block = '<p data-rq-block="a">x</p>';
+        // Item 2: each push adds 1, in every context.
+        yield 'push of the block element' => [$div(255) . $block, $div(256) . $block];
+        yield 'push outside blocks' => [$b(256), $b(257) . str_repeat('</b>', 257)];
+        yield 'push in a foreign region' => ['<svg>' . str_repeat('<g>', 255), '<svg>' . str_repeat('<g>', 256)];
+        yield 'push in block content' => [
+            '<div data-rq-block="a">' . $b(255) . str_repeat('</b>', 255) . '</div>',
+            '<div data-rq-block="a">' . $b(256) . str_repeat('</b>', 256) . '</div>',
+        ];
+        yield 'push of noscript; its content is not counted (item 7)' => [
+            $div(255) . '<noscript>' . $b(300) . str_repeat('</b>', 300) . '</noscript>',
+            $div(256) . '<noscript></noscript>',
+        ];
+        yield 'elements that are not pushed' => [
+            $div(255) . '<b><br><img><input><svg/><math/><col></b><svg><g/><rect/></svg>',
+            $div(255) . '<b><svg></svg></b>',
+        ];
+        // Item 4: an exact pop gives the units back.
+        $cycle = $b(256) . str_repeat('</b>', 256);
+        yield 'exact pops give the units back' => [str_repeat($cycle, 3) . $b(256), str_repeat($cycle, 3) . $b(257)];
+        yield 'an exact pop of F gives back its implied parts' => [
+            str_repeat('<table><td>a</td></table><table><col></table>', 300) . $b(256),
+            str_repeat('<table><td>a</td></table><table><col></table>', 300) . $b(257),
+        ];
+        // Item 5: other pops keep the units.
+        yield 'a crossing keeps the units' => [str_repeat('<span><div></span>', 128), str_repeat('<span><div></span>', 128) . '<b>'];
+        yield 'an exact pop of a dirty element keeps its unit' => [
+            str_repeat('<span><span><div></span></span>', 85) . '<b>',
+            str_repeat('<span><span><div></span></span>', 85) . '<b><b>',
+        ];
+        yield 'end tags of html and body keep the unit' => [
+            str_repeat('<body></body><html></html>', 128),
+            str_repeat('<body></body><html></html>', 128) . '<b>',
+        ];
+        yield 'a crossing keeps the implied parts of F' => [
+            str_repeat('<table><tr><td>a</table>', 64),
+            str_repeat('<table><tr><td>a</table>', 64) . '<b>',
+        ];
+        // Item 3: implied parts, once per F.
+        yield 'implied row group and row' => [str_repeat('<table><td>', 64), str_repeat('<table><td>', 64) . $block];
+        yield 'implied row group' => [str_repeat('<table><tr>', 85) . '<b>', str_repeat('<table><tr>', 85) . '<b><b>'];
+        yield 'implied row in a row group' => [str_repeat('<table><tbody><td>', 64), str_repeat('<table><thead><th>', 64) . '<b>'];
+        yield 'implied column group of col, which is not pushed' => [$div(254) . '<table><col>', $div(255) . '<table><col>'];
+        yield 'implied parts count once per F' => [
+            $div(251) . '<table>' . str_repeat('<tr><td>a</td></tr><col>', 300) . '</table>',
+            $div(252) . '<table><col><tr><td>a</td></tr></table>',
+        ];
+        yield 'implied row counts once per row group' => [
+            $div(252) . '<table><tfoot>' . str_repeat('<td>a</td><th>b</th>', 300) . '</tfoot></table>',
+            $div(253) . '<table><tfoot><td>a</td>',
+        ];
     }
 
-    #[DataProvider('tooDeepCases')]
-    public function testM26PushOfThe257thElementIsALimitError(string $html): void
+    #[DataProvider('depthPairs')]
+    public function testM26DepthCounter(string $within, string $over): void
     {
-        $result = Parser::parse($html);
+        $result = Parser::parse($within);
+        self::assertTrue($result->valid, (string) $result->rule);
+        $result = Parser::parse($over);
         self::assertSame(ErrorCode::Limit, $result->error);
         self::assertSame('M-26', $result->rule);
     }
 
-    public function testM26ElementsThatAreNotPushedDoNotCount(): void
+    public function testM26ReviewReproIsALimitError(): void
     {
-        $full = str_repeat('<div>', 255);
-        // Void elements and self-closing svg/math in HTML context (M-05 item 1).
-        self::assertTrue(Parser::parse($full . '<b><br><img><input><svg/><math/></b>')->valid);
-        // Self-closing elements in a foreign region (M-05 item 2).
-        self::assertTrue(Parser::parse($full . '<svg><g/><rect/><path/></svg>')->valid);
-        // The M-11 check tokenizes noscript content without a token stack.
-        self::assertTrue(Parser::parse($full . '<noscript>' . str_repeat('<b>', 300) . '</noscript>')->valid);
-    }
-
-    public function testM26DepthRecoversAfterPops(): void
-    {
-        $cycle = str_repeat('<b>', 256) . str_repeat('</b>', 256);
-        self::assertTrue(Parser::parse(str_repeat($cycle, 3))->valid);
-        // One end tag pops 256 elements (M-05 step 3); then 256 fit again.
-        $crossed = '<html>' . str_repeat('<div>', 255) . '</html>';
-        self::assertTrue(Parser::parse($crossed . str_repeat('<b>', 256))->valid);
-        self::assertSame(ErrorCode::Limit, Parser::parse($crossed . str_repeat('<b>', 257))->error);
+        // Security review (H-31): the tree builder ignores each </span>, so
+        // the block would be at DOM depth 603. The token stack is empty.
+        $result = Parser::parse(str_repeat('<span><div></span>', 300) . '<p data-rq-block="a">x</p>');
+        self::assertSame(ErrorCode::Limit, $result->error);
+        self::assertSame('M-26', $result->rule);
     }
 
     public function testM27OffsetsAndHashes(): void

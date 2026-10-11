@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-RESERVED-NON-ASCII",
+  "description": "A script type with a dotless i (U+0131): Unicode upper case maps it to the manifest type (H-28)",
+  "rules": [
+    "M-13"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_RESERVED"
+  }
+}

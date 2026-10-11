@@ -68,6 +68,12 @@ test("a manifest-like script in SVG counts too", () => {
   assert.equal(v.manifests, 1);
 });
 
+test("a manifest type with Unicode look-alikes counts (a client with Unicode case folding)", () => {
+  const v = parse5View(b('<script type="application/rıvqen-manifest+json"></script><script type="application/rivqen-manifeſt+json"></script><script type="application/rivqen-manifest-x"></script>'));
+  assert.equal(v.manifests, 3);
+  assert.equal(parse5View(b('<script type="application/json"></script>')).manifests, 0);
+});
+
 test("a namespaced attribute (xlink:type) is not the type attribute", () => {
   const v = parse5View(b('<svg><script xlink:type="application/rivqen-manifest+json"></script></svg>'));
   assert.equal(v.manifests, 0);

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-FORMATTING-CROSS-SPECIAL-NOBR",
+  "description": "A nobr end tag crosses 8 div elements (H-26); a later nobr start tag in a span block would cut the block",
+  "rules": [
+    "M-06"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

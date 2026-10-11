@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-FORMATTING-CROSS-ONE",
+  "description": "A b end tag crosses one div (H-26: one special element is enough); the stray div end tag after it is ignored",
+  "rules": [
+    "M-06"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

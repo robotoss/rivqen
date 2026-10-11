@@ -291,11 +291,69 @@ def _input_size() -> bytes:
     return head + b"a" * (total - len(head) - len(tail)) + tail
 
 
+# Depth counter D (markup.md M-26, H-31). The comments give D for each recipe.
+_DOCTYPE = b"<!DOCTYPE html>\n"
+
+
+def _depth_doc(body: bytes) -> bytes:
+    return _DOCTYPE + body + b"\n"
+
+
+def _ignored_end(reps: int, extra_div: bool) -> bytes:
+    # Each <span><div></span> adds 2 to D: the end tag crosses the div (no decrease). The browser
+    # ignores the end tag ("any other end tag" stops at the special div) and keeps both open.
+    # 300 repetitions: D = 600 before the block (LIMIT). 127 repetitions + <div> + block: D = 256.
+    shape = b"<span><div></span>" * reps
+    wrap_open, wrap_close = (b"<div>", b"</div>") if extra_div else (b"", b"")
+    return _depth_doc(shape + wrap_open + b'<div data-rq-block="deep">x</div>' + wrap_close)
+
+
+def _dirty(reps: int, clean: bool) -> bytes:
+    # Not clean: each repetition adds 4. The first </span> crosses the div; the next </span> pop a
+    # dirty element and do not decrease D. 64 repetitions reach 256; the 65th makes D 257 (LIMIT).
+    # A counter without the dirty mark would stay at 2 per repetition (140 for 70).
+    # Clean: the same elements closed in order; D goes back to 0 after each repetition.
+    one = b"<span><span><span><div></div></span></span></span>" if clean else b"<span><span><span><div></span></span></span>"
+    return _depth_doc(one * reps + b'<p data-rq-block="deep">x</p>')
+
+
+def _nested_tables(levels: int) -> bytes:
+    # Each level <table><td> adds 4: the table, an implied row group, an implied row and the cell.
+    # 63 levels: D = 252, the block makes 253 (valid). 64 levels: the block makes 257 (LIMIT).
+    return _depth_doc(b"<table><td>" * levels + b'<div data-rq-block="deep">x</div>' + b"</td></table>" * levels)
+
+
+def _mixed_ignored(reps: int) -> bytes:
+    # Shapes of the security review where the browser ignores or limits an end tag. D for one
+    # repetition: 3 (h1, span, h2) + 2 (li, ul) + 2 (body, div) + 2 (form, div) = 9. 29 repetitions: 261.
+    one = b"<h1><span><h2>x</h1><li><ul></li><body><div></body><form><div></form>"
+    return _depth_doc(one * reps + b'<p data-rq-block="deep">x</p>')
+
+
+def _noscript_depth(divs: int) -> bytes:
+    # The noscript element counts in D; its content C does not (M-11, M-26). 255 divs + noscript = 256;
+    # 300 nested spans in C do not count; the block after </noscript> makes 256 again (valid).
+    # 256 divs + noscript = 257 (LIMIT).
+    c = b"<span>" * 300 + b"x" + b"</span>" * 300
+    return _depth_doc(
+        b"<div>" * divs + b"<noscript>" + c + b"</noscript>" + b'<div data-rq-block="deep">x</div>' + b"</div>" * divs
+    )
+
+
 GENERATED: dict[str, dict[str, Callable[[], bytes]]] = {
     "FX-RQ-MARKUP-LIMIT-INPUT-SIZE": {"input.html": _input_size},
     "FX-RQ-MARKUP-LIMIT-256": {"input.html": lambda: _many_blocks(256), "fixture.json": _limit_256_fixture},
     "FX-RQ-MARKUP-LIMIT-257": {"input.html": lambda: _many_blocks(257)},
     "FX-RQ-MARKUP-LIMIT-BLOCK-SIZE": {"input.html": _block_size},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-IGNORED-END": {"input.html": lambda: _ignored_end(300, False)},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-IGNORED-END-127": {"input.html": lambda: _ignored_end(127, True)},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-DIRTY": {"input.html": lambda: _dirty(70, False)},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-DIRTY-CLEAN": {"input.html": lambda: _dirty(70, True)},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-TABLE": {"input.html": lambda: _nested_tables(64)},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-TABLE-63": {"input.html": lambda: _nested_tables(63)},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-MIXED": {"input.html": lambda: _mixed_ignored(29)},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT": {"input.html": lambda: _noscript_depth(255)},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ELEMENT": {"input.html": lambda: _noscript_depth(256)},
 }
 
 

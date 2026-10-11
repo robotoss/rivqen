@@ -66,3 +66,29 @@ test("the generator reaches the shapes that the sweep needs", () => {
   assert.ok(has(/<!\[CDATA\[x$/), "CDATA at EOF");
   assert.ok(has(/<svg><desc>/), "foreign integration point");
 });
+
+test("the classic profile is the default and does not change", () => {
+  for (let i = 0; i < 200; i++) {
+    const s = docSeed(4, i);
+    assert.equal(generateDocument(s, { profile: "classic" }), generateDocument(s));
+  }
+});
+
+test("the review profile reaches the shapes of the security review", () => {
+  const docs = Array.from({ length: 3000 }, (_, i) => generateDocument(docSeed(1, i), { profile: "review", maxTokens: 20 }));
+  const has = (re) => docs.some((d) => re.test(d));
+  assert.ok(has(/<(a|nobr)>(<div>){8}/), "formatting element over 8 or more special elements");
+  assert.ok(has(/<a><(span|em|q)>(<\w+>){7}/), "a crossing below the formatting element");
+  assert.ok(has(/<table><td><\/tbody>/), "stray tbody end tag after an implied tbody");
+  assert.ok(has(/<table><td><\/tr>/), "stray tr end tag after an implied tr");
+  assert.ok(has(/<noscript><button><\/noscript>/), "unbalanced noscript content");
+  assert.ok(has(/(<span><div><\/span>){100}/), "a long run of ignored end tags");
+  assert.ok(has(/<script type="application\/rıvqen-manifest\+json">/), "dotless i in a script type");
+  assert.ok(has(/(<table><td>){60}/), "deep nested tables");
+});
+
+test("review documents are bounded", () => {
+  for (let i = 0; i < 1000; i++) {
+    assert.ok(generateDocument(docSeed(9, i), { profile: "review", maxTokens: 200 }).length < 200 * 8000);
+  }
+});

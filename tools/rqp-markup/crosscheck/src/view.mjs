@@ -54,7 +54,7 @@ export function parse5View(bytes, { scripting = true } = {}) {
       const html = node.namespaceURI === HTML_NS;
       const type = attrValue(attrs, "type");
       // Every namespace: M-13 applies in every context, and a CSS selector script[type] also matches an SVG script.
-      if (node.tagName === "script" && type !== null && type.toLowerCase().includes("rivqen-manifest")) {
+      if (node.tagName === "script" && type !== null && looksLikeManifest(type)) {
         manifests++;
       }
       const id = attrValue(attrs, "data-rq-block");
@@ -77,6 +77,17 @@ export function parse5View(bytes, { scripting = true } = {}) {
   }
   blocks.sort((a, b) => (a.start ?? Infinity) - (b.start ?? Infinity));
   return { ok: true, blocks, manifests };
+}
+
+/**
+ * A script type that a client could take for the manifest type: ASCII case-insensitive, and also
+ * after Unicode case mapping (dotless i and long s map to ASCII i and s in upper case), because
+ * markup.md M-13 must hold for a client that compares with Unicode case folding (H-28).
+ * @param {string} type decoded attribute value
+ */
+export function looksLikeManifest(type) {
+  const needle = "rivqen-manifest";
+  return type.toLowerCase().includes(needle) || type.toUpperCase().toLowerCase().includes(needle);
 }
 
 /** @param {object[]} stack @param {object[]} children */

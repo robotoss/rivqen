@@ -2,7 +2,7 @@
 
 This page specifies how a page marks its data blocks in the Rivqen protocol (RQP), when a document is valid for RQP, and which bytes are the content of each block. The markup is valid HTML. It replaces the legacy comment markers.
 
-**Status:** <Badge type="info" text="DESIGN" /> Normative for `rqp/1` from WP-17 S1. Decisions: attribute markup and inline manifest ([ADR-006](/engineering/architecture/adr/#adr-006)); a block without an explicit end tag is invalid (human decision H-12, [sprint record WP-17 S1](/engineering/plan/sprints/WP-17-S1)); M-24 items j and k (H-18); edge cases E1–E7 (H-21) and E8 (H-22), section 2.11. Parser interface, hashes and revisions: `tools/rqp-markup/CONTRACT.md`. Golden fixtures: [`FX-RQ-MARKUP-*`](/engineering/protocol/fixtures#_4-2-markup-fixtures-fx-rq-markup).
+**Status:** <Badge type="info" text="DESIGN" /> Normative for `rqp/1` from WP-17 S1. Decisions: attribute markup and inline manifest ([ADR-006](/engineering/architecture/adr/#adr-006)); a block without an explicit end tag is invalid (human decision H-12, [sprint record WP-17 S1](/engineering/plan/sprints/WP-17-S1)); M-24 items j and k (H-18); edge cases E1–E7 (H-21) and E8 (H-22), section 2.11; rules from the security review: M-06 items 2 and 3 (H-26, H-30), M-11 item 5 (H-27), M-13 non-ASCII types (H-28) and the depth counter D of M-26 (H-25, amended by H-31), section 2.12. Parser interface, hashes and revisions: `tools/rqp-markup/CONTRACT.md`. Golden fixtures: [`FX-RQ-MARKUP-*`](/engineering/protocol/fixtures#_4-2-markup-fixtures-fx-rq-markup).
 
 [[toc]]
 
@@ -51,6 +51,7 @@ Each rule has an ID `M-xx` and names the error code of `tools/rqp-markup/CONTRAC
 | Current node | The top element of the token stack |
 | Foreign region | The part of the document inside an `svg` or `math` element (M-05) |
 | HTML context | Every position that is not in a foreign region |
+| D, dirty, implied part | The depth counter of M-26 and its state on the token stack |
 
 **Name sets.** The rules use these sets of names:
 
@@ -64,8 +65,10 @@ Each rule has an ID `M-xx` and names the error code of `tools/rqp-markup/CONTRAC
 - `INTEGRATION`: `annotation-xml`, `desc`, `foreignobject`, `mi`, `mn`, `mo`, `ms`, `mtext`, `title`.
 - `BLOCK_HTML`: `article`, `aside`, `div`, `footer`, `h1`–`h6`, `header`, `main`, `nav`, `p`, `section`, `span`, `title`.
 - `FORBIDDEN_CONTENT`: `base`, `basefont`, `bgsound`, `body`, `embed`, `frame`, `frameset`, `head`, `html`, `iframe`, `link`, `math`, `meta`, `noembed`, `noframes`, `noscript`, `object`, `optgroup`, `option`, `plaintext`, `script`, `select`, `style`, `svg`, `template`, `textarea`, `title`, `xmp`.
+- `FORMATTING`: `a`, `b`, `big`, `code`, `em`, `font`, `i`, `nobr`, `s`, `small`, `strike`, `strong`, `tt`, `u`.
+- `SPECIAL` (HTML elements only): `address`, `applet`, `area`, `article`, `aside`, `base`, `basefont`, `bgsound`, `blockquote`, `body`, `br`, `button`, `caption`, `center`, `col`, `colgroup`, `dd`, `details`, `dir`, `div`, `dl`, `dt`, `embed`, `fieldset`, `figcaption`, `figure`, `footer`, `form`, `frame`, `frameset`, `h1`–`h6`, `head`, `header`, `hgroup`, `hr`, `html`, `iframe`, `img`, `input`, `keygen`, `li`, `link`, `listing`, `main`, `marquee`, `menu`, `meta`, `nav`, `noembed`, `noframes`, `noscript`, `object`, `ol`, `p`, `param`, `plaintext`, `pre`, `script`, `search`, `section`, `select`, `source`, `style`, `summary`, `table`, `tbody`, `td`, `template`, `textarea`, `tfoot`, `th`, `thead`, `title`, `tr`, `track`, `ul`, `wbr`, `xmp`.
 
-<Badge type="tip" text="FACT" /> `PCLOSE`, `BREAKOUT` and the void handling of `VOID` come from the WHATWG HTML Living Standard, §13.2.6.4.7 "The rules for parsing tokens in body" and §13.2.6.5 "The rules for parsing tokens in foreign content" (checked against the `whatwg/html` source on 2026-10-09). `INTEGRATION` is the union of the SVG HTML integration points (`foreignObject`, `desc`, `title`) and the MathML text integration points and `annotation-xml`.
+<Badge type="tip" text="FACT" /> `PCLOSE`, `BREAKOUT` and the void handling of `VOID` come from the WHATWG HTML Living Standard, §13.2.6.4.7 "The rules for parsing tokens in body" and §13.2.6.5 "The rules for parsing tokens in foreign content" (checked against the `whatwg/html` source on 2026-10-09). `INTEGRATION` is the union of the SVG HTML integration points (`foreignObject`, `desc`, `title`) and the MathML text integration points and `annotation-xml`. `FORMATTING` is the "formatting" category and `SPECIAL` is the HTML part of the "special" category of §13.2.4.2 "The stack of open elements" (checked against `html.spec.whatwg.org` on 2026-10-11). The MathML elements `mi`, `mo`, `mn`, `ms`, `mtext`, `annotation-xml` and the SVG elements `foreignObject`, `desc`, `title` are also special; the rules cover them as elements pushed in a foreign region.
 
 ### 2.2 Input
 
@@ -111,16 +114,26 @@ This applies also when the start tag has the self-closing flag. RCDATA, RAWTEXT 
 3. An end tag: find the nearest element on the stack (from the top) with the same name. If there is none, ignore the end tag. If there is one, pop all elements above it and then pop it. The elements above it are **crossed** (M-06).
 4. A position is in a **foreign region** when the stack contains an `svg` or `math` element that was pushed in HTML context. The region starts after that start tag and ends when that element is popped.
 
-The token stack is not the DOM. It does not do implied end tags, foster parenting or the adoption agency algorithm. The rules M-06 to M-24 make sure that, for a valid document, the differences do not change which elements are blocks or where their content ends.
+The token stack is not the DOM. It does not do implied end tags, foster parenting or the adoption agency algorithm. The rules M-06 to M-24 make sure that, for a valid document, the differences do not change which elements are blocks or where their content ends. The depth counter D of M-26 bounds the depth of the WHATWG tree, which can be larger than the token stack.
 
 ### 2.4 Document rules
 
 These rules apply to the whole document, also when it has no block. They remove the cases where the token stack and the WHATWG tree disagree about an element that matters for blocks. Error for all of them, except M-11 item 4 and M-13: `RQP_MARKUP_STRUCTURE`.
 
-**M-06 Crossing.** An end tag MUST NOT cross (M-05, step 3) an element that was pushed in HTML context and whose name is in `GUARDED`. (Elements pushed in a foreign region, for example an SVG `a`, are not guarded; M-07 applies to them.) Exception: an end tag with a name in `TABLE_FAMILY` can cross elements with a name in `TABLE_PART`.
+**M-06 End tags.**
 
-- Allowed: `<div><span>a</div>` (crosses `span`), `<ul><li>a</ul>` (crosses `li`), `<tr><td>a</tr>` (crosses `td`).
-- Invalid: `<div><button>a</div>` (crosses `button`), `<td><a href="#">a</td>` (crosses `a`).
+1. **Guarded elements.** An end tag MUST NOT cross (M-05, step 3) an element that was pushed in HTML context and whose name is in `GUARDED`. (Elements pushed in a foreign region, for example an SVG `a`, are not guarded by this item; M-07 and item 2 apply to them.) Exception: an end tag with a name in `TABLE_FAMILY` can cross elements with a name in `TABLE_PART`.
+2. **Formatting end tags.** An end tag with a name in `FORMATTING` MUST NOT cross an element that was pushed in HTML context and whose name is in `SPECIAL`. It MUST NOT cross an element that was pushed in a foreign region. (Human decision H-26.)
+3. **Stray table end tags.** In HTML context, an end tag with the name `tbody`, `thead`, `tfoot`, `tr` or `table` MUST match an element on the token stack (M-05, step 3). The elements that the tree builder inserts implicitly (a `tbody` or a `tr`, M-26) stay allowed. (Human decision H-30.)
+
+Examples:
+
+- Allowed: `<div><span>a</div>` (crosses `span`), `<ul><li>a</ul>` (crosses `li`), `<tr><td>a</tr>` (crosses `td`), `<a href="#"><span>a</a>` and `<b><i>a</b>` (a formatting end tag crosses a phrasing element), `<p><b>a</p>` (`p` is not in `FORMATTING`), `<table><td>a</td></table>` (implied `tbody` and `tr`), a stray `</td>`, `</th>`, `</caption>`, `</colgroup>` or `</col>`.
+- Invalid: `<div><button>a</div>` (crosses `button`), `<td><a href="#">a</td>` (crosses `a`), `<b><div>a</b>` (item 2), `<svg><a><text>t</a></svg>` (item 2, a foreign element), `<table><td></tbody>` and `<table><td></tr>` (item 3).
+
+<Badge type="tip" text="FACT" /> Item 2: in the "in body" insertion mode, an end tag with a name in `FORMATTING` runs the adoption agency algorithm (WHATWG §13.2.6.4.7, "An end tag whose tag name is one of: a, b, …, u"; the algorithm is in the same section). The algorithm looks for the "furthest block": the first element in the special category below the formatting element on the stack of open elements. When there is none, it pops the stack "from the current node up to and including formattingElement" and returns: the same elements that the token stack pops. With a furthest block, it moves elements to new parents, and it stops after 8 passes of its outer loop ("If outerLoopCounter is greater than or equal to 8, then return"). Then the formatting element can stay open in the browser while the token stack has closed it. A later `<a>` or `<nobr>` start tag in a block then runs the algorithm again and cuts the block (security review, confirmed in parse5 8.0.1 for `<a><div>`×8`x</a><span data-rq-block="x">y<a>z</a>w</span>`: parse5 has no end tag for the block). Item 2 removes the furthest block when every element above the matching element on the WHATWG stack is an element of the token stack or a reconstructed formatting element. <Badge type="warning" text="RESEARCH" /> After an earlier crossing by another end tag, the WHATWG stack can hold elements that the token stack no longer has (for example `</span>` over 8 `div` elements: "any other end tag" stops at a special element and ignores the token). Then a formatting end tag that crosses nothing still meets a furthest block. This gap is open for the human ([edge cases §6.1](/engineering/protocol/markup-edge-cases#_6-1-m-06-item-2-formatting-end-tags-h-26)).
+
+<Badge type="tip" text="FACT" /> Item 3: in the "in table body" and "in row" insertion modes, an end tag `tbody`, `thead`, `tfoot` closes the row group and an end tag `tr` closes the row when the element is in table scope (WHATWG §13.2.6.4.13, §13.2.6.4.14). In the "in cell" mode, `</tbody>`, `</tfoot>`, `</thead>`, `</tr>` and `</table>` first "close the cell" (§13.2.6.4.15). So a stray `</tbody>` or `</tr>` closes an implied `tbody` or `tr` and the open cell, and the next element goes before the table (foster parenting). The token stack has no such element and ignores the end tag. The other table end tags do not change the WHATWG stack when the token stack has no match: `</td>`, `</th>` and `</caption>` need an element in table scope, which the token stack also has, and `</col>` is always ignored. A stray `</colgroup>` closes only an implied `colgroup`, which the next token other than `col` closes anyway ([edge cases §6.4](/engineering/protocol/markup-edge-cases#_6-4-m-06-item-3-stray-table-end-tags-h-30)).
 
 **M-07 Foreign regions.** In a foreign region:
 
@@ -153,13 +166,26 @@ So a cell, a row or a row group must be closed explicitly before the next one st
 1. The first end tag `noscript` MUST start exactly at the end of C. (C must not end inside a tag, a comment, a DOCTYPE or a RAWTEXT, RCDATA, script data or PLAINTEXT section.)
 2. C MUST NOT contain a start tag with a `data-rq-block` attribute.
 3. C MUST NOT contain a start tag named `frameset`, `math`, `noscript`, `plaintext`, `select`, `svg` or `template`.
-4. C MUST NOT contain a start tag `script` that M-13 rejects: a first `type` attribute whose raw value contains `rivqen-manifest` (ASCII case-insensitive) or contains `&`. Error: `RQP_MARKUP_RESERVED` (E8, H-22).
+4. C MUST NOT contain a start tag `script` that M-13 rejects: a first `type` attribute whose raw value contains `rivqen-manifest` (ASCII case-insensitive), contains `&` or contains a byte ≥ 0x80. Error: `RQP_MARKUP_RESERVED` (E8, H-22; H-28).
+5. C MUST be balanced (human decision H-27). Use a separate stack for C, which starts empty. A start tag that M-05 item 1 would push opens an element of C. Each end tag in C (before the end tag `noscript` of item 1) MUST have the name of the last open element of C, and closes it. At the end of C, no element of C is open. So C has no crossing, no unclosed element and no stray end tag.
 
-Items 1 to 3: error `RQP_MARKUP_STRUCTURE`. Typical tracking fallbacks such as `<noscript><iframe src="…"></iframe></noscript>` and `<noscript><img src="…"></noscript>` are valid. A `noscript` without an end tag whose rest of the input is `<img src="…">` is valid. `<noscript><script type="application/rivqen-manifest+json">…</script></noscript>` is invalid (item 4): a reader with scripting disabled (a crawler, a server-side HTML tool, a native HTML parser) would see a second manifest.
+Items 1 to 3 and 5: error `RQP_MARKUP_STRUCTURE`. Typical tracking fallbacks such as `<noscript><iframe src="…"></iframe></noscript>` and `<noscript><img src="…"></noscript>` are valid. A `noscript` without an end tag whose rest of the input is `<img src="…">` is valid. `<noscript><script type="application/rivqen-manifest+json">…</script></noscript>` is invalid (item 4): a reader with scripting disabled (a crawler, a server-side HTML tool, a native HTML parser) would see a second manifest. `<noscript><button></noscript>` and `<noscript><table></noscript>` are invalid (item 5).
+
+The tags in C are not part of the main token pass: they do not change the token stack of M-05 and the depth counter D of M-26. The `noscript` element itself is pushed and counts.
+
+<Badge type="tip" text="FACT" /> Item 5: with scripting disabled, a `noscript` start tag in body is an ordinary element ("any other start tag"), and its end tag is "any other end tag" (WHATWG §13.2.6.4.7). That step walks down from the current node and ignores the token when it meets a special element first. So when C leaves a `button` or a `table` open, the scripting-disabled tree builder ignores `</noscript>`, and the next block is parsed inside the `button` or the `table` (security review; parse5 8.0.1 has no end tag for the block of `<noscript><button></noscript><div data-rq-block="a">x<button>y</button>z</div>` in the scripting-disabled view).
 
 **M-12 CDATA.** For every `<![CDATA[` that the tokenizer reads in the data state, the first `>` after it MUST be the last character of a `]]>` that starts after `<![CDATA[`. Then a CDATA section (ends at the first `]]>`) and a bogus comment (ends at the first `>`) end at the same byte. If there is no `>` after the `<![CDATA[` before the end of the input, the rule holds: a CDATA section and a bogus comment both end at the end of the input (E4, H-21). M-12 applies in HTML context and in a foreign region. In the content of a foreign `INTEGRATION` or `TEXT` element, M-07 item 5 applies too.
 
-**M-13 Reserved manifest.** A start tag `script` (in any context, outside raw text) MUST NOT have a first `type` attribute whose raw value contains `rivqen-manifest` (ASCII case-insensitive) or contains `&`. The server SDK adds the manifest; a document that already has one, or a script type that could decode to it, is not accepted. Error: `RQP_MARKUP_RESERVED`. The `&` part fails closed, so no character reference decoder is needed (decided by the human, 2026-10-09; [WP-17 S1](/engineering/plan/sprints/WP-17-S1) H-17). The only raw text where M-13 also applies is the `noscript` content C, tokenized as in M-11 (M-11 item 4, H-22).
+**M-13 Reserved manifest.** A start tag `script` (in any context, outside raw text) MUST NOT have a first `type` attribute whose raw value:
+
+1. contains `rivqen-manifest` (ASCII case-insensitive), or
+2. contains `&`, or
+3. contains a byte ≥ 0x80 (a non-ASCII character).
+
+The server SDK adds the manifest; a document that already has one, or a script type that could decode or fold to it, is not accepted. Error: `RQP_MARKUP_RESERVED`. Items 2 and 3 fail closed, so no character reference decoder and no Unicode case mapping are needed (decided by the human, 2026-10-09 and 2026-10-11; [WP-17 S1](/engineering/plan/sprints/WP-17-S1) H-17, H-28). Item 3 also rejects harmless values such as `text/jävascript`. The only raw text where M-13 also applies is the `noscript` content C, tokenized as in M-11 (M-11 item 4, H-22).
+
+<Badge type="tip" text="FACT" /> Item 3: in Unicode, `ı` (U+0131, dotless i) maps to the upper case `I`, and `ſ` (U+017F, long s) maps to the upper case `S`. A client that compares the type with Unicode case folding would take `application/rıvqen-manifest+json` or `application/rivqen-manifeſt+json` for the manifest type, but item 1 does not match them (security review). <Badge type="info" text="DESIGN" /> The client SDK compares the type of the manifest script by an ASCII case-insensitive byte match only, never by Unicode case folding (H-28). The client text is part of sprint S2 ([manifest and patch](/engineering/protocol/manifest-patch)).
 
 ### 2.5 Blocks
 
@@ -254,9 +280,35 @@ Error: `RQP_MARKUP_BAD_JSON`. The hash is over the raw content bytes; RQP does n
 
 ### 2.8 Limits
 
-**M-26 Limits.** A document MUST NOT have more than 256 blocks. The content of one block MUST NOT be larger than 1 MiB (1 048 576 bytes). The token stack (M-05) MUST NOT have more than 256 elements at any point of the document: a push that makes the stack larger than 256 elements is an error. This applies in HTML context and in a foreign region, inside and outside blocks. Error: `RQP_MARKUP_LIMIT`. Values: [resource limits](/engineering/core/resource-limits) (`maxBlocks`, `maxBlockBytes`, `maxOpenElements`, `maxDocumentBytes`).
+**M-26 Limits.** A document MUST NOT have more than 256 blocks. The content of one block MUST NOT be larger than 1 MiB (1 048 576 bytes). The depth counter D (below) MUST NOT be larger than 256 at any point of the document: a step that makes D larger than 256 is an error. This applies in HTML context and in a foreign region, inside and outside blocks. Error: `RQP_MARKUP_LIMIT`. Values: [resource limits](/engineering/core/resource-limits) (`maxBlocks`, `maxBlockBytes`, `maxOpenElements`, `maxDocumentBytes`).
 
-<Badge type="tip" text="FACT" /> Browsers limit the DOM depth during parsing to about 512. Blink (Chrome, Android WebView) has `kMaximumHTMLParserDOMTreeDepth` = 512; Gecko attaches nodes deeper than stack position 511 to that node. Beyond the limit a new node goes to the element at the maximum depth, so a deep block element is empty in the DOM and its content becomes its sibling. Then the block bytes and the DOM do not agree. <Badge type="info" text="DESIGN" /> The limit 256 leaves room for elements that the tree builder adds and the token stack does not have (`html`, `body`, a `tbody` for each table): each implied `tbody` needs at least a `table` and a `tr` start tag, so the DOM depth is at most 1.5 × 256 + 2 = 386 (H-25). The limit also bounds the memory and the per-token work of the token stack in every SDK.
+**Depth counter D** (human decision H-31, which amends H-25). D is computed in the main token pass, together with the token stack of M-05. Each element on the token stack has a **dirty** mark (initially not set) and a set of **implied parts** (initially empty).
+
+1. D starts at 0.
+2. **Push.** Each push to the token stack (M-05 items 1 and 2) adds 1.
+3. **Implied parts.** For a start tag in HTML context, let F be as in M-09. For each implied part in the table below that F does not have yet: add 1, and give the part to F. This applies also to `col`, which is not pushed.
+
+   | Start tag | F | Implied parts |
+   |---|---|---|
+   | `tr` | `table` | row group |
+   | `td`, `th` | `table` | row group, row |
+   | `td`, `th` | `tbody`, `thead`, `tfoot` | row |
+   | `col` | `table` | column group |
+
+4. **Exact pop.** An end tag that pops exactly one element (M-05 step 3: the current node, no crossing), when that element is not dirty and its name is not `html` or `body`, subtracts 1 and the number of implied parts of that element.
+5. **Other pops.** An end tag that pops more than one element (a crossing), or pops a dirty element, or pops `html` or `body`, does not change D. After it, the new current node (if there is one) is dirty.
+6. An end tag that matches no element does not change D.
+7. The tags in the `noscript` content C (M-11) are not part of the main pass and do not change D. The `noscript` element itself is pushed (item 2).
+
+Check D after each push and after each implied part. Every element on the token stack holds at least 1 of D, so the token stack never has more than D elements: D ≤ 256 also bounds the memory and the per-token work of the token stack in every SDK (H-25).
+
+Examples: `<div><span>a</span></div>` gives D = 2, then 0. `<table><tr><td>a</td><td>b</td></tr></table>` gives at most D = 4 (table, row group, `tr`, `td`), then 0. Each `<span><div></span>` adds 2 and never gives them back. Each `<span><span><div></span></span>` adds 3: the first `</span>` crosses the `div` and makes the outer `span` dirty, so the second `</span>` does not subtract.
+
+<Badge type="tip" text="FACT" /> Browsers limit the depth during parsing to about 512. Blink (Chrome, Android WebView) has `kMaximumHTMLParserDOMTreeDepth` = 512; Gecko attaches nodes deeper than stack position 511 to that node. Beyond the limit a new node goes to the element at the maximum depth, so a deep block element is empty in the DOM and its content becomes its sibling. Then the block bytes and the DOM do not agree.
+
+<Badge type="tip" text="FACT" /> The token stack is not a bound of the WHATWG stack. The tree builder ignores some end tags that the token stack uses: "any other end tag" stops at a special element (`</span>` over a `div`), `</li>` needs an `li` in list item scope (`<li><ul></li>`), a heading end tag pops only to the nearest heading (`<h1><span><h2>x</h1>`), `</form>` removes only the form, and `</body>` does not pop (WHATWG §13.2.6.4.7). 300 × `<span><div></span>` before a block gives a WHATWG stack of 603 elements in parse5 8.0.1, while the token stack is empty (security review). D is 600 for this input.
+
+<Badge type="info" text="DESIGN" /> **Claim.** For a document that satisfies the other rules of section 2, after each token: (a) the WHATWG stack of open elements has at most D + 2 elements; (b) each element on it has a DOM depth (element ancestors + 1) of at most D + 2; (c) each element that the tree builder inserts and does not keep on the stack (a void element, the empty `p` of `</p>`, the `br` of `</br>`) has a DOM depth of at most D + 3. The 2 are the implied `html` and `body` (or `head`). With D ≤ 256, the WHATWG stack has at most 258 elements and no element is deeper than 259, far below 512. The argument for each tree-builder behavior is in [edge cases §6.5](/engineering/protocol/markup-edge-cases#_6-5-m-26-depth-counter-d-h-31). <Badge type="tip" text="FACT" /> The cross-check tool computes D and checks (a) to (c) after each token of parse5 8.0.1 (`tools/rqp-markup/crosscheck`, `src/depth.mjs`): 0 violations on the valid golden fixtures and on all sweep documents that the candidates accept ([edge cases §6.6](/engineering/protocol/markup-edge-cases#_6-6-sweeps)).
 
 ### 2.9 Result
 
@@ -274,11 +326,11 @@ Error: `RQP_MARKUP_BAD_JSON`. The hash is over the raw content bytes; RQP does n
 | `RQP_MARKUP_DUPLICATE` | M-21 |
 | `RQP_MARKUP_BAD_JSON` | M-25 |
 | `RQP_MARKUP_RESERVED` | M-11 item 4, M-13 |
-| `RQP_MARKUP_STRUCTURE` | M-06 to M-12 (M-11 items 1 to 3), M-18 to M-20, M-22 to M-24 |
+| `RQP_MARKUP_STRUCTURE` | M-06 to M-12 (M-11 items 1 to 3 and 5), M-18 to M-20, M-22 to M-24 |
 
 `RQP_MARKUP_STRUCTURE` is the one code for all structure failures: no explicit end tag, implied end tag, unbalanced content, forbidden content element, block context, and the document rules.
 
-**Recommended check order.** M-01, M-02, then one pass over the tokens. On each push to the token stack: M-26 (depth). For a block start tag: M-17, M-15, M-16, M-18, M-19, M-21, M-26 (count). At the block end: M-26 (size), M-25. A fixture never depends on this order, because a fixture with an error has exactly one error.
+**Recommended check order.** M-01, M-02, then one pass over the tokens. On each push to the token stack and each implied part: M-26 (depth counter D). On each end tag: M-06 (items 1 to 3), then the change of D. At the end of a `noscript` content C: M-11. For a block start tag: M-17, M-15, M-16, M-18, M-19, M-21, M-26 (count). At the block end: M-26 (size), M-25. A fixture never depends on this order, because a fixture with an error has exactly one error.
 
 ### 2.11 Decided edge cases
 
@@ -294,6 +346,18 @@ Error: `RQP_MARKUP_BAD_JSON`. The hash is over the raw content bytes; RQP does n
 | E6 | `<?` that reaches the end of input | M-03 | A comment to the end of the input |
 | E7 | `frameset` start tag in a foreign region | M-10 | Invalid (`STRUCTURE`) |
 | E8 | Manifest script in `noscript` content | M-11 item 4, M-13 | Invalid (`RESERVED`) |
+
+### 2.12 Rules from the security review
+
+<Badge type="info" text="DESIGN" /> The security review of the four parser candidates (2026-10-11) found shapes where the token stack and the WHATWG tree builder disagree. The human decided H-25 to H-31 ([WP-17 S1](/engineering/plan/sprints/WP-17-S1)). Evidence and analysis: [edge cases §6](/engineering/protocol/markup-edge-cases#_6-security-review-h-25-to-h-31).
+
+| Decision | Shape | Rule | Result |
+|---|---|---|---|
+| H-26 | `</a>` or `</nobr>` crosses 8 or more `div` elements; a later `<a>` cuts a block | M-06 item 2 | `STRUCTURE` |
+| H-27 | `<noscript><button></noscript>`: `</noscript>` is ignored with scripting disabled | M-11 item 5 | `STRUCTURE` |
+| H-28 | `application/rıvqen-manifest+json` (dotless i), long s | M-13 item 3 | `RESERVED` |
+| H-30 | `<table><td></tbody>`: the cell closes, the block moves before the table | M-06 item 3 | `STRUCTURE` |
+| H-25, H-31 | 300 × `<span><div></span>`: WHATWG stack of 603 | M-26 (D) | `LIMIT` |
 
 ## 3. Implementation notes
 
@@ -339,12 +403,24 @@ A tree builder is used only to test the candidates, never to decide validity.
 ### 3.3 Order of work in one pass
 
 1. Check M-01 and M-02 on the bytes.
-2. Tokenize (M-03, M-04). Keep the token stack (M-05) and check M-06 to M-13 for each token.
+2. Tokenize (M-03, M-04). Keep the token stack (M-05) and the depth counter D (M-26), and check M-06 to M-13 for each token.
 3. At a block start tag, check M-14 to M-19 and M-21, and remember the offset after `>`.
 4. In the content, check M-22 to M-24. At the block end tag, record `end`, then check M-26 and M-25.
 5. At EOF, check M-20 for an open block. Then compute the result (M-27).
 
 All loops run once per input byte or per token; all memory is bounded by the input size (M-01).
+
+<Badge type="info" text="DESIGN" /> State for the rules of the security review (section 2.12):
+
+| Rule | State | Cost |
+|---|---|---|
+| M-06 item 2 | The names of the crossed elements and their foreign flag (already on the token stack) | A check of each crossed element: the pops already visit them |
+| M-06 item 3 | None (the end tag search of M-05 step 3 already knows "no match") | O(1) |
+| M-11 item 5 | A second stack of names for C only; an end tag compares with its top | O(1) per tag of C; C is not counted in D, so this stack is bounded by the size of C only |
+| M-13 item 3 | None: scan the raw `type` value for a byte ≥ 0x80 | The value is already scanned for `&` |
+| M-26 (D) | An integer D; per token-stack element a dirty flag and 3 implied-part flags | O(1) per token, besides the search of M-05 step 3 |
+
+<Badge type="info" text="DESIGN" /> A map keyed by tag names from the input must resist hash flooding: use fixed slots for fixed name sets, and a keyed or randomized hash for arbitrary names. PHP arrays use DJBX33A without a seed (security review, T-10: 131 072 nested names with one hash took 35 s). With D ≤ 256 (M-26), a name index of the token stack has at most 256 keys, which bounds the remaining effect. The stack of M-11 item 5 needs no name index: an end tag in C compares only with the top.
 
 ## 4. Why these restrictions
 
@@ -353,7 +429,12 @@ All loops run once per input byte or per token; all memory is bounded by the inp
 | Rule | WHATWG behavior that it removes |
 |---|---|
 | M-04 | The tree builder, not the tokenizer, switches to RCDATA, RAWTEXT, script data and PLAINTEXT. Inside `svg` and `math` it does not switch. |
-| M-06 | An end tag is ignored when a scope boundary (`table`, `td`, `th`, `caption`, `template`, `object`, `applet`, `marquee`, `button` for button scope) is in the way, or when a special element stops the walk. The token stack would pop and disagree with the tree. |
+| M-06 item 1 | An end tag is ignored when a scope boundary (`table`, `td`, `th`, `caption`, `template`, `object`, `applet`, `marquee`, `button` for button scope) is in the way, or when a special element stops the walk. The token stack would pop and disagree with the tree. |
+| M-06 item 2 | A formatting end tag runs the adoption agency algorithm; with a furthest block it moves elements and stops after 8 passes, so the formatting element can stay open. |
+| M-06 item 3 | A stray `</tbody>` or `</tr>` closes an implied `tbody` or `tr` and the open cell. |
+| M-11 item 5 | With scripting disabled, `</noscript>` is ignored when C left a special element open. |
+| M-13 item 3 | Unicode case folding on a client maps non-ASCII look-alikes to the manifest type. |
+| M-26 (D) | Ignored end tags, implied table parts and reconstructed formatting elements make the tree deeper than the token stack; browsers flatten the tree beyond depth 512. |
 | M-07 | `BREAKOUT` start tags pop out of `svg`/`math`. Integration points parse their children as HTML. |
 | M-08 | `select` parsing differs between parser versions (customizable `select`). |
 | M-09, M-19 | Table parts close open cells and rows implicitly. Content directly in a table is moved before the table (foster parenting). |
@@ -374,7 +455,7 @@ All loops run once per input byte or per token; all memory is bounded by the inp
 <Badge type="info" text="DESIGN" />
 
 1. **Reconstructed formatting.** When a formatting element (`b`, `i`, `a`, …) was closed implicitly before a block (for example `<p><b>x<div data-rq-block="d">y</div>`), the WHATWG parser re-opens it inside the block element when it reads text. The DOM of the block then contains an extra `b` that is not in the content bytes. The content bytes and the offsets are still the same in all parsers. When a patch replaces the content, the extra element is not created again. This is a rendering difference, not a parser ambiguity. Follow-up: client patch rules (S2).
-2. **Scripting disabled.** RQP uses the scripting-enabled view (M-04). M-11 makes the block result the same in both views.
+2. **Scripting disabled.** RQP uses the scripting-enabled view (M-04). M-11 makes the block result the same in both views. Why: with scripting disabled, C is markup. Items 2 and 3 keep blocks and the tags that change the parser mode (`frameset`, `math`, `noscript`, `plaintext`, `select`, `svg`, `template`) out of C. Item 1 makes C end in the data state. Item 5 (H-27) makes every element that C opens close by its own end tag inside C, so the tree builder has closed them before `</noscript>`, and `</noscript>` closes the `noscript` element. Effects of C stay outside every block: a block start tag is never in C (item 2), and C is never in the content of a block (`noscript` is in `FORBIDDEN_CONTENT`). C can still close elements around it earlier (a `div` in C closes an open `p`), and with scripting disabled the "in head noscript" mode leaves the head at the first tag of C other than `link`, `meta`, `style`, `noframes`, `basefont` and `bgsound`. That changes the parent of later elements, not the bytes of a later block. <Badge type="tip" text="FACT" /> Before H-27, the scripting-disabled view of `<noscript><button></noscript><div data-rq-block="a">x<button>y</button>z</div>` had no end tag for the block in parse5 8.0.1, so item 2 of this list was false. The sweeps of edge cases §6 found no block disagreement in the scripting-disabled view that M-11 item 5 does not explain.
 3. **Strictness.** The rules reject some documents that browsers render well (for example unclosed `td` before a block in the same table, or an `svg` with HTML in `foreignObject`). Such pages fall back to the normal response. Relaxing a rule later is compatible; making a rule stricter is not.
 
 ## 6. Why attributes instead of comments
@@ -402,7 +483,7 @@ Template authors do not write the manifest. Server SDKs compute it:
 
 - Golden fixtures `FX-RQ-MARKUP-*` in `fixtures/rqp/markup/`: the [catalog](/engineering/protocol/fixtures#_4-2-markup-fixtures-fx-rq-markup) maps each fixture to its rules. `tools/rqp-markup/gen.py` computes each `expected.json` from the bytes that a person wrote in `fixture.json`; it does not parse HTML.
 - Differential test: the four parser candidates must give the same `expected.json` result for every fixture (`tools/rqp-markup/CONTRACT.md` §6).
-- Cross-check against the WHATWG tree builder: `tools/rqp-markup/crosscheck/` compares the blocks of each valid candidate result with the parse5 tree (scripting enabled, optionally also disabled), on the fixtures and on a seeded generator sweep. Its `README.md` has the commands. <Badge type="tip" text="FACT" /> On 2026-10-09, every valid `expected.json` agreed with parse5 8.0.1 in both views, and every block-byte disagreement that the sweeps found was a shape that M-24 items j or k reject ([edge cases §2](/engineering/protocol/markup-edge-cases#_2-method-and-evidence)).
+- Cross-check against the WHATWG tree builder: `tools/rqp-markup/crosscheck/` compares the blocks of each valid candidate result with the parse5 tree (scripting enabled, optionally also disabled), on the fixtures and on a seeded generator sweep. Its `README.md` has the commands. <Badge type="tip" text="FACT" /> On 2026-10-09, every valid `expected.json` agreed with parse5 8.0.1 in both views, and every block-byte disagreement that the sweeps of that day found was a shape that M-24 items j or k reject ([edge cases §2](/engineering/protocol/markup-edge-cases#_2-method-and-evidence)). That generator did not reach all shapes: the security review of 2026-10-11 found more disagreements (deep crossings by formatting end tags, stray table end tags, unbalanced `noscript` content, non-ASCII manifest types, a tree deeper than the token stack). The rules of section 2.12 reject them. The generator profile `review` reaches these shapes; the cross-check tool also computes the depth counter D and checks the claim of M-26 ([edge cases §6](/engineering/protocol/markup-edge-cases#_6-security-review-h-25-to-h-31)).
 
 To regenerate or check the expected results:
 

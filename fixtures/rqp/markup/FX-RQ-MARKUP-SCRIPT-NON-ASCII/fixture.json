@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-SCRIPT-NON-ASCII",
+  "description": "Non-ASCII characters in script content and in other attributes of a script are valid; only the type value is checked (H-28)",
+  "rules": [
+    "M-13",
+    "M-16"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "j",
+        "format": "json",
+        "start_tag": "<script type=\"application/json\" data-rq-block=\"j\" data-note=\"é\">",
+        "content": "{\"name\":\"é\"}"
+      }
+    ]
+  }
+}

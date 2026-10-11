@@ -7,7 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { evaluateDocs, main, parseArgs, viewCell } from "../src/cli.mjs";
+import { countByClass, depthCell, evaluateDocs, main, parseArgs, viewCell } from "../src/cli.mjs";
 import { CrosscheckError } from "../src/run.mjs";
 
 const SUPPORT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "test-support");
@@ -167,9 +167,9 @@ test("cases: one row per case with both parse5 views and each candidate", async 
   const r = await run(["cases", "--cases", file, "--candidates", candidatesFile("cs", ["p5", "valid0"])]);
   assert.equal(r.code, 0);
   const rows = r.out.split("\n");
-  assert.equal(rows[0], "case | parse5 (scripting on) | parse5 (scripting off) | fake-p5 | fake-valid0");
-  assert.equal(rows[1], "c1 | 1 block(s) | 1 block(s) | valid 1 | valid 0 DISAGREE(enabled,disabled)");
-  assert.equal(rows[2], "c2 | 0 block(s) | 0 block(s) 1 manifest | valid 0 DISAGREE(disabled) | valid 0 DISAGREE(disabled)");
+  assert.equal(rows[0], "case | parse5 (scripting on) | parse5 (scripting off) | depth | fake-p5 | fake-valid0");
+  assert.equal(rows[1], "c1 | 1 block(s) | 1 block(s) | max D 1, stack 3, depth 3 | valid 1 | valid 0 DISAGREE(enabled,disabled)");
+  assert.equal(rows[2], "c2 | 0 block(s) | 0 block(s) 1 manifest | max D 1, stack 3, depth 3 | valid 0 DISAGREE(disabled) | valid 0 DISAGREE(disabled)");
 });
 
 test("sweep: an agreeing candidate gives no finding and the same summary on every run", async () => {
@@ -194,6 +194,55 @@ test("sweep: findings are saved as files, at most --keep of each kind", async ()
     assert.ok(existsSync(path.join(out, n, "input.html")));
     assert.ok(existsSync(path.join(out, n, "finding.json")));
   }
+});
+
+test("parseArgs: --profile is classic or review", () => {
+  assert.equal(parseArgs(["sweep"]).profile, "classic");
+  assert.equal(parseArgs(["sweep", "--profile", "review"]).profile, "review");
+  assert.throws(() => parseArgs(["sweep", "--profile", "other"]), /classic or review/);
+});
+
+test("check --expected: a valid fixture with a shape of a security-review rule is a finding", async () => {
+  const doc = `<!DOCTYPE html><table><td></tr><div data-rq-block="x">${SECRET}</div></td></table>`;
+  const dir = fixturesDir("new-rule", { a: doc });
+  const start = Buffer.byteLength('<!DOCTYPE html><table><td></tr><div data-rq-block="x">');
+  const valid = { valid: true, error: null, blocks: [{ id: "x", format: "html", start, end: start + SECRET.length, sha256: "x" }] };
+  writeFileSync(path.join(dir, "a", "expected.json"), JSON.stringify(valid));
+  const r = await run(["check", "--fixtures", dir, "--expected"]);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /new-rule a \[expected\] valid, but the document has: M-05-stray-table-end/);
+  // The same result from a candidate (which may not implement the new rules yet) is not a finding.
+  const file = path.join(TMP, "new-rule.jsonl");
+  writeFileSync(file, `${JSON.stringify({ fixture: "a", ...valid })}\n`);
+  assert.equal((await run(["check", "--fixtures", dir, "--results", file])).code, 0);
+});
+
+test("evaluateDocs: a valid result for a document that breaks the depth invariant is a finding", () => {
+  // Tags in an svg integration point (invalid by M-07): parse5 builds tables that D does not see.
+  const doc = { name: "d", bytes: Buffer.from(`<svg><desc>${"<table><td>".repeat(3)}x`) };
+  const results = new Map([["c", new Map([["d", { valid: true, error: null, blocks: [] }]])]]);
+  const [e] = evaluateDocs([doc], results, ["enabled"]);
+  assert.ok(e.findings.some((f) => f.kind === "depth-invariant"));
+  assert.equal(e.cells.get("c"), "valid 0 DISAGREE(depth)");
+  assert.match(depthCell(e.depth), /INVARIANT\(\d+\)/);
+  const invalid = new Map([["c", new Map([["d", { valid: false, error: "RQP_MARKUP_STRUCTURE", blocks: [] }]])]]);
+  assert.deepEqual(evaluateDocs([doc], invalid, ["enabled"])[0].findings, []);
+});
+
+test("countByClass counts each class, findings without a class, and findings of the open question only", () => {
+  const m = new Map();
+  countByClass(m, "k", []);
+  countByClass(m, "k", ["M-06-formatting-dirty"]);
+  countByClass(m, "k", ["M-06-formatting", "M-06-formatting-dirty"]);
+  const c = m.get("k");
+  assert.deepEqual([c.total, c.none, c.onlyOpen, [...c.classes.entries()]], [3, 1, 1, [["M-06-formatting-dirty", 2], ["M-06-formatting", 1]]]);
+});
+
+test("sweep --profile review prints the rule classes and the depth invariant line", async () => {
+  const r = await run(["sweep", "--count", "40", "--chunk", "20", "--seed", "2", "--profile", "review", "--candidates", candidatesFile("swr", ["p5"])]);
+  assert.match(r.out, /profile=review/);
+  assert.match(r.out, /documents by rule class: .*M-\d\d-/);
+  assert.match(r.out, /depth invariant: \d+ document\(s\) with a violation, 0 of them valid for a candidate/);
 });
 
 test("evaluateDocs and viewCell describe the parse5 view", () => {

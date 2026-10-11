@@ -67,16 +67,112 @@ function pick(rng, list) {
   return list[Math.floor(rng() * list.length)];
 }
 
+/** @param {() => number} rng @param {number} lo @param {number} hi @returns {number} integer in [lo, hi] */
+function between(rng, lo, hi) {
+  return lo + Math.floor(rng() * (hi - lo + 1));
+}
+
+const FORMATTING_PIECES = ["a", "nobr", "b", "i", "em", "font"];
+const SPECIAL_PIECES = ["div", "p", "li", "section", "ul", "form", "h1", "address", "dd"];
+const TABLE_END_PIECES = ["</tbody>", "</tr>", "</thead>", "</tfoot>", "</table>", "</td>", "</th>", "</caption>", "</colgroup>", "</col>"];
+const NOSCRIPT_UNBALANCED = [
+  "<button>", "<table>", "<b>", "<div>", "</div>", "<p>x", "<a href=x><div>", "<li><ul></li>", "<span><div></span>",
+  "<table><td>", "<div><span></div>", "<select>", "<i></b>", "<ul><li>a",
+];
+const NOSCRIPT_BALANCED = [
+  "<div><a href=x>a</a></div>", "<table><tr><td>a</td></tr></table>", "<p><b>x</b></p>", "<ul><li>a</li></ul>",
+  "<img src=x>", "<iframe src=x></iframe>", "<form><input></form>", "<h1><span>x</span></h1>",
+];
+const TYPE_LOOKALIKES = [
+  "application/rıvqen-manifest+json", // dotless i
+  "application/rivqen-manifeſt+json", // long s
+  "application/RIVQEN-MANIFEST+JSON",
+  "text/jävascript",
+  "application/json",
+];
+
+/**
+ * Review motifs (security review of WP-17 S1, decisions H-26 to H-31). Each motif is one piece:
+ * deep crossings by formatting end tags, stray table-family end tags after implied tbody and tr,
+ * noscript content in both views, depth-amplifying ignored end tags, and non-ASCII script types.
+ * A block often follows, because the effects show in a later block.
+ *
+ * @param {() => number} rng
+ * @param {() => string} nextId
+ * @returns {string}
+ */
+function reviewMotif(rng, nextId) {
+  const block = () => {
+    const inner = pick(rng, ["y", "y<a href=x>z</a>w", "y<nobr>z</nobr>w", "<button>y</button>", "<table></table>y", "<b>y</b>"]);
+    const tag = pick(rng, ["span", "div", "p"]);
+    return `<${tag} data-rq-block="${nextId()}">${inner}</${tag}>`;
+  };
+  const kind = Math.floor(rng() * 9);
+  if (kind === 0) {
+    // H-26: a formatting end tag over special elements (often 8 or more: the adoption agency limit).
+    const f = pick(rng, FORMATTING_PIECES);
+    const n = rng() < 0.6 ? between(rng, 7, 10) : between(rng, 1, 3);
+    const s = pick(rng, SPECIAL_PIECES);
+    const via = rng() < 0.4 ? pick(rng, ["span", "em", "q"]) : null; // a crossing below the formatting element
+    const open = `<${f}>${via ? `<${via}>` : ""}${`<${s}>`.repeat(n)}x`;
+    const close = via ? `</${via}></${f}>` : `</${f}>`;
+    return open + close + (rng() < 0.8 ? block() : "");
+  }
+  if (kind === 1) {
+    // H-30: a stray table-family end tag after an implied tbody and tr.
+    const start = pick(rng, ["<table><td>", "<table><tr><td>", "<table><tbody><td>", "<table><col><td>", "<table><caption>"]);
+    const close = start === "<table><caption>" ? "</caption></table>" : "</td></table>";
+    return `${start}${pick(rng, TABLE_END_PIECES)}${rng() < 0.8 ? block() : "x"}${close}`;
+  }
+  if (kind === 2) {
+    // H-27: noscript content, balanced or not; a block with the same elements follows.
+    const c = rng() < 0.6 ? pick(rng, NOSCRIPT_UNBALANCED) : pick(rng, NOSCRIPT_BALANCED);
+    return `<noscript>${c}</noscript>${block()}`;
+  }
+  if (kind === 3 || kind === 4) {
+    // H-31: shapes where the browser ignores an end tag that the token stack uses.
+    const shape = pick(rng, [
+      "<span><div></span>", "<h1><span><h2>x</h1>", "<li><ul></li>", "<body><div></body>", "<form><div></form>",
+      "<b><div>x</b>", "<p><b>x</p>y", "<span><span><div></span></span>", "<i><span><dd></span></i>",
+    ]);
+    const reps = rng() < 0.08 ? between(rng, 100, 300) : between(rng, 1, 12);
+    return shape.repeat(reps) + (rng() < 0.7 ? block() : "");
+  }
+  if (kind === 5) {
+    // Reconstruction of formatting elements and the "steal" of a formatting end tag.
+    const reps = between(rng, 1, 4);
+    return `<p><b class=z>x</p>${"<b><b><b><b></b></b></b>y</b>".repeat(reps)}${block()}`;
+  }
+  if (kind === 6) {
+    // Formatting start tags that run the adoption agency (a in the list; nobr in scope).
+    const f = pick(rng, ["a", "nobr"]);
+    const n = between(rng, 1, 9);
+    return `<${f}>${"<div>".repeat(n)}<${f}>x</${f}>${"</div>".repeat(n)}</${f}>${block()}`;
+  }
+  if (kind === 7) {
+    // H-28: script types with non-ASCII look-alikes, also in noscript content.
+    const t = pick(rng, TYPE_LOOKALIKES);
+    const s = `<script type="${t}">{}</script>`;
+    return rng() < 0.3 ? `<noscript>${s}</noscript>` : s;
+  }
+  // Tables nested in cells: implied tbody and tr count in D.
+  const n = rng() < 0.1 ? between(rng, 60, 70) : between(rng, 1, 5);
+  return `${"<table><td>".repeat(n)}${block()}${"</td></table>".repeat(n)}`;
+}
+
 /**
  * Generate one document.
  *
  * @param {number} seed       document seed (use docSeed for a sweep)
- * @param {{ maxTokens?: number }} [options] maxTokens: number of pieces (1 … 200, default 16)
+ * @param {{ maxTokens?: number, profile?: "classic" | "review" }} [options] maxTokens: number of pieces
+ *   (1 … 200, default 16); profile "review" adds the motifs of the security review (default "classic":
+ *   the documents of earlier sweeps, unchanged)
  * @returns {string}
  */
-export function generateDocument(seed, { maxTokens = 16 } = {}) {
+export function generateDocument(seed, { maxTokens = 16, profile = "classic" } = {}) {
   const limit = Math.max(1, Math.min(200, Math.floor(maxTokens)));
   const rng = makeRng(seed);
+  const review = profile === "review";
   /** @type {string[]} */
   const out = [];
   /** @type {string[]} */
@@ -89,6 +185,10 @@ export function generateDocument(seed, { maxTokens = 16 } = {}) {
   if (rng() < 0.5) out.push("<!DOCTYPE html><html><head><title>T</title></head><body>");
   const count = 1 + Math.floor(rng() * limit);
   for (let k = 0; k < count; k++) {
+    if (review && rng() < 0.3) {
+      out.push(reviewMotif(rng, () => `r${ids++}`));
+      continue;
+    }
     const r = rng();
     if (r < w.open && rng() < w.motif) {
       // A short nesting pattern of lists and tables: reaches the M-24 j and k shapes.

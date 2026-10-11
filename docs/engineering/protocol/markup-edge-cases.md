@@ -1,6 +1,6 @@
 # RQP markup: edge cases E1–E8
 
-This page is a short risk study of eight edge cases of the [RQP markup rules](/engineering/protocol/markup) (rqp/1). For each case it gives the evidence, the options, the risk and one recommended reading. The human decided each case (protocol decision; E8 is also a security decision). The decided rule text is in [`markup.md`](/engineering/protocol/markup) §2; the cases are listed in [§2.11](/engineering/protocol/markup#_2-11-decided-edge-cases).
+This page is a short risk study of eight edge cases of the [RQP markup rules](/engineering/protocol/markup) (rqp/1). For each case it gives the evidence, the options, the risk and one recommended reading. The human decided each case (protocol decision; E8 is also a security decision). The decided rule text is in [`markup.md`](/engineering/protocol/markup) §2; the cases are listed in [§2.11](/engineering/protocol/markup#_2-11-decided-edge-cases). Section 6 is the study of the findings of the security review (H-25 to H-31, 2026-10-11).
 
 **Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-09, task WP-17/S1/T-07 ([sprint record](/engineering/plan/sprints/WP-17-S1)). <Badge type="info" text="DESIGN" /> **Decided on 2026-10-09:** E1–E7 as recommended (human decision H-21), E8 option A, reject with `RQP_MARKUP_RESERVED` (human decision H-22). The evidence below is the state before the decision ("Today" = the candidates before task T-08).
 
@@ -53,7 +53,7 @@ Sweep results (2026-10-09, before the candidates implement M-24 items j and k):
 | seed 5, max 20 pieces, both views | Rust, Java, PHP | 100 000 | 12 270 (Rust) | 2 block-byte disagreements (M-24 j shapes, the same in both views); manifest in the scripting-disabled tree (E8): 2 222 findings (3 candidates); PHP vs Java: 157 documents, all E4; Rust vs Java: 2 (section 4) |
 | all 133 fixtures, both views | Rust, Java, PHP | 133 | — | Only the new M-24 j/k fixtures and the E8 draft. `--expected`: every valid `expected.json` agrees with parse5 in both views |
 
-No sweep found a block-byte disagreement that M-24 j or k does not explain. In the scripting-disabled view, no block disagreement appeared that the scripting-enabled view did not also show. This supports `markup.md` §5 item 2 (M-11 makes both views equal).
+No sweep found a block-byte disagreement that M-24 j or k does not explain. In the scripting-disabled view, no block disagreement appeared that the scripting-enabled view did not also show. This supported `markup.md` §5 item 2 (M-11 makes both views equal). <Badge type="tip" text="FACT" /> The generator of that day did not reach all shapes: the security review of 2026-10-11 found block disagreements in both views that these sweeps did not show (section 6).
 
 ## 3. Cases
 
@@ -206,6 +206,138 @@ Example: `<noscript><script type="application/rivqen-manifest+json">{…}</scrip
 | `EDGE-E6-PI-EOF-HTML` | valid | M-03 | E6: A, H-21 |
 | `EDGE-E7-FOREIGN-FRAMESET` | `STRUCTURE` | M-10 | E7: A, H-21 |
 | `EDGE-E8-NOSCRIPT-MANIFEST` | `RESERVED` | M-11, M-13 | E8: A, H-22 |
+
+## 6. Security review (H-25 to H-31)
+
+**Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-11, task WP-17/S1/T-12-spec. The human decided H-25 to H-31 before this study ([sprint record](/engineering/plan/sprints/WP-17-S1)). The rule text is in [`markup.md`](/engineering/protocol/markup) §2 (summary in §2.12). This section gives the WHATWG reasoning, the parse5 evidence, the refinements of the depth counter D, and one open question (§6.1).
+
+Sources: the WHATWG HTML Living Standard (`html.spec.whatwg.org`, multipage `parsing.html`, read on 2026-10-11), parse5 8.0.1 through `tools/rqp-markup/crosscheck` (`cases/review-cases.json`, `src/depth.mjs`), and the Rust, Node.js and PHP candidates at `27ae1b5` (they implement H-25, not the rules of this section). The Java candidate was not run: Gradle is not installed in this sandbox.
+
+### 6.1 M-06 item 2: formatting end tags (H-26)
+
+<Badge type="tip" text="FACT" /> WHATWG §13.2.6.4.7 "in body": "An end tag whose tag name is one of: a, b, big, code, em, font, i, nobr, s, small, strike, strong, tt, u — Run the adoption agency algorithm for the token." The algorithm (same section):
+
+1. If the current node has the tag name and is not in the list of active formatting elements, pop it and return.
+2. The outer loop runs at most 8 times ("If outerLoopCounter is greater than or equal to 8, then return").
+3. formattingElement is the last element with the tag name in the list of active formatting elements after the last marker. If there is none: "any other end tag". If it is not on the stack: remove it from the list and return. If it is not in scope: ignore the token.
+4. furthestBlock is "the topmost node in the stack of open elements that is lower in the stack than formattingElement, and is an element in the special category".
+5. "If there is no furthestBlock, then the UA must first pop all the nodes from the bottom of the stack of open elements, from the current node up to and including formattingElement, then remove formattingElement from the list of active formatting elements, and finally return."
+
+With a furthest block, the algorithm moves the furthest block to the common ancestor and puts a new formatting element below it. One pass handles one special element. With 8 or more nested special elements, the loop stops and a formatting element stays open in the browser.
+
+<Badge type="info" text="DESIGN" /> Argument for item 2. Let m be the element that the end tag matches on the token stack. Item 2 forbids special and foreign elements between m and the current node of the token stack. When the WHATWG stack above m holds only the elements of the token stack and reconstructed formatting elements (which are not special), there is no furthest block, step 5 applies, and the tree builder pops the same elements as the token stack. Scope (step 3): the scope boundaries `applet`, `caption`, `table`, `td`, `th`, `marquee`, `object` and `template` are in `GUARDED` (M-06 item 1), `html` is in `SPECIAL` (item 2), and the foreign integration points are in a foreign region (M-07, item 2). So the token stack never pops a formatting element over a scope boundary.
+
+<Badge type="tip" text="FACT" /> parse5 8.0.1 (`cases/review-cases.json`, both scripting views):
+
+| Case | parse5 block end | Rust, Node.js, PHP today | Rule |
+|---|---|---|---|
+| `H26-a-div8`: `<a>`, 8 × `<div>`, `x</a>`, block with `<a>` | none (cut) | valid | M-06 item 2 |
+| `H26-nobr-div8`: the same with `nobr` | none (cut) | valid | M-06 item 2 |
+| `H26-a-div7`: 7 × `<div>` | same as candidates | valid | M-06 item 2 (one special element is enough) |
+| `H26-control-phrasing`: `</a>` over `span`, `</b>` over `i`, `</p>` over `b` | same | valid | valid |
+
+**Formatting start tags.** <Badge type="tip" text="FACT" /> Two start tags also run the adoption agency: `a` "if the list of active formatting elements contains an a element between the end of the list and the last marker", and `nobr` "if the stack of open elements has a nobr element in scope" (§13.2.6.4.7). These runs can have a furthest block. <Badge type="info" text="DESIGN" /> In block content, M-24 items e and f reject these start tags whenever an `a` or `nobr` is open on the token stack. The token stack never closes an `a` or `nobr` by a crossing (both are in `GUARDED`), so outside the cases of the open question below, an `a` or `nobr` in the list of the tree builder is also on the token stack. Outside block content, no block is open: the algorithm moves the furthest block with its whole subtree, so the content bytes of an earlier block do not change. The algorithm does not make the WHATWG stack larger and does not make an element deeper: the furthest block moves below the common ancestor, at most as deep as before; the new formatting element takes the place of the removed one. Evidence: `H26-start-a-aaa`, `H26-start-nobr-aaa`, `H26-start-a-div9-aaa` and the fixture `FORMATTING-START-AAA` agree with parse5. No new rule is needed for the start tag paths.
+
+**Open question Q-T12-1 (gap in H-26).** <Badge type="tip" text="FACT" /> The WHATWG stack can hold special elements that the token stack has already popped. Example: `<a><span>`, 8 × `<div>`, `x</span></a><span data-rq-block="x">y<a>z</a>w</span>`. The `</span>` crosses the `div` elements (allowed: `span` is not in `FORMATTING`). The tree builder ignores it ("any other end tag" stops at the special `div`). Then `</a>` is an exact pop on the token stack and crosses nothing, so item 2 does not apply. The tree builder runs the adoption agency with 8 furthest blocks, stops, and the later `<a>` cuts the block (parse5: no end tag for the block, cases `Q1-span-div8-a`, `Q1-span-div8-nobr`). The same works with `</li>` over `ul` (`Q1-li-ul-a`). All three candidates accept these documents. In each case the formatting element is **dirty** in the sense of M-26 (a crossing happened above it). Options for the human:
+
+| Option | Rule | Cost |
+|---|---|---|
+| A (recommended) | M-06 item 2 also: an end tag with a name in `FORMATTING` MUST NOT pop a dirty element (M-26). `STRUCTURE`. | Same state as D; one check. Also rejects harmless shapes such as `<a href="#"><b><span><i>x</span></b></a>` (`Q1-control-b-span-i`). |
+| B | A second mark, set only by a crossing over an element in `SPECIAL` or a foreign element, passed down like the dirty mark; a formatting end tag MUST NOT pop an element with this mark. | Fewer false rejects; one more flag per element in each candidate. |
+| C | No change | Leaves a false accept with the same impact as H-26. |
+
+This is a protocol and security decision. The fixtures do not cover it yet. The cross-check marks the shape as the class `M-06-formatting-dirty`.
+
+### 6.2 M-11 item 5: balanced noscript content (H-27)
+
+<Badge type="tip" text="FACT" /> With scripting disabled, `<noscript>` in body is an ordinary element and `</noscript>` is "any other end tag" (§13.2.6.4.7), which ignores the token when a special element is open above the `noscript`. parse5: `<noscript><button></noscript><div data-rq-block="a">x<button>y</button>z</div>` has no end tag for the block in the scripting-disabled view (case `H27-button`). For `<noscript><table></noscript>` (case `H27-table`) parse5 gives the same block bytes in both views; H-27 rejects it because C is not balanced.
+
+<Badge type="info" text="DESIGN" /> Why item 5 makes `markup.md` §5 item 2 true again: see that item. Additional parse5 checks with balanced C, both views equal: `H27-balanced`, `H27-head-noscript` (the "in head noscript" mode leaves the head at a `div`), `H27-p-closed-by-c` (a `div` in C closes the open `p` in the scripting-disabled view only). The content C is not counted in D (architect decision, `markup.md` M-26 item 7); fixture `LIMIT-DEPTH-NOSCRIPT` has 300 nested elements in C after 255 `div` elements. With scripting disabled such a document is deeper than 512 inside the `noscript`; the flattening of the browser happens only there, and the stack of open elements stays the same, so the later block is not changed.
+
+### 6.3 M-13 item 3: non-ASCII script types (H-28)
+
+<Badge type="tip" text="FACT" /> In JavaScript, `"ı".toUpperCase()` is `"I"` and `"ſ".toUpperCase()` is `"S"` (Unicode case mapping). The cross-check now counts a script type as manifest-like also after this mapping (`src/view.mjs`, `looksLikeManifest`): the cases `H28-dotless-i` and `H28-long-s` give one manifest-like element in both views, and all three candidates accept them today.
+
+### 6.4 M-06 item 3: stray table end tags (H-30)
+
+<Badge type="tip" text="FACT" /> WHATWG §13.2.6.4.13 to §13.2.6.4.15: in "in cell", `</tbody>`, `</tfoot>`, `</thead>`, `</tr>` and `</table>` "close the cell" when an element with that name is in table scope; then "in row" closes the `tr` and "in table body" closes the row group. An implied `tbody` or `tr` is in table scope, but not on the token stack. parse5: `H30-tbody` has no end tag for the block (it is moved before the table and its inner `table` closes it); `H30-tr` moves the block before the table (same bytes).
+
+The other table-family end tags, when they match nothing on the token stack:
+
+| End tag | WHATWG behavior | Effect |
+|---|---|---|
+| `</td>`, `</th>` | "in cell": ignored unless a `td`/`th` is in table scope; "in row", "in table body", "in table", "in caption": "Parse error. Ignore the token." | None. The tree builder has a `td` or `th` open only when the token stack has it: cells are never implied, and the token stack pops a cell only by its own end tag or by a table-family end tag that also closes the cell in the tree builder (M-06 item 1). |
+| `</caption>` | "in caption": ignored unless a `caption` is in table scope; other table modes: ignored | None, for the same reason (captions are never implied). |
+| `</col>` | "in column group" and the table modes: "Parse error. Ignore the token." | None. |
+| `</colgroup>` | "in column group": pops the current `colgroup` | Closes an implied `colgroup` early. The next token other than `col` closes it anyway ("in column group", "anything else"); only white space and comments directly in the table get another parent. No block can be there (M-19). |
+
+So H-30 needs no more names. Evidence: case `H30-control-td-th-caption-colgroup-col` and fixture `TABLE-IMPLIED-PARTS` agree with parse5.
+
+### 6.5 M-26: depth counter D (H-31)
+
+**Refinements of the H-31 draft** (each one is in the rule text):
+
+| # | Draft (H-31) | Rule text | Why |
+|---|---|---|---|
+| R1 | −1 when an end tag pops exactly the current node | Only when that element is not **dirty**; a crossing (and a pop of a dirty element, `html` or `body`) makes the new current node dirty | <Badge type="tip" text="FACT" /> Counterexample: 5 × (10 × `<span>`, `<div>`, 10 × `</span>`). The first `</span>` crosses the `div`; the other 9 pop exactly. The tree builder ignores all of them. Draft D = 10, WHATWG stack 57 (parse5). With the dirty mark D = 55. |
+| R2 | + the implied elements for each start tag | Each implied part (row group, row, column group) counts once per F element, and comes back when F is popped exactly | The draft adds 2 for every `td` directly in a `table` and gives back 1: a table with 128 cells would reach the limit, and every table would keep units. The tree builder has at most one open row group per table and one open row per row group. |
+| R3 | `col` directly in `table`: +1 | The same, although `col` is not pushed | — |
+| R4 | `head`: undecided | `head` is not excluded | In body, `</head>` is ignored only when the tree builder has already closed the head ("in head", "anything else" pops it), so the head is not an ancestor of open elements. "after head" pushes the head back only for one token. |
+| R5 | — | The tags of the `noscript` content C do not count; the `noscript` element counts | Architect decision: with scripting enabled C is text. |
+| R6 | DOM depth ≤ D + 2 | (a) WHATWG stack ≤ D + 2; (b) open elements ≤ D + 2; (c) elements that the tree builder closes at once ≤ D + 3 | A `<br>` at the top level has depth 3 with D = 0. Blink and Gecko flatten by the stack position, so (a) is the bound that matters. |
+
+The false text "1.5 × 256 + 2 = 386" of H-25 is removed: the token stack is not a bound of the WHATWG stack.
+
+<Badge type="info" text="DESIGN" /> **Argument.** Each +1 of D is a unit that belongs to an element of the token stack (its push, or an implied part of its F). A unit comes back only by item 4 of M-26. The claim holds when each element of the WHATWG stack (other than `html`, `head`, `body`), each DOM ancestor of such an element, and each entry of the list of active formatting elements whose element is not on the stack, has its own live unit.
+
+| Tree-builder behavior (WHATWG §13.2.6) | Effect | Why the claim holds |
+|---|---|---|
+| Insert an element for a start tag that M-05 pushes | +1 element | +1 unit (item 2) |
+| Void elements, self-closing `svg`/`math`, `br` for `</br>`, the empty `p` for `</p>`, `input type=hidden` and `form` in a table | inserted and popped at once | Leaves: claim (c) |
+| Implied `html`, `head`, `body` | +2 | The 2 of the claim. `head` and `body` are never both ancestors. |
+| Implied `tbody`, `tr` ("clear the stack back to a table (body) context", then insert), `colgroup` | at most one of each kind open per F | Implied parts (item 3), given back with F |
+| Reconstruct the active formatting elements (§13.2.4.3) | clones of entries whose element is not on the stack | The entry comes from a formatting start tag (a unit). The tree builder popped its element without its own end tag; the token stack crossed it (the unit stays, item 5) or still has it (the unit is live) |
+| Implied end tags, "close a p element", "pop until", the adoption agency without a furthest block | fewer elements | No element gets deeper |
+| An end tag that the tree builder ignores or uses only in part: "any other end tag" at a special element, `</li>` outside list item scope, a heading end tag that stops at another heading, `</form>` (removes only the form), `</body>`, `</html>` | elements stay open that the token stack popped | The token stack popped them by a crossing (no decrease) or they are `html`/`body`. After that the elements below are dirty, so their later exact pops give nothing back |
+| Exact pop of a clean element e | — | No crossing happened above e since its push, so above e the tree builder has only elements that are already closed and reconstructed formatting elements (not special): the end tag of e pops them too |
+| The adoption agency with a furthest block | moves elements | The WHATWG stack does not grow, no element gets deeper |
+| Foster parenting | the element goes before the table | Not deeper than the table |
+| Template contents | a separate fragment; the `template` stays on the stack | Counted through the stack (claim a) |
+| `noscript` with scripting enabled | one element with text | +1 (item 7) |
+
+<Badge type="warning" text="RESEARCH" /> This is an argument, not a machine-checked proof. Two paths are argued only in outline: a `</form>` exact pop while reconstructed formatting elements are above the form (the form stays their ancestor), and a formatting end tag whose adoption agency takes another entry of the same name (after the Noah's Ark clause removed the entry of the token stack element). In both paths the unit of the element that left the stack without its own end tag pays the extra level. The cross-check checks the claim after every token.
+
+<Badge type="tip" text="FACT" /> Measurements with parse5 8.0.1 (`src/depth.mjs`):
+
+| Input | max D | WHATWG stack | max DOM depth |
+|---|---|---|---|
+| 300 × `<span><div></span>`, block (review repro) | 601 | 603 | 603 |
+| 100 × `<h1><span><h2>x</h1>`, block | 301 | 203 | 203 |
+| 130 × `<li><ul></li>`, block | 261 | 263 | 263 |
+| 130 × `<body><div></body>`, block | 261 | 133 | 133 |
+| 130 × `<form><div></form>`, block | 261 | 133 | 263 |
+| 130 × `<p><b>x</p>y`, block (each `y` reconstructs a `b` inside the last one) | 261 | 133 | 133 |
+| 70 × `<span><span><span><div></span></span></span>`, block | 281 | 283 | 283 |
+| 64 × `<table><td>`, block | 257 | 259 | 259 |
+
+The invariant check on the fixtures: 0 violations on the 66 valid fixtures (`check --expected`). The sweeps are in §6.6.
+
+**Cost.** <Badge type="info" text="DESIGN" /> D is stricter than the H-25 stack limit. Each crossing keeps its units: `<p><b>x</p>` costs 2 for the rest of the document (the tree builder really nests the reconstructed `b`, see the table), so about 128 such errors make a page invalid. A table that a crossing closes keeps its units (`<tr><td>a</tr>` inside it makes the table dirty). A `select` with options that have no end tag keeps one unit per option until `</select>`, as with H-25. Relaxing D later (for example, no dirty mark after a crossing that the tree builder mirrors) is compatible.
+
+### 6.6 Sweeps
+
+<Badge type="tip" text="FACT" /> Sweeps of 2026-10-11 with the Rust, Node.js and PHP candidates at `27ae1b5`, both scripting views. The candidates do not implement the rules of this section yet, so findings are expected; each finding is counted once per candidate (the three candidates gave the same results). "Without a class" means that no rule class of the cross-check (§6, `src/depth.mjs`) explains the finding.
+
+| Sweep | Documents | Valid (each candidate) | Findings | Without a class | Only the open question | Depth invariant: violations on valid documents |
+|---|---|---|---|---|---|---|
+| seed 21, `review`, 20 pieces | 50 000 | 15 591 | 6 762 | 0 | 30 (5 documents × 3 candidates × 2 views) | 0 (313 on invalid documents) |
+| seed 22, `review`, 40 pieces | 50 000 | 8 216 | 4 290 | 0 | 0 | 0 (522 on invalid documents) |
+| seed 23, `review`, 80 pieces | 20 000 | 1 697 | 816 | 0 | 6 (1 document) | 0 (354 on invalid documents) |
+| seed 24, `classic`, 20 pieces | 100 000 | 37 318 | 0 | — | — | 0 (222 on invalid documents) |
+
+Findings by kind in seed 21 (per candidate × view): block disagreements 102 (scripting enabled) and 252 (disabled), manifest-like scripts (all `M-13-non-ascii`) 2 634 and 3 735, both kinds in one document 9 and 30. The 5 documents that only the open question explains are all of the form `<a>` or `<nobr>`, a crossing by `span` or `q`, then 8 or more `div` or `ul` elements (seed 21, indexes 6906, 17594, 24445, 35189, 49124). Of the 2 486 documents of seed 21 whose only class is the open question, the Rust candidate accepts 711; option A of §6.1 would reject them all, and 5 of them are real cuts. The depth invariant fails only on documents that the candidates reject (tags in SVG integration points, M-07; table parts after an explicit `colgroup`, M-09). The classic profile gives 0 findings: the change of the manifest check (Unicode look-alikes) adds no finding there.
+
+To repeat a sweep, run in `tools/rqp-markup/crosscheck`: `node src/cli.mjs sweep --only rust,node,php --seed 21 --count 50000 --chunk 10000 --max-tokens 20 --profile review --scripting both`.
 
 ## Related
 

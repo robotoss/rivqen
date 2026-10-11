@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-IMPLIED-PARTS",
+  "description": "Implied tbody, tr and colgroup, and stray td, th, caption, colgroup and col end tags: all valid (H-30 covers only tbody, thead, tfoot, tr and table)",
+  "rules": [
+    "M-06",
+    "M-09",
+    "M-19"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "c",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"c\">",
+        "content": "x"
+      }
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-MARKUP-LIMIT-DEPTH-256",
-  "description": "255 nested div elements and a div block inside them: the token stack has 256 elements, the maximum (M-26, H-25)",
+  "description": "255 nested div elements and a div block inside them: the depth counter D (M-26) is 256, the maximum (H-25, H-31)",
   "rules": [
     "M-05",
     "M-26"

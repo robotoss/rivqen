@@ -10,6 +10,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { compareCandidates, compareWithView, resultShapeError, show } from "./compare.mjs";
+import { CLASSES, analyzeDepth } from "./depth.mjs";
 import { docSeed, generateDocument } from "./generator.mjs";
 import { CrosscheckError, buildCandidate, loadCandidates, readResultsFile, runBatch, writeBatchDir } from "./run.mjs";
 import { parse5View } from "./view.mjs";
@@ -27,7 +28,7 @@ const MAX_DETAIL_LINES = 6;
 const USAGE = `usage:
   node src/cli.mjs check [--fixtures dir | --input file] [--results file.jsonl | --expected] [common options]
   node src/cli.mjs cases [--cases file.json] [common options]
-  node src/cli.mjs sweep [--seed n] [--count n] [--max-tokens n] [--chunk n] [--out dir] [--keep n] [common options]
+  node src/cli.mjs sweep [--seed n] [--count n] [--max-tokens n] [--profile classic|review] [--chunk n] [--out dir] [--keep n] [common options]
 common options: --only name,... --candidates file --timeout seconds --build --scripting enabled|disabled|both`;
 
 /** @param {string} name @param {string | undefined} v @param {number} min @param {number} max */
@@ -58,6 +59,7 @@ export function parseArgs(argv) {
     seed: 1,
     count: 1000,
     maxTokens: 16,
+    profile: "classic",
     chunk: 2000,
     out: null,
     keep: 20,
@@ -112,6 +114,12 @@ export function parseArgs(argv) {
       case "--max-tokens":
         o.maxTokens = intArg(flag, value(), 1, 200);
         break;
+      case "--profile": {
+        const v = value();
+        if (!["classic", "review"].includes(v)) throw new CrosscheckError("--profile is classic or review");
+        o.profile = v;
+        break;
+      }
       case "--chunk":
         o.chunk = intArg(flag, value(), 1, 100_000);
         break;
@@ -134,11 +142,14 @@ export function parseArgs(argv) {
  * @param {{ name: string, bytes: Uint8Array }[]} docs
  * @param {Map<string, Map<string, unknown>>} resultsByCandidate candidate → (doc name → result)
  * @param {string[]} views
- * @returns {{ name: string, findings: { kind: string, candidate: string, details: string[] }[], cells: Map<string, string>, p5: Map<string, import("./view.mjs").View> }[]}
+ * @param {{ rules?: boolean }} [options] rules: a valid result must not have a rule class of the
+ *   security review (depth.mjs CLASSES); use it for results that implement those rules (--expected)
+ * @returns {{ name: string, findings: { kind: string, candidate: string, details: string[] }[], cells: Map<string, string>, p5: Map<string, import("./view.mjs").View>, depth: import("./depth.mjs").DepthAnalysis }[]}
  */
-export function evaluateDocs(docs, resultsByCandidate, views) {
+export function evaluateDocs(docs, resultsByCandidate, views, { rules = false } = {}) {
   return docs.map((doc) => {
     const p5 = new Map(views.map((v) => [v, parse5View(doc.bytes, { scripting: v === "enabled" })]));
+    const depth = analyzeDepth(doc.bytes);
     const findings = [];
     const cells = new Map();
     const perDoc = new Map();
@@ -166,13 +177,46 @@ export function evaluateDocs(docs, resultsByCandidate, views) {
         }
       }
       const o = /** @type {{ valid: boolean, error?: unknown, blocks: unknown[] }} */ (r);
+      if (o.valid && depth.violations.length > 0) {
+        // markup.md M-26: the WHATWG stack and the DOM depth are bounded by D + 2.
+        findings.push({ kind: "depth-invariant", candidate: cand, details: depth.violations });
+        disagreeing.push("depth");
+      }
+      if (rules && o.valid && depth.classes.length > 0) {
+        findings.push({ kind: "new-rule", candidate: cand, details: [`valid, but the document has: ${depth.classes.join(", ")}`] });
+        disagreeing.push("rules");
+      }
       const base = o.valid ? `valid ${o.blocks.length}` : String(o.error).replace(/^RQP_MARKUP_/, "");
       cells.set(cand, disagreeing.length === 0 ? base : `${base} DISAGREE(${disagreeing.join(",")})`);
     }
     const mismatch = compareCandidates(perDoc);
     if (mismatch.length > 0) findings.push({ kind: "candidates", candidate: "*", details: mismatch });
-    return { name: doc.name, findings, cells, p5 };
+    return { name: doc.name, findings, cells, p5, depth };
   });
+}
+
+/**
+ * Count a finding by the rule classes of its document (a finding counts once for each class).
+ * "onlyOpen": the only class is the open question M-06-formatting-dirty (no decided rule explains it).
+ * @param {Map<string, { total: number, none: number, onlyOpen: number, classes: Map<string, number> }>} byClass
+ * @param {string} kind
+ * @param {string[]} classes
+ */
+export function countByClass(byClass, kind, classes) {
+  const c = byClass.get(kind) ?? { total: 0, none: 0, onlyOpen: 0, classes: new Map() };
+  c.total++;
+  if (classes.length === 0) c.none++;
+  else if (classes.every((x) => x === CLASSES.formattingDirty)) c.onlyOpen++;
+  for (const x of classes) c.classes.set(x, (c.classes.get(x) ?? 0) + 1);
+  byClass.set(kind, c);
+}
+
+/** Short text for the depth analysis: D, WHATWG stack, DOM depth, rule classes. */
+export function depthCell(a) {
+  if (!a.ok) return "no tree";
+  const classes = a.classes.length > 0 ? ` classes ${a.classes.join(",")}` : "";
+  const bad = a.violations.length > 0 ? ` INVARIANT(${a.violations.length})` : "";
+  return `max D ${a.maxD}, stack ${a.maxStack}, depth ${a.maxDepth}${classes}${bad}`;
 }
 
 /** Short text for a parse5 view: block count, implied ends, manifests. */
@@ -271,7 +315,7 @@ async function cmdCheck(o, write) {
     let failed = await buildAll(o, write);
     const run = await candidateResults(o, dir, write);
     failed += run.failed;
-    const evaluated = evaluateDocs(docs, run.out, o.views);
+    const evaluated = evaluateDocs(docs, run.out, o.views, { rules: o.expected });
     let problems = 0;
     for (const e of evaluated) {
       for (const f of e.findings) {
@@ -286,6 +330,7 @@ async function cmdCheck(o, write) {
     if (o.input !== null) {
       for (const e of evaluated) {
         write(`parse5: ${[...e.p5].map(([v, view]) => `${v} ${viewCell(view)}`).join("; ")}`);
+        write(`depth: ${depthCell(e.depth)}`);
         for (const [cand, cell] of e.cells) write(`${cand}: ${cell}`);
       }
     }
@@ -322,9 +367,9 @@ async function cmdCases(o, write) {
     failed += run.failed;
     const evaluated = evaluateDocs(docs, run.out, ["enabled", "disabled"]);
     const cands = [...run.out.keys()];
-    write(["case", "parse5 (scripting on)", "parse5 (scripting off)", ...cands].join(" | "));
+    write(["case", "parse5 (scripting on)", "parse5 (scripting off)", "depth", ...cands].join(" | "));
     for (const e of evaluated) {
-      const row = [e.name, viewCell(e.p5.get("enabled")), viewCell(e.p5.get("disabled"))];
+      const row = [e.name, viewCell(e.p5.get("enabled")), viewCell(e.p5.get("disabled")), depthCell(e.depth)];
       for (const c of cands) row.push(e.cells.get(c) ?? "-");
       write(row.join(" | "));
     }
@@ -341,7 +386,10 @@ async function cmdSweep(o, write) {
   const kept = new Map();
   const totals = new Map();
   let failed = await buildAll(o, write);
-  write(`sweep seed=${o.seed} count=${o.count} max-tokens=${o.maxTokens} chunk=${o.chunk} scripting=${o.views.join(",")}`);
+  write(`sweep seed=${o.seed} count=${o.count} max-tokens=${o.maxTokens} profile=${o.profile} chunk=${o.chunk} scripting=${o.views.join(",")}`);
+  const classDocs = new Map();
+  const byClass = new Map();
+  const invariant = { docs: 0, accepted: 0 };
   // One batch directory with fixed slot names, reused by every chunk: creating and deleting
   // directories is the slowest part on some file systems.
   const dir = path.join(tmp, "batch");
@@ -352,7 +400,7 @@ async function cmdSweep(o, write) {
       const docs = [];
       for (let k = 0; k < n; k++) {
         const i = first + k;
-        const text = generateDocument(docSeed(o.seed, i), { maxTokens: o.maxTokens });
+        const text = generateDocument(docSeed(o.seed, i), { maxTokens: o.maxTokens, profile: o.profile });
         docs.push({ name: `s${String(k).padStart(6, "0")}`, bytes: Buffer.from(text, "utf8"), index: i });
       }
       for (let k = n; k < slots; k++) rmSync(path.join(dir, `s${String(k).padStart(6, "0")}`), { recursive: true, force: true });
@@ -363,6 +411,12 @@ async function cmdSweep(o, write) {
       const evaluated = evaluateDocs(docs, run.out, o.views);
       evaluated.forEach((e, k) => {
         const doc = docs[k];
+        for (const c of e.depth.classes) classDocs.set(c, (classDocs.get(c) ?? 0) + 1);
+        if (e.depth.violations.length > 0) {
+          invariant.docs++;
+          if (e.findings.some((f) => f.kind === "depth-invariant")) invariant.accepted++;
+        }
+        for (const f of e.findings) countByClass(byClass, f.kind, e.depth.classes);
         for (const [cand, results] of run.out) {
           const s = stats.get(cand) ?? { docs: 0, valid: 0, withBlocks: 0, findings: 0 };
           const r = results.get(doc.name);
@@ -384,7 +438,10 @@ async function cmdSweep(o, write) {
           const save = path.join(outDir, `${f.kind}-${f.candidate === "*" ? "all" : f.candidate}-${o.seed}-${doc.index}`);
           mkdirSync(save, { recursive: true });
           writeFileSync(path.join(save, "input.html"), doc.bytes);
-          writeFileSync(path.join(save, "finding.json"), `${JSON.stringify({ seed: o.seed, index: doc.index, maxTokens: o.maxTokens, ...f }, null, 2)}\n`);
+          writeFileSync(
+            path.join(save, "finding.json"),
+            `${JSON.stringify({ seed: o.seed, index: doc.index, maxTokens: o.maxTokens, profile: o.profile, classes: e.depth.classes, ...f }, null, 2)}\n`,
+          );
         }
       });
     }
@@ -393,6 +450,15 @@ async function cmdSweep(o, write) {
   }
   write("candidate | documents | valid | valid with blocks | findings");
   for (const [cand, s] of stats) write(`${cand} | ${s.docs} | ${s.valid} | ${s.withBlocks} | ${s.findings}`);
+  // Rule classes of the security review (depth.mjs): documents that have them, and the findings
+  // by class ("none" = a finding that no class explains).
+  const cls = [...classDocs.entries()].sort().map(([k, v]) => `${k}=${v}`).join(" ");
+  write(`documents by rule class: ${cls === "" ? "none" : cls}`);
+  for (const [kind, c] of [...byClass.entries()].sort()) {
+    const parts = [...c.classes.entries()].sort().map(([k, v]) => `${k}=${v}`).join(" ");
+    write(`finding ${kind}: ${c.total} total, ${c.none} without a rule class, ${c.onlyOpen} only ${CLASSES.formattingDirty}; ${parts}`);
+  }
+  write(`depth invariant: ${invariant.docs} document(s) with a violation, ${invariant.accepted} of them valid for a candidate`);
   const kinds = [...totals.entries()].map(([k, v]) => `${k}=${v}`).join(" ");
   write(`findings: ${kinds === "" ? "none" : kinds}`);
   if (totals.size > 0) write(`saved inputs: ${outDir}`);

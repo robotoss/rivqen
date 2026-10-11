@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-RESERVED-NON-ASCII-LONG-S",
+  "description": "A script type with a long s (U+017F): Unicode upper case maps it to S (H-28)",
+  "rules": [
+    "M-13"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_RESERVED"
+  }
+}

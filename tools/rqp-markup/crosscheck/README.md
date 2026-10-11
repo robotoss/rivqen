@@ -18,7 +18,22 @@ When the candidate says **valid**, these must be true. Else the tool reports a f
 | The tree has the same number of elements with a `data-rq-block` attribute as the result has blocks | `parse5-<view>-blocks` |
 | Each element has the same id, is in the HTML namespace, and has the same format (`script` for `json`) | `parse5-<view>-blocks` |
 | `start` equals the end of the start tag, and `end` equals the start of an explicit end tag (UTF-8 byte offsets) | `parse5-<view>-blocks` |
-| The tree has no `script` element whose `type` contains `rivqen-manifest` (case-insensitive, after character reference decoding) | `parse5-<view>-manifest` |
+| The tree has no `script` element whose `type` contains `rivqen-manifest` (case-insensitive, after character reference decoding; also after Unicode upper-case mapping, so `ı` and `ſ` count as `i` and `s`, `markup.md` M-13 item 3) | `parse5-<view>-manifest` |
+| The depth claim of `markup.md` M-26 holds after every token (scripting enabled): the WHATWG stack has at most D + 2 elements, each open element has a DOM depth of at most D + 2, each element that the tree builder closes at once at most D + 3 | `depth-invariant` |
+| With `--expected` only: the document has none of the rule classes below (the golden fixtures implement the rules of the security review) | `new-rule` |
+
+`src/depth.mjs` computes the depth counter D of M-26 from the parse5 tokens (a `Parser` subclass that sees each tokenizer token once), and it classifies each document by the rules of the security review:
+
+| Class | Rule | Shape |
+|---|---|---|
+| `M-06-formatting` | M-06 item 2 (H-26) | A formatting end tag crosses a special or foreign element |
+| `M-06-formatting-dirty` | Open question Q-T12-1 | A formatting end tag pops a dirty element (M-26) |
+| `M-05-stray-table-end` | M-06 item 3 (H-30) | A `tbody`, `thead`, `tfoot`, `tr` or `table` end tag matches nothing |
+| `M-11-balance` | M-11 item 5 (H-27) | The `noscript` content is not balanced |
+| `M-13-non-ascii` | M-13 item 3 (H-28) | A script `type` value has a non-ASCII character |
+| `M-26-depth` | M-26 (H-31) | D is larger than 256 |
+
+The classifier is a test oracle for these rules only. It does not decide validity.
 
 `<view>` is `enabled` (scripting enabled, the RQP view of `markup.md` M-04) or `disabled` (scripting disabled: `noscript` content is markup). The default is `enabled`. Use `--scripting both` to check the claim of `markup.md` §5 item 2 too.
 
@@ -54,8 +69,14 @@ node src/cli.mjs check --fixtures path/to/dir --results results.jsonl
 # The edge-case study inputs (cases/edge-cases.json): one row per case
 node src/cli.mjs cases --only rust,java,php
 
+# The inputs of the security review (repro inputs, controls, open question, depth shapes)
+node src/cli.mjs cases --cases cases/review-cases.json --only rust,node,java,php
+
 # A seeded generator sweep
 TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,java,php --seed 5 --count 100000 --chunk 10000 --scripting both
+
+# A sweep with the shapes of the security review
+TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,node,java,php --seed 21 --count 50000 --chunk 10000 --max-tokens 20 --profile review --scripting both
 ```
 
 | Option | Commands | Meaning | Default |
@@ -73,6 +94,7 @@ TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,java,php --seed 5 --count 100
 | `--seed n` | `sweep` | Seed of the sweep (0 … 2^32 − 1) | 1 |
 | `--count n` | `sweep` | Number of documents (at most 10 000 000) | 1000 |
 | `--max-tokens n` | `sweep` | Pieces per document (1 … 200) | 16 |
+| `--profile p` | `sweep` | `classic` (the documents of earlier sweeps, unchanged) or `review` (adds the shapes of the security review) | `classic` |
 | `--chunk n` | `sweep` | Documents per batch run | 2000 |
 | `--out dir` | `sweep` | Where to save the inputs of findings | `$TMPDIR/rqp-crosscheck-sweep-<seed>` |
 | `--keep n` | `sweep` | Saved and printed findings for each kind | 20 |
@@ -80,8 +102,9 @@ TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,java,php --seed 5 --count 100
 ### Output and exit code
 
 - `check` prints one line for each finding, then one summary line for each candidate.
-- `cases` prints a table: case, parse5 with scripting on, parse5 with scripting off, one cell for each candidate (`valid <n>` or the error code, plus `DISAGREE(<views>)`).
-- `sweep` prints the first findings of each kind, a table (documents, valid, valid with blocks, findings for each candidate) and the total for each finding kind.
+- `check --input` also prints a line `depth:` (max D, WHATWG stack, DOM depth, rule classes).
+- `cases` prints a table: case, parse5 with scripting on, parse5 with scripting off, depth (max D, WHATWG stack, DOM depth, rule classes), one cell for each candidate (`valid <n>` or the error code, plus `DISAGREE(<views>)`; `depth` for a depth-invariant finding).
+- `sweep` prints the first findings of each kind, a table (documents, valid, valid with blocks, findings for each candidate), the number of documents in each rule class, one line for each finding kind (findings without a rule class, findings that only the open question explains, findings by class), the depth invariant line (documents with a violation, and how many of them a candidate accepts), and the total for each finding kind.
 
 | Exit code | Meaning |
 |---|---|
@@ -106,7 +129,8 @@ The batch runs write one file for each document. On a slow temporary file system
    - `<![CDATA[` in an SVG or MathML integration point (`desc`, `mi`, …) gives a comment in parse5. The WHATWG check is on the namespace of the adjusted current node, which gives a CDATA section there. The end byte is the same when `markup.md` M-12 holds.
    - `<?` gives a bogus comment in parse5. The WHATWG standard parses processing instructions since whatwg/html PR #12118 (merged 2026-06-25).
 2. parse5 needs time that grows faster than the nesting depth (about 25 s for 50 000 nested elements). Sweep documents are small; do not run the tool on large untrusted documents in a time-limited job.
-3. The generator (`src/generator.mjs`) is tag soup with list and table patterns. It does not reach every shape. A sweep without findings is evidence, not a proof.
+3. The generator (`src/generator.mjs`) is tag soup with list and table patterns. It does not reach every shape. A sweep without findings is evidence, not a proof. The `classic` profile did not reach the shapes of the security review (2026-10-11); the `review` profile adds them.
+4. The depth pass uses the parse5 token stream. For a valid document it is the token stream of `markup.md` M-03/M-04. For a document that breaks M-07 or M-09 (for example tags in an SVG integration point), parse5 builds elements that the token stack does not see, and the invariant can fail. So the `depth-invariant` finding applies only to results that say valid; the sweep also counts the violations on all documents, for information. While the WHATWG stack has more than 1024 elements, the check covers only new elements and the current node (bounded time).
 
 ## 5. Security
 
@@ -122,7 +146,8 @@ Run `node --test` in this directory. The tests use a fake candidate (`test-suppo
 | Test file | What it checks |
 |---|---|
 | `test/utf8.test.mjs` | Strict UTF-8, BOM, UTF-16 to UTF-8 offsets |
-| `test/view.test.mjs` | parse5 view: byte offsets (non-BMP, CR LF, BOM), implied ends, template and foreign content, manifests, scripting views, limits |
+| `test/view.test.mjs` | parse5 view: byte offsets (non-BMP, CR LF, BOM), implied ends, template and foreign content, manifests (also Unicode look-alikes), scripting views, limits |
+| `test/depth.test.mjs` | Depth counter D (pushes, exact pops, dirty mark, implied parts, `noscript`), the invariant on the review shapes, the rule classes |
 | `test/compare.test.mjs` | Each kind of disagreement, result shapes, candidate comparison |
 | `test/generator.test.mjs` | Deterministic PRNG (known answer), bounded documents, coverage of the needed shapes |
 | `test/cli.test.mjs` | Commands, options, exit codes, saved findings, and that the output never contains document text |

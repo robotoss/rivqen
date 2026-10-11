@@ -271,6 +271,198 @@ fn m06_crossing() {
     assert_invalid("<div><table><tr><td>a</div>", STRUCTURE, "M-06");
 }
 
+const FORMATTING: [&str; 14] = [
+    "a", "b", "big", "code", "em", "font", "i", "nobr", "s", "small", "strike", "strong", "tt", "u",
+];
+
+/// The block of the review repros: a later `<a>` or `<nobr>` in it runs the
+/// adoption agency again in the browser.
+const CUT_BLOCK: &str = "<span data-rq-block=\"x\">y<a>z</a>w</span>";
+
+/// M-06 item 2 (H-26): an end tag with a name in `FORMATTING` must not
+/// cross a `SPECIAL` element pushed in HTML context, or any element pushed
+/// in a foreign region (FX-RQ-MARKUP-FORMATTING-CROSS-*).
+#[test]
+fn m06_2_formatting_end_tags() {
+    // The review repros: 8 special elements stop the adoption agency.
+    let divs = "<div>".repeat(8);
+    assert_invalid(&format!("<a>{divs}x</a>{CUT_BLOCK}"), STRUCTURE, "M-06");
+    assert_invalid(
+        &format!("<nobr>{divs}x</nobr><span data-rq-block=\"x\">y<nobr>z</nobr>w</span>"),
+        STRUCTURE,
+        "M-06",
+    );
+    // One special element is enough, for every formatting name.
+    for name in FORMATTING {
+        assert_invalid(
+            &format!("<{name}><div>x</{name}>y</div>"),
+            STRUCTURE,
+            "M-06",
+        );
+        assert_invalid(&format!("<{name}><p>x</{name}>"), STRUCTURE, "M-06");
+        // Valid neighbors: a phrasing element is not special, and the
+        // special element closed first is not crossed.
+        assert_valid(&format!("<{name}><span><q>x</{name}>"));
+        assert_valid(&format!("<{name}><div>x</div></{name}>"));
+    }
+    // Any special name, with the same `b` end tag.
+    for special in [
+        "address",
+        "article",
+        "blockquote",
+        "center",
+        "dd",
+        "dir",
+        "dl",
+        "dt",
+        "fieldset",
+        "figure",
+        "footer",
+        "form",
+        "h1",
+        "h6",
+        "header",
+        "hgroup",
+        "li",
+        "listing",
+        "main",
+        "menu",
+        "nav",
+        "ol",
+        "pre",
+        "search",
+        "section",
+        "summary",
+        "ul",
+    ] {
+        assert_invalid(&format!("<b><{special}>x</b>"), STRUCTURE, "M-06");
+    }
+    // Foreign elements: every element pushed in a foreign region counts.
+    assert_invalid(
+        "<svg><a href=\"#\"><text>t</a></svg><p data-rq-block=\"a\">z</p>",
+        STRUCTURE,
+        "M-06",
+    );
+    assert_invalid("<svg><a><g><g></a></svg>", STRUCTURE, "M-06");
+    assert_valid("<svg><a href=\"#\"><text>t</text></a></svg>");
+    // A non-formatting end tag may cross them (M-06 item 1 permitting).
+    assert_valid("<svg><g><a><text>t</g></svg>");
+    assert_valid("<p><b>a</p><div><span><i>x</div><span><div>x</span>");
+    // The control document of the study (FX-RQ-MARKUP-FORMATTING-CROSS-PHRASING).
+    assert_valid(
+        "<a href=\"#\"><span>x</a><b><i>y</b><p><b>z</p>w <svg><a href=\"#\"><text>t</text></a></svg>",
+    );
+}
+
+/// M-06 item 3 (H-30): in HTML context, a `tbody`, `thead`, `tfoot`, `tr`
+/// or `table` end tag must match an element of the token stack
+/// (FX-RQ-MARKUP-TABLE-STRAY-*).
+#[test]
+fn m06_3_stray_table_end_tags() {
+    for name in ["tbody", "thead", "tfoot", "tr", "table", "TBODY", "Tr"] {
+        // The review repros: the cell closes and the block moves before the
+        // table.
+        assert_invalid(
+            &format!("<table><td></{name}><div data-rq-block=\"x\">y</div></td></table>"),
+            STRUCTURE,
+            "M-06",
+        );
+        assert_invalid(&format!("<p>a</{name}>b</p>"), STRUCTURE, "M-06");
+        assert_invalid(&format!("</{name}>"), STRUCTURE, "M-06");
+    }
+    assert_invalid(
+        "<table><tbody><tr><td>x</td></tr></tbody></thead></table>",
+        STRUCTURE,
+        "M-06",
+    );
+    // An implied `tbody` or `tr` stays allowed, and so do matching end tags.
+    assert_valid("<table><td>a</td></table><table><tr><td>a</td></tr></table>");
+    assert_valid(
+        "<table><thead><tr><th>h</th></tr></thead><tfoot><tr><td>f</td></tr></tfoot></table>",
+    );
+    // Other table-family end tags without a match are ignored
+    // (FX-RQ-MARKUP-TABLE-IMPLIED-PARTS).
+    assert_valid(
+        "</td></th></caption></colgroup></col><table><caption>c</caption></caption><col></colgroup><tr><td>a</td></td></th></col></tr></table>",
+    );
+    // In a foreign region M-07 item 2 applies (any stray end tag).
+    assert_invalid("<svg></tbody></svg>", STRUCTURE, "M-07");
+    assert_valid("<svg><tbody></tbody></svg>");
+    // In block content M-23 applies.
+    assert_invalid("<div data-rq-block=\"a\"></tr></div>", STRUCTURE, "M-23");
+}
+
+/// M-06 item 4 (H-32): a `FORMATTING` end tag must not pop an element with
+/// the special-crossed mark (FX-RQ-MARKUP-FORMATTING-MARKED-*).
+#[test]
+fn m06_4_special_crossed_mark() {
+    // The review repros: the tree builder ignores `</span>` (special `div`)
+    // and `</li>` (no `li` in list item scope), keeps the elements, and the
+    // later formatting end tag finds 8 furthest blocks.
+    let divs = "<div>".repeat(8);
+    assert_invalid(
+        &format!("<a><span>{divs}x</span></a>{CUT_BLOCK}"),
+        STRUCTURE,
+        "M-06",
+    );
+    assert_invalid(
+        &format!(
+            "<nobr><span>{divs}x</span></nobr><span data-rq-block=\"x\">y<nobr>z</nobr>w</span>"
+        ),
+        STRUCTURE,
+        "M-06",
+    );
+    let lists = "<li><ul>".repeat(4);
+    assert_invalid(
+        &format!("<a>{lists}{}x</a>{CUT_BLOCK}", "</li>".repeat(4)),
+        STRUCTURE,
+        "M-06",
+    );
+    // The minimal shapes of markup.md M-06.
+    assert_invalid("<a><span><div>a</span></a>", STRUCTURE, "M-06");
+    assert_invalid("<a><li><ul></li></a>", STRUCTURE, "M-06");
+    // The mark is on the new current node; a formatting end tag that pops
+    // it as a crossed element fails too.
+    assert_invalid("<a><b><span><div>x</span></a>", STRUCTURE, "M-06");
+    // Item (a) with a foreign crossed element.
+    assert_invalid("<b><svg><g></svg></b>", STRUCTURE, "M-06");
+    // Item (b): an exact pop of a marked element passes the mark down.
+    assert_invalid("<b><p><span><div>x</span></p></b>", STRUCTURE, "M-06");
+    assert_invalid(
+        "<b><p><span><div>x</span></p><i>y</i></b>",
+        STRUCTURE,
+        "M-06",
+    );
+    // An end tag that matches nothing, and a start tag, do not change it.
+    assert_invalid("<b><span><div>x</span></q><i></i></b>", STRUCTURE, "M-06");
+    // Valid neighbors.
+    for body in [
+        // `</span>` crosses only `i` (not special): nothing gets the mark.
+        "<a href=\"#\"><b><span><i>x</span></b></a>",
+        // Nothing is crossed.
+        "<a><span><div>a</div></span></a>",
+        "<a><li><ul></ul></li></a>",
+        "<b><svg><g></g></svg></b>",
+        // A non-formatting end tag may pop a marked element.
+        "<div><span><div>x</span></div>",
+        // The mark goes away with its element: a new `b` is not marked.
+        "<b><span><div>x</span></b-x><b>y</b>",
+        "<div><span><div>x</span></div><b>y</b>",
+        // A formatting element below the marked one is not popped.
+        "<b>x</b><p><span><div>x</span></p><b>y</b>",
+    ] {
+        assert_valid(body);
+    }
+    // FX-RQ-MARKUP-FORMATTING-MARKED-PHRASING.
+    assert_eq!(
+        blocks(&format!(
+            "<a href=\"#\"><b><span><i>x</span></b></a>{}",
+            "<span data-rq-block=\"x\">y<a href=\"#\">z</a>w</span>"
+        )),
+        [html("x", "y<a href=\"#\">z</a>w")]
+    );
+}
+
 #[test]
 fn m07_foreign_breakout() {
     assert_invalid("<svg><p>a</p></svg>", STRUCTURE, "M-07");
@@ -572,6 +764,76 @@ fn m11_m13_reserved_manifest_in_noscript() {
     }
 }
 
+/// M-11 item 5 (H-27): the noscript content C is balanced, checked with a
+/// separate stack. With scripting disabled `</noscript>` is ignored when C
+/// leaves a special element open (FX-RQ-MARKUP-NOSCRIPT-UNBALANCED, -TABLE,
+/// -CROSSING, -STRAY-END, -EOF-UNBALANCED, -BALANCED).
+#[test]
+fn m11_5_noscript_content_is_balanced() {
+    let block = "<div data-rq-block=\"a\">x<button>y</button>z</div>";
+    for content in [
+        // The review repro, and the other cases.
+        "<button>",
+        "<table>",
+        "<div><p>x</div>",
+        "<a href=\"#\"><span>x</a></span>",
+        "</div><img src=\"p.gif\" alt=\"\">",
+        "<b>x</i>",
+        "</br>",
+        "<div></div></div>",
+        // A self-closing flag on a non-void name has no effect (M-05 item 1).
+        "<span/>",
+        // An end tag in raw text of C is text: `style` stays open.
+        "<p><style></p></style>",
+    ] {
+        assert_invalid(
+            &format!("<noscript>{content}</noscript>{block}"),
+            STRUCTURE,
+            "M-11",
+        );
+    }
+    // E3: without an end tag, C is the rest of the input.
+    assert_eq!(
+        error_of(b"<p data-rq-block=\"real\">r</p><noscript><div>x"),
+        (STRUCTURE, "M-11")
+    );
+    assert_eq!(
+        blocks_of(b"<p data-rq-block=\"real\">r</p><noscript><div>x</div>"),
+        vec![html("real", "r")]
+    );
+    // Balanced content: nested elements, void elements (not pushed), raw
+    // text elements with their end tags, comments, ASCII case and U+0000 in
+    // names (the tokenizer lowercases and maps U+0000 to U+FFFD).
+    for content in [
+        "",
+        "text",
+        "<div><a href=\"#\"><img src=\"p.gif\" alt=\"\"></a><table><tr><td>t</td></tr></table><p>text<br></p></div>",
+        "<iframe src=\"x\"></iframe><style>a{}</style><title>t</title><textarea>x</textarea><script>s</script>",
+        "<DIV><P>x</p></Div>",
+        "<a\0>x</A\u{FFFD}>",
+        "<span/></span>",
+        "<hr/><br/><input><wbr>",
+        "<!-- <div> --><!DOCTYPE x>",
+    ] {
+        assert_eq!(
+            blocks(&format!("<noscript>{content}</noscript>{block}")),
+            [html("a", "x<button>y</button>z")],
+            "{content:?}"
+        );
+    }
+    // Names that differ only in non-ASCII case are different names.
+    assert_invalid(
+        "<noscript><x\u{E4}></x\u{C4}></noscript>",
+        STRUCTURE,
+        "M-11",
+    );
+    // In head too.
+    assert_eq!(
+        error_of(b"<html><head><noscript><div></noscript></head></html>"),
+        (STRUCTURE, "M-11")
+    );
+}
+
 #[test]
 fn m12_cdata() {
     assert_invalid("<p><![CDATA[ a > b ]]></p>", STRUCTURE, "M-12");
@@ -602,6 +864,57 @@ fn m13_reserved_manifest() {
         "<div type=\"rivqen-manifest\"></div><script>var t = \"<script type='rivqen-manifest'>\";</script>",
     );
     assert_valid("<script type=\"rivqen-manifes\"></script><script></script>");
+}
+
+/// M-13 item 3 (H-28): a byte >= 0x80 in the first `type` raw value of a
+/// script start tag is reserved: Unicode look-alikes of the manifest type
+/// (dotless i, long s) and harmless values alike
+/// (FX-RQ-MARKUP-RESERVED-NON-ASCII, -LONG-S, -OTHER, -NOSCRIPT-...).
+#[test]
+fn m13_3_non_ascii_script_types_are_reserved() {
+    for ty in [
+        "application/r\u{131}vqen-manifest+json",
+        "application/rivqen-manife\u{17F}t+json",
+        "text/j\u{E4}vascript",
+        "\u{80}",
+        "\u{1F600}",
+        "text/javascript\u{A0}",
+    ] {
+        let script = format!("<script type=\"{ty}\">{{}}</script>");
+        assert_invalid(&script, ErrorCode::Reserved, "M-13");
+        // In a foreign region, in an unquoted value, and in noscript content
+        // (M-11 item 4).
+        assert_invalid(&format!("<svg>{script}</svg>"), ErrorCode::Reserved, "M-13");
+        assert_invalid(
+            &format!("<script type={ty}></script>"),
+            ErrorCode::Reserved,
+            "M-13",
+        );
+        assert_invalid(
+            &format!("<noscript>{script}</noscript>"),
+            ErrorCode::Reserved,
+            "M-13",
+        );
+    }
+    // E3: noscript content to the end of the input.
+    assert_eq!(
+        error_of("<noscript><script type=\"\u{E4}\"></script>".as_bytes()),
+        (ErrorCode::Reserved, "M-13")
+    );
+    // Non-ASCII outside the first script `type` value is allowed.
+    assert_valid(
+        "<script type=\"text/javascript\" type=\"\u{E4}\" data-x=\"\u{E4}\">var \u{E4} = 1;</script>",
+    );
+    assert_valid("<div type=\"\u{131}\"></div><script data-type=\"\u{17F}\"></script>");
+    assert_valid(
+        "<noscript><img alt=\"\u{E4}\"><script type=\"text/javascript\"></script></noscript>",
+    );
+    // A JSON block needs the exact ASCII type anyway (M-16 comes after M-13).
+    assert_invalid(
+        "<script type=\"application/js\u{F6}n\" data-rq-block=\"j\">{}</script>",
+        ErrorCode::Reserved,
+        "M-13",
+    );
 }
 
 // ---- 2.5 Blocks -------------------------------------------------------------

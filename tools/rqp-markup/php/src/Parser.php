@@ -14,14 +14,26 @@ namespace Rivqen\Tools\RqpMarkup;
  * Work per token is O(1), except end tags, whose cost is paid by the
  * elements they pop (each element is pushed once and popped once). The
  * `noscript` check (M-11) tokenizes each `noscript` content once more.
- * Total time is linear in the input size; memory is linear in the input
- * size (stack depth <= number of start tags).
+ * Total time is linear in the input size. The stack has at most
+ * MAX_OPEN_ELEMENTS elements (M-26), so the stack memory is bounded.
+ *
+ * Hash flooding: tag names come from the input, and PHP hashes string array
+ * keys with DJBX33A, which has no seed. An attacker can make many names with
+ * the same hash, and a PHP array with such keys has one long collision chain.
+ * So no array of this class has keys that are raw input names:
+ * - Fixed name sets (M-19, M-24) use counters by slot (TRACKED). A lookup of
+ *   an input name in a constant array probes one chain of constant keys.
+ * - The name index of M-05 step 3 ($byName) uses nameKey(): the name and a
+ *   keyed hash of it with a random key for each parse.
+ * - Block ids ($ids) are at most MAX_BLOCKS (M-26), in [a-z0-9_-] (M-15).
  */
 final class Parser
 {
     public const MAX_INPUT_BYTES = 5_242_880;
     public const MAX_BLOCKS = 256;
     public const MAX_BLOCK_BYTES = 1_048_576;
+    /** M-26: maximum number of elements on the token stack (H-25). */
+    public const MAX_OPEN_ELEMENTS = 256;
     public const JSON_TYPE = 'application/json';
 
     private const BLOCK_ATTR = 'data-rq-block';
@@ -32,16 +44,45 @@ final class Parser
     private const FOREIGN = 1; // pushed in a foreign region
     private const CONTENT = 2; // pushed in the content of a block
 
+    // Slots of the counters for the names that M-19 and M-24 query. Names
+    // that are only queried together share a slot.
+    private const TEMPLATE = 0;
+    private const SELECT = 1;
+    private const BUTTON = 2;
+    private const A = 3;
+    private const NOBR = 4;
+    private const RB_RP_RT = 5;
+    private const RTC = 6;
+    private const HEADING = 7; // h1 to h6
+    private const LIST = 8; // ul, ol, menu, dl
+    private const TABLE = 9;
+    private const RUBY = 10;
+    private const TRACKED = [
+        'template' => self::TEMPLATE, 'select' => self::SELECT, 'button' => self::BUTTON,
+        'a' => self::A, 'nobr' => self::NOBR, 'rb' => self::RB_RP_RT, 'rp' => self::RB_RP_RT,
+        'rt' => self::RB_RP_RT, 'rtc' => self::RTC, 'h1' => self::HEADING, 'h2' => self::HEADING,
+        'h3' => self::HEADING, 'h4' => self::HEADING, 'h5' => self::HEADING, 'h6' => self::HEADING,
+        'ul' => self::LIST, 'ol' => self::LIST, 'menu' => self::LIST, 'dl' => self::LIST,
+        'table' => self::TABLE, 'ruby' => self::RUBY,
+    ];
+    private const SLOTS = 11;
+
+    /** Length of the random xxh3 secret of nameKey() (xxh3 accepts 136 to 256 bytes). */
+    private const NAME_KEY_SECRET_BYTES = 192;
+
     private Tokenizer $tokenizer;
 
     /** @var list<string> Names of the token stack, bottom first. */
     private array $names = [];
     /** @var list<int> Flags (FOREIGN, CONTENT) of the token stack. */
     private array $flags = [];
-    /** @var array<string, int> Number of elements on the stack, by name. */
-    private array $count = [];
-    /** @var array<string, int> Number of elements opened in the content, by name. */
-    private array $contentCount = [];
+    /** @var array<string, int> Number of elements on the stack, by nameKey() of the name. */
+    private array $byName = [];
+    /** @var array<int, int> Number of elements on the stack, by slot of TRACKED. */
+    private array $open;
+    /** @var array<int, int> Number of elements opened in the content, by slot of TRACKED. */
+    private array $openInContent;
+    private readonly string $nameKeySecret;
     /** @var list<int> Stack indexes of HTML elements in TABLE_FAMILY or `template` (for F, M-09). */
     private array $tableIndex = [];
     /**
@@ -73,11 +114,22 @@ final class Parser
     /** @var array<string, true> */
     private array $ids = [];
 
-    private function __construct(private readonly string $input) {}
+    private function __construct(private readonly string $input)
+    {
+        $this->open = array_fill(0, self::SLOTS, 0);
+        $this->openInContent = $this->open;
+        // A new random key for each parse: one parse cannot learn the key
+        // of another one (the result does not depend on the key).
+        $this->nameKeySecret = random_bytes(self::NAME_KEY_SECRET_BYTES);
+    }
 
     /**
      * Check the document and extract its blocks. Never throws for any input
      * string: rule failures become an invalid Result.
+     *
+     * @throws \Random\RandomException Only when the system has no source of
+     *         random bytes (not caused by the input; the command line exits
+     *         with code 70).
      */
     public static function parse(string $input): Result
     {
@@ -292,7 +344,7 @@ final class Parser
         if ($token->selfClosing) {
             throw new MarkupError(ErrorCode::Structure, 'M-18');
         }
-        if (isset($this->count['template']) || isset($this->count['select'])) {
+        if ($this->open[self::TEMPLATE] > 0 || $this->open[self::SELECT] > 0) {
             throw new MarkupError(ErrorCode::Structure, 'M-19');
         }
         $f = $this->tableContext();
@@ -334,13 +386,16 @@ final class Parser
         $invalid = match (true) {
             isset(Names::PCLOSE[$name]) && ($blockName === 'p' || $blockName === 'span') => true,
             isset(Names::HEADING[$name]) => isset(Names::HEADING[$blockName])
-                || $this->openedInContent('h1', 'h2', 'h3', 'h4', 'h5', 'h6'),
-            isset(Names::LIST_ITEM[$name]) => !$this->openedInContent('ul', 'ol', 'menu', 'dl') // item c
+                || $this->openInContent[self::HEADING] > 0,
+            isset(Names::LIST_ITEM[$name]) => $this->openInContent[self::LIST] === 0 // item c
                 || $this->listItemAboveList(), // item j
-            $name === 'button', $name === 'a', $name === 'nobr' => $this->open($name),
-            isset(Names::TABLE_PART[$name]), $name === 'col' => !$this->openedInContent('table'),
-            $name === 'rb', $name === 'rtc' => !$this->openedInContent('ruby') || $this->open('rb', 'rp', 'rt', 'rtc'),
-            $name === 'rp', $name === 'rt' => !$this->openedInContent('ruby') || $this->open('rb', 'rp', 'rt'),
+            $name === 'button' => $this->open[self::BUTTON] > 0,
+            $name === 'a' => $this->open[self::A] > 0,
+            $name === 'nobr' => $this->open[self::NOBR] > 0,
+            isset(Names::TABLE_PART[$name]), $name === 'col' => $this->openInContent[self::TABLE] === 0,
+            $name === 'rb', $name === 'rtc' => $this->openInContent[self::RUBY] === 0
+                || $this->open[self::RB_RP_RT] > 0 || $this->open[self::RTC] > 0,
+            $name === 'rp', $name === 'rt' => $this->openInContent[self::RUBY] === 0 || $this->open[self::RB_RP_RT] > 0,
             default => false,
         };
         if ($invalid) {
@@ -373,7 +428,7 @@ final class Parser
             throw new MarkupError(ErrorCode::Structure, 'M-08');
         }
         // M-05 step 3.
-        if (!isset($this->count[$name])) {
+        if (!isset($this->byName[$this->nameKey($name)])) {
             if ($foreign) {
                 throw new MarkupError(ErrorCode::Structure, 'M-07');
             }
@@ -486,20 +541,31 @@ final class Parser
     // Token stack
     // ----------------------------------------------------------------------
 
+    /** M-05 push. M-26: a push that makes the stack larger than MAX_OPEN_ELEMENTS is an error. */
     private function push(string $name, bool $foreign): int
     {
         $index = count($this->names);
+        if ($index >= self::MAX_OPEN_ELEMENTS) {
+            throw new MarkupError(ErrorCode::Limit, 'M-26');
+        }
         $flags = $foreign ? self::FOREIGN : 0;
+        $slot = self::TRACKED[$name] ?? null;
         if ($this->blockIndex !== null) {
             $flags |= self::CONTENT;
-            $this->contentCount[$name] = ($this->contentCount[$name] ?? 0) + 1;
+            if ($slot !== null) {
+                $this->openInContent[$slot]++;
+            }
             if (isset(Names::LIST[$name]) || isset(Names::LIST_ITEM[$name])) {
                 $this->listIndex[] = $index;
             }
         }
         $this->names[] = $name;
         $this->flags[] = $flags;
-        $this->count[$name] = ($this->count[$name] ?? 0) + 1;
+        if ($slot !== null) {
+            $this->open[$slot]++;
+        }
+        $key = $this->nameKey($name);
+        $this->byName[$key] = ($this->byName[$key] ?? 0) + 1;
         if (!$foreign) {
             if (isset(Names::TABLE_FAMILY[$name]) || $name === 'template') {
                 $this->tableIndex[] = $index;
@@ -523,11 +589,16 @@ final class Parser
         for ($i = count($this->names) - 1; $i >= $index; $i--) {
             $name = $this->names[$i];
             $flags = $this->flags[$i];
-            if (--$this->count[$name] === 0) {
-                unset($this->count[$name]);
+            $key = $this->nameKey($name);
+            if (--$this->byName[$key] === 0) {
+                unset($this->byName[$key]);
             }
-            if (($flags & self::CONTENT) !== 0 && --$this->contentCount[$name] === 0) {
-                unset($this->contentCount[$name]);
+            $slot = self::TRACKED[$name] ?? null;
+            if ($slot !== null) {
+                $this->open[$slot]--;
+                if (($flags & self::CONTENT) !== 0) {
+                    $this->openInContent[$slot]--;
+                }
             }
             if ($this->tableIndex !== [] && $this->tableIndex[count($this->tableIndex) - 1] === $i) {
                 array_pop($this->tableIndex);
@@ -567,26 +638,19 @@ final class Parser
         return isset(Names::LIST_ITEM[$this->names[$this->listIndex[count($this->listIndex) - 1]]]);
     }
 
-    /** True when an element with one of the names is on the token stack. */
-    private function open(string ...$names): bool
+    /**
+     * Key of $name in $byName: the name, then a keyed 64-bit xxh3 hash of
+     * the name (random secret of this parse).
+     *
+     * Exact: the hash has a fixed length, so two keys are equal only when
+     * the names are equal. Not predictable: DJBX33A(name . h) is
+     * DJBX33A(name) * 33^8 + (a sum over the 8 bytes of h), modulo 2^64. So
+     * names with the same DJBX33A hash get buckets that the attacker cannot
+     * predict: h depends on the secret.
+     */
+    private function nameKey(string $name): string
     {
-        foreach ($names as $name) {
-            if (isset($this->count[$name])) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** True when an element with one of the names, opened in the content, is on the token stack. */
-    private function openedInContent(string ...$names): bool
-    {
-        foreach ($names as $name) {
-            if (isset($this->contentCount[$name])) {
-                return true;
-            }
-        }
-        return false;
+        return $name . hash('xxh3', $name, true, ['secret' => $this->nameKeySecret]);
     }
 
     /** M-15: `^[a-z0-9][a-z0-9_-]{0,63}$` on the raw value, without a regex. */

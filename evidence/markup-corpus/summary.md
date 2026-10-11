@@ -238,7 +238,7 @@ H-37 (other): current node names: none.
 
 Examples:
 
-- H-36, nested form: https://www.pravda.com.ua/ , https://aif.ru/politics/russia/svodka-svo-za-nedelyu-vs-rf-zagnali-kiev-v-kapkany-i-travyathttpsadminaifruarticlesmanagementeditid6365431region-id1set-region1-po-vsemu-frontu
+- H-36, nested form: https://www.pravda.com.ua/ , https://aif.ru/politics/russia/svodka-svo-za-nedelyu-REDACTED
 
 ## 8. Simulated blocks
 

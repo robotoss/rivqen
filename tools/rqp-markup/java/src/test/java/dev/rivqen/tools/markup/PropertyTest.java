@@ -22,7 +22,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -307,20 +309,20 @@ class PropertyTest {
   }
 
   /**
-   * M-06 items 1 to 4 and M-26 (D with the dirty mark and implied parts, H-31) against {@link
-   * StackModel}, a plain implementation from the rule text. Each document is a random walk with
-   * crossings, exact pops, stray end tags and table parts in HTML context, block content (exact
-   * pops only) or a foreign region. Divs opened before put D near the limit in half of the walks.
-   * The walk stops at the first error of the model; the analyzer must report the same rule, or the
-   * document is valid.
+   * M-06 items 1 to 4, M-09 conditions 1 and 2 (H-35, H-37), M-10 item 2 (H-36) and M-26 (D with
+   * the dirty mark and implied parts, H-31) against {@link StackModel}, a plain implementation from
+   * the rule text. Each document is a random walk with crossings, exact pops, stray end tags, table
+   * parts, templates and forms in HTML context, block content (exact pops only) or a foreign
+   * region. Divs opened before put D near the limit in half of the walks. The walk stops at the
+   * first error of the model; the analyzer must report the same rule, or the document is valid.
    */
   @Test
   void depthAndMarksMatchAModel() {
     Random r = new Random(32L);
-    int[] byItem = new int[5]; // index 0: M-26, 1 to 4: M-06 item
+    Map<String, Integer> byItem = new TreeMap<>(); // "M-26", "M-06 item 1", …
     int valid = 0;
     int validNearLimit = 0;
-    for (int doc = 0; doc < 6_000; doc++) {
+    for (int doc = 0; doc < 12_000; doc++) {
       StackModel m = new StackModel();
       StringBuilder s = new StringBuilder();
       int prefix = r.nextBoolean() ? r.nextInt(32) : 192 + r.nextInt(64);
@@ -346,7 +348,7 @@ class PropertyTest {
         assertEquals(null, res.error(), () -> res.rule() + " for " + s);
         assertEquals(blocks, res.blocks().size());
       } else {
-        byItem[m.item()]++;
+        byItem.merge(expected + (m.item() > 0 ? " item " + m.item() : ""), 1, Integer::sum);
         ErrorCode code = expected.equals("M-26") ? ErrorCode.LIMIT : ErrorCode.STRUCTURE;
         assertEquals(code, res.error(), () -> "item " + m.item() + " for " + s);
         assertEquals(expected, res.rule());
@@ -356,15 +358,31 @@ class PropertyTest {
     // Each outcome must occur often, else the property says little.
     assertTrue(valid > 1_000, "valid " + valid);
     assertTrue(validNearLimit > 200, "valid near the limit " + validNearLimit);
-    for (int item = 0; item < byItem.length; item++) {
-      assertTrue(byItem[item] > 100, "item " + item + ": " + byItem[item]);
+    List<String> outcomes =
+        List.of( // in the order of the keys of byItem
+            "M-06 item 1",
+            "M-06 item 2",
+            "M-06 item 3",
+            "M-06 item 4",
+            "M-09 item 1",
+            "M-09 item 2",
+            "M-10",
+            "M-26");
+    assertEquals(outcomes, List.copyOf(byItem.keySet()), byItem::toString);
+    for (String outcome : outcomes) {
+      assertTrue(byItem.get(outcome) > 100, byItem::toString);
     }
   }
 
+  /**
+   * Start tags of the HTML walk. {@code template}, {@code form} and {@code col} are there twice:
+   * M-09 condition 1 and M-10 item 2 need two of these tags in one walk.
+   */
   private static final List<String> HTML_NAMES =
       List.of(
-          "b", "i", "em", "a", "span", "q", "div", "p", "ul", "li", "body", "html", "table",
-          "tbody", "tr", "td", "col", "br");
+          ("b i em a span q div p ul li body html table tbody tr td col br colgroup template form"
+                  + " template form col")
+              .split(" "));
 
   private static final List<String> STRAY_NAMES =
       List.of("x", "td", "tbody", "tr", "table", "i", "b");
@@ -375,7 +393,10 @@ class PropertyTest {
     return k < 6 ? 0 : 1 + r.nextInt(k < 9 ? 2 : 6);
   }
 
-  /** HTML context: crossings, table parts (only where M-09 allows them), html and body. */
+  /**
+   * HTML context: crossings, table parts (only where the table of M-09 allows them; conditions 1
+   * and 2 are left to the model), templates, forms, html and body.
+   */
   private static void htmlWalk(Random r, StackModel m, StringBuilder s) {
     int steps = 50 + r.nextInt(250);
     for (int j = 0; j < steps && m.error() == null; j++) {
@@ -385,10 +406,10 @@ class PropertyTest {
         String f = m.tableFamily();
         boolean allowed =
             switch (name) {
-              case "tbody" -> f == null || f.equals("table");
+              case "tbody", "colgroup" -> f == null || f.equals("table");
               case "tr" -> f == null || f.equals("table") || f.equals("tbody");
-              case "td" -> f == null || !f.equals("td");
-              case "col" -> f == null || f.equals("table");
+              case "td" -> f == null || f.equals("table") || f.equals("tbody") || f.equals("tr");
+              case "col" -> f == null || f.equals("table") || f.equals("colgroup");
               default -> true;
             };
         if (allowed) {

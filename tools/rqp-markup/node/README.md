@@ -54,7 +54,7 @@ The library function is `analyze(bytes)` in `src/markup.mjs`. It takes a `Uint8A
 | `test/tree-agreement.test.mjs` | For each valid random document: the same blocks and offsets as the parse5 8.0.1 tree builder (scripting enabled) |
 | `test/property.test.mjs` | No exception on random markup and random bytes; result invariants (content bytes equal input bytes `[start, end)`, template, revisions) |
 | `test/cli.test.mjs` | Single and batch mode, byte order, exit codes, no content on stderr, bounded read |
-| `test/perf.test.mjs` | `[perf]` 14 adversarial inputs of about 5 MiB finish in less than 10 s each (measured: less than 1 s) |
+| `test/perf.test.mjs` | `[perf]` 20 adversarial inputs of about 5 MiB finish in less than 10 s each (measured: less than 1 s). Six of them close deep stacks (top level, block content, svg) or send unmatched end tags to a deep stack; a pop or an end-tag search with a cost proportional to the stack depth fails them |
 
 The random tests use fixed seeds. For a deeper run, set more iterations or another seed:
 
@@ -106,7 +106,7 @@ Evidence that the tokenizer is the WHATWG tokenizer: the differential test again
 | Nearest table-family name for each entry, reset at `template` | F of M-09, M-19 and M-24 k |
 | Stack index of the foreign region root | M-05 rule 4, M-07 |
 
-Every element is pushed and popped once, so the crossing check of M-06 and the pops are linear in total. The first rule violation ends the pass. The check order follows `markup.md` section 2.10.
+Every element is pushed and popped once, so the crossing check of M-06 and the pops are linear in total. A pop takes constant time: it removes the last entry of each per-entry array and of the stack indexes for its name, and it changes two counters. The nearest match of an end tag is the last entry of the stack indexes for its name, so no end tag searches the stack. The first rule violation ends the pass. The check order follows `markup.md` section 2.10.
 
 M-11 tokenizes the `noscript` content again with a second tokenizer. Each byte is in at most one `noscript` content, so this is linear too. The second pass also checks M-13 on each `script` start tag of the content (E8).
 

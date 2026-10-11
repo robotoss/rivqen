@@ -38,6 +38,24 @@ function largeBlocks(open, unit, close, endTag) {
   return Buffer.from(parts.join(''), 'utf8');
 }
 
+/** `open` n times, then `close` n times, up to the maximum input size. */
+function nested(open, close, head = '', tail = '') {
+  const n = Math.floor((MAX - head.length - tail.length) / (open.length + close.length));
+  return Buffer.from(head + open.repeat(n) + close.repeat(n) + tail, 'utf8');
+}
+
+/**
+ * Five html blocks. The content of each is `open` n times, then `close` n
+ * times, just under the 1 MiB content limit (M-26).
+ */
+function nestedBlocks(open, close) {
+  const n = Math.floor((LIMITS.maxBlockBytes - 4096) / (open.length + close.length));
+  const content = open.repeat(n) + close.repeat(n);
+  const parts = [];
+  for (let k = 1; k <= 5; k++) parts.push(`<div data-rq-block="b${k}">${content}</div>`);
+  return Buffer.from(parts.join(''), 'utf8');
+}
+
 const inputs = {
   'one tag with distinct attributes': manyAttributes,
   'one tag with repeated data-rq-block attributes': () => fill('<div', ' data-rq-block=a', '>'),
@@ -59,7 +77,28 @@ const inputs = {
   'svg with many elements': () => fill('<svg>', '<g></g>', '</svg>'),
   'table rows with cells': () => fill('<table>', '<tr><td>x</td></tr>', '</table>'),
   'many CDATA sections': () => fill('', '<![CDATA[]]>'),
+  // Each end tag below matches the current node and pops one element. A pop
+  // with a cost proportional to the stack depth makes these inputs quadratic.
+  'deep nesting closed by matching end tags': () => nested('<b>', '</b>'),
+  'mixed names closed by matching end tags': () => nested('<b><i>', '</i></b>'),
+  'nested lists in block content': () => nestedBlocks('<ul><li>', '</li></ul>'),
+  'nested elements in block content closed by matching end tags': () => nestedBlocks('<b>', '</b>'),
+  'deep nesting in svg closed by matching end tags': () => nested('<g>', '</g>', '<svg>', '</svg>'),
+  // Each end tag has no match: a search for the match that scans the stack is
+  // quadratic.
+  'unmatched end tags on a deep stack': () => nested('<div>', '</x>'),
 };
+
+// Inputs that must be valid, with the number of blocks. If one of them became
+// invalid, the pass would end early and the test would not measure the pops.
+const expectedBlocks = new Map([
+  ['deep nesting closed by matching end tags', 0],
+  ['mixed names closed by matching end tags', 0],
+  ['nested lists in block content', 5],
+  ['nested elements in block content closed by matching end tags', 5],
+  ['deep nesting in svg closed by matching end tags', 0],
+  ['unmatched end tags on a deep stack', 0],
+]);
 
 describe('[perf] linear time at 5 MiB', () => {
   for (const [name, make] of Object.entries(inputs)) {
@@ -71,6 +110,11 @@ describe('[perf] linear time at 5 MiB', () => {
       const ms = performance.now() - t0;
       t.diagnostic(`${Math.round(ms)} ms, ${result.valid ? 'valid' : result.error}`);
       assert.ok(ms < LIMIT_MS, `${Math.round(ms)} ms`);
+      const blocks = expectedBlocks.get(name);
+      if (blocks !== undefined) {
+        assert.equal(result.error, null);
+        assert.equal(result.blocks.length, blocks);
+      }
     });
   }
 });

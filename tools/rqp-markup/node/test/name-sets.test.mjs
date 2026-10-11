@@ -8,6 +8,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { ErrorCode } from '../src/markup.mjs';
+import { SPECIAL as SPECIAL_SET } from '../src/names.mjs';
 import { blocksOf, doc, errorOf } from './helpers.mjs';
 
 const { STRUCTURE } = ErrorCode;
@@ -30,6 +31,15 @@ const BLOCK_HTML = ['article', 'aside', 'div', 'footer', ...H, 'header', 'main',
   'title'];
 const TEXT = ['title', 'textarea', 'iframe', 'noembed', 'noframes', 'noscript', 'style', 'xmp', 'script',
   'plaintext'];
+const FORMATTING = ['a', 'b', 'big', 'code', 'em', 'font', 'i', 'nobr', 's', 'small', 'strike', 'strong', 'tt',
+  'u'];
+const SPECIAL = ['address', 'applet', 'area', 'article', 'aside', 'base', 'basefont', 'bgsound', 'blockquote',
+  'body', 'br', 'button', 'caption', 'center', 'col', 'colgroup', 'dd', 'details', 'dir', 'div', 'dl', 'dt',
+  'embed', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'frame', 'frameset', ...H, 'head', 'header',
+  'hgroup', 'hr', 'html', 'iframe', 'img', 'input', 'keygen', 'li', 'link', 'listing', 'main', 'marquee', 'menu',
+  'meta', 'nav', 'noembed', 'noframes', 'noscript', 'object', 'ol', 'p', 'param', 'plaintext', 'pre', 'script',
+  'search', 'section', 'select', 'source', 'style', 'summary', 'table', 'tbody', 'td', 'template', 'textarea',
+  'tfoot', 'th', 'thead', 'title', 'tr', 'track', 'ul', 'wbr', 'xmp'];
 
 describe('name sets of markup.md section 2.1', () => {
   describe('VOID', () => {
@@ -246,5 +256,59 @@ describe('name sets of markup.md section 2.1', () => {
         });
       }
     }
+  });
+
+  describe('FORMATTING (M-06 items 2 and 4)', () => {
+    for (const name of FORMATTING) {
+      it(`does not let </${name}> cross a special element, and lets it cross a span`, () => {
+        assert.equal(errorOf(doc(`<${name}><div>x</${name}>`)), STRUCTURE);
+        assert.equal(errorOf(doc(`<${name}><span>x</${name}>`)), null);
+      });
+
+      it(`does not let </${name}> pop a marked element`, () => {
+        assert.equal(errorOf(doc(`<${name}><span><div>x</span></${name}>`)), STRUCTURE);
+      });
+    }
+
+    for (const name of ['span', 'q', 'label', 'p', 'div', 'li', 'h1', 'sub', 'sup', 'var', 'ruby']) {
+      it(`lets </${name}> (not formatting) cross a special element and pop a marked one`, () => {
+        assert.equal(errorOf(doc(`<${name}><span><div>x</span></${name}>`)), null);
+        assert.equal(errorOf(doc(`<${name}><section>x</${name}>`)), null);
+      });
+    }
+  });
+
+  describe('SPECIAL (M-06 items 2 and 4)', () => {
+    // Elements that M-05 never pushes in HTML context (VOID), elements that no
+    // end tag may cross (GUARDED, except the table parts), raw text elements
+    // (no end tag in their content) and frameset (M-10) cannot be crossed, so
+    // no rule observes their membership today. The last test checks them.
+    const neverCrossed = new Set([...VOID, ...TEXT, 'applet', 'button', 'marquee', 'object', 'select',
+      'table', 'template', 'frameset']);
+    const tableParts = new Set(TABLE_PART);
+    for (const name of SPECIAL.filter((n) => !neverCrossed.has(n) && !tableParts.has(n))) {
+      it(`does not let a formatting end tag cross ${name}, and marks the element below it`, () => {
+        assert.equal(errorOf(`<b><${name}>x</b>`), STRUCTURE);
+        assert.equal(errorOf(`<b><span><${name}>x</span></b>`), STRUCTURE);
+      });
+    }
+
+    for (const name of TABLE_PART) {
+      it(`marks the element below a table when </table> crosses ${name}`, () => {
+        assert.equal(errorOf(doc(`<b><table><${name}>x</table></b>`)), STRUCTURE);
+        assert.equal(errorOf(doc(`<span><table><${name}>x</table></span>`)), null);
+      });
+    }
+
+    for (const name of ['span', 'q', 'label', 'abbr', 'sub', 'var', 'ruby', 'rt', 'mark', 'i', 'em']) {
+      it(`lets a formatting end tag cross ${name} (not special) without a mark`, () => {
+        assert.equal(errorOf(doc(`<b><${name}>x</b>`)), null);
+        assert.equal(errorOf(doc(`<b><span><${name}>x</span></b>`)), null);
+      });
+    }
+
+    it('has exactly the names of markup.md, also the names that no rule observes today', () => {
+      assert.deepEqual([...SPECIAL_SET].sort(), [...SPECIAL].sort());
+    });
   });
 });

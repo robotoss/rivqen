@@ -213,13 +213,135 @@ fn nested_input(
     (input, open.len())
 }
 
+/// Shapes at the top level (the token stack is empty before and after each
+/// one) with the largest D that they add while they run, and the units of D
+/// that they keep after they end (`markup.md` M-26 items 2 to 6).
+const D_SHAPES: &[(&str, usize, usize)] = &[
+    // Exact pops give everything back (item 4).
+    ("<b></b>", 1, 0),
+    ("<svg><g></g></svg>", 2, 0),
+    ("<noscript><b><i></i></b></noscript>", 1, 0),
+    ("<br><img src=\"x\">", 0, 0),
+    // Implied parts count once per F and come back with F (item 3).
+    ("<table><tr><td>x</td></tr></table>", 4, 0),
+    ("<table><td>a</td><td>b</td></table>", 4, 0),
+    ("<table><col><col></table>", 2, 0),
+    // A crossing keeps all units (item 5); so does a dirty element.
+    ("<span><div></span>", 2, 2),
+    ("<span><span><div></span></span>", 3, 3),
+    ("<div><span><b></span></div>", 3, 3),
+    ("<p><b>x</p>", 2, 2),
+    ("<li><ul></li>", 2, 2),
+    ("<svg><g></svg>", 2, 2),
+    ("<select><option>a<option>b</select>", 3, 3),
+    ("<table><tr><td>a</tr></table>", 4, 4),
+    // `body` and `html` never give their unit back.
+    ("<body></body>", 1, 1),
+    ("<html></html>", 1, 1),
+];
+
+/// The expected result of [`D_SHAPES`] in this order, then a block: valid
+/// when D never goes above 256.
+fn d_model(shapes: &[usize]) -> bool {
+    let mut d = 0;
+    for &index in shapes {
+        let (_, peak, kept) = D_SHAPES[index];
+        if d + peak > MAX_OPEN_ELEMENTS {
+            return false;
+        }
+        d += kept;
+    }
+    d < MAX_OPEN_ELEMENTS
+}
+
+/// A well-nested sequence of elements from [`HTML_NAMES`] with void
+/// elements between them: `ops` opens an element (`Some`) or closes the
+/// current one (`None`). Returns the content and the offsets of its end tags.
+fn balanced_content(ops: &[Option<usize>]) -> (String, Vec<(usize, usize)>) {
+    let mut out = String::new();
+    let mut open = Vec::new();
+    let mut ends = Vec::new();
+    let mut close = |out: &mut String, name: &str| {
+        let start = out.len();
+        out.push_str("</");
+        out.push_str(name);
+        out.push('>');
+        ends.push((start, out.len()));
+    };
+    for op in ops {
+        match op {
+            Some(name) => {
+                let name = HTML_NAMES[name % HTML_NAMES.len()];
+                out.push('<');
+                out.push_str(name);
+                out.push_str("><br>");
+                open.push(name);
+            }
+            None => {
+                if let Some(name) = open.pop() {
+                    close(&mut out, name);
+                }
+            }
+        }
+    }
+    while let Some(name) = open.pop() {
+        close(&mut out, name);
+    }
+    (out, ends)
+}
+
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(2000))]
 
-    /// M-26 depth (H-25): a well-nested document is valid when its deepest
-    /// point has at most 256 elements on the token stack, and is
-    /// `RQP_MARKUP_LIMIT` (M-26) otherwise. Tokens that M-05 does not push
-    /// never count.
+    /// M-26 (H-31): for shapes with known costs, the document is valid
+    /// exactly when D stays at most 256, else `RQP_MARKUP_LIMIT` (M-26).
+    #[test]
+    fn depth_counter_matches_the_model_of_known_shapes(
+        shapes in prop::collection::vec(0..D_SHAPES.len(), 120..280),
+    ) {
+        let input: String = shapes
+            .iter()
+            .map(|&i| D_SHAPES[i].0)
+            .chain(["<p data-rq-block=\"z\">x</p>"])
+            .collect();
+        let result = analyze(input.as_bytes()).map(|doc| doc.blocks.len());
+        if d_model(&shapes) {
+            prop_assert_eq!(result, Ok(1));
+        } else {
+            prop_assert_eq!(
+                result,
+                Err(MarkupError { code: ErrorCode::Limit, rule: "M-26" })
+            );
+        }
+    }
+
+    /// M-11 item 5 (H-27): balanced `noscript` content of any depth is
+    /// valid (C does not count in D); without one of its end tags it is
+    /// `RQP_MARKUP_STRUCTURE` (M-11).
+    #[test]
+    fn noscript_content_must_be_balanced(
+        ops in prop::collection::vec(prop::option::weighted(0.6, 0..HTML_NAMES.len()), 1..400),
+        drop in any::<prop::sample::Index>(),
+    ) {
+        let (content, ends) = balanced_content(&ops);
+        let page = |c: &str| format!("<noscript>{c}</noscript><p data-rq-block=\"z\">x</p>");
+        let valid = analyze(page(&content).as_bytes()).map(|doc| doc.blocks.len());
+        prop_assert_eq!(valid, Ok(1));
+        if !ends.is_empty() {
+            let (start, end) = ends[drop.index(ends.len())];
+            let broken = format!("{}{}", &content[..start], &content[end..]);
+            prop_assert_eq!(
+                analyze(page(&broken).as_bytes()).map(|doc| doc.blocks.len()),
+                Err(MarkupError { code: ErrorCode::Structure, rule: "M-11" })
+            );
+        }
+    }
+
+    /// M-26 depth counter D: in a well-nested document every end tag pops
+    /// exactly the current node, so D is the number of open elements. The
+    /// document is valid when its deepest point has at most 256 elements on
+    /// the token stack, and is `RQP_MARKUP_LIMIT` (M-26) otherwise. Tokens
+    /// that M-05 does not push never count.
     #[test]
     fn depth_limit_holds_for_nested_documents(
         nested in prop::collection::vec((any::<usize>(), prop::option::of(any::<usize>())), 240..270),
@@ -265,6 +387,23 @@ proptest! {
         prop_assert_eq!(&a.template_revision, &b.template_revision);
         prop_assert_eq!(a.page_revision == b.page_revision, content == other);
     }
+}
+
+#[test]
+fn depth_model_reaches_both_results() {
+    // Guard against a shape generator that never reaches the limit, or
+    // always does.
+    let mut runner = proptest::test_runner::TestRunner::deterministic();
+    let strategy = prop::collection::vec(0..D_SHAPES.len(), 120..280);
+    let (mut valid, mut limit) = (0, 0);
+    for _ in 0..500 {
+        if d_model(&strategy.new_tree(&mut runner).unwrap().current()) {
+            valid += 1;
+        } else {
+            limit += 1;
+        }
+    }
+    assert!(valid > 50 && limit > 50, "{valid} valid, {limit} limit");
 }
 
 #[test]

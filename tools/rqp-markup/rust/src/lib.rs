@@ -11,9 +11,9 @@
 //! Validity is decided on tokens only (DL-008). The crate has its own
 //! tokenizer for the WHATWG states that the rules need (DL-012).
 //!
-//! Resource limits: the input size is checked first (M-01); the token stack
-//! has at most [`MAX_OPEN_ELEMENTS`] elements (M-26); memory is linear in the
-//! input size; the work is linear in the input size.
+//! Resource limits: the input size is checked first (M-01); the depth counter D
+//! of M-26 is at most [`MAX_OPEN_ELEMENTS`], and it bounds the token stack;
+//! memory is linear in the input size; the work is linear in the input size.
 
 #![forbid(unsafe_code)]
 
@@ -34,8 +34,10 @@ pub const MAX_INPUT_BYTES: usize = 5_242_880;
 pub const MAX_BLOCKS: usize = 256;
 /// Maximum content size of one block in bytes (M-26): 1 MiB.
 pub const MAX_BLOCK_BYTES: usize = 1_048_576;
-/// Maximum number of elements on the token stack (M-05) at any point of the
-/// document (M-26, H-25). A push that makes the stack larger fails.
+/// Maximum value of the depth counter D (M-26, H-31) at any point of the
+/// document. A push or an implied table part that makes D larger fails.
+/// Every element on the token stack (M-05) holds at least one unit of D, so
+/// this is also the maximum number of open elements (`maxOpenElements`).
 pub const MAX_OPEN_ELEMENTS: usize = 256;
 
 const BOM: &[u8] = b"\xEF\xBB\xBF";
@@ -92,9 +94,27 @@ pub struct MarkupError {
     pub rule: &'static str,
 }
 
+/// The `rule` of a [`MarkupError`] for an internal defect of this candidate
+/// (for example an offset outside the input). It is never caused by a rule
+/// of `markup.md`.
+pub const INTERNAL_RULE: &str = "internal";
+
 impl MarkupError {
     pub(crate) const fn new(code: ErrorCode, rule: &'static str) -> Self {
         Self { code, rule }
+    }
+
+    /// An internal defect. The document fails closed: it is invalid with
+    /// `RQP_MARKUP_STRUCTURE`, and the command exits with an internal
+    /// defect code (`CONTRACT.md` section 5, note).
+    pub(crate) const fn internal() -> Self {
+        Self::new(ErrorCode::Structure, INTERNAL_RULE)
+    }
+
+    /// True for an internal defect of this candidate ([`INTERNAL_RULE`]).
+    #[must_use]
+    pub fn is_internal(&self) -> bool {
+        self.rule == INTERNAL_RULE
     }
 }
 
@@ -172,22 +192,30 @@ pub fn analyze(input: &[u8]) -> Result<Document, MarkupError> {
     // The tokenizer does not see a byte order mark; offsets keep it.
     let start = if input.starts_with(BOM) { BOM.len() } else { 0 };
     let found = rules::run(input, start)?;
+    document(input, &found)
+}
 
+/// The result of a valid document (M-27). A span outside the input, or
+/// blocks out of order, is an internal defect: the document fails closed and
+/// no hash of missing bytes is ever made.
+fn document(input: &[u8], found: &[rules::RawBlock]) -> Result<Document, MarkupError> {
     let mut blocks = Vec::with_capacity(found.len());
-    for raw in &found {
-        let id = input.get(raw.id.start..raw.id.end).unwrap_or_default();
+    for raw in found {
+        let id = input
+            .get(raw.id.start..raw.id.end)
+            .ok_or_else(MarkupError::internal)?;
         let content = input
             .get(raw.content.start..raw.content.end)
-            .unwrap_or_default();
+            .ok_or_else(MarkupError::internal)?;
         blocks.push(Block {
-            id: String::from_utf8_lossy(id).into_owned(),
+            id: String::from_utf8(id.to_vec()).map_err(|_| MarkupError::internal())?,
             format: raw.format,
             start: raw.content.start,
             end: raw.content.end,
             sha256: b64u_sha256(&[content]),
         });
     }
-    let template_revision = template_revision(input, &blocks);
+    let template_revision = template_revision(input, &blocks)?;
     let page_revision = page_revision(&template_revision, &blocks);
     Ok(Document {
         blocks,
@@ -206,17 +234,22 @@ fn b64u_sha256(parts: &[&[u8]]) -> String {
 }
 
 /// `"t1." || B64U(SHA-256("rqp-t1\n" || template))`; the template is the
-/// input without the content bytes of every block.
-fn template_revision(input: &[u8], blocks: &[Block]) -> String {
+/// input without the content bytes of every block. Blocks must be in order
+/// and inside the input; else this is an internal defect.
+fn template_revision(input: &[u8], blocks: &[Block]) -> Result<String, MarkupError> {
     let mut hasher = Sha256::new();
     hasher.update(b"rqp-t1\n");
     let mut kept_from = 0;
     for block in blocks {
-        hasher.update(input.get(kept_from..block.start).unwrap_or_default());
+        hasher.update(
+            input
+                .get(kept_from..block.start)
+                .ok_or_else(MarkupError::internal)?,
+        );
         kept_from = block.end;
     }
-    hasher.update(input.get(kept_from..).unwrap_or_default());
-    format!("t1.{}", URL_SAFE_NO_PAD.encode(hasher.finalize()))
+    hasher.update(input.get(kept_from..).ok_or_else(MarkupError::internal)?);
+    Ok(format!("t1.{}", URL_SAFE_NO_PAD.encode(hasher.finalize())))
 }
 
 /// `"r1." || B64U(SHA-256(P))` with the preimage `P` of `CONTRACT.md`
@@ -334,6 +367,44 @@ mod tests {
         let mut out = String::new();
         push_json_string(&mut out, "a\"b\\c\n\r\t\u{1}\u{1f}\u{20}\u{e9}");
         assert_eq!(out, "\"a\\\"b\\\\c\\n\\r\\t\\u0001\\u001f \u{e9}\"");
+    }
+
+    /// L-3: a block span outside the input, or blocks out of order, is an
+    /// internal defect. The result fails closed; it never hashes missing
+    /// bytes as empty content.
+    #[test]
+    fn spans_outside_the_input_fail_closed() {
+        use crate::rules::RawBlock;
+        use crate::tokenizer::Span;
+        let input = b"<p data-rq-block=\"a\">x</p>";
+        let raw = |id: (usize, usize), content: (usize, usize)| RawBlock {
+            id: Span {
+                start: id.0,
+                end: id.1,
+            },
+            format: Format::Html,
+            content: Span {
+                start: content.0,
+                end: content.1,
+            },
+        };
+        let good = raw((18, 19), (21, 22));
+        let doc = document(input, &[good]).unwrap();
+        assert_eq!(doc.blocks[0].id, "a");
+        assert_eq!(doc, analyze(input).unwrap());
+        for bad in [
+            vec![raw((18, 19), (21, 99))],
+            vec![raw((18, 99), (21, 22))],
+            vec![raw((18, 19), (23, 22))],
+            // Out of order: the template range of the second block is empty
+            // backwards.
+            vec![good, raw((18, 19), (2, 3))],
+        ] {
+            let error = document(input, &bad).unwrap_err();
+            assert!(error.is_internal(), "{bad:?}");
+            assert_eq!(error.code, ErrorCode::Structure);
+        }
+        assert!(!MarkupError::new(ErrorCode::Structure, "M-23").is_internal());
     }
 
     #[test]

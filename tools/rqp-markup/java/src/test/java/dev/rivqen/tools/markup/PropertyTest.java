@@ -5,6 +5,7 @@ package dev.rivqen.tools.markup;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -305,6 +306,199 @@ class PropertyTest {
     assertTrue(atLimit > 100, "at the limit " + atLimit);
   }
 
+  /**
+   * M-06 items 1 to 4 and M-26 (D with the dirty mark and implied parts, H-31) against {@link
+   * StackModel}, a plain implementation from the rule text. Each document is a random walk with
+   * crossings, exact pops, stray end tags and table parts in HTML context, block content (exact
+   * pops only) or a foreign region. Divs opened before put D near the limit in half of the walks.
+   * The walk stops at the first error of the model; the analyzer must report the same rule, or the
+   * document is valid.
+   */
+  @Test
+  void depthAndMarksMatchAModel() {
+    Random r = new Random(32L);
+    int[] byItem = new int[5]; // index 0: M-26, 1 to 4: M-06 item
+    int valid = 0;
+    int validNearLimit = 0;
+    for (int doc = 0; doc < 6_000; doc++) {
+      StackModel m = new StackModel();
+      StringBuilder s = new StringBuilder();
+      int prefix = r.nextBoolean() ? r.nextInt(32) : 192 + r.nextInt(64);
+      for (int j = 0; j < prefix && m.error() == null; j++) {
+        s.append("<div>");
+        m.start("div", false, true);
+      }
+      int context = r.nextInt(3);
+      int blocks = 0;
+      if (context == 0) {
+        htmlWalk(r, m, s);
+      } else if (context == 1) {
+        blocks = blockWalk(r, m, s);
+      } else {
+        foreignWalk(r, m, s);
+      }
+      byte[] in = Docs.utf8(s.toString());
+      Result res = Analyzer.analyze(in);
+      String expected = m.error();
+      if (expected == null) {
+        valid++;
+        validNearLimit += m.maxDepth() >= StackModel.LIMIT - 8 ? 1 : 0;
+        assertEquals(null, res.error(), () -> res.rule() + " for " + s);
+        assertEquals(blocks, res.blocks().size());
+      } else {
+        byItem[m.item()]++;
+        ErrorCode code = expected.equals("M-26") ? ErrorCode.LIMIT : ErrorCode.STRUCTURE;
+        assertEquals(code, res.error(), () -> "item " + m.item() + " for " + s);
+        assertEquals(expected, res.rule());
+      }
+      checkInvariants(in, res);
+    }
+    // Each outcome must occur often, else the property says little.
+    assertTrue(valid > 1_000, "valid " + valid);
+    assertTrue(validNearLimit > 200, "valid near the limit " + validNearLimit);
+    for (int item = 0; item < byItem.length; item++) {
+      assertTrue(byItem[item] > 100, "item " + item + ": " + byItem[item]);
+    }
+  }
+
+  private static final List<String> HTML_NAMES =
+      List.of(
+          "b", "i", "em", "a", "span", "q", "div", "p", "ul", "li", "body", "html", "table",
+          "tbody", "tr", "td", "col", "br");
+
+  private static final List<String> STRAY_NAMES =
+      List.of("x", "td", "tbody", "tr", "table", "i", "b");
+
+  /** An end tag for the element {@code offset} below the current node (0: an exact pop). */
+  private static int endOffset(Random r) {
+    int k = r.nextInt(10);
+    return k < 6 ? 0 : 1 + r.nextInt(k < 9 ? 2 : 6);
+  }
+
+  /** HTML context: crossings, table parts (only where M-09 allows them), html and body. */
+  private static void htmlWalk(Random r, StackModel m, StringBuilder s) {
+    int steps = 50 + r.nextInt(250);
+    for (int j = 0; j < steps && m.error() == null; j++) {
+      int k = r.nextInt(100);
+      if (k < 45) {
+        String name = HTML_NAMES.get(r.nextInt(HTML_NAMES.size()));
+        String f = m.tableFamily();
+        boolean allowed =
+            switch (name) {
+              case "tbody" -> f == null || f.equals("table");
+              case "tr" -> f == null || f.equals("table") || f.equals("tbody");
+              case "td" -> f == null || !f.equals("td");
+              case "col" -> f == null || f.equals("table");
+              default -> true;
+            };
+        if (allowed) {
+          s.append('<').append(name).append('>');
+          m.start(name, false, !name.equals("col") && !name.equals("br"));
+        } else {
+          s.append('x');
+        }
+      } else if (k < 90 && m.size() > 0) {
+        int index = Math.max(0, m.size() - 1 - endOffset(r));
+        String name = m.name(index);
+        s.append("</").append(name).append('>');
+        m.end(name);
+      } else if (k < 95) {
+        String name = STRAY_NAMES.get(r.nextInt(STRAY_NAMES.size()));
+        s.append("</").append(name).append('>');
+        m.end(name);
+      } else {
+        s.append(r.nextBoolean() ? "x" : "<!--c-->");
+      }
+    }
+  }
+
+  /**
+   * Block content: elements that leave units before the block, then exact pushes and pops in the
+   * content (M-23), then the block end tag and the end tags of the elements around the block.
+   *
+   * @return the number of blocks of a valid document
+   */
+  private static int blockWalk(Random r, StackModel m, StringBuilder s) {
+    int crossings = r.nextInt(4);
+    for (int j = 0; j < crossings && m.error() == null; j++) {
+      s.append("<span><div></span>");
+      m.start("span", false, true);
+      m.start("div", false, true);
+      m.end("span");
+    }
+    s.append("<div data-rq-block=a>");
+    m.start("div", false, true);
+    int block = m.size() - 1;
+    List<String> names = List.of("b", "i", "span", "q", "div", "p");
+    int steps = 20 + r.nextInt(300);
+    for (int j = 0; j < steps && m.error() == null; j++) {
+      int k = r.nextInt(100);
+      if (k < 45) {
+        String name = names.get(r.nextInt(names.size()));
+        s.append('<').append(name).append('>');
+        m.start(name, false, true);
+      } else if (k < 90 && m.size() - 1 > block) {
+        String name = m.name(m.size() - 1);
+        s.append("</").append(name).append('>');
+        m.end(name);
+      } else {
+        s.append(r.nextBoolean() ? "<br>" : "x");
+        m.start("br", false, false);
+      }
+    }
+    while (m.error() == null && m.size() > 0) {
+      String name = m.name(m.size() - 1);
+      s.append("</").append(name).append('>');
+      m.end(name);
+    }
+    return 1;
+  }
+
+  /**
+   * A foreign region: crossings of foreign elements (also by the formatting end tag {@code </a>}),
+   * self-closing elements, sometimes a region end that crosses. A {@code b} below the region shows
+   * the mark that passes down to it.
+   */
+  private static void foreignWalk(Random r, StackModel m, StringBuilder s) {
+    boolean b = r.nextBoolean();
+    if (b) {
+      s.append("<b>");
+      m.start("b", false, true);
+    }
+    s.append("<svg>");
+    m.start("svg", false, true);
+    List<String> names = List.of("g", "a", "path", "tspan");
+    int steps = 20 + r.nextInt(200);
+    for (int j = 0; j < steps && m.error() == null && m.regionRoot() >= 0; j++) {
+      int root = m.regionRoot();
+      int k = r.nextInt(100);
+      if (k < 40) {
+        String name = names.get(r.nextInt(names.size()));
+        boolean selfClosing = r.nextInt(6) == 0;
+        s.append('<').append(name).append(selfClosing ? "/>" : ">");
+        m.start(name, true, !selfClosing);
+      } else if (k < 85 && m.size() - 1 > root) {
+        int index = Math.max(root + 1, m.size() - 1 - endOffset(r));
+        String name = m.name(index);
+        s.append("</").append(name).append('>');
+        m.end(name);
+      } else if (k < 88) {
+        s.append("</svg>");
+        m.end("svg");
+      } else {
+        s.append('x');
+      }
+    }
+    // Sometimes the input ends in the region (E2); else close everything from the top.
+    if (r.nextInt(4) > 0) {
+      while (m.error() == null && m.size() > 0) {
+        String name = m.name(m.size() - 1);
+        s.append("</").append(name).append('>');
+        m.end(name);
+      }
+    }
+  }
+
   @Test
   void resultIsDeterministic() {
     Random r = new Random(5L);
@@ -327,6 +521,7 @@ class PropertyTest {
   /** Invariants of every result (CONTRACT.md §3, §4). */
   static void checkInvariants(byte[] in, Result r) {
     assertNotNull(r);
+    assertFalse(r.internalError(), r::rule);
     if (!r.valid()) {
       assertNotNull(r.rule());
       assertTrue(r.blocks().isEmpty());

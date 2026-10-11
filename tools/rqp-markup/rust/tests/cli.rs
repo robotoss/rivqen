@@ -136,6 +136,37 @@ fn io_errors_exit_2() {
     assert_eq!(output.status.code(), Some(2));
 }
 
+/// L-2: an argument that is not UTF-8 is a path like any other. A missing
+/// path is an I/O error (exit code 2), never a panic.
+#[cfg(unix)]
+#[test]
+fn non_utf8_arguments_are_paths() {
+    use std::ffi::OsStr;
+    use std::os::unix::ffi::OsStrExt as _;
+    let dir = temp_dir();
+    let missing = dir.join(OsStr::from_bytes(b"in-\xFF.html"));
+    for args in [
+        vec![missing.as_os_str()],
+        vec![OsStr::new("--batch"), missing.as_os_str()],
+    ] {
+        let output = bin().args(&args).output().unwrap();
+        assert_eq!(output.status.code(), Some(2), "{args:?}");
+        assert!(output.stdout.is_empty());
+        assert!(String::from_utf8_lossy(&output.stderr).contains("cannot"));
+    }
+    // A flag that is not UTF-8 is a usage error.
+    let output = bin().arg(OsStr::from_bytes(b"--\xFF")).output().unwrap();
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("usage:"));
+    // An existing file with such a name is read.
+    let file = dir.join(OsStr::from_bytes(b"ok-\xFF.html"));
+    if fs::write(&file, b"<p data-rq-block=\"a\">x</p>").is_ok() {
+        let output = bin().arg(&file).output().unwrap();
+        assert_eq!(output.status.code(), Some(0));
+        assert_eq!(lines(&output)[0]["blocks"][0]["id"], "a");
+    }
+}
+
 #[test]
 fn batch_mode_sorts_by_name_and_skips_directories_without_input() {
     let dir = temp_dir();

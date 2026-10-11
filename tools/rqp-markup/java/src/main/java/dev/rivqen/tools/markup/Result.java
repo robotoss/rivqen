@@ -10,8 +10,9 @@ import org.jspecify.annotations.Nullable;
  * The result of one document ({@code CONTRACT.md} §3).
  *
  * @param error null for a valid document
- * @param rule the rule that failed (for example {@code "M-06"}), null for a valid document; not
- *     printed, used by tests and diagnostics
+ * @param rule the rule that failed (for example {@code "M-06"}), null for a valid document; for an
+ *     internal error, {@code "internal-error:"} and the exception class name; not printed, used by
+ *     tests and diagnostics
  * @param blocks the blocks in document order; empty for an invalid document
  * @param templateRevision {@code t1.…}, null for an invalid document
  * @param pageRevision {@code r1.…}, null for an invalid document
@@ -37,5 +38,13 @@ public record Result(
   /** True when the document is valid for RQP. */
   public boolean valid() {
     return error == null;
+  }
+
+  /**
+   * True when the result comes from an internal error (a defect) at the boundary of {@link
+   * Analyzer#analyze}. The result is invalid (fail closed); the command exits with code 3.
+   */
+  public boolean internalError() {
+    return rule != null && rule.startsWith(Analyzer.INTERNAL_ERROR);
   }
 }

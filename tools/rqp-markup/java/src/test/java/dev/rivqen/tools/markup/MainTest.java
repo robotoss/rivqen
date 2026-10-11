@@ -155,6 +155,71 @@ class MainTest {
     assertFalse(err().contains(SECRET));
   }
 
+  // Internal errors (security review F-4): fail closed, exit code 3, no document content.
+
+  /** An analysis with a defect: it throws for documents that contain "defect". */
+  private static Result defective(byte[] input) {
+    return Analyzer.failClosed(
+        () -> {
+          if (new String(input, StandardCharsets.UTF_8).contains("defect")) {
+            throw new IllegalStateException("defect at " + SECRET);
+          }
+          return Analyzer.analyze(input);
+        });
+  }
+
+  @Test
+  void unexpectedExceptionInTheAnalysisGivesAnInvalidResult() {
+    Result r =
+        Analyzer.failClosed(
+            () -> {
+              throw new ArrayIndexOutOfBoundsException(SECRET);
+            });
+    assertEquals(ErrorCode.STRUCTURE, r.error());
+    assertEquals("internal-error:java.lang.ArrayIndexOutOfBoundsException", r.rule());
+    assertTrue(r.internalError());
+    assertTrue(r.blocks().isEmpty());
+    assertEquals(null, r.templateRevision());
+    assertEquals(null, r.pageRevision());
+  }
+
+  @Test
+  void resultsWithoutDefectPassTheBoundary() {
+    Result valid = Analyzer.analyze(Docs.utf8("<p data-rq-block=a>x</p>"));
+    assertEquals(valid, Analyzer.failClosed(() -> valid));
+    assertFalse(valid.internalError());
+    assertFalse(Analyzer.analyze(Docs.utf8("<p data-rq-block=a>")).internalError());
+  }
+
+  @Test
+  void defectInSingleModePrintsAFailClosedResultAndExitsWithThree() throws IOException {
+    Path f = write("a.html", "<p data-rq-block=a>defect " + SECRET + "</p>");
+    assertEquals(3, Main.run(new String[] {f.toString()}, out, err, MainTest::defective));
+    assertEquals(
+        "{\"valid\":false,\"error\":\"RQP_MARKUP_STRUCTURE\",\"blocks\":[],"
+            + "\"template_revision\":null,\"page_revision\":null}\n",
+        written.toString());
+    assertTrue(err().startsWith("rqp-markup: internal error"), err());
+    assertFalse(err().contains(SECRET));
+    assertFalse(err().contains("defect at"));
+  }
+
+  @Test
+  void defectInBatchModeKeepsTheOtherResults() throws IOException {
+    write("fx/a/input.html", "<p data-rq-block=a>x</p>");
+    write("fx/b/input.html", "defect " + SECRET);
+    write("fx/c/input.html", "<p data-rq-block=c>y</p>");
+    String[] args = {"--batch", tmp.resolve("fx").toString()};
+    assertEquals(3, Main.run(args, out, err, MainTest::defective));
+    List<String> lines = written.toString().lines().toList();
+    assertEquals(3, lines.size());
+    assertEquals(true, MiniJson.object(lines.get(0)).get("valid"));
+    assertEquals("RQP_MARKUP_STRUCTURE", MiniJson.object(lines.get(1)).get("error"));
+    assertEquals(true, MiniJson.object(lines.get(2)).get("valid"));
+    assertEquals("rqp-markup: internal error in 1 document(s)\n", err());
+    assertFalse(written.toString().contains(SECRET));
+  }
+
   @Test
   void loneSurrogatesAtTheEndsAreEscaped() {
     StringBuilder s = new StringBuilder();

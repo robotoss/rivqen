@@ -38,6 +38,10 @@ final class Harness
         '<script type="rivqen-manifest">', "\xC3\xA9", "\xF0\x9F\x98\x80", "\0", "\xEF\xBB\xBF", '</ x>', '</>',
         '<P DATA-RQ-BLOCK=f>', '<p data-rq-block=g data-rq-block=h>', '<iframe>', '</iframe>',
         '<dd>', '</dd>', '<ol>', '</ol>', '<tbody>', '<div>', '<![CDATA[a]]>', '<style><![CDATA[',
+        // Rules of the security review: M-06 items 2 to 4, M-11 item 5, M-13 item 3, M-26 (D).
+        '</tbody>', '<thead>', '</thead>', '<th>', '</th>', '</nobr>', '<i>', '</i>', '<em>', '</em>',
+        '<body>', '</body>', '<html>', '</html>', '<form>', '</form>', '<rect>', '<text>', '</text>',
+        "<script type=\"\u{0131}\">", "<script type=\"a\x7F\">", '<span><div></span>', '<a><span><div></span>',
     ];
 
     private function __construct() {}
@@ -213,7 +217,7 @@ final class Harness
      */
     private static function outside(Randomizer $random, array &$blocks, int $depth): string
     {
-        $choice = $random->getInt(0, $depth > 3 ? 4 : 18);
+        $choice = $random->getInt(0, $depth > 3 ? 4 : 23);
         return match ($choice) {
             0 => self::text($random),
             1 => '<!-- ' . self::text($random) . ' -->',
@@ -231,6 +235,11 @@ final class Harness
             13 => '<template><p>t</p></template>',
             14 => '<svg><desc>a < b</desc><style><![CDATA[.a{fill:red}]]></style><title><![CDATA[t]]></title></svg>',
             15 => '<noscript><script type="text/javascript">1</script><style><script type="rivqen-manifest"></style></noscript>',
+            // Valid neighbors of the rules of the security review.
+            16 => '<a href="#"><b><span><i>x</span></b></a><p><b>y</p>', // M-06 items 2 and 4: phrasing crossings
+            17 => '<table><td>a</td><td>b</td></table><table><col><col><tr><td>c</td></tr></table>', // M-26: implied parts
+            18 => '<noscript><div><a href="#"><img src="x"></a><p>t<br></p></div></noscript>', // M-11 item 5
+            19 => '<span><div>' . self::outside($random, $blocks, $depth + 1) . '</span>', // a crossing that keeps 2 units of D
             default => self::block($random, $blocks),
         };
     }

@@ -10,7 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-/** The fixed capacity of the token stack (M-26, H-25). Rules are tested through the analyzer. */
+/**
+ * The fixed capacity of the token stack (M-26: size <= D <= 256). Rules are tested through the
+ * analyzer.
+ */
 class TokenStackTest {
 
   @Test

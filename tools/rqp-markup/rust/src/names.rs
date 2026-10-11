@@ -40,6 +40,10 @@ pub(crate) mod flag {
     pub(crate) const TEXT: u32 = 1 << 10;
     /// `template` (stops the table-family search of M-09)
     pub(crate) const TEMPLATE: u32 = 1 << 11;
+    /// `SPECIAL` (M-06 items 2 and 4; HTML elements only)
+    pub(crate) const SPECIAL: u32 = 1 << 12;
+    /// `FORMATTING` (M-06 items 2 and 4)
+    pub(crate) const FORMATTING: u32 = 1 << 13;
 
     /// `TABLE_FAMILY` = `table` and `TABLE_PART`.
     pub(crate) const TABLE_FAMILY: u32 = TABLE | TABLE_PART;
@@ -65,6 +69,7 @@ macro_rules! known_names {
 
 known_names! {
     A = b"a",
+    Body = b"body",
     Button = b"button",
     Caption = b"caption",
     Col = b"col",
@@ -80,6 +85,7 @@ known_names! {
     H5 = b"h5",
     H6 = b"h6",
     Hr = b"hr",
+    Html = b"html",
     Li = b"li",
     Math = b"math",
     Menu = b"menu",
@@ -113,34 +119,34 @@ known_names! {
 
 const HEADINGS: &[&[u8]] = &[b"h1", b"h2", b"h3", b"h4", b"h5", b"h6"];
 
+/// `VOID` of `markup.md` section 2.1. Also used by the M-11 check of
+/// `noscript` content, which keeps no name table.
+pub(crate) const VOID_NAMES: &[&[u8]] = &[
+    b"area",
+    b"base",
+    b"basefont",
+    b"bgsound",
+    b"br",
+    b"col",
+    b"embed",
+    b"frame",
+    b"hr",
+    b"image",
+    b"img",
+    b"input",
+    b"keygen",
+    b"link",
+    b"meta",
+    b"param",
+    b"source",
+    b"track",
+    b"wbr",
+];
+
 /// The name sets of `markup.md` section 2.1, without the `h1`–`h6` ranges
 /// (added from [`HEADINGS`]).
 const SETS: &[(u32, &[&[u8]], bool)] = &[
-    (
-        flag::VOID,
-        &[
-            b"area",
-            b"base",
-            b"basefont",
-            b"bgsound",
-            b"br",
-            b"col",
-            b"embed",
-            b"frame",
-            b"hr",
-            b"image",
-            b"img",
-            b"input",
-            b"keygen",
-            b"link",
-            b"meta",
-            b"param",
-            b"source",
-            b"track",
-            b"wbr",
-        ],
-        false,
-    ),
+    (flag::VOID, VOID_NAMES, false),
     (
         flag::TEXT,
         &[
@@ -342,6 +348,97 @@ const SETS: &[(u32, &[&[u8]], bool)] = &[
         false,
     ),
     (flag::HEADING, &[], true),
+    (
+        flag::FORMATTING,
+        &[
+            b"a", b"b", b"big", b"code", b"em", b"font", b"i", b"nobr", b"s", b"small", b"strike",
+            b"strong", b"tt", b"u",
+        ],
+        false,
+    ),
+    (
+        flag::SPECIAL,
+        &[
+            b"address",
+            b"applet",
+            b"area",
+            b"article",
+            b"aside",
+            b"base",
+            b"basefont",
+            b"bgsound",
+            b"blockquote",
+            b"body",
+            b"br",
+            b"button",
+            b"caption",
+            b"center",
+            b"col",
+            b"colgroup",
+            b"dd",
+            b"details",
+            b"dir",
+            b"div",
+            b"dl",
+            b"dt",
+            b"embed",
+            b"fieldset",
+            b"figcaption",
+            b"figure",
+            b"footer",
+            b"form",
+            b"frame",
+            b"frameset",
+            b"head",
+            b"header",
+            b"hgroup",
+            b"hr",
+            b"html",
+            b"iframe",
+            b"img",
+            b"input",
+            b"keygen",
+            b"li",
+            b"link",
+            b"listing",
+            b"main",
+            b"marquee",
+            b"menu",
+            b"meta",
+            b"nav",
+            b"noembed",
+            b"noframes",
+            b"noscript",
+            b"object",
+            b"ol",
+            b"p",
+            b"param",
+            b"plaintext",
+            b"pre",
+            b"script",
+            b"search",
+            b"section",
+            b"select",
+            b"source",
+            b"style",
+            b"summary",
+            b"table",
+            b"tbody",
+            b"td",
+            b"template",
+            b"textarea",
+            b"tfoot",
+            b"th",
+            b"thead",
+            b"title",
+            b"tr",
+            b"track",
+            b"ul",
+            b"wbr",
+            b"xmp",
+        ],
+        true,
+    ),
 ];
 
 #[derive(Clone, Copy, Debug)]

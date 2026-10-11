@@ -125,10 +125,38 @@ describe('cli', () => {
     assert.match(r.stderr, /cannot read directory/);
   });
 
-  it('exits 2 when an input.html cannot be read', () => {
+  it('exits 2 when an input.html is not a regular file', () => {
     const r = capture(['--batch', path.join(dir, 'broken')]);
     assert.equal(r.code, EXIT_USAGE);
-    assert.match(r.stderr, /cannot read .*input\.html \(EISDIR\)/);
+    assert.match(r.stderr, /cannot read .*input\.html \(not a regular file\)/);
+  });
+
+  it('reads a regular file through a symbolic link', () => {
+    const link = path.join(dir, 'link.html');
+    symlinkSync(path.join(dir, 'valid.html'), link);
+    assert.equal(readBounded(link).toString('utf8'), VALID);
+  });
+
+  it('exits 2 at once for a FIFO, also when no process writes to it', { skip: process.platform === 'win32' }, () => {
+    const fifo = path.join(dir, 'fifo.html');
+    execFileSync('mkfifo', [fifo]);
+    // A spawned process: if the open waited for a writer, the timeout would end it.
+    const run = (args) => spawnSync(process.execPath, [CLI, ...args], { encoding: 'utf8', timeout: 20_000 });
+    const single = run([fifo]);
+    assert.equal(single.signal, null, 'the command did not wait for a writer');
+    assert.equal(single.status, EXIT_USAGE);
+    assert.match(single.stderr, /cannot read .*fifo\.html \(not a regular file\)/);
+    const batchDir = path.join(dir, 'fifo-batch', 'x');
+    mkdirSync(batchDir, { recursive: true });
+    execFileSync('mkfifo', [path.join(batchDir, 'input.html')]);
+    const batch = run(['--batch', path.join(dir, 'fifo-batch')]);
+    assert.equal(batch.signal, null);
+    assert.equal(batch.status, EXIT_USAGE);
+    assert.match(batch.stderr, /input\.html \(not a regular file\)/);
+  });
+
+  it('exits 2 for a device', { skip: process.platform === 'win32' }, () => {
+    assert.throws(() => readBounded('/dev/null'), /not a regular file/);
   });
 
   it('fails closed, reports the defect without content and exits 70 when the analyzer throws', () => {

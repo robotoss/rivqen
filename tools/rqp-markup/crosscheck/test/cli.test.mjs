@@ -167,9 +167,9 @@ test("cases: one row per case with both parse5 views and each candidate", async 
   const r = await run(["cases", "--cases", file, "--candidates", candidatesFile("cs", ["p5", "valid0"])]);
   assert.equal(r.code, 0);
   const rows = r.out.split("\n");
-  assert.equal(rows[0], "case | parse5 (scripting on) | parse5 (scripting off) | fake-p5 | fake-valid0");
-  assert.equal(rows[1], "c1 | 1 block(s) | 1 block(s) | valid 1 | valid 0 DISAGREE(enabled,disabled)");
-  assert.equal(rows[2], "c2 | 0 block(s) | 0 block(s) 1 manifest | valid 0 DISAGREE(disabled) | valid 0 DISAGREE(disabled)");
+  assert.equal(rows[0], "case | parse5 (scripting on) | parse5 (scripting off) | depth | fake-p5 | fake-valid0");
+  assert.equal(rows[1], "c1 | 1 block(s) | 1 block(s) | max D 1, stack 3, depth 3 | valid 1 | valid 0 DISAGREE(enabled,disabled)");
+  assert.equal(rows[2], "c2 | 0 block(s) | 0 block(s) 1 manifest | max D 1, stack 3, depth 3 | valid 0 DISAGREE(disabled) | valid 0 DISAGREE(disabled)");
 });
 
 test("sweep: an agreeing candidate gives no finding and the same summary on every run", async () => {

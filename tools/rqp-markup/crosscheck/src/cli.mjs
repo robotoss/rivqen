@@ -367,9 +367,9 @@ async function cmdCases(o, write) {
     failed += run.failed;
     const evaluated = evaluateDocs(docs, run.out, ["enabled", "disabled"]);
     const cands = [...run.out.keys()];
-    write(["case", "parse5 (scripting on)", "parse5 (scripting off)", ...cands].join(" | "));
+    write(["case", "parse5 (scripting on)", "parse5 (scripting off)", "depth", ...cands].join(" | "));
     for (const e of evaluated) {
-      const row = [e.name, viewCell(e.p5.get("enabled")), viewCell(e.p5.get("disabled"))];
+      const row = [e.name, viewCell(e.p5.get("enabled")), viewCell(e.p5.get("disabled")), depthCell(e.depth)];
       for (const c of cands) row.push(e.cells.get(c) ?? "-");
       write(row.join(" | "));
     }

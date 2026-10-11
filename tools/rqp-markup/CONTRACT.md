@@ -80,7 +80,7 @@ A UTF-8 byte order mark at the start of the input is part of the input bytes and
 | Code | Meaning (details in `markup.md`) |
 |---|---|
 | `RQP_MARKUP_ENCODING` | Input is not valid UTF-8 |
-| `RQP_MARKUP_LIMIT` | A limit is exceeded: input > 5 MiB, > 256 blocks, a block > 1 MiB, or > 256 elements on the token stack (M-26) |
+| `RQP_MARKUP_LIMIT` | A limit is exceeded: input > 5 MiB, > 256 blocks, a block > 1 MiB, or the depth counter D > 256 (M-26) |
 | `RQP_MARKUP_INVALID_ID` | `data-rq-block` value does not match `^[a-z0-9][a-z0-9_-]{0,63}$` |
 | `RQP_MARKUP_FORBIDDEN_ELEMENT` | `data-rq-block` on an element that cannot be a block |
 | `RQP_MARKUP_DUPLICATE` | Two blocks with the same id |

@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
-The Node.js candidate of WP-17 S1 (tasks T-04 and T-08). It implements the RQP markup rules rqp/1 (`docs/engineering/protocol/markup.md` section 2, rules M-01 to M-27, with M-24 items j and k of decision H-18) and the interface of `../CONTRACT.md`. It reads the edge cases E1 to E8 as the human decided them (H-21, H-22; see [Edge cases E1 to E8](#edge-cases-e1-to-e8)). It is a conformance tool, not the server SDK.
+The Node.js candidate of WP-17 S1 (tasks T-04, T-08 and T-09). It implements the RQP markup rules rqp/1 (`docs/engineering/protocol/markup.md` section 2, rules M-01 to M-27, with M-24 items j and k of decision H-18) and the interface of `../CONTRACT.md`. It reads the edge cases E1 to E8 as the human decided them (H-21, H-22; see [Edge cases E1 to E8](#edge-cases-e1-to-e8)). It is a conformance tool, not the server SDK.
 
 ## Requirements
 
@@ -54,7 +54,7 @@ The library function is `analyze(bytes)` in `src/markup.mjs`. It takes a `Uint8A
 | `test/tree-agreement.test.mjs` | For each valid random document: the same blocks and offsets as the parse5 8.0.1 tree builder (scripting enabled) |
 | `test/property.test.mjs` | No exception on random markup and random bytes; result invariants (content bytes equal input bytes `[start, end)`, template, revisions) |
 | `test/cli.test.mjs` | Single and batch mode, byte order, exit codes, no content on stderr, bounded read |
-| `test/perf.test.mjs` | `[perf]` 20 adversarial inputs of about 5 MiB finish in less than 10 s each (measured: less than 1 s). Six of them close deep stacks (top level, block content, svg) or send unmatched end tags to a deep stack; a pop or an end-tag search with a cost proportional to the stack depth fails them |
+| `test/perf.test.mjs` | `[perf]` 27 adversarial inputs of about 5 MiB finish in less than 10 s each (measured: less than 1 s). Eight go beyond the depth limit and must give `RQP_MARKUP_LIMIT`. Seven fill the stack to 256 elements again and again (top level, block content, svg, unmatched end tags) and must be valid with the expected block count |
 
 The random tests use fixed seeds. For a deeper run, set more iterations or another seed:
 
@@ -118,7 +118,9 @@ M-24 j is checked after M-24 c. When c holds, a list opened in the content is op
 
 1. M-01 is checked first, on the byte length. The CLI reads at most 5 MiB + 1 bytes of a file, so memory stays bounded for any file.
 2. M-02 uses `isUtf8()` of `node:buffer` (strict: no overlong forms, no surrogates, no code point above U+10FFFF, no truncated sequence).
-3. Memory is linear in the input size: the token stack has at most one entry per start tag. The largest measured time at 5 MiB is less than 1 s (`test/perf.test.mjs`).
+3. M-26 depth (H-25): the token stack has at most 256 elements (`LIMITS.maxOpenElements`). `push()` checks the limit before it changes any state; a push of element 257 gives `RQP_MARKUP_LIMIT`. The limit applies in HTML context and in a foreign region, inside and outside blocks. Elements that M-05 does not push (void elements, self-closing `svg` and `math` in HTML context, self-closing elements in a foreign region) do not count.
+4. The limit applies to the token stack of the main pass only. The M-11 check of the `noscript` content has no token stack: it only tokenizes.
+5. Memory is linear in the input size; the token stack and its indexes are bounded by the depth limit. The largest measured time at 5 MiB is less than 1 s (`test/perf.test.mjs`).
 
 ### Edge cases E1 to E8
 
@@ -153,7 +155,7 @@ All are development dependencies, pinned to exact versions, installed with `--ig
 | `entities` (via parse5) | 8.1.0 | BSD-2-Clause | parse5 dependency |
 | `@stryker-mutator/core` | 10.0.0 | Apache-2.0 | Mutation check; resolves `chalk` 5.6.2 |
 
-`npm audit` reports a moderate advisory for `qs` 6.15.1. `typed-rest-client` 2.3.1 (a Stryker dependency for the dashboard reporter) pins this exact version. This package does not use the dashboard reporter, and the tool does not process untrusted input with `qs`.
+`typed-rest-client` 2.3.1 (a Stryker dependency for the dashboard reporter) pins `qs` 6.15.1, which has moderate advisories. `package.json` overrides it to `qs` 6.16.0 (BSD-3-Clause; decision H-23, DL-017). `npm audit` reports no advisory. Remove the override when Stryker depends on a fixed `qs`.
 
 ## Security
 

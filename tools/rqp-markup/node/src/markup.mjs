@@ -7,7 +7,8 @@
 // One pass over the tokens of src/tokenizer.mjs with the token stack of M-05.
 // Validity is decided on tokens only (DL-008). The first rule violation ends the
 // pass. Time is linear in the input length: every stack entry is pushed and
-// popped once, and each check is a constant number of map lookups.
+// popped once, and each check is a constant number of map lookups. The token
+// stack has at most LIMITS.maxOpenElements entries (M-26).
 
 import { createHash } from 'node:crypto';
 import { isUtf8 } from 'node:buffer';
@@ -41,6 +42,7 @@ export const LIMITS = Object.freeze({
   maxDocumentBytes: 5 * 1024 * 1024,
   maxBlocks: 256,
   maxBlockBytes: 1024 * 1024,
+  maxOpenElements: 256, // token stack depth (H-25)
 });
 
 /** Error codes of CONTRACT.md section 5. */
@@ -205,8 +207,12 @@ class Scanner {
     return n === 0 ? null : this.family[n - 1];
   }
 
+  // M-26: a push that makes the stack larger than maxOpenElements is an error.
+  // The check comes first, so a rejected push changes no state. Elements that
+  // M-05 does not push never come here, so they do not count.
   push(name, inHtml) {
     const i = this.names.length;
+    if (i >= LIMITS.maxOpenElements) return ErrorCode.LIMIT;
     this.names.push(name);
     this.inHtml.push(inHtml);
     const below = this.currentFamily();
@@ -223,6 +229,7 @@ class Scanner {
     if (inHtml) increment(this.htmlOpen, name);
     if (this.block !== null) increment(this.contentOpen, name);
     if (inHtml && (name === 'svg' || name === 'math')) this.region = i;
+    return null;
   }
 
   pop() {
@@ -286,7 +293,8 @@ class Scanner {
     const text = TEXT.has(name);
     if (text && (t.selfClosing || name === 'plaintext')) return STRUCTURE;
     if (!t.selfClosing) {
-      this.push(name, false);
+      const error = this.push(name, false);
+      if (error !== null) return error;
       if (text || INTEGRATION.has(name)) this.charsOnly = name;
     }
     return null;
@@ -305,7 +313,10 @@ class Scanner {
       if (f !== null && !parents.has(f)) return STRUCTURE; // M-09
     }
     const foreignRoot = name === 'svg' || name === 'math';
-    if (!(foreignRoot && t.selfClosing) && !VOID.has(name)) this.push(name, true);
+    if (!(foreignRoot && t.selfClosing) && !VOID.has(name)) {
+      const error = this.push(name, true);
+      if (error !== null) return error;
+    }
     const mode = TEXT_MODE.get(name);
     if (mode !== undefined) {
       this.tok.switchTo(mode, name); // M-04, also with the self-closing flag

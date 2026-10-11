@@ -10,21 +10,28 @@ namespace Rivqen\Tools\RqpMarkup;
 /**
  * RQP markup validity and block extraction (markup.md section 2, rqp/1).
  *
- * One pass over the tokens of Tokenizer with the token stack of M-05.
- * Work per token is O(1), except end tags, whose cost is paid by the
- * elements they pop (each element is pushed once and popped once). The
- * `noscript` check (M-11) tokenizes each `noscript` content once more.
- * Total time is linear in the input size. The stack has at most
- * MAX_OPEN_ELEMENTS elements (M-26), so the stack memory is bounded.
+ * One pass over the tokens of Tokenizer with the token stack of M-05 and
+ * the depth counter D of M-26. Work per token is O(1), except end tags,
+ * whose cost is paid by the elements they pop (each element is pushed once
+ * and popped once). The `noscript` check (M-11) tokenizes each `noscript`
+ * content once more. Total time is linear in the input size.
+ *
+ * Every element on the token stack holds at least 1 unit of D: its push
+ * adds 1, and only the exact pop of that element (M-26 item 4) gives units
+ * back. So the stack never has more than D <= MAX_DEPTH elements, and the
+ * stack memory and the work of one end tag are bounded.
  *
  * Hash flooding: tag names come from the input, and PHP hashes string array
  * keys with DJBX33A, which has no seed. An attacker can make many names with
  * the same hash, and a PHP array with such keys has one long collision chain.
  * So no array of this class has keys that are raw input names:
- * - Fixed name sets (M-19, M-24) use counters by slot (TRACKED). A lookup of
- *   an input name in a constant array probes one chain of constant keys.
+ * - Fixed name sets (M-06, M-19, M-24) use constant arrays and counters by
+ *   slot (TRACKED). A lookup of an input name in a constant array probes one
+ *   chain of constant keys.
  * - The name index of M-05 step 3 ($byName) uses nameKey(): the name and a
  *   keyed hash of it with a random key for each parse.
+ * - The stack of the `noscript` content (M-11 item 5) is a list: an end tag
+ *   compares only with its top.
  * - Block ids ($ids) are at most MAX_BLOCKS (M-26), in [a-z0-9_-] (M-15).
  */
 final class Parser
@@ -32,17 +39,38 @@ final class Parser
     public const MAX_INPUT_BYTES = 5_242_880;
     public const MAX_BLOCKS = 256;
     public const MAX_BLOCK_BYTES = 1_048_576;
-    /** M-26: maximum number of elements on the token stack (H-25). */
-    public const MAX_OPEN_ELEMENTS = 256;
+    /** M-26: maximum value of the depth counter D (H-25, H-31; `maxOpenElements`). */
+    public const MAX_DEPTH = 256;
     public const JSON_TYPE = 'application/json';
 
     private const BLOCK_ATTR = 'data-rq-block';
     private const ID_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789_-';
     private const ID_FIRST_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789';
     private const ID_MAX = 64;
+    /** The 128 ASCII bytes (M-13 item 3). */
+    private const ASCII_BYTES = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        . "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+        . " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7F";
 
+    // Flags of a token-stack element.
     private const FOREIGN = 1; // pushed in a foreign region
     private const CONTENT = 2; // pushed in the content of a block
+    private const DIRTY = 4; // M-26 item 5: its exact pop gives no unit back
+    private const MARKED = 8; // M-06 item 4: special-crossed mark
+    // M-26 item 3: implied parts of an F element. Each one holds 1 unit of D.
+    private const ROW_GROUP = 16;
+    private const ROW = 32;
+    private const COLUMN_GROUP = 64;
+    /**
+     * M-26 item 3: implied parts by the name of F and the start tag name.
+     * The search for F stops at `template`, so `template` has no entry.
+     */
+    private const IMPLIED_PARTS = [
+        'table' => ['tr' => self::ROW_GROUP, 'td' => self::ROW_GROUP | self::ROW, 'th' => self::ROW_GROUP | self::ROW, 'col' => self::COLUMN_GROUP],
+        'tbody' => ['td' => self::ROW, 'th' => self::ROW],
+        'thead' => ['td' => self::ROW, 'th' => self::ROW],
+        'tfoot' => ['td' => self::ROW, 'th' => self::ROW],
+    ];
 
     // Slots of the counters for the names that M-19 and M-24 query. Names
     // that are only queried together share a slot.
@@ -74,8 +102,10 @@ final class Parser
 
     /** @var list<string> Names of the token stack, bottom first. */
     private array $names = [];
-    /** @var list<int> Flags (FOREIGN, CONTENT) of the token stack. */
+    /** @var array<int, int> Flags (FOREIGN, CONTENT, DIRTY, MARKED, implied parts) of the token stack, by stack index. */
     private array $flags = [];
+    /** M-26: the depth counter D. */
+    private int $depth = 0;
     /** @var array<string, int> Number of elements on the stack, by nameKey() of the name. */
     private array $byName = [];
     /** @var array<int, int> Number of elements on the stack, by slot of TRACKED. */
@@ -260,6 +290,7 @@ final class Parser
             $this->foreignStartTag($token);
             return;
         }
+        $this->impliedParts($name);
         if (($name === 'svg' || $name === 'math') && $token->selfClosing) {
             return;
         }
@@ -275,7 +306,8 @@ final class Parser
 
     /**
      * M-13: a `script` start tag whose first `type` attribute has a raw value
-     * that contains `rivqen-manifest` (ASCII case-insensitive) or `&`.
+     * that contains `rivqen-manifest` (ASCII case-insensitive), `&` or a
+     * byte >= 0x80 (H-28). No PCRE: a PCRE error must not let a value pass.
      */
     private static function checkReserved(Token $startTag): void
     {
@@ -283,8 +315,42 @@ final class Parser
             return;
         }
         $type = $startTag->attribute('type');
-        if ($type !== null && (stripos($type, 'rivqen-manifest') !== false || str_contains($type, '&'))) {
+        if ($type !== null && (stripos($type, 'rivqen-manifest') !== false || str_contains($type, '&')
+            || strspn($type, self::ASCII_BYTES) !== strlen($type))) {
             throw new MarkupError(ErrorCode::Reserved, 'M-13');
+        }
+    }
+
+    /**
+     * M-26 item 3: for a start tag in HTML context, add 1 to D for each
+     * implied part that F (M-09) does not have yet, and give it to F.
+     */
+    private function impliedParts(string $name): void
+    {
+        if ($this->tableIndex === []) {
+            return;
+        }
+        $f = $this->tableIndex[count($this->tableIndex) - 1];
+        $parts = self::IMPLIED_PARTS[$this->names[$f]][$name] ?? 0;
+        $new = $parts & ~$this->flags[$f];
+        $this->flags[$f] |= $new;
+        $this->raise(self::partCount($new));
+    }
+
+    /** Number of implied-part flags in $flags. */
+    private static function partCount(int $flags): int
+    {
+        return (($flags & self::ROW_GROUP) === 0 ? 0 : 1)
+            + (($flags & self::ROW) === 0 ? 0 : 1)
+            + (($flags & self::COLUMN_GROUP) === 0 ? 0 : 1);
+    }
+
+    /** M-26: add $units to D. D larger than MAX_DEPTH is an error. */
+    private function raise(int $units): void
+    {
+        $this->depth += $units;
+        if ($this->depth > self::MAX_DEPTH) {
+            throw new MarkupError(ErrorCode::Limit, 'M-26');
         }
     }
 
@@ -412,7 +478,7 @@ final class Parser
                 throw new MarkupError(ErrorCode::Structure, 'M-07');
             }
             $this->charsOnly = null;
-            $this->popTo(count($this->names) - 1);
+            $this->endTagPop(count($this->names) - 1, $name);
             return;
         }
         if ($this->noscriptStart !== null) {
@@ -432,6 +498,11 @@ final class Parser
             if ($foreign) {
                 throw new MarkupError(ErrorCode::Structure, 'M-07');
             }
+            // M-06 item 3: the tree builder can close an implied `tbody` or
+            // `tr` and the open cell for these end tags.
+            if (isset(Names::STRAY_TABLE_END[$name])) {
+                throw new MarkupError(ErrorCode::Structure, 'M-06');
+            }
             return; // no element with this name: ignore the end tag
         }
         $match = count($this->names) - 1;
@@ -441,16 +512,59 @@ final class Parser
         if ($this->region !== null && $match < $this->region) {
             throw new MarkupError(ErrorCode::Structure, 'M-07');
         }
-        // M-06: crossed elements, from the top down to the match.
+        $this->endTagPop($match, $name);
+    }
+
+    /**
+     * M-05 step 3 for an end tag that matches the element at $match: check
+     * M-06 items 1, 2 and 4, pop, then update D (M-26 items 4 and 5) and the
+     * marks of the new current node (M-06 item 4).
+     *
+     * Cost: O(number of popped elements).
+     */
+    private function endTagPop(int $match, string $name): void
+    {
+        $top = count($this->names) - 1;
         $tablePartsOk = isset(Names::TABLE_FAMILY[$name]);
-        for ($i = count($this->names) - 1; $i > $match; $i--) {
+        $crossesSpecial = false;
+        $marked = ($this->flags[$match] & self::MARKED) !== 0;
+        // Crossed elements, from the top down to the match.
+        for ($i = $top; $i > $match; $i--) {
             $crossed = $this->names[$i];
-            if (($this->flags[$i] & self::FOREIGN) === 0 && isset(Names::GUARDED[$crossed])
-                && !($tablePartsOk && isset(Names::TABLE_PART[$crossed]))) {
-                throw new MarkupError(ErrorCode::Structure, 'M-06');
+            $flags = $this->flags[$i];
+            $foreign = ($flags & self::FOREIGN) !== 0;
+            if (!$foreign && isset(Names::GUARDED[$crossed]) && !($tablePartsOk && isset(Names::TABLE_PART[$crossed]))) {
+                throw new MarkupError(ErrorCode::Structure, 'M-06'); // item 1
+            }
+            if ($foreign || isset(Names::SPECIAL[$crossed])) {
+                $crossesSpecial = true;
+            }
+            if (($flags & self::MARKED) !== 0) {
+                $marked = true;
             }
         }
+        // Items 2 and 4: then the adoption agency of the tree builder has no
+        // furthest block and pops the same elements.
+        if (($crossesSpecial || $marked) && isset(Names::FORMATTING[$name])) {
+            throw new MarkupError(ErrorCode::Structure, 'M-06');
+        }
+        $flags = $this->flags[$match];
+        $clean = $match === $top && ($flags & self::DIRTY) === 0 && $name !== 'html' && $name !== 'body';
         $this->popTo($match);
+        if ($clean) {
+            // M-26 item 4: give back the push unit and the implied parts.
+            $this->depth -= 1 + self::partCount($flags);
+        }
+        if ($match === 0) {
+            return; // no new current node
+        }
+        $current = $match - 1;
+        if (!$clean) {
+            $this->flags[$current] |= self::DIRTY; // M-26 item 5
+        }
+        if ($crossesSpecial || $marked) {
+            $this->flags[$current] |= self::MARKED; // M-06 item 4
+        }
     }
 
     /** M-22 item 4, M-23 and the block end (M-20, M-26, M-25). */
@@ -467,7 +581,7 @@ final class Parser
         if ($top === $this->blockIndex) {
             $this->endBlock($token->start);
         }
-        $this->popTo($top);
+        $this->endTagPop($top, $name);
     }
 
     private function endBlock(int $end): void
@@ -504,22 +618,37 @@ final class Parser
     /**
      * Tokenize the `noscript` content C followed by `</noscript>` alone, from
      * the data state, in HTML context (M-11).
+     *
+     * Item 5 (H-27): C is balanced. $open is the stack of C: a list of names
+     * (no name keys, see the class comment). Each start tag adds at most one
+     * entry and has at least 3 bytes, so the list is bounded by the size of
+     * C. C is not counted in D (M-26 item 7).
      */
     private function checkNoscript(int $start, int $contentEnd): void
     {
         $this->noscriptStart = null;
         $length = $contentEnd - $start;
         $sub = new Tokenizer(substr($this->input, $start, $length) . '</noscript>');
+        /** @var list<string> $open */
+        $open = [];
         while (true) {
             $token = $sub->next();
             if ($token->type === TokenType::Eof) {
                 throw new MarkupError(ErrorCode::Structure, 'M-11');
             }
-            if ($token->type === TokenType::EndTag && $token->name === 'noscript') {
-                if ($token->start !== $length) {
+            if ($token->type === TokenType::EndTag) {
+                if ($token->name === 'noscript') {
+                    // Item 1, and item 5: no element of C is open at the end of C.
+                    if ($token->start !== $length || $open !== []) {
+                        throw new MarkupError(ErrorCode::Structure, 'M-11');
+                    }
+                    return;
+                }
+                // Item 5: an end tag closes the last open element of C.
+                if (array_pop($open) !== $token->name) {
                     throw new MarkupError(ErrorCode::Structure, 'M-11');
                 }
-                return;
+                continue;
             }
             if ($token->type !== TokenType::StartTag) {
                 continue;
@@ -527,12 +656,18 @@ final class Parser
             // M-13 applies also in C (edge case E8, human decision H-22): a
             // reader with scripting disabled sees this `script` as an element.
             self::checkReserved($token);
-            if ($token->attribute(self::BLOCK_ATTR) !== null || isset(Names::NOSCRIPT_FORBIDDEN[$token->name])) {
+            $name = $token->name;
+            if ($token->attribute(self::BLOCK_ATTR) !== null || isset(Names::NOSCRIPT_FORBIDDEN[$name])) {
                 throw new MarkupError(ErrorCode::Structure, 'M-11');
             }
-            $state = Names::TEXT[$token->name] ?? null;
+            // M-05 item 1 pushes every name that is not in VOID. Item 3 has
+            // already rejected `svg` and `math`.
+            if (!isset(Names::VOID[$name])) {
+                $open[] = $name;
+            }
+            $state = Names::TEXT[$name] ?? null;
             if ($state !== null) {
-                $sub->switchTo($state, $token->name);
+                $sub->switchTo($state, $name);
             }
         }
     }
@@ -541,13 +676,15 @@ final class Parser
     // Token stack
     // ----------------------------------------------------------------------
 
-    /** M-05 push. M-26: a push that makes the stack larger than MAX_OPEN_ELEMENTS is an error. */
+    /**
+     * M-05 push. M-26 item 2: each push adds 1 to D. D is checked before the
+     * element goes on the stack, so the stack never has more than MAX_DEPTH
+     * elements.
+     */
     private function push(string $name, bool $foreign): int
     {
+        $this->raise(1);
         $index = count($this->names);
-        if ($index >= self::MAX_OPEN_ELEMENTS) {
-            throw new MarkupError(ErrorCode::Limit, 'M-26');
-        }
         $flags = $foreign ? self::FOREIGN : 0;
         $slot = self::TRACKED[$name] ?? null;
         if ($this->blockIndex !== null) {

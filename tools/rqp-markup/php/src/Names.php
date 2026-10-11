@@ -135,5 +135,38 @@ final class Names
     /** M-19: allowed F for a block start tag (none is also allowed). */
     public const BLOCK_ALLOWED_F = ['td' => true, 'th' => true, 'caption' => true];
 
+    /** M-06 items 2 and 4: the formatting category of WHATWG 13.2.4.2. */
+    public const FORMATTING = [
+        'a' => true, 'b' => true, 'big' => true, 'code' => true, 'em' => true, 'font' => true,
+        'i' => true, 'nobr' => true, 's' => true, 'small' => true, 'strike' => true,
+        'strong' => true, 'tt' => true, 'u' => true,
+    ];
+
+    /** M-06 items 2 and 4: the HTML part of the special category of WHATWG 13.2.4.2. */
+    public const SPECIAL = [
+        'address' => true, 'applet' => true, 'area' => true, 'article' => true, 'aside' => true,
+        'base' => true, 'basefont' => true, 'bgsound' => true, 'blockquote' => true, 'body' => true,
+        'br' => true, 'button' => true, 'caption' => true, 'center' => true, 'col' => true,
+        'colgroup' => true, 'dd' => true, 'details' => true, 'dir' => true, 'div' => true,
+        'dl' => true, 'dt' => true, 'embed' => true, 'fieldset' => true, 'figcaption' => true,
+        'figure' => true, 'footer' => true, 'form' => true, 'frame' => true, 'frameset' => true,
+        'h1' => true, 'h2' => true, 'h3' => true, 'h4' => true, 'h5' => true, 'h6' => true,
+        'head' => true, 'header' => true, 'hgroup' => true, 'hr' => true, 'html' => true,
+        'iframe' => true, 'img' => true, 'input' => true, 'keygen' => true, 'li' => true,
+        'link' => true, 'listing' => true, 'main' => true, 'marquee' => true, 'menu' => true,
+        'meta' => true, 'nav' => true, 'noembed' => true, 'noframes' => true, 'noscript' => true,
+        'object' => true, 'ol' => true, 'p' => true, 'param' => true, 'plaintext' => true,
+        'pre' => true, 'script' => true, 'search' => true, 'section' => true, 'select' => true,
+        'source' => true, 'style' => true, 'summary' => true, 'table' => true, 'tbody' => true,
+        'td' => true, 'template' => true, 'textarea' => true, 'tfoot' => true, 'th' => true,
+        'thead' => true, 'title' => true, 'tr' => true, 'track' => true, 'ul' => true,
+        'wbr' => true, 'xmp' => true,
+    ];
+
+    /** M-06 item 3: end tags that must match an element in HTML context. */
+    public const STRAY_TABLE_END = [
+        'tbody' => true, 'thead' => true, 'tfoot' => true, 'tr' => true, 'table' => true,
+    ];
+
     private function __construct() {}
 }

@@ -32,6 +32,10 @@ When the candidate says **valid**, these must be true. Else the tool reports a f
 | `M-11-balance` | M-11 item 5 (H-27) | The `noscript` content is not balanced |
 | `M-13-non-ascii` | M-13 item 3 (H-28) | A script `type` value has a non-ASCII character |
 | `M-26-depth` | M-26 (H-31) | D is larger than 256 |
+| `M-09-template-col` | M-09 condition 1 (H-35) | A `col` whose nearest table-family or `template` element is a `template` |
+| `M-09-table-current` | M-09 condition 2 (H-37) | A table part, `col` or `table` start tag while F (a table context) is not the current node |
+| `M-10-form` | M-10 item 2 (H-36) | A `form` start tag while an HTML `form` is on the token stack |
+| `M-11-table-part` | M-11 item 6 (H-38) | A table part or `col` in the `noscript` content without a `table` opened in it |
 
 The classifier is a test oracle for these rules only. It does not decide validity.
 
@@ -71,6 +75,7 @@ node src/cli.mjs cases --only rust,java,php
 
 # The inputs of the security review (repro inputs, controls, open question, depth shapes)
 node src/cli.mjs cases --cases cases/review-cases.json --only rust,node,java,php
+node src/cli.mjs cases --cases cases/review2-cases.json --only rust,node,java,php
 
 # A seeded generator sweep
 TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,java,php --seed 5 --count 100000 --chunk 10000 --scripting both
@@ -94,7 +99,7 @@ TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,node,java,php --seed 21 --cou
 | `--seed n` | `sweep` | Seed of the sweep (0 … 2^32 − 1) | 1 |
 | `--count n` | `sweep` | Number of documents (at most 10 000 000) | 1000 |
 | `--max-tokens n` | `sweep` | Pieces per document (1 … 200) | 16 |
-| `--profile p` | `sweep` | `classic` (the documents of earlier sweeps, unchanged) or `review` (adds the shapes of the security review) | `classic` |
+| `--profile p` | `sweep` | `classic` (the documents of earlier sweeps, unchanged), `review` (adds the shapes of the security review, unchanged since round 1) or `review2` (adds the shapes of round 2: form pointer cycles, template with `col` and raw text, foster-parented elements in tables, `noscript` in cells with table parts) | `classic` |
 | `--chunk n` | `sweep` | Documents per batch run | 2000 |
 | `--out dir` | `sweep` | Where to save the inputs of findings | `$TMPDIR/rqp-crosscheck-sweep-<seed>` |
 | `--keep n` | `sweep` | Saved and printed findings for each kind | 20 |
@@ -130,7 +135,7 @@ The batch runs write one file for each document. On a slow temporary file system
    - `<?` gives a bogus comment in parse5. The WHATWG standard parses processing instructions since whatwg/html PR #12118 (merged 2026-06-25).
 2. parse5 needs time that grows faster than the nesting depth (about 25 s for 50 000 nested elements). Sweep documents are small; do not run the tool on large untrusted documents in a time-limited job.
 3. The generator (`src/generator.mjs`) is tag soup with list and table patterns. It does not reach every shape. A sweep without findings is evidence, not a proof. The `classic` profile did not reach the shapes of the security review (2026-10-11); the `review` profile adds them.
-4. The depth pass uses the parse5 token stream. For a valid document it is the token stream of `markup.md` M-03/M-04. For a document that breaks M-07 or M-09 (for example tags in an SVG integration point), parse5 builds elements that the token stack does not see, and the invariant can fail. So the `depth-invariant` finding applies only to results that say valid; the sweep also counts the violations on all documents, for information. While the WHATWG stack has more than 1024 elements, the check covers only new elements and the current node (bounded time).
+4. The depth pass uses the parse5 token stream. For a valid document it is the token stream of `markup.md` M-03/M-04. For a document that breaks M-07 or M-09 (for example tags in an SVG integration point), parse5 builds elements that the token stack does not see, and the invariant can fail. So the `depth-invariant` finding applies only to results that say valid; the sweep also counts the violations on all documents, for information. The check is skipped while a `template` element is open: the claim excludes template contents (H-35). While the WHATWG stack has more than 1024 elements, the check covers only new elements and the current node (bounded time).
 
 ## 5. Security
 

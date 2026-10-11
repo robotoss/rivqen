@@ -19,5 +19,8 @@
   "devDependencies": {
     "@stryker-mutator/core": "10.0.0",
     "parse5": "8.0.1"
+  },
+  "overrides": {
+    "qs": "6.16.0"
   }
 }

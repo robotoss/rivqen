@@ -821,6 +821,66 @@ describe('M-26 block limits', () => {
   });
 });
 
+describe('M-26 token stack depth (H-25)', () => {
+  const MAX = 256; // markup.md M-26, independent of LIMITS
+  const open = (name, n) => `<${name}>`.repeat(n);
+  const close = (name, n) => `</${name}>`.repeat(n);
+  const nest = (name, n, inner = '') => open(name, n) + inner + close(name, n);
+
+  it('accepts a block element as element 256 and rejects it as element 257', () => {
+    assert.deepEqual(blocksOf(nest('div', MAX - 1, DIV('a'))), [['a', 'html', 'x']]);
+    assert.equal(errorOf(nest('div', MAX, DIV('a'))), LIMIT);
+  });
+
+  it('applies outside blocks, also when matching end tags close the elements later', () => {
+    assert.deepEqual(blocksOf(nest('b', MAX) + DIV('a')), [['a', 'html', 'x']]);
+    assert.equal(errorOf(nest('b', MAX + 1) + DIV('a')), LIMIT);
+  });
+
+  it('applies in block content', () => {
+    assert.deepEqual(blocksOf(DIV('a', nest('b', MAX - 1, 'y'))), [['a', 'html', nest('b', MAX - 1, 'y')]]);
+    assert.equal(errorOf(DIV('a', nest('b', MAX, 'y'))), LIMIT);
+  });
+
+  it('applies in a foreign region', () => {
+    assert.equal(errorOf(`<svg>${nest('g', MAX - 1)}</svg>`), null);
+    assert.equal(errorOf(`<svg>${nest('g', MAX)}</svg>`), LIMIT);
+    assert.equal(errorOf(`<math>${nest('mrow', MAX)}</math>`), LIMIT);
+  });
+
+  it('counts HTML and foreign elements together', () => {
+    assert.equal(errorOf(nest('div', 200, `<svg>${nest('g', MAX - 201)}</svg>`)), null);
+    assert.equal(errorOf(nest('div', 200, `<svg>${nest('g', MAX - 200)}</svg>`)), LIMIT);
+  });
+
+  it('does not count elements that M-05 does not push', () => {
+    const notPushed = '<br><img><input><hr><svg/><math/><svg><g/></svg>';
+    // The svg element of the last item is pushed: 255 + 1 = 256 elements.
+    assert.equal(errorOf(nest('div', MAX - 1, notPushed)), null);
+    assert.equal(errorOf(nest('div', MAX, notPushed)), LIMIT);
+    assert.equal(errorOf(`<svg>${nest('g', MAX - 1, '<path/><circle/>')}</svg>`), null);
+  });
+
+  it('frees the depth when elements are popped', () => {
+    const full = nest('b', MAX);
+    assert.equal(errorOf(full + full + full), null);
+    // An end tag that closes many elements at once (M-05 rule 3) frees all of them.
+    assert.equal(errorOf(`<div>${open('span', MAX - 1)}</div>`.repeat(3)), null);
+    // The end of a foreign region frees its elements.
+    assert.equal(errorOf(`<svg>${nest('g', MAX - 1)}</svg>`.repeat(3) + nest('b', MAX)), null);
+  });
+
+  it('frees the depth when a block ends', () => {
+    const block = (id) => DIV(id, nest('b', MAX - 1, 'y'));
+    assert.equal(run(block('a') + block('b')).blocks.length, 2);
+  });
+
+  it('does not apply to the noscript content of M-11 (no token stack)', () => {
+    // In the main pass the content is raw text: only the noscript element is pushed.
+    assert.equal(errorOf(`<noscript>${nest('b', MAX + 10)}</noscript>`), null);
+  });
+});
+
 describe('M-27 result', () => {
   const sha = (data) => createHash('sha256').update(data).digest('base64url');
 

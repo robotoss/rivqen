@@ -167,6 +167,86 @@ fn non_utf8_arguments_are_paths() {
     }
 }
 
+/// Runs the command on `fifo` (a FIFO with no writer). The command must end
+/// without a writer. If it waits longer than the watchdog time, the test
+/// opens the FIFO for writing, so the command can end, and fails.
+#[cfg(unix)]
+fn run_on_fifo(args: &[&Path], fifo: &Path) -> Output {
+    use std::process::Stdio;
+    use std::sync::mpsc;
+    use std::time::Duration;
+    let child = bin()
+        .args(args)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let (done, wait) = mpsc::channel();
+    let waiter = std::thread::spawn(move || done.send(child.wait_with_output().unwrap()));
+    match wait.recv_timeout(Duration::from_secs(60)) {
+        Ok(output) => {
+            waiter.join().unwrap().unwrap();
+            output
+        }
+        Err(_) => {
+            // The command waits in the open of the FIFO; a writer ends that.
+            drop(fs::OpenOptions::new().write(true).open(fifo).unwrap());
+            waiter.join().unwrap().unwrap();
+            panic!("the command waited for a writer of the FIFO");
+        }
+    }
+}
+
+/// Round 2 L-2: single mode does not open a FIFO (the open would wait for a
+/// writer). A path that is not a regular file is an I/O error (exit code 2).
+/// Batch mode skips an `input.html` that is not a regular file.
+#[cfg(unix)]
+#[test]
+fn inputs_that_are_not_regular_files_do_not_block() {
+    let dir = temp_dir();
+    let fifo = dir.join("fifo.html");
+    let made = Command::new("mkfifo").arg(&fifo).status();
+    if !made.is_ok_and(|status| status.success()) {
+        // No `mkfifo` command: nothing to check on this system.
+        return;
+    }
+    let output = run_on_fifo(&[&fifo], &fifo);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stdout.is_empty());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("not a regular file"), "{stderr}");
+
+    // A symbolic link to a FIFO is not a regular file either.
+    let link = dir.join("link.html");
+    std::os::unix::fs::symlink(&fifo, &link).unwrap();
+    let output = run_on_fifo(&[&link], &fifo);
+    assert_eq!(output.status.code(), Some(2));
+
+    // A symbolic link to a regular file is read.
+    let file = dir.join("in.html");
+    fs::write(&file, b"<p data-rq-block=\"a\">x</p>").unwrap();
+    let link = dir.join("file-link.html");
+    std::os::unix::fs::symlink(&file, &link).unwrap();
+    let output = run(&[path_str(&link)]);
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(lines(&output)[0]["blocks"][0]["id"], "a");
+
+    // Batch mode: the fixture with a FIFO input is skipped.
+    let fixtures = temp_dir();
+    for name in ["a", "b"] {
+        fs::create_dir(fixtures.join(name)).unwrap();
+    }
+    fs::write(fixtures.join("b").join("input.html"), b"<p>x</p>").unwrap();
+    let batch_fifo = fixtures.join("a").join("input.html");
+    let made = Command::new("mkfifo").arg(&batch_fifo).status().unwrap();
+    assert!(made.success());
+    let output = run_on_fifo(&[Path::new("--batch"), &fixtures], &batch_fifo);
+    assert_eq!(output.status.code(), Some(0));
+    let results = lines(&output);
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0]["fixture"], "b");
+}
+
 #[test]
 fn batch_mode_sorts_by_name_and_skips_directories_without_input() {
     let dir = temp_dir();

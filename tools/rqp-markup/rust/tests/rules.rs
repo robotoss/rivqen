@@ -1230,3 +1230,88 @@ fn large_adversarial_inputs_finish() {
     .concat();
     assert!(analyze(&scripts).is_ok());
 }
+
+#[test]
+fn large_nested_inputs_closed_by_end_tags_finish() {
+    // A deep token stack that end tags close again. Each input is close to
+    // the size limit (M-01) and would take minutes if a pop cost grew with
+    // the stack size (T-09).
+    let near_limit = |input: &[u8]| input.len() > 5_000_000 && input.len() <= MAX_INPUT_BYTES;
+    // A block after the closed elements: its start tag fails M-16 or M-19
+    // when a pop leaves a name pointer, a table mark or the foreign root
+    // behind.
+    let tail = b"<p data-rq-block=\"end\">x</p>";
+    let only_tail = |input: &[u8]| {
+        assert!(near_limit(input), "{} bytes", input.len());
+        assert_eq!(blocks_of(input), vec![html("end", "x")]);
+    };
+    // Each end tag pops one element (M-05 step 3).
+    let n = 740_000;
+    only_tail(&[b"<b>".repeat(n), b"</b>".repeat(n), tail.to_vec()].concat());
+    // Two names: the pointer of each name goes back to the previous element
+    // with the same name.
+    let n = 370_000;
+    only_tail(&[b"<b><i>".repeat(n), b"</i></b>".repeat(n), tail.to_vec()].concat());
+    // Many short elements on top of a deep stack: the pop of `i` restores
+    // "no open `i`" without a search through the stack.
+    let n = 370_000;
+    only_tail(
+        &[
+            b"<b>".repeat(n),
+            b"<i></i>".repeat(n),
+            b"</b>".repeat(n),
+            tail.to_vec(),
+        ]
+        .concat(),
+    );
+    // One end tag pops all elements above its target.
+    let n = 1_740_000;
+    only_tail(&[&b"<div>"[..], &b"<b>".repeat(n), b"</div>", tail].concat());
+    // Table marks (M-09, M-19): `template` is pushed and popped with a mark.
+    let n = 247_000;
+    only_tail(
+        &[
+            b"<template>".repeat(n),
+            b"</template>".repeat(n),
+            tail.to_vec(),
+        ]
+        .concat(),
+    );
+    // The foreign root (M-07) is reset when `svg` is popped.
+    let n = 740_000;
+    only_tail(
+        &[
+            &b"<svg>"[..],
+            &b"<g>".repeat(n),
+            &b"</g>".repeat(n),
+            b"</svg>",
+            tail,
+        ]
+        .concat(),
+    );
+    // In block content each end tag pops the current node (M-23). Five
+    // blocks, each just under the 1 MiB content limit (M-26).
+    let n = 149_000;
+    let content = [b"<b>".repeat(n), b"</b>".repeat(n)].concat();
+    assert!(content.len() <= MAX_BLOCK_BYTES);
+    let nested: Vec<u8> = (0..5)
+        .flat_map(|i| {
+            [
+                format!("<div data-rq-block=\"b{i}\">").into_bytes(),
+                content.clone(),
+                b"</div>".to_vec(),
+            ]
+            .concat()
+        })
+        .collect();
+    assert!(near_limit(&nested), "{} bytes", nested.len());
+    let found = blocks_of(&nested);
+    assert_eq!(found.len(), 5);
+    for (i, (id, format, text)) in found.iter().enumerate() {
+        assert_eq!(
+            (id.as_str(), *format),
+            (format!("b{i}").as_str(), Format::Html)
+        );
+        assert_eq!(text.as_bytes(), content.as_slice());
+    }
+}

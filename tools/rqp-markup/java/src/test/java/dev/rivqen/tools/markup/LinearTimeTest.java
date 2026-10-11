@@ -95,13 +95,105 @@ class LinearTimeTest {
     return (head + body + "0]</script>").getBytes(StandardCharsets.US_ASCII);
   }
 
+  /**
+   * Valid inputs where each end tag pops one element of a deep token stack. A pop that costs time
+   * in proportion to the stack size (an array shift, a scan or a rebuild of the name index) makes
+   * these inputs quadratic. The block content cases also do this for the end tags in content (M-23)
+   * and for the list queries of M-24 c and j; one case puts a deep stack below the block, because
+   * M-26 keeps the stack in one block small. The expected block count makes sure that the analysis
+   * reads the whole input and does not stop early.
+   */
+  static Stream<Arguments> deepStacks() {
+    return Stream.of(
+        Arguments.of("deep nesting closed by matching end tags", balanced("<b>", "</b>"), 0),
+        Arguments.of("mixed names closed by matching end tags", balanced("<b><i>", "</i></b>"), 0),
+        Arguments.of("nested lists in block content", blocks("", 5, "<ul><li>", "</li></ul>"), 5),
+        Arguments.of(
+            "nested elements in block content closed by matching end tags",
+            blocks("", 5, "<b>", "</b>"),
+            5),
+        Arguments.of(
+            "nested lists in block content over a deep stack",
+            blocks(
+                "<b>".repeat((SIZE - Analyzer.MAX_BLOCK_BYTES) / 3), 1, "<ul><li>", "</li></ul>"),
+            1),
+        Arguments.of("names with one hash code closed by matching end tags", collidingNames(), 0));
+  }
+
+  /**
+   * 2^16 different tag names with the same {@link String#hashCode()}, opened, then closed in
+   * reverse order. The pairs {@code "a~"} and {@code "b_"} have the same hash code, so every name
+   * of the same number of pairs has the same hash code. All names go to one bucket of the name
+   * index.
+   */
+  private static byte[] collidingNames() {
+    int bits = 16;
+    String[] names = new String[1 << bits];
+    for (int i = 0; i < names.length; i++) {
+      StringBuilder n = new StringBuilder("x");
+      for (int b = 0; b < bits; b++) {
+        n.append(((i >> b) & 1) == 0 ? "a~" : "b_");
+      }
+      names[i] = n.toString();
+      assertEquals(names[0].hashCode(), names[i].hashCode());
+    }
+    StringBuilder s = new StringBuilder();
+    for (String n : names) {
+      s.append('<').append(n).append('>');
+    }
+    for (int i = names.length - 1; i >= 0; i--) {
+      s.append("</").append(names[i]).append('>');
+    }
+    byte[] b = s.toString().getBytes(StandardCharsets.US_ASCII);
+    assertTrue(b.length <= Analyzer.MAX_INPUT_BYTES);
+    return b;
+  }
+
+  /** {@code open} repeated n times, then {@code close} repeated n times, to almost 5 MiB. */
+  private static byte[] balanced(String open, String close) {
+    int n = SIZE / (open.length() + close.length());
+    return (open.repeat(n) + close.repeat(n)).getBytes(StandardCharsets.US_ASCII);
+  }
+
+  /**
+   * {@code before}, then {@code count} html blocks. The content of each block is {@code open}
+   * repeated n times, then {@code close} repeated n times, just under the limit of M-26 and the
+   * input limit of M-01. The elements that {@code before} opens stay open below the blocks.
+   */
+  private static byte[] blocks(String before, int count, String open, String close) {
+    int content = Math.min(Analyzer.MAX_BLOCK_BYTES, (SIZE - before.length()) / count - 32);
+    int n = content / (open.length() + close.length());
+    String body = open.repeat(n) + close.repeat(n);
+    assertTrue(body.length() <= Analyzer.MAX_BLOCK_BYTES);
+    StringBuilder s = new StringBuilder(before);
+    for (int i = 0; i < count; i++) {
+      s.append("<div data-rq-block=b").append(i).append('>').append(body).append("</div>");
+    }
+    byte[] b = s.toString().getBytes(StandardCharsets.US_ASCII);
+    assertTrue(b.length <= Analyzer.MAX_INPUT_BYTES);
+    return b;
+  }
+
   @ParameterizedTest(name = "{0}")
   @MethodSource("inputs")
   void finishesQuickly(String name, byte[] input, ErrorCode expected) {
-    Result r = assertTimeoutPreemptively(Duration.ofSeconds(20), () -> Analyzer.analyze(input));
+    Result r = analyzeQuickly(input);
     if (expected != null) {
       assertEquals(expected, r.error());
     }
     PropertyTest.checkInvariants(input, r);
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("deepStacks")
+  void popsDeepStackQuickly(String name, byte[] input, int blocks) {
+    Result r = analyzeQuickly(input);
+    assertEquals(null, r.error(), r::rule);
+    assertEquals(blocks, r.blocks().size());
+    PropertyTest.checkInvariants(input, r);
+  }
+
+  private static Result analyzeQuickly(byte[] input) {
+    return assertTimeoutPreemptively(Duration.ofSeconds(20), () -> Analyzer.analyze(input));
   }
 }

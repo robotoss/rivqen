@@ -84,18 +84,20 @@ class MainTest {
 
   @Test
   void batchModeReadsSubdirectoriesInByteOrder() throws IOException {
+    // "D" < "a" < "b" in byte order, but "D" is last without case. Not "B" or "C": on a file
+    // system without case (macOS default) "B" and "b", or "C" and "c", are one directory.
     write("fx/b/input.html", "<p data-rq-block=b>x</p>");
-    write("fx/B/input.html", "<p data-rq-block=a>" + SECRET);
+    write("fx/D/input.html", "<p data-rq-block=a>" + SECRET);
     write("fx/a\"\\/input.html", "");
     write("fx/c/other.html", "");
     write("fx/file.txt", "x");
     assertEquals(0, run("--batch", tmp.resolve("fx").toString()));
     List<String> lines = written.toString().lines().toList();
     assertEquals(3, lines.size());
-    assertEquals("B", MiniJson.object(lines.get(0)).get("fixture"));
+    assertEquals("D", MiniJson.object(lines.get(0)).get("fixture"));
     assertEquals("a\"\\", MiniJson.object(lines.get(1)).get("fixture"));
     assertEquals("b", MiniJson.object(lines.get(2)).get("fixture"));
-    assertTrue(lines.get(0).startsWith("{\"fixture\":\"B\",\"valid\":false,"));
+    assertTrue(lines.get(0).startsWith("{\"fixture\":\"D\",\"valid\":false,"));
     assertEquals(true, MiniJson.object(lines.get(2)).get("valid"));
     assertFalse(written.toString().contains(SECRET));
   }

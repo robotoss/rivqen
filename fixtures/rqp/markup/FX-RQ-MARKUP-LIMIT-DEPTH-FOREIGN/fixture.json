@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-LIMIT-DEPTH-FOREIGN",
+  "description": "An svg element and 256 nested g elements: 257 elements on the token stack in a foreign region, outside blocks (M-05 item 2, M-26)",
+  "rules": [
+    "M-05",
+    "M-26"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_LIMIT"
+  }
+}

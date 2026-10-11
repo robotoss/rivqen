@@ -81,7 +81,7 @@ The parser decodes the input as UTF-8 always. It ignores `<meta charset>` and th
 
 - A start tag ends at its `>`. A `>` inside a quoted attribute value does not end the tag.
 - Comments follow the WHATWG comment states, including `<!-->`, `<!--->` and the end `--!>`.
-- `<!` followed by anything other than `--`, `DOCTYPE` (ASCII case-insensitive) or `[CDATA[` starts a bogus comment. `</` followed by a character that is not an ASCII letter and not `>` starts a bogus comment. A bogus comment ends at the first `>`. If there is no `>`, it ends at the end of the input.
+- `<!` followed by anything other than `--`, `DOCTYPE` (ASCII case-insensitive) or `[CDATA[` starts a bogus comment. A CDATA section starts only with the exact, case-sensitive `<![CDATA[`. A `<![cdata[` or any other case is a bogus comment: M-12 does not apply to it, and M-07 item 5 does not allow it. `</` followed by a character that is not an ASCII letter and not `>` starts a bogus comment. A bogus comment ends at the first `>`. If there is no `>`, it ends at the end of the input.
 - `<?` starts a bogus comment in older parsers and a processing instruction in newer ones. <Badge type="tip" text="FACT" /> Both end at the first `>` (WHATWG "processing instruction data state" and "bogus comment state"). RQP treats them the same: a comment.
 - A `<?` with no `>` before the end of the input is a comment that ends at the end of the input (E6, H-21). <Badge type="warning" text="RESEARCH" /> The current WHATWG text probably emits no token for a processing instruction that reaches the end of the input ([edge cases](/engineering/protocol/markup-edge-cases), E6). The comment reading is the stricter one: every rule that allows a comment also allows no token.
 - A DOCTYPE token ends at the first `>`.
@@ -254,7 +254,9 @@ Error: `RQP_MARKUP_BAD_JSON`. The hash is over the raw content bytes; RQP does n
 
 ### 2.8 Limits
 
-**M-26 Block limits.** A document MUST NOT have more than 256 blocks. The content of one block MUST NOT be larger than 1 MiB (1 048 576 bytes). Error: `RQP_MARKUP_LIMIT`. Values: [resource limits](/engineering/core/resource-limits) (`maxBlocks`, `maxBlockBytes`, `maxDocumentBytes`).
+**M-26 Limits.** A document MUST NOT have more than 256 blocks. The content of one block MUST NOT be larger than 1 MiB (1 048 576 bytes). The token stack (M-05) MUST NOT have more than 256 elements at any point of the document: a push that makes the stack larger than 256 elements is an error. This applies in HTML context and in a foreign region, inside and outside blocks. Error: `RQP_MARKUP_LIMIT`. Values: [resource limits](/engineering/core/resource-limits) (`maxBlocks`, `maxBlockBytes`, `maxOpenElements`, `maxDocumentBytes`).
+
+<Badge type="tip" text="FACT" /> Browsers limit the DOM depth during parsing to about 512. Blink (Chrome, Android WebView) has `kMaximumHTMLParserDOMTreeDepth` = 512; Gecko attaches nodes deeper than stack position 511 to that node. Beyond the limit a new node goes to the element at the maximum depth, so a deep block element is empty in the DOM and its content becomes its sibling. Then the block bytes and the DOM do not agree. <Badge type="info" text="DESIGN" /> The limit 256 leaves room for elements that the tree builder adds and the token stack does not have (`html`, `body`, a `tbody` for each table): each implied `tbody` needs at least a `table` and a `tr` start tag, so the DOM depth is at most 1.5 × 256 + 2 = 386 (H-25). The limit also bounds the memory and the per-token work of the token stack in every SDK.
 
 ### 2.9 Result
 
@@ -276,7 +278,7 @@ Error: `RQP_MARKUP_BAD_JSON`. The hash is over the raw content bytes; RQP does n
 
 `RQP_MARKUP_STRUCTURE` is the one code for all structure failures: no explicit end tag, implied end tag, unbalanced content, forbidden content element, block context, and the document rules.
 
-**Recommended check order.** M-01, M-02, then one pass over the tokens. For a block start tag: M-17, M-15, M-16, M-18, M-19, M-21, M-26 (count). At the block end: M-26 (size), M-25. A fixture never depends on this order, because a fixture with an error has exactly one error.
+**Recommended check order.** M-01, M-02, then one pass over the tokens. On each push to the token stack: M-26 (depth). For a block start tag: M-17, M-15, M-16, M-18, M-19, M-21, M-26 (count). At the block end: M-26 (size), M-25. A fixture never depends on this order, because a fixture with an error has exactly one error.
 
 ### 2.11 Decided edge cases
 

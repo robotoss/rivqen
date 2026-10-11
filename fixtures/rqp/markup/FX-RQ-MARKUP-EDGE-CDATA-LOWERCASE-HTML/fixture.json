@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-CDATA-LOWERCASE-HTML",
+  "description": "The CDATA section opener is case-sensitive: <![cdata[a>b]]> in HTML context is a bogus comment that ends at the first >, so M-12 does not apply",
+  "rules": [
+    "M-04",
+    "M-12"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

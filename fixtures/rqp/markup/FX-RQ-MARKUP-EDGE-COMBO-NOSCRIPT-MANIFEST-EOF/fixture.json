@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-COMBO-NOSCRIPT-MANIFEST-EOF",
+  "description": "Combination of E3 and E8 (H-21, H-22): noscript without an end tag; its content C (the rest of the input) has a manifest script start tag",
+  "rules": [
+    "M-11",
+    "M-13"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_RESERVED"
+  }
+}

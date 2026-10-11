@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-COMBO-DESC-EMPTY-END-TAG",
+  "description": "Combination of E1 (H-21): </> in svg desc gives no token (WHATWG: missing end tag name), so the content is character tokens only",
+  "rules": [
+    "M-07"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

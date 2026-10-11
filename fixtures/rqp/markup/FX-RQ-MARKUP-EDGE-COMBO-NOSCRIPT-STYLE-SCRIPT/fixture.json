@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-COMBO-NOSCRIPT-STYLE-SCRIPT",
+  "description": "Combination of E8 (H-22): in noscript content C, the manifest script start tag is RAWTEXT of style, not a tag, so M-13 does not apply",
+  "rules": [
+    "M-11",
+    "M-13"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

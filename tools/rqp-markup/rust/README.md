@@ -46,7 +46,7 @@ cargo test
 | Test file | What it checks |
 |---|---|
 | `src/*.rs` (`mod tests`) | Tokenizer states and spans, name sets, JSON grammar, hashes |
-| `tests/rules.rs` | One or more tests for each rule M-01…M-27 and each error code; each invalid case checks the code and the rule. Separate tests for M-24 items j and k, for M-08 with a foreign `select`, and for the edge cases E1…E8 |
+| `tests/rules.rs` | One or more tests for each rule M-01…M-27 and each error code; each invalid case checks the code and the rule. Separate tests for M-24 items j and k, for M-08 with a foreign `select`, and for the edge cases E1…E8. Two tests run near-limit inputs that take minutes when the work is quadratic (`large_adversarial_inputs_finish`, `large_nested_inputs_closed_by_end_tags_finish`) |
 | `tests/fixtures.rs` | Every fixture of `fixtures/rqp/markup/` against its `expected.json` |
 | `tests/cli.rs` | Command line: modes, exit codes, batch order, skipped directories, size limit, no content on stderr |
 | `tests/props.rs` | proptest: no panic on arbitrary bytes and text; for valid results the offsets ascend and stay in the input, content hash = SHA-256 of `input[start..end]`, tags around the content; a markup "soup" generator reaches valid documents with blocks |
@@ -129,7 +129,7 @@ The tokenizer follows the WHATWG state descriptions (HTML Living Standard §13.2
 | Item | Bound |
 |---|---|
 | Input | M-01 is checked first. The command reads at most 5 MiB + 1 byte of a file. |
-| Time | Linear in the input size. The nearest open element with a name is found through a per-name pointer (O(1)); M-24 items j and k use the same pointers and the table-family marks (O(1) per start tag); each element is popped once; raw text end tags scan each letter once. `tests/rules.rs` runs near-limit adversarial inputs (deep stacks, many names, many failed end tags, comment and script patterns, deep lists and tables in a block, many scripts in `noscript`). |
+| Time | Linear in the input size. The nearest open element with a name is found through a per-name pointer (O(1)); M-24 items j and k use the same pointers and the table-family marks (O(1) per start tag); each element is popped once; raw text end tags scan each letter once. `tests/rules.rs` runs near-limit adversarial inputs (deep stacks, many names, many failed end tags, comment and script patterns, deep lists and tables in a block, many scripts in `noscript`). `large_nested_inputs_closed_by_end_tags_finish` (T-09) closes deep stacks with matching end tags: one name, two names, short elements on a deep stack, one end tag that pops all elements, `template` (table marks), `svg` (foreign root) and five blocks just under 1 MiB. Each pop is O(1). The test takes about 5 s in a debug build and 0.3 s in a release build. A pop cost that grows with the stack size makes it take from 20 s to more than 5 min in a release build. |
 | Memory | Linear in the input size: token stack, interned names, at most 257 block ids, one copy of each `noscript` content (M-11), JSON depth stack ≤ 64 |
 | Recursion | None |
 | Panics | `unwrap`, `expect`, `panic`, indexing and unchecked arithmetic are denied by lints outside tests. `#![forbid(unsafe_code)]`. |

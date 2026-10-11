@@ -85,7 +85,8 @@ final class CliTest extends TestCase
     {
         $this->file('fx/b/input.html', '<p data-rq-block="b">2</p>');
         $this->file('fx/a/input.html', '<p data-rq-block="a">1</p>');
-        $this->file('fx/B/input.html', '');
+        // 'Z' and not 'B': on a case-insensitive file system 'B' and 'b' are one directory.
+        $this->file('fx/Z/input.html', '');
         $this->file('fx/c/other.html', 'x');
         $this->file('fx/A0/other.html', 'x');
         $this->file('fx/input.html', 'not a fixture');
@@ -102,7 +103,7 @@ final class CliTest extends TestCase
             self::assertSame(['valid', 'error', 'blocks', 'template_revision', 'page_revision', 'fixture'], array_keys($object));
             $names[] = $object['fixture'];
         }
-        self::assertSame(['B', 'a', 'b'], $names);
+        self::assertSame(['Z', 'a', 'b'], $names);
     }
 
     public function testBatchModeOnAnEmptyDirectoryPrintsNothing(): void

@@ -17,7 +17,7 @@
 
 import { Parser, Tokenizer, TokenizerMode, defaultTreeAdapter } from "parse5";
 import { decodeUtf8 } from "./utf8.mjs";
-import { MAX_INPUT_BYTES } from "./view.mjs";
+import { HTML_NS, MAX_INPUT_BYTES } from "./view.mjs";
 
 export const MAX_D = 256;
 
@@ -32,6 +32,8 @@ export const SPECIAL = names(`address applet area article aside base basefont bg
   menu meta nav noembed noframes noscript object ol p param plaintext pre script search section select source
   style summary table tbody td template textarea tfoot th thead title tr track ul wbr xmp`);
 const TABLE_FAMILY = names("table caption colgroup tbody td tfoot th thead tr");
+const TABLE_PART = names("caption colgroup tbody td tfoot th thead tr");
+const TABLE_CONTEXT = names("table tbody thead tfoot tr colgroup"); // F values of M-24 item k and H-37
 const ROW_GROUPS = names("tbody thead tfoot");
 const STRAY_TABLE_END = names("tbody thead tfoot tr table");
 const RCDATA = names("title textarea");
@@ -45,6 +47,10 @@ export const CLASSES = {
   noscriptBalance: "M-11-balance", // H-27
   typeNonAscii: "M-13-non-ascii", // H-28
   depth: "M-26-depth", // H-31: D > 256
+  templateCol: "M-09-template-col", // H-35: col with template as the nearest table-family-or-template element
+  tableCurrent: "M-09-table-current", // H-37: a table part, col or table start tag while F (a table context) is not the current node
+  form: "M-10-form", // H-36: a form start tag while an HTML form is on the token stack
+  noscriptTablePart: "M-11-table-part", // H-38: a table part or col start tag in C without a table on the C stack
 };
 
 /**
@@ -97,6 +103,7 @@ export class DepthCounter {
     }
     // Elements that the tree builder inserts implicitly for this start tag (M-26, M-09).
     const f = this.#tableContext();
+    this.#classifyStart(name, f);
     if (f !== null) {
       const add = (kind) => {
         if (!f.implied.has(kind)) {
@@ -117,6 +124,25 @@ export class DepthCounter {
     this.stack.push({ name, foreign: false, dirty: false, marked: false, implied: new Set() });
     if (name === "svg" || name === "math") this.roots++;
     this.#raise(1);
+  }
+
+  /** Rule classes of round 2 of the security review for a start tag in HTML context. */
+  #classifyStart(name, f) {
+    if (name === "col") {
+      for (let i = this.stack.length - 1; i >= 0; i--) {
+        const n = this.stack[i].name;
+        if (n === "template") {
+          this.classes.add(CLASSES.templateCol);
+          break;
+        }
+        if (TABLE_FAMILY.has(n)) break;
+      }
+    }
+    if (name === "form" && this.stack.some((e) => !e.foreign && e.name === "form")) this.classes.add(CLASSES.form);
+    const top = this.stack[this.stack.length - 1];
+    if ((TABLE_PART.has(name) || name === "col" || name === "table") && f !== null && TABLE_CONTEXT.has(f.name) && f !== top) {
+      this.classes.add(CLASSES.tableCurrent);
+    }
   }
 
   /** An end tag token (M-05 item 3) with the rule classes of H-26 and H-30. */
@@ -168,12 +194,13 @@ const hasNonAscii = (s) => /[^\x00-\x7f]/.test(s);
 
 /**
  * M-11 with H-27: tokenize the noscript content C (HTML context, M-04) and check that it is
- * balanced. Also applies M-13 (H-28) to script start tags in C.
+ * balanced. Also applies M-13 (H-28) to script start tags in C, and H-38 (a table part or col
+ * needs a table on the C stack).
  * @param {string} c
- * @returns {{ balanced: boolean, nonAsciiType: boolean }}
+ * @returns {{ balanced: boolean, nonAsciiType: boolean, tablePart: boolean }}
  */
 export function checkNoscriptContent(c) {
-  const out = { balanced: true, nonAsciiType: false };
+  const out = { balanced: true, nonAsciiType: false, tablePart: false };
   const stack = [];
   let done = false;
   const handler = {
@@ -183,6 +210,7 @@ export function checkNoscriptContent(c) {
         const type = rawAttrValue(text, t.location, "type");
         if (type !== null && hasNonAscii(type)) out.nonAsciiType = true;
       }
+      if ((TABLE_PART.has(t.tagName) || t.tagName === "col") && !stack.includes("table")) out.tablePart = true;
       if (RCDATA.has(t.tagName)) tok.state = TokenizerMode.RCDATA;
       else if (RAWTEXT.has(t.tagName)) tok.state = TokenizerMode.RAWTEXT;
       else if (t.tagName === "script") tok.state = TokenizerMode.SCRIPT_DATA;
@@ -278,6 +306,13 @@ export function analyzeDepth(bytes, { fullStackLimit = 1024 } = {}) {
       if (size > maxStack) maxStack = size;
       const d = counter.d;
       const at = `${what} at ${offset ?? "?"}`;
+      // H-35: the claim of M-26 excludes template contents (inert, no block inside, M-19).
+      for (let k = 0; k < size; k++) {
+        if (items[k].tagName === "template" && items[k].namespaceURI === HTML_NS) {
+          attached.length = 0;
+          return;
+        }
+      }
       if (size > d + 2) report(`stack ${size} > D ${d} + 2 after ${at}`);
       const memo = new Map();
       const depth = (node) => {
@@ -344,6 +379,7 @@ export function analyzeDepth(bytes, { fullStackLimit = 1024 } = {}) {
       const r = checkNoscriptContent(c);
       if (!r.balanced) counter.classes.add(CLASSES.noscriptBalance);
       if (r.nonAsciiType) counter.classes.add(CLASSES.typeNonAscii);
+      if (r.tablePart) counter.classes.add(CLASSES.noscriptTablePart);
     }
 
     onCharacter(token) {

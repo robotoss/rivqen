@@ -184,7 +184,9 @@ test("class H-30: a stray tbody, thead, tfoot, tr or table end tag in HTML conte
 
 test("an end tag that parse5 reprocesses counts once (text in a table, then </table>)", () => {
   const a = run('<div data-rq-block="box"><table><div><table>a</table></div></table></div>');
-  assert.deepEqual([a.classes, a.violations], [[], []]);
+  // The inner table start tag also breaks H-37 (F is the outer table, the current node is the div);
+  // without the dedupe, the second </table> would pop the outer table and add M-05-stray-table-end.
+  assert.deepEqual([a.classes, a.violations], [[CLASSES.tableCurrent], []]);
 });
 
 test("class H-27: noscript content that is not balanced, also at the end of the input", () => {
@@ -194,16 +196,49 @@ test("class H-27: noscript content that is not balanced, also at the end of the 
 });
 
 test("checkNoscriptContent: order, stray end tags, raw text and void elements", () => {
-  assert.deepEqual(checkNoscriptContent("<a><span>x</a></span>"), { balanced: false, nonAsciiType: false });
-  assert.deepEqual(checkNoscriptContent("</div>"), { balanced: false, nonAsciiType: false });
-  assert.deepEqual(checkNoscriptContent("<br><img><style><p></style><title><b></title>"), { balanced: true, nonAsciiType: false });
-  assert.deepEqual(checkNoscriptContent('<script type="text/jävascript"></script>'), { balanced: true, nonAsciiType: true });
+  assert.deepEqual(checkNoscriptContent("<a><span>x</a></span>"), { balanced: false, nonAsciiType: false, tablePart: false });
+  assert.deepEqual(checkNoscriptContent("</div>"), { balanced: false, nonAsciiType: false, tablePart: false });
+  assert.deepEqual(checkNoscriptContent("<br><img><style><p></style><title><b></title>"), { balanced: true, nonAsciiType: false, tablePart: false });
+  assert.deepEqual(checkNoscriptContent('<script type="text/jävascript"></script>'), { balanced: true, nonAsciiType: true, tablePart: false });
 });
 
 test("class H-28: non-ASCII characters in the raw value of a script type, also in noscript", () => {
   assert.deepEqual(run('<script type="application/rıvqen-manifest+json">{}</script>').classes, [CLASSES.typeNonAscii]);
   assert.deepEqual(run("<noscript><script type=application/rivqen-manifeſt+json></script></noscript>").classes, [CLASSES.typeNonAscii]);
   assert.deepEqual(run('<script type="application/json" data-x="é">"é"</script>').classes, []);
+});
+
+test("class H-35: col whose nearest table-family-or-template element is template", () => {
+  assert.deepEqual(run('<p data-rq-block="z">real</p><template><col><title></template><p data-rq-block="z">fake</p></title></template>').classes, [CLASSES.templateCol]);
+  assert.deepEqual(run("<template><div><col></div></template>").classes, [CLASSES.templateCol]);
+  assert.deepEqual(run("<template><tr><td>x</td></tr></template><template><table><col></table></template>").classes, []);
+});
+
+test("the depth invariant excludes template contents (H-35): implied parts there are not counted", () => {
+  // In "in table" mode inside a template, <tr> inserts a tbody; M-09 F stops at template, so D does not count it.
+  const a = run(`<template><caption></caption>${"<tr><td>".repeat(5)}</template><p>x</p>`);
+  assert.deepEqual(a.violations, []);
+});
+
+test("class H-36: a form start tag while an HTML form is on the token stack", () => {
+  assert.deepEqual(run(`<a href="1">${"<form><object><form></form></object></form>".repeat(9)}x</a>`).classes, [CLASSES.form]);
+  assert.deepEqual(run("<form><input></form><form><input></form><div><form></div><form>x</form>").classes, []);
+  assert.deepEqual(run("<form><svg><form></form></svg></form>").classes, []);
+});
+
+test("class H-37: a table part, col or table start tag while F is not the current node", () => {
+  assert.deepEqual(run("<object><a href=1><table><marquee><table></table></marquee></table>x</a></object>").classes, [CLASSES.tableCurrent]);
+  assert.deepEqual(run("<table><tr><object><td>x</td></object></tr></table>").classes, [CLASSES.tableCurrent]);
+  assert.deepEqual(run("<table><form><tr><td>x</td></tr></form></table>").classes, [CLASSES.tableCurrent]);
+  assert.deepEqual(run("<table><div></div><tr><td><table><tr><td>x</td></tr></table></td></tr></table><table><col></table>").classes, []);
+});
+
+test("class H-38: a table part or col in noscript content without a table opened in C", () => {
+  for (const tag of ["<td></td>", "<col>", "<tr></tr>", "<caption></caption>"]) {
+    assert.deepEqual(run(`<table><tr><td><noscript>${tag}</noscript>x</td></tr></table>`).classes, [CLASSES.noscriptTablePart], tag);
+  }
+  assert.deepEqual(run("<noscript><table></table><td></td></noscript>").classes, [CLASSES.noscriptTablePart]);
+  assert.deepEqual(run("<table><tr><td><noscript><table><tr><td>x</td></tr></table></noscript>x</td></tr></table>").classes, []);
 });
 
 test("rawAttrValue reads quoted, unquoted and empty values without decoding", () => {

@@ -118,14 +118,13 @@ class LinearTimeTest {
   }
 
   /**
-   * Valid inputs that keep the token stack at or near its limit of 256 elements (M-26) for the
-   * whole input, and pop it with one end tag at a time or with one end tag for many elements. A
-   * push, a pop or a stack query that costs time in proportion to the stack size (an array shift, a
-   * scan or a rebuild of the name index) makes these inputs about 256 times slower; a cost in
-   * proportion to the number of names seen so far makes them quadratic. The block content cases
-   * also do this for the end tags in content (M-23) and for the list queries of M-24 c and j. The
-   * expected block count makes sure that the analysis reads the whole input and does not stop
-   * early.
+   * Valid inputs that keep the token stack and D at or near the limit of 256 (M-26) for the whole
+   * input, and pop it with one end tag at a time or with one end tag for many elements. A push, a
+   * pop or a stack query that costs time in proportion to the stack size (an array shift, a scan or
+   * a rebuild of the name index) makes these inputs about 256 times slower; a cost in proportion to
+   * the number of names seen so far makes them quadratic. The block content cases also do this for
+   * the end tags in content (M-23) and for the list queries of M-24 c and j. The expected block
+   * count makes sure that the analysis reads the whole input and does not stop early.
    */
   static Stream<Arguments> deepStacks() {
     return Stream.of(
@@ -167,8 +166,8 @@ class LinearTimeTest {
   }
 
   /**
-   * Deep inputs of the same shapes without the limit: they push more than 256 elements. The
-   * analysis stops at the 257th push (M-26).
+   * Deep inputs of the same shapes without the limit: D becomes larger than 256 (pushes, implied
+   * parts or crossings that keep their units). The analysis stops at that step (M-26).
    */
   static Stream<Arguments> deepStacksAboveTheLimit() {
     return Stream.of(

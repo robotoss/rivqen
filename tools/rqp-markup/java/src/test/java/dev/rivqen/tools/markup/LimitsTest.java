@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-/** M-01 (input size), M-02 (encoding) and M-26 (blocks, block size, token stack depth). */
+/** M-01 (input size), M-02 (encoding) and M-26 (blocks, block size, depth counter D). */
 class LimitsTest {
   private static final int DEPTH = Analyzer.MAX_OPEN_ELEMENTS;
 
@@ -101,7 +101,7 @@ class LimitsTest {
     assertEquals("M-26", Analyzer.analyze(bigBlock("title", Analyzer.MAX_BLOCK_BYTES + 1)).rule());
   }
 
-  // M-26: token stack depth (H-25). A push that makes the stack larger than 256 elements fails.
+  // M-26: depth counter D (H-25, H-31). A step that makes D larger than 256 fails.
 
   private static String open(String tag, int n) {
     return ("<" + tag + ">").repeat(n);
@@ -180,7 +180,7 @@ class LimitsTest {
         "<svg />"
       })
   void elementsThatAreNotPushedDoNotCount(String tag) {
-    // The stack is full: any push would fail.
+    // D is 256: any push would fail.
     Docs.assertValid(open("div", DEPTH) + tag.repeat(3) + close("div", DEPTH));
   }
 
@@ -282,6 +282,15 @@ class LimitsTest {
     assertDepthLimit(unit.repeat(DEPTH) + "<b>");
     assertDepthLimit("<div>" + unit + "</div>" + open("b", DEPTH - 1));
     Docs.assertValid("<div></div>".repeat(DEPTH) + "<div>" + unit + open("b", DEPTH - 2));
+  }
+
+  @Test
+  void popOfForeignHtmlElementGivesNothingBack() {
+    // M-26 items 4 and 5 name html and body without a context (reading of this candidate).
+    String region = "<svg>" + "<html></html>".repeat(DEPTH - 1);
+    Docs.assertValid(region + "x");
+    assertDepthLimit(region + "<g>");
+    Docs.assertValid("<svg>" + "<g></g>".repeat(DEPTH) + "<g>");
   }
 
   @Test
@@ -398,7 +407,7 @@ class LimitsTest {
 
   @Test
   void otherRulesOfTheStartTagAreCheckedBeforeTheDepth() {
-    // Placement in this candidate: the depth check is the last check before the push.
+    // Placement in this candidate: the D check is the last check before the push.
     Docs.assertInvalid(
         open("div", DEPTH) + "<div data-rq-block=A>x</div>", ErrorCode.INVALID_ID, "M-15");
     Docs.assertStructure(open("div", DEPTH) + "<frameset>", "M-10");

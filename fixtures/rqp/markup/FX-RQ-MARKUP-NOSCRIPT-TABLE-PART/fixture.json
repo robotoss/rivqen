@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-TABLE-PART",
+  "description": "A td in noscript content in a cell, without a table in C (H-38): with scripting disabled it closes the outer cell, and the inner table of the block cuts it (security review round 2 repro)",
+  "rules": [
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

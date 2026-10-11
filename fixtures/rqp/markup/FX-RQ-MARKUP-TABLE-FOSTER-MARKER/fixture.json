@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-FOSTER-MARKER",
+  "description": "A table start tag while a foster-parented marquee is the current node (H-37): the tree builder pops the marquee and the outer table without end tags, the marquee marker stays, and the a in the later block cuts it (security review round 2 repro)",
+  "rules": [
+    "M-09"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

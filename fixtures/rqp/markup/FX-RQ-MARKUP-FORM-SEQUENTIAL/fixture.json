@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-MARKUP-FORM-SEQUENTIAL",
+  "description": "Forms one after the other are valid (H-36), also a form start tag after a div end tag that closed the previous form",
+  "rules": [
+    "M-10"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "a",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"a\">",
+        "content": "x"
+      }
+    ]
+  }
+}

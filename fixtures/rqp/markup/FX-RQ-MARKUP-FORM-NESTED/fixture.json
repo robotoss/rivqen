@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-FORM-NESTED",
+  "description": "A form start tag while a form is on the token stack (H-36): the browser ignores the nested form and its end tags, so 9 outer forms stay open, the adoption agency of the a end tag stops, and the a in the block cuts it (security review round 2 repro)",
+  "rules": [
+    "M-10"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

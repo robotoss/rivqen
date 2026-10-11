@@ -340,6 +340,13 @@ def _noscript_depth(divs: int) -> bytes:
     )
 
 
+def _units_then_block(unit: bytes, reps: int) -> bytes:
+    # Security review round 2: shapes where the tree builder keeps elements open that the token stack
+    # closed by exact pops, so D stays small (3 to 5) while the WHATWG stack grows by 1 per unit.
+    # They are invalid by a structure rule (H-36, H-37), not by M-26.
+    return _depth_doc(unit * reps + b'<div data-rq-block="d">x</div>')
+
+
 GENERATED: dict[str, dict[str, Callable[[], bytes]]] = {
     "FX-RQ-MARKUP-LIMIT-INPUT-SIZE": {"input.html": _input_size},
     "FX-RQ-MARKUP-LIMIT-256": {"input.html": lambda: _many_blocks(256), "fixture.json": _limit_256_fixture},
@@ -354,6 +361,14 @@ GENERATED: dict[str, dict[str, Callable[[], bytes]]] = {
     "FX-RQ-MARKUP-LIMIT-DEPTH-MIXED": {"input.html": lambda: _mixed_ignored(29)},
     "FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT": {"input.html": lambda: _noscript_depth(255)},
     "FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ELEMENT": {"input.html": lambda: _noscript_depth(256)},
+    "FX-RQ-MARKUP-FORM-NESTED-DEPTH": {
+        "input.html": lambda: _units_then_block(b"<form><object><form></form></object></form>", 600)
+    },
+    "FX-RQ-MARKUP-TABLE-FOSTER-MARKER-DEPTH": {
+        "input.html": lambda: _units_then_block(
+            b"<object><b><table><marquee><table></table></marquee></table></b></object>", 600
+        )
+    },
 }
 
 

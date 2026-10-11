@@ -183,18 +183,14 @@ fn run_on_fifo(args: &[&Path], fifo: &Path) -> Output {
         .unwrap();
     let (done, wait) = mpsc::channel();
     let waiter = std::thread::spawn(move || done.send(child.wait_with_output().unwrap()));
-    match wait.recv_timeout(Duration::from_secs(60)) {
-        Ok(output) => {
-            waiter.join().unwrap().unwrap();
-            output
-        }
-        Err(_) => {
-            // The command waits in the open of the FIFO; a writer ends that.
-            drop(fs::OpenOptions::new().write(true).open(fifo).unwrap());
-            waiter.join().unwrap().unwrap();
-            panic!("the command waited for a writer of the FIFO");
-        }
-    }
+    let Ok(output) = wait.recv_timeout(Duration::from_secs(60)) else {
+        // The command waits in the open of the FIFO; a writer ends that.
+        drop(fs::OpenOptions::new().write(true).open(fifo).unwrap());
+        waiter.join().unwrap().unwrap();
+        panic!("the command waited for a writer of the FIFO");
+    };
+    waiter.join().unwrap().unwrap();
+    output
 }
 
 /// Round 2 L-2: single mode does not open a FIFO (the open would wait for a

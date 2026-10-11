@@ -11,7 +11,8 @@
     clippy::panic,
     clippy::indexing_slicing,
     clippy::arithmetic_side_effects,
-    clippy::format_collect
+    clippy::format_collect,
+    clippy::format_push_string
 )]
 
 use base64::Engine as _;

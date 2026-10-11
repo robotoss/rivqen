@@ -77,6 +77,7 @@ known_names! {
     Dd = b"dd",
     Dl = b"dl",
     Dt = b"dt",
+    Form = b"form",
     Frameset = b"frameset",
     H1 = b"h1",
     H2 = b"h2",
@@ -141,6 +142,19 @@ pub(crate) const VOID_NAMES: &[&[u8]] = &[
     b"source",
     b"track",
     b"wbr",
+];
+
+/// `TABLE_PART` of `markup.md` section 2.1. Also used by the M-11 check of
+/// `noscript` content (item 6), which keeps no name table.
+pub(crate) const TABLE_PART_NAMES: &[&[u8]] = &[
+    b"caption",
+    b"colgroup",
+    b"tbody",
+    b"td",
+    b"tfoot",
+    b"th",
+    b"thead",
+    b"tr",
 ];
 
 /// The name sets of `markup.md` section 2.1, without the `h1`–`h6` ranges
@@ -229,20 +243,7 @@ const SETS: &[(u32, &[&[u8]], bool)] = &[
         ],
         false,
     ),
-    (
-        flag::TABLE_PART,
-        &[
-            b"caption",
-            b"colgroup",
-            b"tbody",
-            b"td",
-            b"tfoot",
-            b"th",
-            b"thead",
-            b"tr",
-        ],
-        false,
-    ),
+    (flag::TABLE_PART, TABLE_PART_NAMES, false),
     (flag::TABLE, &[b"table"], false),
     (flag::TEMPLATE, &[b"template"], false),
     (

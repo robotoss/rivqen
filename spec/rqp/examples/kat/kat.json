@@ -1,0 +1,8 @@
+{
+  "document": "page.html",
+  "manifest": "../valid/manifest/shop.json",
+  "patches": [
+    "../valid/patch/shop-price.json",
+    "../valid/patch/shop-all.json"
+  ]
+}

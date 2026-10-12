@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:rivqen:rqp:1:manifest",
+  "title": "RQP page manifest (rqp/1)",
+  "description": "Normative text: docs/engineering/protocol/manifest-patch.md section 1. The schema does not check rules that need more than one value: unique block ids, binding to the navigation URL, the byte size of the manifest text, duplicate member names, the lexical form of integers.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "origin", "path", "template_revision", "page_revision", "blocks"],
+  "properties": {
+    "protocol": { "const": "rqp/1" },
+    "origin": { "$ref": "#/$defs/origin" },
+    "path": { "$ref": "#/$defs/path" },
+    "template_revision": { "$ref": "#/$defs/template_revision" },
+    "page_revision": { "$ref": "#/$defs/page_revision" },
+    "blocks": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/block" }
+    },
+    "policy": { "$ref": "#/$defs/policy" },
+    "limits": { "$ref": "#/$defs/limits" }
+  },
+  "$defs": {
+    "origin": {
+      "description": "ASCII serialization of the origin (WHATWG URL): scheme, lower-case host, port only when it is not the default port. No path, no trailing slash.",
+      "type": "string",
+      "maxLength": 512,
+      "pattern": "^https?://([a-z0-9._-]+|\\[[0-9a-f:.]+\\])(:[1-9][0-9]{0,4})?$"
+    },
+    "path": {
+      "description": "Path of the URL as serialized by the WHATWG URL parser. No query, no fragment.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^/[!$-;=@-~]*$"
+    },
+    "block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "format", "sha256"],
+      "properties": {
+        "id": { "$ref": "#/$defs/block_id" },
+        "format": { "$ref": "#/$defs/format" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["private", "public"], "default": "private" },
+        "ttl_seconds": { "type": "integer", "minimum": 0, "maximum": 31536000, "default": 0 },
+        "offline": { "type": "boolean", "default": false }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_patch_bytes": { "type": "integer", "minimum": 1024, "maximum": 5242880 }
+      }
+    },
+    "block_id": {
+      "description": "Markup rule M-15.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "format": { "enum": ["html", "json"] },
+    "sha256": {
+      "description": "SHA-256, base64url without padding, canonical form (the last character has its two low bits zero).",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+    },
+    "template_revision": {
+      "type": "string",
+      "pattern": "^t1\\.[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+    },
+    "page_revision": {
+      "type": "string",
+      "pattern": "^r1\\.[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+    }
+  }
+}

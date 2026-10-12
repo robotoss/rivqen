@@ -1,0 +1,32 @@
+{
+  "protocol": "rqp/1",
+  "origin": "http://[::1]:8080",
+  "path": "/a/b%20c/;x=1/~!$&'()*+,=@:_.-",
+  "template_revision": "t1.Ln0sA6lQeuJl7PW1NWiFpTOTogKdJBOUmXJloaJa78Y",
+  "page_revision": "r1.GKw-c0PwFokMUQ6T-TUmEWnZ4_VlQ2Qpgw-vCTT0-OQ",
+  "blocks": [
+    {
+      "id": "0",
+      "format": "html",
+      "sha256": "47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU"
+    },
+    {
+      "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "format": "json",
+      "sha256": "T1PNoYwrqgwDVLtfmj7L5e0Sq02OEbqHPC8RFhICuUU"
+    },
+    {
+      "id": "9_a-b",
+      "format": "html",
+      "sha256": "LXEWQrcmsEQBYnyp-6wy9chTD7GQPMTbAiWHF5IaSIE"
+    }
+  ],
+  "policy": {
+    "mode": "public",
+    "ttl_seconds": 31536000,
+    "offline": true
+  },
+  "limits": {
+    "max_patch_bytes": 1024
+  }
+}

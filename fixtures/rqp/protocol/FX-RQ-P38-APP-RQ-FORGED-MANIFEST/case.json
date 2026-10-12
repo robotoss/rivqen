@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-P38-APP-RQ-FORGED-MANIFEST",
+  "description": "The page already has an author manifest (M-13: invalid) and the application sends Rq-Version 1: the response has no Rq-Version, so no client uses the manifest (DL-030)",
+  "rules": ["RQP-09", "RQP-14"],
+  "page": "page-forged",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"],
+      ["rq-version", "1"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

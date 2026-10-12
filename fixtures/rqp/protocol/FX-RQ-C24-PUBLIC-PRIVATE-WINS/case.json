@@ -1,0 +1,28 @@
+{
+  "id": "FX-RQ-C24-PUBLIC-PRIVATE-WINS",
+  "kind": "client",
+  "description": "Mode public, a public origin, a request without credentials, Cache-Control public and private (H-61): the partition of the request",
+  "rules": ["RQP-25"],
+  "context": {
+    "public_origin": true,
+    "navigation": "first-visit",
+    "snapshot": null,
+    "credentials": false
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "public, private"]
+    ],
+    "body": {
+      "full": "page-a",
+      "members": {
+        "policy": {
+          "mode": "public"
+        }
+      }
+    }
+  }
+}

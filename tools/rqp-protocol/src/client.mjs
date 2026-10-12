@@ -7,12 +7,21 @@
 // the order of diff-engine.md section 3. It is the source of the expected
 // results of the client fixtures (FX-RQ-C*), not a client SDK.
 //
-// Not modelled: the origin allowlist, partitions, redirects and the policy
-// effects (freshness, offline). The manifest members policy and limits are
-// modelled only as part of the page revision (H-55) and as the patch size hint.
+// Modelled context: the request URL (the cache key of the snapshot), the final
+// URL after redirects, the build type and the http flag (H-49, H-58), whether
+// the request carried credentials and whether the app declares the origin
+// public (the partition of a new snapshot, H-61).
+//
+// Not modelled: the origin allowlist, the partition keys and a partition
+// change (AUTH_PARTITION_CHANGED), the other cache identity inputs (Vary,
+// variant, ignored query parameters), no-store, and the policy effects
+// (freshness, offline). A context snapshot is in the request partition. The
+// manifest members policy and limits are modelled as part of the page revision
+// (H-55), as the patch size hint and, for mode, as the partition choice.
 
 import {
   Code,
+  asciiLower,
   DELTA_TYPE,
   LIMITS,
   digestPrefix,
@@ -20,7 +29,7 @@ import {
   pageRevision,
   sha256b64u,
 } from './common.mjs';
-import { combined, mediaType, normalizeHeaders } from './http.mjs';
+import { combined, mediaType, normalizeHeaders, splitList } from './http.mjs';
 import { analyze, findManifestElements, passesAttributeRule } from './markup.mjs';
 import { parseStrict } from './json-strict.mjs';
 import { loadSchema, validate } from './schema.mjs';
@@ -28,20 +37,40 @@ import { parseItem } from './sf.mjs';
 
 const SCHEMAS = { manifest: loadSchema('manifest'), patch: loadSchema('patch') };
 
-/** A snapshot: the original document, its analysis, the policy and limits of its manifest, its page revision. */
-function snapshot(document, analysis, members) {
+/** The partition of a snapshot: the partition of the request, or the shared public partition (H-61). */
+export const Partition = Object.freeze({ REQUEST: 'request', PUBLIC: 'public' });
+
+/**
+ * A snapshot: the original document, its analysis, the policy and limits of
+ * its manifest, its page revision, and its cache key (canonical URL and
+ * partition).
+ */
+function snapshot(document, analysis, members, key = { url: null, partition: Partition.REQUEST }) {
   const m = membersOf(members);
-  return { document, analysis, members: m, page_revision: pageRevision(analysis.template_revision, analysis.blocks, m) };
+  return { document, analysis, members: m, page_revision: pageRevision(analysis.template_revision, analysis.blocks, m), ...key };
 }
 
 /**
  * A client snapshot from an original document (without the manifest) that is
- * valid for RQP, and the members policy and limits of its manifest.
+ * valid for RQP, and the members policy and limits of its manifest. `url` is
+ * the URL of its cache key (null: not known).
  */
-export function snapshotOf(document, members = {}) {
+export function snapshotOf(document, members = {}, url = null) {
   const analysis = analyze(document);
   if (!analysis.valid) throw new Error('a snapshot needs a document that is valid for RQP');
-  return snapshot(document, analysis, members);
+  return snapshot(document, analysis, members, { url: url === null ? null : canonicalUrl(url), partition: Partition.REQUEST });
+}
+
+/**
+ * The URL part of the cache key (H-58): scheme, host, port, path and query as
+ * the WHATWG URL parser serializes them, without the fragment. The other steps
+ * of cache identity section 2 (percent-encoding, ignored parameters) are not
+ * modelled.
+ */
+export function canonicalUrl(url) {
+  const u = new URL(url);
+  u.hash = '';
+  return u.href;
 }
 
 /** Block content up to this size is listed in a result; sha256 binds every block. */
@@ -55,6 +84,8 @@ export const CONTENT_LISTED_BYTES = 4096;
 function describe(snap) {
   const { document, analysis } = snap;
   return {
+    url: snap.url,
+    partition: snap.partition,
     template_revision: analysis.template_revision,
     page_revision: snap.page_revision,
     ...snap.members,
@@ -68,11 +99,20 @@ function describe(snap) {
   };
 }
 
-/** Section 6.1, rule 5 (H-49): RQP for https; for http only in a debug build with the app flag. */
-export function rqpAllowed(ctx) {
-  const scheme = new URL(ctx.url).protocol;
+/**
+ * Section 6.1, rule 5 (H-49) and section 6.3 (H-58): RQP for an https URL; for
+ * an http URL only in a debug build with the app flag. `url` defaults to the
+ * request URL.
+ */
+export function rqpAllowed(ctx, url = ctx.url) {
+  const scheme = new URL(url).protocol;
   if (scheme === 'https:') return true;
   return scheme === 'http:' && ctx.build === 'debug' && ctx.allow_http === true;
+}
+
+/** The final URL of the response (after redirects); the request URL without a redirect. */
+function finalUrlOf(ctx) {
+  return ctx.final_url ?? ctx.url;
 }
 
 /** The base64 Byte Sequence content of Rq-Have member b (H-44). */
@@ -110,25 +150,64 @@ const result = (outcome, fields = {}) => ({
 });
 
 /**
+ * Section 6.3, item 1 (H-58): the client keeps its snapshot on a 304 only when
+ * the request sent If-None-Match with exactly the strong tag of the snapshot
+ * page revision R, the final URL has the cache key of the snapshot, and the
+ * ETag of the 304, when present, matches R by weak comparison.
+ */
+export function notModifiedAccepted(ctx, sentHeaders, responseHeaders) {
+  if (ctx.snapshot === null || canonicalUrl(finalUrlOf(ctx)) !== canonicalUrl(ctx.url)) return false;
+  const tag = `"${ctx.snapshot.page_revision}"`;
+  if (combined(sentHeaders, 'if-none-match') !== tag) return false;
+  const etag = combined(responseHeaders, 'etag');
+  if (etag === null) return true;
+  return (etag.startsWith('W/') ? etag.slice(2) : etag) === tag;
+}
+
+/** The directive names of a Cache-Control value, in lower case. */
+export function cacheDirectives(value) {
+  if (value === null) return new Set();
+  return new Set(splitList(value).map((d) => asciiLower(d.split('=')[0].replace(/[ \t]+$/, ''))));
+}
+
+/**
+ * Manifest-patch section 1.4, mode (H-61): the shared public partition only
+ * for a manifest with mode "public", an origin that the app declares public,
+ * no Cache-Control directive "private", and an explicit "public" directive or
+ * a request without credentials. Else the partition of the request.
+ */
+export function partitionFor(ctx, responseHeaders, members) {
+  if (members.policy?.mode !== 'public' || ctx.public_origin !== true) return Partition.REQUEST;
+  const directives = cacheDirectives(combined(responseHeaders, 'cache-control'));
+  if (directives.has('private')) return Partition.REQUEST;
+  return directives.has('public') || ctx.credentials === false ? Partition.PUBLIC : Partition.REQUEST;
+}
+
+/**
  * Section 6.3. Returns { outcome, error, next, metric, snapshot }.
  * outcome: "not-modified", "patched", "stored", "normal" or "rejected".
  * next: "keep", "show", "fallback-load" or "webview-load".
  *
- * @param {{ url: string, build: string, allow_http: boolean, navigation: string, snapshot: object|null }} ctx
+ * @param {{ url: string, final_url?: string, build: string, allow_http: boolean, navigation: string,
+ *   snapshot: object|null, credentials?: boolean, public_origin?: boolean }} ctx
  * @param {{ status: number, headers: Array<[string, string]>, body: Uint8Array|null }} response
  */
 export function handleResponse(ctx, response) {
   const headers = normalizeHeaders(response.headers);
   const body = response.body === null ? Buffer.alloc(0) : Buffer.from(response.body);
   if (!rqpAllowed(ctx)) return result('normal'); // the client sent no RQP field
-  if (response.status === 304 && ctx.snapshot !== null) return result('not-modified', { next: 'keep' });
+  if (response.status === 304) {
+    // H-58: a 304 that the client cannot match to its snapshot gives a normal load.
+    if (notModifiedAccepted(ctx, requestHeaders(ctx), headers)) return result('not-modified', { next: 'keep' });
+    return result('normal', { next: 'webview-load' });
+  }
   const type = mediaType(combined(headers, 'content-type'));
   if (response.status === 200 && type === DELTA_TYPE) return handleDelta(ctx, body);
-  if (response.status === 200 && type === 'text/html') {
+  if (response.status === 200 && type === 'text/html' && rqpAllowed(ctx, finalUrlOf(ctx))) {
     const v = combined(headers, 'rq-version');
     const parsed = v === null ? null : parseItem(v);
     if (parsed !== null && parsed.item.type === 'integer' && parsed.item.value === 1) {
-      return handleFull(ctx, body);
+      return handleFull(ctx, headers, body);
     }
   }
   return result('normal');
@@ -137,7 +216,10 @@ export function handleResponse(ctx, response) {
 // ---------------------------------------------------------------------------
 // Full document: manifest-patch sections 1.7 (client) and 1.8.
 
-/** The checks of sections 1.7 and 1.8. Returns the new snapshot or a failure. */
+/**
+ * The checks of sections 1.7 and 1.8 against the final URL. Returns the new
+ * snapshot (in the request partition) or a failure.
+ */
 export function checkFull(ctx, body) {
   const found = findManifestElements(body);
   if (found === null) return { error: 'walk' };
@@ -153,7 +235,7 @@ export function checkFull(ctx, body) {
   if (validate(SCHEMAS.manifest, json.value).length > 0) return { error: 'schema' };
   const m = json.value;
   if (new Set(m.blocks.map((b) => b.id)).size !== m.blocks.length) return { error: 'ids' };
-  const url = new URL(ctx.url);
+  const url = new URL(finalUrlOf(ctx));
   if (m.origin !== url.origin || m.path !== url.pathname) return { error: 'url' };
   // Item 5 (H-48): the markup analysis of the original document.
   const original = Buffer.concat([body.subarray(0, el.start), body.subarray(el.end)]);
@@ -165,15 +247,17 @@ export function checkFull(ctx, body) {
     a.blocks.every((b, i) => b.id === m.blocks[i].id && b.format === m.blocks[i].format && b.sha256 === m.blocks[i].sha256);
   if (!same) return { error: 'analysis' };
   // H-55: the page revision with the policy line of this manifest.
-  const snap = snapshot(original, a, m);
+  // H-58: the snapshot is bound to the cache key of the final URL.
+  const snap = snapshot(original, a, m, { url: canonicalUrl(url.href), partition: Partition.REQUEST });
   if (snap.page_revision !== m.page_revision) return { error: 'revision' };
   return { snapshot: snap };
 }
 
-function handleFull(ctx, body) {
+function handleFull(ctx, headers, body) {
   const checked = checkFull(ctx, body);
   if (checked.snapshot === undefined) return result('rejected', { error: Code.MANIFEST_INVALID });
-  return result('stored', { snapshot: describe(checked.snapshot) });
+  const snap = { ...checked.snapshot, partition: partitionFor(ctx, headers, checked.snapshot.members) };
+  return result('stored', { snapshot: describe(snap) });
 }
 
 // ---------------------------------------------------------------------------
@@ -250,7 +334,7 @@ export function verifyDelta(snap, body, offered, maxPatchBytes = LIMITS.maxPatch
     after.blocks.length === analysis.blocks.length &&
     after.blocks.every((b, i) => b.id === analysis.blocks[i].id && b.format === analysis.blocks[i].format);
   if (!sameShape) return { code: Code.PATCH_CONTENT_REJECTED };
-  const patchedSnapshot = snapshot(patched, after, members);
+  const patchedSnapshot = snapshot(patched, after, members, { url: snap.url, partition: snap.partition });
   if (patchedSnapshot.page_revision !== env.next_revision) return { code: Code.INTEGRITY_ERROR };
   // Step 9: the attribute rule on each patched html block.
   for (const i of replacements.keys()) {
@@ -262,7 +346,11 @@ export function verifyDelta(snap, body, offered, maxPatchBytes = LIMITS.maxPatch
 }
 
 function handleDelta(ctx, body) {
-  const offered = ctx.navigation === 'delta' && ctx.snapshot !== null;
+  // Diff-engine step 1 (H-58): the final URL has the cache key of the snapshot.
+  // A release build sent RQP fields only for https, so the same key is https too.
+  const sameKey = canonicalUrl(finalUrlOf(ctx)) === canonicalUrl(ctx.url);
+  // Step 2: the request offered a delta. Steps 1 and 2 have the same code (PATCH_INVALID).
+  const offered = sameKey && ctx.navigation === 'delta' && ctx.snapshot !== null;
   const verified = ctx.snapshot === null ? { code: Code.PATCH_INVALID } : verifyDelta(ctx.snapshot, body, offered);
   if (verified.code !== undefined) {
     return result('rejected', {
@@ -280,7 +368,7 @@ function handleDelta(ctx, body) {
 
 function internal(context) {
   if (context.snapshot === null) return { ...context, snapshot: null };
-  const snap = snapshotOf(Buffer.from(context.snapshot.document), membersOf(context.snapshot));
+  const snap = snapshotOf(Buffer.from(context.snapshot.document), membersOf(context.snapshot), context.url);
   if (snap.page_revision !== context.snapshot.page_revision) throw new Error('the context snapshot does not match its document');
   return { ...context, snapshot: snap };
 }

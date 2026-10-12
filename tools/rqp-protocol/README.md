@@ -13,9 +13,9 @@ The reference functions here are the source of the expected results. They are no
 |---|---|
 | `gen.mjs` | Generator. Writes the generated pages and every `expected.json` and `response.body`. `--check` changes nothing and fails on a stale, missing or extra file |
 | `check.mjs` | Conformance harness. Runs a server or a client under test over the fixtures and compares the results |
-| `src/server.mjs` | Reference server step: negotiation section 4, steps 1 to 9, one function for each field rule of section 3 |
-| `src/client.mjs` | Reference client step: request fields (section 6.2) and response handling (section 6.3) with the manifest checks and the delta checks in the order of diff-engine section 3 |
-| `src/markup.mjs` | The markup analysis of the Node.js candidate (`tools/rqp-markup/node`), the first `</head>` in HTML context, the manifest elements, the attribute rule (manifest-patch section 4.2) |
+| `src/server.mjs` | Reference server step: negotiation section 4, steps 1 to 9 (with the removal of the `Rq-*` fields of the application response, DL-030, and without its `Last-Modified` on F, DL-032), one function for each field rule of section 3 |
+| `src/client.mjs` | Reference client step: request fields (section 6.2) and response handling (section 6.3) with the manifest checks and the delta checks in the order of diff-engine section 3; the binding of a `304`, a manifest and a delta to the request and to the cache key of the final URL (H-58); the partition of a new snapshot (H-61) |
+| `src/markup.mjs` | The markup analysis of the Node.js candidate (`tools/rqp-markup/node`), the head end tag of the document (manifest-patch section 1.7, DL-031), the manifest elements, the attribute rule with `javascript:`, `vbscript:` and `data:` (manifest-patch section 4.2, H-59) |
 | `src/sf.mjs` | Structured Field Values parser (RFC 9651 section 4.2): Item, List, Dictionary, all bare item types |
 | `src/http.mjs` | Field lines, combined values, entity-tags, `Accept`, media type |
 | `src/json-strict.mjs` | JSON parser with the rules of manifest-patch section 3.2 (no duplicate member names, no lone surrogate, integers as digits, depth 16) |
@@ -53,7 +53,7 @@ The reference functions here are the source of the expected results. They are no
 
 Exit codes of `gen.mjs` and `check.mjs`: `0` success, `1` a stale file, a defective case or a failed fixture, `2` a usage error.
 
-A case can have `"level": "should"` (today only `FX-RQ-P35-ATTRIBUTE-RULE`, H-56). The generator copies the member to `expected.json`; any other value is a defective case. `check.mjs` prints the failure of such a fixture as `FAIL [SHOULD] <name>: …` and counts it apart: the last line is `rqp-protocol check: <passed> passed, <failed> failed, <n> SHOULD failed`. A SHOULD failure also gives exit code `1`, so it is never hidden; a conforming server that chooses not to follow the SHOULD rule reports it as a known deviation.
+A case can have `"level": "should"` (today only `FX-RQ-P35-ATTRIBUTE-RULE` and `FX-RQ-P35-ATTRIBUTE-RULE-DATA`, H-56). The generator copies the member to `expected.json`; any other value is a defective case. `check.mjs` prints the failure of such a fixture as `FAIL [SHOULD] <name>: …` and counts it apart: the last line is `rqp-protocol check: <passed> passed, <failed> failed, <n> SHOULD failed`. A SHOULD failure also gives exit code `1`, so it is never hidden; a conforming server that chooses not to follow the SHOULD rule reports it as a known deviation.
 
 ## Procedure: check a server under test
 
@@ -76,7 +76,7 @@ A case can have `"level": "should"` (today only `FX-RQ-P35-ATTRIBUTE-RULE`, H-56
 ## Procedure: check a client under test
 
 1. Write an ES module that exports `clientStep(context, response)` and, if possible, `clientRequest(context)`.
-   - `context`: `{ url, build, allow_http, navigation, snapshot }`. `navigation` is `first-visit`, `delta` or `fallback`. `snapshot` is `null` or `{ document, template_revision, page_revision, blocks, policy?, limits? }`, where `document` is the original document (without the manifest).
+   - `context`: `{ url, final_url, build, allow_http, credentials, public_origin, navigation, snapshot }`. `url` is the request URL and the cache key URL of the snapshot; `final_url` is the URL of the response after redirects (H-58). `credentials` is `true` when the request had a `Cookie` or `Authorization` field; `public_origin` is `true` when the app declares the origin public (H-61). `navigation` is `first-visit`, `delta` or `fallback`. `snapshot` is `null` or `{ document, template_revision, page_revision, blocks, policy?, limits? }`, where `document` is the original document (without the manifest).
    - `response`: `{ status, headers, body }`.
    - `clientStep` returns `{ outcome, error, next, metric, snapshot }` (values below).
    - `clientRequest` returns the request field lines.
@@ -90,9 +90,9 @@ A case can have `"level": "should"` (today only `FX-RQ-P35-ATTRIBUTE-RULE`, H-56
 |---|---|
 | `outcome` | `not-modified`, `patched`, `stored` (a full document with a valid manifest), `normal` (not RQP), `rejected` |
 | `error` | `null` or a code of manifest-patch section 5 |
-| `next` | `keep` (304), `show` (show this response), `fallback-load` (one GET without delta fields), `webview-load` (the WebView loads the URL; no second fallback) |
+| `next` | `keep` (304), `show` (show this response), `fallback-load` (one GET without delta fields), `webview-load` (the WebView loads the URL; no second fallback). A `304` that the client cannot bind to its snapshot gives `normal` and `webview-load` with no error (H-58) |
 | `metric` | `true` only for `PATCH_CONTENT_REJECTED` |
-| `snapshot` | `null`, or the new snapshot: `template_revision`, `page_revision`, `blocks` (`id`, `format`, `sha256`, and `content` when it has at most 4096 bytes), `document_sha256` (SHA-256 of the stored original document, base64url), `policy` and `limits` when the manifest has them |
+| `snapshot` | `null`, or the new snapshot: `url` (the canonical final URL: WHATWG serialization without the fragment) and `partition` (`request` or `public`), the cache key of the snapshot (H-58, H-61); `template_revision`, `page_revision`, `blocks` (`id`, `format`, `sha256`, and `content` when it has at most 4096 bytes), `document_sha256` (SHA-256 of the stored original document, base64url), `policy` and `limits` when the manifest has them |
 
 ## Comparison rules of check.mjs
 
@@ -120,9 +120,10 @@ Client fixtures: `outcome`, `error`, `next`, `metric` exact; `snapshot` equal (b
 2. An input that the reference steps do not model throws `UnsupportedInput`: a content coding, `If-Match`, `If-Unmodified-Since`, `If-Range`, `If-Modified-Since` without `If-None-Match`. The generator reports it as a defective case. So no fixture depends on an unmodelled path.
 3. The page revision of a manifest with `policy` or `limits` has the policy line (H-55). The markup candidate gives the revision without it, so both steps compute it again from the template revision and the block hashes.
 4. The server step follows H-56 (SHOULD): a changed `html` block that fails the attribute rule gives F.
-5. Pages and fixtures have no `policy` and no `limits`, except `FX-RQ-P36-*` and `FX-RQ-C19-*`.
+5. Pages and fixtures have no `policy` and no `limits`, except `FX-RQ-P36-*`, `FX-RQ-C19-*` and `FX-RQ-C24-*` (`"mode": "public"`).
+6. The client models the cache key only by its URL (canonical final URL) and the partition choice. Partition keys, a partition change, `Vary`, `no-store` and the freshness rules are not modelled; a context snapshot is in the partition of the request.
 
-**Resource limits.** All parsers are linear in their input. The server reads `Rq-Have` only up to 4096 bytes and `Rq-Capabilities` up to 1024 bytes before it parses them. The JSON parser stops at depth 16. The token-stack walk for `</head>` and the manifest elements stops at 256 entries (fails closed); for a document that is valid for RQP the markup rule M-26 keeps the stack below this limit. The client checks the envelope size before it parses the envelope.
+**Resource limits.** All parsers are linear in their input. The server reads `Rq-Have` only up to 4096 bytes and `Rq-Capabilities` up to 1024 bytes before it parses them. The JSON parser stops at depth 16. The token-stack walk for the head end tag and the manifest elements stops at 256 entries (fails closed); the head rule adds constant work per token and reads the bytes between tokens once; for a document that is valid for RQP the markup rule M-26 keeps the stack below this limit. The client checks the envelope size before it parses the envelope.
 
 **Failure modes.** Every parser returns "absent" or an error code for malformed input and never throws for a string or a byte input (seeded property tests in `test/sf.test.mjs`). A server under test that throws fails its fixture; the harness continues with the next fixture.
 
@@ -157,10 +158,12 @@ Server `case.json` members in addition to the README format: `server_config` (`p
 | Member | Rule |
 |---|---|
 | `context.url` | Default `https://shop.example.com/catalog` |
+| `context.final_url` | Default: `context.url` (no redirect) |
 | `context.build`, `context.allow_http` | Default `release`, `false` |
+| `context.credentials`, `context.public_origin` | Default `true`, `false` |
 | `context.navigation` | `first-visit`, `delta` or `fallback` |
 | `context.snapshot` | `null`, a page id, or `{ "page": id, "members": { "policy": …, "limits": … } }` |
 | `response.headers` | Literal lines; the placeholders of the README are allowed |
-| `response.body` | `null`; `{ "page": id }` (the page bytes); `{ "full": id, … }` (F of the page; options `members`, `manifest_of`, `manifest_type`, `manifest_position: "body"`, `manifest_count: 2`, `duplicate_member: true`); `{ "delta": { "from": id, … } }` (options `to` or `ops: [{ block_id, content, sha256? }]`, `base_revision`, `next_revision`, `template_revision` as page ids, `next_members`, `size` (exact envelope bytes), `duplicate_member: true`). Without options, a delta is consistent: correct hashes and a `next_revision` computed from the snapshot |
+| `response.body` | `null`; `{ "page": id }` (the page bytes); `{ "full": id, … }` (F of the page; options `members`, `manifest_of`, `manifest_type`, `manifest_position: "body"` (before `</body>`) or `"head-text"` (before the first `</head>` bytes in any context; default: the head end tag of the document), `manifest_count: 2`, `duplicate_member: true`); `{ "delta": { "from": id, … } }` (options `to` or `ops: [{ block_id, content, sha256? }]`, `base_revision`, `next_revision`, `template_revision` as page ids, `next_members`, `size` (exact envelope bytes), `duplicate_member: true`). Without options, a delta is consistent: correct hashes and a `next_revision` computed from the snapshot |
 
 The generator writes `expected.json` (context with the snapshot values, the request fields, the response with `body_bytes` and `body_sha256`, the result) and `response.body` (exact bytes).

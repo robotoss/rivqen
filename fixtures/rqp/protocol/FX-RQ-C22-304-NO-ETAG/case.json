@@ -1,0 +1,17 @@
+{
+  "id": "FX-RQ-C22-304-NO-ETAG",
+  "kind": "client",
+  "description": "A 304 to R(page-a) without an ETag: kept (H-58)",
+  "rules": ["RQP-24"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 304,
+    "headers": [
+      ["cache-control", "no-cache"]
+    ],
+    "body": null
+  }
+}

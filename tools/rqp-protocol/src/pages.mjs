@@ -68,7 +68,14 @@ export const EXPECTED = Object.freeze({
   'page-a': { blocks: ['title', 'price', 'cart'] },
   'page-b': { blocks: ['title', 'price', 'cart'] },
   'page-b-onclick': { blocks: ['title', 'price', 'cart'] },
+  'page-b-data': { blocks: ['title', 'price', 'cart'] },
   'page-c': { error: 'RQP_MARKUP_DUPLICATE' },
+  // An author manifest (the bytes of spec/rqp/examples/kat/full.html): M-13 (DL-030).
+  'page-forged': { error: 'RQP_MARKUP_RESERVED' },
+  // Valid for RQP, but without a head end tag of the document (DL-031).
+  'page-head-stray': { blocks: ['title', 'price', 'cart'] },
+  'page-head-template': { blocks: ['title', 'price', 'cart'] },
+  'page-no-head-start': { blocks: ['title', 'price', 'cart'] },
   'page-t2': { blocks: ['title', 'price', 'cart'] },
   'page-zero': { blocks: [] },
   'page-big-a': { blocks: ['title', 'price', 'cart'] },

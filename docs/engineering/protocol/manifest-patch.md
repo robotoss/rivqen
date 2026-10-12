@@ -2,7 +2,7 @@
 
 This page defines the two RQP documents of `rqp/1`: the **page manifest** (what a page version contains) and the **patch envelope** (how a client goes from one page version to the next). It also defines the block hashes and the revisions.
 
-**Status:** <Badge type="info" text="DESIGN" /> Normative for `rqp/1` from WP-17 S2. Human decisions ([WP-17 S1](/engineering/plan/sprints/WP-17-S1) §1, [WP-17 S2](/engineering/plan/sprints/WP-17-S2) §1): H-1 (inline manifest only), H-2 (full SHA-256, base64url), H-8 (revisions `t1.` and `r1.`), H-9 (no `page_id` and no `sequence` over HTTP), H-10 (hash in each operation), H-11 (JSON envelope, content as a string, no JCS), H-28 (ASCII case-insensitive match of the manifest type), H-44 (client block digests; the client verifies `next_revision`), H-45 (caching of full and delta responses), H-46 (`If-None-Match` carries the client revision), H-47 (only `replace_block`), H-48 (client markup analysis of the original and the patched document; attribute rule), H-49 (`http` only in debug builds; manifest position), H-50 (error codes, `maxManifestBytes`), H-51 (the same full document for every request), H-55 (`policy` and `limits` in the page revision), H-56 (the server sends the full document when a changed block fails the attribute rule). JSON Schemas: `spec/rqp/schemas/`. Headers and the choice between a full document, a delta and `304`: [negotiation](/engineering/protocol/negotiation). Block markup: [markup](/engineering/protocol/markup).
+**Status:** <Badge type="info" text="DESIGN" /> Normative for `rqp/1` from WP-17 S2. Human decisions ([WP-17 S1](/engineering/plan/sprints/WP-17-S1) §1, [WP-17 S2](/engineering/plan/sprints/WP-17-S2) §1): H-1 (inline manifest only), H-2 (full SHA-256, base64url), H-8 (revisions `t1.` and `r1.`), H-9 (no `page_id` and no `sequence` over HTTP), H-10 (hash in each operation), H-11 (JSON envelope, content as a string, no JCS), H-28 (ASCII case-insensitive match of the manifest type), H-44 (client block digests; the client verifies `next_revision`), H-45 (caching of full and delta responses), H-46 (`If-None-Match` carries the client revision), H-47 (only `replace_block`), H-48 (client markup analysis of the original and the patched document; attribute rule), H-49 (`http` only in debug builds; manifest position), H-50 (error codes, `maxManifestBytes`), H-51 (the same full document for every request), H-55 (`policy` and `limits` in the page revision), H-56 (the server sends the full document when a changed block fails the attribute rule), H-58 (binding to the final URL), H-59 (`vbscript:` and `data:` in the attribute rule), H-60 (privacy of the digests), H-61 (the `public` partition). Architect decisions: DL-030 (`Rq-*` fields of the application response), DL-031 (the head end tag of the document). JSON Schemas: `spec/rqp/schemas/`. Headers and the choice between a full document, a delta and `304`: [negotiation](/engineering/protocol/negotiation). Block markup: [markup](/engineering/protocol/markup).
 
 [[toc]]
 
@@ -136,6 +136,7 @@ The separator after `PL` is `09` (tab). `SHA-256(P)` gives `r1.ke0dIjtkqBtefkyyL
    - the verification of `next_revision` of a patch (section 2.4, steps 5 to 7; H-44) computes steps 4 and 5 from the stored `template_revision` string, the policy line of the snapshot manifest and the full block hashes of the snapshot and of the operations. It needs no template bytes;
    - the markup analysis of the patched document gives the template revision and the block hashes again, and the client computes the page revision from them with the policy line of the snapshot manifest (section 2.4, step 8; H-48, H-55).
 4. A keyed variant of the revisions for private pages (HMAC) is decided in WP-18. It will have its own prefix and its own client rule. In `rqp/1` the only prefixes are `t1.` and `r1.`.
+5. **Privacy (H-60).** The revisions and the block hashes are unkeyed. The client sends them in `If-None-Match` and in `Rq-Have` (64-bit prefixes), so the header logs of a CDN or a proxy can hold them. A party that reads such logs and can guess a block content can test the guess. Deployments SHOULD exclude `Rq-Have` and `If-None-Match` from intermediary header logs until the keyed revisions of WP-18 ([negotiation §10](/engineering/protocol/negotiation#_10-security-and-privacy), item 4).
 
 ### 1.4 Policy
 
@@ -149,13 +150,18 @@ The separator after `PL` is `09` (tab). `SHA-256(P)` gives `r1.ke0dIjtkqBtefkyyL
 
 `policy` and `limits` are part of the page revision (section 1.3, H-55). A change of either member changes the page revision and the ETag of the full document, also when the original document stays the same. The client gets the new values with the next full document (section 2.4, "Policy and limits").
 
-The policy can only make the client stricter. The client applies the HTTP headers ([freshness](/engineering/cache/policy)), the app policy and the manifest policy, and the strictest one decides. `Cache-Control: no-store` always wins.
+The manifest policy never allows what the HTTP headers ([freshness](/engineering/cache/policy)) or the app policy deny. `Cache-Control: no-store` always wins. Member by member (H-61):
+
+- `ttl_seconds` and `offline: false` can only make the client stricter: a shorter freshness lifetime, no stale snapshot on a network error.
+- `offline: true` and `"mode": "public"` allow more than the default, but only together with the HTTP headers and the app: `offline: true` has an effect only when the HTTP headers allow a stale response on an error (`stale-if-error`); `"mode": "public"` has an effect only under the conditions of the table below. Without them the client applies the default.
 
 | Member | Effect |
 |---|---|
-| `mode` | `"private"`: the snapshot belongs to the partition of the request ([cache identity](/engineering/cache/identity)). `"public"`: the client MAY store the snapshot in the shared `public` partition, but only when the app declares the origin public **and** the response has no `Cache-Control: private`. |
+| `mode` | `"private"`: the snapshot belongs to the partition of the request ([cache identity](/engineering/cache/identity)). `"public"`: the client MAY store the snapshot in the shared `public` partition, but only when all of these are true (H-61, RQP-25): the app declares the origin public; the response has no `Cache-Control` directive `private` (also not with field names); the response has the `Cache-Control` directive `public`, **or** the request had no credentials (no `Cookie` and no `Authorization` field). Else the snapshot belongs to the partition of the request. |
 | `ttl_seconds` | Upper bound of the freshness lifetime of the snapshot: the client uses the smaller of the RFC 9111 freshness lifetime and `ttl_seconds`. With `0`, the client revalidates before it shows the snapshot. |
 | `offline` | `true`: the client MAY show the stale snapshot on a network error when the HTTP headers allow it (`stale-if-error`, [freshness](/engineering/cache/policy) rule 6). `false`: the client never shows the snapshot on a network error. |
+
+<Badge type="tip" text="FACT" /> RFC 9111 §3.5: "A shared cache MUST NOT use a cached response to a request with an Authorization header field to satisfy any subsequent request unless the response contains a Cache-Control field with a response directive that allows it to be stored by a shared cache". §5.2.2.9: `public` "permits a shared cache to reuse a response to a request containing an Authorization header field". <Badge type="info" text="DESIGN" /> The `public` partition is shared by all profiles of the app, so the client applies this rule to it, and treats `Cookie` like `Authorization` (H-61). The manifest alone never moves a snapshot out of the partition of the request: when a server sets `"mode": "public"` on a page with personal content, but the request had credentials and the response has no `Cache-Control: public`, the content stays in the partition of the user.
 
 ### 1.5 Limits
 
@@ -178,8 +184,9 @@ A missing member means "no hint". `"limits": {}` and no `limits` member give the
 
 1. The client compares `origin` and `path` byte for byte with its own serialization of the **response URL** (the final URL after redirects), never with values from the manifest alone. On a difference the manifest is invalid (section 1.8).
 2. The query string is not part of the manifest, because a query can hold personal data. The client cache key keeps the query ([cache identity](/engineering/cache/identity)), so two URLs that differ only in the query have different snapshots with the same `path`.
-3. The schemas accept `http` and `https` origins (H-49), so that a local development server can be tested. A client uses RQP for an `http` origin only in a **debug build** and only when the app sets an explicit flag for it. A **release build** uses RQP only for `https` origins: for an `http` URL it sends no `Rq-*` field and does a normal load ([negotiation §6.1](/engineering/protocol/negotiation#_6-1-where-the-client-sends-rqp-fields)).
-4. The server takes `origin` from its configuration of the public origin of the site, not from the connection (a server behind a TLS proxy sees `http` and an internal host). `path` is the path of the target URI.
+3. The schemas accept `http` and `https` origins (H-49), so that a local development server can be tested. A client uses RQP for an `http` origin only in a **debug build** and only when the app sets an explicit flag for it. A **release build** uses RQP only for `https` origins: for an `http` URL it sends no `Rq-*` field and does a normal load ([negotiation §6.1](/engineering/protocol/negotiation#_6-1-where-the-client-sends-rqp-fields)). The rule applies to the final URL too: after a redirect to an `http` URL, a release build does not use the manifest (a normal page, no error) and does not accept a delta (H-58).
+4. **Binding (H-58).** The client stores the new snapshot under the cache key of the final URL: the partition and the canonical URL with scheme, host, port, path and query ([cache identity](/engineering/cache/identity)). It applies a delta only to the snapshot with the cache key of the final URL of the delta ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response)). Rule 1 checks only origin and path, because the manifest has no query; the cache key adds the query and the partition.
+5. The server takes `origin` from its configuration of the public origin of the site, not from the connection (a server behind a TLS proxy sees `http` and an internal host). `path` is the path of the target URI.
 
 ### 1.7 Delivery in the document
 
@@ -188,7 +195,7 @@ A missing member means "no hint". `"limits": {}` and no `limits` member give the
 **Server.**
 
 1. The server inserts exactly these bytes, **exactly once** per document (H-51): `<script type="application/rivqen-manifest+json">`, then the manifest JSON text M, then `</script>`. The start tag has no other attribute and no white space other than the one space.
-2. The insertion point is immediately before the `<` of the first `</head>` end tag that the markup pass of the original document reads in HTML context (not in raw text, not in a comment) (H-49). A document without such an end tag is sent without RQP: the original document, no manifest, no `Rq-*` field, no ETag that RQP computed (as an invalid page, [negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server), step 2). A `</head>` end tag is never in block content (markup M-23), so the insertion never changes block content.
+2. The insertion point is immediately before the `<` of the **head end tag** of the original document (H-49, DL-031; defined below). A document without a head end tag is sent without RQP: the original document, no manifest, no `Rq-*` field, no ETag that RQP computed (as an invalid page, [negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server), step 2). A `</head>` end tag is never in block content (markup M-23), so the insertion never changes block content.
 3. M follows section 3.2 and MUST NOT contain the byte `<` (`3C`). The schema patterns allow `<` in no string, so a serializer that writes no `<` in its syntax meets this rule. Then the content of the element cannot end early or change the script data state.
 4. All other bytes of the original document stay unchanged. The hashes and revisions are those of the original document (section 1.3).
 5. **One full document for every request** (H-51). The server inserts the manifest into the response for every request to a valid page, also for a request without RQP fields or with an unsupported `Rq-Version`. The full document does not depend on any request field ([negotiation §5.1](/engineering/protocol/negotiation#_5-1-full-document)).
@@ -202,11 +209,28 @@ A missing member means "no hint". `"limits": {}` and no `limits` member give the
 
 1. The manifest element is the `script` start tag whose **first** `type` attribute has a raw value (markup §2.1, no character reference decoding) that is equal to `application/rivqen-manifest+json` by **ASCII case-insensitive byte comparison**: the value has exactly 32 bytes, and each byte is equal to the byte of the type after the bytes `41`–`5A` (A–Z) are mapped to `61`–`7A` (a–z) on both sides. No other mapping, no trimming of white space, no MIME parameters, no Unicode case folding (H-28). A value with a byte `80` or larger never matches.
 2. A response with `Rq-Version: 1` has **exactly one** manifest element (H-51). No matching start tag, or more than one, means the document has no valid manifest (section 1.8).
-3. The end tag of the manifest element is immediately followed by the first `</head>` end tag in HTML context (server item 2). Else the document has no valid manifest.
+3. The end tag of the manifest element is immediately followed by the head end tag of the document (server item 2, DL-031). Else the document has no valid manifest. This is also the case when the document has no head end tag.
 4. M is the bytes between the `>` of the start tag and the `<` of the next `</script` end tag.
 5. The client gets the original document when it removes the bytes of the element (from the `<` of the start tag to the `>` of the end tag). The client stores the snapshot without the manifest element.
 
 The client finds the element with the tokenizer of [markup §2.3](/engineering/protocol/markup#_2-3-tokenization-and-token-stack), so a manifest-like text in a comment or in raw text is not an element.
+
+**Head end tag (DL-031).** <Badge type="info" text="DESIGN" /> The server (server item 2) and the client (client item 3) find the head end tag with the same walk: the tokenizer and the token stack of [markup §2.3](/engineering/protocol/markup#_2-3-tokenization-and-token-stack) (M-04, M-05) from the start of the document. A **gap** is the bytes between the end of one token and the start of the next token: character data, and also the bytes of `</>`, which gives no token. **White space** is the bytes `09`, `0A`, `0C`, `0D` and `20`; a UTF-8 byte order mark at offset 0 also counts as white space here.
+
+1. **Before the head.** Until the first `head` start tag, only these can come: gaps of white space, comments, DOCTYPE tokens and `html` start tags. The first `head` start tag pushes the **document head**. Any other token (a start tag, an end tag) or a gap with another byte before it means: the document has no head end tag.
+2. **In the head.** While the document head is the current node (the top entry of the token stack), only these can come: gaps of white space, comments, DOCTYPE tokens, the start tags `base`, `basefont`, `bgsound`, `link`, `meta`, `noframes`, `noscript`, `script`, `style`, `template` and `title`, and the `</head>` end tag. Any other token or gap means: the document has no head end tag. While another element is the current node (the content of a `title`, `script`, `style`, `noscript`, `noframes` or `template`), the walk checks nothing.
+3. **The head end tag** is the `</head>` end tag of item 2. A document has at most one. When the document head leaves the token stack in another way (an end tag that pops it together with another element), the document has no head end tag.
+
+| Document | Head end tag |
+|---|---|
+| A normal page: `<head>`, head content, `</head>` | That `</head>` |
+| `<head>` with a template that holds `<head></head>`, then `</head>` | The last `</head>` (the inner pair is template content) |
+| No `</head>` in the head; `<body>`; a stray `</head>` in the body | None: `<body>` came while the head was the current node |
+| No `</head>` in the head; a template in the body holds `<head></head>` | None: as above, and that `head` start tag is not the first one |
+| No `<head>` start tag; `<title>…</title></head>` | None: `<title>` came before a `head` start tag |
+| `<head><svg>…</svg></head>` | None: `svg` is not head content |
+
+<Badge type="tip" text="FACT" /> Items 1 and 2 follow the "before head" and "in head" insertion modes of the HTML parser (WHATWG HTML §13.2.6.4.3, §13.2.6.4.4): there, a `head` start tag inserts the head element; in the head, the listed start tags are processed as head content, the `</head>` end tag pops the head element, and for "anything else" the parser pops the head element and reprocesses the token, so the head ends without a `</head>` end tag. In a template, "any other end tag" is a parse error and is ignored (§13.2.6.4.16). <Badge type="info" text="DESIGN" /> Rivqen fails closed where the parser ignores a token (for example an end tag other than `</head>` in the head, a second `head` start tag, `</>`): the document then has no head end tag and is sent without RQP. A page whose minifier removed the `<head>` start tag also loses RQP (DL-031). A later version can relax the rule; clients of this version then show the newly allowed pages as normal pages (`MANIFEST_INVALID`), which is safe. Fixtures: `FX-RQ-P39-*`, `FX-RQ-C21-*` ([fixtures §4.1](/engineering/protocol/fixtures#_4-1-protocol-fixtures-fx-rq-p-fx-rq-c)).
 
 ### 1.8 Client checks of the manifest
 
@@ -282,7 +306,7 @@ Rules for the operation list:
 
 ### 2.4 Client verification and apply
 
-<Badge type="info" text="DESIGN" /> Let the client snapshot have the template revision `T`, the page revision `R` and the block list `L = [(id, format, h)]` in document order, where `h` is the **full** hash of the block content in the snapshot. The client verifies a patch in this order. Before step 1, the [diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation) does the transport checks: a delta for a request that did not offer one is `PATCH_INVALID` ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response)), then the size, the JSON rules of section 3.2 and the schema.
+<Badge type="info" text="DESIGN" /> Let the client snapshot have the template revision `T`, the page revision `R` and the block list `L = [(id, format, h)]` in document order, where `h` is the **full** hash of the block content in the snapshot. The client verifies a patch in this order. Before step 1, the [diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation) does the transport checks: a delta from a final URL without the cache key of the snapshot (H-58) or for a request that did not offer one is `PATCH_INVALID` ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response)), then the size, the JSON rules of section 3.2 and the schema.
 
 1. `template_revision` is equal to `T`. Else `TEMPLATE_MISMATCH`.
 2. `base_revision` is equal to `R`. Else `PATCH_BASE_MISMATCH`.
@@ -314,7 +338,7 @@ Steps 1 to 7 need only the hashes. Step 8 needs the bytes of the original docume
 4. `content` is the exact content bytes of the block in the current document, as a JSON string. The bytes are valid UTF-8 (M-02), so every content has a JSON string form.
 5. When the envelope would be larger than its `max_patch_bytes` (section 1.5) or than `maxPatchBytes`, or would not be smaller than the full document, the server sends the full document ([negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server), step 7). The server SHOULD also send the full document when a changed `html` block fails the attribute rule (item 7).
 6. Caching of the delta response (`Cache-Control: no-store`, no `ETag`; H-45) is defined in [negotiation](/engineering/protocol/negotiation).
-7. **Attribute rule (H-56).** A full document can have event-handler attributes in a block: the attribute rule of section 4.2 is not a markup rule. The server SHOULD send the full document instead of a delta when the new content of an `html` block in the change set fails the attribute rule of section 4.2. Then the client gets the page in one request. With a delta, the client rejects it (section 2.4, step 9) and loads the full document (two requests). The client check stays (MUST): the client never depends on this server check. The result depends only on the content bytes of the block, so a server can compute it once for each block hash, in the markup pass of the current document. The other content checks (section 2.4, step 8) need no server rule: when the client snapshot is what the server assumes, the patched document is the current document, which is valid for RQP (item 1). Template authors avoid full loads when they keep `on*` attributes, `javascript:` URLs and character references other than `&amp;` out of the attribute values in blocks that change ([template and data](/guide/concepts/template-and-data#_4-rules-for-good-blocks)).
+7. **Attribute rule (H-56).** A full document can have event-handler attributes in a block: the attribute rule of section 4.2 is not a markup rule. The server SHOULD send the full document instead of a delta when the new content of an `html` block in the change set fails the attribute rule of section 4.2. Then the client gets the page in one request. With a delta, the client rejects it (section 2.4, step 9) and loads the full document (two requests). The client check stays (MUST): the client never depends on this server check. The result depends only on the content bytes of the block, so a server can compute it once for each block hash, in the markup pass of the current document. The other content checks (section 2.4, step 8) need no server rule: when the client snapshot is what the server assumes, the patched document is the current document, which is valid for RQP (item 1). Template authors avoid full loads when they keep `on*` attributes, `javascript:`, `vbscript:` and `data:` URLs and character references other than `&amp;` out of the attribute values in blocks that change ([template and data](/guide/concepts/template-and-data#_4-rules-for-good-blocks)).
 
 ## 3. Canonical bytes
 
@@ -345,9 +369,11 @@ White space between tokens is allowed. Member order is free.
 
 <Badge type="info" text="DESIGN" /> These rules apply to the content of patch operations (H-48). The client checks them in steps 8 and 9 of section 2.4. A failure is `PATCH_CONTENT_REJECTED`: the client shows nothing of the patch and loads the full document.
 
-1. `html` content MUST NOT contain `<script>`, `<iframe>`, `<object>`, `<embed>`, event-handler attributes (`on*`), or `javascript:` URLs.
+1. `html` content MUST NOT contain `<script>`, `<iframe>`, `<object>`, `<embed>`, inline event handlers (`on*` attributes), or dangerous URL schemes (`javascript:`, `vbscript:`, `data:`) in attribute values (H-59).
 2. `json` content is data. The page renders it with its own code.
 3. The client inserts `html` content only into SDK-owned regions. In React apps, prefer `json` blocks and state updates.
+
+<Badge type="info" text="DESIGN" /> **What the rules give (H-59).** Patched content brings no script element, no inline event handler and no dangerous URL scheme into the page. The rules do not cover script gadgets of a framework on the page: attribute values or text that page code reads as code or as a template (for example template expressions of a client-side framework). The Content Security Policy of the page controls them ([SEC-04](/engineering/security/controls)), together with the settings of the framework.
 
 ### 4.1 Markup analysis of the patched document
 
@@ -368,21 +394,23 @@ The analysis is one pass over at most 5 MiB, and the client needs the block offs
 1. If the attribute name (in lower case, as the tokenizer gives it) starts with `on`, reject.
 2. If the raw value of the attribute (markup §2.1: no character reference decoding) contains a `&` that does not start the five bytes `&amp;`, reject. This fails closed without a character reference decoder, as M-13 does: `&#106;`, `&colon;`, `&Tab;` and `&AMP;` are all rejected.
 3. Make a copy of the raw value. In the copy, replace each `&amp;` with `&`. Remove every byte `09` (tab), `0A` (LF) and `0D` (CR). Then remove all bytes `00` to `20` at the start.
-4. If the copy starts with the 11 bytes `javascript:`, compared ASCII case-insensitively, reject.
+4. If the copy starts with `javascript:` (11 bytes), `vbscript:` (9 bytes) or `data:` (5 bytes), compared ASCII case-insensitively, reject (H-59).
 
-Items 2 to 4 apply to every attribute, not only to URL attributes. A `title` block has no start tags in its content (RCDATA), and a `json` block has no attributes, so the rule does not apply to them.
+Items 2 to 4 apply to every attribute, not only to URL attributes. So item 4 also rejects a `title` or `alt` text that starts with `data:`; put such text in the element content. An image in a block uses a URL path, not a `data:` URL. A `title` block has no start tags in its content (RCDATA), and a `json` block has no attributes, so the rule does not apply to them.
 
-A server SHOULD apply the same rule to the new content of each changed `html` block before it sends a delta, and send the full document when the rule rejects (section 2.5, item 7; H-56).
+A server SHOULD apply the same rule, with the same three schemes, to the new content of each changed `html` block before it sends a delta, and send the full document when the rule rejects (section 2.5, item 7; H-56, H-59).
 
-<Badge type="tip" text="FACT" /> Items 3 and 4 follow the WHATWG URL parser, which removes leading and trailing C0 control or space and removes all ASCII tab or newline before it reads the scheme (URL Standard, "basic URL parser"). So `" java\tscript:x"` is a `javascript:` URL for a browser and for this rule.
+<Badge type="tip" text="FACT" /> Items 3 and 4 follow the WHATWG URL parser, which removes leading and trailing C0 control or space and removes all ASCII tab or newline before it reads the scheme (URL Standard, "basic URL parser"). So `" java\tscript:x"` is a `javascript:` URL for a browser and for this rule. The same normalization applies to `vbscript:` and `data:`.
 
 | Raw attribute | Result |
 |---|---|
 | `onclick="x()"`, `ONLOAD=x` | Reject (item 1) |
 | `href="javascript:x"`, `href=" JavaScript:x"` | Reject (item 4) |
+| `href="vbscript:x"`, `href="data:text/html,x"` | Reject (item 4, H-59) |
+| `src=" ⇥Da␊Ta:x"` (tab and LF inside) | Reject (item 4) |
 | `href="java&#x09;script:x"`, `title="a &quot; b"`, `href="?a=1&b=2"` | Reject (item 2) |
 | `href="/p?a=1&amp;b=2"`, `title="Tom &amp; Jerry"` | Accept |
-| `data-x="javascript"`, `href="/javascript:x"` | Accept |
+| `data-x="javascript"`, `href="/javascript:x"`, `href="database:x"` | Accept |
 
 ## 5. Error codes
 
@@ -392,7 +420,7 @@ A server SHOULD apply the same rule to the new content of each changed `html` bl
 |---|---|---|
 | `MANIFEST_INVALID` | Protocol | A check of section 1.7 (client) or 1.8 fails, also the markup analysis of the original document |
 | `PATCH_TOO_LARGE` | ResourceLimit | Envelope larger than `E` (section 1.5), content larger than `maxBlockBytes`, or patched document larger than `maxDocumentBytes` |
-| `PATCH_INVALID` | Protocol | A delta for a request that did not offer one; section 3.2; the schema (also an `op` other than `replace_block`); the operation rules of section 2.3; a response URL that is not the URL of the snapshot |
+| `PATCH_INVALID` | Protocol | A delta for a request that did not offer one; section 3.2; the schema (also an `op` other than `replace_block`); the operation rules of section 2.3; a final URL whose cache key (scheme, host, port, path, query, partition) is not the cache key of the snapshot (H-58) |
 | `TEMPLATE_MISMATCH` | Protocol | Section 2.4, step 1 |
 | `PATCH_BASE_MISMATCH` | Protocol | Section 2.4, step 2 |
 | `INTEGRITY_ERROR` | Protocol | Section 2.4, step 4 (operation hash), step 7 (`next_revision` from the hashes; also after a change of `policy` or `limits` on the server) or step 8 (page revision of the patched document) |

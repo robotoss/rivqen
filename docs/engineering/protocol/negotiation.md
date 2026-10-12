@@ -2,7 +2,7 @@
 
 The Rivqen protocol (RQP) has explicit versions, capabilities and revisions. This page defines how a client and a server agree on RQP, which headers they send, how the server selects the response (full document, delta or `304`), how caches handle the responses, and what the client checks.
 
-**Status:** <Badge type="info" text="DESIGN" /> Normative for `rqp/1` from WP-17 S2. Decisions: `Rq-` header prefix and Structured Field syntax ([ADR-006](/engineering/architecture/adr/#adr-006)); the `dict-compression` token is reserved (H-4); the client sends its block digests, with an all-blocks fallback (H-7); content-derived revisions `t1.`/`r1.` (H-8); ASCII case-insensitive manifest type match (H-28); `Rq-Have` with 64-bit digest prefixes (H-44); caching of full document and delta (H-45); `If-None-Match` carries the client's page revision (H-46); client markup analysis (H-48); `http` only in debug builds (H-49); error codes (H-50); the same full document for every request (H-51); a weak ETag with a content coding (H-52); `Rq-Capabilities` is an Inner List of Tokens (H-53); withdrawn tokens and response headers (H-54); `policy` and `limits` of the manifest are part of the page revision (H-55); the server sends F when a changed block fails the client attribute rule (H-56). Records: [WP-17 S1](/engineering/plan/sprints/WP-17-S1) §1 and [WP-17 S2](/engineering/plan/sprints/WP-17-S2) §1. Block markup: [RQP markup](/engineering/protocol/markup). Manifest, patch envelope and revision algorithm: [RQP manifest and patch](/engineering/protocol/manifest-patch).
+**Status:** <Badge type="info" text="DESIGN" /> Normative for `rqp/1` from WP-17 S2. Decisions: `Rq-` header prefix and Structured Field syntax ([ADR-006](/engineering/architecture/adr/#adr-006)); the `dict-compression` token is reserved (H-4); the client sends its block digests, with an all-blocks fallback (H-7); content-derived revisions `t1.`/`r1.` (H-8); ASCII case-insensitive manifest type match (H-28); `Rq-Have` with 64-bit digest prefixes (H-44); caching of full document and delta (H-45); `If-None-Match` carries the client's page revision (H-46); client markup analysis (H-48); `http` only in debug builds (H-49); error codes (H-50); the same full document for every request (H-51); a weak ETag with a content coding (H-52); `Rq-Capabilities` is an Inner List of Tokens (H-53); withdrawn tokens and response headers (H-54); `policy` and `limits` of the manifest are part of the page revision (H-55); the server sends F when a changed block fails the client attribute rule (H-56); the client binds a `304`, a manifest and a delta to its request and to the cache key of the final URL (H-58); the attribute rule also denies `vbscript:` and `data:` (H-59); privacy of the digests (H-60); the `public` partition (H-61). Architect decisions: the server removes the `Rq-*` fields of the application response (DL-030); the head end tag of the document (DL-031); no `Last-Modified` on F (DL-032). Records: [WP-17 S1](/engineering/plan/sprints/WP-17-S1) §1 and [WP-17 S2](/engineering/plan/sprints/WP-17-S2) §1. Block markup: [RQP markup](/engineering/protocol/markup). Manifest, patch envelope and revision algorithm: [RQP manifest and patch](/engineering/protocol/manifest-patch).
 
 [[toc]]
 
@@ -51,7 +51,7 @@ RQP headers use **Structured Field Values** ([RFC 9651](https://www.rfc-editor.o
 An Item, type Integer. Parameters are ignored.
 
 - Request: the RQP major version that the client uses. `rqp/1` clients send `Rq-Version: 1`.
-- Response: the server sends `Rq-Version: 1` on every full document and every delta of a valid page. It MAY send it on a `304`.
+- Response: the server sends `Rq-Version: 1` on every full document and every delta of a valid page, as exactly one field line. It MAY send it on a `304`. Only the RQP server step sets the field: it removes every `Rq-*` field of the application response first (section 4, DL-030).
 
 A server supports the request version only when the value is the Integer `1`. Any other value, a parse failure or no field means: the request is not an RQP request. The server still sends F, the same F as to an RQP request (section 4, H-51); it never sends a delta for such a request.
 
@@ -169,10 +169,12 @@ The algorithm that computes them is normative in [manifest and patch §1.3](/eng
 
 | Response | Headers that RQP sets |
 |---|---|
-| Full document F | `ETag: "r1.…"` (identity coding) or `ETag: W/"r1.…"` (content coding, H-52); `Rq-Version: 1`. `Content-Type` and `Cache-Control` of the application stay |
+| Full document F | `ETag: "r1.…"` (identity coding) or `ETag: W/"r1.…"` (content coding, H-52); `Rq-Version: 1`. `Content-Type` and `Cache-Control` of the application stay. No `Last-Modified` (DL-032) |
 | Delta D | `Content-Type: application/vnd.rivqen.delta+json`; `Rq-Version: 1`; `Cache-Control: no-store`. No `ETag` |
 | `304` | The `ETag` that F would have; the fields of section 4, step 9 |
-| Invalid page | None. The application response is unchanged |
+| Invalid page, out of scope | None. The server removes the `Rq-*` fields of the application response; the status, the other fields and the content stay (DL-030) |
+
+<Badge type="info" text="DESIGN" /> In every outcome, the response has no `Rq-*` field of the application response (DL-030). An application, a framework or an upstream layer that sets `Rq-Version` would otherwise make a client trust a manifest that the server SDK rejected (section 10, item 5).
 
 <Badge type="info" text="DESIGN" /> The draft response headers `Rq-Revision` and `Rq-Template-Revision` are removed (H-54). A server MUST NOT send them. F carries both revisions in the manifest and the page revision in `ETag`. D carries `base_revision`, `next_revision` and `template_revision` in the envelope. A second copy in a header can disagree with the body, and the client would need a rule for that case.
 
@@ -182,9 +184,11 @@ The algorithm that computes them is normative in [manifest and patch §1.3](/eng
 
 Inputs: the request; the application response A (status, header fields, page bytes P); the server limit `maxPatchBytes` ([resource limits](/engineering/core/resource-limits), default 262144 bytes).
 
-1. **Scope.** If the request method is not `GET` or `HEAD`, or the status of A is not `200`, or the media type of A is not `text/html`, send A unchanged. RQP does not apply.
-2. **Validity.** Analyze P with the [markup rules](/engineering/protocol/markup) (section 2, "invalid for RQP"; H-12, H-15). If P is invalid for RQP, or has no `</head>` end tag in HTML context for the manifest ([manifest and patch §1.7](/engineering/protocol/manifest-patch#_1-7-delivery-in-the-document), H-49), send A unchanged. The response has no manifest, no `Rq-Version` and no other `Rq-*` field, and no ETag that the server computed (an `ETag` of A stays as it is). The server SDK reports the broken rule to the template author, not to the client. An internal error of the server SDK has the same result and is logged as `SERVER_PASSTHROUGH` ([errors](/engineering/core/errors)).
-3. **Full document.** Build F: insert the manifest into P ([manifest and patch §1.7](/engineering/protocol/manifest-patch#_1-7-delivery-in-the-document)). F is the same for every request (H-51). Let E be the entity-tag of F: the strong `"` + page revision + `"` when the response has no content coding, and the weak `W/"` + page revision + `"` when a content coding is applied (H-52, section 5.1). The header fields of F are those of A, with these changes: `ETag: E` replaces an `ETag` of A; add `Rq-Version: 1`; set `Content-Length` for F. Do not add an `Rq-*` field or `Accept` to `Vary`. Keep `Cache-Control` of A (H-45).
+**`Rq-*` fields of A (DL-030).** Before step 1, the server removes from A every header field whose name starts with `Rq-` (ASCII case-insensitive), in every outcome: passthrough (steps 1 and 2), F, D and `304`. In the steps below, "A" means A without these fields. Only the server step sets `Rq-*` response fields.
+
+1. **Scope.** If the request method is not `GET` or `HEAD`, or the status of A is not `200`, or the media type of A is not `text/html`, send A (status, other header fields and content unchanged). RQP does not apply.
+2. **Validity.** Analyze P with the [markup rules](/engineering/protocol/markup) (section 2, "invalid for RQP"; H-12, H-15). If P is invalid for RQP, or has no head end tag for the manifest ([manifest and patch §1.7](/engineering/protocol/manifest-patch#_1-7-delivery-in-the-document), H-49, DL-031), send A (status, other header fields and content unchanged). The response has no manifest, no `Rq-Version` and no other `Rq-*` field, and no ETag that the server computed (an `ETag` of A stays as it is). The server SDK reports the broken rule to the template author, not to the client. An internal error of the server SDK has the same result and is logged as `SERVER_PASSTHROUGH` ([errors](/engineering/core/errors)).
+3. **Full document.** Build F: insert the manifest into P ([manifest and patch §1.7](/engineering/protocol/manifest-patch#_1-7-delivery-in-the-document)). F is the same for every request (H-51). Let E be the entity-tag of F: the strong `"` + page revision + `"` when the response has no content coding, and the weak `W/"` + page revision + `"` when a content coding is applied (H-52, section 5.1). The header fields of F are those of A, with these changes: `ETag: E` replaces an `ETag` of A; remove `Last-Modified` (DL-032); add exactly one field line `Rq-Version: 1`; set `Content-Length` for F. Do not add an `Rq-*` field or `Accept` to `Vary`. Keep `Cache-Control` of A (H-45).
 4. **Conditions.** Evaluate the preconditions of the request against F, in the order of RFC 9110 §13.2.2. If `If-None-Match` is present, ignore `If-Modified-Since`. If the `If-None-Match` condition is false (`*`, or one listed tag matches E by weak comparison; so `"r1.X"` and `W/"r1.X"` both match), go to step 9.
 5. **Delta eligibility.** The request is delta-eligible only when all of these are true. Else go to step 8.
    1. The method is `GET`, and the request has no `Range` field.
@@ -196,14 +200,14 @@ Inputs: the request; the application response A (status, header fields, page byt
 6. **Change set.** If `b` is present: the change set C has each block i (0-based, document order) whose current digest prefix (the first 8 bytes of SHA-256 of its content) is not equal to the bytes 8i to 8i + 7 of `b`. If `b` is absent: C has all N blocks (H-7). If C is empty, go to step 8.
 7. **Delta.** If the current content of an `html` block in C fails the attribute rule of [manifest and patch §4.2](/engineering/protocol/manifest-patch#_4-2-attribute-rule), the server SHOULD go to step 8 (H-56). Build D ([manifest and patch](/engineering/protocol/manifest-patch)) with `base_revision` = B, `next_revision` = the current page revision, `template_revision` = the current template revision, and one operation for each block in C, in document order. If the size of D in bytes is larger than `maxPatchBytes`, or is not smaller than the size of F, go to step 8. Else send D: status `200`, the header fields of A without `ETag`, `Last-Modified` and `Expires`, with `Content-Type: application/vnd.rivqen.delta+json`, `Rq-Version: 1`, `Cache-Control: no-store`, and `Content-Length` for D.
 8. **Full.** Send F with status `200`. For `HEAD`, send the header fields of F without content.
-9. **Not modified.** Send `304` without content. Include the fields that F would have of this list: `ETag` (E), `Cache-Control`, `Expires`, `Vary`, `Date`, `Content-Location` (RFC 9110 §15.4.5). `Rq-Version: 1` MAY be included.
+9. **Not modified.** Send `304` without content. Include the fields that F would have of this list: `ETag` (E), `Cache-Control`, `Expires`, `Vary`, `Date`, `Content-Location` (RFC 9110 §15.4.5). `Rq-Version: 1` MAY be included. No other field of A, so no `Rq-*` field of A and no `Last-Modified`.
 
 Sizes in step 7 are the bytes before any content coding. The comparison of digest prefixes in step 6 does not need a constant-time function: the values are not secret.
 
 | Outcome | Step | Status | Body |
 |---|---|---|---|
-| Out of scope | 1 | As A | A |
-| Invalid for RQP | 2 | `200` | P (A unchanged) |
+| Out of scope | 1 | As A | The content of A (fields without `Rq-*`) |
+| Invalid for RQP | 2 | `200` | P (fields of A without `Rq-*`) |
 | Not modified | 4, 9 | `304` | None |
 | Delta | 7 | `200` | D |
 | Full document | 8 | `200` | F |
@@ -215,13 +219,15 @@ Sizes in step 7 are the bytes before any content coding. The comparison of diges
 - **No base → F.** A delta needs `base_revision`. Without B, the client cannot check that the delta fits its page.
 - **Size.** At equal size, F is better: it can be cached and needs no client work.
 - **Attribute rule → F (H-56).** The client rejects a delta whose `html` content fails the attribute rule and then loads F: two requests. When the server sends F at once, the client needs one request. The client check stays (MUST); the server check is SHOULD because the result is the same page in both cases. The result depends only on the content of the block, so the server can compute it once for each block hash.
+- **`Rq-*` fields of A are removed (DL-030).** The server SDK owns every `Rq-*` field. An `Rq-Version` that the application or an upstream layer sets on a page that the SDK passes through would make a client use a manifest that the SDK rejected, for example an author manifest (markup rule M-13). In a layered deployment (an SDK at the origin and one at the edge) the outer SDK removes the fields of the inner one and sets its own; the only loss is a duplicate.
+- **No `Last-Modified` on F (DL-032).** The bytes of F also depend on the manifest (`policy`, `limits`, `origin`), which a `Last-Modified` of the application does not cover. A cache that revalidates only with `If-Modified-Since` could keep an old F. The ETag `r1.` is the only validator of F. D has no validator at all (step 7).
 - **Change of `policy` or `limits` only → F.** The page revision changes (H-55), so step 4 does not match, but the change set is empty: the server sends F, and the client gets the new values. When blocks changed too, the client computes `next_revision` with its old policy line and rejects D (`INTEGRITY_ERROR`), then loads F: one extra request after a change of the server configuration ([manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply)).
 
 ## 5. Caching
 
 ### 5.1 Full document
 
-F keeps the cache policy (`Cache-Control`, `Expires`) of the application (H-45). F is the same for all requests to the URI that have the same application output (H-51), so it has no `Vary` on `Rq-*` fields or on `Accept`. `Vary` fields of the application (for example `Accept-Encoding`, `Cookie`) stay.
+F keeps the cache policy (`Cache-Control`, `Expires`) of the application (H-45), but not its `Last-Modified`: the ETag is the only validator of F (DL-032). F is the same for all requests to the URI that have the same application output (H-51), so it has no `Vary` on `Rq-*` fields or on `Accept`. `Vary` fields of the application (for example `Accept-Encoding`, `Cookie`) stay.
 
 The opaque-tag of the `ETag` of F is always `"r1.…"`, the page revision. Its form depends on the content coding of the response (H-52):
 
@@ -293,16 +299,21 @@ The client sends `Rq-Capabilities` as one field line with one Inner List of Toke
 
 ### 6.3 Response
 
-The client handles the response in this order:
+The **final URL** is the URL of the response after all redirects. Its **cache key** is the key of [cache identity](/engineering/cache/identity): the partition and the canonical URL (scheme, host, port, path and query; no fragment). The client binds each response to the request that it sent and to this cache key (H-58). The client handles the response in this order:
 
-1. **`304`.** Keep S. S is the current page. Do not require `Rq-Version` on a `304`.
+1. **`304`.** Keep S only when all of these are true (H-58):
+   1. The request sent `If-None-Match: "R"`, the strong tag of the page revision R of S (section 6.2). A first-visit request and the fallback load (item 5) do not send it.
+   2. The final URL has the cache key of S.
+   3. The `304` has no `ETag` field, or its `ETag` matches `"R"` by weak comparison (`"R"` or `W/"R"`).
+
+   Then S is the current page. Do not require `Rq-Version` on a `304`. Else the `304` does not belong to S: show nothing of it, keep S unchanged, and let the WebView load the URL normally. This is not an error code: a `304` has no content that the client could reject.
 2. **Delta.** A `200` whose `Content-Type` media type is `application/vnd.rivqen.delta+json` (ASCII case-insensitive):
-   1. If the request did not offer a delta (no S, no `block-patch` or no delta media type in `Accept`), the delta is unsolicited: stop with `PATCH_INVALID` and do the fallback load (item 5). A server that follows section 4 never sends it (RQP-10).
+   1. If the request did not offer a delta (no S, no `block-patch` or no delta media type in `Accept`), or the final URL does not have the cache key of S (H-58), stop with `PATCH_INVALID` and do the fallback load (item 5). A server that follows section 4 never sends an unsolicited delta (RQP-10). A release build sends RQP fields only to `https` (section 6.1), so a delta from a final URL that is not `https` never has the cache key of S.
    2. Validate D as [manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply) and the [diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation) define. The checks include: size ≤ the client limit (`PATCH_TOO_LARGE`), `template_revision` = T (`TEMPLATE_MISMATCH`), `base_revision` = R (`PATCH_BASE_MISMATCH`), the hash of each operation (`INTEGRITY_ERROR`).
    3. Compute the page revision with T, the policy line of the manifest of S and the new block hashes (algorithm in [manifest and patch §1.3](/engineering/protocol/manifest-patch#_1-3-hashes-and-revisions)). It MUST be equal to `next_revision`. Else the result is discarded (`INTEGRITY_ERROR`). This check also detects a prefix collision in `Rq-Have` and a change of `policy` or `limits` on the server (H-55).
    4. Build the patched document on a copy and run the markup analysis on it; check the attribute rule (H-48; [manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules)). A failure is `PATCH_CONTENT_REJECTED` (or `INTEGRITY_ERROR` when only the page revision differs).
    5. On any failure, show nothing of D and do the fallback load (item 5).
-3. **Full document.** A `200` with an HTML media type is an RQP page only when it has the field `Rq-Version: 1`. Then the client finds and checks the manifest as [manifest and patch §1.7 and §1.8](/engineering/protocol/manifest-patch#_1-8-client-checks-of-the-manifest) define: exactly one manifest element (H-51), immediately before the first `</head>` (H-49), schema, origin and path, and the markup analysis of the original document against the manifest (H-48). The client compares the `type` value of the manifest script with `application/rivqen-manifest+json` by an ASCII case-insensitive byte match only, never by Unicode case folding (H-28). If a check fails (also when there is no manifest element), the client reports `MANIFEST_INVALID`, shows the document as a normal page and stores no snapshot. Without `Rq-Version: 1` the client does not use a manifest, also when the body has one, and reports no error: only a server SDK sets the field, and markup rule M-13 makes the server SDK reject a page that already has a manifest script. The revision of the new snapshot is the manifest page revision, not the `ETag`.
+3. **Full document.** A `200` with an HTML media type is an RQP page only when it has the field `Rq-Version: 1` and its final URL is an `https` URL (a debug build with the app flag also accepts `http`; H-49, H-58). Then the client finds and checks the manifest as [manifest and patch §1.7 and §1.8](/engineering/protocol/manifest-patch#_1-8-client-checks-of-the-manifest) define: exactly one manifest element (H-51), immediately before the head end tag of the document (H-49, DL-031), schema, `origin` and `path` of the final URL, and the markup analysis of the original document against the manifest (H-48). The client compares the `type` value of the manifest script with `application/rivqen-manifest+json` by an ASCII case-insensitive byte match only, never by Unicode case folding (H-28). If a check fails (also when there is no manifest element), the client reports `MANIFEST_INVALID`, shows the document as a normal page and stores no snapshot. Without `Rq-Version: 1`, or from a final URL that the build does not allow, the client does not use a manifest, also when the body has one, and reports no error: only a server SDK sets the field (it removes an `Rq-Version` of the application, DL-030), and markup rule M-13 makes the server SDK reject a page that already has a manifest script. The revision of the new snapshot is the manifest page revision, not the `ETag`. The new snapshot has the cache key of the final URL; its partition follows [manifest and patch §1.4](/engineering/protocol/manifest-patch#_1-4-policy) (H-61).
 4. **Other.** Any other response is a normal HTTP response. The session is not RQP for this navigation ([versioning](/engineering/protocol/versioning)).
 5. **Fallback load.** One `GET` without `Rq-Have`, without an RQP `If-None-Match` and without the delta media type in `Accept`. By section 4, the response cannot be a delta. If it is a delta, stop with `PATCH_INVALID` and let the WebView load the URL normally. The client does at most one fallback load per navigation.
 
@@ -341,21 +352,23 @@ Server work for steps 4 to 7 is bounded: one parse of at most 4096 bytes and one
 | RQP-06 | A server MUST ignore unknown capability tokens and unknown `Rq-Have` members. A server MUST NOT send a delta to a request without `block-patch`. |
 | RQP-07 | A revision is `t1.` or `r1.` followed by 43 base64url characters. Revisions are compared byte for byte. Clients compute revisions only to check a manifest or a delta (H-48). |
 | RQP-08 | F MUST have the `ETag` `"r1.…"` (strong) or `W/"r1.…"` (weak, RQP-18), MUST NOT depend on RQP request fields (`Rq-*`, the delta media type in `Accept`, `If-None-Match`), and MUST NOT list an `Rq-*` field in `Vary`. |
-| RQP-09 | For a page that is invalid for RQP, the server MUST send the application response unchanged: no manifest, no `Rq-*` field, no ETag that RQP computed. |
+| RQP-09 | For a page that is invalid for RQP or has no head end tag, and for a response out of scope, the server MUST send the status, the content and the header fields of the application response unchanged, except that it MUST remove every `Rq-*` field (DL-030): no manifest, no `Rq-*` field, no ETag that RQP computed. |
 | RQP-10 | A server MUST NOT send a delta without a single `r1.` entity-tag in `If-None-Match` and a matching `Rq-Have` template. |
 | RQP-11 | A delta MUST have at least one operation, MUST NOT be larger than `maxPatchBytes`, and MUST be smaller than F. Else the server sends F. |
 | RQP-12 | A client MUST NOT send an `Rq-Have` value longer than 4096 bytes. A server MUST treat a longer value as absent, without parsing it. |
 | RQP-13 | A client MUST check `base_revision` and `next_revision` of a delta. On failure it discards the delta and does one fallback load without delta fields. |
 | RQP-14 | A client MUST compare the manifest script type by ASCII case-insensitive byte match only (H-28), MUST use a manifest only from a response with `Rq-Version: 1`, and MUST check it with the markup analysis of the original document (H-48). |
 | RQP-15 | A client MUST send `If-None-Match` and `Rq-Have` only from a snapshot with the same cache key, and MUST NOT copy them to a redirected request. |
-| RQP-16 | Preconditions are evaluated against F. A server SDK MUST NOT let the application answer `304` by a validator that the SDK replaces. |
+| RQP-16 | Preconditions are evaluated against F. A server SDK MUST NOT let the application answer `304` by a validator that the SDK replaces. F, D and a `304` MUST NOT have the `Last-Modified` of the application (DL-032). |
 | RQP-17 | Logs MUST NOT contain the `Rq-Have` member `b` or block content. Revisions, sizes and outcomes are allowed ([errors and logging](/engineering/architecture/errors-logging)). |
 | RQP-18 | A server MUST send the weak `ETag` `W/"r1.…"` whenever a content coding is applied to F, and the strong `"r1.…"` only for the identity coding (H-52). A server MUST accept a weak tag as the delta base. |
 | RQP-19 | A server MUST read `Rq-Capabilities` only as one Inner List of Tokens; any other shape is an absent field (H-53). |
-| RQP-20 | A server MUST send the same F for every request to a valid page, also without RQP fields, with exactly one manifest element (H-51). |
+| RQP-20 | A server MUST send the same F for every request to a valid page, also without RQP fields, with exactly one manifest element (H-51) immediately before the head end tag of the document (DL-031). A server MUST remove every `Rq-*` field of the application response in every outcome; F and D MUST have exactly one field line `Rq-Version: 1` (DL-030). |
 | RQP-21 | A server MUST NOT send the response fields `Rq-Revision` and `Rq-Template-Revision`; a client MUST NOT send the tokens `manifest` and `json-blocks` (H-54). |
 | RQP-22 | A release build of a client MUST NOT send `Rq-*` fields to an `http` origin. A debug build MAY, only with an explicit app flag (H-49). |
-| RQP-23 | A server SHOULD send F instead of D when the current content of a changed `html` block fails the attribute rule of [manifest and patch §4.2](/engineering/protocol/manifest-patch#_4-2-attribute-rule) (H-56). A client MUST apply the attribute rule to every delta, also when the server checks it. |
+| RQP-23 | A server SHOULD send F instead of D when the current content of a changed `html` block fails the attribute rule of [manifest and patch §4.2](/engineering/protocol/manifest-patch#_4-2-attribute-rule) (H-56). A client MUST apply the attribute rule to every delta, also when the server checks it. Both use the same rule, with `javascript:`, `vbscript:` and `data:` (H-59). |
+| RQP-24 | A client MUST keep its snapshot on a `304` only when the request sent `If-None-Match: "R"` with the page revision R of the snapshot, the final URL has the cache key of the snapshot, and the `ETag` of the `304`, when present, matches `"R"` by weak comparison; else a normal load. A client MUST bind a manifest and a delta to the cache key of the final URL (scheme, host, port, path, query, partition). A release build MUST NOT accept a manifest or a delta from a final URL that is not `https` (H-58). |
+| RQP-25 | A client MUST store a snapshot in the shared `public` partition only when the manifest has `"mode": "public"`, the app declares the origin public, the response has no `Cache-Control` directive `private`, and the response has the directive `public` or the request had no credentials (H-61). |
 
 ## 9. Examples
 
@@ -471,17 +484,20 @@ Content-Type: text/html; charset=utf-8
 Cache-Control: no-cache
 ```
 
-Body: the page bytes of the application, unchanged. No manifest, no `Rq-Version`, no RQP `ETag`. Section 4, step 2. The client shows the page as normal HTML.
+Body: the page bytes of the application, unchanged. No manifest, no `Rq-Version`, no RQP `ETag`. When the application itself sets an `Rq-*` field (for example `Rq-Version: 1`), the server removes it (DL-030). Section 4, step 2. The client shows the page as normal HTML.
 
 ## 10. Security and privacy
 
 1. **Client input to the server.** `Rq-Have` and `If-None-Match` only select what the server sends to the same client. A false value gives that client a wrong delta, which its checks reject, or a full document. Deltas are `no-store`, so a false value cannot reach another client through a cache.
 2. **Digest prefixes.** 8 bytes of SHA-256 per block. An accidental collision is very improbable. A forced collision (a block content with the same 64-bit prefix) makes the server omit a changed block; the `next_revision` check uses the full digests (H-8), so the client loads F. The result is one extra request, never wrong content (H-44).
 3. **Bounded work.** Section 7. The server never stores request state.
-4. **Privacy.** `Rq-Have` holds hashes of page content. Clients send it only to the origin of the snapshot and only from the same partition (RQP-15); logs never contain it (RQP-17). A content-derived ETag is the same for all users that see the same page. For private pages, a keyed revision is decided in WP-18 (H-8).
-5. **Injected manifest.** A manifest is used only with `Rq-Version: 1` (RQP-14). A page with a manifest-like script is invalid for RQP (markup rule M-13), so it is sent without `Rq-Version`. The client accepts exactly one manifest, only immediately before the first `</head>`, and only when the markup analysis of the original document gives the same blocks and revisions (H-48, H-49, H-51).
-6. **Patch content.** A delta cannot bring script into the page: the client runs the markup analysis on the patched document and the attribute rule on patched `html` content ([manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules), H-48). A rejection is `PATCH_CONTENT_REJECTED`, a `SecurityViolation` with a metric (H-50).
-7. **Cleartext.** A release build uses RQP only over `https` (H-49, RQP-22).
+4. **Privacy.** `Rq-Have` holds hashes of page content. Clients send it only to the origin of the snapshot and only from the same partition (RQP-15); Rivqen logs never contain it (RQP-17). A content-derived ETag is the same for all users that see the same page. For private pages, a keyed revision is decided in WP-18 (H-8).
+
+   <Badge type="info" text="DESIGN" /> **Digests in intermediary logs (H-60).** Until the keyed revisions of WP-18, the values of `Rq-Have` (template revision and 64-bit block digest prefixes) and of `If-None-Match` (the page revision) are unkeyed SHA-256 values of page content. A CDN, a reverse proxy or a load balancer that logs request header fields keeps them. A party that reads such logs and can guess the content of a block (for example a short value from a small set, such as an account balance or a yes/no state) can test its guess against the digest. Deployments SHOULD exclude `Rq-Have` and `If-None-Match` from the header logs of intermediaries until WP-18. The member `b` stays for private pages (H-60): without it, every delta has all blocks.
+5. **Injected manifest.** A manifest is used only with `Rq-Version: 1` (RQP-14). The server removes every `Rq-*` field of the application response (DL-030), so an `Rq-Version` that the application or an upstream layer sets never reaches the client on a page that the server passes through. A page with a manifest-like script is invalid for RQP (markup rule M-13), so it is sent without `Rq-Version`. The client accepts exactly one manifest, only immediately before the head end tag of the document (DL-031), and only when the markup analysis of the original document gives the same blocks and revisions (H-48, H-49, H-51).
+6. **Patch content.** The client runs the markup analysis on the patched document and the attribute rule on patched `html` content ([manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules), H-48). So a delta brings no script element, no inline event handler and no dangerous URL scheme (`javascript:`, `vbscript:`, `data:`) into the page (H-59). A rejection is `PATCH_CONTENT_REJECTED`, a `SecurityViolation` with a metric (H-50). The rule does not cover script gadgets of a framework on the page (attribute values or text that page code evaluates as code or as a template). The Content Security Policy of the page controls them ([SEC-04](/engineering/security/controls)).
+7. **Cleartext.** A release build uses RQP only over `https`, also for the final URL after redirects (H-49, H-58, RQP-22, RQP-24).
+8. **Response binding (H-58).** A `304`, a manifest and a delta are used only for the snapshot of the cache key of the final URL, and a `304` only for a request that sent the revision of that snapshot (section 6.3). A response for another URL, another query or another request never changes the snapshot.
 
 ## 11. Intermediaries
 

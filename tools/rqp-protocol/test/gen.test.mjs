@@ -28,13 +28,13 @@ function copyFixture(name) {
 
 test('gen.mjs --check: every committed page and expected file is current', () => {
   const out = execFileSync(process.execPath, [GEN, '--check'], { encoding: 'utf8' });
-  assert.match(out, /88 fixtures are current/);
+  assert.match(out, /118 fixtures are current/);
 });
 
-test('every catalog case P-01 to P-36 and C-01 to C-19 has at least one fixture', () => {
+test('every catalog case P-01 to P-39 and C-01 to C-24 has at least one fixture', () => {
   const names = fixtureNames();
-  for (let i = 1; i <= 36; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-P${String(i).padStart(2, '0')}-`)), `P-${i}`);
-  for (let i = 1; i <= 19; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-C${String(i).padStart(2, '0')}-`)), `C-${i}`);
+  for (let i = 1; i <= 39; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-P${String(i).padStart(2, '0')}-`)), `P-${i}`);
+  for (let i = 1; i <= 24; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-C${String(i).padStart(2, '0')}-`)), `C-${i}`);
 });
 
 test('--check reports a stale expected file and a missing one, and the generator rewrites them', () => {

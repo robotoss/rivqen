@@ -60,7 +60,7 @@ flowchart TD
 
 | # | Threat | Boundary | Mitigation (controls) |
 |---|---|---|---|
-| T-01 | XSS through a data block or patch | B2 | No script in patches; context-aware insertion; CSP (SEC-03, SEC-04, SEC-17) |
+| T-01 | XSS through a data block or patch | B2 | No script elements, no inline event handlers and no dangerous URL schemes (`javascript:`, `vbscript:`, `data:`) in patched content (H-59); context-aware insertion; CSP for script gadgets of a framework on the page (SEC-03, SEC-04, SEC-17) |
 | T-02 | Bridge abuse from a third-party iframe | B1 | Frame-origin check by native API; command allowlist (SEC-02, SEC-16) |
 | T-03 | Cross-account cache read | B5 | Partitioned keys, revoke on logout (SEC-05, SEC-18) |
 | T-04 | Replay of an old patch | B2 | HTTP: `base_revision` + `next_revision` check + navigation generation (SEC-09, SEC-20); no sequence over HTTP (H-9). Push channels (WP-16): sequence |

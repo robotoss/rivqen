@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-C21-HEAD-STRAY-BODY",
+  "kind": "client",
+  "description": "Rq-Version 1 and a consistent manifest immediately before a stray </head> in the body: the document has no head end tag, MANIFEST_INVALID (DL-031)",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-head-stray",
+      "manifest_position": "head-text"
+    }
+  }
+}

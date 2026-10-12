@@ -13,7 +13,7 @@ import { MANIFEST_END, UnsupportedInput, membersOf, pageRevision, sha256b64u } f
 import { handle, manifestOf } from './server.mjs';
 import { handleResponse, havePrefixes, requestHeaders, snapshotOf } from './client.mjs';
 import { combined, normalizeHeaders } from './http.mjs';
-import { analyze, firstHeadEnd } from './markup.mjs';
+import { analyze, documentHeadEnd } from './markup.mjs';
 import { UnknownPage, pageBytes } from './pages.mjs';
 
 export const FIXTURES_DIR = fileURLToPath(new URL('../../../fixtures/rqp/protocol/', import.meta.url));
@@ -88,7 +88,7 @@ export function loadCase(dir, name) {
   if (typeof c.description !== 'string' || !Array.isArray(c.rules)) throw new CaseError(name, 'description and rules are required');
   if (c.kind === 'client') {
     onlyKeys(name, c, ['id', 'kind', 'description', 'rules', 'context', 'response'], 'case');
-    onlyKeys(name, c.context, ['url', 'build', 'allow_http', 'navigation', 'snapshot'], 'context');
+    onlyKeys(name, c.context, ['url', 'final_url', 'build', 'allow_http', 'navigation', 'snapshot', 'credentials', 'public_origin'], 'context');
     onlyKeys(name, c.response, ['status', 'headers', 'body'], 'response');
   } else {
     onlyKeys(name, c, ['id', 'description', 'rules', 'page', 'client_page', 'client_members', 'server_config', 'app', 'request', 'level'], 'case');
@@ -122,12 +122,20 @@ function requiredHeaders(headers) {
   return out;
 }
 
-function forbiddenHeaders(kind, status, appHeaders) {
+function forbiddenHeaders(kind, status, appHeaders, responseHeaders) {
   const out = new Set(ALWAYS_FORBIDDEN);
   if (kind === 'delta') for (const n of ['etag', 'last-modified', 'expires']) out.add(n); // RQP-01, step 7
+  if (kind !== 'app') out.add('last-modified'); // DL-032: F, HEAD of F and 304; D above
   if (kind === 'app') {
     out.add('rq-version'); // RQP-09
     if (combined(appHeaders, 'etag') === null) out.add('etag');
+  }
+  // DL-030: no Rq-* field of A reaches the client. Rq-Version on a 304 is a MAY
+  // of the server step (negotiation section 4, step 9), so it is not forbidden there.
+  for (const [name] of appHeaders) {
+    if (!name.startsWith('rq-') || combined(responseHeaders, name) !== null) continue;
+    if (name === 'rq-version' && status === 304) continue;
+    out.add(name);
   }
   return [...out].sort();
 }
@@ -143,7 +151,7 @@ export function expectServer(c) {
   let body;
   if (r.kind === 'full') {
     const a = analyze(page);
-    body = { kind: 'full', insert_at: firstHeadEnd(page), manifest: manifestOf(a, request.target, config) };
+    body = { kind: 'full', insert_at: documentHeadEnd(page), manifest: manifestOf(a, request.target, config) };
   } else if (r.kind === 'delta') {
     const env = JSON.parse(r.body.toString('utf8'));
     body = {
@@ -165,7 +173,7 @@ export function expectServer(c) {
         ...(Object.keys(config).length > 0 ? { server_config: config } : {}),
         status: r.status,
         headers_required: requiredHeaders(r.headers),
-        headers_forbidden: forbiddenHeaders(r.kind, r.status, app.headers),
+        headers_forbidden: forbiddenHeaders(r.kind, r.status, app.headers, r.headers),
         body,
       },
     },
@@ -191,13 +199,20 @@ function context(c) {
     snapshotPage = snap.page;
     members = membersOf(snap.members);
   }
+  for (const flag of ['allow_http', 'credentials', 'public_origin']) {
+    if (ctx[flag] !== undefined && typeof ctx[flag] !== 'boolean') throw new CaseError(c.id, `context.${flag} must be a boolean`);
+  }
+  const url = ctx.url ?? DEFAULT_TARGET;
   return {
-    url: ctx.url ?? DEFAULT_TARGET,
+    url,
+    final_url: ctx.final_url ?? url,
     build,
     allow_http: ctx.allow_http ?? false,
+    credentials: ctx.credentials ?? true,
+    public_origin: ctx.public_origin ?? false,
     navigation,
     snapshotPage,
-    snapshot: snapshotPage === null ? null : snapshotOf(pageBytes(snapshotPage), members),
+    snapshot: snapshotPage === null ? null : snapshotOf(pageBytes(snapshotPage), members, url),
   };
 }
 
@@ -212,17 +227,21 @@ function fullRecipe(id, recipe, ctx) {
   onlyKeys(id, recipe, ['full', 'members', 'manifest_of', 'manifest_type', 'manifest_position', 'manifest_count', 'duplicate_member'], 'body');
   const page = pageBytes(recipe.full);
   const a = analysisOf(id, recipe.manifest_of ?? recipe.full);
-  let text = JSON.stringify(manifestOf(a, ctx.url, membersOf(recipe.members)));
+  // The manifest is consistent with the final URL of the response (H-58).
+  let text = JSON.stringify(manifestOf(a, ctx.final_url, membersOf(recipe.members)));
   if (recipe.duplicate_member === true) text = withDuplicateMember(text);
   const type = recipe.manifest_type ?? 'application/rivqen-manifest+json';
   const element = Buffer.from(`<script type="${type}">${text}${MANIFEST_END}`, 'utf8');
-  const head = firstHeadEnd(page);
+  // Positions: the head end tag of the document (default, DL-031), the first
+  // "</head>" bytes of the page in any context ("head-text"), or "</body>".
   const bodyEnd = page.indexOf('</body>');
-  if (head < 0 || bodyEnd < 0) throw new CaseError(id, 'the page needs </head> and </body>');
-  const at = [];
-  if (recipe.manifest_position === 'body') at.push(bodyEnd);
-  else if (recipe.manifest_position === undefined) at.push(head);
+  let first;
+  if (recipe.manifest_position === undefined) first = documentHeadEnd(page);
+  else if (recipe.manifest_position === 'head-text') first = page.indexOf('</head>');
+  else if (recipe.manifest_position === 'body') first = bodyEnd;
   else throw new CaseError(id, `manifest_position ${recipe.manifest_position}`);
+  if (first < 0 || bodyEnd < 0) throw new CaseError(id, 'the page has no such position or no </body>');
+  const at = [first];
   if (recipe.manifest_count === 2) at.push(bodyEnd);
   else if (recipe.manifest_count !== undefined) throw new CaseError(id, 'manifest_count must be 2');
   const parts = [];
@@ -340,8 +359,11 @@ export function expectClient(c) {
       kind: 'client',
       context: {
         url: ctx.url,
+        final_url: ctx.final_url,
         build: ctx.build,
         allow_http: ctx.allow_http,
+        credentials: ctx.credentials,
+        public_origin: ctx.public_origin,
         navigation: ctx.navigation,
         snapshot: describeSnapshot(ctx.snapshotPage, ctx.snapshot),
       },

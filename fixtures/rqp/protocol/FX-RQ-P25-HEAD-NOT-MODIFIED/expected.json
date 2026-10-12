@@ -16,7 +16,7 @@
     "cache-control": "no-cache",
     "etag": "\"r1.zmkAXEJQ1oWyDB37krArJho2A9THkC_QRUnIlPolfwk\""
   },
-  "headers_forbidden": ["rq-revision","rq-template-revision"],
+  "headers_forbidden": ["last-modified","rq-revision","rq-template-revision"],
   "body": {
     "kind": "none"
   }

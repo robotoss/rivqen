@@ -18,8 +18,10 @@
 //
 // Client module: export clientStep(context, response) -> { outcome, error,
 // next, metric, snapshot } and optionally clientRequest(context) -> [[name,
-// value]]. context = { url, build, allow_http, navigation, snapshot: null |
-// { document, template_revision, page_revision, blocks, policy?, limits? } }.
+// value]]. context = { url, final_url, build, allow_http, credentials,
+// public_origin, navigation, snapshot: null | { document, template_revision,
+// page_revision, blocks, policy?, limits? } }. url is the request URL and the
+// cache key of the snapshot; final_url is the URL of the response after redirects.
 //
 // Comparison rules: docs/engineering/protocol/fixtures.md section 4.1
 // ("Comparison of F") and section 5; README.md of the fixtures; and RQP-08
@@ -51,7 +53,7 @@ function toBuffer(body) {
 function compareFull(expected, page, body, fail) {
   const at = expected.insert_at;
   if (!body.subarray(0, at).equals(page.subarray(0, at))) return fail('body: the bytes before the manifest element differ from the page');
-  if (!body.subarray(at, at + START.length).equals(START)) return fail('body: no manifest start tag immediately before the first </head>');
+  if (!body.subarray(at, at + START.length).equals(START)) return fail('body: no manifest start tag immediately before the head end tag of the document');
   const textStart = at + START.length;
   const lt = body.indexOf(0x3c, textStart);
   if (lt < 0 || !body.subarray(lt, lt + END.length).equals(END)) return fail('body: the manifest text has "<" or no </script>');
@@ -197,7 +199,16 @@ export async function runClient(mod, { dir = FIXTURES_DIR, only = '' } = {}) {
     if (expected.kind !== 'client') continue;
     const ctx = expected.context;
     const snapshot = ctx.snapshot === null ? null : { ...ctx.snapshot, document: Uint8Array.from(pageBytes(ctx.snapshot.page)) };
-    const context = { url: ctx.url, build: ctx.build, allow_http: ctx.allow_http, navigation: ctx.navigation, snapshot };
+    const context = {
+      url: ctx.url,
+      final_url: ctx.final_url,
+      build: ctx.build,
+      allow_http: ctx.allow_http,
+      credentials: ctx.credentials,
+      public_origin: ctx.public_origin,
+      navigation: ctx.navigation,
+      snapshot,
+    };
     const bodyPath = join(dir, name, 'response.body');
     let failures;
     try {

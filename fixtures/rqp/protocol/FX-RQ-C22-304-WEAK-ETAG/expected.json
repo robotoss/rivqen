@@ -1,0 +1,62 @@
+{
+  "id": "FX-RQ-C22-304-WEAK-ETAG",
+  "kind": "client",
+  "context": {
+    "url": "https://shop.example.com/catalog",
+    "final_url": "https://shop.example.com/catalog",
+    "build": "release",
+    "allow_http": false,
+    "credentials": true,
+    "public_origin": false,
+    "navigation": "delta",
+    "snapshot": {
+      "page": "page-a",
+      "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
+      "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
+      "blocks": [
+        {
+          "id": "title",
+          "format": "html",
+          "sha256": "0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces"
+        },
+        {
+          "id": "price",
+          "format": "html",
+          "sha256": "Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs"
+        },
+        {
+          "id": "cart",
+          "format": "json",
+          "sha256": "zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4"
+        }
+      ]
+    }
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match","\"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\""],
+      ["rq-have","t=t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:"]
+    ]
+  },
+  "response": {
+    "status": 304,
+    "headers": [
+      ["etag","W/\"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\""],
+      ["cache-control","no-cache"]
+    ],
+    "body": null,
+    "body_bytes": 0,
+    "body_sha256": null
+  },
+  "result": {
+    "outcome": "not-modified",
+    "error": null,
+    "next": "keep",
+    "metric": false,
+    "snapshot": null
+  }
+}

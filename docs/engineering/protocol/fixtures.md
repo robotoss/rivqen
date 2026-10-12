@@ -71,7 +71,7 @@ The exact expected outputs are derived from the upstream audit and confirmed wit
 
 ### 4.1 Protocol fixtures (`FX-RQ-P-*`, `FX-RQ-C-*`)
 
-<Badge type="info" text="DESIGN" /> The catalog of the request and response fixtures of `rqp/1` (WP-17 S2). Server cases `P-01` to `P-34` give one request to the server under test and the expected response ([negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server)). Client cases `C-01` to `C-18` give a snapshot and a response to the client and the expected error code and actions ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response), [manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), [diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation)). The expected results follow the human decisions H-44 to H-54. The fixture directory is `fixtures/rqp/protocol/FX-RQ-<ID>/` (`FX-RQ-<P|C><NN>-<NAME>`, for example `FX-RQ-P09-DELTA`; variants of one row share `NN`); task T-03 of [WP-17 S2](/engineering/plan/sprints/WP-17-S2) writes the files and their checker.
+<Badge type="info" text="DESIGN" /> The catalog of the request and response fixtures of `rqp/1` (WP-17 S2). Server cases `P-01` to `P-39` give one request to the server under test and the expected response ([negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server)). Client cases `C-01` to `C-24` give a snapshot and a response to the client and the expected error code and actions ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response), [manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), [diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation)). The expected results follow the human decisions H-44 to H-61 and the architect decisions DL-030 to DL-032. The fixture directory is `fixtures/rqp/protocol/FX-RQ-<ID>/` (`FX-RQ-<P|C><NN>-<NAME>`, for example `FX-RQ-P09-DELTA`; variants of one row share `NN`); task T-03 of [WP-17 S2](/engineering/plan/sprints/WP-17-S2) writes the files and their checker.
 
 The old scenario list maps to this catalog: `FX-RQ-NEGOTIATE` → P-01; `FX-RQ-UNSUPPORTED` → P-03; `FX-RQ-PATCH-OK` → P-09; `FX-RQ-PATCH-BASE-MISMATCH` → C-01; `FX-RQ-PATCH-TEMPLATE-MISMATCH` → P-14 and C-06; `FX-RQ-PATCH-SCRIPT` → C-08; `FX-RQ-PATCH-HASH` → C-07; `FX-RQ-DOWNGRADE-DENIED` → C-15. `FX-RQ-PATCH-SEQUENCE-GAP` is removed: an HTTP patch has no `sequence` (H-9).
 
@@ -88,6 +88,11 @@ The old scenario list maps to this catalog: `FX-RQ-NEGOTIATE` → P-01; `FX-RQ-U
 | `page-huge-a`, `page-huge-b` | One `html` block of 300 KiB and 80 lines of static template; `b` changes its last byte | Generated |
 | `page-b-onclick` | `page-b` with price content `<a onclick="x">y</a>` | By hand |
 | `page-esc-a`, `page-esc-b` | A small template and one `html` block of 2048 `"` characters; `b` changes its last character | Generated |
+| `page-b-data` | `page-b` with price content `<a href="data:text/html,x">y</a>` (H-59) | By hand |
+| `page-forged` | `page-a` with a consistent author manifest before `</head>` (the bytes of `kat/full.html`): invalid for RQP (`RQP_MARKUP_RESERVED`, M-13) | By hand |
+| `page-head-stray` | `page-a` without `</head>` in the head; `<body>` closes the head; a stray `</head>` in the body. Valid, no head end tag (DL-031) | By hand |
+| `page-head-template` | `page-a` without `</head>` in the head; a `template` in the body holds `<head></head>`. Valid, no head end tag | By hand |
+| `page-no-head-start` | `page-a` without the `<head>` start tag. Valid, no head end tag | By hand |
 
 `page-big-*` make sure that a delta is much smaller than F for every server, whatever white space its manifest serializer writes. `page-huge-*` give a delta larger than `maxPatchBytes` (262 144 bytes). `page-esc-*` give a delta that is larger than F, because JSON escapes each `"` as two bytes.
 
@@ -131,14 +136,17 @@ The old scenario list maps to this catalog: `FX-RQ-NEGOTIATE` → P-01; `FX-RQ-U
 | P-32 | `page-zero` | First visit; then `R(page-zero)` with `b=::` | `F(page-zero)` with `"blocks": []`; then `304` |
 | P-33 | `page-big-b` | `R(page-big-a)` with `Rq-Have` split into two field lines `t=…` and `b=:…:` | As P-09: the lines are combined |
 | P-34 | `page-big-b` | `R(page-big-a)` with `Rq-Have: t=t1(page-t2), b=:…:, t=t1(page-big-a)` | As P-09: the last value of a key wins |
-| P-35 | `page-b-onclick` (price content `<a onclick="x">y</a>`) | `R(page-a)` | `F`: the changed block fails the client attribute rule (H-56, RQP-23). Level SHOULD |
+| P-35 | `page-b-onclick` (price content `<a onclick="x">y</a>`); `page-b-data` (`<a href="data:text/html,x">y</a>`, H-59) | `R(page-a)` | `F`: the changed block fails the client attribute rule (H-56, RQP-23). Level SHOULD |
 | P-36 | `page-a` with server policy `ttl_seconds` 60 | `R(page-a)` (client without policy) | `F` with a new ETag: no block changed, the policy line changed (H-55). Control `P36-POLICY-DELTA`: same policy on both sides → delta whose `next_revision` has the policy line |
+| P-37 | `page-a`; `page-big-b` | The application sets `Rq-Version` (`1` or `2`), `Rq-Revision` and `Rq-X-App`; first visit, `R(page-big-a)`, `R(page-a)` | `F(page-a)`, `D(page-big-a→page-big-b, …)`, `304`: exactly one `Rq-Version: 1` on F and D, no `Rq-*` field of the application (DL-030) |
+| P-38 | `page-c`; `page-forged`; `page-a` with status `404` | The application sets `Rq-Version: 1` (and `Rq-Revision`); first visit | The application response without its `Rq-*` fields; for `page-forged` no client uses the author manifest (DL-030, see C-20) |
+| P-39 | `page-head-stray`, `page-head-template`, `page-no-head-start` | First visit | The application response: the page has no head end tag (DL-031) |
 
-Boundary and control fixtures beyond the rows: `P01-APP-ETAG` (the ETag of F replaces the application ETag), `P05-APP-VALIDATOR` (`If-None-Match` with the application ETag → 200, RQP-16), `P09-DELTA-WEAK-BASE` (`W/` base → delta, RQP-18), `P16-HAVE-4096` and `P22-CAPS-1024` (exactly at the limit → delta). P-11 sends the real first 16 bytes of the `page-big-a` prefixes.
+Boundary and control fixtures beyond the rows: `P01-APP-ETAG` (the ETag of F replaces the application ETag; F has no `Last-Modified`, DL-032), `P05-APP-VALIDATOR` (`If-None-Match` with the application ETag → 200, RQP-16), `P09-DELTA-WEAK-BASE` (`W/` base → delta, RQP-18), `P16-HAVE-4096` and `P22-CAPS-1024` (exactly at the limit → delta). P-11 sends the real first 16 bytes of the `page-big-a` prefixes.
 
-Every response of a valid page in P-01 to P-34 has no `Rq-Revision` and no `Rq-Template-Revision` field (H-54). P-25 needs the generated pages only for the first request.
+No response of a server case has an `Rq-Revision` or `Rq-Template-Revision` field (H-54), and no F, D or `304` has a `Last-Modified` field (DL-032). The checker forbids every `Rq-*` field of the application that the expected response does not have (DL-030); on a `304` it allows `Rq-Version` (a MAY of step 9). P-25 needs the generated pages only for the first request.
 
-**Client cases.** The client has a snapshot of `page-a` (except C-03, C-04, C-05, C-11 to C-14 and C-17) and sends `R(page-a)` (or a first-visit request without a snapshot). "Fallback" = one `GET` without `Rq-Have`, without an RQP `If-None-Match` and without the delta media type; page and snapshot unchanged until its response.
+**Client cases.** The client has a snapshot of `page-a` (except C-03, C-04, C-05, C-11 to C-14, C-17, C-20, C-21, C-24 and the `http` cases of C-23) and sends `R(page-a)` (or a first-visit request without a snapshot). The request URL is `https://shop.example.com/catalog`; the final URL is the same unless a case gives another one (a redirect). The result names the cache key of a new snapshot: its URL and its partition (`request` or `public`). "Fallback" = one `GET` without `Rq-Have`, without an RQP `If-None-Match` and without the delta media type; page and snapshot unchanged until its response.
 
 | ID | Response to the client | Expected |
 |---|---|---|
@@ -150,7 +158,7 @@ Every response of a valid page in P-01 to P-34 has no `Rq-Revision` and no `Rq-T
 | C-06 | A delta with `template_revision` = `t1(page-t2)` | `TEMPLATE_MISMATCH`; fallback |
 | C-07 | A delta whose operation `sha256` is not the hash of its `content` | `INTEGRITY_ERROR` (step 4); fallback |
 | C-08 | A delta with `<script>` in the `price` content; hashes and `next_revision` correct | `PATCH_CONTENT_REJECTED` (step 8, M-22); metric; fallback |
-| C-09 | Deltas with `price` content `<a onclick="x">y</a>`, `<a href=" javascript:x">y</a>`, `<a href="java&#x09;script:x">y</a>`, `<b title="&quot;">y</b>`; all valid markup; hashes and `next_revision` correct | `PATCH_CONTENT_REJECTED` (step 9, attribute rule); metric; fallback. With `<a href="/p?a=1&amp;b=2">y</a>`: applied |
+| C-09 | Deltas with `price` content `<a onclick="x">y</a>`, `<a href=" javascript:x">y</a>`, `<a href="java&#x09;script:x">y</a>`, `<b title="&quot;">y</b>`, `<a href="data:text/html,x">y</a>`, `<a href="vbscript:x">y</a>`, `<img src=" ⇥Da␊Ta:…">` (tab, LF, mixed case), `<a title="␁ VbScRiPt:x">y</a>` (C0 control, space, mixed case); all valid markup; hashes and `next_revision` correct | `PATCH_CONTENT_REJECTED` (step 9, attribute rule; H-59 for the last four); metric; fallback. With `<a href="/p?a=1&amp;b=2">y</a>`: applied |
 | C-10 | Deltas with `price` content `1</p><p>2`, `title` content `</title>`, or `cart` content `""` (empty) | `PATCH_CONTENT_REJECTED` (step 8); fallback |
 | C-11 | `Rq-Version: 1` and a manifest whose `price` hash and `page_revision` belong to `page-b`, with the body of `page-a` | `MANIFEST_INVALID` (markup analysis, H-48); normal page; no snapshot |
 | C-12 | `Rq-Version: 1` and a manifest element in `body`, not before `</head>` | `MANIFEST_INVALID` (H-49); normal page |
@@ -161,8 +169,13 @@ Every response of a valid page in P-01 to P-34 has no `Rq-Revision` and no `Rq-T
 | C-17 | A manifest with a duplicate member name; a delta with a duplicate member name | `MANIFEST_INVALID`; `PATCH_INVALID` (section 3.2 of manifest and patch) |
 | C-18 | The response to the fallback load is a delta | `PATCH_INVALID`; normal WebView load; no second fallback |
 | C-19 | Snapshot policy `ttl_seconds` 60; a delta whose `next_revision` uses 61 | `INTEGRITY_ERROR`; one fallback (H-55, H-57). Control `C19-POLICY-SAME`: the same policy line → applied. Control `C16-AT-LIMIT`: an envelope of exactly 262 144 bytes is applied |
+| C-20 | The response of P-38 for `page-forged`: a consistent author manifest, no `Rq-Version` | Normal HTML page; no snapshot; no error code (DL-030) |
+| C-21 | `Rq-Version: 1`; a consistent manifest immediately before the only `</head>` of `page-head-stray`, `page-head-template` or `page-no-head-start` | `MANIFEST_INVALID`: no head end tag (DL-031); normal page |
+| C-22 | A `304`: to the fallback load (no RQP `If-None-Match`); with `ETag: "r1(page-b)"`; after a redirect to `?page=2` | Normal WebView load; snapshot unchanged; no error code (H-58). Controls: `ETag: W/"r1(page-a)"` and no `ETag` → snapshot kept |
+| C-23 | A consistent delta from the final URL `…/catalog?page=2`; a full document of `page-a` from the final URL `http://shop.example.com/catalog` in a release build, and in a debug build with the app flag | `PATCH_INVALID`, fallback; normal page, no snapshot, no error; stored with the cache key of the `http` URL (H-58) |
+| C-24 | `Rq-Version: 1`, a manifest with `"mode": "public"`, an origin that the app declares public: `Cache-Control: public` with credentials; `no-cache` with credentials; `no-cache` without credentials; `public, private` without credentials | Partition `public`; `request`; `public`; `request` (H-61) |
 
-<Badge type="info" text="DESIGN" /> **Comparison of F.** The manifest JSON text M can have other white space and member order in another server ([manifest and patch §3.2](/engineering/protocol/manifest-patch#_3-2-json-text-of-the-manifest-and-the-envelope)). So the runner compares the body of F in three parts: the bytes before and after the manifest element exactly, the position of the element (immediately before the first `</head>`), and M by JSON value. The `ETag` is compared exactly. Section 5 states the general rule for HTML bodies; this rule is the exception for F.
+<Badge type="info" text="DESIGN" /> **Comparison of F.** The manifest JSON text M can have other white space and member order in another server ([manifest and patch §3.2](/engineering/protocol/manifest-patch#_3-2-json-text-of-the-manifest-and-the-envelope)). So the runner compares the body of F in three parts: the bytes before and after the manifest element exactly, the position of the element (immediately before the head end tag of the document, DL-031), and M by JSON value. The `ETag` is compared exactly. Section 5 states the general rule for HTML bodies; this rule is the exception for F.
 
 ### 4.2 Markup fixtures (`FX-RQ-MARKUP-*`)
 

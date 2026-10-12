@@ -69,21 +69,94 @@ The exact expected outputs are derived from the upstream audit and confirmed wit
 
 ## 4. Rivqen protocol catalog
 
-### 4.1 Protocol fixtures (initial)
+### 4.1 Protocol fixtures (`FX-RQ-P-*`, `FX-RQ-C-*`)
 
-<Badge type="info" text="DESIGN" /> Request and response fixtures for RQP. Sprint WP-17 S2 revises this list for the human decisions H-7 (client block digests) and H-9 (no `page_id` and `sequence` in HTTP patches).
+<Badge type="info" text="DESIGN" /> The catalog of the request and response fixtures of `rqp/1` (WP-17 S2). Server cases `P-01` to `P-34` give one request to the server under test and the expected response ([negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server)). Client cases `C-01` to `C-18` give a snapshot and a response to the client and the expected error code and actions ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response), [manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), [diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation)). The expected results follow the human decisions H-44 to H-54. The fixture directory is `fixtures/rqp/protocol/FX-RQ-<ID>/` (for example `FX-RQ-P-01`); task T-03 of [WP-17 S2](/engineering/plan/sprints/WP-17-S2) writes the files and their checker.
 
-| ID | Scenario |
-|---|---|
-| `FX-RQ-NEGOTIATE` | Client and server agree on RQP |
-| `FX-RQ-UNSUPPORTED` | Server ignores RQP headers |
-| `FX-RQ-PATCH-OK` | Valid patch applied |
-| `FX-RQ-PATCH-BASE-MISMATCH` | Stale base revision |
-| `FX-RQ-PATCH-TEMPLATE-MISMATCH` | Template revision changed |
-| `FX-RQ-PATCH-SEQUENCE-GAP` | Missing sequence number |
-| `FX-RQ-PATCH-SCRIPT` | Patch with a `<script>` tag is rejected |
-| `FX-RQ-PATCH-HASH` | Wrong block hash |
-| `FX-RQ-DOWNGRADE-DENIED` | Downgrade not allowed by policy |
+The old scenario list maps to this catalog: `FX-RQ-NEGOTIATE` → P-01; `FX-RQ-UNSUPPORTED` → P-03; `FX-RQ-PATCH-OK` → P-09; `FX-RQ-PATCH-BASE-MISMATCH` → C-01; `FX-RQ-PATCH-TEMPLATE-MISMATCH` → P-14 and C-06; `FX-RQ-PATCH-SCRIPT` → C-08; `FX-RQ-PATCH-HASH` → C-07; `FX-RQ-DOWNGRADE-DENIED` → C-15. `FX-RQ-PATCH-SEQUENCE-GAP` is removed: an HTTP patch has no `sequence` (H-9).
+
+**Pages.** The application output of each server case is one of these pages. "Generated" pages are written by a recipe in the checker of T-03, as the large markup fixtures are (section 4.2).
+
+| Page | Content | Source |
+|---|---|---|
+| `page-a` | The example page: 3 blocks (`title`, `price` = `120.00`, `cart`) | `spec/rqp/examples/kat/page.html` |
+| `page-b` | `page-a` with `price` = `130.00` (same template) | By hand |
+| `page-c` | `page-a` with a second block `price`: invalid for RQP (`RQP_MARKUP_DUPLICATE`) | By hand |
+| `page-t2` | `page-a` with another static header text: another template, the same block ids | By hand |
+| `page-zero` | A valid document without blocks | By hand |
+| `page-big-a`, `page-big-b` | About 20 KiB of template, 3 blocks; `b` changes one block | Generated |
+| `page-huge-a`, `page-huge-b` | One `html` block of 300 KiB; `b` changes its last byte | Generated |
+| `page-esc-a`, `page-esc-b` | A small template and one `html` block of 2048 `"` characters; `b` changes its last character | Generated |
+
+`page-big-*` make sure that a delta is much smaller than F for every server, whatever white space its manifest serializer writes. `page-huge-*` give a delta larger than `maxPatchBytes` (262 144 bytes). `page-esc-*` give a delta that is larger than F, because JSON escapes each `"` as two bytes.
+
+**Notation.** `F(x)` = status `200`, the full document of page `x`, `ETag: "r1(x)"` (strong: the fixtures use no content coding), `Rq-Version: 1`, no `Vary` on `Rq-*`. `D(x→y, ops)` = status `200`, `Content-Type: application/vnd.rivqen.delta+json`, `Rq-Version: 1`, `Cache-Control: no-store`, no `ETag`, an envelope with `base_revision` `r1(x)`, `next_revision` `r1(y)` and `replace_block` operations `ops` in document order. `R(x)` = the full delta request of a client with a snapshot of `x`: `GET`, `Accept: text/html, application/vnd.rivqen.delta+json`, `Rq-Version: 1`, `Rq-Capabilities: (block-patch)`, `If-None-Match: "r1(x)"`, `Rq-Have: t=t1(x), b=:prefixes(x):`. A case lists only what it changes in `R(x)`.
+
+**Server cases.**
+
+| ID | Current page | Request | Expected |
+|---|---|---|---|
+| P-01 | `page-a` | First visit: `Rq-Version: 1`, `Rq-Capabilities: (block-patch)`, `Accept: text/html` | `F(page-a)` |
+| P-02 | `page-a` | No `Rq-*` field (a browser) | `F(page-a)`, the same headers and body as P-01 (H-51) |
+| P-03 | `page-big-b` | `R(page-big-a)` with `Rq-Version: 2` | `F(page-big-b)`; no delta (H-51) |
+| P-04 | `page-big-b` | `R(page-big-a)` with `Rq-Version` `"1"`, `1.0` or `abc` | `F(page-big-b)` |
+| P-05 | `page-a` | `R(page-a)` | `304`, `ETag: "r1(page-a)"`, `Cache-Control` of the application, no body |
+| P-06 | `page-a` | `R(page-a)` with `If-None-Match: W/"r1(page-a)"` | `304` (weak comparison) |
+| P-07 | `page-a` | `R(page-a)` with `If-None-Match: "r1(page-t2)", "r1(page-a)"` | `304` |
+| P-08 | `page-a` | `R(page-b)` with `If-None-Match: *` | `304` |
+| P-09 | `page-big-b` | `R(page-big-a)` | `D(page-big-a→page-big-b, [the changed block])` |
+| P-10 | `page-big-b` | `R(page-big-a)` without `b` | `D(page-big-a→page-big-b, [all 3 blocks])` (H-7) |
+| P-11 | `page-big-b` | `R(page-big-a)` with `b` of 16 bytes (8 × (N − 1)) | As P-10: `b` is absent |
+| P-12 | `page-big-b` | `R(page-big-a)` with `b` of 23 bytes | As P-10 |
+| P-13 | `page-big-b` | `R(page-big-a)` with `b=?1` (Boolean) or `b="x"` (String) | As P-10 |
+| P-14 | `page-big-b` | `R(page-big-a)` with `t=t1(page-t2)` | `F(page-big-b)` |
+| P-15 | `page-big-b` | `R(page-big-a)` without `t`, or with `t="t1.…"` (String) | `F(page-big-b)`: `Rq-Have` is absent |
+| P-16 | `page-big-b` | `R(page-big-a)` with an extra member that makes `Rq-Have` 4097 bytes | `F(page-big-b)`: not parsed (`maxRqHaveBytes`) |
+| P-17 | `page-big-b` | `R(page-big-a)` with `Rq-Have: t=` (parse failure) | `F(page-big-b)` |
+| P-18 | `page-big-b` | `R(page-big-a)` without `If-None-Match` | `F(page-big-b)`: no base |
+| P-19 | `page-big-b` | `R(page-big-a)` with `If-None-Match: "r1(page-big-a)", "r1(page-t2)"` | `F(page-big-b)`: two tags, no base |
+| P-20 | `page-big-b` | `R(page-big-a)` with `If-None-Match: "abc"` or `"t1(page-big-a)"` | `F(page-big-b)` |
+| P-21 | `page-big-b` | `R(page-big-a)` with `Rq-Capabilities: (realtime-ws)` | `F(page-big-b)` |
+| P-22 | `page-big-b` | `R(page-big-a)` with `Rq-Capabilities` as a bare List `block-patch`, as `(block-patch "x")`, as two field lines `(block-patch)` and `(realtime-ws)`, or longer than 1024 bytes | `F(page-big-b)`: the field is absent (H-53) |
+| P-23 | `page-big-b` | `R(page-big-a)` with `Accept: text/html`, `Accept: */*` or the delta type with `q=0` | `F(page-big-b)` |
+| P-24 | `page-big-b` | `R(page-big-a)` with `Range: bytes=0-99` | `F(page-big-b)`, status `200` |
+| P-25 | `page-big-b` | `R(page-big-a)` with method `HEAD`; and `R(page-big-b)` with method `HEAD` | `200` with the header fields of `F(page-big-b)` and no body; then `304` |
+| P-26 | `page-big-b` | `R(page-big-a)` with `b` = the prefixes of `page-big-b` | `F(page-big-b)`: empty change set |
+| P-27 | `page-huge-b` | `R(page-huge-a)` | `F(page-huge-b)`: delta larger than `maxPatchBytes` |
+| P-28 | `page-esc-b` | `R(page-esc-a)` | `F(page-esc-b)`: delta not smaller than F |
+| P-29 | `page-c` | `R(page-a)`; and the first-visit request of P-01 | The application response unchanged: no manifest, no `Rq-Version`, no RQP `ETag` (an `ETag` of the application stays) |
+| P-30 | `page-a` | `POST`; a `404` of the application; a `200` with `application/json` | The application response unchanged |
+| P-31 | `page-big-b` | `R(page-big-a)` with `Rq-Capabilities: (block-patch manifest json-blocks x-future)`, an `Rq-Have` member `x=1` and a parameter `t=…;v=2` | As P-09: unknown tokens (also the removed `manifest` and `json-blocks`, H-54), members and parameters are ignored |
+| P-32 | `page-zero` | First visit; then `R(page-zero)` with `b=::` | `F(page-zero)` with `"blocks": []`; then `304` |
+| P-33 | `page-big-b` | `R(page-big-a)` with `Rq-Have` split into two field lines `t=…` and `b=:…:` | As P-09: the lines are combined |
+| P-34 | `page-big-b` | `R(page-big-a)` with `Rq-Have: t=t1(page-t2), b=:…:, t=t1(page-big-a)` | As P-09: the last value of a key wins |
+
+Every response of a valid page in P-01 to P-34 has no `Rq-Revision` and no `Rq-Template-Revision` field (H-54). P-25 needs the generated pages only for the first request.
+
+**Client cases.** The client has a snapshot of `page-a` (except C-03, C-04, C-05, C-11 to C-14 and C-17) and sends `R(page-a)` (or a first-visit request without a snapshot). "Fallback" = one `GET` without `Rq-Have`, without an RQP `If-None-Match` and without the delta media type; page and snapshot unchanged until its response.
+
+| ID | Response to the client | Expected |
+|---|---|---|
+| C-01 | A delta with `base_revision` ≠ `r1(page-a)` | `PATCH_BASE_MISMATCH`; fallback |
+| C-02 | A delta with one operation for `title` (unchanged content `Shop`) and `next_revision` = `r1(page-b)`: the server omitted the changed `price` block, as after a prefix collision | `INTEGRITY_ERROR` (step 7); fallback |
+| C-03 | No snapshot, first-visit request; the response is a delta | `PATCH_INVALID` (unsolicited); fallback |
+| C-04 | A full document with a manifest but without `Rq-Version` | Normal HTML page; no snapshot; no error code |
+| C-05 | `Rq-Version: 1`; manifest type `APPLICATION/Rivqen-Manifest+JSON` / `application/rıvqen-manifest+json` (U+0131) | Accepted (ASCII case-insensitive) / no manifest element: `MANIFEST_INVALID`, normal page (H-28) |
+| C-06 | A delta with `template_revision` = `t1(page-t2)` | `TEMPLATE_MISMATCH`; fallback |
+| C-07 | A delta whose operation `sha256` is not the hash of its `content` | `INTEGRITY_ERROR` (step 4); fallback |
+| C-08 | A delta with `<script>` in the `price` content; hashes and `next_revision` correct | `PATCH_CONTENT_REJECTED` (step 8, M-22); metric; fallback |
+| C-09 | Deltas with `price` content `<a onclick="x">y</a>`, `<a href=" javascript:x">y</a>`, `<a href="java&#x09;script:x">y</a>`, `<b title="&quot;">y</b>`; all valid markup; hashes and `next_revision` correct | `PATCH_CONTENT_REJECTED` (step 9, attribute rule); metric; fallback. With `<a href="/p?a=1&amp;b=2">y</a>`: applied |
+| C-10 | Deltas with `price` content `1</p><p>2`, `title` content `</title>`, or `cart` content `""` (empty) | `PATCH_CONTENT_REJECTED` (step 8); fallback |
+| C-11 | `Rq-Version: 1` and a manifest whose `price` hash and `page_revision` belong to `page-b`, with the body of `page-a` | `MANIFEST_INVALID` (markup analysis, H-48); normal page; no snapshot |
+| C-12 | `Rq-Version: 1` and a manifest element in `body`, not before `</head>` | `MANIFEST_INVALID` (H-49); normal page |
+| C-13 | `Rq-Version: 1` and two manifest elements | `MANIFEST_INVALID` (H-51); normal page |
+| C-14 | An `http` URL: release build; debug build without the app flag; debug build with the flag | No `Rq-*` field, normal load; the same; RQP (H-49) |
+| C-15 | The server does not answer RQP; legacy mode is not allowed for the origin | Normal HTTPS load (versioning DG-01, DG-04) |
+| C-16 | A delta larger than `min(maxPatchBytes, limits.max_patch_bytes)` | `PATCH_TOO_LARGE` while the body is read; fallback |
+| C-17 | A manifest with a duplicate member name; a delta with a duplicate member name | `MANIFEST_INVALID`; `PATCH_INVALID` (section 3.2 of manifest and patch) |
+| C-18 | The response to the fallback load is a delta | `PATCH_INVALID`; normal WebView load; no second fallback |
+
+<Badge type="info" text="DESIGN" /> **Comparison of F.** The manifest JSON text M can have other white space and member order in another server ([manifest and patch §3.2](/engineering/protocol/manifest-patch#_3-2-json-text-of-the-manifest-and-the-envelope)). So the runner compares the body of F in three parts: the bytes before and after the manifest element exactly, the position of the element (immediately before the first `</head>`), and M by JSON value. The `ETag` is compared exactly. Section 5 states the general rule for HTML bodies; this rule is the exception for F.
 
 ### 4.2 Markup fixtures (`FX-RQ-MARKUP-*`)
 

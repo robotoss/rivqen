@@ -46,17 +46,17 @@ fixtures/rqp/protocol/
 | `app` | The application response before the RQP server step: status and header lines (lower-case names, order kept) |
 | `request.headers` | Header lines in order; a name can repeat (one line each). Placeholders: `{{r1:<page>}}` → `"r1.…"` (with quotes), `{{t1:<page>}}` → `t1.…` (Token), `{{have:<page>}}` → `:<base64>:` of the 64-bit prefixes (H-44). The generator replaces them; the harness gets the final bytes in `expected.json` |
 
-Optional members: `request.target` (default `https://shop.example.com/catalog`), `server_config` (`policy`, `limits` of the server manifest), `client_members` (`policy`, `limits` of the client snapshot; the `{{r1:…}}` placeholder then includes the H-55 policy line), `level` (`"should"` for a case that checks a SHOULD rule, for example P-35 / H-56; a conforming server can fail it and must say so).
+Optional members: `request.target` (default `https://shop.example.com/catalog`), `server_config` (`policy`, `limits` of the server manifest), `client_members` (`policy`, `limits` of the client snapshot; the `{{r1:…}}` placeholder then includes the H-55 policy line), `level` (`"should"` for a case that checks a SHOULD rule, for example the two P-35 cases / H-56 and H-59; a conforming server can fail it and must say so).
 
 Placeholders are the only computed values in `case.json`. Every other byte is literal.
 
-Client cases (`kind: "client"`): `context` (snapshot page and members, build type), `response` (status, header lines and a body recipe). Format in `tools/rqp-protocol/README.md` (section "Client case.json").
+Client cases (`kind: "client"`): `context` (snapshot page and members, build type; also `url`, `final_url` (default: `url`; differs after a redirect), `credentials` (default `true`) and `public_origin` (default `false`), H-58 and H-61), `response` (status, header lines and a body recipe; the recipe option `manifest_position: "head-text"` puts the manifest in the head text, DL-031). Format in `tools/rqp-protocol/README.md` (section "Client case.json").
 
 ## `expected.json`
 
-Generated. Server cases: optional `level` (`"must"` or `"should"`, copied from `case.json`), `request` (`method`, `target`, final header lines), optional `server_config`, `status`, `headers_required` (name → exact value), `headers_forbidden` (names), `body`: `{"kind": "full", "insert_at", "manifest"}` (the page with the manifest inserted; the manifest is compared as a JSON value, fixtures.md §5), `{"kind": "delta", "base_revision", "next_revision", "template_revision", "blocks": [{"id", "format", "sha256"}]}` (changed blocks in order), `{"kind": "app"}` (the application body unchanged) or `{"kind": "none"}`.
+Generated. Server cases: optional `level` (`"must"` or `"should"`, copied from `case.json`), `request` (`method`, `target`, final header lines), optional `server_config`, `status`, `headers_required` (name → exact value), `headers_forbidden` (names: every `Rq-*` field of the application that the response does not have, DL-030, but `rq-version` is allowed on a `304`; `last-modified` for every outcome other than passthrough, DL-032), `body`: `{"kind": "full", "insert_at", "manifest"}` (the page with the manifest inserted; the manifest is compared as a JSON value, fixtures.md §5), `{"kind": "delta", "base_revision", "next_revision", "template_revision", "blocks": [{"id", "format", "sha256"}]}` (changed blocks in order), `{"kind": "app"}` (the application body unchanged) or `{"kind": "none"}`.
 
-Client cases: `context`, `request`, `response` (with `body`, `body_bytes`, `body_sha256`), `result` (`outcome`, `error`, `next`, `metric`, `snapshot`).
+Client cases: `context`, `request`, `response` (with `body`, `body_bytes`, `body_sha256`), `result` (`outcome`, `error`, `next`, `metric`, `snapshot`). A snapshot has `url` (the canonical final URL) and `partition` (`request` or `public`); a client under test must return both.
 
 Harness: `tools/rqp-protocol/check.mjs` runs a server module `handle(request, appResponse, pageBytes, config)` or a client module over the fixtures. It prints `FAIL [SHOULD]` lines for failed SHOULD cases and a summary `N passed, M failed, K SHOULD failed` (see `tools/rqp-protocol/README.md`). The public origin is `https://shop.example.com`; there is no content coding.
 

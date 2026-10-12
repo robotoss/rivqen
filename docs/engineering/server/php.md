@@ -23,7 +23,7 @@
 
 1. Header names are case-insensitive (PSR-7 guarantees this; legacy adapter must normalize).
 2. Never send headers or output before the middleware runs ("headers already sent" is an error, not a fallback).
-3. Respect `memory_limit`: refuse to buffer above `maxDocumentBytes` and pass the response through unchanged.
+3. Respect `memory_limit`: refuse to buffer above `maxDocumentBytes` and pass the response through unchanged, without its `Rq-*` fields (DL-030).
 4. Let the web server or proxy compress after the middleware.
 
 ## Related

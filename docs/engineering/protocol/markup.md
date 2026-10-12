@@ -263,7 +263,7 @@ These rules apply to the content of a block whose element is in `BLOCK_HTML` and
 3. a start tag with the self-closing flag whose name is not in `VOID` (`<span/>`);
 4. an end tag with a name in `VOID` (`</br>`, `</img>`).
 
-Comments, bogus comments, character references and all other elements are allowed. Attributes are not checked: event handler attributes and `javascript:` URLs are a client patch rule ([manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules)), not a markup rule.
+Comments, bogus comments, character references and all other elements are allowed. Attributes are not checked: inline event handlers and `javascript:`, `vbscript:` and `data:` URLs are a client patch rule ([manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules)), not a markup rule.
 
 **M-23 Balance.** In the content, a start tag with a name not in `VOID` pushes an element (M-05). Every end tag MUST have the name of the current node, and pops only that node. The end tag that has the name of the block element while the block element is the current node is the block end tag. Thus:
 

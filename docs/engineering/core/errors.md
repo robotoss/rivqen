@@ -26,7 +26,7 @@ Rivqen errors are typed. Each error has a category, a stable code, and a **fallb
 |---|---|---|
 | `PROTOCOL_UNSUPPORTED` | UnsupportedCapability | Try the allowed downgrade, else normal HTTPS |
 | `MANIFEST_INVALID` | Protocol | The RQP page manifest failed a client check ([manifest and patch §1.8](/engineering/protocol/manifest-patch#_1-8-client-checks-of-the-manifest)): no or two manifest elements, size, JSON, schema, URL, or the markup analysis of the original document. Show the document as a normal page; store no snapshot. Hint: `NormalLoad` |
-| `PATCH_INVALID` | Protocol | An RQP delta is malformed or unsolicited: JSON rules, schema (also an unknown operation), operation rules, another URL, or a delta for a request that did not offer one ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response)). Reject the patch; one fallback load of the full document. Hint: `NormalLoad` |
+| `PATCH_INVALID` | Protocol | An RQP delta is malformed or unsolicited: JSON rules, schema (also an unknown operation), operation rules, a final URL with another cache key (H-58), or a delta for a request that did not offer one ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response)). Reject the patch; one fallback load of the full document. Hint: `NormalLoad` |
 | `PATCH_BASE_MISMATCH` | Protocol | Reject the patch; request a full snapshot |
 | `TEMPLATE_MISMATCH` | Protocol | Full reload |
 | `INTEGRITY_ERROR` | Protocol | Reject; full reload |
@@ -42,7 +42,7 @@ Rivqen errors are typed. Each error has a category, a stable code, and a **fallb
 | `TIMEOUT_FIRST_BYTE` / `TIMEOUT_TOTAL` | Timeout | Fallback |
 | `INTERNAL_ERROR` | Internal | A broken invariant or a caught panic. Fallback; report with location and build id. |
 | `LEGACY_MODE_USED` | Notice | Not an error: the deprecated legacy module served this session. One warning per origin per app start. |
-| `SERVER_PASSTHROUGH` | Server | Server SDK error: the original response is sent unchanged. |
+| `SERVER_PASSTHROUGH` | Server | Server SDK error: the original response is sent unchanged, without its `Rq-*` fields (DL-030). |
 
 ## 3. Rules
 

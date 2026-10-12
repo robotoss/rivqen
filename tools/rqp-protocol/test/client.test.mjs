@@ -210,6 +210,19 @@ test('MANIFEST_INVALID: each failed check of sections 1.7 and 1.8', () => {
   assert.equal(reasons(build(`${JSON.stringify(m)}${' '.repeat(LIMITS.maxManifestBytes)}`)), 'size');
 });
 
+test('a manifest text of exactly maxManifestBytes passes the size check; one byte more fails it', () => {
+  const p = page('page-a');
+  const at = p.indexOf('</head>');
+  const m = JSON.stringify(manifestOf(revisions('page-a'), TARGET));
+  const build = (size) => Buffer.concat([
+    p.subarray(0, at),
+    Buffer.from(`<script type="application/rivqen-manifest+json">${m}${' '.repeat(size - m.length)}</script>`),
+    p.subarray(at),
+  ]);
+  assert.equal(checkFull({ url: TARGET }, build(LIMITS.maxManifestBytes)).error, undefined);
+  assert.equal(checkFull({ url: TARGET }, build(LIMITS.maxManifestBytes + 1)).error, 'size');
+});
+
 test('MANIFEST_INVALID: an upper-case manifest type is accepted (ASCII case-insensitive, H-28)', () => {
   const body = Buffer.from(fullOf('page-a').toString('utf8').replace('application/rivqen-manifest+json', 'APPLICATION/Rivqen-Manifest+JSON'));
   assert.equal(checkFull({ url: TARGET }, body).error, undefined);

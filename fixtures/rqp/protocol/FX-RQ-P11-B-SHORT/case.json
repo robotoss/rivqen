@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-P11-B-SHORT",
-  "description": "b has 16 bytes (8 x (N - 1)): b is absent, delta with all blocks",
+  "description": "b has 16 bytes (8 x (N - 1)): the prefixes of title and price of page-big-a; b is absent, so the delta has all blocks, also the unchanged title",
   "rules": ["RQP-11"],
   "page": "page-big-b",
   "client_page": "page-big-a",
@@ -18,7 +18,7 @@
       ["rq-capabilities", "(block-patch)"],
       ["accept", "text/html, application/vnd.rivqen.delta+json"],
       ["if-none-match", "{{r1:page-big-a}}"],
-      ["rq-have", "t={{t1:page-big-a}}, b=:AAAAAAAAAAAAAAAAAAAAAA==:"]
+      ["rq-have", "t={{t1:page-big-a}}, b=:0Aqua3+/d6ReDehqKiXfLA==:"]
     ]
   }
 }

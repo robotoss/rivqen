@@ -31,6 +31,12 @@ test('step 1: a POST, a status other than 200 and a non-HTML type get A unchange
   }
 });
 
+test('step 1: a 2xx status other than 200 gets A unchanged', () => {
+  for (const status of [201, 203, 206]) {
+    assert.equal(handle(deltaRequest('page-big-a'), { ...APP, status }, page('page-big-b')).reason, 'out-of-scope', String(status));
+  }
+});
+
 test('step 1: the media type match ignores parameters and ASCII case', () => {
   const app = { status: 200, headers: [['content-type', 'Text/HTML ; charset=utf-8']] };
   assert.equal(handle(firstVisit(), app, page('page-a')).kind, 'full');
@@ -56,11 +62,21 @@ test('step 2: a page without </head> in HTML context gets A unchanged (H-49)', (
   assert.deepEqual(r.body, noHead);
 });
 
-test('step 2: the manifest goes before the first </head> in HTML context, not one in an svg', () => {
-  const doc = Buffer.from('<!DOCTYPE html><html><head><title>x</title><svg><head></head></svg></head><body></body></html>', 'utf8');
+test('step 2: the manifest goes before the first </head> end tag, not "</head>" text in script data or a comment', () => {
+  const doc = Buffer.from('<!DOCTYPE html><html><head><script>var s = "</head>";</script><!-- </head> --></head><body></body></html>', 'utf8');
   const r = handle(firstVisit(), APP, doc);
-  const at = r.body.indexOf('<script type="application/rivqen-manifest+json">');
-  assert.equal(at, doc.indexOf('</head></body>'));
+  assert.equal(r.kind, 'full');
+  assert.equal(r.body.indexOf('<script type="application/rivqen-manifest+json">'), doc.indexOf('</head><body>'));
+});
+
+test('step 2: the foreign region of an svg ends at </svg>, so a later </head> is in HTML context', () => {
+  const doc = Buffer.from('<!DOCTYPE html><html><head><title>x</title></head><body><svg><g></g></svg><p data-rq-block="a">1</p></body></html>', 'utf8');
+  const inHead = Buffer.from('<!DOCTYPE html><html><head><svg><desc>d</desc></svg></head><body><p data-rq-block="a">1</p></body></html>', 'utf8');
+  for (const d of [doc, inHead]) {
+    const r = handle(firstVisit(), APP, d);
+    assert.equal(r.kind, 'full', d.toString());
+    assert.equal(r.body.indexOf('<script type="application/rivqen-manifest+json">'), d.indexOf('</head>'));
+  }
 });
 
 // Step 3.
@@ -185,6 +201,34 @@ test('step 7: the limits hint max_patch_bytes of the server lowers the limit', (
 
 test('step 7: a delta that is not smaller than F gives F', () => {
   assert.equal(handle(deltaRequest('page-esc-a'), APP, page('page-esc-b')).reason, 'delta-not-smaller');
+});
+
+test('step 7: a delta of exactly the size of F gives F; one byte smaller is sent', () => {
+  // Quotes cost 2 bytes in D and 1 byte in F. Pad the template so that the sizes meet.
+  const doc = (pad, content) => Buffer.from(`<!DOCTYPE html><html><head><title>T</title></head><body>${' '.repeat(pad)}<p data-rq-block="q">${content}</p></body></html>`, 'utf8');
+  const quotes = '"'.repeat(600);
+  const send = (pad) => {
+    const before = analyzeBytes(doc(pad, 'old'));
+    const request = {
+      method: 'GET',
+      target: TARGET,
+      headers: [
+        ['rq-version', '1'],
+        ['rq-capabilities', '(block-patch)'],
+        ['accept', 'application/vnd.rivqen.delta+json'],
+        ['if-none-match', `"${before.page_revision}"`],
+        ['rq-have', `t=${before.template_revision}`],
+      ],
+    };
+    return handle(request, APP, doc(pad, quotes));
+  };
+  assert.equal(send(0).reason, 'delta-not-smaller');
+  // The size of D does not depend on the template; the size of F grows by one byte per pad byte.
+  const deltaSize = send(10000).body.length;
+  const equalPad = deltaSize - handle(firstVisit(), APP, doc(0, quotes)).body.length;
+  assert.ok(equalPad > 0 && equalPad < 10000);
+  assert.equal(send(equalPad).reason, 'delta-not-smaller');
+  assert.equal(send(equalPad + 1).kind, 'delta');
 });
 
 test('step 7: a changed html block that fails the attribute rule gives F (H-56)', () => {

@@ -1,6 +1,6 @@
 # Project status
 
-**Current stage:** Phase P0 (Foundation and evidence) is **closed**: milestone **M1 "init docs"** is delivered and gate **G0** is passed. **Next:** Phase P1 — Contracts (golden fixtures, reference server, RQP specification).
+**Current stage:** Phase P0 (Foundation and evidence) is **closed**: milestone **M1 "init docs"** is delivered and gate **G0** is passed. **Now:** Phase P1 — Contracts. WP-17 (RQP specification) sprint S1 is closed: the RQP markup rules are normative and four parser candidates agree on all golden markup fixtures. Next: WP-17 sprint S2 (negotiation, manifest and patch), then WP-02 and WP-03.
 
 ## What exists
 
@@ -10,9 +10,9 @@
 | Development plan with work packages | ✅ Available |
 | Upstream VasSonic behavioral audit (summary) | ✅ Available — see [Research](/research/upstream-vassonic) |
 | Upstream server traces (Node.js, PHP, Java) | ✅ Available — see [server traces](/engineering/protocol/legacy-traces) |
-| Rivqen protocol (RQP) specification | 📝 Draft — see [Protocol](/engineering/protocol/); final in P1 |
+| Rivqen protocol (RQP) specification | 🔄 In progress — markup rules normative ([RQP markup](/engineering/protocol/markup)); negotiation, manifest and patch in WP-17 S2 |
 | Server demo (RQP reference behavior) | ✅ Runs — see [Examples: Server](/guide/examples/server) |
-| Golden fixtures | ⏳ Planned (P1) |
+| Golden fixtures | 🔄 RQP markup: 197 fixtures (`fixtures/rqp/markup/`); protocol and legacy fixtures planned (P1) |
 | Rust core | ⏳ Planned (P3) |
 | Android and iOS SDKs | ⏳ Planned (P5) |
 | Web and React SDK | ⏳ Planned (P6) |

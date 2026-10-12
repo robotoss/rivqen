@@ -183,7 +183,7 @@ export async function runServer(mod, { dir = FIXTURES_DIR, only = '' } = {}) {
     } catch (error) {
       failures = [`the server threw ${error instanceof Error ? error.name : typeof error}`];
     }
-    out.push({ name, failures });
+    out.push({ name, failures, level: expected.level ?? 'must' });
   }
   return out;
 }
@@ -258,14 +258,20 @@ async function main(argv) {
     process.stderr.write(`rqp-protocol check: ${error.message}\n`);
     return 2;
   }
+  // A fixture with level "should" checks a SHOULD rule. Its failure is counted
+  // and labelled apart from the failures of MUST rules.
   let failed = 0;
-  for (const { name, failures } of results) {
+  let shouldFailed = 0;
+  for (const { name, failures, level } of results) {
     if (failures.length === 0) continue;
-    failed++;
-    for (const f of failures) process.stdout.write(`FAIL ${name}: ${f}\n`);
+    const should = level === 'should';
+    if (should) shouldFailed++;
+    else failed++;
+    for (const f of failures) process.stdout.write(`FAIL${should ? ' [SHOULD]' : ''} ${name}: ${f}\n`);
   }
-  process.stdout.write(`rqp-protocol check: ${results.length - failed} passed, ${failed} failed\n`);
-  return failed === 0 ? 0 : 1;
+  const passed = results.length - failed - shouldFailed;
+  process.stdout.write(`rqp-protocol check: ${passed} passed, ${failed} failed, ${shouldFailed} SHOULD failed\n`);
+  return failed + shouldFailed === 0 ? 0 : 1;
 }
 
 if (process.argv[1] !== undefined && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

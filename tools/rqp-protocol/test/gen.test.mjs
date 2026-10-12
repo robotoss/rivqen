@@ -82,6 +82,19 @@ test('defective cases stop with a case error: id, unknown member, placeholder, p
   assert.ok(run({ check: true, dir }).problems.some((p) => /page page-c is not valid for RQP/.test(p)));
 });
 
+test('level "should" is copied to expected.json; another level is a defective case', () => {
+  const name = 'FX-RQ-P35-ATTRIBUTE-RULE';
+  const dir = copyFixture(name);
+  const file = join(dir, name, 'case.json');
+  const c = JSON.parse(readFileSync(file, 'utf8'));
+  assert.equal(expectFixture(dir, name).files['expected.json'].level, 'should');
+  writeFileSync(file, JSON.stringify({ ...c, level: 'must' }));
+  assert.throws(() => expectFixture(dir, name), (e) => e instanceof CaseError && /level must be "should"/.test(e.message));
+  const { level: _level, ...withoutLevel } = c;
+  writeFileSync(file, JSON.stringify(withoutLevel));
+  assert.equal(Object.hasOwn(expectFixture(dir, name).files['expected.json'], 'level'), false);
+});
+
 test('placeholders: r1 with quotes, t1 as a token, have as a Byte Sequence; ":" for zero blocks', () => {
   assert.match(substitute('T', '{{r1:page-a}}'), /^"r1\.[A-Za-z0-9_-]{43}"$/);
   assert.match(substitute('T', '{{t1:page-a}}'), /^t1\.[A-Za-z0-9_-]{43}$/);

@@ -2,6 +2,7 @@
   "id": "FX-RQ-P35-ATTRIBUTE-RULE",
   "description": "The changed price block has an onclick attribute: F, not a delta (H-56)",
   "rules": ["RQP-23"],
+  "level": "should",
   "page": "page-b-onclick",
   "client_page": "page-a",
   "app": {

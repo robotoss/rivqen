@@ -2,7 +2,7 @@
 
 `examples/server-demo` is a small Node.js server. It shows the Rivqen protocol (RQP) from the server side: block markup, manifest, `304`, block patch and safe fallback.
 
-**Status:** <Badge type="info" text="DESIGN" /> This page describes the demo after its `rqp/1` alignment in [WP-17 S2](/engineering/plan/sprints/WP-17-S2) (task T-04): rqp/1 revisions, the `Rq-Have` field and a stateless server. Until that change is merged, the demo in the repository uses the draft headers. The demo is reference behavior for WP-17, not the final server SDK.
+**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), task T-04): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 45 tests pass, and the demo passes all 57 server protocol fixtures (checked 2026-10-12, Node.js 22 or later). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
 
 [[toc]]
 
@@ -39,7 +39,7 @@ The server listens on `127.0.0.1:8787`. To change the port, set `PORT`.
 
 ## 4. How the server answers `/catalog`
 
-The server follows the response selection of [negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server).
+<Badge type="tip" text="FACT" /> The server follows the response selection of [negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server).
 
 ```mermaid
 flowchart TD
@@ -55,6 +55,17 @@ flowchart TD
 ```
 
 Every client gets the same full document: a browser without RQP also gets the manifest, `Rq-Version: 1` and the `ETag` `"r1.…"`. The browser ignores the manifest script.
+
+Where the code is:
+
+| File | Content |
+|---|---|
+| `src/rqp.js` | `handle(request, appResponse, pageBytes, config)`: the response selection (steps 1 to 9), the manifest, the page revision with the policy line, the delta |
+| `src/markup.js` | The markup analysis: calls the Node.js parser candidate `tools/rqp-markup/node` in process. Adds the insertion point before `</head>` and the attribute rule (H-56) |
+| `src/fields.js`, `src/sf.js` | The request fields and a Structured Field parser |
+| `src/app.js`, `src/server.js` | The HTTP adapter and the start script. The public origin comes from `ORIGIN`, not from the connection |
+
+The demo manifest has `policy` (`mode` `private`, `ttl_seconds` `0`, `offline` `false`) and `limits` (`max_patch_bytes` `262144`). The page revision includes them ([manifest and patch §1.3](/engineering/protocol/manifest-patch#_1-3-hashes-and-revisions), H-55).
 
 ## 5. Try it by hand
 
@@ -96,6 +107,16 @@ curl -si http://127.0.0.1:8787/catalog \
 
 6. Make sure that the response has `Content-Type: application/vnd.rivqen.delta+json`, `Cache-Control: no-store` and no `ETag`.
 
+Recorded output (2026-10-12, Node.js 22 or later, Rq-Have without `b`; the revisions are values of this run and change when the demo page changes):
+
+| Step | Output that matters |
+|---|---|
+| 1 | `HTTP/1.1 200 OK`, `content-type: text/html; charset=utf-8`, `cache-control: no-cache`, `etag: "r1.zrEnLcp3_yhVSEpGReXsUAp7Gt4VGuNqnik_W4O5xRo"`, `rq-version: 1`, `content-length: 20250`, no `Vary` |
+| 2 | The `ETag` above and `t1.dMGS3KdBw6hmMK_VrD06B55NQwoItge4Ig1Wwh-bigM` |
+| 3 | `HTTP/1.1 304 Not Modified` |
+| 4 | `{"data":1,"template":0}` |
+| 5, 6 | `HTTP/1.1 200 OK`, `content-type: application/vnd.rivqen.delta+json`, `rq-version: 1`, `cache-control: no-store`, `content-length: 836`, no `etag`. The body starts with `{"type":"rivqen.patch","protocol":"rqp/1","base_revision":"r1.zrEn…"` and has four operations |
+
 Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so the delta has an operation for every block (all-blocks fallback, H-7). A real client sends `b`, and the delta has only the changed blocks. If you omit any of the fields of step 5, the server sends the full document.
 
 ## 6. Run the tests
@@ -104,7 +125,20 @@ Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so th
 npm test
 ```
 
-The tests check the markup analysis, the revisions, the manifest, the response selection (full document, `304`, delta), the request field parsers and the patch content.
+<Badge type="tip" text="FACT" /> The 45 tests check, by behavior:
+
+- the response selection: full document, `304`, delta, the size rules, the attribute rule (H-56), invalid pages, a weak `ETag` with a content coding, no state between requests;
+- the known answers of `spec/rqp/examples/kat`: the full documents, both page revisions and the example patches;
+- the request fields and the Structured Field parser;
+- the insertion point of the manifest and the attribute rule;
+- the HTTP adapter on a loopback socket: first visit, revisit, data change, template change;
+- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 57 server fixtures pass (`FX-RQ-P*`), also `FX-RQ-P35` (level SHOULD).
+
+To run the fixtures alone, run this command in `examples/server-demo`:
+
+```bash
+node ../../tools/rqp-protocol/check.mjs --server src/rqp.js
+```
 
 ## 7. Measure bytes
 
@@ -115,7 +149,7 @@ The tests check the markup analysis, the revisions, the manifest, the response s
 npm run measure -- --out ../../evidence/benchmarks/rqp-bytes.json
 ```
 
-The script makes four visits (cold, unchanged, data changed, template changed) with three strategies: plain, HTTP ETag and RQP. To add the upstream legacy server, set `LEGACY_URL` and `LEGACY_PAGES` (see `tools/upstream-lab`).
+The script makes four visits (cold, unchanged, data changed, template changed) with three strategies: plain, HTTP ETag and RQP. The RQP client of the script sends `If-None-Match` and `Rq-Have` with the digest prefixes `b`, and applies each delta to its block list. To add the upstream legacy server, set `LEGACY_URL` and `LEGACY_PAGES` (see `tools/upstream-lab`).
 
 The latest results are on the [Performance](/guide/performance#measured-bytes) page.
 
@@ -132,6 +166,8 @@ The server writes one JSON line per event. It follows [Errors and logging](/engi
 - The demo data is in memory. A restart resets it.
 - The server keeps no history of revisions: the request has the client's revisions and block digests, so a delta from any older page with the same template is possible.
 - The demo does not compress responses, so its `ETag` is strong. A server that compresses sends `W/"r1.…"` ([negotiation §5.1](/engineering/protocol/negotiation#_5-1-full-document)).
+- The server evaluates `If-None-Match` only. It does not evaluate `If-Match`, `If-Unmodified-Since`, `If-Modified-Since` or `If-Range`, and it sends the full document (status `200`) for a `Range` request.
+- The markup analysis is the Node.js parser candidate of WP-17 S1. It is a conformance tool, not a server SDK.
 - It is not a production server. Use the server SDKs when they are released.
 
 ## Related

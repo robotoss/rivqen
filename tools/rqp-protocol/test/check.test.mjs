@@ -14,7 +14,7 @@ import { test } from 'node:test';
 import { compareClient, compareServer, runClient, runServer } from '../check.mjs';
 import * as client from '../src/client.mjs';
 import * as server from '../src/server.mjs';
-import { FIXTURES_DIR, readJsonFile } from '../src/fixtures.mjs';
+import { FIXTURES_DIR, fixtureNames, readJsonFile } from '../src/fixtures.mjs';
 import { page } from './helpers.mjs';
 
 const CHECK = fileURLToPath(new URL('../check.mjs', import.meta.url));
@@ -150,5 +150,31 @@ test('a server module that throws fails its fixtures, and the command exits 1', 
   assert.throws(() => execFileSync(process.execPath, [CHECK, '--server', fileURLToPath(new URL('./fixtures/broken-server.mjs', import.meta.url)), '--only', 'FX-RQ-P01'], { stdio: 'pipe' }), (e) => e.status === 1);
   assert.throws(() => execFileSync(process.execPath, [CHECK, '--bad'], { stdio: 'pipe' }), (e) => e.status === 2);
   const out = execFileSync(process.execPath, [CHECK, '--only', 'FX-RQ-P09'], { encoding: 'utf8' });
-  assert.match(out, /2 passed, 0 failed/);
+  assert.match(out, /2 passed, 0 failed, 0 SHOULD failed/);
+});
+
+test('a failed SHOULD fixture is labelled and counted apart from a failed MUST fixture', () => {
+  const app = fileURLToPath(new URL('./fixtures/app-only-server.mjs', import.meta.url));
+  const run = (only) => {
+    try {
+      return { status: 0, out: execFileSync(process.execPath, [CHECK, '--server', app, '--only', only], { encoding: 'utf8', stdio: 'pipe' }) };
+    } catch (e) {
+      return { status: e.status, out: e.stdout.toString() };
+    }
+  };
+  const should = run('FX-RQ-P35');
+  assert.equal(should.status, 1);
+  assert.match(should.out, /^FAIL \[SHOULD\] FX-RQ-P35-ATTRIBUTE-RULE: /m);
+  assert.match(should.out, /0 passed, 0 failed, 1 SHOULD failed/);
+  const must = run('FX-RQ-P09-DELTA-WEAK');
+  assert.equal(must.status, 1);
+  assert.match(must.out, /^FAIL FX-RQ-P09-DELTA-WEAK-BASE: /m);
+  assert.match(must.out, /0 passed, 1 failed, 0 SHOULD failed/);
+});
+
+test('only the case P-35 has level "should" in its expected file', () => {
+  const levels = fixtureNames()
+    .filter((n) => n.startsWith('FX-RQ-P'))
+    .filter((n) => readJsonFile(join(FIXTURES_DIR, n, 'expected.json')).level === 'should');
+  assert.deepEqual(levels, ['FX-RQ-P35-ATTRIBUTE-RULE']);
 });

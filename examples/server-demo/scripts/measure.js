@@ -6,7 +6,7 @@
 // Compared strategies:
 //   plain      — no Rivqen, no revalidation: full page every time
 //   http-etag  — standard HTTP revalidation: 304 when unchanged, full page otherwise
-//   rqp        — Rivqen protocol: 304, or a patch with only changed blocks, or full page
+//   rqp        — Rivqen protocol rqp/1: 304, or a delta with only the changed blocks, or full page
 //   legacy     — optional: the same page through the UPSTREAM legacy server (LEGACY_URL + LEGACY_PAGES)
 //
 // Usage: node scripts/measure.js [--out file.json]
@@ -15,7 +15,7 @@
 
 import { gzipSync, brotliCompressSync } from 'node:zlib';
 import { writeFileSync } from 'node:fs';
-import { analyze } from '../src/rqp.js';
+import { analyzePage } from '../src/markup.js';
 import { renderCatalog } from '../src/pages.js';
 
 const BASE = process.env.DEMO_URL ?? 'http://127.0.0.1:8787';
@@ -30,18 +30,36 @@ async function get(headers = {}) {
 }
 const post = (p) => fetch(`${BASE}${p}`, { method: 'POST' }).then((r) => r.json());
 
-const RQ = { 'Rq-Version': '1', 'Rq-Capabilities': '(block-patch manifest)' };
+const RQ = { 'Rq-Version': '1', 'Rq-Capabilities': '(block-patch)', Accept: 'text/html, application/vnd.rivqen.delta+json' };
 const results = [];
-let rqpRev = null;
+let snapshot = null; // what an rqp/1 client holds: { page_revision, template_revision, blocks }
 let etag = null;
+
+/** The manifest of a full document (the client reads it with the markup analysis; the demo reads it with a pattern). */
+function manifestOf(body) {
+  const m = /<script type="application\/rivqen-manifest\+json">([^<]*)<\/script>/.exec(body);
+  return m ? JSON.parse(m[1]) : null;
+}
+
+/** Request fields of an rqp/1 client: If-None-Match with the page revision, Rq-Have with t and b (H-44, H-46). */
+function rqpFields() {
+  if (!snapshot) return RQ;
+  const b = Buffer.concat(snapshot.blocks.map((x) => Buffer.from(x.sha256, 'base64url').subarray(0, 8))).toString('base64');
+  return { ...RQ, 'If-None-Match': `"${snapshot.page_revision}"`, 'Rq-Have': `t=${snapshot.template_revision}, b=:${b}:` };
+}
 
 async function visit(name) {
   const plain = await get();
   const http = await get(etag ? { 'If-None-Match': etag } : {});
-  const rqp = await get(rqpRev ? { ...RQ, 'Rq-Base-Revision': `"${rqpRev}"`, 'If-None-Match': `"${rqpRev}"` } : RQ);
+  const rqp = await get(rqpFields());
   etag = plain.headers.get('etag');
-  rqpRev = (rqp.headers.get('rq-revision') ?? '').replace(/"/g, '') || rqpRev;
-  const kind = rqp.status === 304 ? '304' : (rqp.headers.get('content-type') ?? '').includes('delta') ? 'patch' : 'full';
+  const kind = rqp.status === 304 ? '304' : (rqp.headers.get('content-type') ?? '').includes('delta') ? 'delta' : 'full';
+  if (kind === 'full') snapshot = manifestOf(rqp.body);
+  if (kind === 'delta') {
+    // The client applies the delta: new page revision, new hashes for the changed blocks.
+    const d = JSON.parse(rqp.body);
+    snapshot = { ...snapshot, page_revision: d.next_revision, blocks: snapshot.blocks.map((x) => d.operations.find((o) => o.block_id === x.id) ? { ...x, sha256: d.operations.find((o) => o.block_id === x.id).sha256 } : x) };
+  }
   results.push({
     visit: name,
     plain: { status: plain.status, ...sizes(plain.body) },
@@ -90,7 +108,7 @@ function renderCatalogAt(dataStep) {
     .replace(/"items":\d+/, `"items":${dataStep % 4}`);
 }
 
-const page = analyze(renderCatalog());
+const page = analyzePage(Buffer.from(renderCatalog(), 'utf8'));
 const report = { date: new Date().toISOString(), page_bytes: Buffer.byteLength(renderCatalog()), blocks: page.blocks.map((b) => b.id), results };
 console.log(JSON.stringify(report, null, 2));
 if (out) writeFileSync(out, JSON.stringify(report, null, 2) + '\n');

@@ -53,6 +53,8 @@ The reference functions here are the source of the expected results. They are no
 
 Exit codes of `gen.mjs` and `check.mjs`: `0` success, `1` a stale file, a defective case or a failed fixture, `2` a usage error.
 
+A case can have `"level": "should"` (today only `FX-RQ-P35-ATTRIBUTE-RULE`, H-56). The generator copies the member to `expected.json`; any other value is a defective case. `check.mjs` prints the failure of such a fixture as `FAIL [SHOULD] <name>: …` and counts it apart: the last line is `rqp-protocol check: <passed> passed, <failed> failed, <n> SHOULD failed`. A SHOULD failure also gives exit code `1`, so it is never hidden; a conforming server that chooses not to follow the SHOULD rule reports it as a known deviation.
+
 ## Procedure: check a server under test
 
 1. Write an ES module that exports `handle(request, appResponse, pageBytes, config)`.

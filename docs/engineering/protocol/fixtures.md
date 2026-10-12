@@ -71,7 +71,7 @@ The exact expected outputs are derived from the upstream audit and confirmed wit
 
 ### 4.1 Protocol fixtures (`FX-RQ-P-*`, `FX-RQ-C-*`)
 
-<Badge type="info" text="DESIGN" /> The catalog of the request and response fixtures of `rqp/1` (WP-17 S2). Server cases `P-01` to `P-34` give one request to the server under test and the expected response ([negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server)). Client cases `C-01` to `C-18` give a snapshot and a response to the client and the expected error code and actions ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response), [manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), [diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation)). The expected results follow the human decisions H-44 to H-54. The fixture directory is `fixtures/rqp/protocol/FX-RQ-<ID>/` (for example `FX-RQ-P-01`); task T-03 of [WP-17 S2](/engineering/plan/sprints/WP-17-S2) writes the files and their checker.
+<Badge type="info" text="DESIGN" /> The catalog of the request and response fixtures of `rqp/1` (WP-17 S2). Server cases `P-01` to `P-34` give one request to the server under test and the expected response ([negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server)). Client cases `C-01` to `C-18` give a snapshot and a response to the client and the expected error code and actions ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response), [manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), [diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation)). The expected results follow the human decisions H-44 to H-54. The fixture directory is `fixtures/rqp/protocol/FX-RQ-<ID>/` (`FX-RQ-<P|C><NN>-<NAME>`, for example `FX-RQ-P09-DELTA`; variants of one row share `NN`); task T-03 of [WP-17 S2](/engineering/plan/sprints/WP-17-S2) writes the files and their checker.
 
 The old scenario list maps to this catalog: `FX-RQ-NEGOTIATE` → P-01; `FX-RQ-UNSUPPORTED` → P-03; `FX-RQ-PATCH-OK` → P-09; `FX-RQ-PATCH-BASE-MISMATCH` → C-01; `FX-RQ-PATCH-TEMPLATE-MISMATCH` → P-14 and C-06; `FX-RQ-PATCH-SCRIPT` → C-08; `FX-RQ-PATCH-HASH` → C-07; `FX-RQ-DOWNGRADE-DENIED` → C-15. `FX-RQ-PATCH-SEQUENCE-GAP` is removed: an HTTP patch has no `sequence` (H-9).
 
@@ -85,7 +85,8 @@ The old scenario list maps to this catalog: `FX-RQ-NEGOTIATE` → P-01; `FX-RQ-U
 | `page-t2` | `page-a` with another static header text: another template, the same block ids | By hand |
 | `page-zero` | A valid document without blocks | By hand |
 | `page-big-a`, `page-big-b` | About 20 KiB of template, 3 blocks; `b` changes one block | Generated |
-| `page-huge-a`, `page-huge-b` | One `html` block of 300 KiB; `b` changes its last byte | Generated |
+| `page-huge-a`, `page-huge-b` | One `html` block of 300 KiB and 80 lines of static template; `b` changes its last byte | Generated |
+| `page-b-onclick` | `page-b` with price content `<a onclick="x">y</a>` | By hand |
 | `page-esc-a`, `page-esc-b` | A small template and one `html` block of 2048 `"` characters; `b` changes its last character | Generated |
 
 `page-big-*` make sure that a delta is much smaller than F for every server, whatever white space its manifest serializer writes. `page-huge-*` give a delta larger than `maxPatchBytes` (262 144 bytes). `page-esc-*` give a delta that is larger than F, because JSON escapes each `"` as two bytes.
@@ -130,6 +131,10 @@ The old scenario list maps to this catalog: `FX-RQ-NEGOTIATE` → P-01; `FX-RQ-U
 | P-32 | `page-zero` | First visit; then `R(page-zero)` with `b=::` | `F(page-zero)` with `"blocks": []`; then `304` |
 | P-33 | `page-big-b` | `R(page-big-a)` with `Rq-Have` split into two field lines `t=…` and `b=:…:` | As P-09: the lines are combined |
 | P-34 | `page-big-b` | `R(page-big-a)` with `Rq-Have: t=t1(page-t2), b=:…:, t=t1(page-big-a)` | As P-09: the last value of a key wins |
+| P-35 | `page-b-onclick` (price content `<a onclick="x">y</a>`) | `R(page-a)` | `F`: the changed block fails the client attribute rule (H-56, RQP-23). Level SHOULD |
+| P-36 | `page-a` with server policy `ttl_seconds` 60 | `R(page-a)` (client without policy) | `F` with a new ETag: no block changed, the policy line changed (H-55). Control `P36-POLICY-DELTA`: same policy on both sides → delta whose `next_revision` has the policy line |
+
+Boundary and control fixtures beyond the rows: `P01-APP-ETAG` (the ETag of F replaces the application ETag), `P05-APP-VALIDATOR` (`If-None-Match` with the application ETag → 200, RQP-16), `P09-DELTA-WEAK-BASE` (`W/` base → delta, RQP-18), `P16-HAVE-4096` and `P22-CAPS-1024` (exactly at the limit → delta). P-11 sends the real first 16 bytes of the `page-big-a` prefixes.
 
 Every response of a valid page in P-01 to P-34 has no `Rq-Revision` and no `Rq-Template-Revision` field (H-54). P-25 needs the generated pages only for the first request.
 
@@ -155,6 +160,7 @@ Every response of a valid page in P-01 to P-34 has no `Rq-Revision` and no `Rq-T
 | C-16 | A delta larger than `min(maxPatchBytes, limits.max_patch_bytes)` | `PATCH_TOO_LARGE` while the body is read; fallback |
 | C-17 | A manifest with a duplicate member name; a delta with a duplicate member name | `MANIFEST_INVALID`; `PATCH_INVALID` (section 3.2 of manifest and patch) |
 | C-18 | The response to the fallback load is a delta | `PATCH_INVALID`; normal WebView load; no second fallback |
+| C-19 | Snapshot policy `ttl_seconds` 60; a delta whose `next_revision` uses 61 | `INTEGRITY_ERROR`; one fallback (H-55, H-57). Control `C19-POLICY-SAME`: the same policy line → applied. Control `C16-AT-LIMIT`: an envelope of exactly 262 144 bytes is applied |
 
 <Badge type="info" text="DESIGN" /> **Comparison of F.** The manifest JSON text M can have other white space and member order in another server ([manifest and patch §3.2](/engineering/protocol/manifest-patch#_3-2-json-text-of-the-manifest-and-the-envelope)). So the runner compares the body of F in three parts: the bytes before and after the manifest element exactly, the position of the element (immediately before the first `</head>`), and M by JSON value. The `ETag` is compared exactly. Section 5 states the general rule for HTML bodies; this rule is the exception for F.
 

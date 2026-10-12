@@ -44,7 +44,7 @@ A patch passes only if **all** checks pass. The checks run in this order. The fi
 | 7 | `template_revision` equals the snapshot template revision | `TEMPLATE_MISMATCH` |
 | 8 | `base_revision` equals the snapshot page revision | `PATCH_BASE_MISMATCH` |
 | 9 | Each `block_id` is a block of the snapshot; at most one operation per block; operations in document order; `format` equals the block format | `PATCH_INVALID` |
-| 10 | Per operation: UTF-8 bytes of `content` ≤ `maxBlockBytes`, then `B64U(SHA-256(UTF-8(content)))` equals `sha256` | `PATCH_TOO_LARGE`, `INTEGRITY_ERROR` |
+| 10 | Per operation (step 6 already limits `content` to 1 048 576 code points, so only multi-byte content reaches this byte check; with the 256 KiB envelope limit neither case is reachable): UTF-8 bytes of `content` ≤ `maxBlockBytes`, then `B64U(SHA-256(UTF-8(content)))` equals `sha256` | `PATCH_TOO_LARGE`, `INTEGRITY_ERROR` |
 | 11 | Recompute the page revision from the snapshot template revision, the policy line of the snapshot manifest (H-55) and the new block hashes (the full snapshot hash for each block without an operation); it equals `next_revision` | `INTEGRITY_ERROR` |
 | 12 | Apply the operations to a **copy** of the snapshot document; the result ≤ `maxDocumentBytes`. Run the markup analysis on it (H-48): valid for RQP, same template revision, same blocks (`id`, `format`, order); then its page revision, computed with the policy line of the snapshot manifest, equals `next_revision` | `PATCH_TOO_LARGE`; `PATCH_CONTENT_REJECTED`; `INTEGRITY_ERROR` |
 | 13 | Attribute rule on the start tags of each patched `html` block (`on*` names; `javascript:`; any `&` other than `&amp;`) | `PATCH_CONTENT_REJECTED` |

@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: The Rivqen Authors
 
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, before, describe, it } from "node:test";
@@ -111,6 +111,26 @@ describe("runner", () => {
     const r = await run([candidate("fake", "nofixturefield")]);
     assert.equal(r.exitCode, 1);
     assert.match(r.output, /^FX-A\s+CRASH$/m);
+  });
+
+  it("reports CRASH when a fixture appears twice and prints only the name", async () => {
+    const r = await run([candidate("fake", "dup")]);
+    assert.equal(r.exitCode, 1);
+    assert.match(r.output, /^FX-A\s+CRASH$/m);
+    assert.match(r.output, /output has fixture "FX-A" twice/);
+    assert.doesNotMatch(r.output, /SECRET-CONTENT/);
+  });
+
+  it("a fixture entry that cannot be examined is exit 2, not a stack trace", async () => {
+    const dir = path.join(root, "fx-loop");
+    mkdirSync(dir, { recursive: true });
+    symlinkSync(path.join(dir, "FX-LOOP"), path.join(dir, "FX-LOOP"));
+    const file = path.join(root, "candidates.json");
+    writeFileSync(file, JSON.stringify([candidate("fake", "ok")]));
+    const r = await main(["--fixtures", dir, "--candidates", file], { repoRoot: root });
+    assert.equal(r.exitCode, 2);
+    assert.match(r.output, /cannot read fixture entry "FX-LOOP"/);
+    assert.doesNotMatch(r.output, /\n\s+at /);
   });
 
   it("reports CRASH on timeout", async () => {

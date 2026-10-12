@@ -195,6 +195,7 @@ def expected_for(fixture_dir: Path, rule_ids: set[str] | None) -> bytes:
 
     blocks: list[tuple[str, str, int, int]] = []
     previous_end = 0
+    seen_ids: set[str] = set()
     for index, block in enumerate(blocks_spec):
         where = f"{name}: block {index}"
         if not isinstance(block, dict):
@@ -202,12 +203,18 @@ def expected_for(fixture_dir: Path, rule_ids: set[str] | None) -> bytes:
         block_id = block.get("id")
         if not isinstance(block_id, str) or not ID_RE.match(block_id):
             raise FixtureError(f"{where}: 'id' must match the block id syntax")
+        if block_id in seen_ids:
+            raise FixtureError(f"{where}: valid fixture with duplicate block id (M-21)")
+        seen_ids.add(block_id)
         fmt = block.get("format")
         if fmt not in FORMATS:
             raise FixtureError(f"{where}: 'format' must be html or json")
         start_tag = block.get("start_tag")
         if not isinstance(start_tag, str) or not start_tag.startswith("<") or not start_tag.endswith(">"):
             raise FixtureError(f"{where}: 'start_tag' must be the start tag text")
+        # Cheap hand-error check without parsing attributes: the id text must occur in the start tag.
+        if block_id.encode("utf-8") not in start_tag.encode("utf-8"):
+            raise FixtureError(f"{where}: 'id' does not occur in 'start_tag'")
         has_content = "content" in block
         has_file = "content_file" in block
         if has_content == has_file:

@@ -80,7 +80,15 @@ export function loadFixtures(dir) {
   const fixtures = [];
   for (const name of names) {
     const sub = path.join(dir, name);
-    if (!statSync(sub).isDirectory()) continue;
+    let isDir;
+    try {
+      isDir = statSync(sub).isDirectory();
+    } catch (cause) {
+      // A dangling symlink or an entry that vanished is not a fixture directory; any other error is fatal.
+      if (cause?.code === "ENOENT") continue;
+      throw new RunnerError(`cannot read fixture entry ${show(name)}`, { cause });
+    }
+    if (!isDir) continue;
     const expectedPath = path.join(sub, "expected.json");
     if (!existsSync(expectedPath)) {
       if (existsSync(path.join(sub, "input.html"))) {
@@ -203,7 +211,8 @@ export function parseBatchOutput(stdout) {
     if (!isPlainObject(obj) || typeof obj.fixture !== "string") {
       return { crash: "output line has no string field fixture" };
     }
-    if (!results.has(obj.fixture)) results.set(obj.fixture, obj);
+    if (results.has(obj.fixture)) return { crash: `output has fixture ${show(obj.fixture)} twice` };
+    results.set(obj.fixture, obj);
   }
   return { results };
 }

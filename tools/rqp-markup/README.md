@@ -26,6 +26,10 @@ For each candidate, the runner does these steps:
 2. Run the `run` command once, with `{dir}` replaced by the absolute path of the fixtures directory (batch mode).
 3. Compare each result line with `expected.json`: `valid`, `error`, `template_revision`, `page_revision` and `blocks`, element by element.
 
+### Fixture entries
+
+The runner skips an entry of the fixtures directory that is not a directory, including a dangling symlink. If the runner cannot examine an entry for another reason, it exits with code 2.
+
 ### Output
 
 A matrix with one row for each fixture and one column for each candidate. Cell values:
@@ -35,7 +39,7 @@ A matrix with one row for each fixture and one column for each candidate. Cell v
 | `OK` | The result equals `expected.json` |
 | `DIFF` | At least one compared field differs. A detail line follows for each difference. |
 | `MISSING` | The candidate printed no result for this fixture |
-| `CRASH` | Exit code other than 0, output that is not valid JSON, or a timeout. The cell is `CRASH` for every fixture. |
+| `CRASH` | Exit code other than 0, output that is not valid JSON, a result line for the same fixture twice (the reason names only the fixture), or a timeout. The cell is `CRASH` for every fixture. |
 | `NOT BUILT` | The candidate directory does not exist, or the build failed, or a command cannot start |
 
 Below the matrix, one line names the reason for each candidate that is `CRASH` or `NOT BUILT`. A detail line has the form `fixture [candidate] field: expected X, got Y`. The runner prints at most 80 characters of a value and never prints a full document.

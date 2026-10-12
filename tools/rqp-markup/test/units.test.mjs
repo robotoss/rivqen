@@ -3,7 +3,7 @@
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, before, describe, it } from "node:test";
@@ -125,13 +125,19 @@ describe("loadFixtures", () => {
   it("returns fixtures in byte order and skips plain files and empty directories", () => {
     const d = fixtureDir("lf1", {
       "b/expected.json": '{"valid":true}',
-      "B/expected.json": '{"valid":false}',
+      "Z/expected.json": '{"valid":false}',
       "a/expected.json": '{"valid":true}',
       "note.txt": "x",
     });
     mkdirSync(path.join(d, "empty"));
     const names = loadFixtures(d).map((f) => f.name);
-    assert.deepEqual(names, ["B", "a", "b"]);
+    assert.deepEqual(names, ["Z", "a", "b"]);
+  });
+
+  it("skips a dangling symlink", () => {
+    const d = fixtureDir("lf-dangling", { "a/expected.json": '{"valid":true}' });
+    symlinkSync(path.join(d, "no-such-target"), path.join(d, "dangling"));
+    assert.deepEqual(loadFixtures(d).map((f) => f.name), ["a"]);
   });
 
   it("parses expected.json", () => {
@@ -202,10 +208,15 @@ describe("parseCandidates", () => {
 });
 
 describe("parseBatchOutput", () => {
-  it("collects lines by fixture, ignores blank lines, keeps the first of a duplicate", () => {
-    const out = parseBatchOutput('{"fixture":"a","n":1}\n\n  \n{"fixture":"b","n":2}\n{"fixture":"a","n":3}\n');
+  it("collects lines by fixture and ignores blank lines", () => {
+    const out = parseBatchOutput('{"fixture":"a","n":1}\n\n  \n{"fixture":"b","n":2}\n');
     assert.deepEqual([...out.results.keys()], ["a", "b"]);
     assert.equal(out.results.get("a").n, 1);
+  });
+
+  it("returns a crash reason that names a duplicated fixture and nothing else", () => {
+    const out = parseBatchOutput('{"fixture":"a","n":1}\n{"fixture":"a","n":"SECRET"}\n');
+    assert.equal(out.crash, 'output has fixture "a" twice');
   });
 
   it("returns a crash reason for bad JSON, a non-object, an array and a missing fixture field", () => {
@@ -237,7 +248,7 @@ describe("runProcess", () => {
 
   it("runs in the given directory", async () => {
     const r = await runProcess(["node", "-e", "process.stdout.write(process.cwd())"], root, 10_000);
-    assert.equal(r.stdout, path.resolve(root));
+    assert.equal(realpathSync(r.stdout), realpathSync(root));
   });
 
   it("does not pass arguments through a shell", async () => {

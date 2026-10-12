@@ -65,6 +65,33 @@ async function pool(items, jobs, fn) {
 
 const log = (s) => process.stderr.write(`${s}\n`);
 
+/**
+ * Redact a URL for the evidence files. A path segment that holds a third-party admin path
+ * (the text "admin" and later "edit", as in a slug made from an editor URL) keeps its first
+ * four hyphen-separated words and ends with "REDACTED" (architect decision, commit d8f35b0).
+ * @param {string} url
+ */
+export function redactUrl(url) {
+  let u;
+  try {
+    u = new URL(url);
+  } catch {
+    return url;
+  }
+  const segs = u.pathname.split("/");
+  let changed = false;
+  for (let i = 0; i < segs.length; i++) {
+    if (/admin.*edit/i.test(segs[i])) {
+      const words = segs[i].split("-");
+      segs[i] = `${words.slice(0, 4).join("-")}-REDACTED`;
+      changed = true;
+    }
+  }
+  if (!changed) return url;
+  u.pathname = segs.join("/");
+  return u.href;
+}
+
 async function runCandidates(dir, timeoutMs) {
   const list = parseCandidates(readFileSync(path.join(HERE, "..", "candidates.json"), "utf8"));
   const out = {};
@@ -202,7 +229,7 @@ async function main(argv) {
   const tsv = ["id\turl\tcategory\tkind\tlang\tsource\thttp_status\tbytes\ttruncated\tcorpus\tplatform"];
   for (const p of all) {
     tsv.push(
-      [p.id, p.url, p.category, p.kind, p.lang, p.source, p.status ?? p.error ?? "", p.bytes, p.truncated ? "yes" : "no", p.corpus, p.platform ?? ""]
+      [p.id, redactUrl(p.url), p.category, p.kind, p.lang, p.source, p.status ?? p.error ?? "", p.bytes, p.truncated ? "yes" : "no", p.corpus, p.platform ?? ""]
         .map((x) => String(x).replace(/[\t\n]/g, " "))
         .join("\t"),
     );
@@ -216,7 +243,7 @@ async function main(argv) {
     lines.push(
       JSON.stringify({
         id: p.id,
-        url: p.url,
+        url: redactUrl(p.url),
         category: p.category,
         kind: p.kind,
         lang: p.lang,
@@ -231,8 +258,6 @@ async function main(argv) {
         utf8: cl.utf8 ?? null,
         classes: cl.classes ?? null,
         details: cl.details ?? null,
-        research: cl.research ?? null,
-        research_details: cl.researchDetails ?? null,
         max_d: cl.maxD ?? null,
         max_units: cl.maxUnits ?? null,
         existing_blocks: cl.existingBlocks ?? null,

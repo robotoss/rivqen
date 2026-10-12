@@ -11,9 +11,11 @@
 // breaks only rule X" means: if rule X were removed (and nothing else changed), the
 // candidates would accept the document.
 //
-// It also measures, as RESEARCH, the rules of the human decisions H-35 … H-38 (not in the
-// candidates yet), finds elements for the simulated blocks, and (with blocks) checks the
-// block rules M-14 … M-24 with their items.
+// The rules of security review round 2 and of H-43 (M-09 conditions 1 and 2, M-10 items 2
+// and 3, M-11 item 6) come from the cross-check oracle (../crosscheck/src/depth.mjs:
+// DepthCounter and checkNoscriptContent); this pass only adds details. It also finds
+// elements for the simulated blocks, and (with blocks) checks the block rules M-14 … M-24
+// with their items.
 //
 // The tokens come from the parse5 8.0.1 tokenizer (the WHATWG tokenizer, M-03), driven
 // without a tree builder: this pass sets the tokenizer state after a start tag by M-04 and
@@ -28,7 +30,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Tokenizer, TokenizerMode } from "../crosscheck/node_modules/parse5/dist/index.js";
-import { DepthCounter, FORMATTING, SPECIAL, VOID, rawAttrValue } from "../crosscheck/src/depth.mjs";
+import { CLASSES, DepthCounter, FORMATTING, SPECIAL, VOID, checkNoscriptContent, rawAttrValue } from "../crosscheck/src/depth.mjs";
 import { decodeUtf8, utf16ToUtf8Map } from "../crosscheck/src/utf8.mjs";
 
 export const MAX_INPUT_BYTES = 5 * 1024 * 1024;
@@ -152,13 +154,15 @@ function setState(tok, name) {
 function noop() {}
 
 /**
- * M-11 (items 1 to 5) for the noscript content C, plus the H-38 measurement.
+ * M-11 (items 1 to 6) for the noscript content C. Item 6 (H-38) comes from the cross-check
+ * oracle (checkNoscriptContent of depth.mjs); the detail says whether the noscript is in a
+ * cell or caption.
  * @param {string} c
  * @param {Findings} f
  * @param {{ inCell: boolean }} ctx
- * @param {Findings} research
  */
-export function checkNoscript(c, f, ctx, research) {
+export function checkNoscript(c, f, ctx) {
+  if (checkNoscriptContent(c).tablePart) f.add("M-11.6", ctx.inCell ? "noscript in a cell or caption" : "noscript elsewhere");
   const text = `${c}</noscript>`;
   const stack = [];
   let end = -1;
@@ -174,10 +178,6 @@ export function checkNoscript(c, f, ctx, research) {
       if (name === "script") {
         const item = scriptTypeItem(rawAttrValue(text, t.location, "type"));
         if (item !== null) f.add("M-11.4", `M-13 item ${item}`);
-      }
-      if ((TABLE_PART.has(name) || name === "col") && !stack.includes("table")) {
-        research.add("H-38", `<${name}>`);
-        if (ctx.inCell) research.add("H-38-cell", `<${name}>`);
       }
       setState(tok, name);
       if (!VOID.has(name) && !((name === "svg" || name === "math") && t.selfClosing)) stack.push(name);
@@ -263,12 +263,11 @@ function onlyPLi(text, end) {
  */
 export function classify(bytes, { charset = null, blocks = false } = {}) {
   const f = new Findings();
-  const research = new Findings();
   const blockFindings = new Findings();
   const out = { size: bytes.length, utf8: true, maxD: 0, tokens: 0, existingBlocks: 0, blocks: [] };
   if (bytes.length > MAX_INPUT_BYTES) {
     f.add("M-01");
-    return { ...out, ...f.toJSON(), research: research.toJSON().classes, researchDetails: research.toJSON().details, picks: [] };
+    return { ...out, ...f.toJSON(), picks: [] };
   }
   const decoded = decodeInput(bytes, charset);
   out.utf8 = decoded.utf8;
@@ -282,9 +281,10 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
   let restrict = -1; // index of the foreign INTEGRATION or TEXT element whose content is text only
   let selects = 0;
   let templates = 0;
-  let forms = 0;
   let noscriptStart = -1;
   let noscriptInCell = false;
+  /** @type {Set<string>} names of the current node for M-09 condition 2 (detail) */
+  const tableCurrentOver = new Set();
   /** @type {Pick[]} */
   const candidates = [];
   const counts = { main: 0, h1: 0, match: 0 };
@@ -312,13 +312,6 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
     }
     return null;
   };
-  const nearestTableOrTemplate = () => {
-    for (let i = stack.length - 1; i >= 0; i--) {
-      const n = stack[i].name;
-      if (n === "template" || TABLE_FAMILY.has(n)) return n;
-    }
-    return null;
-  };
   const restrictClass = () => (TEXT.has(stack[restrict].name) && !INTEGRATION.has(stack[restrict].name) ? "M-07.4" : "M-07.3");
   const isOpen = (n) => stack.some((e) => e.name === n && !e.foreign);
   const openInContent = (set) => {
@@ -331,7 +324,6 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
       const e = stack[k];
       if (!e.foreign && e.name === "select") selects--;
       if (!e.foreign && e.name === "template") templates--;
-      if (!e.foreign && e.name === "form") forms--;
       if (e.pick !== null) e.pick.end = endOffsetOfToken;
     }
     stack.length = i;
@@ -403,6 +395,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
       const sc = t.selfClosing;
       endOffsetOfToken = t.location.endOffset;
       const inForeign = root >= 0;
+      const attrNames = t.attrs.map((a) => a.name);
       if (restrict >= 0) f.add(restrictClass(), `<${name}> in <${stack[restrict].name}>`);
       if (selects > 0 && !inForeign && !SELECT_START.has(name)) f.add("M-08", `<${name}> in select`);
       if (name === "frameset") f.add("M-10");
@@ -425,7 +418,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
       if (inForeign) {
         if (BREAKOUT.has(name)) f.add("M-07.1", `<${name}>`);
         if (TEXT.has(name) && (sc || name === "plaintext")) f.add("M-07.4", sc ? `<${name}/>` : "<plaintext>");
-        depth.startTag(name, sc);
+        depth.startTag(name, sc, attrNames);
         stackUnits();
         if (!sc) {
           stack.push({ name, foreign: true, marks: new Set(), start: t.location.startOffset, pick: null });
@@ -439,14 +432,11 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
             name === "col" ? ["table", "colgroup"] : name === "tr" ? ["table", "tbody", "thead", "tfoot"] : name === "td" || name === "th" ? ["table", "tbody", "thead", "tfoot", "tr"] : ["table"];
           if (fam !== null && !allowed.includes(fam.name)) f.add("M-09", `<${name}> in <${fam.name}>`);
         }
-        if (name === "col" && nearestTableOrTemplate() === "template") research.add("H-35");
-        if (name === "form" && forms > 0) research.add("H-36");
+        // Detail for M-09 condition 2 (the class itself comes from DepthCounter).
         if ((TABLE_PART.has(name) || name === "col" || name === "table") && fam !== null && ROW_CONTEXT.has(fam.name) && stack[stack.length - 1] !== fam) {
-          const top = stack[stack.length - 1].name;
-          research.add("H-37", `<${name}> over <${top}>`);
-          research.add(top === "form" ? "H-37-form" : "H-37-other", `<${top}>`);
+          tableCurrentOver.add(stack[stack.length - 1].name);
         }
-        depth.startTag(name, sc);
+        depth.startTag(name, sc, attrNames);
         stackUnits();
         setState(tok, name);
         if (name === "noscript") {
@@ -470,7 +460,6 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
           pushed = true;
           if (name === "select") selects++;
           if (name === "template") templates++;
-          if (name === "form") forms++;
           if (name === "svg" || name === "math") root = stack.length - 1;
         }
       }
@@ -490,7 +479,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
       if (restrict >= 0 && name !== stack[restrict].name) f.add(restrictClass(), `</${name}> in <${stack[restrict].name}>`);
       if (selects > 0 && !inForeign && !SELECT_END.has(name)) f.add("M-08", `</${name}> in select`);
       if (name === "noscript" && noscriptStart >= 0) {
-        checkNoscript(text.slice(noscriptStart, t.location.startOffset), f, { inCell: noscriptInCell }, research);
+        checkNoscript(text.slice(noscriptStart, t.location.startOffset), f, { inCell: noscriptInCell });
         noscriptStart = -1;
       }
       let i = stack.length - 1;
@@ -559,7 +548,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
     onWhitespaceCharacter: noop,
     onEof() {
       if (noscriptStart >= 0) {
-        checkNoscript(text.slice(noscriptStart), f, { inCell: noscriptInCell }, research);
+        checkNoscript(text.slice(noscriptStart), f, { inCell: noscriptInCell });
         noscriptStart = -1;
       }
       if (selects > 0) f.add("M-08", "no </select>");
@@ -572,14 +561,19 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
   out.maxD = depth.maxD;
   out.maxUnits = maxUnits;
   if (depth.maxD > 256) f.add(maxUnits > 256 ? "M-26-stack" : "M-26-dirty", `D ${depth.maxD}, units ${maxUnits}`);
+  // Round 2 of the security review and H-43: the classes of the cross-check oracle.
+  if (depth.classes.has(CLASSES.templateCol)) f.add("M-09.1");
+  if (depth.classes.has(CLASSES.tableCurrent)) {
+    if (tableCurrentOver.size === 0) f.add("M-09.2", "<?>");
+    for (const n of tableCurrentOver) f.add("M-09.2", `<${n}>`);
+  }
+  if (depth.classes.has(CLASSES.form)) f.add("M-10.2");
+  if (depth.classes.has(CLASSES.templateFor)) f.add("M-10.3");
   const main = f.toJSON();
-  const rs = research.toJSON();
   return {
     ...out,
     classes: main.classes,
     details: main.details,
-    research: rs.classes,
-    researchDetails: rs.details,
     blockRules: blocks ? blockFindings.toJSON() : null,
     picks: candidates,
   };

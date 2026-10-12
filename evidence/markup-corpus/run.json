@@ -1,10 +1,10 @@
 {
-  "date": "2026-10-11",
+  "date": "2026-10-12",
   "pages": 867,
   "crosscheck_pages": "findings: 0",
   "variants": {
     "small": {
-      "documents": 736,
+      "documents": 733,
       "crosscheck": "findings: 0"
     },
     "main": {

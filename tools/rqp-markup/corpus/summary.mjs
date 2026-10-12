@@ -260,11 +260,19 @@ function main(argv) {
     ["M-06.1, end tag over a guarded element", "M-06.1"],
     ["M-09, table part in a wrong table context", "M-09"],
     ["M-11.3, svg, select, … in noscript content", "M-11.3"],
+    ["H-35 (M-09 condition 1), col in a template", "M-09.1"],
+    ["H-37 (M-09 condition 2), F is not the current node: any", "M-09.2"],
+    ["H-37, the current node is a form", "M-09.2", (k) => k === "<form>"],
+    ["H-37, the current node is another element", "M-09.2", (k) => k !== "<form>"],
+    ["H-36 (M-10 item 2), nested form", "M-10.2"],
+    ["H-43 (M-10 item 3), template with a for attribute", "M-10.3"],
+    ["H-38 (M-11 item 6), table part in noscript: any", "M-11.6"],
+    ["H-38, the noscript is in a cell or caption", "M-11.6", (k) => k.includes("cell")],
   ];
   const decRows = [];
   const decEx = [];
-  for (const [label, cls] of dec) {
-    const s = st.get(cls) ?? { total: 0, alone: 0, pages: [], alonePages: [] };
+  for (const [label, cls, pred] of dec) {
+    const s = pred ? subStats(pages, cls, pred) : (st.get(cls) ?? { total: 0, alone: 0, pages: [], alonePages: [] });
     decRows.push([esc(label), `${s.alone} (${pct(s.alone, N)})`, `${s.total} (${pct(s.total, N)})`]);
     decEx.push([label, examples(s.alonePages.length > 0 ? s.alonePages : s.pages)]);
   }
@@ -298,43 +306,23 @@ function main(argv) {
   w(`M-11.5 (other): first problem in the noscript content: ${n5.slice(0, 6).map(([k, v]) => `${code(k)} ${v}`).join(", ")}.`);
   w();
 
-  // 7. Research rules
-  w("## 7. Rules H-35 to H-38 (spec in progress)");
+  // 7. Rules of security review round 2 and H-43
+  w("## 7. Rules of review round 2 and H-43");
   w();
-  w("**RESEARCH.** These rules are not in the candidates yet. The classifier measures them. **Total**: pages with the shape. **New rejects**: pages that are valid today and that the rule would reject. **Alone**: new rejects where it is the only one of these rules.");
+  const NEW = ["M-09.1", "M-09.2", "M-10.2", "M-10.3", "M-11.6"];
+  const newAny = pages.filter((p) => NEW.some((c) => (p.classes ?? {})[c]));
+  const newOnly = newAny.filter((p) => Object.keys(p.classes).every((c) => NEW.includes(c)));
+  w(`**FACT.** The rules of H-35, H-36, H-37, H-38 and H-43 (M-09 conditions 1 and 2, M-10 items 2 and 3, M-11 item 6) are in the four candidates now. They are on ${newAny.length} pages. ${newOnly.length} pages (${pct(newOnly.length, N)}) are rejected only by these rules: that is their coverage cost. Rows per rule: section 6.`);
   w();
-  const rows = [];
-  const rex = [];
-  for (const [label, cls] of [
-    ["H-35, col in template", "H-35"],
-    ["H-36, nested form", "H-36"],
-    ["H-37, any", "H-37"],
-    ["H-37, current node is form", "H-37-form"],
-    ["H-37, current node is other", "H-37-other"],
-    ["H-38, table part in noscript", "H-38"],
-    ["H-38, noscript in a cell", "H-38-cell"],
-  ]) {
-    const total = pages.filter((p) => (p.research ?? {})[cls]).length;
-    const nv = V.filter((p) => (p.research ?? {})[cls]);
-    const alone = nv.filter((p) => {
-      const r = Object.keys(p.research ?? {}).map((c) => c.replace(/-(form|other|cell)$/, ""));
-      return new Set(r).size === 1;
-    });
-    rows.push([esc(label), String(total), `${nv.length} (${pct(nv.length, N)})`, String(alone.length)]);
-    rex.push([label, examples(nv.length > 0 ? nv : pages.filter((p) => (p.research ?? {})[cls]))]);
+  const h37 = detailCounts(pages, "M-09.2");
+  w(`M-09 condition 2 (H-37): current nodes above F: ${h37.slice(0, 8).map(([k, v]) => `${code(k)} ${v}`).join(", ") || "none"}.`);
+  w();
+  if (newOnly.length > 0) {
+    w("Pages that only these rules reject:");
+    w();
+    for (const p of newOnly) w(`- ${p.url} (${Object.keys(p.classes).join(", ")})`);
+    w();
   }
-  w(table(["Rule", "Total", "New rejects", "Alone"], rows));
-  w();
-  const anyNew = V.filter((p) => ["H-35", "H-36", "H-37", "H-38"].some((c) => (p.research ?? {})[c]));
-  w(`All four together: ${anyNew.length} valid pages would be rejected; acceptance would go from ${pct(V.length, N)} to ${pct(V.length - anyNew.length, N)}.`);
-  w();
-  const h37 = detailCounts(pages, "H-37-other", "research_details");
-  w(`H-37 (other): current node names: ${h37.slice(0, 8).map(([k, v]) => `${code(k)} ${v}`).join(", ") || "none"}.`);
-  w();
-  w("Examples:");
-  w();
-  for (const [label, ex] of rex) if (ex.length > 0) w(`- ${esc(label)}: ${ex.join(" , ")}`);
-  w();
 
   // 8. Simulated blocks
   w("## 8. Simulated blocks");
@@ -402,7 +390,7 @@ function main(argv) {
     const r = new Set(Object.keys(p.classes ?? {}).flatMap((c) => (c === "M-11.4" ? ["M-11", "M-13"] : [ruleOf(c)])));
     return r.has(p.probe_rule);
   }).length;
-  const map5 = { "M-06-formatting": "M-06.2", "M-05-stray-table-end": "M-06.3", "M-11-balance": "M-11.5", "M-13-non-ascii": "M-13.3", "M-26-depth": "M-26", "M-06-formatting-marked": "M-06.4" };
+  const map5 = { "M-06-formatting": "M-06.2", "M-05-stray-table-end": "M-06.3", "M-11-balance": "M-11.5", "M-13-non-ascii": "M-13.3", "M-26-depth": "M-26", "M-06-formatting-marked": "M-06.4", "M-09-template-col": "M-09.1", "M-09-table-current": "M-09.2", "M-10-form": "M-10.2", "M-10-template-for": "M-10.3", "M-11-table-part": "M-11.6" };
   let p5same = 0;
   let p5n = 0;
   for (const p of pages) {
@@ -410,7 +398,7 @@ function main(argv) {
     p5n++;
     const mine = new Set(Object.keys(p.classes ?? {}).map((c) => c.replace(/-(table|row|foreign|special|pli|other|dirty|stack)$/, "")).map((c) => (c === "M-11.4" ? "M-13.3" : c)));
     const theirs = new Set(p.parse5_depth.classes.map((c) => map5[c] ?? c));
-    const sub = [...theirs].every((c) => mine.has(c)) && ["M-06.2", "M-06.3", "M-11.5", "M-26", "M-06.4"].every((c) => !mine.has(c) || theirs.has(c));
+    const sub = [...theirs].every((c) => mine.has(c)) && ["M-06.2", "M-06.3", "M-11.5", "M-26", "M-06.4", "M-09.1", "M-09.2", "M-10.2", "M-10.3", "M-11.6"].every((c) => !mine.has(c) || theirs.has(c));
     if (sub) p5same++;
   }
   const timeouts = pages.filter((p) => p.classify_error || p.parse5_depth?.error);
@@ -427,7 +415,7 @@ function main(argv) {
   const reviewAlone = review.reduce((n, c) => n + (st.get(c)?.alone ?? 0), 0);
   const reviewAny = pages.filter((p) => review.some((c) => (p.classes ?? {})[c])).length;
   obs.push(`The rules of security review round 1 (H-26, H-27, H-28, H-30, H-31, H-32 special part) are on ${reviewAny} pages and alone reject ${reviewAlone}. The foreign part of H-32 alone rejects ${st.get("M-06.4-foreign")?.alone ?? 0}.`);
-  obs.push(`The rules of review round 2 (H-35 to H-38) would reject ${anyNew.length} more pages.`);
+  obs.push(`The rules of review round 2 and H-43 (M-09 conditions 1 and 2, M-10 items 2 and 3, M-11 item 6) alone reject ${newOnly.length} pages.`);
   w("## 11. Observations");
   w();
   w("**DESIGN.** A reading of the numbers above. Relaxing a rule is a human decision; it needs a parse5 study first (markup.md section 5 item 3).");
@@ -446,6 +434,26 @@ function main(argv) {
   w("- The rule probe and the classifier show which rules reject; they do not show that a relaxation is safe. Relaxing a rule is a human decision after a parse5 study.");
   w();
   writeFileSync(path.join(dir, "summary.md"), `${md.join("\n")}\n`);
+}
+
+/**
+ * Total and alone for a sub-case of a class: a page has the sub-case when one detail key of
+ * the class matches `pred`; it is alone when the class is the only class of the page and
+ * every detail key matches.
+ */
+export function subStats(pages, cls, pred) {
+  const out = { total: 0, alone: 0, pages: [], alonePages: [] };
+  for (const p of pages) {
+    const keys = Object.keys(p.details?.[cls] ?? {});
+    if (!(p.classes ?? {})[cls] || !keys.some(pred)) continue;
+    out.total++;
+    out.pages.push(p);
+    if (Object.keys(p.classes).length === 1 && keys.every(pred)) {
+      out.alone++;
+      out.alonePages.push(p);
+    }
+  }
+  return out;
 }
 
 function codeOfClass(c) {

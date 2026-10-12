@@ -10,7 +10,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseList, discoverLink, charsetOf, runPolite } from "../fetch.mjs";
 import { botWall, platformOf } from "../layout.mjs";
-import { classStats, greedy, pct } from "../summary.mjs";
+import { classStats, greedy, pct, subStats } from "../summary.mjs";
+import { redactUrl } from "../run.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -129,4 +130,28 @@ test("summary helpers: alone and total, greedy removal", () => {
   ]);
   assert.equal(pct(1, 3), "33.3 %");
   assert.equal(pct(1, 0), "–");
+});
+
+test("subStats: sub-case of a class by its detail keys", () => {
+  const pages = [
+    { classes: { "M-09.2": 1 }, details: { "M-09.2": { "<form>": 1 } } },
+    { classes: { "M-09.2": 1, "M-02": 1 }, details: { "M-09.2": { "<form>": 1 } } },
+    { classes: { "M-09.2": 1 }, details: { "M-09.2": { "<form>": 1, "<div>": 1 } } },
+    { classes: {}, details: {} },
+  ];
+  const form = subStats(pages, "M-09.2", (k) => k === "<form>");
+  assert.equal(form.total, 3);
+  assert.equal(form.alone, 1);
+  const other = subStats(pages, "M-09.2", (k) => k !== "<form>");
+  assert.equal(other.total, 1);
+  assert.equal(other.alone, 0);
+});
+
+test("redactUrl: a slug with an embedded admin edit path keeps four words", () => {
+  assert.equal(
+    redactUrl("https://news.example/a/b/one-two-three-four-five-httpsadminnewsexampleeditid42-six"),
+    "https://news.example/a/b/one-two-three-four-REDACTED",
+  );
+  assert.equal(redactUrl("https://news.example/a/one-two-three-four-five"), "https://news.example/a/one-two-three-four-five");
+  assert.equal(redactUrl("not a url"), "not a url");
 });

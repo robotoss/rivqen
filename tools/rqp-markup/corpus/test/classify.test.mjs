@@ -91,16 +91,30 @@ test("M-26: D with the dirty mark, and the units of the stack", () => {
   assert.deepEqual(Object.keys(ok.classes), []);
 });
 
-test("research rules H-35 to H-38", () => {
-  assert.deepEqual(doc("<template><col></template>").research, { "H-35": 1 });
-  assert.deepEqual(doc("<table><tr><td><col></td></tr></table>").research, {});
-  assert.deepEqual(doc("<form><div><form></form></div></form>").research, { "H-36": 1 });
-  assert.deepEqual(doc("<table><form><tr><td>a</td></tr></form></table>").research, { "H-37": 1, "H-37-form": 1 });
-  assert.deepEqual(doc("<table><div><tr><td>a</td></tr></div></table>").research, { "H-37": 1, "H-37-other": 1 });
-  assert.deepEqual(doc("<table><tr><td>a</td></tr></table>").research, {});
-  assert.deepEqual(doc("<table><tr><td><noscript><tr></tr></noscript></td></tr></table>").research, { "H-38": 1, "H-38-cell": 1 });
-  assert.deepEqual(doc("<noscript><table><tr><td>a</td></tr></table></noscript>").research, {});
-  assert.deepEqual(doc("<noscript><td>a</td></noscript>").research, { "H-38": 1 });
+test("rules of review round 2 and H-43 (classes from depth.mjs, details from the pass)", () => {
+  const cls = (h) => doc(h).classes;
+  assert.deepEqual(cls("<template><col></template>"), { "M-09.1": 1 });
+  assert.deepEqual(cls("<template><div><col></div></template>"), { "M-09.1": 1 });
+  assert.deepEqual(cls("<template><table><col></table></template>"), {});
+  assert.deepEqual(cls("<table><colgroup><col></colgroup></table>"), {});
+  assert.deepEqual(cls("<form><div><form></form></div></form>"), { "M-10.2": 1 });
+  assert.deepEqual(cls("<form></form><form></form>"), {});
+  assert.deepEqual(cls("<svg><form></form></svg>"), {});
+  const form = doc("<table><form><tr><td>a</td></tr></form></table>");
+  assert.deepEqual(form.classes, { "M-09.2": 1 });
+  assert.deepEqual(form.details["M-09.2"], { "<form>": 1 });
+  const div = doc("<table><div><tr><td>a</td></tr></div></table>");
+  assert.deepEqual(div.details["M-09.2"], { "<div>": 1 });
+  assert.deepEqual(cls("<table><div></div><tr><td>a</td></tr></table>"), {});
+  assert.deepEqual(cls("<table><tr><td>a</td></tr></table>"), {});
+  assert.deepEqual(cls('<template for="p"></template>'), { "M-10.3": 1 });
+  assert.deepEqual(cls("<template FOR></template>"), { "M-10.3": 1 });
+  assert.deepEqual(cls('<svg><template for="p"></template></svg>'), {});
+  const cell = doc("<table><tr><td><noscript><tr></tr></noscript></td></tr></table>");
+  assert.deepEqual(cell.classes, { "M-11.6": 1 });
+  assert.deepEqual(cell.details["M-11.6"], { "noscript in a cell or caption": 1 });
+  assert.deepEqual(cls("<noscript><table><tr><td>a</td></tr></table></noscript>"), {});
+  assert.deepEqual(doc("<noscript><td>a</td></noscript>").details["M-11.6"], { "noscript elsewhere": 1 });
 });
 
 test("block rules on simulated blocks", () => {

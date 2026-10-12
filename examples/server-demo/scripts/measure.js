@@ -28,7 +28,8 @@ async function get(headers = {}) {
   const body = r.status === 304 ? '' : await r.text();
   return { status: r.status, headers: r.headers, body };
 }
-const post = (p) => fetch(`${BASE}${p}`, { method: 'POST' }).then((r) => r.json());
+// The POST endpoints need the custom header (cross-site protection). fetch sends no Origin header here.
+const post = (p) => fetch(`${BASE}${p}`, { method: 'POST', headers: { 'Rq-Demo-Action': '1' } }).then((r) => r.json());
 
 const RQ = { 'Rq-Version': '1', 'Rq-Capabilities': '(block-patch)', Accept: 'text/html, application/vnd.rivqen.delta+json' };
 const results = [];

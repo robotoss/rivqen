@@ -34,6 +34,11 @@ export function hasField(headers, name) {
   return headers.some(([n]) => n === name);
 }
 
+/** Header lines without any Rq-* field. The RQP server step owns these fields (DL-030). */
+export function withoutRqFields(headers) {
+  return headers.filter(([n]) => !n.startsWith('rq-'));
+}
+
 /** Header lines without the named fields. */
 export function without(headers, ...names) {
   return headers.filter(([n]) => !names.includes(n));
@@ -84,6 +89,7 @@ export function parseIfNoneMatch(value) {
   if (text === '*') return { star: true, tags: [] };
   const tags = [];
   let i = 0;
+  while (text[i] === ',' || text[i] === ' ' || text[i] === '\t') i++; // empty list elements are allowed
   while (i < text.length) {
     const weak = text.startsWith('W/', i);
     if (weak) i += 2;
@@ -155,7 +161,7 @@ export function acceptsDelta(headers) {
   return splitList(value).some((range) => {
     const [media, ...params] = range.split(';').map((s) => s.trim());
     if (media.toLowerCase() !== DELTA_TYPE) return false;
-    const q = params.find((param) => /^q\s*=/i.test(param));
+    const q = params.findLast((param) => /^q\s*=/i.test(param)); // the last q parameter wins
     if (q === undefined) return true;
     const weight = q.replace(/^q\s*=\s*/i, '');
     return /^(0(\.[0-9]{0,3})?|1(\.0{0,3})?)$/.test(weight) && Number(weight) > 0;

@@ -6,6 +6,8 @@
 //   GET  /catalog              the demo page (full document, 304, or delta)
 //   POST /__demo/next-data     change price/stock (localhost only)
 //   POST /__demo/next-template change the template (localhost only)
+// The POST endpoints need the header "Rq-Demo-Action: 1" and, when the request has an
+// Origin header, the origin of the demo. Otherwise: 403, no state change.
 //   GET  /healthz
 
 import { createServer } from 'node:http';
@@ -53,6 +55,25 @@ function isLocal(req) {
   return a === '127.0.0.1' || a === '::1' || a === '::ffff:127.0.0.1';
 }
 
+/** The custom request header of the POST endpoints. A web page of another site cannot send it without a CORS preflight, which the demo never answers. */
+export const ACTION_HEADER = 'rq-demo-action';
+export const ACTION_VALUE = '1';
+
+const DEMO_PATHS = new Set(['/__demo/next-data', '/__demo/next-template']);
+const KNOWN_PATHS = new Set(['/catalog', '/healthz', ...DEMO_PATHS]);
+
+/** The path as a log value: a known route, or a fixed word. A raw path can hold personal data. */
+export const pathTemplate = (path) => (KNOWN_PATHS.has(path) ? path : '<unmatched>');
+
+/**
+ * Cross-site protection of the state-changing endpoints: the custom header must be present,
+ * and an Origin header, when present, must be the origin of this demo.
+ */
+export function isSameSiteAction(req, origin) {
+  if (req.headers[ACTION_HEADER] !== ACTION_VALUE) return false;
+  return req.headers.origin === undefined || req.headers.origin === origin;
+}
+
 /**
  * Create the demo server (not listening yet).
  * @param {{ origin: string }} options the public origin of the site: the manifest takes
@@ -75,10 +96,13 @@ export function createDemoServer({ origin }) {
       const path = safeUrl(req.url ?? '/');
       if ((req.method === 'GET' || req.method === 'HEAD') && path === '/catalog') {
         bytes = handleCatalog(req, res, ctx);
-      } else if (req.method === 'POST' && path === '/__demo/next-data' && isLocal(req)) {
-        bytes = send(res, 200, { 'Content-Type': 'application/json' }, JSON.stringify(nextData()));
-      } else if (req.method === 'POST' && path === '/__demo/next-template' && isLocal(req)) {
-        bytes = send(res, 200, { 'Content-Type': 'application/json' }, JSON.stringify(nextTemplate()));
+      } else if (req.method === 'POST' && DEMO_PATHS.has(path) && isLocal(req)) {
+        if (!isSameSiteAction(req, origin)) {
+          bytes = send(res, 403, { 'Content-Type': 'text/plain' }, 'forbidden'); // no state change
+        } else {
+          const next = path === '/__demo/next-data' ? nextData : nextTemplate;
+          bytes = send(res, 200, { 'Content-Type': 'application/json' }, JSON.stringify(next()));
+        }
       } else if (req.method === 'GET' && path === '/healthz') {
         bytes = send(res, 200, { 'Content-Type': 'application/json' }, JSON.stringify({ ok: true, state: demoState() }));
       } else {
@@ -91,7 +115,7 @@ export function createDemoServer({ origin }) {
     } finally {
       const ms = Number(process.hrtime.bigint() - ctx.start) / 1e6;
       log('info', 'http.request', {
-        request_id: ctx.id, method: req.method, path: safeUrl(req.url ?? '/'), status: res.statusCode,
+        request_id: ctx.id, method: req.method, path: pathTemplate(safeUrl(req.url ?? '/')), status: res.statusCode,
         mode: ctx.mode, reason: ctx.reason, bytes, duration_ms: Math.round(ms * 100) / 100,
       });
     }

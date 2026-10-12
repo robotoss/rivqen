@@ -75,6 +75,16 @@ test('If-None-Match: a base needs exactly one r1 tag, weak or strong; 304 uses w
   assert.deepEqual(parseIfNoneMatch('"a",,"b"').tags.map((t) => t.opaque), ['a', 'b']);
 });
 
+test('If-None-Match: empty list elements are allowed, also first and last (RFC 9110 section 5.6.1.2)', () => {
+  const tags = (v) => parseIfNoneMatch(v)?.tags.map((t) => t.opaque);
+  assert.deepEqual(tags(',"a"'), ['a']);
+  assert.deepEqual(tags(' , ,"a" ,, \t,"b",'), ['a', 'b']);
+  assert.equal(parseIfNoneMatch(','), null);
+  assert.equal(parseIfNoneMatch(''), null);
+  assert.equal(deltaBase(lines('if-none-match', `, "${R1}",`)), R1);
+  assert.equal(noneMatchFails(lines('if-none-match', `,,"${R1}"`), `"${R1}"`), true);
+});
+
 test('Accept lists the delta type only as itself and with a weight above 0', () => {
   const accept = (v) => acceptsDelta(lines('accept', v));
   assert.equal(accept('text/html, application/vnd.rivqen.delta+json'), true);
@@ -82,6 +92,9 @@ test('Accept lists the delta type only as itself and with a weight above 0', () 
   assert.equal(accept('application/vnd.rivqen.delta+json;q=0'), false);
   assert.equal(accept('application/vnd.rivqen.delta+json;q=0.000'), false);
   assert.equal(accept('application/vnd.rivqen.delta+json;q=2'), false);
+  assert.equal(accept('application/vnd.rivqen.delta+json;q=0;q=1'), true); // the last q wins
+  assert.equal(accept('application/vnd.rivqen.delta+json;q=1;q=0'), false);
+  assert.equal(accept('application/vnd.rivqen.delta+json;q=1;q=2'), false);
   for (const no of ['*/*', 'application/*', 'text/html', 'application/vnd.rivqen.delta+json2', '']) assert.equal(accept(no), false, no);
   assert.equal(acceptsDelta([]), false);
 });

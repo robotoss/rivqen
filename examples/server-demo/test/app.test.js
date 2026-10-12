@@ -12,6 +12,7 @@ const { createDemoServer } = await import('../src/app.js');
 const { analyzePage } = await import('../src/markup.js');
 
 const ORIGIN = 'https://shop.example.com';
+const ACTION = [['Rq-Demo-Action', '1']]; // the POST endpoints need this header (DL-033)
 let server;
 let base;
 
@@ -73,7 +74,7 @@ test('first visit, revisit, data change and template change follow rqp/1', async
   assert.equal(again.headers.etag, first.headers.etag);
 
   // 3. Data change: a delta with the changed blocks and no ETag. Without b, every block is in it (H-7).
-  assert.equal((await call('POST', '/__demo/next-data')).status, 200);
+  assert.equal((await call('POST', '/__demo/next-data', ACTION)).status, 200);
   const patch = await call('GET', '/catalog', delta(manifest.page_revision, manifest.template_revision));
   assert.equal(patch.status, 200);
   assert.equal(patch.headers['content-type'], 'application/vnd.rivqen.delta+json');
@@ -86,7 +87,7 @@ test('first visit, revisit, data change and template change follow rqp/1', async
   assert.ok(patch.body.length < first.body.length / 10);
 
   // 4. Template change: the full document with a new template revision.
-  assert.equal((await call('POST', '/__demo/next-template')).status, 200);
+  assert.equal((await call('POST', '/__demo/next-template', ACTION)).status, 200);
   const changed = await call('GET', '/catalog', delta(envelope.next_revision, manifest.template_revision));
   assert.equal(changed.status, 200);
   assert.match(changed.headers['content-type'], /^text\/html/);
@@ -114,5 +115,5 @@ test('two lines of a field reach the server as two lines, and the other routes a
   assert.equal(two.status, 200);
   assert.equal((await call('GET', '/healthz')).status, 200);
   assert.equal((await call('GET', '/nope')).status, 404);
-  assert.equal((await call('POST', '/catalog')).status, 404);
+  assert.equal((await call('POST', '/catalog', ACTION)).status, 404);
 });

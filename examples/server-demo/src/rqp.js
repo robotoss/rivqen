@@ -23,8 +23,9 @@ import {
   requestVersion,
   rqHave,
   without,
+  withoutRqFields,
 } from './fields.js';
-import { analyzePage, firstHeadEnd, passesAttributeRule } from './markup.js';
+import { analyzePage, documentHeadEnd, passesAttributeRule } from './markup.js';
 
 export { DELTA_TYPE };
 export const MANIFEST_TYPE = 'application/rivqen-manifest+json';
@@ -84,8 +85,8 @@ export function buildManifest(analysis, target, members) {
 }
 
 /**
- * F: the page with the manifest element immediately before the first </head>
- * (manifest-patch section 1.7). Returns null when the manifest text has a "<".
+ * F: the page with the manifest element immediately before the head end tag of the
+ * document (manifest-patch section 1.7, DL-031). Returns null when the manifest text has a "<".
  */
 export function insertManifest(page, insertAt, manifest) {
   const text = JSON.stringify(manifest);
@@ -153,7 +154,8 @@ const KEEP_ON_304 = new Set(['etag', 'cache-control', 'expires', 'vary', 'date',
  */
 export function handle(request, appResponse, pageBytes, config = {}) {
   const page = Buffer.from(pageBytes.buffer, pageBytes.byteOffset, pageBytes.byteLength);
-  const appHeaders = normalizeHeaders(appResponse.headers);
+  // DL-030: the RQP step owns every Rq-* field. No outcome carries an Rq-* field of A.
+  const appHeaders = withoutRqFields(normalizeHeaders(appResponse.headers));
   const passthrough = (reason) => ({ status: appResponse.status, headers: appHeaders, body: page, mode: 'passthrough', reason });
   try {
     return select(request, appResponse.status, appHeaders, page, config) ?? passthrough('invalid-page');
@@ -172,7 +174,7 @@ function select(request, status, appHeaders, page, config) {
   // Step 2: validity.
   const analysis = analyzePage(page);
   if (!analysis.valid) return null;
-  const insertAt = firstHeadEnd(page);
+  const insertAt = documentHeadEnd(page);
   if (insertAt < 0) return null;
 
   // Step 3: the full document F, the same for every request.
@@ -183,7 +185,8 @@ function select(request, status, appHeaders, page, config) {
   if (full === null) return null;
   const etag = `${config.contentCoding ? 'W/' : ''}"${manifest.page_revision}"`;
   const fullHeaders = [
-    ...without(appHeaders, 'etag', 'content-length'),
+    // DL-032: the ETag r1. is the only validator of F, so Last-Modified of A goes.
+    ...without(appHeaders, 'etag', 'last-modified', 'content-length'),
     ['etag', etag],
     ['rq-version', '1'],
     ['content-length', String(full.length)],

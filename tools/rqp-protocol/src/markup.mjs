@@ -35,6 +35,17 @@ const HEAD_CONTENT = new Set([
 ]);
 
 /**
+ * End tags that items 1 and 2 do not ignore (DL-034). The HTML parser ignores
+ * every other end tag in the "before head" and "in head" modes.
+ */
+const HEAD_END_TAGS = new Set(['head', 'body', 'html', 'br']);
+
+/** DL-034: an end tag that items 1 and 2 ignore (no state change, no failure). */
+function ignoredEndTag(t) {
+  return t.type === TokenType.END_TAG && !HEAD_END_TAGS.has(t.name);
+}
+
+/**
  * True when every byte in [from, to) is white space (09, 0A, 0C, 0D, 20). A
  * UTF-8 byte order mark at offset 0 counts as white space (markup M-02).
  */
@@ -56,9 +67,11 @@ function onlyWhiteSpace(bytes, from, to) {
  */
 function headStep(state, headIndex, stackLength, t, gapOk) {
   if (state === HEAD_BEFORE) {
-    // Item 1: white space, comments, DOCTYPE and html start tags before <head>.
+    // Item 1: white space, comments, DOCTYPE and html start tags before <head>;
+    // ignored end tags (DL-034).
     if (!gapOk) return { state: HEAD_NONE, end: false };
     if (t.type === TokenType.COMMENT || t.type === TokenType.DOCTYPE || t.type === TokenType.EOF) return { state, end: false };
+    if (ignoredEndTag(t)) return { state, end: false };
     if (t.type === TokenType.START_TAG && (t.name === 'html' || t.name === 'head')) return { state, end: false };
     return { state: HEAD_NONE, end: false };
   }
@@ -70,6 +83,9 @@ function headStep(state, headIndex, stackLength, t, gapOk) {
   if (!gapOk) return { state: HEAD_NONE, end: false };
   if (t.type === TokenType.COMMENT || t.type === TokenType.DOCTYPE) return { state, end: false };
   if (t.type === TokenType.START_TAG && HEAD_CONTENT.has(t.name)) return { state, end: false };
+  // DL-034: a stray end tag (</meta>, </link>, </script> ...) changes nothing.
+  // Only html entries are below the head, so walk() pops nothing for it.
+  if (ignoredEndTag(t)) return { state, end: false };
   // Item 3. After it the state is HEAD_NONE: there is at most one head end tag.
   return { state: HEAD_NONE, end: t.type === TokenType.END_TAG && t.name === 'head' };
 }
@@ -79,7 +95,7 @@ function headStep(state, headIndex, stackLength, t, gapOk) {
  * state changes of M-04, and call `visit(token, html, headEnd)` for each start
  * and end tag, where `html` is true when the tag is in HTML context and
  * `headEnd` is true only for the head end tag of the document (manifest-patch
- * section 1.7, DL-031). Returns false when the walk stopped early (visit
+ * section 1.7, DL-031, DL-034). Returns false when the walk stopped early (visit
  * returned true, or the stack limit was hit).
  */
 function walk(bytes, visit) {

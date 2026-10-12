@@ -93,6 +93,8 @@ The old scenario list maps to this catalog: `FX-RQ-NEGOTIATE` → P-01; `FX-RQ-U
 | `page-head-stray` | `page-a` without `</head>` in the head; `<body>` closes the head; a stray `</head>` in the body. Valid, no head end tag (DL-031) | By hand |
 | `page-head-template` | `page-a` without `</head>` in the head; a `template` in the body holds `<head></head>`. Valid, no head end tag | By hand |
 | `page-no-head-start` | `page-a` without the `<head>` start tag. Valid, no head end tag | By hand |
+| `page-head-stray-end` | `page-a` with `<meta charset="utf-8"></meta>` in the head: a stray end tag that the parser ignores (DL-034). Valid, head end tag found | By hand |
+| `page-head-br` | `page-a` with `</br>` in the head. Valid, no head end tag (DL-034) | By hand |
 
 `page-big-*` make sure that a delta is much smaller than F for every server, whatever white space its manifest serializer writes. `page-huge-*` give a delta larger than `maxPatchBytes` (262 144 bytes). `page-esc-*` give a delta that is larger than F, because JSON escapes each `"` as two bytes.
 
@@ -140,7 +142,7 @@ The old scenario list maps to this catalog: `FX-RQ-NEGOTIATE` → P-01; `FX-RQ-U
 | P-36 | `page-a` with server policy `ttl_seconds` 60 | `R(page-a)` (client without policy) | `F` with a new ETag: no block changed, the policy line changed (H-55). Control `P36-POLICY-DELTA`: same policy on both sides → delta whose `next_revision` has the policy line |
 | P-37 | `page-a`; `page-big-b` | The application sets `Rq-Version` (`1` or `2`), `Rq-Revision` and `Rq-X-App`; first visit, `R(page-big-a)`, `R(page-a)` | `F(page-a)`, `D(page-big-a→page-big-b, …)`, `304`: exactly one `Rq-Version: 1` on F and D, no `Rq-*` field of the application (DL-030) |
 | P-38 | `page-c`; `page-forged`; `page-a` with status `404` | The application sets `Rq-Version: 1` (and `Rq-Revision`); first visit | The application response without its `Rq-*` fields; for `page-forged` no client uses the author manifest (DL-030, see C-20) |
-| P-39 | `page-head-stray`, `page-head-template`, `page-no-head-start` | First visit | The application response: the page has no head end tag (DL-031) |
+| P-39 | `page-head-stray`, `page-head-template`, `page-no-head-start`, `page-head-br`; `page-head-stray-end` | First visit | The application response: the page has no head end tag (DL-031; `</br>` is not ignored, DL-034). For `page-head-stray-end`: F with the manifest immediately before the real `</head>`; the stray `</meta>` is ignored (DL-034) |
 
 Boundary and control fixtures beyond the rows: `P01-APP-ETAG` (the ETag of F replaces the application ETag; F has no `Last-Modified`, DL-032), `P05-APP-VALIDATOR` (`If-None-Match` with the application ETag → 200, RQP-16), `P09-DELTA-WEAK-BASE` (`W/` base → delta, RQP-18), `P16-HAVE-4096` and `P22-CAPS-1024` (exactly at the limit → delta). P-11 sends the real first 16 bytes of the `page-big-a` prefixes.
 
@@ -170,7 +172,7 @@ No response of a server case has an `Rq-Revision` or `Rq-Template-Revision` fiel
 | C-18 | The response to the fallback load is a delta | `PATCH_INVALID`; normal WebView load; no second fallback |
 | C-19 | Snapshot policy `ttl_seconds` 60; a delta whose `next_revision` uses 61 | `INTEGRITY_ERROR`; one fallback (H-55, H-57). Control `C19-POLICY-SAME`: the same policy line → applied. Control `C16-AT-LIMIT`: an envelope of exactly 262 144 bytes is applied |
 | C-20 | The response of P-38 for `page-forged`: a consistent author manifest, no `Rq-Version` | Normal HTML page; no snapshot; no error code (DL-030) |
-| C-21 | `Rq-Version: 1`; a consistent manifest immediately before the only `</head>` of `page-head-stray`, `page-head-template` or `page-no-head-start` | `MANIFEST_INVALID`: no head end tag (DL-031); normal page |
+| C-21 | `Rq-Version: 1`; a consistent manifest immediately before the only `</head>` of `page-head-stray`, `page-head-template` or `page-no-head-start` | `MANIFEST_INVALID`: no head end tag (DL-031); normal page. Control `C21-HEAD-STRAY-VOID-END`: the manifest immediately before the real `</head>` of `page-head-stray-end` (after a stray `</meta>`) → stored (DL-034) |
 | C-22 | A `304`: to the fallback load (no RQP `If-None-Match`); with `ETag: "r1(page-b)"`; after a redirect to `?page=2` | Normal WebView load; snapshot unchanged; no error code (H-58). Controls: `ETag: W/"r1(page-a)"` and no `ETag` → snapshot kept |
 | C-23 | A consistent delta from the final URL `…/catalog?page=2`; a full document of `page-a` from the final URL `http://shop.example.com/catalog` in a release build, and in a debug build with the app flag | `PATCH_INVALID`, fallback; normal page, no snapshot, no error; stored with the cache key of the `http` URL (H-58) |
 | C-24 | `Rq-Version: 1`, a manifest with `"mode": "public"`, an origin that the app declares public: `Cache-Control: public` with credentials; `no-cache` with credentials; `no-cache` without credentials; `public, private` without credentials | Partition `public`; `request`; `public`; `request` (H-61) |

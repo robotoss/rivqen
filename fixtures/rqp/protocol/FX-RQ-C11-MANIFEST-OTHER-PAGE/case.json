@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-C11-MANIFEST-OTHER-PAGE",
+  "kind": "client",
+  "description": "Rq-Version 1 and the manifest of page-b with the body of page-a (H-48)",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["etag", "{{r1:page-b}}"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a",
+      "manifest_of": "page-b"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-C17-MANIFEST-DUPLICATE-MEMBER",
+  "kind": "client",
+  "description": "A manifest with the member protocol two times",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["etag", "{{r1:page-a}}"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a",
+      "duplicate_member": true
+    }
+  }
+}

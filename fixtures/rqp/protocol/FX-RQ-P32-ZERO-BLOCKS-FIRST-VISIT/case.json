@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P32-ZERO-BLOCKS-FIRST-VISIT",
+  "description": "A page without blocks: F with \"blocks\": []",
+  "rules": ["RQP-08"],
+  "page": "page-zero",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

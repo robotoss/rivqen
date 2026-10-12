@@ -1,0 +1,37 @@
+{
+  "id": "FX-RQ-C03-UNSOLICITED",
+  "kind": "client",
+  "context": {
+    "url": "https://shop.example.com/catalog",
+    "build": "release",
+    "allow_http": false,
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html"]
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","application/vnd.rivqen.delta+json"],
+      ["rq-version","1"],
+      ["cache-control","no-store"]
+    ],
+    "body": "response.body",
+    "body_bytes": 388,
+    "body_sha256": "lVc86SuUHKslxFMic3YEy5aId7N4YUJ0imP_W_VtrwQ"
+  },
+  "result": {
+    "outcome": "rejected",
+    "error": "PATCH_INVALID",
+    "next": "fallback-load",
+    "metric": false,
+    "snapshot": null
+  }
+}

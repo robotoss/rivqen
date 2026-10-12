@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-C17-DELTA-DUPLICATE-MEMBER",
+  "kind": "client",
+  "description": "A delta with the member protocol two times",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b",
+        "duplicate_member": true
+      }
+    }
+  }
+}

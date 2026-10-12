@@ -1,0 +1,24 @@
+{
+  "id": "FX-RQ-C14-HTTP-RELEASE",
+  "kind": "client",
+  "description": "An http URL in a release build: no Rq-* field, the response is a normal page (H-49)",
+  "rules": ["RQP-22"],
+  "context": {
+    "url": "http://shop.example.com/catalog",
+    "build": "release",
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["etag", "{{r1:page-a}}"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a"
+    }
+  }
+}

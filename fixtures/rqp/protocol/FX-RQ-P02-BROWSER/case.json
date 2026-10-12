@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-P02-BROWSER",
+  "description": "A browser without RQP fields gets the same F as an RQP client (H-51)",
+  "rules": ["RQP-08", "RQP-20", "RQP-04"],
+  "page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"]
+    ]
+  }
+}

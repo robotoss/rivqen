@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-C05-TYPE-UPPERCASE",
+  "kind": "client",
+  "description": "Manifest type APPLICATION/Rivqen-Manifest+JSON: accepted (ASCII case-insensitive, H-28)",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["etag", "{{r1:page-a}}"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a",
+      "manifest_type": "APPLICATION/Rivqen-Manifest+JSON"
+    }
+  }
+}

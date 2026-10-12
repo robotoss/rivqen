@@ -1,0 +1,24 @@
+{
+  "id": "FX-RQ-C18-FALLBACK-DELTA",
+  "kind": "client",
+  "description": "The response to the fallback load is a delta: PATCH_INVALID, normal WebView load, no second fallback",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "fallback",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b"
+      }
+    }
+  }
+}

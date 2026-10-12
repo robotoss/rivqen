@@ -1,0 +1,24 @@
+{
+  "id": "FX-RQ-P20-INM-OTHER-TAG",
+  "description": "If-None-Match \"abc\" is not a page revision: no base, F",
+  "rules": ["RQP-10"],
+  "page": "page-big-b",
+  "client_page": "page-big-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "\"abc\""],
+      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}"]
+    ]
+  }
+}

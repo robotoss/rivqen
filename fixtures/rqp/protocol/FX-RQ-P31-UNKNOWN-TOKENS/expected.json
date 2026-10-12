@@ -1,0 +1,34 @@
+{
+  "id": "FX-RQ-P31-UNKNOWN-TOKENS",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch manifest json-blocks x-future)"],
+      ["accept","text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match","\"r1.QZWQveB3Od0paA9JtInsnGdvGe4b3NIqT4xsP6rdKMU\""],
+      ["rq-have","t=t1.UDAGcPAhlaAytet6ltzfl_jk0ucsCZ3Qw1nrSGA5pwA;v=2, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:, x=1"]
+    ]
+  },
+  "status": 200,
+  "headers_required": {
+    "content-type": "application/vnd.rivqen.delta+json",
+    "rq-version": "1",
+    "cache-control": "no-store"
+  },
+  "headers_forbidden": ["etag","expires","last-modified","rq-revision","rq-template-revision"],
+  "body": {
+    "kind": "delta",
+    "base_revision": "r1.QZWQveB3Od0paA9JtInsnGdvGe4b3NIqT4xsP6rdKMU",
+    "next_revision": "r1.zmkAXEJQ1oWyDB37krArJho2A9THkC_QRUnIlPolfwk",
+    "template_revision": "t1.UDAGcPAhlaAytet6ltzfl_jk0ucsCZ3Qw1nrSGA5pwA",
+    "blocks": [
+      {
+        "id": "price",
+        "format": "html",
+        "sha256": "bB9ScYcQQzKWqPCBW62MTsc9Ff_djve7Denf3YMoCUg"
+      }
+    ]
+  }
+}

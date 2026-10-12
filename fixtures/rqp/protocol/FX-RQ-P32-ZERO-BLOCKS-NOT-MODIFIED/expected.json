@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-P32-ZERO-BLOCKS-NOT-MODIFIED",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match","\"r1.BgyOJ0KPx6zil_duHSiCIgtxzhUXRaxTtSaBbXas9rg\""],
+      ["rq-have","t=t1.OSRFptnhNIski13tjSU2ny41r11c8GNzk1jBndaNXOI, b=::"]
+    ]
+  },
+  "status": 304,
+  "headers_required": {
+    "cache-control": "no-cache",
+    "etag": "\"r1.BgyOJ0KPx6zil_duHSiCIgtxzhUXRaxTtSaBbXas9rg\""
+  },
+  "headers_forbidden": ["rq-revision","rq-template-revision"],
+  "body": {
+    "kind": "none"
+  }
+}

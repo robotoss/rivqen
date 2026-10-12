@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-P29-INVALID-PAGE-FIRST-VISIT",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html"]
+    ]
+  },
+  "status": 200,
+  "headers_required": {
+    "content-type": "text/html; charset=utf-8",
+    "cache-control": "no-cache",
+    "etag": "\"app-7\""
+  },
+  "headers_forbidden": ["rq-revision","rq-template-revision","rq-version"],
+  "body": {
+    "kind": "app"
+  }
+}

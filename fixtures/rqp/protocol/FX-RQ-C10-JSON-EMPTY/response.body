@@ -1,0 +1,1 @@
+{"type":"rivqen.patch","protocol":"rqp/1","base_revision":"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8","next_revision":"r1.Q3Dd3_qA312WxSQHWbTvlyRmHl7JKbSPYrRtUEACqEg","template_revision":"t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM","operations":[{"op":"replace_block","block_id":"cart","format":"json","content":"","sha256":"47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU"}]}

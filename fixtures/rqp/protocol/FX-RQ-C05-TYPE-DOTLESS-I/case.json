@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-C05-TYPE-DOTLESS-I",
+  "kind": "client",
+  "description": "Manifest type with a dotless i (U+0131): no manifest element, MANIFEST_INVALID (H-28)",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["etag", "{{r1:page-a}}"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a",
+      "manifest_type": "application/rıvqen-manifest+json"
+    }
+  }
+}

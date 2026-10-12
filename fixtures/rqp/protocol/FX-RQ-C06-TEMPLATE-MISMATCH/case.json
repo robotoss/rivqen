@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-C06-TEMPLATE-MISMATCH",
+  "kind": "client",
+  "description": "A delta with template_revision t1(page-t2)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b",
+        "template_revision": "page-t2"
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-C15-NO-RQP-SERVER",
+  "kind": "client",
+  "description": "The server does not answer RQP (no Rq-Version, no manifest): normal HTTPS load",
+  "rules": ["RQP-04"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "page": "page-a"
+    }
+  }
+}

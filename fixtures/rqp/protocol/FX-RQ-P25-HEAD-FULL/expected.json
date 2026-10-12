@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-P25-HEAD-FULL",
+  "request": {
+    "method": "HEAD",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match","\"r1.QZWQveB3Od0paA9JtInsnGdvGe4b3NIqT4xsP6rdKMU\""],
+      ["rq-have","t=t1.UDAGcPAhlaAytet6ltzfl_jk0ucsCZ3Qw1nrSGA5pwA, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:"]
+    ]
+  },
+  "status": 200,
+  "headers_required": {
+    "content-type": "text/html; charset=utf-8",
+    "cache-control": "no-cache",
+    "etag": "\"r1.zmkAXEJQ1oWyDB37krArJho2A9THkC_QRUnIlPolfwk\"",
+    "rq-version": "1"
+  },
+  "headers_forbidden": ["rq-revision","rq-template-revision"],
+  "body": {
+    "kind": "none"
+  }
+}

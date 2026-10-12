@@ -1,0 +1,40 @@
+{
+  "id": "FX-RQ-P27-DELTA-TOO-LARGE",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match","\"r1.TgQ3fn7oxPmamMUx0XIamZ1qDGvYQ_rv87RiwNKNFnA\""],
+      ["rq-have","t=t1.3petNrlgiYCi30b_qoaEjGWQRnolHXj4MKTRGg7py74, b=:g81blSXLEE0=:"]
+    ]
+  },
+  "status": 200,
+  "headers_required": {
+    "content-type": "text/html; charset=utf-8",
+    "cache-control": "no-cache",
+    "etag": "\"r1.X7O14ASHjflBMvoCkC65PzNPuo5JAcGP58gq-QrcJhM\"",
+    "rq-version": "1"
+  },
+  "headers_forbidden": ["rq-revision","rq-template-revision"],
+  "body": {
+    "kind": "full",
+    "insert_at": 52,
+    "manifest": {
+      "protocol": "rqp/1",
+      "origin": "https://shop.example.com",
+      "path": "/catalog",
+      "template_revision": "t1.3petNrlgiYCi30b_qoaEjGWQRnolHXj4MKTRGg7py74",
+      "page_revision": "r1.X7O14ASHjflBMvoCkC65PzNPuo5JAcGP58gq-QrcJhM",
+      "blocks": [
+        {
+          "id": "huge",
+          "format": "html",
+          "sha256": "UlhQGQvLDdz0TNrRjw9JpGaU9cELMxBmDO_o4YqZB0o"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P01-FIRST-VISIT",
+  "description": "First visit of an RQP client: the full document F",
+  "rules": ["RQP-08", "RQP-20"],
+  "page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

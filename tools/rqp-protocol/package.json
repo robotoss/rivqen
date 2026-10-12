@@ -1,0 +1,17 @@
+{
+  "name": "rqp-protocol",
+  "version": "0.0.0",
+  "private": true,
+  "description": "rqp/1 protocol fixtures: reference server and client steps, fixture generator and conformance harness",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\"",
+    "gen": "node gen.mjs",
+    "gen:check": "node gen.mjs --check",
+    "check": "node check.mjs"
+  }
+}

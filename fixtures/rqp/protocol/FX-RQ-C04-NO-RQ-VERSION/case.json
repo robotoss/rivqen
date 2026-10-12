@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-C04-NO-RQ-VERSION",
+  "kind": "client",
+  "description": "A full document with a manifest but without Rq-Version: a normal page, no error",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["etag", "{{r1:page-a}}"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a"
+    }
+  }
+}

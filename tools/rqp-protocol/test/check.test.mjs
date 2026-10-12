@@ -92,7 +92,7 @@ test('compares F by the bytes around the manifest, the position and the manifest
   assert.ok(ok(text.replace('<title', '<TITLE')).some((f) => f.includes('before the manifest element')));
   assert.ok(ok(text.replace(m.page_revision, m.template_revision.replace('t1.', 'r1.'))).some((f) => f.includes('manifest value')));
   const moved = text.replace(/<script type="application\/rivqen-manifest\+json">.*?<\/script>/, '').replace('</body>', `<script type="application/rivqen-manifest+json">${JSON.stringify(m)}</script></body>`);
-  assert.ok(ok(moved).some((f) => f.includes('immediately before the first </head>')));
+  assert.ok(ok(moved).some((f) => f.includes('immediately before the head end tag')));
 });
 
 test('detects Rq-* or Accept in Vary of F and a wrong Content-Length', () => {

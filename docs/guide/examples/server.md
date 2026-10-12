@@ -2,7 +2,7 @@
 
 `examples/server-demo` is a small Node.js server. It shows the Rivqen protocol (RQP) from the server side: block markup, manifest, `304`, block patch and safe fallback.
 
-**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), task T-04): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 45 tests pass, and the demo passes all 57 server protocol fixtures (checked 2026-10-12, Node.js 22 or later). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
+**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 65 tests pass, and the demo passes all 69 server protocol fixtures (checked 2026-10-12, Node.js 22 or later). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
 
 [[toc]]
 
@@ -125,14 +125,14 @@ Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so th
 npm test
 ```
 
-<Badge type="tip" text="FACT" /> The 45 tests check, by behavior:
+<Badge type="tip" text="FACT" /> The 65 tests check, by behavior:
 
 - the response selection: full document, `304`, delta, the size rules, the attribute rule (H-56), invalid pages, a weak `ETag` with a content coding, no state between requests;
 - the known answers of `spec/rqp/examples/kat`: the full documents, both page revisions and the example patches;
 - the request fields and the Structured Field parser;
 - the insertion point of the manifest and the attribute rule;
 - the HTTP adapter on a loopback socket: first visit, revisit, data change, template change;
-- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 57 server fixtures pass (`FX-RQ-P*`), also `FX-RQ-P35` (level SHOULD).
+- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 69 server fixtures pass (`FX-RQ-P*`), also the two `FX-RQ-P35` cases (level SHOULD).
 
 To run the fixtures alone, run this command in `examples/server-demo`:
 

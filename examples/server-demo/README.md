@@ -9,7 +9,7 @@ Documentation: https://robotoss.github.io/rivqen/guide/examples/server
 ```bash
 npm install
 npm start          # http://127.0.0.1:8787/catalog
-npm test           # 65 tests, with the 67 server protocol fixtures
+npm test           # 65 tests, with the 69 server protocol fixtures
 npm run measure    # bytes per visit; needs the server running
 ```
 

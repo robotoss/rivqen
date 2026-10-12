@@ -390,7 +390,7 @@ The runner (`server/conformance`) is language-neutral. It starts the server unde
 | Status | Exact |
 | Protocol headers | Exact names (case-insensitive) and values |
 | Other headers | Presence of required headers (`Content-Type`, `Cache-Control`, `Vary`) |
-| HTML body | Byte-exact (after decoding transfer and content encodings) |
+| HTML body | Byte-exact (after decoding transfer and content encodings). Exception: an RQP full document F — the bytes outside the manifest element are byte-exact, the element position is the same, and the manifest text is compared as a JSON value (white space and member order are free, manifest-patch §3.2) |
 | JSON body | Semantic equality (key order ignored), unless the fixture marks it byte-exact |
 
 ## Related

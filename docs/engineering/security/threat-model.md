@@ -63,7 +63,7 @@ flowchart TD
 | T-01 | XSS through a data block or patch | B2 | No script in patches; context-aware insertion; CSP (SEC-03, SEC-04, SEC-17) |
 | T-02 | Bridge abuse from a third-party iframe | B1 | Frame-origin check by native API; command allowlist (SEC-02, SEC-16) |
 | T-03 | Cross-account cache read | B5 | Partitioned keys, revoke on logout (SEC-05, SEC-18) |
-| T-04 | Replay of an old patch | B2 | Base revision + sequence + generation (SEC-09, SEC-20) |
+| T-04 | Replay of an old patch | B2 | HTTP: `base_revision` + `next_revision` check + navigation generation (SEC-09, SEC-20); no sequence over HTTP (H-9). Push channels (WP-16): sequence |
 | T-05 | Cache poisoning via shared CDN | B4 | `Cache-Control: private`, `Vary`, no 304 on identity mismatch (SEC-06) |
 | T-06 | Decompression bomb / huge document | B2 | Size and ratio limits (SEC-07, SEC-23) |
 | T-07 | Slow-loris stream | B2 | Deadlines and backpressure (SEC-07) |

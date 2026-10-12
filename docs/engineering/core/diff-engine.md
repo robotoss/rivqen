@@ -11,7 +11,7 @@ The diff engine (`rivqen-diff`) computes which data blocks changed, validates in
 | Path | Protocol | Who computes the diff | What the client receives |
 |---|---|---|---|
 | **legacy data diff** | Legacy protocol | Server sends **all** data blocks; client compares them with cached blocks | JSON map of block key → HTML (see [legacy wire contract](/engineering/protocol/legacy-wire)) |
-| **RQP patch** | Rivqen protocol | Server sends only changed blocks in a `PatchEnvelope` | Typed operations with base and next revision |
+| **RQP patch** | Rivqen protocol | Server sends only changed blocks in a `PatchEnvelope` | `replace_block` operations with base and next revision; the client sends `Rq-Have` digest prefixes (H-44, H-47) |
 
 ## 2. legacy data diff
 

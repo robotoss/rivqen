@@ -9,7 +9,7 @@ Rivqen has one main protocol and one temporary compatibility mode.
 | Block markup | `data-rq-block="name"` attribute on a normal HTML element | HTML comments `<!--sonicdiff-name-->…<!--sonicdiff-name-end-->` |
 | Version tracking | Page revision and template revision in a manifest | `etag` and `template-tag` headers |
 | Data update | Only changed blocks, as a validated patch | Server sends all blocks |
-| Replay protection | Base revision and sequence number | Limited |
+| Replay protection | Base revision and next-revision check (sequence numbers only on push channels) | Limited |
 | Push updates | Optional (WebSocket; WebTransport experimental) | No |
 | Lifetime | Long-term | **Deprecated from 1.0, removed in 1.5** |
 

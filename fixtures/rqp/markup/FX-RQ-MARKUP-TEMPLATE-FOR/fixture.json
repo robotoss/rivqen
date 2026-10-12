@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-TEMPLATE-FOR",
+  "description": "A template start tag with a for attribute (H-43): content patching replaces the content between the start and end markers in the block (conformance study T-17, Chrome 154 repro)",
+  "rules": [
+    "M-10"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

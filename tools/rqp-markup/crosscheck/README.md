@@ -36,8 +36,11 @@ When the candidate says **valid**, these must be true. Else the tool reports a f
 | `M-09-table-current` | M-09 condition 2 (H-37) | A table part, `col` or `table` start tag while F (a table context) is not the current node |
 | `M-10-form` | M-10 item 2 (H-36) | A `form` start tag while an HTML `form` is on the token stack |
 | `M-11-table-part` | M-11 item 6 (H-38) | A table part or `col` in the `noscript` content without a `table` opened in it |
+| `M-10-template-for` | M-10 item 3 (H-43) | A `template` start tag in HTML context with a `for` attribute (any value) |
 
 The classifier is a test oracle for these rules only. It does not decide validity.
+
+parse5 8.0.1 does not implement content patching (`template for`) and reads `<?…>` as a bogus comment, so it never disagrees with a candidate on the shape of `M-10-template-for`. For this class the sweep only counts the documents that a candidate accepts; the evidence for the rule is Chrome 154 (`docs/engineering/protocol/markup-edge-cases.md` §8.5).
 
 `<view>` is `enabled` (scripting enabled, the RQP view of `markup.md` M-04) or `disabled` (scripting disabled: `noscript` content is markup). The default is `enabled`. Use `--scripting both` to check the claim of `markup.md` §5 item 2 too.
 
@@ -77,6 +80,9 @@ node src/cli.mjs cases --only rust,java,php
 node src/cli.mjs cases --cases cases/review-cases.json --only rust,node,java,php
 node src/cli.mjs cases --cases cases/review2-cases.json --only rust,node,java,php
 
+# The conformance study (round 3): WHATWG steps, cases with the fields step and expected
+node src/cli.mjs cases --cases cases/conformance-cases.json --only rust,node,java,php
+
 # A seeded generator sweep
 TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,java,php --seed 5 --count 100000 --chunk 10000 --scripting both
 
@@ -99,7 +105,7 @@ TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,node,java,php --seed 21 --cou
 | `--seed n` | `sweep` | Seed of the sweep (0 … 2^32 − 1) | 1 |
 | `--count n` | `sweep` | Number of documents (at most 10 000 000) | 1000 |
 | `--max-tokens n` | `sweep` | Pieces per document (1 … 200) | 16 |
-| `--profile p` | `sweep` | `classic` (the documents of earlier sweeps, unchanged), `review` (adds the shapes of the security review, unchanged since round 1) or `review2` (adds the shapes of round 2: form pointer cycles, template with `col` and raw text, foster-parented elements in tables, `noscript` in cells with table parts) | `classic` |
+| `--profile p` | `sweep` | `classic` (the documents of earlier sweeps, unchanged), `review` (adds the shapes of the security review, unchanged since round 1), `review2` (adds the shapes of round 2: form pointer cycles, template with `col` and raw text, foster-parented elements in tables, `noscript` in cells with table parts) or `review3` (adds the `template for` motif of H-43: processing-instruction markers in or around a block, then a `template` with `for`, or a control; `review` and `review2` documents do not change) | `classic` |
 | `--chunk n` | `sweep` | Documents per batch run | 2000 |
 | `--out dir` | `sweep` | Where to save the inputs of findings | `$TMPDIR/rqp-crosscheck-sweep-<seed>` |
 | `--keep n` | `sweep` | Saved and printed findings for each kind | 20 |

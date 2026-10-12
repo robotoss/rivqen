@@ -252,6 +252,19 @@ final class TokenStack {
   }
 
   /**
+   * M-09 condition 1 (H-35): true when the nearest element pushed in HTML context with a name in
+   * {@code TABLE_FAMILY} or the name {@code template} is a {@code template} element. This is the
+   * element where the search for F stops.
+   */
+  boolean templateTableContext() {
+    if (size == 0) {
+      return false;
+    }
+    int i = tableContext[size - 1];
+    return i >= 0 && known[i] == Name.TEMPLATE;
+  }
+
+  /**
    * Index of the nearest {@code ul}, {@code ol}, {@code menu} or {@code dl} element pushed in HTML
    * context (M-24 c, j), or -1.
    */

@@ -104,7 +104,10 @@ final class Cli
             }
             $sub = $dir . DIRECTORY_SEPARATOR . $name;
             $file = $sub . DIRECTORY_SEPARATOR . 'input.html';
-            if (!is_dir($sub) || !is_file($file)) {
+            // A missing input.html skips the entry. Any other kind of entry
+            // goes to readInput(), which rejects it (CONTRACT.md section 2,
+            // item 7).
+            if (!is_dir($sub) || !file_exists($file)) {
                 continue;
             }
             $line = Parser::parse(self::readInput($file))->toArray() + ['fixture' => $name];
@@ -127,6 +130,11 @@ final class Cli
                 throw new UsageError('cannot open: ' . $path);
             }
             try {
+                // The path may have changed after is_file(): check the handle.
+                $stat = fstat($handle);
+                if ($stat === false || ($stat['mode'] & 0o170000) !== 0o100000) {
+                    throw new UsageError('not a file: ' . $path);
+                }
                 $data = stream_get_contents($handle, Parser::MAX_INPUT_BYTES + 1);
             } finally {
                 fclose($handle);

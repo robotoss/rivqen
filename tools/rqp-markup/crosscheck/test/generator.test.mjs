@@ -87,6 +87,35 @@ test("the review profile reaches the shapes of the security review", () => {
   assert.ok(has(/(<table><td>){60}/), "deep nested tables");
 });
 
+test("the review profile does not change with review2: a saved finding of seed 21 still reproduces", () => {
+  // Seed 21, index 6906 (edge cases §6.6): an a, a crossing by span, then 8 or more ul elements.
+  assert.match(generateDocument(docSeed(21, 6906), { maxTokens: 20, profile: "review" }), /<a><span>(<ul>){8}/);
+});
+
+test("the review2 profile reaches the shapes of round 2 of the security review", () => {
+  const docs = Array.from({ length: 3000 }, (_, i) => generateDocument(docSeed(1, i), { profile: "review2", maxTokens: 20 }));
+  const has = (re) => docs.some((d) => re.test(d));
+  assert.ok(has(/(<form><object><form><\/form><\/object><\/form>){9}/), "nested forms in object, repeated");
+  assert.ok(has(/<template><col><title><\/template><p data-rq-block/), "template, col and raw text");
+  assert.ok(has(/<table><marquee><table><\/table><\/marquee><\/table>/), "foster-parented marquee with a table");
+  assert.ok(has(/<td><noscript><td><\/td><\/noscript>/), "noscript in a cell with a table part");
+  assert.ok(has(/<caption><noscript><col><\/noscript>/), "noscript in a caption with col");
+});
+
+test("the review3 profile reaches the template for shapes of H-43 and keeps review2 seeds", () => {
+  const docs = Array.from({ length: 3000 }, (_, i) => generateDocument(docSeed(1, i), { profile: "review3", maxTokens: 20 }));
+  const has = (re) => docs.some((d) => re.test(d));
+  assert.ok(has(/data-rq-block="r\d+"><\?start name="m">x<\?end><\/(div|p|span)><template for="m">/), "start and end markers in a block");
+  assert.ok(has(/<\?start name="m"><(div|p|span) data-rq-block="r\d+">y<\/\1><\?end><template/), "markers around a block");
+  assert.ok(has(/<template for>/) && has(/<template for="">/) && has(/<template FOR="m">/), "empty, valueless and upper-case for");
+  assert.ok(has(/<svg><template for="m">/), "svg control");
+  // review2 documents do not change when review3 exists (saved findings of seeds 51 and 52 stay valid).
+  for (let i = 0; i < 200; i++) {
+    const s = docSeed(51, i);
+    assert.doesNotMatch(generateDocument(s, { profile: "review2", maxTokens: 20 }), /<template (for|FOR)/);
+  }
+});
+
 test("review documents are bounded", () => {
   for (let i = 0; i < 1000; i++) {
     assert.ok(generateDocument(docSeed(9, i), { profile: "review", maxTokens: 200 }).length < 200 * 8000);

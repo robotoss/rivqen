@@ -101,13 +101,16 @@ const TYPE_LOOKALIKES = [
  * @param {() => string} nextId
  * @returns {string}
  */
-function reviewMotif(rng, nextId) {
+function reviewMotif(rng, nextId, kinds = 9) {
   const block = () => {
     const inner = pick(rng, ["y", "y<a href=x>z</a>w", "y<nobr>z</nobr>w", "<button>y</button>", "<table></table>y", "<b>y</b>"]);
     const tag = pick(rng, ["span", "div", "p"]);
     return `<${tag} data-rq-block="${nextId()}">${inner}</${tag}>`;
   };
-  const kind = Math.floor(rng() * 9);
+  // review: kinds 0 to 8 (unchanged since the first sweeps); review2 adds kinds 9 to 12; review3 adds kind 13.
+  const kind = Math.floor(rng() * kinds);
+  if (kind === 13) return templateForMotif(rng, nextId);
+  if (kind >= 9) return round2Motif(kind, rng, nextId, block);
   if (kind === 0) {
     // H-26: a formatting end tag over special elements (often 8 or more: the adoption agency limit).
     const f = pick(rng, FORMATTING_PIECES);
@@ -160,19 +163,97 @@ function reviewMotif(rng, nextId) {
   return `${"<table><td>".repeat(n)}${block()}${"</td></table>".repeat(n)}`;
 }
 
+const FORM_SHAPES = [
+  "<form><object><form></form></object></form>", "<form><div></form><form>x</form>", "<div><form></div><form>x</form>",
+  "<form><input></form><form><input></form>", "<span><form></span><form>x</form>", "<form><table><form></form></table></form>",
+];
+const TEMPLATE_STARTS = ["<col>", "<colgroup>", "<tr><td>x</td></tr>", "<caption></caption><tr>", "<div><col>", "<td>"];
+const RAW_NAMES = ["title", "textarea", "style", "xmp", "script", ""];
+const FOSTER_WRAPPERS = ["object", "b", "a", "div"];
+const FOSTER_ELEMENTS = ["marquee", "object", "applet", "div", "span", "form", "b"];
+const CELL_CONTEXTS = [
+  ["<table><tr><td>", "</td></tr></table>"], ["<table><tr><th>", "</th></tr></table>"], ["<table><caption>", "</caption></table>"],
+];
+const NOSCRIPT_TABLE_CONTENT = [
+  "<td></td>", "<col>", "<tr></tr>", "<th>x</th>", "<caption></caption>", "<tbody></tbody>",
+  "<table><tr><td>x</td></tr></table>", "<table><col></table>", "<img src=x>",
+];
+
+/**
+ * Motifs of round 2 of the security review (H-35 to H-38): form pointer cycles, template with col
+ * and raw text, foster-parented elements in tables, noscript in cells with table parts.
+ * @param {number} kind 9 … 12
+ * @param {() => number} rng
+ * @param {() => string} nextId
+ * @param {() => string} block
+ */
+function round2Motif(kind, rng, nextId, block) {
+  if (kind === 9) {
+    const reps = rng() < 0.08 ? between(rng, 100, 300) : between(rng, 1, 10);
+    const body = pick(rng, FORM_SHAPES).repeat(reps);
+    return rng() < 0.5 ? `<a href="1">${body}x</a>${block()}` : body + block();
+  }
+  if (kind === 10) {
+    const raw = pick(rng, RAW_NAMES);
+    const open = raw === "" ? "" : `<${raw}>`;
+    const close = raw === "" ? "" : `</${raw}>`;
+    return `<template>${pick(rng, TEMPLATE_STARTS)}${open}</template><p data-rq-block="${nextId()}">f</p>${close}</template>${block()}`;
+  }
+  if (kind === 11) {
+    const w = pick(rng, FOSTER_WRAPPERS);
+    const m = pick(rng, FOSTER_ELEMENTS);
+    const unit = rng() < 0.5
+      ? `<${w}><table><${m}><table></table></${m}></table></${w}>`
+      : `<table><tr><${m}><td>x</td></${m}></tr></table>`;
+    const reps = rng() < 0.08 ? between(rng, 100, 300) : between(rng, 1, 3);
+    return unit.repeat(reps) + block();
+  }
+  const [open, close] = pick(rng, CELL_CONTEXTS);
+  return `${open}<noscript>${pick(rng, NOSCRIPT_TABLE_CONTENT)}</noscript><div data-rq-block="${nextId()}">a<table></table>b</div>${close}`;
+}
+
+const MARKER_SHAPES = [
+  ['<?start name="m">', "x<?end>"], ['<?start name="m">', "x"], ['<?marker name="m">', ""], ["", ""],
+];
+const TEMPLATE_FOR_SHAPES = [
+  ['<template for="m">', "</template>"], ['<template FOR="m">', "</template>"], ["<template for>", "</template>"],
+  ['<template for="">', "</template>"], ['<table><template for="m">', "</template></table>"],
+  ['<svg><template for="m">', "</template></svg>"], ['<template id="m">', "</template>"],
+];
+
+/**
+ * Motif of H-43 (conformance study T-17): processing-instruction markers in or around a block, then
+ * a template with a for attribute (content patching), or a control (svg template, no for).
+ * parse5 8.0.1 does not implement content patching, so a sweep finds no disagreement for this
+ * motif; it measures which documents the candidates accept (class M-10-template-for).
+ * @param {() => number} rng
+ * @param {() => string} nextId
+ */
+function templateForMotif(rng, nextId) {
+  const [m0, m1] = pick(rng, MARKER_SHAPES);
+  const [t0, t1] = pick(rng, TEMPLATE_FOR_SHAPES);
+  const tag = pick(rng, ["div", "p", "span"]);
+  const id = nextId();
+  const block = rng() < 0.5
+    ? `<${tag} data-rq-block="${id}">${m0}${m1 || "y"}</${tag}>`
+    : `${m0}<${tag} data-rq-block="${id}">y</${tag}>${m1.replace("x", "")}`;
+  return `${block}${t0}${pick(rng, ["<b>new</b>", "z", ""])}${t1}`;
+}
+
 /**
  * Generate one document.
  *
  * @param {number} seed       document seed (use docSeed for a sweep)
- * @param {{ maxTokens?: number, profile?: "classic" | "review" }} [options] maxTokens: number of pieces
- *   (1 … 200, default 16); profile "review" adds the motifs of the security review (default "classic":
- *   the documents of earlier sweeps, unchanged)
+ * @param {{ maxTokens?: number, profile?: "classic" | "review" | "review2" | "review3" }} [options] maxTokens: number of
+ *   pieces (1 … 200, default 16); profile "review" adds the motifs of the security review, "review2" those of
+ *   round 2, "review3" the template for motif of H-43 (default "classic": the documents of earlier sweeps, unchanged)
  * @returns {string}
  */
 export function generateDocument(seed, { maxTokens = 16, profile = "classic" } = {}) {
   const limit = Math.max(1, Math.min(200, Math.floor(maxTokens)));
   const rng = makeRng(seed);
-  const review = profile === "review";
+  const review = profile === "review" || profile === "review2" || profile === "review3";
+  const kinds = profile === "review3" ? 14 : profile === "review2" ? 13 : 9;
   /** @type {string[]} */
   const out = [];
   /** @type {string[]} */
@@ -186,7 +267,7 @@ export function generateDocument(seed, { maxTokens = 16, profile = "classic" } =
   const count = 1 + Math.floor(rng() * limit);
   for (let k = 0; k < count; k++) {
     if (review && rng() < 0.3) {
-      out.push(reviewMotif(rng, () => `r${ids++}`));
+      out.push(reviewMotif(rng, () => `r${ids++}`, kinds));
       continue;
     }
     const r = rng();

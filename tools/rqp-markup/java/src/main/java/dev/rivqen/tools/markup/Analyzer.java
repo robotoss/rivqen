@@ -179,6 +179,9 @@ public final class Analyzer {
     if (k == Name.FRAMESET) {
       throw structure("M-10");
     }
+    if (html && k == Name.TEMPLATE && tok.hasForAttribute()) {
+      throw structure("M-10"); // item 3 (H-43)
+    }
     if (k == Name.SCRIPT && reservedType(in, tok)) {
       throw new Reject(ErrorCode.RESERVED, "M-13");
     }
@@ -196,6 +199,7 @@ public final class Analyzer {
       return;
     }
     tablePart(k);
+    nestedForm(k);
     impliedParts(k);
     boolean region = k == Name.SVG || k == Name.MATH;
     if (!(region && selfClosing) && !Name.is(k, Name.Set.VOID)) {
@@ -384,10 +388,19 @@ public final class Analyzer {
     return n + (withRtc ? stack.open(Name.RTC) : 0) > 0;
   }
 
-  /** M-09: table parts only directly in their table-family parent. */
+  /**
+   * M-09 for a start tag in HTML context: table parts only directly in their table-family parent,
+   * with condition 1 (H-35: no {@code col} where the search for F stops at a {@code template}) and
+   * condition 2 (H-37: in table context, F is the current node). The checks come before the implied
+   * parts and the push (M-26), so the tree builder never pops a foster-parented element without its
+   * end tag ("clear the stack back to a table context").
+   */
   private void tablePart(@Nullable Name k) {
-    if (k == null) {
+    if (k == null || (!k.inAny(Name.Set.TABLE_FAMILY) && k != Name.COL)) {
       return;
+    }
+    if (k == Name.COL && stack.templateTableContext()) {
+      throw structure("M-09"); // condition 1
     }
     Name f = stack.tableFamily();
     if (f == null) {
@@ -404,10 +417,24 @@ public final class Analyzer {
                   || f == Name.THEAD
                   || f == Name.TFOOT
                   || f == Name.TR;
-          default -> true;
+          default -> true; // table
         };
     if (!allowed) {
       throw structure("M-09");
+    }
+    if (tableContext() && stack.tableFamilyIndex() != stack.size() - 1) {
+      throw structure("M-09"); // condition 2
+    }
+  }
+
+  /**
+   * M-10 item 2 (H-36): a {@code form} start tag in HTML context while a {@code form} pushed in
+   * HTML context is on the token stack. The count of such forms goes down on every pop, also on a
+   * crossing ({@link TokenStack#open(Name)}).
+   */
+  private void nestedForm(@Nullable Name k) {
+    if (k == Name.FORM && stack.open(Name.FORM) > 0) {
+      throw structure("M-10");
     }
   }
 
@@ -594,6 +621,9 @@ public final class Analyzer {
    * an end tag compares only with its top, so this stack needs no name index. The tags of C do not
    * change the token stack or D (M-26 item 7). The stack of C is bounded by the size of C only: a
    * start tag has at least 3 bytes, and each entry is a reference to an interned name (F-2).
+   *
+   * <p>Item 6 (H-38): a start tag in {@code TABLE_PART} or {@code col} needs a {@code table} on the
+   * stack of C. A count of these tables is enough: an end tag of C closes only the top element.
    */
   private void noscript(int from, int to) {
     int length = to - from;
@@ -603,6 +633,8 @@ public final class Analyzer {
     Tokenizer sub = new Tokenizer(c, 0, c.length);
     String[] open = new String[16];
     int size = 0;
+    // Item 6 (H-38): the number of table elements on the stack of C.
+    int tables = 0;
     while (true) {
       switch (sub.next()) {
         case START_TAG -> {
@@ -624,6 +656,11 @@ public final class Analyzer {
               || k == Name.TEMPLATE) {
             throw structure("M-11");
           }
+          // Item 6: a table part or col in C needs an open table of C, else with scripting
+          // disabled it closes a cell or caption around the noscript element.
+          if ((Name.is(k, Name.Set.TABLE_PART) || k == Name.COL) && tables == 0) {
+            throw structure("M-11");
+          }
           // Item 5: a start tag that M-05 item 1 pushes opens an element of C. Self-closing svg
           // and math are rejected above, so only VOID names are not pushed.
           if (!Name.is(k, Name.Set.VOID)) {
@@ -631,6 +668,9 @@ public final class Analyzer {
               open = Arrays.copyOf(open, size * 2);
             }
             open[size++] = names.intern(raw, k);
+            if (k == Name.TABLE) {
+              tables++;
+            }
           }
           if (k != null && k.text != null) {
             sub.enterText(k.text, k.tag);
@@ -651,6 +691,9 @@ public final class Analyzer {
             throw structure("M-11");
           }
           open[--size] = null;
+          if (k == Name.TABLE) {
+            tables--; // the end tag has the name of the element that it closes
+          }
         }
         case EOF -> throw structure("M-11");
         case COMMENT, DOCTYPE -> {}

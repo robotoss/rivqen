@@ -35,6 +35,8 @@ final class LimitsTest extends TestCase
     private const MAX_SECONDS = 30;
     private const MAX_LIMIT_SECONDS = 2;
     private const MAX_PEAK_BYTES = 256 * 1024 * 1024;
+    /** Peak memory for 5 MiB of noscript content that only opens elements (M-11 item 5). */
+    private const MAX_NOSCRIPT_PEAK_BYTES = 32 * 1024 * 1024;
     private const DEPTH = Parser::MAX_DEPTH;
 
     /**
@@ -176,6 +178,10 @@ final class LimitsTest extends TestCase
             $n = intdiv(Parser::MAX_INPUT_BYTES - 21, 9);
             return '<noscript>' . str_repeat('<ab>', $n) . str_repeat('</ab>', $n) . '</noscript>';
         }];
+        // M-11 item 6: table parts in a table of the noscript content.
+        yield 'table parts in noscript content' => [static fn(): string => self::fill('<noscript><table>', '<tr><td></td></tr>', '</table></noscript>')];
+        // M-09 condition 2 and M-10 item 2 are O(1) for each start tag.
+        yield 'rows in a table and forms in sequence' => [static fn(): string => self::fill('<table>', '<tr><td><form></form></td></tr>', '</table>')];
         yield 'deep noscript content with names with one hash' => [static fn(): string => '<noscript>'
             . self::nameStacks(self::COLLIDING, 71_000, Parser::MAX_INPUT_BYTES - 21) . '</noscript>'];
         // M-24 item j keeps one index stack of the lists and list items in
@@ -276,6 +282,8 @@ final class LimitsTest extends TestCase
     {
         yield 'two-byte names' => ['<ab>'];
         yield 'one-byte names' => ['<a>'];
+        // The tokenizer makes a new lower-case string for each of these names.
+        yield 'one-byte upper-case names' => ['<A>'];
         yield 'names with one hash' => ['<a~b]a~>'];
     }
 
@@ -286,7 +294,10 @@ final class LimitsTest extends TestCase
         self::assertSame(ErrorCode::Structure, $result->error);
         self::assertSame('M-11', $result->rule);
         self::assertLessThan(self::MAX_SECONDS, $seconds);
-        self::assertLessThan(self::MAX_PEAK_BYTES, $peak);
+        // The stack of C has 4 bytes for each entry (OffsetStack), plus the
+        // copy of C for its tokenizer: about 17 MiB for 1.7 million entries.
+        // A list of names needs 37 MiB to 90 MiB for the same inputs.
+        self::assertLessThan(self::MAX_NOSCRIPT_PEAK_BYTES, $peak);
     }
 
     /**

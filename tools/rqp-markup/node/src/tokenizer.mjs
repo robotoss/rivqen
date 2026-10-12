@@ -99,6 +99,7 @@ export function tagName(b, start, end) {
 
 const BLOCK_ATTR = 'data-rq-block';
 const TYPE_ATTR = 'type';
+const FOR_ATTR = 'for';
 const SCRIPT = 'script';
 const DOCTYPE = 'doctype';
 const CDATA = '[CDATA[';
@@ -117,6 +118,8 @@ function newTag(type, name, start) {
     // Raw value spans { start, end } of the first attribute with this name, or null.
     blockAttr: null,
     typeAttr: null,
+    // M-10 item 3: true when the tag has an attribute named "for" (any value).
+    hasFor: false,
   };
 }
 
@@ -505,6 +508,7 @@ export class Tokenizer {
       token.typeAttr = { start: end, end };
       return SLOT_TYPE;
     }
+    if (spanEqualsLower(b, start, end, FOR_ATTR)) token.hasFor = true;
     return SLOT_NONE;
   }
 

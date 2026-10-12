@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-CURRENT",
+  "description": "Normal tables: every table part, col and table start tag has F as the current node; a foster-parented div closed before the next row; a table in a cell (H-37: valid)",
+  "rules": [
+    "M-09",
+    "M-19"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "a",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"a\">",
+        "content": "x"
+      }
+    ]
+  }
+}

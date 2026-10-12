@@ -196,10 +196,12 @@ test("sweep: findings are saved as files, at most --keep of each kind", async ()
   }
 });
 
-test("parseArgs: --profile is classic or review", () => {
+test("parseArgs: --profile is classic, review, review2 or review3", () => {
   assert.equal(parseArgs(["sweep"]).profile, "classic");
   assert.equal(parseArgs(["sweep", "--profile", "review"]).profile, "review");
-  assert.throws(() => parseArgs(["sweep", "--profile", "other"]), /classic or review/);
+  assert.equal(parseArgs(["sweep", "--profile", "review2"]).profile, "review2");
+  assert.equal(parseArgs(["sweep", "--profile", "review3"]).profile, "review3");
+  assert.throws(() => parseArgs(["sweep", "--profile", "other"]), /classic, review, review2 or review3/);
 });
 
 test("check --expected: a valid fixture with a shape of a security-review rule is a finding", async () => {

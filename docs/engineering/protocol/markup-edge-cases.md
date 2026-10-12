@@ -1,6 +1,6 @@
 # RQP markup: edge cases E1–E8
 
-This page is a short risk study of eight edge cases of the [RQP markup rules](/engineering/protocol/markup) (rqp/1). For each case it gives the evidence, the options, the risk and one recommended reading. The human decided each case (protocol decision; E8 is also a security decision). The decided rule text is in [`markup.md`](/engineering/protocol/markup) §2; the cases are listed in [§2.11](/engineering/protocol/markup#_2-11-decided-edge-cases). Section 6 is the study of the findings of the security review (H-25 to H-31, 2026-10-11).
+This page is a short risk study of eight edge cases of the [RQP markup rules](/engineering/protocol/markup) (rqp/1). For each case it gives the evidence, the options, the risk and one recommended reading. The human decided each case (protocol decision; E8 is also a security decision). The decided rule text is in [`markup.md`](/engineering/protocol/markup) §2; the cases are listed in [§2.11](/engineering/protocol/markup#_2-11-decided-edge-cases). Section 6 is the study of the findings of the security review (H-25 to H-31, 2026-10-11). Section 7 is round 2 of the review (H-35 to H-38). Section 8 is the WHATWG conformance study (round 3, H-43).
 
 **Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-09, task WP-17/S1/T-07 ([sprint record](/engineering/plan/sprints/WP-17-S1)). <Badge type="info" text="DESIGN" /> **Decided on 2026-10-09:** E1–E7 as recommended (human decision H-21), E8 option A, reject with `RQP_MARKUP_RESERVED` (human decision H-22). The evidence below is the state before the decision ("Today" = the candidates before task T-08).
 
@@ -265,6 +265,8 @@ The cross-check reports the shape as the class `M-06-formatting-marked`.
 
 <Badge type="info" text="DESIGN" /> Why item 5 makes `markup.md` §5 item 2 true again: see that item. Additional parse5 checks with balanced C, both views equal: `H27-balanced`, `H27-head-noscript` (the "in head noscript" mode leaves the head at a `div`), `H27-p-closed-by-c` (a `div` in C closes the open `p` in the scripting-disabled view only). The content C is not counted in D (architect decision, `markup.md` M-26 item 7); fixture `LIMIT-DEPTH-NOSCRIPT` has 300 nested elements in C after 255 `div` elements. With scripting disabled such a document is deeper than 512 inside the `noscript`; the flattening of the browser happens only there, and the stack of open elements stays the same, so the later block is not changed.
 
+<Badge type="tip" text="FACT" /> Correction (round 2, H-38): item 5 alone did not make both views equal. A balanced C with a table part and no table of its own, in a cell or a caption, closes that cell or caption in the scripting-disabled view (`<td><noscript><td></td></noscript>`). M-11 item 6 closes this gap (§7.4).
+
 ### 6.3 M-13 item 3: non-ASCII script types (H-28)
 
 <Badge type="tip" text="FACT" /> In JavaScript, `"ı".toUpperCase()` is `"I"` and `"ſ".toUpperCase()` is `"S"` (Unicode case mapping). The cross-check now counts a script type as manifest-like also after this mapping (`src/view.mjs`, `looksLikeManifest`): the cases `H28-dotless-i` and `H28-long-s` give one manifest-like element in both views, and all three candidates accept them today.
@@ -309,7 +311,7 @@ The false text "1.5 × 256 + 2 = 386" of H-25 is removed: the token stack is not
 | Implied `tbody`, `tr` ("clear the stack back to a table (body) context", then insert), `colgroup` | at most one of each kind open per F | Implied parts (item 3), given back with F |
 | Reconstruct the active formatting elements (§13.2.4.3) | clones of entries whose element is not on the stack | The entry comes from a formatting start tag (a unit). The tree builder popped its element without its own end tag; the token stack crossed it (the unit stays, item 5) or still has it (the unit is live) |
 | Implied end tags, "close a p element", "pop until", the adoption agency without a furthest block | fewer elements | No element gets deeper |
-| An end tag that the tree builder ignores or uses only in part: "any other end tag" at a special element, `</li>` outside list item scope, a heading end tag that stops at another heading, `</form>` (removes only the form), `</body>`, `</html>` | elements stay open that the token stack popped | The token stack popped them by a crossing (no decrease) or they are `html`/`body`. After that the elements below are dirty, so their later exact pops give nothing back |
+| An end tag that the tree builder ignores or uses only in part: "any other end tag" at a special element, `</li>` outside list item scope, a heading end tag that stops at another heading, `</form>` (ignored when the form element pointer is null or its form is not in scope, else it removes only that form; M-10 item 2 allows one form on the token stack), `</body>`, `</html>` | elements stay open that the token stack popped | The token stack popped them by a crossing (no decrease) or they are `html`/`body`. After that the elements below are dirty, so their later exact pops give nothing back |
 | Exact pop of a clean element e | — | No crossing happened above e since its push, so above e the tree builder has only elements that are already closed and reconstructed formatting elements (not special): the end tag of e pops them too |
 | The adoption agency with a furthest block | moves elements | The WHATWG stack does not grow, no element gets deeper |
 | Foster parenting | the element goes before the table | Not deeper than the table |
@@ -360,6 +362,372 @@ For comparison, the accepted documents that only one other class rejects in seed
 <Badge type="tip" text="FACT" /> **After T-13** (all four candidates implement H-25…H-32, wp/WP-17 at `cf88837`; both scripting views): every candidate gives 180/180 on the golden fixtures and 0 parse5 findings on them. Review sweeps per lane: Rust seed 31, Node.js seed 32, Java seed 33, PHP seed 34 (20 000 documents each): 0 findings, no accepted document that only one rule class rejects, 0 depth-invariant violations on valid documents. Joint sweep of the four candidates, seed 41 (`review`, 20 pieces, 20 000 documents): 3 539 valid documents (1 886 with blocks) in each candidate, identical results, 0 findings, 0 depth-invariant violations on valid documents.
 
 To repeat a sweep, run in `tools/rqp-markup/crosscheck`: `node src/cli.mjs sweep --only rust,node,php --seed 21 --count 50000 --chunk 10000 --max-tokens 20 --profile review --scripting both`.
+
+## 7. Security review round 2 (H-35 to H-38)
+
+**Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-11, task WP-17/S1/T-14-spec. The human decided H-35 to H-38 before this study ([sprint record](/engineering/plan/sprints/WP-17-S1)). Rule text: `markup.md` M-09 conditions 1 and 2, M-10 item 2, M-11 item 6, and the M-26 claim. Sources: the WHATWG text as in §6, parse5 8.0.1 through `tools/rqp-markup/crosscheck` (`cases/review2-cases.json`, `src/depth.mjs`), and the four candidates at `65d4b98` (they implement H-25 to H-32, not the rules of this section). The Java candidate was built with a cached Gradle 9.5.1.
+
+| Decision | Repro (case) | parse5 today | Candidates today | Rule |
+|---|---|---|---|---|
+| H-35 | `<template><col><title>` … fake block (`H35-template-col-title`) | 2 blocks | valid, 1 block | M-09 condition 1 |
+| H-35 | `<template><col><textarea>` … manifest script (`H35-template-col-textarea`) | 1 manifest | valid | M-09 condition 1 |
+| H-36 | `<a>`, 9 × `<form><object><form></form></object></form>`, block with `<a>` (`H36-form-object-a`) | no end tag for the block; WHATWG stack 13 with D = 4 | valid | M-10 item 2 |
+| H-36 | 600 × the same unit, block (`H36-form-object-depth`) | WHATWG stack 603 with D = 3 | valid | M-10 item 2 |
+| H-37 | `<object><a><table><marquee><table></table></marquee></table>x</a></object>`, block with `<a>` (`H37-marquee-table`) | no end tag for the block | valid | M-09 condition 2 |
+| H-37 | 600 × `<object><b><table><marquee><table></table></marquee></table></b></object>`, block (`H37-foster-depth`) | WHATWG stack 605 with D = 5 | valid | M-09 condition 2 |
+| H-38 | `<td><noscript><td></td></noscript>`, block with a `table` (`H38-td`; also `col`, `th`, `caption` variants) | scripting disabled: no end tag for the block | valid | M-11 item 6 |
+
+### 7.1 M-09: col in a template (H-35)
+
+<Badge type="tip" text="FACT" /> "in template" (§13.2.6.4.16) sends `col` to "in column group", and there "Anything else: If the current node is not a colgroup element, then this is a parse error; ignore the token" (§13.2.6.4.12). In a template the current node is the `template`, so the tree builder ignores the later start tags, also the raw-text ones.
+
+**Check of the other paths.** In a template, "in template" sends `caption`, `colgroup`, `tbody`, `tfoot`, `thead` to "in table", `tr` to "in table body", `td` and `th` to "in row", and every other start tag to "in body". In "in table" (§13.2.6.4.9), `style`, `script` and `template` go to "in head", and every other start tag is foster-parented "using the rules for the "in body" insertion mode"; "in table body" and "in row" send other start tags to "in table"; "in caption" uses "in body"; "in column group" with a `colgroup` as the current node pops it and reprocesses the token in "in table". So `title`, `textarea`, `style`, `script`, `xmp`, `iframe`, `noembed`, `noframes`, `noscript` and `plaintext` are inserted (and switch the tokenizer) in all these paths. "in column group" with a `template` as the current node is the only path in a template that ignores them. Outside a template, "in column group" always has a `colgroup` as the current node (except in the fragment case). Two other modes ignore start tags: "in select" (older parsers; M-08 allows only `option`, `optgroup` and `hr` in a `select`) and "in frameset" / "after frameset" (M-10 item 1). Control: `<template><colgroup><title>…</title></colgroup></template>` gives the same result in parse5 and the candidates (`H35-control-template-colgroup-title`).
+
+The M-26 claim now excludes template contents. Inside a template, "in table" inserts an implied `tbody` for `tr` ("Clear the stack back to a table context", then insert a `tbody`), while the M-09 search for F stops at the `template`, so D does not count it (low finding of round 2). Template contents are inert and hold no block (M-19). After the `template` closes, the WHATWG stack holds none of their elements. The cross-check does not check the invariant while a `template` element is open.
+
+### 7.2 M-10 item 2: nested forms (H-36)
+
+<Badge type="tip" text="FACT" /> "in body", `form` start tag: "If the form element pointer is not null, and the parser is not parsing template contents, then this is a parse error; ignore the token." `form` end tag: the pointer is set to null, and the token is ignored when "node is null or … the stack of open elements does not have node in scope"; else only node is removed (§13.2.6.4.7). The earlier FACT text ("`</form>` removes only the form") left out the two ignore cases; `markup.md` M-06 item 4 and §6.5 are corrected.
+
+<Badge type="info" text="DESIGN" /> **Re-check of the H-32 argument with item 2.** With at most one HTML `form` on the token stack:
+
+| Situation | Tree builder | Token stack | Result |
+|---|---|---|---|
+| The tree builder inserted the form; `</form>` pops it exactly | The pointer names it, and it is in scope (a scope boundary above it needs a `GUARDED` crossing, M-06 item 1) → removed | exact pop | Mirrored |
+| The same, but `</form>` crosses elements | Removes only the form; the crossed elements stay open | Crossing: D keeps its units; a crossed special element sets the special-crossed mark | Covered by M-26 and M-06 item 4 |
+| An earlier crossing closed the form (`<div><form></div>`), the pointer still names it; then a new `<form>` | Ignored: no element | Pushed (no form on the token stack) | Nothing stays open. The next `</form>` is ignored (node not in scope), and the token stack pops an element that the tree builder never had |
+| A `template` is open | The pointer is not used; `</form>` pops "until a form element has been popped" | as usual | Mirrored |
+
+So `</form>` is mirrored when the token stack pops the form exactly, and no `form` can stay open in the tree builder after an exact pop. `H36-control-stale-pointer` and the fixture `FORM-SEQUENTIAL` agree with parse5.
+
+### 7.3 M-09: F is the current node (H-37)
+
+<Badge type="tip" text="FACT" /> "Clear the stack back to a table context": "while the current node is not a table, template, or html element, pop elements from the stack of open elements". "… a table body context" stops at `tbody`, `tfoot`, `thead`, `template`, `html`; "… a table row context" stops at `tr`, `template`, `html` (§13.2.6.4.9, §13.2.6.4.13, §13.2.6.4.14). Start tags that run these steps: `caption`, `colgroup`, `col`, `tbody`, `tfoot`, `thead`, `td`, `th`, `tr` (in the three modes), and `table` ("Pop elements from this stack until a table element has been popped"). Condition 2 covers all of them: F must be the current node, so the steps pop nothing.
+
+**End tags.** The end tags that pop down to a table element are `</table>` ("pop elements from this stack until a table element has been popped"), `</tbody>`, `</tfoot>`, `</thead>` (clear back to a table body context, then pop) and `</tr>` (clear back to a table row context, then pop). On the token stack, such an end tag crosses the foster-parented elements above F:
+
+| Foster-parented element above F | Covered by |
+|---|---|
+| `applet`, `marquee`, `object`, `template` (the elements that insert a marker) | M-06 item 1: they are in `GUARDED`, and a `TABLE_FAMILY` end tag may cross only `TABLE_PART` elements |
+| `button`, `a`, `nobr`, `select`, `svg`, `math` | M-06 item 1 (`GUARDED`) |
+| `form` | The pop closes it in both. The form element pointer stays set: §7.2 covers that path |
+| Other elements (`div`, `b`, `span`, …) | Popped in both (mirrored). Formatting elements stay in the list of active formatting elements and are reconstructed later (`markup.md` §5 item 1). D keeps their units (crossing). A crossed special element sets the special-crossed mark (M-06 item 4) |
+
+`H37-end-table-over-b` agrees with parse5; `H37-end-table-over-div-a` is rejected by M-06 item 4. No further rule is proposed for end tags.
+
+**Cost.** Condition 2 also rejects shapes that parse5 parses the same as the token stack, for example `<table><tr><object><td>x</td></object></tr></table>` and the old pattern `<table><form><tr>…</tr></form></table>` (`H37-object-td`, `H37-form-in-table`). The corpus measurement (H-39) shows how often real pages have them.
+
+### 7.4 M-11 item 6: table parts in noscript content (H-38)
+
+<Badge type="tip" text="FACT" /> With scripting disabled, a `noscript` element in a cell or a caption does not change the insertion mode ("in cell" or "in caption"). "in cell" (§13.2.6.4.15): "A start tag whose tag name is one of: "caption", "col", "colgroup", "tbody", "td", "tfoot", "th", "thead", "tr"" → "Close the cell (see below) and reprocess the token." "in caption" (§13.2.6.4.11) closes the caption for the same names. So a table part in C closes the cell or the caption around the `noscript`, and the rest is parsed in another cell or row; the block of `H38-td` is cut in the scripting-disabled view. With a `table` opened in C, the table part is parsed in the modes of that table. Both views agree for `H38-control-table-in-c` and the fixture `NOSCRIPT-TABLE-IN-CELL`.
+
+### 7.5 Sweeps
+
+<Badge type="tip" text="FACT" /> Sweeps of 2026-10-11 with the four candidates at `65d4b98` (Rust, Node.js, Java, PHP), profile `review2` (the `review` motifs plus form pointer cycles, template with `col` and raw text, foster-parented elements in tables, and `noscript` in cells and captions with table parts), both scripting views. The candidates do not implement H-35 to H-38 yet; the four gave identical results.
+
+| Sweep | Documents | Valid (each) | Findings (per candidate × view) | Without a class | Depth invariant: accepted documents with a violation |
+|---|---|---|---|---|---|
+| seed 51, 20 pieces | 30 000 | 5 728 | 3 180 | 0 | 165, all with `M-10-form` |
+| seed 52, 60 pieces | 10 000 | 671 | 312 | 0 | 18, all with `M-10-form` |
+
+Documents that a candidate accepts and that only one rule class rejects (seed 51): `M-09-table-current` 443, `M-11-table-part` 349, `M-09-template-col` 141, `M-10-form` 131. Findings by class (seed 51; a finding counts once for each class of its document): block disagreements in the scripting-enabled view 372 (`M-09-template-col` 364, `M-09-table-current` 48, `M-11-table-part` 28, `M-10-form` 20) and in the scripting-disabled view 2 148 (`M-11-table-part` 1 804, `M-09-template-col` 436, `M-09-table-current` 316, `M-10-form` 108). The generator makes these shapes on purpose; the numbers do not estimate real pages (H-39).
+
+To repeat a sweep, run in `tools/rqp-markup/crosscheck`: `node src/cli.mjs sweep --only rust,node,java,php --seed 51 --count 30000 --chunk 10000 --max-tokens 20 --profile review2 --scripting both`.
+
+## 8. WHATWG conformance table (round 3)
+
+**Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-12, task WP-17/S1/T-17-conformance ([sprint record](/engineering/plan/sprints/WP-17-S1)). It found one gap (GAP-1, §8.5). <Badge type="info" text="DESIGN" /> **Closed on 2026-10-12:** the human decided option A (H-43). The rule is `markup.md` M-10 item 3; fixtures `TEMPLATE-FOR`, `TEMPLATE-FOR-EMPTY`, `TEMPLATE-FOR-SVG`; cross-check class `M-10-template-for` (task T-19). The candidate lanes of T-19 implement the rule. The study text below is the state before the decision, except where it says H-43.
+
+Sources:
+
+- The WHATWG HTML Living Standard, read on 2026-10-12 (`html.spec.whatwg.org`, multipage `parsing.html` and `scripting.html`): §13.2.4 "Parse state", §13.2.5 "Tokenization", §13.2.6 "Tree construction", §4.12.3 "The template element".
+- parse5 8.0.1 through `tools/rqp-markup/crosscheck`, both scripting views (`cases/conformance-cases.json`, 77 cases).
+- Headless Chrome 154.0.8037.99 (`--headless --dump-dom`, scripting enabled) on the same 77 inputs.
+- The four candidates (Rust, Node.js, Java, PHP) at `cf56d4d`.
+
+### 8.1 Method
+
+<Badge type="info" text="DESIGN" /> The token model (`markup.md` §2) is correct when, for every document that the rules accept, the tree builder with scripting enabled gives:
+
+1. the same block elements, with the same start tag and end tag (M-14, M-20, M-27);
+2. a block subtree that comes only from the content bytes of the block;
+3. no script element with a manifest type (M-13);
+4. a WHATWG stack of at most D + 2 elements (M-26 claim).
+
+The table lists each step of §13.2.6 that does one of these things. The column "Kind" gives the letters:
+
+| Kind | Meaning |
+|---|---|
+| a | Ignores a token |
+| b | Pops elements, but not by a matching end tag |
+| c | Inserts an element that has no start tag |
+| d | Moves or removes nodes |
+| e | Changes the tokenizer state |
+
+The table also has the tokenizer states that the tree builder controls (§8.2.1) and the template content patching of §4.12.3, because the "in head" rules call it. "Covered" means that a rule of `markup.md` makes the token model agree, or that the step cannot change the four items above (the reason is in the row or in §8.3). Each row that is not obvious has cases in §8.4. A case id in the cases file starts with `C3-`; the tables below leave out this prefix.
+
+### 8.2 Step table
+
+#### 8.2.1 Tokenizer and dispatcher
+
+| ID | Step | Kind | Rule |
+|---|---|---|---|
+| K-1 | RCDATA, RAWTEXT, script data, PLAINTEXT after a start tag | e | M-04 |
+| K-2 | Start tags of K-1 names that the tree builder ignores | a, e | M-09 cond. 1, M-10 item 1, M-04 |
+| K-3 | CDATA section when the adjusted current node is not HTML | e | M-12, M-07 item 5; §8.3 item 6 |
+| K-4 | Processing instruction states: end at the first `>` | e | M-03 |
+
+#### 8.2.2 Before body (§13.2.6.4.1 to §13.2.6.4.6)
+
+| ID | Step | Kind | Rule |
+|---|---|---|---|
+| IN-1 | "initial": white space ignored; quirks mode set | a | No element; quirks: SA-11 |
+| BH-1 | "before html": DOCTYPE, white space, most end tags ignored | a | Token stack is empty here |
+| BH-2 | "before html": implied `html` | c | The 2 of the M-26 claim |
+| BD-1 | "before head": DOCTYPE, white space, most end tags ignored | a | Token stack has at most `html` |
+| BD-2 | "before head": implied `head` | c | The 2 of the M-26 claim |
+| IH-1 | "in head": DOCTYPE, `head`, other end tags ignored | a | M-26 (a 2nd `head` costs D only) |
+| IH-2 | "in head": anything else pops `head` | b | No block is `head`; M-26 |
+| IH-3 | `</template>`: implied end tags, pop to `template` | b | M-06 item 1, M-19 |
+| IH-4 | `meta` charset can change the encoding | e | M-02 (UTF-8 transport) |
+| IH-5 | `template` with `for`: content patching | d | M-10 item 3 (H-43; was GAP-1) |
+| IH-6 | `template` with `shadowrootmode`: shadow root | d | M-19, M-22 (rendering only) |
+| HN-1 | "in head noscript" | a, b | Scripting disabled only (H-42) |
+| AH-1 | "after head": `head` pushed again for one token | c | M-04, M-20 |
+| AH-2 | "after head": `head`, DOCTYPE, end tags ignored | a | As IH-1 |
+| AH-3 | "after head": implied `body` | c | The 2 of the M-26 claim |
+| AH-4 | `frameset` | a, d | M-10 item 1 |
+
+#### 8.2.3 In body (§13.2.6.4.7)
+
+| ID | Step | Kind | Rule |
+|---|---|---|---|
+| IB-1 | U+0000 ignored | a | Text only; offsets are input bytes |
+| IB-2 | Reconstruct the active formatting elements | c | §5 item 1 of `markup.md`; M-26 |
+| IB-3 | `html` start tag: attributes merged | a | M-26 items 4, 5; M-06 item 4 |
+| IB-4 | `body` start tag: attributes merged | a | As IB-3 |
+| IB-5 | `frameset`: removes `body` | b, d | M-10 item 1 |
+| IB-6 | `</body>`, `</html>`: mode change, no pop | a | M-26 item 5, M-06 items 1, 4 |
+| IB-7 | `PCLOSE` start tags: close a `p` | b | M-24 a |
+| IB-8 | `h1`–`h6` pop a current heading | b | M-24 b |
+| IB-9 | `pre`, `listing`: next LF ignored | a | §8.3 item 7 |
+| IB-10 | `form` ignored while the pointer is set | a | M-10 item 2 |
+| IB-11 | `li`, `dd`, `dt` close earlier items | b | M-24 c, j; §8.3 item 1 |
+| IB-12 | `plaintext` | e | M-04, M-22 |
+| IB-13 | `button` closes an open `button` | b | M-24 d |
+| IB-14 | Block end tags (`div`, `ul`, `select`, …) | b | M-05 step 3; M-06 item 1 |
+| IB-15 | `</form>` | a, b | M-10 item 2 |
+| IB-16 | `</p>` without `p`: empty `p` | c | M-23; claim (c) |
+| IB-17 | `</li>` outside list item scope | a | M-06 item 4, M-26 |
+| IB-18 | `</dd>`, `</dt>` | b | As IB-14 |
+| IB-19 | Heading end tag pops any heading | a, b | M-23; M-06 item 4, M-26 |
+| IB-20 | `a` with an `a` in the list | b, d | M-24 e; §6.1 |
+| IB-21 | `nobr` with `nobr` in scope | b, d | M-24 f; §6.1 |
+| IB-22 | Formatting end tags: adoption agency | b, d | M-06 items 2, 4 |
+| IB-23 | `applet`, `marquee`, `object`: markers | b | M-06 item 1 |
+| IB-24 | `table` closes `p` (no-quirks only) | b | M-24 a; SA-11 |
+| IB-25 | `</br>`: a `br` element | c | M-22 item 4; claim (c) |
+| IB-26 | `input` with `select` in scope pops it | b | M-08 |
+| IB-27 | `hr`: close `p`; in `select`, implied ends | b | M-24 a, M-08, M-26 |
+| IB-28 | `image` becomes `img` | a | `VOID` has `image` |
+| IB-29 | `textarea`: RCDATA, next LF ignored | a, e | M-04, M-22 |
+| IB-30 | `xmp`: close `p`, RAWTEXT | b, e | M-04, M-24 a |
+| IB-31 | `iframe`, `noembed`, `noscript` | e | M-04 |
+| IB-32 | `select` in `select`: ignored, pops | a, b | M-08 |
+| IB-33 | `option`, `optgroup`: implied ends | b | M-22, M-08, M-26 |
+| IB-34 | `rb`, `rtc`, `rp`, `rt`: implied ends | b | M-24 h, i |
+| IB-35 | `math`, `svg` | — | M-05, M-07 |
+| IB-36 | Table parts, `frame`, `head` ignored | a | M-09, M-19, M-24 g |
+| IB-37 | Any other end tag stops at a special element | a | M-06 item 4, M-26 |
+| IB-38 | `title`, `style`, `script`, `template`, … | e | Rules of "in head" (IH rows) |
+| IB-39 | End of file: elements stay open | — | M-20 |
+
+#### 8.2.4 Text and table modes (§13.2.6.4.8 to §13.2.6.4.15)
+
+| ID | Step | Kind | Rule |
+|---|---|---|---|
+| TX-1 | "text": end of file pops the element | b | M-20, M-11 (E3) |
+| TB-1 | Characters go to "in table text" | — | TT rows |
+| TB-2 | `caption`, `colgroup`, row groups: clear the stack | b | M-09 cond. 2 |
+| TB-3 | Implied `colgroup`, `tbody` | c | M-26 implied parts |
+| TB-4 | `table` in a table: pop to `table` | b | M-09 cond. 2, M-24 k |
+| TB-5 | `</table>` | b | M-06 items 1, 3 |
+| TB-6 | `</body>`, `</td>`, `</col>`, … ignored | a | M-06 items 1, 3 (§6.4) |
+| TB-7 | Hidden `input`, `form`: inserted and popped | c | Claim (c); M-10 item 2 |
+| TB-8 | `form` ignored while the pointer is set | a | M-10 item 2 |
+| TB-9 | Anything else: foster parenting | d | M-19, M-24 k, M-09 cond. 2 |
+| TT-1 | U+0000 ignored | a | Text only |
+| TT-2 | Other text foster-parented | c, d | M-24 k; §5 item 1 |
+| CA-1 | `</caption>`: implied ends, pop | b | M-05 step 3; M-06 item 1 |
+| CA-2 | Table parts, `</table>` close the caption | b | M-09 table; M-06 item 1 |
+| CA-3 | `</body>`, `</td>`, `</tr>`, … ignored | a | M-06 items 1, 3 |
+| CG-1 | `</colgroup>` (no `colgroup`), `</col>` ignored | a | §6.4 |
+| CG-2 | Anything else pops `colgroup` | b | M-09 table; M-19 |
+| CG-3 | Anything else under `template`: ignored | a, e | M-09 cond. 1 (H-35) |
+| TBO-1 | `tr`: clear to a table body context | b | M-09 cond. 2 |
+| TBO-2 | `td`, `th`: implied `tr` | c | M-26 implied parts; M-09 |
+| TBO-3 | `</tbody>`, `</tfoot>`, `</thead>` | b | M-06 items 1, 3 |
+| TBO-4 | `caption`, `col`, row groups, `</table>` | b | M-09 table; M-06 item 1 |
+| TBO-5 | `</body>`, `</td>`, `</tr>`, … ignored | a | M-06 items 1, 3 |
+| TR-1 | `td`, `th`: clear to a table row context | b | M-09 cond. 2 |
+| TR-2 | `</tr>` | b | M-06 items 1, 3 |
+| TR-3 | Other table parts, `</table>` pop the row | b | M-09 table; M-06 item 1 |
+| TR-4 | `</tbody>`, `</tfoot>`, `</thead>` | b | M-06 item 3 (H-30) |
+| TR-5 | `</body>`, `</td>`, `</caption>`, … ignored | a | M-06 items 1, 3 |
+| TD-1 | `</td>`, `</th>`: implied ends, pop | b | M-05 step 3; M-06 item 1 |
+| TD-2 | Table-part start tags close the cell | b | M-09 table |
+| TD-3 | `</table>`, `</tbody>`, `</tr>`, … close it | b | M-06 items 1, 3 |
+| TD-4 | `</body>`, `</html>`, `</col>`, … ignored | a | M-06 item 1 |
+
+#### 8.2.5 Template, after body, frameset (§13.2.6.4.16 to §13.2.6.4.21)
+
+| ID | Step | Kind | Rule |
+|---|---|---|---|
+| TM-1 | Table parts switch the template mode | — | M-09 cond. 1, M-19 |
+| TM-2 | Any other end tag ignored | a | M-06 item 1 |
+| TM-3 | End of file: pop to `template` | b | M-19, M-20 |
+| AB-1 | "after body": comment goes to `html` | d | No block effect |
+| AB-2 | "after body": other tokens back to "in body" | — | IB-6 |
+| AAB-1 | "after after body": comments to the document | d | IB-6 |
+| FS-1 | Frameset modes ignore most tokens | a | Not reachable: M-10 item 1 |
+
+#### 8.2.6 Foreign content (§13.2.6.5)
+
+| ID | Step | Kind | Rule |
+|---|---|---|---|
+| F-1 | U+0000 becomes U+FFFD | — | Text only |
+| F-2 | Breakout start tags, `font` with attributes | b | M-07 item 1 |
+| F-3 | `</br>`, `</p>` break out | b | M-07 item 2 |
+| F-4 | Any other end tag; HTML rules at an HTML node | b | M-07 item 2 |
+| F-5 | Self-closing start tags pop | — | M-05 item 2 |
+| F-6 | SVG `script` end tag | — | M-07 item 4 |
+| F-7 | Integration points use HTML rules | — | M-07 item 3 |
+| F-8 | Text in an integration point reconstructs | c | §8.3 item 6 |
+| F-9 | `annotation-xml` with `svg`: HTML rules | — | M-07 item 3 |
+| F-10 | `mglyph`, `malignmark` stay foreign | — | M-07 item 3 |
+
+#### 8.2.7 Shared algorithms and parser state
+
+| ID | Step | Kind | Rule |
+|---|---|---|---|
+| SA-1 | Reset the insertion mode appropriately | — | M-06 item 1, M-09, M-19 |
+| SA-2 | Reconstruct the active formatting elements | c | IB-2 |
+| SA-3 | Adoption agency algorithm | b, d | IB-20 to IB-22 |
+| SA-4 | Close a `p` element | b | M-24 a |
+| SA-5 | Generate implied end tags (also thoroughly) | b | M-22, M-23, M-24 c, h, i, j |
+| SA-6 | Clear the stack back to a table context | b | M-09 cond. 2 |
+| SA-7 | Foster parenting | d | M-19, M-24 k, M-09 cond. 2 |
+| SA-8 | Head element pointer | c | AH-1 |
+| SA-9 | Form element pointer | a | M-10 item 2 |
+| SA-10 | Frameset-ok flag | — | M-10 item 1 |
+| SA-11 | Quirks: `table` closes `p` only in no-quirks | b | M-24 a |
+| SA-12 | Three entries per family in the list | — | M-26 (§6.5) |
+| SA-13 | Prepare content patching (§4.12.3) | d | M-10 item 3 (H-43; was GAP-1) |
+| SA-14 | Page scripts (`document.write`, custom elements) | d, e | Out of scope: page code |
+
+#### 8.2.8 Count
+
+<Badge type="warning" text="RESEARCH" />
+
+| Result | Rows |
+|---|---|
+| Steps in the table | 122 |
+| Covered by a rule or without effect | 118 before H-43; 120 with H-43 |
+| Not covered | 2 before H-43 (IH-5, SA-13: GAP-1); 0 with H-43 |
+| Outside the RQP view | 2 (HN-1, SA-14) |
+
+### 8.3 Arguments for the rows that are not obvious
+
+1. <Badge type="info" text="DESIGN" /> **Implied pops (kind b).** These steps close elements that the token stack keeps open. This is the other direction of M-06 item 4: the tree builder has fewer open elements, not more. Such a pop can change a block only while the block is open, so only a start tag in the content can do it. M-22, M-23 and M-24 cover every start tag of "in body" that pops. <Badge type="tip" text="FACT" /> The name sets of `markup.md` §2.1 are equal to the current text: `PCLOSE` is the union of all "in body" start tags that "close a `p` element"; `BREAKOUT` is the breakout list of foreign content plus `font`; `SPECIAL`, `FORMATTING` and `VOID` are as in §13.2.4.2 and §13.2.6.4.7. After the block end tag, the closed elements contain no block bytes, so the block result does not change. D keeps their units (M-26), which is stricter than needed.
+2. <Badge type="tip" text="FACT" /> **`</body>` and `</html>` (IB-6, AB-2, AAB-1).** In "in body" these end tags pop nothing; they only change the mode. In "after body" and "after after body", a comment goes to the `html` element or to the document; every other token except `</html>` and the end of file is processed with the "in body" rules. So content after `</body>` or `</html>` is parsed as if the end tags were not there. The token stack pops `body` or `html` by a crossing: D keeps its units (M-26 item 5), and a crossed special element sets the special-crossed mark (M-06 item 4). In "in table", "in caption", "in cell" and "in template" these end tags are ignored; there the token stack crosses a `GUARDED` element, and M-06 item 1 rejects the document (`body-end-in-cell`). An `</html>` that matches nothing is ignored by both (`html-end-in-cell`).
+3. <Badge type="tip" text="FACT" /> **`select` (customizable `select`).** The current text has no "in select" and no "in select in table" mode. `select` content goes through "in body", and `select` is in the "has an element in scope" list. `input`, `select`, `hr`, `option` and `optgroup` (IB-26, IB-32, IB-27, IB-33) have new steps for a `select` in scope. M-08 allows only `option`, `optgroup`, `hr` and their end tags in a `select`. For these tokens, the old and the new text give the same block result: parse5 8.0.1 (old text) and Chrome 154 (new text) agree on `select-hr`, `select-optgroup`, `select-in-table` and `select-in-cell`. `hr` pops an open `option` in the tree builder, not on the token stack; D keeps the unit.
+4. <Badge type="tip" text="FACT" /> **`table` in a table (TB-4).** "in table": "A start tag whose tag name is "table"": "Pop elements from this stack until a table element has been popped", then reset the insertion mode and reprocess the token. M-09 condition 2 allows `<table><table>`, because F is the current node. The tree builder closes the outer table, and the new table is its sibling; the token stack nests them. A block in the inner table is in a cell (M-19) of a table that both models have open. After the inner `</table>`, the token stack still has the outer table: M-19 rejects a block there unless F is a cell, and a cell start tag in the closed table is ignored by the tree builder, so the block goes to the body with the same tags (`table-in-row`). D counts more than the tree builder.
+5. <Badge type="tip" text="FACT" /> **Quirks mode (SA-11).** In tree construction, quirks mode changes one step only: "A start tag whose tag name is "table"" closes an open `p` only "If the Document is not set to quirks mode". `table` is in `PCLOSE`, so M-24 a rejects a `table` in the content of a `p` or `span` block in both modes. In other places the `p` closes earlier or later, but its end tag `</p>` is mirrored or gives an empty `p` (IB-16). A document without DOCTYPE and a document with a quirks public identifier give the same blocks in parse5 and Chrome (`quirks-*`, `noquirks-*`). The fragment parser takes the quirks mode of the document, so a patch gives the same tree.
+6. <Badge type="info" text="DESIGN" /> **Foreign content (K-3, F-8).** `svg` and `math` are in `GUARDED` (M-06 item 1), so a crossing never closes them, and M-07 item 1 forbids breakouts. So the foreign-region flag of the token stack is equal to "the adjusted current node is not HTML", which selects the CDATA section state; inside an integration point M-12 and M-07 item 5 make both readings end at the same byte. Characters in an integration point run "reconstruct the active formatting elements" (they use the "in body" rules). This reconstructs nothing: the `svg` or `math` start tag reconstructs first, and no token in the region adds an entry to the list or pops an HTML element (M-07). Evidence: `reconstruct-mi`, `reconstruct-annot`, `reconstruct-desc`.
+7. <Badge type="tip" text="FACT" /> **Leading LF (IB-9, IB-29).** After `pre`, `listing` and `textarea`, the tree builder ignores the next token when it is an LF. The tokenizer state does not change. The content bytes keep the LF; the DOM does not. No block element is `pre`, `listing` or `textarea` (M-16), so the block start and end tags do not move. The fragment parser of a patch also drops the LF after `pre` or `listing`. CR LF is one LF after preprocessing; offsets count input bytes (M-03), and the candidates and parse5 agree (`listing-crlf`).
+8. <Badge type="tip" text="FACT" /> **U+0000 and CR (IB-1, TT-1, TT-2).** "in body" and "in table text" ignore U+0000; foreign content inserts U+FFFD. These are text changes only. Text in table context is foster-parented, but it stays inside the parent of the table, so inside the block when the table is in the block (`table-text-nul`, `table-text-cr`).
+9. <Badge type="tip" text="FACT" /> **`template shadowrootmode` (IH-6).** The template becomes the shadow root of the adjusted current node, and it is not inserted in the DOM. `template` is in `FORBIDDEN_CONTENT`, so a block element is never the host. The block stays in the light DOM of its parent (Chrome: `template-shadowroot`). Whether it is shown depends on slots; that is rendering, not parsing.
+10. <Badge type="info" text="DESIGN" /> **Stricter than the tree builder.** M-07 is stricter in three places: `font` without attributes breaks out only in M-07 (`font-plain`); `annotation-xml` without `encoding` is not an integration point, but M-07 item 3 treats it as one (`annot-noenc-mi`); `mglyph` and `malignmark` in a MathML text integration point stay foreign (`mglyph`). These are false rejects, not false accepts.
+
+### 8.4 Cases and results
+
+<Badge type="tip" text="FACT" /> Run in `tools/rqp-markup/crosscheck`: `node src/cli.mjs cases --cases cases/conformance-cases.json --only rust,node,java,php --scripting both`. Each case in the file has the fields `step` (row of §8.2) and `expected` (the result by the rules, derived by hand before the run). All four candidates gave the expected result for all 77 cases (rules before H-43, candidates at `cf56d4d`). With H-43 the expected result of 7 cases is `STRUCTURE` (table below); the candidates give it when they implement M-10 item 3 (T-19). parse5 8.0.1 agreed with every valid result in both scripting views (no finding, no depth-invariant violation). Chrome 154 had the same block elements as the candidates for every valid case except the GAP-1 cases.
+
+| Cases | Rows | Result |
+|---|---|---|
+| `quirks-p-table`, `noquirks-p-table`, `quirks-div-block-p-table`, `noquirks-div-block-p-table`, `quirks-public-id` | SA-11 | valid |
+| `quirks-p-block-table` | SA-11 | `STRUCTURE` (M-24 a) |
+| `head-twice`, `title-after-head` | IH-1, AH-1 | valid, 2 blocks |
+| `html-in-body`, `body-in-body` | IB-3, IB-4 | valid |
+| `head-in-body`, `frame-in-body`, `stray-td`, `stray-caption` | IB-36 | valid |
+| `stray-tr-block` | IB-36 | `STRUCTURE` (M-19) |
+| `image`, `svg-image` | IB-28 | valid |
+| `after-body-block`, `after-body-p-open`, `after-body-ws-comment` | AB-2, AAB-1 | valid |
+| `after-body-b-div` | AB-2 | `STRUCTURE` (M-06 item 2) |
+| `body-end-in-cell` | IB-6 | `STRUCTURE` (M-06 item 1) |
+| `html-end-in-cell`, `html-end-crosses-div` | IB-6 | valid |
+| `select-in-table`, `select-in-cell`, `select-hr`, `select-optgroup`, `option-outside` | TB-9, IB-27, IB-33 | valid |
+| `select-td-inside`, `select-nested`, `select-input`, `select-keygen` | IB-26, IB-32 | `STRUCTURE` (M-08) |
+| `frameset-after-content` | IB-5 | `STRUCTURE` (M-10) |
+| `plaintext-after-block` | IB-12 | valid, 1 block |
+| `pre-lf`, `listing-crlf`, `pre-lf-before-block`, `textarea-lf`, `xmp` | IB-9, IB-29, IB-30 | valid |
+| `table-text-nul`, `table-text-cr`, `body-nul` | TT-1, TT-2, IB-1 | valid |
+| `font-color`, `font-plain` | F-2 | `STRUCTURE` (M-07 item 1) |
+| `foreign-end-p`, `foreign-end-br` | F-3 | `STRUCTURE` (M-07 item 2) |
+| `annot-html-block` | F-7 | `STRUCTURE` (M-07, M-16) |
+| `annot-html-text` | F-7 | valid |
+| `annot-noenc-mi`, `mglyph` | F-7, F-10 | `STRUCTURE` (stricter) |
+| `reconstruct-mi`, `reconstruct-annot`, `reconstruct-desc` | F-8 | valid |
+| `ruby-outside`, `ruby-content`, `ruby-p-in-content` | IB-34 | valid |
+| `ruby-outer-p-block` | IB-34 | `STRUCTURE` (M-24 i) |
+| `li-outside`, `dl-outside`, `li-after-block` | IB-11 | valid |
+| `table-in-table`, `table-in-row` | TB-4 | valid |
+| `form-stale-pointer` | TB-7 | valid |
+| `heading-end-other` | IB-19 | valid |
+| `eof-title`, `eof-script` | TX-1 | valid |
+| `template-shadowroot` | IH-6 | valid |
+| `GAP1-replace-content`, `GAP1-remove-block`, `GAP1-title-in-head`, `GAP1-start-no-end`, `GAP1-ancestor-scope` | IH-5 | Before H-43: valid (**GAP-1**). With H-43: `STRUCTURE` (M-10 item 3) |
+| `GAP1-control-table-scope`, `GAP1-control-empty` | IH-5 | Before H-43: valid (no patching). With H-43: `STRUCTURE` (fail closed) |
+| `GAP1-control-foreign`, `xml-pi` | IH-5 | valid (no patching) |
+
+To repeat the Chrome check, write each input to a file and run `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --dump-dom file:///…/case.html`. The tool does not run Chrome.
+
+### 8.5 GAP-1: template content patching
+
+<Badge type="tip" text="FACT" /> The current WHATWG text has **content patching**. §4.12.3: the `template` element has the content attribute `for` ("Updates existing content"). §13.2.6.4.4, "in head", "A start tag whose tag name is "template"": when `shadowrootmode` is not set and "templateStartTag's for attribute is specified", the tree builder runs "prepare content patching". The steps are:
+
+1. The scope is "the node that contains the adjusted insertion location"; when that is the `body`, the scope is its parent, so a `template` in the body can patch the `head`.
+2. "find markers" walks the descendants of the scope in tree order. It takes the first processing instruction `<?marker name="…">`, or `<?start name="…">` with its matching `<?end>` among the next siblings. A `<?start>` without `<?end>` is "a range from start to the end of its parent".
+3. The nodes between `<?start>` and `<?end>` are removed.
+4. The content of the template is not inert: "the appropriate place for inserting a node" sends it to the parent of the marker, before the end marker. `</template>` then removes the markers.
+
+The `template` start tag reaches this path from "in head" and from every mode that sends it there: "after head", "in body", "in table", "in column group", "in template", and the modes that use their rules ("in caption", "in cell", "in table body", "in row"). It does not apply to an SVG or MathML `template`, to an empty `for` value, or when no marker is found in the scope. The tokenizer reads `<?start …>` as a processing instruction; RQP reads it as a comment (M-03), and M-22 allows comments in block content.
+
+<Badge type="tip" text="FACT" /> Evidence. The four candidates say valid, 1 block, for each input below. parse5 8.0.1 has no content patching and no processing instructions, so its tree has the block as in the bytes (no finding: the cross-check cannot see this gap). Chrome 154 (`--dump-dom`, scripting enabled) gives this DOM. Each input starts with `<!DOCTYPE html>`; the full inputs are in the cases file.
+
+- `GAP1-replace-content`: `<div data-rq-block="a"><?start name="p">old<?end></div>` and then `<template for="p"><b>new</b></template>`. The block content is `<b>new</b>`, not `old`.
+- `GAP1-remove-block`: `<body><?start name="q"><div data-rq-block="a">x</div><?end>` and then `<template for="q">gone</template>`. The block element is not in the DOM; the body has the text `gone`.
+- `GAP1-title-in-head`: `<head><?start name="t"><title data-rq-block="t">T</title><?end></head>` and then, in the body, `<template for="t"><title>X</title></template>`. The block element is not in the DOM; the head has `<title>X</title>`.
+- `GAP1-start-no-end`: `<p data-rq-block="a">v<?start name="m">w</p>` and then `<template for="m">Z</template>`. The block content is `vZ`, not `v` followed by the marker and `w`.
+- `GAP1-ancestor-scope`: `<div><div data-rq-block="a"><?start name="m">x<?end></div>` and then `<template for="m">y</template></div>`. The block content is `y`.
+
+Impact: the block element is not in the DOM, or its subtree does not come from its content bytes (items 1 and 2 of §8.1). This is the same class as H-26 and H-30 (a block that the client cannot find or that is not what the server hashed). The patched content cannot add a manifest script or a block: M-13 applies in every context, and M-19 rejects a block start tag while a `template` is on the token stack. <Badge type="warning" text="RESEARCH" /> The depth of patched content is not measured: it is inserted under the marker, and the M-26 claim does not check while a `template` is open. Use of `template for` in the T-15 corpus: NOT MEASURED (the corpus statistics do not count it).
+
+**Question for the human (protocol and security decision).** Decided on 2026-10-12: option A (H-43). The options were:
+
+| Option | Rule | Cost |
+|---|---|---|
+| A (recommended) | A `template` start tag in HTML context MUST NOT have an attribute named `for` (ASCII case-insensitive, as the tokenizer lowercases names). Error: `RQP_MARKUP_STRUCTURE` | One attribute check on a tag that every candidate already finds (M-19). Fail closed: also rejects an empty `for` and a `for` that matches no marker. Pages that use content patching fall back to normal HTML |
+| B | A comment that starts with `<?` and whose target is `marker`, `start` or `end` MUST NOT appear | Each candidate must read the processing instruction target (case-sensitive, ends at white space, `?` or `>`); older parsers read a bogus comment, so the rule must not depend on the tokenizer of the client. It leaves `template for` valid, so a later change of the marker syntax in the WHATWG text can open the gap again |
+| C | A and B | The cost of both; no extra safety over A for the parser view |
+
+Recommendation: **A**. <Badge type="info" text="DESIGN" /> **Done (T-19):** `markup.md` M-10 item 3 with rows in §2.12, §3.3 and §4; fixtures `TEMPLATE-FOR` (invalid, the first Chrome repro), `TEMPLATE-FOR-EMPTY` (invalid: `<template For>` without a value) and `TEMPLATE-FOR-SVG` (valid control); the class `M-10-template-for` in `src/depth.mjs`; the sweep profile `review3`. M-11 item 3 already forbids `template` in the `noscript` content C. <Badge type="tip" text="FACT" /> A `review3` sweep (seed 81, 5 000 documents, Rust and Node.js candidates before H-43, both views) gave 0 parse5 findings and 39 accepted documents that only `M-10-template-for` rejects: parse5 cannot see the class, as expected.
+
+### 8.6 Follow-ups
+
+1. <Badge type="info" text="DESIGN" /> parse5 8.0.1 implements an older text: no processing instructions, no content patching, the old `select` modes. A cross-check with parse5 alone does not find gaps from these changes. Proposal for the architect: an optional Chrome oracle in `tools/rqp-markup/crosscheck` for the `cases` command.
+2. Done (T-19): `markup.md` §3.2 (the list of WHATWG changes since 2025) names content patching.
+3. Count `template for`, `<?marker` and `<?start` in the T-15 corpus.
 
 ## Related
 

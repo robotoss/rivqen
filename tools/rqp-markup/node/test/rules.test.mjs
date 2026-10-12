@@ -459,6 +459,99 @@ describe('M-09 table parts', () => {
   });
 });
 
+describe('M-09 condition 1 col in a template (H-35)', () => {
+  it('rejects the review repros: a raw text element after <template><col>', () => {
+    const title = '<p data-rq-block="z">real</p><template><col><title></template>'
+      + '<p data-rq-block="z">fake</p></title></template>';
+    const textarea = '<template><col><textarea></template>'
+      + '<script type="application/rivqen-manifest+json">{"evil":1}</script></textarea></template>'
+      + '</head><body><p data-rq-block="z">q</p>';
+    const style = '<template><col><style></template><p data-rq-block="f">fake</p></style></template>'
+      + '<p data-rq-block="y">q</p>';
+    assert.equal(errorOf(title), STRUCTURE);
+    assert.equal(errorOf(textarea), STRUCTURE);
+    assert.equal(errorOf(style), STRUCTURE);
+  });
+
+  it('rejects a col when a template is nearer than every table-family element', () => {
+    assert.equal(errorOf(doc('<template><col></template>')), STRUCTURE);
+    assert.equal(errorOf(doc('<template><div><col></div></template>')), STRUCTURE);
+    assert.equal(errorOf(doc('<table><tr><td><template><col></template></td></tr></table>')), STRUCTURE);
+    assert.equal(errorOf(doc('<template><table><template><col></template></table></template>')), STRUCTURE);
+  });
+
+  it('accepts a col in a table or a colgroup in a template', () => {
+    assert.equal(errorOf(doc('<template><table><col></table></template>')), null);
+    assert.equal(errorOf(doc('<template><colgroup><col></colgroup></template>')), null);
+  });
+
+  it('accepts other table parts in a template (the review controls)', () => {
+    assert.equal(errorOf(doc('<template><tr><td>x</td></tr></template><p data-rq-block="a">x</p>')), null);
+    const colgroup = '<template><colgroup><title></template><p data-rq-block="f">fake</p></title></colgroup>'
+      + '</template><p data-rq-block="y">q</p>';
+    assert.deepEqual(blocksOf(colgroup).map((b) => b[0]), ['y']);
+  });
+
+  it('accepts a col after the template is closed', () => {
+    assert.equal(errorOf(doc('<template></template><col>')), null);
+    assert.equal(errorOf(doc('<table><template></template><col></table>')), null);
+  });
+});
+
+describe('M-09 condition 2 F is the current node (H-37)', () => {
+  it('rejects the review repros: a foster-parented element above F', () => {
+    const marquee = '<object><a href="1"><table><marquee><table></table></marquee></table>x</a></object>'
+      + '<span data-rq-block="k">y<a href="2">z</a>w</span>';
+    const unit = '<object><b><table><marquee><table></table></marquee></table></b></object>';
+    assert.equal(errorOf(marquee), STRUCTURE);
+    assert.equal(errorOf(`${unit.repeat(600)}<p data-rq-block="a">x</p>`), STRUCTURE);
+    assert.equal(errorOf(doc('<table><tr><object><td>x</td></object></tr></table>')), STRUCTURE);
+    assert.equal(errorOf(doc('<table><form><tr><td>x</td></tr></form></table>')), STRUCTURE);
+  });
+
+  // Each start tag that M-09 allows for F, and a table start tag.
+  const allowed = {
+    '<table>': ['caption', 'colgroup', 'tbody', 'thead', 'tfoot', 'col', 'tr', 'td', 'th', 'table'],
+    '<table><tbody>': ['tr', 'td', 'th', 'table'],
+    '<table><thead>': ['tr', 'td', 'th', 'table'],
+    '<table><tfoot>': ['tr', 'td', 'th', 'table'],
+    '<table><tr>': ['td', 'th', 'table'],
+    '<table><colgroup>': ['col', 'table'],
+  };
+  for (const [prefix, names] of Object.entries(allowed)) {
+    for (const name of names) {
+      it(`rejects <${name}> with an element above F in ${prefix} and accepts it when F is the current node`, () => {
+        assert.equal(errorOf(`${prefix}<div><${name}>`), STRUCTURE);
+        assert.equal(errorOf(`${prefix}<div></div><${name}>`), null);
+      });
+    }
+  }
+
+  it('applies to every element above F, also a non-special one', () => {
+    for (const above of ['b', 'span', 'form', 'object', 'marquee', 'applet', 'a']) {
+      assert.equal(errorOf(`<table><tr><${above}><td>`), STRUCTURE, above);
+    }
+  });
+
+  it('accepts a table in a cell or a caption, where F is not a table context', () => {
+    assert.equal(errorOf(doc('<table><tr><td><div><table></table></div></td></tr></table>')), null);
+    assert.equal(errorOf(doc('<table><caption><b><table></table></b></caption></table>')), null);
+  });
+
+  it('accepts the review control: an element closed before the table part', () => {
+    const body = '<table><div></div><tr><td><span data-rq-block="a">x</span></td></tr></table>';
+    assert.deepEqual(blocksOf(doc(body)), [['a', 'html', 'x']]);
+  });
+
+  it('does not apply when the search for F stops at a template', () => {
+    assert.equal(errorOf(doc('<table><template><div><td>x</td></div></template></table>')), null);
+  });
+
+  it('does not apply to other start tags above F (M-24 k covers them in block content)', () => {
+    assert.equal(errorOf(doc('<table><div><p>x</p></div></table>')), null);
+  });
+});
+
 describe('M-10 frameset', () => {
   it('rejects a frameset start tag', () => {
     assert.equal(errorOf('<html><frameset></frameset></html>'), STRUCTURE);
@@ -466,6 +559,92 @@ describe('M-10 frameset', () => {
 
   it('accepts frameset text in raw text', () => {
     assert.equal(errorOf(doc('<script>"<frameset>"</script>')), null);
+  });
+});
+
+describe('M-10 item 2 nested forms (H-36)', () => {
+  const unit = '<form><object><form></form></object></form>';
+
+  it('rejects the review repros: a form inside a form', () => {
+    assert.equal(errorOf(doc(unit)), STRUCTURE);
+    const anchor = `<a href="1">${unit.repeat(9)}<span data-rq-block="k">y<a href="2">z</a>w</span>`;
+    assert.equal(errorOf(anchor), STRUCTURE);
+    assert.equal(errorOf(`${unit.repeat(600)}<p data-rq-block="a">x</p>`), STRUCTURE);
+  });
+
+  it('rejects a form start tag at any depth under an open form', () => {
+    assert.equal(errorOf(doc('<form><div><form>')), STRUCTURE);
+    assert.equal(errorOf(doc('<form><table><tr><td><form>')), STRUCTURE);
+    assert.equal(errorOf(doc('<form><template><form></form></template></form>')), STRUCTURE);
+    assert.equal(errorOf(doc('<form><div data-rq-block="a"><form></form></div></form>')), STRUCTURE);
+  });
+
+  it('accepts forms one after another (the review control)', () => {
+    const body = '<form><input></form><form><input></form><p data-rq-block="a">x</p>';
+    assert.deepEqual(blocksOf(doc(body)).map((b) => b[0]), ['a']);
+    assert.equal(errorOf(doc('<div data-rq-block="a"><form>x</form><form>y</form></div>')), null);
+  });
+
+  it('accepts a form after a crossing popped the earlier form (the stale pointer control)', () => {
+    const body = '<div><form></div><form>x</form><p data-rq-block="a">x</p>';
+    assert.deepEqual(blocksOf(doc(body)).map((b) => b[0]), ['a']);
+  });
+
+  it('does not count a form in a foreign region', () => {
+    assert.equal(errorOf(doc('<form><svg><form></form></svg></form>')), null);
+    assert.equal(errorOf(doc('<svg><form></form></svg><form></form>')), null);
+  });
+});
+
+describe('M-10 item 3 template for (H-43)', () => {
+  const block = '<div data-rq-block="a">x</div>';
+
+  it('rejects a template start tag with a for attribute', () => {
+    assert.equal(errorOf(`${block}<template for="p"><b>n</b></template>`), STRUCTURE);
+  });
+
+  it('matches the name ASCII case-insensitively, with any value or none', () => {
+    for (const tag of ['<template FOR="">', '<template For=x>', '<template for>', '<template for=\'\'>']) {
+      assert.equal(errorOf(`${block}${tag}</template>`), STRUCTURE, tag);
+    }
+  });
+
+  it('rejects the attribute after other attributes and when it is duplicated', () => {
+    assert.equal(errorOf(`${block}<template id="t" class=c for="p"></template>`), STRUCTURE);
+    assert.equal(errorOf(`${block}<template for for="q"></template>`), STRUCTURE);
+    assert.equal(errorOf(`${block}<template id="1" id="2" for></template>`), STRUCTURE);
+  });
+
+  it('rejects it in a document without a block and inside other elements', () => {
+    assert.equal(errorOf('<template for="p"></template>'), STRUCTURE);
+    assert.equal(errorOf(`${block}<table><template for="p"></template></table>`), STRUCTURE);
+  });
+
+  it('accepts a template without a for attribute (the control)', () => {
+    assert.equal(errorOf(`${block}<template id="t"><b>n</b></template>`), null);
+    assert.equal(errorOf(`${block}<template></template>`), null);
+  });
+
+  it('does not match other names or values', () => {
+    for (const tag of ['<template data-for="p">', '<template id="for">', '<template fo="p">',
+      '<template form="p">', '<template forx>', '<template xfor>']) {
+      assert.equal(errorOf(`${block}${tag}</template>`), null, tag);
+    }
+  });
+
+  it('does not apply to a template in a foreign region', () => {
+    assert.equal(errorOf(`<svg><template for="p"></template></svg>${block}`), null);
+    assert.equal(errorOf(`${block}<math><template for></template></math>`), null);
+  });
+
+  it('applies to other elements only as before: for on a label is valid', () => {
+    assert.equal(errorOf(`${block}<label for="x">y</label>`), null);
+  });
+
+  it('keeps rejecting a template in block content and in noscript content', () => {
+    assert.equal(errorOf('<div data-rq-block="a"><template for="p"></template></div>'), STRUCTURE);
+    assert.equal(checkNoscript(Buffer.from('<template for="p"></template>')), STRUCTURE);
+    assert.equal(checkNoscript(Buffer.from('<template></template>')), STRUCTURE);
   });
 });
 
@@ -567,6 +746,49 @@ describe('M-11 item 5 balanced noscript content (H-27)', () => {
     assert.equal(errorOf(`${'<div>'.repeat(256)}<noscript>${deep}</noscript>`), LIMIT);
     assert.equal(checkNoscript(Buffer.from(deep)), null);
     assert.equal(checkNoscript(Buffer.from(`${deep}<b>`)), STRUCTURE);
+  });
+});
+
+describe('M-11 item 6 table parts in noscript content (H-38)', () => {
+  const block = '<div data-rq-block="x">a<table></table>b</div>';
+
+  it('rejects the review repros: a table part in noscript content in a cell or a caption', () => {
+    for (const [cell, part] of [['td', '<td></td>'], ['td', '<col>'], ['th', '<tr></tr>']]) {
+      const body = `<table><tr><${cell}><noscript>${part}</noscript>${block}</${cell}></tr></table>`;
+      assert.equal(errorOf(doc(body)), STRUCTURE, part);
+    }
+    const caption = `<table><caption><noscript><td></td></noscript>${block}</caption></table>`;
+    assert.equal(errorOf(doc(caption)), STRUCTURE);
+  });
+
+  for (const name of ['caption', 'colgroup', 'tbody', 'td', 'tfoot', 'th', 'thead', 'tr', 'col']) {
+    it(`rejects a balanced ${name} start tag without a table of the content`, () => {
+      const element = name === 'col' ? '<col>' : `<${name}></${name}>`;
+      assert.equal(checkNoscript(Buffer.from(element)), STRUCTURE);
+      assert.equal(checkNoscript(Buffer.from(`<table>${element}</table>`)), null);
+    });
+  }
+
+  it('accepts table parts in a table opened in the content (the review control)', () => {
+    const body = `<table><tr><td><noscript><table><tr><td>x</td></tr></table></noscript>${block}</td></tr></table>`;
+    assert.deepEqual(blocksOf(doc(body)), [['x', 'html', 'a<table></table>b']]);
+  });
+
+  it('needs the table of the content to be still open', () => {
+    assert.equal(checkNoscript(Buffer.from('<table></table><tr></tr>')), STRUCTURE);
+    assert.equal(checkNoscript(Buffer.from('<table><table></table></table><tr></tr>')), STRUCTURE);
+    // Two tables: closing the inner one leaves the outer one open.
+    assert.equal(checkNoscript(Buffer.from('<table><caption><table></table></caption><tbody></tbody></table>')), null);
+  });
+
+  it('accepts a table of the content under other elements', () => {
+    assert.equal(checkNoscript(Buffer.from('<div><table><tr><td><b>x</b></td></tr></table></div>')), null);
+  });
+
+  it('does not count other elements of the content as a table', () => {
+    const body = `<table><tr><td><noscript><div><td></td></div></noscript>${block}</td></tr></table>`;
+    assert.equal(errorOf(doc(body)), STRUCTURE);
+    assert.equal(checkNoscript(Buffer.from('<div><span><tr></tr></span></div>')), STRUCTURE);
   });
 });
 

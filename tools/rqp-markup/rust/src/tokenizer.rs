@@ -46,6 +46,9 @@ pub(crate) struct Tag {
     pub(crate) block_attr: Option<Span>,
     /// Raw value of the first `type` attribute.
     pub(crate) type_attr: Option<Span>,
+    /// The tag has an attribute named `for` (ASCII case-insensitive), with
+    /// any value, in any occurrence (M-10 item 3).
+    pub(crate) has_for: bool,
 }
 
 /// A token that the rules use.
@@ -396,6 +399,7 @@ impl<'a> Tokenizer<'a> {
         let mut attr = Attr::Other;
         let mut block_attr: Option<Span> = None;
         let mut type_attr: Option<Span> = None;
+        let mut has_for = false;
         let mut self_closing = false;
 
         loop {
@@ -440,6 +444,7 @@ impl<'a> Tokenizer<'a> {
                         // Leaving the attribute name state: the first
                         // attribute with a name wins (M-03).
                         let name = self.slice(attr_start, i);
+                        has_for |= name.eq_ignore_ascii_case(b"for");
                         attr = if block_attr.is_none()
                             && name.eq_ignore_ascii_case(b"data-rq-block")
                         {
@@ -549,6 +554,7 @@ impl<'a> Tokenizer<'a> {
             self_closing,
             block_attr,
             type_attr,
+            has_for,
         })
     }
 
@@ -877,6 +883,26 @@ mod tests {
         assert_eq!(tag.span, Span { start: 3, end: 6 });
         assert_eq!(tokenizer.next_token(), Token::Eof);
         assert_eq!(tokenizer.next_token(), Token::Eof);
+    }
+
+    #[test]
+    fn for_attribute_is_found_by_name_in_any_position() {
+        let has_for = |input: &str| {
+            let mut tokenizer = Tokenizer::new(input.as_bytes(), 0);
+            let Token::StartTag(tag) = tokenizer.next_token() else {
+                unreachable!("a start tag");
+            };
+            tag.has_for
+        };
+        assert!(has_for("<t for>"));
+        assert!(has_for("<t FoR=\"\">"));
+        assert!(has_for("<t a=b for=c>"));
+        assert!(has_for("<t for=a for=b>"));
+        assert!(has_for("<t a=\"x\"for>"));
+        assert!(has_for("<t for/>"));
+        assert!(!has_for("<t>"));
+        assert!(!has_for("<t data-for=for forx fo>"));
+        assert!(!has_for("<t a=\"for\" b='for' c=for>"));
     }
 
     #[test]

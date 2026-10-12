@@ -661,6 +661,111 @@ fn m09_table_parts() {
     assert_valid("<table><tr><td><template><td>a</td></template></td></tr></table>");
 }
 
+/// M-09 condition 1 (H-35): in a template, `col` sends the tree builder to
+/// "in column group", which ignores every later start tag, also raw text
+/// ones (FX-RQ-MARKUP-TEMPLATE-COL-TITLE, -TEMPLATE-COL-TEXTAREA,
+/// -TEMPLATE-TABLE-PARTS).
+#[test]
+fn m09_1_col_in_a_template() {
+    for body in [
+        // The review repro: the title text is markup in the browser.
+        "<p data-rq-block=\"z\">real</p><template><col><title></template><p data-rq-block=\"y\">fake</p></title></template>",
+        "<template><col></template>",
+        "<template><div><col></div></template>",
+        "<TEMPLATE><COL></TEMPLATE>",
+        // A table that is closed again is not the nearest element.
+        "<template><table></table><col></template>",
+        // A template in a table or a cell: the template is nearer.
+        "<table><template><col></template></table>",
+        "<table><tr><td><template><b><col></b></template></td></tr></table>",
+    ] {
+        assert_invalid(body, STRUCTURE, "M-09");
+    }
+    assert_eq!(
+        error_of(b"<head><template><col><textarea></template><script type=\"application/rivqen-manifest+json\">{}</script></textarea></template></head>"),
+        (STRUCTURE, "M-09")
+    );
+    for body in [
+        "<template><tr><td>x</td></tr></template>",
+        "<template><table><col></table></template>",
+        "<template><colgroup><col></colgroup></template>",
+        // The tree builder inserts the `title` in these paths.
+        "<template><colgroup><title>t</title></colgroup></template>",
+        // In a foreign region `col` is a foreign element.
+        "<template><svg><col/></svg></template>",
+        // No template open: M-09 only.
+        "<col><table><col></table>",
+        "<template></template><col>",
+    ] {
+        assert_eq!(
+            blocks(&format!("{body}<p data-rq-block=\"a\">x</p>")),
+            [html("a", "x")],
+            "{body}"
+        );
+    }
+}
+
+/// M-09 condition 2 (H-37): a table part, `col` or `table` start tag while
+/// F is a table, a row group, a row or a column group must have F as the
+/// current node. Else "clear the stack back to a table context" pops
+/// foster-parented elements without their end tags
+/// (FX-RQ-MARKUP-TABLE-FOSTER-MARKER, -TABLE-FOSTER-MARKER-DEPTH,
+/// -TABLE-CURRENT).
+#[test]
+fn m09_2_f_is_the_current_node() {
+    for body in [
+        // The review repro: the `marquee` marker cuts the block.
+        "<object><a href=\"1\"><table><marquee><table></table></marquee></table>x</a></object><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>",
+        "<table><tr><object><td></td></object></tr></table>",
+        "<table><form><tr></tr></form></table>",
+        "<table><div><caption></caption></div></table>",
+        "<table><b><colgroup></colgroup></b></table>",
+        "<table><span><col></span></table>",
+        "<table><tbody><span><tr></tr></span></tbody></table>",
+        "<table><thead><i><tr></tr></i></thead></table>",
+        "<table><tfoot><i><td></td></i></tfoot></table>",
+        "<table><tr><b><th></th></b></tr></table>",
+        "<table><colgroup><div><col></div></colgroup></table>",
+        "<table><colgroup><div><table></table></div></colgroup></table>",
+        "<table><tr><div><table></table></div></tr></table>",
+        // An element that is not pushed does not count; one that is does.
+        "<table><br><p><tr></tr></p></table>",
+    ] {
+        assert_invalid(body, STRUCTURE, "M-09");
+    }
+    for body in [
+        // Foster-parented elements closed before the next part.
+        "<table><div></div><tr><td>x</td></tr><b>y</b><tr><td>z</td></tr></table>",
+        "<table><colgroup><col><col></colgroup><tbody><tr><td>x</td></tr></tbody></table>",
+        // F is a cell or a caption: a nested table is allowed.
+        "<table><tr><td><b><table><tr><td>n</td></tr></table></b></td></tr></table>",
+        "<table><caption><div><table></table></div></caption></table>",
+        // Not pushed elements and other tokens above F.
+        "<table><br><input><!-- c --><tr><td>x</td></tr></table>",
+        // No F: a table in a formatting element.
+        "<b><table><tr><td>x</td></tr></table></b>",
+        // The search for F stops at a template.
+        "<table><tr><td>x</td></tr><template><div><tr><td>y</td></tr></div></template></table>",
+    ] {
+        assert_eq!(
+            blocks(&format!("{body}<p data-rq-block=\"a\">x</p>")),
+            [html("a", "x")],
+            "{body}"
+        );
+    }
+    // The check comes before the implied parts of M-26: at D = 256 the
+    // `td` fails M-09, not the limit of its implied row group and row.
+    let prefix = "<div>".repeat(MAX_OPEN_ELEMENTS - 2);
+    assert_eq!(
+        error_of(format!("{prefix}<table><b><td>").as_bytes()),
+        (STRUCTURE, "M-09")
+    );
+    assert_eq!(
+        error_of(format!("{prefix}<table><td>").as_bytes()),
+        (ErrorCode::Limit, "M-26")
+    );
+}
+
 #[test]
 fn m10_frameset() {
     assert_invalid(
@@ -670,6 +775,98 @@ fn m10_frameset() {
     );
     assert_invalid("<svg><frameset></frameset></svg>", STRUCTURE, "M-10");
     assert_valid("<!-- <frameset> --><script>\"<frameset>\"</script>");
+}
+
+/// M-10 item 2 (H-36): no `form` start tag in HTML context while an HTML
+/// `form` is on the token stack. The tree builder ignores the nested start
+/// tag (form element pointer) and can keep the outer form open
+/// (FX-RQ-MARKUP-FORM-NESTED, -FORM-NESTED-DEPTH, -FORM-SEQUENTIAL).
+#[test]
+fn m10_2_nested_forms() {
+    let unit = "<form><object><form></form></object></form>";
+    for body in [
+        format!("<a href=\"1\">{unit}x</a><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"),
+        "<form><div><form></form></div></form>".to_owned(),
+        "<FORM><Form></form></FORM>".to_owned(),
+        // A closed foreign region does not hide the outer form.
+        "<form><svg></svg><form></form></form>".to_owned(),
+        // In block content too.
+        "<div data-rq-block=\"a\"><form><p><form></form></p></form></div>".to_owned(),
+    ] {
+        assert_invalid(&body, STRUCTURE, "M-10");
+    }
+    // 600 units: the first nested start tag fails.
+    assert_eq!(error_of(unit.repeat(600).as_bytes()), (STRUCTURE, "M-10"));
+    for body in [
+        "<form><input name=\"q\"></form><form><input name=\"r\"></form>",
+        // A crossing pops the form: the count goes down.
+        "<div><form></div><form>x</form>",
+        "<div><span><form></span></div><form></form>",
+        // A `form` in a foreign region is a foreign element; it is never
+        // counted, also when a crossing pops it.
+        "<form><svg><form></form></svg></form>",
+        "<svg><form></form></svg><form></form>",
+        "<svg><g><form></svg><form></form>",
+        // A form that holds a block.
+        "<form><div data-rq-block=\"b\">y</div></form><form></form>",
+    ] {
+        let found = blocks(&format!("{body}<p data-rq-block=\"a\">x</p>"));
+        assert_eq!(found.last(), Some(&html("a", "x")), "{body}");
+    }
+}
+
+/// M-10 item 3 (H-43): no `for` attribute on a `template` start tag in HTML
+/// context. WHATWG content patching (`<template for>`) replaces or removes
+/// the nodes between `<?start>` and `<?end>`, which the token model reads as
+/// comments.
+#[test]
+fn m10_3_template_for() {
+    let block = "<div data-rq-block=\"a\">x</div>";
+    for tag in [
+        "<template for=\"p\"><b>n</b></template>",
+        "<template FOR=\"\"></template>",
+        "<template for></template>",
+        "<template for=p></template>",
+        "<TEMPLATE id=\"t\" For='p'></TEMPLATE>",
+        // Any occurrence, also a duplicate.
+        "<template for=\"p\" for=\"q\"></template>",
+        "<template id=\"t\" id=\"u\" fOr></template>",
+        "<template for/></template>",
+        // Inside other elements and in a table.
+        "<div><template for=\"p\"></template></div>",
+        "<table><template for=\"p\"></template></table>",
+    ] {
+        assert_invalid(&format!("{block}{tag}"), STRUCTURE, "M-10");
+        assert_invalid(&format!("{tag}{block}"), STRUCTURE, "M-10");
+    }
+    for tag in [
+        "<template id=\"t\"><b>n</b></template>",
+        "<template></template>",
+        // Another name that contains `for`; another tag with `for`.
+        "<template data-for=\"p\" form=\"q\" format></template>",
+        "<label for=\"p\">l</label>",
+        "<output for=\"p\"></output>",
+        // A value is not a name.
+        "<template id=\"for\" title=for></template>",
+        // A foreign `template` is not affected.
+        "<svg><template for=\"p\"></template></svg>",
+        "<math><template for></template></math>",
+    ] {
+        let found = blocks(&format!("{tag}{block}"));
+        assert_eq!(found.last(), Some(&html("a", "x")), "{tag}");
+    }
+    // After a closed foreign region the rule applies again.
+    assert_invalid(
+        &format!("<svg></svg><template for></template>{block}"),
+        STRUCTURE,
+        "M-10",
+    );
+    // C already forbids `template` (M-11), with or without `for`.
+    assert_invalid(
+        "<noscript><template for=\"p\"></template></noscript>",
+        STRUCTURE,
+        "M-11",
+    );
 }
 
 #[test]
@@ -839,6 +1036,60 @@ fn m11_5_noscript_content_is_balanced() {
         error_of(b"<html><head><noscript><div></noscript></head></html>"),
         (STRUCTURE, "M-11")
     );
+}
+
+/// M-11 item 6 (H-38): a table part or `col` in the noscript content C
+/// needs a `table` of C that is still open. With scripting disabled the
+/// table part closes the cell or caption around `noscript`
+/// (FX-RQ-MARKUP-NOSCRIPT-TABLE-PART, -CAPTION, -COL, -TH,
+/// -NOSCRIPT-TABLE-IN-CELL).
+#[test]
+fn m11_6_table_parts_in_noscript() {
+    let block = "<div data-rq-block=\"x\">a<table></table>b</div>";
+    for content in [
+        "<td></td>",
+        "<th></th>",
+        "<tr></tr>",
+        "<tbody></tbody>",
+        "<thead></thead>",
+        "<tfoot></tfoot>",
+        "<caption></caption>",
+        "<colgroup></colgroup>",
+        "<col>",
+        "<TD></TD>",
+        // The table of C is closed.
+        "<table></table><tr></tr>",
+        "<table></table><table></table><td></td>",
+        // A name that only starts with `table` is not a table.
+        "<tablex><td></td></tablex>",
+    ] {
+        for context in [
+            "<table><tr><td>{}</td></tr></table>",
+            "<table><caption>{}</caption></table>",
+        ] {
+            let body = context.replace("{}", &format!("<noscript>{content}</noscript>{block}"));
+            assert_invalid(&body, STRUCTURE, "M-11");
+        }
+    }
+    // Outside a cell too, and at EOF (E3).
+    assert_invalid("<noscript><td></td></noscript>", STRUCTURE, "M-11");
+    assert_eq!(error_of(b"<noscript><col>"), (STRUCTURE, "M-11"));
+    for content in [
+        "<table><tr><td>x</td></tr></table>",
+        "<table><caption>c</caption><colgroup><col></colgroup><tbody><tr><th>h</th></tr></tbody></table>",
+        // A table on the stack of C is enough; M-09 does not apply in C.
+        "<table><div><td></td></div></table>",
+        "<TABLE><tr></tr></TABLE>",
+        // The outer table is still open after the inner one closes.
+        "<table><table></table><td></td></table>",
+        "<table><tr><td><table></table></td><td>y</td></tr></table>",
+        // Names that are not table parts.
+        "<tbody-x></tbody-x><colx></colx><div>t</div>",
+    ] {
+        let body =
+            format!("<table><tr><td><noscript>{content}</noscript>{block}</td></tr></table>");
+        assert_eq!(blocks(&body), [html("x", "a<table></table>b")], "{content}");
+    }
 }
 
 #[test]
@@ -2041,6 +2292,35 @@ fn large_nested_inputs_closed_by_end_tags_finish() {
     );
     let unit = [b"<template>".repeat(max), b"</template>".repeat(max)].concat();
     only_tail(&fill(b"", &unit, tail, MAX_INPUT_BYTES));
+    // The checks of H-35 to H-38 cost O(1) per tag: many forms at the
+    // maximum depth (M-10 item 2), many rows of one table (M-09 condition 2),
+    // many `col` in one template table (condition 1), and many table parts
+    // in one noscript table (M-11 item 6).
+    let suffix = [b"</div>".repeat(max - 1), tail.to_vec()].concat();
+    only_tail(&fill(
+        &b"<div>".repeat(max - 1),
+        b"<form></form>",
+        &suffix,
+        MAX_INPUT_BYTES,
+    ));
+    only_tail(&fill(
+        b"<table>",
+        b"<tr><td>x</td></tr>",
+        &[&b"</table>"[..], tail].concat(),
+        MAX_INPUT_BYTES,
+    ));
+    only_tail(&fill(
+        b"<template><table>",
+        b"<col>",
+        &[&b"</table></template>"[..], tail].concat(),
+        MAX_INPUT_BYTES,
+    ));
+    only_tail(&fill(
+        b"<noscript><table>",
+        b"<tr><td></td></tr>",
+        &[&b"</table></noscript>"[..], tail].concat(),
+        MAX_INPUT_BYTES,
+    ));
     // The foreign root (M-07) is reset when `svg` is popped.
     let n = 740_000;
     limit(

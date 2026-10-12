@@ -54,15 +54,36 @@ impl std::fmt::Display for CliError {
     }
 }
 
+/// The error for an input path that is not a regular file.
+fn not_a_file() -> io::Error {
+    io::Error::new(io::ErrorKind::InvalidInput, "not a regular file")
+}
+
 /// Reads at most `MAX_INPUT_BYTES + 1` bytes: enough for M-01 to fail
 /// without reading a larger file into memory.
+///
+/// Only a regular file (also through a symbolic link) is an input. The type
+/// is checked before the open: on Unix, the open of a FIFO for reading
+/// waits for a writer, so the command would hang (round 2 L-2). A
+/// directory, FIFO, socket or device is an I/O error (exit code 2). The open
+/// file is checked again, so a path that changes to another type between
+/// the two steps does not read a directory or a device; a change to a FIFO
+/// in that window can still make the open wait.
 fn read_input(path: &Path) -> Result<Vec<u8>, CliError> {
     let io_error = |op, source| CliError::Io {
         op,
         path: path.to_path_buf(),
         source,
     };
+    let kind = fs::metadata(path).map_err(|e| io_error("open", e))?;
+    if !kind.is_file() {
+        return Err(io_error("open", not_a_file()));
+    }
     let file = fs::File::open(path).map_err(|e| io_error("open", e))?;
+    let kind = file.metadata().map_err(|e| io_error("open", e))?;
+    if !kind.is_file() {
+        return Err(io_error("open", not_a_file()));
+    }
     let limit = u64::try_from(MAX_INPUT_BYTES)
         .unwrap_or(u64::MAX)
         .saturating_add(1);
@@ -134,7 +155,10 @@ fn batch(dir: &Path, sink: &mut Sink<impl Write, impl Write>) -> Result<(), CliE
     names.sort_by(|a, b| a.as_encoded_bytes().cmp(b.as_encoded_bytes()));
     for name in names {
         let input_path = dir.join(&name).join("input.html");
-        if !input_path.is_file() {
+        // A missing input.html skips the directory. Any other entry that is
+        // not a regular file is an I/O error (CONTRACT.md section 2, item 7);
+        // read_input rejects it before the open, so a FIFO never blocks.
+        if matches!(fs::metadata(&input_path), Err(e) if e.kind() == io::ErrorKind::NotFound) {
             continue;
         }
         let input = read_input(&input_path)?;

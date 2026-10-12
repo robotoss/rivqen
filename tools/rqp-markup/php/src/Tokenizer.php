@@ -33,8 +33,8 @@ namespace Rivqen\Tools\RqpMarkup;
  */
 final class Tokenizer
 {
-    /** Attribute names whose raw value the rules need (M-13, M-14, M-16). */
-    public const WATCHED = ['data-rq-block' => true, 'type' => true];
+    /** Attribute names whose raw value the rules need (M-10 item 3, M-13, M-14, M-16). */
+    public const WATCHED = ['data-rq-block' => true, 'type' => true, 'for' => true];
 
     private const WS = "\t\n\f\r ";
     private const TAG_NAME_END = "\t\n\f\r />";
@@ -114,6 +114,16 @@ final class Tokenizer
             ContentState::ScriptData => $this->scriptData(),
             ContentState::Plaintext => $this->eof(),
         };
+    }
+
+    /**
+     * Length of the raw tag name that starts at $nameStart: up to white
+     * space, `/` or `>` (tag name state, 13.2.5.8). The name of a tag token
+     * is normalizeName() of these bytes.
+     */
+    public static function tagNameLength(string $input, int $nameStart): int
+    {
+        return strcspn($input, self::TAG_NAME_END, $nameStart);
     }
 
     /** Lower-case ASCII and replace U+0000 by U+FFFD, as the tokenizer does for names. */
@@ -350,7 +360,7 @@ final class Tokenizer
 
     private function tag(int $lt, int $nameStart, bool $isStart): Token
     {
-        $n = strcspn($this->input, self::TAG_NAME_END, $nameStart);
+        $n = self::tagNameLength($this->input, $nameStart);
         $name = self::normalizeName(substr($this->input, $nameStart, $n));
         return $this->tagRest($lt, $nameStart + $n, $name, $isStart);
     }
@@ -498,8 +508,8 @@ final class Tokenizer
     private function watchedName(int $from, int $to, array $attrs): ?string
     {
         $n = $to - $from;
-        // Only the lengths of the watched names can match ('type', 'data-rq-block').
-        if ($n !== 4 && $n !== 13) {
+        // Only the lengths of the watched names can match ('for', 'type', 'data-rq-block').
+        if ($n !== 3 && $n !== 4 && $n !== 13) {
             return null;
         }
         $name = strtolower(substr($this->input, $from, $n));

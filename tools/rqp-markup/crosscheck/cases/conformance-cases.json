@@ -1,0 +1,473 @@
+[
+  {
+    "id": "C3-quirks-p-table",
+    "step": "SA-11",
+    "expected": "valid 1",
+    "input": "<p>a<table><tr><td>b</td></tr></table>c</p><div data-rq-block=\"a\">x</div>"
+  },
+  {
+    "id": "C3-noquirks-p-table",
+    "step": "SA-11",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><p>a<table><tr><td>b</td></tr></table>c</p><div data-rq-block=\"a\">x</div>"
+  },
+  {
+    "id": "C3-quirks-p-block-table",
+    "step": "SA-11",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<p data-rq-block=\"a\">a<table><tr><td>b</td></tr></table>c</p>"
+  },
+  {
+    "id": "C3-quirks-div-block-p-table",
+    "step": "SA-11",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"a\"><p>a<table><tr><td>b</td></tr></table>c</p></div>"
+  },
+  {
+    "id": "C3-noquirks-div-block-p-table",
+    "step": "SA-11",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><div data-rq-block=\"a\"><p>a<table><tr><td>b</td></tr></table>c</p></div>"
+  },
+  {
+    "id": "C3-quirks-public-id",
+    "step": "SA-11",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"><p>a<table><tr><td><span data-rq-block=\"s\">x</span></td></tr></table>b</p>"
+  },
+  {
+    "id": "C3-head-twice",
+    "step": "IH-1",
+    "expected": "valid 2",
+    "input": "<head></head><head><title data-rq-block=\"t\">T</title></head><p data-rq-block=\"p\">x</p>"
+  },
+  {
+    "id": "C3-title-after-head",
+    "step": "AH-1",
+    "expected": "valid 2",
+    "input": "<!DOCTYPE html><html><head></head><title data-rq-block=\"t\">T</title><body><p data-rq-block=\"p\">x</p></body></html>"
+  },
+  {
+    "id": "C3-html-in-body",
+    "step": "IB-3",
+    "expected": "valid 1",
+    "input": "<div><html lang=\"en\"><p data-rq-block=\"p\">y</p></html></div>"
+  },
+  {
+    "id": "C3-body-in-body",
+    "step": "IB-4",
+    "expected": "valid 1",
+    "input": "<div><body class=\"x\"><span data-rq-block=\"s\">y</span></body>z</div>"
+  },
+  {
+    "id": "C3-head-in-body",
+    "step": "IB-36",
+    "expected": "valid 1",
+    "input": "<div><head><p data-rq-block=\"p\">x</p></head></div>"
+  },
+  {
+    "id": "C3-frame-in-body",
+    "step": "IB-36",
+    "expected": "valid 1",
+    "input": "<div><frame><p data-rq-block=\"p\">x</p></div>"
+  },
+  {
+    "id": "C3-image",
+    "step": "IB-28",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"a\"><image src=\"i.png\">y</div>"
+  },
+  {
+    "id": "C3-svg-image",
+    "step": "IB-28",
+    "expected": "valid 1",
+    "input": "<svg><image href=\"i.png\"></image></svg><div data-rq-block=\"a\">x</div>"
+  },
+  {
+    "id": "C3-stray-td",
+    "step": "IB-36",
+    "expected": "valid 1",
+    "input": "<td><div data-rq-block=\"a\">x</div></td>"
+  },
+  {
+    "id": "C3-stray-caption",
+    "step": "IB-36",
+    "expected": "valid 1",
+    "input": "<caption><div data-rq-block=\"a\">x</div></caption>"
+  },
+  {
+    "id": "C3-stray-tr-block",
+    "step": "IB-36",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<tr><span data-rq-block=\"s\">x</span></tr>"
+  },
+  {
+    "id": "C3-after-body-block",
+    "step": "AB-2",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><html><head></head><body><p>a</p></body></html><div data-rq-block=\"a\">x</div><!--c-->"
+  },
+  {
+    "id": "C3-after-body-p-open",
+    "step": "AB-2",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><body><p>a</body></html><span data-rq-block=\"s\">x<b>y</b></span>"
+  },
+  {
+    "id": "C3-after-body-ws-comment",
+    "step": "AAB-1",
+    "expected": "valid 2",
+    "input": "<!DOCTYPE html><body><div data-rq-block=\"a\">x</div></body>\n<!--c-->\n</html>\n<!--d--><p data-rq-block=\"b\">y</p>\n"
+  },
+  {
+    "id": "C3-after-body-b-div",
+    "step": "AB-2",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<b><div>x</body></html><span data-rq-block=\"s\">y</span></b>"
+  },
+  {
+    "id": "C3-body-end-in-cell",
+    "step": "IB-6",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<body><table><tr><td></body><div data-rq-block=\"a\">x</div></td></tr></table>"
+  },
+  {
+    "id": "C3-html-end-in-cell",
+    "step": "IB-6",
+    "expected": "valid 1",
+    "input": "<table><tr><td></html><div data-rq-block=\"a\">x</div></td></tr></table>"
+  },
+  {
+    "id": "C3-html-end-crosses-div",
+    "step": "IB-6",
+    "expected": "valid 1",
+    "input": "<html><body><div></html><p data-rq-block=\"p\">x</p>"
+  },
+  {
+    "id": "C3-select-in-table",
+    "step": "TB-9",
+    "expected": "valid 1",
+    "input": "<table><select><option>a</option></select><tr><td><p data-rq-block=\"a\">x</p></td></tr></table>"
+  },
+  {
+    "id": "C3-select-in-cell",
+    "step": "IB-32",
+    "expected": "valid 1",
+    "input": "<table><tr><td><select><option>a</option></select><div data-rq-block=\"a\">x</div></td></tr></table>"
+  },
+  {
+    "id": "C3-select-td-inside",
+    "step": "IB-32",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><tr><td><select><option>a</option><td>b</td></select></td></tr></table><p data-rq-block=\"p\">x</p>"
+  },
+  {
+    "id": "C3-select-hr",
+    "step": "IB-27",
+    "expected": "valid 1",
+    "input": "<select><option>a<hr><option>b</select><div data-rq-block=\"a\">x</div>"
+  },
+  {
+    "id": "C3-select-optgroup",
+    "step": "IB-33",
+    "expected": "valid 1",
+    "input": "<select><optgroup label=\"g\"><option>a<optgroup label=\"h\"><option>b</select><p data-rq-block=\"p\">x</p>"
+  },
+  {
+    "id": "C3-select-nested",
+    "step": "IB-32",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<select><select></select><p data-rq-block=\"p\">x</p>"
+  },
+  {
+    "id": "C3-select-input",
+    "step": "IB-26",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<select><input></select><p data-rq-block=\"p\">x</p>"
+  },
+  {
+    "id": "C3-select-keygen",
+    "step": "IB-26",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<select><keygen></select><p data-rq-block=\"p\">x</p>"
+  },
+  {
+    "id": "C3-option-outside",
+    "step": "IB-33",
+    "expected": "valid 1",
+    "input": "<div><option>a<option>b</div><p data-rq-block=\"p\">x</p>"
+  },
+  {
+    "id": "C3-frameset-after-content",
+    "step": "IB-5",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<p>x</p><frameset></frameset><div data-rq-block=\"a\">y</div>"
+  },
+  {
+    "id": "C3-plaintext-after-block",
+    "step": "IB-12",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"a\">x</div><plaintext><div data-rq-block=\"b\">y</div>"
+  },
+  {
+    "id": "C3-pre-lf",
+    "step": "IB-9",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"a\"><pre>\nx</pre></div>"
+  },
+  {
+    "id": "C3-listing-crlf",
+    "step": "IB-9",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"a\">\r\n<listing>\r\nx</listing>\r\n</div>"
+  },
+  {
+    "id": "C3-pre-lf-before-block",
+    "step": "IB-9",
+    "expected": "valid 1",
+    "input": "<pre>\n<span data-rq-block=\"s\">x</span></pre>"
+  },
+  {
+    "id": "C3-textarea-lf",
+    "step": "IB-29",
+    "expected": "valid 1",
+    "input": "<textarea>\n<div data-rq-block=\"z\">x</div></textarea><p data-rq-block=\"a\">y</p>"
+  },
+  {
+    "id": "C3-xmp",
+    "step": "IB-30",
+    "expected": "valid 1",
+    "input": "<p>a<xmp><p data-rq-block=\"z\"></xmp><div data-rq-block=\"a\">y</div>"
+  },
+  {
+    "id": "C3-table-text-nul",
+    "step": "TT-1",
+    "expected": "valid 1",
+    "input": "<table>\u0000<tr><td><div data-rq-block=\"a\">x\u0000y</div></td></tr></table>"
+  },
+  {
+    "id": "C3-table-text-cr",
+    "step": "TT-2",
+    "expected": "valid 1",
+    "input": "<table>\r\n a\r<tr><td><div data-rq-block=\"a\">x\r\ny</div></td></tr></table>"
+  },
+  {
+    "id": "C3-body-nul",
+    "step": "IB-1",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"a\">a\u0000b</div>"
+  },
+  {
+    "id": "C3-font-color",
+    "step": "F-2",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<svg><font color=\"red\"></font></svg><p data-rq-block=\"p\">x</p>"
+  },
+  {
+    "id": "C3-font-plain",
+    "step": "F-2",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<svg><font></font></svg><p data-rq-block=\"p\">x</p>"
+  },
+  {
+    "id": "C3-foreign-end-p",
+    "step": "F-3",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<p><svg></p><div data-rq-block=\"a\">x</div>"
+  },
+  {
+    "id": "C3-foreign-end-br",
+    "step": "F-3",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<svg></br></svg><div data-rq-block=\"a\">x</div>"
+  },
+  {
+    "id": "C3-annot-html-block",
+    "step": "F-7",
+    "expected": "RQP_MARKUP_STRUCTURE|RQP_MARKUP_FORBIDDEN_ELEMENT",
+    "input": "<math><annotation-xml encoding=\"text/html\"><div data-rq-block=\"a\">x</div></annotation-xml></math>"
+  },
+  {
+    "id": "C3-annot-html-text",
+    "step": "F-7",
+    "expected": "valid 1",
+    "input": "<math><annotation-xml encoding=\"text/html\">a &lt; b</annotation-xml></math><div data-rq-block=\"a\">x</div>"
+  },
+  {
+    "id": "C3-annot-noenc-mi",
+    "step": "F-7",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<math><annotation-xml><mi>x</mi></annotation-xml></math><p data-rq-block=\"p\">y</p>"
+  },
+  {
+    "id": "C3-mglyph",
+    "step": "F-10",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<math><mi><mglyph></mglyph></mi></math><p data-rq-block=\"p\">y</p>"
+  },
+  {
+    "id": "C3-reconstruct-mi",
+    "step": "F-8",
+    "expected": "valid 1",
+    "input": "<p><b>x</p><math><mi>y</mi></math><div data-rq-block=\"a\">z</div>"
+  },
+  {
+    "id": "C3-reconstruct-annot",
+    "step": "F-8",
+    "expected": "valid 1",
+    "input": "<p><b>x</p><math><annotation-xml encoding=\"text/html\">y</annotation-xml></math><div data-rq-block=\"a\">z</div>"
+  },
+  {
+    "id": "C3-reconstruct-desc",
+    "step": "F-8",
+    "expected": "valid 1",
+    "input": "<p><i>x</p><svg><desc>y</desc></svg><span data-rq-block=\"s\">z</span>"
+  },
+  {
+    "id": "C3-ruby-outside",
+    "step": "IB-34",
+    "expected": "valid 1",
+    "input": "<ruby>a<rb>b<rt>c<rtc>d<rp>e</ruby><p data-rq-block=\"p\">x</p>"
+  },
+  {
+    "id": "C3-ruby-content",
+    "step": "IB-34",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"a\"><ruby>a<rt>b</rt></ruby></div>"
+  },
+  {
+    "id": "C3-ruby-outer-p-block",
+    "step": "IB-34",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<ruby><p data-rq-block=\"p\">a<rt>b</rt></p></ruby>"
+  },
+  {
+    "id": "C3-ruby-p-in-content",
+    "step": "IB-34",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"a\"><ruby><p>x<rt>y</rt></p></ruby></div>"
+  },
+  {
+    "id": "C3-li-outside",
+    "step": "IB-11",
+    "expected": "valid 1",
+    "input": "<ul><li>a<div><li>b</div></ul><p data-rq-block=\"p\">x</p>"
+  },
+  {
+    "id": "C3-dl-outside",
+    "step": "IB-11",
+    "expected": "valid 1",
+    "input": "<dl><dt>a<dd>b<dt>c</dl><div data-rq-block=\"a\">x</div>"
+  },
+  {
+    "id": "C3-li-after-block",
+    "step": "IB-11",
+    "expected": "valid 1",
+    "input": "<ul><li><div data-rq-block=\"a\">x</div><li>y</ul>"
+  },
+  {
+    "id": "C3-table-in-table",
+    "step": "TB-4",
+    "expected": "valid 1",
+    "input": "<table><table><tr><td><div data-rq-block=\"a\">x</div></td></tr></table></table>"
+  },
+  {
+    "id": "C3-table-in-row",
+    "step": "TB-4",
+    "expected": "valid 1",
+    "input": "<table><tr><table></table><td><div data-rq-block=\"a\">x</div></td></tr></table>"
+  },
+  {
+    "id": "C3-form-stale-pointer",
+    "step": "TB-7",
+    "expected": "valid 1",
+    "input": "<table><form></table><form><div data-rq-block=\"a\">x</div></form>"
+  },
+  {
+    "id": "C3-heading-end-other",
+    "step": "IB-19",
+    "expected": "valid 1",
+    "input": "<h1>a</h2><div data-rq-block=\"a\">x</div>"
+  },
+  {
+    "id": "C3-eof-title",
+    "step": "TX-1",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"a\">x</div><title>abc"
+  },
+  {
+    "id": "C3-eof-script",
+    "step": "TX-1",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"a\">x</div><script>abc"
+  },
+  {
+    "id": "C3-template-shadowroot",
+    "step": "IH-6",
+    "expected": "valid 1",
+    "input": "<div><template shadowrootmode=\"open\"><slot></slot></template><span data-rq-block=\"s\">x</span></div>"
+  },
+  {
+    "id": "C3-GAP1-replace-content",
+    "step": "IH-5",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "note": "GAP-1, closed by H-43 (M-10 item 3). Chrome 154: the block content is <b>new</b>, not the content bytes. parse5 8.0.1 cannot see this class (no content patching, no processing instructions); the evidence is Chrome 154.",
+    "input": "<!DOCTYPE html><div data-rq-block=\"a\"><?start name=\"p\">old<?end></div><template for=\"p\"><b>new</b></template><p>after</p>"
+  },
+  {
+    "id": "C3-GAP1-remove-block",
+    "step": "IH-5",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "note": "GAP-1, closed by H-43 (M-10 item 3). Chrome 154: the block element is removed from the DOM. parse5 8.0.1 cannot see this class (no content patching, no processing instructions); the evidence is Chrome 154.",
+    "input": "<!DOCTYPE html><body><?start name=\"q\"><div data-rq-block=\"a\">x</div><?end><template for=\"q\">gone</template><p>after</p>"
+  },
+  {
+    "id": "C3-GAP1-title-in-head",
+    "step": "IH-5",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "note": "GAP-1, closed by H-43 (M-10 item 3). Chrome 154: the title block is replaced by <title>X</title> (a template in body patches the head). parse5 8.0.1 cannot see this class (no content patching, no processing instructions); the evidence is Chrome 154.",
+    "input": "<!DOCTYPE html><html><head><?start name=\"t\"><title data-rq-block=\"t\">T</title><?end></head><body><template for=\"t\"><title>X</title></template><p>b</p></body></html>"
+  },
+  {
+    "id": "C3-GAP1-start-no-end",
+    "step": "IH-5",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "note": "GAP-1, closed by H-43 (M-10 item 3). Chrome 154: <?start> without <?end> removes to the end of the block; block content is vZ. parse5 8.0.1 cannot see this class (no content patching, no processing instructions); the evidence is Chrome 154.",
+    "input": "<!DOCTYPE html><p data-rq-block=\"a\">v<?start name=\"m\">w</p><template for=\"m\">Z</template><p>tail</p>"
+  },
+  {
+    "id": "C3-GAP1-ancestor-scope",
+    "step": "IH-5",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "note": "GAP-1, closed by H-43 (M-10 item 3). The template is in an ancestor of the block, so the marker search finds the marker. parse5 8.0.1 cannot see this class (no content patching, no processing instructions); the evidence is Chrome 154.",
+    "input": "<!DOCTYPE html><div><div data-rq-block=\"a\"><?start name=\"m\">x<?end></div><template for=\"m\">y</template></div>"
+  },
+  {
+    "id": "C3-GAP1-control-table-scope",
+    "step": "IH-5",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "note": "H-43 (M-10 item 3) rejects every for attribute on an HTML template (fail closed). Chrome 154: no patch here; the search scope is the table, the parent of the template. parse5 8.0.1 cannot see this class (no content patching, no processing instructions); the evidence is Chrome 154.",
+    "input": "<!DOCTYPE html><div data-rq-block=\"a\">v<?marker name=\"m\"></div><table><template for=\"m\"><i>z</i></template></table>"
+  },
+  {
+    "id": "C3-GAP1-control-foreign",
+    "step": "IH-5",
+    "expected": "valid 1",
+    "note": "Control, valid under H-43: M-10 item 3 applies in HTML context only. Chrome 154: no patch; an SVG template is a foreign element.",
+    "input": "<!DOCTYPE html><div data-rq-block=\"a\"><?start name=\"m\">x</div><svg><template for=\"m\">Z</template></svg>"
+  },
+  {
+    "id": "C3-GAP1-control-empty",
+    "step": "IH-5",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "note": "H-43 (M-10 item 3) rejects an empty for value too (fail closed). Chrome 154: no patch; an empty for value returns false. parse5 8.0.1 cannot see this class (no content patching, no processing instructions); the evidence is Chrome 154.",
+    "input": "<!DOCTYPE html><div data-rq-block=\"a\"><?start name=\"\">x</div><template for=\"\">Z</template>"
+  },
+  {
+    "id": "C3-xml-pi",
+    "step": "IH-5",
+    "expected": "valid 1",
+    "note": "Control. The target xml gives a bogus comment, not a processing instruction.",
+    "input": "<?xml version=\"1.0\"?><!DOCTYPE html><div data-rq-block=\"a\">x</div>"
+  }
+]

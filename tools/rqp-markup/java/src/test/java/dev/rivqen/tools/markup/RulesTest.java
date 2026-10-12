@@ -714,10 +714,118 @@ class RulesTest {
     void tablePartsInTheirParents(String markup) {
       assertValid(body(markup + P));
     }
+
+    // Condition 1 (H-35): no col where the search for F stops at a template.
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<template><col></template>",
+          "<template><div><col></div></template>",
+          "<template><col/></template>",
+          "<table><template><col></template></table>",
+          "<table><tr><td><template><b><col></b></template></td></tr></table>"
+        })
+    void colInTemplate(String markup) {
+      assertStructure(body(markup + P), "M-09");
+    }
+
+    @Test
+    void reviewReprosColInTemplate() {
+      // The tree builder ignores the title or textarea after <template><col>: its text is markup.
+      assertStructure(
+          body(
+              P
+                  + "<template><col><title></template><p data-rq-block=\"z\">f</p></title></template>"),
+          "M-09");
+      assertStructure(
+          "<html><head><template><col><textarea></template>"
+              + "<script type=\"application/rivqen-manifest+json\">{}</script>"
+              + "</textarea></template></head><body>"
+              + P,
+          "M-09");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<template><tr><td>x</td></tr></template>",
+          "<template><table><col></table></template>",
+          "<template><colgroup><col></colgroup></template>",
+          "<template><div><table><colgroup><col></colgroup></table></div></template>",
+          "<template></template><table><col></table>",
+          "<template><svg><col/></svg></template>",
+          "<template><title>t</title><textarea>a</textarea></template>"
+        })
+    void colInATableOfATemplateAndOtherTemplates(String markup) {
+      assertValid(body(markup + P));
+    }
+
+    // Condition 2 (H-37): in table context, F is the current node.
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<table><marquee><table>",
+          "<table><tr><object><td>",
+          "<table><form><tr>",
+          "<table><div><caption>",
+          "<table><div><colgroup>",
+          "<table><div><col>",
+          "<table><b><tbody>",
+          "<table><span><thead>",
+          "<table><i><tfoot>",
+          "<table><applet><td>",
+          "<table><div><table>",
+          "<table><tbody><span><tr>",
+          "<table><thead><b><td>",
+          "<table><tfoot><b><th>",
+          "<table><tbody><tr><b><td>",
+          "<table><tr><x-y><th>",
+          "<table><tr><div><table>",
+          "<table><colgroup><b><col>",
+          "<table><colgroup><b><table>"
+        })
+    void tablePartAboveAnOpenElementInTableContext(String markup) {
+      assertStructure(body(markup), "M-09");
+    }
+
+    @Test
+    void reviewReproFosterParentedMarquee() {
+      assertStructure(
+          body(
+              "<object><a href=\"1\"><table><marquee><table></table></marquee></table>x</a></object>"
+                  + "<span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"),
+          "M-09");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<table><div></div><tr><td>x</td></tr></table>",
+          "<table><b></b><colgroup><col></colgroup><col></table>",
+          "<table><tr><td><div><table><tr><td>n</td></tr></table></div></td></tr></table>",
+          "<table><caption><div><table></table></div></caption></table>",
+          "<table><tr><th><b><table></table></b></th></tr></table>",
+          "<table><template><div></div></template><tr></tr></table>",
+          "<table><table></table></table>",
+          "<div><b><table><tbody><tr><td>x</td></tr></tbody></table></b></div>"
+        })
+    void tablePartWhereFIsTheCurrentNode(String markup) {
+      assertValid(body(markup + P));
+    }
+
+    @Test
+    void currentNodeConditionComesBeforeTheImpliedParts() {
+      // D is 256 after <b>; the row group and row of <td> would make it 258.
+      String divs = "<div>".repeat(Analyzer.MAX_OPEN_ELEMENTS - 2);
+      assertStructure(divs + "<table><b><td>", "M-09");
+      assertInvalid(divs + "<table><td>", ErrorCode.LIMIT, "M-26");
+    }
   }
 
   @Nested
-  class M10Frameset {
+  class M10FramesetAndForms {
     @Test
     void framesetStartTag() {
       assertStructure("<html><frameset><frame></frameset></html>", "M-10");
@@ -731,6 +839,83 @@ class RulesTest {
     @Test
     void framesetEndTagAlone() {
       assertValid(body("</frameset>" + P));
+    }
+
+    // Item 2 (H-36): no form start tag while an HTML form is on the token stack.
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<form><form>",
+          "<form><div><form>",
+          "<form><object><form></form></object></form>",
+          "<form><svg></svg><form>",
+          "<div><form><span></span><form></form></form></div>",
+          "<form><table><tr><td><form>",
+          "<form><template><form>",
+          "<div data-rq-block=a><form><form></form></form></div>",
+          "<form><div data-rq-block=a><form></form></div></form>"
+        })
+    void nestedForm(String markup) {
+      assertStructure(body(markup), "M-10");
+    }
+
+    @Test
+    void reviewReproNestedFormsInObject() {
+      String unit = "<form><object><form></form></object></form>";
+      assertStructure(
+          body(
+              "<a href=\"1\">"
+                  + unit.repeat(9)
+                  + "x</a><span data-rq-block=\"k\">y<a>z</a>w</span>"),
+          "M-10");
+      assertStructure(unit.repeat(600) + P, "M-10");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<form><input name=q></form><form><input name=r></form>",
+          "<div><form></div><form>x</form>",
+          "<div><form><span></div><form>x</form>",
+          "<form><svg><form></form></svg></form>",
+          "<svg><form></svg><form></form>",
+          "<form></form><div><form></form></div>",
+          "</form><form></form>"
+        })
+    void formAfterTheFormIsPoppedOrInAForeignRegion(String markup) {
+      assertValid(body(markup + P));
+    }
+
+    // Item 3 (H-43): no template start tag with a "for" attribute in HTML context.
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<template for=\"p\"><b>n</b></template>",
+          "<template FOR=\"\"></template>",
+          "<template for></template>",
+          "<template for=p></template>",
+          "<template id=t for=p></template>",
+          "<template for=a for=b></template>",
+          "<template id=t fOr='x'/>",
+          "<table><template for=p></template></table>"
+        })
+    void templateWithForAttribute(String markup) {
+      assertStructure("<div data-rq-block=\"a\">x</div>" + markup, "M-10");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<template id=\"t\"></template>",
+          "<template data-for=p format=x></template>",
+          "<template forx=p></template>",
+          "<div for=p></div>",
+          "<svg><template for=\"p\"></template></svg>"
+        })
+    void templateWithoutForAttributeOrForeign(String markup) {
+      assertValid("<div data-rq-block=\"a\">x</div>" + markup);
     }
   }
 
@@ -876,6 +1061,67 @@ class RulesTest {
       assertValid(body("<noscript>" + c + "</noscript>" + P));
       assertStructure(body("<noscript>" + c + "<e1></e2></noscript>" + P), "M-11");
       assertValid(body(c + "<e2000><e1></e1></e2000>" + P));
+    }
+
+    // Item 6 (H-38): a table part or col in C needs an open table of C.
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<td></td>",
+          "<th></th>",
+          "<tr></tr>",
+          "<tbody></tbody>",
+          "<thead></thead>",
+          "<tfoot></tfoot>",
+          "<caption></caption>",
+          "<colgroup></colgroup>",
+          "<col>",
+          "<table></table><tr></tr>",
+          "<div><table></table><td></td></div>",
+          "<table><tr><td><table></table></td></tr></table><col>",
+          "<b><caption></caption></b>"
+        })
+    void tablePartInNoscriptWithoutTable(String markup) {
+      assertStructure(body("<noscript>" + markup + "</noscript>" + P), "M-11");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<table><tr><td><noscript><td></td></noscript>",
+          "<table><caption><noscript><td></td></noscript>",
+          "<table><tr><td><noscript><col></noscript>",
+          "<table><tr><th><noscript><tr></tr></noscript>"
+        })
+    void reviewReprosTablePartInNoscriptInACell(String start) {
+      String block = "<div data-rq-block=\"x\">a<table></table>b</div>";
+      String end = start.contains("<caption>") ? "</caption></table>" : "</td></tr></table>";
+      assertStructure(body(start + block + end), "M-11");
+    }
+
+    @Test
+    void tablePartInNoscriptWithoutEndTag() {
+      // E3: C is the rest of the input.
+      assertStructure(P + "<noscript><td></td>", "M-11");
+      assertValid(P + "<noscript><table><tr><td>x</td></tr></table>");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<table><tr><td>x</td></tr></table>",
+          "<table><caption>c</caption><colgroup><col></colgroup><col><thead></thead>"
+              + "<tbody><tr><th>h</th></tr></tbody><tfoot></tfoot></table>",
+          "<table><tr><td><table></table></td><td>y</td></tr></table>",
+          "<div><table><tr><td><b>x</b></td></tr></table></div>",
+          "<table></table><table><col></table>",
+          "<textarea><td></textarea><style>td{}</style>"
+        })
+    void tablePartInATableOfNoscript(String markup) {
+      assertValid(body("<noscript>" + markup + "</noscript>" + P));
+      assertValid(
+          body("<table><tr><td><noscript>" + markup + "</noscript>" + P + "</td></tr></table>"));
     }
 
     @Test

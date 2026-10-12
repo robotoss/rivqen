@@ -399,6 +399,12 @@ impl<'a> Pass<'a> {
         if !foreign && name == Known::Form.id() && self.html_forms > 0 {
             return Err(structure("M-10"));
         }
+        // M-10 item 3 (H-43): `<template for>` is WHATWG content patching,
+        // which replaces or removes nodes between `<?start>` and `<?end>`.
+        // A `template` in a foreign region is a foreign element.
+        if !foreign && name == Known::Template.id() && tag.has_for {
+            return Err(structure("M-10"));
+        }
         if name == Known::Script.id() {
             if let Some(value) = tag.type_attr {
                 if is_reserved_type(self.bytes(value)?) {

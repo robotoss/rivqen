@@ -87,7 +87,7 @@ The exact expected outputs are derived from the upstream audit and confirmed wit
 
 ### 4.2 Markup fixtures (`FX-RQ-MARKUP-*`)
 
-<Badge type="tip" text="FACT" /> 194 fixtures (71 valid, 123 invalid) in `fixtures/rqp/markup/`. All are normative. The 18 fixtures `EDGE-*` cover the edge cases E1–E8, their combinations and the case of the CDATA opener ([markup §2.11](/engineering/protocol/markup#_2-11-decided-edge-cases)), decided by the human (H-21, H-22). The fixtures `FORMATTING-*`, `NOSCRIPT-BALANCED`, `NOSCRIPT-CROSSING`, `NOSCRIPT-EOF-UNBALANCED`, `NOSCRIPT-STRAY-END`, `NOSCRIPT-UNBALANCED*`, `*-NON-ASCII*`, `TABLE-STRAY-*`, `TABLE-IMPLIED-PARTS` and `LIMIT-DEPTH-*` cover the rules of the security review (H-25 to H-38, [markup §2.12](/engineering/protocol/markup#_2-12-rules-from-the-security-review)). Each fixture tests the rules of [RQP markup](/engineering/protocol/markup) §2 that it lists. Layout and `fixture.json` format: `fixtures/rqp/markup/README.md`. Result format: `tools/rqp-markup/CONTRACT.md` §3.
+<Badge type="tip" text="FACT" /> 197 fixtures (72 valid, 125 invalid) in `fixtures/rqp/markup/`. All are normative. The 18 fixtures `EDGE-*` cover the edge cases E1–E8, their combinations and the case of the CDATA opener ([markup §2.11](/engineering/protocol/markup#_2-11-decided-edge-cases)), decided by the human (H-21, H-22). The fixtures `FORMATTING-*`, `NOSCRIPT-BALANCED`, `NOSCRIPT-CROSSING`, `NOSCRIPT-EOF-UNBALANCED`, `NOSCRIPT-STRAY-END`, `NOSCRIPT-UNBALANCED*`, `*-NON-ASCII*`, `TABLE-STRAY-*`, `TABLE-IMPLIED-PARTS` and `LIMIT-DEPTH-*` cover the rules of the security review (H-25 to H-38, [markup §2.12](/engineering/protocol/markup#_2-12-rules-from-the-security-review)). The fixtures `TEMPLATE-FOR*` cover H-43 from the conformance study ([edge cases §8](/engineering/protocol/markup-edge-cases#_8-whatwg-conformance-table-round-3)). Each fixture tests the rules of [RQP markup](/engineering/protocol/markup) §2 that it lists. Layout and `fixture.json` format: `fixtures/rqp/markup/README.md`. Result format: `tools/rqp-markup/CONTRACT.md` §3.
 
 | File | Written by |
 |---|---|
@@ -293,6 +293,9 @@ In the table, the prefix `FX-RQ-MARKUP-` is not shown.
 | `TABLE-TEXT` | valid, 1 block | M-09, M-24 | Text and a comment directly in a table in the content, and elements in a cell (item k) |
 | `TEMPLATE-COL-TEXTAREA` | `STRUCTURE` | M-09 | A col directly in a template in the head; the ignored textarea hides a manifest script (H-35, review repro) |
 | `TEMPLATE-COL-TITLE` | `STRUCTURE` | M-09 | A col directly in a template; the ignored title makes a fake block (H-35, review repro) |
+| `TEMPLATE-FOR` | `STRUCTURE` | M-10 | A template with a for attribute after a block with start and end markers: content patching replaces the block content (H-43, Chrome 154 repro) |
+| `TEMPLATE-FOR-EMPTY` | `STRUCTURE` | M-10 | A template with a for attribute without a value, in mixed case (H-43: the value does not matter) |
+| `TEMPLATE-FOR-SVG` | valid, 1 block | M-07, M-10 | A template with a for attribute in svg is a foreign element and does not patch (H-43: valid) |
 | `TEMPLATE-OUTSIDE` | valid, 1 block | M-05, M-19 | A template element without blocks, then a block outside it |
 | `TEMPLATE-TABLE-PARTS` | valid, 1 block | M-09, M-19 | tr and td in a template, col in a table in a template (H-35: valid) |
 | `TEXTAREA-TEXT` | valid, 1 block | M-04, M-14 | Tag-like text in a textarea element (RCDATA) is not a block |

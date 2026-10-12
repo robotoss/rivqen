@@ -815,6 +815,60 @@ fn m10_2_nested_forms() {
     }
 }
 
+/// M-10 item 3 (H-43): no `for` attribute on a `template` start tag in HTML
+/// context. WHATWG content patching (`<template for>`) replaces or removes
+/// the nodes between `<?start>` and `<?end>`, which the token model reads as
+/// comments.
+#[test]
+fn m10_3_template_for() {
+    let block = "<div data-rq-block=\"a\">x</div>";
+    for tag in [
+        "<template for=\"p\"><b>n</b></template>",
+        "<template FOR=\"\"></template>",
+        "<template for></template>",
+        "<template for=p></template>",
+        "<TEMPLATE id=\"t\" For='p'></TEMPLATE>",
+        // Any occurrence, also a duplicate.
+        "<template for=\"p\" for=\"q\"></template>",
+        "<template id=\"t\" id=\"u\" fOr></template>",
+        "<template for/></template>",
+        // Inside other elements and in a table.
+        "<div><template for=\"p\"></template></div>",
+        "<table><template for=\"p\"></template></table>",
+    ] {
+        assert_invalid(&format!("{block}{tag}"), STRUCTURE, "M-10");
+        assert_invalid(&format!("{tag}{block}"), STRUCTURE, "M-10");
+    }
+    for tag in [
+        "<template id=\"t\"><b>n</b></template>",
+        "<template></template>",
+        // Another name that contains `for`; another tag with `for`.
+        "<template data-for=\"p\" form=\"q\" format></template>",
+        "<label for=\"p\">l</label>",
+        "<output for=\"p\"></output>",
+        // A value is not a name.
+        "<template id=\"for\" title=for></template>",
+        // A foreign `template` is not affected.
+        "<svg><template for=\"p\"></template></svg>",
+        "<math><template for></template></math>",
+    ] {
+        let found = blocks(&format!("{tag}{block}"));
+        assert_eq!(found.last(), Some(&html("a", "x")), "{tag}");
+    }
+    // After a closed foreign region the rule applies again.
+    assert_invalid(
+        &format!("<svg></svg><template for></template>{block}"),
+        STRUCTURE,
+        "M-10",
+    );
+    // C already forbids `template` (M-11), with or without `for`.
+    assert_invalid(
+        "<noscript><template for=\"p\"></template></noscript>",
+        STRUCTURE,
+        "M-11",
+    );
+}
+
 #[test]
 fn m11_noscript() {
     assert_valid(

@@ -10,7 +10,7 @@ This section describes the example apps. Each example shows the same page — a 
 
 | Example | Folder | State | What you can do now |
 |---|---|---|---|
-| [Server](/guide/examples/server) | `examples/server-demo` | **Runs**, 14 tests pass | Start it, send RQP requests, measure bytes |
+| [Server](/guide/examples/server) | `examples/server-demo` | **Runs**, 45 tests pass | Start it, send RQP requests, measure bytes |
 | [Android](/guide/examples/android) | `examples/android-demo` | Planned (P5) | Read the screen plan and the planned API |
 | [iOS](/guide/examples/ios) | `examples/ios-demo` | Planned (P5) | Read the screen plan and the planned API |
 | [Web](/guide/examples/web) | `examples/web-demo` | Planned (P6) | Read the screen plan and the planned API |

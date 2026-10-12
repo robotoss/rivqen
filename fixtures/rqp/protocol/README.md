@@ -54,11 +54,11 @@ Client cases (`kind: "client"`): `context` (snapshot page and members, build typ
 
 ## `expected.json`
 
-Generated. Server cases: `request` (`method`, `target`, final header lines), optional `server_config`, `status`, `headers_required` (name → exact value), `headers_forbidden` (names), `body`: `{"kind": "full", "insert_at", "manifest"}` (the page with the manifest inserted; the manifest is compared as a JSON value, fixtures.md §5), `{"kind": "delta", "base_revision", "next_revision", "template_revision", "blocks": [{"id", "format", "sha256"}]}` (changed blocks in order), `{"kind": "app"}` (the application body unchanged) or `{"kind": "none"}`.
+Generated. Server cases: optional `level` (`"must"` or `"should"`, copied from `case.json`), `request` (`method`, `target`, final header lines), optional `server_config`, `status`, `headers_required` (name → exact value), `headers_forbidden` (names), `body`: `{"kind": "full", "insert_at", "manifest"}` (the page with the manifest inserted; the manifest is compared as a JSON value, fixtures.md §5), `{"kind": "delta", "base_revision", "next_revision", "template_revision", "blocks": [{"id", "format", "sha256"}]}` (changed blocks in order), `{"kind": "app"}` (the application body unchanged) or `{"kind": "none"}`.
 
 Client cases: `context`, `request`, `response` (with `body`, `body_bytes`, `body_sha256`), `result` (`outcome`, `error`, `next`, `metric`, `snapshot`).
 
-Harness: `tools/rqp-protocol/check.mjs` runs a server module `handle(request, appResponse, pageBytes, config)` or a client module over the fixtures. The public origin is `https://shop.example.com`; there is no content coding.
+Harness: `tools/rqp-protocol/check.mjs` runs a server module `handle(request, appResponse, pageBytes, config)` or a client module over the fixtures. It prints `FAIL [SHOULD]` lines for failed SHOULD cases and a summary `N passed, M failed, K SHOULD failed` (see `tools/rqp-protocol/README.md`). The public origin is `https://shop.example.com`; there is no content coding.
 
 ## Rules
 

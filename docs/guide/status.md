@@ -1,6 +1,6 @@
 # Project status
 
-**Current stage:** Phase P0 (Foundation and evidence) is **closed**: milestone **M1 "init docs"** is delivered and gate **G0** is passed. **Now:** Phase P1 — Contracts. WP-17 (RQP specification) sprint S1 is closed: the RQP markup rules are normative and four parser candidates agree on all golden markup fixtures. Next: WP-17 sprint S2 (negotiation, manifest and patch), then WP-02 and WP-03.
+**Current stage:** Phase P0 (Foundation and evidence) is **closed**: milestone **M1 "init docs"** is delivered and gate **G0** is passed. **Now:** Phase P1 — Contracts. WP-17 (RQP specification) sprint S1 is closed: the RQP markup rules are normative and four parser candidates agree on all golden markup fixtures. Now: WP-17 sprint S2 (negotiation, manifest and patch) is running; WP-02 and WP-03 follow.
 
 ## What exists
 

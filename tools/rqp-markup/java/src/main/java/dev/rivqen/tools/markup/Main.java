@@ -14,9 +14,11 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -131,6 +133,7 @@ public final class Main {
     for (Path p : fixtures) {
       Path input = p.resolve("input.html");
       if (!Files.exists(input)) {
+        // Only a missing input.html is skipped. Any other entry is checked by read().
         continue;
       }
       Result r = analyzer.apply(read(input));
@@ -150,6 +153,11 @@ public final class Main {
    * a larger file into memory.
    */
   static byte[] read(Path path) throws IOException {
+    // Check the type before the open: opening a FIFO waits for a writer (CONTRACT.md §2 item 7).
+    // Symbolic links are followed. A narrow window remains between this check and the open.
+    if (!Files.readAttributes(path, BasicFileAttributes.class).isRegularFile()) {
+      throw new FileSystemException(null, null, "not a regular file");
+    }
     try (InputStream s = Files.newInputStream(path)) {
       return s.readNBytes(Analyzer.MAX_INPUT_BYTES + 1);
     }

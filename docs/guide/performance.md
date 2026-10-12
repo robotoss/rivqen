@@ -43,39 +43,38 @@ The model has no DNS time, no TCP slow start, no CPU contention, no JavaScript c
 
 ## 3. Measured bytes {#measured-bytes}
 
-Source: `evidence/benchmarks/rqp-bytes.json`, made with `npm run measure` in [`examples/server-demo`](/guide/examples/server). Page: the demo catalog, 19,538 bytes of HTML with four blocks (`title`, `price`, `stock`, `cart`). Compression: Node.js zlib defaults.
+Source: `evidence/benchmarks/rqp-bytes.json`, made with `npm run measure` in [`examples/server-demo`](/guide/examples/server). Run date: 2026-10-12. Page: the demo catalog with four blocks (`title`, `price`, `stock`, `cart`). The page source is 19,538 bytes. The served document with the manifest is 20,250 bytes. Compression: Node.js zlib defaults. <Badge type="tip" text="FACT" />
 
 ### Body bytes per visit (gzip)
 
 | Visit | Plain (no revalidation) | HTTP ETag | Rivqen (RQP) | RQP response |
 |---|---:|---:|---:|---|
-| 1. Cold | 2,221 | 2,221 | 2,661 | Full HTML + manifest |
-| 2. Revisit, unchanged | 2,221 | 0 | 0 | `304` |
-| 3. Data changed | 2,220 | 2,220 | **484** | Patch, 4 blocks |
-| 4. Template changed | 2,240 | 2,240 | 2,679 | Full HTML + manifest |
+| 1. Cold | 2,708 | 2,708 | 2,708 | Full HTML + manifest |
+| 2. Revisit, unchanged | 2,708 | 0 | 0 | `304` |
+| 3. Data changed | 2,715 | 2,715 | **526** | Delta, changed blocks only |
+| 4. Template changed | 2,733 | 2,733 | 2,733 | Full HTML + manifest |
 
 ### All encodings for the data change
 
 | Strategy | Raw | gzip | Brotli |
 |---|---:|---:|---:|
-| Full page (plain, ETag) | 19,538 | 2,220 | 1,216 |
-| Rivqen patch (RQP) | 869 | 484 | 406 |
-| Legacy data body (upstream server, same page) | 512 | 295 | 253 |
+| Full page (plain, ETag) | 20,250 | 2,715 | 1,668 |
+| Rivqen delta (RQP) | 836 | 526 | 467 |
 
 ```mermaid
 xychart-beta
   title "Data change: bytes on the wire (gzip)"
-  x-axis ["Full page", "RQP patch", "Legacy body"]
-  y-axis "Bytes" 0 --> 2400
-  bar [2220, 484, 295]
+  x-axis ["Full page", "RQP delta"]
+  y-axis "Bytes" 0 --> 3000
+  bar [2715, 526]
 ```
 
 ### What the numbers say
 
-1. On a data change, the RQP patch is **78 % smaller** than the full page with gzip (484 vs 2,220 bytes) and 67 % smaller with Brotli.
+1. On a data change, the RQP delta is **81 % smaller** than the full page with gzip (526 vs 2,715 bytes) and 72 % smaller with Brotli (467 vs 1,668 bytes).
 2. On an unchanged revisit, RQP and plain HTTP ETag are equal: both send `304`. The gain there is time (cache first), not bytes.
-3. On the first visit and on a template change, RQP is about **440 bytes larger** with gzip. This is the manifest.
-4. The RQP patch is **larger than the legacy data body** (869 vs 512 bytes raw). The cause is per-block SHA-256 values (64 hex characters each) and envelope fields. This is open question [Q-15](/engineering/plan/open-questions).
+3. On the first visit and on a template change, RQP sends the same bytes as the plain server. In this demo, the plain server also sends the document with the manifest.
+4. The run has no legacy comparison. The legacy data body was not measured in this run.
 
 ::: info Bytes are not time
 These values count body bytes only, without headers and TLS framing. For a small page on a fast network, the byte saving changes little. The saving grows with page size, slow networks and frequent data changes.

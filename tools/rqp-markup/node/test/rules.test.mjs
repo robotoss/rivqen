@@ -596,6 +596,58 @@ describe('M-10 item 2 nested forms (H-36)', () => {
   });
 });
 
+describe('M-10 item 3 template for (H-43)', () => {
+  const block = '<div data-rq-block="a">x</div>';
+
+  it('rejects a template start tag with a for attribute', () => {
+    assert.equal(errorOf(`${block}<template for="p"><b>n</b></template>`), STRUCTURE);
+  });
+
+  it('matches the name ASCII case-insensitively, with any value or none', () => {
+    for (const tag of ['<template FOR="">', '<template For=x>', '<template for>', '<template for=\'\'>']) {
+      assert.equal(errorOf(`${block}${tag}</template>`), STRUCTURE, tag);
+    }
+  });
+
+  it('rejects the attribute after other attributes and when it is duplicated', () => {
+    assert.equal(errorOf(`${block}<template id="t" class=c for="p"></template>`), STRUCTURE);
+    assert.equal(errorOf(`${block}<template for for="q"></template>`), STRUCTURE);
+    assert.equal(errorOf(`${block}<template id="1" id="2" for></template>`), STRUCTURE);
+  });
+
+  it('rejects it in a document without a block and inside other elements', () => {
+    assert.equal(errorOf('<template for="p"></template>'), STRUCTURE);
+    assert.equal(errorOf(`${block}<table><template for="p"></template></table>`), STRUCTURE);
+  });
+
+  it('accepts a template without a for attribute (the control)', () => {
+    assert.equal(errorOf(`${block}<template id="t"><b>n</b></template>`), null);
+    assert.equal(errorOf(`${block}<template></template>`), null);
+  });
+
+  it('does not match other names or values', () => {
+    for (const tag of ['<template data-for="p">', '<template id="for">', '<template fo="p">',
+      '<template form="p">', '<template forx>', '<template xfor>']) {
+      assert.equal(errorOf(`${block}${tag}</template>`), null, tag);
+    }
+  });
+
+  it('does not apply to a template in a foreign region', () => {
+    assert.equal(errorOf(`<svg><template for="p"></template></svg>${block}`), null);
+    assert.equal(errorOf(`${block}<math><template for></template></math>`), null);
+  });
+
+  it('applies to other elements only as before: for on a label is valid', () => {
+    assert.equal(errorOf(`${block}<label for="x">y</label>`), null);
+  });
+
+  it('keeps rejecting a template in block content and in noscript content', () => {
+    assert.equal(errorOf('<div data-rq-block="a"><template for="p"></template></div>'), STRUCTURE);
+    assert.equal(checkNoscript(Buffer.from('<template for="p"></template>')), STRUCTURE);
+    assert.equal(checkNoscript(Buffer.from('<template></template>')), STRUCTURE);
+  });
+});
+
 describe('M-11 noscript', () => {
   it('accepts typical tracking fallbacks', () => {
     const body = '<noscript><iframe src="https://www.example.com/"></iframe></noscript>'

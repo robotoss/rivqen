@@ -382,7 +382,7 @@ class Scanner {
     return null;
   }
 
-  // M-05 rule 1, M-04, M-09, M-10 item 2, M-26 item 3, and M-22 to M-24 in
+  // M-05 rule 1, M-04, M-09, M-10 items 2 and 3, M-26 item 3, and M-22 to M-24 in
   // block content. All checks come before the implied parts and the push.
   htmlStart(t) {
     const name = t.name;
@@ -392,6 +392,9 @@ class Scanner {
     }
     // M-10 item 2 (H-36): the form element pointer of the tree builder.
     if (name === 'form' && this.isOpen('form')) return STRUCTURE;
+    // M-10 item 3 (H-43): content patching (<template for>) would act on the
+    // nodes between the markers, which the token model reads as comments.
+    if (name === 'template' && t.hasFor) return STRUCTURE;
     const f = this.familyIndex();
     // M-09 condition 1 (H-35): "in column group" in a template ignores the
     // later start tags, also the raw text ones.

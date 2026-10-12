@@ -91,7 +91,6 @@ final class CliTest extends TestCase
         $this->file('fx/A0/other.html', 'x');
         $this->file('fx/input.html', 'not a fixture');
         $this->file('fx/file', 'x');
-        self::assertTrue(mkdir($this->tmp . '/fx/d/input.html', 0o700, true));
         [$code, $out, $err] = self::cli(['--batch', $this->tmp . '/fx']);
         self::assertSame(0, $code);
         self::assertSame('', $err);
@@ -213,6 +212,126 @@ final class CliTest extends TestCase
         fclose($pipes[1]);
         fclose($pipes[2]);
         self::assertSame(2, proc_close($process));
+    }
+
+    /**
+     * Run the command in a child process with a deadline, so that a read that
+     * waits on a FIFO fails the test and does not hang it.
+     *
+     * @param list<string> $args
+     * @return array{int, string, string}
+     */
+    private static function cliProcess(array $args): array
+    {
+        $bin = dirname(__DIR__) . '/bin/rqp-markup';
+        $process = proc_open([PHP_BINARY, '-n', $bin, ...$args], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        self::assertIsResource($process);
+        stream_set_blocking($pipes[1], false);
+        stream_set_blocking($pipes[2], false);
+        $out = '';
+        $err = '';
+        $deadline = microtime(true) + 10.0;
+        while (true) {
+            $out .= (string) stream_get_contents($pipes[1]);
+            $err .= (string) stream_get_contents($pipes[2]);
+            $status = proc_get_status($process);
+            if (!$status['running']) {
+                break;
+            }
+            if (microtime(true) > $deadline) {
+                proc_terminate($process, 9);
+                proc_close($process);
+                self::fail('the command waits on its input');
+            }
+            usleep(10_000);
+        }
+        $out .= (string) stream_get_contents($pipes[1]);
+        $err .= (string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $code = $status['exitcode'];
+        proc_close($process);
+        return [$code, $out, $err];
+    }
+
+    private function fifo(string $relative): string
+    {
+        if (!function_exists('posix_mkfifo')) {
+            self::markTestSkipped('posix_mkfifo is not available');
+        }
+        $path = $this->tmp . '/' . $relative;
+        $dir = dirname($path);
+        if (!is_dir($dir)) {
+            self::assertTrue(mkdir($dir, 0o700, true));
+        }
+        if (!posix_mkfifo($path, 0o600)) {
+            self::markTestSkipped('cannot create a FIFO here');
+        }
+        return $path;
+    }
+
+    public function testSingleModeFifoIsAnIoErrorWithoutWaiting(): void
+    {
+        [$code, $out, $err] = self::cliProcess([$this->fifo('pipe.html')]);
+        self::assertSame(2, $code);
+        self::assertSame('', $out);
+        self::assertStringContainsString('not a file', $err);
+    }
+
+    public function testSingleModeSymlinkToFifoIsAnIoErrorWithoutWaiting(): void
+    {
+        $fifo = $this->fifo('pipe.html');
+        self::assertTrue(symlink($fifo, $this->tmp . '/link.html'));
+        [$code, $out, $err] = self::cliProcess([$this->tmp . '/link.html']);
+        self::assertSame(2, $code);
+        self::assertSame('', $out);
+        self::assertStringContainsString('not a file', $err);
+    }
+
+    public function testSingleModeSymlinkToRegularFileIsRead(): void
+    {
+        $path = $this->file('real.html', '<title data-rq-block="t">x</title>');
+        self::assertTrue(symlink($path, $this->tmp . '/link.html'));
+        [$code, $out] = self::cli([$this->tmp . '/link.html']);
+        self::assertSame(0, $code);
+        self::assertStringStartsWith('{"valid":true', $out);
+    }
+
+    public function testBatchFifoInputIsAnIoErrorWithoutWaiting(): void
+    {
+        $this->fifo('fx/a/input.html');
+        [$code, $out, $err] = self::cliProcess(['--batch', $this->tmp . '/fx']);
+        self::assertSame(2, $code);
+        self::assertSame('', $out);
+        self::assertStringContainsString('not a file', $err);
+    }
+
+    public function testBatchSymlinkToFifoInputIsAnIoErrorWithoutWaiting(): void
+    {
+        $fifo = $this->fifo('pipe');
+        self::assertTrue(mkdir($this->tmp . '/fx/a', 0o700, true));
+        self::assertTrue(symlink($fifo, $this->tmp . '/fx/a/input.html'));
+        [$code, , $err] = self::cliProcess(['--batch', $this->tmp . '/fx']);
+        self::assertSame(2, $code);
+        self::assertStringContainsString('not a file', $err);
+    }
+
+    public function testBatchDirectoryNamedInputHtmlIsAnIoError(): void
+    {
+        self::assertTrue(mkdir($this->tmp . '/fx/a/input.html', 0o700, true));
+        [$code, $out, $err] = self::cli(['--batch', $this->tmp . '/fx']);
+        self::assertSame(2, $code);
+        self::assertSame('', $out);
+        self::assertStringContainsString('not a file', $err);
+    }
+
+    public function testBatchErrorMessageHasNoDocumentContent(): void
+    {
+        $this->file('fx/a/input.html', '<title data-rq-block="t">SECRET</title>');
+        self::assertTrue(mkdir($this->tmp . '/fx/b/input.html', 0o700, true));
+        [$code, , $err] = self::cli(['--batch', $this->tmp . '/fx']);
+        self::assertSame(2, $code);
+        self::assertStringNotContainsString('SECRET', $err);
     }
 
     private static function removeTree(string $path): void

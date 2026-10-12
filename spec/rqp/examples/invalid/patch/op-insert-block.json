@@ -1,8 +1,8 @@
 {
   "description": "insert_block is not an rqp/1 operation",
   "expect": {
-    "keyword": "oneOf",
-    "instancePath": "/operations/0"
+    "keyword": "const",
+    "instancePath": "/operations/0/op"
   },
   "instance": {
     "type": "rivqen.patch",

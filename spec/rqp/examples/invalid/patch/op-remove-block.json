@@ -1,8 +1,8 @@
 {
-  "description": "block_id follows M-15",
+  "description": "remove_block is not an rqp/1 operation (H-47): replace_block with empty content does the same",
   "expect": {
-    "keyword": "pattern",
-    "instancePath": "/operations/0/block_id"
+    "keyword": "const",
+    "instancePath": "/operations/0/op"
   },
   "instance": {
     "type": "rivqen.patch",
@@ -13,7 +13,7 @@
     "operations": [
       {
         "op": "remove_block",
-        "block_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        "block_id": "title"
       }
     ]
   }

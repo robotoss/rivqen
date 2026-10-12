@@ -1,8 +1,8 @@
 {
   "description": "Unknown operations are rejected",
   "expect": {
-    "keyword": "oneOf",
-    "instancePath": "/operations/0"
+    "keyword": "const",
+    "instancePath": "/operations/0/op"
   },
   "instance": {
     "type": "rivqen.patch",

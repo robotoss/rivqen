@@ -16,12 +16,8 @@
       "type": "array",
       "minItems": 1,
       "maxItems": 256,
-      "items": {
-        "oneOf": [
-          { "$ref": "#/$defs/replace_block" },
-          { "$ref": "#/$defs/remove_block" }
-        ]
-      }
+      "description": "rqp/1 has one operation, replace_block (H-47). A new operation needs a new capability.",
+      "items": { "$ref": "#/$defs/replace_block" }
     }
   },
   "$defs": {
@@ -39,15 +35,6 @@
           "maxLength": 1048576
         },
         "sha256": { "$ref": "#/$defs/sha256" }
-      }
-    },
-    "remove_block": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["op", "block_id"],
-      "properties": {
-        "op": { "const": "remove_block" },
-        "block_id": { "$ref": "#/$defs/block_id" }
       }
     },
     "block_id": {

@@ -1,0 +1,32 @@
+{
+  "id": "FX-RQ-P32-ZERO-BLOCKS-FIRST-VISIT",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html"]
+    ]
+  },
+  "status": 200,
+  "headers_required": {
+    "content-type": "text/html; charset=utf-8",
+    "cache-control": "no-cache",
+    "etag": "\"r1.BgyOJ0KPx6zil_duHSiCIgtxzhUXRaxTtSaBbXas9rg\"",
+    "rq-version": "1"
+  },
+  "headers_forbidden": ["rq-revision","rq-template-revision"],
+  "body": {
+    "kind": "full",
+    "insert_at": 52,
+    "manifest": {
+      "protocol": "rqp/1",
+      "origin": "https://shop.example.com",
+      "path": "/catalog",
+      "template_revision": "t1.OSRFptnhNIski13tjSU2ny41r11c8GNzk1jBndaNXOI",
+      "page_revision": "r1.BgyOJ0KPx6zil_duHSiCIgtxzhUXRaxTtSaBbXas9rg",
+      "blocks": []
+    }
+  }
+}

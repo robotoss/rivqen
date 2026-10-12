@@ -1,0 +1,62 @@
+{
+  "id": "FX-RQ-C14-HTTP-DEBUG-FLAG",
+  "kind": "client",
+  "context": {
+    "url": "http://shop.example.com/catalog",
+    "build": "debug",
+    "allow_http": true,
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html"]
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"],
+      ["rq-version","1"],
+      ["etag","\"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\""],
+      ["cache-control","no-cache"]
+    ],
+    "body": "response.body",
+    "body_bytes": 798,
+    "body_sha256": "JGBFUyqqlHaR_iMUXVvD6FY9r41d1yaIZYLE3wCZRPI"
+  },
+  "result": {
+    "outcome": "stored",
+    "error": null,
+    "next": "show",
+    "metric": false,
+    "snapshot": {
+      "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
+      "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
+      "blocks": [
+        {
+          "id": "title",
+          "format": "html",
+          "sha256": "0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces",
+          "content": "Shop"
+        },
+        {
+          "id": "price",
+          "format": "html",
+          "sha256": "Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs",
+          "content": "120.00"
+        },
+        {
+          "id": "cart",
+          "format": "json",
+          "sha256": "zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4",
+          "content": "{\"items\":3}"
+        }
+      ],
+      "document_sha256": "xzb0cXdSHvu0CtK8DkDnFU_oof2RpisnvRVGspmq62c"
+    }
+  }
+}

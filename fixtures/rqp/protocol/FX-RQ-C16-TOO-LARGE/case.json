@@ -1,0 +1,30 @@
+{
+  "id": "FX-RQ-C16-TOO-LARGE",
+  "kind": "client",
+  "description": "A delta of 262145 bytes, one more than min(maxPatchBytes, max_patch_bytes)",
+  "rules": ["RQP-11"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": ""
+          }
+        ],
+        "size": 262145
+      }
+    }
+  }
+}

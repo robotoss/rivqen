@@ -1,0 +1,24 @@
+{
+  "id": "FX-RQ-P06-NOT-MODIFIED-WEAK",
+  "description": "A weak tag W/\"r1(page-a)\" matches by weak comparison: 304",
+  "rules": ["RQP-03", "RQP-18"],
+  "page": "page-a",
+  "client_page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "W/{{r1:page-a}}"],
+      ["rq-have", "t={{t1:page-a}}, b={{have:page-a}}"]
+    ]
+  }
+}

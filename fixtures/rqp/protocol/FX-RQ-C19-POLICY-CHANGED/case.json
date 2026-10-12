@@ -1,0 +1,36 @@
+{
+  "id": "FX-RQ-C19-POLICY-CHANGED",
+  "kind": "client",
+  "description": "Snapshot policy ttl_seconds 60; the delta next_revision was computed with ttl_seconds 61 (H-55)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": {
+      "page": "page-a",
+      "members": {
+        "policy": {
+          "ttl_seconds": 60
+        }
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b",
+        "next_members": {
+          "policy": {
+            "ttl_seconds": 61
+          }
+        }
+      }
+    }
+  }
+}

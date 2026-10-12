@@ -1,0 +1,36 @@
+{
+  "id": "FX-RQ-C14-HTTP-DEBUG-NO-FLAG",
+  "kind": "client",
+  "context": {
+    "url": "http://shop.example.com/catalog",
+    "build": "debug",
+    "allow_http": false,
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["accept","text/html"]
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"],
+      ["rq-version","1"],
+      ["etag","\"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\""],
+      ["cache-control","no-cache"]
+    ],
+    "body": "response.body",
+    "body_bytes": 798,
+    "body_sha256": "JGBFUyqqlHaR_iMUXVvD6FY9r41d1yaIZYLE3wCZRPI"
+  },
+  "result": {
+    "outcome": "normal",
+    "error": null,
+    "next": "show",
+    "metric": false,
+    "snapshot": null
+  }
+}

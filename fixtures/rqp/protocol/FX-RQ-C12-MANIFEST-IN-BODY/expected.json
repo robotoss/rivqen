@@ -1,0 +1,38 @@
+{
+  "id": "FX-RQ-C12-MANIFEST-IN-BODY",
+  "kind": "client",
+  "context": {
+    "url": "https://shop.example.com/catalog",
+    "build": "release",
+    "allow_http": false,
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html"]
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"],
+      ["rq-version","1"],
+      ["etag","\"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\""],
+      ["cache-control","no-cache"]
+    ],
+    "body": "response.body",
+    "body_bytes": 799,
+    "body_sha256": "hpYDYHi-zk1KxxDFlvqy_SwBInvjPN1_Dby5mQhYCnQ"
+  },
+  "result": {
+    "outcome": "rejected",
+    "error": "MANIFEST_INVALID",
+    "next": "show",
+    "metric": false,
+    "snapshot": null
+  }
+}

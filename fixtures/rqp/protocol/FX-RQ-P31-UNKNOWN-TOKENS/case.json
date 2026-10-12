@@ -1,0 +1,24 @@
+{
+  "id": "FX-RQ-P31-UNKNOWN-TOKENS",
+  "description": "Unknown and withdrawn tokens, an unknown Rq-Have member and a parameter are ignored: delta as P-09 (H-54)",
+  "rules": ["RQP-06", "RQP-21"],
+  "page": "page-big-b",
+  "client_page": "page-big-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch manifest json-blocks x-future)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-big-a}}"],
+      ["rq-have", "t={{t1:page-big-a}};v=2, b={{have:page-big-a}}, x=1"]
+    ]
+  }
+}

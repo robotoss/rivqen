@@ -1,0 +1,40 @@
+{
+  "id": "FX-RQ-P36-POLICY-DELTA",
+  "description": "The client and the server have the same policy and limits; a block changed: delta whose next_revision has the policy line (H-55, extra case)",
+  "rules": ["RQP-11"],
+  "page": "page-big-b",
+  "client_page": "page-big-a",
+  "client_members": {
+    "policy": {
+      "ttl_seconds": 60
+    },
+    "limits": {
+      "max_patch_bytes": 65536
+    }
+  },
+  "server_config": {
+    "policy": {
+      "ttl_seconds": 60
+    },
+    "limits": {
+      "max_patch_bytes": 65536
+    }
+  },
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-big-a}}"],
+      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}"]
+    ]
+  }
+}

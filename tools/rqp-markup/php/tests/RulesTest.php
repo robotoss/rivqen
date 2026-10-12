@@ -170,6 +170,13 @@ final class RulesTest extends TestCase
         yield 'M-10.2 nested forms in object (review repro)' => [
             '<a href="1">' . str_repeat('<form><object><form></form></object></form>', 9) . 'x</a><span data-rq-block="k">y<a href="2">z</a>w</span>', 'M-10', $S,
         ];
+        // M-10 item 3 (H-43): `template` with a `for` attribute in HTML context.
+        yield 'M-10.3 template for' => ['<div data-rq-block="a">x</div><template for="p"><b>n</b></template>', 'M-10', $S];
+        yield 'M-10.3 template FOR empty value' => ['<template FOR="">', 'M-10', $S];
+        yield 'M-10.3 template for without value' => ['<template for>', 'M-10', $S];
+        yield 'M-10.3 template for in noscript is M-11' => ['<noscript><template for="p"></template></noscript>', 'M-11', $S];
+        yield 'M-10.3 template for duplicated' => ['<template for for="x">', 'M-10', $S];
+        yield 'M-10.3 template for after another attribute' => ['<template id="t" for="p">', 'M-10', $S];
         yield 'M-10.2 form in a form' => ['<form><form></form></form>', 'M-10', $S];
         yield 'M-10.2 form in a div in a form' => ['<form><div><form>', 'M-10', $S];
         yield 'M-10.2 form in a cell in a form' => ['<form><table><tr><td><form>', 'M-10', $S];
@@ -416,6 +423,11 @@ final class RulesTest extends TestCase
      */
     public static function validCases(): iterable
     {
+        // M-10 item 3 (H-43)
+        yield 'M-10.3 template without for' => ['<p data-rq-block="a">x</p><template id="t"></template>', [['a', 'html', 'x']]];
+        yield 'M-10.3 template for in svg' => ['<p data-rq-block="a">x</p><svg><template for="p"></template></svg>', [['a', 'html', 'x']]];
+        yield 'M-10.3 for on another element' => ['<p data-rq-block="a">x</p><label for="p">l</label>', [['a', 'html', 'x']]];
+
         // M-02
         yield 'M-02 BOM' => ["\xEF\xBB\xBF<p data-rq-block=\"a\">x</p>", [['a', 'html', 'x']]];
         yield 'M-02 U+FEFF after offset 0' => ["x\xEF\xBB\xBF<p data-rq-block=\"a\">\xEF\xBB\xBF</p>", [['a', 'html', "\xEF\xBB\xBF"]]];

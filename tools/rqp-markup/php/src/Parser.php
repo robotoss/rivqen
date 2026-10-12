@@ -279,6 +279,10 @@ final class Parser
             if ($name === 'form' && $this->forms > 0) {
                 throw new MarkupError(ErrorCode::Structure, 'M-10'); // item 2
             }
+            // Item 3 (H-43): content patching replaces nodes between the markers.
+            if ($name === 'template' && $token->attribute('for') !== null) {
+                throw new MarkupError(ErrorCode::Structure, 'M-10');
+            }
         }
 
         if ($token->attribute(self::BLOCK_ATTR) !== null) {

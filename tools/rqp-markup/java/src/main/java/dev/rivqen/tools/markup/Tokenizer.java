@@ -38,6 +38,7 @@ final class Tokenizer {
 
   private static final byte[] DATA_RQ_BLOCK = ascii("data-rq-block");
   private static final byte[] TYPE = ascii("type");
+  private static final byte[] FOR = ascii("for");
   private static final byte[] DOCTYPE = ascii("doctype");
   private static final byte[] CDATA_OPEN = ascii("[CDATA[");
   private static final byte[] SCRIPT = ascii("script");
@@ -99,6 +100,7 @@ final class Tokenizer {
   private int blockValueEnd = -1;
   private int typeValueStart = -1;
   private int typeValueEnd = -1;
+  private boolean forAttribute;
 
   private byte[] nameBuf = new byte[32];
   private int nameLen;
@@ -234,6 +236,11 @@ final class Tokenizer {
     return typeValueEnd;
   }
 
+  /** True when the start tag has an attribute named {@code for}, in any occurrence (M-10). */
+  boolean hasForAttribute() {
+    return forAttribute;
+  }
+
   // ---------------------------------------------------------------------------------------------
   // Tags and attributes
 
@@ -261,6 +268,7 @@ final class Tokenizer {
     blockValueEnd = -1;
     typeValueStart = -1;
     typeValueEnd = -1;
+    forAttribute = false;
   }
 
   private void appendName(byte b) {
@@ -401,6 +409,9 @@ final class Tokenizer {
    * attribute without a value has the empty value.
    */
   private int attributeName(int from, int to) {
+    if (equalsIgnoreCase(from, to, FOR)) {
+      forAttribute = true; // every occurrence counts, also a dropped duplicate
+    }
     if (blockValueStart < 0 && equalsIgnoreCase(from, to, DATA_RQ_BLOCK)) {
       blockValueStart = to;
       blockValueEnd = to;

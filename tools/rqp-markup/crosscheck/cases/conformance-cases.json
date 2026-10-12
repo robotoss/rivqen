@@ -410,57 +410,57 @@
   {
     "id": "C3-GAP1-replace-content",
     "step": "IH-5",
-    "expected": "valid 1",
-    "note": "GAP-1. Chrome 154: the block content is <b>new</b>, not the content bytes. parse5 8.0.1 has no content patching.",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "note": "GAP-1, closed by H-43 (M-10 item 3). Chrome 154: the block content is <b>new</b>, not the content bytes. parse5 8.0.1 cannot see this class (no content patching, no processing instructions); the evidence is Chrome 154.",
     "input": "<!DOCTYPE html><div data-rq-block=\"a\"><?start name=\"p\">old<?end></div><template for=\"p\"><b>new</b></template><p>after</p>"
   },
   {
     "id": "C3-GAP1-remove-block",
     "step": "IH-5",
-    "expected": "valid 1",
-    "note": "GAP-1. Chrome 154: the block element is removed from the DOM.",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "note": "GAP-1, closed by H-43 (M-10 item 3). Chrome 154: the block element is removed from the DOM. parse5 8.0.1 cannot see this class (no content patching, no processing instructions); the evidence is Chrome 154.",
     "input": "<!DOCTYPE html><body><?start name=\"q\"><div data-rq-block=\"a\">x</div><?end><template for=\"q\">gone</template><p>after</p>"
   },
   {
     "id": "C3-GAP1-title-in-head",
     "step": "IH-5",
-    "expected": "valid 1",
-    "note": "GAP-1. Chrome 154: the title block is replaced by <title>X</title> (a template in body patches the head).",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "note": "GAP-1, closed by H-43 (M-10 item 3). Chrome 154: the title block is replaced by <title>X</title> (a template in body patches the head). parse5 8.0.1 cannot see this class (no content patching, no processing instructions); the evidence is Chrome 154.",
     "input": "<!DOCTYPE html><html><head><?start name=\"t\"><title data-rq-block=\"t\">T</title><?end></head><body><template for=\"t\"><title>X</title></template><p>b</p></body></html>"
   },
   {
     "id": "C3-GAP1-start-no-end",
     "step": "IH-5",
-    "expected": "valid 1",
-    "note": "GAP-1. Chrome 154: <?start> without <?end> removes to the end of the block; block content is vZ.",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "note": "GAP-1, closed by H-43 (M-10 item 3). Chrome 154: <?start> without <?end> removes to the end of the block; block content is vZ. parse5 8.0.1 cannot see this class (no content patching, no processing instructions); the evidence is Chrome 154.",
     "input": "<!DOCTYPE html><p data-rq-block=\"a\">v<?start name=\"m\">w</p><template for=\"m\">Z</template><p>tail</p>"
   },
   {
     "id": "C3-GAP1-ancestor-scope",
     "step": "IH-5",
-    "expected": "valid 1",
-    "note": "GAP-1. The template is in an ancestor of the block, so the marker search finds the marker.",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "note": "GAP-1, closed by H-43 (M-10 item 3). The template is in an ancestor of the block, so the marker search finds the marker. parse5 8.0.1 cannot see this class (no content patching, no processing instructions); the evidence is Chrome 154.",
     "input": "<!DOCTYPE html><div><div data-rq-block=\"a\"><?start name=\"m\">x<?end></div><template for=\"m\">y</template></div>"
   },
   {
     "id": "C3-GAP1-control-table-scope",
     "step": "IH-5",
-    "expected": "valid 1",
-    "note": "Control. Chrome 154: no patch; the search scope is the table, the parent of the template.",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "note": "H-43 (M-10 item 3) rejects every for attribute on an HTML template (fail closed). Chrome 154: no patch here; the search scope is the table, the parent of the template. parse5 8.0.1 cannot see this class (no content patching, no processing instructions); the evidence is Chrome 154.",
     "input": "<!DOCTYPE html><div data-rq-block=\"a\">v<?marker name=\"m\"></div><table><template for=\"m\"><i>z</i></template></table>"
   },
   {
     "id": "C3-GAP1-control-foreign",
     "step": "IH-5",
     "expected": "valid 1",
-    "note": "Control. Chrome 154: no patch; an SVG template is a foreign element.",
+    "note": "Control, valid under H-43: M-10 item 3 applies in HTML context only. Chrome 154: no patch; an SVG template is a foreign element.",
     "input": "<!DOCTYPE html><div data-rq-block=\"a\"><?start name=\"m\">x</div><svg><template for=\"m\">Z</template></svg>"
   },
   {
     "id": "C3-GAP1-control-empty",
     "step": "IH-5",
-    "expected": "valid 1",
-    "note": "Control. Chrome 154: no patch; an empty for value returns false.",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "note": "H-43 (M-10 item 3) rejects an empty for value too (fail closed). Chrome 154: no patch; an empty for value returns false. parse5 8.0.1 cannot see this class (no content patching, no processing instructions); the evidence is Chrome 154.",
     "input": "<!DOCTYPE html><div data-rq-block=\"a\"><?start name=\"\">x</div><template for=\"\">Z</template>"
   },
   {

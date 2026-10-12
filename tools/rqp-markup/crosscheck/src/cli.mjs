@@ -28,7 +28,7 @@ const MAX_DETAIL_LINES = 6;
 const USAGE = `usage:
   node src/cli.mjs check [--fixtures dir | --input file] [--results file.jsonl | --expected] [common options]
   node src/cli.mjs cases [--cases file.json] [common options]
-  node src/cli.mjs sweep [--seed n] [--count n] [--max-tokens n] [--profile classic|review|review2] [--chunk n] [--out dir] [--keep n] [common options]
+  node src/cli.mjs sweep [--seed n] [--count n] [--max-tokens n] [--profile classic|review|review2|review3] [--chunk n] [--out dir] [--keep n] [common options]
 common options: --only name,... --candidates file --timeout seconds --build --scripting enabled|disabled|both`;
 
 /** @param {string} name @param {string | undefined} v @param {number} min @param {number} max */
@@ -116,7 +116,7 @@ export function parseArgs(argv) {
         break;
       case "--profile": {
         const v = value();
-        if (!["classic", "review", "review2"].includes(v)) throw new CrosscheckError("--profile is classic, review or review2");
+        if (!["classic", "review", "review2", "review3"].includes(v)) throw new CrosscheckError("--profile is classic, review, review2 or review3");
         o.profile = v;
         break;
       }

@@ -51,6 +51,7 @@ export const CLASSES = {
   tableCurrent: "M-09-table-current", // H-37: a table part, col or table start tag while F (a table context) is not the current node
   form: "M-10-form", // H-36: a form start tag while an HTML form is on the token stack
   noscriptTablePart: "M-11-table-part", // H-38: a table part or col start tag in C without a table on the C stack
+  templateFor: "M-10-template-for", // H-43: an HTML template start tag with a for attribute (content patching; parse5 8.0.1 does not implement it)
 };
 
 /**
@@ -92,8 +93,13 @@ export class DepthCounter {
     return null;
   }
 
-  /** A start tag token (M-05 items 1 and 2). */
-  startTag(name, selfClosing) {
+  /**
+   * A start tag token (M-05 items 1 and 2).
+   * @param {string} name
+   * @param {boolean} selfClosing
+   * @param {string[]} [attrNames] attribute names in lower case (M-10 item 3)
+   */
+  startTag(name, selfClosing, attrNames = []) {
     if (this.inForeign) {
       if (!selfClosing) {
         this.stack.push({ name, foreign: true, dirty: false, marked: false, implied: new Set() });
@@ -103,7 +109,7 @@ export class DepthCounter {
     }
     // Elements that the tree builder inserts implicitly for this start tag (M-26, M-09).
     const f = this.#tableContext();
-    this.#classifyStart(name, f);
+    this.#classifyStart(name, f, attrNames);
     if (f !== null) {
       const add = (kind) => {
         if (!f.implied.has(kind)) {
@@ -126,8 +132,8 @@ export class DepthCounter {
     this.#raise(1);
   }
 
-  /** Rule classes of round 2 of the security review for a start tag in HTML context. */
-  #classifyStart(name, f) {
+  /** Rule classes of round 2 of the security review and of H-43 for a start tag in HTML context. */
+  #classifyStart(name, f, attrNames) {
     if (name === "col") {
       for (let i = this.stack.length - 1; i >= 0; i--) {
         const n = this.stack[i].name;
@@ -139,6 +145,7 @@ export class DepthCounter {
       }
     }
     if (name === "form" && this.stack.some((e) => e.name === "form")) this.classes.add(CLASSES.form);
+    if (name === "template" && attrNames.includes("for")) this.classes.add(CLASSES.templateFor);
     const top = this.stack[this.stack.length - 1];
     if ((TABLE_PART.has(name) || name === "col" || name === "table") && f !== null && TABLE_CONTEXT.has(f.name) && f !== top) {
       this.classes.add(CLASSES.tableCurrent);
@@ -350,7 +357,7 @@ export function analyzeDepth(bytes, { fullStackLimit = 1024 } = {}) {
 
     onStartTag(token) {
       const htmlContext = !counter.inForeign;
-      counter.startTag(token.tagName, token.selfClosing);
+      counter.startTag(token.tagName, token.selfClosing, (token.attrs ?? []).map((a) => a.name));
       if (token.tagName === "script") {
         const type = rawAttrValue(text, token.location, "type");
         if (type !== null && hasNonAscii(type)) counter.classes.add(CLASSES.typeNonAscii);

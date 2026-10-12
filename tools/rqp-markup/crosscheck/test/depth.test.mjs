@@ -214,6 +214,30 @@ test("class H-35: col whose nearest table-family-or-template element is template
   assert.deepEqual(run("<template><tr><td>x</td></tr></template><template><table><col></table></template>").classes, []);
 });
 
+test("class H-43: an HTML template start tag with a for attribute, any value and any case", () => {
+  const cls = [CLASSES.templateFor];
+  assert.deepEqual(run('<div data-rq-block="a"><?start name="p">old<?end></div><template for="p"><b>new</b></template>').classes, cls);
+  assert.deepEqual(run("<template FOR>y</template>").classes, cls);
+  assert.deepEqual(run('<template for="">y</template>').classes, cls);
+  assert.deepEqual(run('<table><template for="m"></template></table>').classes, cls);
+  assert.deepEqual(run('<template><template id="t" for="m"></template></template>').classes, cls);
+  assert.deepEqual(run('<template shadowrootmode="open" for="m"></template>').classes, cls);
+});
+
+test("class H-43 does not apply to foreign templates, other attributes or other elements", () => {
+  assert.deepEqual(run('<svg><template for="m">Z</template></svg>').classes, []);
+  assert.deepEqual(run('<math><template for="m"></template></math>').classes, []);
+  assert.deepEqual(run('<template id="for" data-for="m" form="x"></template><label for="m">x</label>').classes, []);
+});
+
+test("startTag without attribute names keeps the old behavior", () => {
+  const c = new DepthCounter();
+  c.startTag("template", false);
+  assert.deepEqual([...c.classes], []);
+  c.startTag("template", false, ["for"]);
+  assert.deepEqual([...c.classes], [CLASSES.templateFor]);
+});
+
 test("the depth invariant excludes template contents (H-35): implied parts there are not counted", () => {
   // In "in table" mode inside a template, <tr> inserts a tbody; M-09 F stops at template, so D does not count it.
   const a = run(`<template><caption></caption>${"<tr><td>".repeat(5)}</template><p>x</p>`);

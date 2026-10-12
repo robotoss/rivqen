@@ -155,7 +155,10 @@ fn batch(dir: &Path, sink: &mut Sink<impl Write, impl Write>) -> Result<(), CliE
     names.sort_by(|a, b| a.as_encoded_bytes().cmp(b.as_encoded_bytes()));
     for name in names {
         let input_path = dir.join(&name).join("input.html");
-        if !input_path.is_file() {
+        // A missing input.html skips the directory. Any other entry that is
+        // not a regular file is an I/O error (CONTRACT.md section 2, item 7);
+        // read_input rejects it before the open, so a FIFO never blocks.
+        if matches!(fs::metadata(&input_path), Err(e) if e.kind() == io::ErrorKind::NotFound) {
             continue;
         }
         let input = read_input(&input_path)?;

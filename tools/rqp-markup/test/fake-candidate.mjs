@@ -31,5 +31,8 @@ if (mode === "hang") {
       if (result.blocks.length > 0) result.blocks[0].end += 1;
     }
     process.stdout.write(`${JSON.stringify({ fixture: name, ...result })}\n`);
+    if (mode === "dup" && name === names[0]) {
+      process.stdout.write(`${JSON.stringify({ fixture: name, ...result, valid: "SECRET-CONTENT" })}\n`);
+    }
   }
 }

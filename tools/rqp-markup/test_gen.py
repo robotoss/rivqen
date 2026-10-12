@@ -158,6 +158,18 @@ class RefusalTest(unittest.TestCase):
     def test_bad_id_and_format(self) -> None:
         self.assert_refused(KAT_INPUT, [{"id": "A", "format": "html", "start_tag": '<p data-rq-block="a">', "content": "x"}], "'id'")
 
+    def test_duplicate_block_id_in_valid_fixture(self) -> None:
+        data = b'<p data-rq-block="a">x</p><p data-rq-block="a" class="2">y</p>'
+        blocks = [
+            {"id": "a", "format": "html", "start_tag": '<p data-rq-block="a">', "content": "x"},
+            {"id": "a", "format": "html", "start_tag": '<p data-rq-block="a" class="2">', "content": "y"},
+        ]
+        self.assert_refused(data, blocks, "duplicate block id")
+
+    def test_id_must_occur_in_start_tag(self) -> None:
+        data = b'<p data-rq-block="b">x</p>'
+        self.assert_refused(data, [{"id": "zz", "format": "html", "start_tag": '<p data-rq-block="b">', "content": "x"}], "does not occur in 'start_tag'")
+
     def test_unknown_error_code(self) -> None:
         spec = {"id": "FX-RQ-MARKUP-T", "description": "d", "rules": ["M-01"], "expect": {"valid": False, "error": "NOPE"}}
         self.fx.add("FX-RQ-MARKUP-T", b"", spec)

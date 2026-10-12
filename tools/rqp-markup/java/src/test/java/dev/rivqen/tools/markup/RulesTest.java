@@ -886,6 +886,37 @@ class RulesTest {
     void formAfterTheFormIsPoppedOrInAForeignRegion(String markup) {
       assertValid(body(markup + P));
     }
+
+    // Item 3 (H-43): no template start tag with a "for" attribute in HTML context.
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<template for=\"p\"><b>n</b></template>",
+          "<template FOR=\"\"></template>",
+          "<template for></template>",
+          "<template for=p></template>",
+          "<template id=t for=p></template>",
+          "<template for=a for=b></template>",
+          "<template id=t fOr='x'/>",
+          "<table><template for=p></template></table>"
+        })
+    void templateWithForAttribute(String markup) {
+      assertStructure("<div data-rq-block=\"a\">x</div>" + markup, "M-10");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<template id=\"t\"></template>",
+          "<template data-for=p format=x></template>",
+          "<template forx=p></template>",
+          "<div for=p></div>",
+          "<svg><template for=\"p\"></template></svg>"
+        })
+    void templateWithoutForAttributeOrForeign(String markup) {
+      assertValid("<div data-rq-block=\"a\">x</div>" + markup);
+    }
   }
 
   @Nested

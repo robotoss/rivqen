@@ -179,6 +179,9 @@ public final class Analyzer {
     if (k == Name.FRAMESET) {
       throw structure("M-10");
     }
+    if (html && k == Name.TEMPLATE && tok.hasForAttribute()) {
+      throw structure("M-10"); // item 3 (H-43)
+    }
     if (k == Name.SCRIPT && reservedType(in, tok)) {
       throw new Reject(ErrorCode.RESERVED, "M-13");
     }

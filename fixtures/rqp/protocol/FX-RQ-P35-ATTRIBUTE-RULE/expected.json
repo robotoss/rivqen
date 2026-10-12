@@ -1,5 +1,6 @@
 {
   "id": "FX-RQ-P35-ATTRIBUTE-RULE",
+  "level": "should",
   "request": {
     "method": "GET",
     "target": "https://shop.example.com/catalog",

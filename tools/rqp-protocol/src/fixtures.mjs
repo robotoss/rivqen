@@ -91,7 +91,8 @@ export function loadCase(dir, name) {
     onlyKeys(name, c.context, ['url', 'build', 'allow_http', 'navigation', 'snapshot'], 'context');
     onlyKeys(name, c.response, ['status', 'headers', 'body'], 'response');
   } else {
-    onlyKeys(name, c, ['id', 'description', 'rules', 'page', 'client_page', 'client_members', 'server_config', 'app', 'request'], 'case');
+    onlyKeys(name, c, ['id', 'description', 'rules', 'page', 'client_page', 'client_members', 'server_config', 'app', 'request', 'level'], 'case');
+    if (c.level !== undefined && c.level !== 'should') throw new CaseError(name, 'level must be "should" when present');
     onlyKeys(name, c.server_config ?? {}, ['policy', 'limits'], 'server_config');
     onlyKeys(name, c.client_members ?? {}, ['policy', 'limits'], 'client_members');
     onlyKeys(name, c.request, ['method', 'target', 'headers'], 'request');
@@ -159,6 +160,7 @@ export function expectServer(c) {
     files: {
       'expected.json': {
         id: c.id,
+        ...(c.level === undefined ? {} : { level: c.level }),
         request,
         ...(Object.keys(config).length > 0 ? { server_config: config } : {}),
         status: r.status,

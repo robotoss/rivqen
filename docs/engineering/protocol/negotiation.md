@@ -67,7 +67,7 @@ Rq-Capabilities: (block-patch realtime-ws)
 
 The server reads the field as follows:
 
-1. If the field value (all field lines combined, RFC 9651 §4.2) is longer than 1024 bytes (`maxRqCapabilitiesBytes`), treat the field as absent. Do not parse it.
+1. If the field value (all field lines combined with `, ` — comma and one space — between them, RFC 9651 §4.2; DL-029) is longer than 1024 bytes (`maxRqCapabilitiesBytes`), treat the field as absent. Do not parse it.
 2. Parse the field as a List (RFC 9651 §4.2). If the parse fails, treat the field as absent.
 3. If the List does not have exactly one member, or the member is not an Inner List, or an item of the Inner List is not a Token, treat the field as absent.
 4. The capability set is the set of the Tokens in the Inner List. Ignore all parameters (of the Inner List and of its items). They are reserved for later versions.
@@ -115,7 +115,7 @@ The prefix is taken from the digest bytes, not from the base64url text. The clie
 
 **Server.** The server reads the field in this order:
 
-1. If the field value (all field lines combined, RFC 9651 §4.2) is longer than 4096 bytes (`maxRqHaveBytes`), treat `Rq-Have` as absent. Do not parse it.
+1. If the field value (all field lines combined with `, ` — comma and one space — between them, RFC 9651 §4.2; DL-029) is longer than 4096 bytes (`maxRqHaveBytes`), treat `Rq-Have` as absent. Do not parse it.
 2. Parse the field as a Dictionary. If the parse fails, treat `Rq-Have` as absent.
 3. If the member `t` is missing or is not a Token, treat `Rq-Have` as absent. Ignore parameters of `t`.
 4. The client template matches when `t` is equal, byte for byte, to the current template revision. If it does not match, stop: `b` is not used.

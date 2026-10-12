@@ -38,6 +38,20 @@ test('content before <head> means no head end tag', () => {
   assert.equal(at('text<html><head></head></html>'), -1);
 });
 
+test('every head content element keeps the head open; text or another element in the head ends it', () => {
+  for (const n of ['base', 'basefont', 'bgsound', 'link', 'meta', 'noframes', 'noscript', 'script', 'style', 'template', 'title']) {
+    const doc = `<html><head><${n}></${n}></head><body></body></html>`;
+    assert.equal(at(doc), doc.indexOf('</head>'), n);
+  }
+  assert.equal(at('<html><head>text</head><body></body></html>'), -1);
+  assert.equal(at('<html><head><meta> x <title></title></head><body></body></html>'), -1);
+  assert.equal(at('<html><head><div></div></head><body></body></html>'), -1);
+});
+
+test('a </head> that pops the head through another element leaves no head end tag', () => {
+  assert.equal(at('<html><head><template></head><p></head><body></body></html>'), -1);
+});
+
 test('white space, comments, DOCTYPE and a byte order mark may come before <head>', () => {
   const doc = '﻿ <!DOCTYPE html>\n<!-- c --><html>\n<head>\n<meta charset="utf-8">\n</head><body></body></html>';
   assert.equal(at(doc), Buffer.from(doc).indexOf('</head>'));

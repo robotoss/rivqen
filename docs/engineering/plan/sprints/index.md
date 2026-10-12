@@ -8,7 +8,8 @@ Each sprint has one record. The record is the shared memory of the work: the pla
 
 | Sprint | WP | Goal | State |
 |---|---|---|---|
-| [WP-17-S1](/engineering/plan/sprints/WP-17-S1) | WP-17 | RQP markup rules, fixtures, four parser candidates | Running |
+| [WP-17-S1](/engineering/plan/sprints/WP-17-S1) | WP-17 | RQP markup rules, fixtures, four parser candidates | Closed |
+| [WP-17-S2](/engineering/plan/sprints/WP-17-S2) | WP-17 | RQP negotiation, manifest and patch, JSON Schemas, protocol fixtures | Planned |
 
 ## How to add a record
 

@@ -1,0 +1,99 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: The Rivqen Authors
+//
+// HTTP adapter of the Rivqen protocol (RQP) demo server. It is thin: it maps a Node.js
+// request to the request of handle() (src/rqp.js) and writes the result.
+//   GET  /catalog              the demo page (full document, 304, or delta)
+//   POST /__demo/next-data     change price/stock (localhost only)
+//   POST /__demo/next-template change the template (localhost only)
+//   GET  /healthz
+
+import { createServer } from 'node:http';
+import { randomUUID } from 'node:crypto';
+import { requestLines } from './fields.js';
+import { handle } from './rqp.js';
+import { renderCatalog, nextData, nextTemplate, demoState } from './pages.js';
+import { log, logError, safeUrl } from './log.js';
+
+/** Manifest members of this server. They are part of the page revision (H-55). */
+export const CONFIG = Object.freeze({
+  policy: { mode: 'private', ttl_seconds: 0, offline: false },
+  limits: { max_patch_bytes: 262144 },
+});
+
+/** Fields of every response of the demo. */
+const COMMON = { 'X-Content-Type-Options': 'nosniff' };
+
+/** The response of the application for the catalog page, before the RQP step. */
+const appResponse = () => ({
+  status: 200,
+  headers: [
+    ['content-type', 'text/html; charset=utf-8'],
+    ['cache-control', 'no-cache'],
+    ['x-content-type-options', 'nosniff'],
+  ],
+});
+
+/** Write a response of handle() and return the number of body bytes. */
+function sendResult(res, result) {
+  res.writeHead(result.status, result.headers.flat());
+  res.end(result.body ?? undefined);
+  return result.body ? result.body.length : 0;
+}
+
+function send(res, status, headers, body) {
+  const buf = body === undefined ? undefined : Buffer.from(body, 'utf8');
+  res.writeHead(status, { ...COMMON, ...headers, ...(buf ? { 'Content-Length': buf.length } : {}) });
+  res.end(buf);
+  return buf ? buf.length : 0;
+}
+
+function isLocal(req) {
+  const a = req.socket.remoteAddress ?? '';
+  return a === '127.0.0.1' || a === '::1' || a === '::ffff:127.0.0.1';
+}
+
+/**
+ * Create the demo server (not listening yet).
+ * @param {{ origin: string }} options the public origin of the site: the manifest takes
+ *   `origin` from here, not from the connection (manifest-patch section 1.6)
+ */
+export function createDemoServer({ origin }) {
+  function handleCatalog(req, res, ctx) {
+    const request = { method: req.method, target: `${origin}/catalog`, headers: requestLines(req.rawHeaders) };
+    const result = handle(request, appResponse(), Buffer.from(renderCatalog(), 'utf8'), CONFIG);
+    ctx.mode = result.mode;
+    ctx.reason = result.reason;
+    if (result.error) logError('rqp.passthrough', result.error, { request_id: ctx.id, path: '/catalog' });
+    return sendResult(res, result);
+  }
+
+  return createServer((req, res) => {
+    const ctx = { id: randomUUID().slice(0, 8), start: process.hrtime.bigint(), mode: '-' };
+    let bytes = 0;
+    try {
+      const path = safeUrl(req.url ?? '/');
+      if ((req.method === 'GET' || req.method === 'HEAD') && path === '/catalog') {
+        bytes = handleCatalog(req, res, ctx);
+      } else if (req.method === 'POST' && path === '/__demo/next-data' && isLocal(req)) {
+        bytes = send(res, 200, { 'Content-Type': 'application/json' }, JSON.stringify(nextData()));
+      } else if (req.method === 'POST' && path === '/__demo/next-template' && isLocal(req)) {
+        bytes = send(res, 200, { 'Content-Type': 'application/json' }, JSON.stringify(nextTemplate()));
+      } else if (req.method === 'GET' && path === '/healthz') {
+        bytes = send(res, 200, { 'Content-Type': 'application/json' }, JSON.stringify({ ok: true, state: demoState() }));
+      } else {
+        bytes = send(res, 404, { 'Content-Type': 'text/plain' }, 'not found');
+      }
+    } catch (err) {
+      logError('http.unhandled', err, { request_id: ctx.id });
+      if (!res.headersSent) bytes = send(res, 500, { 'Content-Type': 'text/plain' }, 'internal error');
+      else res.destroy();
+    } finally {
+      const ms = Number(process.hrtime.bigint() - ctx.start) / 1e6;
+      log('info', 'http.request', {
+        request_id: ctx.id, method: req.method, path: safeUrl(req.url ?? '/'), status: res.statusCode,
+        mode: ctx.mode, reason: ctx.reason, bytes, duration_ms: Math.round(ms * 100) / 100,
+      });
+    }
+  });
+}

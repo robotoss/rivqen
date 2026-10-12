@@ -1,165 +1,241 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: The Rivqen Authors
 //
-// Reference implementation of the Rivqen protocol (RQP) server side, as
-// specified in docs/engineering/protocol/{markup,negotiation,manifest-patch}.md.
+// Server side of rqp/1 for the demo: the stateless response selection of
+// docs/engineering/protocol/negotiation.md section 4. The server keeps no state per
+// client or per page: the request holds the client's revisions and block digest prefixes.
 // It is a demo, not the production SDK: clarity over speed.
+//
+// handle(request, appResponse, pageBytes, config) is the interface of the conformance
+// harness (tools/rqp-protocol/check.mjs, --server).
 
 import { createHash } from 'node:crypto';
-import { parse } from 'parse5';
+import {
+  DELTA_TYPE,
+  acceptsDelta,
+  capabilities,
+  deltaBase,
+  fieldValue,
+  hasField,
+  mediaType,
+  noneMatchFails,
+  normalizeHeaders,
+  requestVersion,
+  rqHave,
+  without,
+} from './fields.js';
+import { analyzePage, firstHeadEnd, passesAttributeRule } from './markup.js';
 
-export const RQP_VERSION = 1;
+export { DELTA_TYPE };
 export const MANIFEST_TYPE = 'application/rivqen-manifest+json';
-export const DELTA_TYPE = 'application/vnd.rivqen.delta+json';
+export const MAX_PATCH_BYTES = 262144; // server limit maxPatchBytes (resource limits, default)
 
-const BLOCK_ATTR = 'data-rq-block';
-const ID_RE = /^[a-z0-9][a-z0-9_-]{0,63}$/;
-const FORBIDDEN = new Set(['style', 'template', 'iframe', 'textarea']);
-const VOID = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr']);
+const sha256b64u = (data) => createHash('sha256').update(data).digest('base64url');
 
-/** Error with a stable code from the Rivqen error catalog. */
-export class RqpError extends Error {
-  constructor(code, message, detail = {}) {
-    super(message);
-    this.name = 'RqpError';
-    this.code = code;
-    this.detail = detail; // safe fields only: ids, offsets, counts
+/** Text S of the policy line (manifest-patch section 1.3, H-55). '' when the manifest has neither member. */
+export function policyLineText({ policy, limits }) {
+  const items = [];
+  if (policy !== undefined) {
+    items.push('policy');
+    if (policy.mode !== undefined) items.push(`mode=${policy.mode}`);
+    if (policy.ttl_seconds !== undefined) items.push(`ttl_seconds=${policy.ttl_seconds}`);
+    if (policy.offline !== undefined) items.push(`offline=${policy.offline}`);
   }
-}
-
-export const sha256 = (s) => createHash('sha256').update(s, 'utf8').digest('hex');
-
-function attr(node, name) {
-  return node.attrs?.find((a) => a.name === name)?.value;
+  if (limits !== undefined) {
+    items.push('limits');
+    if (limits.max_patch_bytes !== undefined) items.push(`max_patch_bytes=${limits.max_patch_bytes}`);
+  }
+  return items.join(';');
 }
 
 /**
- * Find all data blocks in an HTML document.
- * Returns blocks in document order with UTF-16 offsets of their inner content.
- * Throws RqpError for invalid markup (duplicate, nested, forbidden, bad id).
+ * Page revision of manifest-patch section 1.3, steps 4 and 5, with the policy line.
+ * The markup analysis gives the revision without the line, so the demo computes it again.
  */
-export function findBlocks(html) {
-  const doc = parse(html, { sourceCodeLocationInfo: true });
-  const blocks = [];
-  const seen = new Set();
-
-  const walk = (node, insideBlock) => {
-    const id = node.tagName ? attr(node, BLOCK_ATTR) : undefined;
-    let inside = insideBlock;
-    if (id !== undefined) {
-      if (!ID_RE.test(id)) throw new RqpError('RQP_MARKUP_INVALID_ID', 'invalid block id', { id });
-      if (seen.has(id)) throw new RqpError('RQP_MARKUP_DUPLICATE', 'duplicate block id', { id });
-      if (insideBlock) throw new RqpError('RQP_MARKUP_NESTED', 'nested block', { id, parent: insideBlock });
-      if (FORBIDDEN.has(node.tagName) || VOID.has(node.tagName)) {
-        throw new RqpError('RQP_MARKUP_FORBIDDEN_ELEMENT', 'element cannot be a block', { id, element: node.tagName });
-      }
-      let format = 'html';
-      if (node.tagName === 'script') {
-        if (attr(node, 'type') !== 'application/json') {
-          throw new RqpError('RQP_MARKUP_FORBIDDEN_ELEMENT', 'only application/json scripts can be blocks', { id });
-        }
-        format = 'json';
-      }
-      const loc = node.sourceCodeLocation;
-      if (!loc?.startTag || !loc?.endTag) {
-        throw new RqpError('RQP_MARKUP_UNCLOSED', 'block element must have an explicit end tag', { id });
-      }
-      seen.add(id);
-      blocks.push({ id, format, start: loc.startTag.endOffset, end: loc.endTag.startOffset });
-      inside = id;
-    }
-    // <template> content lives in node.content in parse5.
-    for (const child of node.childNodes ?? []) walk(child, inside);
-    if (node.content) for (const child of node.content.childNodes ?? []) walk(child, inside);
-  };
-  walk(doc, null);
-  blocks.sort((a, b) => a.start - b.start);
-  return blocks;
+export function pageRevision(templateRevision, blocks, members = {}) {
+  let preimage = `rqp-r1\n${templateRevision}\n`;
+  const text = policyLineText(members);
+  if (text !== '') preimage += `PL\t${text}\n`;
+  for (const b of blocks) preimage += `${b.id}\t${b.format}\t${b.sha256}\n`;
+  return `r1.${sha256b64u(preimage)}`;
 }
 
-/**
- * Split a document into template + blocks and compute revisions.
- * The template is the document with every block's inner content removed.
- */
-export function analyze(html) {
-  const found = findBlocks(html);
-  let template = '';
-  let last = 0;
-  const blocks = [];
-  for (const b of found) {
-    const content = html.slice(b.start, b.end);
-    if (b.format === 'json') {
-      try {
-        JSON.parse(content);
-      } catch {
-        throw new RqpError('RQP_MARKUP_BAD_JSON', 'json block is not valid JSON', { id: b.id });
-      }
-    }
-    template += html.slice(last, b.start);
-    last = b.end;
-    blocks.push({ id: b.id, format: b.format, content, sha256: sha256(content) });
-  }
-  template += html.slice(last);
-  const templateRevision = 'tpl-' + sha256(template).slice(0, 16);
-  const pageRevision =
-    'rev-' + sha256(templateRevision + '\n' + blocks.map((b) => `${b.id}:${b.sha256}`).join('\n')).slice(0, 16);
-  return { template, templateRevision, pageRevision, blocks };
+/** Only the manifest members policy and limits of a configuration object. */
+function membersOf(config) {
+  const members = {};
+  if (config.policy !== undefined) members.policy = config.policy;
+  if (config.limits !== undefined) members.limits = config.limits;
+  return members;
 }
 
-/** Build the page manifest (no content, no secrets). */
-export function manifest({ origin, path, analysis, policy }) {
+/** The page manifest (manifest-patch section 1.2). It has no content and no secrets. */
+export function buildManifest(analysis, target, members) {
+  const url = new URL(target);
+  const blocks = analysis.blocks.map(({ id, format, sha256 }) => ({ id, format, sha256 }));
   return {
-    protocol: `rqp/${RQP_VERSION}`,
-    origin,
-    path,
-    template_revision: analysis.templateRevision,
-    page_revision: analysis.pageRevision,
-    blocks: analysis.blocks.map((b) => ({ id: b.id, format: b.format, sha256: b.sha256 })),
-    policy,
-    limits: { max_patch_bytes: 262144 },
+    protocol: 'rqp/1',
+    origin: url.origin,
+    path: url.pathname,
+    template_revision: analysis.template_revision,
+    page_revision: pageRevision(analysis.template_revision, blocks, members),
+    blocks,
+    ...members,
   };
 }
 
-/** Insert the manifest script right before </head>. Escapes "<" to keep the script inert. */
-export function injectManifest(html, m) {
-  const json = JSON.stringify(m).replace(/</g, '\\u003c');
-  const tag = `<script type="${MANIFEST_TYPE}" id="rq-manifest">${json}</script>`;
-  const i = html.search(/<\/head\s*>/i);
-  if (i < 0) throw new RqpError('RQP_NO_HEAD', 'document has no </head>');
-  return html.slice(0, i) + tag + html.slice(i);
+/**
+ * F: the page with the manifest element immediately before the first </head>
+ * (manifest-patch section 1.7). Returns null when the manifest text has a "<".
+ */
+export function insertManifest(page, insertAt, manifest) {
+  const text = JSON.stringify(manifest);
+  if (text.includes('<')) return null;
+  return Buffer.concat([
+    page.subarray(0, insertAt),
+    Buffer.from(`<script type="${MANIFEST_TYPE}">${text}</script>`, 'utf8'),
+    page.subarray(insertAt),
+  ]);
 }
 
+/** The first 8 bytes of the raw SHA-256 digest of a block (H-44), from its base64url hash. */
+const digestPrefix = (sha256) => Buffer.from(sha256, 'base64url').subarray(0, 8);
+
 /**
- * Build a patch envelope from a base analysis to the current analysis.
- * Returns null when a patch is not possible (different template).
+ * Step 6: the indices of the blocks in the change set C. `b` is the decoded Rq-Have
+ * member b, or null for the all-blocks fallback (H-7).
  */
-export function buildPatch({ pageId, base, current, sequence }) {
-  if (base.templateRevision !== current.templateRevision) return null;
-  const old = new Map(base.blocks.map((b) => [b.id, b]));
-  const operations = [];
-  for (const b of current.blocks) {
-    const prev = old.get(b.id);
-    if (!prev || prev.sha256 !== b.sha256) {
-      operations.push({ op: 'replace_block', block_id: b.id, format: b.format, content: b.content, sha256: b.sha256 });
-    }
-  }
+export function changeSet(blocks, b) {
+  const changed = [];
+  blocks.forEach((block, i) => {
+    if (b === null || !digestPrefix(block.sha256).equals(b.subarray(8 * i, 8 * i + 8))) changed.push(i);
+  });
+  return changed;
+}
+
+/** Step 7: the delta envelope D (manifest-patch section 2). One replace_block per changed block. */
+export function buildDelta(page, analysis, baseRevision, nextRevision, indices) {
   return {
     type: 'rivqen.patch',
-    protocol: RQP_VERSION,
-    page_id: pageId,
-    base_revision: base.pageRevision,
-    next_revision: current.pageRevision,
-    template_revision: current.templateRevision,
-    sequence,
-    operations,
+    protocol: 'rqp/1',
+    base_revision: baseRevision,
+    next_revision: nextRevision,
+    template_revision: analysis.template_revision,
+    operations: indices.map((i) => {
+      const b = analysis.blocks[i];
+      return {
+        op: 'replace_block',
+        block_id: b.id,
+        format: b.format,
+        content: page.toString('utf8', b.start, b.end),
+        sha256: b.sha256,
+      };
+    }),
   };
 }
 
-/** Parse the request headers that matter for RQP. Header names are case-insensitive in Node. */
-export function readRequest(headers) {
-  const version = Number.parseInt(headers['rq-version'] ?? '', 10);
-  const caps = (headers['rq-capabilities'] ?? '').replace(/[()]/g, ' ').split(/\s+/).filter(Boolean);
-  const base = (headers['rq-base-revision'] ?? '').replace(/^"|"$/g, '') || null;
-  const inm = (headers['if-none-match'] ?? '').split(',').map((s) => s.trim().replace(/^W\//, '').replace(/^"|"$/g, ''));
-  return { isRqp: version === RQP_VERSION, caps: new Set(caps), base, ifNoneMatch: new Set(inm.filter(Boolean)) };
+const KEEP_ON_304 = new Set(['etag', 'cache-control', 'expires', 'vary', 'date', 'content-location']);
+
+/**
+ * Negotiation section 4. Returns { status, headers, body, mode, reason }:
+ * headers is a list of [name, value] lines, body a Buffer or null, mode one of
+ * 'passthrough', 'full', '304' or 'delta', reason a short log word.
+ *
+ * An internal error never reaches the client: the application response is sent
+ * unchanged with mode 'passthrough' and reason 'SERVER_PASSTHROUGH' (errors.md).
+ *
+ * @param {{ method: string, target: string, headers: Array<[string, string]> }} request
+ *   target is the absolute URL of the request (the server takes the public origin from its configuration)
+ * @param {{ status: number, headers: Array<[string, string]> }} appResponse
+ * @param {Uint8Array} pageBytes the page bytes P
+ * @param {{ policy?: object, limits?: object, maxPatchBytes?: number, contentCoding?: boolean }} [config]
+ *   policy and limits are the manifest members. contentCoding is true when the caller applies a
+ *   content coding to the response: the ETag is then weak (H-52).
+ */
+export function handle(request, appResponse, pageBytes, config = {}) {
+  const page = Buffer.from(pageBytes.buffer, pageBytes.byteOffset, pageBytes.byteLength);
+  const appHeaders = normalizeHeaders(appResponse.headers);
+  const passthrough = (reason) => ({ status: appResponse.status, headers: appHeaders, body: page, mode: 'passthrough', reason });
+  try {
+    return select(request, appResponse.status, appHeaders, page, config) ?? passthrough('invalid-page');
+  } catch (error) {
+    return { ...passthrough('SERVER_PASSTHROUGH'), error };
+  }
+}
+
+/** Steps 1 to 9. Returns null when the page is invalid for RQP (step 2). */
+function select(request, status, appHeaders, page, config) {
+  // Step 1: scope.
+  const inScope =
+    (request.method === 'GET' || request.method === 'HEAD') && status === 200 && mediaType(fieldValue(appHeaders, 'content-type')) === 'text/html';
+  if (!inScope) return { status, headers: appHeaders, body: page, mode: 'passthrough', reason: 'out-of-scope' };
+
+  // Step 2: validity.
+  const analysis = analyzePage(page);
+  if (!analysis.valid) return null;
+  const insertAt = firstHeadEnd(page);
+  if (insertAt < 0) return null;
+
+  // Step 3: the full document F, the same for every request.
+  const reqHeaders = normalizeHeaders(request.headers);
+  const members = membersOf(config);
+  const manifest = buildManifest(analysis, request.target, members);
+  const full = insertManifest(page, insertAt, manifest);
+  if (full === null) return null;
+  const etag = `${config.contentCoding ? 'W/' : ''}"${manifest.page_revision}"`;
+  const fullHeaders = [
+    ...without(appHeaders, 'etag', 'content-length'),
+    ['etag', etag],
+    ['rq-version', '1'],
+    ['content-length', String(full.length)],
+  ];
+  const head = request.method === 'HEAD';
+  const sendFull = (reason) => ({ status: 200, headers: fullHeaders, body: head ? null : full, mode: 'full', reason });
+
+  // Step 4: conditions. Step 9: not modified.
+  if (noneMatchFails(reqHeaders, etag)) {
+    return { status: 304, headers: fullHeaders.filter(([n]) => KEEP_ON_304.has(n)), body: null, mode: '304', reason: 'not-modified' };
+  }
+
+  // Step 5: delta eligibility.
+  const base = deltaBase(reqHeaders);
+  const have = rqHave(reqHeaders);
+  const eligible =
+    request.method === 'GET' &&
+    !hasField(reqHeaders, 'range') &&
+    requestVersion(reqHeaders) === 1 &&
+    capabilities(reqHeaders).has('block-patch') &&
+    acceptsDelta(reqHeaders) &&
+    base !== null &&
+    have !== null &&
+    have.t === analysis.template_revision;
+  if (!eligible) return sendFull('not-eligible');
+
+  // Step 6: change set. A b with another length than 8 N is absent (section 3.4, step 6).
+  const b = have.b !== null && have.b.length === 8 * analysis.blocks.length ? have.b : null;
+  const changed = changeSet(analysis.blocks, b);
+  if (changed.length === 0) return sendFull('empty-change-set');
+
+  // Step 7: delta. H-56: F when a changed html block fails the attribute rule.
+  const failsRule = changed.some((i) => {
+    const block = analysis.blocks[i];
+    return block.format === 'html' && !passesAttributeRule(page.subarray(block.start, block.end));
+  });
+  if (failsRule) return sendFull('attribute-rule');
+  const delta = Buffer.from(JSON.stringify(buildDelta(page, analysis, base, manifest.page_revision, changed)), 'utf8');
+  const limit = Math.min(config.maxPatchBytes ?? MAX_PATCH_BYTES, members.limits?.max_patch_bytes ?? Infinity);
+  if (delta.length > limit) return sendFull('delta-too-large');
+  if (delta.length >= full.length) return sendFull('delta-not-smaller');
+  return {
+    status: 200,
+    headers: [
+      ...without(appHeaders, 'etag', 'last-modified', 'expires', 'content-type', 'cache-control', 'content-length'),
+      ['content-type', DELTA_TYPE],
+      ['rq-version', '1'],
+      ['cache-control', 'no-store'],
+      ['content-length', String(delta.length)],
+    ],
+    body: delta,
+    mode: 'delta',
+    reason: 'delta',
+  };
 }

@@ -73,13 +73,16 @@ Classes (rule and item):
 | `M-06.4-special`, `M-06.4-foreign` | Formatting end tag pops a marked element; the marks come from special crossings, or from foreign crossings only (H-32) |
 | `M-07.1` … `M-07.4` | Foreign regions |
 | `M-08`, `M-09`, `M-10`, `M-12` | Select, table parts, frameset, CDATA |
+| `M-09.1`, `M-09.2` | M-09 condition 1 (`col` in a template, H-35) and condition 2 (F is not the current node, H-37; the detail names the current node) |
+| `M-10.2`, `M-10.3` | Nested `form` (H-36); `template` with a `for` attribute (H-43) |
+| `M-11.6` | Table part or `col` in `noscript` content without a `table` of the content (H-38); the detail says if the `noscript` is in a cell or caption |
 | `M-11.1` … `M-11.4` | `noscript` content items 1 to 4 |
 | `M-11.5-pli`, `M-11.5-other` | Unbalanced `noscript` content: only unclosed `p` or `li`, or other (H-27) |
 | `M-13.1` … `M-13.3` | Script type items (H-28 is item 3) |
 | `M-26-dirty`, `M-26-stack` | D > 256 only through the dirty mark (the units of the stack stay ≤ 256), or also without it (H-31) |
 | `M-15` … `M-24.k` | Block rules, with `--blocks` only (simulated blocks) |
 
-Research classes (rules that are not in the candidates yet): `H-35` (`col` while the nearest table-family or `template` element is `template`), `H-36` (`form` start tag while a `form` is open), `H-37` (table part, `col` or `table` start tag while F is a table context and the current node is not F; `H-37-form` when the current node is `form`, `H-37-other` else), `H-38` (table part or `col` in `noscript` content without an open `table` of the content; `H-38-cell` when the `noscript` is in a cell or caption).
+The classes `M-09.1`, `M-09.2`, `M-10.2`, `M-10.3`, `M-11.6` and `M-26-*` come from the cross-check oracle (`../crosscheck/src/depth.mjs`: `DepthCounter` and `checkNoscriptContent`), driven by the token stream of this pass. The pass adds only the details.
 
 Not checked: M-25 (JSON) and the block limits of M-26.
 
@@ -92,4 +95,4 @@ Run `node --test` in this directory. The golden fixtures are the reference: the 
 - The URL list is hand-made: popular sites and inner pages, not a random sample.
 - A page is the server HTML for a client without JavaScript and cookies.
 - The simulated blocks are a heuristic (DESIGN), see `summary.md` section 8.
-- The research classes follow the decision text in the sprint record (H-35 … H-38), not a final rule text.
+- `run.mjs` redacts a URL path segment that holds a third-party admin path (the text `admin` and later `edit`): it keeps the first four words and ends with `REDACTED`.

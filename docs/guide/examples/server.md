@@ -33,8 +33,8 @@ The server listens on `127.0.0.1:8787`. To change the port, set `PORT`.
 | Method | Path | Result |
 |---|---|---|
 | `GET` | `/catalog` | The demo page: full document, `304`, or a delta |
-| `POST` | `/__demo/next-data` | Changes price and stock. Localhost only. |
-| `POST` | `/__demo/next-template` | Adds a menu item (template change). Localhost only. |
+| `POST` | `/__demo/next-data` | Changes price and stock. Localhost only; needs the header `Rq-Demo-Action: 1` and, when the request has `Origin`, the demo's own origin (else `403`). |
+| `POST` | `/__demo/next-template` | Adds a menu item (template change). Same protection as `next-data`. |
 | `GET` | `/healthz` | `{ "ok": true, "state": … }` |
 
 ## 4. How the server answers `/catalog`
@@ -61,7 +61,7 @@ Where the code is:
 | File | Content |
 |---|---|
 | `src/rqp.js` | `handle(request, appResponse, pageBytes, config)`: the response selection (steps 1 to 9), the manifest, the page revision with the policy line, the delta |
-| `src/markup.js` | The markup analysis: calls the Node.js parser candidate `tools/rqp-markup/node` in process. Adds the insertion point before `</head>` and the attribute rule (H-56) |
+| `src/markup.js` | The markup analysis: calls the Node.js parser candidate `tools/rqp-markup/node` in process. Adds the insertion point before the head end tag of the document (DL-031, DL-034) and the attribute rule (H-56, H-59) |
 | `src/fields.js`, `src/sf.js` | The request fields and a Structured Field parser |
 | `src/app.js`, `src/server.js` | The HTTP adapter and the start script. The public origin comes from `ORIGIN`, not from the connection |
 
@@ -93,7 +93,7 @@ curl -si http://127.0.0.1:8787/catalog -H "If-None-Match: $ETAG" | head -1
 4. Change the data.
 
 ```bash
-curl -s -X POST http://127.0.0.1:8787/__demo/next-data
+curl -s -X POST http://127.0.0.1:8787/__demo/next-data -H 'Rq-Demo-Action: 1'
 ```
 
 5. Ask for a delta from your revision.

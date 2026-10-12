@@ -46,8 +46,8 @@ Each mobile and web demo has the same control panel:
 | Control | Effect |
 |---|---|
 | **Open page** | Opens the catalog in a new session |
-| **Change data** | Calls `POST /__demo/next-data` |
-| **Change template** | Calls `POST /__demo/next-template` |
+| **Change data** | Calls `POST /__demo/next-data` with the header `Rq-Demo-Action: 1` |
+| **Change template** | Calls `POST /__demo/next-template` with the header `Rq-Demo-Action: 1` |
 | **Clear cache** | Calls `clearCache` for the demo partition |
 | **Rivqen on / off** | Opens the same page in a plain web view, for comparison |
 | **Event log** | Shows session outcomes: `FirstLoad`, `CacheHitNotModified`, `DataUpdated`, `TemplateChanged`, `ServedStale`, `Fallback` |

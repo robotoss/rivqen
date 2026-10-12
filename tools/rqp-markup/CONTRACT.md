@@ -29,11 +29,11 @@ Each candidate is a command with two modes:
 
 1. Single mode: read the file as bytes. Print one JSON object (section 3) and a line feed to stdout.
 2. Batch mode: for each subdirectory of `<fixtures-dir>` in byte order of its name, read `<subdir>/input.html`. Print one JSON line per fixture: the object of section 3 plus the field `"fixture": "<subdir name>"`. Skip a subdirectory without `input.html`.
-7. Input files: read only regular files. A single-mode path or a batch `input.html` that exists but is not a regular file (a FIFO, a device, a directory, a socket; symbolic links are followed) is an I/O error: exit code `2`, reason on stderr. Never wait on a FIFO: check the file type before the open (and again on the open file where the platform allows it).
 3. Exit code `0` when results are printed, for valid and invalid documents.
 4. Exit code `2` for a usage error or an I/O error. Print the reason to stderr.
 5. No input may cause a crash, a hang or an exit code other than `0` in batch mode or single mode. A crash on any input is a defect.
 6. Never print document content to stderr.
+7. Input files: read only regular files. A single-mode path or a batch `input.html` that exists but is not a regular file (a FIFO, a device, a directory, a socket; symbolic links are followed) is an I/O error: exit code `2`, reason on stderr. Never wait on a FIFO: check the file type before the open (and again on the open file where the platform allows it).
 
 ## 3. Result object
 

@@ -72,7 +72,7 @@ flowchart TD
 | Type | Fields | Notes |
 |---|---|---|
 | `Capabilities` | set of tokens | Negotiated per request. |
-| `PageManifest` | `protocol`, `origin`, `path`, `template_revision`, `page_revision`, `base_revision?`, `blocks[]`, `policy`, `limits` | See [RQP manifest and patch](/engineering/protocol/manifest-patch). |
+| `PageManifest` | `protocol`, `origin`, `path`, `template_revision`, `page_revision`, `blocks[]`, `policy`, `limits` | See [RQP manifest and patch](/engineering/protocol/manifest-patch). |
 | `BlockDescriptor` | `id`, `format` (`html`/`json`), `sha256` | Hash over canonical bytes. |
 | `PatchEnvelope` | `type`, `protocol`, `page_id`, `base_revision`, `next_revision`, `template_revision`, `sequence`, `operations[]` | Validated before apply. |
 | `PatchOp` | `replace_block`, `remove_block`, `insert_block` | No operation can carry executable code. |

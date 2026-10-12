@@ -8,9 +8,9 @@ This section is the **normative specification** of the wire protocols that Rivqe
 
 | Page | Content | Normative? |
 |---|---|---|
-| [RQP markup](/engineering/protocol/markup) | `data-rq-block` grammar, template, title | Draft |
+| [RQP markup](/engineering/protocol/markup) | `data-rq-block` rules M-01…M-27, golden fixtures | Normative (rqp/1) |
 | [RQP negotiation and headers](/engineering/protocol/negotiation) | Versions, capabilities, `Rq-*` headers | Draft |
-| [RQP manifest and patch](/engineering/protocol/manifest-patch) | JSON schemas and validation | Draft |
+| [RQP manifest and patch](/engineering/protocol/manifest-patch) | Manifest, patch envelope, hashes and revisions, JSON Schemas (`spec/rqp/schemas`) | Normative (rqp/1) |
 | [Modes and legacy deprecation](/engineering/protocol/versioning) | Mode selection, downgrade rules, end of life of the legacy mode | Yes |
 | [Golden fixtures](/engineering/protocol/fixtures) | Fixture format and catalog | Yes |
 | [Legacy: wire contract](/engineering/protocol/legacy-wire) | Headers, status codes, bodies, `cache-offline` | Yes (legacy module) |

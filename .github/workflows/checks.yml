@@ -40,6 +40,12 @@ jobs:
           npm ci
           npm test
 
+      - name: RQP schema tests
+        working-directory: tools/rqp-schema
+        run: |
+          npm ci --ignore-scripts
+          npm test
+
       - name: Mutation helper tests
         working-directory: tools/mutation
         run: node --test

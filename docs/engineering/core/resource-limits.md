@@ -13,8 +13,9 @@ Every input to the core is bounded. Limits protect the app from memory exhaustio
 | `prefixBufferBytes` | 512 KiB | Bridge stream prefix | Backpressure (stop reading) |
 | `maxChunkBytes` | 64 KiB | One stream chunk | Split chunk |
 | `maxBlocks` | 256 | Data blocks per page | Protocol error |
-| `maxBlockKeyBytes` | 128 | Block key length | Protocol error |
+| `maxBlockKeyBytes` | 128 (legacy mode); 64 in RQP ([markup](/engineering/protocol/markup) M-15) | Block key length | Protocol error |
 | `maxBlockBytes` | 1 MiB | One data block | Protocol error |
+| `maxManifestBytes` | 64 KiB | Text of the RQP page manifest ([manifest and patch](/engineering/protocol/manifest-patch)); worst case of a valid manifest is about 37 KiB | `MANIFEST_INVALID` → normal load |
 | `maxOpenElements` | 256 | Depth counter D of the RQP markup analysis ([markup](/engineering/protocol/markup) M-26, H-25, H-31); it also bounds the token stack (size ≤ D) and the WHATWG stack (≤ D + 2) | `RQP_MARKUP_LIMIT` → normal HTML without RQP |
 | `maxPatchBytes` | 256 KiB | One RQP patch envelope | `PATCH_TOO_LARGE` |
 | `maxJsonDepth` | 16 | legacy data JSON, RQP envelopes | Protocol error |

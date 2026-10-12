@@ -1,2 +1,3 @@
 # Golden fixtures are exact bytes: no line-end conversion, no diff merging.
 fixtures/** -text
+spec/rqp/examples/kat/** -text

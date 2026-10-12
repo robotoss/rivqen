@@ -66,6 +66,8 @@ Invalid document:
 
 ## 4. Hashes and revisions (rqp/1)
 
+Normative text: `docs/engineering/protocol/manifest-patch.md` §1.3. This section is an informative copy for the candidates; the values are the same (known-answer set `spec/rqp/examples/kat`).
+
 `B64U(x)` = base64url without padding. `||` = byte concatenation. Strings are UTF-8.
 
 1. `block.sha256 = B64U(SHA-256(content))`

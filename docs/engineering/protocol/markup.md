@@ -212,7 +212,7 @@ The tags in C are not part of the main token pass: they do not change the token 
 
 The server SDK adds the manifest; a document that already has one, or a script type that could decode or fold to it, is not accepted. Error: `RQP_MARKUP_RESERVED`. Items 2 and 3 fail closed, so no character reference decoder and no Unicode case mapping are needed (decided by the human, 2026-10-09 and 2026-10-11; [WP-17 S1](/engineering/plan/sprints/WP-17-S1) H-17, H-28). Item 3 also rejects harmless values such as `text/jävascript`. The only raw text where M-13 also applies is the `noscript` content C, tokenized as in M-11 (M-11 item 4, H-22).
 
-<Badge type="tip" text="FACT" /> Item 3: in Unicode, `ı` (U+0131, dotless i) maps to the upper case `I`, and `ſ` (U+017F, long s) maps to the upper case `S`. A client that compares the type with Unicode case folding would take `application/rıvqen-manifest+json` or `application/rivqen-manifeſt+json` for the manifest type, but item 1 does not match them (security review). <Badge type="info" text="DESIGN" /> The client SDK compares the type of the manifest script by an ASCII case-insensitive byte match only, never by Unicode case folding (H-28). The client text is part of sprint S2 ([manifest and patch](/engineering/protocol/manifest-patch)).
+<Badge type="tip" text="FACT" /> Item 3: in Unicode, `ı` (U+0131, dotless i) maps to the upper case `I`, and `ſ` (U+017F, long s) maps to the upper case `S`. A client that compares the type with Unicode case folding would take `application/rıvqen-manifest+json` or `application/rivqen-manifeſt+json` for the manifest type, but item 1 does not match them (security review). <Badge type="info" text="DESIGN" /> The client SDK compares the type of the manifest script by an ASCII case-insensitive byte match only, never by Unicode case folding (H-28). The client rule is in [manifest and patch §1.7](/engineering/protocol/manifest-patch) (client item 1).
 
 ### 2.5 Blocks
 
@@ -339,7 +339,7 @@ Examples: `<div><span>a</span></div>` gives D = 2, then 0. `<table><tr><td>a</td
 
 ### 2.9 Result
 
-**M-27 Result.** For a valid document the result is the list of blocks in document order. Each block has `id`, `format`, `start` (offset of the first content byte), `end` (offset of the `<` of the block end tag) and `sha256`. The template and the revisions follow `tools/rqp-markup/CONTRACT.md` §4. The template keeps the start and end tags of every block.
+**M-27 Result.** For a valid document the result is the list of blocks in document order. Each block has `id`, `format`, `start` (offset of the first content byte), `end` (offset of the `<` of the block end tag) and `sha256`. The template and the revisions follow [manifest and patch §1.3](/engineering/protocol/manifest-patch#_1-3-hashes-and-revisions) (normative). The template keeps the start and end tags of every block.
 
 ### 2.10 Error codes
 

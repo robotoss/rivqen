@@ -142,6 +142,28 @@ test('a delta larger than the limit, or not smaller than the full document, give
   assert.equal(run(get(clientLines(quotes("'"))), quotes('x')).reason, 'delta');
 });
 
+test('the size rules are exact: a delta of exactly the limit is sent; a delta as large as F is not', () => {
+  const held = page('120.00');
+  const lines = clientLines(held);
+  const current = page('130.00');
+  const delta = run(get(lines), current);
+  assert.equal(delta.mode, 'delta');
+  const size = delta.body.length;
+  assert.equal(run(get(lines), current, { maxPatchBytes: size }).mode, 'delta');
+  assert.equal(run(get(lines), current, { maxPatchBytes: size - 1 }).reason, 'delta-too-large');
+  // Each quote adds one byte to the delta (JSON escape) and none to F: find the first step where F is not larger.
+  const quotes = (n) => Buffer.from(`<html><head></head><body><p data-rq-block="a">${'"'.repeat(n)}${'x'.repeat(400 - n)}</p></body></html>`);
+  const heldQuotes = Buffer.from(`<html><head></head><body><p data-rq-block="a">${'y'.repeat(400)}</p></body></html>`);
+  const base = clientLines(heldQuotes);
+  let n = 1;
+  while (run(get(base), quotes(n)).mode === 'delta') n++;
+  const full = run(get(base), quotes(n));
+  const analysis = revisionsOf(quotes(n));
+  const envelope = buildDelta(quotes(n), analysis, revisionsOf(heldQuotes).page_revision, analysis.page_revision, [0]);
+  assert.equal(full.reason, 'delta-not-smaller');
+  assert.equal(Buffer.byteLength(JSON.stringify(envelope)), full.body.length);
+});
+
 test('a changed html block with an on* attribute gives the full document (H-56)', () => {
   const held = page('120.00');
   const current = page('<b onclick="x()">130.00</b>');
@@ -167,7 +189,7 @@ test('a page that is not valid for RQP, or has no </head>, is sent unchanged wit
 test('a response out of scope is sent unchanged: POST, status 404, JSON type', () => {
   const p = page();
   assert.equal(run({ ...get(), method: 'POST' }, p).mode, 'passthrough');
-  assert.equal(handle(get(), { status: 404, headers: APP.headers }, p, {}).mode, 'passthrough');
+  for (const status of [404, 201, 206, 304]) assert.equal(handle(get(), { status, headers: APP.headers }, p, {}).mode, 'passthrough', String(status));
   assert.equal(handle(get(), { status: 200, headers: [['content-type', 'application/json']] }, p, {}).mode, 'passthrough');
 });
 
@@ -179,6 +201,19 @@ test('an ETag of the application is replaced; with a content coding the ETag is 
   assert.equal(header(r, 'content-length'), String(r.body.length));
   const weak = handle(get(), app, p, { contentCoding: true });
   assert.equal(header(weak, 'etag'), `W/"${revisionsOf(p).page_revision}"`);
+});
+
+test('a delta does not carry ETag, Last-Modified, Expires or the length of the application response', () => {
+  const held = page('120.00');
+  const app = {
+    status: 200,
+    headers: [...APP.headers, ['etag', '"app"'], ['last-modified', 'Mon, 12 Oct 2026 10:00:00 GMT'], ['expires', 'Tue, 13 Oct 2026 10:00:00 GMT'], ['content-length', '1'], ['x-app', 'kept']],
+  };
+  const r = handle(get(clientLines(held)), app, page('130.00'), {});
+  assert.equal(r.mode, 'delta');
+  for (const name of ['etag', 'last-modified', 'expires']) assert.equal(header(r, name), null, name);
+  assert.equal(header(r, 'content-length'), String(r.body.length));
+  assert.equal(header(r, 'x-app'), 'kept');
 });
 
 test('an internal error sends the application response unchanged and reports it', () => {

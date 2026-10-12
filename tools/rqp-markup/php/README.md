@@ -20,6 +20,8 @@ php bin/rqp-markup --batch <fixtures-dir>
 | 2 | Usage error or I/O error. The reason is on stderr. |
 | 70 | Internal error (a defect). stderr has the exception class and the source line only. |
 
+A defect in the parser for one document fails closed for that document. The command prints the result line `valid: false`, `error: RQP_MARKUP_STRUCTURE`, no blocks and null revisions, reports the defect on stderr (class name and source line, no document content), goes on with the next fixture in batch mode, and exits with 70 at the end. In single mode it prints that line and exits with 70. Only an argument that starts with `--` is an option: `-page.html` is a path.
+
 The command never prints document content to stderr. It reads at most 5 MiB + 1 byte of a file, so rule M-01 applies to any file size.
 
 The command reads only regular files (symbolic links are followed). A single-mode path, or a batch `input.html`, that exists but is not a regular file (FIFO, device, directory, socket) is an I/O error: exit code 2, and the command does not wait on a FIFO. A batch subdirectory without `input.html` is skipped (CONTRACT section 2, item 7).

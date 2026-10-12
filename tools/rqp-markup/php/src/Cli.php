@@ -16,6 +16,10 @@ namespace Rivqen\Tools\RqpMarkup;
  * Exit codes: 0 results printed (valid and invalid documents); 2 usage or
  * I/O error; 70 internal error (a defect). stderr never gets document
  * content: only paths, exception class names and source lines.
+ *
+ * A defect in the parser for one document fails closed for that document:
+ * its result line is invalid with RQP_MARKUP_STRUCTURE, the defect goes to
+ * stderr, the next documents are still processed, and the exit code is 70.
  */
 final class Cli
 {
@@ -33,8 +37,9 @@ final class Cli
      * @param list<string> $argv
      * @param resource $out
      * @param resource $err
+     * @param (callable(string): Result)|null $parser test seam; Parser::parse by default
      */
-    public static function run(array $argv, $out, $err): int
+    public static function run(array $argv, $out, $err, ?callable $parser = null): int
     {
         // Every PHP warning becomes an exception, so nothing is ignored and
         // nothing is printed to stdout.
@@ -42,7 +47,7 @@ final class Cli
             throw new \ErrorException($message, 0, $severity, $file, $line);
         });
         try {
-            return self::main($argv, $out);
+            return self::main($argv, $out, $err, $parser ?? Parser::parse(...));
         } catch (UsageError $e) {
             self::writeError($err, 'rqp-markup: ' . $e->getMessage() . "\n");
             return self::EXIT_USAGE;
@@ -64,27 +69,35 @@ final class Cli
     /**
      * @param list<string> $argv
      * @param resource $out
+     * @param resource $err
+     * @param callable(string): Result $parser
      */
-    private static function main(array $argv, $out): int
+    private static function main(array $argv, $out, $err, callable $parser): int
     {
         $args = array_slice($argv, 1);
         if (count($args) === 2 && $args[0] === '--batch') {
-            self::batch($args[1], $out);
-            return self::EXIT_OK;
+            $defect = self::batch($args[1], $out, $err, $parser);
+            return $defect ? self::EXIT_INTERNAL : self::EXIT_OK;
         }
-        if (count($args) === 1 && !str_starts_with($args[0], '-')) {
-            $result = Parser::parse(self::readInput($args[0]));
-            self::writeLine($out, $result->toArray());
-            return self::EXIT_OK;
+        // Only "--..." is an option; "-page.html" is a path.
+        if (count($args) === 1 && !str_starts_with($args[0], '--')) {
+            $defect = false;
+            $line = self::parseDocument(self::readInput($args[0]), $parser, $err, $defect);
+            self::writeLine($out, $line);
+            return $defect ? self::EXIT_INTERNAL : self::EXIT_OK;
         }
         throw new UsageError(trim(self::USAGE));
     }
 
     /**
      * @param resource $out
+     * @param resource $err
+     * @param callable(string): Result $parser
+     * @return bool true when the parser had a defect for at least one document
      */
-    private static function batch(string $dir, $out): void
+    private static function batch(string $dir, $out, $err, callable $parser): bool
     {
+        $defect = false;
         if (!is_dir($dir)) {
             throw new UsageError('not a directory: ' . $dir);
         }
@@ -110,8 +123,34 @@ final class Cli
             if (!is_dir($sub) || !file_exists($file)) {
                 continue;
             }
-            $line = Parser::parse(self::readInput($file))->toArray() + ['fixture' => $name];
+            $line = self::parseDocument(self::readInput($file), $parser, $err, $defect) + ['fixture' => $name];
             self::writeLine($out, $line);
+        }
+        return $defect;
+    }
+
+    /**
+     * Parse one document. A Throwable from the parser is a defect: report
+     * the class and the source line (never the message, which could hold
+     * document bytes) and return the fail-closed result.
+     *
+     * @param callable(string): Result $parser
+     * @param resource $err
+     * @return array<string, mixed>
+     */
+    private static function parseDocument(string $input, callable $parser, $err, bool &$defect): array
+    {
+        try {
+            return $parser($input)->toArray();
+        } catch (\Throwable $e) {
+            $defect = true;
+            self::writeError($err, sprintf(
+                "rqp-markup: internal error: %s at %s:%d\n",
+                $e::class,
+                basename($e->getFile()),
+                $e->getLine(),
+            ));
+            return Result::invalid(ErrorCode::Structure, 'internal')->toArray();
         }
     }
 

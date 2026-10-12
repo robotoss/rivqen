@@ -10,6 +10,7 @@ namespace Rivqen\Tools\RqpMarkup\Tests;
 use PHPUnit\Framework\TestCase;
 use Rivqen\Tools\RqpMarkup\Cli;
 use Rivqen\Tools\RqpMarkup\Parser;
+use Rivqen\Tools\RqpMarkup\Result;
 
 /**
  * Command line of CONTRACT.md section 2.
@@ -32,15 +33,16 @@ final class CliTest extends TestCase
 
     /**
      * @param list<string> $args
+     * @param (callable(string): Result)|null $parser
      * @return array{int, string, string}
      */
-    private static function cli(array $args): array
+    private static function cli(array $args, ?callable $parser = null): array
     {
         $out = fopen('php://memory', 'w+');
         $err = fopen('php://memory', 'w+');
         self::assertIsResource($out);
         self::assertIsResource($err);
-        $code = Cli::run(['rqp-markup', ...$args], $out, $err);
+        $code = Cli::run(['rqp-markup', ...$args], $out, $err, $parser);
         rewind($out);
         rewind($err);
         return [$code, (string) stream_get_contents($out), (string) stream_get_contents($err)];
@@ -113,12 +115,85 @@ final class CliTest extends TestCase
 
     public function testUsageErrors(): void
     {
-        foreach ([[], ['--batch'], ['a', 'b'], ['--batch', 'a', 'b'], ['-x'], ['--help']] as $args) {
+        foreach ([[], ['--batch'], ['a', 'b'], ['--batch', 'a', 'b'], ['--x'], ['--help']] as $args) {
             [$code, $out, $err] = self::cli($args);
             self::assertSame(2, $code, implode(' ', $args));
             self::assertSame('', $out);
             self::assertStringContainsString('usage: rqp-markup', $err);
         }
+    }
+
+    private const FAIL_CLOSED = '{"valid":false,"error":"RQP_MARKUP_STRUCTURE","blocks":[],"template_revision":null,"page_revision":null';
+
+    /**
+     * Parser seam that fails on documents containing "BOOM".
+     */
+    private static function defectiveParser(): \Closure
+    {
+        return static function (string $input): Result {
+            if (str_contains($input, 'BOOM')) {
+                throw new \RuntimeException('message with ' . $input);
+            }
+            return Parser::parse($input);
+        };
+    }
+
+    public function testBatchDefectFailsClosedForThatDocumentAndContinues(): void
+    {
+        $this->file('fx/a/input.html', '<p data-rq-block="a">1</p>');
+        $this->file('fx/b/input.html', '<p data-rq-block="b">SECRET BOOM</p>');
+        $this->file('fx/c/input.html', '<p data-rq-block="c">3</p>');
+        [$code, $out, $err] = self::cli(['--batch', $this->tmp . '/fx'], self::defectiveParser());
+        self::assertSame(70, $code);
+        $lines = explode("\n", rtrim($out, "\n"));
+        self::assertCount(3, $lines);
+        self::assertStringStartsWith('{"valid":true', $lines[0]);
+        self::assertSame(self::FAIL_CLOSED . ',"fixture":"b"}', $lines[1]);
+        self::assertStringStartsWith('{"valid":true', $lines[2]);
+        self::assertStringContainsString('"fixture":"c"', $lines[2]);
+        self::assertStringContainsString('RuntimeException', $err);
+        self::assertStringNotContainsString('SECRET', $err);
+        self::assertStringNotContainsString('BOOM', $err);
+    }
+
+    public function testSingleModeDefectFailsClosedWithExit70(): void
+    {
+        $path = $this->file('in.html', '<p>SECRET BOOM</p>');
+        [$code, $out, $err] = self::cli([$path], self::defectiveParser());
+        self::assertSame(70, $code);
+        self::assertSame(self::FAIL_CLOSED . "}\n", $out);
+        self::assertStringContainsString('RuntimeException', $err);
+        self::assertStringContainsString('CliTest.php', $err);
+        self::assertStringNotContainsString('SECRET', $err);
+    }
+
+    public function testPhpWarningInParserIsADefectNotAnEscape(): void
+    {
+        $path = $this->file('in.html', 'x');
+        $parser = static function (string $input): Result {
+            trigger_error('warn SECRET', E_USER_WARNING);
+            return Parser::parse($input);
+        };
+        [$code, $out, $err] = self::cli([$path], $parser);
+        self::assertSame(70, $code);
+        self::assertStringStartsWith(self::FAIL_CLOSED, $out);
+        self::assertStringNotContainsString('SECRET', $err);
+    }
+
+    public function testDashPrefixedFileNameIsAPathInSingleMode(): void
+    {
+        $this->file('-page.html', '<title data-rq-block="t">x</title>');
+        $cwd = getcwd();
+        self::assertNotFalse($cwd);
+        self::assertTrue(chdir($this->tmp));
+        try {
+            [$code, $out, $err] = self::cli(['-page.html']);
+        } finally {
+            chdir($cwd);
+        }
+        self::assertSame(0, $code);
+        self::assertSame('', $err);
+        self::assertStringStartsWith('{"valid":true', $out);
     }
 
     public function testMissingFileIsAnIoError(): void

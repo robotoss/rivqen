@@ -1,6 +1,6 @@
 # RQP markup: edge cases E1–E8
 
-This page is a short risk study of eight edge cases of the [RQP markup rules](/engineering/protocol/markup) (rqp/1). For each case it gives the evidence, the options, the risk and one recommended reading. The human decided each case (protocol decision; E8 is also a security decision). The decided rule text is in [`markup.md`](/engineering/protocol/markup) §2; the cases are listed in [§2.11](/engineering/protocol/markup#_2-11-decided-edge-cases). Section 6 is the study of the findings of the security review (H-25 to H-31, 2026-10-11).
+This page is a short risk study of eight edge cases of the [RQP markup rules](/engineering/protocol/markup) (rqp/1). For each case it gives the evidence, the options, the risk and one recommended reading. The human decided each case (protocol decision; E8 is also a security decision). The decided rule text is in [`markup.md`](/engineering/protocol/markup) §2; the cases are listed in [§2.11](/engineering/protocol/markup#_2-11-decided-edge-cases). Section 6 is the study of the findings of the security review (H-25 to H-31, 2026-10-11). Section 7 is round 2 of the review (H-35 to H-38). Section 8 is the WHATWG conformance study (round 3, H-43).
 
 **Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-09, task WP-17/S1/T-07 ([sprint record](/engineering/plan/sprints/WP-17-S1)). <Badge type="info" text="DESIGN" /> **Decided on 2026-10-09:** E1–E7 as recommended (human decision H-21), E8 option A, reject with `RQP_MARKUP_RESERVED` (human decision H-22). The evidence below is the state before the decision ("Today" = the candidates before task T-08).
 
@@ -436,7 +436,7 @@ To repeat a sweep, run in `tools/rqp-markup/crosscheck`: `node src/cli.mjs sweep
 
 ## 8. WHATWG conformance table (round 3)
 
-**Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-12, task WP-17/S1/T-17-conformance ([sprint record](/engineering/plan/sprints/WP-17-S1)). It found one gap (GAP-1, §8.5). The proposed rule for GAP-1 is a **human decision** (protocol and security); it is not in `markup.md`.
+**Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-12, task WP-17/S1/T-17-conformance ([sprint record](/engineering/plan/sprints/WP-17-S1)). It found one gap (GAP-1, §8.5). <Badge type="info" text="DESIGN" /> **Closed on 2026-10-12:** the human decided option A (H-43). The rule is `markup.md` M-10 item 3; fixtures `TEMPLATE-FOR`, `TEMPLATE-FOR-EMPTY`, `TEMPLATE-FOR-SVG`; cross-check class `M-10-template-for` (task T-19). The candidate lanes of T-19 implement the rule. The study text below is the state before the decision, except where it says H-43.
 
 Sources:
 
@@ -490,7 +490,7 @@ The table also has the tokenizer states that the tree builder controls (§8.2.1)
 | IH-2 | "in head": anything else pops `head` | b | No block is `head`; M-26 |
 | IH-3 | `</template>`: implied end tags, pop to `template` | b | M-06 item 1, M-19 |
 | IH-4 | `meta` charset can change the encoding | e | M-02 (UTF-8 transport) |
-| IH-5 | `template` with `for`: content patching | d | **Not covered: GAP-1** |
+| IH-5 | `template` with `for`: content patching | d | M-10 item 3 (H-43; was GAP-1) |
 | IH-6 | `template` with `shadowrootmode`: shadow root | d | M-19, M-22 (rendering only) |
 | HN-1 | "in head noscript" | a, b | Scripting disabled only (H-42) |
 | AH-1 | "after head": `head` pushed again for one token | c | M-04, M-20 |
@@ -622,7 +622,7 @@ The table also has the tokenizer states that the tree builder controls (§8.2.1)
 | SA-10 | Frameset-ok flag | — | M-10 item 1 |
 | SA-11 | Quirks: `table` closes `p` only in no-quirks | b | M-24 a |
 | SA-12 | Three entries per family in the list | — | M-26 (§6.5) |
-| SA-13 | Prepare content patching (§4.12.3) | d | **Not covered: GAP-1** |
+| SA-13 | Prepare content patching (§4.12.3) | d | M-10 item 3 (H-43; was GAP-1) |
 | SA-14 | Page scripts (`document.write`, custom elements) | d, e | Out of scope: page code |
 
 #### 8.2.8 Count
@@ -632,8 +632,8 @@ The table also has the tokenizer states that the tree builder controls (§8.2.1)
 | Result | Rows |
 |---|---|
 | Steps in the table | 122 |
-| Covered by a rule or without effect | 118 |
-| Not covered (GAP-1) | 2 (IH-5, SA-13) |
+| Covered by a rule or without effect | 118 before H-43; 120 with H-43 |
+| Not covered | 2 before H-43 (IH-5, SA-13: GAP-1); 0 with H-43 |
 | Outside the RQP view | 2 (HN-1, SA-14) |
 
 ### 8.3 Arguments for the rows that are not obvious
@@ -651,7 +651,7 @@ The table also has the tokenizer states that the tree builder controls (§8.2.1)
 
 ### 8.4 Cases and results
 
-<Badge type="tip" text="FACT" /> Run in `tools/rqp-markup/crosscheck`: `node src/cli.mjs cases --cases cases/conformance-cases.json --only rust,node,java,php --scripting both`. Each case in the file has the fields `step` (row of §8.2) and `expected` (the result by the rules, derived by hand before the run). All four candidates gave the expected result for all 77 cases. parse5 8.0.1 agreed with every valid result in both scripting views (no finding, no depth-invariant violation). Chrome 154 had the same block elements as the candidates for every valid case except the GAP-1 cases.
+<Badge type="tip" text="FACT" /> Run in `tools/rqp-markup/crosscheck`: `node src/cli.mjs cases --cases cases/conformance-cases.json --only rust,node,java,php --scripting both`. Each case in the file has the fields `step` (row of §8.2) and `expected` (the result by the rules, derived by hand before the run). All four candidates gave the expected result for all 77 cases (rules before H-43, candidates at `cf56d4d`). With H-43 the expected result of 7 cases is `STRUCTURE` (table below); the candidates give it when they implement M-10 item 3 (T-19). parse5 8.0.1 agreed with every valid result in both scripting views (no finding, no depth-invariant violation). Chrome 154 had the same block elements as the candidates for every valid case except the GAP-1 cases.
 
 | Cases | Rows | Result |
 |---|---|---|
@@ -686,8 +686,9 @@ The table also has the tokenizer states that the tree builder controls (§8.2.1)
 | `heading-end-other` | IB-19 | valid |
 | `eof-title`, `eof-script` | TX-1 | valid |
 | `template-shadowroot` | IH-6 | valid |
-| `GAP1-replace-content`, `GAP1-remove-block`, `GAP1-title-in-head`, `GAP1-start-no-end`, `GAP1-ancestor-scope` | IH-5 | valid: **GAP-1** |
-| `GAP1-control-table-scope`, `GAP1-control-foreign`, `GAP1-control-empty`, `xml-pi` | IH-5 | valid (no patching) |
+| `GAP1-replace-content`, `GAP1-remove-block`, `GAP1-title-in-head`, `GAP1-start-no-end`, `GAP1-ancestor-scope` | IH-5 | Before H-43: valid (**GAP-1**). With H-43: `STRUCTURE` (M-10 item 3) |
+| `GAP1-control-table-scope`, `GAP1-control-empty` | IH-5 | Before H-43: valid (no patching). With H-43: `STRUCTURE` (fail closed) |
+| `GAP1-control-foreign`, `xml-pi` | IH-5 | valid (no patching) |
 
 To repeat the Chrome check, write each input to a file and run `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --dump-dom file:///…/case.html`. The tool does not run Chrome.
 
@@ -712,7 +713,7 @@ The `template` start tag reaches this path from "in head" and from every mode th
 
 Impact: the block element is not in the DOM, or its subtree does not come from its content bytes (items 1 and 2 of §8.1). This is the same class as H-26 and H-30 (a block that the client cannot find or that is not what the server hashed). The patched content cannot add a manifest script or a block: M-13 applies in every context, and M-19 rejects a block start tag while a `template` is on the token stack. <Badge type="warning" text="RESEARCH" /> The depth of patched content is not measured: it is inserted under the marker, and the M-26 claim does not check while a `template` is open. Use of `template for` in the T-15 corpus: NOT MEASURED (the corpus statistics do not count it).
 
-**Question for the human (protocol and security decision).** Options:
+**Question for the human (protocol and security decision).** Decided on 2026-10-12: option A (H-43). The options were:
 
 | Option | Rule | Cost |
 |---|---|---|
@@ -720,12 +721,12 @@ Impact: the block element is not in the DOM, or its subtree does not come from i
 | B | A comment that starts with `<?` and whose target is `marker`, `start` or `end` MUST NOT appear | Each candidate must read the processing instruction target (case-sensitive, ends at white space, `?` or `>`); older parsers read a bogus comment, so the rule must not depend on the tokenizer of the client. It leaves `template for` valid, so a later change of the marker syntax in the WHATWG text can open the gap again |
 | C | A and B | The cost of both; no extra safety over A for the parser view |
 
-Recommendation: **A**. Proposed place: a new item in `markup.md` §2.4 (for example M-10 item 3), a row in §2.12 and §4, fixtures `TEMPLATE-FOR` (invalid) and `TEMPLATE-FOR-SVG` (valid control), and a `M-xx-template-for` class in `src/depth.mjs`. M-11 item 3 already forbids `template` in the `noscript` content C.
+Recommendation: **A**. <Badge type="info" text="DESIGN" /> **Done (T-19):** `markup.md` M-10 item 3 with rows in §2.12, §3.3 and §4; fixtures `TEMPLATE-FOR` (invalid, the first Chrome repro), `TEMPLATE-FOR-EMPTY` (invalid: `<template For>` without a value) and `TEMPLATE-FOR-SVG` (valid control); the class `M-10-template-for` in `src/depth.mjs`; the sweep profile `review3`. M-11 item 3 already forbids `template` in the `noscript` content C. <Badge type="tip" text="FACT" /> A `review3` sweep (seed 81, 5 000 documents, Rust and Node.js candidates before H-43, both views) gave 0 parse5 findings and 39 accepted documents that only `M-10-template-for` rejects: parse5 cannot see the class, as expected.
 
 ### 8.6 Follow-ups
 
 1. <Badge type="info" text="DESIGN" /> parse5 8.0.1 implements an older text: no processing instructions, no content patching, the old `select` modes. A cross-check with parse5 alone does not find gaps from these changes. Proposal for the architect: an optional Chrome oracle in `tools/rqp-markup/crosscheck` for the `cases` command.
-2. After the decision on GAP-1: `markup.md` §3.2 (the list of WHATWG changes since 2025) also names content patching.
+2. Done (T-19): `markup.md` §3.2 (the list of WHATWG changes since 2025) names content patching.
 3. Count `template for`, `<?marker` and `<?start` in the T-15 corpus.
 
 ## Related

@@ -1,8 +1,10 @@
 {
   "document": "page.html",
+  "full_document": "full.html",
   "manifest": "../valid/manifest/shop.json",
   "patches": [
     "../valid/patch/shop-price.json",
     "../valid/patch/shop-all.json"
-  ]
+  ],
+  "rq_have": "t=t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:"
 }

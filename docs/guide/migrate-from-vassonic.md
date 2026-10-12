@@ -21,8 +21,9 @@ Rivqen is not released yet. Use this guide to plan.
 |---|---|---|---|
 | Block markup | `<!--sonicdiff-x-->…<!--sonicdiff-x-end-->` | `data-rq-block="x"` attribute | Run `rivqen-migrate` on your templates |
 | Page title | Implicit block (rules differ per server) | Normal block: `<title data-rq-block="title">` | Mark the title if it changes |
-| Versions | `etag`, `template-tag` headers | Manifest + `Rq-Revision`, `Rq-Template-Revision` | Nothing; the server SDK computes them |
-| Data update | All blocks sent; client computes diff | Only changed blocks, validated patch | Nothing |
+| Versions | `etag`, `template-tag` headers | Template and page revisions in the page manifest; the page revision is also the standard `ETag` | Nothing; the server SDK computes them |
+| Data update | All blocks sent; client computes diff | The client sends short block digests (`Rq-Have`); the server sends only changed blocks; the client validates the patch | Nothing |
+| Clients without the SDK | Unchanged HTML | The same full document for every client; browsers ignore the manifest | Nothing |
 | Cache identity | Host + path + `sonic_*` parameters; other parameters ignored | Full URL + account partition | Remove `sonic_remain_params` workarounds |
 | Accounts | Optional account name prefix | Mandatory partition per account | Pass a non-secret user ID to `open` |
 | JS bridge | `addJavascriptInterface` object `sonic` | Origin-checked message bridge | Use `@rivqen/web-core`; the legacy bridge shim exists until 1.5 |
@@ -53,6 +54,8 @@ Rivqen is not released yet. Use this guide to plan.
 - [ ] Every block has a unique, lowercase name.
 - [ ] Personal pages send `Cache-Control: private` (or `no-store`).
 - [ ] The app passes a partition for every authenticated session and clears it on logout.
-- [ ] Page origins are in `allowedOrigins` and `bridgeOrigins`.
+- [ ] Page origins are in `allowedOrigins` and `bridgeOrigins`, with `https`. Release builds do not use RQP over `http`.
+- [ ] A proxy or CDN that compresses pages sends a weak `ETag` (`W/"r1.…"`), not the strong one.
+- [ ] Blocks that change often have no `on*` attributes and no `javascript:` URLs. The client rejects such patches and loads the full page.
 - [ ] Conformance runner passes against staging.
 - [ ] `LegacyModeUsed` is zero before you upgrade to Rivqen 1.5.

@@ -11,7 +11,7 @@ This package checks the JSON Schemas of the Rivqen protocol in `spec/rqp/schemas
 |---|---|
 | `test/schemas.test.mjs` | Each schema is valid against the Draft 2020-12 meta-schema, compiles in Ajv strict mode, and has its URN `$id`. The definitions that both schemas carry (`block_id`, `format`, `sha256`, `template_revision`, `page_revision`) are identical. |
 | `test/examples.test.mjs` | Every file in `examples/valid/<kind>/` passes. Every file in `examples/invalid/<kind>/` fails with the expected keyword at the expected instance path, and has no second defect. Boundary values (256/257 blocks and operations, content length, canonical base64url last character) are generated in the test. |
-| `test/kat.test.mjs` | Known-answer test: `examples/kat/page.html`, the manifest and the patches agree with the revision algorithm (section 1.3 of the spec page), with the client verification of `next_revision` (section 2.4), and with the Node.js markup candidate `tools/rqp-markup/node`. |
+| `test/kat.test.mjs` | Known-answer test: `examples/kat/page.html`, the manifest and the patches agree with the revision algorithm (section 1.3 of the spec page), with the client verification of `next_revision` (section 2.4), and with the Node.js markup candidate `tools/rqp-markup/node`. The client checks of H-48: the markup analysis of the original document against the manifest (section 1.8) and of the patched document (section 2.4, step 8), with patches that have correct hashes and a correct `next_revision` but bad content. The full document `kat/full.html` (manifest position, no `<` in the manifest text, M-13) and the `Rq-Have` example value. |
 
 ## Requirements
 

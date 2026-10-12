@@ -5,7 +5,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { KINDS, contentHash, exampleFiles, readJson, validators } from './helpers.mjs';
+import { KINDS, contentHash, exampleFiles, readJson, schemaPath, validators } from './helpers.mjs';
 
 const v = validators();
 
@@ -34,18 +34,15 @@ for (const kind of KINDS) {
 }
 
 test('every invalid example has exactly one defect: no error outside the expected path', () => {
-  // An error at a parent path (oneOf, the root) is allowed. The other branch of the operation
-  // oneOf reports errors in the same operation; they are allowed too. Any other error means a second defect.
-  const opOf = (p) => p.split('/').slice(0, 3).join('/');
+  // An error at a parent path of the defect (for example `required` in the operation of a
+  // wrong `op`) or below it is allowed. Any other error means a second defect.
   for (const kind of KINDS) {
     for (const { name, path } of exampleFiles('invalid', kind)) {
       const { expect, instance } = readJson(path);
       const target = expect.instancePath;
       const errors = errorsOf(kind, instance);
-      const oneOfAt = new Set(errors.filter((e) => e.keyword === 'oneOf').map((e) => e.instancePath));
       for (const e of errors) {
-        const branch = oneOfAt.has(opOf(e.instancePath)) && opOf(e.instancePath) === opOf(target);
-        const related = branch || target.startsWith(e.instancePath) || e.instancePath.startsWith(target);
+        const related = target.startsWith(e.instancePath) || e.instancePath.startsWith(target);
         assert.ok(related, `${kind}/${name}: unrelated error ${e.keyword} at ${e.instancePath}`);
       }
     }
@@ -77,7 +74,7 @@ test('a manifest with 257 blocks fails with maxItems', () => {
 });
 
 test('a patch with 256 operations passes and one with 257 fails with maxItems', () => {
-  const op = (i) => ({ op: 'remove_block', block_id: `b${i}` });
+  const op = (i) => ({ op: 'replace_block', block_id: `b${i}`, format: 'html', content: '', sha256: contentHash('') });
   assert.equal(errorsOf('patch', { ...price(), operations: Array.from({ length: 256 }, (_, i) => op(i)) }), null);
   const errors = errorsOf('patch', { ...price(), operations: Array.from({ length: 257 }, (_, i) => op(i)) });
   assert.deepEqual(errors.map((e) => [e.keyword, e.instancePath]), [['maxItems', '/operations']]);
@@ -95,8 +92,23 @@ test('content of 1 048 576 code points passes and 1 048 577 fails with maxLength
   assert.ok(errors.some((e) => e.keyword === 'maxLength' && e.instancePath === '/operations/0/content'));
 });
 
-test('an empty block content (remove_block result) has the hash 47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU', () => {
+test('an empty block content has the hash 47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU', () => {
   assert.equal(contentHash(''), '47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU');
+});
+
+test('replace_block is the only operation (H-47): remove_block and insert_block fail at /operations/0/op', () => {
+  const p = price();
+  assert.deepEqual(readJson(schemaPath('patch')).properties.operations.items, { $ref: '#/$defs/replace_block' });
+  for (const op of ['remove_block', 'insert_block']) {
+    const env = { ...p, operations: [{ ...p.operations[0], op }] };
+    assert.deepEqual(errorsOf('patch', env).map((e) => [e.keyword, e.instancePath]), [['const', '/operations/0/op']], op);
+  }
+});
+
+test('replace_block with empty content passes the schema (the result of the withdrawn remove_block)', () => {
+  const p = price();
+  p.operations[0] = { ...p.operations[0], content: '', sha256: contentHash('') };
+  assert.equal(errorsOf('patch', p), null);
 });
 
 test('each of the 16 canonical last characters passes and the 48 others fail', () => {

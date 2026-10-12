@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P39-HEAD-BR-END",
+  "description": "A </br> end tag in the head is not ignored (the HTML parser treats it as a br start tag, which closes the head): no head end tag, the page is sent without RQP (DL-034)",
+  "rules": ["RQP-09"],
+  "page": "page-head-br",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

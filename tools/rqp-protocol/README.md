@@ -15,7 +15,7 @@ The reference functions here are the source of the expected results. They are no
 | `check.mjs` | Conformance harness. Runs a server or a client under test over the fixtures and compares the results |
 | `src/server.mjs` | Reference server step: negotiation section 4, steps 1 to 9 (with the removal of the `Rq-*` fields of the application response, DL-030, and without its `Last-Modified` on F, DL-032), one function for each field rule of section 3 |
 | `src/client.mjs` | Reference client step: request fields (section 6.2) and response handling (section 6.3) with the manifest checks and the delta checks in the order of diff-engine section 3; the binding of a `304`, a manifest and a delta to the request and to the cache key of the final URL (H-58); the partition of a new snapshot (H-61) |
-| `src/markup.mjs` | The markup analysis of the Node.js candidate (`tools/rqp-markup/node`), the head end tag of the document (manifest-patch section 1.7, DL-031), the manifest elements, the attribute rule with `javascript:`, `vbscript:` and `data:` (manifest-patch section 4.2, H-59) |
+| `src/markup.mjs` | The markup analysis of the Node.js candidate (`tools/rqp-markup/node`), the head end tag of the document (manifest-patch section 1.7, DL-031, DL-034), the manifest elements, the attribute rule with `javascript:`, `vbscript:` and `data:` (manifest-patch section 4.2, H-59) |
 | `src/sf.mjs` | Structured Field Values parser (RFC 9651 section 4.2): Item, List, Dictionary, all bare item types |
 | `src/http.mjs` | Field lines, combined values, entity-tags, `Accept`, media type |
 | `src/json-strict.mjs` | JSON parser with the rules of manifest-patch section 3.2 (no duplicate member names, no lone surrogate, integers as digits, depth 16) |

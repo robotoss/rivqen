@@ -76,6 +76,9 @@ export const EXPECTED = Object.freeze({
   'page-head-stray': { blocks: ['title', 'price', 'cart'] },
   'page-head-template': { blocks: ['title', 'price', 'cart'] },
   'page-no-head-start': { blocks: ['title', 'price', 'cart'] },
+  // DL-034: a stray </meta> in the head is ignored (head end tag found); </br> in the head fails.
+  'page-head-stray-end': { blocks: ['title', 'price', 'cart'] },
+  'page-head-br': { blocks: ['title', 'price', 'cart'] },
   'page-t2': { blocks: ['title', 'price', 'cart'] },
   'page-zero': { blocks: [] },
   'page-big-a': { blocks: ['title', 'price', 'cart'] },

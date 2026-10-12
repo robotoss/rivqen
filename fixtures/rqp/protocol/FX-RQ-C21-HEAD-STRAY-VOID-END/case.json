@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-C21-HEAD-STRAY-VOID-END",
+  "kind": "client",
+  "description": "Rq-Version 1 and a consistent manifest immediately before the real </head>, after a stray </meta> end tag in the head: the manifest is accepted (DL-034)",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-head-stray-end"
+    }
+  }
+}

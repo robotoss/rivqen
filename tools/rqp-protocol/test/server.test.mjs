@@ -90,12 +90,10 @@ test('DL-031: no head end tag when something else comes before or in the head', 
     '<html>x<head></head>', // text before the head
     '<p>x</p><head></head>', // another start tag before the head
     '<html><meta charset="utf-8"><head></head>', // head content before the head start tag (the head is implied)
-    '</p><head></head>', // an end tag before the head
     '<html><head>x</head>', // text in the head
     '<html><head></>', // "</>" gives no token: its bytes are not white space
     '<html><head><div></head>', // a start tag that is not head content
     '<html><head><svg><desc>d</desc></svg></head>', // svg closes the head
-    '<html><head></p></head>', // another end tag
     '<html><head><head></head>', // a second head start tag
     '<html><head><title>t</title><body></head>', // the head is closed by body; </head> is stray
     '<html><head><template></head></template></head>', // </head> crosses the template
@@ -103,6 +101,39 @@ test('DL-031: no head end tag when something else comes before or in the head', 
     '<html><head><title>t</title>', // no </head> at all
   ];
   for (const p of none) assert.equal(headEnd(p), -1, p);
+});
+
+test('DL-034: an end tag other than head, body, html and br is ignored before and in the head', () => {
+  const ok = [
+    '<html><head><meta charset="utf-8"></meta><link rel="a"></link><base href="/"></base></head>', // stray void end tags
+    '<html><head><script>s</script></script></head>', // a second </script> with no script open
+    '<html><head></p></div></title></head>', // any other name, also of a head content element
+    '</p><html></div><head></head>', // before the head (item 1)
+    '<html><head> </meta> <!-- c --> </head>', // white space around it
+  ];
+  for (const p of ok) assert.equal(headEnd(p), Buffer.from(p).lastIndexOf('</'), p);
+});
+
+test('DL-034: </body>, </html> and </br> still fail, before and in the head, also without an <html> start tag', () => {
+  const none = [
+    '<html><head></br></head>',
+    '<html><head></body></head>',
+    '<html><head></html></head>',
+    '<head></html></head>', // no <html> start tag: nothing to pop, still a failure
+    '<head></body></head>',
+    '<head></br></head>',
+    '</br><head></head>', // item 1
+    '</body><head></head>',
+    '</html><head></head>',
+    '<html></html><head></head>',
+    '<html><head>x</meta></head>', // the gap before an ignored end tag is still checked
+    'x</p><head></head>', // the same before the head (item 1)
+  ];
+  for (const p of none) assert.equal(headEnd(p), -1, p);
+  // Upper case names are the same names (the tokenizer lowers them).
+  assert.equal(headEnd('<html><head></BR></head>'), -1);
+  const upper = '<html><head></META></head>';
+  assert.equal(headEnd(upper), upper.lastIndexOf('</'));
 });
 
 test('DL-031: a later head element and a later </head> never count', () => {

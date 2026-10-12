@@ -38,6 +38,10 @@ rqp-markup --batch <fixtures-dir>
 
 The command reads at most 5 MiB + 1 byte of a file. The start script sets `-Xmx512m`.
 
+The command reads only regular files (`CONTRACT.md` §2 item 7). It follows symbolic links. If the path of single mode, or the `input.html` of a batch fixture, exists but is not a regular file (a FIFO, a device, a directory, a socket), the exit code is 2. The command checks the file type before it opens the file, so it never waits on a FIFO. A subdirectory of a batch without `input.html` is skipped.
+
+FACT. Remaining window: Java has no portable way to open a file without blocking and then check its type. The check and the open are two steps. A process that has write access to the directory can replace a regular file by a FIFO between them, and the open then waits. Use input directories that only trusted users can write to.
+
 ## 3. Test
 
 Run these commands in `tools/rqp-markup/java`:

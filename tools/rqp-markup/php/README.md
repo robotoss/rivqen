@@ -22,6 +22,8 @@ php bin/rqp-markup --batch <fixtures-dir>
 
 The command never prints document content to stderr. It reads at most 5 MiB + 1 byte of a file, so rule M-01 applies to any file size.
 
+The command reads only regular files (symbolic links are followed). A single-mode path, or a batch `input.html`, that exists but is not a regular file (FIFO, device, directory, socket) is an I/O error: exit code 2, and the command does not wait on a FIFO. A batch subdirectory without `input.html` is skipped (CONTRACT section 2, item 7).
+
 To compare with the golden fixtures, run this command from the repository root:
 
 ```sh

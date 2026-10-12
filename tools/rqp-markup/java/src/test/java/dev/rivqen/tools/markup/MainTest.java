@@ -5,7 +5,9 @@ package dev.rivqen.tools.markup;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -15,6 +17,7 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -146,6 +149,74 @@ class MainTest {
     assertEquals(Analyzer.MAX_INPUT_BYTES + 1, Main.read(f).length);
     assertEquals(0, run(f.toString()));
     assertTrue(written.toString().contains("RQP_MARKUP_LIMIT"));
+  }
+
+  // CONTRACT.md §2 item 7: only regular files are read; never wait on a FIFO.
+
+  private static final Duration GUARD = Duration.ofSeconds(10);
+
+  private Path fifo(Path f) throws InterruptedException {
+    try {
+      Process p = new ProcessBuilder("mkfifo", f.toString()).redirectErrorStream(true).start();
+      assumeTrue(p.waitFor() == 0, "mkfifo failed");
+    } catch (IOException e) {
+      assumeTrue(false, "mkfifo is not available");
+    }
+    return f;
+  }
+
+  private void assertIoErrorWithoutWaiting(String... args) {
+    int code = assertTimeoutPreemptively(GUARD, () -> run(args));
+    assertEquals(2, code);
+    assertTrue(err().startsWith("rqp-markup: I/O error ("), err());
+    assertEquals("", written.toString());
+  }
+
+  @Test
+  void fifoInputIsAnIoErrorAndNeverBlocks() throws Exception {
+    assertIoErrorWithoutWaiting(fifo(tmp.resolve("in.fifo")).toString());
+  }
+
+  @Test
+  void symlinkToFifoIsAnIoErrorAndNeverBlocks() throws Exception {
+    Path link = tmp.resolve("link.html");
+    Files.createSymbolicLink(link, fifo(tmp.resolve("target.fifo")));
+    assertIoErrorWithoutWaiting(link.toString());
+  }
+
+  @Test
+  void directoryInputInSingleModeIsAnIoError() {
+    assertIoErrorWithoutWaiting(tmp.toString());
+  }
+
+  @Test
+  void fifoNamedInputHtmlInBatchIsAnIoErrorAndNeverBlocks() throws Exception {
+    Files.createDirectories(tmp.resolve("fx/a"));
+    fifo(tmp.resolve("fx/a/input.html"));
+    assertIoErrorWithoutWaiting("--batch", tmp.resolve("fx").toString());
+  }
+
+  @Test
+  void directoryNamedInputHtmlInBatchIsAnIoError() throws IOException {
+    Files.createDirectories(tmp.resolve("fx/a/input.html"));
+    assertIoErrorWithoutWaiting("--batch", tmp.resolve("fx").toString());
+  }
+
+  @Test
+  void batchSkipsSubdirectoryWithoutInputHtml() throws IOException {
+    Files.createDirectories(tmp.resolve("fx/empty"));
+    write("fx/b/input.html", "<p>x</p>");
+    assertEquals(0, run("--batch", tmp.resolve("fx").toString()));
+    assertEquals(1, written.toString().lines().count());
+  }
+
+  @Test
+  void symlinkToRegularFileIsRead() throws IOException {
+    Path target = write("real.html", "<p>x</p>");
+    Path link = tmp.resolve("link.html");
+    Files.createSymbolicLink(link, target);
+    assertEquals(0, run(link.toString()));
+    assertEquals(1, written.toString().lines().count());
   }
 
   @Test

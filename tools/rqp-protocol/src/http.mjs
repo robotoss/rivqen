@@ -90,7 +90,7 @@ export function parseEntityTags(value) {
 }
 
 /** Split a field value on commas outside quoted strings. */
-function splitList(value) {
+export function splitList(value) {
   const parts = [];
   let cur = '';
   let quoted = false;

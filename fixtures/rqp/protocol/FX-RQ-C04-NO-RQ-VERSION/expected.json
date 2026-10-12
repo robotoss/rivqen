@@ -3,8 +3,11 @@
   "kind": "client",
   "context": {
     "url": "https://shop.example.com/catalog",
+    "final_url": "https://shop.example.com/catalog",
     "build": "release",
     "allow_http": false,
+    "credentials": true,
+    "public_origin": false,
     "navigation": "first-visit",
     "snapshot": null
   },

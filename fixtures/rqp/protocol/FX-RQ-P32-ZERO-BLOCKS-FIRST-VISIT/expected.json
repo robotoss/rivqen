@@ -16,7 +16,7 @@
     "etag": "\"r1.BgyOJ0KPx6zil_duHSiCIgtxzhUXRaxTtSaBbXas9rg\"",
     "rq-version": "1"
   },
-  "headers_forbidden": ["rq-revision","rq-template-revision"],
+  "headers_forbidden": ["last-modified","rq-revision","rq-template-revision"],
   "body": {
     "kind": "full",
     "insert_at": 52,

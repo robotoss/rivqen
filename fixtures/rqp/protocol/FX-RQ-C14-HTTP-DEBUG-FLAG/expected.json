@@ -3,8 +3,11 @@
   "kind": "client",
   "context": {
     "url": "http://shop.example.com/catalog",
+    "final_url": "http://shop.example.com/catalog",
     "build": "debug",
     "allow_http": true,
+    "credentials": true,
+    "public_origin": false,
     "navigation": "first-visit",
     "snapshot": null
   },
@@ -34,6 +37,8 @@
     "next": "show",
     "metric": false,
     "snapshot": {
+      "url": "http://shop.example.com/catalog",
+      "partition": "request",
       "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
       "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
       "blocks": [

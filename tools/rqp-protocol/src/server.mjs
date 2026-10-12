@@ -21,7 +21,7 @@ import {
   pageRevision,
 } from './common.mjs';
 import { acceptsMediaType, combined, has, mediaType, normalizeHeaders, parseEntityTags, without } from './http.mjs';
-import { analyze, firstHeadEnd, passesAttributeRule } from './markup.mjs';
+import { analyze, documentHeadEnd, passesAttributeRule } from './markup.mjs';
 import { parseDictionary, parseItem, parseList } from './sf.mjs';
 
 const BASE_TAG = /^"(r1\.[A-Za-z0-9_-]{43})"$/;
@@ -115,7 +115,7 @@ export function manifestOf(analysis, target, members = {}) {
   };
 }
 
-/** Step 3: F = P with the manifest element immediately before the first </head>. */
+/** Step 3: F = P with the manifest element immediately before the head end tag (DL-031). */
 export function fullDocument(page, insertAt, manifest) {
   const text = JSON.stringify(manifest);
   if (text.includes('<')) return null; // manifest-patch section 1.7, server item 3
@@ -157,6 +157,14 @@ export function deltaEnvelope(page, analysis, manifest, base, indices) {
   };
 }
 
+/**
+ * DL-030: the RQP server step owns every Rq-* field. The fields of the
+ * application response A without its Rq-* fields, in every outcome.
+ */
+export function withoutRqFields(headers) {
+  return headers.filter(([name]) => !name.startsWith('rq-'));
+}
+
 function unsupported(headers) {
   for (const name of ['if-match', 'if-unmodified-since', 'if-range', 'content-encoding']) {
     if (has(headers, name)) throw new UnsupportedInput(`the reference server does not model ${name}`);
@@ -178,7 +186,8 @@ export function handle(request, app, pageBytes, config = {}) {
   // Manifest-patch section 2.5, item 5: also the hint max_patch_bytes of the server.
   const maxPatchBytes = Math.min(config.maxPatchBytes ?? LIMITS.maxPatchBytes, members.limits?.max_patch_bytes ?? Infinity);
   const reqHeaders = normalizeHeaders(request.headers);
-  const appHeaders = normalizeHeaders(app.headers);
+  // DL-030: no outcome (passthrough, F, D, 304) carries an Rq-* field of A.
+  const appHeaders = withoutRqFields(normalizeHeaders(app.headers));
   const page = Buffer.from(pageBytes.buffer, pageBytes.byteOffset, pageBytes.byteLength);
   unsupported(appHeaders);
   const passthrough = (reason) => ({ status: app.status, headers: appHeaders, body: page, kind: 'app', reason });
@@ -193,7 +202,7 @@ export function handle(request, app, pageBytes, config = {}) {
   // Step 2.
   const analysis = analyze(page);
   if (!analysis.valid) return passthrough('invalid-page');
-  const insertAt = firstHeadEnd(page);
+  const insertAt = documentHeadEnd(page);
   if (insertAt < 0) return passthrough('no-head-end');
 
   // Step 3.
@@ -201,8 +210,9 @@ export function handle(request, app, pageBytes, config = {}) {
   const full = fullDocument(page, insertAt, manifest);
   if (full === null) return passthrough('server-passthrough');
   const etag = `"${manifest.page_revision}"`;
+  // DL-032: the ETag r1. is the only validator of F, so A's Last-Modified goes.
   const fullHeaders = [
-    ...without(appHeaders, 'etag', 'content-length'),
+    ...without(appHeaders, 'etag', 'last-modified', 'content-length'),
     ['etag', etag],
     ['rq-version', '1'],
     ['content-length', String(full.length)],

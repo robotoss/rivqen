@@ -3,8 +3,11 @@
   "kind": "client",
   "context": {
     "url": "https://shop.example.com/catalog",
+    "final_url": "https://shop.example.com/catalog",
     "build": "release",
     "allow_http": false,
+    "credentials": true,
+    "public_origin": false,
     "navigation": "delta",
     "snapshot": {
       "page": "page-a",
@@ -56,6 +59,8 @@
     "next": "show",
     "metric": false,
     "snapshot": {
+      "url": "https://shop.example.com/catalog",
+      "partition": "request",
       "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
       "page_revision": "r1.NNLqgg4WOYI0wf6ARe-HnwGjC4FqlCgtRm_3Vnabf6M",
       "blocks": [

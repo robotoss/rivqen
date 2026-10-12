@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import { UnsupportedInput } from '../src/common.mjs';
 import { capabilities, changeSet, deltaBase, handle, notModified, requestVersion, rqHave } from '../src/server.mjs';
 import { acceptsMediaType, parseEntityTags } from '../src/http.mjs';
-import { analyze as analyzeBytes } from '../src/markup.mjs';
+import { analyze as analyzeBytes, documentHeadEnd } from '../src/markup.mjs';
 import { APP, TARGET, blockPage, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
 
 const header = (r, name) => r.headers.filter(([n]) => n === name).map(([, v]) => v).join(', ') || null;
@@ -69,14 +69,56 @@ test('step 2: the manifest goes before the first </head> end tag, not "</head>" 
   assert.equal(r.body.indexOf('<script type="application/rivqen-manifest+json">'), doc.indexOf('</head><body>'));
 });
 
-test('step 2: the foreign region of an svg ends at </svg>, so a later </head> is in HTML context', () => {
+// DL-031: the head end tag of the document (manifest-patch section 1.7).
+const HEAD_BODY = '<body><p data-rq-block="a">1</p></body></html>';
+const headEnd = (prefix) => documentHeadEnd(Buffer.from(prefix + HEAD_BODY, 'utf8'));
+
+test('DL-031: the head end tag after white space, comments, DOCTYPE, html, a BOM and the head content', () => {
+  const ok = [
+    '<!DOCTYPE html><html><head></head>',
+    '﻿ \t\n\r\f<!-- c --><!DOCTYPE html><html><head><!-- c --> <!doctype x></head>',
+    '<head><base href="/"><basefont><bgsound><link rel="a"><meta charset="utf-8"><noframes>n</noframes><noscript>n</noscript>' +
+      '<script>var s = "</head>";</script><style>s</style><template><p>t</p><head></head></template><title>t</title></head>',
+    '<HTML><HEAD/></HEAD>',
+  ];
+  for (const p of ok) assert.equal(headEnd(p), Buffer.from(p).lastIndexOf('</'), p);
+});
+
+test('DL-031: no head end tag when something else comes before or in the head', () => {
+  const none = [
+    '<html><title>t</title></head>', // no <head> start tag
+    '<html>x<head></head>', // text before the head
+    '<p>x</p><head></head>', // another start tag before the head
+    '</p><head></head>', // an end tag before the head
+    '<html><head>x</head>', // text in the head
+    '<html><head></>', // "</>" gives no token: its bytes are not white space
+    '<html><head><div></head>', // a start tag that is not head content
+    '<html><head><svg><desc>d</desc></svg></head>', // svg closes the head
+    '<html><head></p></head>', // another end tag
+    '<html><head><head></head>', // a second head start tag
+    '<html><head><title>t</title><body></head>', // the head is closed by body; </head> is stray
+    '<html><head><template></head></template></head>', // </head> crosses the template
+    '<html><head><title>t</title>', // no </head> at all
+  ];
+  for (const p of none) assert.equal(headEnd(p), -1, p);
+});
+
+test('DL-031: a later head element and a later </head> never count', () => {
+  assert.equal(headEnd('<html><head><body></body><head></head>'), -1);
+  const once = '<html><head></head><head></head>';
+  assert.equal(headEnd(once), once.indexOf('</head>'));
+});
+
+test('step 2: an svg in the body does not change the head end tag', () => {
   const doc = Buffer.from('<!DOCTYPE html><html><head><title>x</title></head><body><svg><g></g></svg><p data-rq-block="a">1</p></body></html>', 'utf8');
+  const r = handle(firstVisit(), APP, doc);
+  assert.equal(r.kind, 'full');
+  assert.equal(r.body.indexOf('<script type="application/rivqen-manifest+json">'), doc.indexOf('</head>'));
+});
+
+test('step 2: an svg start tag while the head is the current node closes the head: no RQP (DL-031)', () => {
   const inHead = Buffer.from('<!DOCTYPE html><html><head><svg><desc>d</desc></svg></head><body><p data-rq-block="a">1</p></body></html>', 'utf8');
-  for (const d of [doc, inHead]) {
-    const r = handle(firstVisit(), APP, d);
-    assert.equal(r.kind, 'full', d.toString());
-    assert.equal(r.body.indexOf('<script type="application/rivqen-manifest+json">'), d.indexOf('</head>'));
-  }
+  assert.equal(handle(firstVisit(), APP, inHead).reason, 'no-head-end');
 });
 
 // Step 3.
@@ -330,6 +372,33 @@ test('Accept: the delta media type with q > 0, no wildcard', () => {
   assert.equal(acceptsMediaType('application/*', t), false);
   assert.equal(acceptsMediaType(null, t), false);
   assert.equal(acceptsMediaType(`text/html;a="x,${t}"`, t), false);
+});
+
+test('DL-030: no outcome carries an Rq-* field of the application response', () => {
+  const rq = [['rq-version', '2'], ['Rq-Revision', 'r1.app'], ['rq-x', '1']];
+  const app = { status: 200, headers: [...APP.headers, ...rq] };
+  const cases = [
+    ['out-of-scope', handle(deltaRequest('page-a', {}, 'POST'), app, page('page-a'))],
+    ['invalid-page', handle(firstVisit(), app, page('page-c'))],
+    ['full', handle(firstVisit(), app, page('page-a'))],
+    ['delta', handle(deltaRequest('page-big-a'), app, page('page-big-b'))],
+    ['not-modified', handle(deltaRequest('page-a'), app, page('page-a'))],
+  ];
+  for (const [what, r] of cases) {
+    assert.equal(header(r, 'rq-revision'), null, what);
+    assert.equal(header(r, 'rq-x'), null, what);
+    const versions = r.headers.filter(([n]) => n === 'rq-version').map(([, v]) => v);
+    assert.deepEqual(versions, what === 'full' || what === 'delta' ? ['1'] : [], what);
+  }
+  assert.deepEqual(cases[0][1].body, page('page-a')); // the body of A stays
+});
+
+test('DL-032: F and its 304 have no Last-Modified of the application; a passthrough keeps it', () => {
+  const app = { status: 200, headers: [...APP.headers, ['last-modified', 'Mon, 12 Oct 2026 08:00:00 GMT']] };
+  assert.equal(header(handle(firstVisit(), app, page('page-a')), 'last-modified'), null);
+  assert.equal(header(handle(firstVisit('HEAD'), app, page('page-a')), 'last-modified'), null);
+  assert.equal(header(handle(deltaRequest('page-a'), app, page('page-a')), 'last-modified'), null);
+  assert.equal(header(handle(firstVisit(), app, page('page-c')), 'last-modified'), 'Mon, 12 Oct 2026 08:00:00 GMT');
 });
 
 test('no response of a valid page has Rq-Revision or Rq-Template-Revision (H-54)', () => {

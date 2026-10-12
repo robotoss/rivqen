@@ -1,0 +1,25 @@
+{
+  "description": "json content is a JSON string, not a JSON value (H-11)",
+  "expect": {
+    "keyword": "type",
+    "instancePath": "/operations/0/content"
+  },
+  "instance": {
+    "type": "rivqen.patch",
+    "protocol": "rqp/1",
+    "base_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
+    "next_revision": "r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI",
+    "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
+    "operations": [
+      {
+        "op": "replace_block",
+        "block_id": "price",
+        "format": "json",
+        "content": {
+          "items": 4
+        },
+        "sha256": "bB9ScYcQQzKWqPCBW62MTsc9Ff_djve7Denf3YMoCUg"
+      }
+    ]
+  }
+}

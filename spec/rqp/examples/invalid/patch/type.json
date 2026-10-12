@@ -1,0 +1,23 @@
+{
+  "description": "type is rivqen.patch",
+  "expect": {
+    "keyword": "const",
+    "instancePath": "/type"
+  },
+  "instance": {
+    "type": "rqp.patch",
+    "protocol": "rqp/1",
+    "base_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
+    "next_revision": "r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI",
+    "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
+    "operations": [
+      {
+        "op": "replace_block",
+        "block_id": "price",
+        "format": "html",
+        "content": "130.00",
+        "sha256": "bB9ScYcQQzKWqPCBW62MTsc9Ff_djve7Denf3YMoCUg"
+      }
+    ]
+  }
+}

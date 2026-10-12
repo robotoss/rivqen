@@ -29,19 +29,27 @@ Rivqen procedure:
 
 ## 3. RQP patch validation
 
-A patch passes only if **all** checks pass. The checks run in this order. The first failure stops the process.
+<Badge type="info" text="DESIGN" /> Normative rules: [RQP manifest and patch](/engineering/protocol/manifest-patch) §2.4 (client verification), §3.2 (JSON rules) and §4 (content rules). The HTTP envelope has no `page_id` and no `sequence` (H-9); a push channel (WP-16) checks its own channel fields before step 1.
 
-| # | Check | On failure |
+A patch passes only if **all** checks pass. The checks run in this order. The first failure stops the process. On any failure the engine changes neither the page nor the snapshot, and the session loads the full document over HTTPS.
+
+| # | Check | Code |
 |---|---|---|
-| 1 | Envelope size ≤ `limits.maxPatchBytes`; JSON depth ≤ 16; operation count ≤ limit | Reject; `PATCH_TOO_LARGE` |
-| 2 | Schema valid (`type`, `protocol`, required fields) | Reject; `PROTOCOL_ERROR` |
-| 3 | `origin`, `page_id`, partition match the current navigation | Reject; `SECURITY_VIOLATION` |
-| 4 | `template_revision` equals the current template revision | Full reload; `TEMPLATE_MISMATCH` |
-| 5 | `base_revision` equals the current page revision | Request snapshot; `PATCH_BASE_MISMATCH` |
-| 6 | `sequence` = last + 1 on this channel (duplicates are idempotent no-ops) | Gap → resync over HTTPS |
-| 7 | Every `block_id` exists in the manifest (or is a declared insert) | Reject; `PROTOCOL_ERROR` |
-| 8 | Each block's SHA-256 over canonical bytes equals the declared hash | Reject; `INTEGRITY_ERROR` |
-| 9 | Content policy: HTML blocks pass the trusted-insertion policy; no `<script>`, no inline event handlers unless the host policy allows them | Reject; `SECURITY_VIOLATION` |
+| 1 | The response belongs to the current navigation: same generation and request ([INV-12](/engineering/architecture/invariants)); the final response URL (after redirects) has the origin and path of the snapshot | Stale: no-op. Other URL: `PATCH_INVALID` |
+| 2 | The partition did not change between the request and the response | `AUTH_PARTITION_CHANGED` |
+| 3 | Envelope bytes ≤ `min(maxPatchBytes, limits.max_patch_bytes)`, counted while the body is read (after content decoding) | `PATCH_TOO_LARGE` |
+| 4 | JSON rules: UTF-8, no duplicate member names, no lone surrogate escape, integer form, depth ≤ `maxJsonDepth` | `PATCH_INVALID` |
+| 5 | Schema `urn:rivqen:rqp:1:patch`: `type`, `protocol` `"rqp/1"`, revision patterns, 1 to 256 operations, operation members | `PATCH_INVALID` |
+| 6 | `template_revision` equals the snapshot template revision | `TEMPLATE_MISMATCH` |
+| 7 | `base_revision` equals the snapshot page revision | `PATCH_BASE_MISMATCH` |
+| 8 | Each `block_id` is a block of the snapshot; at most one operation per block; operations in document order; `format` equals the block format; `remove_block` only for `html` blocks | `PATCH_INVALID` |
+| 9 | Per operation: UTF-8 bytes of `content` ≤ `maxBlockBytes`, then `B64U(SHA-256(UTF-8(content)))` equals `sha256` | `PATCH_TOO_LARGE`, `INTEGRITY_ERROR` |
+| 10 | Recompute the page revision from the snapshot template revision and the new block hashes (the full snapshot hash for each block without an operation); it equals `next_revision` | `INTEGRITY_ERROR` |
+| 11 | Content rules: the §4 rules of the manifest and patch page; the new document ≤ `maxDocumentBytes` | `PATCH_CONTENT_REJECTED`, `PATCH_TOO_LARGE` |
+
+Step 10 is what makes the 64-bit block digest prefixes of the request safe (H-44): a changed block that the server omits keeps its old full hash in the recomputation, so the revision differs and the client loads the full document. `PATCH_INVALID` and `PATCH_CONTENT_REJECTED` are proposed codes for the [error catalog](/engineering/core/errors) (WP-17 S2, T-02).
+
+Bounds: steps 3 to 5 read at most `maxPatchBytes` bytes; steps 8 to 10 do work linear in the envelope size and in the number of blocks (≤ 256); step 11 is one markup pass over at most `maxDocumentBytes` when the re-check of the manifest and patch page §4 is adopted (open question Q-T02-4).
 
 ## 4. Apply plan
 

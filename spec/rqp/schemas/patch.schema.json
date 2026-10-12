@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:rivqen:rqp:1:patch",
+  "title": "RQP patch envelope (rqp/1, HTTP)",
+  "description": "Normative text: docs/engineering/protocol/manifest-patch.md section 2. The schema does not check rules that need more than one value or the client state: block ids known and in document order, one operation per block, format of the block, content hashes, next_revision recomputation, content rules, byte sizes, duplicate member names.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "protocol", "base_revision", "next_revision", "template_revision", "operations"],
+  "properties": {
+    "type": { "const": "rivqen.patch" },
+    "protocol": { "const": "rqp/1" },
+    "base_revision": { "$ref": "#/$defs/page_revision" },
+    "next_revision": { "$ref": "#/$defs/page_revision" },
+    "template_revision": { "$ref": "#/$defs/template_revision" },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/replace_block" },
+          { "$ref": "#/$defs/remove_block" }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "replace_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "block_id", "format", "content", "sha256"],
+      "properties": {
+        "op": { "const": "replace_block" },
+        "block_id": { "$ref": "#/$defs/block_id" },
+        "format": { "$ref": "#/$defs/format" },
+        "content": {
+          "description": "New block content. maxLength counts code points; the client also checks the UTF-8 byte length (maxBlockBytes).",
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "remove_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "block_id"],
+      "properties": {
+        "op": { "const": "remove_block" },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+    "block_id": {
+      "description": "Markup rule M-15.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "format": { "enum": ["html", "json"] },
+    "sha256": {
+      "description": "SHA-256, base64url without padding, canonical form (the last character has its two low bits zero).",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+    },
+    "template_revision": {
+      "type": "string",
+      "pattern": "^t1\\.[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+    },
+    "page_revision": {
+      "type": "string",
+      "pattern": "^r1\\.[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+    }
+  }
+}

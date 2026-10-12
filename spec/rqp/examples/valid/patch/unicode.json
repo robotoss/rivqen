@@ -1,0 +1,23 @@
+{
+  "type": "rivqen.patch",
+  "protocol": "rqp/1",
+  "base_revision": "r1.zQqphWFHtsW0_yt9_uXaIKo4JTCZ7xtKZKztIzya_ik",
+  "next_revision": "r1.qqlAJmTxpB9A67xSyZk-tmrrNmYClY_fqig7ceZNsSM",
+  "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
+  "operations": [
+    {
+      "op": "replace_block",
+      "block_id": "note",
+      "format": "html",
+      "content": "café 😀 <b>&amp;</b>\r\n",
+      "sha256": "CwfD54ucyYZoSPVL3zXGHx49bEBi1q7IDj3F2UalPyQ"
+    },
+    {
+      "op": "replace_block",
+      "block_id": "data",
+      "format": "json",
+      "content": "{\"s\":\"\\u00e9\\ud83d\\ude00\",\"n\":1e400}",
+      "sha256": "dsw1y205aawbeseBKHCb2ysOp5XEv7piUhuLc-fE7D4"
+    }
+  ]
+}

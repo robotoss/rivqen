@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-C22-304-WEAK-ETAG",
+  "kind": "client",
+  "description": "A 304 to R(page-a) with the weak ETag of page-a: kept (weak comparison, H-58)",
+  "rules": ["RQP-24"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 304,
+    "headers": [
+      ["etag", "W/{{r1:page-a}}"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": null
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P39-NO-HEAD-START-TAG",
+  "description": "The page has no <head> start tag (the head is implied) and a </head> end tag: no head end tag, the page is sent without RQP (DL-031)",
+  "rules": ["RQP-09"],
+  "page": "page-no-head-start",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

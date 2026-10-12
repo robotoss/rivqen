@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-C23-HTTP-FINAL-DEBUG-FLAG",
+  "kind": "client",
+  "description": "Debug build with the http flag: the same redirect; the manifest is accepted and the snapshot has the cache key of the http URL (H-49, H-58)",
+  "rules": ["RQP-22", "RQP-24"],
+  "context": {
+    "final_url": "http://shop.example.com/catalog",
+    "build": "debug",
+    "allow_http": true,
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["etag", "{{r1:page-a}}"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a"
+    }
+  }
+}

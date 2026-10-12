@@ -162,9 +162,9 @@ test('a failed SHOULD fixture is labelled and counted apart from a failed MUST f
       return { status: e.status, out: e.stdout.toString() };
     }
   };
-  const should = run('FX-RQ-P35');
+  const should = run('FX-RQ-P35-ATTRIBUTE-RULE-DATA');
   assert.equal(should.status, 1);
-  assert.match(should.out, /^FAIL \[SHOULD\] FX-RQ-P35-ATTRIBUTE-RULE: /m);
+  assert.match(should.out, /^FAIL \[SHOULD\] FX-RQ-P35-ATTRIBUTE-RULE-DATA: /m);
   assert.match(should.out, /0 passed, 0 failed, 1 SHOULD failed/);
   const must = run('FX-RQ-P09-DELTA-WEAK');
   assert.equal(must.status, 1);
@@ -172,9 +172,9 @@ test('a failed SHOULD fixture is labelled and counted apart from a failed MUST f
   assert.match(must.out, /0 passed, 1 failed, 0 SHOULD failed/);
 });
 
-test('only the case P-35 has level "should" in its expected file', () => {
+test('only the cases of P-35 have level "should" in their expected files', () => {
   const levels = fixtureNames()
     .filter((n) => n.startsWith('FX-RQ-P'))
     .filter((n) => readJsonFile(join(FIXTURES_DIR, n, 'expected.json')).level === 'should');
-  assert.deepEqual(levels, ['FX-RQ-P35-ATTRIBUTE-RULE']);
+  assert.deepEqual(levels, ['FX-RQ-P35-ATTRIBUTE-RULE', 'FX-RQ-P35-ATTRIBUTE-RULE-DATA']);
 });

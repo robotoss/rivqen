@@ -1,0 +1,26 @@
+{
+  "id": "FX-RQ-P37-APP-RQ-DELTA",
+  "description": "The application sends Rq-Version 2 and Rq-Revision: the delta has exactly one Rq-Version 1 and no Rq-* field of the application (DL-030)",
+  "rules": ["RQP-01", "RQP-21"],
+  "client_page": "page-big-a",
+  "page": "page-big-b",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"],
+      ["rq-version", "2"],
+      ["rq-revision", "r1.app"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-big-a}}"],
+      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}"]
+    ]
+  }
+}

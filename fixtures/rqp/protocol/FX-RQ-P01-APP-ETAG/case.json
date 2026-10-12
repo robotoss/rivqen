@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-P01-APP-ETAG",
-  "description": "First visit; the application has its own ETag and Last-Modified: the ETag of F replaces the ETag of the application (extra case)",
+  "description": "First visit; the application has its own ETag and Last-Modified: the ETag of F replaces the ETag of the application, and F has no Last-Modified (DL-032; extra case)",
   "rules": ["RQP-08", "RQP-16"],
   "page": "page-a",
   "app": {

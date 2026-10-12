@@ -1,0 +1,40 @@
+{
+  "id": "FX-RQ-C21-NO-HEAD-START-TAG",
+  "kind": "client",
+  "context": {
+    "url": "https://shop.example.com/catalog",
+    "final_url": "https://shop.example.com/catalog",
+    "build": "release",
+    "allow_http": false,
+    "credentials": true,
+    "public_origin": false,
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html"]
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"],
+      ["rq-version","1"],
+      ["cache-control","no-cache"]
+    ],
+    "body": "response.body",
+    "body_bytes": 792,
+    "body_sha256": "GhQm4bMB9WHQPAWXIffKkNe2q5Z31XlILaVYkUlaRfY"
+  },
+  "result": {
+    "outcome": "rejected",
+    "error": "MANIFEST_INVALID",
+    "next": "show",
+    "metric": false,
+    "snapshot": null
+  }
+}

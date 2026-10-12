@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-P38-APP-RQ-OUT-OF-SCOPE",
+  "description": "A 404 of the application with Rq-Version 1: out of scope, the application response without its Rq-* fields (DL-030)",
+  "rules": ["RQP-09"],
+  "page": "page-a",
+  "app": {
+    "status": 404,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"],
+      ["rq-version", "1"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

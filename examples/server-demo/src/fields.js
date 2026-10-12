@@ -173,3 +173,41 @@ export function mediaType(value) {
   if (value === null) return null;
   return value.split(';')[0].trim().toLowerCase();
 }
+
+/** Labels that the WHATWG Encoding Standard maps to the UTF-8 encoding (lower case). */
+const UTF8_LABELS = new Set(['unicode-1-1-utf-8', 'unicode11utf8', 'unicode20utf8', 'utf-8', 'utf8', 'x-unicode20utf8']);
+
+/**
+ * The value of the first charset parameter of a Content-Type value, or null when there is
+ * none. Parameters are split at ";" outside double quotes. The name is ASCII case-insensitive.
+ * A quoted value loses its surrounding quotes.
+ */
+export function charsetParameter(value) {
+  if (value === null) return null;
+  const parts = [];
+  let current = '';
+  let quoted = false;
+  for (let i = 0; i < value.length; i++) {
+    const c = value[i];
+    if (c === '"') quoted = !quoted;
+    if (c === '\\' && quoted && i + 1 < value.length) {
+      current += c + value[++i];
+      continue;
+    }
+    if (c === ';' && !quoted) {
+      parts.push(current);
+      current = '';
+    } else current += c;
+  }
+  parts.push(current);
+  for (const part of parts.slice(1)) {
+    const eq = part.indexOf('=');
+    if (eq < 0 || part.slice(0, eq).trim().toLowerCase() !== 'charset') continue;
+    const raw = part.slice(eq + 1).trim();
+    return raw.length >= 2 && raw.startsWith('"') && raw.endsWith('"') ? raw.slice(1, -1) : raw;
+  }
+  return null;
+}
+
+/** True when a charset value is a label of the UTF-8 encoding (H-62). */
+export const isUtf8Label = (label) => UTF8_LABELS.has(label.toLowerCase());

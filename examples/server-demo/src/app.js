@@ -8,6 +8,8 @@
 //   POST /__demo/next-template change the template (localhost only)
 // The POST endpoints need the header "Rq-Demo-Action: 1" and, when the request has an
 // Origin header, the origin of the demo. Otherwise: 403, no state change.
+// Every route answers only a request whose Host header is the host (with port) of the
+// configured origin. Otherwise: 421, no body, no state change (DL-036 I4).
 //   GET  /healthz
 
 import { createServer } from 'node:http';
@@ -74,12 +76,19 @@ export function isSameSiteAction(req, origin) {
   return req.headers.origin === undefined || req.headers.origin === origin;
 }
 
+/** DL-036 I4: true when the Host header is the host (with port) of the configured origin. Host names are case-insensitive. */
+export const isOwnHost = (req, host) => typeof req.headers.host === 'string' && req.headers.host.toLowerCase() === host;
+
 /**
  * Create the demo server (not listening yet).
  * @param {{ origin: string }} options the public origin of the site: the manifest takes
  *   `origin` from here, not from the connection (manifest-patch section 1.6)
  */
 export function createDemoServer({ origin }) {
+  const parsed = new URL(origin);
+  const ownOrigin = parsed.origin; // normalized once: the Origin header of a browser is in this form
+  const ownHost = parsed.host;
+
   function handleCatalog(req, res, ctx) {
     const request = { method: req.method, target: `${origin}/catalog`, headers: requestLines(req.rawHeaders) };
     const result = handle(request, appResponse(), Buffer.from(renderCatalog(), 'utf8'), CONFIG);
@@ -94,10 +103,13 @@ export function createDemoServer({ origin }) {
     let bytes = 0;
     try {
       const path = safeUrl(req.url ?? '/');
-      if ((req.method === 'GET' || req.method === 'HEAD') && path === '/catalog') {
+      if (!isOwnHost(req, ownHost)) {
+        res.writeHead(421, { ...COMMON, 'Content-Length': 0 }); // no detail, no state change
+        res.end();
+      } else if ((req.method === 'GET' || req.method === 'HEAD') && path === '/catalog') {
         bytes = handleCatalog(req, res, ctx);
       } else if (req.method === 'POST' && DEMO_PATHS.has(path) && isLocal(req)) {
-        if (!isSameSiteAction(req, origin)) {
+        if (!isSameSiteAction(req, ownOrigin)) {
           bytes = send(res, 403, { 'Content-Type': 'text/plain' }, 'forbidden'); // no state change
         } else {
           const next = path === '/__demo/next-data' ? nextData : nextTemplate;

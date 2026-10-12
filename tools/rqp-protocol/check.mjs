@@ -199,14 +199,17 @@ export async function runClient(mod, { dir = FIXTURES_DIR, only = '' } = {}) {
     const snapshot = ctx.snapshot === null ? null : { ...ctx.snapshot, document: Uint8Array.from(pageBytes(ctx.snapshot.page)) };
     const context = { url: ctx.url, build: ctx.build, allow_http: ctx.allow_http, navigation: ctx.navigation, snapshot };
     const bodyPath = join(dir, name, 'response.body');
-    const response = {
-      status: expected.response.status,
-      headers: expected.response.headers,
-      body: expected.response.body === null ? null : Uint8Array.from(readFileSync(bodyPath)),
-    };
     let failures;
     try {
-      if (expected.response.body !== null && !existsSync(bodyPath)) throw new Error('response.body is missing');
+      if (expected.response.body !== null && !existsSync(bodyPath)) {
+        out.push({ name, failures: ['response.body is missing'] });
+        continue;
+      }
+      const response = {
+        status: expected.response.status,
+        headers: expected.response.headers,
+        body: expected.response.body === null ? null : Uint8Array.from(readFileSync(bodyPath)),
+      };
       const request = typeof mod.clientRequest === 'function' ? await mod.clientRequest(context) : undefined;
       failures = compareClient(expected, await mod.clientStep(context, response), request);
     } catch (error) {

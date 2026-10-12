@@ -6,6 +6,8 @@
 
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { cpSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
@@ -125,6 +127,21 @@ test('client comparison detects a wrong code, next action, snapshot and request 
   const req = expected.request.headers.map(([n, v]) => [n, n === 'rq-have' ? 'x' : v]);
   assert.ok(compareClient(expected, good, req).some((f) => f.startsWith('request rq-have')));
   assert.ok(compareClient(expected, good, [...expected.request.headers, ['rq-base-revision', 'x']]).some((f) => f.includes('not an rqp/1 field')));
+});
+
+test('a missing response.body fails that client fixture only', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'rqp-protocol-check-'));
+  try {
+    for (const name of ['FX-RQ-C01-BASE-MISMATCH', 'FX-RQ-C02-OMITTED-BLOCK']) cpSync(join(FIXTURES_DIR, name), join(dir, name), { recursive: true });
+    rmSync(join(dir, 'FX-RQ-C01-BASE-MISMATCH', 'response.body'));
+    const results = await runClient(client, { dir });
+    assert.deepEqual(results, [
+      { name: 'FX-RQ-C01-BASE-MISMATCH', failures: ['response.body is missing'] },
+      { name: 'FX-RQ-C02-OMITTED-BLOCK', failures: [] },
+    ]);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('a server module that throws fails its fixtures, and the command exits 1', async () => {

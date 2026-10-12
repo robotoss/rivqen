@@ -49,9 +49,10 @@ function template(bytes, blocks) {
 /**
  * Client verification of manifest-patch.md section 2.4, steps 3 to 7 (block list and
  * next_revision): returns the new block list, or the code of the first failed check.
- * The schema allows only replace_block (H-47).
+ * The schema allows only replace_block (H-47). `snap` is the snapshot manifest: its
+ * policy and limits give the policy line of the preimage (H-55).
  */
-function applyToBlocks(current, env) {
+function applyToBlocks(current, env, snap = manifest) {
   const next = current.map((b) => ({ ...b }));
   let last = -1;
   for (const op of env.operations) {
@@ -62,7 +63,7 @@ function applyToBlocks(current, env) {
     if (contentHash(op.content) !== op.sha256) return 'INTEGRITY_ERROR';
     next[i].sha256 = op.sha256;
   }
-  if (pageRevision(env.template_revision, next) !== env.next_revision) return 'INTEGRITY_ERROR';
+  if (pageRevision(env.template_revision, next, snap) !== env.next_revision) return 'INTEGRITY_ERROR';
   return next;
 }
 
@@ -70,20 +71,23 @@ function applyToBlocks(current, env) {
  * Client check of section 2.4, step 8 (H-48): the markup analysis of the patched document.
  * Returns null when the patched document is valid, has the same template revision and the
  * same blocks (id, format, order), and its page revision is next_revision; else the code.
+ * The analysis has no manifest input, so the page revision is computed again with the
+ * policy line of the snapshot manifest `snap` (H-55).
  */
-function checkPatchedDocument(bytes, blocks, env) {
+function checkPatchedDocument(bytes, blocks, env, snap = manifest) {
   const after = analyze(splice(bytes, blocks, env));
   if (!after.valid) return 'PATCH_CONTENT_REJECTED';
   if (after.template_revision !== env.template_revision) return 'PATCH_CONTENT_REJECTED';
   const shape = (list) => list.map(({ id, format }) => `${id}\t${format}`).join('\n');
   if (shape(after.blocks) !== shape(blocks)) return 'PATCH_CONTENT_REJECTED';
-  if (after.page_revision !== env.next_revision) return 'INTEGRITY_ERROR';
+  if (pageRevision(after.template_revision, after.blocks, snap) !== env.next_revision) return 'INTEGRITY_ERROR';
   return null;
 }
 
 /**
  * Client check of section 1.8 (H-48): the markup analysis of the original document
- * gives the blocks and the revisions of the manifest. Returns null or MANIFEST_INVALID.
+ * gives the blocks and the template revision of the manifest, and these with the policy
+ * line of the manifest give its page revision (H-55). Returns null or MANIFEST_INVALID.
  */
 function checkManifest(original, m) {
   const r = analyze(original);
@@ -92,7 +96,7 @@ function checkManifest(original, m) {
   const same =
     JSON.stringify(r.blocks.map(fields)) === JSON.stringify(m.blocks.map(fields)) &&
     r.template_revision === m.template_revision &&
-    r.page_revision === m.page_revision;
+    pageRevision(r.template_revision, r.blocks, m) === m.page_revision;
   return same ? null : 'MANIFEST_INVALID';
 }
 
@@ -102,7 +106,7 @@ function patchOne(id, content) {
   const format = manifest.blocks.find((b) => b.id === id).format;
   return {
     ...structuredClone(patches[0].env),
-    next_revision: pageRevision(manifest.template_revision, blocks),
+    next_revision: pageRevision(manifest.template_revision, blocks, manifest),
     operations: [{ op: 'replace_block', block_id: id, format, content, sha256: contentHash(content) }],
   };
 }
@@ -230,26 +234,99 @@ test('the Rq-Have example is t and the 8-byte digest prefixes of the manifest bl
 const TYPE = '<script type="application/rivqen-manifest+json">';
 const full = readFileSync(join(KAT, kat.full_document));
 
-test('the full document is the KAT document with the manifest element immediately before the first </head>', () => {
-  // The KAT page has no </head> in raw text or in a comment, so a byte search finds the end tag.
-  const at = page.indexOf('</head>');
-  const start = full.indexOf(TYPE);
-  const end = full.indexOf('</script>', start) + '</script>'.length;
-  assert.equal(start, at);
-  assert.equal(full.indexOf(TYPE, start + 1), -1, 'exactly one manifest element');
-  assert.equal(full.subarray(end, end + 7).toString('latin1'), '</head>');
-  assert.deepEqual(Buffer.concat([full.subarray(0, start), full.subarray(end)]), page);
+// Known-answer set 2 (H-55): the same page with policy and limits in the manifest.
+const pl = kat.with_policy_limits;
+const manifestPl = readJson(join(KAT, pl.manifest));
+const fullPl = readFileSync(join(KAT, pl.full_document));
+const patchesPl = pl.patches.map((p) => ({ name: p, env: readJson(join(KAT, p)) }));
+
+for (const [label, doc, m] of [
+  ['the full document', full, manifest],
+  ['the full document with policy and limits', fullPl, manifestPl],
+]) {
+  test(`${label} is the KAT document with the manifest element immediately before the first </head>`, () => {
+    // The KAT page has no </head> in raw text or in a comment, so a byte search finds the end tag.
+    const at = page.indexOf('</head>');
+    const start = doc.indexOf(TYPE);
+    const end = doc.indexOf('</script>', start) + '</script>'.length;
+    assert.equal(start, at);
+    assert.equal(doc.indexOf(TYPE, start + 1), -1, 'exactly one manifest element');
+    assert.equal(doc.subarray(end, end + 7).toString('latin1'), '</head>');
+    assert.deepEqual(Buffer.concat([doc.subarray(0, start), doc.subarray(end)]), page);
+  });
+
+  test(`the manifest text in ${label} has no "<", is the KAT manifest and passes the client check`, () => {
+    const start = doc.indexOf(TYPE) + TYPE.length;
+    const text = doc.subarray(start, doc.indexOf('</script', start));
+    assert.equal(text.indexOf('<'), -1);
+    assert.deepEqual(JSON.parse(text.toString('utf8')), m);
+    assert.equal(checkManifest(page, JSON.parse(text.toString('utf8'))), null);
+  });
+
+  test(`${label} is invalid for RQP (M-13), so a server never inserts a second manifest`, () => {
+    assert.equal(analyze(doc).error, 'RQP_MARKUP_RESERVED');
+  });
+}
+
+test('the KAT manifest has no policy and no limits, so its page revision is the markup analysis value (H-55)', () => {
+  assert.equal(Object.hasOwn(manifest, 'policy') || Object.hasOwn(manifest, 'limits'), false);
+  assert.equal(base.page_revision, manifest.page_revision);
 });
 
-test('the manifest text in the full document has no "<" and is the KAT manifest', () => {
-  const start = full.indexOf(TYPE) + TYPE.length;
-  const m = full.subarray(start, full.indexOf('</script', start));
-  assert.equal(m.indexOf('<'), -1);
-  assert.deepEqual(JSON.parse(m.toString('utf8')), manifest);
+test('the exact page_revision preimage with policy and limits: one PL line before the block lines (H-55)', () => {
+  // Written out by hand, independent of the helper in helpers.mjs.
+  const p =
+    'rqp-r1\n' + 't1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM\n' +
+    'PL\tpolicy;mode=private;ttl_seconds=60;offline=false;limits;max_patch_bytes=262144\n' +
+    'title\thtml\t0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces\n' +
+    'price\thtml\tXg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs\n' +
+    'cart\tjson\tzyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4\n';
+  assert.ok(p.includes(pl.policy_line));
+  assert.equal('r1.' + sha256b64u(Buffer.from(p, 'utf8')), manifestPl.page_revision);
+  assert.equal(manifestPl.page_revision, 'r1.ke0dIjtkqBtefkyyLQU5ICLWPia5PfammTko2xmMLOQ');
 });
 
-test('a full document is invalid for RQP (M-13), so a server never inserts a second manifest', () => {
-  assert.equal(analyze(full).error, 'RQP_MARKUP_RESERVED');
+test('policy and limits change the page revision; template and blocks stay those of the analysis (H-55)', () => {
+  assert.equal(manifestPl.template_revision, base.template_revision);
+  assert.deepEqual(manifestPl.blocks, manifest.blocks);
+  assert.notEqual(manifestPl.page_revision, base.page_revision);
+  assert.equal(pageRevision(base.template_revision, base.blocks, manifestPl), manifestPl.page_revision);
+});
+
+test('a manifest that adds policy or limits but keeps the old page revision is rejected (H-55)', () => {
+  // A server changes its configuration and does not recompute the revision: the strong ETag would lie.
+  const policyOnly = { ...manifest, policy: manifestPl.policy };
+  const limitsOnly = { ...manifest, limits: manifestPl.limits };
+  const stale = { ...manifestPl, page_revision: manifest.page_revision };
+  for (const m of [policyOnly, limitsOnly, stale]) assert.equal(checkManifest(page, m), 'MANIFEST_INVALID');
+});
+
+test('a manifest with policy and limits removed keeps a stale page revision and is rejected (H-55)', () => {
+  const { policy, limits, ...rest } = manifestPl;
+  assert.ok(policy && limits);
+  assert.equal(checkManifest(page, rest), 'MANIFEST_INVALID');
+});
+
+for (const { name, env } of patchesPl) {
+  test(`${name}: base and next revisions include the policy line of the snapshot (H-55)`, () => {
+    assert.equal(env.base_revision, manifestPl.page_revision);
+    assert.equal(env.template_revision, manifestPl.template_revision);
+    assert.equal(env.next_revision, pl.page_revision_b);
+    assert.ok(Array.isArray(applyToBlocks(manifestPl.blocks, env, manifestPl)));
+    assert.equal(checkPatchedDocument(page, base.blocks, env, manifestPl), null);
+  });
+
+  test(`${name}: a client whose snapshot has other policy or limits fails the next_revision check (H-55)`, () => {
+    // The server changed its policy after the client stored the page: one fallback load, never a stale policy.
+    const other = { ...manifestPl, policy: { ...manifestPl.policy, ttl_seconds: 61 } };
+    assert.equal(applyToBlocks(manifestPl.blocks, env, other), 'INTEGRITY_ERROR');
+    assert.equal(applyToBlocks(manifestPl.blocks, env, manifest), 'INTEGRITY_ERROR');
+    assert.equal(checkPatchedDocument(page, base.blocks, env, manifest), 'INTEGRITY_ERROR');
+  });
+}
+
+test('the patch of the KAT page without policy fails against a snapshot with policy (H-55)', () => {
+  assert.equal(applyToBlocks(manifestPl.blocks, patches[0].env, manifestPl), 'INTEGRITY_ERROR');
 });
 
 test('the delta of the price change is smaller than the full document (negotiation section 4, step 7)', () => {

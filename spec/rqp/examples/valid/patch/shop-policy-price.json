@@ -1,0 +1,16 @@
+{
+  "type": "rivqen.patch",
+  "protocol": "rqp/1",
+  "base_revision": "r1.ke0dIjtkqBtefkyyLQU5ICLWPia5PfammTko2xmMLOQ",
+  "next_revision": "r1.0MisoW_Jyga-Mg3DpBueKx95g3OvhROWUgWwXI6t5uc",
+  "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
+  "operations": [
+    {
+      "op": "replace_block",
+      "block_id": "price",
+      "format": "html",
+      "content": "130.00",
+      "sha256": "bB9ScYcQQzKWqPCBW62MTsc9Ff_djve7Denf3YMoCUg"
+    }
+  ]
+}

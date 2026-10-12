@@ -76,6 +76,8 @@ Normative text: `docs/engineering/protocol/manifest-patch.md` §1.3. This sectio
 4. `P = "rqp-r1\n" || template_revision || "\n"`, then for each block in document order: `id || "\t" || format || "\t" || sha256 || "\n"`
 5. `page_revision = "r1." || B64U(SHA-256(P))`
 
+The candidates compute the page revision for a manifest without `policy` and `limits`: the preimage P has no policy line. A manifest with one of these members has the extra line `PL<TAB>S<LF>` after the template revision line (manifest-patch.md §1.3, H-55), so its page revision differs from the value that a candidate prints.
+
 A UTF-8 byte order mark at the start of the input is part of the input bytes and of the template.
 
 ## 5. Error codes

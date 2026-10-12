@@ -81,9 +81,18 @@ export const EXPECTED = Object.freeze({
 
 export const PAGE_IDS = Object.freeze(Object.keys(EXPECTED));
 
+/** A page id that is not in EXPECTED. */
+export class UnknownPage extends Error {
+  constructor(id) {
+    super(`unknown page ${id}`);
+    this.name = 'UnknownPage';
+    this.code = 'RQP_FIXTURE_PAGE';
+  }
+}
+
 /** The bytes of a page: the recipe output for a generated page, else the committed file. */
 export function pageBytes(id) {
-  if (!Object.hasOwn(EXPECTED, id)) throw new Error(`unknown page ${id}`);
+  if (!Object.hasOwn(EXPECTED, id)) throw new UnknownPage(id);
   const recipe = GENERATED[id];
   if (recipe !== undefined) return Buffer.from(recipe(), 'utf8');
   return readFileSync(`${PAGES_DIR}${id}.html`);

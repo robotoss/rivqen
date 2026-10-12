@@ -208,10 +208,12 @@ export function splice(document, blocks, replacements) {
 /**
  * Verify a delta against a snapshot. Returns { code } for the first failed
  * check, or { snapshot } with the new snapshot. `offered` is diff-engine step 2.
+ * `maxPatchBytes` is the client resource limit (initial value 256 KiB; the
+ * fixtures use the initial value).
  */
-export function verifyDelta(snap, body, offered) {
+export function verifyDelta(snap, body, offered, maxPatchBytes = LIMITS.maxPatchBytes) {
   if (!offered) return { code: Code.PATCH_INVALID };
-  const limit = Math.min(LIMITS.maxPatchBytes, snap.members.limits?.max_patch_bytes ?? Infinity);
+  const limit = Math.min(maxPatchBytes, snap.members.limits?.max_patch_bytes ?? Infinity);
   if (body.length > limit) return { code: Code.PATCH_TOO_LARGE };
   const json = parseStrict(body);
   if (!json.ok) return { code: Code.PATCH_INVALID };
@@ -270,4 +272,25 @@ function handleDelta(ctx, body) {
     });
   }
   return result('patched', { snapshot: describe(verified.snapshot) });
+}
+
+// ---------------------------------------------------------------------------
+// Harness interface (check.mjs --client). A context snapshot is plain data:
+// { document, template_revision, page_revision, blocks, policy?, limits? }.
+
+function internal(context) {
+  if (context.snapshot === null) return { ...context, snapshot: null };
+  const snap = snapshotOf(Buffer.from(context.snapshot.document), membersOf(context.snapshot));
+  if (snap.page_revision !== context.snapshot.page_revision) throw new Error('the context snapshot does not match its document');
+  return { ...context, snapshot: snap };
+}
+
+/** The request fields that the client sends for a context (negotiation section 6.2). */
+export function clientRequest(context) {
+  return requestHeaders(internal(context));
+}
+
+/** The client step for a context and a response (negotiation section 6.3). */
+export function clientStep(context, response) {
+  return handleResponse(internal(context), response);
 }

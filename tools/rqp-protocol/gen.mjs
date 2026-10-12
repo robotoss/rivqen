@@ -48,19 +48,19 @@ export function checkPages(read = pageBytes) {
 }
 
 /** Compare or write one file. Returns a problem text or null. */
-function sync(path, bytes, check) {
+function sync(path, bytes, check, label) {
   const current = existsSync(path) ? readFileSync(path) : null;
   if (current !== null && current.equals(bytes)) return null;
-  if (check) return `${path.slice(FIXTURES_DIR.length)}: ${current === null ? 'missing' : 'stale'}`;
+  if (check) return `${label}: ${current === null ? 'missing' : 'stale'}`;
   writeFileSync(path, bytes);
   return null;
 }
 
-/** Run the generator. Returns { problems, written } (written: fixtures processed). */
+/** Run the generator on a fixture directory. Returns { problems, count } (count: fixtures processed). */
 export function run({ check, dir = FIXTURES_DIR, log = () => {} }) {
   const problems = [];
   for (const [id, recipe] of Object.entries(GENERATED)) {
-    const p = sync(join(PAGES_DIR, `${id}.html`), Buffer.from(recipe(), 'utf8'), check);
+    const p = sync(join(PAGES_DIR, `${id}.html`), Buffer.from(recipe(), 'utf8'), check, `pages/${id}.html`);
     if (p !== null) problems.push(p);
   }
   // Hand pages are read from disk; generated pages from the recipe (equal after the sync above).
@@ -76,7 +76,7 @@ export function run({ check, dir = FIXTURES_DIR, log = () => {} }) {
       continue;
     }
     for (const [file, value] of Object.entries(files)) {
-      const p = sync(join(dir, name, file), fileBytes(value), check);
+      const p = sync(join(dir, name, file), fileBytes(value), check, `${name}/${file}`);
       if (p !== null) problems.push(p);
     }
     for (const file of GENERATED_NAMES) {

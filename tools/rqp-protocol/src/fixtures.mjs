@@ -14,7 +14,7 @@ import { handle, manifestOf } from './server.mjs';
 import { handleResponse, havePrefixes, requestHeaders, snapshotOf } from './client.mjs';
 import { combined, normalizeHeaders } from './http.mjs';
 import { analyze, firstHeadEnd } from './markup.mjs';
-import { pageBytes } from './pages.mjs';
+import { UnknownPage, pageBytes } from './pages.mjs';
 
 export const FIXTURES_DIR = fileURLToPath(new URL('../../../fixtures/rqp/protocol/', import.meta.url));
 export const DEFAULT_TARGET = 'https://shop.example.com/catalog';
@@ -364,7 +364,7 @@ export function expectFixture(dir, name) {
   try {
     return c.kind === 'client' ? expectClient(c) : expectServer(c);
   } catch (error) {
-    if (error instanceof UnsupportedInput) throw new CaseError(name, error.message);
+    if (error instanceof UnsupportedInput || error instanceof UnknownPage) throw new CaseError(name, error.message);
     throw error;
   }
 }

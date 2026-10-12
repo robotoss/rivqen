@@ -175,6 +175,7 @@ The human decided these rules after the security review of 2026-10-11 (H-25 to H
 | H-36 | M-10 item 2: no `form` start tag in HTML context while an HTML `form` is on the token stack. A crossing that pops the form also decrements its count | `htmlStart()` |
 | H-37 | M-09 condition 2: a start tag in `TABLE_PART`, `col` or `table` while F is `table`, `tbody`, `thead`, `tfoot`, `tr` or `colgroup` needs F as the current node | `htmlStart()` |
 | H-38 | M-11 item 6: a start tag in `TABLE_PART` or `col` in the `noscript` content needs an open `table` of the content | `checkNoscript()` |
+| H-43 | M-10 item 3: no `template` start tag with an attribute named `for` (ASCII case-insensitive, any value, any occurrence) in HTML context. A `template` in a foreign region is not affected. In the `noscript` content `template` is already forbidden (M-11 item 3) | `htmlStart()`, tokenizer flag `hasFor` |
 
 `FORMATTING` and `SPECIAL` are fixed sets in `src/names.mjs`. Not every member of `SPECIAL` changes a result today: void elements are never pushed in HTML context, raw text elements have no end tag in their content, the other `GUARDED` elements and `table` cannot be crossed (M-06 item 1), and `frameset` is rejected (M-10). `test/name-sets.test.mjs` checks the other members by behavior and the full set against the list of `markup.md`.
 

@@ -20,13 +20,5 @@
       "format": "json",
       "sha256": "zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4"
     }
-  ],
-  "policy": {
-    "mode": "private",
-    "ttl_seconds": 60,
-    "offline": false
-  },
-  "limits": {
-    "max_patch_bytes": 262144
-  }
+  ]
 }

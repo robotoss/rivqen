@@ -45,6 +45,7 @@
       }
     },
     "policy": {
+      "description": "Section 1.4. Part of page_revision (section 1.3, policy line, H-55): the members that are present, also an empty object, change the page revision; a default value is not written for a missing member.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -54,6 +55,7 @@
       }
     },
     "limits": {
+      "description": "Section 1.5. Part of page_revision (section 1.3, policy line, H-55), as policy.",
       "type": "object",
       "additionalProperties": false,
       "properties": {

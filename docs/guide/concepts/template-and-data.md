@@ -47,6 +47,8 @@ Pages that still use VasSonic comment markers work in the optional legacy mode u
 | Nothing changed | `304 Not Modified`. No body. |
 | Data changed, template the same | A patch with only the changed blocks. |
 | Template changed | The full new HTML. |
+| A changed block has an `on…` attribute or a character reference other than `&amp;` in an attribute value (section 4, rules 7 to 9) | The full new HTML. |
+| The server changed the page cache settings (`policy`, `limits` in the manifest) | The full new HTML. |
 
 ## 4. Rules for good blocks
 
@@ -56,6 +58,19 @@ Pages that still use VasSonic comment markers work in the optional legacy mode u
 4. Do not nest blocks.
 5. Do not put scripts inside HTML blocks. For data, use a `json` block (`<script type="application/json" data-rq-block="…">`).
 6. Put user-specific content in blocks only on pages that are cached per account.
+7. Inside a block, do not use event-handler attributes (`onclick`, `onload` and all other `on…` names). Attach handlers from the page script instead.
+8. Inside a block, write `&` in an attribute value only as `&amp;`. Do not use other character references in attribute values (for example `&quot;`, `&#39;`, `&colon;`). Use the other quote character, or put the text in the element content.
+9. Do not use `javascript:` URLs inside a block.
+
+Rules 7 to 9 apply to the content of HTML blocks, not to the block element itself (its tag and attributes belong to the template). A page that breaks them still works. But the client accepts no patch with such content, so it gets the full page for every change of that block. The server SDK sends the full page at once ([manifest and patch §4.2](/engineering/protocol/manifest-patch#_4-2-attribute-rule)).
+
+```html
+<!-- Patched as a block update -->
+<p data-rq-block="price"><a href="/cart?item=7&amp;qty=1">120.00</a></p>
+
+<!-- Full page on each change: onclick and &quot; in the block -->
+<p data-rq-block="price"><a onclick="buy()" title="&quot;Sale&quot;">120.00</a></p>
+```
 
 ## 5. Without server support
 

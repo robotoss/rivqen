@@ -56,6 +56,6 @@ Rivqen is not released yet. Use this guide to plan.
 - [ ] The app passes a partition for every authenticated session and clears it on logout.
 - [ ] Page origins are in `allowedOrigins` and `bridgeOrigins`, with `https`. Release builds do not use RQP over `http`.
 - [ ] A proxy or CDN that compresses pages sends a weak `ETag` (`W/"r1.…"`), not the strong one.
-- [ ] Blocks that change often have no `on*` attributes and no `javascript:` URLs. The client rejects such patches and loads the full page.
+- [ ] Blocks that change often have no `on*` attributes, no `javascript:` URLs and no character references other than `&amp;` in attribute values. For such a block the server sends the full page, not a patch ([template and data](/guide/concepts/template-and-data#_4-rules-for-good-blocks)).
 - [ ] Conformance runner passes against staging.
 - [ ] `LegacyModeUsed` is zero before you upgrade to Rivqen 1.5.

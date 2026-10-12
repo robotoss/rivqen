@@ -8,16 +8,18 @@ Every input to the core is bounded. Limits protect the app from memory exhaustio
 
 | Limit | Initial value | Applies to | On violation |
 |---|---|---|---|
-| `maxDocumentBytes` | 5 MiB (decoded) | Main HTML document | `DOCUMENT_TOO_LARGE` → fallback |
+| `maxDocumentBytes` | 5 MiB (decoded) | Main HTML document; the RQP document after a patch ([manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), step 8) | `DOCUMENT_TOO_LARGE` → fallback; after a patch `PATCH_TOO_LARGE` |
 | `maxCompressedRatio` | 50 : 1 | gzip / br / zstd decoding | Abort decoding → fallback |
 | `prefixBufferBytes` | 512 KiB | Bridge stream prefix | Backpressure (stop reading) |
 | `maxChunkBytes` | 64 KiB | One stream chunk | Split chunk |
 | `maxBlocks` | 256 | Data blocks per page | Protocol error |
 | `maxBlockKeyBytes` | 128 (legacy mode); 64 in RQP ([markup](/engineering/protocol/markup) M-15) | Block key length | Protocol error |
 | `maxBlockBytes` | 1 MiB | One data block | Protocol error |
-| `maxManifestBytes` | 64 KiB | Text of the RQP page manifest ([manifest and patch](/engineering/protocol/manifest-patch)); worst case of a valid manifest is about 37 KiB | `MANIFEST_INVALID` → normal load |
+| `maxManifestBytes` | 64 KiB (H-50) | Text of the RQP page manifest ([manifest and patch](/engineering/protocol/manifest-patch)); worst case of a valid manifest is about 37 KiB | `MANIFEST_INVALID` → normal load |
 | `maxOpenElements` | 256 | Depth counter D of the RQP markup analysis ([markup](/engineering/protocol/markup) M-26, H-25, H-31); it also bounds the token stack (size ≤ D) and the WHATWG stack (≤ D + 2) | `RQP_MARKUP_LIMIT` → normal HTML without RQP |
-| `maxPatchBytes` | 256 KiB | One RQP patch envelope | `PATCH_TOO_LARGE` |
+| `maxPatchBytes` | 256 KiB | One RQP patch envelope. The server sends the full document when a delta is larger ([negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server), step 7) | Client: `PATCH_TOO_LARGE`. Server: full document |
+| `maxRqHaveBytes` | 4096 bytes, fixed by `rqp/1` | Request field `Rq-Have`, all field lines combined (H-44) | Client: never sends more. Server: field is absent, not parsed |
+| `maxRqCapabilitiesBytes` | 1024 bytes, fixed by `rqp/1` | Request field `Rq-Capabilities`, all field lines combined | Server: field is absent, not parsed |
 | `maxJsonDepth` | 16 | legacy data JSON, RQP envelopes | Protocol error |
 | `maxHeaderBytes` | 16 KiB per header, 64 KiB total | Response headers parsed by the core | Protocol error |
 | `maxActiveSessions` | 8 per engine | Concurrent sessions | Oldest background session is cancelled |
@@ -40,7 +42,7 @@ On Android the adapter uses `ActivityManager.isLowRamDevice()` and `ComponentCal
 
 ## 3. Rules
 
-1. Every limit is configurable by the host app within a safe range. The core rejects values outside the range.
+1. Every limit is configurable by the host app within a safe range. The core rejects values outside the range. Exception: a limit marked "fixed by `rqp/1`" is part of the protocol and is not configurable, because a different value on one side changes the result for valid requests.
 2. A limit violation is never a crash. It is a typed error and a fallback.
 3. Fuzz tests run with the limits at their configured values and assert bounded memory.
 

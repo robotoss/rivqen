@@ -89,6 +89,7 @@ test('DL-031: no head end tag when something else comes before or in the head', 
     '<html><title>t</title></head>', // no <head> start tag
     '<html>x<head></head>', // text before the head
     '<p>x</p><head></head>', // another start tag before the head
+    '<html><meta charset="utf-8"><head></head>', // head content before the head start tag (the head is implied)
     '</p><head></head>', // an end tag before the head
     '<html><head>x</head>', // text in the head
     '<html><head></>', // "</>" gives no token: its bytes are not white space
@@ -98,6 +99,7 @@ test('DL-031: no head end tag when something else comes before or in the head', 
     '<html><head><head></head>', // a second head start tag
     '<html><head><title>t</title><body></head>', // the head is closed by body; </head> is stray
     '<html><head><template></head></template></head>', // </head> crosses the template
+    '<html><head><template></head></template><div></head>', // the head left the stack: a later </head> never counts
     '<html><head><title>t</title>', // no </head> at all
   ];
   for (const p of none) assert.equal(headEnd(p), -1, p);

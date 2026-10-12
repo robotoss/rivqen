@@ -233,6 +233,9 @@ const AMP = Buffer.from('&amp;', 'latin1');
 /** Item 4 (H-48, H-59): the URL schemes that the rule denies, with the colon, in lower case. */
 export const DENIED_SCHEMES = Object.freeze(['javascript:', 'vbscript:', 'data:']);
 
+/** The length of the longest denied scheme ("javascript:", 11 bytes). */
+const SCHEME_BYTES = Math.max(...DENIED_SCHEMES.map((s) => s.length));
+
 /** Manifest-patch section 4.2 for one attribute: true when it is rejected. */
 export function attributeRejected(name, value) {
   if (name.startsWith('on')) return true; // item 1
@@ -242,8 +245,8 @@ export function attributeRejected(name, value) {
   // Item 3: "&amp;" -> "&", remove TAB, LF, CR, then leading bytes 00 to 20.
   let copy = value.toString('latin1').replaceAll('&amp;', '&').replace(/[\t\n\r]/g, '');
   copy = copy.replace(/^[\x00-\x20]+/, '');
-  // Item 4: ASCII case-insensitive.
-  const lower = copy.replace(/[A-Z]/g, (m) => m.toLowerCase());
+  // Item 4: ASCII case-insensitive; only the first SCHEME_BYTES bytes matter.
+  const lower = copy.slice(0, SCHEME_BYTES).replace(/[A-Z]/g, (m) => m.toLowerCase());
   return DENIED_SCHEMES.some((scheme) => lower.startsWith(scheme));
 }
 

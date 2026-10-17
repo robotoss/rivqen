@@ -41,7 +41,8 @@ cache_key = SHA-256(partition ‖ origin ‖ canonical_url ‖ method ‖ vary_v
 
 1. Cookies and `Authorization` values are never part of a file name, log line or metric.
 2. The partition is **required** for every session. There is no shared default partition for authenticated content.
-3. Public pages can use a `public` partition that is shared by all profiles, only when all of these are true (H-61): the app declares the origin public; the response has no `Cache-Control` directive `private`; the response has an explicit `Cache-Control: public`, **or** the request had no credentials (no `Cookie`, no `Authorization`). For an RQP page the manifest also has `"mode": "public"` ([manifest and patch §1.4](/engineering/protocol/manifest-patch#_1-4-policy)). Else the entry goes to the partition of the request.
+3. Public pages can use a `public` partition that is shared by all profiles, only when all of these are true (H-61): the app declares the origin public; the response has no `Cache-Control` directive `private`; the response has an explicit `Cache-Control: public`, **or** the request had no credentials. For an RQP page the manifest also has `"mode": "public"` ([manifest and patch §1.4](/engineering/protocol/manifest-patch#_1-4-policy)). Else the entry goes to the partition of the request.
+   - **Credentials (H-62).** The client treats a request as credentialed unless it knows that no cookie (also no cookie that the WebView cookie store adds), no `Authorization` field, no HTTP authentication and no client certificate was used. A `Set-Cookie` field in the response also counts as credentials. Unknown means credentialed.
 4. A partition change cancels all sessions in the old partition.
 5. When the user or the app clears the cookies or the site data of a site, the client deletes the snapshots of that site in all partitions, also in `public` (H-60). The snapshots of a site are those of every origin whose host is the cleared domain or a subdomain of it. When all cookies or all site data are cleared, the client deletes all snapshots. A snapshot holds content and revisions that the server gave for the old cookies; it must not outlive them.
 
@@ -54,6 +55,8 @@ cache_key = SHA-256(partition ‖ origin ‖ canonical_url ‖ method ‖ vary_v
 | Query parameter order change | Different keys (default) / same key (if declared not significant) |
 | `Vary: Accept-Language` | Separate entries per language |
 | `"mode": "public"`, public origin, request with cookies, no `Cache-Control: public` | Entry in the partition of the request (protocol fixture `FX-RQ-C24-PUBLIC-NO-DIRECTIVE`) |
+| `"mode": "public"`, public origin, no `Cache-Control: public`, the client cannot tell whether credentials were sent | Entry in the partition of the request (`FX-RQ-C24-PUBLIC-CREDENTIALS-UNKNOWN`, H-62) |
+| `"mode": "public"`, public origin, no `Cache-Control: public`, a request without credentials and a `Set-Cookie` in the response | Entry in the partition of the request (`FX-RQ-C24-PUBLIC-SET-COOKIE`, H-62) |
 | The user clears the site data of one site | No snapshot of that site is left; snapshots of other sites stay |
 
 ## Related

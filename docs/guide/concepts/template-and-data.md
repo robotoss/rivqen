@@ -47,7 +47,7 @@ Pages that still use VasSonic comment markers work in the optional legacy mode u
 | Nothing changed | `304 Not Modified`. No body. |
 | Data changed, template the same | A patch with only the changed blocks. |
 | Template changed | The full new HTML. |
-| A changed block has an `on…` attribute, a `javascript:`, `vbscript:` or `data:` URL, or a character reference other than `&amp;` in an attribute value (section 4, rules 7 to 9) | The full new HTML. |
+| A changed block has an `on…` attribute, an attribute value that starts with `javascript:`, `vbscript:` or `data:`, or a character reference other than `&amp;` in an attribute value (section 4, rules 7 to 9) | The full new HTML. |
 | The server changed the page cache settings (`policy`, `limits` in the manifest) | The full new HTML. |
 
 ## 4. Rules for good blocks
@@ -62,7 +62,7 @@ Pages that still use VasSonic comment markers work in the optional legacy mode u
 8. Inside a block, write `&` in an attribute value only as `&amp;`. Do not use other character references in attribute values (for example `&quot;`, `&#39;`, `&colon;`). Use the other quote character, or put the text in the element content.
 9. Inside a block, do not use `javascript:`, `vbscript:` or `data:` URLs, and do not start any attribute value with these words. For an image, use a URL path, not a `data:` URL.
 
-Rules 7 to 9 apply to the content of HTML blocks, not to the block element itself (its tag and attributes belong to the template). A page that breaks them still works. But the client accepts no patch with such content, so it gets the full page for every change of that block. The server SDK sends the full page at once ([manifest and patch §4.2](/engineering/protocol/manifest-patch#_4-2-attribute-rule)).
+Rules 7 to 9 apply to the content of HTML blocks, not to the block element itself (its tag and attributes belong to the template). They are not a full HTML sanitizer: use a Content Security Policy for the rest ([manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules)). A page that breaks them still works. But the client accepts no patch with such content, so it gets the full page for every change of that block. The server SDK sends the full page at once ([manifest and patch §4.2](/engineering/protocol/manifest-patch#_4-2-attribute-rule)).
 
 ```html
 <!-- Patched as a block update -->

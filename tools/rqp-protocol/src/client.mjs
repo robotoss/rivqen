@@ -217,7 +217,7 @@ export function partitionFor(ctx, responseHeaders, members) {
 }
 
 /**
- * Manifest-patch section 1.7, client item 1 (H-62 item 3): the browser decodes
+ * Manifest-patch section 1.7, client item 6 (H-62 item 3): the browser decodes
  * F as UTF-8. True when the body starts with a UTF-8 byte order mark (BOM
  * sniffing comes first in the HTML encoding sniffing algorithm) or the
  * Content-Type has a charset parameter that is a UTF-8 label.

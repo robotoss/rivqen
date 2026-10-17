@@ -324,7 +324,7 @@ test('H-61: the public partition needs mode public, a public origin, no private,
   assert.deepEqual([...cacheDirectives('a, B=1 , c="x,private"')], ['a', 'b', 'c']);
 });
 
-test('H-62 (2): unknown credentials count as present; Set-Cookie in the response counts as credentials', () => {
+test('H-62 (2), H-63: unknown credentials count as present; Set-Cookie in the response counts as credentials', () => {
   const store = (credentials, extra = [], cacheControl = 'no-cache') => {
     const headers = [...HTML, ['cache-control', cacheControl], ...extra];
     const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', public_origin: true, credentials }), { status: 200, headers, body: fullOf('page-a', { policy: { mode: 'public' } }) });
@@ -338,7 +338,9 @@ test('H-62 (2): unknown credentials count as present; Set-Cookie in the response
   assert.equal(store(false, [['Set-Cookie', 'a=1']]), 'request'); // field names are case-insensitive
   // The explicit public directive does not depend on credentials (H-61).
   assert.equal(store(null, [], 'public'), 'public');
-  assert.equal(store(false, [['set-cookie', 'a=1']], 'public'), 'public');
+  // H-63: a Set-Cookie field gives the request partition also with an explicit public directive.
+  assert.equal(store(false, [['set-cookie', 'a=1']], 'public'), 'request');
+  assert.equal(store(null, [['Set-Cookie', 'a=1']], 'public'), 'request');
 });
 
 test('H-62 (1): F is used only when the final request carried RQP fields (origin allowlist, RQP-05)', () => {

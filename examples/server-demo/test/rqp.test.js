@@ -272,7 +272,7 @@ const withType = (value) => ({ status: 200, headers: [['content-type', value], [
 const runType = (value) => handle(get(), withType(value), page());
 
 test('H-62: a charset other than UTF-8 makes the page invalid: it is sent unchanged, without Rq-* fields', () => {
-  for (const value of ['text/html; charset=iso-8859-1', 'text/html;charset="windows-1252"', 'text/html; charset=utf-16', 'text/html; charset=']) {
+  for (const value of ['text/html; charset=iso-8859-1', 'text/html;charset="windows-1252"', 'text/html; charset=utf-16', 'text/html; charset=""']) {
     const r = runType(value);
     assert.equal(r.mode, 'passthrough', value);
     assert.deepEqual(r.body, page(), value);

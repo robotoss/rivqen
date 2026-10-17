@@ -15,10 +15,9 @@ import {
   acceptsDelta,
   capabilities,
   deltaBase,
-  charsetParameter,
+  fullContentType,
   fieldValue,
   hasField,
-  isUtf8Label,
   mediaType,
   noneMatchFails,
   normalizeHeaders,
@@ -174,9 +173,8 @@ function select(request, status, appHeaders, page, config) {
   if (!inScope) return { status, headers: appHeaders, body: page, mode: 'passthrough', reason: 'out-of-scope' };
 
   // Step 2: validity. H-62: the page is UTF-8; a charset parameter of another encoding makes it invalid.
-  const contentType = fieldValue(appHeaders, 'content-type');
-  const charset = charsetParameter(contentType);
-  if (charset !== null && !isUtf8Label(charset)) return null;
+  const typed = fullContentType(appHeaders);
+  if (typed === null) return null;
   const analysis = analyzePage(page);
   if (!analysis.valid) return null;
   const insertAt = documentHeadEnd(page);
@@ -191,8 +189,7 @@ function select(request, status, appHeaders, page, config) {
   const etag = `${config.contentCoding ? 'W/' : ''}"${manifest.page_revision}"`;
   const fullHeaders = [
     // DL-032: the ETag r1. is the only validator of F, so Last-Modified of A goes.
-    ...without(appHeaders, 'etag', 'last-modified', 'content-length', 'content-type'),
-    ['content-type', charset === null ? `${contentType}; charset=utf-8` : contentType],
+    ...without(typed, 'etag', 'last-modified', 'content-length'),
     ['etag', etag],
     ['rq-version', '1'],
     ['content-length', String(full.length)],

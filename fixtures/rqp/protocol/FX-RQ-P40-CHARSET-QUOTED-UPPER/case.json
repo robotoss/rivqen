@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P40-CHARSET-QUOTED-UPPER",
+  "description": "The application sends charset=\"UTF-8\" (quoted, upper case), a UTF-8 label: F keeps the Content-Type unchanged (H-62)",
+  "rules": ["RQP-08", "RQP-26"],
+  "page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=\"UTF-8\""],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

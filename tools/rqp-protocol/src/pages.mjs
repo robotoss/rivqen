@@ -79,6 +79,8 @@ export const EXPECTED = Object.freeze({
   // DL-034: a stray </meta> in the head is ignored (head end tag found); </br> in the head fails.
   'page-head-stray-end': { blocks: ['title', 'price', 'cart'] },
   'page-head-br': { blocks: ['title', 'price', 'cart'] },
+  // H-62 (3): page-a with a UTF-8 byte order mark at offset 0 (markup M-02).
+  'page-bom': { blocks: ['title', 'price', 'cart'] },
   'page-t2': { blocks: ['title', 'price', 'cart'] },
   'page-zero': { blocks: [] },
   'page-big-a': { blocks: ['title', 'price', 'cart'] },

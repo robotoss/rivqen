@@ -135,3 +135,11 @@ test('a block above maxBlockBytes fails the attribute rule; a block of exactly t
   assert.equal(passesAttributeRule(filler(LIMIT)), true);
   assert.equal(passesAttributeRule(filler(LIMIT + 1)), false);
 });
+
+test('white space before the head start tag is tab, line feed, form feed, carriage return or space; vertical tab is not', () => {
+  for (const ws of ['\t', '\n', '\f', '\r', ' ']) {
+    const doc = `<html>${ws}<head></head></html>`;
+    assert.equal(at(doc), doc.indexOf('</head>'), JSON.stringify(ws));
+  }
+  assert.equal(at('<html>\v<head></head></html>'), -1);
+});

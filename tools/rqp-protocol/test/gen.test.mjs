@@ -31,10 +31,26 @@ test('gen.mjs --check: every committed page and expected file is current', () =>
   assert.match(out, /130 fixtures are current/);
 });
 
-test('every catalog case P-01 to P-39 and C-01 to C-24 has at least one fixture', () => {
+test('every catalog case P-01 to P-40 and C-01 to C-26 has at least one fixture', () => {
   const names = fixtureNames();
-  for (let i = 1; i <= 39; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-P${String(i).padStart(2, '0')}-`)), `P-${i}`);
-  for (let i = 1; i <= 24; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-C${String(i).padStart(2, '0')}-`)), `C-${i}`);
+  for (let i = 1; i <= 40; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-P${String(i).padStart(2, '0')}-`)), `P-${i}`);
+  for (let i = 1; i <= 26; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-C${String(i).padStart(2, '0')}-`)), `C-${i}`);
+});
+
+test('context.credentials: true, false or null (unknown, the default); another value is a defective case (H-62)', () => {
+  const name = 'FX-RQ-C24-PUBLIC-CREDENTIALS-UNKNOWN';
+  const dir = copyFixture(name);
+  const file = join(dir, name, 'case.json');
+  const c = JSON.parse(readFileSync(file, 'utf8'));
+  const credentials = (value) => {
+    writeFileSync(file, JSON.stringify({ ...c, context: { ...c.context, credentials: value } }));
+    return expectFixture(dir, name).files['expected.json'];
+  };
+  const absent = expectFixture(dir, name).files['expected.json'];
+  assert.equal(absent.context.credentials, null);
+  assert.deepEqual(credentials(null), absent);
+  assert.equal(credentials(false).context.credentials, false);
+  assert.throws(() => credentials('yes'), (e) => e instanceof CaseError && /credentials must be a boolean or null/.test(e.message));
 });
 
 test('--check reports a stale expected file and a missing one, and the generator rewrites them', () => {

@@ -157,6 +157,7 @@ test('client: F is used only with a UTF-8 charset label or a UTF-8 byte order ma
   assert.equal(respond('text/html', bom).outcome, 'stored');
   assert.equal(respond('text/html; charset=iso-2022-jp', bom).outcome, 'stored'); // BOM sniffing comes first
   assert.equal(decodedAsUtf8(typed('text/html'), Buffer.from([0xef, 0xbb])), false);
+  assert.equal(decodedAsUtf8(typed('text/html'), Buffer.from([0xef, 0xbb, 0x41])), false); // the BOM is all three bytes
   assert.equal(decodedAsUtf8(typed('text/html'), Buffer.from([0xfe, 0xff, 0x00])), false);
   assert.equal(decodedAsUtf8(typed('text/html'), Buffer.from([0xef, 0xbb, 0xbf])), true);
 });

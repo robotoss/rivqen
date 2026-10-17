@@ -6,6 +6,7 @@
     "final_url": "https://shop.example.com/catalog",
     "build": "release",
     "allow_http": false,
+    "allowlisted": true,
     "credentials": false,
     "public_origin": true,
     "navigation": "first-visit",

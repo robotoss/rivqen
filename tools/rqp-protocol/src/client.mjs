@@ -9,12 +9,14 @@
 //
 // Modelled context: the request URL (the cache key of the snapshot), the final
 // URL after redirects, the build type and the http flag (H-49, H-58), whether
-// the request carried credentials and whether the app declares the origin
-// public (the partition of a new snapshot, H-61).
+// the origin of the final URL is in the origin allowlist (RQP-05, H-62 item 1),
+// whether the request carried credentials (true, false or unknown; H-62 item
+// 2) and whether the app declares the origin public (the partition of a new
+// snapshot, H-61).
 //
-// Not modelled: the origin allowlist, the partition keys and a partition
-// change (AUTH_PARTITION_CHANGED), the other cache identity inputs (Vary,
-// variant, ignored query parameters), no-store, and the policy effects
+// Not modelled: the partition keys and a partition change
+// (AUTH_PARTITION_CHANGED, also for a 304), the other cache identity inputs
+// (Vary, variant, ignored query parameters), no-store, and the policy effects
 // (freshness, offline). A context snapshot is in the request partition. The
 // manifest members policy and limits are modelled as part of the page revision
 // (H-55), as the patch size hint and, for mode, as the partition choice.
@@ -29,7 +31,16 @@ import {
   pageRevision,
   sha256b64u,
 } from './common.mjs';
-import { combined, mediaType, normalizeHeaders, splitList } from './http.mjs';
+import {
+  Charset,
+  combined,
+  contentTypeCharset,
+  has,
+  mediaType,
+  normalizeHeaders,
+  splitList,
+  startsWithUtf8Bom,
+} from './http.mjs';
 import { analyze, findManifestElements, passesAttributeRule } from './markup.mjs';
 import { parseStrict } from './json-strict.mjs';
 import { loadSchema, validate } from './schema.mjs';
@@ -100,11 +111,23 @@ function describe(snap) {
 }
 
 /**
- * Section 6.1, rule 5 (H-49) and section 6.3 (H-58): RQP for an https URL; for
- * an http URL only in a debug build with the app flag. `url` defaults to the
- * request URL.
+ * Section 6.1, rule 1 (RQP-05, H-62 item 1): the origin of `url` is in the
+ * origin allowlist. The context member `allowlisted` (default true) tells it
+ * for the origin of the final URL; every other origin of a context is in the
+ * allowlist.
+ */
+export function inAllowlist(ctx, url) {
+  return ctx.allowlisted !== false || new URL(url).origin !== new URL(finalUrlOf(ctx)).origin;
+}
+
+/**
+ * Section 6.1, rules 1 and 5 (RQP-05, H-49) and section 6.3 (H-58, H-62): the
+ * client sends RQP fields to `url` only when its origin is in the allowlist,
+ * and only for https; for http only in a debug build with the app flag. `url`
+ * defaults to the request URL.
  */
 export function rqpAllowed(ctx, url = ctx.url) {
+  if (!inAllowlist(ctx, url)) return false;
   const scheme = new URL(url).protocol;
   if (scheme === 'https:') return true;
   return scheme === 'http:' && ctx.build === 'debug' && ctx.allow_http === true;
@@ -171,16 +194,36 @@ export function cacheDirectives(value) {
 }
 
 /**
- * Manifest-patch section 1.4, mode (H-61): the shared public partition only
- * for a manifest with mode "public", an origin that the app declares public,
- * no Cache-Control directive "private", and an explicit "public" directive or
- * a request without credentials. Else the partition of the request.
+ * Manifest-patch section 1.4, mode (H-62 item 2): the request had no
+ * credentials only when the client knows it (credentials === false) and the
+ * response has no Set-Cookie field. Unknown credentials (null or absent) count
+ * as present.
+ */
+export function withoutCredentials(ctx, responseHeaders) {
+  return ctx.credentials === false && !has(responseHeaders, 'set-cookie');
+}
+
+/**
+ * Manifest-patch section 1.4, mode (H-61, H-62): the shared public partition
+ * only for a manifest with mode "public", an origin that the app declares
+ * public, no Cache-Control directive "private", and an explicit "public"
+ * directive or a request without credentials. Else the partition of the request.
  */
 export function partitionFor(ctx, responseHeaders, members) {
   if (members.policy?.mode !== 'public' || ctx.public_origin !== true) return Partition.REQUEST;
   const directives = cacheDirectives(combined(responseHeaders, 'cache-control'));
   if (directives.has('private')) return Partition.REQUEST;
-  return directives.has('public') || ctx.credentials === false ? Partition.PUBLIC : Partition.REQUEST;
+  return directives.has('public') || withoutCredentials(ctx, responseHeaders) ? Partition.PUBLIC : Partition.REQUEST;
+}
+
+/**
+ * Manifest-patch section 1.7, client item 1 (H-62 item 3): the browser decodes
+ * F as UTF-8. True when the body starts with a UTF-8 byte order mark (BOM
+ * sniffing comes first in the HTML encoding sniffing algorithm) or the
+ * Content-Type has a charset parameter that is a UTF-8 label.
+ */
+export function decodedAsUtf8(responseHeaders, body) {
+  return startsWithUtf8Bom(body) || contentTypeCharset(responseHeaders) === Charset.UTF8;
 }
 
 /**
@@ -188,8 +231,13 @@ export function partitionFor(ctx, responseHeaders, members) {
  * outcome: "not-modified", "patched", "stored", "normal" or "rejected".
  * next: "keep", "show", "fallback-load" or "webview-load".
  *
+ * H-62 (1): the client uses F, a 304 or D only when the final request carried
+ * RQP fields (rqpAllowed for the final URL). For F this is checked below. A 304
+ * and D need the cache key of the snapshot, so the final URL has the origin of
+ * the request URL, which passed rqpAllowed at the start.
+ *
  * @param {{ url: string, final_url?: string, build: string, allow_http: boolean, navigation: string,
- *   snapshot: object|null, credentials?: boolean, public_origin?: boolean }} ctx
+ *   snapshot: object|null, allowlisted?: boolean, credentials?: boolean|null, public_origin?: boolean }} ctx
  * @param {{ status: number, headers: Array<[string, string]>, body: Uint8Array|null }} response
  */
 export function handleResponse(ctx, response) {
@@ -254,6 +302,8 @@ export function checkFull(ctx, body) {
 }
 
 function handleFull(ctx, headers, body) {
+  // H-62 (3): a document that the browser can decode with another encoding is not used.
+  if (!decodedAsUtf8(headers, body)) return result('rejected', { error: Code.MANIFEST_INVALID });
   const checked = checkFull(ctx, body);
   if (checked.snapshot === undefined) return result('rejected', { error: Code.MANIFEST_INVALID });
   const snap = { ...checked.snapshot, partition: partitionFor(ctx, headers, checked.snapshot.members) };

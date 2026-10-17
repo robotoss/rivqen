@@ -20,7 +20,17 @@ import {
   membersOf,
   pageRevision,
 } from './common.mjs';
-import { acceptsMediaType, combined, has, mediaType, normalizeHeaders, parseEntityTags, without } from './http.mjs';
+import {
+  Charset,
+  acceptsMediaType,
+  combined,
+  contentTypeCharset,
+  has,
+  mediaType,
+  normalizeHeaders,
+  parseEntityTags,
+  without,
+} from './http.mjs';
 import { analyze, documentHeadEnd, passesAttributeRule } from './markup.mjs';
 import { parseDictionary, parseItem, parseList } from './sf.mjs';
 
@@ -165,6 +175,21 @@ export function withoutRqFields(headers) {
   return headers.filter(([name]) => !name.startsWith('rq-'));
 }
 
+/**
+ * Step 3 (H-62, item 3): the Content-Type line of F. When A has no charset
+ * parameter, F gets "; charset=utf-8". Returns null when the new value does
+ * not parse to a UTF-8 charset (for example after an unclosed quoted string
+ * in A): the page is then passed through, because the browser could decode it
+ * with another encoding.
+ */
+export function fullContentType(appHeaders) {
+  const charset = contentTypeCharset(appHeaders);
+  if (charset === Charset.UTF8) return appHeaders;
+  if (charset !== Charset.NONE) return null;
+  const out = appHeaders.map(([n, v]) => [n, n === 'content-type' ? `${v.replace(/[ \t]+$/, '')}; charset=utf-8` : v]);
+  return contentTypeCharset(out) === Charset.UTF8 ? out : null;
+}
+
 function unsupported(headers) {
   for (const name of ['if-match', 'if-unmodified-since', 'if-range', 'content-encoding']) {
     if (has(headers, name)) throw new UnsupportedInput(`the reference server does not model ${name}`);
@@ -199,7 +224,9 @@ export function handle(request, app, pageBytes, config = {}) {
     throw new UnsupportedInput('the reference server does not model If-Modified-Since alone');
   }
 
-  // Step 2.
+  // Step 2. H-62 (3): UTF-8 only. A charset that is not a UTF-8 label makes the page invalid for RQP.
+  const typed = fullContentType(appHeaders);
+  if (typed === null) return passthrough('charset');
   const analysis = analyze(page);
   if (!analysis.valid) return passthrough('invalid-page');
   const insertAt = documentHeadEnd(page);
@@ -211,8 +238,9 @@ export function handle(request, app, pageBytes, config = {}) {
   if (full === null) return passthrough('server-passthrough');
   const etag = `"${manifest.page_revision}"`;
   // DL-032: the ETag r1. is the only validator of F, so A's Last-Modified goes.
+  // H-62 (3): F of a page without a charset parameter gets "; charset=utf-8".
   const fullHeaders = [
-    ...without(appHeaders, 'etag', 'last-modified', 'content-length'),
+    ...without(typed, 'etag', 'last-modified', 'content-length'),
     ['etag', etag],
     ['rq-version', '1'],
     ['content-length', String(full.length)],

@@ -18,10 +18,12 @@
 //
 // Client module: export clientStep(context, response) -> { outcome, error,
 // next, metric, snapshot } and optionally clientRequest(context) -> [[name,
-// value]]. context = { url, final_url, build, allow_http, credentials,
-// public_origin, navigation, snapshot: null | { document, template_revision,
-// page_revision, blocks, policy?, limits? } }. url is the request URL and the
-// cache key of the snapshot; final_url is the URL of the response after redirects.
+// value]]. context = { url, final_url, build, allow_http, allowlisted,
+// credentials, public_origin, navigation, snapshot: null | { document,
+// template_revision, page_revision, blocks, policy?, limits? } }. url is the
+// request URL and the cache key of the snapshot; final_url is the URL of the
+// response after redirects; allowlisted tells whether the origin of the final
+// URL is in the origin allowlist; credentials is true, false or null (unknown).
 //
 // Comparison rules: docs/engineering/protocol/fixtures.md section 4.1
 // ("Comparison of F") and section 5; README.md of the fixtures; and RQP-08
@@ -102,6 +104,12 @@ export function compareServer(expected, page, response) {
     if (got !== value) fail(`header ${name}: ${got === null ? 'absent' : JSON.stringify(got)}, expected ${JSON.stringify(value)}`);
   }
   for (const name of expected.headers_forbidden) if (has(headers, name)) fail(`header ${name}: forbidden`);
+  // DL-036 (I2): an optional field, when present, is exactly one line with exactly the expected value.
+  for (const [name, value] of Object.entries(expected.headers_optional ?? {})) {
+    const lines = headers.filter(([n]) => n === name);
+    if (lines.length > 1) fail(`header ${name}: ${lines.length} field lines, expected at most one`);
+    else if (lines.length === 1 && combined(lines, name) !== value) fail(`header ${name}: ${JSON.stringify(combined(lines, name))}, expected ${JSON.stringify(value)} or absent`);
+  }
   const kind = expected.body.kind;
   if (kind === 'full' || expected.status === 304 || (kind === 'none' && expected.status === 200)) {
     const vary = combined(headers, 'vary');
@@ -204,6 +212,7 @@ export async function runClient(mod, { dir = FIXTURES_DIR, only = '' } = {}) {
       final_url: ctx.final_url,
       build: ctx.build,
       allow_http: ctx.allow_http,
+      allowlisted: ctx.allowlisted,
       credentials: ctx.credentials,
       public_origin: ctx.public_origin,
       navigation: ctx.navigation,

@@ -68,7 +68,8 @@ test('with the policy and limits of the second set: the KAT full document and th
 });
 
 test('the reference client accepts the KAT full documents and applies the KAT patches', () => {
-  const html = [['content-type', 'text/html'], ['rq-version', '1']];
+  // H-62 (3): F of a conforming server always has a UTF-8 charset (server step 3).
+  const html = [['content-type', 'text/html; charset=utf-8'], ['rq-version', '1']];
   const json = [['content-type', 'application/vnd.rivqen.delta+json']];
   const ctx = { url: 'https://shop.example.com/catalog', build: 'release', allow_http: false, navigation: 'first-visit', snapshot: null };
   for (const [fullFile, patchFile, m] of [[kat.full_document, kat.patches[0], manifest], [set2.full_document, set2.patches[0], manifest2]]) {

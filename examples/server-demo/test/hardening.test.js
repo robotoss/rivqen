@@ -25,7 +25,9 @@ after(() => new Promise((resolve) => server.close(resolve)));
 /** One request with exact header lines. */
 function call(method, path, headers = []) {
   return new Promise((resolve, reject) => {
-    const req = request(`${base}${path}`, { method, headers: [['Host', new URL(ORIGIN).host], ...headers].flat() }, (res) => {
+    const hasHost = headers.some(([n]) => n.toLowerCase() === 'host');
+    const lines = hasHost ? headers : [['Host', new URL(ORIGIN).host], ...headers];
+    const req = request(`${base}${path}`, { method, headers: lines.flat() }, (res) => {
       const chunks = [];
       res.on('data', (c) => chunks.push(c));
       res.on('end', () => resolve({ status: res.statusCode, body: Buffer.concat(chunks) }));
@@ -95,4 +97,49 @@ test('pathTemplate keeps only the routes of the demo', () => {
   assert.equal(pathTemplate('/healthz'), '/healthz');
   assert.equal(pathTemplate('/__demo/next-data'), '/__demo/next-data');
   assert.equal(pathTemplate('/other'), '<unmatched>');
+});
+
+test('a request with another Host is refused with 421, no body, on every route, and changes nothing (DL-036 I4)', async () => {
+  const before = await state();
+  for (const host of ['evil.example', 'shop.example.com:8443', 'shop.example.com.evil.example', '']) {
+    for (const [method, path, extra] of [
+      ['GET', '/catalog', []],
+      ['GET', '/healthz', []],
+      ['GET', '/other', []],
+      ['POST', '/__demo/next-data', ACTION],
+      ['POST', '/__demo/next-template', ACTION],
+    ]) {
+      const r = await call(method, path, [['Host', host], ...extra]);
+      assert.equal(r.status, 421, `${method} ${path} Host "${host}"`);
+      assert.equal(r.body.length, 0);
+    }
+  }
+  assert.deepEqual(await state(), before);
+});
+
+test('the Host name is compared without case', async () => {
+  assert.equal((await call('GET', '/healthz', [['Host', 'SHOP.Example.COM']])).status, 200);
+});
+
+test('the Origin check uses the normalized origin: a trailing slash or an upper-case host in the setting is accepted', async () => {
+  for (const setting of ['https://shop.example.com/', 'HTTPS://SHOP.EXAMPLE.COM', 'https://Shop.Example.com:443']) {
+    const own = createDemoServer({ origin: setting });
+    await new Promise((resolve) => own.listen(0, '127.0.0.1', resolve));
+    try {
+      const url = `http://127.0.0.1:${own.address().port}/__demo/next-data`;
+      const send = (origin) =>
+        new Promise((resolve, reject) => {
+          const req = request(url, { method: 'POST', headers: { Host: 'shop.example.com', 'Rq-Demo-Action': '1', Origin: origin } }, (res) => {
+            res.resume();
+            res.on('end', () => resolve(res.statusCode));
+          });
+          req.on('error', reject);
+          req.end();
+        });
+      assert.equal(await send('https://shop.example.com'), 200, setting);
+      assert.equal(await send('https://evil.example'), 403, setting);
+    } finally {
+      await new Promise((resolve) => own.close(resolve));
+    }
+  }
 });

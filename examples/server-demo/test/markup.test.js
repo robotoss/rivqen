@@ -121,3 +121,17 @@ test('attribute rule: an attribute in a text-mode element is not an attribute of
   assert.equal(passesAttributeRule(b('<style><a onclick=x></style><b>y</b>')), true);
   assert.equal(passesAttributeRule(b('<!-- <a onclick=x> --><b>y</b>')), true);
 });
+
+test('the head walk fails as soon as the head cannot end: a later head end tag is not found', () => {
+  // Text before <head>: the head rule fails; the late </head> must not be returned.
+  assert.equal(at('<html>x<head></head><body></body></html>'), -1);
+  // A non-head-content element inside the head ends the head; a second </head> is not the head end tag.
+  assert.equal(at('<html><head><p>x</p></head></head></html>'), -1);
+});
+
+test('a block above maxBlockBytes fails the attribute rule; a block of exactly that size passes', () => {
+  const LIMIT = 1024 * 1024;
+  const filler = (n) => b('<p>' + 'a'.repeat(n - 7) + '</p>');
+  assert.equal(passesAttributeRule(filler(LIMIT)), true);
+  assert.equal(passesAttributeRule(filler(LIMIT + 1)), false);
+});

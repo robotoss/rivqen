@@ -19,17 +19,19 @@ import { analyzePage } from '../src/markup.js';
 import { renderCatalog } from '../src/pages.js';
 
 const BASE = process.env.DEMO_URL ?? 'http://127.0.0.1:8787';
+// The server answers only its own Host (DL-036 I4): send the host of ORIGIN (or of DEMO_URL).
+const HOST = new URL(process.env.ORIGIN ?? BASE).host;
 const out = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : null;
 
 const sizes = (body) => ({ raw: Buffer.byteLength(body), gzip: body ? gzipSync(body).length : 0, br: body ? brotliCompressSync(body).length : 0 });
 
 async function get(headers = {}) {
-  const r = await fetch(`${BASE}/catalog`, { headers });
+  const r = await fetch(`${BASE}/catalog`, { headers: { Host: HOST, ...headers } });
   const body = r.status === 304 ? '' : await r.text();
   return { status: r.status, headers: r.headers, body };
 }
 // The POST endpoints need the custom header (cross-site protection). fetch sends no Origin header here.
-const post = (p) => fetch(`${BASE}${p}`, { method: 'POST', headers: { 'Rq-Demo-Action': '1' } }).then((r) => r.json());
+const post = (p) => fetch(`${BASE}${p}`, { method: 'POST', headers: { Host: HOST, 'Rq-Demo-Action': '1' } }).then((r) => r.json());
 
 const RQ = { 'Rq-Version': '1', 'Rq-Capabilities': '(block-patch)', Accept: 'text/html, application/vnd.rivqen.delta+json' };
 const results = [];

@@ -37,14 +37,18 @@ The server listens on `127.0.0.1:8787`. To change the port, set `PORT`.
 | `POST` | `/__demo/next-template` | Adds a menu item (template change). Same protection as `next-data`. |
 | `GET` | `/healthz` | `{ "ok": true, "state": … }` |
 
+<Badge type="tip" text="FACT" /> Every route answers only a request whose `Host` header is the host (with port) of `ORIGIN`, compared without case. Any other request gets `421` with no body, and the server changes nothing (DL-036).
+
 ## 4. How the server answers `/catalog`
 
 <Badge type="tip" text="FACT" /> The server follows the response selection of [negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server).
 
 ```mermaid
 flowchart TD
-  R[Request] --> A{Markup valid?}
+  R[Request] --> C
   A -- no --> P[200 original HTML<br/>no RQP]
+  C{Charset<br/>UTF-8 or none?} -- no --> P
+  C -- yes --> A
   A -- yes --> N{If-None-Match<br/>matches r1?}
   N -- yes --> NM[304]
   N -- no --> Q{Delta request?<br/>Rq-Version 1,<br/>block-patch, Accept,<br/>one r1 tag, same t}
@@ -53,6 +57,8 @@ flowchart TD
   S -- yes --> D[200 delta<br/>no-store]
   S -- no --> F
 ```
+
+<Badge type="tip" text="FACT" /> The page must be UTF-8 (H-62). When the `Content-Type` of the page has a `charset` parameter that is not a label of UTF-8 in the [WHATWG Encoding Standard](https://encoding.spec.whatwg.org/) (for example `iso-8859-1`), the server sends the page unchanged, without RQP. When the `Content-Type` has no `charset` parameter, the full document gets `; charset=utf-8`. A UTF-8 label (`utf-8`, `utf8`, `"UTF-8"`) stays as it is.
 
 Every client gets the same full document: a browser without RQP also gets the manifest, `Rq-Version: 1` and the `ETag` `"r1.…"`. The browser ignores the manifest script.
 
@@ -125,13 +131,13 @@ Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so th
 npm test
 ```
 
-<Badge type="tip" text="FACT" /> The 65 tests check, by behavior:
+<Badge type="tip" text="FACT" /> The 76 tests check, by behavior:
 
-- the response selection: full document, `304`, delta, the size rules, the attribute rule (H-56), invalid pages, a weak `ETag` with a content coding, no state between requests;
+- the response selection: full document, `304`, delta, the size rules, the attribute rule (H-56), invalid pages, the charset rule, a weak `ETag` with a content coding, no state between requests;
 - the known answers of `spec/rqp/examples/kat`: the full documents, both page revisions and the example patches;
 - the request fields and the Structured Field parser;
 - the insertion point of the manifest and the attribute rule;
-- the HTTP adapter on a loopback socket: first visit, revisit, data change, template change;
+- the HTTP adapter on a loopback socket: first visit, revisit, data change, template change, the `Host` check (`421`);
 - the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 69 server fixtures pass (`FX-RQ-P*`), also the two `FX-RQ-P35` cases (level SHOULD).
 
 To run the fixtures alone, run this command in `examples/server-demo`:
@@ -149,7 +155,7 @@ node ../../tools/rqp-protocol/check.mjs --server src/rqp.js
 npm run measure -- --out ../../evidence/benchmarks/rqp-bytes.json
 ```
 
-The script makes four visits (cold, unchanged, data changed, template changed) with three strategies: plain, HTTP ETag and RQP. The RQP client of the script sends `If-None-Match` and `Rq-Have` with the digest prefixes `b`, and applies each delta to its block list. To add the upstream legacy server, set `LEGACY_URL` and `LEGACY_PAGES` (see `tools/upstream-lab`).
+The script makes four visits (cold, unchanged, data changed, template changed) with three strategies: plain, HTTP ETag and RQP. The RQP client of the script sends `If-None-Match` and `Rq-Have` with the digest prefixes `b`, and applies each delta to its block list. The script sends the `Host` of `ORIGIN` (or of `DEMO_URL`). To add the upstream legacy server, set `LEGACY_URL` and `LEGACY_PAGES` (see `tools/upstream-lab`).
 
 The latest results are on the [Performance](/guide/performance#measured-bytes) page.
 

@@ -77,7 +77,7 @@ Each rule has an ID `M-xx` and names the error code of `tools/rqp-markup/CONTRAC
 
 **M-02 Encoding.** The input MUST be valid UTF-8 (RFC 3629: no overlong forms, no surrogate code points, no code point above U+10FFFF, no truncated sequence). A UTF-8 BOM (`EF BB BF`) at offset 0 is allowed. The tokenizer does not see it, but it stays in the offsets and in the template (contract §4). U+FEFF at any other offset is a normal character. U+0000 and other control characters are valid characters. Error: `RQP_MARKUP_ENCODING`.
 
-The parser decodes the input as UTF-8 always. It ignores `<meta charset>` and the `http-equiv` charset declaration. <Badge type="info" text="DESIGN" /> The RQP server sends `Content-Type: text/html; charset=utf-8`; a transport-layer charset has priority over `<meta>` in the WHATWG encoding sniffing algorithm, so the browser also decodes UTF-8 (negotiation text: S2).
+The parser decodes the input as UTF-8 always. It ignores `<meta charset>` and the `http-equiv` charset declaration. <Badge type="info" text="DESIGN" /> RQP is for UTF-8 pages only (H-62, RQP-26): the server passes through a page whose `Content-Type` has another charset, and appends `; charset=utf-8` to F when it has none. A transport-layer charset has priority over `<meta>` in the WHATWG encoding sniffing algorithm, so the browser also decodes UTF-8 ([negotiation §4, charset rule](/engineering/protocol/negotiation#_4-response-selection-server)).
 
 ### 2.3 Tokenization and token stack
 

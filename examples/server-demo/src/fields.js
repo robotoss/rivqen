@@ -181,7 +181,7 @@ const lowerAscii = (text) => text.replace(/[A-Z]/g, (c) => String.fromCharCode(c
 /** HTTP white space (MIME Sniffing): tab, line feed, carriage return, space. */
 const isHttpSpace = (c) => c === '\t' || c === '\n' || c === '\r' || c === ' ';
 /** Code points that a parameter value may hold (MIME Sniffing "HTTP quoted-string token code point"). */
-const VALUE_CODE_POINTS = /^[\t -~\u0080-ÿ]*$/;
+const VALUE_CODE_POINTS = /^[\t\x20-\x7e\x80-\xff]*$/;
 
 /**
  * The value of the first valid charset parameter of one media type (H-62, item 2), or null.

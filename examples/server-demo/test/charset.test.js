@@ -66,6 +66,7 @@ test('H-62 item 1: a comma inside a quoted string is not a list separator; empty
   assert.equal(run('text/html; x="a\\",b"; charset=utf-8').mode, 'full');
   assert.equal(run('text/html; charset=utf-8,').mode, 'full');
   assert.equal(contentTypeCharset([['content-type', '']]), CHARSET.OTHER);
+  assert.equal(contentTypeCharset([['cache-control', 'no-cache']]), CHARSET.NONE);
 });
 
 test('H-62 item 4: trailing white space of the field value goes before the appended parameter', () => {
@@ -81,6 +82,12 @@ test('H-62 item 3: label comparison trims ASCII white space and ignores case; ot
   for (const label of ['utf-9', 'utf_8', 'utf-16', '']) {
     assert.equal(contentTypeCharset([['content-type', `text/html; charset="${label}"`]]), CHARSET.OTHER, label);
   }
+  // A tab and the code points 80 to FF are valid in a value; other control characters are not (the parameter is skipped).
+  assert.equal(contentTypeCharset([['content-type', 'text/html; charset="utf-8\t"']]), CHARSET.UTF8);
+  assert.equal(contentTypeCharset([['content-type', 'text/html; charset="é"']]), CHARSET.OTHER);
+  assert.equal(contentTypeCharset([['content-type', 'text/html; charset="ÿ"']]), CHARSET.OTHER);
+  assert.equal(contentTypeCharset([['content-type', 'text/html; charset="Ā"']]), CHARSET.NONE);
+  assert.equal(contentTypeCharset([['content-type', 'text/html; charset="\u007f"']]), CHARSET.NONE);
   // The Encoding Standard trims 09, 0A, 0C, 0D and 20; the media type parser would drop 0A, 0C and 0D earlier.
   for (const space of ['\t', '\n', '\f', '\r', ' ']) assert.equal(isUtf8Label(`${space}utf-8${space}`), true, JSON.stringify(space));
   assert.equal(isUtf8Label('\u000butf-8'), false);

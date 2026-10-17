@@ -26,7 +26,7 @@ after(() => new Promise((resolve) => server.close(resolve)));
 /** One request with exact header lines (fetch cannot send a field twice; an array of headers needs its own Host). */
 function call(method, path, headers = []) {
   return new Promise((resolve, reject) => {
-    const req = request(`${base}${path}`, { method, headers: [['Host', new URL(base).host], ...headers].flat() }, (res) => {
+    const req = request(`${base}${path}`, { method, headers: [['Host', new URL(ORIGIN).host], ...headers].flat() }, (res) => {
       const chunks = [];
       res.on('data', (c) => chunks.push(c));
       res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, raw: res.rawHeaders, body: Buffer.concat(chunks) }));

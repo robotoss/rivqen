@@ -37,7 +37,8 @@ const HEAD_CONTENT = new Set(['base', 'basefont', 'bgsound', 'link', 'meta', 'no
  * DL-034: an end tag other than head, body, html and br is "any other end tag" of the
  * HTML parser (parse error, ignored) before the head and while the head is the current node.
  */
-const IGNORED_END_TAG = (name) => !['head', 'body', 'html', 'br'].includes(name);
+const NOT_IGNORED_END_TAGS = new Set(['head', 'body', 'html', 'br']);
+const IGNORED_END_TAG = (name) => !NOT_IGNORED_END_TAGS.has(name);
 
 /** The token stack of a valid page is never deeper than this (markup M-26). A deeper walk fails closed. */
 const MAX_STACK = 256;
@@ -46,7 +47,10 @@ const MAX_STACK = 256;
 function onlyWhiteSpace(bytes, from, to) {
   let p = from;
   if (p === 0 && to >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) p = 3;
-  for (; p < to; p++) if (![0x09, 0x0a, 0x0c, 0x0d, 0x20].includes(bytes[p])) return false;
+  for (; p < to; p++) {
+    const b = bytes[p];
+    if (b !== 0x09 && b !== 0x0a && b !== 0x0c && b !== 0x0d && b !== 0x20) return false;
+  }
   return true;
 }
 
@@ -94,6 +98,7 @@ export function documentHeadEnd(bytes) {
     const step = headStep(head, headIndex, stack.length, token, onlyWhiteSpace(bytes, prevEnd, token.start));
     const opensHead = head === HEAD_BEFORE && step.state === HEAD_BEFORE && token.type === TokenType.START_TAG && token.name === 'head';
     head = step.state;
+    if (head === HEAD_NONE && !step.end) return -1; // no head end tag can follow: stop the walk
     prevEnd = token.end;
     if (token.type === TokenType.EOF) return -1;
     if (token.type === TokenType.START_TAG) {
@@ -117,7 +122,7 @@ export function documentHeadEnd(bytes) {
       if (at >= 0) {
         stack.length = at;
         if (region >= stack.length) region = -1;
-        if (head === HEAD_OPEN && headIndex >= stack.length) head = HEAD_NONE; // left the stack another way
+        if (head === HEAD_OPEN && headIndex >= stack.length) return -1; // the head left the stack another way
       }
     }
   }
@@ -165,6 +170,9 @@ function attributesOf(tag) {
   return attrs;
 }
 
+/** Resource limit maxBlockBytes (resource-limits.md): 1 MiB. A larger block fails the rule, as in the reference. */
+export const MAX_BLOCK_BYTES = 1024 * 1024;
+
 /** Item 4 (H-48, H-59): the URL schemes that the rule denies, with the colon, in lower case. */
 export const DENIED_SCHEMES = Object.freeze(['javascript:', 'vbscript:', 'data:']);
 const SCHEME_BYTES = Math.max(...DENIED_SCHEMES.map((scheme) => scheme.length));
@@ -186,6 +194,7 @@ function rejected({ name, value }) {
  * block content passes the attribute rule. `content` is a Buffer.
  */
 export function passesAttributeRule(content) {
+  if (content.length > MAX_BLOCK_BYTES) return false;
   const tokenizer = new Tokenizer(content);
   for (;;) {
     const token = tokenizer.next();

@@ -267,3 +267,45 @@ test('changeSet and buildDelta: one operation per changed block, in the given or
   const delta = buildDelta(page('2'), cur, 'r1.a', 'r1.b', [1, 2]);
   assert.deepEqual(delta.operations.map((o) => o.block_id), ['price', 'cart']);
 });
+
+const withType = (value) => ({ status: 200, headers: [['content-type', value], ['cache-control', 'no-cache']] });
+const runType = (value) => handle(get(), withType(value), page());
+
+test('H-62: a charset other than UTF-8 makes the page invalid: it is sent unchanged, without Rq-* fields', () => {
+  for (const value of ['text/html; charset=iso-8859-1', 'text/html;charset="windows-1252"', 'text/html; charset=utf-16', 'text/html; charset=']) {
+    const r = runType(value);
+    assert.equal(r.mode, 'passthrough', value);
+    assert.deepEqual(r.body, page(), value);
+    assert.equal(header(r, 'content-type'), value);
+    assert.equal(r.headers.filter(([n]) => n.startsWith('rq-')).length, 0, value);
+  }
+});
+
+test('H-62: a UTF-8 charset label (any case, quoted or not) gives the full document with the content type unchanged', () => {
+  for (const value of ['text/html; charset=utf-8', 'text/html; charset="UTF-8"', 'text/html; Charset=utf8', 'text/html; charset=Unicode-1-1-UTF-8', 'text/html; foo="a;charset=x"; charset=x-unicode20utf8']) {
+    const r = runType(value);
+    assert.equal(r.mode, 'full', value);
+    assert.equal(header(r, 'content-type'), value);
+    assert.equal(header(r, 'rq-version'), '1');
+  }
+});
+
+test('H-62: a content type without a charset gets "; charset=utf-8" in the full document; the body is the same', () => {
+  const r = runType('text/html');
+  assert.equal(r.mode, 'full');
+  assert.equal(header(r, 'content-type'), 'text/html; charset=utf-8');
+  assert.deepEqual(r.body, runType('text/html; charset=utf-8').body);
+});
+
+test('H-62: a charset parameter inside a quoted value of another parameter does not count as a charset', () => {
+  const r = runType('text/html; foo="a;charset=iso-8859-1"');
+  assert.equal(r.mode, 'full');
+  assert.equal(header(r, 'content-type'), 'text/html; foo="a;charset=iso-8859-1"; charset=utf-8');
+});
+
+test('H-62: a delta keeps its own content type (the charset rule is for the full document)', () => {
+  const held = page('120.00');
+  const r = handle(get(clientLines(held)), withType('text/html'), page('130.00'));
+  assert.equal(r.mode, 'delta');
+  assert.equal(header(r, 'content-type'), 'application/vnd.rivqen.delta+json');
+});

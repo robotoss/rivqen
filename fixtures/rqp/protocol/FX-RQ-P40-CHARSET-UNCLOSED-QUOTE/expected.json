@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P40-CHARSET-UNCLOSED-QUOTE",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html"]
+    ]
+  },
+  "status": 200,
+  "headers_required": {
+    "content-type": "text/html; x=\"abc",
+    "cache-control": "no-cache"
+  },
+  "headers_forbidden": ["etag","rq-revision","rq-template-revision","rq-version"],
+  "body": {
+    "kind": "app"
+  }
+}

@@ -177,37 +177,113 @@ export function mediaType(value) {
 /** Labels that the WHATWG Encoding Standard maps to the UTF-8 encoding (lower case). */
 const UTF8_LABELS = new Set(['unicode-1-1-utf-8', 'unicode11utf8', 'unicode20utf8', 'utf-8', 'utf8', 'x-unicode20utf8']);
 
+const lowerAscii = (text) => text.replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32));
+/** HTTP white space (MIME Sniffing): tab, line feed, carriage return, space. */
+const isHttpSpace = (c) => c === '\t' || c === '\n' || c === '\r' || c === ' ';
+/** Code points that a parameter value may hold (MIME Sniffing "HTTP quoted-string token code point"). */
+const VALUE_CODE_POINTS = /^[\t\x20-\x7e\x80-\xff]*$/;
+
 /**
- * The value of the first charset parameter of a Content-Type value, or null when there is
- * none. Parameters are split at ";" outside double quotes. The name is ASCII case-insensitive.
- * A quoted value loses its surrounding quotes.
+ * The value of the first valid charset parameter of one media type (H-62, item 2), or null.
+ * Parameter steps of "parse a MIME type" (MIME Sniffing 4.4): split at ";", skip white space,
+ * read the name up to ";" or "=", read a quoted or an unquoted value. A quoted value loses its
+ * quotes and backslash escapes. An unquoted value loses its trailing white space and an empty
+ * one does not count. The name must equal "charset" after ASCII lower-casing; it is not trimmed.
  */
-export function charsetParameter(value) {
-  if (value === null) return null;
-  const parts = [];
-  let current = '';
-  let quoted = false;
-  for (let i = 0; i < value.length; i++) {
-    const c = value[i];
-    if (c === '"') quoted = !quoted;
-    if (c === '\\' && quoted && i + 1 < value.length) {
-      current += c + value[++i];
-      continue;
+export function charsetParameter(mime) {
+  let at = mime.indexOf(';');
+  if (at < 0) return null;
+  // Invariant: at the top of the loop, `at` is on a ";" that starts a parameter.
+  while (at < mime.length) {
+    at++;
+    while (at < mime.length && isHttpSpace(mime[at])) at++;
+    const nameStart = at;
+    while (at < mime.length && mime[at] !== ';' && mime[at] !== '=') at++;
+    const name = lowerAscii(mime.slice(nameStart, at));
+    if (mime[at] === ';') continue; // a name without a value
+    at++; // past "="
+    if (at >= mime.length) break;
+    let value = '';
+    if (mime[at] === '"') {
+      at++;
+      while (at < mime.length && mime[at] !== '"') {
+        if (mime[at] === '\\') {
+          at++;
+          value += at < mime.length ? mime[at] : '\\';
+        } else value += mime[at];
+        at++;
+      }
+      while (at < mime.length && mime[at] !== ';') at++;
+    } else {
+      const start = at;
+      while (at < mime.length && mime[at] !== ';') at++;
+      let end = at;
+      while (end > start && isHttpSpace(mime[end - 1])) end--;
+      value = mime.slice(start, end);
+      if (value === '') continue;
     }
-    if (c === ';' && !quoted) {
-      parts.push(current);
-      current = '';
-    } else current += c;
-  }
-  parts.push(current);
-  for (const part of parts.slice(1)) {
-    const eq = part.indexOf('=');
-    if (eq < 0 || part.slice(0, eq).trim().toLowerCase() !== 'charset') continue;
-    const raw = part.slice(eq + 1).trim();
-    return raw.length >= 2 && raw.startsWith('"') && raw.endsWith('"') ? raw.slice(1, -1) : raw;
+    if (name === 'charset' && VALUE_CODE_POINTS.test(value)) return value;
   }
   return null;
 }
 
-/** True when a charset value is a label of the UTF-8 encoding (H-62). */
-export const isUtf8Label = (label) => UTF8_LABELS.has(label.toLowerCase());
+/** The media types of one field line: split at "," outside quoted strings, trim, drop empty ones. */
+function mediaTypes(line) {
+  const types = [];
+  let current = '';
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (quoted && c === '\\' && i + 1 < line.length) {
+      current += c + line[++i];
+      continue;
+    }
+    if (c === '"') quoted = !quoted;
+    if (c === ',' && !quoted) {
+      types.push(current);
+      current = '';
+    } else current += c;
+  }
+  types.push(current);
+  return types.map((t) => t.replace(/^[ \t]+|[ \t]+$/g, '')).filter((t) => t !== '');
+}
+
+/** True when a charset value is a label of the UTF-8 encoding (H-62, item 3). */
+export function isUtf8Label(label) {
+  const space = (c) => c === '\t' || c === '\n' || c === '\f' || c === '\r' || c === ' ';
+  let start = 0;
+  let end = label.length;
+  while (start < end && space(label[start])) start++;
+  while (end > start && space(label[end - 1])) end--;
+  return UTF8_LABELS.has(lowerAscii(label.slice(start, end)));
+}
+
+export const CHARSET = Object.freeze({ NONE: 'none', UTF8: 'utf-8', OTHER: 'other' });
+
+/**
+ * The charset class of the Content-Type field lines of A (H-62, items 1 to 3). More than one
+ * field line, or other than one media type, is OTHER (fails closed).
+ */
+export function contentTypeCharset(headers) {
+  const lines = headers.filter(([n]) => n === 'content-type');
+  if (lines.length === 0) return CHARSET.NONE;
+  if (lines.length > 1) return CHARSET.OTHER;
+  const types = mediaTypes(lines[0][1]);
+  if (types.length !== 1) return CHARSET.OTHER;
+  const label = charsetParameter(types[0]);
+  if (label === null) return CHARSET.NONE;
+  return isUtf8Label(label) ? CHARSET.UTF8 : CHARSET.OTHER;
+}
+
+/**
+ * The header lines of the full document (H-62, item 4), or null when the page is invalid for RQP.
+ * Without a charset, "; charset=utf-8" goes after the field value without its trailing white
+ * space. The new value is read again; it must have a UTF-8 charset.
+ */
+export function fullContentType(headers) {
+  const charset = contentTypeCharset(headers);
+  if (charset === CHARSET.UTF8) return headers;
+  if (charset === CHARSET.OTHER) return null;
+  const appended = headers.map(([n, v]) => [n, n === 'content-type' ? `${v.replace(/[ \t]+$/, '')}; charset=utf-8` : v]);
+  return contentTypeCharset(appended) === CHARSET.UTF8 ? appended : null;
+}

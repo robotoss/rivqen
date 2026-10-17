@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P40-CHARSET-UNCLOSED-QUOTE",
+  "description": "The appended charset parameter falls inside the unclosed quoted string of A, so the new value has no UTF-8 charset: the page is invalid for RQP and A is sent unchanged (H-62, item 4)",
+  "rules": ["RQP-26"],
+  "page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; x=\"abc"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

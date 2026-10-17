@@ -114,6 +114,96 @@ export function splitList(value) {
   return parts.map((p) => p.replace(/^[ \t]+|[ \t]+$/g, '')).filter((p) => p !== '');
 }
 
+/**
+ * The labels of the encoding UTF-8 in the WHATWG Encoding Standard, section
+ * 4.2 "Names and labels" (checked on 2026-10-17; the standard was last updated
+ * on 2026-05-21).
+ */
+export const UTF8_LABELS = Object.freeze(['unicode-1-1-utf-8', 'unicode11utf8', 'unicode20utf8', 'utf-8', 'utf8', 'x-unicode20utf8']);
+
+/**
+ * "Get an encoding" (Encoding Standard section 4.2) restricted to UTF-8: true
+ * when the label without leading and trailing ASCII white space (09, 0A, 0C,
+ * 0D, 20) is a UTF-8 label by ASCII case-insensitive match.
+ */
+export function isUtf8Label(label) {
+  return UTF8_LABELS.includes(asciiLower(label.replace(/^[\t\n\f\r ]+|[\t\n\f\r ]+$/g, '')));
+}
+
+const HTTP_WS = new Set(['\t', '\n', '\r', ' ']);
+const QUOTED_STRING_TOKEN = /^[\t\x20-\x7e\x80-\xff]*$/;
+
+/**
+ * The value of the first valid charset parameter of one MIME type, or null.
+ * The parameter steps of "parse a MIME type" (WHATWG MIME Sniffing section
+ * 4.4, steps 11.1 to 11.10): a quoted value is an HTTP quoted string with
+ * backslash escapes (the quotes are removed); an unquoted value loses its
+ * trailing HTTP white space and is skipped when it is empty; the first valid
+ * parameter of a name wins. The essence is not checked here (step 1 of the
+ * server does that).
+ */
+export function charsetParameter(mime) {
+  let i = mime.indexOf(';');
+  if (i < 0) return null;
+  while (i < mime.length) {
+    i++; // past ";"
+    while (i < mime.length && HTTP_WS.has(mime[i])) i++;
+    const nameStart = i;
+    while (i < mime.length && mime[i] !== ';' && mime[i] !== '=') i++;
+    const name = asciiLower(mime.slice(nameStart, i));
+    if (i < mime.length) {
+      if (mime[i] === ';') continue;
+      i++; // past "="
+    }
+    if (i >= mime.length) break;
+    let value = '';
+    if (mime[i] === '"') {
+      i++;
+      while (i < mime.length) {
+        const c = mime[i++];
+        if (c === '"') break;
+        if (c !== '\\') value += c;
+        else if (i >= mime.length) value += '\\';
+        else value += mime[i++];
+      }
+      while (i < mime.length && mime[i] !== ';') i++;
+    } else {
+      const valueStart = i;
+      while (i < mime.length && mime[i] !== ';') i++;
+      value = mime.slice(valueStart, i).replace(/[\t\n\r ]+$/, '');
+      if (value === '') continue;
+    }
+    if (name === 'charset' && QUOTED_STRING_TOKEN.test(value)) return value;
+  }
+  return null;
+}
+
+/** The charset classes of a Content-Type field (H-62, item 3). */
+export const Charset = Object.freeze({ NONE: 'none', UTF8: 'utf-8', OTHER: 'other' });
+
+/**
+ * H-62 (3): the charset of the Content-Type field lines. NONE: no field or no
+ * charset parameter. UTF8: one field line with one media type whose charset is
+ * a UTF-8 label. OTHER: any other charset, and every field with more than one
+ * line or more than one media type (the Fetch Standard takes the last media
+ * type; this function does not model that and fails closed).
+ */
+export function contentTypeCharset(headers) {
+  const lines = headers.filter(([n]) => n === 'content-type');
+  if (lines.length === 0) return Charset.NONE;
+  if (lines.length > 1) return Charset.OTHER;
+  const values = splitList(lines[0][1]);
+  if (values.length !== 1) return Charset.OTHER;
+  const label = charsetParameter(values[0]);
+  if (label === null) return Charset.NONE;
+  return isUtf8Label(label) ? Charset.UTF8 : Charset.OTHER;
+}
+
+/** True when the bytes start with the UTF-8 byte order mark EF BB BF. */
+export function startsWithUtf8Bom(bytes) {
+  return bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf;
+}
+
 const QVALUE = /^(0(\.[0-9]{0,3})?|1(\.0{0,3})?)$/;
 
 /**

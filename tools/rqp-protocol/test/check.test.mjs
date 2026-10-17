@@ -61,6 +61,21 @@ test('detects a forbidden header: ETag on a delta, Rq-Revision, Rq-Version on a 
   assert.ok(compareServer(app.expected, app.page, withHeaders(app.reference, (h) => [...h, ['rq-version', '1']])).includes('header rq-version: forbidden'));
 });
 
+test('DL-036 (I2): Rq-Version on a 304 is optional, and when present exactly one line with the value 1', () => {
+  const { expected, reference, page: p } = load('FX-RQ-P05-NOT-MODIFIED');
+  assert.deepEqual(expected.headers_optional, { 'rq-version': '1' });
+  const add = (...values) => compareServer(expected, p, withHeaders(reference, (h) => [...h, ...values.map((v) => ['rq-version', v])]));
+  assert.deepEqual(add(), []);
+  assert.deepEqual(add('1'), []);
+  assert.deepEqual(add(' 1 '), []); // field values have no outer white space (RFC 9110 section 5.5)
+  assert.ok(add('2').includes('header rq-version: "2", expected "1" or absent'));
+  assert.ok(add('1;v=2').some((f) => f.startsWith('header rq-version: "1;v=2"')));
+  assert.ok(add('1, 1').some((f) => f.startsWith('header rq-version: "1, 1"')));
+  assert.ok(add('1', '1').includes('header rq-version: 2 field lines, expected at most one'));
+  // F has no headers_optional: there Rq-Version is required.
+  assert.equal(load('FX-RQ-P01-FIRST-VISIT').expected.headers_optional, undefined);
+});
+
 test('detects a wrong changed-block list in a delta', () => {
   const { expected, page: p } = load('FX-RQ-P09-DELTA');
   const all = load('FX-RQ-P10-DELTA-NO-B').reference; // all three blocks for the same pages

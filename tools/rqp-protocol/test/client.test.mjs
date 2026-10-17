@@ -324,6 +324,46 @@ test('H-61: the public partition needs mode public, a public origin, no private,
   assert.deepEqual([...cacheDirectives('a, B=1 , c="x,private"')], ['a', 'b', 'c']);
 });
 
+test('H-62 (2): unknown credentials count as present; Set-Cookie in the response counts as credentials', () => {
+  const store = (credentials, extra = [], cacheControl = 'no-cache') => {
+    const headers = [...HTML, ['cache-control', cacheControl], ...extra];
+    const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', public_origin: true, credentials }), { status: 200, headers, body: fullOf('page-a', { policy: { mode: 'public' } }) });
+    return r.snapshot.partition;
+  };
+  assert.equal(store(false), 'public');
+  assert.equal(store(null), 'request');
+  assert.equal(store(undefined), 'request');
+  assert.equal(store(true), 'request');
+  assert.equal(store(false, [['set-cookie', 'a=1']]), 'request');
+  assert.equal(store(false, [['Set-Cookie', 'a=1']]), 'request'); // field names are case-insensitive
+  // The explicit public directive does not depend on credentials (H-61).
+  assert.equal(store(null, [], 'public'), 'public');
+  assert.equal(store(false, [['set-cookie', 'a=1']], 'public'), 'public');
+});
+
+test('H-62 (1): F is used only when the final request carried RQP fields (origin allowlist, RQP-05)', () => {
+  const other = 'https://pay.example.net/catalog';
+  const run = (fields) => handleResponse(ctx({ snapshot: null, navigation: 'first-visit', final_url: other, ...fields }), { status: 200, headers: HTML, body: fullOf('page-a', {}, other) });
+  assert.deepEqual([run({ allowlisted: false }).outcome, run({ allowlisted: false }).error, run({ allowlisted: false }).snapshot], ['normal', null, null]);
+  // Control: the same redirect to an origin in the allowlist stores the snapshot under the final URL.
+  assert.deepEqual([run({}).outcome, run({}).snapshot.url], ['stored', other]);
+  assert.deepEqual([run({ allowlisted: true }).outcome], ['stored']);
+});
+
+test('H-62 (1): the allowlist flag is about the origin of the final URL', () => {
+  const other = 'https://pay.example.net/catalog';
+  // The request URL has another origin, so the request carried RQP fields.
+  assert.deepEqual(requestHeaders(ctx({ final_url: other, allowlisted: false })), deltaRequest('page-a').headers);
+  // Without a redirect the request URL is that origin: no RQP fields, a normal response.
+  assert.deepEqual(requestHeaders(ctx({ allowlisted: false })), [['accept', 'text/html']]);
+  const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', allowlisted: false }), { status: 200, headers: HTML, body: fullOf('page-a') });
+  assert.deepEqual([r.outcome, r.snapshot], ['normal', null]);
+  // A 304 and a delta from an origin outside the allowlist never have the cache key of the snapshot.
+  assert.deepEqual([on304({ final_url: other, allowlisted: false }).outcome, on304({ final_url: other, allowlisted: false }).next], ['normal', 'webview-load']);
+  const delta = handleResponse(ctx({ final_url: other, allowlisted: false }), { status: 200, headers: DELTA, body: Buffer.from(JSON.stringify(envelope([['price', '130.00']]))) });
+  assert.deepEqual([delta.error, delta.next], ['PATCH_INVALID', 'fallback-load']);
+});
+
 test('a patched snapshot keeps the cache key of the snapshot', () => {
   const r = handleResponse(ctx(), { status: 200, headers: DELTA, body: Buffer.from(JSON.stringify(envelope([['price', '130.00']]))) });
   assert.deepEqual([r.snapshot.url, r.snapshot.partition], [TARGET, 'request']);

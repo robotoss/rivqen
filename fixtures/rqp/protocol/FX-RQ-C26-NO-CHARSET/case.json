@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-C26-NO-CHARSET",
+  "kind": "client",
+  "description": "Rq-Version 1 and a consistent manifest, but no charset parameter and no byte order mark: the browser can detect another encoding, so MANIFEST_INVALID, a normal page, no snapshot (H-62)",
+  "rules": ["RQP-26"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a"
+    }
+  }
+}

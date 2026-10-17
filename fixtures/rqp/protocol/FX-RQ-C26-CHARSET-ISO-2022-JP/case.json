@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-C26-CHARSET-ISO-2022-JP",
+  "kind": "client",
+  "description": "Rq-Version 1 and a consistent manifest, but charset=iso-2022-jp and no byte order mark: the browser does not decode the document as UTF-8, so MANIFEST_INVALID, a normal page, no snapshot (H-62)",
+  "rules": ["RQP-26"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=iso-2022-jp"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a"
+    }
+  }
+}

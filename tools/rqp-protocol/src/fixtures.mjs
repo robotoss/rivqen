@@ -88,7 +88,7 @@ export function loadCase(dir, name) {
   if (typeof c.description !== 'string' || !Array.isArray(c.rules)) throw new CaseError(name, 'description and rules are required');
   if (c.kind === 'client') {
     onlyKeys(name, c, ['id', 'kind', 'description', 'rules', 'context', 'response'], 'case');
-    onlyKeys(name, c.context, ['url', 'final_url', 'build', 'allow_http', 'navigation', 'snapshot', 'credentials', 'public_origin'], 'context');
+    onlyKeys(name, c.context, ['url', 'final_url', 'build', 'allow_http', 'allowlisted', 'navigation', 'snapshot', 'credentials', 'public_origin'], 'context');
     onlyKeys(name, c.response, ['status', 'headers', 'body'], 'response');
   } else {
     onlyKeys(name, c, ['id', 'description', 'rules', 'page', 'client_page', 'client_members', 'server_config', 'app', 'request', 'level'], 'case');
@@ -131,13 +131,23 @@ function forbiddenHeaders(kind, status, appHeaders, responseHeaders) {
     if (combined(appHeaders, 'etag') === null) out.add('etag');
   }
   // DL-030: no Rq-* field of A reaches the client. Rq-Version on a 304 is a MAY
-  // of the server step (negotiation section 4, step 9), so it is not forbidden there.
+  // of the server step (negotiation section 4, step 9), so it is not forbidden
+  // there; headers_optional fixes its value (DL-036, I2).
   for (const [name] of appHeaders) {
     if (!name.startsWith('rq-') || combined(responseHeaders, name) !== null) continue;
     if (name === 'rq-version' && status === 304) continue;
     out.add(name);
   }
   return [...out].sort();
+}
+
+/**
+ * Fields that a response MAY have: name -> the exact combined value of exactly
+ * one field line when the field is present. DL-036 (I2): Rq-Version on a 304
+ * (negotiation section 4, step 9) is exactly one line with the value 1.
+ */
+function optionalHeaders(status) {
+  return status === 304 ? { 'rq-version': '1' } : {};
 }
 
 /** expected.json of a server case, from the reference server step. */
@@ -174,6 +184,7 @@ export function expectServer(c) {
         status: r.status,
         headers_required: requiredHeaders(r.headers),
         headers_forbidden: forbiddenHeaders(r.kind, r.status, app.headers, r.headers),
+        ...(r.status === 304 ? { headers_optional: optionalHeaders(r.status) } : {}),
         body,
       },
     },
@@ -199,8 +210,12 @@ function context(c) {
     snapshotPage = snap.page;
     members = membersOf(snap.members);
   }
-  for (const flag of ['allow_http', 'credentials', 'public_origin']) {
+  for (const flag of ['allow_http', 'allowlisted', 'public_origin']) {
     if (ctx[flag] !== undefined && typeof ctx[flag] !== 'boolean') throw new CaseError(c.id, `context.${flag} must be a boolean`);
+  }
+  // H-62 (2): credentials true, false or unknown (absent or null; unknown counts as present).
+  if (ctx.credentials !== undefined && ctx.credentials !== null && typeof ctx.credentials !== 'boolean') {
+    throw new CaseError(c.id, 'context.credentials must be a boolean or null');
   }
   const url = ctx.url ?? DEFAULT_TARGET;
   return {
@@ -208,7 +223,8 @@ function context(c) {
     final_url: ctx.final_url ?? url,
     build,
     allow_http: ctx.allow_http ?? false,
-    credentials: ctx.credentials ?? true,
+    allowlisted: ctx.allowlisted ?? true,
+    credentials: ctx.credentials ?? null,
     public_origin: ctx.public_origin ?? false,
     navigation,
     snapshotPage,
@@ -362,6 +378,7 @@ export function expectClient(c) {
         final_url: ctx.final_url,
         build: ctx.build,
         allow_http: ctx.allow_http,
+        allowlisted: ctx.allowlisted,
         credentials: ctx.credentials,
         public_origin: ctx.public_origin,
         navigation: ctx.navigation,

@@ -11,7 +11,7 @@ This register lists every security control. Each control has a test that proves 
 | ID | Control | Why | Verification |
 |---|---|---|---|
 | `SEC-01` | TLS everywhere with system chain and hostname validation | Stop MITM | TLS lab tests; static check for custom trust managers |
-| `SEC-02` | Origin allowlist and check of the **real** frame origin | Protect the native bridge | E2E with cross-origin iframes and redirects |
+| `SEC-02` | Origin allowlist and check of the **real** frame origin. The native bridge MUST NOT be reachable through URL-scheme navigation (a link, a form or a redirect to a custom scheme such as `myapp://` or `intent:`; DL-036) | Protect the native bridge | E2E with cross-origin iframes and redirects; a link and a redirect to a custom scheme do not reach the bridge |
 | `SEC-03` | Never execute code from a patch or a manifest | Stop XSS/RCE through updates | Fuzz + browser security suite |
 | `SEC-04` | CSP and Trusted Types where supported; context-aware escaping | Safe fragment insertion | DOM XSS test corpus |
 | `SEC-05` | Cache partitions per app / profile / tenant / environment | No cross-account leaks | Multi-account concurrency tests |

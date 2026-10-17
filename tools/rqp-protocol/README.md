@@ -13,11 +13,11 @@ The reference functions here are the source of the expected results. They are no
 |---|---|
 | `gen.mjs` | Generator. Writes the generated pages and every `expected.json` and `response.body`. `--check` changes nothing and fails on a stale, missing or extra file |
 | `check.mjs` | Conformance harness. Runs a server or a client under test over the fixtures and compares the results |
-| `src/server.mjs` | Reference server step: negotiation section 4, steps 1 to 9 (with the removal of the `Rq-*` fields of the application response, DL-030, and without its `Last-Modified` on F, DL-032), one function for each field rule of section 3 |
-| `src/client.mjs` | Reference client step: request fields (section 6.2) and response handling (section 6.3) with the manifest checks and the delta checks in the order of diff-engine section 3; the binding of a `304`, a manifest and a delta to the request and to the cache key of the final URL (H-58); the partition of a new snapshot (H-61) |
+| `src/server.mjs` | Reference server step: negotiation section 4, steps 1 to 9 (with the removal of the `Rq-*` fields of the application response, DL-030, without its `Last-Modified` on F, DL-032, and the charset rule, H-62), one function for each field rule of section 3 |
+| `src/client.mjs` | Reference client step: request fields (section 6.2) and response handling (section 6.3) with the manifest checks and the delta checks in the order of diff-engine section 3; the binding of a `304`, a manifest and a delta to the request and to the cache key of the final URL (H-58); the allowlist of the final URL, the UTF-8 check of a full document and the credentials rule (H-62); the partition of a new snapshot (H-61) |
 | `src/markup.mjs` | The markup analysis of the Node.js candidate (`tools/rqp-markup/node`), the head end tag of the document (manifest-patch section 1.7, DL-031, DL-034), the manifest elements, the attribute rule with `javascript:`, `vbscript:` and `data:` (manifest-patch section 4.2, H-59) |
 | `src/sf.mjs` | Structured Field Values parser (RFC 9651 section 4.2): Item, List, Dictionary, all bare item types |
-| `src/http.mjs` | Field lines, combined values, entity-tags, `Accept`, media type |
+| `src/http.mjs` | Field lines, combined values, entity-tags, `Accept`, media type, the charset parameter of `Content-Type` and the UTF-8 labels of the Encoding Standard (H-62) |
 | `src/json-strict.mjs` | JSON parser with the rules of manifest-patch section 3.2 (no duplicate member names, no lone surrogate, integers as digits, depth 16) |
 | `src/schema.mjs` | A small validator for the JSON Schema keywords that `spec/rqp/schemas` uses. It reads the schema files. An unknown keyword is an error |
 | `src/common.mjs` | Limits, error codes, hashes, the page revision with the policy line (H-55) |
@@ -76,7 +76,7 @@ A case can have `"level": "should"` (today only `FX-RQ-P35-ATTRIBUTE-RULE` and `
 ## Procedure: check a client under test
 
 1. Write an ES module that exports `clientStep(context, response)` and, if possible, `clientRequest(context)`.
-   - `context`: `{ url, final_url, build, allow_http, credentials, public_origin, navigation, snapshot }`. `url` is the request URL and the cache key URL of the snapshot; `final_url` is the URL of the response after redirects (H-58). `credentials` is `true` when the request had a `Cookie` or `Authorization` field; `public_origin` is `true` when the app declares the origin public (H-61). `navigation` is `first-visit`, `delta` or `fallback`. `snapshot` is `null` or `{ document, template_revision, page_revision, blocks, policy?, limits? }`, where `document` is the original document (without the manifest).
+   - `context`: `{ url, final_url, build, allow_http, allowlisted, credentials, public_origin, navigation, snapshot }`. `url` is the request URL and the cache key URL of the snapshot; `final_url` is the URL of the response after redirects (H-58). `allowlisted` is `false` when the origin of the final URL is not in the origin allowlist of the app; every other origin of the context is in the allowlist (RQP-05, H-62). `credentials` is `true` when the request had credentials, `false` when the client knows that it had none (no cookie, also none from the WebView cookie store, no `Authorization`, no HTTP authentication, no client certificate), and `null` when the client does not know; `null` counts as `true` (H-62). `public_origin` is `true` when the app declares the origin public (H-61). `navigation` is `first-visit`, `delta` or `fallback`. `snapshot` is `null` or `{ document, template_revision, page_revision, blocks, policy?, limits? }`, where `document` is the original document (without the manifest).
    - `response`: `{ status, headers, body }`.
    - `clientStep` returns `{ outcome, error, next, metric, snapshot }` (values below).
    - `clientRequest` returns the request field lines.
@@ -103,6 +103,7 @@ Server fixtures (`fixtures.md` section 4.1 "Comparison of F", section 5):
 | Status | Exact |
 | `headers_required` | The combined value (lines joined with `, `) is exactly the expected value. Names are case-insensitive |
 | `headers_forbidden` | The field is absent |
+| `headers_optional` (`304` only) | When the field is present: exactly one field line, and its value is exactly the expected value. Today only `rq-version: 1` (DL-036) |
 | `Vary` of F and of `304` | No member `rq-*` and no `accept` (RQP-08) |
 | `Content-Length` | When present with a body: equal to the body length |
 | Body `none` | No body or an empty body (`304`, `HEAD`) |
@@ -121,7 +122,9 @@ Client fixtures: `outcome`, `error`, `next`, `metric` exact; `snapshot` equal (b
 3. The page revision of a manifest with `policy` or `limits` has the policy line (H-55). The markup candidate gives the revision without it, so both steps compute it again from the template revision and the block hashes.
 4. The server step follows H-56 (SHOULD): a changed `html` block that fails the attribute rule gives F.
 5. Pages and fixtures have no `policy` and no `limits`, except `FX-RQ-P36-*`, `FX-RQ-C19-*` and `FX-RQ-C24-*` (`"mode": "public"`).
-6. The client models the cache key only by its URL (canonical final URL) and the partition choice. Partition keys, a partition change, `Vary`, `no-store` and the freshness rules are not modelled; a context snapshot is in the partition of the request.
+6. The client models the cache key only by its URL (canonical final URL) and the partition choice. Partition keys, a partition change (`AUTH_PARTITION_CHANGED`, also for a `304`, DL-036), `Vary`, `no-store` and the freshness rules are not modelled; a context snapshot is in the partition of the request.
+7. UTF-8 only (H-62). The server step passes a page through when the `Content-Type` of A has a charset that is not a UTF-8 label, or more than one field line or media type; it appends `; charset=utf-8` when A has no charset, and parses the result again (a value that does not give UTF-8 also passes the page through). The client step uses a full document only with a UTF-8 byte order mark or a UTF-8 charset. The charset parser follows the parameter steps of WHATWG MIME Sniffing "parse a MIME type" and the label table of the Encoding Standard; a seeded property test (`test/charset.test.mjs`) checks that every F of the server has a UTF-8 charset.
+8. The allowlist is modelled by one flag for the origin of the final URL (`allowlisted`). The client step uses a full document only when the final request carried RQP fields; a `304` and a delta from another origin fail the cache key binding already (H-58, H-62).
 
 **Resource limits.** All parsers are linear in their input. The server reads `Rq-Have` only up to 4096 bytes and `Rq-Capabilities` up to 1024 bytes before it parses them. The JSON parser stops at depth 16. The token-stack walk for the head end tag and the manifest elements stops at 256 entries (fails closed); the head rule adds constant work per token and reads the bytes between tokens once; for a document that is valid for RQP the markup rule M-26 keeps the stack below this limit. The client checks the envelope size before it parses the envelope.
 
@@ -160,7 +163,8 @@ Server `case.json` members in addition to the README format: `server_config` (`p
 | `context.url` | Default `https://shop.example.com/catalog` |
 | `context.final_url` | Default: `context.url` (no redirect) |
 | `context.build`, `context.allow_http` | Default `release`, `false` |
-| `context.credentials`, `context.public_origin` | Default `true`, `false` |
+| `context.allowlisted` | Default `true`. `false`: the origin of `final_url` is not in the allowlist (H-62) |
+| `context.credentials`, `context.public_origin` | `credentials`: `true`, `false` or `null` (unknown, the default; counts as `true`, H-62). `public_origin`: default `false` |
 | `context.navigation` | `first-visit`, `delta` or `fallback` |
 | `context.snapshot` | `null`, a page id, or `{ "page": id, "members": { "policy": …, "limits": … } }` |
 | `response.headers` | Literal lines; the placeholders of the README are allowed |

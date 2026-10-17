@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P40-CHARSET-NAME-SPACE",
+  "description": "The parameter name is \"charset \" (a space is not a token code point), so A has no charset: F has \"; charset=utf-8\" appended (H-62, items 2 and 4)",
+  "rules": ["RQP-26"],
+  "page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset = utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

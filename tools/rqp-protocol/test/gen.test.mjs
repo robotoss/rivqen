@@ -28,7 +28,7 @@ function copyFixture(name) {
 
 test('gen.mjs --check: every committed page and expected file is current', () => {
   const out = execFileSync(process.execPath, [GEN, '--check'], { encoding: 'utf8' });
-  assert.match(out, /121 fixtures are current/);
+  assert.match(out, /130 fixtures are current/);
 });
 
 test('every catalog case P-01 to P-39 and C-01 to C-24 has at least one fixture', () => {

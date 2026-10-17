@@ -105,7 +105,8 @@ test('property: random bodies never make the client step throw', () => {
     parseStrict(body);
     const delta = handleResponse(ctx, { status: 200, headers: [['content-type', 'application/vnd.rivqen.delta+json']], body });
     assert.equal(delta.outcome, 'rejected');
-    const full = handleResponse(ctx, { status: 200, headers: [['content-type', 'text/html'], ['rq-version', '1']], body });
+    // A UTF-8 charset (H-62), so that the body reaches the manifest checks.
+    const full = handleResponse(ctx, { status: 200, headers: [['content-type', 'text/html; charset=utf-8'], ['rq-version', '1']], body });
     assert.ok(['rejected', 'stored'].includes(full.outcome));
   }
 });

@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-MARKUP-ICON-ROOT-CROSSING",
+  "description": "The icon shapes outside blocks: svg and math end tags cross unclosed foreign children inside a, b and i (H-75: valid)",
+  "rules": [
+    "M-06"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

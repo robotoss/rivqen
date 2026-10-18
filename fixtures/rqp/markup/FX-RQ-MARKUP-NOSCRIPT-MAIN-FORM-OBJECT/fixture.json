@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-MAIN-FORM-OBJECT",
+  "description": "The H-36 shape inside noscript content C: 9 x form, object, form in an a element. Item 8 runs M-10 item 2 on C (H-71: invalid)",
+  "rules": [
+    "M-10",
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-ICON-INNER-CROSSING",
+  "description": "A g end tag inside svg crosses an unclosed path: the mark goes to the svg and then to the a element, and the a end tag pops it (M-06 item 4, H-75)",
+  "rules": [
+    "M-06"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

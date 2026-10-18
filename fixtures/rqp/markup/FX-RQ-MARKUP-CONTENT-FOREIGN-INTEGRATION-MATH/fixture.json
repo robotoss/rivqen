@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-FOREIGN-INTEGRATION-MATH",
+  "description": "An mrow start tag inside MathML mi in the content: the tree builder makes an HTML element there (M-07 item 3, H-73)",
+  "rules": [
+    "M-07",
+    "M-22"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

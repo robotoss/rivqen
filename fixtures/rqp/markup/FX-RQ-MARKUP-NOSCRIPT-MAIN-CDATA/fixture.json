@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-MAIN-CDATA",
+  "description": "A <![CDATA[ in noscript content C whose first > is not the end of ]]>. Item 8 runs M-12 on C (H-71: invalid)",
+  "rules": [
+    "M-11",
+    "M-12"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

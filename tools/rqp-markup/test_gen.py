@@ -238,8 +238,11 @@ _VOID = {b"br", b"col", b"img", b"input", b"hr", b"meta", b"link"}
 
 
 def max_depth_counter(data: bytes) -> int:
-    """Largest D of markup.md M-26 for the simple recipe inputs (tags only, HTML context,
-    no raw text except noscript). Independent of the candidates and of the cross-check tool."""
+    """Largest D of markup.md M-26 for the simple recipe inputs (tags only, no raw text).
+    Independent of the candidates and of the cross-check tool. Foreign elements are pushed like
+    HTML elements (M-05 item 2: the recipes have no self-closing tags). The tags of the noscript
+    content C count as main-pass tags (M-11 item 8, M-26 item 7; H-71): the recipes have a balanced
+    C, so D after the noscript end tag is the value before C."""
     stack: list[dict] = []
     d = best = 0
     pos = 0
@@ -260,8 +263,6 @@ def max_depth_counter(data: bytes) -> int:
                 stack.append({"name": name, "dirty": False, "implied": set()})
                 d += 1
             best = max(best, d)
-            if name == b"noscript":  # C is not part of the main pass (M-11, M-26)
-                pos = data.index(b"</noscript>", pos)
             continue
         idx = next((i for i in range(len(stack) - 1, -1, -1) if stack[i]["name"] == name), None)
         if idx is None:
@@ -295,9 +296,24 @@ class DepthRecipeTest(unittest.TestCase):
     def test_mixed_shapes(self) -> None:
         self.check("FX-RQ-MARKUP-LIMIT-DEPTH-MIXED", 262)
 
-    def test_noscript_content_does_not_count(self) -> None:
-        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT", 256)
-        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ELEMENT", 257)
+    def test_noscript_content_counts(self) -> None:
+        # H-71 (M-11 item 8, M-26 item 7): the tags of C count; before H-71 the first recipe was valid (D 256).
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT", 556)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ELEMENT", 557)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-CONTENT-256", 256)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-CONTENT-257", 257)
+
+    def test_foreign_region_in_block_content(self) -> None:
+        # H-73: an svg subtree in the content of a block; its pushes count.
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-CONTENT-FOREIGN-256", 256)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-CONTENT-FOREIGN-257", 257)
+        recipe = gen.GENERATED["FX-RQ-MARKUP-LIMIT-DEPTH-CONTENT-FOREIGN-256"]
+        self.assertIn(recipe["content.html"](), recipe["input.html"]())
+
+    def test_icon_crossing_keeps_its_units(self) -> None:
+        # H-75 removes the mark of the icon crossing, not its units: each repetition adds 3.
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-ICON-85", 256)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-ICON", 259)
 
     def test_structure_rule_depth_inputs_keep_d_small(self) -> None:
         # H-36, H-37: the tree builder keeps one element per unit open, but every pop is exact, so D

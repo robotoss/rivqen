@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-SVG-ICON-CROSSING",
+  "description": "The icon shape in the content: an a element with an svg whose end tag crosses an unclosed path (H-73, H-75: valid)",
+  "rules": [
+    "M-06",
+    "M-23"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "icon",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"icon\">",
+        "content": "<a href=\"#\"><svg><path d=\"M0\"></svg></a>"
+      }
+    ]
+  }
+}

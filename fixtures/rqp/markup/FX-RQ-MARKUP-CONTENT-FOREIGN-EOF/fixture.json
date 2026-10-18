@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-FOREIGN-EOF",
+  "description": "The input ends in a foreign region that started in the content: the block has no end tag (M-07 item 6, M-20, H-73)",
+  "rules": [
+    "M-07",
+    "M-20"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

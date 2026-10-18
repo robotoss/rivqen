@@ -337,14 +337,32 @@ def _mixed_ignored(reps: int) -> bytes:
     return _depth_doc(one * reps + b'<p data-rq-block="deep">x</p>')
 
 
-def _noscript_depth(divs: int) -> bytes:
-    # The noscript element counts in D; its content C does not (M-11, M-26). 255 divs + noscript = 256;
-    # 300 nested spans in C do not count; the block after </noscript> makes 256 again (valid).
-    # 256 divs + noscript = 257 (LIMIT).
-    c = b"<span>" * 300 + b"x" + b"</span>" * 300
+def _noscript_depth(divs: int, spans: int = 300) -> bytes:
+    # The noscript element and the tags of its content C count in D (M-11 item 8, M-26 item 7; H-71).
+    # 255 divs + noscript + 300 nested spans in C: D = 556 (LIMIT). 256 divs + noscript = 257 (LIMIT)
+    # before C. 155 divs + noscript + 100 spans = 256 (valid); after </noscript> D is 155 again and the
+    # block makes 156. 156 divs + noscript + 100 spans = 257 (LIMIT).
+    c = b"<span>" * spans + b"x" + b"</span>" * spans
     return _depth_doc(
         b"<div>" * divs + b"<noscript>" + c + b"</noscript>" + b'<div data-rq-block="deep">x</div>' + b"</div>" * divs
     )
+
+
+def _foreign_subtree(gs: int) -> bytes:
+    return b"<svg>" + b"<g>" * gs + b"x" + b"</g>" * gs + b"</svg>"
+
+
+def _content_foreign_depth(gs: int) -> bytes:
+    # A foreign region in html block content (H-73): pushes in it count (M-05 item 2, M-26).
+    # Block div + svg + 254 g = 256 (valid); 255 g = 257 (LIMIT).
+    return _depth_doc(b'<div data-rq-block="deep">' + _foreign_subtree(gs) + b"</div>")
+
+
+def _icon_depth(reps: int) -> bytes:
+    # The icon crossing (H-75) sets no special-crossed mark, but D does not change: each
+    # <span><svg><path></svg></span> adds 3 for the rest of the document (the </svg> crossing makes the
+    # span dirty, M-26 item 5). 85 repetitions: D = 255, the block makes 256 (valid). 86: 257 (LIMIT).
+    return _depth_doc(b'<span><svg><path d="M0"></svg></span>' * reps + b'<div data-rq-block="deep">x</div>')
 
 
 def _units_then_block(unit: bytes, reps: int) -> bytes:
@@ -368,6 +386,15 @@ GENERATED: dict[str, dict[str, Callable[[], bytes]]] = {
     "FX-RQ-MARKUP-LIMIT-DEPTH-MIXED": {"input.html": lambda: _mixed_ignored(29)},
     "FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT": {"input.html": lambda: _noscript_depth(255)},
     "FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ELEMENT": {"input.html": lambda: _noscript_depth(256)},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-CONTENT-256": {"input.html": lambda: _noscript_depth(155, 100)},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-CONTENT-257": {"input.html": lambda: _noscript_depth(156, 100)},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-CONTENT-FOREIGN-256": {
+        "input.html": lambda: _content_foreign_depth(254),
+        "content.html": lambda: _foreign_subtree(254),
+    },
+    "FX-RQ-MARKUP-LIMIT-DEPTH-CONTENT-FOREIGN-257": {"input.html": lambda: _content_foreign_depth(255)},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-ICON-85": {"input.html": lambda: _icon_depth(85)},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-ICON": {"input.html": lambda: _icon_depth(86)},
     "FX-RQ-MARKUP-FORM-NESTED-DEPTH": {
         "input.html": lambda: _units_then_block(b"<form><object><form></form></object></form>", 600)
     },

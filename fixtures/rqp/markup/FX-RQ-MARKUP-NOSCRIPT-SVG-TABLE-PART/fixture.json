@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-SVG-TABLE-PART",
+  "description": "A tr start tag inside svg in noscript content C without a table of C (M-11 item 6 applies in the foreign region of C, H-74)",
+  "rules": [
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

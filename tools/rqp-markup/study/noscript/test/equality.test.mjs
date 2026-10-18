@@ -11,14 +11,13 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { analyze as analyzeCandidate } from '../../../node/src/markup.mjs';
+import { digestResults, loadBaseline } from '../../baseline/baseline.mjs';
+import { GROUPS } from '../../baseline/groups.mjs';
 import { documentHeadStart as referenceHeadStart } from '../../../../rqp-protocol/src/markup.mjs';
 import { PAGE_IDS, pageBytes } from '../../../../rqp-protocol/src/pages.mjs';
 import { documentHeadStart as demoHeadStart } from '../../../../../examples/server-demo/src/markup.js';
-import { generateDocument } from '../../../crosscheck/src/generator.mjs';
 import { analyzeStudy } from '../src/markup-study.mjs';
 import { headWalk } from '../src/head-study.mjs';
-import { docSeed, generateNoscriptDocument } from '../src/generator.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, '..', '..', '..', '..', '..');
@@ -59,11 +58,15 @@ function assertHeadEqual(name, bytes) {
   assert.equal(headWalk(bytes).headStart, want, `${name}: study head walk (option hc)`);
 }
 
-test('the shipped model equals the Node.js candidate on every golden markup fixture', () => {
-  const inputs = markupInputs();
-  assert.ok(inputs.length >= 190, `only ${inputs.length} fixtures`);
-  for (const [name, bytes] of inputs) {
-    assert.deepEqual(analyzeStudy(bytes, { noscript: 'shipped' }).result, analyzeCandidate(bytes), name);
+// The shipped model is the S2 rule set. It equals the pre-S3 Node.js candidate, recorded in
+// ../../baseline/baseline-s2.json (the shipped candidate follows the S3 rules now).
+const BASELINE = loadBaseline();
+
+test('the shipped model equals the pre-S3 Node.js candidate on every S2 golden markup fixture', () => {
+  const list = GROUPS.fixtures(Object.keys(BASELINE.fixtures));
+  assert.equal(list.length, 197);
+  for (const [name, bytes] of list) {
+    assert.deepEqual(analyzeStudy(bytes, { noscript: 'shipped' }).result, BASELINE.fixtures[name], name);
   }
 });
 
@@ -78,14 +81,11 @@ test('the study option hc equals the shipped H-72 head start of the reference an
   assert.ok(found > 100, 'the inputs must reach the head start tag');
 });
 
-test('the shipped flags equal the shipped code on generated noscript and review2 documents', () => {
-  for (let i = 0; i < 1500; i++) {
-    for (const profile of ['body', 'head']) {
-      const bytes = Buffer.from(generateNoscriptDocument(7, i, profile).input, 'utf8');
-      assert.deepEqual(analyzeStudy(bytes).result, analyzeCandidate(bytes), `${profile} ${i}`);
-      assertHeadEqual(`${profile} ${i}`, bytes);
-    }
-    const r2 = Buffer.from(generateDocument(docSeed(7, i), { maxTokens: 20, profile: 'review2' }), 'utf8');
-    assert.deepEqual(analyzeStudy(r2).result, analyzeCandidate(r2), `review2 ${i}`);
+test('the shipped flags equal the pre-S3 candidate on generated noscript and review2 documents', () => {
+  for (const group of ['noscriptBody', 'noscriptHead', 'review2']) {
+    const list = GROUPS[group]();
+    assert.equal(list.length, BASELINE.groups[group].count);
+    assert.equal(digestResults(list.map(([, b]) => analyzeStudy(b).result)), BASELINE.groups[group].digest, group);
   }
+  for (const [name, bytes] of [...GROUPS.noscriptBody(), ...GROUPS.noscriptHead()]) assertHeadEqual(name, bytes);
 });

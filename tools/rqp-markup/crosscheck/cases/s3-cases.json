@@ -466,5 +466,47 @@
     "decision": "H-75",
     "expected": "RQP_MARKUP_LIMIT",
     "input": "<span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><div data-rq-block=\"d\">x</div>"
+  },
+  {
+    "id": "S3-PI-GT-IN-ATTR",
+    "decision": "DL-044",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><html><head><title>t</title></head><body><?a b=\"x>y\"?><span data-rq-block=\"k\">y</span></body></html>"
+  },
+  {
+    "id": "S3-PI-SPACE-GT",
+    "decision": "DL-044",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><html><head><title>t</title></head><body><?a ><span data-rq-block=\"k\">y</span></body></html>"
+  },
+  {
+    "id": "S3-PI-QUESTION-GT",
+    "decision": "DL-044",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><html><head><title>t</title></head><body><?a ?><span data-rq-block=\"k\">y</span></body></html>"
+  },
+  {
+    "id": "S3-PI-EMPTY",
+    "decision": "DL-044",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><html><head><title>t</title></head><body><?><span data-rq-block=\"k\">y</span></body></html>"
+  },
+  {
+    "id": "S3-PI-DIGIT",
+    "decision": "DL-044",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><html><head><title>t</title></head><body><?1><span data-rq-block=\"k\">y</span></body></html>"
+  },
+  {
+    "id": "S3-PI-XML",
+    "decision": "DL-044",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><html><head><title>t</title></head><body><?xml ?><span data-rq-block=\"k\">y</span></body></html>"
+  },
+  {
+    "id": "S3-PI-EOF",
+    "decision": "DL-044",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><html><head><title>t</title></head><body><span data-rq-block=\"k\">y</span><?a b"
   }
 ]

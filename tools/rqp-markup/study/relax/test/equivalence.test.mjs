@@ -1,88 +1,39 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: The Rivqen Authors
 
-// The study rule with every flag off is the shipped Node.js candidate: the same
-// result object (CONTRACT.md section 3) on every golden fixture, on every input
-// of the cross-check cases and on generated documents of all generator profiles.
+// The study rule with every flag off is the markup rule set of S2 (before the
+// S3 decisions H-71, H-73, H-74, H-75). It gives the result object (CONTRACT.md
+// section 3) of the pre-S3 Node.js candidate, recorded in
+// ../../baseline/baseline-s2.json: on every S2 golden fixture, on every input of
+// the S2 cross-check cases and on generated documents of all generator profiles.
+// (Until S3 these tests compared with the shipped candidate and with
+// expected.json; both follow the S3 rules now.)
 
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import path from 'node:path';
 import { test } from 'node:test';
-import { fileURLToPath } from 'node:url';
-import { analyze } from '../../../node/src/markup.mjs';
-import { docSeed, generateDocument } from '../../../crosscheck/src/generator.mjs';
 import { BASE, COMBOS, analyzeRelaxed, flagsOf } from '../src/markup-relax.mjs';
-import { generateRelaxDocument } from '../src/gen.mjs';
 import { contractFields } from '../src/combos.mjs';
+import { digestResults, loadBaseline } from '../../baseline/baseline.mjs';
+import { GROUPS } from '../../baseline/groups.mjs';
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(HERE, '..', '..', '..', '..', '..');
-const FIXTURES = path.join(ROOT, 'fixtures', 'rqp', 'markup');
-const CASES = path.join(ROOT, 'tools', 'rqp-markup', 'crosscheck', 'cases');
+const BASELINE = loadBaseline();
+const flagsOff = (bytes) => contractFields(analyzeRelaxed(bytes, BASE));
 
-function fixtures() {
-  return readdirSync(FIXTURES)
-    .filter((name) => existsSync(path.join(FIXTURES, name, 'input.html')))
-    .sort()
-    .map((name) => ({ name, bytes: readFileSync(path.join(FIXTURES, name, 'input.html')) }));
+test('flags off: equal to the pre-S3 candidate on every S2 golden fixture', () => {
+  const names = Object.keys(BASELINE.fixtures);
+  assert.equal(names.length, 197, 'the 197 golden fixtures of S2');
+  const list = GROUPS.fixtures(names);
+  assert.equal(list.length, 197);
+  for (const [name, bytes] of list) assert.deepEqual(flagsOff(bytes), BASELINE.fixtures[name], name);
+});
+
+for (const group of ['cases', 'classic', 'review', 'review2', 'review3', 'relax']) {
+  test(`flags off: equal to the pre-S3 candidate on the ${group} group`, () => {
+    const list = GROUPS[group]();
+    assert.equal(list.length, BASELINE.groups[group].count);
+    assert.equal(digestResults(list.map(([, b]) => flagsOff(b))), BASELINE.groups[group].digest);
+  });
 }
-
-function cases() {
-  const out = [];
-  for (const file of readdirSync(CASES).filter((f) => f.endsWith('.json')).sort()) {
-    for (const c of JSON.parse(readFileSync(path.join(CASES, file), 'utf8'))) {
-      out.push({ name: `${file}:${c.id}`, bytes: Buffer.from(c.input, 'utf8') });
-    }
-  }
-  return out;
-}
-
-test('flags off: equal to the shipped candidate on every golden fixture', () => {
-  const list = fixtures();
-  assert.ok(list.length >= 197, `expected the 197 golden fixtures (788 runner checks / 4), got ${list.length}`);
-  for (const { name, bytes } of list) {
-    assert.deepEqual(contractFields(analyzeRelaxed(bytes, BASE)), analyze(bytes), name);
-  }
-});
-
-test('flags off: equal to the expected.json of every golden fixture', () => {
-  for (const { name } of fixtures()) {
-    const bytes = readFileSync(path.join(FIXTURES, name, 'input.html'));
-    const expected = JSON.parse(readFileSync(path.join(FIXTURES, name, 'expected.json'), 'utf8'));
-    const got = contractFields(analyzeRelaxed(bytes, BASE));
-    assert.equal(got.valid, expected.valid, name);
-    if (expected.valid) {
-      assert.deepEqual(got.blocks, expected.blocks, name);
-      assert.equal(got.template_revision, expected.template_revision, name);
-      assert.equal(got.page_revision, expected.page_revision, name);
-    } else {
-      assert.equal(got.error, expected.error, name);
-    }
-  }
-});
-
-test('flags off: equal to the shipped candidate on the cross-check cases', () => {
-  const list = cases();
-  assert.ok(list.length > 100);
-  for (const { name, bytes } of list) {
-    assert.deepEqual(contractFields(analyzeRelaxed(bytes, BASE)), analyze(bytes), name);
-  }
-});
-
-test('flags off: equal to the shipped candidate on generated documents of every profile', () => {
-  const n = Number(process.env.RQP_RELAX_EQ_DOCS ?? 1500);
-  for (const profile of ['classic', 'review', 'review2', 'review3']) {
-    for (let i = 0; i < n; i++) {
-      const bytes = Buffer.from(generateDocument(docSeed(7, i), { maxTokens: 20, profile }), 'utf8');
-      assert.deepEqual(contractFields(analyzeRelaxed(bytes, BASE)), analyze(bytes), `${profile} ${i}`);
-    }
-  }
-  for (let i = 0; i < n; i++) {
-    const bytes = Buffer.from(generateRelaxDocument(docSeed(8, i)), 'utf8');
-    assert.deepEqual(contractFields(analyzeRelaxed(bytes, BASE)), analyze(bytes), `relax ${i}`);
-  }
-});
 
 test('flagsOf: every combination name gives its flags; unknown names throw', () => {
   assert.deepEqual(flagsOf('base'), BASE);

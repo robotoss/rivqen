@@ -12,6 +12,7 @@ Study tools of WP-17 S3 task T-01 (H-40): three relaxations of the RQP markup ru
 | Flag | Relaxation | Rules that change |
 |---|---|---|
 | `r1` | A balanced `svg` or `math` subtree in the content of an `html` block | M-22 (items 2 and 3 for `svg` and `math`; `script` and `style` stay forbidden in the foreign region) |
+| `r1a` | `r1` with an element allowlist in the foreign region of block content (`FOREIGN_CONTENT_ALLOWED`) | As `r1`; every other start tag in that region is invalid |
 | `r2` | `svg` in the `noscript` content C | M-11 item 3 (without `svg`); M-05, M-07 and M-12 in a foreign region of C |
 | `r3` | No special-crossed mark for a crossing by the end tag of the region root (`</svg>`, `</math>`) | M-06 item 4; with `r1` also M-23 for that end tag, with `r2` also M-11 item 5 |
 | `r3w` | `r3` for every end tag in a foreign region (scope "region") | As `r3` |

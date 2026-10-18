@@ -67,15 +67,35 @@ const NON_ASCII = 0x80;
  */
 export const FOREIGN_CONTENT_FORBIDDEN = Object.freeze(new Set(['script', 'style']));
 
+/**
+ * r1a: the only start tags allowed inside a foreign region of html block content
+ * (option "adopt with limits", report section 6). Shapes, paint servers, filters
+ * without external input, text, and the MathML Core presentation elements. Not in
+ * the list: a, image, feImage, foreignObject, the SMIL elements (animate, set,
+ * animateMotion, animateTransform, discard, mpath), script, style, textPath, cursor,
+ * view, maction, annotation-xml and every unknown name.
+ */
+export const FOREIGN_CONTENT_ALLOWED = Object.freeze(new Set([
+  'svg', 'g', 'path', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'rect', 'defs', 'symbol', 'use',
+  'title', 'desc', 'lineargradient', 'radialgradient', 'stop', 'clippath', 'mask', 'pattern', 'marker', 'text',
+  'tspan', 'filter', 'feblend', 'fecolormatrix', 'fecomponenttransfer', 'fecomposite', 'fedisplacementmap',
+  'fedropshadow', 'feflood', 'fefunca', 'fefuncb', 'fefuncg', 'fefuncr', 'fegaussianblur', 'femerge',
+  'femergenode', 'femorphology', 'feoffset', 'feturbulence',
+  'math', 'mrow', 'mi', 'mo', 'mn', 'ms', 'mtext', 'mspace', 'msub', 'msup', 'msubsup', 'mfrac', 'msqrt',
+  'mroot', 'mstyle', 'munder', 'mover', 'munderover', 'mmultiscripts', 'mprescripts', 'none', 'mtable', 'mtr',
+  'mtd', 'mpadded', 'mphantom', 'merror', 'semantics', 'annotation',
+]));
+
 /** r2: the names of M-11 item 3 without svg. */
 const NOSCRIPT_FORBIDDEN_R2 = Object.freeze(new Set([...NOSCRIPT_FORBIDDEN].filter((n) => n !== 'svg')));
 
 /** All flags off: the shipped rules. */
-export const BASE = Object.freeze({ r1: false, r2: false, r3: false, r3Scope: 'root' });
+export const BASE = Object.freeze({ r1: false, r1Allow: false, r2: false, r3: false, r3Scope: 'root' });
 
 /**
  * Flags from a combination name: "base", or relaxations joined by "+", for
- * example "r1+r3". "r3w" is r3 with the scope "region".
+ * example "r1+r3". "r3w" is r3 with the scope "region". "r1a" is r1 with the element
+ * allowlist FOREIGN_CONTENT_ALLOWED.
  * @param {string} spec
  */
 export function flagsOf(spec) {
@@ -83,6 +103,10 @@ export function flagsOf(spec) {
   if (spec === 'base') return Object.freeze(f);
   for (const part of spec.split('+')) {
     if (part === 'r1') f.r1 = true;
+    else if (part === 'r1a') {
+      f.r1 = true;
+      f.r1Allow = true;
+    }
     else if (part === 'r2') f.r2 = true;
     else if (part === 'r3') f.r3 = true;
     else if (part === 'r3w') {
@@ -94,7 +118,9 @@ export function flagsOf(spec) {
 }
 
 /** The combinations of the study (report section 3). */
-export const COMBOS = Object.freeze(['base', 'r1', 'r2', 'r3', 'r3w', 'r1+r3', 'r2+r3', 'r1+r2', 'r1+r2+r3', 'r1+r2+r3w']);
+export const COMBOS = Object.freeze([
+  'base', 'r1', 'r1a', 'r2', 'r3', 'r3w', 'r1+r3', 'r2+r3', 'r1+r2', 'r1+r2+r3', 'r1a+r2+r3', 'r1+r2+r3w',
+]);
 
 // State bits of a token-stack entry.
 const DIRTY = 1; // M-26 item 5
@@ -419,9 +445,10 @@ class Scanner {
       const error = this.blockStart(t, foreign);
       if (error !== null) return error;
     }
-    if (foreign && this.block !== null && FOREIGN_CONTENT_FORBIDDEN.has(t.name)) {
+    if (foreign && this.block !== null) {
       // r1 only: without r1 a foreign region never starts in block content.
-      return this.fail(`r1-forbidden:${t.name}`);
+      if (this.flags.r1Allow && !FOREIGN_CONTENT_ALLOWED.has(t.name)) return this.fail(`r1a-not-allowed:${t.name}`);
+      if (FOREIGN_CONTENT_FORBIDDEN.has(t.name)) return this.fail(`r1-forbidden:${t.name}`);
     }
     return foreign ? this.foreignStart(t) : this.htmlStart(t);
   }

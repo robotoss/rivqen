@@ -86,8 +86,9 @@ test('flags off: equal to the shipped candidate on generated documents of every 
 
 test('flagsOf: every combination name gives its flags; unknown names throw', () => {
   assert.deepEqual(flagsOf('base'), BASE);
-  assert.deepEqual(flagsOf('r1+r3'), { r1: true, r2: false, r3: true, r3Scope: 'root' });
-  assert.deepEqual(flagsOf('r2+r3w'), { r1: false, r2: true, r3: true, r3Scope: 'region' });
+  assert.deepEqual(flagsOf('r1+r3'), { r1: true, r1Allow: false, r2: false, r3: true, r3Scope: 'root' });
+  assert.deepEqual(flagsOf('r2+r3w'), { r1: false, r1Allow: false, r2: true, r3: true, r3Scope: 'region' });
+  assert.deepEqual(flagsOf('r1a'), { r1: true, r1Allow: true, r2: false, r3: false, r3Scope: 'root' });
   for (const c of COMBOS) assert.doesNotThrow(() => flagsOf(c));
   assert.throws(() => flagsOf('r4'), RangeError);
 });

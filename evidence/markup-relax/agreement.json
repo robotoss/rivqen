@@ -1,0 +1,4339 @@
+{
+ "date": "2026-10-18",
+ "seed": 40,
+ "combos": [
+  "base",
+  "r1",
+  "r1a",
+  "r2",
+  "r3",
+  "r3w",
+  "r1+r3",
+  "r2+r3",
+  "r1+r2",
+  "r1+r2+r3",
+  "r1a+r2+r3",
+  "r1+r2+r3w"
+ ],
+ "sets": {
+  "fixtures": {
+   "documents": 197,
+   "combos": {
+    "base": {
+     "valid": 72,
+     "gained": 0,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r1": {
+     "valid": 73,
+     "gained": 1,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r1a": {
+     "valid": 73,
+     "gained": 1,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r2": {
+     "valid": 72,
+     "gained": 0,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r3": {
+     "valid": 72,
+     "gained": 0,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r3w": {
+     "valid": 72,
+     "gained": 0,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r1+r3": {
+     "valid": 73,
+     "gained": 1,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r2+r3": {
+     "valid": 72,
+     "gained": 0,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r1+r2": {
+     "valid": 73,
+     "gained": 1,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r1+r2+r3": {
+     "valid": 73,
+     "gained": 1,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r1a+r2+r3": {
+     "valid": 73,
+     "gained": 1,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r1+r2+r3w": {
+     "valid": 73,
+     "gained": 1,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    }
+   },
+   "findings": {}
+  },
+  "cases": {
+   "documents": 162,
+   "combos": {
+    "base": {
+     "valid": 88,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 2,
+      "noscript-outside-head": 6,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 3,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 72, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 38 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-head-noscript",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 28, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-end",
+       "detail": "noscript at 3: end tag 25, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-outside",
+       "detail": "start tag at 13 is not inside noscript at 3"
+      }
+     ]
+    },
+    "r1": {
+     "valid": 88,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 2,
+      "noscript-outside-head": 6,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 3,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 72, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 38 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-head-noscript",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 28, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-end",
+       "detail": "noscript at 3: end tag 25, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-outside",
+       "detail": "start tag at 13 is not inside noscript at 3"
+      }
+     ]
+    },
+    "r1a": {
+     "valid": 88,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 2,
+      "noscript-outside-head": 6,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 3,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 72, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 38 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-head-noscript",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 28, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-end",
+       "detail": "noscript at 3: end tag 25, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-outside",
+       "detail": "start tag at 13 is not inside noscript at 3"
+      }
+     ]
+    },
+    "r2": {
+     "valid": 88,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 2,
+      "noscript-outside-head": 6,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 3,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 72, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 38 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-head-noscript",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 28, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-end",
+       "detail": "noscript at 3: end tag 25, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-outside",
+       "detail": "start tag at 13 is not inside noscript at 3"
+      }
+     ]
+    },
+    "r3": {
+     "valid": 88,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 2,
+      "noscript-outside-head": 6,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 3,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 72, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 38 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-head-noscript",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 28, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-end",
+       "detail": "noscript at 3: end tag 25, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-outside",
+       "detail": "start tag at 13 is not inside noscript at 3"
+      }
+     ]
+    },
+    "r3w": {
+     "valid": 88,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 2,
+      "noscript-outside-head": 6,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 3,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 72, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 38 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-head-noscript",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 28, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-end",
+       "detail": "noscript at 3: end tag 25, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-outside",
+       "detail": "start tag at 13 is not inside noscript at 3"
+      }
+     ]
+    },
+    "r1+r3": {
+     "valid": 88,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 2,
+      "noscript-outside-head": 6,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 3,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 72, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 38 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-head-noscript",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 28, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-end",
+       "detail": "noscript at 3: end tag 25, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-outside",
+       "detail": "start tag at 13 is not inside noscript at 3"
+      }
+     ]
+    },
+    "r2+r3": {
+     "valid": 88,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 2,
+      "noscript-outside-head": 6,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 3,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 72, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 38 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-head-noscript",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 28, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-end",
+       "detail": "noscript at 3: end tag 25, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-outside",
+       "detail": "start tag at 13 is not inside noscript at 3"
+      }
+     ]
+    },
+    "r1+r2": {
+     "valid": 88,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 2,
+      "noscript-outside-head": 6,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 3,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 72, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 38 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-head-noscript",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 28, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-end",
+       "detail": "noscript at 3: end tag 25, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-outside",
+       "detail": "start tag at 13 is not inside noscript at 3"
+      }
+     ]
+    },
+    "r1+r2+r3": {
+     "valid": 88,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 2,
+      "noscript-outside-head": 6,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 3,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 72, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 38 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-head-noscript",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 28, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-end",
+       "detail": "noscript at 3: end tag 25, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-outside",
+       "detail": "start tag at 13 is not inside noscript at 3"
+      }
+     ]
+    },
+    "r1a+r2+r3": {
+     "valid": 88,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 2,
+      "noscript-outside-head": 6,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 3,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 72, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 38 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-head-noscript",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 28, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-end",
+       "detail": "noscript at 3: end tag 25, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-outside",
+       "detail": "start tag at 13 is not inside noscript at 3"
+      }
+     ]
+    },
+    "r1+r2+r3w": {
+     "valid": 88,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 2,
+      "noscript-outside-head": 6,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 3,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 72, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-balanced",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 38 is not inside noscript at 0"
+      },
+      {
+       "doc": "review-cases.json:H27-head-noscript",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 28, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-end",
+       "detail": "noscript at 3: end tag 25, tree null"
+      },
+      {
+       "doc": "review-cases.json:H27-p-closed-by-c",
+       "kind": "noscript-outside",
+       "detail": "start tag at 13 is not inside noscript at 3"
+      }
+     ]
+    }
+   },
+   "findings": {
+    "noscript-end-head": 24,
+    "noscript-outside-head": 72,
+    "noscript-end": 12,
+    "noscript-outside": 12
+   }
+  },
+  "profile-classic": {
+   "documents": 50000,
+   "combos": {
+    "base": {
+     "valid": 17518,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 129,
+      "noscript-outside-head": 105,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 139,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 1: end tag 34, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 11 is not inside noscript at 1"
+      },
+      {
+       "doc": "\n<noscript>text<hr>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 1"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><!--c--><p><noscript><p>]]></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 77 is not inside noscript at 67"
+      }
+     ]
+    },
+    "r1": {
+     "valid": 17576,
+     "gained": 58,
+     "findings": {
+      "noscript-end-head": 129,
+      "noscript-outside-head": 105,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 139,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 1: end tag 34, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 11 is not inside noscript at 1"
+      },
+      {
+       "doc": "\n<noscript>text<hr>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 1"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><!--c--><p><noscript><p>]]></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 77 is not inside noscript at 67"
+      }
+     ]
+    },
+    "r1a": {
+     "valid": 17572,
+     "gained": 54,
+     "findings": {
+      "noscript-end-head": 129,
+      "noscript-outside-head": 105,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 139,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 1: end tag 34, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 11 is not inside noscript at 1"
+      },
+      {
+       "doc": "\n<noscript>text<hr>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 1"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><!--c--><p><noscript><p>]]></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 77 is not inside noscript at 67"
+      }
+     ]
+    },
+    "r2": {
+     "valid": 17519,
+     "gained": 1,
+     "findings": {
+      "noscript-end-head": 129,
+      "noscript-outside-head": 105,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 139,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 1: end tag 34, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 11 is not inside noscript at 1"
+      },
+      {
+       "doc": "\n<noscript>text<hr>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 1"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><!--c--><p><noscript><p>]]></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 77 is not inside noscript at 67"
+      }
+     ]
+    },
+    "r3": {
+     "valid": 17518,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 129,
+      "noscript-outside-head": 105,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 139,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 1: end tag 34, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 11 is not inside noscript at 1"
+      },
+      {
+       "doc": "\n<noscript>text<hr>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 1"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><!--c--><p><noscript><p>]]></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 77 is not inside noscript at 67"
+      }
+     ]
+    },
+    "r3w": {
+     "valid": 17518,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 129,
+      "noscript-outside-head": 105,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 139,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 1: end tag 34, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 11 is not inside noscript at 1"
+      },
+      {
+       "doc": "\n<noscript>text<hr>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 1"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><!--c--><p><noscript><p>]]></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 77 is not inside noscript at 67"
+      }
+     ]
+    },
+    "r1+r3": {
+     "valid": 17577,
+     "gained": 59,
+     "findings": {
+      "noscript-end-head": 129,
+      "noscript-outside-head": 105,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 139,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 1: end tag 34, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 11 is not inside noscript at 1"
+      },
+      {
+       "doc": "\n<noscript>text<hr>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 1"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><!--c--><p><noscript><p>]]></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 77 is not inside noscript at 67"
+      }
+     ]
+    },
+    "r2+r3": {
+     "valid": 17519,
+     "gained": 1,
+     "findings": {
+      "noscript-end-head": 129,
+      "noscript-outside-head": 105,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 139,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 1: end tag 34, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 11 is not inside noscript at 1"
+      },
+      {
+       "doc": "\n<noscript>text<hr>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 1"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><!--c--><p><noscript><p>]]></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 77 is not inside noscript at 67"
+      }
+     ]
+    },
+    "r1+r2": {
+     "valid": 17577,
+     "gained": 59,
+     "findings": {
+      "noscript-end-head": 129,
+      "noscript-outside-head": 105,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 139,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 1: end tag 34, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 11 is not inside noscript at 1"
+      },
+      {
+       "doc": "\n<noscript>text<hr>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 1"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><!--c--><p><noscript><p>]]></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 77 is not inside noscript at 67"
+      }
+     ]
+    },
+    "r1+r2+r3": {
+     "valid": 17578,
+     "gained": 60,
+     "findings": {
+      "noscript-end-head": 129,
+      "noscript-outside-head": 105,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 139,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 1: end tag 34, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 11 is not inside noscript at 1"
+      },
+      {
+       "doc": "\n<noscript>text<hr>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 1"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><!--c--><p><noscript><p>]]></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 77 is not inside noscript at 67"
+      }
+     ]
+    },
+    "r1a+r2+r3": {
+     "valid": 17574,
+     "gained": 56,
+     "findings": {
+      "noscript-end-head": 129,
+      "noscript-outside-head": 105,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 139,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 1: end tag 34, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 11 is not inside noscript at 1"
+      },
+      {
+       "doc": "\n<noscript>text<hr>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 1"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><!--c--><p><noscript><p>]]></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 77 is not inside noscript at 67"
+      }
+     ]
+    },
+    "r1+r2+r3w": {
+     "valid": 17578,
+     "gained": 60,
+     "findings": {
+      "noscript-end-head": 129,
+      "noscript-outside-head": 105,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 139,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "<noscript>text</noscript>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 14, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 1: end tag 34, tree null"
+      },
+      {
+       "doc": "\n<noscript><iframe src=x></iframe></noscript><![CDATA[a]]><img src=x><xmp><p></xmp>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 11 is not inside noscript at 1"
+      },
+      {
+       "doc": "\n<noscript>text<hr>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 1"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><!--c--><p><noscript><p>]]></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 77 is not inside noscript at 67"
+      }
+     ]
+    }
+   },
+   "findings": {
+    "noscript-end-head": 1548,
+    "noscript-outside-head": 1260,
+    "noscript-outside": 12
+   }
+  },
+  "profile-review": {
+   "documents": 50000,
+   "combos": {
+    "base": {
+     "valid": 8623,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 179,
+      "noscript-outside-head": 245,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 184,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 35, tree null"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 16 is not inside noscript at 6"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><div data-rq-block=\"r0\">y</div></><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y<a href=x>z</a>w</p></td></table></td></table></td></table></td></table><address></address>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-end",
+       "detail": "noscript at 15: end tag 45, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 25 is not inside noscript at 15"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 31 is not inside noscript at 15"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 118: end tag 154, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 128 is not inside noscript at 118"
+      }
+     ]
+    },
+    "r1": {
+     "valid": 8640,
+     "gained": 17,
+     "findings": {
+      "noscript-end-head": 179,
+      "noscript-outside-head": 245,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 184,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 35, tree null"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 16 is not inside noscript at 6"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><div data-rq-block=\"r0\">y</div></><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y<a href=x>z</a>w</p></td></table></td></table></td></table></td></table><address></address>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-end",
+       "detail": "noscript at 15: end tag 45, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 25 is not inside noscript at 15"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 31 is not inside noscript at 15"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 118: end tag 154, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 128 is not inside noscript at 118"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r1a": {
+     "valid": 8640,
+     "gained": 17,
+     "findings": {
+      "noscript-end-head": 179,
+      "noscript-outside-head": 245,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 184,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 35, tree null"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 16 is not inside noscript at 6"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><div data-rq-block=\"r0\">y</div></><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y<a href=x>z</a>w</p></td></table></td></table></td></table></td></table><address></address>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-end",
+       "detail": "noscript at 15: end tag 45, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 25 is not inside noscript at 15"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 31 is not inside noscript at 15"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 118: end tag 154, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 128 is not inside noscript at 118"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r2": {
+     "valid": 8624,
+     "gained": 1,
+     "findings": {
+      "noscript-end-head": 179,
+      "noscript-outside-head": 245,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 184,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 35, tree null"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 16 is not inside noscript at 6"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><div data-rq-block=\"r0\">y</div></><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y<a href=x>z</a>w</p></td></table></td></table></td></table></td></table><address></address>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-end",
+       "detail": "noscript at 15: end tag 45, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 25 is not inside noscript at 15"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 31 is not inside noscript at 15"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 118: end tag 154, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 128 is not inside noscript at 118"
+      }
+     ]
+    },
+    "r3": {
+     "valid": 8623,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 179,
+      "noscript-outside-head": 245,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 184,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 35, tree null"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 16 is not inside noscript at 6"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><div data-rq-block=\"r0\">y</div></><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y<a href=x>z</a>w</p></td></table></td></table></td></table></td></table><address></address>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-end",
+       "detail": "noscript at 15: end tag 45, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 25 is not inside noscript at 15"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 31 is not inside noscript at 15"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 118: end tag 154, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 128 is not inside noscript at 118"
+      }
+     ]
+    },
+    "r3w": {
+     "valid": 8623,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 179,
+      "noscript-outside-head": 245,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 184,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 35, tree null"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 16 is not inside noscript at 6"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><div data-rq-block=\"r0\">y</div></><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y<a href=x>z</a>w</p></td></table></td></table></td></table></td></table><address></address>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-end",
+       "detail": "noscript at 15: end tag 45, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 25 is not inside noscript at 15"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 31 is not inside noscript at 15"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 118: end tag 154, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 128 is not inside noscript at 118"
+      }
+     ]
+    },
+    "r1+r3": {
+     "valid": 8640,
+     "gained": 17,
+     "findings": {
+      "noscript-end-head": 179,
+      "noscript-outside-head": 245,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 184,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 35, tree null"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 16 is not inside noscript at 6"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><div data-rq-block=\"r0\">y</div></><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y<a href=x>z</a>w</p></td></table></td></table></td></table></td></table><address></address>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-end",
+       "detail": "noscript at 15: end tag 45, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 25 is not inside noscript at 15"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 31 is not inside noscript at 15"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 118: end tag 154, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 128 is not inside noscript at 118"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r2+r3": {
+     "valid": 8624,
+     "gained": 1,
+     "findings": {
+      "noscript-end-head": 179,
+      "noscript-outside-head": 245,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 184,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 35, tree null"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 16 is not inside noscript at 6"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><div data-rq-block=\"r0\">y</div></><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y<a href=x>z</a>w</p></td></table></td></table></td></table></td></table><address></address>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-end",
+       "detail": "noscript at 15: end tag 45, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 25 is not inside noscript at 15"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 31 is not inside noscript at 15"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 118: end tag 154, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 128 is not inside noscript at 118"
+      }
+     ]
+    },
+    "r1+r2": {
+     "valid": 8641,
+     "gained": 18,
+     "findings": {
+      "noscript-end-head": 179,
+      "noscript-outside-head": 245,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 184,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 35, tree null"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 16 is not inside noscript at 6"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><div data-rq-block=\"r0\">y</div></><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y<a href=x>z</a>w</p></td></table></td></table></td></table></td></table><address></address>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-end",
+       "detail": "noscript at 15: end tag 45, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 25 is not inside noscript at 15"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 31 is not inside noscript at 15"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 118: end tag 154, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 128 is not inside noscript at 118"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r1+r2+r3": {
+     "valid": 8641,
+     "gained": 18,
+     "findings": {
+      "noscript-end-head": 179,
+      "noscript-outside-head": 245,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 184,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 35, tree null"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 16 is not inside noscript at 6"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><div data-rq-block=\"r0\">y</div></><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y<a href=x>z</a>w</p></td></table></td></table></td></table></td></table><address></address>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-end",
+       "detail": "noscript at 15: end tag 45, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 25 is not inside noscript at 15"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 31 is not inside noscript at 15"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 118: end tag 154, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 128 is not inside noscript at 118"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r1a+r2+r3": {
+     "valid": 8641,
+     "gained": 18,
+     "findings": {
+      "noscript-end-head": 179,
+      "noscript-outside-head": 245,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 184,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 35, tree null"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 16 is not inside noscript at 6"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><div data-rq-block=\"r0\">y</div></><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y<a href=x>z</a>w</p></td></table></td></table></td></table></td></table><address></address>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-end",
+       "detail": "noscript at 15: end tag 45, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 25 is not inside noscript at 15"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 31 is not inside noscript at 15"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 118: end tag 154, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 128 is not inside noscript at 118"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r1+r2+r3w": {
+     "valid": 8641,
+     "gained": 18,
+     "findings": {
+      "noscript-end-head": 179,
+      "noscript-outside-head": 245,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 184,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\"><b>y</b></div><h2></h2>\r\n😀",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 6: end tag 35, tree null"
+      },
+      {
+       "doc": "\n</h2><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><th>\r\n<!---></th>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 16 is not inside noscript at 6"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><div data-rq-block=\"r0\">y</div></><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y<a href=x>z</a>w</p></td></table></td></table></td></table></td></table><address></address>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-end",
+       "detail": "noscript at 15: end tag 45, tree null"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 25 is not inside noscript at 15"
+      },
+      {
+       "doc": "<menu><p><span><noscript><form><input></form></noscript><div data-rq-block=\"r0\">y</div></span></p></menu><ruby><rt><table><colgroup></colgroup></table></rt></ruby>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 31 is not inside noscript at 15"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 118: end tag 154, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><caption><noscript><iframe src=x></iframe></noscript><noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y</div></caption><table><tr><td></th><p data-rq-block=\"r1\"><button>y</button></p></td></table></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 128 is not inside noscript at 118"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    }
+   },
+   "findings": {
+    "noscript-end-head": 2148,
+    "noscript-outside-head": 2940,
+    "noscript-end": 24,
+    "noscript-outside": 48,
+    "gained:noscript-end-head": 7
+   }
+  },
+  "profile-review2": {
+   "documents": 50000,
+   "combos": {
+    "base": {
+     "valid": 7506,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 106,
+      "noscript-outside-head": 145,
+      "noscript-end": 1,
+      "noscript-outside": 2
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 111,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 23 is not inside noscript at 9"
+      }
+     ]
+    },
+    "r1": {
+     "valid": 7529,
+     "gained": 23,
+     "findings": {
+      "noscript-end-head": 106,
+      "noscript-outside-head": 145,
+      "noscript-end": 1,
+      "noscript-outside": 2
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 111,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 23 is not inside noscript at 9"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r1a": {
+     "valid": 7529,
+     "gained": 23,
+     "findings": {
+      "noscript-end-head": 106,
+      "noscript-outside-head": 145,
+      "noscript-end": 1,
+      "noscript-outside": 2
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 111,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 23 is not inside noscript at 9"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r2": {
+     "valid": 7507,
+     "gained": 1,
+     "findings": {
+      "noscript-end-head": 106,
+      "noscript-outside-head": 145,
+      "noscript-end": 1,
+      "noscript-outside": 2
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 111,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 23 is not inside noscript at 9"
+      }
+     ]
+    },
+    "r3": {
+     "valid": 7507,
+     "gained": 1,
+     "findings": {
+      "noscript-end-head": 106,
+      "noscript-outside-head": 145,
+      "noscript-end": 1,
+      "noscript-outside": 2
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 111,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 23 is not inside noscript at 9"
+      }
+     ]
+    },
+    "r3w": {
+     "valid": 7507,
+     "gained": 1,
+     "findings": {
+      "noscript-end-head": 106,
+      "noscript-outside-head": 145,
+      "noscript-end": 1,
+      "noscript-outside": 2
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 111,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 23 is not inside noscript at 9"
+      }
+     ]
+    },
+    "r1+r3": {
+     "valid": 7530,
+     "gained": 24,
+     "findings": {
+      "noscript-end-head": 106,
+      "noscript-outside-head": 145,
+      "noscript-end": 1,
+      "noscript-outside": 2
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 111,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 23 is not inside noscript at 9"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r2+r3": {
+     "valid": 7508,
+     "gained": 2,
+     "findings": {
+      "noscript-end-head": 106,
+      "noscript-outside-head": 145,
+      "noscript-end": 1,
+      "noscript-outside": 2
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 111,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 23 is not inside noscript at 9"
+      }
+     ]
+    },
+    "r1+r2": {
+     "valid": 7530,
+     "gained": 24,
+     "findings": {
+      "noscript-end-head": 106,
+      "noscript-outside-head": 145,
+      "noscript-end": 1,
+      "noscript-outside": 2
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 111,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 23 is not inside noscript at 9"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r1+r2+r3": {
+     "valid": 7531,
+     "gained": 25,
+     "findings": {
+      "noscript-end-head": 106,
+      "noscript-outside-head": 145,
+      "noscript-end": 1,
+      "noscript-outside": 2
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 111,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 23 is not inside noscript at 9"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r1a+r2+r3": {
+     "valid": 7531,
+     "gained": 25,
+     "findings": {
+      "noscript-end-head": 106,
+      "noscript-outside-head": 145,
+      "noscript-end": 1,
+      "noscript-outside": 2
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 111,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 23 is not inside noscript at 9"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r1+r2+r3w": {
+     "valid": 7531,
+     "gained": 25,
+     "findings": {
+      "noscript-end-head": 106,
+      "noscript-outside-head": 145,
+      "noscript-end": 1,
+      "noscript-outside": 2
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 111,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><div data-rq-block=\"r1\"><b>y</b></div><ul></ul>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 23 is not inside noscript at 9"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    }
+   },
+   "findings": {
+    "noscript-end-head": 1272,
+    "noscript-outside-head": 1740,
+    "noscript-end": 12,
+    "noscript-outside": 24,
+    "gained:noscript-end-head": 7
+   }
+  },
+  "profile-review3": {
+   "documents": 50000,
+   "combos": {
+    "base": {
+     "valid": 7367,
+     "gained": 0,
+     "findings": {
+      "noscript-end-head": 93,
+      "noscript-outside-head": 123,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 99,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>x",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 66: end tag 95, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 76 is not inside noscript at 66"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 80 is not inside noscript at 66"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      }
+     ]
+    },
+    "r1": {
+     "valid": 7385,
+     "gained": 18,
+     "findings": {
+      "noscript-end-head": 93,
+      "noscript-outside-head": 123,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 99,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>x",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 66: end tag 95, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 76 is not inside noscript at 66"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 80 is not inside noscript at 66"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r1a": {
+     "valid": 7385,
+     "gained": 18,
+     "findings": {
+      "noscript-end-head": 93,
+      "noscript-outside-head": 123,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 99,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>x",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 66: end tag 95, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 76 is not inside noscript at 66"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 80 is not inside noscript at 66"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r2": {
+     "valid": 7368,
+     "gained": 1,
+     "findings": {
+      "noscript-end-head": 93,
+      "noscript-outside-head": 123,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 99,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>x",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 66: end tag 95, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 76 is not inside noscript at 66"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 80 is not inside noscript at 66"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      }
+     ]
+    },
+    "r3": {
+     "valid": 7368,
+     "gained": 1,
+     "findings": {
+      "noscript-end-head": 93,
+      "noscript-outside-head": 123,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 99,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>x",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 66: end tag 95, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 76 is not inside noscript at 66"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 80 is not inside noscript at 66"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      }
+     ]
+    },
+    "r3w": {
+     "valid": 7368,
+     "gained": 1,
+     "findings": {
+      "noscript-end-head": 93,
+      "noscript-outside-head": 123,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 99,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>x",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 66: end tag 95, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 76 is not inside noscript at 66"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 80 is not inside noscript at 66"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      }
+     ]
+    },
+    "r1+r3": {
+     "valid": 7386,
+     "gained": 19,
+     "findings": {
+      "noscript-end-head": 93,
+      "noscript-outside-head": 123,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 99,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>x",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 66: end tag 95, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 76 is not inside noscript at 66"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 80 is not inside noscript at 66"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r2+r3": {
+     "valid": 7369,
+     "gained": 2,
+     "findings": {
+      "noscript-end-head": 93,
+      "noscript-outside-head": 123,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {},
+     "docsWithFinding": 99,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>x",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 66: end tag 95, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 76 is not inside noscript at 66"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 80 is not inside noscript at 66"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      }
+     ]
+    },
+    "r1+r2": {
+     "valid": 7386,
+     "gained": 19,
+     "findings": {
+      "noscript-end-head": 93,
+      "noscript-outside-head": 123,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 99,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>x",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 66: end tag 95, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 76 is not inside noscript at 66"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 80 is not inside noscript at 66"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r1+r2+r3": {
+     "valid": 7387,
+     "gained": 20,
+     "findings": {
+      "noscript-end-head": 93,
+      "noscript-outside-head": 123,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 99,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>x",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 66: end tag 95, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 76 is not inside noscript at 66"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 80 is not inside noscript at 66"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r1a+r2+r3": {
+     "valid": 7387,
+     "gained": 20,
+     "findings": {
+      "noscript-end-head": 93,
+      "noscript-outside-head": 123,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 99,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>x",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 66: end tag 95, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 76 is not inside noscript at 66"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 80 is not inside noscript at 66"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    },
+    "r1+r2+r3w": {
+     "valid": 7387,
+     "gained": 20,
+     "findings": {
+      "noscript-end-head": 93,
+      "noscript-outside-head": 123,
+      "noscript-end": 2,
+      "noscript-outside": 4
+     },
+     "gainedFindings": {
+      "noscript-end-head": 1
+     },
+     "docsWithFinding": 99,
+     "gainedDocsWithFinding": 1,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 36, tree null"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><div><a href=x>a</a></div></noscript><div data-rq-block=\"r0\">y<nobr>z</nobr>w</div><!x><style>a < b<h2 data-rq-block=\"b1\"><style>p{}</style>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 15 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 21, tree null"
+      },
+      {
+       "doc": "<noscript><img src=x></noscript><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p><dl><dd><![CDATA[a]]></dd></dl><li></li>",
+       "kind": "noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<noscript><iframe src=x></iframe></noscript><script>a</script>x",
+       "kind": "noscript-end-head",
+       "detail": "noscript at 0: end tag 33, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 66: end tag 95, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 76 is not inside noscript at 66"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><<p><span><noscript><ul><li>a</li></ul></noscript><span data-rq-block=\"r0\"><b>y</b></span><foreignObject><?pi a?><table><td><table><td><table><td><table><td><table><td><p data-rq-block=\"r1\">y</p></td></table></td></table></td></table></td></table></td></table></foreignObject></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 80 is not inside noscript at 66"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-end",
+       "detail": "noscript at 9: end tag 42, tree null"
+      },
+      {
+       "doc": "<p><span><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r0\">y</span></span></p>",
+       "kind": "noscript-outside",
+       "detail": "start tag at 19 is not inside noscript at 9"
+      },
+      {
+       "doc": "\r\n<noscript>text</noscript><dl><dd> 😀<h2 data-rq-block=\"b0\"><svg><desc>a < b</desc></svg></h2></dd></dl>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 2: end tag 16, tree null"
+      }
+     ]
+    }
+   },
+   "findings": {
+    "noscript-end-head": 1116,
+    "noscript-outside-head": 1476,
+    "noscript-end": 24,
+    "noscript-outside": 48,
+    "gained:noscript-end-head": 7
+   }
+  },
+  "relax": {
+   "documents": 300000,
+   "combos": {
+    "base": {
+     "valid": 8819,
+     "gained": 0,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r1": {
+     "valid": 48555,
+     "gained": 39736,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r1a": {
+     "valid": 40108,
+     "gained": 31289,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r2": {
+     "valid": 36188,
+     "gained": 27369,
+     "findings": {},
+     "gainedFindings": {
+      "noscript-end-head": 9020,
+      "noscript-outside-head": 22487
+     },
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 9020,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><svg href=\"#a\"></svg></noscript><span>s</span>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 0: end tag 31, tree null"
+      },
+      {
+       "doc": "<noscript><svg href=\"#a\"></svg></noscript><span>s</span>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 27: end tag 118, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 37 is not inside noscript at 27"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 42 is not inside noscript at 27"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><link rel=x href=y><noscript><a href=#>l</a><svg href=\"#a\" d=\"M0 0\"><circle></circle></svg>x</noscript><title data-rq-block=\"t\">T</title></head><body><p data-rq-block=\"z\">y<nobr>n</nobr></p></body></html>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 46: end tag 119, tree null"
+      }
+     ]
+    },
+    "r3": {
+     "valid": 13617,
+     "gained": 4798,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r3w": {
+     "valid": 14500,
+     "gained": 5681,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r1+r3": {
+     "valid": 57629,
+     "gained": 48810,
+     "findings": {},
+     "gainedFindings": {},
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 0,
+     "gainedDocsNotHead": 0,
+     "examples": []
+    },
+    "r2+r3": {
+     "valid": 43473,
+     "gained": 34654,
+     "findings": {},
+     "gainedFindings": {
+      "noscript-end-head": 9871,
+      "noscript-outside-head": 26615
+     },
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 9871,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><svg href=\"#a\"></svg></noscript><span>s</span>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 0: end tag 31, tree null"
+      },
+      {
+       "doc": "<noscript><svg href=\"#a\"></svg></noscript><span>s</span>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 27: end tag 118, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 37 is not inside noscript at 27"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 42 is not inside noscript at 27"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><link rel=x href=y><noscript><a href=#>l</a><svg href=\"#a\" d=\"M0 0\"><circle></circle></svg>x</noscript><title data-rq-block=\"t\">T</title></head><body><p data-rq-block=\"z\">y<nobr>n</nobr></p></body></html>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 46: end tag 119, tree null"
+      }
+     ]
+    },
+    "r1+r2": {
+     "valid": 75924,
+     "gained": 67105,
+     "findings": {},
+     "gainedFindings": {
+      "noscript-end-head": 9020,
+      "noscript-outside-head": 22487
+     },
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 9020,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><svg href=\"#a\"></svg></noscript><span>s</span>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 0: end tag 31, tree null"
+      },
+      {
+       "doc": "<noscript><svg href=\"#a\"></svg></noscript><span>s</span>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 27: end tag 118, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 37 is not inside noscript at 27"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 42 is not inside noscript at 27"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><link rel=x href=y><noscript><a href=#>l</a><svg href=\"#a\" d=\"M0 0\"><circle></circle></svg>x</noscript><title data-rq-block=\"t\">T</title></head><body><p data-rq-block=\"z\">y<nobr>n</nobr></p></body></html>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 46: end tag 119, tree null"
+      }
+     ]
+    },
+    "r1+r2+r3": {
+     "valid": 87485,
+     "gained": 78666,
+     "findings": {},
+     "gainedFindings": {
+      "noscript-end-head": 9871,
+      "noscript-outside-head": 26615
+     },
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 9871,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><svg href=\"#a\"></svg></noscript><span>s</span>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 0: end tag 31, tree null"
+      },
+      {
+       "doc": "<noscript><svg href=\"#a\"></svg></noscript><span>s</span>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 27: end tag 118, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 37 is not inside noscript at 27"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 42 is not inside noscript at 27"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><link rel=x href=y><noscript><a href=#>l</a><svg href=\"#a\" d=\"M0 0\"><circle></circle></svg>x</noscript><title data-rq-block=\"t\">T</title></head><body><p data-rq-block=\"z\">y<nobr>n</nobr></p></body></html>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 46: end tag 119, tree null"
+      }
+     ]
+    },
+    "r1a+r2+r3": {
+     "valid": 75861,
+     "gained": 67042,
+     "findings": {},
+     "gainedFindings": {
+      "noscript-end-head": 9871,
+      "noscript-outside-head": 26615
+     },
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 9871,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><svg href=\"#a\"></svg></noscript><span>s</span>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 0: end tag 31, tree null"
+      },
+      {
+       "doc": "<noscript><svg href=\"#a\"></svg></noscript><span>s</span>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 27: end tag 118, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 37 is not inside noscript at 27"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 42 is not inside noscript at 27"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><link rel=x href=y><noscript><a href=#>l</a><svg href=\"#a\" d=\"M0 0\"><circle></circle></svg>x</noscript><title data-rq-block=\"t\">T</title></head><body><p data-rq-block=\"z\">y<nobr>n</nobr></p></body></html>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 46: end tag 119, tree null"
+      }
+     ]
+    },
+    "r1+r2+r3w": {
+     "valid": 92487,
+     "gained": 83668,
+     "findings": {},
+     "gainedFindings": {
+      "noscript-end-head": 10358,
+      "noscript-outside-head": 30835
+     },
+     "docsWithFinding": 0,
+     "gainedDocsWithFinding": 10358,
+     "gainedDocsNotHead": 0,
+     "examples": [
+      {
+       "doc": "<noscript><svg href=\"#a\"></svg></noscript><span>s</span>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 0: end tag 31, tree null"
+      },
+      {
+       "doc": "<noscript><svg href=\"#a\"></svg></noscript><span>s</span>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 10 is not inside noscript at 0"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 27: end tag 118, tree null"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 37 is not inside noscript at 27"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><noscript><svg><rect><clipPath class=\"i\" viewBox=\"0 0 1 1\"></clipPath></rect><!--c--></svg></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"z\"><a href=#>q</a></div></body></html>",
+       "kind": "gained:noscript-outside-head",
+       "detail": "start tag at 42 is not inside noscript at 27"
+      },
+      {
+       "doc": "<!DOCTYPE html><html><head><link rel=x href=y><noscript><a href=#>l</a><svg href=\"#a\" d=\"M0 0\"><circle></circle></svg>x</noscript><title data-rq-block=\"t\">T</title></head><body><p data-rq-block=\"z\">y<nobr>n</nobr></p></body></html>",
+       "kind": "gained:noscript-end-head",
+       "detail": "noscript at 46: end tag 119, tree null"
+      }
+     ]
+    }
+   },
+   "findings": {
+    "gained:noscript-end-head": 58011,
+    "gained:noscript-outside-head": 155654
+   }
+  }
+ },
+ "totals": {
+  "noscript-end-head": 6108,
+  "noscript-outside-head": 7488,
+  "noscript-end": 72,
+  "noscript-outside": 144,
+  "gained:noscript-end-head": 58032,
+  "gained:noscript-outside-head": 155654
+ }
+}

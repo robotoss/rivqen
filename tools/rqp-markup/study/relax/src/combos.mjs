@@ -22,7 +22,7 @@ export function resultKey(r) {
   return `valid ${r.blocks.map((b) => `${b.id}/${b.format}/${b.start}/${b.end}`).join(',')}`;
 }
 
-/** The relaxations of a combination name, as a set ("r3w" counts as r3w). */
+/** The relaxations of a combination name, as a set. */
 export function partsOf(combo) {
   return combo === 'base' ? new Set() : new Set(combo.split('+'));
 }
@@ -30,10 +30,11 @@ export function partsOf(combo) {
 /**
  * The combinations of COMBOS that are a proper subset of `combo` (base is a
  * subset of every other combination). r3 is a subset of r3w: the scope
- * "region" allows every crossing that the scope "root" allows.
+ * "region" allows every crossing that the scope "root" allows. r1a is a subset
+ * of r1: the allowlist only removes documents.
  */
 export function subsetsOf(combo) {
   const want = partsOf(combo);
-  const covers = (part) => want.has(part) || (part === 'r3' && want.has('r3w'));
+  const covers = (part) => want.has(part) || (part === 'r3' && want.has('r3w')) || (part === 'r1a' && want.has('r1'));
   return COMBOS.filter((c) => c !== combo && [...partsOf(c)].every(covers));
 }

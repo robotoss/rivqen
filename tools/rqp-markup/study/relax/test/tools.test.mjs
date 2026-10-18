@@ -48,9 +48,10 @@ test('generator: bounded documents that reach the shapes of the three relaxation
   assert.ok(max < 16 * 1024, `max ${max}`);
 });
 
-test('subsetsOf: base is in every set; r3 is a subset of r3w; no combination is its own subset', () => {
+test('subsetsOf: base is in every set; r3 is a subset of r3w and r1a of r1; no combination is its own subset', () => {
   assert.deepEqual(subsetsOf('base'), []);
-  assert.deepEqual(subsetsOf('r1+r3'), ['base', 'r1', 'r3']);
+  assert.deepEqual(subsetsOf('r1+r3'), ['base', 'r1', 'r1a', 'r3']);
+  assert.deepEqual(subsetsOf('r1a'), ['base']);
   assert.ok(subsetsOf('r1+r2+r3w').includes('r1+r2+r3'));
   for (const c of COMBOS) assert.ok(!subsetsOf(c).includes(c));
 });

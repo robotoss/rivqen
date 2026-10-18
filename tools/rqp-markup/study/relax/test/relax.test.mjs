@@ -64,6 +64,25 @@ test('r1: the other names of FORBIDDEN_CONTENT stay forbidden in HTML context', 
   }
 });
 
+test('r1a: only the allowlist of shapes, paint servers, filters, text and MathML Core elements', () => {
+  for (const html of [
+    '<div data-rq-block="a"><svg viewBox="0 0 1 1"><title>t</title><g><path d="M0"/><use href="#i"/></g></svg></div>',
+    '<div data-rq-block="a"><svg><defs><linearGradient id="g"><stop/></linearGradient></defs><rect/></svg></div>',
+    '<div data-rq-block="a"><math><mfrac><mi>x</mi><mn>2</mn></mfrac></math></div>',
+  ]) assert.equal(valid(html, 'r1a'), true, html);
+  for (const [inner, name] of [
+    ['<a href="/x"><path/></a>', 'a'],
+    ['<animate attributeName="fill"/>', 'animate'],
+    ['<set attributeName="fill" to="red"/>', 'set'],
+    ['<image href="/i.png"/>', 'image'],
+    ['<foreignObject></foreignObject>', 'foreignobject'],
+    ['<x-unknown/>', 'x-unknown'],
+  ]) assert.equal(why(`<div data-rq-block="a"><svg>${inner}</svg></div>`, 'r1a'), `r1a-not-allowed:${name}`);
+  assert.equal(why('<div data-rq-block="a"><math><maction><mi>x</mi></maction></math></div>', 'r1a'), 'r1a-not-allowed:maction');
+  // Outside blocks the allowlist does not apply.
+  assert.equal(valid('<svg><a href="/x"><path/></a></svg>', 'r1a'), true);
+});
+
 test('r3: the icon shape outside blocks is valid; the H-32 shapes with special crossings stay invalid', () => {
   const icon = '<a href="#"><svg><path d="M0"></svg></a><span data-rq-block="x">y<a>z</a>w</span>';
   assert.equal(why(icon, 'base'), 'M-06.4');

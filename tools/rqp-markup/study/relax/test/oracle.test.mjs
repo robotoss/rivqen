@@ -53,6 +53,17 @@ test('a start tag that makes no element is "missing"', () => {
   assert.ok(k.includes('tree-enabled-missing'), k.join());
 });
 
+test('fragment parsing in the context of the block element: namespace, missing and count findings', () => {
+  const html = '<div data-rq-block="a"><svg><path/></svg></div>';
+  const end = html.indexOf('</div>');
+  const wrongNs = kinds(html, forged([block('a', 23, end)], [[23, false, 28, 'svg'], [28, false, 35, 'path']]));
+  assert.ok(wrongNs.includes('fragment-namespace'), wrongNs.join());
+  const extra = kinds(html, forged([block('a', 23, end)], [[23, false, 28, 'svg'], [28, true, 35, 'path'], [30, true, 35, 'x']]));
+  assert.ok(extra.includes('fragment-missing') && extra.includes('fragment-count'), extra.join());
+  const r = analyzeRelaxed(Buffer.from(html), flagsOf('r1'), { trace: true });
+  assert.ok(!kinds(html, r).some((k) => k.startsWith('fragment-')));
+});
+
 test('noscript content that leaves the noscript element: end and outside findings, with the head flag', () => {
   // Scripting disabled: <div> in C closes the open p and the noscript element with it.
   const body = '<body><p><noscript><div>x</div></noscript>';

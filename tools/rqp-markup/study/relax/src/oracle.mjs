@@ -10,6 +10,11 @@
 //   tree-<view>-<kind>        new for r1: each start tag of html block content
 //                             makes an element inside the block element, in the
 //                             namespace that the token stack says (HTML or foreign)
+//   fragment-<kind>           new for r1: the content of each html block parsed as a
+//                             fragment with the block element as the context (the way a
+//                             client sets the content of the element): each start tag of
+//                             the content makes one element, in the namespace that the
+//                             token stack says, and no element starts outside the content
 //   noscript-<kind>[-head]    new for r2 (scripting disabled): the noscript element
 //                             ends at the end tag that the token pass found, and each
 //                             start tag of C makes an element inside it, in the
@@ -18,7 +23,7 @@
 //
 // The oracle never prints document text. Details hold offsets and tag names only.
 
-import { parse } from '../../../crosscheck/node_modules/parse5/dist/index.js';
+import { parse, parseFragment } from '../../../crosscheck/node_modules/parse5/dist/index.js';
 import { compareWithView } from '../../../crosscheck/src/compare.mjs';
 import { analyzeDepth } from '../../../crosscheck/src/depth.mjs';
 import { decodeUtf8, utf16ToUtf8Map } from '../../../crosscheck/src/utf8.mjs';
@@ -88,6 +93,45 @@ export function contentFindings(index, result, trace) {
         out.push({ kind: 'namespace', detail: `<${inside.tagName}> at ${at}: token stack ${foreign ? 'foreign' : 'html'}, tree ${isForeign(inside) ? 'foreign' : 'html'}` });
       }
     }
+  }
+  return out;
+}
+
+/**
+ * r1: the content of each html block (not title) as a fragment in the context of the
+ * block element (HTML fragment parsing algorithm, parse5 parseFragment, scripting enabled).
+ * @param {Uint8Array} bytes
+ * @param {object} result with trace
+ */
+export function fragmentFindings(bytes, result) {
+  const out = [];
+  for (const [i, block] of result.blocks.entries()) {
+    const name = result.trace.blockNames[i];
+    if (block.format !== 'html' || name === 'title') continue;
+    const decoded = decodeUtf8(Buffer.from(bytes.subarray(block.start, block.end)));
+    if (decoded === null) continue; // a block boundary is never inside a UTF-8 sequence
+    const map = utf16ToUtf8Map(decoded.text, 0);
+    const context = parse(`<${name}>`).childNodes[0].childNodes[1].childNodes[0]; // html > body > element
+    const frag = parseFragment(context, decoded.text, { sourceCodeLocationInfo: true, scriptingEnabled: true });
+    const got = new Map();
+    const stack = [...frag.childNodes];
+    while (stack.length > 0) {
+      const node = stack.pop();
+      if (typeof node.tagName === 'string' && node.sourceCodeLocation?.startTag) {
+        const at = map[node.sourceCodeLocation.startTag.startOffset] + block.start;
+        if (!got.has(at)) got.set(at, node);
+      }
+      if (node.content && Array.isArray(node.content.childNodes)) for (const c of node.content.childNodes) stack.push(c);
+      if (Array.isArray(node.childNodes)) for (const c of node.childNodes) stack.push(c);
+    }
+    const want = result.trace.content.filter(([at]) => at >= block.start && at < block.end);
+    for (const [at, inRegion, , tag] of want) {
+      const el = got.get(at);
+      const foreign = inRegion || tag === 'svg' || tag === 'math';
+      if (el === undefined) out.push({ kind: 'missing', detail: `block ${block.id}: start tag at ${at} has no element` });
+      else if (isForeign(el) !== foreign) out.push({ kind: 'namespace', detail: `block ${block.id}: <${el.tagName}> at ${at}` });
+    }
+    if (got.size !== want.length) out.push({ kind: 'count', detail: `block ${block.id}: fragment ${got.size} elements, content ${want.length} start tags` });
   }
   return out;
 }
@@ -164,6 +208,7 @@ export class Oracle {
         }
       }
     }
+    for (const f of fragmentFindings(this.bytes, result)) out.push({ kind: `fragment-${f.kind}`, detail: f.detail });
     const d = this.depth();
     if (d.violations.length > 0) out.push({ kind: 'depth-invariant', detail: d.violations[0] });
     return out;

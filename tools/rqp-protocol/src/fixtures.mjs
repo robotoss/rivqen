@@ -246,10 +246,17 @@ function context(c) {
   // from the request URL (as strings). false with another final URL is a defect.
   const wasRedirected = ctx.redirected ?? finalUrl !== url;
   if (!wasRedirected && finalUrl !== url) throw new CaseError(c.id, 'context.redirected is false, but final_url differs from url');
-  // DL-038: the allowlist is a list of serialized origins. Default: the origins
-  // of the request URL and of the final URL (every origin of the context).
+  // DL-039: the allowlist is a list of serialized origins. Default: the origin
+  // of the request URL. DL-040: a case with a cross-origin final URL lists the
+  // allowlist explicitly.
   let allowlist = ctx.allowlist;
-  if (allowlist === undefined) allowlist = [...new Set([originOf(c.id, url), originOf(c.id, finalUrl)])];
+  if (allowlist === undefined) {
+    const requestOrigin = originOf(c.id, url);
+    if (originOf(c.id, finalUrl) !== requestOrigin) {
+      throw new CaseError(c.id, 'context.allowlist is required when final_url has another origin than url (DL-040)');
+    }
+    allowlist = [requestOrigin];
+  }
   if (!Array.isArray(allowlist) || !allowlist.every((o) => typeof o === 'string')) {
     throw new CaseError(c.id, 'context.allowlist must be a list of origin strings');
   }

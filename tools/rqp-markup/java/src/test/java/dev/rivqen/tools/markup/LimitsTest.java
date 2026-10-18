@@ -215,10 +215,19 @@ class LimitsTest {
   }
 
   @Test
-  void noscriptContentIsNotCounted() {
-    // M-26 item 7: the tags of the noscript content C are not part of the main pass.
-    String c = open("div", 300) + close("div", 300);
-    Docs.assertValid(open("div", DEPTH - 1) + "<noscript>" + c + "</noscript>");
+  void noscriptContentIsCounted() {
+    // M-26 item 7 (H-71): the tags of the noscript content C count in the pass on C.
+    assertDepthLimit("<noscript>" + open("div", DEPTH) + close("div", DEPTH) + "</noscript>");
+    assertDepthLimit(open("div", DEPTH - 2) + "<noscript><b><i></i></b></noscript>");
+    Docs.assertValid(open("div", DEPTH - 3) + "<noscript><b><i></i></b></noscript>");
+  }
+
+  @Test
+  void depthAfterNoscriptIsTheDepthOfTheMainPass() {
+    // After `</noscript>` D is the value of the main pass: the `noscript` element is popped
+    // exactly, so each repeat gives its unit back and a crossing in C does not stay.
+    String crossing = "<noscript><span><svg><path d=M0></svg></span></noscript>";
+    Docs.assertValid(crossing.repeat(300));
   }
 
   @Test

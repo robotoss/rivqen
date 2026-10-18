@@ -7,7 +7,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
@@ -56,7 +55,13 @@ public final class Analyzer {
   private static final byte[] NOSCRIPT_END = Tokenizer.ascii("</noscript>");
 
   private final byte[] in;
-  private final Tokenizer tok;
+
+  /** The bytes that {@link #tok} reads: the document, or the content C of a noscript (M-11). */
+  private byte[] buf;
+
+  /** The active tokenizer: the main one, or the one of the pass on C (M-11 item 8). */
+  private Tokenizer tok;
+
   private final TokenStack stack = new TokenStack();
   private final List<Result.Block> blocks = new ArrayList<>();
   private final Set<String> ids = new HashSet<>();
@@ -79,6 +84,15 @@ public final class Analyzer {
   /** Offset of the content of an open {@code noscript} element in HTML context, or -1. */
   private int noscriptContent = -1;
 
+  /**
+   * M-11 item 8: stack size after the {@code noscript} push while the pass on C runs, else -1. The
+   * elements above this size are the stack of C (item 5).
+   */
+  private int noscriptBase = -1;
+
+  /** M-11 item 6: the number of {@code table} elements of C that are open. */
+  private int noscriptTables;
+
   private record Pending(String id, String format, int start) {}
 
   /** A rule failed. Internal control flow only; never escapes {@link #analyze}. */
@@ -99,6 +113,7 @@ public final class Analyzer {
 
   private Analyzer(byte[] in) {
     this.in = in;
+    this.buf = in;
     // M-02: the tokenizer does not see a byte order mark at offset 0. Its bytes (EF BB BF) are not
     // ASCII, so in the data state they are characters that can neither start nor end a token:
     // starting at offset 0 gives the same tokens as starting after the mark. Offsets always count
@@ -176,14 +191,17 @@ public final class Analyzer {
     if (textOnly >= 0) {
       throw structure("M-07");
     }
+    if (k == Name.SCRIPT && reservedType(buf, tok)) {
+      throw new Reject(ErrorCode.RESERVED, "M-13");
+    }
+    if (noscriptBase >= 0) {
+      noscriptStartTag(k, html);
+    }
     if (k == Name.FRAMESET) {
       throw structure("M-10");
     }
     if (html && k == Name.TEMPLATE && tok.hasForAttribute()) {
       throw structure("M-10"); // item 3 (H-43)
-    }
-    if (k == Name.SCRIPT && reservedType(in, tok)) {
-      throw new Reject(ErrorCode.RESERVED, "M-13");
     }
     if (stack.open(Name.SELECT) > 0 && k != Name.OPTION && k != Name.OPTGROUP && k != Name.HR) {
       throw structure("M-08");
@@ -192,7 +210,11 @@ public final class Analyzer {
     if (tok.hasBlockAttribute()) {
       block = blockStart(k, html, inContent);
     } else if (inContent) {
-      contentStartTag(k, selfClosing);
+      if (html) {
+        contentStartTag(k, selfClosing);
+      } else if (!Name.foreignAllowed(raw)) {
+        throw structure("M-22"); // item 5 (H-73)
+      }
     }
     if (!html) {
       foreignStartTag(name, k, selfClosing);
@@ -318,12 +340,62 @@ public final class Analyzer {
     return new Pending(id, format, tok.end());
   }
 
-  /** M-22 and M-24: a start tag in the content of an html block. */
+  /**
+   * M-11 items 2, 3, 6 and 7 for a start tag in C, in HTML context and in a foreign region of C
+   * (item 9). The other items are the rules of the main pass, which run on this start tag too.
+   */
+  private void noscriptStartTag(@Nullable Name k, boolean html) {
+    if (tok.hasBlockAttribute()) {
+      throw structure("M-11"); // item 2
+    }
+    if (k == Name.FRAMESET
+        || k == Name.MATH
+        || k == Name.NOSCRIPT
+        || k == Name.PLAINTEXT
+        || k == Name.SELECT
+        || k == Name.TEMPLATE) {
+      throw structure("M-11"); // item 3
+    }
+    if (k == Name.HTML || k == Name.BODY || k == Name.HEAD) {
+      throw structure("M-11"); // item 7
+    }
+    // Item 6 (H-38): with scripting disabled, a table part or col without a table of C closes a
+    // cell or caption around the noscript element.
+    if ((Name.is(k, Name.Set.TABLE_PART) || k == Name.COL) && noscriptTables == 0) {
+      throw structure("M-11");
+    }
+    if (html && k == Name.TABLE) {
+      noscriptTables++; // a table is never void, so the main pass pushes it
+    }
+  }
+
+  /**
+   * M-11 items 5 and 7 for an end tag in C (not the end tag {@code noscript} that ends C): it has
+   * the name of the last open element of C and closes it, or it is the end tag of the region root
+   * of item 9 (H-75), which closes the region.
+   */
+  private void noscriptEndTag(String name, @Nullable Name k) {
+    if (k == Name.HTML || k == Name.BODY || k == Name.HEAD) {
+      throw structure("M-11"); // item 7
+    }
+    int top = stack.size() - 1;
+    boolean closesTop = top >= noscriptBase && stack.name(top).equals(name);
+    boolean closesRegion =
+        stack.regionRoot() >= noscriptBase && stack.nearest(name) == stack.regionRoot();
+    if (!closesTop && !closesRegion) {
+      throw structure("M-11");
+    }
+    if (closesTop && k == Name.TABLE && !stack.foreign(top)) {
+      noscriptTables--;
+    }
+  }
+
+  /** M-22 and M-24: a start tag in HTML context in the content of an html block. */
   private void contentStartTag(@Nullable Name k, boolean selfClosing) {
     if (Name.is(k, Name.Set.FORBIDDEN_CONTENT)) {
       throw structure("M-22");
     }
-    if (selfClosing && !Name.is(k, Name.Set.VOID)) {
+    if (selfClosing && !Name.is(k, Name.Set.VOID) && k != Name.SVG && k != Name.MATH) {
       throw structure("M-22");
     }
     // M-24 k: in table context only table parts and col; also for names that no set knows.
@@ -451,13 +523,17 @@ public final class Analyzer {
       }
       throw structure("M-07");
     }
+    if (noscriptBase >= 0) {
+      noscriptEndTag(name, k);
+    }
     if (pending != null && blockIndex < 0) {
       // The appropriate end tag of a title or json block (M-20).
       finishBlock(tok.start());
     }
     if (noscriptContent >= 0) {
-      noscript(noscriptContent, tok.start());
+      int from = noscriptContent;
       noscriptContent = -1;
+      noscript(from, tok.start());
     }
     if (stack.open(Name.SELECT) > 0 && k != Name.OPTION && k != Name.OPTGROUP && k != Name.SELECT) {
       throw structure("M-08");
@@ -510,10 +586,13 @@ public final class Analyzer {
     int top = stack.size() - 1;
     boolean formatting = Name.is(k, Name.Set.FORMATTING);
     boolean mark = false;
+    // H-75: the end tag of the region root pops the whole region in the tree builder too, so the
+    // foreign elements that it crosses set no mark.
+    boolean rootEnd = index == stack.regionRoot();
     for (int i = top; i >= index; i--) {
       // A crossed element sets the mark when it is special (pushed in HTML context) or foreign.
       boolean special =
-          i > index && (stack.foreign(i) || Name.is(stack.known(i), Name.Set.SPECIAL));
+          i > index && (stack.foreign(i) ? !rootEnd : Name.is(stack.known(i), Name.Set.SPECIAL));
       boolean marked = stack.marked(i);
       if (formatting && (special || marked)) {
         throw structure("M-06"); // item 2 (special or foreign), item 4 (marked)
@@ -538,12 +617,24 @@ public final class Analyzer {
     }
   }
 
-  /** M-22 rule 4, M-23 and the block end tag of M-20. */
+  /** M-22 item 4, M-23 and the block end tag of M-20. */
   private void contentEndTag(String name, @Nullable Name k) {
+    int top = stack.size() - 1;
+    int root = stack.regionRoot();
+    if (root >= 0) {
+      // M-23 (H-75): in a foreign region of the content, an end tag has the name of the current
+      // node, or it is the end tag of the region root, which pops the region. M-22 item 4 is for
+      // HTML context only.
+      int index = stack.nearest(name);
+      if (!stack.name(top).equals(name) && index != root) {
+        throw structure("M-23");
+      }
+      popTo(index, k);
+      return;
+    }
     if (Name.is(k, Name.Set.VOID)) {
       throw structure("M-22");
     }
-    int top = stack.size() - 1;
     if (!stack.name(top).equals(name)) {
       throw structure("M-23");
     }
@@ -582,7 +673,9 @@ public final class Analyzer {
 
   private void eof() {
     if (noscriptContent >= 0) {
-      noscript(noscriptContent, in.length);
+      int from = noscriptContent;
+      noscriptContent = -1;
+      noscript(from, in.length);
     }
     if (pending != null) {
       throw structure("M-20");
@@ -613,92 +706,59 @@ public final class Analyzer {
   }
 
   /**
-   * M-11: tokenize the content C of a {@code noscript} element and a following {@code </noscript>}
-   * alone, from the data state, in HTML context. M-13 applies to the start tags of this pass too
-   * (E8). When the {@code noscript} element has no end tag, C is the rest of the input (E3).
+   * M-11: the content C of a {@code noscript} element. The tokens of C and a following {@code
+   * </noscript>} alone, from the data state, go through the rules of the main pass, in place, on
+   * the token stack of the main pass (item 8, H-71; DL-044 c). The caller has pushed the {@code
+   * noscript} element. {@link #noscriptStartTag} and {@link #noscriptEndTag} add the items of M-11
+   * that are not rules of the main pass. When the {@code noscript} element has no end tag, C is the
+   * rest of the input (E3).
    *
-   * <p>Item 5 (H-27): C is balanced. A separate stack, which starts empty, holds the elements of C;
-   * an end tag compares only with its top, so this stack needs no name index. The tags of C do not
-   * change the token stack or D (M-26 item 7). The stack of C is bounded by the size of C only: a
-   * start tag has at least 3 bytes, and each entry is a reference to an interned name (F-2).
+   * <p>The elements of C are on the token stack above the {@code noscript} element, so the stack is
+   * bounded by D (M-26, item 7). After the end tag {@code noscript}, D and the dirty mark of the
+   * {@code noscript} element go back to the values that they had before C; C is balanced (item 5),
+   * so the stack has the same elements again. The marks need no restore: C sets none (H-75).
    *
-   * <p>Item 6 (H-38): a start tag in {@code TABLE_PART} or {@code col} needs a {@code table} on the
-   * stack of C. A count of these tables is enough: an end tag of C closes only the top element.
+   * @param from offset of the first byte of C
+   * @param to offset of the end of C
    */
   private void noscript(int from, int to) {
     int length = to - from;
     byte[] c = new byte[length + NOSCRIPT_END.length];
     System.arraycopy(in, from, c, 0, length);
     System.arraycopy(NOSCRIPT_END, 0, c, length, NOSCRIPT_END.length);
-    Tokenizer sub = new Tokenizer(c, 0, c.length);
-    String[] open = new String[16];
-    int size = 0;
-    // Item 6 (H-38): the number of table elements on the stack of C.
-    int tables = 0;
-    while (true) {
-      switch (sub.next()) {
-        case START_TAG -> {
-          String raw = sub.name();
-          Name k = Name.of(raw);
-          // M-13 applies also to C (E8, H-22): a reader with scripting disabled sees this script.
-          if (k == Name.SCRIPT && reservedType(c, sub)) {
-            throw new Reject(ErrorCode.RESERVED, "M-13");
-          }
-          if (sub.hasBlockAttribute()) {
-            throw structure("M-11");
-          }
-          if (k == Name.FRAMESET
-              || k == Name.MATH
-              || k == Name.NOSCRIPT
-              || k == Name.PLAINTEXT
-              || k == Name.SELECT
-              || k == Name.SVG
-              || k == Name.TEMPLATE) {
-            throw structure("M-11");
-          }
-          // Item 6: a table part or col in C needs an open table of C, else with scripting
-          // disabled it closes a cell or caption around the noscript element.
-          if ((Name.is(k, Name.Set.TABLE_PART) || k == Name.COL) && tables == 0) {
-            throw structure("M-11");
-          }
-          // Item 5: a start tag that M-05 item 1 pushes opens an element of C. Self-closing svg
-          // and math are rejected above, so only VOID names are not pushed.
-          if (!Name.is(k, Name.Set.VOID)) {
-            if (size == open.length) {
-              open = Arrays.copyOf(open, size * 2);
-            }
-            open[size++] = names.intern(raw, k);
-            if (k == Name.TABLE) {
-              tables++;
-            }
-          }
-          if (k != null && k.text != null) {
-            sub.enterText(k.text, k.tag);
-          }
-        }
+    Tokenizer outer = tok;
+    int element = stack.size() - 1;
+    int savedDepth = depth;
+    boolean savedDirty = stack.dirty(element);
+    buf = c;
+    tok = new Tokenizer(c, 0, c.length);
+    noscriptBase = stack.size();
+    noscriptTables = 0;
+    boolean done = false;
+    while (!done) {
+      switch (tok.next()) {
+        case START_TAG -> startTag();
         case END_TAG -> {
-          String raw = sub.name();
-          Name k = Name.of(raw);
-          if (k == Name.NOSCRIPT) {
+          if (Name.of(tok.name()) == Name.NOSCRIPT) {
             // Item 1, then item 5: no element of C is open at the end of C.
-            if (sub.start() == length && size == 0) {
-              return;
+            if (tok.start() != length || stack.size() != noscriptBase) {
+              throw structure("M-11");
             }
-            throw structure("M-11");
-          }
-          // Item 5: every end tag closes the last open element of C.
-          if (size == 0 || !open[size - 1].equals(names.intern(raw, k))) {
-            throw structure("M-11");
-          }
-          open[--size] = null;
-          if (k == Name.TABLE) {
-            tables--; // the end tag has the name of the element that it closes
+            done = true;
+          } else {
+            endTag();
           }
         }
+        case COMMENT -> comment();
+        case DOCTYPE -> doctype();
         case EOF -> throw structure("M-11");
-        case COMMENT, DOCTYPE -> {}
       }
     }
+    tok = outer;
+    buf = in;
+    noscriptBase = -1;
+    depth = savedDepth;
+    stack.restoreDirty(element, savedDirty);
   }
 
   /** M-15: {@code ^[a-z0-9][a-z0-9_-]{0,63}$} on the raw value. */

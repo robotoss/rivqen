@@ -59,7 +59,7 @@ class LinearTimeTest {
             repeat("<script><!--", "<script></script>", "--></script>"),
             null),
         Arguments.of("noscript content", repeat("<noscript>", "<img src=x>", "</noscript>"), null),
-        // M-11 item 5: the stack of the noscript content C is bounded by the size of C only.
+        // M-11 item 8: the elements of C are on the token stack, which D bounds (M-26 item 7).
         Arguments.of(
             "deep balanced noscript content",
             wrap("<noscript>", balanced("<b>", "</b>", 32), "</noscript>"),
@@ -67,7 +67,7 @@ class LinearTimeTest {
         Arguments.of(
             "deep noscript content to the end of input",
             repeat("<noscript>", "<b>", ""),
-            ErrorCode.STRUCTURE),
+            ErrorCode.LIMIT),
         Arguments.of(
             "unique names in noscript content",
             wrap("<noscript>", uniqueNamesInGroups(4096, 32), "</noscript>"),

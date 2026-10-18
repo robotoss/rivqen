@@ -74,7 +74,7 @@ enum Name {
   LISTING("listing", Set.PCLOSE | Set.BREAKOUT | Set.SPECIAL),
   MAIN("main", Set.PCLOSE | Set.BLOCK_HTML | Set.SPECIAL),
   MARQUEE("marquee", Set.GUARDED | Set.SPECIAL),
-  MATH("math", Set.GUARDED | Set.FORBIDDEN_CONTENT),
+  MATH("math", Set.GUARDED),
   MENU("menu", Set.PCLOSE | Set.BREAKOUT | Set.LIST | Set.SPECIAL),
   META("meta", Set.VOID | Set.BREAKOUT | Set.FORBIDDEN_CONTENT | Set.SPECIAL),
   MI("mi", Set.INTEGRATION),
@@ -114,7 +114,7 @@ enum Name {
   SUB("sub", Set.BREAKOUT),
   SUMMARY("summary", Set.PCLOSE | Set.SPECIAL),
   SUP("sup", Set.BREAKOUT),
-  SVG("svg", Set.GUARDED | Set.FORBIDDEN_CONTENT),
+  SVG("svg", Set.GUARDED),
   TABLE("table", Set.PCLOSE | Set.GUARDED | Set.BREAKOUT | Set.TABLE | Set.SPECIAL),
   TBODY("tbody", Set.GUARDED | Set.TABLE_PART | Set.SPECIAL),
   TD("td", Set.GUARDED | Set.TABLE_PART | Set.SPECIAL),
@@ -220,6 +220,94 @@ enum Name {
   /** True when {@code name} is non-null and in at least one set of {@code mask}. */
   static boolean isAny(@Nullable Name name, int mask) {
     return name != null && name.inAny(mask);
+  }
+
+  /**
+   * {@code FOREIGN_ALLOWED} of {@code markup.md} §2.1 (H-73): the only names of a start tag in a
+   * foreign region of the content of an html block. The names are not in the enum above, because
+   * most of them are in no other set.
+   */
+  private static final java.util.Set<String> FOREIGN_ALLOWED =
+      java.util.Set.of(
+          "svg",
+          "g",
+          "path",
+          "circle",
+          "ellipse",
+          "line",
+          "polyline",
+          "polygon",
+          "rect",
+          "defs",
+          "symbol",
+          "use",
+          "title",
+          "desc",
+          "lineargradient",
+          "radialgradient",
+          "stop",
+          "clippath",
+          "mask",
+          "pattern",
+          "marker",
+          "text",
+          "tspan",
+          "filter",
+          "feblend",
+          "fecolormatrix",
+          "fecomponenttransfer",
+          "fecomposite",
+          "fedisplacementmap",
+          "fedropshadow",
+          "feflood",
+          "fefunca",
+          "fefuncb",
+          "fefuncg",
+          "fefuncr",
+          "fegaussianblur",
+          "femerge",
+          "femergenode",
+          "femorphology",
+          "feoffset",
+          "feturbulence",
+          "math",
+          "mrow",
+          "mi",
+          "mo",
+          "mn",
+          "ms",
+          "mtext",
+          "mspace",
+          "msub",
+          "msup",
+          "msubsup",
+          "mfrac",
+          "msqrt",
+          "mroot",
+          "mstyle",
+          "munder",
+          "mover",
+          "munderover",
+          "mmultiscripts",
+          "mprescripts",
+          "none",
+          "mtable",
+          "mtr",
+          "mtd",
+          "mpadded",
+          "mphantom",
+          "merror",
+          "semantics",
+          "annotation");
+
+  /** True when {@code tag} (lower case) is in {@code FOREIGN_ALLOWED}. */
+  static boolean foreignAllowed(String tag) {
+    return FOREIGN_ALLOWED.contains(tag);
+  }
+
+  /** The names of {@code FOREIGN_ALLOWED} (for the test of the list). */
+  static java.util.Set<String> foreignAllowedNames() {
+    return FOREIGN_ALLOWED;
   }
 
   private static Map<String, Name> index() {

@@ -141,12 +141,17 @@ export function inAllowlist(ctx, url) {
  * is a string that is equal to its own serialized origin (WHATWG URL parse,
  * then the ASCII serialization of the origin). So upper case, a default port,
  * a trailing "/", a path, user information, white space, a Unicode IDN host
- * and "*" are invalid. An SDK rejects a configuration with an invalid entry;
- * the reference has no configuration step, so the fixture loader uses this
- * check. Never throws.
+ * and "*" are invalid. H-70: the host also has no "*" (the WHATWG host parser
+ * accepts it, so "https://*.example.com" is its own origin, but it is never a
+ * wildcard). DL-041: the scheme is https or http (the only schemes that can
+ * get RQP, rule 5). An SDK rejects a configuration with an invalid entry; the
+ * reference has no configuration step, so the fixture loader uses this check.
+ * Never throws.
  */
 export function validAllowlistEntry(entry) {
-  return typeof entry === 'string' && URL.canParse(entry) && new URL(entry).origin === entry;
+  if (typeof entry !== 'string' || !URL.canParse(entry)) return false;
+  const url = new URL(entry);
+  return url.origin === entry && (url.protocol === 'https:' || url.protocol === 'http:') && !url.hostname.includes('*');
 }
 
 /**

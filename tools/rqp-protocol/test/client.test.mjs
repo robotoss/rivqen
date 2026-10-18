@@ -597,7 +597,8 @@ test('H-69: validAllowlistEntry accepts only a string that is its own serialized
   }
   const invalid = ['HTTPS://shop.example.com', 'https://SHOP.example.com', 'https://shop.example.com:443', 'http://shop.example.com:80', 'https://shop.example.com/',
     'https://shop.example.com/catalog', 'https://faß.example', 'https://bücher.example', '*', '*.example.com', 'shop.example.com', ' https://shop.example.com',
-    'https://shop.example.com ', 'https://user:pw@shop.example.com', 'https://shop.example.com?q', 'https://shop.example.com#f', 'null', 'file:///x', '', 'https://[0:0::1]'];
+    'https://shop.example.com ', 'https://user:pw@shop.example.com', 'https://shop.example.com?q', 'https://shop.example.com#f', 'null', 'file:///x', '', 'https://[0:0::1]',
+    'https://*.example.com', 'http://*', 'https://shop*.example.com', 'wss://shop.example.com', 'ftp://shop.example.com'];
   for (const entry of invalid) assert.equal(validAllowlistEntry(entry), false, entry);
   // Never throws: also not for a value that cannot become a string.
   for (const entry of [null, undefined, 1, ['https://shop.example.com'], { href: 'https://shop.example.com' }, Symbol('x')]) assert.equal(validAllowlistEntry(entry), false, typeof entry);

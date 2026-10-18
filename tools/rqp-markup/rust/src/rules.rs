@@ -17,9 +17,7 @@
 
 use std::collections::HashSet;
 
-use crate::names::{
-    Known, NameId, NameTable, RawKind, TABLE_PART_NAMES, VOID_NAMES, flag, raw_kind,
-};
+use crate::names::{Known, NameId, NameTable, RawKind, flag, raw_kind};
 use crate::tokenizer::{Span, Tag, Token, Tokenizer};
 use crate::{ErrorCode, Format, MAX_BLOCK_BYTES, MAX_BLOCKS, MAX_OPEN_ELEMENTS, MarkupError, json};
 
@@ -134,6 +132,9 @@ fn is_reserved_type(value: &[u8]) -> bool {
             .any(|w| w.eq_ignore_ascii_case(b"rivqen-manifest"))
 }
 
+/// The end tag after the content C of a `noscript` element (M-11).
+const NOSCRIPT_END: &[u8] = b"</noscript>";
+
 fn is_any(name: NameId, names: &[Known]) -> bool {
     names.iter().any(|k| k.id() == name)
 }
@@ -160,7 +161,7 @@ struct Pass<'a> {
     text_only: Option<NameId>,
     block: Option<OpenBlock>,
     blocks: Vec<RawBlock>,
-    ids: HashSet<&'a [u8]>,
+    ids: HashSet<Box<[u8]>>,
     /// Offset after a `noscript` start tag in HTML context whose RAWTEXT
     /// content is not checked yet (M-11).
     noscript: Option<usize>,
@@ -191,28 +192,28 @@ pub(crate) fn run(input: &[u8], start: usize) -> Result<Vec<RawBlock>, MarkupErr
         }
         match token {
             Token::StartTag(tag) => {
-                if let Some((kind, end_name)) = pass.start_tag(&tag)? {
+                if let Some((kind, end_name)) = pass.start_tag(input, &tag)? {
                     tokens.set_raw(kind, end_name);
                 }
             }
-            Token::EndTag(tag) => pass.end_tag(&tag)?,
-            Token::Comment(_) => pass.not_character()?,
-            Token::Doctype(_) => pass.doctype()?,
-            // E5 (H-21): a CDATA section that satisfies M-12 is allowed
-            // also where M-07.3 and M-07.4 allow character tokens only.
-            Token::Cdata { well_formed, .. } => {
-                if !well_formed {
-                    return Err(structure("M-12"));
-                }
-            }
+            Token::EndTag(tag) => pass.end_tag(input, &tag)?,
             Token::Eof => return pass.finish(),
+            other => pass.other_token(&other)?,
         }
     }
 }
 
-impl<'a> Pass<'a> {
-    fn bytes(&self, span: Span) -> Result<&'a [u8], MarkupError> {
-        slice(self.input, span)
+impl Pass<'_> {
+    /// A comment, a DOCTYPE or a CDATA section.
+    fn other_token(&mut self, token: &Token) -> Result<(), MarkupError> {
+        match token {
+            Token::Comment(_) => self.not_character(),
+            Token::Doctype(_) => self.doctype(),
+            // E5 (H-21): a CDATA section that satisfies M-12 is allowed
+            // also where M-07.3 and M-07.4 allow character tokens only.
+            Token::Cdata { well_formed, .. } if !well_formed => Err(structure("M-12")),
+            _ => Ok(()),
+        }
     }
 
     fn is_open(&self, name: Known) -> bool {
@@ -381,8 +382,8 @@ impl<'a> Pass<'a> {
         Ok(())
     }
 
-    fn start_tag(&mut self, tag: &Tag) -> Result<RawSwitch, MarkupError> {
-        let raw_name = self.bytes(tag.name)?;
+    fn start_tag(&mut self, src: &[u8], tag: &Tag) -> Result<RawSwitch, MarkupError> {
+        let raw_name = slice(src, tag.name)?;
         let name = self.names.intern(raw_name);
         let foreign = self.foreign_root.is_some();
 
@@ -407,7 +408,7 @@ impl<'a> Pass<'a> {
         }
         if name == Known::Script.id() {
             if let Some(value) = tag.type_attr {
-                if is_reserved_type(self.bytes(value)?) {
+                if is_reserved_type(slice(src, value)?) {
                     return Err(MarkupError::new(ErrorCode::Reserved, "M-13"));
                 }
             }
@@ -428,9 +429,9 @@ impl<'a> Pass<'a> {
             if tag.block_attr.is_some() {
                 return Err(MarkupError::new(ErrorCode::Nested, "M-17"));
             }
-            self.content_start(tag, name, block)?;
+            self.content_start(tag, name, block, foreign)?;
         } else if let Some(attr) = tag.block_attr {
-            return self.block_start(tag, name, attr, foreign);
+            return self.block_start(src, tag, name, attr, foreign);
         }
 
         if foreign {
@@ -516,17 +517,18 @@ impl<'a> Pass<'a> {
     /// adds its unit of D (M-26).
     fn block_start(
         &mut self,
+        src: &[u8],
         tag: &Tag,
         name: NameId,
         attr: Span,
         foreign: bool,
     ) -> Result<RawSwitch, MarkupError> {
-        let id = self.bytes(attr)?;
+        let id = slice(src, attr)?;
         if !is_valid_id(id) {
             return Err(MarkupError::new(ErrorCode::InvalidId, "M-15"));
         }
         let json_type = match tag.type_attr {
-            Some(value) => self.bytes(value)? == b"application/json",
+            Some(value) => slice(src, value)? == b"application/json",
             None => false,
         };
         let kind = if foreign {
@@ -558,7 +560,7 @@ impl<'a> Pass<'a> {
         {
             return Err(structure("M-19"));
         }
-        if !self.ids.insert(id) {
+        if !self.ids.insert(id.into()) {
             return Err(MarkupError::new(ErrorCode::Duplicate, "M-21"));
         }
         if self.blocks.len() >= MAX_BLOCKS {
@@ -573,15 +575,31 @@ impl<'a> Pass<'a> {
             elem,
             name,
         });
-        Ok(raw_kind(self.bytes(tag.name)?))
+        Ok(raw_kind(slice(src, tag.name)?))
     }
 
     /// M-22 and M-24 for a start tag in the content of a markup block.
-    fn content_start(&self, tag: &Tag, name: NameId, block: OpenBlock) -> Result<(), MarkupError> {
+    /// `foreign` is true for a start tag in a foreign region of the content:
+    /// M-22 item 5 applies there, and items 2 to 4 and M-24 do not (H-73).
+    fn content_start(
+        &self,
+        tag: &Tag,
+        name: NameId,
+        block: OpenBlock,
+        foreign: bool,
+    ) -> Result<(), MarkupError> {
         use Known::{A, Button, Col, Colgroup, Dd, Dl, Dt, H1, H2, H3, H4, H5, H6, Li, Menu};
         use Known::{Nobr, Ol, P, Rb, Rp, Rt, Rtc, Ruby, Span, Table, Tbody, Tfoot, Thead, Tr, Ul};
+        if foreign {
+            return if self.names.has(name, flag::FOREIGN_ALLOWED) {
+                Ok(())
+            } else {
+                Err(structure("M-22"))
+            };
+        }
+        let region_root = is_any(name, &[Known::Svg, Known::Math]);
         if self.names.has(name, flag::FORBIDDEN_CONTENT)
-            || (tag.self_closing && !self.names.has(name, flag::VOID))
+            || (tag.self_closing && !self.names.has(name, flag::VOID) && !region_root)
         {
             return Err(structure("M-22"));
         }
@@ -625,14 +643,23 @@ impl<'a> Pass<'a> {
         Ok(())
     }
 
-    fn end_tag(&mut self, tag: &Tag) -> Result<(), MarkupError> {
+    fn end_tag(&mut self, src: &[u8], tag: &Tag) -> Result<(), MarkupError> {
         if let Some(start) = self.noscript.take() {
-            check_noscript(self.bytes(Span {
-                start,
-                end: tag.span.start,
-            })?)?;
+            self.check_noscript(slice(
+                src,
+                Span {
+                    start,
+                    end: tag.span.start,
+                },
+            )?)?;
         }
-        let name = self.names.lookup(self.bytes(tag.name)?);
+        self.end_tag_rules(slice(src, tag.name)?, tag)
+    }
+
+    /// An end tag with the raw name `raw_name`: M-05 step 3 and the rules
+    /// that depend on it.
+    fn end_tag_rules(&mut self, raw_name: &[u8], tag: &Tag) -> Result<(), MarkupError> {
+        let name = self.names.lookup(raw_name);
         if let Some(text_only) = self.text_only {
             if name != Some(text_only) {
                 return Err(structure("M-07"));
@@ -690,6 +717,10 @@ impl<'a> Pass<'a> {
         let table_family = self.names.has(name, flag::TABLE_FAMILY);
         let mut crossed = false;
         let mut mark = false;
+        // M-06 item 4 (H-75): the end tag of the region root pops every
+        // element of its region in the tree builder too, so the foreign
+        // elements that it crosses set no mark.
+        let region_root_close = self.foreign_root == Some(target);
         let matched = loop {
             let elem = self.pop()?;
             // M-06 item 4: a formatting end tag pops no marked element. A
@@ -713,8 +744,11 @@ impl<'a> Pass<'a> {
                 return Err(structure("M-06"));
             }
             // M-06 items 2 and 4 (a): a special element pushed in HTML
-            // context, or any element pushed in a foreign region.
-            if !elem.html || self.names.has(elem.name, flag::SPECIAL) {
+            // context, or any element pushed in a foreign region unless the
+            // end tag closes the region root.
+            if self.names.has(elem.name, flag::SPECIAL) && elem.html
+                || !elem.html && !region_root_close
+            {
                 if formatting {
                     return Err(structure("M-06"));
                 }
@@ -745,24 +779,38 @@ impl<'a> Pass<'a> {
         block: OpenBlock,
     ) -> Result<(), MarkupError> {
         let current = self.stack.last().map(|e| e.name);
+        let top = self
+            .stack
+            .len()
+            .checked_sub(1)
+            .ok_or_else(MarkupError::internal)?;
+        let mut target = top;
         if block.content == Content::Markup {
-            if name.is_some_and(|n| self.names.has(n, flag::VOID)) {
+            // M-22 item 4 is for the HTML context only.
+            if self.foreign_root.is_none() && name.is_some_and(|n| self.names.has(n, flag::VOID)) {
                 return Err(structure("M-22"));
             }
-            if current.is_none() || current != name {
+            // M-23 (H-75): the end tag of the region root can cross the
+            // elements of its region.
+            let root_close = self
+                .foreign_root
+                .is_some_and(|root| name.and_then(|n| self.names.top(n)) == Some(root));
+            if root_close {
+                target = self.foreign_root.ok_or_else(MarkupError::internal)?;
+            } else if current.is_none() || current != name {
                 return Err(structure("M-23"));
             }
         }
         // For a raw block the tokenizer returns only the appropriate end tag,
         // and the block element is the current node. In both cases the end
-        // tag pops exactly the current node.
-        let current = current.ok_or_else(MarkupError::internal)?;
-        let index = self
-            .stack
-            .len()
-            .checked_sub(1)
-            .ok_or_else(MarkupError::internal)?;
-        self.close(current, index)?;
+        // tag pops the current node, or the region root and the elements
+        // above it.
+        let closed = if target == top {
+            current.ok_or_else(MarkupError::internal)?
+        } else {
+            name.ok_or_else(MarkupError::internal)?
+        };
+        self.close(closed, target)?;
         if self.stack.len() == block.elem {
             return self.close_block(block, tag.span.start);
         }
@@ -779,7 +827,7 @@ impl<'a> Pass<'a> {
         if end.saturating_sub(block.start) > MAX_BLOCK_BYTES {
             return Err(limit());
         }
-        if block.format == Format::Json && !json::is_json_text(self.bytes(content)?) {
+        if block.format == Format::Json && !json::is_json_text(slice(self.input, content)?) {
             return Err(MarkupError::new(ErrorCode::BadJson, "M-25"));
         }
         self.blocks.push(RawBlock {
@@ -790,12 +838,146 @@ impl<'a> Pass<'a> {
         Ok(())
     }
 
+    /// M-11 item 8 (H-71, DL-044): the pass over the content C of the
+    /// `noscript` element that is the current node, and over the end tag
+    /// `noscript` after it. C is the rest of the input when the element has
+    /// no end tag (E3). The pass runs on the state of the main pass: the
+    /// tokens of C use the same rules, so M-05 to M-10, M-12, M-13 and the
+    /// limit on D apply to them, and the error is the one of the rule that
+    /// fails.
+    ///
+    /// Items 1 to 3 and 5 to 7 and 9 are checked by
+    /// [`Pass::noscript_start_rules`] and [`Pass::noscript_end_rules`]. When
+    /// the pass succeeds, C is balanced (item 5), so the token stack and the
+    /// marks are those of before C. D and the dirty mark of the current node
+    /// can differ, and the pass restores them (DL-044 c). The stack of C is
+    /// the part of the token stack above the `noscript` element, so it is
+    /// bounded by D (M-26).
+    fn check_noscript(&mut self, content: &[u8]) -> Result<(), MarkupError> {
+        let mut text = Vec::with_capacity(content.len().saturating_add(NOSCRIPT_END.len()));
+        text.extend_from_slice(content);
+        text.extend_from_slice(NOSCRIPT_END);
+        let base = self.stack.len();
+        let saved_depth = self.depth;
+        let saved_flags = self.stack.last().map(|e| (e.dirty, e.marked));
+        let mut tokens = Tokenizer::new(&text, 0);
+        loop {
+            let token = tokens.next_token();
+            if tokens.defect() {
+                return Err(MarkupError::internal());
+            }
+            match token {
+                Token::StartTag(tag) => {
+                    self.noscript_start_rules(&text, &tag, base)?;
+                    if let Some((kind, end_name)) = self.start_tag(&text, &tag)? {
+                        tokens.set_raw(kind, end_name);
+                    }
+                }
+                Token::EndTag(tag) => {
+                    let raw_name = slice(&text, tag.name)?;
+                    if self.noscript_end_rules(raw_name, &tag, base, content.len())? {
+                        break;
+                    }
+                    self.end_tag_rules(raw_name, &tag)?;
+                }
+                // Item 1: C ends inside a tag, a comment or a raw text.
+                Token::Eof => return Err(structure("M-11")),
+                other => self.other_token(&other)?,
+            }
+        }
+        self.depth = saved_depth;
+        if let (Some(elem), Some((dirty, marked))) = (self.stack.last_mut(), saved_flags) {
+            elem.dirty = dirty;
+            elem.marked = marked;
+        }
+        Ok(())
+    }
+
+    /// M-11 items 2, 3, 6 and 7 for a start tag of C. `base` is the size of
+    /// the token stack with the `noscript` element, so the elements of C are
+    /// at the indices from `base`.
+    fn noscript_start_rules(
+        &mut self,
+        src: &[u8],
+        tag: &Tag,
+        base: usize,
+    ) -> Result<(), MarkupError> {
+        use Known::{Body, Col, Frameset, Head, Html, Math, Noscript, Plaintext, Select, Table};
+        let name = self.names.intern(slice(src, tag.name)?);
+        // Item 4 (E8, H-22, H-28) is M-13 of the pass in `start_tag`. Item 2; item 3 (`svg` is not in the set, item 9); item 7.
+        if tag.block_attr.is_some()
+            || is_any(
+                name,
+                &[
+                    Frameset,
+                    Math,
+                    Noscript,
+                    Plaintext,
+                    Select,
+                    Known::Template,
+                    Html,
+                    Body,
+                    Head,
+                ],
+            )
+        {
+            return Err(structure("M-11"));
+        }
+        // Item 6 (H-38): a table opened in C and still open.
+        let part = self.names.has(name, flag::TABLE_PART) || name == Col.id();
+        if part && self.names.top(Table.id()).is_none_or(|t| t < base) {
+            return Err(structure("M-11"));
+        }
+        Ok(())
+    }
+
+    /// M-11 items 1, 5 and 7 for an end tag of C or the end tag after it.
+    /// Returns true for the end tag `noscript` that ends the pass.
+    fn noscript_end_rules(
+        &mut self,
+        raw_name: &[u8],
+        tag: &Tag,
+        base: usize,
+        content_len: usize,
+    ) -> Result<bool, MarkupError> {
+        let name = self.names.lookup(raw_name);
+        if name == Some(Known::Noscript.id()) {
+            // Item 1: the first end tag `noscript` starts at the end of C.
+            // Item 5: no element of C is open.
+            return if tag.span.start == content_len && self.stack.len() == base {
+                Ok(true)
+            } else {
+                Err(structure("M-11"))
+            };
+        }
+        if name.is_some_and(|n| is_any(n, &[Known::Html, Known::Body, Known::Head])) {
+            return Err(structure("M-11"));
+        }
+        // Item 5: no stray end tag, and the end tag matches the current node.
+        // Exception (H-75): the end tag of the region root.
+        let Some(current) = self.stack.last().filter(|_| self.stack.len() > base) else {
+            return Err(structure("M-11"));
+        };
+        let region_root_close = name == Some(Known::Svg.id())
+            && self.foreign_root.is_some()
+            && self.names.top(Known::Svg.id()) == self.foreign_root;
+        if name == Some(current.name) || region_root_close {
+            Ok(false)
+        } else {
+            Err(structure("M-11"))
+        }
+    }
+
     fn finish(mut self) -> Result<Vec<RawBlock>, MarkupError> {
         if let Some(start) = self.noscript.take() {
-            check_noscript(self.bytes(Span {
-                start,
-                end: self.input.len(),
-            })?)?;
+            let input = self.input;
+            self.check_noscript(slice(
+                input,
+                Span {
+                    start,
+                    end: input.len(),
+                },
+            )?)?;
         }
         if self.block.is_some() {
             return Err(structure("M-20"));
@@ -807,136 +989,10 @@ impl<'a> Pass<'a> {
     }
 }
 
-/// Start tag names that M-11 forbids in `noscript` content.
-const NOSCRIPT_FORBIDDEN: &[&[u8]] = &[
-    b"frameset",
-    b"math",
-    b"noscript",
-    b"plaintext",
-    b"select",
-    b"svg",
-    b"template",
-];
-
-/// A tag name as the tokenizer emits it (M-03): ASCII lower case, and
-/// U+0000 as U+FFFD.
-fn normalized(raw: &[u8]) -> impl Iterator<Item = u8> + '_ {
-    raw.iter().flat_map(|&byte| {
-        let (bytes, len) = if byte == 0 {
-            ([0xEF, 0xBF, 0xBD], 3)
-        } else {
-            ([byte.to_ascii_lowercase(), 0, 0], 1)
-        };
-        bytes.into_iter().take(len)
-    })
-}
-
-/// M-11 (and M-13 for C, E8): tokenize the content C of a `noscript` element
-/// followed by `</noscript>` from the data state, in HTML context. When the
-/// `noscript` element has no end tag, C is the rest of the input (E3).
-///
-/// Item 5 (H-27) keeps a separate stack of the elements of C, as name spans
-/// of the tokenized text. It grows only with the start tags of C (at least
-/// 3 bytes each), so it is bounded by the input size (M-01). C is not
-/// counted in D (M-26 item 7). Item 6 (H-38) counts the `table` elements on
-/// that stack.
-fn check_noscript(content: &[u8]) -> Result<(), MarkupError> {
-    let mut text = Vec::with_capacity(content.len().saturating_add(11));
-    text.extend_from_slice(content);
-    text.extend_from_slice(b"</noscript>");
-    let mut open: Vec<Span> = Vec::new();
-    // Item 6: the number of `table` elements on `open`.
-    let mut tables: usize = 0;
-    let mut tokens = Tokenizer::new(&text, 0);
-    loop {
-        let token = tokens.next_token();
-        if tokens.defect() {
-            return Err(MarkupError::internal());
-        }
-        match token {
-            Token::StartTag(tag) => {
-                let name = slice(&text, tag.name)?;
-                // E8 (H-22), H-28: M-13 applies to C too. A reader with
-                // scripting disabled parses C as markup and would see a
-                // manifest.
-                if name.eq_ignore_ascii_case(b"script") {
-                    if let Some(value) = tag.type_attr {
-                        if is_reserved_type(slice(&text, value)?) {
-                            return Err(MarkupError::new(ErrorCode::Reserved, "M-13"));
-                        }
-                    }
-                }
-                if tag.block_attr.is_some()
-                    || NOSCRIPT_FORBIDDEN
-                        .iter()
-                        .any(|n| n.eq_ignore_ascii_case(name))
-                {
-                    return Err(structure("M-11"));
-                }
-                // Item 6 (H-38): with scripting disabled, a table part outside
-                // a table of C closes the cell or caption around `noscript`.
-                if tables == 0
-                    && (name.eq_ignore_ascii_case(b"col")
-                        || TABLE_PART_NAMES
-                            .iter()
-                            .any(|n| n.eq_ignore_ascii_case(name)))
-                {
-                    return Err(structure("M-11"));
-                }
-                // Item 5: a start tag that M-05 item 1 pushes opens an
-                // element of C. `svg` and `math` are forbidden above, so
-                // only the VOID names are not pushed.
-                if !VOID_NAMES.iter().any(|v| v.eq_ignore_ascii_case(name)) {
-                    open.push(tag.name);
-                    if name.eq_ignore_ascii_case(b"table") {
-                        tables = tables.checked_add(1).ok_or_else(MarkupError::internal)?;
-                    }
-                }
-                if let Some((kind, end_name)) = raw_kind(name) {
-                    tokens.set_raw(kind, end_name);
-                }
-            }
-            Token::EndTag(tag) => {
-                let name = slice(&text, tag.name)?;
-                if name.eq_ignore_ascii_case(b"noscript") {
-                    // Item 1, and item 5: no element of C is open.
-                    return if tag.span.start == content.len() && open.is_empty() {
-                        Ok(())
-                    } else {
-                        Err(structure("M-11"))
-                    };
-                }
-                // Item 5: the end tag closes the last open element of C.
-                let Some(last) = open.pop() else {
-                    return Err(structure("M-11"));
-                };
-                if !normalized(slice(&text, last)?).eq(normalized(name)) {
-                    return Err(structure("M-11"));
-                }
-                if name.eq_ignore_ascii_case(b"table") {
-                    tables = tables.checked_sub(1).ok_or_else(MarkupError::internal)?;
-                }
-            }
-            Token::Eof => return Err(structure("M-11")),
-            Token::Comment(_) | Token::Doctype(_) | Token::Cdata { .. } => {}
-        }
-    }
-}
-
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn normalized_names_compare_as_the_tokenizer_emits_them() {
-        let same = |a: &[u8], b: &[u8]| normalized(a).eq(normalized(b));
-        assert!(same(b"DiV", b"div"));
-        assert!(same(b"a\0", "a\u{FFFD}".as_bytes()));
-        assert!(!same(b"a\0", b"a"));
-        assert!(!same(b"div", b"dif"));
-        assert!(!same("\u{C4}".as_bytes(), "\u{E4}".as_bytes()));
-    }
 
     #[test]
     fn a_span_outside_the_input_fails_closed() {

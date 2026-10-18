@@ -221,7 +221,10 @@ const D_SHAPES: &[(&str, usize, usize)] = &[
     // Exact pops give everything back (item 4).
     ("<b></b>", 1, 0),
     ("<svg><g></g></svg>", 2, 0),
-    ("<noscript><b><i></i></b></noscript>", 1, 0),
+    // The tags of `noscript` content count in the pass of M-11 item 8
+    // (H-71), and D is restored after the end tag (DL-044 c).
+    ("<noscript><b><i></i></b></noscript>", 3, 0),
+    ("<div><noscript><svg><path></svg></noscript></div>", 4, 0),
     ("<br><img src=\"x\">", 0, 0),
     // Implied parts count once per F and come back with F (item 3).
     ("<table><tr><td>x</td></tr></table>", 4, 0),
@@ -365,25 +368,45 @@ proptest! {
         }
     }
 
-    /// M-11 item 6 (H-38): balanced `noscript` content in a cell is valid
-    /// exactly when every table part in it has a `table` of the content
-    /// open; else `RQP_MARKUP_STRUCTURE` (M-11).
+    /// M-11 item 6 (H-38): a table part in `noscript` content in a cell
+    /// needs a `table` of the content open. Without one the result is
+    /// `RQP_MARKUP_STRUCTURE` (M-11). With one, the main pass applies M-09
+    /// condition 2 to the part (H-71): valid when the table is the current
+    /// node, else M-09.
     #[test]
     fn table_parts_in_noscript_need_an_open_table(
-        ops in nested_ops(6),
+        wrappers in prop::collection::vec(prop::bool::ANY, 0..6),
+        table_at in prop::option::of(0usize..7),
+        part in 0..4usize,
     ) {
-        let names = ["div", "table", "td", "tr", "caption", "span"];
-        let (content, holds) = nested_names(&ops, &names, |name, open| {
-            !["td", "tr", "caption"].contains(&name) || open.contains(&"table")
-        });
+        let mut content = String::new();
+        let mut open = Vec::new();
+        for depth in 0..=wrappers.len() {
+            if table_at == Some(depth) {
+                content.push_str("<table>");
+                open.push("table");
+            }
+            if let Some(&div) = wrappers.get(depth) {
+                let name = if div { "div" } else { "span" };
+                content.push_str(&format!("<{name}>"));
+                open.push(name);
+            }
+        }
+        content.push_str(["<td>x</td>", "<tr></tr>", "<caption>x</caption>", "<col>"][part]);
+        for name in open.iter().rev() {
+            content.push_str(&format!("</{name}>"));
+        }
         let input = format!(
             "<table><tr><td><noscript>{content}</noscript><div data-rq-block=\"z\">x</div></td></tr></table>"
         );
         let result = analyze(input.as_bytes()).map(|doc| doc.blocks.len());
-        if holds {
+        let table_open = open.contains(&"table");
+        if !table_open {
+            prop_assert_eq!(result, Err(MarkupError { code: ErrorCode::Structure, rule: "M-11" }));
+        } else if open.last() == Some(&"table") {
             prop_assert_eq!(result, Ok(1));
         } else {
-            prop_assert_eq!(result, Err(MarkupError { code: ErrorCode::Structure, rule: "M-11" }));
+            prop_assert_eq!(result, Err(MarkupError { code: ErrorCode::Structure, rule: "M-09" }));
         }
     }
 

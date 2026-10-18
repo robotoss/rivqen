@@ -76,8 +76,18 @@ export function isSameSiteAction(req, origin) {
   return req.headers.origin === undefined || req.headers.origin === origin;
 }
 
-/** DL-036 I4: true when the Host header is the host (with port) of the configured origin. Host names are case-insensitive. */
-export const isOwnHost = (req, host) => typeof req.headers.host === 'string' && req.headers.host.toLowerCase() === host;
+/**
+ * DL-036 I4: true when the Host header is the authority of the configured origin. `host` is
+ * the URL host (with a non-default port) and `defaultPort` is 80 for http, 443 for https. The
+ * default port is the same authority as no port (RFC 9110 sections 4.2.1 and 4.2.2), so both
+ * forms are accepted. The comparison is exact otherwise, ASCII case-insensitive.
+ */
+export function isOwnHost(req, host, defaultPort) {
+  const value = req.headers.host;
+  if (typeof value !== 'string') return false;
+  const lower = value.replace(/[A-Z]/g, (c) => c.toLowerCase());
+  return lower === host || (defaultPort !== undefined && lower === `${host}:${defaultPort}`);
+}
 
 /**
  * Create the demo server (not listening yet).
@@ -88,6 +98,8 @@ export function createDemoServer({ origin }) {
   const parsed = new URL(origin);
   const ownOrigin = parsed.origin; // normalized once: the Origin header of a browser is in this form
   const ownHost = parsed.host;
+  // parsed.host never holds the default port. With another explicit port the host has one form only.
+  const defaultPort = parsed.port !== '' ? undefined : parsed.protocol === 'https:' ? 443 : 80;
 
   function handleCatalog(req, res, ctx) {
     const request = { method: req.method, target: `${origin}/catalog`, headers: requestLines(req.rawHeaders) };
@@ -103,7 +115,7 @@ export function createDemoServer({ origin }) {
     let bytes = 0;
     try {
       const path = safeUrl(req.url ?? '/');
-      if (!isOwnHost(req, ownHost)) {
+      if (!isOwnHost(req, ownHost, defaultPort)) {
         res.writeHead(421, { ...COMMON, 'Content-Length': 0 }); // no detail, no state change
         res.end();
       } else if ((req.method === 'GET' || req.method === 'HEAD') && path === '/catalog') {

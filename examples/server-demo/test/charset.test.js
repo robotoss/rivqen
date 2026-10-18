@@ -20,7 +20,7 @@ test('H-62 item 2: the name is not trimmed, so "charset " is not a charset and F
   for (const value of ['text/html; charset = utf-8', 'text/html; charset =utf-8']) {
     const r = run(value);
     assert.equal(r.mode, 'full', value);
-    assert.equal(header(r, 'content-type'), `${value}; charset=utf-8`, value);
+    assert.equal(header(r, 'content-type'), 'text/html; charset=utf-8', value);
   }
 });
 
@@ -34,10 +34,10 @@ test('H-62 item 4: an unclosed quoted string swallows the appended parameter: th
 test('H-62 item 2: an empty unquoted value does not count; the next valid charset parameter wins', () => {
   const none = run('text/html; charset=');
   assert.equal(none.mode, 'full');
-  assert.equal(header(none, 'content-type'), 'text/html; charset=; charset=utf-8');
+  assert.equal(header(none, 'content-type'), 'text/html; charset=utf-8');
   const next = run('text/html; charset=; charset=utf-8');
   assert.equal(next.mode, 'full');
-  assert.equal(header(next, 'content-type'), 'text/html; charset=; charset=utf-8');
+  assert.equal(header(next, 'content-type'), 'text/html; charset=utf-8');
 });
 
 test('H-62 item 2: a quoted value loses its quotes and its backslash escapes', () => {
@@ -104,9 +104,10 @@ test('charsetParameter reads parameters up to ";" and skips names without a valu
   assert.equal(charsetParameter('text/html; charset="a;b"'), 'a;b');
 });
 
-test('fullContentType keeps the other lines and returns the same lines for a UTF-8 charset', () => {
-  const ok = [['content-type', 'text/html; charset=utf-8'], ['x', 'y']];
-  assert.equal(fullContentType(ok), ok);
+test('fullContentType (H-66) gives one exact Content-Type line and keeps the other lines', () => {
+  const ok = [['content-type', 'text/html; charset="UTF-8"'], ['x', 'y']];
+  assert.deepEqual(fullContentType(ok), [['content-type', 'text/html; charset=utf-8'], ['x', 'y']]);
+  assert.equal(fullContentType([['content-type', 'text/html; charset=latin1']]), null);
   const appended = fullContentType([['x', 'y'], ['content-type', 'text/html']]);
   assert.deepEqual(appended, [['x', 'y'], ['content-type', 'text/html; charset=utf-8']]);
 });
@@ -151,8 +152,11 @@ test('property: the demo reads the Content-Type like the reference and makes the
     const reference = referenceHandle(get(), app, page());
     const demo = handle(get(), app, page());
     assert.equal(demo.mode === 'full', reference.kind === 'full', label);
-    const typeOf = (r) => r.headers.filter(([n]) => n === 'content-type');
-    assert.deepEqual(typeOf(demo), typeOf(reference), label);
+    // H-66: the reference and the demo give F the exact value; the test does not compare that text
+    // with the reference (the reference changes in a parallel lane). The demo value is asserted here.
+    if (demo.mode === 'full') {
+      assert.deepEqual(demo.headers.filter(([n]) => n === 'content-type'), [['content-type', 'text/html; charset=utf-8']], label);
+    }
     assert.deepEqual(demo.body, reference.body, label);
   }
   assert.deepEqual([...seen].sort(), [CHARSET.NONE, CHARSET.OTHER, CHARSET.UTF8]);

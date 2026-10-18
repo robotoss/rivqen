@@ -2,7 +2,7 @@
 
 `examples/server-demo` is a small Node.js server. It shows the Rivqen protocol (RQP) from the server side: block markup, manifest, `304`, block patch and safe fallback.
 
-**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 65 tests pass, and the demo passes all 69 server protocol fixtures (checked 2026-10-12, Node.js 22 or later). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
+**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 95 tests pass, and the demo passes all 74 server protocol fixtures (checked 2026-10-18, Node.js 22 or later). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
 
 [[toc]]
 
@@ -37,7 +37,7 @@ The server listens on `127.0.0.1:8787`. To change the port, set `PORT`.
 | `POST` | `/__demo/next-template` | Adds a menu item (template change). Same protection as `next-data`. |
 | `GET` | `/healthz` | `{ "ok": true, "state": … }` |
 
-<Badge type="tip" text="FACT" /> Every route answers only a request whose `Host` header is the host (with port) of `ORIGIN`, compared without case. Any other request gets `421` with no body, and the server changes nothing (DL-036).
+<Badge type="tip" text="FACT" /> Every route answers only a request whose `Host` header is the host of `ORIGIN`, compared without case. The default port of the origin scheme (`:443` for https, `:80` for http) is the same authority as no port, so both forms are accepted (RFC 9110 sections 4.2.1 and 4.2.2); any other port gets `421`. Any other request gets `421` with no body, and the server changes nothing (DL-036).
 
 ## 4. How the server answers `/catalog`
 
@@ -58,7 +58,7 @@ flowchart TD
   S -- no --> F
 ```
 
-<Badge type="tip" text="FACT" /> The page must be UTF-8 (H-62). When the `Content-Type` of the page has a `charset` parameter that is not a label of UTF-8 in the [WHATWG Encoding Standard](https://encoding.spec.whatwg.org/) (for example `iso-8859-1`), the server sends the page unchanged, without RQP. When the `Content-Type` has no `charset` parameter, the full document gets `; charset=utf-8`. A UTF-8 label (`utf-8`, `utf8`, `"UTF-8"`) stays as it is.
+<Badge type="tip" text="FACT" /> The page must be UTF-8 (H-62). When the `Content-Type` of the page has a `charset` parameter that is not a label of UTF-8 in the [WHATWG Encoding Standard](https://encoding.spec.whatwg.org/) (for example `iso-8859-1`), the server sends the page unchanged, without RQP. The full document always has exactly one `Content-Type` line with the value `text/html; charset=utf-8` (H-66), whatever the `Content-Type` text of the page was (no `charset`, `utf8` or `"UTF-8"`). A delta keeps its own content type.
 
 Every client gets the same full document: a browser without RQP also gets the manifest, `Rq-Version: 1` and the `ETag` `"r1.…"`. The browser ignores the manifest script.
 
@@ -131,14 +131,14 @@ Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so th
 npm test
 ```
 
-<Badge type="tip" text="FACT" /> The 76 tests check, by behavior:
+<Badge type="tip" text="FACT" /> The 95 tests check, by behavior:
 
 - the response selection: full document, `304`, delta, the size rules, the attribute rule (H-56), invalid pages, the charset rule, a weak `ETag` with a content coding, no state between requests;
 - the known answers of `spec/rqp/examples/kat`: the full documents, both page revisions and the example patches;
 - the request fields and the Structured Field parser;
 - the insertion point of the manifest and the attribute rule;
 - the HTTP adapter on a loopback socket: first visit, revisit, data change, template change, the `Host` check (`421`);
-- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 69 server fixtures pass (`FX-RQ-P*`), also the two `FX-RQ-P35` cases (level SHOULD).
+- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 74 server fixtures pass (`FX-RQ-P*`), also the two `FX-RQ-P35` cases (level SHOULD).
 
 To run the fixtures alone, run this command in `examples/server-demo`:
 

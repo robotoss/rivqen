@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { request } from 'node:http';
 
 process.env.LOG_LEVEL = 'info';
-const { createDemoServer, pathTemplate } = await import('../src/app.js');
+const { createDemoServer, pathTemplate, isOwnHost } = await import('../src/app.js');
 
 const ORIGIN = 'https://shop.example.com';
 const ACTION = [['Rq-Demo-Action', '1']];
@@ -115,6 +115,64 @@ test('a request with another Host is refused with 421, no body, on every route, 
     }
   }
   assert.deepEqual(await state(), before);
+});
+
+test('the default port of the origin scheme is the same authority as no port (RFC 9110 sections 4.2.1, 4.2.2)', async () => {
+  assert.equal((await call('GET', '/healthz', [['Host', 'shop.example.com:443']])).status, 200);
+  assert.equal((await call('GET', '/healthz', [['Host', 'SHOP.example.com:443']])).status, 200);
+  for (const host of ['shop.example.com:80', 'shop.example.com:', 'shop.example.com:0443', 'shop.example.com:443:443']) {
+    assert.equal((await call('GET', '/healthz', [['Host', host]])).status, 421, host);
+  }
+});
+
+test('isOwnHost: the default port depends on the scheme; a non-default port must match exactly', () => {
+  const own = (host, value, port) => isOwnHost({ headers: { host: value } }, host, port);
+  assert.equal(own('a.test', 'a.test:80', 80), true);
+  assert.equal(own('a.test', 'a.test:443', 80), false);
+  assert.equal(own('a.test', 'A.TEST:443', 443), true);
+  assert.equal(own('a.test:8080', 'a.test:8080', undefined), true);
+  assert.equal(own('a.test:8080', 'a.test:8080:80', undefined), false);
+  assert.equal(own('a.test:8080', 'a.test', undefined), false);
+  assert.equal(own('a.test', 'a.test', 80), true);
+  assert.equal(isOwnHost({ headers: {} }, 'a.test', 80), false);
+});
+
+test('an origin with a non-default port accepts only that port', async () => {
+  const own = createDemoServer({ origin: 'http://shop.example.com:8080' });
+  await new Promise((resolve) => own.listen(0, '127.0.0.1', resolve));
+  try {
+    const status = (host) =>
+      new Promise((resolve, reject) => {
+        request(`http://127.0.0.1:${own.address().port}/healthz`, { headers: { Host: host } }, (res) => {
+          res.resume();
+          res.on('end', () => resolve(res.statusCode));
+        }).on('error', reject).end();
+      });
+    assert.equal(await status('shop.example.com:8080'), 200);
+    assert.equal(await status('shop.example.com'), 421);
+    assert.equal(await status('shop.example.com:80'), 421);
+    assert.equal(await status('shop.example.com:8080:80'), 421);
+  } finally {
+    await new Promise((resolve) => own.close(resolve));
+  }
+});
+
+test('an http origin accepts :80', async () => {
+  const own = createDemoServer({ origin: 'http://shop.example.com' });
+  await new Promise((resolve) => own.listen(0, '127.0.0.1', resolve));
+  try {
+    const status = (host) =>
+      new Promise((resolve, reject) => {
+        request(`http://127.0.0.1:${own.address().port}/healthz`, { headers: { Host: host } }, (res) => {
+          res.resume();
+          res.on('end', () => resolve(res.statusCode));
+        }).on('error', reject).end();
+      });
+    assert.equal(await status('shop.example.com:80'), 200);
+    assert.equal(await status('shop.example.com:443'), 421);
+  } finally {
+    await new Promise((resolve) => own.close(resolve));
+  }
 });
 
 test('the Host name is compared without case', async () => {

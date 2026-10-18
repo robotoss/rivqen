@@ -2419,3 +2419,295 @@ fn large_nested_inputs_closed_by_end_tags_finish() {
         assert_eq!(text.as_bytes(), content.as_slice());
     }
 }
+
+// ---- WP-17 S3: H-71, H-73, H-74, H-75 ----------------------------------------
+
+/// M-22 item 5 (H-73): `svg` and `math` in the content open a region; a start
+/// tag there must be in `FOREIGN_ALLOWED`.
+#[test]
+fn m22_5_foreign_regions_in_html_block_content() {
+    let icon = "<svg viewBox=\"0 0 16 16\"><title>Close</title><path d=\"M0\"/></svg> Close";
+    assert_eq!(
+        blocks(&format!("<span data-rq-block=\"i\">{icon}</span>")),
+        [html("i", icon)]
+    );
+    let math = "<math><mi>x</mi><mo>+</mo><mn>1</mn></math>";
+    assert_eq!(
+        blocks(&format!("<p data-rq-block=\"f\">{math}</p>")),
+        [html("f", math)]
+    );
+    // A self-closing region root opens no region (M-22 item 3 exempts it).
+    assert_eq!(
+        blocks("<p data-rq-block=\"s\"><svg/><math/>x</p>"),
+        [html("s", "<svg/><math/>x")]
+    );
+    // Names that are not in FOREIGN_ALLOWED fail with item 5.
+    for name in [
+        "a",
+        "animate",
+        "set",
+        "foreignObject",
+        "image",
+        "feImage",
+        "script",
+        "style",
+        "textPath",
+        "maction",
+        "annotation-xml",
+        "unknown-name",
+    ] {
+        let body = format!("<p data-rq-block=\"b\"><svg><{name}></{name}></svg></p>");
+        assert_invalid(&body, STRUCTURE, "M-22");
+    }
+    assert_invalid(
+        "<p data-rq-block=\"b\"><math><maction></maction></math></p>",
+        STRUCTURE,
+        "M-22",
+    );
+    // A self-closing element of the region that is not allowed: item 5 too.
+    assert_invalid(
+        "<p data-rq-block=\"b\"><svg><set attributeName=\"x\"/></svg></p>",
+        STRUCTURE,
+        "M-22",
+    );
+    // Items 2 to 4 are for the HTML context only: `title` is forbidden in
+    // HTML content, and allowed in the region.
+    assert_invalid(
+        "<p data-rq-block=\"b\"><title>x</title></p>",
+        STRUCTURE,
+        "M-22",
+    );
+    // M-07 applies in the region of the content.
+    assert_invalid(
+        "<p data-rq-block=\"b\"><svg><desc><g></g></desc></svg></p>",
+        STRUCTURE,
+        "M-07",
+    );
+    assert_invalid(
+        "<p data-rq-block=\"b\"><svg><p>x</p></svg></p>",
+        STRUCTURE,
+        "M-07",
+    );
+    assert_invalid(
+        "<p data-rq-block=\"b\"><svg><title>a<b></b></title></svg></p>",
+        STRUCTURE,
+        "M-07",
+    );
+    // M-17 comes first for a block start tag in the region.
+    assert_eq!(
+        error("<p data-rq-block=\"b\"><svg><g data-rq-block=\"c\"></g></svg></p>"),
+        (ErrorCode::Nested, "M-17")
+    );
+    // M-24 item k applies to the region root start tag in table context.
+    assert_invalid(
+        "<td><p data-rq-block=\"b\"><table><svg></svg></table></p></td>",
+        STRUCTURE,
+        "M-24",
+    );
+}
+
+/// M-23 (H-73, H-75): balance in a region of the content.
+#[test]
+fn m23_balance_in_a_foreign_region_of_the_content() {
+    // The end tag of the region root closes the elements of its region.
+    let content = "<svg><g><path d=\"M0\"></svg>";
+    assert_eq!(
+        blocks(&format!("<p data-rq-block=\"b\">{content}</p>")),
+        [html("b", content)]
+    );
+    // Every other end tag matches the current node.
+    assert_invalid(
+        "<p data-rq-block=\"b\"><svg><g><path d=\"M0\"></g></svg></p>",
+        STRUCTURE,
+        "M-23",
+    );
+    assert_invalid(
+        "<p data-rq-block=\"b\"><svg></g></svg></p>",
+        STRUCTURE,
+        "M-23",
+    );
+    // An inner `svg` is not the region root.
+    assert_invalid(
+        "<p data-rq-block=\"b\"><svg><svg><path d=\"M0\"></svg></svg></p>",
+        STRUCTURE,
+        "M-23",
+    );
+    assert_valid("<p data-rq-block=\"b\"><svg><svg></svg></svg></p>");
+    // The block end tag can not close an open region.
+    assert_invalid("<p data-rq-block=\"b\"><svg><g></p>", STRUCTURE, "M-23");
+    // M-22 item 4 does not apply in the region: `</br>` is a stray end tag.
+    assert_invalid(
+        "<p data-rq-block=\"b\"><svg></br></svg></p>",
+        STRUCTURE,
+        "M-23",
+    );
+    // M-07 item 6 with M-20: the input ends in a region of the content.
+    assert_eq!(
+        error_of(b"<p data-rq-block=\"b\"><svg><path d=\"M0\">"),
+        (STRUCTURE, "M-20")
+    );
+}
+
+/// M-26 in a region of the content (H-73): pushes count.
+#[test]
+fn m26_pushes_in_a_foreign_region_of_the_content_count() {
+    let block = |n: usize| {
+        format!(
+            "<p data-rq-block=\"b\"><svg>{}{}</svg></p>",
+            "<g>".repeat(n),
+            "</g>".repeat(n)
+        )
+    };
+    // The block element, the region root and 254 elements.
+    depth_valid(&block(254));
+    depth_limit(&block(255));
+}
+
+/// M-06 item 4 and M-26 (H-75): the crossing sets no mark but D stays.
+#[test]
+fn m26_region_root_crossing_keeps_d() {
+    let icons = |n: usize| {
+        format!(
+            "{}<p data-rq-block=\"z\">x</p>",
+            "<span><svg><path d=\"M0\"></svg></span>".repeat(n)
+        )
+    };
+    depth_valid(&icons(85));
+    depth_limit(&icons(86));
+}
+
+/// M-11 item 9 (H-74) and item 5 (H-75): a region in `noscript` content.
+#[test]
+fn m11_9_foreign_region_in_noscript_content() {
+    for body in [
+        "<noscript><img src=\"p.gif\"><svg width=\"1\" height=\"1\"><path d=\"M0\"></path></svg></noscript>",
+        "<noscript><a href=\"/\"><svg><path d=\"M0\"></svg>Home</a></noscript>",
+        "<noscript><svg><g><path d=\"M0\"></svg></noscript>",
+        "<noscript><svg><svg></svg></svg></noscript>",
+        "<noscript><svg/></noscript>",
+        "<noscript><svg><style><![CDATA[.a{fill:red}]]></style></svg></noscript>",
+        "<noscript><svg><desc>a < b</desc></svg></noscript>",
+    ] {
+        assert_valid(body);
+    }
+    // E3: no end tag.
+    assert!(analyze(b"<noscript><svg><path d=\"M0\"></svg>").is_ok());
+    for (body, rule) in [
+        // Item 5: only the end tag of the region root can cross.
+        (
+            "<noscript><svg><g><path d=\"M0\"></g></svg></noscript>",
+            "M-11",
+        ),
+        (
+            "<noscript><svg><svg><path d=\"M0\"></svg></svg></noscript>",
+            "M-11",
+        ),
+        ("<noscript><svg><g></noscript>", "M-11"),
+        ("<noscript><svg></g></svg></noscript>", "M-11"),
+        // Items 2, 3, 6, 7 in the region.
+        (
+            "<noscript><svg><g data-rq-block=\"a\"></g></svg></noscript>",
+            "M-11",
+        ),
+        (
+            "<noscript><svg><template></template></svg></noscript>",
+            "M-11",
+        ),
+        ("<noscript><svg><select></select></svg></noscript>", "M-11"),
+        ("<noscript><svg><tr></tr></svg></noscript>", "M-11"),
+        ("<noscript><svg><body></body></svg></noscript>", "M-11"),
+        ("<noscript><svg><html></html></svg></noscript>", "M-11"),
+        // Item 3: `math` stays forbidden.
+        ("<noscript><math><mi>x</mi></math></noscript>", "M-11"),
+        ("<noscript><svg><math></math></svg></noscript>", "M-11"),
+        // Item 8: the rules of the main pass in the region.
+        ("<noscript><svg><p>x</p></svg></noscript>", "M-07"),
+        (
+            "<noscript><svg><title><g></g></title></svg></noscript>",
+            "M-07",
+        ),
+        (
+            "<noscript><svg><textarea><b></b></textarea></svg></noscript>",
+            "M-07",
+        ),
+        (
+            "<noscript><svg><style><![CDATA[a>b{}]]></style></svg></noscript>",
+            "M-12",
+        ),
+    ] {
+        assert_invalid(body, STRUCTURE, rule);
+    }
+    assert_invalid(
+        "<noscript><svg><script type=\"rivqen-manifest\"></script></svg></noscript>",
+        ErrorCode::Reserved,
+        "M-13",
+    );
+}
+
+/// M-11 item 7 (H-71): `html`, `body` and `head` tags anywhere in C.
+#[test]
+fn m11_7_document_tags_in_noscript_content() {
+    for content in [
+        "<html>",
+        "<body>",
+        "<head>",
+        "</html>",
+        "</body>",
+        "</head>",
+        "<BODY class=\"x\">",
+        "<div></body></div>",
+    ] {
+        assert_invalid(
+            &format!("<noscript>{content}</noscript>"),
+            STRUCTURE,
+            "M-11",
+        );
+    }
+    assert_valid("<noscript><header></header><bodyx></bodyx></noscript>");
+}
+
+/// M-11 item 8 (H-71, DL-044): C goes through the rules of the main pass.
+#[test]
+fn m11_8_main_pass_rules_in_noscript_content() {
+    // M-10 item 2: a form is open around the `noscript`.
+    assert_invalid(
+        "<form><noscript><form>x</form></noscript></form>",
+        STRUCTURE,
+        "M-10",
+    );
+    assert_invalid(
+        "<form><div><noscript><form></form></noscript></div></form>",
+        STRUCTURE,
+        "M-10",
+    );
+    assert_valid("<form></form><noscript><form></form></noscript><form></form>");
+    // M-09 condition 2: F is the outer table.
+    assert_invalid(
+        "<table><noscript><table></table></noscript></table>",
+        STRUCTURE,
+        "M-09",
+    );
+    // M-09 condition 2 inside C (the security review repro T-16).
+    assert_invalid(
+        "<object><a href=\"1\"><noscript><table><marquee><table></table></marquee></table></noscript>x</a></object>",
+        STRUCTURE,
+        "M-09",
+    );
+    assert_invalid("<noscript><![CDATA[a>b]]></noscript>", STRUCTURE, "M-12");
+    // After the end tag, the main pass has its own state: the `form` of C is
+    // gone, and the dirty mark of the region crossing is restored.
+    assert_valid("<noscript><form></form></noscript><form></form>");
+    assert_valid("<b><noscript><svg><path d=\"M0\"></svg></noscript></b>");
+}
+
+/// The state of the main pass after the end tag `noscript` (DL-044 c): the
+/// dirty mark that the region crossing sets in the pass of item 8 is gone, so
+/// the exact pops give their units back and D is 0 after each repeat.
+#[test]
+fn m11_8_state_after_noscript_is_the_state_before_it() {
+    let icon = "<noscript><svg><path d=\"M0\"></svg></noscript>";
+    depth_valid(&format!(
+        "{}<p data-rq-block=\"z\">x</p>",
+        format!("<div>{icon}</div>").repeat(300)
+    ));
+}

@@ -12,6 +12,7 @@ import { LIMITS, pageRevision, sha256b64u } from '../src/common.mjs';
 import {
   cacheDirectives,
   checkFull,
+  clientRequest,
   clientStep,
   deltaPartition,
   handleResponse,
@@ -27,7 +28,7 @@ import {
   verifyDelta,
   withoutCredentials,
 } from '../src/client.mjs';
-import { analyze, attributeRejected, attributesOf, documentHeadStart, passesAttributeRule } from '../src/markup.mjs';
+import { analyze, attributeRejected, attributesOf, documentHeadStart, findManifestElements, isManifestType, passesAttributeRule } from '../src/markup.mjs';
 import { fullDocument, handle, manifestOf } from '../src/server.mjs';
 import { APP, TARGET, blockPage, clientContext, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
 
@@ -683,4 +684,120 @@ test('attribute tokenizer: quoted, unquoted, valueless, duplicate and "=" names'
 test('the server never inserts a manifest text that contains "<" (manifest-patch section 1.7, server item 3)', () => {
   assert.equal(fullDocument(page('page-a'), 0, { a: '<' }), null);
   assert.equal(snapshotOf(blockPage('é')).analysis.blocks[0].id, 'x');
+});
+
+const pick = (r) => [r.outcome, r.error, r.next];
+/** page-a with `extra` immediately after its title element. */
+const p2 = (extra) => page('page-a').toString('utf8').replace('</title>', `</title>${extra}`);
+
+test('a snapshot needs a document that is valid for RQP', () => {
+  assert.throws(() => snapshotOf(page('page-c')), /valid for RQP/);
+});
+
+test('a block of exactly 4096 bytes lists its content in the result; one byte more does not', () => {
+  const stored = (n) => {
+    const body = handle(firstVisit(), APP, blockPage('a'.repeat(n))).body;
+    return handleResponse(ctx({ snapshot: null, navigation: 'first-visit' }), { status: 200, headers: HTML, body }).snapshot.blocks[0];
+  };
+  assert.equal(stored(4096).content, 'a'.repeat(4096));
+  assert.equal(Object.hasOwn(stored(4097), 'content'), false);
+});
+
+test('rule 5: no scheme other than https and http gets RQP, also in a debug build with the http flag', () => {
+  for (const url of ['ftp://shop.example.com/catalog', 'ws://shop.example.com/catalog']) {
+    const c = clientContext({ url, allowlist: [new URL(url).origin], build: 'debug', allow_http: true });
+    assert.equal(rqpAllowed(c), false, url);
+  }
+});
+
+test('only a 200 with the delta type is a delta, and only a 200 text/html with Rq-Version 1 is a full document', () => {
+  const delta = Buffer.from(JSON.stringify(envelope([['price', '130.00']])));
+  for (const status of [203, 206]) {
+    assert.deepEqual(pick(handleResponse(ctx(), { status, headers: DELTA, body: delta })), ['normal', null, 'show'], String(status));
+  }
+  const full = fullOf('page-a');
+  const first = ctx({ snapshot: null, navigation: 'first-visit' });
+  const cases = [
+    [404, HTML],
+    [200, [['content-type', 'application/xhtml+xml; charset=utf-8'], ['rq-version', '1']]],
+    [200, [['content-type', 'text/html; charset=utf-8'], ['rq-version', '1.0']]],
+  ];
+  for (const [status, headers] of cases) {
+    assert.deepEqual(pick(handleResponse(first, { status, headers, body: full })), ['normal', null, 'show'], JSON.stringify([status, headers]));
+  }
+});
+
+test('MANIFEST_INVALID: the manifest names the template revision and the blocks of the analysis, also with a matching page revision', () => {
+  const p = page('page-a');
+  const at = documentHeadStart(p);
+  const m = manifestOf(revisions('page-a'), TARGET);
+  const error = (manifest, doc = p, where = at) => {
+    const element = Buffer.from(`<script type="application/rivqen-manifest+json">${JSON.stringify(manifest)}</script>`);
+    return checkFull({ url: TARGET }, Buffer.concat([doc.subarray(0, where), element, doc.subarray(where)])).error ?? null;
+  };
+  assert.equal(error(m), null);
+  const renamed = (i, change) => m.blocks.map((b, k) => (k === i ? { ...b, ...change } : b));
+  assert.equal(error({ ...m, template_revision: revisions('page-t2').template_revision }), 'analysis');
+  assert.equal(error({ ...m, blocks: [...m.blocks, { id: 'extra', format: 'html', sha256: m.blocks[0].sha256 }] }), 'analysis');
+  assert.equal(error({ ...m, blocks: renamed(1, { id: 'cost' }) }), 'analysis');
+  assert.equal(error({ ...m, blocks: renamed(2, { format: 'html' }) }), 'analysis');
+  // An original document that is not valid for RQP.
+  const c = page('page-c');
+  assert.equal(error(m, c, documentHeadStart(c)), 'analysis');
+});
+
+test('manifest elements: only a script start tag with exactly the 32 bytes of the type, ASCII case-insensitive', () => {
+  const span = (s) => [Buffer.from(s), { start: 0, end: Buffer.byteLength(s) }];
+  assert.equal(isManifestType(...span('application/rivqen-manifest+json')), true);
+  assert.equal(isManifestType(...span('application/rivqen-manifest+jsox')), false);
+  assert.equal(isManifestType(Buffer.alloc(0), null), false);
+  const doc = Buffer.from('<html><head></head><body><div type="application/rivqen-manifest+json"></div><p></script type="application/rivqen-manifest+json"></body>');
+  assert.deepEqual(findManifestElements(doc).elements, []);
+  // A classic script (no type attribute) is not a manifest element.
+  const classic = Buffer.from(p2('<script>var n = 1;</script>'));
+  assert.equal(analyze(classic).valid, true);
+  const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit' }), { status: 200, headers: HTML, body: handle(firstVisit(), APP, classic).body });
+  assert.equal(r.outcome, 'stored');
+});
+
+test('diff-engine order: a wrong next_revision (step 7) is found before the markup analysis of the patched document (step 8)', () => {
+  const env = envelope([['price', '<span data-rq-block="y">a</span>']], { next_revision: revisions('page-b').page_revision });
+  assert.equal(code(env), 'INTEGRITY_ERROR');
+  assert.equal(code(envelope([['price', '<span data-rq-block="y">a</span>']])), 'PATCH_CONTENT_REJECTED');
+});
+
+test('a patched document of exactly maxDocumentBytes is applied', () => {
+  const content = 'b'.repeat(300);
+  const head = '<!DOCTYPE html><html><head><title>t</title></head><body><p>';
+  const tail = '</p><div data-rq-block="x">1</div></body></html>';
+  const filler = 'a'.repeat(LIMITS.maxDocumentBytes - head.length - tail.length - content.length + 1);
+  const snap = snapshotOf(Buffer.from(head + filler + tail));
+  const a = snap.analysis;
+  const sha = sha256b64u(content);
+  const env = {
+    type: 'rivqen.patch',
+    protocol: 'rqp/1',
+    base_revision: snap.page_revision,
+    next_revision: pageRevision(a.template_revision, [{ ...a.blocks[0], sha256: sha }]),
+    template_revision: a.template_revision,
+    operations: [{ op: 'replace_block', block_id: 'x', format: 'html', content, sha256: sha }],
+  };
+  const r = verifyDelta(snap, Buffer.from(JSON.stringify(env)), true);
+  assert.equal(r.code, undefined);
+  assert.equal(r.snapshot.document.length, LIMITS.maxDocumentBytes);
+});
+
+test('step 9: the attribute rule reads only html blocks; a json block with markup text is applied', () => {
+  const r = verify(envelope([['cart', '{"t":"<b onclick=x>"}']]));
+  assert.equal(r.code, undefined);
+  assert.equal(r.snapshot.analysis.blocks[2].id, 'cart');
+});
+
+test('harness interface: the request fields of a context, and a context snapshot that does not match its document', () => {
+  const s = snapA();
+  const plain = { document: page('page-a'), template_revision: s.analysis.template_revision, page_revision: s.page_revision, blocks: [] };
+  const context = { ...ctx(), snapshot: plain };
+  assert.deepEqual(clientRequest(context), deltaRequest('page-a').headers);
+  assert.deepEqual(clientRequest({ ...context, snapshot: null, navigation: 'first-visit' }), firstVisit().headers);
+  assert.throws(() => clientStep({ ...context, snapshot: { ...plain, page_revision: revisions('page-b').page_revision } }, { status: 304, headers: [], body: null }), /does not match/);
 });

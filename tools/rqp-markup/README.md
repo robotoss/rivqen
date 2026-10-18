@@ -57,7 +57,7 @@ A candidate that is not built is never skipped silently. Use `--only` to leave i
 ### `candidates.json`
 
 ```json
-[{ "name": "node", "cwd": "tools/rqp-markup/node", "build": ["npm", "ci"], "run": ["node", "src/cli.mjs", "--batch", "{dir}"] }]
+[{ "name": "node", "cwd": "tools/rqp-markup/node", "build": null, "run": ["node", "src/cli.mjs", "--batch", "{dir}"] }]
 ```
 
 | Field | Rule |

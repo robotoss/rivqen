@@ -8,7 +8,7 @@
   {
     "name": "node",
     "cwd": "tools/rqp-markup/node",
-    "build": ["npm", "ci", "--ignore-scripts", "--silent"],
+    "build": null,
     "run": ["node", "src/cli.mjs", "--batch", "{dir}"]
   },
   {

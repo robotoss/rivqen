@@ -695,7 +695,7 @@ To repeat the Chrome check, write each input to a file and run `"/Applications/G
 
 ### 8.5 GAP-1: template content patching
 
-<Badge type="tip" text="FACT" /> The current WHATWG text has **content patching**. §4.12.3: the `template` element has the content attribute `for` ("Updates existing content"). §13.2.6.4.4, "in head", "A start tag whose tag name is "template"": when `shadowrootmode` is not set and "templateStartTag's for attribute is specified", the tree builder runs "prepare content patching". The steps are:
+<Badge type="tip" text="FACT" /> The current WHATWG text has **content patching**. §4.12.3: the `template` element has the content attribute `for` ("Updates existing content"). §13.2.6.4.4, "in head", "A start tag whose tag name is "template"": when `shadowrootmode` is not set, the step "Otherwise, if template has a for attribute:" makes the tree builder run the algorithm "prepare content patching" (checked 2026-10-18). The steps are:
 
 1. The scope is "the node that contains the adjusted insertion location"; when that is the `body`, the scope is its parent, so a `template` in the body can patch the `head`.
 2. "find markers" walks the descendants of the scope in tree order. It takes the first processing instruction `<?marker name="…">`, or `<?start name="…">` with its matching `<?end>` among the next siblings. A `<?start>` without `<?end>` is "a range from start to the end of its parent".

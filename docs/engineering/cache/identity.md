@@ -29,7 +29,7 @@ cache_key = SHA-256(partition ‖ origin ‖ canonical_url ‖ method ‖ vary_v
 ## 2. URL canonicalization
 
 1. Lowercase the scheme and the host. Apply IDNA to the host.
-2. Remove the default port (`443` for `https`).
+2. Remove the default port of the scheme (`443` for `https`, `80` for `http` in debug builds).
 3. Remove the fragment (`#…`).
 4. Normalize percent-encoding: decode unreserved characters, uppercase hex digits.
 5. Keep **all** query parameters by default. Do not sort them unless the app declares that order is not significant.

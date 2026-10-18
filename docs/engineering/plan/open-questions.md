@@ -21,6 +21,11 @@ This page lists questions that block or shape decisions. Each question has a way
 | Q-12 | Who owns cookies and auth during native early fetch on Android and iOS? | Cookie isolation tests; API mapping | Sensitive pages | WP-04 |
 | Q-13 | Can Compression Dictionary Transport replace or complement block patches in RQP? | Benchmark on real pages; platform support check | Nothing in P1 (human, 2026-10-09: moved to P8; RQP 1 reserves the capability token `dict-compression`) | WP-16 |
 | Q-16 | Use the Arcmutate plugins (line-level git scope for PIT, Kotlin-aware mutation, Android)? They are commercial; a free licence for open-source projects is announced but not verified | Confirm licence terms in writing; compare with class-scoped PIT on the first JVM/Kotlin WP | JVM/Kotlin mutation gate | WP-14, WP-10 |
+| Q-17 | Does an optional Chrome oracle in `tools/rqp-markup/crosscheck` find gaps that parse5 8.0.1 cannot (processing instructions, content patching, new `select` modes)? ([edge cases §8.6](/engineering/protocol/markup-edge-cases#_8-6-follow-ups), item 1) | Architect decision to add the oracle, then a run of the `cases` command | Confidence in M-rules after the 2025 WHATWG changes | WP-17 |
+| Q-18 | How many pages of the corpus (882 pages) hold `template for`, `<?marker` and `<?start`? ([edge cases §8.6](/engineering/protocol/markup-edge-cases#_8-6-follow-ups), item 3) | Count in `tools/rqp-markup/corpus` and write the numbers in `evidence/markup-corpus/summary.md` | Strictness numbers of the markup rules | WP-17 |
+| Q-19 | What does a browser with scripting disabled do with the `noscript` shapes of M-11? parse5 is the only parser that was checked (NOT FOUND for a browser) | Run the golden shapes in a browser engine with scripting disabled | Claim of M-11 in the scripting-disabled view | WP-17 |
+| Q-20 | Do real WebViews follow H-66 (exact `Content-Type`, UTF-8 delivery) and the byte order mark rule (DL-040) | WebView tests on Android and iOS | Client delivery code | WP-04, WP-10, WP-11 |
+| Q-21 | A repeatable sweep for H-72: the one-off checks of WP-17 S3 T-08a have no script in the repository | Commit a sweep script with parse5 and the four candidates | Evidence for the manifest position | WP-17 |
 
 ## 2. Closed
 

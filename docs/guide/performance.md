@@ -14,7 +14,7 @@ Rivqen saves time in three ways:
 2. **Cache first.** On a revisit, the cached page shows at once. Revalidation runs in the background.
 3. **Small updates.** When only data changes, only the changed blocks travel. The template stays in the cache.
 
-Rivqen does **not** make the first visit smaller. The first visit carries the manifest, so it is a little larger (see the table below).
+Rivqen does **not** make the first visit smaller. The first visit sends the full document with the manifest. In the measured run (section 3), the first visit has the same bytes for the plain strategy and for RQP, because the demo "plain" strategy also sends this document.
 
 ## 2. Interactive model
 
@@ -58,23 +58,23 @@ Source: `evidence/benchmarks/rqp-bytes.json`, made with `npm run measure` in [`e
 
 | Strategy | Raw | gzip | Brotli |
 |---|---:|---:|---:|
-| Full page (plain, ETag) | 20,250 | 2,715 | 1,668 |
+| Full document F (no delta) | 20,250 | 2,715 | 1,668 |
 | Rivqen delta (RQP) | 836 | 526 | 467 |
 
 ```mermaid
 xychart-beta
   title "Data change: bytes on the wire (gzip)"
-  x-axis ["Full page", "RQP delta"]
+  x-axis ["Full document F", "RQP delta"]
   y-axis "Bytes" 0 --> 3000
   bar [2715, 526]
 ```
 
 ### What the numbers say
 
-1. On a data change, the RQP delta is **81 % smaller** than the full page with gzip (526 vs 2,715 bytes) and 72 % smaller with Brotli (467 vs 1,668 bytes).
+1. On a data change, the RQP delta is **81 % smaller** than the full document F with gzip (526 vs 2,715 bytes) and 72 % smaller with Brotli (467 vs 1,668 bytes).
 2. On an unchanged revisit, RQP and plain HTTP ETag are equal: both send `304`. The gain there is time (cache first), not bytes.
-3. On the first visit and on a template change, RQP sends the same bytes as the plain server. In this demo, the plain server also sends the document with the manifest.
-4. The run has no legacy comparison. The legacy data body was not measured in this run.
+3. On the first visit and on a template change, RQP and the "plain" strategy send the same bytes. The demo "plain" strategy sends the full document F with the manifest, so the run does not measure the cost of the manifest against a page without it.
+4. The comparison with the upstream legacy server was dropped in the 2026-10-12 re-measure. It is not measured in this run. The lab for a new measurement is `tools/upstream-lab` (see its README); whether to re-measure is open.
 
 ::: info Bytes are not time
 These values count body bytes only, without headers and TLS framing. For a small page on a fast network, the byte saving changes little. The saving grows with page size, slow networks and frequent data changes.

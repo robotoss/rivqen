@@ -58,7 +58,7 @@ flowchart TD
 | `R-CACHE-07` | Concurrent identical requests in the same partition are deduplicated. Different partitions never share a response. |
 | `R-CACHE-08` | Legacy `cache-offline` values apply **only** in legacy mode. |
 | `R-CACHE-09` | Clearing the cookies or the site data of a site deletes the snapshots of that site in all partitions (H-60). See [Cache identity](/engineering/cache/identity) rule 5. |
-| `R-CACHE-10` | The shared `public` partition needs an origin that the app declares public and an explicit `Cache-Control: public` or a request without credentials; `private` always keeps the entry in the partition of the request (H-61). Unknown credentials and a `Set-Cookie` in the response count as credentials (H-62). See [Cache identity](/engineering/cache/identity) rule 3. |
+| `R-CACHE-10` | The shared `public` partition needs an origin that the app declares public and an explicit `Cache-Control: public` or a request without credentials; `private` always keeps the entry in the partition of the request (H-61). Unknown credentials and a `Set-Cookie` or `Set-Cookie2` in the response count as credentials (H-62, H-63, DL-038); so does every response whose header fields the native SDK did not see in full (H-64). The result of a delta on a `public` entry stays public only with known absent credentials; else it goes to the partition of the request (H-65). See [Cache identity](/engineering/cache/identity) rule 3. |
 
 ## 4. Acceptance test
 

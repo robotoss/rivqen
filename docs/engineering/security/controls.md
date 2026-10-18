@@ -11,10 +11,10 @@ This register lists every security control. Each control has a test that proves 
 | ID | Control | Why | Verification |
 |---|---|---|---|
 | `SEC-01` | TLS everywhere with system chain and hostname validation | Stop MITM | TLS lab tests; static check for custom trust managers |
-| `SEC-02` | Origin allowlist and check of the **real** frame origin. The native bridge MUST NOT be reachable through URL-scheme navigation (a link, a form or a redirect to a custom scheme such as `myapp://` or `intent:`; DL-036) | Protect the native bridge | E2E with cross-origin iframes and redirects; a link and a redirect to a custom scheme do not reach the bridge |
+| `SEC-02` | Origin allowlist and check of the **real** frame origin. The allowlist compares the serialized origin (scheme, lower-case IDNA host, no default port) by exact match, with no wildcard and no suffix match (DL-038). The native bridge MUST NOT be reachable through URL-scheme navigation (a link, a form or a redirect to a custom scheme such as `myapp://` or `intent:`; DL-036) | Protect the native bridge | E2E with cross-origin iframes and redirects; a link and a redirect to a custom scheme do not reach the bridge; protocol fixtures `FX-RQ-C25-*` (host case, default port, suffix host) |
 | `SEC-03` | Never execute code from a patch or a manifest | Stop XSS/RCE through updates | Fuzz + browser security suite |
 | `SEC-04` | CSP and Trusted Types where supported; context-aware escaping | Safe fragment insertion | DOM XSS test corpus |
-| `SEC-05` | Cache partitions per app / profile / tenant / environment | No cross-account leaks | Multi-account concurrency tests |
+| `SEC-05` | Cache partitions per app / profile / tenant / environment. The shared `public` partition only under RQP-25: also only for a response that the native SDK saw in full (H-64), never with `Set-Cookie` or `Set-Cookie2` (H-63, DL-038), and for the result of a delta only with known absent credentials (H-65) | No cross-account leaks | Multi-account concurrency tests; protocol fixtures `FX-RQ-C24-*`, `FX-RQ-C27-*` |
 | `SEC-06` | `no-store`, `private` and server TTL beat acceleration | Do not cache forbidden responses | Header matrix tests |
 | `SEC-07` | Protocol bounds and timeouts | Stop zip bombs, OOM, slow streams | Fuzz + chaos tests |
 | `SEC-08` | No cookies, auth headers, personal data or page HTML in logs | Privacy | Log scanning in CI and on devices |
@@ -35,7 +35,7 @@ This column says what the audit must establish about upstream. It is **not** a c
 |---|---|---|---|---|
 | `SEC-15` | Trust model | Which URLs, redirects, diffs and bridge messages are trusted by default | Explicit trust boundaries per URL/origin/frame/partition; nothing trusted implicitly | Threat model + negative test per boundary |
 | `SEC-16` | WebView/JS bridge | How the calling frame and page are identified | Native frame-origin APIs; typed commands; no remote eval | E2E: cross-origin iframe, redirect, malformed message |
-| `SEC-17` | Diff / HTML | Where updates become DOM and which trust checks exist | Typed diff schema; context escaping; CSP; no JS in diffs | HTML/patch fuzz + browser suite |
+| `SEC-17` | Diff / HTML | Where updates become DOM and which trust checks exist | Typed diff schema; context escaping; CSP; no JS in diffs. UTF-8 only: the full document has exactly `Content-Type: text/html; charset=utf-8`, and the client gives every document to the WebView as UTF-8 (H-62, H-66) | HTML/patch fuzz + browser suite; protocol fixtures `FX-RQ-P40-*`, `FX-RQ-C26-*`; a WebView test that each platform adapter delivers a snapshot as UTF-8 |
 | `SEC-18` | Cache partition | What binds the cache to cookies, session and account | Namespace = app + environment + profile + tenant + origin + auth scope | Multi-account and logout tests |
 | `SEC-19` | Cache crypto | Whether private content is protected at rest | AEAD for private entries; platform-wrapped keys | Key rotation, tamper, restore, logout tests |
 | `SEC-20` | Freshness / rollback | How revision, template tag, etag and 304 work | Monotonic revision per session; base check; atomic commit | Old patch never changes the page |

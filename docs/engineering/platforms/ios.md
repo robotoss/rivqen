@@ -25,6 +25,8 @@ The iOS SDK connects the Rust core to `WKWebView`. iOS is the hardest platform f
 | `load(URLRequest)` | Real navigation | Use bytes that the app already fetched |
 | SwiftUI `WebView` / `WebPage` (iOS 26+) | Declarative web content | No interception of `https` either |
 
+<Badge type="info" text="DESIGN" /> **Encoding (H-66).** Whatever prototype WP-04 selects, the SDK gives an RQP full document and every snapshot (also a patched or an offline snapshot) to the web view as `text/html` with the encoding `utf-8` ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response), "Delivery to the WebView"): `mimeType: "text/html"` and `characterEncodingName: "utf-8"` for `load(_:mimeType:characterEncodingName:baseURL:)`, a response with the MIME type `text/html` and the text encoding name `utf-8` for `loadSimulatedRequest`, and a string decoded from the bytes as UTF-8 for `loadHTMLString`.
+
 Sources: [WKURLSchemeHandler](https://developer.apple.com/documentation/webkit/wkurlschemehandler), [loadHTMLString](https://developer.apple.com/documentation/webkit/wkwebview/loadhtmlstring(_:baseurl:)), [loadSimulatedRequest](https://developer.apple.com/documentation/webkit/wkwebview/loadsimulatedrequest(_:response:responsedata:)).
 
 ## 3. Prototypes (WP-04)

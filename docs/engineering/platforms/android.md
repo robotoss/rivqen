@@ -31,7 +31,7 @@ Rivqen is a new implementation in Kotlin. It keeps the behavior, not the code.
 1. The app calls `open(request)` **before** it creates or shows the WebView.
 2. The SDK creates a core session and runs the cache lookup and the network request in parallel.
 3. The app attaches the WebView. The controller calls `loadUrl(url)` (Standard presentation) or loads the ready document (Quick presentation, only if security headers are preserved).
-4. `shouldInterceptRequest` checks: main frame, `GET`, URL equals the session URL, origin allowed. If all are true, it returns a `WebResourceResponse` with status, headers (including CSP) and the bridge `InputStream`.
+4. `shouldInterceptRequest` checks: main frame, `GET`, URL equals the session URL, origin allowed. If all are true, it returns a `WebResourceResponse` with status, headers (including CSP) and the bridge `InputStream`. <Badge type="info" text="DESIGN" /> For an RQP full document or snapshot (also a patched or an offline snapshot), the `mimeType` is `text/html` and the `encoding` is `utf-8`, whatever the response said (H-66; [negotiation §6.3](/engineering/protocol/negotiation#_6-3-response), "Delivery to the WebView"). The same holds for the `mimeType` and `encoding` arguments of `loadDataWithBaseURL`.
 5. The core receives HTTP events and returns actions: show cache, stream, patch, full load or fallback.
 6. `onPageCommitVisible` and `onPageFinished` events go to the core; races follow the [FSM rules](/engineering/core/session-fsm#_4-races).
 7. On `onDestroy`, navigation away, or partition change, the session is cancelled and all streams close.

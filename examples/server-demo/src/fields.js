@@ -282,14 +282,10 @@ export const FULL_CONTENT_TYPE = 'text/html; charset=utf-8';
  * The page passes through (null) when the charset class is OTHER. Otherwise (no charset or a
  * UTF-8 charset) F has exactly one Content-Type line with the value FULL_CONTENT_TYPE, whatever
  * the text of A was (DL-039: F never carries the text of A, so no second parse is needed).
- * The line keeps the place of the first Content-Type line of A.
+ * The line keeps its place.
  */
 export function fullContentType(headers) {
   if (contentTypeCharset(headers) === CHARSET.OTHER) return null;
-  const out = [];
-  for (const line of headers) {
-    if (line[0] !== 'content-type') out.push(line);
-    else if (!out.some(([n]) => n === 'content-type')) out.push(['content-type', FULL_CONTENT_TYPE]);
-  }
-  return out;
+  // Not OTHER, so A has at most one Content-Type line; it keeps its place.
+  return headers.map(([n, v]) => [n, n === 'content-type' ? FULL_CONTENT_TYPE : v]);
 }

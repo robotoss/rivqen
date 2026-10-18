@@ -64,7 +64,7 @@ Mutation result of T-09 (WP-17 S3; Infection 0.35.6, changed lines against `7f36
 | `tests/CliTest.php` | Command line, exit codes, batch order, bounded read |
 | `tests/PropertyTest.php` | Seeded random documents: invariants, and an oracle for generated valid documents. Model tests: D (M-26) for random sequences of shapes with known units, the balance of random `noscript` content (M-11 item 5; an M-09 error of the main rules (item 8) is also accepted), and table parts in random balanced `noscript` content (M-11 item 6) |
 | `tests/LimitsTest.php` | Linear time and bounded memory on adversarial 5 MiB inputs within D ≤ 256 (also names with one PHP string hash, and deep `noscript` content); fast `M-26` stop for inputs where D gets larger than 256, also for `noscript` content (M-11 item 8: it counts in D); at most 32 MiB for 5 MiB of `noscript` content that only opens elements |
-| `tests/ForeignRegionRulesTest.php` | WP-17 S3 rules (H-71, H-73, H-74, H-75): foreign regions in block content (M-22 item 5, M-23), `svg` in `noscript` content (M-11 items 5 and 9), the main pass on that content (M-11 item 8), the root end tag and M-06 item 4. Each invalid case checks the rule ID |
+| `tests/ForeignRegionRulesTest.php` | WP-17 S3 rules (H-71, H-73, H-74, H-75) and S4 (H-78): foreign regions in block content (no name list since H-78, M-07, M-23), `svg` in `noscript` content (M-11 items 5 and 9), the main pass on that content (M-11 item 8), the root end tag and M-06 item 4. Each invalid case checks the rule ID |
 | `tests/fuzz.php` | Fuzz target (time-limited; writes a failing input to a file) |
 
 ### Dev tools
@@ -135,8 +135,10 @@ The end tag rules of the security review use the elements that the pop visits an
 | M-11 items 5 and 8 (H-27, H-71) | The tokens of C run through the rules of the main pass on the main stack (`Parser::checkNoscript()`). Before the main rules, each end tag of C must have the name of the current node, which must be above the `noscript` element. Exception (H-75, DL-044 d): `svg` whose nearest `svg` is the region root. The stack must be back at the `noscript` element at the end of C. The stack of C is part of the stack of the main pass, so D ≤ 256 bounds it |
 | M-11 item 6 (H-38) | The count of `table` elements on the stack minus the count at the `noscript` start tag. A start tag in `TABLE_PART` or `col` in C with a count of 0 is an error |
 | M-11 items 2, 3, 7, 9 (H-71, H-74) | `NOSCRIPT_FORBIDDEN` (no `svg`: it starts a region of C, the main rules of M-05 item 4 give the region) and `NOSCRIPT_DOCUMENT_TAGS` (`html`, `body`, `head`: start and end tags) |
-| M-22 item 5, M-23 (H-73, H-75) | `FOREIGN_ALLOWED` check on each start tag in a region of the content; the end tag of the region root closes the region: one search for the nearest element with that name (`Parser::nearestIndex()`), then the pops |
-| M-13 item 3 (H-28) | `strspn()` with the 128 ASCII bytes finds a byte ≥ 0x80 in the raw `type` value of a `script` start tag. No PCRE: an error of `preg_match()` must not let a value pass |
+| M-23 (H-75), M-22 (H-78) | No name list in a region of the content (`FOREIGN_ALLOWED` was removed in S4: it is a patch rule). The end tag of the region root closes the region: one search for the nearest element with that name (`Parser::nearestIndex()`), then the pops |
+| M-04, M-22 (H-78) | `script`, `style` and `iframe` are allowed in the content. The tokenizer state switch after their start tag is the same as outside a block, so the raw text (script data with the escape states, RAWTEXT) is linear and its end tag pops the element (M-23). `FORBIDDEN_CONTENT` has 16 names |
+| M-13 items 2 and 3 (H-28, H-84) | `strspn()` with the 128 ASCII bytes finds a byte ≥ 0x80 in the raw `type` value of a `script` start tag. Item 2 (`Parser::hasReservedReference()`): at each `&`, a letter next rejects; else `&#digits` or `&#x`/`&#X` hex is read on the raw bytes (`;` optional, leading zeros, value capped at 0x110000) and the value is checked (00–20, letter, digit, `/`, `+`, `-`, `.`, ≥ 0x80). `&#;` and `&#x;` are no references. No PCRE: an error of `preg_match()` must not let a value pass |
+| M-16 (H-86) | A `json` block has a `script` with a first `type` exactly `application/json` or `application/ld+json` (`Parser::JSON_TYPES`); M-25 applies to both |
 
 `FORMATTING`, `SPECIAL` and the stray table end tags are constant arrays in `src/Names.php`.
 
@@ -225,6 +227,10 @@ The human decided these cases (decisions H-21 and H-22 in the WP-17 S1 sprint re
 | Memory of the M-11 item 5 stack | Bounded by D | `markup.md` M-26 item 7 (H-71): C counts in D and runs on the stack of the main pass, so the stack has at most 256 entries. Earlier (S1, S2) the stack of C was a separate packed stack of name offsets with up to 1.7 million entries (17 MiB for 5 MiB of C; `src/OffsetStack.php`, removed in S3). The copy of C for its tokenizer remains: it is at most 5 MiB |
 | State of the pass of M-11 item 8 | In place, restored at the end | C closes every element it opens (item 5), so the stack is as before. Only D and the dirty mark of the `noscript` element change; the parser saves and restores both (DL-044 c). No copy of the stack, so the cost is O(tokens of C) |
 | Key of the name index | xxh3 with a random secret from `random_bytes()`, new for each parse | `hash` and `random` are always present in PHP 8.3, so there is no new dependency. SipHash (`sodium_crypto_shorthash()`) is faster (0.10 µs against 0.15 µs) but needs the optional `sodium` extension. |
+
+### S4 changes (T-07)
+
+Functions changed for H-78, H-84 and H-86: `Names::FORBIDDEN_CONTENT` (10 names removed), `Names::FOREIGN_ALLOWED` (removed), `Parser::contentStartTag()`, `Parser::checkReserved()`, `Parser::hasReservedReference()` and `Parser::reservedNumeric()` (new), `Parser::blockStartTag()` (`JSON_TYPES` instead of `JSON_TYPE`). All 297 golden fixtures give the expected result. The cross-check cases of `crosscheck/cases/s4-cases.json` give no finding with `--scripting both`. The mutation run of S4 is not done yet.
 
 ## Related
 

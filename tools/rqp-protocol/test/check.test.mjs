@@ -162,6 +162,8 @@ test('the client fixtures catch a client that ignores H-64, H-65 or the exact or
     'FX-RQ-C25-FINAL-DEFAULT-PORT',
     'FX-RQ-C25-FINAL-HOST-CASE',
     'FX-RQ-C25-IDN-HOST',
+    'FX-RQ-C25-USERINFO-FINAL-304',
+    'FX-RQ-C25-USERINFO-FINAL-DELTA',
     'FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-REDIRECT-HOST-CASE',
   ]);
 });
@@ -185,7 +187,12 @@ test('the client fixtures catch a client that ignores H-67, H-68 or the WHATWG p
     x.password = '';
     return x.href;
   };
-  assert.deepEqual(await failing((c) => ({ ...c, url: strip(c.url), final_url: strip(c.final_url), redirected: c.redirected })), ['FX-RQ-C25-USERINFO-FINAL', 'FX-RQ-C25-USERINFO-REQUEST']);
+  assert.deepEqual(await failing((c) => ({ ...c, url: strip(c.url), final_url: strip(c.final_url), redirected: c.redirected })), [
+    'FX-RQ-C25-USERINFO-FINAL',
+    'FX-RQ-C25-USERINFO-FINAL-304',
+    'FX-RQ-C25-USERINFO-FINAL-DELTA',
+    'FX-RQ-C25-USERINFO-REQUEST',
+  ]);
   // DL-040 L-3: a client that parses the URL again with a parser that reads the text before a backslash and "@" as
   // user information and takes the host after it.
   const rfc = (u) => u.replace(/^https:\/\/[^/?#]*\\@/, 'https://');

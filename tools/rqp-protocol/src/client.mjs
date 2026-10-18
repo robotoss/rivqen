@@ -336,7 +336,8 @@ export function handleResponse(ctx, response) {
   if (!rqpAllowed(ctx)) return result('normal'); // the client sent no RQP field
   if (response.status === 304) {
     // H-58: a 304 that the client cannot match to its snapshot gives a normal load.
-    if (notModifiedAccepted(ctx, requestHeaders(ctx), headers)) return result('not-modified', { next: 'keep' });
+    // H-68: also checked here, not only through the cache key (an SDK may strip user information from keys).
+    if (rqpAllowed(ctx, finalUrlOf(ctx)) && notModifiedAccepted(ctx, requestHeaders(ctx), headers)) return result('not-modified', { next: 'keep' });
     return result('normal', { next: 'webview-load' });
   }
   const type = mediaType(combined(headers, 'content-type'));
@@ -488,7 +489,8 @@ export function verifyDelta(snap, body, offered, maxPatchBytes = LIMITS.maxPatch
 function handleDelta(ctx, headers, body) {
   // Diff-engine step 1 (H-58): the final URL has the cache key of the snapshot.
   // A release build sent RQP fields only for https, so the same key is https too.
-  const sameKey = canonicalUrl(finalUrlOf(ctx)) === canonicalUrl(ctx.url);
+  // H-68: a final URL with user information never gets a delta, also when a key would match.
+  const sameKey = rqpAllowed(ctx, finalUrlOf(ctx)) && canonicalUrl(finalUrlOf(ctx)) === canonicalUrl(ctx.url);
   // Step 2: the request offered a delta. Steps 1 and 2 have the same code (PATCH_INVALID).
   const offered = sameKey && ctx.navigation === 'delta' && ctx.snapshot !== null;
   const verified = ctx.snapshot === null ? { code: Code.PATCH_INVALID } : verifyDelta(ctx.snapshot, body, offered);

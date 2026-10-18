@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: The Rivqen Authors
 
 // Rules of WP-17 S3 (docs/engineering/protocol/markup.md section 2.13):
-// H-71 (M-11 items 7 and 8, M-26 item 7), H-73 (M-22 item 5, FOREIGN_ALLOWED),
+// H-71 (M-11 items 7 and 8, M-26 item 7), H-73 (the region of the content; item 5 left markup in H-78),
 // H-74 (M-11 item 9) and H-75 (M-06 item 4, M-11 item 5, M-23). Each test names
 // an input that only the named rule rejects, so the reason is the rule.
 
@@ -10,7 +10,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { ErrorCode } from '../src/markup.mjs';
 import {
-  BREAKOUT, FORBIDDEN_CONTENT, FOREIGN_ALLOWED, NOSCRIPT_FORBIDDEN, TEXT,
+  FORBIDDEN_CONTENT, NOSCRIPT_FORBIDDEN,
 } from '../src/names.mjs';
 import { doc, errorOf } from './helpers.mjs';
 
@@ -20,18 +20,6 @@ const inBlock = (content, tag = 'div') => `<${tag} data-rq-block="a">${content}<
 const ns = (content) => errorOf(doc(`<noscript>${content}</noscript>`));
 
 describe('name sets (H-73, H-74)', () => {
-  it('has the 70 lower-case names of FOREIGN_ALLOWED', () => {
-    assert.equal(FOREIGN_ALLOWED.size, 70);
-    for (const name of FOREIGN_ALLOWED) assert.equal(name, name.toLowerCase());
-  });
-
-  it('keeps out of FOREIGN_ALLOWED the names that run script, navigate, animate or load', () => {
-    for (const name of [
-      'a', 'image', 'feimage', 'foreignobject', 'animate', 'animatemotion', 'animatetransform', 'set',
-      'discard', 'mpath', 'script', 'style', 'textpath', 'cursor', 'view', 'maction', 'annotation-xml',
-    ]) assert.equal(FOREIGN_ALLOWED.has(name), false, name);
-  });
-
   it('does not forbid svg and math as HTML names of block content (they open a region)', () => {
     assert.equal(FORBIDDEN_CONTENT.has('svg'), false);
     assert.equal(FORBIDDEN_CONTENT.has('math'), false);
@@ -41,28 +29,12 @@ describe('name sets (H-73, H-74)', () => {
     assert.equal(NOSCRIPT_FORBIDDEN.has('math'), true);
     assert.equal(NOSCRIPT_FORBIDDEN.has('svg'), false);
   });
-
-  it('has no name of BREAKOUT and no TEXT name other than title in FOREIGN_ALLOWED', () => {
-    for (const name of FOREIGN_ALLOWED) {
-      assert.equal(BREAKOUT.has(name), false, name);
-      if (name !== 'title') assert.equal(TEXT.has(name), false, name);
-    }
-  });
 });
 
-describe('M-22 item 5 and the region of the content (H-73)', () => {
-  for (const name of FOREIGN_ALLOWED) {
-    if (name === 'svg' || name === 'math') continue;
-    it(`accepts <${name}> in a foreign region of the content`, () => {
-      assert.equal(errorOf(inBlock(`<svg><${name}></${name}></svg>`)), null);
-    });
-  }
-
+describe('the region of the content (H-73, H-78)', () => {
   for (const name of ['a', 'animate', 'set', 'foreignobject', 'image', 'script', 'style', 'maction', 'foo']) {
-    it(`rejects <${name}> in a foreign region of the content (item 5)`, () => {
-      // The name is not in BREAKOUT and has no self-closing rule in the
-      // region, so only item 5 rejects it.
-      assert.equal(errorOf(inBlock(`<svg><${name}/></svg>`)), STRUCTURE);
+    it(`accepts <${name}> in a foreign region of the content (H-78)`, () => {
+      assert.equal(errorOf(inBlock(`<svg><${name}></${name}></svg>`)), null);
     });
   }
 
@@ -73,7 +45,7 @@ describe('M-22 item 5 and the region of the content (H-73)', () => {
   it('opens a region for svg and math without the self-closing flag', () => {
     assert.equal(errorOf(inBlock('<svg><path d="M0"/></svg>x')), null);
     assert.equal(errorOf(inBlock('<math><mi>x</mi></math>')), null);
-    // In the region an HTML element is a breakout (M-07 item 1), not item 5.
+    // In the region an HTML element is a breakout (M-07 item 1).
     assert.equal(errorOf(inBlock('<svg><div></div></svg>')), STRUCTURE);
   });
 
@@ -84,7 +56,7 @@ describe('M-22 item 5 and the region of the content (H-73)', () => {
   });
 
   it('applies M-22 rule 2 again after the region ends', () => {
-    assert.equal(errorOf(inBlock('<svg></svg><script>1</script>')), STRUCTURE);
+    assert.equal(errorOf(inBlock('<svg></svg><textarea>1</textarea>')), STRUCTURE);
     assert.equal(errorOf(inBlock('<svg></svg><b>x</b>')), null);
   });
 
@@ -287,21 +259,6 @@ describe('M-11 item 8: the main pass on the noscript content (H-71)', () => {
 });
 
 describe('names of markup.md section 2.1 and the noscript scan at the root of the stack', () => {
-  it('has exactly the names of markup.md section 2.1 in FOREIGN_ALLOWED', () => {
-    const expected = [
-      'svg', 'g', 'path', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'rect', 'defs',
-      'symbol', 'use', 'title', 'desc', 'lineargradient', 'radialgradient', 'stop', 'clippath',
-      'mask', 'pattern', 'marker', 'text', 'tspan', 'filter', 'feblend', 'fecolormatrix',
-      'fecomponenttransfer', 'fecomposite', 'fedisplacementmap', 'fedropshadow', 'feflood',
-      'fefunca', 'fefuncb', 'fefuncg', 'fefuncr', 'fegaussianblur', 'femerge', 'femergenode',
-      'femorphology', 'feoffset', 'feturbulence', 'math', 'mrow', 'mi', 'mo', 'mn', 'ms', 'mtext',
-      'mspace', 'msub', 'msup', 'msubsup', 'mfrac', 'msqrt', 'mroot', 'mstyle', 'munder', 'mover',
-      'munderover', 'mmultiscripts', 'mprescripts', 'none', 'mtable', 'mtr', 'mtd', 'mpadded',
-      'mphantom', 'merror', 'semantics', 'annotation',
-    ];
-    assert.deepEqual([...FOREIGN_ALLOWED].sort(), [...expected].sort());
-  });
-
   it('has exactly the forbidden start tags of the noscript content', () => {
     assert.deepEqual(
       [...NOSCRIPT_FORBIDDEN].sort(),

@@ -110,10 +110,12 @@ test('the command lines reject bad options', () => {
   assert.throws(() => corpusArgs(['--data', 'd', '--evidence', 'e', '--jobs', '99']), /--jobs/);
 });
 
-test('a small sweep agrees with the shipped code and counts disagreements by view', () => {
+// After S3 the shipped candidate follows H-71 and H-74, so the shipped model of this study (the S2 rules)
+// differs from it by design; equality.test.mjs pins the S2 equality against the pre-S3 baseline.
+test('a small sweep counts disagreements by view', () => {
   const r = sweep(sweepArgs(['--source', 'body', '--seed', '11', '--count', '300']));
   assert.equal(r.count, 300);
-  assert.equal(r.candidateMismatch, 0);
+  assert.equal(typeof r.candidateMismatch, 'number');
   assert.equal(r.modelADivergences, 0);
   for (const v of ['a', 'b0', 'b1']) assert.equal(r.markup[v].disagree.disabled, 0, v);
   assert.ok(r.markup.shipped.valid >= r.markup.a.valid);

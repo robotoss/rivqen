@@ -3,6 +3,8 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
+**After S3 (2026-10-18).** The decisions H-71…H-75 are now in the shipped candidates. This study models the rules before them: it imports the frozen pre-S3 name sets of `../baseline/names-s2.mjs`, and its tests compare "flags off" with the pre-S3 baseline `../baseline/baseline-s2.json`. Numbers that compare with "the shipped candidate" (`candidateMismatch`, `baseEqualsShipped`) were measured before S3; a run today differs by design.
+
 Study tools of WP-17 S3 task T-01 (H-40): three relaxations of the RQP markup rules (`docs/engineering/protocol/markup.md`), measured with parse5 8.0.1 and on the markup corpus. Report: `evidence/markup-relax/report.md`.
 
 **Status:** DESIGN (study tool). It is not a candidate, not part of the differential runner and not part of CI. It changes no rule: the relaxations exist only behind flags in a study copy of the Node.js candidate.

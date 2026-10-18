@@ -49,7 +49,7 @@ import {
   TEXT_MODE,
   VOID,
   internName,
-} from '../../../node/src/names.mjs';
+} from '../../baseline/names-s2.mjs';
 
 export { ErrorCode, LIMITS };
 

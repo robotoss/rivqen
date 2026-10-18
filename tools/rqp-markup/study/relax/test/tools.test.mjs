@@ -85,7 +85,9 @@ test('corpus-page: the output has numbers and names only, never page text', () =
   const out = measurePage(Buffer.from(page));
   const text = JSON.stringify(out);
   assert.ok(!text.includes(marker));
-  assert.equal(out.baseEqualsShipped, true);
+  // After S3 the shipped candidate accepts svg in noscript (H-74), so base (the S2 rules) differs from it by design;
+  // equivalence.test.mjs pins the S2 equality against the pre-S3 baseline.
+  assert.equal(out.baseEqualsShipped, false);
   assert.equal(out.page.base.why, 'M-11.3:svg');
   assert.equal(out.page.r2.valid, true);
   assert.equal(out.variants.main.combos['r1+r2'].valid, true);

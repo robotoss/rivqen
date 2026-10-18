@@ -6,7 +6,7 @@
 // shipped rule is tools/rqp-protocol/src/markup.mjs (attributeRejected); the test
 // test/attrs.test.mjs checks that attributeReason() agrees with it.
 
-import { TEXT_MODE } from '../../../node/src/names.mjs';
+import { TEXT_MODE } from '../../baseline/names-s2.mjs';
 import { TokenType, Tokenizer } from '../../../node/src/tokenizer.mjs';
 import { attributesOf } from '../../../../rqp-protocol/src/markup.mjs';
 

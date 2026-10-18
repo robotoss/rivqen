@@ -20,7 +20,7 @@
 //            close the noscript element early ("anything else" of "in head
 //            noscript") and the rest of C is in "in head", so the head stays open.
 
-import { TEXT_MODE, VOID } from '../../../node/src/names.mjs';
+import { TEXT_MODE, VOID } from '../../baseline/names-s2.mjs';
 import { TokenType, Tokenizer } from '../../../node/src/tokenizer.mjs';
 
 export const HEAD_RULES = Object.freeze(['shipped', 'h0', 'h1', 'h2']);

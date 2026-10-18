@@ -3,6 +3,8 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
+**After S3 (2026-10-18).** The decisions H-71…H-75 are now in the shipped candidates. This study models the rules before them: it imports the frozen pre-S3 name sets of `../baseline/names-s2.mjs`, and its tests compare "flags off" with the pre-S3 baseline `../baseline/baseline-s2.json`. Numbers that compare with "the shipped candidate" (`candidateMismatch`, `baseEqualsShipped`) were measured before S3; a run today differs by design.
+
 Study scripts of WP-17 S3 task T-02. Report: `evidence/markup-noscript/report.md`. Machine results: `evidence/markup-noscript/*.json`.
 
 **Status:** DESIGN (study code). It is not a candidate, not in the differential runner (`../../diff.mjs`) and not in CI. It does not change `markup.md`, `manifest-patch.md`, the candidates, the fixtures, the reference or the demo.

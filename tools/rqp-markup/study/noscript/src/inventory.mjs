@@ -7,7 +7,7 @@
 // only, never document text. Tag names are kept only when they match
 // ^[a-z][a-z0-9-]{0,31}$; other names count as "?".
 
-import { TEXT_MODE, VOID } from '../../../node/src/names.mjs';
+import { TEXT_MODE, VOID } from '../../baseline/names-s2.mjs';
 import { TokenType, Tokenizer } from '../../../node/src/tokenizer.mjs';
 import { HEAD_NOSCRIPT_H1, HEAD_NOSCRIPT_H2, headNoscriptFailure } from './head-study.mjs';
 

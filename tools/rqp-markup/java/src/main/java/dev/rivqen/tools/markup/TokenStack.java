@@ -87,6 +87,15 @@ final class TokenStack {
     dirty[index] = true;
   }
 
+  /**
+   * M-11 item 8 (DL-044 c): sets the dirty mark of the element at {@code index} to {@code value}.
+   * Only the pass on the content of a {@code noscript} element uses this, to give the {@code
+   * noscript} element the mark that it had before that pass.
+   */
+  void restoreDirty(int index, boolean value) {
+    dirty[index] = value;
+  }
+
   /** M-06 item 4: true when the element at {@code index} has the special-crossed mark. */
   boolean marked(int index) {
     return marked[index];

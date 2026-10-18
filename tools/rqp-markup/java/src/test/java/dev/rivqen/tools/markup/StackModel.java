@@ -223,6 +223,8 @@ final class StackModel {
     }
     int top = stack.size() - 1;
     boolean setMark = false;
+    // H-75: the end tag of the region root crosses foreign elements and sets no mark by them.
+    boolean rootEnd = m == regionRoot();
     for (int i = top; i >= m; i--) {
       Entry e = stack.get(i);
       boolean crossed = i > m;
@@ -245,7 +247,8 @@ final class StackModel {
         item = 4;
         return;
       }
-      setMark |= (crossed && specialOrForeign) || e.marked;
+      boolean sets = e.foreign ? !rootEnd : SPECIAL.contains(e.name);
+      setMark |= (crossed && sets) || e.marked;
     }
     Entry matched = stack.get(m);
     boolean exact = m == top && !matched.dirty && !name.equals("html") && !name.equals("body");

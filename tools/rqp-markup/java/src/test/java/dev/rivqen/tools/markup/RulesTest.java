@@ -453,8 +453,37 @@ class RulesTest {
 
     @Test
     void crossingOfForeignElementSetsTheMark() {
-      assertStructure(body("<b><svg><g></svg></b>"), "M-06");
-      assertValid(body("<b><svg><g></g></svg></b>" + P));
+      // `</g>` crosses `path`; the mark goes to `svg`, and `</svg>` passes it to `b` (item 4 b).
+      assertStructure(body("<b><svg><g><path></g></svg></b>"), "M-06");
+      assertValid(body("<b><svg><g><path></path></g></svg></b>" + P));
+    }
+
+    @Test
+    void endTagOfTheRegionRootSetsNoMark() {
+      // H-75: `</svg>` crosses `g` and `path` and sets no mark by them.
+      assertValid(body("<b><svg><g><path></svg></b>" + P));
+      assertValid(body("<a href=x><svg><path d=M0></svg></a>" + P));
+      assertValid(body("<b><math><mrow><msup></math></b>" + P));
+    }
+
+    @Test
+    void endTagOfAnInnerSvgSetsTheMark() {
+      // The inner `svg` is a foreign element, not the region root (M-05 item 4).
+      assertStructure(body("<a href=x><svg><svg><path d=M0></svg></svg></a>"), "M-06");
+    }
+
+    @Test
+    void endTagOfTheRegionRootPassesAMarkDown() {
+      // Item 4 (b): `</g>` crosses `path` and marks `svg`; `</svg>` pops the marked `svg`.
+      assertStructure(body("<a href=x><svg><g><path></g></svg></a>"), "M-06");
+    }
+
+    @Test
+    void endTagOfTheRegionRootStillMakesTheNewCurrentNodeDirty() {
+      // D does not go down after the crossing: each icon keeps 3 units (H-75, M-26 item 5).
+      String icon = "<span><svg><path d=M0></svg></span>";
+      assertValid(icon.repeat(85) + "<i>"); // D = 256
+      assertInvalid(icon.repeat(85) + "<i><i>", ErrorCode.LIMIT, "M-26");
     }
 
     @Test
@@ -953,8 +982,7 @@ class RulesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(
-        strings = {"frameset", "math", "noscript", "plaintext", "select", "svg", "template"})
+    @ValueSource(strings = {"frameset", "math", "noscript", "plaintext", "select", "template"})
     void contentMustNotContainForbiddenStartTag(String name) {
       assertStructure(body("<noscript><" + name + "></noscript>"), "M-11");
     }
@@ -1535,7 +1563,6 @@ class RulesTest {
           "html",
           "iframe",
           "link",
-          "math",
           "meta",
           "noembed",
           "noframes",
@@ -1547,7 +1574,6 @@ class RulesTest {
           "script",
           "select",
           "style",
-          "svg",
           "template",
           "textarea",
           "title",

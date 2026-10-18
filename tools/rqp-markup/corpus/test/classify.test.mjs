@@ -143,6 +143,37 @@ test("H-71: the rules of the main pass on the noscript content (M-11 items 7 and
   assert.deepEqual(cls("<table><tr><td><noscript><table></table></noscript></td></tr></table>"), {});
 });
 
+test("H-71: M-09 on the table parts of C, with F in C or around the noscript element", () => {
+  const cls = (h) => doc(h).classes;
+  assert.deepEqual(cls("<noscript><table><tr><td><col></td></tr></table></noscript>"), { "M-09": 1 });
+  assert.deepEqual(cls("<noscript><table><caption><tr></tr></caption></table></noscript>"), { "M-09": 1 });
+  assert.deepEqual(cls("<noscript><table><tr><caption></caption></tr></table></noscript>"), { "M-09": 1 });
+  assert.deepEqual(cls("<noscript><table><tbody><th>a</th></tbody><colgroup><col></colgroup></table></noscript>"), {});
+  // A template in C stops the search for F (M-09); the template itself is M-11 item 3.
+  assert.deepEqual(cls("<table><tr><td><noscript><template><tr></tr></template></noscript></td></tr></table>"), { "M-11.3": 1, "M-11.6": 1 });
+});
+
+test("H-74: M-07 and M-12 in the foreign region of C, and the end of the region", () => {
+  const cls = (h) => doc(h).classes;
+  // After the integration point and after the region, C is in the right context again.
+  assert.deepEqual(cls("<noscript><svg><title>t</title><g></g></svg><p>x</p></noscript>"), {});
+  assert.deepEqual(cls("<noscript><svg><style/></svg></noscript>"), { "M-07.4": 1 });
+  assert.deepEqual(cls("<noscript><svg><desc><!--c--></desc></svg></noscript>"), { "M-07.3": 1 });
+  assert.deepEqual(cls("<noscript><svg><desc><!DOCTYPE html></desc></svg></noscript>"), { "M-07.3": 1 });
+  assert.deepEqual(cls("<noscript><!-- a > b --></noscript>"), {});
+  const out = doc("<noscript><div><svg></div></noscript>");
+  assert.deepEqual(Object.keys(out.classes), ["M-07.2", "M-11.5-other"]);
+  // math in C: M-11 item 3; its end tag closes the region like the end tag of an svg root.
+  assert.deepEqual(cls("<noscript><math><mi>x</mi><mrow><mn>1</mn></math></noscript>"), { "M-11.3": 1 });
+});
+
+test("M-11 item 5: only unclosed p or li, also with a foreign region and void elements in C", () => {
+  const cls = (h) => doc(h).classes;
+  assert.deepEqual(cls('<noscript><p><svg><path d="M0"></svg>x</noscript>'), { "M-11.5-pli": 1 });
+  assert.deepEqual(cls('<noscript><p><svg><path d="M0"></svg><i><b><br></b></i></noscript>'), { "M-11.5-pli": 1 });
+  assert.deepEqual(cls("<noscript><p><br><svg/></noscript>"), { "M-11.5-pli": 1 });
+});
+
 test("H-74 and H-75: svg in the noscript content (M-11 items 5 and 9)", () => {
   const cls = (h) => doc(h).classes;
   assert.deepEqual(cls('<noscript><img src="p.gif"><svg width="1"><path d="M0"></path></svg><svg/></noscript>'), {});
@@ -168,7 +199,10 @@ test("block rules on simulated blocks", () => {
   assert.deepEqual(all(a), ["M-22.5"]);
   assert.deepEqual(a.blockRules?.details["M-22.5"], { "<a>": 1, "<script>": 1 });
   assert.deepEqual(all(doc('<main data-rq-block="m"><svg><foreignObject>t</foreignObject><x-y.z/></svg></main>', true)), ["M-22.5"]);
-  assert.equal(JSON.stringify(doc('<main data-rq-block="m"><svg><x.SECRET/></svg></main>', true)).includes("SECRET"), false);
+  // The tokenizer lowercases tag names: the detail has "?", not the name.
+  const odd = doc('<main data-rq-block="m"><svg><x.SECRET/></svg></main>', true);
+  assert.deepEqual(odd.blockRules?.details["M-22.5"], { "<?>": 1 });
+  assert.equal(JSON.stringify(odd).toLowerCase().includes("secret"), false);
   // H-75 in the content: only the end tag of the region root can cross.
   assert.deepEqual(all(doc('<main data-rq-block="m"><a href="#"><svg><path d="M0"></svg></a></main>', true)), []);
   assert.deepEqual(all(doc('<main data-rq-block="m"><svg><g><path d="M0"></g></svg></main>', true)), ["M-23"]);

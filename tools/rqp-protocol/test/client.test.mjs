@@ -14,11 +14,15 @@ import {
   clientStep,
   deltaPartition,
   handleResponse,
+  hasUserinfo,
   inAllowlist,
   partitionFor,
+  redirected,
   requestHeaders,
+  rqpAllowed,
   setsCookie,
   snapshotOf,
+  validAllowlistEntry,
   verifyDelta,
   withoutCredentials,
 } from '../src/client.mjs';
@@ -427,8 +431,8 @@ test('H-64: the public partition only for a response whose header fields the nat
     assert.equal(storeIn({ response_fields_visible: visible }, [['cache-control', 'public']]), 'request', String(visible));
     assert.equal(storeIn({ response_fields_visible: visible }, [['cache-control', 'no-cache']]), 'request', String(visible));
   }
-  assert.equal(partitionFor({ public_origin: true, credentials: false }, [], PUBLIC), 'request');
-  assert.equal(partitionFor({ public_origin: true, credentials: false, response_fields_visible: true }, [], PUBLIC), 'public');
+  assert.equal(partitionFor({ public_origin: true, credentials: false, redirected: false }, [], PUBLIC), 'request');
+  assert.equal(partitionFor({ public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [], PUBLIC), 'public');
 });
 
 test('DL-038: Set-Cookie2 counts as Set-Cookie; field names match ASCII case-insensitively', () => {
@@ -443,7 +447,7 @@ test('DL-038: Set-Cookie2 counts as Set-Cookie; field names match ASCII case-ins
 test('withoutCredentials is only the credentials flag; partitionFor is the one place of the Set-Cookie rule', () => {
   assert.equal(withoutCredentials({ credentials: false }), true);
   for (const credentials of [true, null, undefined, 0, 'false']) assert.equal(withoutCredentials({ credentials }), false, String(credentials));
-  assert.equal(partitionFor({ public_origin: true, credentials: false, response_fields_visible: true }, [['set-cookie', 'a=1']], PUBLIC), 'request');
+  assert.equal(partitionFor({ public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [['set-cookie', 'a=1']], PUBLIC), 'request');
 });
 
 const publicSnapshot = () => snapshotOf(page('page-a'), PUBLIC, TARGET, 'public');
@@ -497,8 +501,8 @@ test('H-65: a snapshot in the partition of the request gives a result in the par
   const snap = snapshotOf(page('page-a'), PUBLIC, TARGET);
   const r = handleResponse(ctx({ public_origin: true, credentials: false, snapshot: snap }), publicDelta([['cache-control', 'public']]));
   assert.deepEqual([r.outcome, r.snapshot.partition], ['patched', 'request']);
-  assert.equal(deltaPartition({ public_origin: true, credentials: false, response_fields_visible: true }, [], { partition: 'request', members: PUBLIC }), 'request');
-  assert.equal(deltaPartition({ public_origin: true, credentials: false, response_fields_visible: true }, [], { partition: 'public', members: PUBLIC }), 'public');
+  assert.equal(deltaPartition({ public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [], { partition: 'request', members: PUBLIC }), 'request');
+  assert.equal(deltaPartition({ public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [], { partition: 'public', members: PUBLIC }), 'public');
 });
 
 test('H-65: a 304 on a public snapshot keeps the snapshot as it is, also with Set-Cookie or private on the 304', () => {
@@ -516,6 +520,97 @@ test('the harness interface takes the partition of the context snapshot', () => 
   assert.equal(clientStep(context, publicDelta()).snapshot.partition, 'public');
   assert.equal(clientStep({ ...context, snapshot: plain }, publicDelta()).snapshot.partition, 'request');
   assert.throws(() => clientStep({ ...context, snapshot: { ...plain, partition: 'shared' } }, publicDelta()), /unknown partition shared/);
+});
+
+// H-67: a result that comes through a redirect never goes to the public partition.
+test('H-67: redirected is true for any redirect, also to the same URL; only false with the same final URL means no redirect', () => {
+  assert.equal(redirected({ url: TARGET, redirected: false }), false);
+  assert.equal(redirected({ url: TARGET, final_url: TARGET, redirected: false }), false);
+  assert.equal(redirected({ url: TARGET, final_url: TARGET, redirected: true }), true);
+  // Another final URL is a redirect, also with the flag false and for the same cache key.
+  for (const final of ['https://shop.example.com/other', 'https://SHOP.example.com/catalog', `${TARGET}#x`]) {
+    assert.equal(redirected({ url: TARGET, final_url: final, redirected: false }), true, final);
+  }
+  // Fails closed: a flag that is not false counts as a redirect.
+  for (const flag of [undefined, null, 0, 'false']) assert.equal(redirected({ url: TARGET, redirected: flag }), true, String(flag));
+});
+
+test('H-67: F that comes through a redirect goes to the partition of the request, also with Cache-Control public', () => {
+  assert.equal(storeIn({}, [['cache-control', 'public']]), 'public'); // control: no redirect
+  const final = 'https://shop.example.com/catalog?page=1';
+  const moved = handleResponse(publicCtx({ final_url: final }), { status: 200, headers: [...HTML, ['cache-control', 'public']], body: fullOf('page-a', PUBLIC, final) });
+  assert.deepEqual([moved.outcome, moved.snapshot.url, moved.snapshot.partition], ['stored', final, 'request']);
+  assert.equal(storeIn({ redirected: true }, [['cache-control', 'public']]), 'request');
+  assert.equal(storeIn({ redirected: true, final_url: TARGET }, []), 'request');
+  assert.equal(partitionFor({ public_origin: true, credentials: false, response_fields_visible: true, url: TARGET, redirected: true }, [['cache-control', 'public']], PUBLIC), 'request');
+});
+
+test('H-67: a delta on a public snapshot that comes through a redirect gives a result in the partition of the request', () => {
+  for (const fields of [{ redirected: true }, { final_url: 'https://SHOP.example.com:443/catalog' }]) {
+    const r = onPublic(fields, []);
+    assert.deepEqual([r.outcome, r.snapshot.url, r.snapshot.partition], ['patched', TARGET, 'request'], JSON.stringify(fields));
+  }
+  assert.equal(deltaPartition({ public_origin: true, credentials: false, response_fields_visible: true, url: TARGET, redirected: true }, [], { partition: 'public', members: PUBLIC }), 'request');
+});
+
+test('H-67: a 304 on a public snapshot after a redirect to the same URL keeps the snapshot as it is', () => {
+  const snap = publicSnapshot();
+  const r = handleResponse(ctx({ public_origin: true, credentials: false, redirected: true, snapshot: snap }), { status: 304, headers: [], body: null });
+  assert.deepEqual([r.outcome, r.next, r.snapshot, snap.partition], ['not-modified', 'keep', null, 'public']);
+});
+
+// H-68: no RQP for a URL with a user name or a password.
+test('H-68: hasUserinfo is true for a user name, a password or both; an empty user information does not count', () => {
+  for (const url of ['https://user:secret@shop.example.com/catalog', 'https://user@shop.example.com/catalog', 'https://:secret@shop.example.com/catalog', 'https://shop.example.com@attacker.example/']) {
+    assert.equal(hasUserinfo(url), true, url);
+  }
+  for (const url of [TARGET, 'https://@shop.example.com/catalog', 'https://:@shop.example.com/catalog', 'https://shop.example.com/a@b', 'https://shop.example.com\\@attacker.example/']) {
+    assert.equal(hasUserinfo(url), false, url);
+  }
+});
+
+test('H-68: no RQP field to a URL with user information, also when its origin is in the allowlist', () => {
+  const allowlist = ['https://shop.example.com'];
+  for (const url of ['https://user:secret@shop.example.com/catalog', 'https://user@shop.example.com/catalog', 'https://:secret@shop.example.com/catalog']) {
+    assert.equal(inAllowlist({ allowlist }, url), true, url); // the origin has no user information
+    assert.equal(rqpAllowed(clientContext({ url, allowlist })), false, url);
+    assert.deepEqual(requestHeaders(clientContext({ url, allowlist, navigation: 'first-visit' })), [['accept', 'text/html']], url);
+    const r = handleResponse(clientContext({ url, allowlist }), { status: 200, headers: HTML, body: fullOf('page-a') });
+    assert.deepEqual([r.outcome, r.error, r.snapshot], ['normal', null, null], url);
+  }
+  assert.equal(rqpAllowed(clientContext({ url: 'https://@shop.example.com/catalog', allowlist })), true);
+});
+
+test('H-68: a final URL with user information: F gives a normal page, a 304 and a delta fail the cache key', () => {
+  const final = 'https://user:secret@shop.example.com/catalog';
+  const full = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', final_url: final }), { status: 200, headers: HTML, body: fullOf('page-a', {}, final) });
+  assert.deepEqual([full.outcome, full.error, full.snapshot], ['normal', null, null]);
+  assert.deepEqual([on304({ final_url: final }).outcome, on304({ final_url: final }).next], ['normal', 'webview-load']);
+  const delta = handleResponse(ctx({ final_url: final }), { status: 200, headers: DELTA, body: Buffer.from(JSON.stringify(envelope([['price', '130.00']]))) });
+  assert.deepEqual([delta.outcome, delta.error, delta.next], ['rejected', 'PATCH_INVALID', 'fallback-load']);
+});
+
+// H-69: an allowlist entry is its own serialized origin.
+test('H-69: validAllowlistEntry accepts only a string that is its own serialized origin', () => {
+  for (const entry of ['https://shop.example.com', 'http://shop.example.com', 'https://shop.example.com:8443', 'https://xn--fa-hia.example', 'https://[::1]', 'https://192.0.2.1']) {
+    assert.equal(validAllowlistEntry(entry), true, entry);
+  }
+  const invalid = ['HTTPS://shop.example.com', 'https://SHOP.example.com', 'https://shop.example.com:443', 'http://shop.example.com:80', 'https://shop.example.com/',
+    'https://shop.example.com/catalog', 'https://faß.example', 'https://bücher.example', '*', '*.example.com', 'shop.example.com', ' https://shop.example.com',
+    'https://shop.example.com ', 'https://user:pw@shop.example.com', 'https://shop.example.com?q', 'https://shop.example.com#f', 'null', 'file:///x', '', 'https://[0:0::1]'];
+  for (const entry of invalid) assert.equal(validAllowlistEntry(entry), false, entry);
+  // Never throws: also not for a value that cannot become a string.
+  for (const entry of [null, undefined, 1, ['https://shop.example.com'], { href: 'https://shop.example.com' }, Symbol('x')]) assert.equal(validAllowlistEntry(entry), false, typeof entry);
+});
+
+// DL-040 L-3: the origin is the one of the WHATWG parse of the URL.
+test('DL-040 L-3: a backslash in an https URL is a path separator, and an IDN host has its nontransitional xn-- form', () => {
+  const shop = { allowlist: ['https://shop.example.com'] };
+  assert.equal(inAllowlist(shop, 'https://attacker.example\\@shop.example.com/catalog'), false);
+  assert.equal(inAllowlist(shop, 'https://shop.example.com\\@attacker.example/catalog'), true);
+  assert.equal(inAllowlist(shop, 'https://shop.example.com@attacker.example/catalog'), false);
+  assert.equal(inAllowlist({ allowlist: ['https://xn--fa-hia.example'] }, 'https://faß.example/'), true);
+  assert.equal(inAllowlist({ allowlist: ['https://fass.example'] }, 'https://faß.example/'), false);
 });
 
 test('a patched snapshot keeps the cache key of the snapshot', () => {

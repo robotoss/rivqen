@@ -5,6 +5,7 @@
   "rules": ["RQP-22", "RQP-24"],
   "context": {
     "final_url": "http://shop.example.com/catalog",
+    "allowlist": ["https://shop.example.com", "http://shop.example.com"],
     "navigation": "first-visit",
     "snapshot": null
   },

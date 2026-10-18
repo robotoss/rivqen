@@ -150,14 +150,46 @@ test('the client fixtures catch a client that ignores H-64, H-65 or the exact or
     return (await runClient(mod)).filter((r) => r.failures.length > 0).map((r) => r.name);
   };
   // H-64: a client that trusts the fields of every response.
-  assert.deepEqual(await failing((c) => ({ ...c, response_fields_visible: true })), ['FX-RQ-C24-PUBLIC-FIELDS-HIDDEN']);
+  assert.deepEqual(await failing((c) => ({ ...c, response_fields_visible: true })), ['FX-RQ-C24-PUBLIC-FIELDS-HIDDEN', 'FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-FIELDS-HIDDEN']);
   // H-65: a client that forgets the partition of its snapshot.
   assert.deepEqual(await failing((c) => ({ ...c, snapshot: c.snapshot === null ? null : { ...c.snapshot, partition: 'request' } })), ['FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-STAYS-PUBLIC']);
   // DL-038: a client that matches the allowlist by host suffix, or compares the URL text without serialization.
   const suffix = (c) => ({ ...c, allowlist: c.allowlist.some((o) => new URL(c.final_url).origin.startsWith(`${o}.`)) ? [...c.allowlist, new URL(c.final_url).origin] : c.allowlist });
   assert.deepEqual(await failing(suffix), ['FX-RQ-C25-FINAL-HOST-SUFFIX']);
   const raw = (c) => ({ ...c, allowlist: c.allowlist.includes(c.final_url.split('/').slice(0, 3).join('/')) ? c.allowlist : [] });
-  assert.deepEqual(await failing(raw), ['FX-RQ-C25-FINAL-DEFAULT-PORT', 'FX-RQ-C25-FINAL-HOST-CASE']);
+  assert.deepEqual(await failing(raw), [
+    'FX-RQ-C25-FINAL-BACKSLASH-ALLOWED-HOST',
+    'FX-RQ-C25-FINAL-DEFAULT-PORT',
+    'FX-RQ-C25-FINAL-HOST-CASE',
+    'FX-RQ-C25-IDN-HOST',
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-REDIRECT-HOST-CASE',
+  ]);
+});
+
+test('the client fixtures catch a client that ignores H-67, H-68 or the WHATWG parse of DL-040 L-3', async () => {
+  const failing = async (change) => {
+    const mod = { clientStep: (context, response) => client.clientStep(change(context), response), clientRequest: (context) => client.clientRequest(change(context)) };
+    return (await runClient(mod)).filter((r) => r.failures.length > 0).map((r) => r.name);
+  };
+  // H-67: a client that forgets the redirect when it chooses the partition (it looks at the final request only).
+  assert.deepEqual(await failing((c) => (c.public_origin ? { ...c, url: c.final_url, redirected: false } : c)), [
+    'FX-RQ-C24-PUBLIC-REDIRECT',
+    'FX-RQ-C24-PUBLIC-REDIRECT-SAME-URL',
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-REDIRECT',
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-REDIRECT-HOST-CASE',
+  ]);
+  // H-68: a client that removes the user information before its checks.
+  const strip = (u) => {
+    const x = new URL(u);
+    x.username = '';
+    x.password = '';
+    return x.href;
+  };
+  assert.deepEqual(await failing((c) => ({ ...c, url: strip(c.url), final_url: strip(c.final_url), redirected: c.redirected })), ['FX-RQ-C25-USERINFO-FINAL', 'FX-RQ-C25-USERINFO-REQUEST']);
+  // DL-040 L-3: a client that parses the URL again with a parser that reads the text before a backslash and "@" as
+  // user information and takes the host after it.
+  const rfc = (u) => u.replace(/^https:\/\/[^/?#]*\\@/, 'https://');
+  assert.deepEqual(await failing((c) => ({ ...c, final_url: rfc(c.final_url) })), ['FX-RQ-C25-FINAL-BACKSLASH-ALLOWED-HOST', 'FX-RQ-C25-FINAL-BACKSLASH-OTHER-HOST']);
 });
 
 test('a missing response.body fails that client fixture only', async () => {

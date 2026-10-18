@@ -1,0 +1,31 @@
+{
+  "id": "FX-RQ-C24-PUBLIC-REDIRECT",
+  "kind": "client",
+  "description": "Mode public, a public origin, a request without credentials, all fields seen and Cache-Control public, but the response came through a redirect from https://shop.example.com/ to /catalog: a redirect response can set a cookie that the next request carries, so the snapshot goes to the partition of the request (H-67)",
+  "rules": ["RQP-25"],
+  "context": {
+    "url": "https://shop.example.com/",
+    "final_url": "https://shop.example.com/catalog",
+    "allowlist": ["https://shop.example.com"],
+    "public_origin": true,
+    "navigation": "first-visit",
+    "snapshot": null,
+    "credentials": false
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "public, max-age=60"]
+    ],
+    "body": {
+      "full": "page-a",
+      "members": {
+        "policy": {
+          "mode": "public"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "id": "FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-REDIRECT-HOST-CASE",
+  "kind": "client",
+  "description": "As FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-REDIRECT, but the redirect goes to https://SHOP.example.com/catalog (the same cache key; redirected by default because final_url differs from url): the delta is applied and the result goes to the partition of the request (H-67)",
+  "rules": ["RQP-24", "RQP-25"],
+  "context": {
+    "public_origin": true,
+    "navigation": "delta",
+    "snapshot": {
+      "page": "page-a",
+      "members": {
+        "policy": {
+          "mode": "public"
+        }
+      },
+      "partition": "public"
+    },
+    "credentials": false,
+    "final_url": "https://SHOP.example.com/catalog",
+    "allowlist": ["https://shop.example.com"]
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b"
+      }
+    }
+  }
+}

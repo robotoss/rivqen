@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-C25-FINAL-BACKSLASH-OTHER-HOST",
+  "kind": "client",
+  "description": "A redirect to https://attacker.example\\@shop.example.com/catalog: the WHATWG URL parser reads \"\\\" as \"/\" in an https URL, so the host is attacker.example (path /@shop.example.com/catalog), an origin outside the allowlist: a normal page, no snapshot, no error. A parser that reads \"attacker.example\\\" as user information sees shop.example.com and fails this case (DL-040 L-3)",
+  "rules": ["RQP-05", "RQP-24"],
+  "context": {
+    "final_url": "https://attacker.example\\@shop.example.com/catalog",
+    "allowlist": ["https://shop.example.com"],
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a"
+    }
+  }
+}

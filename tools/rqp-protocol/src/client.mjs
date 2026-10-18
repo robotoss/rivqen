@@ -8,19 +8,25 @@
 // results of the client fixtures (FX-RQ-C*), not a client SDK.
 //
 // Modelled context: the request URL (the cache key of the snapshot), the final
-// URL after redirects, the build type and the http flag (H-49, H-58), the
-// origin allowlist as a list of serialized origins (RQP-05, H-62 item 1,
-// DL-038), whether the request carried credentials (true, false or unknown;
-// H-62 item 2), whether the native SDK saw all header fields of the response
-// (H-64), whether the app declares the origin public (the partition of a new
-// snapshot, H-61), and the partition of the context snapshot (request or
-// public; H-65).
+// URL after redirects and whether the response came through a redirect (H-67),
+// the build type and the http flag (H-49, H-58), the origin allowlist as a
+// list of serialized origins (RQP-05, H-62 item 1, DL-038, H-69), whether the
+// request carried credentials (true, false or unknown; H-62 item 2), whether
+// the native SDK saw all header fields of the response (H-64), whether the app
+// declares the origin public (the partition of a new snapshot, H-61), and the
+// partition of the context snapshot (request or public; H-65). A URL is the
+// WHATWG parse of its string (DL-040 L-3: an SDK takes the URL object of its
+// network stack).
 //
 // Not modelled: the partition keys and a partition change
 // (AUTH_PARTITION_CHANGED, also for a 304), the other cache identity inputs
 // (Vary, variant, ignored query parameters), no-store, the policy effects
-// (freshness, offline), and the delivery to the WebView (H-66: text/html with
-// the encoding utf-8; a platform adapter rule). The manifest members policy
+// (freshness, offline; also DL-040 I-3: a 304 that does not meet RQP-25 does
+// not update the stored metadata of a public entry), the choice between two
+// entries of one cache key (DL-039), the configuration step that rejects an
+// allowlist entry (H-69; validAllowlistEntry is the check), and the delivery to
+// the WebView (H-66, DL-040 L-2: text/html with the encoding utf-8; a platform
+// adapter rule). The manifest members policy
 // and limits are modelled as part of the page revision (H-55), as the patch
 // size hint and, for mode, as the partition choice.
 
@@ -81,7 +87,9 @@ export function snapshotOf(document, members = {}, url = null, partition = Parti
  * The URL part of the cache key (H-58): scheme, host, port, path and query as
  * the WHATWG URL parser serializes them, without the fragment. The other steps
  * of cache identity section 2 (percent-encoding, ignored parameters) are not
- * modelled.
+ * modelled. The user information stays in the string on purpose: the client
+ * stores no snapshot for a URL with a user name or a password (H-68), so a URL
+ * with user information never compares equal to the key of a snapshot.
  */
 export function canonicalUrl(url) {
   const u = new URL(url);
@@ -129,13 +137,37 @@ export function inAllowlist(ctx, url) {
 }
 
 /**
- * Section 6.1, rules 1 and 5 (RQP-05, H-49) and section 6.3 (H-58, H-62): the
- * client sends RQP fields to `url` only when its origin is in the allowlist,
- * and only for https; for http only in a debug build with the app flag. `url`
- * defaults to the request URL.
+ * Section 6.1, rule 1 (H-69, RQP-05): an allowlist entry is valid only when it
+ * is a string that is equal to its own serialized origin (WHATWG URL parse,
+ * then the ASCII serialization of the origin). So upper case, a default port,
+ * a trailing "/", a path, user information, white space, a Unicode IDN host
+ * and "*" are invalid. An SDK rejects a configuration with an invalid entry;
+ * the reference has no configuration step, so the fixture loader uses this
+ * check. Never throws.
+ */
+export function validAllowlistEntry(entry) {
+  return typeof entry === 'string' && URL.canParse(entry) && new URL(entry).origin === entry;
+}
+
+/**
+ * Section 6.1, rule 1 (H-68): the URL has a user name or a password (the
+ * WHATWG URL "includes credentials"). An empty user information ("https://@host/")
+ * is not kept by the parser and does not count.
+ */
+export function hasUserinfo(url) {
+  const u = new URL(url);
+  return u.username !== '' || u.password !== '';
+}
+
+/**
+ * Section 6.1, rules 1 and 5 (RQP-05, H-49, H-68) and section 6.3 (H-58,
+ * H-62): the client sends RQP fields to `url` only when the URL has no user
+ * name and no password, its origin is in the allowlist, and only for https;
+ * for http only in a debug build with the app flag. `url` defaults to the
+ * request URL.
  */
 export function rqpAllowed(ctx, url = ctx.url) {
-  if (!inAllowlist(ctx, url)) return false;
+  if (hasUserinfo(url) || !inAllowlist(ctx, url)) return false;
   const scheme = new URL(url).protocol;
   if (scheme === 'https:') return true;
   return scheme === 'http:' && ctx.build === 'debug' && ctx.allow_http === true;
@@ -144,6 +176,15 @@ export function rqpAllowed(ctx, url = ctx.url) {
 /** The final URL of the response (after redirects); the request URL without a redirect. */
 function finalUrlOf(ctx) {
   return ctx.final_url ?? ctx.url;
+}
+
+/**
+ * H-67: the response came through at least one redirect, also a redirect to
+ * the same URL. Fails closed: only ctx.redirected === false with a final URL
+ * equal to the request URL (the same string) means no redirect.
+ */
+export function redirected(ctx) {
+  return ctx.redirected !== false || finalUrlOf(ctx) !== ctx.url;
 }
 
 /** The base64 Byte Sequence content of Rq-Have member b (H-44). */
@@ -221,16 +262,19 @@ export function setsCookie(responseHeaders) {
 }
 
 /**
- * Manifest-patch section 1.4, mode (H-61 to H-64, RQP-25): the shared public
- * partition only for a manifest with mode "public", an origin that the app
- * declares public, a response whose header fields the native SDK saw in full
- * (H-64; any other response counts as a response with a Set-Cookie field), no
- * Set-Cookie field (H-63), no Cache-Control directive "private", and an
- * explicit "public" directive or a request without credentials. Else the
- * partition of the request.
+ * Manifest-patch section 1.4, mode (H-61 to H-64, H-67, RQP-25): the shared
+ * public partition only for a manifest with mode "public", an origin that the
+ * app declares public, a response that did not come through a redirect (H-67;
+ * a redirect response can set a cookie that the next request carries), a
+ * response whose header fields the native SDK saw in full (H-64; any other
+ * response counts as a response with a Set-Cookie field), no Set-Cookie field
+ * (H-63), no Cache-Control directive "private", and an explicit "public"
+ * directive or a request without credentials. Else the partition of the
+ * request. deltaPartition uses it, so the redirect rule also covers a delta.
  */
 export function partitionFor(ctx, responseHeaders, members) {
   if (members.policy?.mode !== 'public' || ctx.public_origin !== true) return Partition.REQUEST;
+  if (redirected(ctx)) return Partition.REQUEST;
   if (ctx.response_fields_visible !== true || setsCookie(responseHeaders)) return Partition.REQUEST;
   const directives = cacheDirectives(combined(responseHeaders, 'cache-control'));
   if (directives.has('private')) return Partition.REQUEST;
@@ -241,7 +285,8 @@ export function partitionFor(ctx, responseHeaders, members) {
  * H-65: the partition of the result of a delta. A snapshot in the partition of
  * the request gives a result in the partition of the request. The result of a
  * delta on a public snapshot stays public only when the delta response meets
- * RQP-25 (partitionFor with the policy of the snapshot manifest) and the
+ * RQP-25 (partitionFor with the policy of the snapshot manifest; so also no
+ * redirect, H-67) and the
  * client knows that the request had no credentials: a delta has
  * Cache-Control no-store, so an explicit "public" directive does not count.
  * Else the result goes to the partition of the request, and the public
@@ -271,9 +316,11 @@ export function decodedAsUtf8(responseHeaders, body) {
  * H-62 (1): the client uses F, a 304 or D only when the final request carried
  * RQP fields (rqpAllowed for the final URL). For F this is checked below. A 304
  * and D need the cache key of the snapshot, so the final URL has the origin of
- * the request URL, which passed rqpAllowed at the start.
+ * the request URL, which passed rqpAllowed at the start. canonicalUrl keeps
+ * the user information, so a final URL with a user name or a password (H-68)
+ * never has the cache key of a snapshot: no snapshot is stored for such a URL.
  *
- * @param {{ url: string, final_url?: string, build: string, allow_http: boolean, navigation: string,
+ * @param {{ url: string, final_url?: string, redirected?: boolean, build: string, allow_http: boolean, navigation: string,
  *   snapshot: object|null, allowlist: string[], credentials?: boolean|null,
  *   response_fields_visible?: boolean, public_origin?: boolean }} ctx
  * @param {{ status: number, headers: Array<[string, string]>, body: Uint8Array|null }} response

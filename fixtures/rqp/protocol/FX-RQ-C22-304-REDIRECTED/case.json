@@ -5,6 +5,7 @@
   "rules": ["RQP-24"],
   "context": {
     "final_url": "https://shop.example.com/catalog?page=2",
+    "allowlist": ["https://shop.example.com"],
     "navigation": "delta",
     "snapshot": "page-a"
   },

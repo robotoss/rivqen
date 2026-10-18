@@ -4,6 +4,7 @@
   "context": {
     "url": "https://shop.example.com/catalog",
     "final_url": "https://shop.example.com.attacker.net/catalog",
+    "redirected": true,
     "build": "release",
     "allow_http": false,
     "allowlist": ["https://shop.example.com"],

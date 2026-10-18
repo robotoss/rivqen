@@ -24,8 +24,8 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | [WP-11](#wp-11) | iOS SDK | P5 | iOS engineer | WP-09 | XL | Planned |
 | [WP-12](#wp-12) | Web core, React adapter, JS bridge | P6 | Web engineer | WP-09, WP-13 | L | Planned |
 | [WP-13](#wp-13) | Node.js server SDK | P4 | Backend engineer | WP-02 | M | Planned |
-| [WP-14](#wp-14) | Java server SDK | P4 | Backend engineer | WP-02 | M | Planned |
-| [WP-15](#wp-15) | PHP server SDK | P4 | Backend engineer | WP-02 | M | Planned |
+| [WP-14](#wp-13) | Java server SDK | P4 | Backend engineer | WP-02 | M | Planned |
+| [WP-15](#wp-13) | PHP server SDK | P4 | Backend engineer | WP-02 | M | Planned |
 | [WP-16](#wp-16) | Transport extensions (realtime, dictionary compression) | P8 | Protocol designer | WP-10, WP-11 | L | Planned |
 | [WP-17](#wp-17) | Rivqen protocol (RQP) specification | P1 | Protocol designer | WP-00 | L | **In progress** ([S1](/engineering/plan/sprints/WP-17-S1), [S2](/engineering/plan/sprints/WP-17-S2) and [S3](/engineering/plan/sprints/WP-17-S3) closed; open for further work with the human) |
 | [WP-18](#wp-18) | Security engineering | P0–P7 | Security engineer | — (continuous) | L | Planned |

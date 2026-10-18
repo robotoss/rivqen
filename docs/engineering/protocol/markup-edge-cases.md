@@ -792,9 +792,78 @@ The reference of the decided rules is the T-01 study copy (`study/relax/src/mark
 
 <Badge type="tip" text="FACT" /> Corpus (882 pages of the S3 fetch, 2026-10-18), the same reference: 820 pages valid (798 with the rules before S3); H-71 alone rejects none of the 798 pages. The corpus run with the four candidates (commit `532acd9`) gives 820 of 882 pages valid, with 0 validity disagreements.
 
+## 10. Relaxed rules (WP-17 S4)
+
+<Badge type="info" text="DESIGN" /> **Decided on 2026-10-19** ([sprint record WP-17 S4](/engineering/plan/sprints/WP-17-S4) §1), after the rule-cost audit ([sprint record WP-17 S3](/engineering/plan/sprints/WP-17-S3) §6): H-77 (attribute rule item 2 at the scheme decision byte), H-78 (the patch-safety elements and `FOREIGN_ALLOWED` leave M-22 for the patch content rule), H-83 (`data:` raster images in `img`, `source` and `video`), H-84 (M-13 item 2 narrowed) and H-86 (`application/ld+json` as a `json` type). Rule text: `markup.md` M-04, M-11 item 4, M-13, M-16, M-22, M-24, [§2.14](/engineering/protocol/markup#_2-14-rules-from-wp-17-s4); [manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules). Task T-02 wrote the rule text, the golden fixtures, the cross-check cases `cases/s4-cases.json` and the changes of the corpus classifier.
+
+### 10.1 What H-78 changes in the token pass
+
+<Badge type="info" text="DESIGN" />
+
+| Item | Before H-78 | After H-78 |
+|---|---|---|
+| `script`, `style`, `iframe` in block content | `STRUCTURE` (M-22 item 2) | M-04 switches the tokenizer in the content as outside it. The raw text is character tokens up to the appropriate end tag; the end tag pops the element (M-23); the block end tag and the offsets are found after it. Raw text that does not end makes the block lose its end tag (M-20) |
+| `object` in block content | `STRUCTURE` | Pushed, in `GUARDED`: M-23 balance, M-06 item 1, M-24 item k in table context, M-09 for table start tags in it |
+| `link`, `meta`, `embed`, `base`, `basefont`, `bgsound` | `STRUCTURE` | `VOID`: not pushed; M-22 item 4 rejects their end tags |
+| Foreign element outside `FOREIGN_ALLOWED` | `STRUCTURE` (M-22 item 5) | Valid when M-07 holds (as outside blocks). M-07 items 3 to 5 keep integration points and `script`/`style` in the region text only |
+| A manifest-like `script` in block content | Two errors (M-22, M-13) | `RESERVED` only (M-13) |
+| Patch with these elements | Rejected by the analysis (step 8) | Valid markup; rejected only by the patch content rule (step 9, MUST) |
+
+No token-stack rule depends on the content of a raw text, and every moved element is already allowed outside blocks, where the cross-checks since S1 cover it. The claim of M-26 does not change: the moved elements are pushed and popped like other elements (`object`, `script`, `style`, `iframe`) or inserted and popped at once like other void elements (claim item (c)).
+
+Choices of T-02 (each one is stricter than the other reading, so a later relaxation stays compatible):
+
+1. **M-13 item 2 also rejects a numeric reference with the value `80` or more.** The H-84 text does not list it. Without it, `application/r&#305;vqen-manifest+json` and `application/rivqen-manife&#x17f;t+json` are valid, and the cross-check reports `parse5-enabled-manifest` and `parse5-disabled-manifest` for them (a reader that decodes and maps Unicode case sees the manifest type; the H-28 shape). Fixture `RESERVED-CHARREF-NON-ASCII`. Waits for the architect (H-80) or the human.
+2. **The `srcset` split rejects a character reference that decodes to white space, `,`, `(` or `)`** (H-83). With such a reference, the raw split and the browser split can give different candidates. Without such a reference they are the same (randomized check: 54 780 values, 0 differences).
+3. **The `data:` exception reads the type by prefix** (`data:image/`, not `data:image/svg+xml`), as H-83 says. A space before the type (`data: image/png`) rejects; the percent form `data:image/svg%2Bxml` passes as a type that is not SVG by name. <Badge type="warning" text="RESEARCH" /> How engines read such a type is NOT FOUND; an `img` image runs no script by the specifications in either case (manifest and patch §4.2).
+
+### 10.2 Fixtures
+
+<Badge type="tip" text="FACT" /> 2026-10-18: 297 golden fixtures (120 valid, 177 invalid); 50 new. Fourteen existing results change by decision:
+
+| Fixture | Before | After | Decision |
+|---|---|---|---|
+| `CONTENT-SCRIPT` | `STRUCTURE` | valid, 1 block | H-78 |
+| `CONTENT-FOREIGN-A`, `-ANIMATE`, `-ANIMATEMOTION`, `-ANIMATETRANSFORM`, `-ANNOTATION-XML`, `-FEIMAGE`, `-FOREIGNOBJECT`, `-IMAGE`, `-MACTION`, `-SCRIPT`, `-SET`, `-STYLE` (12) | `STRUCTURE` | valid, 1 block | H-78 (FOREIGN_ALLOWED is a patch rule; M-07 holds) |
+| `FORBIDDEN-SCRIPT-TYPE` (`application/ld+json`) | `FORBIDDEN_ELEMENT` | valid, 1 `json` block | H-86 |
+
+The inputs of these fixtures are not changed; the fixture ids stay. `CONTENT-FOREIGN-INTEGRATION`, `-INTEGRATION-MATH`, `-CROSSING` and `-EOF` stay invalid (M-07, M-23, M-20).
+
+New fixtures:
+
+| Decision | Valid | Invalid |
+|---|---|---|
+| H-78, moved elements | `CONTENT-STYLE`, `-LINK`, `-META`, `-IFRAME`, `-OBJECT`, `-EMBED`, `-BASE`, `-BASEFONT`, `-BGSOUND`, `CONTENT-RAWTEXT-P` | — |
+| H-78, raw text | `CONTENT-SCRIPT-END-TAG-TEXT` (`</div>` in script data), `CONTENT-SCRIPT-ESCAPED` (`<!--<script>`), `CONTENT-SCRIPT-BLOCK-TEXT`, `CONTENT-STYLE-COMMENT-TEXT`, `CONTENT-IFRAME-TEXT` | `CONTENT-SCRIPT-ESCAPED-EOF` (M-20), `CONTENT-SCRIPT-SELF-CLOSING` (M-22 item 3), `CONTENT-SCRIPT-RESERVED` (M-13) |
+| H-78, `object` | `CONTENT-OBJECT-TABLE` | `CONTENT-OBJECT-UNBALANCED` (M-06, M-23), `CONTENT-OBJECT-IN-TABLE` (M-24 item k), `CONTENT-OBJECT-CELL` (M-09) |
+| H-78, foreign | `CONTENT-FOREIGN-A-IN-HTML-A`, `CONTENT-FOREIGN-SCRIPT-CDATA` | — |
+| H-78, names that M-22 keeps | — | `CONTENT-FORBIDDEN-HTML`, `-HEAD`, `-BODY`, `-FRAME`, `-FRAMESET` (also M-10), `-SELECT`, `-OPTGROUP`, `-TITLE`, `-NOSCRIPT`, `-TEMPLATE`, `-TEXTAREA`, `-NOEMBED`, `-NOFRAMES`, `-XMP`, `-PLAINTEXT` (also M-20) |
+| H-84 | `SCRIPT-TYPE-CHARREF` (8 types) | `RESERVED-CHARREF-NAMED`, `-SLASH`, `-LEADING-ZEROS`, `-SPACE`, `-NON-ASCII` (choice 1) |
+| H-86 | `JSON-LD` | `BAD-JSON-LD`, `BAD-JSON-LD-EMPTY`, `FORBIDDEN-SCRIPT-TYPE-LD-CASE`, `FORBIDDEN-SCRIPT-TYPE-LD-PARAM` |
+
+H-77 and H-83 are patch rules: a markup fixture cannot show them. Their protocol fixtures come with the reference (T-08).
+
+### 10.3 Cross-check
+
+<Badge type="tip" text="FACT" /> parse5 8.0.1, 2026-10-18, `tools/rqp-markup/crosscheck`, both scripting views:
+
+| Input | Result |
+|---|---|
+| Golden fixtures, `check --expected --scripting both` | 297 documents, 120 valid; 0 findings (blocks, depth claim and rule classes in both views) |
+| `cases/s4-cases.json` (126 cases), reference of the S4 rules | Each `expected` field holds; 0 disagreements and 0 depth-claim findings |
+| The same cases, the reference with the H-84 list only (no `80` or more) | `parse5-*-manifest` for `S4-H84-invalid-dotless-i` and `S4-H84-invalid-long-s` (choice 1) |
+| Sweeps, profiles `classic`, `review`, `review2`, `review3`, seed 81, 100 000 documents each | 88 829 valid documents; 0 findings; 0 depth-claim violations on valid documents in either view |
+| A generator of H-78 block content (raw text with `</div>`, `<!--` and `<script>`, `object`, void elements, tables, foreign elements outside `FOREIGN_ALLOWED`, JSON-LD), 130 000 documents | 10 567 valid documents; 0 findings |
+| The reference against the golden fixtures (`diff.mjs`) | 297 of 297 |
+
+The reference of the S4 rules is a copy of the Node.js candidate with four changes (the `FORBIDDEN_CONTENT` set of H-78, no `FOREIGN_ALLOWED` check, M-13 item 2 of H-84 with choice 1, the `json` type of H-86). It was used only to check the rule text, the fixtures and the cases; it is not committed (the candidates follow in T-04 to T-07).
+
+<Badge type="tip" text="FACT" /> Attribute rule (H-77, S4 T-02, 2026-10-18): 300 000 generated values, decoded by parse5 8.0.1 as attribute values and read with the scheme steps of the URL Standard; 127 690 are `javascript:`, `vbscript:` or `data:` URLs, and items 2 to 4 reject all of them. Reading the numeric reference on the copy of item 3 instead misses `java&#x73⏎cript:x` (manifest and patch §4.2).
+
 ## Related
 
 - [RQP markup](/engineering/protocol/markup)
 - [Golden fixtures](/engineering/protocol/fixtures)
 - [Sprint record WP-17 S1](/engineering/plan/sprints/WP-17-S1)
 - [Sprint record WP-17 S3](/engineering/plan/sprints/WP-17-S3)
+- [Sprint record WP-17 S4](/engineering/plan/sprints/WP-17-S4)

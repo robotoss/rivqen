@@ -190,7 +190,7 @@ No response of a server case has an `Rq-Revision` or `Rq-Template-Revision` fiel
 
 ### 4.2 Markup fixtures (`FX-RQ-MARKUP-*`)
 
-<Badge type="tip" text="FACT" /> 247 fixtures (86 valid, 161 invalid) in `fixtures/rqp/markup/`, counted on 2026-10-18. All are normative. The 18 fixtures `EDGE-*` cover the edge cases E1–E8, their combinations and the case of the CDATA opener ([markup §2.11](/engineering/protocol/markup#_2-11-decided-edge-cases)), decided by the human (H-21, H-22). The fixtures `FORMATTING-*`, `NOSCRIPT-BALANCED`, `NOSCRIPT-CROSSING`, `NOSCRIPT-EOF-UNBALANCED`, `NOSCRIPT-STRAY-END`, `NOSCRIPT-UNBALANCED*`, `*-NON-ASCII*`, `TABLE-STRAY-*`, `TABLE-IMPLIED-PARTS` and `LIMIT-DEPTH-*` cover the rules of the security review (H-25 to H-38, [markup §2.12](/engineering/protocol/markup#_2-12-rules-from-the-security-review)). The fixtures `TEMPLATE-FOR*` cover H-43 from the conformance study ([edge cases §8](/engineering/protocol/markup-edge-cases#_8-whatwg-conformance-table-round-3)). Each fixture tests the rules of [RQP markup](/engineering/protocol/markup) §2 that it lists. Layout and `fixture.json` format: `fixtures/rqp/markup/README.md`. Result format: `tools/rqp-markup/CONTRACT.md` §3.
+<Badge type="tip" text="FACT" /> 297 fixtures (120 valid, 177 invalid) in `fixtures/rqp/markup/`, counted on 2026-10-18 after WP-17 S4 T-02. The decisions H-78, H-84 and H-86 changed 14 results and added 50 fixtures ([edge cases §10.2](/engineering/protocol/markup-edge-cases#_10-2-fixtures)); some fixture ids are older than these decisions (`FORBIDDEN-SCRIPT-TYPE` is valid since H-86). All are normative. The 18 fixtures `EDGE-*` cover the edge cases E1–E8, their combinations and the case of the CDATA opener ([markup §2.11](/engineering/protocol/markup#_2-11-decided-edge-cases)), decided by the human (H-21, H-22). The fixtures `FORMATTING-*`, `NOSCRIPT-BALANCED`, `NOSCRIPT-CROSSING`, `NOSCRIPT-EOF-UNBALANCED`, `NOSCRIPT-STRAY-END`, `NOSCRIPT-UNBALANCED*`, `*-NON-ASCII*`, `TABLE-STRAY-*`, `TABLE-IMPLIED-PARTS` and `LIMIT-DEPTH-*` cover the rules of the security review (H-25 to H-38, [markup §2.12](/engineering/protocol/markup#_2-12-rules-from-the-security-review)). The fixtures `TEMPLATE-FOR*` cover H-43 from the conformance study ([edge cases §8](/engineering/protocol/markup-edge-cases#_8-whatwg-conformance-table-round-3)). Each fixture tests the rules of [RQP markup](/engineering/protocol/markup) §2 that it lists. Layout and `fixture.json` format: `fixtures/rqp/markup/README.md`. Result format: `tools/rqp-markup/CONTRACT.md` §3.
 
 | File | Written by |
 |---|---|
@@ -220,6 +220,8 @@ In the table, the prefix `FX-RQ-MARKUP-` is not shown.
 | `BAD-JSON` | `BAD_JSON` | M-25 | A trailing comma is not valid JSON |
 | `BAD-JSON-DEPTH-65` | `BAD_JSON` | M-25 | Nesting depth 65 is more than the maximum (64) |
 | `BAD-JSON-EMPTY` | `BAD_JSON` | M-25 | Empty content is not a JSON text |
+| `BAD-JSON-LD` | `BAD_JSON` | M-25, H-86 | A JSON-LD block with a trailing comma (H-86: M-25 applies) |
+| `BAD-JSON-LD-EMPTY` | `BAD_JSON` | M-25, H-86 | An empty JSON-LD block (H-86: M-25 applies) |
 | `BAD-JSON-SURROGATE` | `BAD_JSON` | M-25 | A lone surrogate escape is invalid |
 | `BAD-JSON-WHITESPACE` | `BAD_JSON` | M-25 | A no-break space is not JSON white space |
 | `BOGUS-COMMENT` | valid, 1 block | M-03, M-14 | Bogus comments (&lt;!x and &lt;/ followed by a space) end at the first > |
@@ -229,27 +231,66 @@ In the table, the prefix `FX-RQ-MARKUP-` is not shown.
 | `CHARREF` | valid, 1 block | M-14, M-27 | Character references stay as raw bytes; escaped markup is not a block |
 | `COL-IN-CELL` | `STRUCTURE` | M-09 | A col start tag inside a td |
 | `COMMENT-FORMS` | valid, 2 blocks | M-03, M-14 | Tag-like text in a comment is not a block; &lt;!--> and --!> end comments early |
+| `CONTENT-BASE` | valid, 1 block | M-22, M-23, H-78 | A base element (void) in the content: valid markup since H-78 (the patch content rule rejects it in a patch) |
+| `CONTENT-BASEFONT` | valid, 1 block | M-22, M-23, H-78 | A basefont element (void) in the content: valid markup since H-78 (the patch content rule rejects it in a patch) |
+| `CONTENT-BGSOUND` | valid, 1 block | M-22, M-23, H-78 | A bgsound element (void) in the content: valid markup since H-78 (the patch content rule rejects it in a patch) |
 | `CONTENT-DOCTYPE` | `STRUCTURE` | M-22 | A DOCTYPE token in the content |
-| `CONTENT-FOREIGN-A` | `STRUCTURE` | M-22, H-73 | An svg a element in the content (not in FOREIGN_ALLOWED, H-73) |
-| `CONTENT-FOREIGN-ANIMATE` | `STRUCTURE` | M-22, H-73 | An svg animate element in the content (SMIL, not in FOREIGN_ALLOWED, H-73) |
-| `CONTENT-FOREIGN-ANIMATEMOTION` | `STRUCTURE` | M-22, H-73 | An svg animateMotion element in the content (SMIL, not in FOREIGN_ALLOWED, H-73) |
-| `CONTENT-FOREIGN-ANIMATETRANSFORM` | `STRUCTURE` | M-22, H-73 | An svg animateTransform element in the content (SMIL, not in FOREIGN_ALLOWED, H-73) |
-| `CONTENT-FOREIGN-ANNOTATION-XML` | `STRUCTURE` | M-22, H-73 | A MathML annotation-xml element with text in the content (not in FOREIGN_ALLOWED, H-73) |
+| `CONTENT-EMBED` | valid, 1 block | M-22, M-23, H-78 | An embed element (void) in the content: valid markup since H-78 (the patch content rule rejects it in a patch) |
+| `CONTENT-FORBIDDEN-BODY` | `STRUCTURE` | M-22, H-78 | A body element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FORBIDDEN-FRAME` | `STRUCTURE` | M-22, H-78 | A frame element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FORBIDDEN-FRAMESET` | `STRUCTURE` | M-10, M-22, H-78 | A frameset element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FORBIDDEN-HEAD` | `STRUCTURE` | M-22, H-78 | A head element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FORBIDDEN-HTML` | `STRUCTURE` | M-22, H-78 | An html element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FORBIDDEN-NOEMBED` | `STRUCTURE` | M-22, H-78 | A noembed element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FORBIDDEN-NOFRAMES` | `STRUCTURE` | M-22, H-78 | A noframes element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FORBIDDEN-NOSCRIPT` | `STRUCTURE` | M-22, H-78 | A noscript element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FORBIDDEN-OPTGROUP` | `STRUCTURE` | M-22, H-78 | An optgroup element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FORBIDDEN-PLAINTEXT` | `STRUCTURE` | M-20, M-22, H-78 | A plaintext element in the content: M-22 keeps it (H-78); PLAINTEXT never ends, so the block has no end tag (M-20) |
+| `CONTENT-FORBIDDEN-SELECT` | `STRUCTURE` | M-22, H-78 | A select element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FORBIDDEN-TEMPLATE` | `STRUCTURE` | M-22, H-78 | A template element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FORBIDDEN-TEXTAREA` | `STRUCTURE` | M-22, H-78 | A textarea element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FORBIDDEN-TITLE` | `STRUCTURE` | M-22, H-78 | A title element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FORBIDDEN-XMP` | `STRUCTURE` | M-22, H-78 | An xmp element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FOREIGN-A` | valid, 1 block | M-07, M-22, M-23, H-78 | An svg a element in the content: outside FOREIGN_ALLOWED, valid markup since H-78 (FOREIGN_ALLOWED is a patch content rule; M-07 holds) |
+| `CONTENT-FOREIGN-A-IN-HTML-A` | valid, 1 block | M-06, M-07, M-24, H-78 | An svg a element in a span block in an HTML a element: the foreign start tag runs no adoption agency and closes nothing (H-78, M-24 applies in HTML context only) |
+| `CONTENT-FOREIGN-ANIMATE` | valid, 1 block | M-07, M-22, M-23, H-78 | An svg animate element (SMIL) in the content: outside FOREIGN_ALLOWED, valid markup since H-78 (FOREIGN_ALLOWED is a patch content rule; M-07 holds) |
+| `CONTENT-FOREIGN-ANIMATEMOTION` | valid, 1 block | M-07, M-22, M-23, H-78 | An svg animateMotion element (SMIL) in the content: outside FOREIGN_ALLOWED, valid markup since H-78 (FOREIGN_ALLOWED is a patch content rule; M-07 holds) |
+| `CONTENT-FOREIGN-ANIMATETRANSFORM` | valid, 1 block | M-07, M-22, M-23, H-78 | An svg animateTransform element (SMIL) in the content: outside FOREIGN_ALLOWED, valid markup since H-78 (FOREIGN_ALLOWED is a patch content rule; M-07 holds) |
+| `CONTENT-FOREIGN-ANNOTATION-XML` | valid, 1 block | M-07, M-22, M-23, H-78 | A MathML annotation-xml element with text in the content: outside FOREIGN_ALLOWED, valid markup since H-78 (FOREIGN_ALLOWED is a patch content rule; M-07 holds) |
 | `CONTENT-FOREIGN-CROSSING` | `STRUCTURE` | M-23, H-73, H-75 | In the content, a g end tag crosses an unclosed svg path: only the end tag of the region root can cross (M-23, H-73, H-75) |
 | `CONTENT-FOREIGN-EOF` | `STRUCTURE` | M-07, M-20, H-73 | The input ends in a foreign region that started in the content: the block has no end tag (M-07 item 6, M-20, H-73) |
-| `CONTENT-FOREIGN-FEIMAGE` | `STRUCTURE` | M-22, H-73 | An svg feImage element in a filter in the content (not in FOREIGN_ALLOWED, H-73) |
-| `CONTENT-FOREIGN-FOREIGNOBJECT` | `STRUCTURE` | M-22, H-73 | An svg foreignObject element with text in the content (not in FOREIGN_ALLOWED, H-73) |
-| `CONTENT-FOREIGN-IMAGE` | `STRUCTURE` | M-22, H-73 | An svg image element in the content (not in FOREIGN_ALLOWED, H-73) |
+| `CONTENT-FOREIGN-FEIMAGE` | valid, 1 block | M-07, M-22, M-23, H-78 | An svg feImage element in a filter in the content: outside FOREIGN_ALLOWED, valid markup since H-78 (FOREIGN_ALLOWED is a patch content rule; M-07 holds) |
+| `CONTENT-FOREIGN-FOREIGNOBJECT` | valid, 1 block | M-07, M-22, M-23, H-78 | An svg foreignObject element with text in the content: outside FOREIGN_ALLOWED, valid markup since H-78 (FOREIGN_ALLOWED is a patch content rule; M-07 holds) |
+| `CONTENT-FOREIGN-IMAGE` | valid, 1 block | M-07, M-22, M-23, H-78 | An svg image element in the content: outside FOREIGN_ALLOWED, valid markup since H-78 (FOREIGN_ALLOWED is a patch content rule; M-07 holds) |
 | `CONTENT-FOREIGN-INTEGRATION` | `STRUCTURE` | M-07, M-22, H-73 | A g start tag inside svg desc in the content: the tree builder makes an HTML element there (M-07 item 3, H-73) |
 | `CONTENT-FOREIGN-INTEGRATION-MATH` | `STRUCTURE` | M-07, M-22, H-73 | An mrow start tag inside MathML mi in the content: the tree builder makes an HTML element there (M-07 item 3, H-73) |
-| `CONTENT-FOREIGN-MACTION` | `STRUCTURE` | M-22, H-73 | A MathML maction element in the content (not in FOREIGN_ALLOWED, H-73) |
-| `CONTENT-FOREIGN-SCRIPT` | `STRUCTURE` | M-22, H-73 | An svg script element in the content (not in FOREIGN_ALLOWED, H-73) |
-| `CONTENT-FOREIGN-SET` | `STRUCTURE` | M-22, H-73 | An svg set element in the content (SMIL, not in FOREIGN_ALLOWED, H-73) |
-| `CONTENT-FOREIGN-STYLE` | `STRUCTURE` | M-22, H-73 | An svg style element in the content (not in FOREIGN_ALLOWED, H-73) |
+| `CONTENT-FOREIGN-MACTION` | valid, 1 block | M-07, M-22, M-23, H-78 | A MathML maction element in the content: outside FOREIGN_ALLOWED, valid markup since H-78 (FOREIGN_ALLOWED is a patch content rule; M-07 holds) |
+| `CONTENT-FOREIGN-SCRIPT` | valid, 1 block | M-07, M-22, M-23, H-78 | An svg script element with text in the content: outside FOREIGN_ALLOWED, valid markup since H-78 (FOREIGN_ALLOWED is a patch content rule; M-07 holds) |
+| `CONTENT-FOREIGN-SCRIPT-CDATA` | valid, 1 block | M-07, M-12, H-78 | An svg script with a CDATA section that has a &lt; in the content (H-78, M-07 items 4 and 5, M-12) |
+| `CONTENT-FOREIGN-SET` | valid, 1 block | M-07, M-22, M-23, H-78 | An svg set element (SMIL) in the content: outside FOREIGN_ALLOWED, valid markup since H-78 (FOREIGN_ALLOWED is a patch content rule; M-07 holds) |
+| `CONTENT-FOREIGN-STYLE` | valid, 1 block | M-07, M-22, M-23, H-78 | An svg style element with text in the content: outside FOREIGN_ALLOWED, valid markup since H-78 (FOREIGN_ALLOWED is a patch content rule; M-07 holds) |
+| `CONTENT-IFRAME` | valid, 1 block | M-22, M-23, H-78 | An iframe element in the content: valid markup since H-78 (the patch content rule rejects it in a patch) |
+| `CONTENT-IFRAME-TEXT` | valid, 1 block | M-04, M-23, H-78 | Markup in the RAWTEXT of an iframe in the content is text (H-78, M-04) |
+| `CONTENT-LINK` | valid, 1 block | M-22, M-23, H-78 | A link element (void) in the content: valid markup since H-78 (the patch content rule rejects it in a patch) |
 | `CONTENT-MATH` | valid, 1 block | M-22, M-24, H-73 | A math element with mrow, mi, mo and mn in the content of a p block (H-73: valid) |
+| `CONTENT-META` | valid, 1 block | M-22, M-23, H-78 | A meta element (void) in the content: valid markup since H-78 (the patch content rule rejects it in a patch) |
+| `CONTENT-OBJECT` | valid, 1 block | M-22, M-23, H-78 | An object element with a param and fallback text in the content: valid markup since H-78 (the patch content rule rejects it in a patch) |
+| `CONTENT-OBJECT-CELL` | `STRUCTURE` | M-09, H-78 | A td start tag in an object in a cell in the content: the tree builder closes the cell and the object (H-78, M-09) |
+| `CONTENT-OBJECT-IN-TABLE` | `STRUCTURE` | M-24, H-78 | An object directly in a table in the content is foster-parented (H-78, M-24 item k) |
+| `CONTENT-OBJECT-TABLE` | valid, 1 block | M-09, M-22, M-23, H-78 | A table in an object in the content (H-78: object in a block; M-09 and M-23 hold) |
+| `CONTENT-OBJECT-UNBALANCED` | `STRUCTURE` | M-06, M-20, M-23, H-78 | An object in the content without its end tag: the block end tag crosses it (H-78, M-06 item 1, M-23) |
 | `CONTENT-OPTION` | `STRUCTURE` | M-22 | An option element in the content |
-| `CONTENT-SCRIPT` | `STRUCTURE` | M-22 | A script element in the content |
+| `CONTENT-RAWTEXT-P` | valid, 1 block | M-04, M-22, M-24, H-78 | Script, style and iframe in a p block: they are not in PCLOSE, so they do not close the p (H-78, M-24 item a) |
+| `CONTENT-SCRIPT` | valid, 1 block | M-04, M-22, M-23, H-78 | A script element in the content: valid markup since H-78 (the patch content rule rejects it in a patch) |
+| `CONTENT-SCRIPT-BLOCK-TEXT` | valid, 1 block | M-04, M-14, M-17, H-78 | Block-like text in the script data of a script in the content is not a block start tag (H-78, M-14, M-17) |
+| `CONTENT-SCRIPT-END-TAG-TEXT` | valid, 1 block | M-04, M-20, M-23, H-78 | A &lt;/div> in the script data of a script in the content is text: the block ends at the real &lt;/div> (H-78, M-04) |
+| `CONTENT-SCRIPT-ESCAPED` | valid, 1 block | M-04, M-23, H-78 | A script in the content with &lt;!--&lt;script>: the first &lt;/script> ends the double-escaped state, not the script (H-78, M-04) |
+| `CONTENT-SCRIPT-ESCAPED-EOF` | `STRUCTURE` | M-04, M-20, H-78 | A script in the content stays in the double-escaped state to the end of the input: the block has no end tag (H-78, M-04, M-20) |
+| `CONTENT-SCRIPT-RESERVED` | `RESERVED` | M-13, H-78 | A manifest-like script in the content: M-13 applies (RESERVED), M-22 no longer does (H-78) |
+| `CONTENT-SCRIPT-SELF-CLOSING` | `STRUCTURE` | M-04, M-22 | A self-closing script start tag in the content (M-22 item 3; M-04 still switches to script data) |
 | `CONTENT-SELF-CLOSING` | `STRUCTURE` | M-22 | A self-closing flag on a non-void element in the content |
+| `CONTENT-STYLE` | valid, 1 block | M-22, M-23, H-78 | A style element in the content: valid markup since H-78 (the patch content rule rejects it in a patch) |
+| `CONTENT-STYLE-COMMENT-TEXT` | valid, 1 block | M-04, M-23, H-78 | A style in a span block: &lt;!-- and &lt;/span> in RAWTEXT are text, the block ends at the real &lt;/span> (H-78, M-04) |
 | `CONTENT-SVG` | valid, 1 block | M-22, H-73 | An svg element in the content (H-73: valid) |
 | `CONTENT-SVG-ICON` | valid, 1 block | M-07, M-22, M-23, H-73 | An svg icon in the content: title and desc text, a gradient, nested g, self-closing children and use (H-73: valid) |
 | `CONTENT-SVG-ICON-CROSSING` | valid, 1 block | M-06, M-23, H-73, H-75 | The icon shape in the content: an a element with an svg whose end tag crosses an unclosed path (H-73, H-75: valid) |
@@ -291,8 +332,10 @@ In the table, the prefix `FX-RQ-MARKUP-` is not shown.
 | `FORBIDDEN-RAWTEXT` | `FORBIDDEN_ELEMENT` | M-16 | A RAWTEXT element (style) cannot be a block |
 | `FORBIDDEN-RCDATA` | `FORBIDDEN_ELEMENT` | M-16 | An RCDATA element (textarea) cannot be a block |
 | `FORBIDDEN-SCRIPT-JS` | `FORBIDDEN_ELEMENT` | M-16 | A script without type (JavaScript) cannot be a block |
-| `FORBIDDEN-SCRIPT-TYPE` | `FORBIDDEN_ELEMENT` | M-16 | A script with another JSON type (application/ld+json) cannot be a block |
+| `FORBIDDEN-SCRIPT-TYPE` | valid, 1 block | M-16, M-25, H-86 | A script with the type application/ld+json is a json block since H-86 (the fixture id is older than the decision) |
 | `FORBIDDEN-SCRIPT-TYPE-CASE` | `FORBIDDEN_ELEMENT` | M-16 | The json script type is case-sensitive (Application/JSON) |
+| `FORBIDDEN-SCRIPT-TYPE-LD-CASE` | `FORBIDDEN_ELEMENT` | M-16, H-86 | The JSON-LD type is case-sensitive (H-86, M-16) |
+| `FORBIDDEN-SCRIPT-TYPE-LD-PARAM` | `FORBIDDEN_ELEMENT` | M-16, H-86 | A JSON-LD type with a parameter is not a json type (H-86, M-16) |
 | `FORBIDDEN-SVG` | `FORBIDDEN_ELEMENT` | M-16 | An svg title is not the HTML title and cannot be a block |
 | `FORBIDDEN-TEMPLATE` | `FORBIDDEN_ELEMENT` | M-16 | A template element cannot be a block |
 | `FORBIDDEN-VOID` | `FORBIDDEN_ELEMENT` | M-16 | A void element (img) cannot be a block |
@@ -345,6 +388,7 @@ In the table, the prefix `FX-RQ-MARKUP-` is not shown.
 | `JSON` | valid, 1 block | M-16, M-20, M-25 | A json block in a script element with type application/json |
 | `JSON-DEPTH-64` | valid, 1 block | M-25 | JSON with nesting depth 64 (the maximum) |
 | `JSON-EDGE` | valid, 1 block | M-25 | JSON with CR LF white space, a huge number, duplicate names, a surrogate pair and an escaped slash |
+| `JSON-LD` | valid, 2 blocks | M-16, M-25, H-86 | A JSON-LD block in the head and a json block in the body: both have the format json (H-86) |
 | `LIMIT-256` | valid, 256 blocks | M-26, M-27 | 256 blocks: the maximum number (generated by gen.py) |
 | `LIMIT-257` | `LIMIT` | M-26 | 257 blocks: one more than the maximum (input generated by gen.py) |
 | `LIMIT-BLOCK-SIZE` | `LIMIT` | M-26 | One block with 1 048 577 content bytes: one byte more than the maximum (input generated by gen.py) |
@@ -418,11 +462,17 @@ In the table, the prefix `FX-RQ-MARKUP-` is not shown.
 | `RESERVED` | `RESERVED` | M-13 | The document already contains a manifest script |
 | `RESERVED-CASE` | `RESERVED` | M-13 | A manifest script type with other case and white space |
 | `RESERVED-CHARREF` | `RESERVED` | M-13 | A script type with a character reference that could decode to the manifest type |
+| `RESERVED-CHARREF-LEADING-ZEROS` | `RESERVED` | M-13, H-84 | A script type with a decimal reference with leading zeros and without ; to A: M-13 item 2 rejects it (H-84) |
+| `RESERVED-CHARREF-NAMED` | `RESERVED` | M-13, H-84 | A script type with a & followed by an ASCII letter (every named reference, also &amp;): M-13 item 2 rejects it (H-84) |
+| `RESERVED-CHARREF-NON-ASCII` | `RESERVED` | M-13, H-28, H-84 | A script type with a numeric reference to a non-ASCII character (dotless i, U+0131): the H-28 shape through a reference: M-13 item 2 rejects it (H-84) |
+| `RESERVED-CHARREF-SLASH` | `RESERVED` | M-13, H-84 | A script type with a numeric reference to /: M-13 item 2 rejects it (H-84) |
+| `RESERVED-CHARREF-SPACE` | `RESERVED` | M-13, H-84 | A script type with a hexadecimal reference with X and without ; to a tab: M-13 item 2 rejects it (H-84) |
 | `RESERVED-NON-ASCII` | `RESERVED` | M-13 | A script type with a dotless i (U+0131) (H-28) |
 | `RESERVED-NON-ASCII-LONG-S` | `RESERVED` | M-13 | A script type with a long s (U+017F) (H-28) |
 | `RESERVED-NON-ASCII-OTHER` | `RESERVED` | M-13 | Any non-ASCII character in a script type (text/jävascript) (H-28) |
 | `SCRIPT-NON-ASCII` | valid, 1 block | M-13, M-16 | Non-ASCII text in script content and in other script attributes (H-28: valid) |
 | `SCRIPT-TEXT` | valid, 1 block | M-04, M-14 | Tag-like text in script data, also in the double-escaped state, is not a block |
+| `SCRIPT-TYPE-CHARREF` | valid, 1 block | M-13, H-84 | Script types with a & that M-13 item 2 allows (H-84): a & before a space or at the end, &#; and &#x; (no reference), and numeric references to ':', '~', '_' and '!' (hex with x or X, leading zeros, with and without ;) |
 | `SELECT` | valid, 1 block | M-08 | A select with option, optgroup and explicit end tags |
 | `SELECT-CONTENT` | `STRUCTURE` | M-08 | A b element inside select (parsers differ for select content) |
 | `SELF-CLOSING-BLOCK` | `STRUCTURE` | M-18 | A block start tag with the self-closing flag |

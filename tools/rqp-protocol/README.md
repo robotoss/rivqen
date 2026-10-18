@@ -24,11 +24,12 @@ The reference functions here are the source of the expected results. They are no
 | `src/pages.mjs` | Page recipes and the expected markup result of each page |
 | `src/fixtures.mjs` | `case.json` reading, placeholders, response recipes of client cases, expected files |
 | `test/` | `node --test` tests |
+| `stryker.config.json` | Mutation check (StrykerJS, see [Procedure: run the mutation check](#procedure-run-the-mutation-check)) |
 
 ## Requirements
 
 - Node.js 22 or later.
-- No dependency. The package imports the Node.js markup candidate by a relative path (`../rqp-markup/node/src/`), which has no runtime dependency. It does not use Ajv: `src/schema.mjs` checks the same schema files, and its tests compare it with every example of `spec/rqp/examples` (the keyword and the instance path that Ajv 8.20.0 reports).
+- No runtime dependency. The only development dependency is `@stryker-mutator/core` 10.0.0 for the mutation check (see [Dependencies](#dependencies)). The package imports the Node.js markup candidate by a relative path (`../rqp-markup/node/src/`), which has no runtime dependency. It does not use Ajv: `src/schema.mjs` checks the same schema files, and its tests compare it with every example of `spec/rqp/examples` (the keyword and the instance path that Ajv 8.20.0 reports).
 
 ## Procedure: run the checks
 
@@ -54,6 +55,78 @@ The reference functions here are the source of the expected results. They are no
 Exit codes of `gen.mjs` and `check.mjs`: `0` success, `1` a stale file, a defective case or a failed fixture, `2` a usage error.
 
 A case can have `"level": "should"` (today only `FX-RQ-P35-ATTRIBUTE-RULE` and `FX-RQ-P35-ATTRIBUTE-RULE-DATA`, H-56). The generator copies the member to `expected.json`; any other value is a defective case. `check.mjs` prints the failure of such a fixture as `FAIL [SHOULD] <name>: …` and counts it apart: the last line is `rqp-protocol check: <passed> passed, <failed> failed, <n> SHOULD failed`. A SHOULD failure also gives exit code `1`, so it is never hidden; a conforming server that chooses not to follow the SHOULD rule reports it as a known deviation.
+
+## Procedure: run the mutation check
+
+StrykerJS 10.0.0 with the command runner (`stryker.config.json`, policy: `docs/engineering/quality/mutation.md`). Each mutant runs `node --test "test/*.test.mjs"`. The run fails below 80 %.
+
+`inPlace` is on: the sources reach `fixtures/`, `spec/` and the Node.js candidate by relative paths, and a sandbox copy breaks these paths. Stryker writes the mutants into `src/`, adds `// @ts-nocheck` to the files in `test/`, and puts the original files back at the end.
+
+1. Run only one mutation tool at a time on the machine.
+2. Go to `tools/rqp-protocol`.
+3. Install the development dependency (one time):
+
+   ```sh
+   npm ci --ignore-scripts
+   ```
+
+4. Run the changed lines (task and sprint):
+
+   ```sh
+   npx stryker run --mutate "$(node ../mutation/diff-ranges.mjs --base main --ext .mjs --format stryker)"
+   ```
+
+   Or run the whole package (about 40 minutes for 3885 mutants on 4 CPUs):
+
+   ```sh
+   npm run mutation -- --force
+   ```
+
+5. Make sure that `git status` shows no change in `src/` or `test/`. If a run stopped before its end, restore the files with `git checkout -- src test`.
+
+The reports go to `reports/` (ignored by git).
+
+### Results
+
+Whole package, 2026-10-19 (WP-17, the first run with a tool; before it only manual mutants). Detected = killed + timeout.
+
+| File | Before the new tests | After |
+|---|---|---|
+| `client.mjs` | 91.5 % | 570/591 (96.4 %) |
+| `common.mjs` | 88.1 % | 105/109 (96.3 %) |
+| `fixtures.mjs` | 87.4 % | 703/748 (94.0 %) |
+| `http.mjs` | 77.8 % | 427/450 (94.9 %) |
+| `json-strict.mjs` | 82.4 % | 302/313 (96.5 %) |
+| `markup.mjs` | 84.6 % | 378/409 (92.4 %) |
+| `pages.mjs` | 97.0 % | 162/165 (98.2 %) |
+| `schema.mjs` | 74.5 % | 258/275 (93.8 %) |
+| `server.mjs` | 94.3 % | 361/371 (97.3 %) |
+| `sf.mjs` | 85.0 % | 437/454 (96.3 %) |
+| All | 3339/3877 (86.1 %) | 3703/3885 (95.3 %) |
+
+The first run found one defect: a delta recipe with a `size` smaller than the envelope without content stopped `gen.mjs` with a `RangeError` instead of a case error. `src/fixtures.mjs` now reports it as a defective case.
+
+The 182 survivors: 141 equivalent, 41 accepted.
+
+| Group | n | Status | Reason |
+|---|---|---|---|
+| Error message text (`CaseError`, `TypeError`, `SchemaError`, `UnsupportedInput`, the `where` labels of `onlyKeys`) | 35 | Accepted | Text for the case author; the class and the `code` are tested |
+| `'utf8'` or `'latin1'` → `''` in `Buffer.from`, `Buffer.byteLength`, `readFileSync` | 16 | Equivalent | Node.js uses UTF-8 for an empty encoding; the latin1 texts are ASCII |
+| Loop bounds `i < length` → `true` or `<=` (`http.mjs` 15, `json-strict.mjs` 3, `markup.mjs` 11) | 29 | Equivalent | The index past the end reads `undefined`, which fails the next test of the loop; in `attributesOf` the `>` at `end - 1` stops each loop first |
+| `attributesOf` quoted value: `close < 0 \|\| close > end` (6), `q === 0x3e` → `false` (1), `>` tests in name loops (2), case regex (1) | 10 | Equivalent | The tokenizer ends a start tag only after the closing quote and the `>`; an empty unquoted value gives the same empty attribute |
+| Anchors of regular expressions on text with a fixed form (`BASE_TAG`, `hex4`, display string hex, the trim of If-None-Match) | 8 | Equivalent | The text is already a quoted tag, has at most 4 (or 2) characters, or the white space goes in the list loop |
+| `sameShape` and the second `next_revision` check of `verifyDelta` | 12 | Equivalent | A patch changes only block content; nested blocks are invalid, and any other change of the block list changes the template revision, which is checked first. Same template and shape give the block hashes of step 7. Kept as defense in depth |
+| Double guards: `ctx.snapshot` in `handleDelta` (2), `!a.valid` and `!json.ok` before a check with the same result (2), `i < 0` before `i <= last` (1), `parseItem(null)` (2), default key of `snapshot()` (1), `el.end <= 0` and `insertAt <= 0` (2), `eq <= 0` in `acceptsMediaType` (1) | 11 | Equivalent | The other check gives the same result, or the value cannot occur (a parameter name before `=` at offset 0 is empty, so it is not `q`) |
+| SF limits: decimal length > 16 (5), ASCII step 1 (4), `Fail` catch (1), string escape at the end (2), Byte Sequence without the second `:` (3) | 15 | Equivalent | The fraction rule (at most 3 digits), the per-type character rules or the next separator check reject the same input |
+| JSON number regex (2), `c >= '0'` (2), `JsonError` catch (1), BOM length (1) | 6 | Equivalent | A fraction or an exponent always gives rule `integer`; other first characters give `syntax` both ways; no other error is thrown |
+| Charset constants `none`, `utf-8`, `other` → `''` | 3 | Equivalent | Compared only through `Charset.*` |
+| q value `0(\.[0-9]{0,3})?` without `?`, the BOM length check of `startsWithUtf8Bom` and `onlyWhiteSpace` | 3 | Equivalent | `q=0` gives 0 both ways; a missing byte reads `undefined` |
+| The walk: `mode !== undefined` (1), `END_TAG` → `true` (1), the script end tag in `findManifestElements` (2), `textEnd` of an unclosed element (1), `Z` in the type (1), `copy.slice` (1) | 7 | Equivalent | `switchTo(undefined)` is the data state; DOCTYPE and comment tokens have the name `null`; in script data only `</script>` ends the element; `textEnd` is read only for a closed element; the type has no `z` |
+| Schema keywords `!== undefined` → `true` (7), `Number.isFinite` (2), lone high surrogate at the end (3) | 12 | Equivalent | A comparison with `undefined` is false and `RegExp(undefined)` matches; JSON has no `NaN` or `Infinity` |
+| Fixture loader: `status === 304` in `forbiddenHeaders`, `bodyEnd < 0` and `first <= 0` (3), `ctx.snapshot !== null` (1), content `!== ''` (1), `asciiLower` regex (1), `HUGE_CONTENT_BYTES * 10` (1), generated pages read from the committed files (1) | 9 | Equivalent | Every non-304 outcome has its own Rq-Version or forbids it; every page has `</body>`; the final size check stops the case; `gen.mjs --check` keeps the committed pages equal to the recipes |
+| `fixtureNames` without the sort (2) | 2 | Accepted | APFS gives the directory entries in byte order already; the test checks the order and kills these mutants on a file system with another order |
+| Fixture loader: a check followed by a check with the same `CaseError` (`typeof obj`, `every` → `some` before H-69, `recipe.delta` before `onlyKeys`) | 3 | Accepted | The case still stops with a `CaseError`; only the message differs |
+| `expectFixture` converts every error to a `CaseError` | 1 | Accepted | No case input gives another error except a context snapshot of a page that is not valid for RQP, which stops `gen.mjs` with a plain `Error` (it fails closed) |
 
 ## Procedure: check a server under test
 
@@ -112,6 +185,18 @@ Server fixtures (`fixtures.md` section 4.1 "Comparison of F", section 5):
 | Body `delta` | JSON rules and patch schema; `base_revision`, `next_revision`, `template_revision` exact; the operations are the expected `blocks` in order (`id`, `format`, `sha256`); each `sha256` is the hash of its `content` |
 
 Client fixtures: `outcome`, `error`, `next`, `metric` exact; `snapshot` equal (block `content` is compared only where `expected.json` lists it); request fields `rq-version`, `rq-capabilities`, `if-none-match`, `rq-have` exact, no other `rq-*` field, and the same answer to "does `Accept` list the delta media type".
+
+## Dependencies
+
+Development only (`devDependencies`, exact version, `package-lock.json`; installed with `--ignore-scripts`). Nothing of it is imported by `src/`, `gen.mjs` or `check.mjs`.
+
+| Package | Version | License | Use |
+|---|---|---|---|
+| `@stryker-mutator/core` | 10.0.0 | Apache-2.0 | Mutation check (the version of `tools/rqp-markup/node`; H-23, H-29, DL-016) |
+
+The locked tree has 166 packages: MIT 136, Apache-2.0 14, ISC 10, BSD-3-Clause 3, 0BSD 1, and the two dev-only exceptions of H-29: `caniuse-lite` 1.0.30001816 (CC-BY-4.0) and `minimatch` 10.2.6 (BlueOak-1.0.0). Checked on 2026-10-18 from the `license` field of each installed `package.json`.
+
+`typed-rest-client` 2.3.1 (a Stryker dependency for the dashboard reporter, which is not used) pins `qs` 6.15.x, which has moderate advisories. `package.json` overrides it to `qs` 6.16.0 (BSD-3-Clause), as `tools/rqp-markup/node` does (H-23, DL-017). `npm audit` reports no advisory. Remove the override when Stryker depends on a fixed `qs`.
 
 ## Design
 

@@ -48,7 +48,16 @@ final class ForeignRegionRulesTest extends TestCase
         yield 'self-closing svg in noscript' => ['<noscript><svg/><p></p></noscript>'];
         yield 'nested svg in noscript' => ['<noscript><svg><svg></svg></svg></noscript>'];
         yield 'noscript at EOF with a closed svg' => ['<noscript><svg><path d="M0"></svg>'];
-        // DL-044 b: FOREIGN_ALLOWED does not apply to C.
+        // H-78: no name list applies in a region of C or of the content.
+        foreach (['a href="#x"', 'animate', 'set', 'foreignObject', 'image', 'script', 'style', 'animateTransform', 'textPath', 'feImage'] as $tag) {
+            yield "H-78 $tag in svg of the content" => [$B . "<svg><$tag></" . strtok($tag, ' ') . '></svg></span>'];
+        }
+        yield 'H-78 maction in math of the content' => [$B . '<math><maction></maction></math></span>'];
+        yield 'H-78 annotation-xml in math of the content' => [$B . '<math><annotation-xml>t</annotation-xml></math></span>'];
+        yield 'H-78 a self-closing name outside the old set' => [$B . '<svg><animate/></svg></span>'];
+        yield 'H-78 script after the region' => [$B . '<svg></svg><script></script></span>'];
+        yield 'H-78 svg script with CDATA' => [$B . '<svg><script><![CDATA[a<b]]></script></svg></span>'];
+        yield 'H-78 html a inside a region-free a' => ['<span data-rq-block="a"><a href="#"><svg><a href="#x"></a></svg></a></span>'];
         yield 'a foreign a in noscript' => ['<noscript><svg><a href="#"></a></svg></noscript>'];
         yield 'a foreign style with CDATA in noscript' => ['<noscript><svg><style><![CDATA[.a{}]]></style></svg></noscript>'];
         yield 'noscript inside a link with an icon' => ['<a href="#"><noscript><svg><path d="M0"></svg></noscript></a><b></b>'];
@@ -67,15 +76,8 @@ final class ForeignRegionRulesTest extends TestCase
     public static function invalidDocuments(): iterable
     {
         $B = self::BLOCK;
-        // M-22 item 5: names outside FOREIGN_ALLOWED.
-        foreach (['a href="#x"', 'animate', 'set', 'foreignObject', 'image', 'script', 'style', 'animateTransform', 'textPath', 'feImage', 'div'] as $tag) {
-            yield "M-22.5 $tag in svg" => [$B . "<svg><$tag></svg></span>", 'M-22'];
-        }
-        yield 'M-22.5 maction in math' => [$B . '<math><maction></maction></math></span>', 'M-22'];
-        yield 'M-22.5 annotation-xml in math' => [$B . '<math><annotation-xml></annotation-xml></math></span>', 'M-22'];
-        yield 'M-22.5 a self-closing name outside the set' => [$B . '<svg><animate/></svg></span>', 'M-22'];
-        yield 'M-22.5 a name outside the set in a nested element' => [$B . '<svg><g><set/></g></svg></span>', 'M-22'];
         // M-07 still applies in the region.
+        yield 'M-07.1 breakout tag in the region' => [$B . '<svg><div></svg></span>', 'M-07'];
         yield 'M-07.3 tag in an integration point' => [$B . '<svg><desc><g></g></desc></svg></span>', 'M-07'];
         yield 'M-07.3 comment in an integration point' => [$B . '<svg><title><!--x--></title></svg></span>', 'M-07'];
         yield 'M-07.3 a text element in svg is not RCDATA' => [$B . '<svg><title><g></g></title></svg></span>', 'M-07'];
@@ -90,7 +92,6 @@ final class ForeignRegionRulesTest extends TestCase
         yield 'M-20 the region is open at EOF' => [$B . '<svg><g>', 'M-20'];
         yield 'M-17 block start tag in a region' => [$B . '<svg><g data-rq-block="b"></g></svg></span>', 'M-17'];
         yield 'M-22.3 self-closing html element' => [$B . '<svg/><b/></span>', 'M-22'];
-        yield 'M-22.2 script after the region' => [$B . '<svg></svg><script></script></span>', 'M-22'];
         yield 'M-22.1 DOCTYPE in a region of the content' => [$B . '<svg><!DOCTYPE html></svg></span>', 'M-22'];
         // M-26: pushes in a region of the content count.
         yield 'M-26 region of the content' => ['<div data-rq-block="a"><svg>' . str_repeat('<g>', 255) . str_repeat('</g>', 255) . '</svg></div>', 'M-26'];

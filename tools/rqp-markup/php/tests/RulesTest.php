@@ -248,7 +248,22 @@ final class RulesTest extends TestCase
         // M-13
         yield 'M-13 manifest script' => ['<script type="application/rivqen-manifest+json">{}</script>', 'M-13', ErrorCode::Reserved];
         yield 'M-13 case-insensitive' => ['<script type="Application/RIVQEN-Manifest+JSON ">{}</script>', 'M-13', ErrorCode::Reserved];
-        yield 'M-13 character reference' => ['<script type="application/json&#59;x">{}</script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 letter after the ampersand' => ['<script type="text/x&amp;y"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 ampersand and a letter, no semicolon' => ['<script type="text/a&b"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 hex slash' => ['<script type="application&#x2F;x"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 hex slash upper case X' => ['<script type="application&#X2f;x"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 decimal letter with leading zeros' => ['<script type="text/&#0000065pp"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 tab' => ['<script type="text/plain&#X9"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 hyphen' => ['<script type="application/rivqen&#45;manifest+json"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 value 0x80' => ['<script type="a&#128;"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 value above 10FFFF' => ['<script type="a&#99999999999999999999;"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 value 0x20' => ['<script type="a&#32;b"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 digit' => ['<script type="a&#48;b"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 plus' => ['<script type="a&#43;b"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 dot' => ['<script type="a&#46;b"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 the second ampersand counts' => ['<script type="a & b &amp;"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 a lower-case letter, last value' => ['<script type="a&#122;"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 an upper-case letter, first value' => ['<script type="a&#65;"></script>', 'M-13', ErrorCode::Reserved];
         yield 'M-13 unquoted' => ['<script type=rivqen-manifest></script>', 'M-13', ErrorCode::Reserved];
         yield 'M-13 in svg' => ['<svg><script type="rivqen-manifest"></script></svg>', 'M-13', ErrorCode::Reserved];
         yield 'M-13 first type counts' => ['<script type="rivqen-manifest" type="text/javascript"></script>', 'M-13', ErrorCode::Reserved];
@@ -293,7 +308,9 @@ final class RulesTest extends TestCase
         yield 'M-16 textarea' => ['<textarea data-rq-block="a"></textarea>', 'M-16', ErrorCode::ForbiddenElement];
         yield 'M-16 template' => ['<template data-rq-block="a"></template>', 'M-16', ErrorCode::ForbiddenElement];
         yield 'M-16 script without type' => ['<script data-rq-block="a">1</script>', 'M-16', ErrorCode::ForbiddenElement];
-        yield 'M-16 script ld+json' => ['<script type="application/ld+json" data-rq-block="a">{}</script>', 'M-16', ErrorCode::ForbiddenElement];
+        yield 'M-16 script ld+json upper case' => ['<script type="application/LD+JSON" data-rq-block="a">{}</script>', 'M-16', ErrorCode::ForbiddenElement];
+        yield 'M-16 script ld+json with a parameter' => ['<script type="application/ld+json; charset=utf-8" data-rq-block="a">{}</script>', 'M-16', ErrorCode::ForbiddenElement];
+        yield 'M-16 script ld+json with a final space' => ['<script type="application/ld+json " data-rq-block="a">{}</script>', 'M-16', ErrorCode::ForbiddenElement];
         yield 'M-16 script type upper case' => ['<script type="Application/JSON" data-rq-block="a">{}</script>', 'M-16', ErrorCode::ForbiddenElement];
         yield 'M-16 script type with parameter' => ['<script type="application/json;charset=utf-8" data-rq-block="a">{}</script>', 'M-16', ErrorCode::ForbiddenElement];
         yield 'M-16 script type with white space' => ['<script type=" application/json" data-rq-block="a">{}</script>', 'M-16', ErrorCode::ForbiddenElement];
@@ -332,9 +349,22 @@ final class RulesTest extends TestCase
 
         // M-22
         yield 'M-22.1 doctype in content' => [$P . '<!DOCTYPE html></p>', 'M-22', $S];
-        yield 'M-22.2 script in content' => [$P . '<script></script></p>', 'M-22', $S];
         yield 'M-22.2 option in content' => [$P . '<option></option></p>', 'M-22', $S];
-        yield 'M-22.2 meta in content' => [$P . '<meta charset="utf-8"></p>', 'M-22', $S];
+        yield 'M-22.2 textarea in content' => [$P . '<textarea></textarea></p>', 'M-22', $S];
+        yield 'M-22.3 self-closing script' => [$P . '<script/></p>', 'M-22', $S];
+        yield 'M-22.3 self-closing style' => [$P . '<style/></p>', 'M-22', $S];
+        yield 'M-22.3 self-closing iframe' => [$P . '<iframe/></p>', 'M-22', $S];
+        yield 'M-22.4 end tag embed' => [$P . '</embed></p>', 'M-22', $S];
+        yield 'M-22.4 end tag link' => [$P . '</link></p>', 'M-22', $S];
+        yield 'M-22.4 end tag meta' => [$P . '</meta></p>', 'M-22', $S];
+        yield 'M-23 object is not closed' => [$P . '<object>x</p>', 'M-23', $S];
+        yield 'M-20 script data stays double escaped' => [$P . '<script><!--<script>x</p>', 'M-20', $S];
+        yield 'M-20 style without end tag' => [$P . '<style>x</p>', 'M-20', $S];
+        yield 'M-20 iframe without end tag' => [$P . '<iframe>x</p>', 'M-20', $S];
+        yield 'M-13 script in content' => [$P . '<script type="rivqen-manifest"></script></p>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 script in content, numeric reference' => [$P . '<script type="a&#x2d;b"></script></p>', 'M-13', ErrorCode::Reserved];
+        yield 'M-09 table part inside object in a cell' => ['<div data-rq-block="a"><table><tr><td><object><td></object></td></tr></table></div>', 'M-09', $S];
+        yield 'M-24.k object in table context' => ['<div data-rq-block="a"><table><object></object></table></div>', 'M-24', $S];
         yield 'M-22.2 title in content' => ['<div data-rq-block="a"><title>t</title></div>', 'M-22', $S];
         yield 'M-22.3 self-closing span' => [$P . '<span/></p>', 'M-22', $S];
         yield 'M-22.4 end tag br' => [$P . 'a</br>b</p>', 'M-22', $S];
@@ -587,6 +617,9 @@ final class RulesTest extends TestCase
         yield 'M-12 CDATA without greater-than in svg (E4)' => ['<p data-rq-block="a">x</p><svg><![CDATA[x]]', [['a', 'html', 'x']]];
 
         // M-13
+        yield 'M-13.2 numeric references that are not reserved' => ['<script type="text/x&#58;y"></script><script type="text/x&#x7E;"></script><script type="a &#59"></script>', []];
+        yield 'M-13.2 not references' => ['<script type="text/x-tmpl & b"></script><script type="text/x&#;"></script><script type="text/x&#x;"></script><script type="text/x&"></script><script type="a&#xg"></script><script type="a&#"></script>', []];
+        yield 'M-13.2 the cap does not overflow' => ['<script type="a&#x' . str_repeat('0', 5000) . '3a;"></script>', []];
         yield 'M-13 manifest text in a script is not a tag' => ['<script>"<script type=rivqen-manifest>"</script>', []];
         yield 'M-13 applies only to script start tags' => [
             '<link type="application/rivqen-manifest+json"><style type="a&amp;b"></style><noscript><link type="rivqen-manifest"></noscript><p data-rq-block="a">x</p>',
@@ -628,6 +661,7 @@ final class RulesTest extends TestCase
                 ['b8', 'html', '17'],
             ],
         ];
+        yield 'M-16 ld+json block' => ['<script type="application/ld+json" data-rq-block="c">{"@context":"x"}</script>', [['c', 'json', '{"@context":"x"}']]];
         yield 'M-16 json block' => ['<script type="application/json" data-rq-block="c">{"a":[1]}</script>', [['c', 'json', '{"a":[1]}']]];
         yield 'M-16 title block keeps RCDATA bytes' => ['<title data-rq-block="t">a &amp; <b></title>', [['t', 'html', 'a &amp; <b>']]];
 
@@ -651,6 +685,44 @@ final class RulesTest extends TestCase
         yield 'M-22 allowed content' => [
             '<div data-rq-block="a"><!-- c --><?pi?><br/><img src="x"/><a href="javascript:x" onclick="y">l</a>&amp;</div>',
             [['a', 'html', '<!-- c --><?pi?><br/><img src="x"/><a href="javascript:x" onclick="y">l</a>&amp;']],
+        ];
+
+        // M-22 and M-04 in the content (H-78): raw text.
+        yield 'H-78 script with a block end tag in its text' => [
+            '<div data-rq-block="w">x<script>document.write("</div>")</script>y</div>',
+            [['w', 'html', 'x<script>document.write("</div>")</script>y']],
+        ];
+        yield 'H-78 script data escaped and double escaped' => [
+            '<p data-rq-block="a"><script>a<!--<script>b</script>c--></script></p>',
+            [['a', 'html', '<script>a<!--<script>b</script>c--></script>']],
+        ];
+        yield 'H-78 script end tag with white space and case' => [
+            '<p data-rq-block="a"><script>x</SCRIPT ></p>',
+            [['a', 'html', '<script>x</SCRIPT >']],
+        ];
+        yield 'H-78 script end tag with an attribute' => [
+            '<p data-rq-block="a"><script>x</script foo></p>',
+            [['a', 'html', '<script>x</script foo>']],
+        ];
+        yield 'H-78 scripty is not an end tag' => [
+            '<p data-rq-block="a"><script>x</scripty></p></script></p>',
+            [['a', 'html', '<script>x</scripty></p></script>']],
+        ];
+        yield 'H-78 style text' => [
+            '<p data-rq-block="a"><style>a</p><b data-rq-block="b"></style></p>',
+            [['a', 'html', '<style>a</p><b data-rq-block="b"></style>']],
+        ];
+        yield 'H-78 iframe text' => [
+            '<div data-rq-block="a"><iframe></div><p data-rq-block="b"></iframe></div>',
+            [['a', 'html', '<iframe></div><p data-rq-block="b"></iframe>']],
+        ];
+        yield 'H-78 patch-safety void elements' => [
+            '<div data-rq-block="a"><base href="/"><basefont><bgsound><embed><link rel="x"><meta charset="u"></div>',
+            [['a', 'html', '<base href="/"><basefont><bgsound><embed><link rel="x"><meta charset="u">']],
+        ];
+        yield 'H-78 object with its end tag' => [
+            '<div data-rq-block="a"><object data="x">t</object></div>',
+            [['a', 'html', '<object data="x">t</object>']],
         ];
 
         // M-23

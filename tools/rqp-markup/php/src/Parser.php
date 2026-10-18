@@ -42,7 +42,8 @@ final class Parser
     public const MAX_BLOCK_BYTES = 1_048_576;
     /** M-26: maximum value of the depth counter D (H-25, H-31; `maxOpenElements`). */
     public const MAX_DEPTH = 256;
-    public const JSON_TYPE = 'application/json';
+    /** M-16 (H-86): the exact `type` values of a `json` block. */
+    public const JSON_TYPES = ['application/json' => true, 'application/ld+json' => true];
 
     private const BLOCK_ATTR = 'data-rq-block';
     private const ID_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789_-';
@@ -358,8 +359,9 @@ final class Parser
 
     /**
      * M-13: a `script` start tag whose first `type` attribute has a raw value
-     * that contains `rivqen-manifest` (ASCII case-insensitive), `&` or a
-     * byte >= 0x80 (H-28). No PCRE: a PCRE error must not let a value pass.
+     * that contains `rivqen-manifest` (ASCII case-insensitive), a `&` that
+     * item 2 rejects (H-84), or a byte >= 0x80 (H-28). No PCRE: a PCRE error
+     * must not let a value pass.
      */
     private static function checkReserved(Token $startTag): void
     {
@@ -367,10 +369,59 @@ final class Parser
             return;
         }
         $type = $startTag->attribute('type');
-        if ($type !== null && (stripos($type, 'rivqen-manifest') !== false || str_contains($type, '&')
+        if ($type !== null && (stripos($type, 'rivqen-manifest') !== false || self::hasReservedReference($type)
             || strspn($type, self::ASCII_BYTES) !== strlen($type))) {
             throw new MarkupError(ErrorCode::Reserved, 'M-13');
         }
+    }
+
+    /**
+     * M-13 item 2 (H-84, DL-048 a): true when a `&` of the raw value is
+     * followed by an ASCII letter, or starts a numeric character reference
+     * whose value is 00 to 20, an ASCII letter or digit, `/`, `+`, `-`, `.`,
+     * or 0x80 or more. `&#` and `&#x` without a digit are not references.
+     * One pass over the value; the value is capped at 0x110000.
+     */
+    private static function hasReservedReference(string $value): bool
+    {
+        $length = strlen($value);
+        $at = strpos($value, '&');
+        while ($at !== false) {
+            $i = $at + 1;
+            if ($i < $length) {
+                $next = $value[$i];
+                if (ctype_alpha($next)) {
+                    return true;
+                }
+                if ($next === '#' && self::reservedNumeric($value, $i + 1, $length)) {
+                    return true;
+                }
+            }
+            $at = strpos($value, '&', $at + 1);
+        }
+        return false;
+    }
+
+    /** The digits of a numeric reference start at $i (after `&#`). */
+    private static function reservedNumeric(string $value, int $i, int $length): bool
+    {
+        $hex = $i < $length && ($value[$i] === 'x' || $value[$i] === 'X');
+        if ($hex) {
+            $i++;
+        }
+        $digits = $hex ? '0123456789abcdefABCDEF' : '0123456789';
+        $run = strspn($value, $digits, $i);
+        if ($run === 0) {
+            return false;
+        }
+        $code = 0;
+        $base = $hex ? 16 : 10;
+        for ($k = $i, $end = $i + $run; $k < $end && $code < 0x110000; $k++) {
+            $code = min(0x110000, $code * $base + (int) base_convert($value[$k], 16, 10));
+        }
+        return $code <= 0x20 || $code >= 0x80 || $code === 0x2B || $code === 0x2D || $code === 0x2E
+            || $code === 0x2F || ($code >= 0x30 && $code <= 0x39)
+            || ($code >= 0x41 && $code <= 0x5A) || ($code >= 0x61 && $code <= 0x7A);
     }
 
     /**
@@ -454,7 +505,7 @@ final class Parser
         }
         if (isset(Names::BLOCK_HTML[$name])) {
             $format = 'html';
-        } elseif ($name === 'script' && $token->attribute('type') === self::JSON_TYPE) {
+        } elseif ($name === 'script' && isset(self::JSON_TYPES[(string) $token->attribute('type')])) {
             $format = 'json';
         } else {
             throw new MarkupError(ErrorCode::ForbiddenElement, 'M-16');
@@ -483,15 +534,12 @@ final class Parser
         $this->switchState($name, $token->end);
     }
 
-    /** M-22 and M-24 for a start tag in the content of an html block (M-22 item 5 in a foreign region). */
+    /** M-22 and M-24 for a start tag in HTML context of the content of an html block. */
     private function contentStartTag(Token $token, string $blockName): void
     {
         $name = $token->name;
         if ($this->region !== null) {
-            // M-22 item 5 (H-73). M-24 is for start tags in HTML context only.
-            if (!isset(Names::FOREIGN_ALLOWED[$name])) {
-                throw new MarkupError(ErrorCode::Structure, 'M-22');
-            }
+            // M-22 and M-24 are for start tags in HTML context only (H-78).
             return;
         }
         if (isset(Names::FORBIDDEN_CONTENT[$name])) {

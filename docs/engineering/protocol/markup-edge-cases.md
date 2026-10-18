@@ -788,9 +788,9 @@ Each new invalid fixture breaks one rule item (corpus classifier, `classify.mjs`
 | Control: the `body` generator with the rules before S3 | 24 block disagreements with scripting disabled (the H-37 class of the T-02 study) and 6 114 depth-claim violations with scripting disabled on documents that those rules accept |
 | T-01 tree, fragment and `noscript` tree checks on the valid fixtures | Only `noscript-*-head` findings for `NOSCRIPT-SVG-HEAD`: "in head noscript" ends the head at the `svg` start tag. The blocks agree; the manifest position is H-72 |
 
-The reference of the decided rules is the T-01 study copy (`study/relax/src/markup-relax.mjs`, flags `r1a`, `r2`, `r3`) with the model (a) pass of the T-02 study copy added. It was used only to check the rule text and the fixtures; it is not committed. <Badge type="info" text="DESIGN" /> At integration, run the cases and a sweep again with the four candidates of T-04…T-07: `node src/cli.mjs cases --cases cases/s3-cases.json --only rust,node,java,php` and `node src/cli.mjs sweep --only rust,node,java,php --seed 71 --count 100000 --chunk 10000 --max-tokens 20 --profile review2 --scripting both`.
+The reference of the decided rules is the T-01 study copy (`study/relax/src/markup-relax.mjs`, flags `r1a`, `r2`, `r3`) with the model (a) pass of the T-02 study copy added. It was used only to check the rule text and the fixtures; its code is committed under `tools/rqp-markup/study`. <Badge type="tip" text="FACT" /> The differential runner `node tools/rqp-markup/diff.mjs` passes 988 of 988 checks (247 fixtures × 4 candidates).
 
-<Badge type="tip" text="FACT" /> Corpus (882 pages of the S3 fetch, 2026-10-18), the same reference: 820 pages valid (798 with the rules before S3); H-71 alone rejects none of the 798 pages. The corpus run with the four candidates follows at the sprint close.
+<Badge type="tip" text="FACT" /> Corpus (882 pages of the S3 fetch, 2026-10-18), the same reference: 820 pages valid (798 with the rules before S3); H-71 alone rejects none of the 798 pages. The corpus run with the four candidates (commit `532acd9`) gives 820 of 882 pages valid, with 0 validity disagreements.
 
 ## Related
 

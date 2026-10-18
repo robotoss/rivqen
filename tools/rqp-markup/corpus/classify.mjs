@@ -51,19 +51,38 @@ const BREAKOUT = names(`b big blockquote body br center code dd div dl dt em emb
   meta nobr ol p pre ruby s small span strike strong sub sup table tt u ul var`);
 const INTEGRATION = names("annotation-xml desc foreignobject mi mn mo ms mtext title");
 const BLOCK_HTML = names(`article aside div footer ${H} header main nav p section span title`);
-const FORBIDDEN_CONTENT = names(`base basefont bgsound body embed frame frameset head html iframe link math meta noembed
-  noframes noscript object optgroup option plaintext script select style svg template textarea title xmp`);
+const FORBIDDEN_CONTENT = names(`base basefont bgsound body embed frame frameset head html iframe link meta noembed
+  noframes noscript object optgroup option plaintext script select style template textarea title xmp`);
+// M-22 item 5 (H-73): the only start tags in a foreign region of html block content.
+const FOREIGN_ALLOWED = names(`svg g path circle ellipse line polyline polygon rect defs symbol use title desc lineargradient
+  radialgradient stop clippath mask pattern marker text tspan filter feblend fecolormatrix fecomponenttransfer fecomposite
+  fedisplacementmap fedropshadow feflood fefunca fefuncb fefuncg fefuncr fegaussianblur femerge femergenode femorphology
+  feoffset feturbulence math mrow mi mo mn ms mtext mspace msub msup msubsup mfrac msqrt mroot mstyle munder mover munderover
+  mmultiscripts mprescripts none mtable mtr mtd mpadded mphantom merror semantics annotation`);
 const STRAY_TABLE_END = names("tbody thead tfoot tr table");
 const SELECT_START = names("option optgroup hr");
 const SELECT_END = names("option optgroup select");
-const NOSCRIPT_FORBIDDEN = names("frameset math noscript plaintext select svg template");
+const NOSCRIPT_FORBIDDEN = names("frameset math noscript plaintext select template"); // M-11 item 3 (svg: item 9, H-74)
+const DOCUMENT_TAGS = names("html body head"); // M-11 item 7 (H-71)
 const ROW_CONTEXT = names("table tbody thead tfoot tr colgroup");
 const LISTS = names("ul ol menu dl");
 const LIST_ITEMS = names("li dd dt");
 const BLOCK_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 const PICK_MATCH = /price|title|content/i;
 
-/** The rule id of a class: "M-06.1" → "M-06", "M-26-dirty" → "M-26", "M-22.2:svg" → "M-22". */
+/** A tag name for a detail: names from the page that do not look like tag names become "?". */
+const safeName = (name) => (/^[a-z][a-z0-9-]{0,31}$/.test(name) ? name : "?");
+
+/** M-09: the F values that allow a table part or col start tag (null: the name is not a table part or col). */
+function allowedParents(name) {
+  if (name === "col") return ["table", "colgroup"];
+  if (name === "tr") return ["table", "tbody", "thead", "tfoot"];
+  if (name === "td" || name === "th") return ["table", "tbody", "thead", "tfoot", "tr"];
+  if (TABLE_PART.has(name)) return ["table"];
+  return null;
+}
+
+/** The rule id of a class: "M-06.1" → "M-06", "M-26-dirty" → "M-26", "M-22.2:script" → "M-22". */
 export const ruleOf = (cls) => /^M-\d\d/.exec(cls)?.[0] ?? cls;
 
 /**
@@ -154,51 +173,117 @@ function setState(tok, name) {
 function noop() {}
 
 /**
- * M-11 (items 1 to 6) for the noscript content C. Item 6 (H-38) comes from the cross-check
- * oracle (checkNoscriptContent of depth.mjs); the detail says whether the noscript is in a
- * cell or caption.
+ * M-11 for the noscript content C (items 1 to 9). Item 6 (H-38), the D of item 8 (H-71), and the
+ * classes of M-09 conditions 1 and 2 and M-10 items 2 and 3 of item 8 come from the cross-check
+ * oracle (checkNoscriptContent of depth.mjs with the main-pass counter: its classes go to the class
+ * set of that counter). This pass adds items 1 to 5 and 7 with details, and the other main-pass
+ * rules of item 8 on the tokens of C: M-07 in the foreign region of C (item 9, H-74), M-09 for the
+ * table parts (F can be an element around the noscript element) and M-12. The details of the
+ * item 8 classes end with "in noscript". M-06 in C needs no class: a crossing or a stray end tag
+ * in C is already M-11 item 5.
  * @param {string} c
  * @param {Findings} f
- * @param {{ inCell: boolean }} ctx
+ * @param {{ inCell: boolean, outer?: DepthCounter | null, outerFamily?: string | null, tableCurrentOver?: Set<string> }} ctx
+ *   outer: the main-pass counter while the noscript element is the current node; outerFamily: F of
+ *   the main pass (M-09; null for none or a template); tableCurrentOver: details of M-09 condition 2
  */
 export function checkNoscript(c, f, ctx) {
-  if (checkNoscriptContent(c).tablePart) f.add("M-11.6", ctx.inCell ? "noscript in a cell or caption" : "noscript elsewhere");
+  const r = checkNoscriptContent(c, ctx.outer ?? null);
+  if (r.tablePart) f.add("M-11.6", ctx.inCell ? "noscript in a cell or caption" : "noscript elsewhere");
+  if (r.maxD > 256) f.add("M-26-noscript", `D ${r.maxD}`);
   const text = `${c}</noscript>`;
+  /** @type {string[]} names of the open elements of C */
   const stack = [];
+  let region = -1; // index of the region root of C (item 9)
+  let restrict = -1; // index of the foreign INTEGRATION or TEXT element whose content is text only (M-07 items 3, 4)
   let end = -1;
   let unbalanced = false;
   /** @type {string | null} */
   let firstIssue = null;
+  const restrictClass = () => (TEXT.has(stack[restrict]) && !INTEGRATION.has(stack[restrict]) ? "M-07.4" : "M-07.3");
+  /** F of M-09 for a start tag in HTML context of C: in C, else around the noscript element. */
+  const family = () => {
+    for (let i = stack.length - 1; i >= 0; i--) {
+      if (stack[i] === "template") return { name: null, current: false };
+      if (TABLE_FAMILY.has(stack[i])) return { name: stack[i], current: i === stack.length - 1 };
+    }
+    return { name: ctx.outerFamily ?? null, current: false };
+  };
+  const popTo = (i) => {
+    stack.length = i;
+    if (restrict >= stack.length) restrict = -1;
+    if (region >= stack.length) region = -1;
+  };
   const handler = {
     onStartTag(t) {
       if (end >= 0) return;
       const name = t.tagName;
+      const sc = t.selfClosing;
+      if (restrict >= 0) f.add(restrictClass(), `<${safeName(name)}> in noscript`);
       if (t.attrs.some((a) => a.name === "data-rq-block")) f.add("M-11.2");
       if (NOSCRIPT_FORBIDDEN.has(name)) f.add("M-11.3", `<${name}>`);
+      if (DOCUMENT_TAGS.has(name)) f.add("M-11.7", `<${name}>`);
       if (name === "script") {
         const item = scriptTypeItem(rawAttrValue(text, t.location, "type"));
         if (item !== null) f.add("M-11.4", `M-13 item ${item}`);
       }
+      if (region >= 0) {
+        // Foreign region of C: M-05 item 2, no state change (M-04); M-07 items 1 and 4 through item 8.
+        if (BREAKOUT.has(name)) f.add("M-07.1", `<${name}> in noscript`);
+        if (TEXT.has(name) && (sc || name === "plaintext")) f.add("M-07.4", `<${name}${sc ? "/" : ""}> in noscript`);
+        if (!sc) {
+          stack.push(name);
+          if (restrict < 0 && (INTEGRATION.has(name) || TEXT.has(name))) restrict = stack.length - 1;
+        }
+        return;
+      }
+      const parents = allowedParents(name);
+      if (parents !== null || name === "table") {
+        const fam = family();
+        if (parents !== null && fam.name !== null && !parents.includes(fam.name)) f.add("M-09", `<${name}> in <${fam.name}> in noscript`);
+        // Detail of M-09 condition 2 (the class comes from the counter of item 8).
+        if (fam.name !== null && ROW_CONTEXT.has(fam.name) && !fam.current) {
+          ctx.tableCurrentOver?.add(`<${safeName(stack.at(-1) ?? "noscript")}> in noscript`);
+        }
+      }
       setState(tok, name);
-      if (!VOID.has(name) && !((name === "svg" || name === "math") && t.selfClosing)) stack.push(name);
+      if (!((name === "svg" || name === "math") && sc) && !VOID.has(name)) {
+        stack.push(name);
+        if (name === "svg" || name === "math") region = stack.length - 1;
+      }
     },
     onEndTag(t) {
       if (end >= 0) return;
-      if (t.tagName === "noscript") {
+      const name = t.tagName;
+      if (name === "noscript") {
         end = t.location.startOffset;
         return;
       }
-      if (stack.length > 0 && stack[stack.length - 1] === t.tagName) {
-        stack.pop();
+      if (DOCUMENT_TAGS.has(name)) f.add("M-11.7", `</${name}>`);
+      if (restrict >= 0 && name !== stack[restrict]) f.add(restrictClass(), `</${safeName(name)}> in noscript`);
+      const i = stack.lastIndexOf(name);
+      // Item 5: the end tag closes the last open element of C, or (H-75) it is the end tag of the
+      // region root, which closes the elements of the region above it.
+      if (i >= 0 && (i === stack.length - 1 || i === region)) {
+        popTo(i);
         return;
       }
-      if (!unbalanced) firstIssue = `</${t.tagName}> over <${stack.at(-1) ?? "none"}>`;
+      if (region >= 0 && i < region) f.add("M-07.2", `</${safeName(name)}> in noscript`);
+      if (!unbalanced) firstIssue = `</${safeName(name)}> over <${safeName(stack.at(-1) ?? "none")}>`;
       unbalanced = true;
-      const i = stack.lastIndexOf(t.tagName);
-      if (i >= 0) stack.length = i;
+      if (i >= 0) popTo(i);
     },
-    onComment: noop,
-    onDoctype: noop,
+    onComment(t) {
+      if (end >= 0) return;
+      const start = t.location.startOffset;
+      const cdata = text.startsWith("<![CDATA[", start);
+      if (cdata && !cdataOk(text, start)) f.add("M-12", "in noscript");
+      if (restrict >= 0 && !cdata) f.add(restrictClass(), "comment in noscript");
+    },
+    onDoctype() {
+      if (end >= 0) return;
+      if (restrict >= 0) f.add(restrictClass(), "doctype in noscript");
+    },
     onCharacter: noop,
     onNullCharacter: noop,
     onWhitespaceCharacter: noop,
@@ -208,7 +293,7 @@ export function checkNoscript(c, f, ctx) {
   tok.write(text, true);
   if (end !== c.length) f.add("M-11.1");
   if (unbalanced || stack.length > 0) {
-    f.add(onlyPLi(text, end) ? "M-11.5-pli" : "M-11.5-other", firstIssue ?? `<${stack.at(-1)}> not closed`);
+    f.add(onlyPLi(text, end) ? "M-11.5-pli" : "M-11.5-other", firstIssue ?? `<${safeName(stack.at(-1) ?? "none")}> not closed`);
   }
 }
 
@@ -222,18 +307,27 @@ const P_LI = names("p li");
  */
 function onlyPLi(text, end) {
   const stack = [];
+  let region = -1; // the region root of C: no state change after it, and its end tag can cross (H-74, H-75)
   let ok = true;
   const handler = {
     onStartTag(t) {
       if (t.location.startOffset >= end && end >= 0) return;
+      if (region >= 0) {
+        if (!t.selfClosing) stack.push(t.tagName);
+        return;
+      }
       setState(tok, t.tagName);
-      if (!VOID.has(t.tagName) && !((t.tagName === "svg" || t.tagName === "math") && t.selfClosing)) stack.push(t.tagName);
+      if (!VOID.has(t.tagName) && !((t.tagName === "svg" || t.tagName === "math") && t.selfClosing)) {
+        stack.push(t.tagName);
+        if (t.tagName === "svg" || t.tagName === "math") region = stack.length - 1;
+      }
     },
     onEndTag(t) {
       if (end >= 0 && t.location.startOffset >= end) return;
       const i = stack.lastIndexOf(t.tagName);
-      if (i < 0 || stack.slice(i + 1).some((n) => !P_LI.has(n))) ok = false;
+      if (i < 0 || (i !== region && stack.slice(i + 1).some((n) => !P_LI.has(n)))) ok = false;
       if (i >= 0) stack.length = i;
+      if (region >= stack.length) region = -1;
     },
     onComment: noop,
     onDoctype: noop,
@@ -283,7 +377,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
   let templates = 0;
   let noscriptStart = -1;
   let noscriptInCell = false;
-  /** @type {Set<string>} names of the current node for M-09 condition 2 (detail) */
+  /** @type {Set<string>} the current node for M-09 condition 2 (detail: "<name>", or "<name> in noscript") */
   const tableCurrentOver = new Set();
   /** @type {Pick[]} */
   const candidates = [];
@@ -313,6 +407,8 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
     return null;
   };
   const restrictClass = () => (TEXT.has(stack[restrict].name) && !INTEGRATION.has(stack[restrict].name) ? "M-07.4" : "M-07.3");
+  // M-11 item 8 (H-71): the main-pass state while the noscript element is the current node.
+  const noscriptContext = () => ({ inCell: noscriptInCell, outer: depth, outerFamily: tableContext()?.name ?? null, tableCurrentOver });
   const isOpen = (n) => stack.some((e) => e.name === n && !e.foreign);
   const openInContent = (set) => {
     for (let i = stack.length - 1; i > (block?.index ?? stack.length); i--) if (set.has(stack[i].name)) return true;
@@ -333,16 +429,16 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
   let endOffsetOfToken = 0;
 
   // Block rules M-22 to M-24 for a start tag in the content of an html block.
-  // Class names: "M-22.2:<name>" for a forbidden element in HTML context; "M-22-foreign" for
-  // a forbidden or self-closing tag inside an svg or math subtree of the content (a
-  // consequence of "M-22.2:svg" or "M-22.2:math").
+  // Class names: "M-22.2:<name>" for a forbidden element in HTML context; "M-22.5" for a start
+  // tag in a foreign region of the content whose name is not in FOREIGN_ALLOWED (H-73). M-24
+  // applies in HTML context only.
   const contentStartTag = (name, selfClosing, f2, inForeign) => {
     if (inForeign) {
-      if (FORBIDDEN_CONTENT.has(name) || (selfClosing && !VOID.has(name))) f2.add("M-22-foreign", `<${name}${selfClosing ? "/" : ""}>`);
+      if (!FOREIGN_ALLOWED.has(name)) f2.add("M-22.5", `<${safeName(name)}>`);
       return;
     }
     if (FORBIDDEN_CONTENT.has(name)) f2.add(`M-22.2:${name}`);
-    if (selfClosing && !VOID.has(name)) f2.add("M-22.3", `<${name}/>`);
+    if (selfClosing && !VOID.has(name) && name !== "svg" && name !== "math") f2.add("M-22.3", `<${safeName(name)}/>`);
     const b = /** @type {NonNullable<typeof block>} */ (block);
     if (PCLOSE.has(name) && (b.name === "p" || b.name === "span")) f2.add("M-24.a", `<${name}> in <${b.name}>`);
     if (HEADINGS.has(name) && (HEADINGS.has(b.name) || openInContent(HEADINGS))) f2.add("M-24.b");
@@ -434,7 +530,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
         }
         // Detail for M-09 condition 2 (the class itself comes from DepthCounter).
         if ((TABLE_PART.has(name) || name === "col" || name === "table") && fam !== null && ROW_CONTEXT.has(fam.name) && stack[stack.length - 1] !== fam) {
-          tableCurrentOver.add(stack[stack.length - 1].name);
+          tableCurrentOver.add(`<${safeName(stack[stack.length - 1].name)}>`);
         }
         depth.startTag(name, sc, attrNames);
         stackUnits();
@@ -479,14 +575,18 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
       if (restrict >= 0 && name !== stack[restrict].name) f.add(restrictClass(), `</${name}> in <${stack[restrict].name}>`);
       if (selects > 0 && !inForeign && !SELECT_END.has(name)) f.add("M-08", `</${name}> in select`);
       if (name === "noscript" && noscriptStart >= 0) {
-        checkNoscript(text.slice(noscriptStart, t.location.startOffset), f, { inCell: noscriptInCell });
+        checkNoscript(text.slice(noscriptStart, t.location.startOffset), f, noscriptContext());
         noscriptStart = -1;
       }
       let i = stack.length - 1;
       while (i >= 0 && stack[i].name !== name) i--;
+      // H-75: the end tag of the region root crosses only elements of its region.
+      const rootEnd = inForeign && i === root;
       if (block !== null && block.html) {
-        if (VOID.has(name)) blockFindings.add("M-22.4", `</${name}>`);
-        else if (i !== stack.length - 1) blockFindings.add("M-23", i < 0 ? `stray </${name}>` : `</${name}> over <${stack[stack.length - 1].name}>`);
+        if (VOID.has(name) && !inForeign) blockFindings.add("M-22.4", `</${name}>`);
+        else if (i !== stack.length - 1 && !(rootEnd && root > block.index)) {
+          blockFindings.add("M-23", i < 0 ? `stray </${safeName(name)}>` : `</${safeName(name)}> over <${safeName(stack[stack.length - 1].name)}>`);
+        }
         if (i >= 0 && i <= block.index && i !== stack.length - 1) blockFindings.add("M-20", i === block.index ? "closed by a crossing" : "closed by an outer end tag");
       }
       if (inForeign && (i < 0 || i < root)) f.add("M-07.2", i < 0 ? `stray </${name}>` : `</${name}> leaves the region`);
@@ -517,7 +617,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
       }
       const origins = new Set();
       if (special) origins.add("special");
-      if (foreign) origins.add("foreign");
+      if (foreign && !rootEnd) origins.add("foreign"); // H-75: the crossing of the region root sets no mark
       for (const e of popped) for (const o of e.marks) origins.add(o);
       const blockEnded = block !== null && i === block.index;
       popTo(i);
@@ -548,7 +648,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
     onWhitespaceCharacter: noop,
     onEof() {
       if (noscriptStart >= 0) {
-        checkNoscript(text.slice(noscriptStart), f, { inCell: noscriptInCell });
+        checkNoscript(text.slice(noscriptStart), f, noscriptContext());
         noscriptStart = -1;
       }
       if (selects > 0) f.add("M-08", "no </select>");
@@ -565,7 +665,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
   if (depth.classes.has(CLASSES.templateCol)) f.add("M-09.1");
   if (depth.classes.has(CLASSES.tableCurrent)) {
     if (tableCurrentOver.size === 0) f.add("M-09.2", "<?>");
-    for (const n of tableCurrentOver) f.add("M-09.2", `<${n}>`);
+    for (const n of tableCurrentOver) f.add("M-09.2", n);
   }
   if (depth.classes.has(CLASSES.form)) f.add("M-10.2");
   if (depth.classes.has(CLASSES.templateFor)) f.add("M-10.3");

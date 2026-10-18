@@ -9,7 +9,7 @@ Documentation: https://robotoss.github.io/rivqen/guide/examples/server
 ```bash
 npm install
 npm start          # http://127.0.0.1:8787/catalog
-npm test           # 95 tests, with the 74 server protocol fixtures
+npm test           # 87 tests, with the 77 server protocol fixtures
 npm run measure    # bytes per visit; needs the server running
 ```
 
@@ -38,7 +38,7 @@ Every route answers only a request whose `Host` header equals the host of the co
 
 ## Behavior that follows the review fixes (S2)
 
-- **Head rule (DL-031, DL-034).** The manifest element goes before the head end tag of the document, not before the first `</head>` text. The head start tag may follow only white space, comments, DOCTYPE and `html` start tags. Inside the head only head content may come (`base`, `link`, `meta`, `script`, `style`, `template`, `title`, `noscript`, `noframes`, `basefont`, `bgsound`, comments). An end tag other than `head`, `body`, `html` and `br` is ignored there. Without such a head end tag, the server sends the application response unchanged.
+- **Head rule (H-72, WP-17 S3).** The manifest element goes immediately after the `>` of the head start tag of the document, with no byte between them. The head start tag may follow only white space, comments, DOCTYPE tokens, `html` start tags and end tags other than `head`, `body`, `html` and `br` (these are ignored, DL-034). A `<head>` text in a comment or in a `template` does not count. What comes after the head start tag does not matter: the head does not need a `</head>` end tag. Without such a head start tag, the server sends the application response unchanged. This replaces the S2 rule "before the head end tag" (DL-031): with scripting disabled, a `noscript` in the head can close the head early, and the manifest was then in the body.
 - **Rq-* fields (DL-030).** The server removes every `Rq-*` field of the application response in all outcomes. A full document and a delta carry one `Rq-Version: 1` line.
 - **Charset (H-62).** The page is UTF-8. When the `Content-Type` of the application response has a `charset` parameter that is not a WHATWG label of UTF-8 (`unicode-1-1-utf-8`, `unicode11utf8`, `unicode20utf8`, `utf-8`, `utf8`, `x-unicode20utf8`; ASCII case-insensitive, quotes removed), the server sends the response unchanged. The full document always has exactly one `Content-Type` line with the value `text/html; charset=utf-8` (H-66), whatever the text of the application response was. The server reads the field as the rule says ([negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server)): one field line with one media type (else it sends the response unchanged), and the parameter name is not trimmed. A value without a charset (also one with a quoted string that is not closed) gives the full document with the exact value (DL-039). A delta is not changed by this rule.
 - **Validators (DL-032).** The full document has no `Last-Modified`; its ETag is the page revision.

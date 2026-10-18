@@ -389,7 +389,9 @@ function deltaRecipe(id, recipe, ctx) {
   if (ops.length !== 1 || ops[0].content !== '' || ops[0].sha256 !== undefined) {
     throw new CaseError(id, 'size needs exactly one operation with empty content and no sha256');
   }
-  ops[0].content = 'x'.repeat(d.size - build().length);
+  const fill = d.size - build().length;
+  if (!(fill >= 0)) throw new CaseError(id, `size ${d.size} is smaller than the envelope without content`);
+  ops[0].content = 'x'.repeat(fill);
   const out = build();
   if (out.length !== d.size) throw new CaseError(id, `size ${d.size} not reached`);
   return out;

@@ -68,9 +68,26 @@ export const BLOCK_HTML = set(
 
 export const FORBIDDEN_CONTENT = set(
   'base', 'basefont', 'bgsound', 'body', 'embed', 'frame', 'frameset', 'head', 'html',
-  'iframe', 'link', 'math', 'meta', 'noembed', 'noframes', 'noscript', 'object', 'optgroup',
-  'option', 'plaintext', 'script', 'select', 'style', 'svg', 'template', 'textarea', 'title',
+  'iframe', 'link', 'meta', 'noembed', 'noframes', 'noscript', 'object', 'optgroup',
+  'option', 'plaintext', 'script', 'select', 'style', 'template', 'textarea', 'title',
   'xmp',
+);
+
+/**
+ * M-22 item 5 (human decision H-73): the start tags that are allowed in a
+ * foreign region of the content of an html block. Exact lower-case list of
+ * markup.md section 2.1.
+ */
+export const FOREIGN_ALLOWED = set(
+  'svg', 'g', 'path', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'rect', 'defs',
+  'symbol', 'use', 'title', 'desc', 'lineargradient', 'radialgradient', 'stop', 'clippath',
+  'mask', 'pattern', 'marker', 'text', 'tspan', 'filter', 'feblend', 'fecolormatrix',
+  'fecomponenttransfer', 'fecomposite', 'fedisplacementmap', 'fedropshadow', 'feflood',
+  'fefunca', 'fefuncb', 'fefuncg', 'fefuncr', 'fegaussianblur', 'femerge', 'femergenode',
+  'femorphology', 'feoffset', 'feturbulence', 'math', 'mrow', 'mi', 'mo', 'mn', 'ms', 'mtext',
+  'mspace', 'msub', 'msup', 'msubsup', 'mfrac', 'msqrt', 'mroot', 'mstyle', 'munder', 'mover',
+  'munderover', 'mmultiscripts', 'mprescripts', 'none', 'mtable', 'mtr', 'mtd', 'mpadded',
+  'mphantom', 'merror', 'semantics', 'annotation',
 );
 
 /** M-08: tokens allowed inside a select element. */
@@ -102,10 +119,13 @@ export const LIST_ITEMS = set('li', 'dd', 'dt');
 /** M-24 k: values of F (M-09) where the WHATWG parser foster-parents content. */
 export const TABLE_CONTEXT = set('table', 'tbody', 'thead', 'tfoot', 'tr', 'colgroup');
 
-/** M-11 rule 3: start tags not allowed in noscript content. */
+/** M-11 items 3 and 7: start tags not allowed in noscript content (svg starts a region: item 9). */
 export const NOSCRIPT_FORBIDDEN = set(
-  'frameset', 'math', 'noscript', 'plaintext', 'select', 'svg', 'template',
+  'frameset', 'math', 'noscript', 'plaintext', 'select', 'template',
 );
+
+/** M-11 item 7 (H-71): document tags, not allowed as a start tag or an end tag in noscript content. */
+export const DOCUMENT_TAGS = set('html', 'body', 'head');
 
 /** M-06 items 2 and 4: the WHATWG "formatting" category (decisions H-26, H-32). */
 export const FORMATTING = set(

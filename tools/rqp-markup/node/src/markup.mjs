@@ -9,7 +9,9 @@
 // pass. Time is linear in the input length: every stack entry is pushed and
 // popped once, and each check is a constant number of map lookups. Every entry
 // of the token stack holds at least one unit of the depth counter D, and
-// D <= LIMITS.maxOpenElements (M-26), so the stack has at most 256 entries.
+// D <= LIMITS.maxOpenElements (M-26), so the stack has at most 256 entries. The
+// noscript content C (M-11) is scanned a second time, in place, on the same
+// stack above the noscript element, so its elements count in the same bound.
 
 import { createHash } from 'node:crypto';
 import { isUtf8 } from 'node:buffer';
@@ -19,7 +21,9 @@ import {
   BLOCK_FAMILY,
   BLOCK_HTML,
   BREAKOUT,
+  DOCUMENT_TAGS,
   FORBIDDEN_CONTENT,
+  FOREIGN_ALLOWED,
   FORMATTING,
   GUARDED,
   HEADINGS,
@@ -150,53 +154,6 @@ function decrement(map, key) {
   else map.delete(key);
 }
 
-/**
- * M-11: tokenize the noscript content C followed by "</noscript>" alone from
- * the data state (HTML context). Returns an error code or null.
- *
- * M-13 also applies to the start tags of C (decision H-22, edge case E8): a
- * reader with scripting disabled parses C as markup and would see a manifest.
- * C must be balanced (item 5, decision H-27): a separate stack of names, with
- * one entry for each element of C that M-05 item 1 would push. Its size is
- * bounded by the size of C; it is not part of the depth counter D (M-26 item 7).
- */
-export function checkNoscript(content) {
-  const b = Buffer.concat([content, NOSCRIPT_END]);
-  const tok = new Tokenizer(b);
-  const open = [];
-  let tables = 0; // item 6: table elements on the stack of C
-  for (;;) {
-    const t = tok.next();
-    if (t.type === TokenType.START_TAG) {
-      const name = internName(t.name);
-      if (name === 'script' && t.typeAttr !== null && isReservedType(b, t.typeAttr)) {
-        return ErrorCode.RESERVED; // item 4: M-13 in C (E8, H-28)
-      }
-      if (t.blockAttr !== null || NOSCRIPT_FORBIDDEN.has(name)) return STRUCTURE; // items 2, 3
-      // Item 6 (H-38): a table part needs a table of C, or with scripting
-      // disabled it closes a cell or caption around the noscript element.
-      // The keys of TABLE_PARENTS are the names of TABLE_PART and col.
-      if (tables === 0 && TABLE_PARENTS.has(name)) return STRUCTURE;
-      // Item 5. svg and math are forbidden (item 3), so only VOID is not pushed.
-      if (!VOID.has(name)) {
-        open.push(name);
-        if (name === 'table') tables++;
-      }
-      const mode = TEXT_MODE.get(name);
-      if (mode !== undefined) tok.switchTo(mode, name);
-    } else if (t.type === TokenType.END_TAG) {
-      if (t.name === 'noscript') {
-        // Item 1, and item 5: no element of C is open at its end.
-        return t.start === content.length && open.length === 0 ? null : STRUCTURE;
-      }
-      if (open.at(-1) !== t.name) return STRUCTURE; // item 5: crossing or stray end tag
-      if (open.pop() === 'table') tables--;
-    } else if (t.type === TokenType.EOF) {
-      return STRUCTURE;
-    }
-  }
-}
-
 /** One pass over the tokens: the token stack (M-05) and rules M-06 to M-26. */
 class Scanner {
   constructor(bytes) {
@@ -217,6 +174,7 @@ class Scanner {
     this.region = -1; // stack index of the svg or math element of the foreign region
     this.charsOnly = null; // M-07: name of the element whose content must be text only
     this.noscriptStart = -1; // M-11: offset of the noscript content
+    this.cBase = -1; // M-11: stack index of the noscript element while C is scanned, else -1
     this.pending = null; // block of the start tag that is processed now
     this.block = null; // open block: { id, format, start, index }
     this.blocks = [];
@@ -337,6 +295,7 @@ class Scanner {
     if (t.name === 'script' && t.typeAttr !== null && isReservedType(this.b, t.typeAttr)) {
       return ErrorCode.RESERVED; // M-13
     }
+    if (this.cBase >= 0 && this.noscriptRejects(t)) return STRUCTURE; // M-11 items 2, 3, 6, 7
     if (this.inSelect() && !SELECT_START.has(t.name)) return STRUCTURE; // M-08
     const foreign = this.region >= 0;
     if (t.blockAttr !== null) {
@@ -372,6 +331,8 @@ class Scanner {
   foreignStart(t) {
     const name = t.name;
     if (BREAKOUT.has(name)) return STRUCTURE;
+    // M-22 item 5 (H-73): a foreign region of block content has only these names.
+    if (this.block !== null && !FOREIGN_ALLOWED.has(name)) return STRUCTURE;
     const text = TEXT.has(name);
     if (text && (t.selfClosing || name === 'plaintext')) return STRUCTURE;
     if (!t.selfClosing) {
@@ -440,7 +401,8 @@ class Scanner {
   contentStart(t) {
     const name = t.name;
     if (FORBIDDEN_CONTENT.has(name)) return STRUCTURE; // M-22 rule 2
-    if (t.selfClosing && !VOID.has(name)) return STRUCTURE; // M-22 rule 3
+    // M-22 rule 3: a self-closing svg or math opens no region (M-05 item 1).
+    if (t.selfClosing && !VOID.has(name) && name !== 'svg' && name !== 'math') return STRUCTURE;
     const blockName = this.names[this.block.index];
     if (PCLOSE.has(name) && (blockName === 'p' || blockName === 'span')) return STRUCTURE; // a
     if (HEADINGS.has(name) && (HEADINGS.has(blockName) || this.headingInContent())) {
@@ -482,8 +444,7 @@ class Scanner {
     const name = t.name;
     if (this.noscriptStart >= 0) {
       // The tokenizer was in RAWTEXT: this is the end tag of the noscript element.
-      const error = checkNoscript(this.b.subarray(this.noscriptStart, t.start));
-      this.noscriptStart = -1;
+      const error = this.scanNoscript(this.b.subarray(this.noscriptStart, t.start));
       if (error !== null) return error;
     }
     if (this.charsOnly !== null) {
@@ -491,6 +452,7 @@ class Scanner {
       this.charsOnly = null;
     }
     if (this.inSelect() && !SELECT_END.has(name)) return STRUCTURE; // M-08
+    if (this.cBase >= 0) return this.noscriptEnd(t);
     if (this.block !== null) return this.contentEnd(t);
     const idx = this.nearest(name);
     if (this.region >= 0) {
@@ -509,7 +471,10 @@ class Scanner {
     const top = this.names.length - 1;
     const formatting = FORMATTING.has(name);
     const tableEnd = TABLE_FAMILY.has(name);
-    let crossesSpecial = false;
+    let crossesSpecial = false; // M-06 item 2: a crossed special or foreign element
+    let setsMark = false; // M-06 item 4 (a): the crossing marks the new current node
+    // M-06 item 4 (H-75): the end tag of the region root sets no mark by (a).
+    const rootEnd = idx === this.region;
     let marked = (this.state[idx] & MARKED) !== 0;
     for (let i = top; i > idx; i--) {
       const crossed = this.names[i];
@@ -520,6 +485,7 @@ class Scanner {
       // M-06 item 2: a special element pushed in HTML context, or any element
       // pushed in a foreign region.
       if (!html || SPECIAL.has(crossed)) crossesSpecial = true;
+      if (html ? SPECIAL.has(crossed) : !rootEnd) setsMark = true;
       if ((this.state[i] & MARKED) !== 0) marked = true;
     }
     if (formatting && (crossesSpecial || marked)) return STRUCTURE; // M-06 items 2 and 4
@@ -530,7 +496,7 @@ class Scanner {
     const current = this.names.length - 1;
     if (current >= 0) {
       if (!exact) this.state[current] |= DIRTY; // M-26 item 5
-      if (crossesSpecial || marked) this.state[current] |= MARKED; // M-06 item 4
+      if (setsMark || marked) this.state[current] |= MARKED; // M-06 item 4
     }
     return null;
   }
@@ -544,6 +510,8 @@ class Scanner {
   // is the current node. A stray table end tag (M-06 item 3) never matches.
   contentEnd(t) {
     const top = this.names.length - 1;
+    // M-23 exception (H-75): the end tag of the region root pops the region.
+    if (this.region >= 0 && this.nearest(t.name) === this.region) return this.close(this.region, t.name);
     if (this.names[top] !== t.name) return STRUCTURE; // M-23
     if (top === this.block.index) {
       const { id, format, start } = this.block;
@@ -554,6 +522,86 @@ class Scanner {
       this.block = null;
     }
     return this.close(top, t.name);
+  }
+
+  // M-11 items 2, 3, 6 and 7 for a start tag of C, in HTML context and in a
+  // foreign region of C. Item 4 is M-13 (checked before).
+  noscriptRejects(t) {
+    const name = t.name;
+    if (t.blockAttr !== null || NOSCRIPT_FORBIDDEN.has(name) || DOCUMENT_TAGS.has(name)) return true;
+    // Item 6 (H-38): a table part needs a table of C that is still open. The keys
+    // of TABLE_PARENTS are the names of TABLE_PART and col.
+    return TABLE_PARENTS.has(name) && this.nearest('table') <= this.cBase;
+  }
+
+  /**
+   * M-11 items 1 and 5 to 9 (H-71, H-74, H-75): scan the noscript content C
+   * followed by "</noscript>" alone, from the data state, with the rules of the
+   * main pass, in place on the stack above the noscript element (the current
+   * node). Returns an error code or null. The caller has pushed the noscript
+   * element (M-26 item 2). After a valid C, the stack, D and the dirty mark of
+   * the noscript element are those that the main pass had before C (M-11, note
+   * of item 8). On an error, the scan ends and no state is used again.
+   */
+  scanNoscript(content) {
+    this.noscriptStart = -1; // the end tag of C is handled here, not again in endTag()
+    const base = this.names.length - 1;
+    const saved = { b: this.b, tok: this.tok, depth: this.depth, state: this.state[base] };
+    this.b = Buffer.concat([content, NOSCRIPT_END]);
+    this.tok = new Tokenizer(this.b);
+    this.cBase = base;
+    const error = this.scanNoscriptTokens(content.length);
+    this.b = saved.b;
+    this.tok = saved.tok;
+    this.cBase = -1;
+    this.charsOnly = null;
+    this.depth = saved.depth;
+    this.state[base] = saved.state;
+    return error;
+  }
+
+  scanNoscriptTokens(contentLength) {
+    for (;;) {
+      const t = this.tok.next();
+      let error;
+      switch (t.type) {
+        case TokenType.START_TAG:
+          t.name = internName(t.name);
+          error = this.startTag(t);
+          break;
+        case TokenType.END_TAG:
+          t.name = internName(t.name);
+          if (t.name === 'noscript') {
+            // Item 1: the first end tag noscript ends C exactly. Item 5: no
+            // element of C is open, and no text-only element is open (M-07).
+            const ended = t.start === contentLength && this.names.length - 1 === this.cBase;
+            return ended && this.charsOnly === null ? null : STRUCTURE;
+          }
+          error = this.endTag(t);
+          break;
+        case TokenType.COMMENT:
+          error = this.comment(t);
+          break;
+        case TokenType.DOCTYPE:
+          error = this.doctype();
+          break;
+        default:
+          return STRUCTURE; // item 1: the end tag noscript was not reached (raw text)
+      }
+      if (error !== null) return error;
+    }
+  }
+
+  // M-11 items 5 and 7 for an end tag of C: it has the name of the current node,
+  // which is an element of C. Exception (H-75): an end tag of the region root
+  // closes the region.
+  noscriptEnd(t) {
+    const name = t.name;
+    if (DOCUMENT_TAGS.has(name)) return STRUCTURE; // item 7
+    const top = this.names.length - 1;
+    if (this.region >= 0 && this.nearest(name) === this.region) return this.close(this.region, name);
+    if (top <= this.cBase || this.names[top] !== name) return STRUCTURE; // item 5
+    return this.close(top, name);
   }
 
   comment(t) {
@@ -577,7 +625,7 @@ class Scanner {
   eof(t) {
     if (this.noscriptStart >= 0) {
       // The noscript content runs to the end of the input.
-      const error = checkNoscript(this.b.subarray(this.noscriptStart, t.start));
+      const error = this.scanNoscript(this.b.subarray(this.noscriptStart, t.start));
       if (error !== null) return error;
     }
     if (this.block !== null) return STRUCTURE; // M-20

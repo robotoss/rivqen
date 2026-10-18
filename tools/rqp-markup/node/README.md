@@ -54,7 +54,8 @@ The library function is `analyze(bytes)` in `src/markup.mjs`. It takes a `Uint8A
 | `test/tree-agreement.test.mjs` | For each valid random document, in both scripting views of parse5 8.0.1: the same blocks and offsets as the tree builder, no `script` whose decoded type contains `rivqen-manifest` after Unicode upper-case mapping (M-13), and no element deeper than 259 (M-26). The generator also makes the shapes of the security review and of its round 2 |
 | `test/property.test.mjs` | No exception on random markup and random bytes; result invariants (content bytes equal input bytes `[start, end)`, template, revisions); a prefix whose elements are all closed exactly does not change the result of the rest (D, marks, name counts and the count of open forms come back to their start values) |
 | `test/cli.test.mjs` | Single and batch mode, byte order, exit codes, no content on stderr, bounded read, only regular files (a FIFO without a writer gives exit 2 at once) |
-| `test/perf.test.mjs` | `[perf]` 36 adversarial inputs of about 5 MiB finish in less than 10 s each (measured: less than 0.25 s each). Each input has an expected result. Eight go beyond the depth limit and must give `RQP_MARKUP_LIMIT`. Others keep D at 256 again and again (top level, block content, svg, unmatched end tags, one crossing at the limit, implied table parts) and must be valid. Two nest the `noscript` content to 5 MiB (balanced: valid; unbalanced: `RQP_MARKUP_STRUCTURE`). Five use the round 2 rules: forms one after another, closed elements before table parts, `col` in a table in a template, tables nested in the `noscript` content, and table parts after the tables of the content are closed (`RQP_MARKUP_STRUCTURE`) |
+| `test/s3-rules.test.mjs` | Rules of WP-17 S3 (H-71, H-73, H-74, H-75): `FOREIGN_ALLOWED` and the name sets, M-22 item 5 and the region of block content, M-23 with the region root, M-06 item 4 with the region root, M-11 items 5 and 7 to 9. Each case is an input that only the named rule rejects |
+| `test/perf.test.mjs` | `[perf]` 39 adversarial inputs of about 5 MiB finish in less than 10 s each (measured: less than 0.25 s each). Each input has an expected result. Eight go beyond the depth limit and must give `RQP_MARKUP_LIMIT`. Others keep D at 256 again and again (top level, block content, svg, unmatched end tags, one crossing at the limit, implied table parts) and must be valid. Five use the `noscript` content of 5 MiB: nested (`RQP_MARKUP_LIMIT`, D counts C), siblings balanced (valid) and unbalanced at the end (`RQP_MARKUP_STRUCTURE`), and svg icons (valid). Five use the round 2 rules: forms one after another, closed elements before table parts, `col` in a table in a template, tables nested in the `noscript` content, and table parts after the tables of the content are closed (`RQP_MARKUP_STRUCTURE`) |
 
 The random tests use fixed seeds. For a deeper run, set more iterations or another seed:
 
@@ -84,12 +85,12 @@ T-13 (rules of the security review, F-4, F-7; changed lines against `4fff64f`, w
 |---|---|---|---|
 | `markup.mjs` `isReservedType()` | `i < span.end` → `i <= span.end` | Equivalent | The byte at `span.end` is a quote, white space or `>`: none of them is `&` or ≥ 0x80 |
 | `markup.mjs` `isReservedType()` | `>= 0x80` → `> 0x80` | Equivalent | The input is valid UTF-8 (M-02) and the span starts at an ASCII boundary, so the first non-ASCII byte of a value is a lead byte ≥ 0xC2 |
-| `markup.mjs` `checkNoscript()` | `if (mode !== undefined)` → `if (true)` | Equivalent | `switchTo(undefined)` gives the default branch of `next()`: the data state |
+| `markup.mjs` `scanNoscript()` | `if (mode !== undefined)` → `if (true)` | Equivalent | `switchTo(undefined)` gives the default branch of `next()`: the data state |
 | `markup.mjs` `close()` | `if (current >= 0)` → `if (true)` | Equivalent | With an empty stack it writes the property `"-1"` of the state array, which is never read |
 | `names.mjs` `KNOWN_NAMES` (2) | the interning list → `[]` | Equivalent | Interning changes only which string object is kept, never a result |
 | `cli.mjs` `readBounded()` | `if (cause instanceof CliError)` → `if (true)` | Accepted | Reached only by a read error on an open regular file (for example `EIO`); a test needs fault injection |
 
-T-16 (rules of round 2, H-35 to H-38; changed lines against `5224828`, without `--incremental`): 65 of 65 mutants killed (100 %). The first run had one survivor in `checkNoscript()`: `if (name === 'table') tables++` → `if (true) tables++` (every element of the content counts as a table). A behavior test now covers it: `<td><noscript><div><td></td></div></noscript>` is invalid, because with scripting disabled that `td` closes the cell around the `noscript`.
+T-16 (rules of round 2, H-35 to H-38; changed lines against `5224828`, without `--incremental`): 65 of 65 mutants killed (100 %). The first run had one survivor in `scanNoscript()`: `if (name === 'table') tables++` → `if (true) tables++` (every element of the content counts as a table). A behavior test now covers it: `<td><noscript><div><td></td></div></noscript>` is invalid, because with scripting disabled that `td` closes the cell around the `noscript`.
 
 ## Design
 
@@ -127,7 +128,14 @@ Every element is pushed and popped once, so the crossing checks of M-06 and the 
 
 All checks of an end tag (`close()` in `src/markup.mjs`) are in one loop over the entries that the end tag pops: M-06 item 1 (guarded), item 2 (a `FORMATTING` end tag over a special element pushed in HTML context or over any element pushed in a foreign region) and item 4 (a `FORMATTING` end tag that pops a marked entry). Only after all checks, the entries are popped and D and the marks change. In block content, M-23 allows only exact pops, so this loop has no crossed entry there.
 
-M-11 tokenizes the `noscript` content again with a second tokenizer. Each byte is in at most one `noscript` content, so this is linear too. The second pass also checks M-13 on each `script` start tag of the content (E8), and keeps a separate stack of names for item 5: an end tag compares only with its top. For item 6 it counts the `table` entries of that stack: +1 when a `table` is pushed, −1 when an end tag pops one. A start tag in `TABLE_PART` or `col` needs a count above 0.
+M-11 (H-71, H-74, H-75) scans the `noscript` content C again with a second tokenizer, from the data state, on the bytes of C followed by `</noscript>` (`scanNoscript()`). Each byte is in at most one `noscript` content, so this is linear too. The scan runs **in place**: it uses the same `Scanner` methods (`startTag()`, `endTag()`, `comment()`, `doctype()`) and the same token stack, above the `noscript` element, which is the current node. So M-05 to M-10, M-12, M-13 and the depth counter D apply to the tokens of C without a second implementation (item 8). `cBase`, the stack index of the `noscript` element, marks the scan. It adds only the rules of C:
+
+- `noscriptRejects()` for a start tag: item 2 (`data-rq-block`), item 3 (`NOSCRIPT_FORBIDDEN`, without `svg`), item 7 (`DOCUMENT_TAGS`: `html`, `body`, `head`), and item 6 (a `TABLE_PART` or `col` start tag needs `nearest('table') > cBase`, a table of C that is still open, also in a region). M-13 (item 4) is the check of the main pass.
+- `noscriptEnd()` for an end tag: item 7, and item 5: the end tag has the name of the current node, which is an element above `cBase`. The exception of H-75 is an end tag whose nearest element with its name is the region root: it closes the region.
+- The first end tag `noscript` ends the scan (item 1): it must start at the end of C, the current node must be the `noscript` element (nothing of C is open), and no text-only element of a region may be open. The end of the input before it, for example in a RCDATA `title` of C, is an error.
+- An `svg` start tag in HTML context starts a region by the normal rule of M-05 item 4 (item 9). The tokenizer state does not change in the region (M-04), and the start tag of a self-closing `svg` opens none.
+
+`scanNoscript()` saves D and the state bits of the `noscript` element, and restores them (and the main tokenizer and bytes) at the end, so the main pass continues with the state it had after the `noscript` push. The stack itself is back at the `noscript` element, because C is balanced.
 
 M-24 j is checked after M-24 c. When c holds, a list opened in the content is open, so the nearest list or list item from the top of the stack is always an element opened in the content. The index for j therefore needs no separate "opened in the content" flag.
 
@@ -138,7 +146,7 @@ M-24 j is checked after M-24 c. When c holds, a list opened in the content is op
 1. M-01 is checked first, on the byte length. The CLI reads at most 5 MiB + 1 bytes of a file, so memory stays bounded for any file.
 2. M-02 uses `isUtf8()` of `node:buffer` (strict: no overlong forms, no surrogates, no code point above U+10FFFF, no truncated sequence).
 3. M-26 depth counter D (H-31, which amends H-25): `addDepth()` adds 1 for each push and 1 for each new implied part of F, and checks `D <= 256` (`LIMITS.maxOpenElements`) before it changes any state. An end tag gives units back only when it pops exactly one clean element that is not `html` or `body`; else the new current node gets the dirty bit. The limit applies in HTML context and in a foreign region, inside and outside blocks. Elements that M-05 does not push (void elements, self-closing `svg` and `math` in HTML context, self-closing elements in a foreign region) do not count, but an implied column group of a `col` does.
-4. Each entry of the token stack holds at least 1 of D, so the token stack, its per-entry arrays and its name maps have at most 256 entries. The tags of the `noscript` content are not counted in D (M-26 item 7): its stack of M-11 item 5 is bounded only by the size of the content (5 MiB of `<em>` is about 1.3 million entries).
+4. Each entry of the token stack holds at least 1 of D, so the token stack, its per-entry arrays and its name maps have at most 256 entries. The tags of the `noscript` content count in D (M-26 item 7, H-71): C is scanned on the same stack, so its elements are bounded by 256 too (5 MiB of `<em>` in C gives `RQP_MARKUP_LIMIT`). The scan gives D back at the end of C.
 5. The names of the sets of `markup.md` section 2.1 are interned (`internName()` in `src/names.mjs`): for such a name, a stack entry keeps a constant string, not one string per tag (security review F-4). Interning does not change a result.
 6. Memory is linear in the input size. The largest measured time at 5 MiB is less than 0.25 s (`test/perf.test.mjs`).
 
@@ -150,12 +158,12 @@ The human decided these cases (H-21, H-22 in the sprint record `docs/engineering
 |---|---|---|---|
 | E1 | `<` as a character in foreign text content (`<svg><desc>a < b`) | Valid | The tokenizer emits no token for it |
 | E2 | End of input in a foreign region, after all blocks | Valid | `eof()` checks only `noscript`, an open block and `select` |
-| E3 | `noscript` without an end tag | C is the rest of the input; M-11 applies | `eof()` calls `checkNoscript()` |
+| E3 | `noscript` without an end tag | C is the rest of the input; M-11 applies | `eof()` calls `scanNoscript()` |
 | E4 | `<![CDATA[` without `>` before the end of input | Valid; inside a block, M-20 fails | `isCdataSafe()` |
 | E5 | CDATA in a foreign `TEXT` element or integration point | Valid when M-12 holds | `comment()` |
 | E6 | `<?` that reaches the end of input | A comment to the end of input (invalid in foreign text content) | Tokenizer, `comment()` |
 | E7 | `frameset` start tag in a foreign region | Invalid (`RQP_MARKUP_STRUCTURE`) | `startTag()`, before the context test |
-| E8 | Manifest `script` in `noscript` content | Invalid (`RQP_MARKUP_RESERVED`): M-13 applies to the start tags of C | `checkNoscript()` |
+| E8 | Manifest `script` in `noscript` content | Invalid (`RQP_MARKUP_RESERVED`): M-13 applies to the start tags of C | `scanNoscript()` |
 
 An E5 CDATA section that runs to the end of input in foreign text content is valid (E2 and E4 together). No fixture covers this combination; the rules test does.
 
@@ -168,13 +176,13 @@ The human decided these rules after the security review of 2026-10-11 (H-25 to H
 | H-26 | M-06 item 2: a `FORMATTING` end tag does not cross a `SPECIAL` element pushed in HTML context or any element pushed in a foreign region | `close()` |
 | H-30 | M-06 item 3: in HTML context, `</tbody>`, `</thead>`, `</tfoot>`, `</tr>`, `</table>` must match an element | `endTag()` (`STRAY_TABLE_END`) |
 | H-32 | M-06 item 4: special-crossed mark on the new current node; a `FORMATTING` end tag does not pop a marked entry | `close()` (`MARKED` bit) |
-| H-27 | M-11 item 5: the `noscript` content is balanced, also when it runs to the end of the input (E3) | `checkNoscript()` |
+| H-27 | M-11 item 5: the `noscript` content is balanced, also when it runs to the end of the input (E3) | `scanNoscript()` |
 | H-28 | M-13 item 3: a byte ≥ 0x80 in the raw `type` value of a `script` start tag gives `RQP_MARKUP_RESERVED`, in the main pass and in the `noscript` content | `isReservedType()` |
 | H-31 | M-26: the depth counter D with the dirty bit and the implied parts; it replaces the stack-size limit of H-25 | `addDepth()`, `htmlStart()`, `close()` |
 | H-35 | M-09 condition 1: no `col` start tag when a `template` is nearer than every `TABLE_FAMILY` element | `htmlStart()` (`IN_TEMPLATE`) |
 | H-36 | M-10 item 2: no `form` start tag in HTML context while an HTML `form` is on the token stack. A crossing that pops the form also decrements its count | `htmlStart()` |
 | H-37 | M-09 condition 2: a start tag in `TABLE_PART`, `col` or `table` while F is `table`, `tbody`, `thead`, `tfoot`, `tr` or `colgroup` needs F as the current node | `htmlStart()` |
-| H-38 | M-11 item 6: a start tag in `TABLE_PART` or `col` in the `noscript` content needs an open `table` of the content | `checkNoscript()` |
+| H-38 | M-11 item 6: a start tag in `TABLE_PART` or `col` in the `noscript` content needs an open `table` of the content | `scanNoscript()` |
 | H-43 | M-10 item 3: no `template` start tag with an attribute named `for` (ASCII case-insensitive, any value, any occurrence) in HTML context. A `template` in a foreign region is not affected. In the `noscript` content `template` is already forbidden (M-11 item 3) | `htmlStart()`, tokenizer flag `hasFor` |
 
 `FORMATTING` and `SPECIAL` are fixed sets in `src/names.mjs`. Not every member of `SPECIAL` changes a result today: void elements are never pushed in HTML context, raw text elements have no end tag in their content, the other `GUARDED` elements and `table` cannot be crossed (M-06 item 1), and `frameset` is rejected (M-10). `test/name-sets.test.mjs` checks the other members by behavior and the full set against the list of `markup.md`.
@@ -184,7 +192,7 @@ Choices of this candidate inside the rules:
 | Case | Choice | Reason |
 |---|---|---|
 | End tag in block content | The same `close()` as outside: checks of M-06 items 2 and 4, D, marks | M-23 allows only exact pops of elements that were pushed in the content, so the checks never fail there and D always gives the units back. One code path for all pops. |
-| M-11 item 5, start tag `svg` or `math` with the self-closing flag | Not handled separately | M-11 item 3 rejects every `svg` and `math` start tag in the content first. |
+| M-11 item 5, start tag `svg` with the self-closing flag | Not handled separately | M-05 item 1 pushes nothing and opens no region; `math` is rejected by item 3. |
 | Implied parts and M-09 | M-09 with conditions 1 and 2, and M-10 item 2, are checked first; the implied parts of a rejected start tag are not counted, and it is not pushed | A rejected start tag ends the pass, so the order changes only which error code a document with two errors gets (`CONTRACT.md` section 5). |
 | M-09 condition 1 and the F index | The per-entry F index has a second negative value, `IN_TEMPLATE`, instead of a walk down the stack | It keeps the check O(1). All other users of F read only indexes ≥ 0, so they see `IN_TEMPLATE` as "no F", as before. A `template` pushed in a foreign region also sets it; that entry is popped with its region before the next start tag in HTML context, so it never changes a result. |
 | M-10 item 2 in a `template` | A `form` start tag in a `template` under an open HTML `form` is rejected | The rule text has no exception for template contents (the tree builder does not use the form element pointer there). Stricter than needed; the rule text decides. |
@@ -215,4 +223,4 @@ All are development dependencies, pinned to exact versions, installed with `--ig
 - Every loop advances the input position or pops the stack; no recursion.
 - The CLI never prints document content to stderr.
 - The CLI reads only regular files. It opens the input with `O_NONBLOCK` and checks `fstat` on the descriptor, so a FIFO without a writer cannot make it wait (security review F-7).
-- The token stack and its name maps have at most 256 entries (D ≤ 256), so tag names from the input cannot fill a map (hash flooding, security review F-4). The `noscript` stack of M-11 item 5 has no name map.
+- The token stack and its name maps have at most 256 entries (D ≤ 256), so tag names from the input cannot fill a map (hash flooding, security review F-4). The `noscript` content is scanned on the same stack, so it adds no map.

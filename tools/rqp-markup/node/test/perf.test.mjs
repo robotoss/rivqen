@@ -10,8 +10,8 @@
 // stack depth is then at most 256 times slower, not quadratic in the input
 // length. A crossing keeps its units in D, so a document can cross at most
 // 256 elements in total; the crossing shapes below cross once, at the limit.
-// The noscript content C has its own stack (M-11 item 5), bounded by the size
-// of C only.
+// The noscript content C is scanned on the same stack and counts in D (M-11
+// item 8, M-26 item 7, H-71), so its depth is bounded too.
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -118,11 +118,17 @@ const inputs = {
   'table cells without rows, at the depth limit': () =>
     fill('<div>'.repeat(DEPTH - 4) + '<table>', '<td>x</td><th>y</th>', '</table>'),
   'tables with implied parts, popped exactly': () => fill('', '<table><td>x</td><col></table>'),
-  // M-11 item 5: one noscript content, nested to 5 MiB and closed again.
+  // M-11 items 5 and 8: one noscript content of 5 MiB, closed again.
   'noscript content nested to 5 MiB and balanced': () =>
     nested('<em>', '</em>', '<noscript>', '</noscript>'),
   'noscript content nested to 5 MiB, unbalanced at its end': () =>
     fill('<noscript>', '<em>', '</noscript>'),
+  'noscript content of 5 MiB of siblings, balanced': () =>
+    fill('<noscript>', '<em>x</em>', '</noscript>'),
+  'noscript content of 5 MiB of siblings, unbalanced at its end': () =>
+    fill('<noscript>', '<em>x</em>', '<em></noscript>'),
+  'noscript content of 5 MiB of svg icons': () =>
+    fill('<noscript>', '<svg><g><path d="M0"></path></g></svg>', '</noscript>'),
   // Rules of security review round 2 (H-35 to H-38).
   'forms one after another': () => fill('', '<form><div></div></form>'),
   'table parts after foster-parented elements that are closed': () =>
@@ -170,12 +176,15 @@ const expected = new Map([
   ['unmatched end tags on a stack at the depth limit', VALID],
   ['table cells without rows, at the depth limit', VALID],
   ['tables with implied parts, popped exactly', VALID],
-  ['noscript content nested to 5 MiB and balanced', VALID],
-  ['noscript content nested to 5 MiB, unbalanced at its end', STRUCTURE],
+  ['noscript content nested to 5 MiB and balanced', LIMIT], // M-26 item 7
+  ['noscript content nested to 5 MiB, unbalanced at its end', LIMIT],
+  ['noscript content of 5 MiB of siblings, balanced', VALID],
+  ['noscript content of 5 MiB of siblings, unbalanced at its end', STRUCTURE],
+  ['noscript content of 5 MiB of svg icons', VALID],
   ['forms one after another', VALID],
   ['table parts after foster-parented elements that are closed', VALID],
   ['cols in a table in a template', VALID],
-  ['noscript content with tables nested to 5 MiB and balanced', VALID],
+  ['noscript content with tables nested to 5 MiB and balanced', LIMIT],
   ['noscript content with table parts after its tables are closed', STRUCTURE], // M-11 item 6
 ]);
 

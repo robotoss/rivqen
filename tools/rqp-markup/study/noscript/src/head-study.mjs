@@ -125,10 +125,12 @@ function headStep(state, headIndex, stackLength, t, gapOk, rule) {
 }
 
 /**
- * Head walk with a noscript rule. Returns { at, headNoscripts, failure }: `at` is the
- * byte offset of the "<" of the head end tag, or -1; `headNoscripts` counts the
- * noscript elements opened while the document head was the current node; `failure`
- * is the label of the first C token that failed (h1, h2), or null.
+ * Head walk with a noscript rule. Returns { at, headNoscripts, failure, headStart }:
+ * `at` is the byte offset of the "<" of the head end tag, or -1; `headNoscripts`
+ * counts the noscript elements opened while the document head was the current node;
+ * `failure` is the label of the first C token that failed (h1, h2), or null;
+ * `headStart` is the offset after the head start tag that item 1 accepted, or -1
+ * (the insertion point of option hc of the report, a protocol change).
  *
  * @param {Uint8Array} input
  * @param {{ rule?: 'shipped' | 'h0' | 'h1' | 'h2' }} [opts]
@@ -147,6 +149,7 @@ export function headWalk(input, { rule = 'shipped' } = {}) {
   let cStart = -1; // start of C of the noscript of the document head, while it is open
   let failure = null;
   let at = -1;
+  let headStart = -1; // offset after the head start tag that item 1 accepts (option hc of the report)
   for (;;) {
     const t = tok.next();
     const step = headStep(head, headIndex, stack.length, t, onlyWhiteSpace(bytes, prevEnd, t.start), rule);
@@ -169,6 +172,7 @@ export function headWalk(input, { rule = 'shipped' } = {}) {
       if (opensHead) {
         head = HEAD_OPEN;
         headIndex = stack.length - 1;
+        headStart = t.end;
       }
       if (headNoscript) {
         headNoscripts++;
@@ -196,7 +200,7 @@ export function headWalk(input, { rule = 'shipped' } = {}) {
       }
     }
   }
-  return { at, headNoscripts, failure };
+  return { at, headNoscripts, failure, headStart };
 }
 
 /** Byte offset of the head end tag under a rule, or -1. */

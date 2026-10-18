@@ -1,0 +1,329 @@
+{
+ "source": "cases",
+ "seed": null,
+ "count": 162,
+ "candidateMismatch": 0,
+ "modelADivergences": 0,
+ "markup": {
+  "shipped": {
+   "documents": 162,
+   "valid": 88,
+   "validWithBlocks": 88,
+   "disagree": {
+    "enabled": 0,
+    "disabled": 0
+   },
+   "signatures": {},
+   "examples": []
+  },
+  "a": {
+   "documents": 162,
+   "valid": 88,
+   "validWithBlocks": 88,
+   "disagree": {
+    "enabled": 0,
+    "disabled": 0
+   },
+   "signatures": {},
+   "examples": []
+  },
+  "a-fx": {
+   "documents": 162,
+   "valid": 88,
+   "validWithBlocks": 88,
+   "disagree": {
+    "enabled": 0,
+    "disabled": 0
+   },
+   "signatures": {},
+   "examples": []
+  },
+  "b0": {
+   "documents": 162,
+   "valid": 86,
+   "validWithBlocks": 86,
+   "disagree": {
+    "enabled": 0,
+    "disabled": 0
+   },
+   "signatures": {},
+   "examples": []
+  },
+  "b1": {
+   "documents": 162,
+   "valid": 86,
+   "validWithBlocks": 86,
+   "disagree": {
+    "enabled": 0,
+    "disabled": 0
+   },
+   "signatures": {},
+   "examples": []
+  }
+ },
+ "lostAgainstShipped": {
+  "shipped": 0,
+  "a": 0,
+  "a-fx": 0,
+  "b0": 2,
+  "b1": 2
+ },
+ "lostNames": {
+  "shipped": [],
+  "a": [],
+  "a-fx": [],
+  "b0": [
+   "review-cases.json:H27-balanced B:table",
+   "review2-cases.json:H38-control-table-in-c B:table"
+  ],
+  "b1": [
+   "review-cases.json:H27-balanced B:table",
+   "review2-cases.json:H38-control-table-in-c B:table"
+  ]
+ },
+ "rejectReasons": {
+  "shipped": {
+   "M-10.3": 7,
+   "M-26": 7,
+   "M-06.2": 6,
+   "M-10.1": 5,
+   "M-06.4": 4,
+   "M-07.3": 4,
+   "M-08": 4,
+   "M-09.2": 4,
+   "M-11.6": 4,
+   "M-09.1": 3,
+   "M-11.4": 3,
+   "M-13": 3,
+   "M-06.3": 2,
+   "M-07.1": 2,
+   "M-07.2": 2,
+   "M-10.2": 2,
+   "M-11.5": 2,
+   "M-20": 2,
+   "M-06.1": 1,
+   "M-07.5": 1,
+   "M-11.1": 1,
+   "M-11.2": 1,
+   "M-12": 1,
+   "M-19.2": 1,
+   "M-24.a": 1,
+   "M-24.hi": 1
+  },
+  "a": {
+   "M-10.3": 7,
+   "M-26": 7,
+   "M-06.2": 6,
+   "M-10.1": 5,
+   "M-06.4": 4,
+   "M-07.3": 4,
+   "M-08": 4,
+   "M-09.2": 4,
+   "M-11.6": 4,
+   "M-09.1": 3,
+   "M-11.4": 3,
+   "M-13": 3,
+   "M-06.3": 2,
+   "M-07.1": 2,
+   "M-07.2": 2,
+   "M-10.2": 2,
+   "M-11.5": 2,
+   "M-20": 2,
+   "M-06.1": 1,
+   "M-07.5": 1,
+   "M-11.1": 1,
+   "M-11.2": 1,
+   "M-12": 1,
+   "M-19.2": 1,
+   "M-24.a": 1,
+   "M-24.hi": 1
+  },
+  "a-fx": {
+   "M-10.3": 7,
+   "M-26": 7,
+   "M-06.2": 6,
+   "M-10.1": 5,
+   "M-06.4": 4,
+   "M-07.3": 4,
+   "M-08": 4,
+   "M-09.2": 4,
+   "M-11.6": 4,
+   "M-09.1": 3,
+   "M-11.4": 3,
+   "M-13": 3,
+   "M-06.3": 2,
+   "M-07.1": 2,
+   "M-07.2": 2,
+   "M-10.2": 2,
+   "M-11.5": 2,
+   "M-20": 2,
+   "M-06.1": 1,
+   "M-07.5": 1,
+   "M-11.1": 1,
+   "M-11.2": 1,
+   "M-12": 1,
+   "M-19.2": 1,
+   "M-24.a": 1,
+   "M-24.hi": 1
+  },
+  "b0": {
+   "M-10.3": 7,
+   "M-26": 7,
+   "M-06.2": 6,
+   "M-10.1": 5,
+   "M-06.4": 4,
+   "M-07.3": 4,
+   "M-08": 4,
+   "M-09.2": 4,
+   "M-11.6": 4,
+   "M-09.1": 3,
+   "M-11.4": 3,
+   "M-13": 3,
+   "B:table": 2,
+   "M-06.3": 2,
+   "M-07.1": 2,
+   "M-07.2": 2,
+   "M-10.2": 2,
+   "M-11.5": 2,
+   "M-20": 2,
+   "M-06.1": 1,
+   "M-07.5": 1,
+   "M-11.1": 1,
+   "M-11.2": 1,
+   "M-12": 1,
+   "M-19.2": 1,
+   "M-24.a": 1,
+   "M-24.hi": 1
+  },
+  "b1": {
+   "M-10.3": 7,
+   "M-26": 7,
+   "M-06.2": 6,
+   "M-10.1": 5,
+   "M-06.4": 4,
+   "M-07.3": 4,
+   "M-08": 4,
+   "M-09.2": 4,
+   "M-11.6": 4,
+   "M-09.1": 3,
+   "M-11.4": 3,
+   "M-13": 3,
+   "B:table": 2,
+   "M-06.3": 2,
+   "M-07.1": 2,
+   "M-07.2": 2,
+   "M-10.2": 2,
+   "M-11.5": 2,
+   "M-20": 2,
+   "M-06.1": 1,
+   "M-07.5": 1,
+   "M-11.1": 1,
+   "M-11.2": 1,
+   "M-12": 1,
+   "M-19.2": 1,
+   "M-24.a": 1,
+   "M-24.hi": 1
+  }
+ },
+ "head": {
+  "shipped": {
+   "documents": 162,
+   "found": 6,
+   "foundMarkupValid": 4,
+   "disagree": {
+    "enabled": 0,
+    "disabled": 1
+   },
+   "disagreeMarkupValid": {
+    "enabled": 0,
+    "disabled": 1
+   },
+   "signatures": {
+    "H27-head-noscript": 1
+   },
+   "examples": [
+    {
+     "name": "review-cases.json:H27-head-noscript",
+     "input": "<head><noscript><div>q</div></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"a\">x</div>",
+     "detail": {
+      "enabled": null,
+      "disabled": {
+       "parse5End": -1,
+       "manifestInHead": false
+      }
+     }
+    }
+   ]
+  },
+  "h0": {
+   "documents": 162,
+   "found": 4,
+   "foundMarkupValid": 3,
+   "disagree": {
+    "enabled": 0,
+    "disabled": 0
+   },
+   "disagreeMarkupValid": {
+    "enabled": 0,
+    "disabled": 0
+   },
+   "signatures": {},
+   "examples": []
+  },
+  "h1": {
+   "documents": 162,
+   "found": 4,
+   "foundMarkupValid": 3,
+   "disagree": {
+    "enabled": 0,
+    "disabled": 0
+   },
+   "disagreeMarkupValid": {
+    "enabled": 0,
+    "disabled": 0
+   },
+   "signatures": {},
+   "examples": []
+  },
+  "h2": {
+   "documents": 162,
+   "found": 5,
+   "foundMarkupValid": 3,
+   "disagree": {
+    "enabled": 0,
+    "disabled": 0
+   },
+   "disagreeMarkupValid": {
+    "enabled": 0,
+    "disabled": 0
+   },
+   "signatures": {},
+   "examples": []
+  },
+  "hc": {
+   "documents": 162,
+   "found": 6,
+   "foundMarkupValid": 4,
+   "disagree": {
+    "enabled": 0,
+    "disabled": 0
+   },
+   "disagreeMarkupValid": {
+    "enabled": 0,
+    "disabled": 0
+   },
+   "signatures": {},
+   "examples": []
+  }
+ },
+ "headFailures": {
+  "h1": {
+   "<div>": 1,
+   "<script>": 1
+  },
+  "h2": {
+   "<div>": 1
+  }
+ },
+ "seconds": 0
+}

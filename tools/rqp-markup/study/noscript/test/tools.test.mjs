@@ -80,7 +80,7 @@ test('aggregate counts pages lost by a model and head disagreements', () => {
       id: 'p1', url: 'https://a.example/', result: {
         inventory: inv, candidateEqual: true, divergences: 0,
         markup: { shipped: m(true), a: m(false, 'A:M-09.2'), 'a-fx': m(false, 'A:M-09.2'), b0: m(true), b1: m(true) },
-        head: { shipped: h(10, 'disagree'), h0: h(-1), h1: h(-1), h2: h(-1) },
+        head: { shipped: h(10, 'disagree'), h0: h(-1), h1: h(-1), h2: h(-1), hc: h(6) },
         variants: {},
       },
     },
@@ -98,6 +98,8 @@ test('aggregate counts pages lost by a model and head disagreements', () => {
   assert.deepEqual(a.headNoscript.h1Failures, { '<img>': 1 });
   assert.equal(a.combined['shipped+shipped'], 1);
   assert.equal(a.combined['a+h1'], 0);
+  assert.equal(a.head.hc.found, 1);
+  assert.equal(a.head.hc.gainedShippedValid, 0);
 });
 
 test('the command lines reject bad options', () => {

@@ -95,6 +95,16 @@ test('headNoscriptFailure names the first token that leaves the head', () => {
   assert.equal(headNoscriptFailure(bytes('<!--x'), HEAD_NOSCRIPT_H1), 'eof');
 });
 
+test('option hc: a manifest after the head start tag stays in the head in both views, also with body content in a head noscript', () => {
+  for (const c of ['<img src=x>', 'Enable JavaScript', '<div>x</div>', '<link rel=x>']) {
+    const input = doc(c);
+    const w = headWalk(bytes(input));
+    assert.equal(w.headStart, input.indexOf('<head>') + '<head>'.length, c);
+    for (const scripting of [true, false]) assert.equal(manifestView(bytes(input), w.headStart, scripting).inHead, true, `${c} ${scripting}`);
+  }
+  assert.equal(headWalk(bytes('<title>x</title><head></head>')).headStart, -1, 'no head start tag after item 1 fails');
+});
+
 test('an unknown head rule is an error of the caller', () => {
   assert.throws(() => headWalk(bytes(''), { rule: 'h9' }), RangeError);
 });

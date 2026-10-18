@@ -125,13 +125,17 @@ export function aggregate(rows) {
     a.markup[m] = g;
   }
   for (const rule of HEAD_VARIANTS) {
-    const g = { found: 0, foundShippedValid: 0, lostShippedValid: 0, lostPages: [], disagreeShippedValid: { enabled: [], disabled: [] }, disagreeAll: { enabled: 0, disabled: 0 } };
+    const g = {
+      found: 0, foundShippedValid: 0, lostShippedValid: 0, gainedShippedValid: 0, lostPages: [],
+      disagreeShippedValid: { enabled: [], disabled: [] }, disagreeAll: { enabled: 0, disabled: 0 },
+    };
     for (const r of ok) {
       const x = r.result.head[rule];
       const valid = r.result.markup.shipped.valid;
       if (x.at >= 0) {
         g.found++;
         if (valid) g.foundShippedValid++;
+        if (valid && r.result.head.shipped.at < 0) g.gainedShippedValid++;
         for (const view of ['enabled', 'disabled']) {
           if (x[view] !== 'disagree') continue;
           g.disagreeAll[view]++;

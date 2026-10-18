@@ -30,7 +30,9 @@ export const MARKUP_VARIANTS = Object.freeze([
   { name: 'b1', opts: { noscript: 'allow', allow: ALLOW_B1 } },
 ]);
 
-export const HEAD_VARIANTS = Object.freeze(['shipped', 'h0', 'h1', 'h2']);
+/** Head rules of src/head-study.mjs, and option hc (insertion after the head start tag). */
+export const HEAD_VARIANTS = Object.freeze(['shipped', 'h0', 'h1', 'h2', 'hc']);
+const WALK_RULES = Object.freeze(['shipped', 'h0', 'h1', 'h2']);
 
 const VIEWS = Object.freeze([
   ['enabled', true],
@@ -69,7 +71,7 @@ export function evaluateDocument(bytes, { head = true, markup = true } = {}) {
   if (head) {
     let hv = null;
     const manifests = new Map();
-    for (const rule of HEAD_VARIANTS) {
+    for (const rule of WALK_RULES) {
       const w = headWalk(bytes, { rule });
       const r = { at: w.at, headNoscripts: w.headNoscripts, failure: w.failure };
       if (w.at >= 0) {
@@ -90,6 +92,19 @@ export function evaluateDocument(bytes, { head = true, markup = true } = {}) {
       }
       out.head[rule] = r;
     }
+    // Option hc (a protocol change): the manifest element goes immediately after the head
+    // start tag that item 1 accepts. Agreement: the manifest is a child of the head in the view.
+    const w = headWalk(bytes, { rule: 'shipped' });
+    const r = { at: w.headStart, headNoscripts: w.headNoscripts, failure: null };
+    if (w.headStart >= 0) {
+      for (const [name, scripting] of VIEWS) {
+        const m = manifestView(bytes, w.headStart, scripting);
+        if (!m.ok) r[name] = 'no-view';
+        else r[name] = m.inHead ? 'agree' : 'disagree';
+        if (r[name] === 'disagree') r[`${name}Details`] = { parse5End: -2, manifestInHead: m.inHead };
+      }
+    }
+    out.head.hc = r;
   }
   return out;
 }

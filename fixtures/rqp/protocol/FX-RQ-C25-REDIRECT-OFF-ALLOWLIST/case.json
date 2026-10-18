@@ -5,7 +5,7 @@
   "rules": ["RQP-05", "RQP-24"],
   "context": {
     "final_url": "https://pay.example.net/catalog",
-    "allowlisted": false,
+    "allowlist": ["https://shop.example.com"],
     "navigation": "first-visit",
     "snapshot": null
   },

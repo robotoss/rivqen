@@ -144,6 +144,22 @@ test('client comparison detects a wrong code, next action, snapshot and request 
   assert.ok(compareClient(expected, good, [...expected.request.headers, ['rq-base-revision', 'x']]).some((f) => f.includes('not an rqp/1 field')));
 });
 
+test('the client fixtures catch a client that ignores H-64, H-65 or the exact origin match of DL-038', async () => {
+  const failing = async (change) => {
+    const mod = { clientStep: (context, response) => client.clientStep(change(context), response), clientRequest: client.clientRequest };
+    return (await runClient(mod)).filter((r) => r.failures.length > 0).map((r) => r.name);
+  };
+  // H-64: a client that trusts the fields of every response.
+  assert.deepEqual(await failing((c) => ({ ...c, response_fields_visible: true })), ['FX-RQ-C24-PUBLIC-FIELDS-HIDDEN']);
+  // H-65: a client that forgets the partition of its snapshot.
+  assert.deepEqual(await failing((c) => ({ ...c, snapshot: c.snapshot === null ? null : { ...c.snapshot, partition: 'request' } })), ['FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-STAYS-PUBLIC']);
+  // DL-038: a client that matches the allowlist by host suffix, or compares the URL text without serialization.
+  const suffix = (c) => ({ ...c, allowlist: c.allowlist.some((o) => new URL(c.final_url).origin.startsWith(`${o}.`)) ? [...c.allowlist, new URL(c.final_url).origin] : c.allowlist });
+  assert.deepEqual(await failing(suffix), ['FX-RQ-C25-FINAL-HOST-SUFFIX']);
+  const raw = (c) => ({ ...c, allowlist: c.allowlist.includes(c.final_url.split('/').slice(0, 3).join('/')) ? c.allowlist : [] });
+  assert.deepEqual(await failing(raw), ['FX-RQ-C25-FINAL-DEFAULT-PORT', 'FX-RQ-C25-FINAL-HOST-CASE']);
+});
+
 test('a missing response.body fails that client fixture only', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'rqp-protocol-check-'));
   try {

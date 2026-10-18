@@ -28,13 +28,74 @@ function copyFixture(name) {
 
 test('gen.mjs --check: every committed page and expected file is current', () => {
   const out = execFileSync(process.execPath, [GEN, '--check'], { encoding: 'utf8' });
-  assert.match(out, /133 fixtures are current/);
+  assert.match(out, /145 fixtures are current/);
 });
 
-test('every catalog case P-01 to P-40 and C-01 to C-26 has at least one fixture', () => {
+test('every catalog case P-01 to P-40 and C-01 to C-27 has at least one fixture', () => {
   const names = fixtureNames();
   for (let i = 1; i <= 40; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-P${String(i).padStart(2, '0')}-`)), `P-${i}`);
-  for (let i = 1; i <= 26; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-C${String(i).padStart(2, '0')}-`)), `C-${i}`);
+  for (let i = 1; i <= 27; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-C${String(i).padStart(2, '0')}-`)), `C-${i}`);
+});
+
+test('context.allowlist (DL-038): default the origins of url and final_url; another shape is a defective case', () => {
+  const name = 'FX-RQ-C25-REDIRECT-OFF-ALLOWLIST';
+  const dir = copyFixture(name);
+  const file = join(dir, name, 'case.json');
+  const c = JSON.parse(readFileSync(file, 'utf8'));
+  const withContext = (context) => {
+    writeFileSync(file, JSON.stringify({ ...c, context }));
+    return expectFixture(dir, name).files['expected.json'];
+  };
+  const { allowlist: _allowlist, ...rest } = c.context;
+  const byDefault = withContext(rest);
+  assert.deepEqual(byDefault.context.allowlist, ['https://shop.example.com', 'https://pay.example.net']);
+  assert.equal(byDefault.result.outcome, 'stored');
+  const { final_url: _final, ...noRedirect } = rest;
+  assert.deepEqual(withContext(noRedirect).context.allowlist, ['https://shop.example.com']);
+  assert.equal(withContext({ ...rest, allowlist: ['https://shop.example.com'] }).result.outcome, 'normal');
+  for (const bad of ['https://shop.example.com', [1], null, {}]) {
+    assert.throws(() => withContext({ ...rest, allowlist: bad }), (e) => e instanceof CaseError && /allowlist must be a list of origin strings/.test(e.message), JSON.stringify(bad));
+  }
+  assert.throws(() => withContext({ ...rest, final_url: 'not a url' }), (e) => e instanceof CaseError && /not a URL/.test(e.message));
+});
+
+test('context.response_fields_visible (H-64): default true; a value that is not a boolean is a defective case', () => {
+  const name = 'FX-RQ-C24-PUBLIC-NO-CREDENTIALS';
+  const dir = copyFixture(name);
+  const file = join(dir, name, 'case.json');
+  const c = JSON.parse(readFileSync(file, 'utf8'));
+  const visible = (value) => {
+    writeFileSync(file, JSON.stringify({ ...c, context: { ...c.context, response_fields_visible: value } }));
+    return expectFixture(dir, name).files['expected.json'];
+  };
+  const absent = expectFixture(dir, name).files['expected.json'];
+  assert.deepEqual([absent.context.response_fields_visible, absent.result.snapshot.partition], [true, 'public']);
+  assert.equal(visible(false).result.snapshot.partition, 'request');
+  assert.throws(() => visible('no'), (e) => e instanceof CaseError && /response_fields_visible must be a boolean/.test(e.message));
+});
+
+test('context.snapshot.partition (H-65): request (default) or public; public needs mode public', () => {
+  const name = 'FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-STAYS-PUBLIC';
+  const dir = copyFixture(name);
+  const file = join(dir, name, 'case.json');
+  const c = JSON.parse(readFileSync(file, 'utf8'));
+  const withSnapshot = (snapshot) => {
+    writeFileSync(file, JSON.stringify({ ...c, context: { ...c.context, snapshot } }));
+    return expectFixture(dir, name).files['expected.json'];
+  };
+  const { partition: _p, ...requestSnapshot } = c.context.snapshot;
+  const req = withSnapshot(requestSnapshot);
+  assert.deepEqual([req.context.snapshot.partition, req.result.snapshot.partition], ['request', 'request']);
+  assert.deepEqual([withSnapshot(c.context.snapshot).context.snapshot.partition, withSnapshot(c.context.snapshot).result.snapshot.partition], ['public', 'public']);
+  assert.throws(() => withSnapshot({ ...c.context.snapshot, partition: 'shared' }), (e) => e instanceof CaseError && /partition shared/.test(e.message));
+  assert.throws(() => withSnapshot({ page: 'page-a', partition: 'public' }), (e) => e instanceof CaseError && /needs the member policy with mode public/.test(e.message));
+  assert.throws(() => withSnapshot({ ...c.context.snapshot, members: { policy: { mode: 'private' } } }), (e) => e instanceof CaseError && /mode public/.test(e.message));
+});
+
+test('headers_optional is written for a 304 only', () => {
+  const nm = expectFixture(FIXTURES_DIR, 'FX-RQ-P05-NOT-MODIFIED').files['expected.json'];
+  assert.deepEqual(nm.headers_optional, { 'rq-version': '1' });
+  assert.equal(Object.hasOwn(expectFixture(FIXTURES_DIR, 'FX-RQ-P01-FIRST-VISIT').files['expected.json'], 'headers_optional'), false);
 });
 
 test('context.credentials: true, false or null (unknown, the default); another value is a defective case (H-62)', () => {

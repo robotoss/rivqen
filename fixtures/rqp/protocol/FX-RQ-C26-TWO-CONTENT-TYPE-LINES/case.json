@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-C26-TWO-CONTENT-TYPE-LINES",
+  "kind": "client",
+  "description": "Rq-Version 1 and a consistent manifest, two Content-Type field lines (both text/html; charset=utf-8) and no byte order mark: more than one field line is not UTF-8, so MANIFEST_INVALID, a normal page, no snapshot (DL-038, H-62)",
+  "rules": ["RQP-26"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a"
+    }
+  }
+}

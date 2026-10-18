@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-P40-CHARSET-ABSENT",
-  "description": "The application Content-Type has no charset parameter: F has the Content-Type with \"; charset=utf-8\" appended; the ETag is the page revision as for every F (H-62)",
+  "description": "The application Content-Type has no charset parameter: F has exactly Content-Type: text/html; charset=utf-8; the ETag is the page revision as for every F (H-62, H-66)",
   "rules": ["RQP-08", "RQP-26"],
   "page": "page-a",
   "app": {

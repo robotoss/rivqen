@@ -26,8 +26,6 @@ use base64::Engine as _;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use sha2::{Digest, Sha256};
 
-pub use json::{MAX_DEPTH as MAX_JSON_DEPTH, is_json_text};
-
 /// Maximum input size in bytes (M-01): 5 MiB.
 pub const MAX_INPUT_BYTES: usize = 5_242_880;
 /// Maximum number of blocks in one document (M-26).

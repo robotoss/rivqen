@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-SCRIPT-END-TAG-TEXT",
+  "description": "A </div> in the script data of a script in the content is text: the block ends at the real </div> (H-78, M-04)",
+  "rules": [
+    "M-04",
+    "M-20",
+    "M-23"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "x<script>document.write(\"</div>\");</script>y"
+      }
+    ]
+  }
+}

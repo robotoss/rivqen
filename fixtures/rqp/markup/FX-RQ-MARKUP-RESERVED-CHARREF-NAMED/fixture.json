@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-RESERVED-CHARREF-NAMED",
+  "description": "A script type with a & followed by an ASCII letter (every named reference, also &amp;): M-13 item 2 rejects it (H-84)",
+  "rules": [
+    "M-13"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_RESERVED"
+  }
+}

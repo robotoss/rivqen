@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-SCRIPT-BLOCK-TEXT",
+  "description": "Block-like text in the script data of a script in the content is not a block start tag (H-78, M-14, M-17)",
+  "rules": [
+    "M-04",
+    "M-14",
+    "M-17"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "<script>var t = \"<p data-rq-block=\\\"x\\\">\";</script>"
+      }
+    ]
+  }
+}

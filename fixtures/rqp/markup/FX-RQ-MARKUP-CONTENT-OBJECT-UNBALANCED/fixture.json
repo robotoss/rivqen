@@ -1,0 +1,13 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-OBJECT-UNBALANCED",
+  "description": "An object in the content without its end tag: the block end tag crosses it (H-78, M-06 item 1, M-23)",
+  "rules": [
+    "M-06",
+    "M-20",
+    "M-23"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

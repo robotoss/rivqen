@@ -1,11 +1,20 @@
 {
   "id": "FX-RQ-MARKUP-CONTENT-FOREIGN-SET",
-  "description": "An svg set element in the content (SMIL, not in FOREIGN_ALLOWED, H-73)",
+  "description": "An svg set element (SMIL) in the content: outside FOREIGN_ALLOWED, valid markup since H-78 (FOREIGN_ALLOWED is a patch content rule; M-07 holds)",
   "rules": [
-    "M-22"
+    "M-07",
+    "M-22",
+    "M-23"
   ],
   "expect": {
-    "valid": false,
-    "error": "RQP_MARKUP_STRUCTURE"
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "<svg><rect width=\"1\" height=\"1\"><set attributeName=\"width\" to=\"2\"/></rect></svg>"
+      }
+    ]
   }
 }

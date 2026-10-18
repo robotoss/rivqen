@@ -1,11 +1,19 @@
 {
   "id": "FX-RQ-MARKUP-FORBIDDEN-SCRIPT-TYPE",
-  "description": "A script with another JSON type (application/ld+json) cannot be a block",
+  "description": "A script with the type application/ld+json is a json block since H-86 (the fixture id is older than the decision)",
   "rules": [
-    "M-16"
+    "M-16",
+    "M-25"
   ],
   "expect": {
-    "valid": false,
-    "error": "RQP_MARKUP_FORBIDDEN_ELEMENT"
+    "valid": true,
+    "blocks": [
+      {
+        "id": "ld",
+        "format": "json",
+        "start_tag": "<script type=\"application/ld+json\" data-rq-block=\"ld\">",
+        "content": "{}"
+      }
+    ]
   }
 }

@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-SCRIPT-SELF-CLOSING",
+  "description": "A self-closing script start tag in the content (M-22 item 3; M-04 still switches to script data)",
+  "rules": [
+    "M-04",
+    "M-22"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

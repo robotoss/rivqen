@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-FOREIGN-A-IN-HTML-A",
+  "description": "An svg a element in a span block in an HTML a element: the foreign start tag runs no adoption agency and closes nothing (H-78, M-24 applies in HTML context only)",
+  "rules": [
+    "M-06",
+    "M-07",
+    "M-24"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "i",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"i\">",
+        "content": "<svg><a href=\"#x\"><path d=\"M0\"/></a></svg>Home"
+      }
+    ]
+  }
+}

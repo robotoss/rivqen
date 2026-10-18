@@ -1,0 +1,22 @@
+{
+  "valid": true,
+  "error": null,
+  "blocks": [
+    {
+      "id": "ld",
+      "format": "json",
+      "start": 98,
+      "end": 207,
+      "sha256": "KuLNYbf57Z7zzK8nSEodmueHItn7yeu0CipHitYB8cA"
+    },
+    {
+      "id": "cart",
+      "format": "json",
+      "start": 283,
+      "end": 294,
+      "sha256": "zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4"
+    }
+  ],
+  "template_revision": "t1.DdWXzfosP7U69SKcW8IeGAT2IISXKLgaNTu-SMP3iKw",
+  "page_revision": "r1.TqNVUk-L6VQsWgzcGJucsX8Z08d49LKgCLA54onpPos"
+}

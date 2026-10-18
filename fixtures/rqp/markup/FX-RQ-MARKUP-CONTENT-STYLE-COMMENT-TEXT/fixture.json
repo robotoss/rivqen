@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-STYLE-COMMENT-TEXT",
+  "description": "A style in a span block: <!-- and </span> in RAWTEXT are text, the block ends at the real </span> (H-78, M-04)",
+  "rules": [
+    "M-04",
+    "M-23"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "s",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"s\">",
+        "content": "<style><!--</span>--></style>t"
+      }
+    ]
+  }
+}

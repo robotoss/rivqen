@@ -224,21 +224,32 @@ export function attributeRejected(name, value) {
 }
 
 /**
+ * The start tags that the attribute rule reads in the content: the byte offsets of
+ * their "<", in order, or null when the walk cannot finish (fail closed).
+ */
+export function startTagOffsets(content) {
+  const offsets = [];
+  const done = walk(content, (t) => {
+    if (t.type === TokenType.START_TAG) offsets.push(t.start);
+  });
+  return done ? offsets : null;
+}
+
+/**
  * Manifest-patch section 4.2: true when every start tag of the html content
- * passes the attribute rule. The content is tokenized from the data state with
- * the state changes of M-04, as in the analysis of the patched document.
+ * passes the attribute rule, also a start tag in a foreign region (H-73). The
+ * content is tokenized from the data state with the token stack of M-05 and the
+ * state changes of M-04, which apply only in HTML context, as in the analysis
+ * of the patched document. Fails closed when the walk cannot finish.
  */
 export function passesAttributeRule(content) {
   if (content.length > LIMITS.maxBlockBytes) return false;
-  const tok = new Tokenizer(content);
-  for (;;) {
-    const t = tok.next();
-    if (t.type === TokenType.EOF) return true;
-    if (t.type !== TokenType.START_TAG) continue;
+  let ok = true;
+  const done = walk(content, (t) => {
+    if (!ok || t.type !== TokenType.START_TAG) return;
     for (const { name, value } of attributesOf(content, t.start, t.end)) {
-      if (attributeRejected(name, value)) return false;
+      if (attributeRejected(name, value)) ok = false;
     }
-    const mode = TEXT_MODE.get(t.name);
-    if (mode !== undefined) tok.switchTo(mode, t.name);
-  }
+  });
+  return done && ok;
 }

@@ -1,0 +1,40 @@
+{
+  "id": "FX-RQ-C09-SVG-ICON-ACCEPTED",
+  "kind": "client",
+  "description": "price content is an svg icon with title, path and use; the attribute rule accepts it: applied (H-73)",
+  "rules": [
+    "RQP-13"
+  ],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      [
+        "content-type",
+        "application/vnd.rivqen.delta+json"
+      ],
+      [
+        "rq-version",
+        "1"
+      ],
+      [
+        "cache-control",
+        "no-store"
+      ]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<svg viewBox=\"0 0 8 8\"><title>Icon</title><path d=\"M0 0h8v8z\" fill=\"#333\"/><use href=\"#i\"/></svg>"
+          }
+        ]
+      }
+    }
+  }
+}

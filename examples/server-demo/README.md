@@ -9,7 +9,7 @@ Documentation: https://robotoss.github.io/rivqen/guide/examples/server
 ```bash
 npm install
 npm start          # http://127.0.0.1:8787/catalog
-npm test           # 87 tests, with the 77 server protocol fixtures
+npm test           # 91 tests, with the 78 server protocol fixtures
 npm run measure    # bytes per visit; needs the server running
 ```
 
@@ -42,7 +42,7 @@ Every route answers only a request whose `Host` header equals the host of the co
 - **Rq-* fields (DL-030).** The server removes every `Rq-*` field of the application response in all outcomes. A full document and a delta carry one `Rq-Version: 1` line.
 - **Charset (H-62).** The page is UTF-8. When the `Content-Type` of the application response has a `charset` parameter that is not a WHATWG label of UTF-8 (`unicode-1-1-utf-8`, `unicode11utf8`, `unicode20utf8`, `utf-8`, `utf8`, `x-unicode20utf8`; ASCII case-insensitive, quotes removed), the server sends the response unchanged. The full document always has exactly one `Content-Type` line with the value `text/html; charset=utf-8` (H-66), whatever the text of the application response was. The server reads the field as the rule says ([negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server)): one field line with one media type (else it sends the response unchanged), and the parameter name is not trimmed. A value without a charset (also one with a quoted string that is not closed) gives the full document with the exact value (DL-039). A delta is not changed by this rule.
 - **Validators (DL-032).** The full document has no `Last-Modified`; its ETag is the page revision.
-- **Attribute rule (H-59).** A changed html block with an `on*` attribute, a bad character reference, or a URL that starts with `javascript:`, `vbscript:` or `data:` (after the normalization of manifest-patch section 4.2) gets the full document.
+- **Attribute rule (H-59, H-73).** The rule reads every start tag of the block, also in an `svg` or `math` region (the text-mode state changes apply only in HTML context). A changed html block with an `on*` attribute, a bad character reference, or a URL that starts with `javascript:`, `vbscript:` or `data:` (after the normalization of manifest-patch section 4.2) gets the full document.
 - **Logs (DL-033).** The request log has a route template (`/catalog`, `/healthz`, the demo routes, or `<unmatched>`), never the raw path or query.
 
 ## Protocol fixtures

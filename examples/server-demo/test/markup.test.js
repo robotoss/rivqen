@@ -113,3 +113,41 @@ test('a block above maxBlockBytes fails the attribute rule; a block of exactly t
   assert.equal(passesAttributeRule(filler(LIMIT + 1)), false);
 });
 
+test('attribute rule: every start tag of an svg or math region is checked (H-73)', () => {
+  for (const html of [
+    '<svg><title>x</title><path onload="x"/></svg>',
+    '<svg><use xlink:href="javascript:x"/></svg>',
+    '<svg><desc>d</desc><use href=" \tData:image/svg+xml,x"/></svg>',
+    '<svg><text y="&#x6a;">t</text></svg>',
+    '<svg><g><g><rect ONCLICK=x /></g></g></svg>',
+    '<math><mrow><mo onclick=x>+</mo></mrow></math>',
+  ]) {
+    assert.equal(passesAttributeRule(b(html)), false, html);
+  }
+  assert.equal(passesAttributeRule(b('<svg viewBox="0 0 8 8"><title>Icon</title><path d="M0 0h8v8z"/><use href="#i"/></svg>')), true);
+  assert.equal(passesAttributeRule(b('<math><mi>x</mi><mo>+</mo></math>')), true);
+});
+
+test('attribute rule: in a region a title start tag opens no RCDATA state, in HTML context it does', () => {
+  // Not valid markup (M-18), but the walk must not hide the path start tag behind it.
+  assert.equal(passesAttributeRule(b('<svg><title/><path onload="x"/></svg>')), false);
+  assert.equal(passesAttributeRule(b('<title><a onclick=x></title><b>y</b>')), true);
+});
+
+test('attribute rule: text-mode state changes apply again after the region closes; a self-closing svg opens none', () => {
+  assert.equal(passesAttributeRule(b('<svg><g></g></svg><style><a onclick=x></style>')), true);
+  assert.equal(passesAttributeRule(b('<svg/><style><a onclick=x></style>')), true);
+  assert.equal(passesAttributeRule(b('<math/><title><a onclick=x></title>')), true);
+  assert.equal(passesAttributeRule(b('<math><style><a onclick=x></style></math>')), false); // math starts a region
+  assert.equal(passesAttributeRule(b('<svg></svg><style><a onclick=x></style><i onclick=x></i>')), false);
+  assert.equal(passesAttributeRule(b('<svg><g><title/><g onload=x>')), false);
+});
+
+test('attribute rule: a stack deeper than the limit fails closed', () => {
+  assert.equal(passesAttributeRule(b('<svg>' + '<g>'.repeat(300))), false);
+  assert.equal(passesAttributeRule(b('<svg>' + '<g>'.repeat(200))), true);
+  assert.equal(passesAttributeRule(b('<svg>' + '<g/>'.repeat(300) + '</svg>')), true); // self-closing elements are not open
+  assert.equal(passesAttributeRule(b('<i onclick=x></i onclick=x>')), false);
+  assert.equal(passesAttributeRule(b('<b></b onclick=x>')), true); // an end tag has no attributes for the rule
+});
+

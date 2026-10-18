@@ -57,6 +57,45 @@ test('List and Dictionary: members, parameters, white space and trailing commas'
   assert.equal(parseDictionary('a=1,,b=2'), null);
 });
 
+test('Item: the digit limits of Integer and Decimal (RFC 9651 section 4.2.4)', () => {
+  assert.deepEqual(item('999999999999999'), { type: 'integer', value: 999999999999999 });
+  assert.deepEqual(item('-999999999999999'), { type: 'integer', value: -999999999999999 });
+  // 12 integer digits and 3 fraction digits: the longest Decimal (16 characters).
+  assert.deepEqual(item('123456789012.123'), { type: 'decimal', value: 123456789012.123 });
+  assert.deepEqual(item('1.123'), { type: 'decimal', value: 1.123 });
+  for (const f of ['1234567890123.1', '1.2.3', '-;a', '1.1234']) assert.equal(parseItem(f), null, f);
+  assert.equal(parseList('-, 1'), null);
+});
+
+test('Item: the characters of String and Display String (RFC 9651 sections 4.2.5, 4.2.10)', () => {
+  assert.deepEqual(item('"a\\\\b"'), { type: 'string', value: 'a\\b' });
+  assert.deepEqual(item('?1'), { type: 'boolean', value: true });
+  assert.deepEqual(item(' 1 '), { type: 'integer', value: 1 });
+  // A control character or DEL is not allowed in either string type.
+  for (const f of ['"a\u001fb"', '"a\u007f"', '%"a\u001f"', '%"a\u007f"', '%abc"', '%"%c3"%bc"', '!"a"']) {
+    assert.equal(parseItem(f), null, JSON.stringify(f));
+  }
+});
+
+test('Item: Byte Sequence characters and padding (RFC 9651 section 4.2.7)', () => {
+  for (const f of [':ab$d:', ':YQ===:', ':ab-c:']) assert.equal(parseItem(f), null, f);
+});
+
+test('parameters and separators: SP after ";", a bare key is true, OWS around ","', () => {
+  const p = parseItem('a; b=1;c');
+  assert.equal(p.params.get('b').value, 1);
+  assert.deepEqual(p.params.get('c'), { type: 'boolean', value: true });
+  assert.deepEqual(parseDictionary('a').get('a').item, { type: 'boolean', value: true });
+  assert.deepEqual([...parseDictionary('a=1 ,\tb=2').keys()], ['a', 'b']);
+  assert.deepEqual(parseList('a,\tb').map((m) => m.item.value), ['a', 'b']);
+  assert.equal(parseList('a, '), null); // a trailing comma
+  assert.equal(parseDictionary('a=1,'), null);
+  assert.equal(parseDictionary('a=1 bc=2'), null); // no comma between members
+  assert.equal(parseList('(a"b")'), null); // no SP between inner list items
+  // A non-string value is ignored, as a parse failure.
+  assert.equal(parseItem(undefined), null);
+});
+
 /** Deterministic PRNG (mulberry32), fixed seed. */
 function prng(seed) {
   let s = seed >>> 0;

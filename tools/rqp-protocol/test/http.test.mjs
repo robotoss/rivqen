@@ -46,7 +46,7 @@ test('combined value and media type: outer white space goes, inner white space s
 });
 
 test('entity-tag lists: empty elements, OWS around commas, the weak flag, and the etagc range', () => {
-  assert.deepEqual(parseEntityTags(', ,"a",\t"b"\t, W/"c"'), {
+  assert.deepEqual(parseEntityTags(', ,"a" ,\t"b"\t, W/"c"'), {
     star: false,
     tags: [
       { weak: false, opaque: '"a"' },

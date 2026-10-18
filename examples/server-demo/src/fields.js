@@ -171,7 +171,7 @@ export function acceptsDelta(headers) {
 /** The media type of a Content-Type value, in lower case without parameters, or null. */
 export function mediaType(value) {
   if (value === null) return null;
-  return value.split(';')[0].trim().toLowerCase();
+  return value.split(';')[0].replace(/^[ \t]+|[ \t]+$/g, '').toLowerCase();
 }
 
 /** Labels that the WHATWG Encoding Standard maps to the UTF-8 encoding (lower case). */
@@ -275,15 +275,26 @@ export function contentTypeCharset(headers) {
   return isUtf8Label(label) ? CHARSET.UTF8 : CHARSET.OTHER;
 }
 
+export const FULL_CONTENT_TYPE = 'text/html; charset=utf-8';
+
 /**
- * The header lines of the full document (H-62, item 4), or null when the page is invalid for RQP.
- * Without a charset, "; charset=utf-8" goes after the field value without its trailing white
- * space. The new value is read again; it must have a UTF-8 charset.
+ * The header lines of the full document (H-66), or null when the page is invalid for RQP.
+ * The page passes through (null) when the charset class is OTHER, or when the value with
+ * "; charset=utf-8" appended does not have a UTF-8 charset (for example an unclosed quoted
+ * string). Otherwise F has exactly one Content-Type line with the value FULL_CONTENT_TYPE,
+ * whatever the text of A was. The line keeps the place of the first Content-Type line of A.
  */
 export function fullContentType(headers) {
   const charset = contentTypeCharset(headers);
-  if (charset === CHARSET.UTF8) return headers;
   if (charset === CHARSET.OTHER) return null;
-  const appended = headers.map(([n, v]) => [n, n === 'content-type' ? `${v.replace(/[ \t]+$/, '')}; charset=utf-8` : v]);
-  return contentTypeCharset(appended) === CHARSET.UTF8 ? appended : null;
+  if (charset === CHARSET.NONE) {
+    const appended = headers.map(([n, v]) => [n, n === 'content-type' ? `${v.replace(/[ \t]+$/, '')}; charset=utf-8` : v]);
+    if (contentTypeCharset(appended) !== CHARSET.UTF8) return null;
+  }
+  const out = [];
+  for (const line of headers) {
+    if (line[0] !== 'content-type') out.push(line);
+    else if (!out.some(([n]) => n === 'content-type')) out.push(['content-type', FULL_CONTENT_TYPE]);
+  }
+  return out;
 }

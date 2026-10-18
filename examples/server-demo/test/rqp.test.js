@@ -281,11 +281,12 @@ test('H-62: a charset other than UTF-8 makes the page invalid: it is sent unchan
   }
 });
 
-test('H-62: a UTF-8 charset label (any case, quoted or not) gives the full document with the content type unchanged', () => {
+test('H-62: a UTF-8 charset label (any case, quoted or not) gives the full document with the exact content type (H-66)', () => {
   for (const value of ['text/html; charset=utf-8', 'text/html; charset="UTF-8"', 'text/html; Charset=utf8', 'text/html; charset=Unicode-1-1-UTF-8', 'text/html; foo="a;charset=x"; charset=x-unicode20utf8']) {
     const r = runType(value);
     assert.equal(r.mode, 'full', value);
-    assert.equal(header(r, 'content-type'), value);
+    assert.equal(header(r, 'content-type'), 'text/html; charset=utf-8', value);
+    assert.equal(r.headers.filter(([n]) => n === 'content-type').length, 1, value);
     assert.equal(header(r, 'rq-version'), '1');
   }
 });
@@ -300,7 +301,7 @@ test('H-62: a content type without a charset gets "; charset=utf-8" in the full 
 test('H-62: a charset parameter inside a quoted value of another parameter does not count as a charset', () => {
   const r = runType('text/html; foo="a;charset=iso-8859-1"');
   assert.equal(r.mode, 'full');
-  assert.equal(header(r, 'content-type'), 'text/html; foo="a;charset=iso-8859-1"; charset=utf-8');
+  assert.equal(header(r, 'content-type'), 'text/html; charset=utf-8'); // H-66: the app text is dropped
 });
 
 test('H-62: a delta keeps its own content type (the charset rule is for the full document)', () => {
@@ -308,4 +309,23 @@ test('H-62: a delta keeps its own content type (the charset rule is for the full
   const r = handle(get(clientLines(held)), withType('text/html'), page('130.00'));
   assert.equal(r.mode, 'delta');
   assert.equal(header(r, 'content-type'), 'application/vnd.rivqen.delta+json');
+});
+
+test('H-66: a Content-Type of A with a UTF-8 label in another spelling is replaced by the exact value', () => {
+  for (const value of ['TEXT/HTML;CHARSET=UTF8', 'text/html;charset="utf-8"', 'text/html ; charset=utf-8 ']) {
+    assert.equal(header(runType(value), 'content-type'), 'text/html; charset=utf-8', value);
+  }
+});
+
+test('H-66: F keeps the other fields of A and the place of the Content-Type line', () => {
+  const app = { status: 200, headers: [['x-a', '1'], ['content-type', 'text/html'], ['x-b', '2']] };
+  const names = handle(get(), app, page()).headers.map(([n]) => n);
+  assert.deepEqual(names.slice(0, 3), ['x-a', 'content-type', 'x-b']);
+});
+
+test('H-66 step 1: Unicode white space is not HTTP white space, so U+00A0 before the media type is out of scope', () => {
+  const r = runType('\u00a0text/html');
+  assert.equal(r.mode, 'passthrough');
+  assert.equal(r.reason, 'out-of-scope');
+  assert.equal(runType('\t text/html \t').mode, 'full');
 });

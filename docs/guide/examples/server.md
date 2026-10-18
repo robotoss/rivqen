@@ -37,7 +37,7 @@ The server listens on `127.0.0.1:8787`. To change the port, set `PORT`.
 | `POST` | `/__demo/next-template` | Adds a menu item (template change). Same protection as `next-data`. |
 | `GET` | `/healthz` | `{ "ok": true, "state": … }` |
 
-<Badge type="tip" text="FACT" /> Every route answers only a request whose `Host` header is the host (with port) of `ORIGIN`, compared without case. Any other request gets `421` with no body, and the server changes nothing (DL-036).
+<Badge type="tip" text="FACT" /> Every route answers only a request whose `Host` header is the host of `ORIGIN`, compared without case. The default port of the origin scheme (`:443` for https, `:80` for http) is the same authority as no port, so both forms are accepted (RFC 9110 sections 4.2.1 and 4.2.2); any other port gets `421`. Any other request gets `421` with no body, and the server changes nothing (DL-036).
 
 ## 4. How the server answers `/catalog`
 
@@ -58,7 +58,7 @@ flowchart TD
   S -- no --> F
 ```
 
-<Badge type="tip" text="FACT" /> The page must be UTF-8 (H-62). When the `Content-Type` of the page has a `charset` parameter that is not a label of UTF-8 in the [WHATWG Encoding Standard](https://encoding.spec.whatwg.org/) (for example `iso-8859-1`), the server sends the page unchanged, without RQP. When the `Content-Type` has no `charset` parameter, the full document gets `; charset=utf-8`. A UTF-8 label (`utf-8`, `utf8`, `"UTF-8"`) stays as it is.
+<Badge type="tip" text="FACT" /> The page must be UTF-8 (H-62). When the `Content-Type` of the page has a `charset` parameter that is not a label of UTF-8 in the [WHATWG Encoding Standard](https://encoding.spec.whatwg.org/) (for example `iso-8859-1`), the server sends the page unchanged, without RQP. The full document always has exactly one `Content-Type` line with the value `text/html; charset=utf-8` (H-66), whatever the `Content-Type` text of the page was (no `charset`, `utf8` or `"UTF-8"`). A delta keeps its own content type.
 
 Every client gets the same full document: a browser without RQP also gets the manifest, `Rq-Version: 1` and the `ETag` `"r1.…"`. The browser ignores the manifest script.
 
@@ -131,7 +131,7 @@ Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so th
 npm test
 ```
 
-<Badge type="tip" text="FACT" /> The 76 tests check, by behavior:
+<Badge type="tip" text="FACT" /> The 95 tests check, by behavior:
 
 - the response selection: full document, `304`, delta, the size rules, the attribute rule (H-56), invalid pages, the charset rule, a weak `ETag` with a content coding, no state between requests;
 - the known answers of `spec/rqp/examples/kat`: the full documents, both page revisions and the example patches;

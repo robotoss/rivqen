@@ -215,6 +215,48 @@ test("H-75: the end tag of the region root sets no special-crossed mark; D does 
   assert.deepEqual(ds, [1, 2, 3, 3, 3]);
 });
 
+test("H-75: the end tag of the region root still passes a mark of a popped element (M-06 item 4 (b))", () => {
+  // </g> crosses path and marks svg; </svg> crosses rect (no mark by (a)) but pops the marked svg.
+  const block = '<span data-rq-block="x">y<a>z</a>w</span>';
+  assert.deepEqual(run(`<a href="#"><svg><g><path d="M0"></g><rect></svg></a>${block}`).classes, [CLASSES.formattingMarked]);
+});
+
+test("checkNoscriptContent: item 7 for start tags alone, M-13 for script only, raw text states in HTML context of C", () => {
+  assert.equal(checkNoscriptContent("<body>").documentTag, true);
+  assert.equal(checkNoscriptContent('<input type="jä"><img type="ı">').nonAsciiType, false);
+  // Script data and PLAINTEXT in HTML context of C: the "tags" after them are text.
+  assert.equal(checkNoscriptContent("<script>if (a</b) x</script>").balanced, true);
+  assert.equal(checkNoscriptContent("<plaintext></plaintext>").balanced, false);
+  // math also starts a region (item 3 forbids it; the tokenization follows M-05 item 4).
+  assert.equal(checkNoscriptContent("<math><mi></math>").balanced, true);
+});
+
+test("checkNoscriptContent: the region of C ends with its root, and only the root end tag crosses", () => {
+  // Self-closing tags in the region are not pushed.
+  assert.equal(checkNoscriptContent("<svg><g><path/></g></svg>").balanced, true);
+  // The region stays open after an inner end tag.
+  assert.equal(checkNoscriptContent("<svg><g></g><path></svg>").balanced, true);
+  // After the root end tag, C is HTML context again: void elements, nesting.
+  assert.equal(checkNoscriptContent("<svg></svg><div><p><br></p></div>").balanced, true);
+  assert.equal(checkNoscriptContent("<svg></svg><div><div><p><br></p></div></div>").balanced, true);
+  // The end tag of a nested svg is not the end tag of the region root.
+  assert.equal(checkNoscriptContent("<svg><svg><path></svg>").balanced, false);
+});
+
+test("H-71: the pass on C sees attribute names (M-10 item 3 class in C)", () => {
+  assert.ok(run('<noscript><template for="p"></template></noscript>').classes.includes(CLASSES.templateFor));
+});
+
+test("maxD keeps an earlier maximum when a later noscript content is flat; classes are sorted", () => {
+  assert.equal(run("<div><div><div></div></div></div><noscript><i></i></noscript>").maxD, 3);
+  assert.deepEqual(run("<noscript><body></body></noscript><table><td></tbody></table>").classes, [CLASSES.strayTable, CLASSES.noscriptDocumentTag]);
+});
+
+test("scripting disabled: a nested noscript start tag in C does not start a new C (the outer C is checked)", () => {
+  const a = analyzeDepth(b("<div><noscript><noscript><span></span></noscript>x</noscript></div>"), { scripting: false });
+  assert.deepEqual(a.classes, [CLASSES.noscriptBalance]);
+});
+
 test("scripting disabled: the claim of M-26 holds with D counted in C, at the bound", () => {
   // WHATWG stack in C: html, body, 155 div, noscript, 100 span = 258 = D + 2.
   const doc = `${"<div>".repeat(155)}<noscript>${"<span>".repeat(100)}x${"</span>".repeat(100)}</noscript><div data-rq-block="x">y</div>`;

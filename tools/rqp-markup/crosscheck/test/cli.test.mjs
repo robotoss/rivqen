@@ -9,6 +9,8 @@ import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { countByClass, depthCell, evaluateDocs, main, parseArgs, viewCell } from "../src/cli.mjs";
 import { CrosscheckError } from "../src/run.mjs";
+import { analyzeDepth } from "../src/depth.mjs";
+import { docSeed, generateDocument } from "../src/generator.mjs";
 
 const SUPPORT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "test-support");
 const TMP = mkdtempSync(path.join(os.tmpdir(), "rqp-crosscheck-test-"));
@@ -260,6 +262,19 @@ test("sweep --profile review prints the rule classes and the depth invariant lin
   assert.doesNotMatch(r.out, /scripting disabled\)/);
   const both = await run(["sweep", "--count", "40", "--chunk", "20", "--seed", "2", "--profile", "review", "--scripting", "both", "--candidates", candidatesFile("swr2", ["p5"])]);
   assert.match(both.out, /depth invariant \(scripting disabled\): \d+ document\(s\) with a violation, \d+ of them valid for a candidate/);
+});
+
+test("sweep --scripting both counts the documents with a violation of the claim in the disabled view", async () => {
+  // Independent count: the documents of the sweep whose scripting-disabled analysis has a violation.
+  let want = 0;
+  for (let i = 0; i < 60; i++) {
+    const text = generateDocument(docSeed(5, i), { maxTokens: 16, profile: "review2" });
+    if (analyzeDepth(Buffer.from(text, "utf8"), { scripting: false }).violations.length > 0) want++;
+  }
+  assert.ok(want > 0 && want < 60, `want ${want}`);
+  const r = await run(["sweep", "--count", "60", "--chunk", "30", "--seed", "5", "--profile", "review2", "--scripting", "both", "--keep", "0", "--candidates", candidatesFile("swd", ["valid0"])]);
+  // valid0 accepts every document, so each of them has the finding depth-invariant-disabled.
+  assert.match(r.out, new RegExp(`depth invariant \\(scripting disabled\\): ${want} document\\(s\\) with a violation, ${want} of them valid for a candidate`));
 });
 
 test("evaluateDocs and viewCell describe the parse5 view", () => {

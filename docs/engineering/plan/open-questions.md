@@ -26,7 +26,7 @@ This page lists questions that block or shape decisions. Each question has a way
 | Q-19 | What does a browser with scripting disabled do with the `noscript` shapes of M-11? parse5 is the only parser that was checked (NOT FOUND for a browser) | Run the golden shapes in a browser engine with scripting disabled | Claim of M-11 in the scripting-disabled view | WP-17 |
 | Q-20 | Do real WebViews follow H-66 (exact `Content-Type`, UTF-8 delivery) and the byte order mark rule (DL-040) | WebView tests on Android and iOS | Client delivery code | WP-04, WP-10, WP-11 |
 | Q-21 | A repeatable sweep for H-72: the one-off checks of WP-17 S3 T-08a have no script in the repository | Commit a sweep script with parse5 and the four candidates | Evidence for the manifest position | WP-17 |
-| Q-22 | The legacy byte comparison (RQP against the upstream VasSonic server on the same page) is not measured since 2026-10-12 | Measure it again with `LEGACY_URL` (tools/upstream-lab) at the next byte measurement, when a VasSonic checkout is available (human decision H-82, [WP-17 S4](/engineering/plan/sprints/WP-17-S4)) | WP-19 | Open |
+| Q-22 | The legacy byte comparison (RQP against the upstream VasSonic server on the same page) is not measured since 2026-10-12 | Measure it again with `LEGACY_URL` (tools/upstream-lab) at the next byte measurement, when a VasSonic checkout is available (human decision H-82, [WP-17 S4](/engineering/plan/sprints/WP-17-S4)) | Benchmark claims (WP-19) | Architect |
 
 ## 2. Closed
 

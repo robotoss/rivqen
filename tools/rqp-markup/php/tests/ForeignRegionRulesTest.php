@@ -105,6 +105,7 @@ final class ForeignRegionRulesTest extends TestCase
         yield 'M-11.5 stray end tag svg' => ['<noscript></svg></noscript>', 'M-11'];
         yield 'M-11.5 stray end tag after a self-closing svg' => ['<noscript><svg/></svg></noscript>', 'M-11'];
         yield 'M-11.5 svg open at the end of C' => ['<noscript><svg>', 'M-11'];
+        yield 'M-11.5 end tag of a name that is not open, region root directly above noscript' => ['<noscript><svg><g></path></svg></noscript>', 'M-11'];
         yield 'M-11.6 table part in a region of C' => ['<noscript><svg><tr></tr></svg></noscript>', 'M-11'];
         yield 'M-11.7 html in a region of C' => ['<noscript><svg><html></svg></noscript>', 'M-11'];
         yield 'M-11.7 body start tag in C' => ['<noscript><body></body></noscript>', 'M-11'];
@@ -140,6 +141,14 @@ final class ForeignRegionRulesTest extends TestCase
     public function testManifestScriptInARegionOfCIsReserved(): void
     {
         $result = Parser::parse('<noscript><svg><script type="application/rivqen-manifest+json"></script></svg></noscript>');
+        self::assertSame(ErrorCode::Reserved, $result->error);
+        self::assertSame('M-13', $result->rule);
+    }
+
+    public function testReservedScriptInCIsReportedBeforeTheNoscriptRules(): void
+    {
+        // The block attribute is also an M-11 item 2 violation; M-13 is checked first (item 4).
+        $result = Parser::parse('<noscript><script type="application/rivqen-manifest+json" data-rq-block="a"></script></noscript>');
         self::assertSame(ErrorCode::Reserved, $result->error);
         self::assertSame('M-13', $result->rule);
     }

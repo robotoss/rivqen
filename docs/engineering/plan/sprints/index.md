@@ -10,7 +10,7 @@ Each sprint has one record. The record is the shared memory of the work: the pla
 |---|---|---|---|
 | [WP-17-S1](/engineering/plan/sprints/WP-17-S1) | WP-17 | RQP markup rules, fixtures, four parser candidates | Closed |
 | [WP-17-S2](/engineering/plan/sprints/WP-17-S2) | WP-17 | RQP negotiation, manifest and patch, JSON Schemas, protocol fixtures | Closed |
-| [WP-17-S3](/engineering/plan/sprints/WP-17-S3) | WP-17 | `noscript` content model (H-42) and relaxation studies (H-40) | Closed |
+| [WP-17-S3](/engineering/plan/sprints/WP-17-S3) | WP-17 | `noscript` content model (H-71), manifest after the head start tag (H-72, a wire change), `svg`/`math` in blocks and `noscript` (H-73…H-75), SVG ids in patches (H-76) | Closed |
 
 ## How to add a record
 

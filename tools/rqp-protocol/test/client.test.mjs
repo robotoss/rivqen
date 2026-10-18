@@ -27,7 +27,7 @@ import {
   verifyDelta,
   withoutCredentials,
 } from '../src/client.mjs';
-import { attributeRejected, attributesOf, documentHeadStart, passesAttributeRule } from '../src/markup.mjs';
+import { analyze, attributeRejected, attributesOf, documentHeadStart, passesAttributeRule } from '../src/markup.mjs';
 import { fullDocument, handle, manifestOf } from '../src/server.mjs';
 import { APP, TARGET, blockPage, clientContext, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
 
@@ -237,6 +237,24 @@ test('H-72: each MANIFEST_INVALID case of fixture row C-21 fails the position ch
     const body = readFileSync(new URL(`FX-RQ-C21-${name}/response.body`, dir));
     assert.equal(checkFull({ url: TARGET }, body).error, 'position', name);
   }
+});
+
+test('a manifest element without an end tag fails client item 3, also when the bytes after it are a consistent manifest', () => {
+  // Without the end tag check, M would be the bytes up to the last byte and the
+  // original document "<html><head>\n": a consistent pair that the WebView does not show.
+  const original = Buffer.from('<html><head>\n');
+  const m = JSON.stringify(manifestOf(analyze(original), TARGET));
+  const body = Buffer.from(`<html><head><script type="application/rivqen-manifest+json">${m}\n`);
+  assert.equal(checkFull({ url: TARGET }, body).error, 'position');
+});
+
+test('the manifest walk fails closed when its token stack would have more than 256 entries', () => {
+  const p = page('page-a');
+  const at = documentHeadStart(p);
+  const element = `<script type="application/rivqen-manifest+json">${JSON.stringify(manifestOf(revisions('page-a'), TARGET))}</script>`;
+  const deep = (n) => Buffer.concat([p.subarray(0, at), Buffer.from(element), p.subarray(at).subarray(0, -8), Buffer.from(`${'<div>'.repeat(n)}</html>\n`)]);
+  assert.equal(checkFull({ url: TARGET }, deep(300)).error, 'walk');
+  assert.notEqual(checkFull({ url: TARGET }, deep(10)).error, 'walk');
 });
 
 test('a manifest text of exactly maxManifestBytes passes the size check; one byte more fails it', () => {

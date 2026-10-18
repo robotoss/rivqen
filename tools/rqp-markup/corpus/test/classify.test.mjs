@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { classify, ruleOf, choosePicks, insertBlocks, cdataOk, scriptTypeItem } from "../classify.mjs";
+import { classify, ruleOf, choosePicks, insertBlocks, cdataOk, scriptTypeItem, numericReference } from "../classify.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.resolve(HERE, "..", "..", "..", "..", "fixtures", "rqp", "markup");
@@ -194,17 +194,32 @@ test("block rules on simulated blocks", () => {
   const ok = doc('<main data-rq-block="m">x<p>a</p></main>', true);
   assert.deepEqual(all(ok), []);
   assert.deepEqual(ok.blocks.length, 1);
-  assert.deepEqual(all(doc('<main data-rq-block="m"><script></script></main>', true)), ["M-22.2:script"]);
-  // H-73: svg and math in the content, with FOREIGN_ALLOWED (M-22 item 5).
-  assert.deepEqual(all(doc('<main data-rq-block="m"><svg><path/><title>t</title></svg><math><mi>x</mi></math><svg/></main>', true)), []);
+  // H-78: M-22 keeps only the names of its item 2; the patch-safety elements are a patch rule.
+  assert.deepEqual(all(doc('<main data-rq-block="m"><textarea>t</textarea></main>', true)), ["M-22.2:textarea"]);
+  const script = doc('<main data-rq-block="m"><script>"</main>"</script><style>a{}</style><link rel="x"></main>', true);
+  assert.deepEqual(all(script), []);
+  assert.deepEqual(script.blocks.length, 1);
+  assert.deepEqual(script.patchRules?.classes, { "patch.element:link": 1, "patch.element:script": 1, "patch.element:style": 1 });
+  // H-73: svg and math in the content; FOREIGN_ALLOWED is a patch rule since H-78.
+  const icon = doc('<main data-rq-block="m"><svg><path/><title>t</title></svg><math><mi>x</mi></math><svg/></main>', true);
+  assert.deepEqual(all(icon), []);
+  assert.deepEqual(icon.patchRules?.classes, {});
   const a = doc('<main data-rq-block="m"><svg><a href="#x"><text>t</text></a><script></script></svg></main>', true);
-  assert.deepEqual(all(a), ["M-22.5"]);
-  assert.deepEqual(a.blockRules?.details["M-22.5"], { "<a>": 1, "<script>": 1 });
-  assert.deepEqual(all(doc('<main data-rq-block="m"><svg><foreignObject>t</foreignObject><x-y.z/></svg></main>', true)), ["M-22.5"]);
+  assert.deepEqual(all(a), []);
+  assert.deepEqual(a.patchRules?.classes, { "patch.foreign": 2 });
+  assert.deepEqual(a.patchRules?.details["patch.foreign"], { "<a>": 1, "<script>": 1 });
+  assert.deepEqual(doc('<main data-rq-block="m"><svg><foreignObject>t</foreignObject><x-y.z/></svg></main>', true).patchRules?.classes, { "patch.foreign": 2 });
+  // The patch classes come only from block content, and only in blocks mode.
+  assert.deepEqual(doc('<script></script><main data-rq-block="m">x</main>', true).patchRules?.classes, {});
+  assert.equal(doc('<main data-rq-block="m"><script></script></main>').patchRules, null);
   // The tokenizer lowercases tag names: the detail has "?", not the name.
   const odd = doc('<main data-rq-block="m"><svg><x.SECRET/></svg></main>', true);
-  assert.deepEqual(odd.blockRules?.details["M-22.5"], { "<?>": 1 });
+  assert.deepEqual(odd.patchRules?.details["patch.foreign"], { "<?>": 1 });
   assert.equal(JSON.stringify(odd).toLowerCase().includes("secret"), false);
+  // H-86: application/ld+json is a json type (exact).
+  assert.deepEqual(all(doc('<script type="application/ld+json" data-rq-block="l">{}</script>', true)), []);
+  assert.deepEqual(all(doc('<script type="application/LD+json" data-rq-block="l">{}</script>', true)), ["M-16"]);
+  assert.deepEqual(all(doc('<script type="text/json" data-rq-block="l">{}</script>', true)), ["M-16"]);
   // H-75 in the content: only the end tag of the region root can cross.
   assert.deepEqual(all(doc('<main data-rq-block="m"><a href="#"><svg><path d="M0"></svg></a></main>', true)), []);
   assert.deepEqual(all(doc('<main data-rq-block="m"><svg><g><path d="M0"></g></svg></main>', true)), ["M-23"]);
@@ -266,7 +281,30 @@ test("helpers", () => {
   assert.equal(scriptTypeItem("text/javascript"), null);
   assert.equal(scriptTypeItem("Application/Rivqen-Manifest+json"), "1");
   assert.equal(scriptTypeItem("a&b"), "2");
+  // H-84: a & rejects only before an ASCII letter or as a numeric reference to 00-20, a letter,
+  // a digit, "/", "+", "-", "." or a non-ASCII character.
+  for (const t of ["a & b", "a&", "a&#58;", "a&#x7E;", "a&#X5f", "a&#0000033;", "a&#;", "a&#x;", "a&#x7f", "a&;"]) assert.equal(scriptTypeItem(t), null, t);
+  for (const t of ["a&amp;", "a&Z", "a&#47;", "a&#x2B", "a&#45;", "a&#46;", "a&#48", "a&#x41;", "a&#32;", "a&#X9", "a&#0;", "a&#x80;", "a&#305;", "a&#99999999999;", "a&#x110000"]) {
+    assert.equal(scriptTypeItem(t), "2", t);
+  }
+  assert.equal(scriptTypeItem("a&#33;ı"), "3");
   assert.equal(scriptTypeItem("ı"), "3");
+});
+
+test("numericReference reads the WHATWG forms on the raw text", () => {
+  assert.equal(numericReference("&#106;", 0), 106);
+  assert.equal(numericReference("&#x6A", 0), 0x6a);
+  assert.equal(numericReference("&#X6a;", 0), 0x6a);
+  assert.equal(numericReference("&#0000058x", 0), 58);
+  assert.equal(numericReference("&#x73\ncript", 0), 0x73);
+  assert.equal(numericReference("&#\t106;", 0), -1);
+  assert.equal(numericReference("&#x;", 0), -1);
+  assert.equal(numericReference("&#;", 0), -1);
+  assert.equal(numericReference("&a", 0), -1);
+  assert.equal(numericReference("&#", 0), -1);
+  assert.equal(numericReference("&#x", 0), -1);
+  assert.equal(numericReference(`&#${"9".repeat(400)}`, 0), 0x110000);
+  assert.equal(numericReference("x&#49", 1), 49);
 });
 
 test("the output has no document text", () => {

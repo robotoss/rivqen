@@ -51,14 +51,20 @@ const BREAKOUT = names(`b big blockquote body br center code dd div dl dt em emb
   meta nobr ol p pre ruby s small span strike strong sub sup table tt u ul var`);
 const INTEGRATION = names("annotation-xml desc foreignobject mi mn mo ms mtext title");
 const BLOCK_HTML = names(`article aside div footer ${H} header main nav p section span title`);
-const FORBIDDEN_CONTENT = names(`base basefont bgsound body embed frame frameset head html iframe link meta noembed
-  noframes noscript object optgroup option plaintext script select style template textarea title xmp`);
-// M-22 item 5 (H-73): the only start tags in a foreign region of html block content.
+// M-22 item 2 after H-78: the names that M-22 keeps.
+const FORBIDDEN_CONTENT = names(`body frame frameset head html noembed noframes noscript optgroup option plaintext select
+  template textarea title xmp`);
+// The patch content rule (manifest-patch.md section 4 item 1, H-78): not markup rules. A block with
+// these names is valid; a patch that brings them is rejected. PATCH_FORBIDDEN: start tags in HTML
+// context of the content; FOREIGN_ALLOWED (H-73): the only start tags in a foreign region of it.
+const PATCH_FORBIDDEN = names("base basefont bgsound embed iframe link meta object script style");
 const FOREIGN_ALLOWED = names(`svg g path circle ellipse line polyline polygon rect defs symbol use title desc lineargradient
   radialgradient stop clippath mask pattern marker text tspan filter feblend fecolormatrix fecomponenttransfer fecomposite
   fedisplacementmap fedropshadow feflood fefunca fefuncb fefuncg fefuncr fegaussianblur femerge femergenode femorphology
   feoffset feturbulence math mrow mi mo mn ms mtext mspace msub msup msubsup mfrac msqrt mroot mstyle munder mover munderover
   mmultiscripts mprescripts none mtable mtr mtd mpadded mphantom merror semantics annotation`);
+// M-16 json types (exact, case-sensitive; H-86 adds application/ld+json).
+const JSON_TYPES = names("application/json application/ld+json");
 const STRAY_TABLE_END = names("tbody thead tfoot tr table");
 const SELECT_START = names("option optgroup hr");
 const SELECT_END = names("option optgroup select");
@@ -151,9 +157,49 @@ const hasNonAscii = (s) => /[^\x00-\x7f]/.test(s);
 export function scriptTypeItem(type) {
   if (type === null) return null;
   if (type.toLowerCase().includes("rivqen-manifest")) return "1";
-  if (type.includes("&")) return "2";
+  for (let i = type.indexOf("&"); i >= 0; i = type.indexOf("&", i + 1)) if (rejectedAmpersand(type, i)) return "2";
   if (hasNonAscii(type)) return "3";
   return null;
+}
+
+const ASCII_LETTER = /^[A-Za-z]$/;
+const ASCII_DIGIT = /^[0-9]$/;
+const HEX_DIGIT = /^[0-9A-Fa-f]$/;
+const TYPE_PUNCTUATION = new Set(["/", "+", "-", "."]);
+
+/**
+ * The value of the numeric character reference that starts at the `&` at `at`, read as the WHATWG
+ * tokenizer reads it (`&#` with decimal digits, or `&#x`/`&#X` with hex digits; leading zeros;
+ * `;` optional), or -1 when no numeric reference starts there. Values above 10FFFF are 110000.
+ * @param {string} s
+ * @param {number} at
+ */
+export function numericReference(s, at) {
+  if (s[at + 1] !== "#") return -1;
+  let j = at + 2;
+  const hex = s[j] === "x" || s[j] === "X";
+  if (hex) j++;
+  const digit = hex ? HEX_DIGIT : ASCII_DIGIT;
+  if (j >= s.length || !digit.test(s[j])) return -1;
+  let v = 0;
+  for (; j < s.length && digit.test(s[j]); j++) v = Math.min(v * (hex ? 16 : 10) + Number.parseInt(s[j], 16), 0x110000);
+  return v;
+}
+
+/**
+ * M-13 item 2 (H-84): the `&` at `at` rejects when an ASCII letter follows it (every named
+ * reference), or when it starts a numeric reference whose value is 00-20, an ASCII letter or digit,
+ * "/", "+", "-", ".", or 80 and above (a non-ASCII character, the H-28 shape through a reference).
+ * @param {string} s
+ * @param {number} at
+ */
+function rejectedAmpersand(s, at) {
+  if (at + 1 < s.length && ASCII_LETTER.test(s[at + 1])) return true;
+  const v = numericReference(s, at);
+  if (v < 0) return false;
+  if (v <= 0x20 || v >= 0x80) return true;
+  const c = String.fromCharCode(v);
+  return ASCII_LETTER.test(c) || ASCII_DIGIT.test(c) || TYPE_PUNCTUATION.has(c);
 }
 
 /** M-12: the first `>` after `<![CDATA[` at `start` must end a `]]>` that starts after it. */
@@ -358,6 +404,8 @@ function onlyPLi(text, end) {
 export function classify(bytes, { charset = null, blocks = false } = {}) {
   const f = new Findings();
   const blockFindings = new Findings();
+  // The patch content rule (H-78): classes that do not make a block invalid, only its patches.
+  const patchFindings = new Findings();
   const out = { size: bytes.length, utf8: true, maxD: 0, tokens: 0, existingBlocks: 0, blocks: [] };
   if (bytes.length > MAX_INPUT_BYTES) {
     f.add("M-01");
@@ -429,15 +477,17 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
   let endOffsetOfToken = 0;
 
   // Block rules M-22 to M-24 for a start tag in the content of an html block.
-  // Class names: "M-22.2:<name>" for a forbidden element in HTML context; "M-22.5" for a start
-  // tag in a foreign region of the content whose name is not in FOREIGN_ALLOWED (H-73). M-24
-  // applies in HTML context only.
+  // Class names: "M-22.2:<name>" for a name that M-22 keeps (H-78) in HTML context. M-24 applies
+  // in HTML context only. The patch content rule (H-78) goes to patchFindings, not to f2:
+  // "patch.element:<name>" for a name in PATCH_FORBIDDEN in HTML context, "patch.foreign" for a
+  // start tag in a foreign region of the content whose name is not in FOREIGN_ALLOWED (H-73).
   const contentStartTag = (name, selfClosing, f2, inForeign) => {
     if (inForeign) {
-      if (!FOREIGN_ALLOWED.has(name)) f2.add("M-22.5", `<${safeName(name)}>`);
+      if (!FOREIGN_ALLOWED.has(name)) patchFindings.add("patch.foreign", `<${safeName(name)}>`);
       return;
     }
     if (FORBIDDEN_CONTENT.has(name)) f2.add(`M-22.2:${name}`);
+    if (PATCH_FORBIDDEN.has(name)) patchFindings.add(`patch.element:${name}`);
     if (selfClosing && !VOID.has(name) && name !== "svg" && name !== "math") f2.add("M-22.3", `<${safeName(name)}/>`);
     const b = /** @type {NonNullable<typeof block>} */ (block);
     if (PCLOSE.has(name) && (b.name === "p" || b.name === "span")) f2.add("M-24.a", `<${name}> in <${b.name}>`);
@@ -473,7 +523,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
       return null;
     }
     if (!BLOCK_ID.test(raw)) bf.add("M-15");
-    const json = name === "script" && rawAttrValue(text, t.location, "type") === "application/json";
+    const json = name === "script" && JSON_TYPES.has(rawAttrValue(text, t.location, "type") ?? "");
     if (inForeign || (!BLOCK_HTML.has(name) && !json)) bf.add("M-16", `<${name}>`);
     if (t.selfClosing) bf.add("M-18");
     if (templates > 0 || selects > 0) bf.add("M-19.1");
@@ -675,6 +725,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
     classes: main.classes,
     details: main.details,
     blockRules: blocks ? blockFindings.toJSON() : null,
+    patchRules: blocks ? patchFindings.toJSON() : null,
     picks: candidates,
   };
 }

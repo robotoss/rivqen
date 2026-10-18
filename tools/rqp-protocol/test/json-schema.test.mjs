@@ -142,7 +142,7 @@ test('schema: code points at the surrogate bounds; a lone surrogate counts as on
   const max1 = { type: 'string', maxLength: 1 };
   for (const s of ['\u{10000}', '\u{10FFFF}', '\ud800', '\udc00']) assert.deepEqual(validate(max1, s), [], JSON.stringify(s));
   const min2 = { type: 'string', minLength: 2 };
-  for (const s of ['a\udc00', '\ud800a', '\ud800\ue000']) assert.deepEqual(validate(min2, s), [], JSON.stringify(s));
+  for (const s of ['a\udc00', '\ud800a', '\ud800\ue000', '\ue000\udc00']) assert.deepEqual(validate(min2, s), [], JSON.stringify(s));
   assert.deepEqual(validate(min2, 'a'), [{ keyword: 'minLength', instancePath: '' }]);
   // pattern uses the "u" flag: "." is one code point.
   assert.deepEqual(validate({ type: 'string', pattern: '^.$' }, '\u{1F600}'), []);

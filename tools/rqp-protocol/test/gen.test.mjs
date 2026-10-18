@@ -357,7 +357,11 @@ test('delta recipe: base_revision uses the members of the context snapshot only 
 
 test('delta recipe "size": exactly one operation with empty content and no sha256, and a reachable size', () => {
   const sized = (delta) => withCase('FX-RQ-C16-AT-LIMIT', (c) => ({ ...c, response: { ...c.response, body: { delta: { ...c.response.body.delta, ...delta } } } }));
-  assert.equal(sized({ size: 1000 })().files['response.body'].length, 1000);
+  const body = sized({ size: 1000 })().files['response.body'];
+  assert.equal(body.length, 1000);
+  // The smallest size: the envelope with empty content.
+  const smallest = 1000 - JSON.parse(body.toString('utf8')).operations[0].content.length;
+  assert.equal(JSON.parse(sized({ size: smallest })().files['response.body'].toString('utf8')).operations[0].content, '');
   const defects = [
     { ops: [{ block_id: 'price', content: '' }, { block_id: 'title', content: '' }] },
     { ops: [{ block_id: 'price', content: 'x' }] },

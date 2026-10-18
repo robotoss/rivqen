@@ -46,7 +46,7 @@ test('combined value and media type: outer white space goes, inner white space s
 });
 
 test('entity-tag lists: empty elements, OWS around commas, the weak flag, and the etagc range', () => {
-  assert.deepEqual(parseEntityTags(', ,"a",\t"b" , W/"c"'), {
+  assert.deepEqual(parseEntityTags(', ,"a",\t"b"\t, W/"c"'), {
     star: false,
     tags: [
       { weak: false, opaque: '"a"' },
@@ -54,6 +54,7 @@ test('entity-tag lists: empty elements, OWS around commas, the weak flag, and th
       { weak: true, opaque: '"c"' },
     ],
   });
+  assert.deepEqual(parseEntityTags('*'), { star: true, tags: [] });
   assert.deepEqual(parseEntityTags('  "x"  ').tags, [{ weak: false, opaque: '"x"' }]);
   // No opening DQUOTE, a space or a control character in the tag.
   for (const f of ['x"', 'W/x"', '"a b"', '"a\u0001"']) assert.equal(parseEntityTags(f), null, JSON.stringify(f));
@@ -70,6 +71,7 @@ test('comma lists: a quoted string keeps its commas and escapes; empty elements 
 test('charset parameter: HTTP white space after ";", parameters only after the first ";"', () => {
   for (const ws of ['\t', '\n', '\r', ' ']) assert.equal(charsetParameter(`text/html;${ws}charset=utf-8`), 'utf-8', JSON.stringify(ws));
   assert.equal(charsetParameter('charset=utf-8'), null);
+  assert.equal(charsetParameter('xcharset=utf-8'), null);
   assert.equal(charsetParameter(';charset=utf-8'), 'utf-8');
   // After a quoted value, the rest up to the next ";" is ignored.
   assert.equal(charsetParameter('text/html; a="b"xcharset=utf-8'), null);
@@ -88,10 +90,10 @@ test('UTF-8 byte order mark: exactly EF BB BF at offset 0', () => {
 });
 
 test('Accept: the q value grammar of RFC 9110 section 12.4.2; parameters other than q are ignored', () => {
-  for (const ok of [`${DELTA};q=1`, `${DELTA};q=1.00`, `${DELTA} ;q=0.5`, `${DELTA};q=0.5 ;level=1`, `${DELTA};level=1`, `${DELTA};qq`]) {
+  for (const ok of [`${DELTA};q=1`, `${DELTA};q=1.00`, `${DELTA} ;q=0.5`, `${DELTA};q=0.5 ;level=1`, `${DELTA};level=1`, `${DELTA};charset=utf-8`, `${DELTA} \t;q=0.5`, `${DELTA};qq`]) {
     assert.equal(acceptsMediaType(ok, DELTA), true, ok);
   }
-  for (const no of [`${DELTA};q=20`, `${DELTA};q=0.5x`, `${DELTA}; q=0`, `${DELTA}  ;q=0`, 'application/ vnd.rivqen.delta+json']) {
+  for (const no of [`${DELTA};q=20`, `${DELTA};q=0.5x`, `${DELTA}; q=0`, 'application/ vnd.rivqen.delta+json']) {
     assert.equal(acceptsMediaType(no, DELTA), false, no);
   }
 });

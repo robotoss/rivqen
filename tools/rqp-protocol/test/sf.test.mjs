@@ -85,10 +85,12 @@ test('parameters and separators: SP after ";", a bare key is true, OWS around ",
   const p = parseItem('a; b=1;c');
   assert.equal(p.params.get('b').value, 1);
   assert.deepEqual(p.params.get('c'), { type: 'boolean', value: true });
-  assert.deepEqual(parseDictionary('a').get('a').item, { type: 'boolean', value: true });
+  assert.deepEqual(parseDictionary('a').get('a'), { inner: false, item: { type: 'boolean', value: true }, params: new Map() });
+  assert.equal(parseDictionary('*a=1').get('*a').item.value, 1);
   assert.deepEqual([...parseDictionary('a=1 ,\tb=2').keys()], ['a', 'b']);
   assert.deepEqual(parseList('a,\tb').map((m) => m.item.value), ['a', 'b']);
   assert.equal(parseList('a, '), null); // a trailing comma
+  assert.equal(parseList('a bc'), null); // no comma between members
   assert.equal(parseDictionary('a=1,'), null);
   assert.equal(parseDictionary('a=1 bc=2'), null); // no comma between members
   assert.equal(parseList('(a"b")'), null); // no SP between inner list items

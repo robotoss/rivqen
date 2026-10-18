@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-C25-USERINFO-FINAL",
+  "kind": "client",
+  "description": "A redirect to https://user:secret@shop.example.com/catalog (user information, an origin in the allowlist): the final request carried no RQP fields, so a full document with Rq-Version 1 and a consistent manifest gives a normal page, no snapshot, no error (H-68)",
+  "rules": ["RQP-05", "RQP-24"],
+  "context": {
+    "final_url": "https://user:secret@shop.example.com/catalog",
+    "allowlist": ["https://shop.example.com"],
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a"
+    }
+  }
+}

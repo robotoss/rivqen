@@ -185,8 +185,11 @@ export const FULL_CONTENT_TYPE = 'text/html; charset=utf-8';
  * media type). The charset rule only decides the passthrough: F always has
  * exactly one field line "Content-Type: text/html; charset=utf-8", whatever
  * the Content-Type text of A was (no charset, a quoted or upper-case UTF-8
- * label, other parameters). Step 1 found the media type text/html, so A has
- * exactly one Content-Type line here, and the line keeps its position.
+ * label, other parameters). A has at least one Content-Type line here (step 1
+ * found the media type text/html). The one-line guarantee comes from
+ * contentTypeCharset, which returns OTHER for more than one line, so such a
+ * page is passed through; step 1 alone does not give it (it reads the combined
+ * value). The one line keeps its position.
  */
 export function fullContentType(appHeaders) {
   if (contentTypeCharset(appHeaders) === Charset.OTHER) return null;

@@ -18,12 +18,15 @@
 //
 // Client module: export clientStep(context, response) -> { outcome, error,
 // next, metric, snapshot } and optionally clientRequest(context) -> [[name,
-// value]]. context = { url, final_url, build, allow_http, allowlist,
-// credentials, response_fields_visible, public_origin, navigation, snapshot:
-// null | { document, template_revision, page_revision, blocks, policy?,
-// limits?, partition } }. url is the request URL and the cache key of the
-// snapshot; final_url is the URL of the response after redirects; allowlist is
-// the origin allowlist as serialized origins (exact match, DL-038);
+// value]]. context = { url, final_url, redirected, build, allow_http,
+// allowlist, credentials, response_fields_visible, public_origin, navigation,
+// snapshot: null | { document, template_revision, page_revision, blocks,
+// policy?, limits?, partition } }. url is the request URL and the cache key of
+// the snapshot; final_url is the URL of the response after redirects (a client
+// parses both with the WHATWG URL parser, DL-040); redirected tells whether the
+// response came through a redirect, also one to the same URL (H-67); allowlist
+// is the origin allowlist as serialized origins (exact match, DL-038; every
+// entry is valid, H-69);
 // credentials is true, false or null (unknown); response_fields_visible tells
 // whether the native SDK saw all header fields of the response (H-64);
 // partition is the partition of the snapshot, "request" or "public" (H-65).
@@ -213,6 +216,7 @@ export async function runClient(mod, { dir = FIXTURES_DIR, only = '' } = {}) {
     const context = {
       url: ctx.url,
       final_url: ctx.final_url,
+      redirected: ctx.redirected,
       build: ctx.build,
       allow_http: ctx.allow_http,
       allowlist: ctx.allowlist,

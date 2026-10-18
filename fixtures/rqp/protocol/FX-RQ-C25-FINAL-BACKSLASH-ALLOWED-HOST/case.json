@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-C25-FINAL-BACKSLASH-ALLOWED-HOST",
+  "kind": "client",
+  "description": "A redirect to https://shop.example.com\\@attacker.example/catalog: by the WHATWG URL parser the host is shop.example.com, no user information, and the path is /@attacker.example/catalog; a manifest for that URL is accepted and the snapshot has that cache key (DL-040 L-3)",
+  "rules": ["RQP-05", "RQP-24"],
+  "context": {
+    "final_url": "https://shop.example.com\\@attacker.example/catalog",
+    "allowlist": ["https://shop.example.com"],
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a"
+    }
+  }
+}

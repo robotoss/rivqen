@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MANIFEST_END, UnsupportedInput, membersOf, pageRevision, sha256b64u } from './common.mjs';
 import { handle, manifestOf } from './server.mjs';
-import { Partition, handleResponse, havePrefixes, requestHeaders, snapshotOf } from './client.mjs';
+import { Partition, handleResponse, hasUserinfo, havePrefixes, requestHeaders, snapshotOf, validAllowlistEntry } from './client.mjs';
 import { combined, normalizeHeaders } from './http.mjs';
 import { analyze, documentHeadEnd } from './markup.mjs';
 import { UnknownPage, pageBytes } from './pages.mjs';
@@ -91,7 +91,7 @@ export function loadCase(dir, name) {
     onlyKeys(
       name,
       c.context,
-      ['url', 'final_url', 'build', 'allow_http', 'allowlist', 'navigation', 'snapshot', 'credentials', 'response_fields_visible', 'public_origin'],
+      ['url', 'final_url', 'redirected', 'build', 'allow_http', 'allowlist', 'navigation', 'snapshot', 'credentials', 'response_fields_visible', 'public_origin'],
       'context',
     );
     onlyKeys(name, c.response, ['status', 'headers', 'body'], 'response');
@@ -233,7 +233,7 @@ function context(c) {
       throw new CaseError(c.id, 'a public context snapshot needs the member policy with mode public');
     }
   }
-  for (const flag of ['allow_http', 'response_fields_visible', 'public_origin']) {
+  for (const flag of ['allow_http', 'redirected', 'response_fields_visible', 'public_origin']) {
     if (ctx[flag] !== undefined && typeof ctx[flag] !== 'boolean') throw new CaseError(c.id, `context.${flag} must be a boolean`);
   }
   // H-62 (2): credentials true, false or unknown (absent or null; unknown counts as present).
@@ -242,6 +242,10 @@ function context(c) {
   }
   const url = ctx.url ?? DEFAULT_TARGET;
   const finalUrl = ctx.final_url ?? url;
+  // H-67: a redirect, also one to the same URL. Default: the final URL differs
+  // from the request URL (as strings). false with another final URL is a defect.
+  const wasRedirected = ctx.redirected ?? finalUrl !== url;
+  if (!wasRedirected && finalUrl !== url) throw new CaseError(c.id, 'context.redirected is false, but final_url differs from url');
   // DL-038: the allowlist is a list of serialized origins. Default: the origins
   // of the request URL and of the final URL (every origin of the context).
   let allowlist = ctx.allowlist;
@@ -249,9 +253,16 @@ function context(c) {
   if (!Array.isArray(allowlist) || !allowlist.every((o) => typeof o === 'string')) {
     throw new CaseError(c.id, 'context.allowlist must be a list of origin strings');
   }
+  // H-69: an SDK rejects a configuration with an entry that is not its own serialized origin.
+  for (const entry of allowlist) {
+    if (!validAllowlistEntry(entry)) throw new CaseError(c.id, `context.allowlist entry ${JSON.stringify(entry)} is not a serialized origin (H-69)`);
+  }
+  // H-68: the client stores no snapshot for a URL with user information, so no context snapshot can have one.
+  if (snapshotPage !== null && hasUserinfo(url)) throw new CaseError(c.id, 'a context snapshot needs a url without user information (H-68)');
   return {
     url,
     final_url: finalUrl,
+    redirected: wasRedirected,
     build,
     allow_http: ctx.allow_http ?? false,
     allowlist,
@@ -410,6 +421,7 @@ export function expectClient(c) {
       context: {
         url: ctx.url,
         final_url: ctx.final_url,
+        redirected: ctx.redirected,
         build: ctx.build,
         allow_http: ctx.allow_http,
         allowlist: ctx.allowlist,

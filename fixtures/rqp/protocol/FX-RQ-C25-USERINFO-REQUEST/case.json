@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-C25-USERINFO-REQUEST",
+  "kind": "client",
+  "description": "The request URL https://user:secret@shop.example.com/catalog has a user name and a password; its origin is in the allowlist: the client sends no RQP field, uses no manifest and stores no snapshot; a normal page, no error (H-68)",
+  "rules": ["RQP-05", "RQP-24"],
+  "context": {
+    "url": "https://user:secret@shop.example.com/catalog",
+    "allowlist": ["https://shop.example.com"],
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a"
+    }
+  }
+}

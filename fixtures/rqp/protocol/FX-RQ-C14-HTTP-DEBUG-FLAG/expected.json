@@ -4,6 +4,7 @@
   "context": {
     "url": "http://shop.example.com/catalog",
     "final_url": "http://shop.example.com/catalog",
+    "redirected": false,
     "build": "debug",
     "allow_http": true,
     "allowlist": ["http://shop.example.com"],

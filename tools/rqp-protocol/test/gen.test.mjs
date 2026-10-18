@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { after, test } from 'node:test';
 import { checkPages, run } from '../gen.mjs';
-import { CaseError, FIXTURES_DIR, expectFixture, fixtureNames, formatJson, substitute } from '../src/fixtures.mjs';
+import { CaseError, FIXTURES_DIR, expectFixture, fixtureNames, formatJson, readJsonFile, substitute } from '../src/fixtures.mjs';
 import { GENERATED, pageBytes } from '../src/pages.mjs';
 
 const GEN = fileURLToPath(new URL('../gen.mjs', import.meta.url));
@@ -28,7 +28,7 @@ function copyFixture(name) {
 
 test('gen.mjs --check: every committed page and expected file is current', () => {
   const out = execFileSync(process.execPath, [GEN, '--check'], { encoding: 'utf8' });
-  assert.match(out, /145 fixtures are current/);
+  assert.match(out, /158 fixtures are current/);
 });
 
 test('every catalog case P-01 to P-40 and C-01 to C-27 has at least one fixture', () => {
@@ -57,6 +57,60 @@ test('context.allowlist (DL-038): default the origins of url and final_url; anot
     assert.throws(() => withContext({ ...rest, allowlist: bad }), (e) => e instanceof CaseError && /allowlist must be a list of origin strings/.test(e.message), JSON.stringify(bad));
   }
   assert.throws(() => withContext({ ...rest, final_url: 'not a url' }), (e) => e instanceof CaseError && /not a URL/.test(e.message));
+});
+
+test('context.redirected (H-67): default "final_url differs from url"; true with the same URL; false with another final URL is a defect', () => {
+  const name = 'FX-RQ-C24-PUBLIC-REDIRECT-SAME-URL';
+  const dir = copyFixture(name);
+  const file = join(dir, name, 'case.json');
+  const c = JSON.parse(readFileSync(file, 'utf8'));
+  const withContext = (context) => {
+    writeFileSync(file, JSON.stringify({ ...c, context }));
+    return expectFixture(dir, name).files['expected.json'];
+  };
+  const same = withContext(c.context);
+  assert.deepEqual([same.context.redirected, same.result.snapshot.partition], [true, 'request']);
+  const { redirected: _r, ...rest } = c.context;
+  const none = withContext(rest);
+  assert.deepEqual([none.context.redirected, none.result.snapshot.partition], [false, 'public']);
+  const other = withContext({ ...rest, final_url: 'https://shop.example.com/catalog?x=1' });
+  assert.equal(other.context.redirected, true);
+  assert.throws(() => withContext({ ...rest, final_url: 'https://shop.example.com/catalog?x=1', redirected: false }), (e) => e instanceof CaseError && /redirected is false/.test(e.message));
+  assert.throws(() => withContext({ ...rest, redirected: 'yes' }), (e) => e instanceof CaseError && /redirected must be a boolean/.test(e.message));
+});
+
+test('context.allowlist (H-69): an entry that is not its own serialized origin is a defective case', () => {
+  const name = 'FX-RQ-C25-REDIRECT-OFF-ALLOWLIST';
+  const dir = copyFixture(name);
+  const file = join(dir, name, 'case.json');
+  const c = JSON.parse(readFileSync(file, 'utf8'));
+  const withList = (allowlist) => {
+    writeFileSync(file, JSON.stringify({ ...c, context: { ...c.context, allowlist } }));
+    return expectFixture(dir, name).files['expected.json'];
+  };
+  assert.deepEqual(withList(['https://shop.example.com', 'https://xn--fa-hia.example']).context.allowlist, ['https://shop.example.com', 'https://xn--fa-hia.example']);
+  for (const bad of ['https://SHOP.example.com', 'https://shop.example.com:443', 'https://shop.example.com/', 'https://shop.example.com/catalog', 'https://faß.example', '*']) {
+    assert.throws(() => withList(['https://pay.example.net', bad]), (e) => e instanceof CaseError && e.message.includes(`entry ${JSON.stringify(bad)} is not a serialized origin (H-69)`), bad);
+  }
+});
+
+test('a context snapshot for a URL with user information is a defective case (H-68)', () => {
+  const name = 'FX-RQ-C25-USERINFO-REQUEST';
+  const dir = copyFixture(name);
+  const file = join(dir, name, 'case.json');
+  const c = JSON.parse(readFileSync(file, 'utf8'));
+  writeFileSync(file, JSON.stringify({ ...c, context: { ...c.context, navigation: 'delta', snapshot: 'page-a' } }));
+  assert.throws(() => expectFixture(dir, name), (e) => e instanceof CaseError && /needs a url without user information \(H-68\)/.test(e.message));
+});
+
+test('code review round 4: every redirect case lists its allowlist; the expected context has redirected', () => {
+  for (const name of fixtureNames()) {
+    const c = readJsonFile(join(FIXTURES_DIR, name, 'case.json'));
+    if (c.kind !== 'client') continue;
+    const e = readJsonFile(join(FIXTURES_DIR, name, 'expected.json'));
+    assert.equal(typeof e.context.redirected, 'boolean', name);
+    if (e.context.redirected) assert.ok(Array.isArray(c.context.allowlist), `${name}: a redirect case must list context.allowlist`);
+  }
 });
 
 test('context.response_fields_visible (H-64): default true; a value that is not a boolean is a defective case', () => {

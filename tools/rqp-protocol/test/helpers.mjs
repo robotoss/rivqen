@@ -25,13 +25,14 @@ export const APP = Object.freeze({
 export const ALLOWLIST = Object.freeze(['https://shop.example.com', 'http://shop.example.com']);
 
 /**
- * A client context of the reference client: request URL TARGET, release
- * build, ALLOWLIST, a native fetch (all response fields visible, H-64), first
- * visit without a snapshot. `fields` replace members.
+ * A client context of the reference client: request URL TARGET, no redirect
+ * (H-67), release build, ALLOWLIST, a native fetch (all response fields
+ * visible, H-64), first visit without a snapshot. `fields` replace members.
  */
 export function clientContext(fields = {}) {
   return {
     url: TARGET,
+    redirected: false,
     build: 'release',
     allow_http: false,
     allowlist: ALLOWLIST,

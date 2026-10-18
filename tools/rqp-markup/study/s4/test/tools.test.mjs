@@ -38,6 +38,16 @@ test('a small table sweep: no finding for b1, b2 and b3, gains for every closure
     assert.deepEqual(out.modes[m].findings, {}, m);
   }
   assert.ok(out.modes.b2.gained >= out.modes.b1.gained);
+  assert.equal(out.modes.off.gained, 0);
+  // Every document that close off accepts, b2 accepts with the same result: gained is the difference.
+  assert.equal(out.modes.b2.gained, out.modes.b2.valid - out.modes.off.valid);
+});
+
+test('a sweep with every shipped document checked keeps the b3 findings apart from the shipped ones', () => {
+  const out = tableSweep({ source: 'classic', seed: 85, count: 5000, examples: 1, control: 1, out: null });
+  assert.deepEqual(out.modes.off.findings, {});
+  assert.deepEqual(out.modes.b2.findings, {});
+  assert.deepEqual(out.modes.b3.findings, { 'depth-enabled': 2, 'depth-disabled': 2 });
 });
 
 test('a small head sweep: the h79 rule has no failure and the hostile client c2 accepts only the server position', () => {
@@ -79,10 +89,16 @@ test('the corpus totals count gained and lost pages per rule and mode', () => {
     close: { off: { valid: offValid }, b2: { valid: b2Valid } },
     variants: {},
   });
-  const t = aggregate([page('https://a/', 'implied', false, true), page('https://b/', 'explicit', true, true), { error: 'timeout' }]);
+  const t = aggregate([
+    page('https://a/', 'implied', false, true),
+    page('https://b/', 'explicit', true, true),
+    page('https://c/', 'explicit', false, false),
+    { error: 'timeout' },
+  ]);
   assert.equal(t.errors, 1);
   assert.deepEqual(t.head.h79.gained, ['https://a/']);
   assert.deepEqual(t.head.h79.lost, []);
   assert.deepEqual(t.close.b2.gained, ['https://a/']);
-  assert.equal(t.close.b2.lost, 0);
+  assert.equal(t.close.b2.lost, 0, 'a page that close off rejects too is not lost');
+  assert.equal(t.close.b2.valid, 2);
 });

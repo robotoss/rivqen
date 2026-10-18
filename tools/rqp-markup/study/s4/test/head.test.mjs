@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { IMPLIED_H79, clientAccepts, fullDocument, headPosition } from '../src/head.mjs';
-import { checkBothViews } from '../src/head-views.mjs';
+import { checkBothViews, checkView } from '../src/head-views.mjs';
 import { boundaries, checkServer } from '../src/head-sweep.mjs';
 import { protocolDocuments } from '../src/inputs.mjs';
 import { findManifestElements } from '../../../../rqp-protocol/src/markup.mjs';
@@ -65,6 +65,19 @@ test('c2 rejects a manifest that the server would not write; c1 accepts it and t
   const o2 = B('<html>\n<meta charset="utf-8">');
   const { full: f2, length: l2 } = fullDocument(o2, 6);
   assert.equal(clientAccepts(f2, 6, 6 + l2, 'h79').c2, false);
+});
+
+test('the parse5 checks find a manifest that is not the first child and a second manifest', () => {
+  const o = B('<html><head>\n<title>t</title></head>');
+  // After white space in the head: a text node is the first child of the head.
+  const { full } = fullDocument(o, 13);
+  const late = checkView(o, full, true);
+  assert.equal(late.first, false);
+  assert.equal(late.only, true);
+  // Two manifests: also the second one is found (both views).
+  const twice = fullDocument(fullDocument(o, 12).full, 12).full;
+  const v = checkBothViews(o, twice);
+  assert.ok(v.failures.includes('enabled-only') && v.failures.includes('disabled-only'), v.failures.join());
 });
 
 test('boundaries: the token boundaries up to the end of the token that ends item 1', () => {

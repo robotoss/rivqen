@@ -9,7 +9,8 @@ import assert from 'node:assert/strict';
 import { analyzeDepth } from '../../../crosscheck/src/depth.mjs';
 import { analyzeS4 } from '../src/markup-s4.mjs';
 import { analyzeDepthClosure } from '../src/depth-s4.mjs';
-import { checkResult, rewrite } from '../src/table-oracle.mjs';
+import { checkResult, rewrite, rewriteFindings, tableFindings } from '../src/table-oracle.mjs';
+import { treeIndex } from '../../relax/src/oracle.mjs';
 
 const B = (s) => Buffer.from(s, 'utf8');
 const run = (s, close) => analyzeS4(B(s), { close, trace: true });
@@ -94,12 +95,21 @@ test('b3 does not release for a row group end tag: the reconstructed formatting 
 });
 
 test('the closure counter equals the cross-check counter on a document without a closure', () => {
-  const s = '<table><tr><td>a</td><td><span><div></span></td></tr></table><p>x</p>';
-  for (const scripting of [true, false]) {
-    const a = analyzeDepth(B(s), { scripting });
-    const b = analyzeDepthClosure(B(s), { scripting });
-    assert.deepEqual(b, a);
+  // The second document has a table part in a template: F stops at the template (no closure).
+  for (const s of ['<table><tr><td>a</td><td><span><div></span></td></tr></table><p>x</p>', '<table><tr><td><template><td>x</td></template></td></tr></table>', '<table><caption><template><td>x</td></template></caption></table>']) {
+    for (const scripting of [true, false]) {
+      const a = analyzeDepth(B(s), { scripting });
+      const b = analyzeDepthClosure(B(s), { scripting });
+      assert.deepEqual(b, a, s);
+    }
   }
+});
+
+test('b3 frees also the units that earlier crossings moved to the cell', () => {
+  // Each </span> crosses the div and moves 2 units to the cell; b2 keeps them, b3 frees them at </td>.
+  const s = `<table><tr>${'<td><span><div></span>x</td>'.repeat(150)}</tr></table>`;
+  assert.equal(run(s, 'b2').error, 'RQP_MARKUP_LIMIT');
+  assert.equal(run(s, 'b3').valid, true);
 });
 
 test('rewrite inserts the implied end tags and maps offsets after them', () => {
@@ -110,6 +120,22 @@ test('rewrite inserts the implied end tags and maps offsets after them', () => {
   assert.equal(bytes.toString(), `<table><tr><td>a</td><td>b</table>${AFTER}`);
   assert.equal(shift(15), 15);
   assert.equal(shift(16), 21);
+});
+
+test('the rewrite check finds a tree change when an end tag is written where the tree builder does not close', () => {
+  const s = B('<table><tr><td>a<td>b</table>');
+  const r = run(s.toString(), 'b2');
+  assert.deepEqual(checkResult(s, r), []);
+  const wrong = { ...r, virtual: [[16, 'tr']] }; // </tr> closes the row: a second row in the tree
+  assert.deepEqual(rewriteFindings(s, wrong).map((f) => f.kind), ['rewrite-enabled-dom', 'rewrite-disabled-dom']);
+});
+
+test('the table check finds a missing element and a parent other than F', () => {
+  const s = B('<table><tr><td>a</td></tr></table>');
+  const index = treeIndex(s, true);
+  assert.deepEqual(tableFindings(index, [[7, 'tr', 0], [11, 'td', 7]]), []);
+  assert.deepEqual(tableFindings(index, [[11, 'td', 0]]).map((f) => f.kind), ['parent']);
+  assert.deepEqual(tableFindings(index, [[12, 'td', 7]]).map((f) => f.kind), ['missing']);
 });
 
 test('b3 is unsafe: a released cell end tag outside a table pops nothing in the tree builder', () => {

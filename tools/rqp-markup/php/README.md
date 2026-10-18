@@ -53,9 +53,9 @@ Do these steps in this directory:
 | `tests/RevisionTest.php` | Hashes and revisions of `CONTRACT.md` section 4 |
 | `tests/FixturesTest.php` | Every fixture of `fixtures/rqp/markup/` against `expected.json` |
 | `tests/CliTest.php` | Command line, exit codes, batch order, bounded read |
-| `tests/PropertyTest.php` | Seeded random documents: invariants, and an oracle for generated valid documents. Model tests: D (M-26) for random sequences of shapes with known units, the balance of random `noscript` content (M-11 item 5), and table parts in random balanced `noscript` content (M-11 item 6) |
-| `tests/LimitsTest.php` | Linear time and bounded memory on adversarial 5 MiB inputs within D ≤ 256 (also names with one PHP string hash, and deep `noscript` content); fast `M-26` stop for inputs where D gets larger than 256; at most 32 MiB for 5 MiB of `noscript` content that only opens elements |
-| `tests/OffsetStackTest.php` | The packed stack of the `noscript` content: LIFO order across growth, all 32-bit values, capacity at most twice the entries, range check |
+| `tests/PropertyTest.php` | Seeded random documents: invariants, and an oracle for generated valid documents. Model tests: D (M-26) for random sequences of shapes with known units, the balance of random `noscript` content (M-11 item 5; an M-09 error of the main rules (item 8) is also accepted), and table parts in random balanced `noscript` content (M-11 item 6) |
+| `tests/LimitsTest.php` | Linear time and bounded memory on adversarial 5 MiB inputs within D ≤ 256 (also names with one PHP string hash, and deep `noscript` content); fast `M-26` stop for inputs where D gets larger than 256, also for `noscript` content (M-11 item 8: it counts in D); at most 32 MiB for 5 MiB of `noscript` content that only opens elements |
+| `tests/ForeignRegionRulesTest.php` | WP-17 S3 rules (H-71, H-73, H-74, H-75): foreign regions in block content (M-22 item 5, M-23), `svg` in `noscript` content (M-11 items 5 and 9), the main pass on that content (M-11 item 8), the root end tag and M-06 item 4. Each invalid case checks the rule ID |
 | `tests/fuzz.php` | Fuzz target (time-limited; writes a failing input to a file) |
 
 ### Dev tools
@@ -105,7 +105,7 @@ The depth counter D works as `markup.md` M-26 says:
 - Every other pop keeps D and makes the new current node dirty.
 - When D gets larger than 256, the result is `RQP_MARKUP_LIMIT` with rule `M-26`. This applies in HTML context and in a foreign region, inside and outside blocks.
 
-The check is done before the element goes on the stack. Units come back only when their own element is popped exactly, so every element on the stack holds at least 1 unit: the stack never has more than 256 elements. Elements that M-05 does not push (void elements, self-closing `svg` and `math` in HTML context, self-closing elements in a foreign region) do not count. The tags in `noscript` content are not part of the main pass and do not count (M-26 item 7); the `noscript` element counts.
+The check is done before the element goes on the stack. Units come back only when their own element is popped exactly, so every element on the stack holds at least 1 unit: the stack never has more than 256 elements. Elements that M-05 does not push (void elements, self-closing `svg` and `math` in HTML context, self-closing elements in a foreign region) do not count. The tags in `noscript` content run through the main pass and count (M-26 item 7, H-71); after the end tag `noscript`, D has the value of the main pass before the content (the pass saves and restores D and the dirty mark of the `noscript` element, DL-044 c). The `noscript` element counts.
 
 The start tag rules of round 2 of the security review need no search. They run in HTML context, before the implied parts and the push:
 
@@ -122,9 +122,11 @@ The end tag rules of the security review use the elements that the pop visits an
 |---|---|
 | M-06 item 2 (H-26) | An end tag with a name in `FORMATTING` must not cross an element in `SPECIAL` (HTML context) or a foreign element |
 | M-06 item 3 (H-30) | In HTML context, an end tag `tbody`, `thead`, `tfoot`, `tr` or `table` with no match on the stack is an error |
-| M-06 item 4 (H-32) | After the pop, the new current node gets the mark when a crossed element is special or foreign, or a popped element has the mark. An end tag with a name in `FORMATTING` must not pop a marked element |
-| M-11 item 5 (H-27) | A second stack for the `noscript` content C (`src/OffsetStack.php`). A start tag that M-05 item 1 pushes adds the offset of its raw name in C (4 bytes). An end tag must have the name of the top entry: the parser normalizes the raw name at that offset again (`Tokenizer::tagNameLength()` and `Tokenizer::normalizeName()`, the same code as the tokenizer) and compares. The stack must be empty at the end of C |
-| M-11 item 6 (H-38) | A count of the `table` elements on the stack of C. A start tag in `TABLE_PART` or `col` in C with a count of 0 is an error |
+| M-06 item 4 (H-32, H-75) | After the pop, the new current node gets the mark when a crossed element is special, or foreign and the matching element is not the region root, or a popped element has the mark. An end tag with a name in `FORMATTING` must not pop a marked element |
+| M-11 items 5 and 8 (H-27, H-71) | The tokens of C run through the rules of the main pass on the main stack (`Parser::checkNoscript()`). Before the main rules, each end tag of C must have the name of the current node, which must be above the `noscript` element. Exception (H-75, DL-044 d): `svg` whose nearest `svg` is the region root. The stack must be back at the `noscript` element at the end of C. The stack of C is part of the stack of the main pass, so D ≤ 256 bounds it |
+| M-11 item 6 (H-38) | The count of `table` elements on the stack minus the count at the `noscript` start tag. A start tag in `TABLE_PART` or `col` in C with a count of 0 is an error |
+| M-11 items 2, 3, 7, 9 (H-71, H-74) | `NOSCRIPT_FORBIDDEN` (no `svg`: it starts a region of C, the main rules of M-05 item 4 give the region) and `NOSCRIPT_DOCUMENT_TAGS` (`html`, `body`, `head`: start and end tags) |
+| M-22 item 5, M-23 (H-73, H-75) | `FOREIGN_ALLOWED` check on each start tag in a region of the content; the end tag of the region root closes the region: one search for the nearest element with that name (`Parser::nearestIndex()`), then the pops |
 | M-13 item 3 (H-28) | `strspn()` with the 128 ASCII bytes finds a byte ≥ 0x80 in the raw `type` value of a `script` start tag. No PCRE: an error of `preg_match()` must not let a value pass |
 
 `FORMATTING`, `SPECIAL` and the stray table end tags are constant arrays in `src/Names.php`.
@@ -142,7 +144,7 @@ These structures make the work for each token constant:
 | Count of the HTML `form` elements on the stack | M-10 item 2 |
 | Flags of each stack element (dirty, mark, implied parts) | M-26 and M-06 item 4: set and checked only on the popped elements and the new current node |
 
-An end tag that matches an element pops the elements above it. Each element is pushed once and popped once (`array_pop()`, O(1); `array_splice()` would copy the stack for each pop), so all end tags together cost O(number of start tags). M-24 item k uses F of M-09 (the top of the table index stack). The M-11 check tokenizes the content of each `noscript` once more, applies M-13 to its start tags (E8) and checks the balance (item 5) and the table parts (item 6) with its own stack. The JSON validator (`src/JsonValidator.php`) is iterative and builds no value. UTF-8 validity (M-02) is one PCRE check (`preg_match('//u')`) that cannot backtrack.
+An end tag that matches an element pops the elements above it. Each element is pushed once and popped once (`array_pop()`, O(1); `array_splice()` would copy the stack for each pop), so all end tags together cost O(number of start tags). M-24 item k uses F of M-09 (the top of the table index stack). The M-11 check tokenizes the content of each `noscript` once more, applies M-13 to its start tags (E8), checks the balance (item 5) and the table parts (item 6), and runs the main rules on its tokens (item 8) on the main stack. The JSON validator (`src/JsonValidator.php`) is iterative and builds no value. UTF-8 validity (M-02) is one PCRE check (`preg_match('//u')`) that cannot backtrack.
 
 ### Hash flooding
 
@@ -157,7 +159,7 @@ The parser has no array whose keys are raw tag names from the input:
 | Name sets (`src/Names.php`, `Tokenizer::WATCHED`) | Constant names | Same: one chain of constant keys |
 | Block ids | At most 256 ids (M-26) of `[a-z0-9_-]` (M-15) | Bounded |
 | Watched attributes of a token | `type`, `data-rq-block` only | Bounded |
-| Stack of the `noscript` content (M-11 item 5) | None (a binary string of offsets) | No array: an end tag compares with the top entry only |
+| Stack of the `noscript` content (M-11 item 5) | None (the stack of the main pass) | An end tag compares with the top entry only, or finds the region root with one search |
 
 With the fix and the depth limit removed (a test build only), the 131 072 nested names took 0.30 s (0.33 s without collisions). With the depth limit, the same input stops at the 257th start tag. D ≤ 256 also bounds the name index to 256 keys. The xxh3 hash adds about 0.15 µs for each push, pop and end tag lookup.
 
@@ -175,12 +177,11 @@ Measured on PHP 8.5.11 with inputs of up to 5 MiB on 2026-10-11 (after the depth
 | `<table><tr><td>` × 64 (D = 256: table, row group, `tr`, `td`), then `</td></tr></table>` × 64, repeated | 2.4 s | 5 MiB |
 | `<div>` × 251, `<table>`, then `<tr><td>a</td></tr><col>` repeated (implied parts once per table) | 2.6 s | 5 MiB |
 | `<p><span><div></span>` (marked `p`), then `<b><i></i></b>` repeated | 3.4 s | 5 MiB |
-| `<noscript>`, `<ab>` × 582 000, `</ab>` × 582 000 (stack of the content, M-11 item 5) | 2.2 s | 11 MiB |
-| `<noscript>` with 71 000 nested names with one DJBX33A hash, closed in reverse order | 0.3 s | 6 MiB |
+| `<noscript>`, `<ab>` × 255, `</ab>` × 255, repeated (balanced content at D = 256, M-11 item 8) | see `tests/LimitsTest.php` | 5 MiB |
+| `<noscript>` with stacks of 255 nested names with one DJBX33A hash, closed in reverse order, repeated | see `tests/LimitsTest.php` | 5 MiB |
 | `<noscript><table>`, then `<tr><td></td></tr>` repeated (M-11 item 6) | 2.3 s | 5 MiB |
 | `<table>`, then `<tr><td><form></form></td></tr>` repeated (M-09 condition 2, M-10 item 2) | 2.9 s | 5 MiB |
-| `<noscript>`, then `<ab>` × 1.3 million and no end tags (`M-11` at the end) | 2.4 s | 17 MiB |
-| `<noscript>`, then `<a>` or `<A>` × 1.7 million and no end tags (worst case of the content stack) | 3.2 s | 17 MiB |
+| `<noscript>`, then `<ab>`, `<a>` or `<A>` × 1.3 to 1.7 million and no end tags (`M-26` at the 256th element; the copy of C is the only memory that grows) | < 2 s | < 32 MiB |
 | Five blocks of almost 1 MiB with 127 nested `<ul><li>` groups, repeated (M-24 item j) | 3.0 s | 1 MiB |
 | Names with one DJBX33A hash in stacks of 256, repeated | 0.3 s | 5 MiB |
 | Names with one DJBX33A hash: 256 open, then end tags of other such names | 0.2 s | 5 MiB |
@@ -212,7 +213,8 @@ The human decided these cases (decisions H-21 and H-22 in the WP-17 S1 sprint re
 | `select` in M-19 | Kept, but not reachable | M-08 rejects a block start tag inside `select` first |
 | Order of the M-26 depth check | Implied parts and the push, after the other checks of the start tag | `markup.md` section 2.10: "On each push to the token stack and each implied part". A fixture has one error only, so the order does not change a fixture result. |
 | Order of the end tag checks | M-07, then M-06 items 1, 2 and 4, then the pop, D and the marks | `markup.md` section 2.10. All items of M-06 give rule ID `M-06`; all items of M-11 give `M-11` |
-| Memory of the M-11 item 5 stack | Not bounded by D | `markup.md` M-26 item 7 and section 3.3: C is not counted. Each start tag in C has at least 3 bytes, so the stack has at most 1.7 million entries for 5 MiB. Each entry is the 4-byte offset of the raw name in C, in one binary string whose capacity doubles (`src/OffsetStack.php`): measured 17 MiB peak for 1.7 million entries, together with the copy of C for its tokenizer. The earlier list of lower-case names needed 37 MiB (`<a>`), 77 MiB (`<ab>`) and 90 MiB (`<A>`: a new string for each entry) for the same inputs (round 2 low finding F-2). The cost is time: the content stack inputs take about 40 % longer. `tests/LimitsTest.php` checks less than 32 MiB |
+| Memory of the M-11 item 5 stack | Bounded by D | `markup.md` M-26 item 7 (H-71): C counts in D and runs on the stack of the main pass, so the stack has at most 256 entries. Earlier (S1, S2) the stack of C was a separate packed stack of name offsets with up to 1.7 million entries (17 MiB for 5 MiB of C; `src/OffsetStack.php`, removed in S3). The copy of C for its tokenizer remains: it is at most 5 MiB |
+| State of the pass of M-11 item 8 | In place, restored at the end | C closes every element it opens (item 5), so the stack is as before. Only D and the dirty mark of the `noscript` element change; the parser saves and restores both (DL-044 c). No copy of the stack, so the cost is O(tokens of C) |
 | Key of the name index | xxh3 with a random secret from `random_bytes()`, new for each parse | `hash` and `random` are always present in PHP 8.3, so there is no new dependency. SipHash (`sodium_crypto_shorthash()`) is faster (0.10 µs against 0.15 µs) but needs the optional `sodium` extension. |
 
 ## Related

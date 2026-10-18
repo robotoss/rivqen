@@ -14,7 +14,8 @@ namespace Rivqen\Tools\RqpMarkup;
  * the depth counter D of M-26. Work per token is O(1), except end tags,
  * whose cost is paid by the elements they pop (each element is pushed once
  * and popped once). The `noscript` check (M-11) tokenizes each `noscript`
- * content once more. Total time is linear in the input size.
+ * content once more and runs the rules of the main pass on its tokens.
+ * Total time is linear in the input size.
  *
  * Every element on the token stack holds at least 1 unit of D: its push
  * adds 1, and only the exact pop of that element (M-26 item 4) gives units
@@ -30,8 +31,8 @@ namespace Rivqen\Tools\RqpMarkup;
  *   chain of constant keys.
  * - The name index of M-05 step 3 ($byName) uses nameKey(): the name and a
  *   keyed hash of it with a random key for each parse.
- * - The stack of the `noscript` content (M-11 item 5) is an OffsetStack of
- *   name offsets (no keys): an end tag compares only with its top.
+ * - The `noscript` content (M-11) uses the token stack of the main pass: an
+ *   end tag compares only with its top (or, for the region root, one search).
  * - Block ids ($ids) are at most MAX_BLOCKS (M-26), in [a-z0-9_-] (M-15).
  */
 final class Parser
@@ -198,26 +199,35 @@ final class Parser
 
         while (true) {
             $token = $this->tokenizer->next();
-            switch ($token->type) {
-                case TokenType::StartTag:
-                    $this->startTag($token);
-                    break;
-                case TokenType::EndTag:
-                    $this->endTag($token);
-                    break;
-                case TokenType::Comment:
-                    $this->comment();
-                    break;
-                case TokenType::Cdata:
-                    $this->cdata($token);
-                    break;
-                case TokenType::Doctype:
-                    $this->doctype();
-                    break;
-                case TokenType::Eof:
-                    $this->eof();
-                    return $this->blocks;
+            if ($token->type === TokenType::Eof) {
+                $this->eof();
+                return $this->blocks;
             }
+            $this->handle($token);
+        }
+    }
+
+    /** One token that is not EOF, by the rules of the main pass. */
+    private function handle(Token $token): void
+    {
+        switch ($token->type) {
+            case TokenType::StartTag:
+                $this->startTag($token);
+                break;
+            case TokenType::EndTag:
+                $this->endTag($token);
+                break;
+            case TokenType::Comment:
+                $this->comment();
+                break;
+            case TokenType::Cdata:
+                $this->cdata($token);
+                break;
+            case TokenType::Doctype:
+                $this->doctype();
+                break;
+            case TokenType::Eof:
+                break;
         }
     }
 
@@ -473,15 +483,22 @@ final class Parser
         $this->switchState($name, $token->end);
     }
 
-    /** M-22 and M-24 for a start tag in the content of an html block. */
+    /** M-22 and M-24 for a start tag in the content of an html block (M-22 item 5 in a foreign region). */
     private function contentStartTag(Token $token, string $blockName): void
     {
         $name = $token->name;
+        if ($this->region !== null) {
+            // M-22 item 5 (H-73). M-24 is for start tags in HTML context only.
+            if (!isset(Names::FOREIGN_ALLOWED[$name])) {
+                throw new MarkupError(ErrorCode::Structure, 'M-22');
+            }
+            return;
+        }
         if (isset(Names::FORBIDDEN_CONTENT[$name])) {
             throw new MarkupError(ErrorCode::Structure, 'M-22');
         }
         $void = isset(Names::VOID[$name]);
-        if ($token->selfClosing && !$void) {
+        if ($token->selfClosing && !$void && $name !== 'svg' && $name !== 'math') {
             throw new MarkupError(ErrorCode::Structure, 'M-22');
         }
         // Item k: in table context the WHATWG parser foster-parents every
@@ -578,7 +595,10 @@ final class Parser
             if (!$foreign && isset(Names::GUARDED[$crossed]) && !($tablePartsOk && isset(Names::TABLE_PART[$crossed]))) {
                 throw new MarkupError(ErrorCode::Structure, 'M-06'); // item 1
             }
-            if ($foreign || isset(Names::SPECIAL[$crossed])) {
+            // M-06 item 4 (a), H-75: the end tag of the region root crosses
+            // foreign elements and sets no mark. (Item 2 is not affected: the
+            // name of a region root is not in FORMATTING.)
+            if (($foreign && $match !== $this->region) || (!$foreign && isset(Names::SPECIAL[$crossed]))) {
                 $crossesSpecial = true;
             }
             if (($flags & self::MARKED) !== 0) {
@@ -613,17 +633,35 @@ final class Parser
     private function contentEndTag(Token $token): void
     {
         $name = $token->name;
-        if (isset(Names::VOID[$name])) {
-            throw new MarkupError(ErrorCode::Structure, 'M-22');
+        if ($this->region === null && isset(Names::VOID[$name])) {
+            throw new MarkupError(ErrorCode::Structure, 'M-22'); // item 4
         }
         $top = count($this->names) - 1;
         if ($this->names[$top] !== $name) {
-            throw new MarkupError(ErrorCode::Structure, 'M-23');
+            // H-75: in a region, the end tag of the region root closes the region.
+            if ($this->region === null || $this->nearestIndex($name, $this->region) !== $this->region) {
+                throw new MarkupError(ErrorCode::Structure, 'M-23');
+            }
+            $this->endTagPop($this->region, $name);
+            return;
         }
         if ($top === $this->blockIndex) {
             $this->endBlock($token->start);
         }
         $this->endTagPop($top, $name);
+    }
+
+    /**
+     * Stack index of the nearest element with $name, searching down from the
+     * top to $floor; $floor - 1 when there is none. Cost: O(elements above).
+     */
+    private function nearestIndex(string $name, int $floor): int
+    {
+        $i = count($this->names) - 1;
+        while ($i >= $floor && $this->names[$i] !== $name) {
+            $i--;
+        }
+        return $i;
     }
 
     private function endBlock(int $end): void
@@ -658,85 +696,102 @@ final class Parser
     // ----------------------------------------------------------------------
 
     /**
-     * Tokenize the `noscript` content C followed by `</noscript>` alone, from
-     * the data state, in HTML context (M-11).
+     * M-11: check the `noscript` content C. The tokens of C, followed by
+     * `</noscript>` alone, come from a tokenizer in the data state, in HTML
+     * context.
      *
-     * Item 5 (H-27): C is balanced. $open is the stack of C. C is not
-     * counted in D (M-26 item 7), so the stack is bounded only by the size
-     * of C: each start tag adds at most one entry and has at least 3 bytes.
-     * An entry is the offset of the raw tag name in $c (4 bytes, OffsetStack);
-     * the name is normalized again only for the comparison with an end tag.
-     * There are no name keys (see the class comment).
+     * Item 8 (H-71): the tokens run through the rules of the main pass, on the
+     * token stack of the main pass. The `noscript` element is the current node
+     * at the start. By item 5, C closes every element that it opens, so the
+     * pass leaves the stack as it found it. The pass changes only D and the
+     * dirty mark of the `noscript` element (a region root end tag makes the
+     * new current node dirty). Both are restored at the end (DL-044 c), so the
+     * main pass continues as without C. Items 2 to 4 and 6 to 9 are checks on
+     * each tag before the main rules; item 5 (balance) is a check on each end
+     * tag. All of them are O(1) per token. The stack of C is part of the main
+     * stack, so D <= MAX_DEPTH bounds its size (M-26 item 7).
      *
-     * Item 6 (H-38): $tables is the number of `table` elements on the stack
-     * of C. A TABLE_PART or `col` start tag in C needs one.
+     * Item 6 (H-38): the number of `table` elements above the `noscript`
+     * element is `open[TABLE] - $tablesBefore`.
      */
     private function checkNoscript(int $start, int $contentEnd): void
     {
         $this->noscriptStart = null;
         $length = $contentEnd - $start;
         $c = substr($this->input, $start, $length) . '</noscript>';
-        $sub = new Tokenizer($c);
-        $open = new OffsetStack();
-        $tables = 0;
+        $noscript = count($this->names) - 1;
+        $depth = $this->depth;
+        $flags = $this->flags[$noscript];
+        $tablesBefore = $this->open[self::TABLE];
+        $outer = $this->tokenizer;
+        $this->tokenizer = new Tokenizer($c);
         while (true) {
-            $token = $sub->next();
+            $token = $this->tokenizer->next();
             if ($token->type === TokenType::Eof) {
                 throw new MarkupError(ErrorCode::Structure, 'M-11');
             }
             if ($token->type === TokenType::EndTag) {
                 if ($token->name === 'noscript') {
                     // Item 1, and item 5: no element of C is open at the end of C.
-                    if ($token->start !== $length || $open->count() !== 0) {
+                    if ($token->start !== $length || count($this->names) - 1 !== $noscript) {
                         throw new MarkupError(ErrorCode::Structure, 'M-11');
                     }
-                    return;
+                    break;
                 }
-                // Item 5: an end tag closes the last open element of C.
-                $top = $open->pop();
-                if ($top === null || self::nameAt($c, $top) !== $token->name) {
-                    throw new MarkupError(ErrorCode::Structure, 'M-11');
-                }
-                if ($token->name === 'table') {
-                    $tables--;
-                }
-                continue;
-            }
-            if ($token->type !== TokenType::StartTag) {
-                continue;
-            }
-            // M-13 applies also in C (edge case E8, human decision H-22): a
-            // reader with scripting disabled sees this `script` as an element.
-            self::checkReserved($token);
-            $name = $token->name;
-            if ($token->attribute(self::BLOCK_ATTR) !== null || isset(Names::NOSCRIPT_FORBIDDEN[$name])) {
-                throw new MarkupError(ErrorCode::Structure, 'M-11');
-            }
-            // Item 6: a table part in C needs a table of C (also `col`, which
-            // is not pushed).
-            if ((isset(Names::TABLE_PART[$name]) || $name === 'col') && $tables === 0) {
-                throw new MarkupError(ErrorCode::Structure, 'M-11');
-            }
-            // M-05 item 1 pushes every name that is not in VOID. Item 3 has
-            // already rejected `svg` and `math`. A start tag starts with `<`,
-            // so its raw name starts at the next byte.
-            if (!isset(Names::VOID[$name])) {
-                $open->push($token->start + 1);
-                if ($name === 'table') {
-                    $tables++;
-                }
-            }
-            $state = Names::TEXT[$name] ?? null;
-            if ($state !== null) {
-                $sub->switchTo($state, $name);
+                $this->noscriptEndTag($token, $noscript);
+            } elseif ($token->type === TokenType::StartTag) {
+                $this->noscriptStartTag($token, $this->open[self::TABLE] - $tablesBefore);
+            } else {
+                $this->handle($token);
             }
         }
+        $this->tokenizer = $outer;
+        $this->depth = $depth;
+        $this->flags[$noscript] = $flags;
     }
 
-    /** The name of the start tag whose raw name starts at $offset of $c (as the tokenizer gives it). */
-    private static function nameAt(string $c, int $offset): string
+    /** M-11 items 2, 3, 4, 6, 7 and 9 for a start tag of C, then the main rules (item 8). */
+    private function noscriptStartTag(Token $token, int $tables): void
     {
-        return Tokenizer::normalizeName(substr($c, $offset, Tokenizer::tagNameLength($c, $offset)));
+        // M-13 applies also in C (edge case E8, human decision H-22): a
+        // reader with scripting disabled sees this `script` as an element.
+        self::checkReserved($token);
+        $name = $token->name;
+        if ($token->attribute(self::BLOCK_ATTR) !== null
+            || isset(Names::NOSCRIPT_FORBIDDEN[$name])
+            || isset(Names::NOSCRIPT_DOCUMENT_TAGS[$name])) {
+            throw new MarkupError(ErrorCode::Structure, 'M-11');
+        }
+        // Item 6: a table part in C needs a table of C (also `col`, which is
+        // not pushed).
+        if ((isset(Names::TABLE_PART[$name]) || $name === 'col') && $tables === 0) {
+            throw new MarkupError(ErrorCode::Structure, 'M-11');
+        }
+        $this->startTag($token);
+    }
+
+    /**
+     * M-11 items 5 and 7 for an end tag of C (not `noscript`), then the main
+     * rules (item 8). The end tag closes the current node, which must be an
+     * element of C. Exception (H-75, DL-044 d): `svg` whose nearest open
+     * `svg` is the region root closes the root and every element above it.
+     */
+    private function noscriptEndTag(Token $token, int $noscript): void
+    {
+        $name = $token->name;
+        if (isset(Names::NOSCRIPT_DOCUMENT_TAGS[$name])) {
+            throw new MarkupError(ErrorCode::Structure, 'M-11');
+        }
+        $top = count($this->names) - 1;
+        if ($top <= $noscript) {
+            throw new MarkupError(ErrorCode::Structure, 'M-11'); // stray end tag
+        }
+        if ($this->names[$top] !== $name) {
+            if ($this->region === null || $this->nearestIndex($name, $noscript + 1) !== $this->region) {
+                throw new MarkupError(ErrorCode::Structure, 'M-11');
+            }
+        }
+        $this->endTag($token);
     }
 
     // ----------------------------------------------------------------------

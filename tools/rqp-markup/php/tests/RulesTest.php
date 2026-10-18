@@ -164,6 +164,7 @@ final class RulesTest extends TestCase
         // M-10
         yield 'M-10 frameset' => ['<html><frameset></frameset></html>', 'M-10', $S];
         yield 'M-10 frameset in svg (E7)' => ['<svg><frameset/></svg>', 'M-10', $S];
+        yield 'M-10.2 form in noscript content in a form (M-11 item 8)' => ['<form><noscript><form></form></noscript></form><p data-rq-block="a">x</p>', 'M-10', $S];
         yield 'M-10 frameset in math' => ['<math><frameset></frameset></math>', 'M-10', $S];
         // M-10 item 2 (H-36): a `form` start tag in HTML context while an
         // HTML `form` is on the token stack.
@@ -194,7 +195,6 @@ final class RulesTest extends TestCase
         yield 'M-11 content ends in RAWTEXT' => ['<noscript><style></noscript></style>', 'M-11', $S];
         yield 'M-11 content ends in script data' => ['<noscript><script></noscript></script>', 'M-11', $S];
         yield 'M-11 content ends in PLAINTEXT' => ['<noscript><plaintext></noscript>', 'M-11', $S];
-        yield 'M-11 svg in noscript' => ['<noscript><svg></svg></noscript>', 'M-11', $S];
         yield 'M-11 math in noscript' => ['<noscript><math></math></noscript>', 'M-11', $S];
         yield 'M-11 noscript in noscript' => ['<noscript><noscript></noscript>', 'M-11', $S];
         yield 'M-11 select in noscript' => ['<noscript><select></select></noscript>', 'M-11', $S];
@@ -334,8 +334,6 @@ final class RulesTest extends TestCase
         yield 'M-22.1 doctype in content' => [$P . '<!DOCTYPE html></p>', 'M-22', $S];
         yield 'M-22.2 script in content' => [$P . '<script></script></p>', 'M-22', $S];
         yield 'M-22.2 option in content' => [$P . '<option></option></p>', 'M-22', $S];
-        yield 'M-22.2 svg in content' => [$P . '<svg></svg></p>', 'M-22', $S];
-        yield 'M-22.2 self-closing svg in content' => [$P . '<svg/></p>', 'M-22', $S];
         yield 'M-22.2 meta in content' => [$P . '<meta charset="utf-8"></p>', 'M-22', $S];
         yield 'M-22.2 title in content' => ['<div data-rq-block="a"><title>t</title></div>', 'M-22', $S];
         yield 'M-22.3 self-closing span' => [$P . '<span/></p>', 'M-22', $S];
@@ -546,7 +544,6 @@ final class RulesTest extends TestCase
         yield 'M-10.2 form after a form end tag that crosses' => ['<form><span></form><form></form><p data-rq-block="a">x</p>', $A];
         yield 'M-10.2 foreign form in a form' => ['<form><svg><form></form></svg></form><p data-rq-block="a">x</p>', $A];
         yield 'M-10.2 form in a block after a form' => ['<form></form><div data-rq-block="a"><form>x</form></div>', [['a', 'html', '<form>x</form>']]];
-        yield 'M-10.2 form in noscript content in a form' => ['<form><noscript><form></form></noscript></form><p data-rq-block="a">x</p>', $A];
 
         // M-11
         yield 'M-11 iframe in noscript' => ['<noscript><iframe src="https://example.com/t"></iframe></noscript><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
@@ -564,7 +561,8 @@ final class RulesTest extends TestCase
         yield 'M-11.5 upper-case start tag, lower-case end tag' => ['<noscript><DIV><Span>x</SPAN></div></noscript><p data-rq-block="a">x</p>', $A];
         yield 'M-11.5 names end at white space, slash and greater-than' => ["<noscript><b\nclass=x><i/x><u\t></u ></i></b></noscript><p data-rq-block=\"a\">x</p>", $A];
         yield 'M-11.5 NUL in a name matches U+FFFD' => ["<noscript><a\0b></a\u{FFFD}b><c\0></c\0></noscript><p data-rq-block=\"a\">x</p>", $A];
-        yield 'M-11.5 deep balanced content' => ['<noscript>' . str_repeat('<b><i>', 3000) . str_repeat('</i></b>', 3000) . '</noscript><p data-rq-block="a">x</p>', $A];
+        yield 'M-11.5 deep balanced content' => ['<noscript>' . str_repeat('<b><i>', 100) . str_repeat('</i></b>', 100) . '</noscript><p data-rq-block="a">x</p>', $A];
+        yield 'M-11.9 svg in noscript' => ['<noscript><svg></svg></noscript><p data-rq-block="a">x</p>', $A];
         // M-11 item 6 (H-38): valid neighbors.
         yield 'M-11.6 table in noscript in a cell' => [
             '<table><tr><td><noscript><table><tr><td>x</td></tr></table></noscript><div data-rq-block="x">a<table></table>b</div></td></tr></table>',
@@ -795,9 +793,19 @@ final class RulesTest extends TestCase
             '<div data-rq-block="a">' . $b(255) . str_repeat('</b>', 255) . '</div>',
             '<div data-rq-block="a">' . $b(256) . str_repeat('</b>', 256) . '</div>',
         ];
-        yield 'push of noscript; its content is not counted (item 7)' => [
-            $div(255) . '<noscript>' . $b(300) . str_repeat('</b>', 300) . '</noscript>',
-            $div(256) . '<noscript></noscript>',
+        yield 'push of noscript' => [$div(255) . '<noscript></noscript>', $div(256) . '<noscript></noscript>'];
+        yield 'the tags of the noscript content count (item 7, H-71)' => [
+            $div(254) . '<noscript><b></b></noscript>',
+            $div(255) . '<noscript><b></b></noscript>',
+        ];
+        yield 'D is the value of the main pass after the noscript content (item 7)' => [
+            '<noscript>' . $b(255) . str_repeat('</b>', 255) . '</noscript>' . $b(256),
+            '<noscript>' . $b(255) . str_repeat('</b>', 255) . '</noscript>' . $b(257),
+        ];
+        yield 'icon crossings in the noscript content keep their units only in that pass (DL-044 c)' => [
+            '<noscript>' . str_repeat('<span><svg><path></svg></span>', 80) . '</noscript>'
+                . str_repeat('<span><svg><path></svg></span>', 80),
+            '<noscript>' . str_repeat('<span><svg><path></svg></span>', 86) . '</noscript>',
         ];
         yield 'elements that are not pushed' => [
             $div(255) . '<b><br><img><input><svg/><math/><col></b><svg><g/><rect/></svg>',

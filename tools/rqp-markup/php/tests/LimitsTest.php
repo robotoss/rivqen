@@ -26,8 +26,8 @@ use Rivqen\Tools\RqpMarkup\Result;
  * stacks of 256 elements that are opened and closed again and again (exact
  * pops give the units back) until the input has 5 MiB. A crossing keeps its
  * units, so crossings pop at most 256 elements in one document. The stack
- * of the noscript content (M-11 item 5) is not counted in D; it is bounded
- * by the input size only.
+ * of the noscript content (M-11 item 8, H-71) is the stack of the main pass,
+ * so D bounds it too.
  */
 #[Group('limits')]
 final class LimitsTest extends TestCase
@@ -35,7 +35,7 @@ final class LimitsTest extends TestCase
     private const MAX_SECONDS = 30;
     private const MAX_LIMIT_SECONDS = 2;
     private const MAX_PEAK_BYTES = 256 * 1024 * 1024;
-    /** Peak memory for 5 MiB of noscript content that only opens elements (M-11 item 5). */
+    /** Peak memory for 5 MiB of noscript content that only opens elements (M-11 item 8: the copy of C and the stop at D). */
     private const MAX_NOSCRIPT_PEAK_BYTES = 32 * 1024 * 1024;
     private const DEPTH = Parser::MAX_DEPTH;
 
@@ -173,17 +173,16 @@ final class LimitsTest extends TestCase
         yield 'implied parts once per table, many rows' => [static fn(): string => self::fill(str_repeat('<div>', $d - 5) . '<table>', '<tr><td>a</td></tr><col>', '</table>')];
         // M-06 item 4: formatting end tags above a marked element.
         yield 'formatting end tags above a marked element' => [static fn(): string => self::fill('<p><span><div></span>', '<b><i></i></b>', '</p>')];
-        // M-11 item 5: the stack of the noscript content is not bounded by D.
-        yield 'deep balanced noscript content' => [static function (): string {
-            $n = intdiv(Parser::MAX_INPUT_BYTES - 21, 9);
-            return '<noscript>' . str_repeat('<ab>', $n) . str_repeat('</ab>', $n) . '</noscript>';
-        }];
+        // M-11 items 5 and 8: the noscript content uses the stack of the main
+        // pass: 1 for the noscript element and 255 for C.
+        yield 'balanced noscript content at D = 256' => [static fn(): string => '<noscript>'
+            . self::fill('', str_repeat('<ab>', $d - 1) . str_repeat('</ab>', $d - 1), '') . '</noscript>'];
         // M-11 item 6: table parts in a table of the noscript content.
         yield 'table parts in noscript content' => [static fn(): string => self::fill('<noscript><table>', '<tr><td></td></tr>', '</table></noscript>')];
         // M-09 condition 2 and M-10 item 2 are O(1) for each start tag.
         yield 'rows in a table and forms in sequence' => [static fn(): string => self::fill('<table>', '<tr><td><form></form></td></tr>', '</table>')];
-        yield 'deep noscript content with names with one hash' => [static fn(): string => '<noscript>'
-            . self::nameStacks(self::COLLIDING, 71_000, Parser::MAX_INPUT_BYTES - 21) . '</noscript>'];
+        yield 'noscript content with names with one hash at D = 256' => [static fn(): string => '<noscript>'
+            . self::nameStacks(self::COLLIDING, $d - 1, Parser::MAX_INPUT_BYTES - 21) . '</noscript>'];
         // M-24 item j keeps one index stack of the lists and list items in
         // the content: the block element and 254 list elements.
         yield 'nested lists of depth 255 in blocks' => [static fn(): string => self::blocks(str_repeat('<ul><li>', 127) . str_repeat('</li></ul>', 127))];
@@ -221,6 +220,13 @@ final class LimitsTest extends TestCase
             }
             return implode('', $parts);
         }];
+        // M-26 item 7 (H-71): the tags of the noscript content count.
+        yield 'deep balanced noscript content' => [static function (): string {
+            $n = intdiv(Parser::MAX_INPUT_BYTES - 21, 9);
+            return '<noscript>' . str_repeat('<ab>', $n) . str_repeat('</ab>', $n) . '</noscript>';
+        }];
+        yield 'deep noscript content with names with one hash' => [static fn(): string => '<noscript>'
+            . self::nameStacks(self::COLLIDING, 71_000, Parser::MAX_INPUT_BYTES - 21) . '</noscript>'];
         yield 'deep nesting then matching end tags' => [static fn(): string => str_repeat('<b>', 740_000) . str_repeat('</b>', 740_000)];
         yield 'deep foreign region' => [static fn(): string => self::fill('<svg>', '<g>', '</svg>')];
         yield 'deep tables' => [static fn(): string => self::fill('', '<table><tr><td>')];
@@ -272,9 +278,9 @@ final class LimitsTest extends TestCase
     }
 
     /**
-     * M-11 item 5: the stack of the noscript content is not bounded by D
-     * (M-26 item 7). Its largest size comes from content that only opens
-     * elements; the result is an M-11 error at the end of the content.
+     * M-11 item 8 (H-71): content that only opens elements stops at D = 256,
+     * also when it has no end tag. The copy of C for its tokenizer is the
+     * only memory that grows with the input.
      *
      * @return iterable<string, array{string}>
      */
@@ -282,21 +288,17 @@ final class LimitsTest extends TestCase
     {
         yield 'two-byte names' => ['<ab>'];
         yield 'one-byte names' => ['<a>'];
-        // The tokenizer makes a new lower-case string for each of these names.
         yield 'one-byte upper-case names' => ['<A>'];
         yield 'names with one hash' => ['<a~b]a~>'];
     }
 
     #[DataProvider('unbalancedNoscriptInputs')]
-    public function testUnbalancedNoscriptContentHasBoundedTimeAndMemory(string $unit): void
+    public function testUnbalancedNoscriptContentStopsAtTheDepthLimit(string $unit): void
     {
         [$result, $seconds, $peak] = self::measure(self::fill('<noscript>', $unit));
-        self::assertSame(ErrorCode::Structure, $result->error);
-        self::assertSame('M-11', $result->rule);
-        self::assertLessThan(self::MAX_SECONDS, $seconds);
-        // The stack of C has 4 bytes for each entry (OffsetStack), plus the
-        // copy of C for its tokenizer: about 17 MiB for 1.7 million entries.
-        // A list of names needs 37 MiB to 90 MiB for the same inputs.
+        self::assertSame(ErrorCode::Limit, $result->error);
+        self::assertSame('M-26', $result->rule);
+        self::assertLessThan(self::MAX_LIMIT_SECONDS, $seconds);
         self::assertLessThan(self::MAX_NOSCRIPT_PEAK_BYTES, $peak);
     }
 

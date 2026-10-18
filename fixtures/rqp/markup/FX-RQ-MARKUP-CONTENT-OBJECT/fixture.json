@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-OBJECT",
+  "description": "An object element with a param and fallback text in the content: valid markup since H-78 (the patch content rule rejects it in a patch)",
+  "rules": [
+    "M-22",
+    "M-23"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "<object data=\"/a.svg\" type=\"image/svg+xml\"><param name=\"a\" value=\"1\">Fallback</object>"
+      }
+    ]
+  }
+}

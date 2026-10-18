@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-MARKUP-SCRIPT-TYPE-CHARREF",
+  "description": "Script types with a & that M-13 item 2 allows (H-84): a & before a space or at the end, &#; and &#x; (no reference), and numeric references to ':', '~', '_' and '!' (hex with x or X, leading zeros, with and without ;)",
+  "rules": [
+    "M-13"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "a",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"a\">",
+        "content": "x"
+      }
+    ]
+  }
+}

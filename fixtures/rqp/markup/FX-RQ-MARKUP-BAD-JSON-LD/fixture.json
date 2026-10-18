@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-BAD-JSON-LD",
+  "description": "A JSON-LD block with a trailing comma (H-86: M-25 applies)",
+  "rules": [
+    "M-25"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_BAD_JSON"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-FORBIDDEN-PLAINTEXT",
+  "description": "A plaintext element in the content: M-22 keeps it (H-78); PLAINTEXT never ends, so the block has no end tag (M-20)",
+  "rules": [
+    "M-20",
+    "M-22"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

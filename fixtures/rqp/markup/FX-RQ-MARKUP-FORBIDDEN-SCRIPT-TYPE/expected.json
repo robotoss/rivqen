@@ -1,7 +1,15 @@
 {
-  "valid": false,
-  "error": "RQP_MARKUP_FORBIDDEN_ELEMENT",
-  "blocks": [],
-  "template_revision": null,
-  "page_revision": null
+  "valid": true,
+  "error": null,
+  "blocks": [
+    {
+      "id": "ld",
+      "format": "json",
+      "start": 112,
+      "end": 114,
+      "sha256": "RBNvo1WzZ4oRRq0W9-hknpT7T8If536DEMBg9hyq_4o"
+    }
+  ],
+  "template_revision": "t1.WTggj2HlV3Lk0hUCFLhZIyPFGMELPEElgbjXHy666-Y",
+  "page_revision": "r1.3hzja0-qISl2NLvzF_f3TR8aYsdE0ZgiIbm_PmDza3E"
 }

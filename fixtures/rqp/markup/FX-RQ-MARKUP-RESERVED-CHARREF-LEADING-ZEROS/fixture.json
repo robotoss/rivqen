@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-RESERVED-CHARREF-LEADING-ZEROS",
+  "description": "A script type with a decimal reference with leading zeros and without ; to A: M-13 item 2 rejects it (H-84)",
+  "rules": [
+    "M-13"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_RESERVED"
+  }
+}

@@ -88,6 +88,9 @@ node src/cli.mjs cases --cases cases/conformance-cases.json --only rust,node,jav
 # The shapes of the WP-17 S3 decisions H-71, H-73, H-74 and H-75 (fields decision and expected)
 node src/cli.mjs cases --cases cases/s3-cases.json --only rust,node,java,php
 
+# The shapes of the WP-17 S4 decisions H-78, H-84 and H-86 (fields decision and expected)
+node src/cli.mjs cases --cases cases/s4-cases.json --only rust,node,java,php
+
 # A seeded generator sweep
 TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,java,php --seed 5 --count 100000 --chunk 10000 --scripting both
 

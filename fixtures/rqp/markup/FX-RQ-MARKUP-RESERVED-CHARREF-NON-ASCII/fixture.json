@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-RESERVED-CHARREF-NON-ASCII",
+  "description": "A script type with a numeric reference to a non-ASCII character (dotless i, U+0131): the H-28 shape through a reference: M-13 item 2 rejects it (H-84)",
+  "rules": [
+    "M-13"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_RESERVED"
+  }
+}

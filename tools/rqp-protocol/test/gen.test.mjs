@@ -37,7 +37,7 @@ test('every catalog case P-01 to P-40 and C-01 to C-27 has at least one fixture'
   for (let i = 1; i <= 27; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-C${String(i).padStart(2, '0')}-`)), `C-${i}`);
 });
 
-test('context.allowlist (DL-038): default the origins of url and final_url; another shape is a defective case', () => {
+test('context.allowlist (DL-039/DL-040): default the origin of url, required for a cross-origin final_url; another shape is a defective case', () => {
   const name = 'FX-RQ-C25-REDIRECT-OFF-ALLOWLIST';
   const dir = copyFixture(name);
   const file = join(dir, name, 'case.json');
@@ -47,9 +47,8 @@ test('context.allowlist (DL-038): default the origins of url and final_url; anot
     return expectFixture(dir, name).files['expected.json'];
   };
   const { allowlist: _allowlist, ...rest } = c.context;
-  const byDefault = withContext(rest);
-  assert.deepEqual(byDefault.context.allowlist, ['https://shop.example.com', 'https://pay.example.net']);
-  assert.equal(byDefault.result.outcome, 'stored');
+  assert.throws(() => withContext(rest), (e) => e instanceof CaseError && /allowlist is required/.test(e.message));
+  assert.equal(withContext({ ...rest, allowlist: ['https://shop.example.com', 'https://pay.example.net'] }).result.outcome, 'stored');
   const { final_url: _final, ...noRedirect } = rest;
   assert.deepEqual(withContext(noRedirect).context.allowlist, ['https://shop.example.com']);
   assert.equal(withContext({ ...rest, allowlist: ['https://shop.example.com'] }).result.outcome, 'normal');

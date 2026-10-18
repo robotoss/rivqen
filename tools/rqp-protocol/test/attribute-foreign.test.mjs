@@ -64,6 +64,10 @@ test('the state changes apply again after the region is closed', () => {
   assert.equal(rule('<svg></svg><style><a onclick=x></style><i onclick=x></i>'), false);
 });
 
+test('an end tag has no attributes for the rule', () => {
+  assert.equal(rule('<b></b onclick=x>'), true);
+});
+
 test('a self-closing svg or math opens no region', () => {
   assert.equal(rule('<svg/><style><a onclick=x></style>'), true);
   assert.equal(rule('<math/><title><a onclick=x></title>'), true);
@@ -78,6 +82,7 @@ test('a stack deeper than the limit fails closed, nothing throws', () => {
   assert.equal(rule('<svg>' + '<g>'.repeat(300)), false);
   assert.equal(startTagOffsets(b('<svg>' + '<g>'.repeat(300))), null);
   assert.equal(rule('<svg>' + '<g>'.repeat(200)), true);
+  assert.equal(rule('<svg>' + '<g/>'.repeat(300) + '</svg>'), true); // self-closing elements are not open
 });
 
 // Property: for generated block content that the analysis accepts, the walk reads exactly

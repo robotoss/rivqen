@@ -137,6 +137,8 @@ test('attribute rule: in a region a title start tag opens no RCDATA state, in HT
 test('attribute rule: text-mode state changes apply again after the region closes; a self-closing svg opens none', () => {
   assert.equal(passesAttributeRule(b('<svg><g></g></svg><style><a onclick=x></style>')), true);
   assert.equal(passesAttributeRule(b('<svg/><style><a onclick=x></style>')), true);
+  assert.equal(passesAttributeRule(b('<math/><title><a onclick=x></title>')), true);
+  assert.equal(passesAttributeRule(b('<math><style><a onclick=x></style></math>')), false); // math starts a region
   assert.equal(passesAttributeRule(b('<svg></svg><style><a onclick=x></style><i onclick=x></i>')), false);
   assert.equal(passesAttributeRule(b('<svg><g><title/><g onload=x>')), false);
 });
@@ -144,5 +146,8 @@ test('attribute rule: text-mode state changes apply again after the region close
 test('attribute rule: a stack deeper than the limit fails closed', () => {
   assert.equal(passesAttributeRule(b('<svg>' + '<g>'.repeat(300))), false);
   assert.equal(passesAttributeRule(b('<svg>' + '<g>'.repeat(200))), true);
+  assert.equal(passesAttributeRule(b('<svg>' + '<g/>'.repeat(300) + '</svg>')), true); // self-closing elements are not open
+  assert.equal(passesAttributeRule(b('<i onclick=x></i onclick=x>')), false);
+  assert.equal(passesAttributeRule(b('<b></b onclick=x>')), true); // an end tag has no attributes for the rule
 });
 

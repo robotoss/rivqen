@@ -45,9 +45,6 @@ pub(crate) mod flag {
     /// `FORMATTING` (M-06 items 2 and 4)
     pub(crate) const FORMATTING: u32 = 1 << 13;
 
-    /// `FOREIGN_ALLOWED` (M-22 item 5)
-    pub(crate) const FOREIGN_ALLOWED: u32 = 1 << 14;
-
     /// `TABLE_FAMILY` = `table` and `TABLE_PART`.
     pub(crate) const TABLE_FAMILY: u32 = TABLE | TABLE_PART;
 }
@@ -159,80 +156,6 @@ pub(crate) const TABLE_PART_NAMES: &[&[u8]] = &[
     b"th",
     b"thead",
     b"tr",
-];
-
-/// `FOREIGN_ALLOWED` of `markup.md` section 2.1 (human decision H-73).
-pub(crate) const FOREIGN_ALLOWED_NAMES: &[&[u8]] = &[
-    b"svg",
-    b"g",
-    b"path",
-    b"circle",
-    b"ellipse",
-    b"line",
-    b"polyline",
-    b"polygon",
-    b"rect",
-    b"defs",
-    b"symbol",
-    b"use",
-    b"title",
-    b"desc",
-    b"lineargradient",
-    b"radialgradient",
-    b"stop",
-    b"clippath",
-    b"mask",
-    b"pattern",
-    b"marker",
-    b"text",
-    b"tspan",
-    b"filter",
-    b"feblend",
-    b"fecolormatrix",
-    b"fecomponenttransfer",
-    b"fecomposite",
-    b"fedisplacementmap",
-    b"fedropshadow",
-    b"feflood",
-    b"fefunca",
-    b"fefuncb",
-    b"fefuncg",
-    b"fefuncr",
-    b"fegaussianblur",
-    b"femerge",
-    b"femergenode",
-    b"femorphology",
-    b"feoffset",
-    b"feturbulence",
-    b"math",
-    b"mrow",
-    b"mi",
-    b"mo",
-    b"mn",
-    b"ms",
-    b"mtext",
-    b"mspace",
-    b"msub",
-    b"msup",
-    b"msubsup",
-    b"mfrac",
-    b"msqrt",
-    b"mroot",
-    b"mstyle",
-    b"munder",
-    b"mover",
-    b"munderover",
-    b"mmultiscripts",
-    b"mprescripts",
-    b"none",
-    b"mtable",
-    b"mtr",
-    b"mtd",
-    b"mpadded",
-    b"mphantom",
-    b"merror",
-    b"semantics",
-    b"annotation",
 ];
 
 /// The name sets of `markup.md` section 2.1, without the `h1`–`h6` ranges
@@ -395,28 +318,18 @@ const SETS: &[(u32, &[&[u8]], bool)] = &[
     (
         flag::FORBIDDEN_CONTENT,
         &[
-            b"base",
-            b"basefont",
-            b"bgsound",
             b"body",
-            b"embed",
             b"frame",
             b"frameset",
             b"head",
             b"html",
-            b"iframe",
-            b"link",
-            b"meta",
             b"noembed",
             b"noframes",
             b"noscript",
-            b"object",
             b"optgroup",
             b"option",
             b"plaintext",
-            b"script",
             b"select",
-            b"style",
             b"template",
             b"textarea",
             b"title",
@@ -424,7 +337,6 @@ const SETS: &[(u32, &[&[u8]], bool)] = &[
         ],
         false,
     ),
-    (flag::FOREIGN_ALLOWED, FOREIGN_ALLOWED_NAMES, false),
     (flag::HEADING, &[], true),
     (
         flag::FORMATTING,
@@ -705,44 +617,23 @@ mod tests {
         assert!(!has(b"svg", flag::FORBIDDEN_CONTENT));
         assert!(!has(b"math", flag::FORBIDDEN_CONTENT));
         assert!(has(b"title", flag::FORBIDDEN_CONTENT));
-        assert!(has(b"marquee", flag::GUARDED));
-        assert!(!has(b"span", flag::GUARDED));
-    }
-
-    #[test]
-    fn foreign_allowed_has_the_names_of_the_set_and_no_active_element() {
-        let mut table = NameTable::new();
-        assert_eq!(FOREIGN_ALLOWED_NAMES.len(), 70);
-        let mut allowed = |name: &[u8]| {
-            let id = table.intern(name);
-            table.has(id, flag::FOREIGN_ALLOWED)
-        };
+        // H-78: the patch-safety elements are not forbidden in the content.
         for name in [
-            &b"svg"[..],
-            b"path",
-            b"title",
-            b"math",
-            b"annotation",
-            b"feturbulence",
-        ] {
-            assert!(allowed(name), "{name:?}");
-        }
-        for name in [
-            &b"a"[..],
-            b"image",
-            b"feimage",
-            b"foreignobject",
-            b"animate",
-            b"set",
+            &b"base"[..],
+            b"basefont",
+            b"bgsound",
+            b"embed",
+            b"iframe",
+            b"link",
+            b"meta",
+            b"object",
             b"script",
             b"style",
-            b"textpath",
-            b"maction",
-            b"annotation-xml",
-            b"div",
         ] {
-            assert!(!allowed(name), "{name:?}");
+            assert!(!has(name, flag::FORBIDDEN_CONTENT), "{name:?}");
         }
+        assert!(has(b"marquee", flag::GUARDED));
+        assert!(!has(b"span", flag::GUARDED));
     }
 
     #[test]

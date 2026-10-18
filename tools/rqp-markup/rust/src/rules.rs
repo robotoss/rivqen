@@ -124,12 +124,64 @@ pub(crate) fn is_valid_id(id: &[u8]) -> bool {
 }
 
 /// M-13: a reserved script `type` raw value. It contains `rivqen-manifest`
-/// in any ASCII case (item 1), `&` (item 2) or a byte >= 0x80 (item 3, H-28).
+/// in any ASCII case (item 1), a `&` that item 2 rejects (H-84) or a byte
+/// >= 0x80 (item 3, H-28).
 fn is_reserved_type(value: &[u8]) -> bool {
-    value.iter().any(|&b| b == b'&' || !b.is_ascii())
+    value.iter().any(|b| !b.is_ascii())
         || value
             .windows(b"rivqen-manifest".len())
             .any(|w| w.eq_ignore_ascii_case(b"rivqen-manifest"))
+        || value
+            .iter()
+            .enumerate()
+            .filter(|&(_, &b)| b == b'&')
+            .any(|(i, _)| {
+                value
+                    .get(i.saturating_add(1)..)
+                    .is_some_and(rejects_reference)
+            })
+}
+
+/// M-13 item 2 (H-84, DL-048 a) for the bytes after one `&`: an ASCII letter
+/// (a named reference), or a numeric reference whose value is `00`..`20`, an
+/// ASCII letter or digit, `/`, `+`, `-`, `.`, or `80` or more. `&#` and `&#x`
+/// without a digit are not references. The value stops at `110000`.
+fn rejects_reference(after: &[u8]) -> bool {
+    const CAP: u32 = 0x0011_0000;
+    let Some((&first, rest)) = after.split_first() else {
+        return false;
+    };
+    if first.is_ascii_alphabetic() {
+        return true;
+    }
+    if first != b'#' {
+        return false;
+    }
+    let (radix, digits) = match rest.split_first() {
+        Some((b'x' | b'X', hex)) => (16, hex),
+        _ => (10, rest),
+    };
+    let mut seen = false;
+    let mut value: u32 = 0;
+    for digit in digits.iter().map_while(|&b| char::from(b).to_digit(radix)) {
+        seen = true;
+        value = value.saturating_mul(radix).saturating_add(digit).min(CAP);
+    }
+    seen && match u8::try_from(value) {
+        Ok(byte) => {
+            byte <= 0x20
+                || byte >= 0x80
+                || byte.is_ascii_alphanumeric()
+                || matches!(byte, b'/' | b'+' | b'-' | b'.')
+        }
+        Err(_) => true,
+    }
+}
+
+/// M-16 (H-86): the `type` raw value of a `json` block. Exact and
+/// case-sensitive, without white space or parameters.
+fn is_json_type(value: &[u8]) -> bool {
+    value == b"application/json" || value == b"application/ld+json"
 }
 
 /// The end tag after the content C of a `noscript` element (M-11).
@@ -528,7 +580,7 @@ impl Pass<'_> {
             return Err(MarkupError::new(ErrorCode::InvalidId, "M-15"));
         }
         let json_type = match tag.type_attr {
-            Some(value) => slice(src, value)? == b"application/json",
+            Some(value) => is_json_type(slice(src, value)?),
             None => false,
         };
         let kind = if foreign {
@@ -580,7 +632,7 @@ impl Pass<'_> {
 
     /// M-22 and M-24 for a start tag in the content of a markup block.
     /// `foreign` is true for a start tag in a foreign region of the content:
-    /// M-22 item 5 applies there, and items 2 to 4 and M-24 do not (H-73).
+    /// only M-07 and M-23 apply there (H-73, H-78), not M-22 and M-24.
     fn content_start(
         &self,
         tag: &Tag,
@@ -591,11 +643,7 @@ impl Pass<'_> {
         use Known::{A, Button, Col, Colgroup, Dd, Dl, Dt, H1, H2, H3, H4, H5, H6, Li, Menu};
         use Known::{Nobr, Ol, P, Rb, Rp, Rt, Rtc, Ruby, Span, Table, Tbody, Tfoot, Thead, Tr, Ul};
         if foreign {
-            return if self.names.has(name, flag::FOREIGN_ALLOWED) {
-                Ok(())
-            } else {
-                Err(structure("M-22"))
-            };
+            return Ok(());
         }
         let region_root = is_any(name, &[Known::Svg, Known::Math]);
         if self.names.has(name, flag::FORBIDDEN_CONTENT)

@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-MAIN-TABLE-IN-TABLE",
+  "description": "A table start tag in noscript content C while the noscript element is in a table: F is the outer table and the noscript element is the current node, so item 8 runs M-09 condition 2 on C (H-71: invalid)",
+  "rules": [
+    "M-09",
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

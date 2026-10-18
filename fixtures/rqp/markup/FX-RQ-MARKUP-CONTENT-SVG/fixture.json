@@ -1,11 +1,18 @@
 {
   "id": "FX-RQ-MARKUP-CONTENT-SVG",
-  "description": "An svg element in the content",
+  "description": "An svg element in the content (H-73: valid)",
   "rules": [
     "M-22"
   ],
   "expect": {
-    "valid": false,
-    "error": "RQP_MARKUP_STRUCTURE"
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "<svg></svg>"
+      }
+    ]
   }
 }

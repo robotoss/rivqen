@@ -238,40 +238,54 @@ _VOID = {b"br", b"col", b"img", b"input", b"hr", b"meta", b"link"}
 
 
 def max_depth_counter(data: bytes) -> int:
-    """Largest D of markup.md M-26 for the simple recipe inputs (tags only, HTML context,
-    no raw text except noscript). Independent of the candidates and of the cross-check tool."""
+    """Largest D of markup.md M-26 for the simple recipe inputs (tags only, no raw text).
+    Independent of the candidates and of the cross-check tool. Foreign elements are pushed like
+    HTML elements (M-05 item 2: the recipes have no self-closing tags). The tags of the noscript
+    content C count as main-pass tags (M-11 item 8, M-26 item 7; H-71); at the noscript end tag the
+    main pass continues with D and the token stack that it had after the noscript start tag."""
     stack: list[dict] = []
     d = best = 0
     pos = 0
+    saved: tuple[int, int, bool] | None = None  # D, stack size and dirty flag after <noscript>
     while True:
         m = _TAG.search(data, pos)
         if m is None:
             return best
+        if m.group(1) == b"/" and m.group(2) == b"noscript" and saved is not None:
+            d, size, dirty = saved
+            del stack[size:]
+            stack[-1]["dirty"] = dirty
+            saved = None
+        best, d = _depth_step(stack, m, d, best)
+        if m.group(1) == b"" and m.group(2) == b"noscript":
+            saved = (d, len(stack), stack[-1]["dirty"])
         pos = m.end()
-        end, name = m.group(1) == b"/", m.group(2)
-        if not end:
-            f = next((e for e in reversed(stack) if e["name"] in (b"table", b"tbody", b"tr", b"td")), None)
-            parts = {b"td": ("rowgroup", "row")} if f is not None and f["name"] == b"table" else {}
-            for part in parts.get(name, ()):
-                if part not in f["implied"]:
-                    f["implied"].add(part)
-                    d += 1
-            if name not in _VOID:
-                stack.append({"name": name, "dirty": False, "implied": set()})
+
+
+def _depth_step(stack: list[dict], m: re.Match, d: int, best: int) -> tuple[int, int]:
+    """One tag of max_depth_counter: returns the new (best, d)."""
+    end, name = m.group(1) == b"/", m.group(2)
+    if not end:
+        f = next((e for e in reversed(stack) if e["name"] in (b"table", b"tbody", b"tr", b"td")), None)
+        parts = {b"td": ("rowgroup", "row")} if f is not None and f["name"] == b"table" else {}
+        for part in parts.get(name, ()):
+            if part not in f["implied"]:
+                f["implied"].add(part)
                 d += 1
-            best = max(best, d)
-            if name == b"noscript":  # C is not part of the main pass (M-11, M-26)
-                pos = data.index(b"</noscript>", pos)
-            continue
-        idx = next((i for i in range(len(stack) - 1, -1, -1) if stack[i]["name"] == name), None)
-        if idx is None:
-            continue
-        popped = stack[idx:]
-        del stack[idx:]
-        if len(popped) == 1 and not popped[0]["dirty"] and name not in (b"html", b"body"):
-            d -= 1 + len(popped[0]["implied"])
-        elif stack:
-            stack[-1]["dirty"] = True
+        if name not in _VOID:
+            stack.append({"name": name, "dirty": False, "implied": set()})
+            d += 1
+        return max(best, d), d
+    idx = next((i for i in range(len(stack) - 1, -1, -1) if stack[i]["name"] == name), None)
+    if idx is None:
+        return best, d
+    popped = stack[idx:]
+    del stack[idx:]
+    if len(popped) == 1 and not popped[0]["dirty"] and name not in (b"html", b"body"):
+        d -= 1 + len(popped[0]["implied"])
+    elif stack:
+        stack[-1]["dirty"] = True
+    return best, d
 
 
 class DepthRecipeTest(unittest.TestCase):
@@ -295,9 +309,31 @@ class DepthRecipeTest(unittest.TestCase):
     def test_mixed_shapes(self) -> None:
         self.check("FX-RQ-MARKUP-LIMIT-DEPTH-MIXED", 262)
 
-    def test_noscript_content_does_not_count(self) -> None:
-        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT", 256)
-        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ELEMENT", 257)
+    def test_noscript_content_counts(self) -> None:
+        # H-71 (M-11 item 8, M-26 item 7): the tags of C count; before H-71 the first recipe was valid (D 256).
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT", 556)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ELEMENT", 557)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-CONTENT-256", 256)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-CONTENT-257", 257)
+
+    def test_noscript_content_keeps_icon_units_only_in_its_pass(self) -> None:
+        # H-71 with H-75: each icon in C adds 2 in the pass of item 8; after </noscript> the main
+        # pass has D as before C, so the block after the noscript element sees 254, not 257.
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ICON-RESTORE", 256)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ICONS-127", 255)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ICONS", 257)
+
+    def test_foreign_region_in_block_content(self) -> None:
+        # H-73: an svg subtree in the content of a block; its pushes count.
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-CONTENT-FOREIGN-256", 256)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-CONTENT-FOREIGN-257", 257)
+        recipe = gen.GENERATED["FX-RQ-MARKUP-LIMIT-DEPTH-CONTENT-FOREIGN-256"]
+        self.assertIn(recipe["content.html"](), recipe["input.html"]())
+
+    def test_icon_crossing_keeps_its_units(self) -> None:
+        # H-75 removes the mark of the icon crossing, not its units: each repetition adds 3.
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-ICON-85", 256)
+        self.check("FX-RQ-MARKUP-LIMIT-DEPTH-ICON", 259)
 
     def test_structure_rule_depth_inputs_keep_d_small(self) -> None:
         # H-36, H-37: the tree builder keeps one element per unit open, but every pop is exact, so D

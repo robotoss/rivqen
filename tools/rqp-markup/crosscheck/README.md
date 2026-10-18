@@ -20,16 +20,17 @@ When the candidate says **valid**, these must be true. Else the tool reports a f
 | `start` equals the end of the start tag, and `end` equals the start of an explicit end tag (UTF-8 byte offsets) | `parse5-<view>-blocks` |
 | The tree has no `script` element whose `type` contains `rivqen-manifest` (case-insensitive, after character reference decoding; also after Unicode upper-case mapping, so `ı` and `ſ` count as `i` and `s`, `markup.md` M-13 item 3) | `parse5-<view>-manifest` |
 | The depth claim of `markup.md` M-26 holds after every token (scripting enabled): the WHATWG stack has at most D + 2 elements, each open element has a DOM depth of at most D + 2, each element that the tree builder closes at once at most D + 3 | `depth-invariant` |
+| With the view `disabled`: the same claim in the scripting-disabled tree. The counter runs on the tokens of the `noscript` content C as they come (the pass of `markup.md` M-11 item 8, H-71), and after the end tag `noscript` it continues with the main-pass state | `depth-invariant-disabled` |
 | With `--expected` only: the document has none of the rule classes below (the golden fixtures implement the rules of the security review) | `new-rule` |
 
-`src/depth.mjs` computes the depth counter D of M-26 from the parse5 tokens (a `Parser` subclass that sees each tokenizer token once), and it classifies each document by the rules of the security review:
+`src/depth.mjs` computes the depth counter D of M-26 from the parse5 tokens (a `Parser` subclass that sees each tokenizer token once), and it classifies each document by the rules of the security review. The counter follows H-75: the end tag of the region root (the `svg` or `math` element pushed in HTML context) sets no special-crossed mark for its crossing. For the `noscript` content C, `checkNoscriptContent` also runs the main-pass counter on a copy (M-11 item 8, H-71), so the classes below and D come also from the tokens of C, with the foreign region of C (item 9, H-74):
 
 | Class | Rule | Shape |
 |---|---|---|
 | `M-06-formatting` | M-06 item 2 (H-26) | A formatting end tag crosses a special or foreign element |
 | `M-06-formatting-marked` | M-06 item 4 (H-32) | A formatting end tag pops an element with the special-crossed mark |
 | `M-05-stray-table-end` | M-06 item 3 (H-30) | A `tbody`, `thead`, `tfoot`, `tr` or `table` end tag matches nothing |
-| `M-11-balance` | M-11 item 5 (H-27) | The `noscript` content is not balanced |
+| `M-11-balance` | M-11 item 5 (H-27, H-75) | The `noscript` content is not balanced (the end tag of a region root of C may cross elements of its region) |
 | `M-13-non-ascii` | M-13 item 3 (H-28) | A script `type` value has a non-ASCII character |
 | `M-26-depth` | M-26 (H-31) | D is larger than 256 |
 | `M-09-template-col` | M-09 condition 1 (H-35) | A `col` whose nearest table-family or `template` element is a `template` |
@@ -37,6 +38,7 @@ When the candidate says **valid**, these must be true. Else the tool reports a f
 | `M-10-form` | M-10 item 2 (H-36) | A `form` start tag while an HTML `form` is on the token stack |
 | `M-11-table-part` | M-11 item 6 (H-38) | A table part or `col` in the `noscript` content without a `table` opened in it |
 | `M-10-template-for` | M-10 item 3 (H-43) | A `template` start tag in HTML context with a `for` attribute (any value) |
+| `M-11-document-tag` | M-11 item 7 (H-71) | An `html`, `body` or `head` start or end tag in the `noscript` content |
 
 The classifier is a test oracle for these rules only. It does not decide validity.
 
@@ -83,6 +85,9 @@ node src/cli.mjs cases --cases cases/review2-cases.json --only rust,node,java,ph
 # The conformance study (round 3): WHATWG steps, cases with the fields step and expected
 node src/cli.mjs cases --cases cases/conformance-cases.json --only rust,node,java,php
 
+# The shapes of the WP-17 S3 decisions H-71, H-73, H-74 and H-75 (fields decision and expected)
+node src/cli.mjs cases --cases cases/s3-cases.json --only rust,node,java,php
+
 # A seeded generator sweep
 TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,java,php --seed 5 --count 100000 --chunk 10000 --scripting both
 
@@ -114,8 +119,8 @@ TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,node,java,php --seed 21 --cou
 
 - `check` prints one line for each finding, then one summary line for each candidate.
 - `check --input` also prints a line `depth:` (max D, WHATWG stack, DOM depth, rule classes).
-- `cases` prints a table: case, parse5 with scripting on, parse5 with scripting off, depth (max D, WHATWG stack, DOM depth, rule classes), one cell for each candidate (`valid <n>` or the error code, plus `DISAGREE(<views>)`; `depth` for a depth-invariant finding).
-- `sweep` prints the first findings of each kind, a table (documents, valid, valid with blocks, findings for each candidate), the number of documents in each rule class, one line for each finding kind (findings without a rule class, findings that only the open question explains, findings by class), the depth invariant line (documents with a violation, and how many of them a candidate accepts), and the total for each finding kind.
+- `cases` prints a table: case, parse5 with scripting on, parse5 with scripting off, depth (max D, WHATWG stack, DOM depth, rule classes), depth with scripting off, one cell for each candidate (`valid <n>` or the error code, plus `DISAGREE(<views>)`; `depth` or `depth-disabled` for a depth-invariant finding).
+- `sweep` prints the first findings of each kind, a table (documents, valid, valid with blocks, findings for each candidate), the number of documents in each rule class, one line for each finding kind (findings without a rule class, findings that only the open question explains, findings by class), the depth invariant line (documents with a violation, and how many of them a candidate accepts; a second line for the scripting-disabled view when it is checked), and the total for each finding kind.
 
 | Exit code | Meaning |
 |---|---|
@@ -158,7 +163,7 @@ Run `node --test` in this directory. The tests use a fake candidate (`test-suppo
 |---|---|
 | `test/utf8.test.mjs` | Strict UTF-8, BOM, UTF-16 to UTF-8 offsets |
 | `test/view.test.mjs` | parse5 view: byte offsets (non-BMP, CR LF, BOM), implied ends, template and foreign content, manifests (also Unicode look-alikes), scripting views, limits |
-| `test/depth.test.mjs` | Depth counter D (pushes, exact pops, dirty mark, implied parts, `noscript`), the invariant on the review shapes, the rule classes |
+| `test/depth.test.mjs` | Depth counter D (pushes, exact pops, dirty mark, implied parts, `noscript` content in D), the invariant on the review shapes and in the scripting-disabled view, the rule classes, the pass on C (H-71), the foreign region of C (H-74), the crossing of the region root (H-75) |
 | `test/compare.test.mjs` | Each kind of disagreement, result shapes, candidate comparison |
 | `test/generator.test.mjs` | Deterministic PRNG (known answer), bounded documents, coverage of the needed shapes |
 | `test/cli.test.mjs` | Commands, options, exit codes, saved findings, and that the output never contains document text |

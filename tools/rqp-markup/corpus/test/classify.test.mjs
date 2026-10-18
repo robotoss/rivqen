@@ -49,7 +49,10 @@ test("document rules with items", () => {
   assert.deepEqual(Object.keys(doc("<table><td></tbody>").classes), ["M-06.3-row"]);
   assert.deepEqual(Object.keys(doc("<div></table>").classes), ["M-06.3-table"]);
   assert.deepEqual(Object.keys(doc("<a><span><div>a</span></a>").classes), ["M-06.4-special"]);
-  assert.deepEqual(Object.keys(doc('<a href="#"><svg><path d="M0"></svg></a>').classes), ["M-06.4-foreign"]);
+  // H-75: the end tag of the region root sets no mark; an inner crossing in the region does.
+  assert.deepEqual(Object.keys(doc('<a href="#"><svg><path d="M0"></svg></a>').classes), []);
+  assert.deepEqual(Object.keys(doc('<a href="#"><svg><g><path d="M0"></g></svg></a>').classes), ["M-06.4-foreign"]);
+  assert.deepEqual(Object.keys(doc('<a href="#"><svg><svg><path d="M0"></svg></svg></a>').classes), ["M-06.4-foreign"]);
   assert.deepEqual(Object.keys(doc("<svg><div></div></svg>").classes), ["M-07.1"]);
   assert.deepEqual(Object.keys(doc("<svg></p></svg>").classes), ["M-07.2"]);
   // An end tag in the region that matches an element below the region (also crosses svg: M-06.1).
@@ -61,7 +64,7 @@ test("document rules with items", () => {
   assert.deepEqual(Object.keys(doc("<table><tr><td>a<td>b</td></tr></table>").classes), ["M-09"]);
   assert.deepEqual(Object.keys(doc("<frameset>").classes), ["M-10"]);
   assert.deepEqual(Object.keys(doc("<noscript><img src=\"a</noscript>").classes), ["M-11.1"]);
-  assert.deepEqual(Object.keys(doc("<noscript><svg></svg></noscript>").classes), ["M-11.3"]);
+  assert.deepEqual(Object.keys(doc("<noscript><math></math></noscript>").classes), ["M-11.3"]);
   assert.deepEqual(Object.keys(doc('<noscript><script type="a&b"></script></noscript>').classes), ["M-11.4"]);
   assert.deepEqual(Object.keys(doc("<noscript><button></noscript>").classes), ["M-11.5-other"]);
   assert.deepEqual(Object.keys(doc("<noscript><p>a<li>b</noscript>").classes), ["M-11.5-pli"]);
@@ -110,11 +113,81 @@ test("rules of review round 2 and H-43 (classes from depth.mjs, details from the
   assert.deepEqual(cls('<template for="p"></template>'), { "M-10.3": 1 });
   assert.deepEqual(cls("<template FOR></template>"), { "M-10.3": 1 });
   assert.deepEqual(cls('<svg><template for="p"></template></svg>'), {});
+  // With H-71, M-09 also applies to the tags of C: the tr has the cell around the noscript as F.
   const cell = doc("<table><tr><td><noscript><tr></tr></noscript></td></tr></table>");
-  assert.deepEqual(cell.classes, { "M-11.6": 1 });
+  assert.deepEqual(cell.classes, { "M-09": 1, "M-11.6": 1 });
+  assert.deepEqual(cell.details["M-09"], { "<tr> in <td> in noscript": 1 });
   assert.deepEqual(cell.details["M-11.6"], { "noscript in a cell or caption": 1 });
   assert.deepEqual(cls("<noscript><table><tr><td>a</td></tr></table></noscript>"), {});
   assert.deepEqual(doc("<noscript><td>a</td></noscript>").details["M-11.6"], { "noscript elsewhere": 1 });
+});
+
+test("H-71: the rules of the main pass on the noscript content (M-11 items 7 and 8)", () => {
+  const cls = (h) => doc(h).classes;
+  const k = '<span data-rq-block="k">y<a href="2">z</a>w</span>';
+  const t16 = doc(`<object><a href="1"><noscript><table><marquee><table></table></marquee></table></noscript>x</a></object>${k}`);
+  assert.deepEqual(t16.classes, { "M-09.2": 1 });
+  assert.deepEqual(t16.details["M-09.2"], { "<marquee> in noscript": 1 });
+  assert.deepEqual(cls("<table><noscript><table></table></noscript></table>"), { "M-09.2": 1 });
+  assert.deepEqual(cls("<form><noscript><form>x</form></noscript></form>"), { "M-10.2": 1 });
+  assert.deepEqual(cls(`<a href="1"><noscript>${"<form><object><form></form></object></form>".repeat(9)}</noscript>x</a>`), { "M-10.2": 1 });
+  assert.deepEqual(cls("<noscript><table><caption><td>a</td></caption></table></noscript>"), { "M-09": 1 });
+  assert.deepEqual(cls("<noscript><![CDATA[a>b]]></noscript>"), { "M-12": 1 });
+  assert.deepEqual(cls("<noscript><body></body></noscript>"), { "M-11.7": 2 });
+  assert.deepEqual(doc('<noscript><html lang="en"></html></noscript>').details["M-11.7"], { "<html>": 1, "</html>": 1 });
+  const deep = doc(`${"<div>".repeat(156)}<noscript>${"<span>".repeat(100)}x${"</span>".repeat(100)}</noscript>`);
+  assert.deepEqual(deep.classes, { "M-26-noscript": 1 });
+  assert.deepEqual(cls(`${"<div>".repeat(155)}<noscript>${"<span>".repeat(100)}x${"</span>".repeat(100)}</noscript>`), {});
+  // Controls: the same tags without the elements around the noscript element.
+  assert.deepEqual(cls("<form></form><noscript><form>x</form><table><tr><td>t</td></tr></table></noscript>"), {});
+  assert.deepEqual(cls("<table><tr><td><noscript><table></table></noscript></td></tr></table>"), {});
+});
+
+test("H-71: M-09 on the table parts of C, with F in C or around the noscript element", () => {
+  const cls = (h) => doc(h).classes;
+  assert.deepEqual(cls("<noscript><table><tr><td><col></td></tr></table></noscript>"), { "M-09": 1 });
+  assert.deepEqual(cls("<noscript><table><caption><tr></tr></caption></table></noscript>"), { "M-09": 1 });
+  assert.deepEqual(cls("<noscript><table><tr><caption></caption></tr></table></noscript>"), { "M-09": 1 });
+  assert.deepEqual(cls("<noscript><table><tbody><th>a</th></tbody><colgroup><col></colgroup></table></noscript>"), {});
+  assert.deepEqual(cls("<noscript><table><thead><tr><td>a</td></tr></thead><tfoot><tr><th>b</th></tr></tfoot><tr><td>c</td></tr></table></noscript>"), {});
+  assert.deepEqual(cls("<noscript><table><tbody><tr><td><tr></tr></td></tr></tbody></table></noscript>"), { "M-09": 1 });
+  // A template in C stops the search for F (M-09); the template itself is M-11 item 3.
+  assert.deepEqual(cls("<table><tr><td><noscript><template><tr></tr></template></noscript></td></tr></table>"), { "M-11.3": 1, "M-11.6": 1 });
+});
+
+test("H-74: M-07 and M-12 in the foreign region of C, and the end of the region", () => {
+  const cls = (h) => doc(h).classes;
+  // After the integration point and after the region, C is in the right context again.
+  assert.deepEqual(cls("<noscript><svg><title>t</title><g></g></svg><p>x</p></noscript>"), {});
+  assert.deepEqual(cls("<noscript><svg><style/></svg></noscript>"), { "M-07.4": 1 });
+  assert.deepEqual(cls("<noscript><svg><desc><!--c--></desc></svg></noscript>"), { "M-07.3": 1 });
+  assert.deepEqual(cls("<noscript><svg><desc><!DOCTYPE html></desc></svg></noscript>"), { "M-07.3": 1 });
+  assert.deepEqual(cls("<noscript><!-- a > b --></noscript>"), {});
+  const out = doc("<noscript><div><svg></div></noscript>");
+  assert.deepEqual(Object.keys(out.classes), ["M-07.2", "M-11.5-other"]);
+  // math in C: M-11 item 3; its end tag closes the region like the end tag of an svg root.
+  assert.deepEqual(cls("<noscript><math><mi>x</mi><mrow><mn>1</mn></math></noscript>"), { "M-11.3": 1 });
+});
+
+test("M-11 item 5: only unclosed p or li, also with a foreign region and void elements in C", () => {
+  const cls = (h) => doc(h).classes;
+  assert.deepEqual(cls('<noscript><p><svg><path d="M0"></svg>x</noscript>'), { "M-11.5-pli": 1 });
+  assert.deepEqual(cls('<noscript><p><svg><path d="M0"></svg><i><b><br></b></i></noscript>'), { "M-11.5-pli": 1 });
+  assert.deepEqual(cls("<noscript><p><br><svg/></noscript>"), { "M-11.5-pli": 1 });
+});
+
+test("H-74 and H-75: svg in the noscript content (M-11 items 5 and 9)", () => {
+  const cls = (h) => doc(h).classes;
+  assert.deepEqual(cls('<noscript><img src="p.gif"><svg width="1"><path d="M0"></path></svg><svg/></noscript>'), {});
+  assert.deepEqual(cls('<noscript><a href="/"><svg><path d="M0"></svg>Home</a></noscript>'), {});
+  assert.deepEqual(cls('<noscript><svg><g><path d="M0"></g></svg></noscript>'), { "M-11.5-other": 1 });
+  assert.deepEqual(cls("<noscript><svg><p>x</p></svg></noscript>"), { "M-07.1": 1 });
+  // No state change in the region: the g in svg title is a tag (M-07 item 3), and the svg end tag
+  // after an svg style start tag is a tag (so M-07 item 4: the style content is text only).
+  assert.deepEqual(cls("<noscript><svg><title><g></g></title></svg></noscript>"), { "M-07.3": 2 });
+  assert.deepEqual(cls("<noscript><svg><style></svg></noscript>"), { "M-07.4": 1 });
+  assert.deepEqual(cls("<noscript><svg><tr></tr></svg></noscript>"), { "M-11.6": 1 });
+  assert.deepEqual(cls("<noscript><svg><style><![CDATA[a>b]]></style></svg></noscript>"), { "M-12": 1 });
 });
 
 test("block rules on simulated blocks", () => {
@@ -122,7 +195,20 @@ test("block rules on simulated blocks", () => {
   assert.deepEqual(all(ok), []);
   assert.deepEqual(ok.blocks.length, 1);
   assert.deepEqual(all(doc('<main data-rq-block="m"><script></script></main>', true)), ["M-22.2:script"]);
-  assert.deepEqual(all(doc('<main data-rq-block="m"><svg><path/><title>t</title></svg></main>', true)), ["M-22-foreign", "M-22.2:svg"]);
+  // H-73: svg and math in the content, with FOREIGN_ALLOWED (M-22 item 5).
+  assert.deepEqual(all(doc('<main data-rq-block="m"><svg><path/><title>t</title></svg><math><mi>x</mi></math><svg/></main>', true)), []);
+  const a = doc('<main data-rq-block="m"><svg><a href="#x"><text>t</text></a><script></script></svg></main>', true);
+  assert.deepEqual(all(a), ["M-22.5"]);
+  assert.deepEqual(a.blockRules?.details["M-22.5"], { "<a>": 1, "<script>": 1 });
+  assert.deepEqual(all(doc('<main data-rq-block="m"><svg><foreignObject>t</foreignObject><x-y.z/></svg></main>', true)), ["M-22.5"]);
+  // The tokenizer lowercases tag names: the detail has "?", not the name.
+  const odd = doc('<main data-rq-block="m"><svg><x.SECRET/></svg></main>', true);
+  assert.deepEqual(odd.blockRules?.details["M-22.5"], { "<?>": 1 });
+  assert.equal(JSON.stringify(odd).toLowerCase().includes("secret"), false);
+  // H-75 in the content: only the end tag of the region root can cross.
+  assert.deepEqual(all(doc('<main data-rq-block="m"><a href="#"><svg><path d="M0"></svg></a></main>', true)), []);
+  assert.deepEqual(all(doc('<main data-rq-block="m"><svg><g><path d="M0"></g></svg></main>', true)), ["M-23"]);
+  assert.deepEqual(all(doc('<main data-rq-block="m"><svg><path d="M0"/>', true)), ["M-20"]);
   assert.deepEqual(all(doc('<main data-rq-block="m"><span/></span></main>', true)), ["M-22.3"]);
   assert.deepEqual(all(doc('<main data-rq-block="m"><br></br></main>', true)), ["M-22.4"]);
   assert.deepEqual(all(doc('<main data-rq-block="m"><p>a</main>', true)), ["M-20", "M-23"]);

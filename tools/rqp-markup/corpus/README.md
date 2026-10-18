@@ -70,19 +70,22 @@ Classes (rule and item):
 | `M-06.1` | End tag crosses a guarded element |
 | `M-06.2` | Formatting end tag crosses a special or foreign element (H-26) |
 | `M-06.3-table`, `M-06.3-row` | Stray `</table>`; stray `</tbody>`, `</thead>`, `</tfoot>`, `</tr>` (H-30) |
-| `M-06.4-special`, `M-06.4-foreign` | Formatting end tag pops a marked element; the marks come from special crossings, or from foreign crossings only (H-32) |
+| `M-06.4-special`, `M-06.4-foreign` | Formatting end tag pops a marked element; the marks come from special crossings, or from foreign crossings only (H-32). The crossing by the end tag of a region root sets no mark (H-75) |
 | `M-07.1` … `M-07.4` | Foreign regions |
 | `M-08`, `M-09`, `M-10`, `M-12` | Select, table parts, frameset, CDATA |
 | `M-09.1`, `M-09.2` | M-09 condition 1 (`col` in a template, H-35) and condition 2 (F is not the current node, H-37; the detail names the current node) |
 | `M-10.2`, `M-10.3` | Nested `form` (H-36); `template` with a `for` attribute (H-43) |
 | `M-11.6` | Table part or `col` in `noscript` content without a `table` of the content (H-38); the detail says if the `noscript` is in a cell or caption |
-| `M-11.1` … `M-11.4` | `noscript` content items 1 to 4 |
-| `M-11.5-pli`, `M-11.5-other` | Unbalanced `noscript` content: only unclosed `p` or `li`, or other (H-27) |
+| `M-11.1` … `M-11.4` | `noscript` content items 1 to 4; item 3 without `svg` (H-74) |
+| `M-11.5-pli`, `M-11.5-other` | Unbalanced `noscript` content: only unclosed `p` or `li`, or other (H-27). The end tag of the region root of C can cross elements of its region (H-75) |
+| `M-11.7` | An `html`, `body` or `head` tag in the `noscript` content (H-71) |
+| `M-07.*`, `M-09`, `M-09.2`, `M-10.2`, `M-12` with the detail "… in noscript" | M-11 item 8 (H-71): a rule of the main pass that fails on the tokens of the `noscript` content, with the foreign region of C (item 9, H-74) |
+| `M-26-noscript` | M-11 item 8 (H-71): D > 256 in the pass on the `noscript` content |
 | `M-13.1` … `M-13.3` | Script type items (H-28 is item 3) |
 | `M-26-dirty`, `M-26-stack` | D > 256 only through the dirty mark (the units of the stack stay ≤ 256), or also without it (H-31) |
-| `M-15` … `M-24.k` | Block rules, with `--blocks` only (simulated blocks) |
+| `M-15` … `M-24.k` | Block rules, with `--blocks` only (simulated blocks). `M-22.5`: a start tag in a foreign region of the content whose name is not in `FOREIGN_ALLOWED` (H-73); `svg` and `math` are not in `FORBIDDEN_CONTENT` |
 
-The classes `M-09.1`, `M-09.2`, `M-10.2`, `M-10.3`, `M-11.6` and `M-26-*` come from the cross-check oracle (`../crosscheck/src/depth.mjs`: `DepthCounter` and `checkNoscriptContent`), driven by the token stream of this pass. The pass adds only the details.
+The classes `M-09.1`, `M-09.2`, `M-10.2`, `M-10.3`, `M-11.6` and `M-26-*` come from the cross-check oracle (`../crosscheck/src/depth.mjs`: `DepthCounter` and `checkNoscriptContent`), driven by the token stream of this pass. The pass adds only the details. For the `noscript` content, `checkNoscriptContent` gets the main-pass counter, so these classes also come from the tokens of C (M-11 item 8). A detail that would hold a tag name from the page that does not look like a tag name (`^[a-z][a-z0-9-]{0,31}$`) has `?` instead.
 
 Not checked: M-25 (JSON) and the block limits of M-26.
 

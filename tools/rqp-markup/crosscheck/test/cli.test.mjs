@@ -9,6 +9,8 @@ import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { countByClass, depthCell, evaluateDocs, main, parseArgs, viewCell } from "../src/cli.mjs";
 import { CrosscheckError } from "../src/run.mjs";
+import { analyzeDepth } from "../src/depth.mjs";
+import { docSeed, generateDocument } from "../src/generator.mjs";
 
 const SUPPORT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "test-support");
 const TMP = mkdtempSync(path.join(os.tmpdir(), "rqp-crosscheck-test-"));
@@ -167,9 +169,9 @@ test("cases: one row per case with both parse5 views and each candidate", async 
   const r = await run(["cases", "--cases", file, "--candidates", candidatesFile("cs", ["p5", "valid0"])]);
   assert.equal(r.code, 0);
   const rows = r.out.split("\n");
-  assert.equal(rows[0], "case | parse5 (scripting on) | parse5 (scripting off) | depth | fake-p5 | fake-valid0");
-  assert.equal(rows[1], "c1 | 1 block(s) | 1 block(s) | max D 1, stack 3, depth 3 | valid 1 | valid 0 DISAGREE(enabled,disabled)");
-  assert.equal(rows[2], "c2 | 0 block(s) | 0 block(s) 1 manifest | max D 1, stack 3, depth 3 | valid 0 DISAGREE(disabled) | valid 0 DISAGREE(disabled)");
+  assert.equal(rows[0], "case | parse5 (scripting on) | parse5 (scripting off) | depth | depth (scripting off) | fake-p5 | fake-valid0");
+  assert.equal(rows[1], "c1 | 1 block(s) | 1 block(s) | max D 1, stack 3, depth 3 | max D 1, stack 3, depth 3 | valid 1 | valid 0 DISAGREE(enabled,disabled)");
+  assert.equal(rows[2], "c2 | 0 block(s) | 0 block(s) 1 manifest | max D 2, stack 3, depth 3 | max D 2, stack 3, depth 3 | valid 0 DISAGREE(disabled) | valid 0 DISAGREE(disabled)");
 });
 
 test("sweep: an agreeing candidate gives no finding and the same summary on every run", async () => {
@@ -231,6 +233,18 @@ test("evaluateDocs: a valid result for a document that breaks the depth invarian
   assert.deepEqual(evaluateDocs([doc], invalid, ["enabled"])[0].findings, []);
 });
 
+test("evaluateDocs: with the disabled view, a valid result for a document that breaks the claim there is a finding", () => {
+  // Tags in an svg integration point inside noscript content (invalid by M-07 through M-11 item 8):
+  // C is text with scripting enabled, so only the disabled view has the extra tables.
+  const doc = { name: "d", bytes: Buffer.from(`<noscript><svg><desc>${"<table><td>".repeat(3)}x</desc></svg></noscript>`) };
+  const results = new Map([["c", new Map([["d", { valid: true, error: null, blocks: [] }]])]]);
+  const [on] = evaluateDocs([doc], results, ["enabled"]);
+  assert.deepEqual([on.findings, on.depthDisabled], [[], null]);
+  const [both] = evaluateDocs([doc], results, ["enabled", "disabled"]);
+  assert.deepEqual(both.findings.map((f) => f.kind), ["depth-invariant-disabled"]);
+  assert.equal(both.cells.get("c"), "valid 0 DISAGREE(depth-disabled)");
+});
+
 test("countByClass counts each class, findings without a class, and findings of the open question only", () => {
   const m = new Map();
   countByClass(m, "k", []);
@@ -245,6 +259,22 @@ test("sweep --profile review prints the rule classes and the depth invariant lin
   assert.match(r.out, /profile=review/);
   assert.match(r.out, /documents by rule class: .*M-\d\d-/);
   assert.match(r.out, /depth invariant: \d+ document\(s\) with a violation, 0 of them valid for a candidate/);
+  assert.doesNotMatch(r.out, /scripting disabled\)/);
+  const both = await run(["sweep", "--count", "40", "--chunk", "20", "--seed", "2", "--profile", "review", "--scripting", "both", "--candidates", candidatesFile("swr2", ["p5"])]);
+  assert.match(both.out, /depth invariant \(scripting disabled\): \d+ document\(s\) with a violation, \d+ of them valid for a candidate/);
+});
+
+test("sweep --scripting both counts the documents with a violation of the claim in the disabled view", async () => {
+  // Independent count: the documents of the sweep whose scripting-disabled analysis has a violation.
+  let want = 0;
+  for (let i = 0; i < 60; i++) {
+    const text = generateDocument(docSeed(5, i), { maxTokens: 16, profile: "review2" });
+    if (analyzeDepth(Buffer.from(text, "utf8"), { scripting: false }).violations.length > 0) want++;
+  }
+  assert.ok(want > 0 && want < 60, `want ${want}`);
+  const r = await run(["sweep", "--count", "60", "--chunk", "30", "--seed", "5", "--profile", "review2", "--scripting", "both", "--keep", "0", "--candidates", candidatesFile("swd", ["valid0"])]);
+  // valid0 accepts every document, so each of them has the finding depth-invariant-disabled.
+  assert.match(r.out, new RegExp(`depth invariant \\(scripting disabled\\): ${want} document\\(s\\) with a violation, ${want} of them valid for a candidate`));
 });
 
 test("evaluateDocs and viewCell describe the parse5 view", () => {

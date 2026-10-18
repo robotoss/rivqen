@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-SVG-UNCLOSED",
+  "description": "An svg element in noscript content C that is not closed before the noscript end tag (M-11 item 5, H-74)",
+  "rules": [
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

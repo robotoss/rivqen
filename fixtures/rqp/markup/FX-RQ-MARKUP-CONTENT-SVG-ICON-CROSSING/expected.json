@@ -1,0 +1,15 @@
+{
+  "valid": true,
+  "error": null,
+  "blocks": [
+    {
+      "id": "icon",
+      "format": "html",
+      "start": 84,
+      "end": 124,
+      "sha256": "y5Zv3vvNUWtqCI-5nhNH-TshaTjOHO0VPynuA3z1AaI"
+    }
+  ],
+  "template_revision": "t1.3B4gCymOEkQXeWV93D25U_LQl0R4ilglwK5hPvm3oKA",
+  "page_revision": "r1.CuP6hwlF0sENhZ7sXqFAbT4fxaFVivg40_ZwDmNtWok"
+}

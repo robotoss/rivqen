@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-DOCUMENT-TAG-BODY",
+  "description": "A body start tag and end tag in noscript content C (M-11 item 7, H-71: invalid)",
+  "rules": [
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

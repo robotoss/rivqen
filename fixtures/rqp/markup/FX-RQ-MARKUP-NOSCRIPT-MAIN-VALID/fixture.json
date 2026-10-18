@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-MAIN-VALID",
+  "description": "noscript content C in a form in a table cell, with a div, an input, a button and its own table: the main-pass rules hold on C (H-71: valid)",
+  "rules": [
+    "M-09",
+    "M-10",
+    "M-11"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

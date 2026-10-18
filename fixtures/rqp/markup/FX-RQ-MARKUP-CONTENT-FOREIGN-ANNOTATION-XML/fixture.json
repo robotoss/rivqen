@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-FOREIGN-ANNOTATION-XML",
+  "description": "A MathML annotation-xml element with text in the content (not in FOREIGN_ALLOWED, H-73)",
+  "rules": [
+    "M-22"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

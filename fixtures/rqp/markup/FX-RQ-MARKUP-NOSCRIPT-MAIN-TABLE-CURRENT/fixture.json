@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-MAIN-TABLE-CURRENT",
+  "description": "The T-16 shape: noscript content C with a marquee between two table start tags, in an a element in an object, before a block. Item 8 runs M-09 condition 2 on C (H-71: invalid)",
+  "rules": [
+    "M-09",
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

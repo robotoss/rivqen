@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-FOREIGN-CROSSING",
+  "description": "In the content, a g end tag crosses an unclosed svg path: only the end tag of the region root can cross (M-23, H-73, H-75)",
+  "rules": [
+    "M-23"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

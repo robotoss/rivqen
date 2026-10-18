@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-SVG-BREAKOUT",
+  "description": "A p start tag inside svg in noscript content C breaks out of foreign content (M-07 item 1 through M-11 item 8, H-74)",
+  "rules": [
+    "M-07",
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

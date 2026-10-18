@@ -206,13 +206,14 @@ export function withoutCredentials(ctx, responseHeaders) {
 /**
  * Manifest-patch section 1.4, mode (H-61, H-62): the shared public partition
  * only for a manifest with mode "public", an origin that the app declares
- * public, no Cache-Control directive "private", and an explicit "public"
- * directive or a request without credentials. Else the partition of the request.
+ * public, no Cache-Control directive "private", no Set-Cookie field in the
+ * response (H-63), and an explicit "public" directive or a request without
+ * credentials. Else the partition of the request.
  */
 export function partitionFor(ctx, responseHeaders, members) {
   if (members.policy?.mode !== 'public' || ctx.public_origin !== true) return Partition.REQUEST;
   const directives = cacheDirectives(combined(responseHeaders, 'cache-control'));
-  if (directives.has('private')) return Partition.REQUEST;
+  if (directives.has('private') || has(responseHeaders, 'set-cookie')) return Partition.REQUEST;
   return directives.has('public') || withoutCredentials(ctx, responseHeaders) ? Partition.PUBLIC : Partition.REQUEST;
 }
 

@@ -599,7 +599,8 @@ test('H-69: validAllowlistEntry accepts only a string that is its own serialized
     'https://shop.example.com/catalog', 'https://faß.example', 'https://bücher.example', '*', '*.example.com', 'shop.example.com', ' https://shop.example.com',
     'https://shop.example.com ', 'https://user:pw@shop.example.com', 'https://shop.example.com?q', 'https://shop.example.com#f', 'null', 'file:///x', '', 'https://[0:0::1]'];
   for (const entry of invalid) assert.equal(validAllowlistEntry(entry), false, entry);
-  for (const entry of [null, undefined, 1, ['https://shop.example.com'], { href: 'https://shop.example.com' }]) assert.equal(validAllowlistEntry(entry), false, String(entry));
+  // Never throws: also not for a value that cannot become a string.
+  for (const entry of [null, undefined, 1, ['https://shop.example.com'], { href: 'https://shop.example.com' }, Symbol('x')]) assert.equal(validAllowlistEntry(entry), false, typeof entry);
 });
 
 // DL-040 L-3: the origin is the one of the WHATWG parse of the URL.

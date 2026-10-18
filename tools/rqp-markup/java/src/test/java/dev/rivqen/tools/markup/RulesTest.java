@@ -1221,6 +1221,67 @@ class RulesTest {
           body("<script type=\"text/javascript&#x20;\"></script>"), ErrorCode.RESERVED, "M-13");
     }
 
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "text/x&amp;y",
+          "text/a&b",
+          "text/x&A",
+          "application&#x2F;x",
+          "application&#x2f",
+          "text/&#0000065pp",
+          "text/&#X41;",
+          "text/plain&#X9",
+          "text/plain&#0;",
+          "text/plain&#32;",
+          "text/x&#48;",
+          "text/x&#43;y",
+          "application/rivqen&#45;manifest+json",
+          "text/x&#46;y",
+          "application/r&#305;vqen-manifest+json",
+          "text/x&#128;",
+          "text/x&#x110000;",
+          "text/x&#99999999999999999999999;",
+          "text/x&&a"
+        })
+    void referenceThatCanMakeAManifestTypeIsReserved(String type) {
+      // H-84 and DL-048 a: the letter after '&', or the value of a numeric reference.
+      assertInvalid(body("<script type=\"" + type + "\"></script>"), ErrorCode.RESERVED, "M-13");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "text/x-tmpl & b",
+          "text/x&#58;y",
+          "text/x&#x7E;",
+          "text/x&#33;",
+          "text/x&#x21",
+          "text/x&#;",
+          "text/x&#x;",
+          "text/x&#X;",
+          "text/x&#xg",
+          "text/x&#g",
+          "text/x&",
+          "text/x&&",
+          "text/x&1",
+          "text/x&;",
+          "text/x&#"
+        })
+    void otherAmpersandsAreNotReserved(String type) {
+      assertValid(body("<script type=\"" + type + "\"></script>" + P));
+    }
+
+    @Test
+    void referenceRuleAlsoAppliesInNoscriptContent() {
+      // M-11 item 4 uses M-13 item 2.
+      assertInvalid(
+          body("<noscript><script type=\"text/x&amp;y\"></script></noscript>" + P),
+          ErrorCode.RESERVED,
+          "M-13");
+      assertValid(body("<noscript><script type=\"text/x&#58;y\"></script></noscript>" + P));
+    }
+
     @Test
     void onlyTheFirstTypeAttributeCounts() {
       assertValid(
@@ -1388,6 +1449,19 @@ class RulesTest {
                   "<script type=\"application/json\" data-rq-block=j>{\"a\":[1,\"</p>\"]}</script>")));
     }
 
+    @Test
+    void jsonLdBlockIsAJsonBlock() {
+      // H-86: application/ld+json is a json type; M-25 applies to it.
+      assertEquals(
+          List.of("j:json:{\"@id\":1}"),
+          blocks(
+              body("<script type=\"application/ld+json\" data-rq-block=j>{\"@id\":1}</script>")));
+      assertInvalid(
+          body("<script type=\"application/ld+json\" data-rq-block=j>{</script>"),
+          ErrorCode.BAD_JSON,
+          "M-25");
+    }
+
     @ParameterizedTest
     @ValueSource(
         strings = {
@@ -1397,7 +1471,9 @@ class RulesTest {
           "<textarea data-rq-block=a>x</textarea>",
           "<template data-rq-block=a>x</template>",
           "<script data-rq-block=a>1</script>",
-          "<script type=\"application/ld+json\" data-rq-block=a>1</script>",
+          "<script type=\"Application/LD+JSON\" data-rq-block=a>1</script>",
+          "<script type=\"application/ld+json \" data-rq-block=a>1</script>",
+          "<script type=\"application/jsonld\" data-rq-block=a>1</script>",
           "<script type=\"Application/JSON\" data-rq-block=a>1</script>",
           "<script type=\"application/json \" data-rq-block=a>1</script>",
           "<script type=text/plain type=application/json data-rq-block=a>1</script>",
@@ -1553,27 +1629,17 @@ class RulesTest {
     @ParameterizedTest
     @ValueSource(
         strings = {
-          "base",
-          "basefont",
-          "bgsound",
           "body",
-          "embed",
           "frame",
           "head",
           "html",
-          "iframe",
-          "link",
-          "meta",
           "noembed",
           "noframes",
           "noscript",
-          "object",
           "optgroup",
           "option",
           "plaintext",
-          "script",
           "select",
-          "style",
           "template",
           "textarea",
           "title",
@@ -1586,6 +1652,40 @@ class RulesTest {
     @ParameterizedTest
     @ValueSource(strings = {"<span/>", "<foo/>", "<div/>"})
     void selfClosingNonVoidElement(String tag) {
+      assertStructure(body("<div data-rq-block=a>" + tag + "</div>"), "M-22");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<base href=x>",
+          "<basefont>",
+          "<bgsound src=x>",
+          "<embed src=x>",
+          "<link rel=x>",
+          "<meta name=x>",
+          "<iframe src=x></iframe>",
+          "<object data=x><param name=a></object>",
+          "<script>init()</script>",
+          "<style>p{}</style>"
+        })
+    void patchSafetyElementsAreValidMarkup(String markup) {
+      // H-78: the patch content rule rejects these in a patch; the markup rule does not.
+      String content = "x" + markup + "y";
+      assertEquals(
+          List.of("a:html:" + content), blocks(body("<div data-rq-block=a>" + content + "</div>")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"<script/>", "<style/>", "<iframe/>"})
+    void selfClosingRawTextElementIsStillInvalid(String tag) {
+      assertStructure(body("<div data-rq-block=a>" + tag + "</div>"), "M-22");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {"</embed>", "</link>", "</meta>", "</base>", "</basefont>", "</bgsound>"})
+    void endTagOfMovedVoidElement(String tag) {
       assertStructure(body("<div data-rq-block=a>" + tag + "</div>"), "M-22");
     }
 

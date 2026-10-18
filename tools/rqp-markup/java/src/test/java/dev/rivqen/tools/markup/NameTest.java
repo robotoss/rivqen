@@ -22,14 +22,10 @@ class NameTest {
           + " p param plaintext pre script search section select source style summary table tbody"
           + " td template textarea tfoot th thead title tr track ul wbr xmp";
 
-  private static final String FOREIGN_ALLOWED =
-      "svg g path circle ellipse line polyline polygon rect defs symbol use title desc"
-          + " lineargradient radialgradient stop clippath mask pattern marker text tspan filter"
-          + " feblend fecolormatrix fecomponenttransfer fecomposite fedisplacementmap fedropshadow"
-          + " feflood fefunca fefuncb fefuncg fefuncr fegaussianblur femerge femergenode"
-          + " femorphology feoffset feturbulence math mrow mi mo mn ms mtext mspace msub msup"
-          + " msubsup mfrac msqrt mroot mstyle munder mover munderover mmultiscripts mprescripts"
-          + " none mtable mtr mtd mpadded mphantom merror semantics annotation";
+  /** FORBIDDEN_CONTENT of markup.md section 2.1 (H-78). */
+  private static final String FORBIDDEN_CONTENT =
+      "body frame frameset head html noembed noframes noscript optgroup option plaintext select"
+          + " template textarea title xmp";
 
   private static final String FORMATTING = "a b big code em font i nobr s small strike strong tt u";
 
@@ -51,9 +47,9 @@ class NameTest {
   }
 
   @Test
-  void foreignAllowedIsTheListOfTheRules() {
-    assertEquals(names(FOREIGN_ALLOWED), new TreeSet<>(Name.foreignAllowedNames()));
-    assertEquals(names(FOREIGN_ALLOWED).size(), Name.foreignAllowedNames().size());
+  void forbiddenContentIsTheListOfTheRules() {
+    names(FORBIDDEN_CONTENT).forEach(n -> assertNotNull(Name.of(n), n));
+    assertEquals(names(FORBIDDEN_CONTENT), withFlag(Name.Set.FORBIDDEN_CONTENT));
   }
 
   @Test

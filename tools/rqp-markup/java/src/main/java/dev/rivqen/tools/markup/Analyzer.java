@@ -50,7 +50,11 @@ public final class Analyzer {
   static final String FORMAT_HTML = "html";
   static final String FORMAT_JSON = "json";
 
+  /** M-13 item 2: a numeric reference value is capped here (above 10FFFF). */
+  private static final int REFERENCE_CAP = 0x110000;
+
   private static final byte[] JSON_TYPE = Tokenizer.ascii("application/json");
+  private static final byte[] JSON_LD_TYPE = Tokenizer.ascii("application/ld+json");
   private static final byte[] MANIFEST = Tokenizer.ascii("rivqen-manifest");
   private static final byte[] NOSCRIPT_END = Tokenizer.ascii("</noscript>");
 
@@ -209,12 +213,8 @@ public final class Analyzer {
     Pending block = null;
     if (tok.hasBlockAttribute()) {
       block = blockStart(k, html, inContent);
-    } else if (inContent) {
-      if (html) {
-        contentStartTag(k, selfClosing);
-      } else if (!Name.foreignAllowed(raw)) {
-        throw structure("M-22"); // item 5 (H-73)
-      }
+    } else if (inContent && html) {
+      contentStartTag(k, selfClosing);
     }
     if (!html) {
       foreignStartTag(name, k, selfClosing);
@@ -316,7 +316,7 @@ public final class Analyzer {
     String format;
     if (html && Name.is(k, Name.Set.BLOCK_HTML)) {
       format = FORMAT_HTML;
-    } else if (html && k == Name.SCRIPT && typeEquals(JSON_TYPE)) {
+    } else if (html && k == Name.SCRIPT && (typeEquals(JSON_TYPE) || typeEquals(JSON_LD_TYPE))) {
       format = FORMAT_JSON;
     } else {
       throw new Reject(ErrorCode.FORBIDDEN_ELEMENT, "M-16");
@@ -796,7 +796,8 @@ public final class Analyzer {
 
   /**
    * M-13: the first {@code type} raw value of the start tag that {@code t} just returned contains
-   * {@code rivqen-manifest} (ASCII case-insensitive), '&' or a byte of 0x80 or more (H-28).
+   * {@code rivqen-manifest} (ASCII case-insensitive), a byte of 0x80 or more (H-28), or a {@code &}
+   * that item 2 rejects (H-84, {@link #rejectedReference}).
    *
    * @param in the bytes that {@code t} reads
    * @param t the tokenizer
@@ -809,7 +810,7 @@ public final class Analyzer {
     int to = t.typeValueEnd();
     for (int i = from; i < to; i++) {
       // A Java byte of 0x80 or more is negative: a byte of a non-ASCII character (item 3).
-      if (in[i] == '&' || in[i] < 0) {
+      if (in[i] < 0 || (in[i] == '&' && rejectedReference(in, i + 1, to))) {
         return true;
       }
     }
@@ -823,6 +824,59 @@ public final class Analyzer {
       }
     }
     return false;
+  }
+
+  /**
+   * M-13 item 2 (H-84, DL-048 a) for the {@code &} before offset {@code at}: true when the next
+   * byte is an ASCII letter, or when it starts a numeric character reference (read on the raw
+   * bytes: {@code &#} and decimal digits, or {@code &#x}, {@code &#X} and hex digits; leading zeros
+   * allowed; the {@code ;} is optional) whose value is 00 to 20, an ASCII letter or digit, {@code
+   * /}, {@code +}, {@code -}, {@code .}, or 0x80 or more. The value stops at 0x110000, so no
+   * overflow. A reference without a digit is not a reference. Each digit is read once here and once
+   * by the caller.
+   */
+  private static boolean rejectedReference(byte[] in, int at, int to) {
+    if (at >= to) {
+      return false;
+    }
+    int c = in[at];
+    if (isAsciiLetter(c)) {
+      return true;
+    }
+    if (c != '#') {
+      return false;
+    }
+    int i = at + 1;
+    int radix = 10;
+    if (i < to && (in[i] == 'x' || in[i] == 'X')) {
+      radix = 16;
+      i++;
+    }
+    int value = 0;
+    int digits = 0;
+    for (; i < to; i++) {
+      int d = Character.digit(in[i], radix);
+      if (d < 0) {
+        break;
+      }
+      value = Math.min(value * radix + d, REFERENCE_CAP);
+      digits++;
+    }
+    if (digits == 0) {
+      return false;
+    }
+    return value <= 0x20
+        || value >= 0x80
+        || isAsciiLetter(value)
+        || (value >= '0' && value <= '9')
+        || value == '/'
+        || value == '+'
+        || value == '-'
+        || value == '.';
+  }
+
+  private static boolean isAsciiLetter(int c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
   }
 
   // ---------------------------------------------------------------------------------------------

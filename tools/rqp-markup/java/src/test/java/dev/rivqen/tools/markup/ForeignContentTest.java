@@ -71,29 +71,39 @@ class ForeignContentTest {
           "set",
           "discard",
           "mpath",
-          "foreignobject",
           "image",
           "feimage",
-          "script",
-          "style",
           "textpath",
           "cursor",
           "view",
           "unknown-name"
         })
-    void svgElementOutsideTheAllowedSet(String name) {
-      assertStructure(block("<svg><" + name + "></" + name + "></svg>"), "M-22");
+    void svgElementsOutsideTheOldAllowedSetAreValid(String name) {
+      // H-78: FOREIGN_ALLOWED is a patch rule, not a markup rule.
+      assertValid(block("<svg><" + name + "></" + name + "></svg>"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"foreignobject", "script", "style"})
+    void textOnlyElementsAreValidWithText(String name) {
+      String content = "<svg><" + name + ">t</" + name + "></svg>";
+      assertEquals(List.of("a:html:" + content), blocks(block(content)));
+    }
+
+    @Test
+    void foreignScriptKeepsItsM07TextRule() {
+      assertStructure(block("<svg><script>a<b</script></svg>"), "M-07");
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"maction", "annotation-xml", "mglyph", "a"})
-    void mathElementOutsideTheAllowedSet(String name) {
-      assertStructure(block("<math><" + name + "></" + name + "></math>"), "M-22");
+    void mathElementsOutsideTheOldAllowedSetAreValid(String name) {
+      assertValid(block("<math><" + name + "></" + name + "></math>"));
     }
 
     @Test
-    void selfClosingElementOutsideTheAllowedSetIsInvalid() {
-      assertStructure(block("<svg><animate attributeName=x /></svg>"), "M-22");
+    void selfClosingForeignElementIsValid() {
+      assertValid(block("<svg><animate attributeName=x /></svg>"));
     }
 
     @Test
@@ -120,13 +130,13 @@ class ForeignContentTest {
     @Test
     void htmlItemsDoNotApplyInARegion() {
       // Item 2 (a name in FORBIDDEN_CONTENT) and item 3 (self-closing) are for HTML context.
-      // `title` is in FORBIDDEN_CONTENT and in FOREIGN_ALLOWED.
+      // `title` is in FORBIDDEN_CONTENT.
       assertValid(block("<svg><title>t</title><g/></svg>"));
     }
 
     @Test
     void breakoutNameInARegionIsInvalid() {
-      assertStructure(block("<svg><div></div></svg>"), "M-22");
+      assertStructure(block("<svg><div></div></svg>"), "M-07");
     }
   }
 

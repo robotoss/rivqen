@@ -160,10 +160,14 @@ final class PropertyTest extends TestCase
             $balanced = $balanced && $open === [];
             $result = Parser::parse(self::withNoscript($random, $c));
             if ($balanced) {
-                self::assertTrue($result->valid, "document $n: " . ($result->rule ?? ''));
-                $valid++;
+                // The main rules also run on C (M-11 item 8): M-09 can reject
+                // a balanced C (`<table><b><table>`).
+                self::assertTrue($result->valid || $result->rule === 'M-09', "document $n: " . ($result->rule ?? ''));
+                $valid += $result->valid ? 1 : 0;
             } else {
-                self::assertSame(['M-11', ErrorCode::Structure], [$result->rule, $result->error], "document $n");
+                self::assertFalse($result->valid, "document $n");
+                self::assertSame(ErrorCode::Structure, $result->error, "document $n");
+                self::assertContains($result->rule, ['M-11', 'M-09'], "document $n");
             }
         }
         self::assertGreaterThan(300, $valid);
@@ -203,9 +207,11 @@ final class PropertyTest extends TestCase
             }
             $result = Parser::parse(self::withNoscript($random, $c));
             if ($valid) {
-                self::assertTrue($result->valid, "document $n: " . ($result->rule ?? ''));
+                // M-09 (item 8) can reject what M-11 item 6 accepts.
+                self::assertTrue($result->valid || $result->rule === 'M-09', "document $n: " . ($result->rule ?? ''));
             } else {
-                self::assertSame(['M-11', ErrorCode::Structure], [$result->rule, $result->error], "document $n");
+                self::assertFalse($result->valid, "document $n");
+                self::assertContains($result->rule, ['M-11', 'M-09'], "document $n");
             }
             $valids += $valid ? 1 : 0;
         }

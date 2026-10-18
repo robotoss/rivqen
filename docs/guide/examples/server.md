@@ -2,7 +2,7 @@
 
 `examples/server-demo` is a small Node.js server. It shows the Rivqen protocol (RQP) from the server side: block markup, manifest, `304`, block patch and safe fallback.
 
-**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 95 tests pass, and the demo passes all 74 server protocol fixtures (checked 2026-10-18, Node.js 22 or later). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
+**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 91 tests pass, and the demo passes all 78 server protocol fixtures (checked 2026-10-18, Node.js 22 or later). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
 
 [[toc]]
 
@@ -58,11 +58,11 @@ flowchart TD
   S -- no --> F
 ```
 
-<Badge type="tip" text="FACT" /> The page must be UTF-8 (H-62). When the `Content-Type` of the page has a `charset` parameter that is not a label of UTF-8 in the [WHATWG Encoding Standard](https://encoding.spec.whatwg.org/) (for example `iso-8859-1`), the server sends the page unchanged, without RQP. The full document always has exactly one `Content-Type` line with the value `text/html; charset=utf-8` (H-66), whatever the `Content-Type` text of the page was (no `charset`, `utf8` or `"UTF-8"`). A delta keeps its own content type.
+<Badge type="tip" text="FACT" /> The page must be UTF-8 (H-62). When the `Content-Type` of the page has a `charset` parameter that is not a label of UTF-8 in the [WHATWG Encoding Standard](https://encoding.spec.whatwg.org/) (for example `iso-8859-1`), or has more than one field line or more than one media type (RQP-26, [negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server), charset rule), the server sends the page unchanged, without RQP. The full document always has exactly one `Content-Type` line with the value `text/html; charset=utf-8` (H-66), whatever the `Content-Type` text of the page was (no `charset`, `utf8` or `"UTF-8"`). A delta keeps its own content type.
 
 Every client gets the same full document: a browser without RQP also gets the manifest, `Rq-Version: 1` and the `ETag` `"r1.…"`. The browser ignores the manifest script.
 
-<Badge type="info" text="DESIGN" /> The manifest element is the first thing in the head: the server inserts it immediately after the `<head>` start tag of the page (H-72). Only white space, comments, the DOCTYPE and the `<html>` start tag can come before `<head>`. A page without such a `<head>` start tag is sent unchanged, without RQP. The head does not need a `</head>` end tag. Details: [manifest and patch §1.7](/engineering/protocol/manifest-patch#_1-7-delivery-in-the-document).
+<Badge type="tip" text="FACT" /> The manifest element is the first thing in the head: the server inserts it immediately after the `<head>` start tag of the page (H-72). Only white space, comments, DOCTYPE tokens, `<html>` start tags and ignored end tags can come before `<head>` ([manifest and patch §1.7](/engineering/protocol/manifest-patch#_1-7-delivery-in-the-document), server item 2). A page without such a `<head>` start tag is sent unchanged, without RQP. The head does not need a `</head>` end tag. Details: [manifest and patch §1.7](/engineering/protocol/manifest-patch#_1-7-delivery-in-the-document).
 
 Where the code is:
 
@@ -133,14 +133,14 @@ Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so th
 npm test
 ```
 
-<Badge type="tip" text="FACT" /> The 87 tests check, by behavior:
+<Badge type="tip" text="FACT" /> The 91 tests check, by behavior:
 
 - the response selection: full document, `304`, delta, the size rules, the attribute rule (H-56), invalid pages, the charset rule, a weak `ETag` with a content coding, no state between requests;
 - the known answers of `spec/rqp/examples/kat`: the full documents, both page revisions and the example patches;
 - the request fields and the Structured Field parser;
 - the insertion point of the manifest (immediately after the head start tag, H-72) and the attribute rule;
 - the HTTP adapter on a loopback socket: first visit, revisit, data change, template change, the `Host` check (`421`);
-- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 77 server fixtures pass (`FX-RQ-P*`), also the two `FX-RQ-P35` cases (level SHOULD).
+- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 78 server fixtures pass (`FX-RQ-P*`), also the two `FX-RQ-P35` cases (level SHOULD).
 
 To run the fixtures alone, run this command in `examples/server-demo`:
 

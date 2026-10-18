@@ -1,0 +1,40 @@
+{
+  "id": "FX-RQ-C09-SVG-ONLOAD",
+  "kind": "client",
+  "description": "price content <svg><title>x</title><path onload=\"x\"/></svg> passes the markup analysis; the attribute rule reads the path start tag in the svg region and rejects it (H-73)",
+  "rules": [
+    "RQP-13"
+  ],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      [
+        "content-type",
+        "application/vnd.rivqen.delta+json"
+      ],
+      [
+        "rq-version",
+        "1"
+      ],
+      [
+        "cache-control",
+        "no-store"
+      ]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<svg><title>x</title><path onload=\"x\"/></svg>"
+          }
+        ]
+      }
+    }
+  }
+}

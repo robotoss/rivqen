@@ -10,10 +10,10 @@
 // This module adds two things that the protocol needs on top of the analysis. Both use
 // the tokenizer of the candidate, so they read the document as the analysis does:
 //   - the head start tag of the document (manifest-patch section 1.7, H-72);
-//   - the attribute rule for changed html blocks (manifest-patch section 4.2, H-56, H-59).
+//   - the attribute rule for changed html blocks (manifest-patch section 4.2, H-56, H-59, H-73: also in a foreign region).
 
 import { analyze as analyzeMarkup } from '../../../tools/rqp-markup/node/src/markup.mjs';
-import { TEXT_MODE } from '../../../tools/rqp-markup/node/src/names.mjs';
+import { TEXT_MODE, VOID } from '../../../tools/rqp-markup/node/src/names.mjs';
 import { TokenType, Tokenizer, isWs } from '../../../tools/rqp-markup/node/src/tokenizer.mjs';
 
 /**
@@ -127,20 +127,44 @@ function rejected({ name, value }) {
   return DENIED_SCHEMES.some((scheme) => start.startsWith(scheme));
 }
 
+/** Depth limit of the open-element stack; a deeper block fails the rule (fail closed). */
+const MAX_OPEN = 256;
+
 /**
  * Manifest-patch section 4.2: true when every attribute of every start tag in the html
- * block content passes the attribute rule. `content` is a Buffer.
+ * block content passes the attribute rule, also in a foreign region (svg, math; H-73).
+ * `content` is a Buffer. The rule reads the tags as the analysis does: the stack of open
+ * elements finds the region, and the text-mode state changes of M-04 apply only in HTML
+ * context (in a region a title or style start tag opens no RCDATA or RAWTEXT state).
  */
 export function passesAttributeRule(content) {
   if (content.length > MAX_BLOCK_BYTES) return false;
   const tokenizer = new Tokenizer(content);
+  const open = [];
+  let region = -1; // index in `open` of the svg or math element that started the region
   for (;;) {
     const token = tokenizer.next();
     if (token.type === TokenType.EOF) return true;
+    if (token.type === TokenType.END_TAG) {
+      const at = open.lastIndexOf(token.name);
+      if (at >= 0) {
+        open.length = at;
+        if (region >= at) region = -1;
+      }
+      continue;
+    }
     if (token.type !== TokenType.START_TAG) continue;
     const tag = content.toString('latin1', token.start, token.end);
     if (attributesOf(tag).some(rejected)) return false;
-    const mode = TEXT_MODE.get(token.name);
+    const inHtml = region < 0;
+    const root = token.name === 'svg' || token.name === 'math';
+    const opens = inHtml ? !(root && token.selfClosing) && !VOID.has(token.name) : !token.selfClosing;
+    if (opens) {
+      if (open.length >= MAX_OPEN) return false;
+      open.push(token.name);
+      if (inHtml && root) region = open.length - 1;
+    }
+    const mode = inHtml ? TEXT_MODE.get(token.name) : undefined;
     if (mode !== undefined) tokenizer.switchTo(mode, token.name);
   }
 }

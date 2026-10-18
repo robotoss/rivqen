@@ -247,5 +247,5 @@ test('only the cases of P-35 have level "should" in their expected files', () =>
   const levels = fixtureNames()
     .filter((n) => n.startsWith('FX-RQ-P'))
     .filter((n) => readJsonFile(join(FIXTURES_DIR, n, 'expected.json')).level === 'should');
-  assert.deepEqual(levels, ['FX-RQ-P35-ATTRIBUTE-RULE', 'FX-RQ-P35-ATTRIBUTE-RULE-DATA']);
+  assert.deepEqual(levels, ['FX-RQ-P35-ATTRIBUTE-RULE', 'FX-RQ-P35-ATTRIBUTE-RULE-DATA', 'FX-RQ-P35-ATTRIBUTE-RULE-SVG']);
 });

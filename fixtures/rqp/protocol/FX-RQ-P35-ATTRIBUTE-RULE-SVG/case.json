@@ -1,0 +1,48 @@
+{
+  "id": "FX-RQ-P35-ATTRIBUTE-RULE-SVG",
+  "description": "The changed price block has an on* attribute in an svg region, behind a title element: F, not a delta (H-56, H-73)",
+  "rules": [
+    "RQP-23"
+  ],
+  "level": "should",
+  "client_page": "page-a",
+  "page": "page-b-svg",
+  "app": {
+    "status": 200,
+    "headers": [
+      [
+        "content-type",
+        "text/html; charset=utf-8"
+      ],
+      [
+        "cache-control",
+        "no-cache"
+      ]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      [
+        "rq-version",
+        "1"
+      ],
+      [
+        "rq-capabilities",
+        "(block-patch)"
+      ],
+      [
+        "accept",
+        "text/html, application/vnd.rivqen.delta+json"
+      ],
+      [
+        "if-none-match",
+        "{{r1:page-a}}"
+      ],
+      [
+        "rq-have",
+        "t={{t1:page-a}}, b={{have:page-a}}"
+      ]
+    ]
+  }
+}

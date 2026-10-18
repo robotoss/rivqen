@@ -69,6 +69,7 @@ export const EXPECTED = Object.freeze({
   'page-b': { blocks: ['title', 'price', 'cart'] },
   'page-b-onclick': { blocks: ['title', 'price', 'cart'] },
   'page-b-data': { blocks: ['title', 'price', 'cart'] },
+  'page-b-svg': { blocks: ['title', 'price', 'cart'] },
   'page-c': { error: 'RQP_MARKUP_DUPLICATE' },
   // An author manifest (the bytes of spec/rqp/examples/kat/full.html): M-13 (DL-030).
   'page-forged': { error: 'RQP_MARKUP_RESERVED' },

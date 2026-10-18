@@ -1,6 +1,6 @@
 # RQP markup: edge cases E1–E8
 
-This page is a short risk study of eight edge cases of the [RQP markup rules](/engineering/protocol/markup) (rqp/1). For each case it gives the evidence, the options, the risk and one recommended reading. The human decided each case (protocol decision; E8 is also a security decision). The decided rule text is in [`markup.md`](/engineering/protocol/markup) §2; the cases are listed in [§2.11](/engineering/protocol/markup#_2-11-decided-edge-cases). Section 6 is the study of the findings of the security review (H-25 to H-31, 2026-10-11). Section 7 is round 2 of the review (H-35 to H-38). Section 8 is the WHATWG conformance study (round 3, H-43).
+This page is a short risk study of eight edge cases of the [RQP markup rules](/engineering/protocol/markup) (rqp/1). For each case it gives the evidence, the options, the risk and one recommended reading. The human decided each case (protocol decision; E8 is also a security decision). The decided rule text is in [`markup.md`](/engineering/protocol/markup) §2; the cases are listed in [§2.11](/engineering/protocol/markup#_2-11-decided-edge-cases). Section 6 is the study of the findings of the security review (H-25 to H-31, 2026-10-11). Section 7 is round 2 of the review (H-35 to H-38). Section 8 is the WHATWG conformance study (round 3, H-43). Section 9 is the evidence for the `noscript` content model and the relaxations of WP-17 S3 (H-71, H-73 to H-75).
 
 **Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-09, task WP-17/S1/T-07 ([sprint record](/engineering/plan/sprints/WP-17-S1)). <Badge type="info" text="DESIGN" /> **Decided on 2026-10-09:** E1–E7 as recommended (human decision H-21), E8 option A, reject with `RQP_MARKUP_RESERVED` (human decision H-22). The evidence below is the state before the decision ("Today" = the candidates before task T-08).
 
@@ -263,7 +263,7 @@ The cross-check reports the shape as the class `M-06-formatting-marked`.
 
 <Badge type="tip" text="FACT" /> With scripting disabled, `<noscript>` in body is an ordinary element and `</noscript>` is "any other end tag" (§13.2.6.4.7), which ignores the token when a special element is open above the `noscript`. parse5: `<noscript><button></noscript><div data-rq-block="a">x<button>y</button>z</div>` has no end tag for the block in the scripting-disabled view (case `H27-button`). For `<noscript><table></noscript>` (case `H27-table`) parse5 gives the same block bytes in both views; H-27 rejects it because C is not balanced.
 
-<Badge type="info" text="DESIGN" /> Why item 5 makes `markup.md` §5 item 2 true again: see that item. Additional parse5 checks with balanced C, both views equal: `H27-balanced`, `H27-head-noscript` (the "in head noscript" mode leaves the head at a `div`), `H27-p-closed-by-c` (a `div` in C closes the open `p` in the scripting-disabled view only). The content C is not counted in D (architect decision, `markup.md` M-26 item 7); fixture `LIMIT-DEPTH-NOSCRIPT` has 300 nested elements in C after 255 `div` elements. With scripting disabled such a document is deeper than 512 inside the `noscript`; the flattening of the browser happens only there, and the stack of open elements stays the same, so the later block is not changed.
+<Badge type="info" text="DESIGN" /> Why item 5 makes `markup.md` §5 item 2 true again: see that item. Additional parse5 checks with balanced C, both views equal: `H27-balanced`, `H27-head-noscript` (the "in head noscript" mode leaves the head at a `div`), `H27-p-closed-by-c` (a `div` in C closes the open `p` in the scripting-disabled view only). The content C was not counted in D at first (architect decision R5); fixture `LIMIT-DEPTH-NOSCRIPT` has 300 nested elements in C after 255 `div` elements. With scripting disabled such a document is deeper than 512 inside the `noscript`. <Badge type="info" text="DESIGN" /> Since H-71 (WP-17 S3), C counts in D in the pass of M-11 item 8, so this fixture is invalid (`RQP_MARKUP_LIMIT`), and D bounds the scripting-disabled tree in C too (§9).
 
 <Badge type="tip" text="FACT" /> Correction (round 2, H-38): item 5 alone did not make both views equal. A balanced C with a table part and no table of its own, in a cell or a caption, closes that cell or caption in the scripting-disabled view (`<td><noscript><td></td></noscript>`). M-11 item 6 closes this gap (§7.4).
 
@@ -296,7 +296,7 @@ So H-30 needs no more names. Evidence: case `H30-control-td-th-caption-colgroup-
 | R2 | + the implied elements for each start tag | Each implied part (row group, row, column group) counts once per F element, and comes back when F is popped exactly | The draft adds 2 for every `td` directly in a `table` and gives back 1: a table with 128 cells would reach the limit, and every table would keep units. The tree builder has at most one open row group per table and one open row per row group. |
 | R3 | `col` directly in `table`: +1 | The same, although `col` is not pushed | — |
 | R4 | `head`: undecided | `head` is not excluded | In body, `</head>` is ignored only when the tree builder has already closed the head ("in head", "anything else" pops it), so the head is not an ancestor of open elements. "after head" pushes the head back only for one token. |
-| R5 | — | The tags of the `noscript` content C do not count; the `noscript` element counts | Architect decision: with scripting enabled C is text. |
+| R5 | — | Replaced by H-71: the tags of the `noscript` content C count in the pass of M-11 item 8; after the end tag `noscript`, D is as before C. The `noscript` element counts | The earlier architect decision (C does not count, because with scripting enabled C is text) left the scripting-disabled tree in C without a bound (H-42). The human decided H-71 (WP-17 S3, option A1): fixture `LIMIT-DEPTH-NOSCRIPT` is now invalid. |
 | R6 | DOM depth ≤ D + 2 | (a) WHATWG stack ≤ D + 2; (b) open elements ≤ D + 2; (c) elements that the tree builder closes at once ≤ D + 3 | A `<br>` at the top level has depth 3 with D = 0. Blink and Gecko flatten by the stack position, so (a) is the bound that matters. |
 
 The false text "1.5 × 256 + 2 = 386" of H-25 is removed: the token stack is not a bound of the WHATWG stack.
@@ -317,6 +317,7 @@ The false text "1.5 × 256 + 2 = 386" of H-25 is removed: the token stack is not
 | Foster parenting | the element goes before the table | Not deeper than the table |
 | Template contents | a separate fragment; the `template` stays on the stack | Counted through the stack (claim a) |
 | `noscript` with scripting enabled | one element with text | +1 (item 7) |
+| `noscript` with scripting disabled | the tokens of C are inserted as in the main stream | The pass of M-11 item 8 counts them (item 7, H-71); C closes every element that it opens (M-11 items 5 and 7), so after `</noscript>` the main pass continues with its own D |
 
 <Badge type="warning" text="RESEARCH" /> This is an argument, not a machine-checked proof. Two paths are argued only in outline: a `</form>` exact pop while reconstructed formatting elements are above the form (the form stays their ancestor), and a formatting end tag whose adoption agency takes another entry of the same name (after the Noah's Ark clause removed the entry of the token stack element). In both paths the unit of the element that left the stack without its own end tag pays the extra level. The cross-check checks the claim after every token.
 
@@ -492,7 +493,7 @@ The table also has the tokenizer states that the tree builder controls (§8.2.1)
 | IH-4 | `meta` charset can change the encoding | e | M-02 (UTF-8 transport) |
 | IH-5 | `template` with `for`: content patching | d | M-10 item 3 (H-43; was GAP-1) |
 | IH-6 | `template` with `shadowrootmode`: shadow root | d | M-19, M-22 (rendering only) |
-| HN-1 | "in head noscript" | a, b | Scripting disabled only (H-42) |
+| HN-1 | "in head noscript" | a, b | Scripting disabled only: blocks M-11; manifest position H-72 (manifest and patch §1.7) |
 | AH-1 | "after head": `head` pushed again for one token | c | M-04, M-20 |
 | AH-2 | "after head": `head`, DOCTYPE, end tags ignored | a | As IH-1 |
 | AH-3 | "after head": implied `body` | c | The 2 of the M-26 claim |
@@ -729,8 +730,70 @@ Recommendation: **A**. <Badge type="info" text="DESIGN" /> **Done (T-19):** `mar
 2. Done (T-19): `markup.md` §3.2 (the list of WHATWG changes since 2025) names content patching.
 3. Count `template for`, `<?marker` and `<?start` in the T-15 corpus.
 
+## 9. noscript content model and relaxations (WP-17 S3)
+
+<Badge type="info" text="DESIGN" /> **Decided on 2026-10-18** ([sprint record WP-17 S3](/engineering/plan/sprints/WP-17-S3) §1): H-71 (option A1: the main-pass rules on the `noscript` content C, D counted in C), H-73 (option A: `svg` and `math` in `html` block content with `FOREIGN_ALLOWED`), H-74 (option A: `svg` in C), H-75 (option A: no mark for the crossing by the end tag of the region root). Studies: `evidence/markup-noscript/report.md` (T-02) and `evidence/markup-relax/report.md` (T-01). Rule text: `markup.md` M-05 item 4, M-06 item 4, M-07 item 6, M-11 items 3 and 5 to 9, M-22 item 5 and `FOREIGN_ALLOWED`, M-23, M-24, M-26 item 7, [§2.13](/engineering/protocol/markup#_2-13-rules-from-the-wp-17-s3-studies). Task T-03 wrote the rule text, the golden fixtures, the cross-check cases `cases/s3-cases.json` and the changes of the cross-check oracle and the corpus classifier.
+
+### 9.1 How the four decisions fit together
+
+<Badge type="info" text="DESIGN" />
+
+| Pair | Where they meet | Rule text |
+|---|---|---|
+| H-71 and H-74 | The foreign region of C (item 9) is also a foreign region in the pass of item 8: the `noscript` element is in HTML context, so the `svg` start tag in C pushes a region root by M-05 item 4. | Item 9 gives only the tokenization (no state change) and the stack of item 5 (M-05 item 2). M-07 and M-12 in the region come from item 8. Items 2 to 4, 6 and 7 also apply in the region. |
+| H-71 and H-75 | The exception of item 5 in C. In the pass of item 8 the crossing sets no mark (M-06 item 4), but it makes the new current node dirty (M-26 item 5), so D of that pass stays larger. | After the end tag `noscript`, the main pass continues with its own state (item 8). The pass of item 8 can only reject more. |
+| H-73 and H-75 | The exception of M-23 in block content. The region root starts in the content (M-16, M-07 item 2), so the crossing never reaches an element outside the block. | M-23 uses the same condition as M-06 item 4: the matching element is the region root. The block element can become dirty; that changes only D. |
+| H-73 and M-24 | A start tag in a foreign region closes no element. | The items of M-24 apply in HTML context only. |
+| H-73 and H-71, H-74 | C is never in block content (`noscript` is in `FORBIDDEN_CONTENT` and not in `FOREIGN_ALLOWED`), and with scripting enabled C is never parsed as markup. | `FOREIGN_ALLOWED` applies only to block content, not to the foreign region of C. |
+| H-71 and H-38 | For C in a cell or a caption, item 8 (M-09) and item 6 both reject a table part without a table of C. | Both give `RQP_MARKUP_STRUCTURE`. Item 6 stays for C outside a table (`<noscript><td></td></noscript>`), where M-09 has no F. |
+
+Choices of T-03 that the studies left open (each one is stricter than the other reading, so a later relaxation stays compatible):
+
+1. Item 6 also applies in the foreign region of C (the proposal of T-01). The model (a) variant of T-02 did not apply it there. Fixture `NOSCRIPT-SVG-TABLE-PART`.
+2. Item 7 also applies in the foreign region of C (as in the T-02 study code).
+3. `math` stays in item 3 (H-74 names `svg` only), so only `svg` starts a foreign region of C. Fixture `NOSCRIPT-MATH`.
+4. A self-closing `<svg/>` or `<math/>` is allowed in block content and opens no region (M-22 item 3, the proposal of T-01). Fixture `CONTENT-SVG-SELF-CLOSING-ROOT`.
+
+### 9.2 Fixtures
+
+<Badge type="tip" text="FACT" /> 2026-10-18: 244 golden fixtures (84 valid, 160 invalid). Two existing results change by decision:
+
+| Fixture | Before | After | Decision |
+|---|---|---|---|
+| `LIMIT-DEPTH-NOSCRIPT` | valid, 1 block | `LIMIT` | H-71 (replaces R5) |
+| `CONTENT-SVG` | `STRUCTURE` | valid, 1 block | H-73 |
+
+New fixtures (47):
+
+| Decision | Valid | Invalid |
+|---|---|---|
+| H-71 | `NOSCRIPT-MAIN-VALID`, `LIMIT-DEPTH-NOSCRIPT-CONTENT-256` | `NOSCRIPT-MAIN-TABLE-CURRENT` (T-16), `NOSCRIPT-MAIN-TABLE-IN-TABLE`, `NOSCRIPT-MAIN-FORM-OBJECT` (H-36 in C), `NOSCRIPT-MAIN-FORM-OUTSIDE`, `NOSCRIPT-MAIN-CDATA`, `NOSCRIPT-DOCUMENT-TAG-BODY`, `-HTML`, `-HEAD`, `LIMIT-DEPTH-NOSCRIPT-CONTENT-257` |
+| H-73 | `CONTENT-SVG-ICON`, `CONTENT-MATH`, `CONTENT-SVG-SELF-CLOSING-ROOT`, `LIMIT-DEPTH-CONTENT-FOREIGN-256` | `CONTENT-FOREIGN-A`, `-ANIMATE`, `-SET`, `-ANIMATEMOTION`, `-ANIMATETRANSFORM`, `-FOREIGNOBJECT`, `-IMAGE`, `-SCRIPT`, `-STYLE`, `-FEIMAGE`, `-MACTION`, `-ANNOTATION-XML`, `-INTEGRATION`, `-INTEGRATION-MATH`, `-CROSSING`, `-EOF`, `LIMIT-DEPTH-CONTENT-FOREIGN-257` |
+| H-74 | `NOSCRIPT-SVG`, `NOSCRIPT-SVG-HEAD` | `NOSCRIPT-SVG-CROSSING`, `-UNCLOSED`, `-BREAKOUT`, `-TITLE-MARKUP`, `-TABLE-PART`, `NOSCRIPT-MATH` |
+| H-75 | `ICON-ROOT-CROSSING`, `CONTENT-SVG-ICON-CROSSING`, `NOSCRIPT-SVG-ICON`, `LIMIT-DEPTH-ICON-85` | `ICON-INNER-CROSSING`, `ICON-NESTED-SVG-CROSSING`, `LIMIT-DEPTH-ICON` |
+
+Each new invalid fixture breaks one rule item (corpus classifier, `classify.mjs`). The fixtures `NOSCRIPT-TABLE-PART`, `-CAPTION`, `-COL` and `-TH` now break M-11 item 6 and item 8 (M-09); the result is the same (`STRUCTURE`).
+
+### 9.3 Cross-check
+
+<Badge type="tip" text="FACT" /> parse5 8.0.1, 2026-10-18, `tools/rqp-markup/crosscheck`:
+
+| Input | Result |
+|---|---|
+| Golden fixtures, `check --expected --scripting both` | 244 documents, 84 valid; 0 findings (blocks in both views, depth claim in both views, rule classes) |
+| `cases/s3-cases.json` (78 cases) and the earlier cases files (162 cases) | Each `expected` field holds for a reference of the decided rules; 0 disagreements in both views and 0 depth-claim violations on the valid cases. The depth claim fails in the scripting-disabled view only on rejected shapes (T-16, H-36 in C, an unclosed `svg` in C) |
+| Sweeps, profiles `classic`, `review`, `review2`, `review3`, seed 71, 100 000 documents each, both views | 81 848 valid documents; 0 findings; 0 depth-claim violations on valid documents in either view (violations on rejected documents: 208 / 4 627, 659 / 8 921, 5 353 / 12 090, 5 130 / 11 721 with scripting enabled / disabled) |
+| The generators of the studies: `relax` (seed 40, 300 000), `body` (seed 42, 1 000 000), `head` (seed 42, 300 000), both views | 578 734 valid documents; 0 findings |
+| Control: the `body` generator with the rules before S3 | 24 block disagreements with scripting disabled (the H-37 class of the T-02 study) and 6 114 depth-claim violations with scripting disabled on documents that those rules accept |
+| T-01 tree, fragment and `noscript` tree checks on the valid fixtures | Only `noscript-*-head` findings for `NOSCRIPT-SVG-HEAD`: "in head noscript" ends the head at the `svg` start tag. The blocks agree; the manifest position is H-72 |
+
+The reference of the decided rules is the T-01 study copy (`study/relax/src/markup-relax.mjs`, flags `r1a`, `r2`, `r3`) with the model (a) pass of the T-02 study copy added. It was used only to check the rule text and the fixtures; it is not committed. <Badge type="info" text="DESIGN" /> At integration, run the cases and a sweep again with the four candidates of T-04…T-07: `node src/cli.mjs cases --cases cases/s3-cases.json --only rust,node,java,php` and `node src/cli.mjs sweep --only rust,node,java,php --seed 71 --count 100000 --chunk 10000 --max-tokens 20 --profile review2 --scripting both`.
+
+<Badge type="tip" text="FACT" /> Corpus (882 pages of the S3 fetch, 2026-10-18), the same reference: 820 pages valid (798 with the rules before S3); H-71 alone rejects none of the 798 pages. The corpus run with the four candidates follows at the sprint close.
+
 ## Related
 
 - [RQP markup](/engineering/protocol/markup)
 - [Golden fixtures](/engineering/protocol/fixtures)
 - [Sprint record WP-17 S1](/engineering/plan/sprints/WP-17-S1)
+- [Sprint record WP-17 S3](/engineering/plan/sprints/WP-17-S3)

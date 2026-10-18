@@ -26,7 +26,7 @@ import {
   without,
   withoutRqFields,
 } from './fields.js';
-import { analyzePage, documentHeadEnd, passesAttributeRule } from './markup.js';
+import { analyzePage, documentHeadStart, passesAttributeRule } from './markup.js';
 
 export { DELTA_TYPE };
 export const MANIFEST_TYPE = 'application/rivqen-manifest+json';
@@ -86,8 +86,8 @@ export function buildManifest(analysis, target, members) {
 }
 
 /**
- * F: the page with the manifest element immediately before the head end tag of the
- * document (manifest-patch section 1.7, DL-031). Returns null when the manifest text has a "<".
+ * F: the page with the manifest element immediately after the head start tag of the
+ * document (manifest-patch section 1.7, H-72). Returns null when the manifest text has a "<".
  */
 export function insertManifest(page, insertAt, manifest) {
   const text = JSON.stringify(manifest);
@@ -177,7 +177,7 @@ function select(request, status, appHeaders, page, config) {
   if (typed === null) return null;
   const analysis = analyzePage(page);
   if (!analysis.valid) return null;
-  const insertAt = documentHeadEnd(page);
+  const insertAt = documentHeadStart(page);
   if (insertAt < 0) return null;
 
   // Step 3: the full document F, the same for every request.

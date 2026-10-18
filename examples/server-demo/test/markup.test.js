@@ -1,78 +1,62 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: The Rivqen Authors
 //
-// Markup glue of the demo: the insertion point of the manifest and the attribute rule.
+// Markup glue of the demo: the insertion point of the manifest (H-72) and the attribute rule.
 // The markup analysis itself is the candidate in tools/rqp-markup/node (tested there).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { analyzePage, documentHeadEnd, passesAttributeRule } from '../src/markup.js';
+import { analyzePage, documentHeadStart, passesAttributeRule } from '../src/markup.js';
 
 const b = (s) => Buffer.from(s, 'utf8');
 
-const at = (doc) => documentHeadEnd(b(doc));
+const at = (doc) => documentHeadStart(b(doc));
+const after = (prefix) => b(prefix).length;
 
-test('the manifest goes before the head end tag; a head end tag in a comment or raw text is not it', () => {
-  const doc = '<!DOCTYPE html><html><head><!-- </head> --><title>x </head></title><style>/* </head> */</style></head><body></body></html>';
-  assert.equal(at(doc), doc.lastIndexOf('</head>'));
+test('the manifest goes immediately after the head start tag; "<head>" in a comment is not it (H-72)', () => {
+  const prefix = '<!DOCTYPE html><!-- <head> --><html><head>';
+  assert.equal(at(`${prefix}<title>x</title></head><body></body></html>`), after(prefix));
 });
 
-test('a document without a head end tag has no insertion point', () => {
-  assert.equal(at('<html><body><p>x</p></body></html>'), -1);
-  assert.equal(at('<html><head><!-- </head> --></html>'), -1);
+test('white space, comments, DOCTYPE tokens, html start tags and a byte order mark may come before <head>', () => {
+  const prefix = '﻿ <!DOCTYPE html>\n<!-- c --><html>\n<html lang="en"><HEAD class="a>b">';
+  assert.equal(at(`${prefix}<meta charset="utf-8"></head><body></body></html>`), after(prefix));
 });
 
-test('a stray </head> in the body is not the head end tag (DL-031)', () => {
-  assert.equal(at('<html><body><p>x</p></head></body></html>'), -1);
-  assert.equal(at('<html><head><title>t</title><body></head></body></html>'), -1);
-});
-
-test('a </head> inside a template element in the head is not the head end tag', () => {
-  const doc = '<html><head><template><b></b></template></head><body></body></html>';
-  assert.equal(at(doc), doc.indexOf('</head>'));
-  // The </head> inside the template pops the document head from the token stack (item 3).
-  assert.equal(at('<html><head><template></head></template></head><body></body></html>'), -1);
-});
-
-test('content before <head> means no head end tag', () => {
-  assert.equal(at('<html><p>x</p><head></head><body></body></html>'), -1);
-  assert.equal(at('text<html><head></head></html>'), -1);
-});
-
-test('every head content element keeps the head open; text or another element in the head ends it', () => {
-  for (const n of ['base', 'basefont', 'bgsound', 'link', 'meta', 'noframes', 'noscript', 'script', 'style', 'template', 'title']) {
-    const doc = `<html><head><${n}></${n}></head><body></body></html>`;
-    assert.equal(at(doc), doc.indexOf('</head>'), n);
+test('white space before the head start tag is tab, line feed, form feed, carriage return or space; vertical tab is not', () => {
+  for (const ws of ['\t', '\n', '\f', '\r', ' ']) {
+    assert.equal(at(`<html>${ws}<head></head></html>`), after(`<html>${ws}<head>`), JSON.stringify(ws));
   }
-  assert.equal(at('<html><head>text</head><body></body></html>'), -1);
-  assert.equal(at('<html><head><meta> x <title></title></head><body></body></html>'), -1);
-  assert.equal(at('<html><head><div></div></head><body></body></html>'), -1);
+  assert.equal(at('<html>\v<head></head></html>'), -1);
 });
 
-test('a </head> that pops the head through another element leaves no head end tag', () => {
-  assert.equal(at('<html><head><template></head><p></head><body></body></html>'), -1);
+test('what comes after the head start tag does not matter: the head needs no end tag', () => {
+  for (const rest of ['</head>', '<body>', '<div>x</div>', 'text', '<svg></svg>', '<noscript><img src=x></noscript>', '</br>', '<head>', '']) {
+    assert.equal(at(`<html><head>${rest}<body></body></html>`), after('<html><head>'), rest);
+  }
 });
 
-test('white space, comments, DOCTYPE and a byte order mark may come before <head>', () => {
-  const doc = '﻿ <!DOCTYPE html>\n<!-- c --><html>\n<head>\n<meta charset="utf-8">\n</head><body></body></html>';
-  assert.equal(at(doc), Buffer.from(doc).indexOf('</head>'));
+test('a document without a head start tag of the document has no insertion point', () => {
+  for (const doc of [
+    '',
+    '<html><title>x</title></head><body></body></html>', // no <head> start tag
+    '<html><!-- <head> --></html>', // only in a comment
+    'text<html><head></head></html>', // text before the head
+    '<html>&amp;<head></head></html>', // a character reference is text
+    '<html><p>x</p><head></head><body></body></html>', // another start tag before the head
+    '<html><meta charset="utf-8"><head></head></html>', // head content before the head (the head is implied)
+    '<body><template><head></head></template></body>', // a head start tag in a template
+    '<html></><head></head></html>', // "</>" gives no token: its bytes are not white space
+  ]) {
+    assert.equal(at(doc), -1, doc);
+  }
 });
 
-test('an svg element in the head ends the head: no head end tag follows', () => {
-  assert.equal(at('<html><head><svg></svg></head><body></body></html>'), -1);
-  assert.equal(at('<html><head><svg></head></svg></head><body></body></html>'), -1);
-});
-
-test('an end tag other than head, body, html and br is ignored before the head and in the head (DL-034)', () => {
-  const doc = '<html></p><head><meta charset=utf-8></meta></div><title>x</title></head><body></body></html>';
-  assert.equal(at(doc), doc.indexOf('</head>'));
-  assert.equal(at('<html><head></br></head><body></body></html>'), -1);
-  assert.equal(at('<html><head></body></head></html>'), -1);
-  assert.equal(at('<html></html><head></head>'), -1);
-});
-
-test('the first head end tag in head position is the insertion point', () => {
-  const doc = '<html><head></head><body></head></body></html>';
-  assert.equal(at(doc), doc.indexOf('</head>'));
+test('an end tag other than head, body, html and br is ignored before the head (DL-034)', () => {
+  const prefix = '</p><html></div></META><head>';
+  assert.equal(at(`${prefix}</head><body></body></html>`), after(prefix));
+  for (const end of ['</br>', '</BR>', '</body>', '</html>', '</head>']) {
+    assert.equal(at(`<html>${end}<head></head><body></body></html>`), -1, end);
+  }
 });
 
 test('the candidate analysis is used: a duplicate block id is invalid, blocks have byte offsets', () => {
@@ -122,13 +106,6 @@ test('attribute rule: an attribute in a text-mode element is not an attribute of
   assert.equal(passesAttributeRule(b('<!-- <a onclick=x> --><b>y</b>')), true);
 });
 
-test('the head walk fails as soon as the head cannot end: a later head end tag is not found', () => {
-  // Text before <head>: the head rule fails; the late </head> must not be returned.
-  assert.equal(at('<html>x<head></head><body></body></html>'), -1);
-  // A non-head-content element inside the head ends the head; a second </head> is not the head end tag.
-  assert.equal(at('<html><head><p>x</p></head></head></html>'), -1);
-});
-
 test('a block above maxBlockBytes fails the attribute rule; a block of exactly that size passes', () => {
   const LIMIT = 1024 * 1024;
   const filler = (n) => b('<p>' + 'a'.repeat(n - 7) + '</p>');
@@ -136,10 +113,3 @@ test('a block above maxBlockBytes fails the attribute rule; a block of exactly t
   assert.equal(passesAttributeRule(filler(LIMIT + 1)), false);
 });
 
-test('white space before the head start tag is tab, line feed, form feed, carriage return or space; vertical tab is not', () => {
-  for (const ws of ['\t', '\n', '\f', '\r', ' ']) {
-    const doc = `<html>${ws}<head></head></html>`;
-    assert.equal(at(doc), doc.indexOf('</head>'), JSON.stringify(ws));
-  }
-  assert.equal(at('<html>\v<head></head></html>'), -1);
-});

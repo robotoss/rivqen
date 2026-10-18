@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: The Rivqen Authors
 //
 // The S2 review fixes (DL-030 to DL-033) at the level of handle(): Rq-* fields of the
-// application response, Last-Modified of F, the head rule, the attribute rule schemes.
+// application response, Last-Modified of F, the head rule (H-72), the attribute rule schemes.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { handle } from '../src/rqp.js';
@@ -45,12 +45,11 @@ test('Last-Modified of the application is not sent with the full document (DL-03
   assert.equal(header(r, 'etag'), `"${revisionsOf(page()).page_revision}"`);
 });
 
-test('a page whose only head end tag is stray (body, content before head, svg in head) is sent unchanged (DL-031)', () => {
+test('a page without a head start tag of the document is sent unchanged (H-72)', () => {
   for (const html of [
-    '<html><head><title>t</title><body><p data-rq-block="a">1</p></head></body></html>',
-    '<html><body><p data-rq-block="a">1</p></body></head></html>',
-    '<html><p>x</p><head></head><body><p data-rq-block="a">1</p></body></html>',
-    '<html><head><svg></svg></head><body><p data-rq-block="a">1</p></body></html>',
+    '<html><body><p data-rq-block="a">1</p></body></head></html>', // no <head> start tag
+    '<html><p>x</p><head></head><body><p data-rq-block="a">1</p></body></html>', // content before <head>
+    '<html><title>t</title><head></head><body><p data-rq-block="a">1</p></body></html>', // head content before <head>
   ]) {
     const p = Buffer.from(html);
     const r = run(get(), p);
@@ -59,22 +58,22 @@ test('a page whose only head end tag is stray (body, content before head, svg in
   }
 });
 
-test('the manifest goes before the head end tag of the document, not before one in the title text', () => {
-  const html = '<html><head><title>a</head>b</title></head><body><p data-rq-block="a">1</p></body></html>';
-  const r = run(get(), Buffer.from(html));
-  assert.equal(r.mode, 'full');
-  const text = r.body.toString('utf8');
-  assert.ok(text.startsWith('<html><head><title>a</head>b</title><script type="application/rivqen-manifest+json">'));
-  assert.ok(text.includes('</script></head><body>'));
-});
-
-test('a stray end tag in the head does not move the insertion point; </br> in the head means passthrough (DL-034)', () => {
-  const ok = '<html><head><meta charset=utf-8></meta><title>x</title></head><body><p data-rq-block="a">1</p></body></html>';
-  const r = run(get(), Buffer.from(ok));
-  assert.equal(r.mode, 'full');
-  assert.ok(r.body.toString('utf8').includes('</script></head><body>'));
-  const br = Buffer.from('<html><head></br></head><body><p data-rq-block="a">1</p></body></html>');
-  assert.equal(run(get(), br).mode, 'passthrough');
+test('the manifest goes immediately after the head start tag, also when the head has no end tag (H-72)', () => {
+  const MANIFEST = '<html><head><script type="application/rivqen-manifest+json">';
+  for (const html of [
+    '<html><head><title>a</head>b</title></head><body><p data-rq-block="a">1</p></body></html>', // "</head>" in the title text
+    '<html><head><title>t</title><body><p data-rq-block="a">1</p></head></body></html>', // closed by body; stray </head>
+    '<html><head><svg></svg></head><body><p data-rq-block="a">1</p></body></html>', // svg closes the head
+    '<html><head><meta charset=utf-8></meta><title>x</title></head><body><p data-rq-block="a">1</p></body></html>', // stray </meta>
+    '<html><head></br></head><body><p data-rq-block="a">1</p></body></html>', // </br> closes the head
+  ]) {
+    const r = run(get(), Buffer.from(html));
+    assert.equal(r.mode, 'full', html);
+    const text = r.body.toString('utf8');
+    assert.ok(text.startsWith(MANIFEST), html);
+    // The bytes after the manifest element are the page bytes after the head start tag.
+    assert.equal(text.slice(text.indexOf('</script>') + '</script>'.length), html.slice('<html><head>'.length), html);
+  }
 });
 
 test('a changed block with a data:, vbscript: or javascript: URL gives the full document (H-59)', () => {

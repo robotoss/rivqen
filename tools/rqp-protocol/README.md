@@ -166,7 +166,7 @@ Server `case.json` members in addition to the README format: `server_config` (`p
 | `context.final_url` | Default: `context.url` (no redirect) |
 | `context.redirected` | Default: `final_url` differs from `url` (as strings). `true` with an equal `final_url`: a redirect to the same URL (H-67). `false` with another `final_url` is a defective case |
 | `context.build`, `context.allow_http` | Default `release`, `false` |
-| `context.allowlist` | A list of origin strings. Default: the serialized origins of `url` and of `final_url` (every origin of the context is allowed). Give the list to test the exact origin match (DL-038) or an origin outside the allowlist (H-62). A redirect case MUST give the list (code review round 4; `test/gen.test.mjs` checks every committed case). An entry that is not equal to its own serialized origin is a defective case (H-69) |
+| `context.allowlist` | A list of origin strings. Default: the serialized origin of `url`. A case whose `final_url` has another origin must list the allowlist; the loader rejects it otherwise (DL-040). Give the list to test the exact origin match (DL-038) or an origin outside the allowlist (H-62). A redirect case MUST give the list (code review round 4; `test/gen.test.mjs` checks every committed case). An entry that is not equal to its own serialized origin is a defective case (H-69) |
 | `context.credentials`, `context.public_origin` | `credentials`: `true`, `false` or `null` (unknown, the default; counts as `true`, H-62). `public_origin`: default `false` |
 | `context.response_fields_visible` | Default `true` (a native fetch). `false`: the native SDK did not see all header fields of the response (H-64) |
 | `context.navigation` | `first-visit`, `delta` or `fallback` |

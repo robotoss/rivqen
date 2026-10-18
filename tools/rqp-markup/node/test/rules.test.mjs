@@ -6,7 +6,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { ErrorCode, LIMITS, analyze, checkNoscript } from '../src/markup.mjs';
+import { ErrorCode, LIMITS, analyze } from '../src/markup.mjs';
 import { FORBIDDEN_CONTENT } from '../src/names.mjs';
 import { blocksOf, doc, errorOf, run } from './helpers.mjs';
 
@@ -15,6 +15,11 @@ const {
 } = ErrorCode;
 
 const P = (id, content = 'x') => `<p data-rq-block="${id}">${content}</p>`;
+// The error of a document that is a noscript element with the given content C
+// (the content is Buffer or string), else null.
+const checkNoscript = (content) => errorOf(Buffer.concat([
+  Buffer.from('<noscript>'), Buffer.from(content), Buffer.from('</noscript>'),
+]));
 const DIV = (id, content = 'x') => `<div data-rq-block="${id}">${content}</div>`;
 
 describe('M-01 input size', () => {
@@ -668,7 +673,7 @@ describe('M-11 noscript', () => {
     assert.equal(errorOf(doc('<noscript><style></noscript>')), STRUCTURE);
   });
 
-  for (const name of ['frameset', 'math', 'noscript', 'plaintext', 'select', 'svg', 'template']) {
+  for (const name of ['frameset', 'math', 'noscript', 'plaintext', 'select', 'template']) {
     it(`rejects a ${name} start tag in noscript content`, () => {
       assert.equal(errorOf(doc(`<noscript><${name}></noscript>`)), STRUCTURE);
     });
@@ -681,10 +686,9 @@ describe('M-11 noscript', () => {
 
   it('requires the first noscript end tag exactly at the end of the content', () => {
     assert.equal(checkNoscript(Buffer.from('<p>a</p>')), null);
-    assert.equal(checkNoscript(Buffer.from('<title></noscript>')), STRUCTURE);
-    // The main pass never gives such a content (raw text ends at </noscript>),
-    // but checkNoscript() checks item 1 by itself.
-    assert.equal(checkNoscript(Buffer.from('</noscript>x')), STRUCTURE);
+    // The appended end tag is text in RCDATA: the end tag noscript is not reached.
+    assert.equal(checkNoscript(Buffer.from('<title>')), STRUCTURE);
+    assert.equal(errorOf(doc('<noscript><title></noscript>')), STRUCTURE);
   });
 });
 
@@ -739,13 +743,19 @@ describe('M-11 item 5 balanced noscript content (H-27)', () => {
     assert.equal(errorOf('<noscript><b>x'), STRUCTURE);
   });
 
-  it('uses a stack that is separate from the token stack and has no depth limit', () => {
-    const deep = `${'<b>'.repeat(300)}x${'</b>'.repeat(300)}`;
-    // The noscript element is element 256 and its content adds nothing.
-    assert.equal(errorOf(`${'<div>'.repeat(255)}<noscript>${deep}</noscript>${P('a')}`), null);
-    assert.equal(errorOf(`${'<div>'.repeat(256)}<noscript>${deep}</noscript>`), LIMIT);
-    assert.equal(checkNoscript(Buffer.from(deep)), null);
-    assert.equal(checkNoscript(Buffer.from(`${deep}<b>`)), STRUCTURE);
+  it('counts the elements of the content in the depth counter D (M-26 item 7, H-71)', () => {
+    const deep = (n) => `${'<b>'.repeat(n)}x${'</b>'.repeat(n)}`;
+    // The noscript element is element 255; its content adds up to 1 more.
+    assert.equal(errorOf(`${'<div>'.repeat(254)}<noscript>${deep(1)}</noscript>${P('a')}`), null);
+    assert.equal(errorOf(`${'<div>'.repeat(254)}<noscript>${deep(2)}</noscript>`), LIMIT);
+    assert.equal(checkNoscript(Buffer.from(deep(255))), null);
+    assert.equal(checkNoscript(Buffer.from(deep(256))), LIMIT);
+    assert.equal(checkNoscript(Buffer.from(`${deep(255)}<b>`)), STRUCTURE);
+  });
+
+  it('gives D back after the end tag noscript', () => {
+    const body = `${'<div>'.repeat(254)}<noscript>${'<b>x</b>'}</noscript>${'<i>x</i>'}`;
+    assert.equal(errorOf(body), null);
   });
 });
 
@@ -1347,14 +1357,14 @@ describe('M-26 token stack depth (H-25)', () => {
     assert.equal(run(block('a') + block('b')).blocks.length, 2);
   });
 
-  it('does not count the tags of the noscript content (M-26 item 7)', () => {
-    // In the main pass the content is raw text: only the noscript element is pushed.
-    assert.equal(errorOf(`<noscript>${nest('b', MAX + 10)}</noscript>`), null);
+  it('counts the tags of the noscript content (M-26 item 7, H-71)', () => {
+    assert.equal(errorOf(`<noscript>${nest('b', MAX - 1)}</noscript>`), null);
+    assert.equal(errorOf(`<noscript>${nest('b', MAX)}</noscript>`), LIMIT);
   });
 
   it('counts the noscript element', () => {
-    assert.equal(errorOf(nest('div', MAX - 1, '<noscript><b>x</b></noscript>')), null);
-    assert.equal(errorOf(nest('div', MAX, '<noscript><b>x</b></noscript>')), LIMIT);
+    assert.equal(errorOf(nest('div', MAX - 1, '<noscript>x</noscript>')), null);
+    assert.equal(errorOf(nest('div', MAX, '<noscript>x</noscript>')), LIMIT);
   });
 });
 

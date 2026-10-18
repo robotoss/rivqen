@@ -175,19 +175,22 @@ export function withoutRqFields(headers) {
   return headers.filter(([name]) => !name.startsWith('rq-'));
 }
 
+/** H-66: the exact Content-Type field value of every F. */
+export const FULL_CONTENT_TYPE = 'text/html; charset=utf-8';
+
 /**
- * Step 3 (H-62, item 3): the Content-Type line of F. When A has no charset
- * parameter, F gets "; charset=utf-8". Returns null when the new value does
- * not parse to a UTF-8 charset (for example after an unclosed quoted string
- * in A): the page is then passed through, because the browser could decode it
- * with another encoding.
+ * Steps 2 and 3 (H-62 item 3, H-66): the header fields of A with the
+ * Content-Type of F, or null when the charset rule makes the page invalid for
+ * RQP (a charset that is not a UTF-8 label, or more than one field line or
+ * media type). The charset rule only decides the passthrough: F always has
+ * exactly one field line "Content-Type: text/html; charset=utf-8", whatever
+ * the Content-Type text of A was (no charset, a quoted or upper-case UTF-8
+ * label, other parameters). Step 1 found the media type text/html, so A has
+ * exactly one Content-Type line here, and the line keeps its position.
  */
 export function fullContentType(appHeaders) {
-  const charset = contentTypeCharset(appHeaders);
-  if (charset === Charset.UTF8) return appHeaders;
-  if (charset !== Charset.NONE) return null;
-  const out = appHeaders.map(([n, v]) => [n, n === 'content-type' ? `${v.replace(/[ \t]+$/, '')}; charset=utf-8` : v]);
-  return contentTypeCharset(out) === Charset.UTF8 ? out : null;
+  if (contentTypeCharset(appHeaders) === Charset.OTHER) return null;
+  return appHeaders.map(([n, v]) => [n, n === 'content-type' ? FULL_CONTENT_TYPE : v]);
 }
 
 function unsupported(headers) {
@@ -238,7 +241,7 @@ export function handle(request, app, pageBytes, config = {}) {
   if (full === null) return passthrough('server-passthrough');
   const etag = `"${manifest.page_revision}"`;
   // DL-032: the ETag r1. is the only validator of F, so A's Last-Modified goes.
-  // H-62 (3): F of a page without a charset parameter gets "; charset=utf-8".
+  // H-66: F has exactly "Content-Type: text/html; charset=utf-8" (fullContentType).
   const fullHeaders = [
     ...without(typed, 'etag', 'last-modified', 'content-length'),
     ['etag', etag],

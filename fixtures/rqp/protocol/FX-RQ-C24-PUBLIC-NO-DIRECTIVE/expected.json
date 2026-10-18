@@ -6,8 +6,9 @@
     "final_url": "https://shop.example.com/catalog",
     "build": "release",
     "allow_http": false,
-    "allowlisted": true,
+    "allowlist": ["https://shop.example.com"],
     "credentials": true,
+    "response_fields_visible": true,
     "public_origin": true,
     "navigation": "first-visit",
     "snapshot": null

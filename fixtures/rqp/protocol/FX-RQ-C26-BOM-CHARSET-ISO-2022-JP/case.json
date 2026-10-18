@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-C26-BOM-CHARSET-ISO-2022-JP",
+  "kind": "client",
+  "description": "Rq-Version 1, charset=iso-2022-jp, and the document starts with a UTF-8 byte order mark: BOM sniffing comes first, so the browser decodes UTF-8 and the snapshot is stored (DL-038; the client delivers it as UTF-8, H-66)",
+  "rules": ["RQP-26"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=iso-2022-jp"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-bom"
+    }
+  }
+}

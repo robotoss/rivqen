@@ -6,8 +6,9 @@
     "final_url": "https://pay.example.net/catalog",
     "build": "release",
     "allow_http": false,
-    "allowlisted": false,
+    "allowlist": ["https://shop.example.com"],
     "credentials": null,
+    "response_fields_visible": true,
     "public_origin": false,
     "navigation": "first-visit",
     "snapshot": null

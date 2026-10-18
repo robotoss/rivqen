@@ -11,7 +11,7 @@
   },
   "status": 200,
   "headers_required": {
-    "content-type": "text/html; charset = utf-8; charset=utf-8",
+    "content-type": "text/html; charset=utf-8",
     "cache-control": "no-cache",
     "etag": "\"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\"",
     "rq-version": "1"

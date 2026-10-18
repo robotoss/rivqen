@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MANIFEST_END, UnsupportedInput, membersOf, pageRevision, sha256b64u } from './common.mjs';
 import { handle, manifestOf } from './server.mjs';
-import { handleResponse, havePrefixes, requestHeaders, snapshotOf } from './client.mjs';
+import { Partition, handleResponse, havePrefixes, requestHeaders, snapshotOf } from './client.mjs';
 import { combined, normalizeHeaders } from './http.mjs';
 import { analyze, documentHeadEnd } from './markup.mjs';
 import { UnknownPage, pageBytes } from './pages.mjs';
@@ -88,7 +88,12 @@ export function loadCase(dir, name) {
   if (typeof c.description !== 'string' || !Array.isArray(c.rules)) throw new CaseError(name, 'description and rules are required');
   if (c.kind === 'client') {
     onlyKeys(name, c, ['id', 'kind', 'description', 'rules', 'context', 'response'], 'case');
-    onlyKeys(name, c.context, ['url', 'final_url', 'build', 'allow_http', 'allowlisted', 'navigation', 'snapshot', 'credentials', 'public_origin'], 'context');
+    onlyKeys(
+      name,
+      c.context,
+      ['url', 'final_url', 'build', 'allow_http', 'allowlist', 'navigation', 'snapshot', 'credentials', 'response_fields_visible', 'public_origin'],
+      'context',
+    );
     onlyKeys(name, c.response, ['status', 'headers', 'body'], 'response');
   } else {
     onlyKeys(name, c, ['id', 'description', 'rules', 'page', 'client_page', 'client_members', 'server_config', 'app', 'request', 'level'], 'case');
@@ -142,12 +147,13 @@ function forbiddenHeaders(kind, status, appHeaders, responseHeaders) {
 }
 
 /**
- * Fields that a response MAY have: name -> the exact combined value of exactly
- * one field line when the field is present. DL-036 (I2): Rq-Version on a 304
+ * The member headers_optional of expected.json: fields that a response MAY
+ * have, name -> the exact combined value of exactly one field line when the
+ * field is present. Only a 304 has it. DL-036 (I2): Rq-Version on a 304
  * (negotiation section 4, step 9) is exactly one line with the value 1.
  */
 function optionalHeaders(status) {
-  return status === 304 ? { 'rq-version': '1' } : {};
+  return status === 304 ? { headers_optional: { 'rq-version': '1' } } : {};
 }
 
 /** expected.json of a server case, from the reference server step. */
@@ -184,7 +190,7 @@ export function expectServer(c) {
         status: r.status,
         headers_required: requiredHeaders(r.headers),
         headers_forbidden: forbiddenHeaders(r.kind, r.status, app.headers, r.headers),
-        ...(r.status === 304 ? { headers_optional: optionalHeaders(r.status) } : {}),
+        ...optionalHeaders(r.status),
         body,
       },
     },
@@ -195,22 +201,39 @@ export function expectServer(c) {
 // ---------------------------------------------------------------------------
 // Client fixtures.
 
+/** The serialized origin of a URL (WHATWG URL Standard), or a CaseError. */
+function originOf(id, url) {
+  try {
+    return new URL(url).origin;
+  } catch {
+    throw new CaseError(id, `${url} is not a URL`);
+  }
+}
+
 function context(c) {
   const ctx = c.context;
   const navigation = ctx.navigation;
   if (!['first-visit', 'delta', 'fallback'].includes(navigation)) throw new CaseError(c.id, `navigation ${navigation}`);
   const build = ctx.build ?? 'release';
   if (build !== 'release' && build !== 'debug') throw new CaseError(c.id, `build ${build}`);
-  // snapshot: null, a page id, or { page, members } for a snapshot manifest with policy or limits.
+  // snapshot: null, a page id, or { page, members?, partition? } for a snapshot
+  // manifest with policy or limits, or a snapshot in the public partition (H-65).
   const snap = ctx.snapshot ?? null;
   let snapshotPage = snap;
   let members = {};
+  let partition = Partition.REQUEST;
   if (snap !== null && typeof snap === 'object') {
-    onlyKeys(c.id, snap, ['page', 'members'], 'context.snapshot');
+    onlyKeys(c.id, snap, ['page', 'members', 'partition'], 'context.snapshot');
     snapshotPage = snap.page;
     members = membersOf(snap.members);
+    partition = snap.partition ?? Partition.REQUEST;
+    if (partition !== Partition.REQUEST && partition !== Partition.PUBLIC) throw new CaseError(c.id, `context.snapshot.partition ${partition}`);
+    // A public snapshot comes from a manifest with mode public (H-61).
+    if (partition === Partition.PUBLIC && members.policy?.mode !== 'public') {
+      throw new CaseError(c.id, 'a public context snapshot needs the member policy with mode public');
+    }
   }
-  for (const flag of ['allow_http', 'allowlisted', 'public_origin']) {
+  for (const flag of ['allow_http', 'response_fields_visible', 'public_origin']) {
     if (ctx[flag] !== undefined && typeof ctx[flag] !== 'boolean') throw new CaseError(c.id, `context.${flag} must be a boolean`);
   }
   // H-62 (2): credentials true, false or unknown (absent or null; unknown counts as present).
@@ -218,17 +241,27 @@ function context(c) {
     throw new CaseError(c.id, 'context.credentials must be a boolean or null');
   }
   const url = ctx.url ?? DEFAULT_TARGET;
+  const finalUrl = ctx.final_url ?? url;
+  // DL-038: the allowlist is a list of serialized origins. Default: the origins
+  // of the request URL and of the final URL (every origin of the context).
+  let allowlist = ctx.allowlist;
+  if (allowlist === undefined) allowlist = [...new Set([originOf(c.id, url), originOf(c.id, finalUrl)])];
+  if (!Array.isArray(allowlist) || !allowlist.every((o) => typeof o === 'string')) {
+    throw new CaseError(c.id, 'context.allowlist must be a list of origin strings');
+  }
   return {
     url,
-    final_url: ctx.final_url ?? url,
+    final_url: finalUrl,
     build,
     allow_http: ctx.allow_http ?? false,
-    allowlisted: ctx.allowlisted ?? true,
+    allowlist,
     credentials: ctx.credentials ?? null,
+    // H-64: the reference client models a native fetch, so it sees every field by default.
+    response_fields_visible: ctx.response_fields_visible ?? true,
     public_origin: ctx.public_origin ?? false,
     navigation,
     snapshotPage,
-    snapshot: snapshotPage === null ? null : snapshotOf(pageBytes(snapshotPage), members, url),
+    snapshot: snapshotPage === null ? null : snapshotOf(pageBytes(snapshotPage), members, url, partition),
   };
 }
 
@@ -360,6 +393,7 @@ function describeSnapshot(page, snap) {
     page_revision: snap.page_revision,
     blocks: a.blocks.map(({ id, format, sha256 }) => ({ id, format, sha256 })),
     ...snap.members,
+    partition: snap.partition,
   };
 }
 
@@ -378,8 +412,9 @@ export function expectClient(c) {
         final_url: ctx.final_url,
         build: ctx.build,
         allow_http: ctx.allow_http,
-        allowlisted: ctx.allowlisted,
+        allowlist: ctx.allowlist,
         credentials: ctx.credentials,
+        response_fields_visible: ctx.response_fields_visible,
         public_origin: ctx.public_origin,
         navigation: ctx.navigation,
         snapshot: describeSnapshot(ctx.snapshotPage, ctx.snapshot),

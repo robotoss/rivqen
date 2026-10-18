@@ -11,7 +11,7 @@ import { acceptsMediaType, parseEntityTags } from '../src/http.mjs';
 import { parseStrict } from '../src/json-strict.mjs';
 import { handle } from '../src/server.mjs';
 import { handleResponse, snapshotOf } from '../src/client.mjs';
-import { APP, TARGET, deltaRequest, page } from './helpers.mjs';
+import { APP, clientContext, deltaRequest, page } from './helpers.mjs';
 
 const item = (v) => parseItem(v)?.item ?? null;
 
@@ -97,7 +97,7 @@ test('property: random field values never make the parsers or the server step th
 test('property: random bodies never make the client step throw', () => {
   const rnd = prng(0xc11e);
   const snapshot = snapshotOf(page('page-a'));
-  const ctx = { url: TARGET, build: 'release', allow_http: false, navigation: 'delta', snapshot };
+  const ctx = clientContext({ navigation: 'delta', snapshot });
   const valid = JSON.stringify({ type: 'rivqen.patch', protocol: 'rqp/1', operations: [] });
   for (let i = 0; i < 1500; i++) {
     // Random text, and a valid prefix with a random tail.

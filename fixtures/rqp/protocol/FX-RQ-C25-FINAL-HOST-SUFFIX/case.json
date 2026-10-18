@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-C25-FINAL-HOST-SUFFIX",
+  "kind": "client",
+  "description": "The allowlist has https://shop.example.com; a redirect to https://shop.example.com.attacker.net/catalog is another origin (exact match, no suffix match), so the final request carried no RQP fields: a normal page, no snapshot, no error (DL-038)",
+  "rules": ["RQP-05", "RQP-24"],
+  "context": {
+    "final_url": "https://shop.example.com.attacker.net/catalog",
+    "allowlist": ["https://shop.example.com"],
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-P40-CHARSET-QUOTED-UPPER",
-  "description": "The application sends charset=\"UTF-8\" (quoted, upper case), a UTF-8 label: F keeps the Content-Type unchanged (H-62)",
+  "description": "The application sends charset=\"UTF-8\" (quoted, upper case), a UTF-8 label, so the page is not passed through; F has exactly Content-Type: text/html; charset=utf-8, not the text of A (H-62, H-66)",
   "rules": ["RQP-08", "RQP-26"],
   "page": "page-a",
   "app": {

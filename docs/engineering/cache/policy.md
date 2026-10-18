@@ -30,7 +30,7 @@ The core applies these rules in order. The first rule that matches decides.
 | 7 | legacy mode and `cache-offline` rule applies | Follow the [legacy rule](/engineering/protocol/legacy-wire#cache-offline). |
 | 8 | Otherwise | Revalidate before showing (conditional request). |
 
-The manifest policy of an RQP page ([manifest and patch §1.4](/engineering/protocol/manifest-patch#_1-4-policy)) never allows what these rules or the app policy deny (H-61). `ttl_seconds` only shortens the freshness lifetime of rule 4. `offline: true` has an effect only inside rule 6 (`stale-if-error`). `"mode": "public"` selects the `public` partition only under the conditions of [cache identity](/engineering/cache/identity) rule 3.
+The manifest policy of an RQP page ([manifest and patch §1.4](/engineering/protocol/manifest-patch#_1-4-policy)) never allows what these rules or the app policy deny (H-61). `ttl_seconds` only shortens the freshness lifetime of rule 4. `offline: true` has an effect only inside rule 6 (`stale-if-error`). `"mode": "public"` selects the `public` partition only under the conditions of [cache identity](/engineering/cache/identity) rule 3, also for the result of a delta on a `public` entry (H-65). A `304` (rule 8) does not change the partition of an entry.
 
 ## 3. Sensitive content
 

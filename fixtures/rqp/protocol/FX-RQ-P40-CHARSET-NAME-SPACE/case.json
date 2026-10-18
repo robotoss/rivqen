@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-P40-CHARSET-NAME-SPACE",
-  "description": "The parameter name is \"charset \" (a space is not a token code point), so A has no charset: F has \"; charset=utf-8\" appended (H-62, items 2 and 4)",
+  "description": "The parameter name is \"charset \" (a space is not a token code point), so A has no charset: F has exactly Content-Type: text/html; charset=utf-8 (H-62 item 2, H-66)",
   "rules": ["RQP-26"],
   "page": "page-a",
   "app": {

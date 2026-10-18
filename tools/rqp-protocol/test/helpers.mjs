@@ -21,6 +21,27 @@ export const APP = Object.freeze({
   ],
 });
 
+/** The origin allowlist of the client tests (DL-038): the https and the http origin of TARGET. */
+export const ALLOWLIST = Object.freeze(['https://shop.example.com', 'http://shop.example.com']);
+
+/**
+ * A client context of the reference client: request URL TARGET, release
+ * build, ALLOWLIST, a native fetch (all response fields visible, H-64), first
+ * visit without a snapshot. `fields` replace members.
+ */
+export function clientContext(fields = {}) {
+  return {
+    url: TARGET,
+    build: 'release',
+    allow_http: false,
+    allowlist: ALLOWLIST,
+    response_fields_visible: true,
+    navigation: 'first-visit',
+    snapshot: null,
+    ...fields,
+  };
+}
+
 export function readJson(path) {
   return JSON.parse(readFileSync(path, 'utf8'));
 }

@@ -18,12 +18,15 @@
 //
 // Client module: export clientStep(context, response) -> { outcome, error,
 // next, metric, snapshot } and optionally clientRequest(context) -> [[name,
-// value]]. context = { url, final_url, build, allow_http, allowlisted,
-// credentials, public_origin, navigation, snapshot: null | { document,
-// template_revision, page_revision, blocks, policy?, limits? } }. url is the
-// request URL and the cache key of the snapshot; final_url is the URL of the
-// response after redirects; allowlisted tells whether the origin of the final
-// URL is in the origin allowlist; credentials is true, false or null (unknown).
+// value]]. context = { url, final_url, build, allow_http, allowlist,
+// credentials, response_fields_visible, public_origin, navigation, snapshot:
+// null | { document, template_revision, page_revision, blocks, policy?,
+// limits?, partition } }. url is the request URL and the cache key of the
+// snapshot; final_url is the URL of the response after redirects; allowlist is
+// the origin allowlist as serialized origins (exact match, DL-038);
+// credentials is true, false or null (unknown); response_fields_visible tells
+// whether the native SDK saw all header fields of the response (H-64);
+// partition is the partition of the snapshot, "request" or "public" (H-65).
 //
 // Comparison rules: docs/engineering/protocol/fixtures.md section 4.1
 // ("Comparison of F") and section 5; README.md of the fixtures; and RQP-08
@@ -212,8 +215,9 @@ export async function runClient(mod, { dir = FIXTURES_DIR, only = '' } = {}) {
       final_url: ctx.final_url,
       build: ctx.build,
       allow_http: ctx.allow_http,
-      allowlisted: ctx.allowlisted,
+      allowlist: ctx.allowlist,
       credentials: ctx.credentials,
+      response_fields_visible: ctx.response_fields_visible,
       public_origin: ctx.public_origin,
       navigation: ctx.navigation,
       snapshot,

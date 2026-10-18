@@ -5,14 +5,16 @@
 // Sniffing "parse a MIME type" and Encoding Standard "get an encoding"), the
 // server rules of negotiation section 4 (steps 2 and 3) and the client rule of
 // manifest-patch section 1.7 (client item 1). A seeded property test checks
-// the invariant: every F of the server has a Content-Type with a UTF-8 charset.
+// the invariant: every F of the server has exactly one line
+// "Content-Type: text/html; charset=utf-8" (H-66), and only a charset that is
+// not UTF-8 passes the page through.
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { Charset, UTF8_LABELS, charsetParameter, contentTypeCharset, isUtf8Label } from '../src/http.mjs';
 import { decodedAsUtf8, handleResponse } from '../src/client.mjs';
-import { fullContentType, handle } from '../src/server.mjs';
-import { APP, TARGET, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
+import { FULL_CONTENT_TYPE, fullContentType, handle } from '../src/server.mjs';
+import { APP, clientContext, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
 
 const typed = (value) => [['content-type', value]];
 const appWith = (value) => ({ status: 200, headers: [['content-type', value], ['cache-control', 'no-cache']] });
@@ -80,38 +82,40 @@ test('step 2: a charset that is not a UTF-8 label passes A through, also for a r
   }
 });
 
-test('step 3: no charset parameter: F gets "; charset=utf-8"; the ETag and the 304 do not change', () => {
-  const plain = handle(firstVisit(), appWith('text/html'), page('page-a'));
+test('H-66, step 3: F has exactly one line "Content-Type: text/html; charset=utf-8", whatever the text of A; the ETag and the 304 do not change', () => {
   const utf8 = handle(firstVisit(), APP, page('page-a'));
-  assert.equal(header(plain, 'content-type'), 'text/html; charset=utf-8');
-  assert.equal(header(plain, 'etag'), header(utf8, 'etag'));
-  assert.deepEqual(plain.body, utf8.body);
-  assert.equal(header(handle(firstVisit(), appWith('Text/HTML  '), page('page-a')), 'content-type'), 'Text/HTML; charset=utf-8');
-  assert.equal(header(handle(firstVisit(), appWith('text/html; x=1'), page('page-a')), 'content-type'), 'text/html; x=1; charset=utf-8');
-  // HEAD of F has the same fields.
-  assert.equal(header(handle(firstVisit('HEAD'), appWith('text/html'), page('page-a')), 'content-type'), 'text/html; charset=utf-8');
+  for (const value of ['text/html', 'Text/HTML  ', 'text/html; x=1', 'text/html; charset="UTF-8"', 'text/html;charset=utf8', 'text/html; charset=unicode-1-1-utf-8',
+    'text/html; charset = utf-8', 'text/html; charset =latin1', 'text/html; x="abc', 'text/html; charset="utf-8" ; x=1']) {
+    const r = handle(firstVisit(), appWith(value), page('page-a'));
+    assert.equal(r.kind, 'full', value);
+    assert.deepEqual(r.headers.filter(([n]) => n === 'content-type'), [['content-type', FULL_CONTENT_TYPE]], value);
+    assert.equal(header(r, 'etag'), header(utf8, 'etag'), value);
+    assert.deepEqual(r.body, utf8.body, value);
+    // HEAD of F has the same field.
+    assert.equal(header(handle(firstVisit('HEAD'), appWith(value), page('page-a')), 'content-type'), FULL_CONTENT_TYPE, value);
+  }
+  assert.equal(FULL_CONTENT_TYPE, 'text/html; charset=utf-8');
+  // The line keeps its position among the fields of A.
+  const r = handle(firstVisit(), { status: 200, headers: [['x-a', '1'], ['content-type', 'text/html'], ['x-b', '2']] }, page('page-a'));
+  assert.deepEqual(r.headers.slice(0, 3), [['x-a', '1'], ['content-type', FULL_CONTENT_TYPE], ['x-b', '2']]);
   // A 304 has no Content-Type, and its ETag is the ETag of F.
   const nm = handle(deltaRequest('page-a'), appWith('text/html'), page('page-a'));
   assert.deepEqual([nm.status, header(nm, 'content-type'), header(nm, 'etag')], [304, null, `"${revisions('page-a').page_revision}"`]);
-});
-
-test('step 3: a UTF-8 label stays as it is; a delta has the delta media type', () => {
-  for (const value of ['text/html; charset="UTF-8"', 'text/html;charset=utf8', 'text/html; charset=unicode-1-1-utf-8']) {
-    assert.equal(header(handle(firstVisit(), appWith(value), page('page-a')), 'content-type'), value);
-  }
-  const d = handle(deltaRequest('page-big-a'), appWith('text/html'), page('page-big-b'));
+  // A delta has the delta media type.
+  const d = handle(deltaRequest('page-big-a'), appWith('text/html; charset="UTF-8"'), page('page-big-b'));
   assert.deepEqual([d.kind, header(d, 'content-type')], ['delta', 'application/vnd.rivqen.delta+json']);
 });
 
-test('step 3: when the appended parameter would not give UTF-8, the page is passed through', () => {
-  // An unclosed quoted string takes the appended text into its value.
-  assert.equal(fullContentType(typed('text/html; x="abc')), null);
-  assert.equal(handle(firstVisit(), appWith('text/html; x="abc'), page('page-a')).reason, 'charset');
-  // A name that ends with a space is not "charset": no charset, so the server appends one.
-  assert.deepEqual(fullContentType(typed('text/html; charset =latin1')), typed('text/html; charset =latin1; charset=utf-8'));
+test('H-66: the charset rule only decides the passthrough; an unclosed quoted string is no charset, so F', () => {
+  assert.deepEqual(fullContentType(typed('text/html; x="abc')), typed(FULL_CONTENT_TYPE));
+  assert.deepEqual(fullContentType([['content-type', 'text/html'], ['vary', 'cookie']]), [['content-type', FULL_CONTENT_TYPE], ['vary', 'cookie']]);
+  for (const value of ['text/html; charset=latin1', 'text/html; charset=""', 'text/html; charset=utf-8, text/html']) {
+    assert.equal(fullContentType(typed(value)), null, value);
+  }
+  assert.equal(fullContentType([['content-type', 'text/html; charset=utf-8'], ['content-type', 'text/html; charset=utf-8']]), null);
 });
 
-test('property: for any Content-Type of A, F has a Content-Type with a UTF-8 charset, and nothing throws', () => {
+test('property: for any Content-Type of A, F has exactly the Content-Type of H-66, and nothing throws', () => {
   let s = 0x0c4a5e7;
   const rnd = () => {
     s = (Math.imul(s, 1103515245) + 12345) >>> 0;
@@ -126,11 +130,15 @@ test('property: for any Content-Type of A, F has a Content-Type with a UTF-8 cha
     const r = handle(firstVisit(), appWith(value), page('page-a'));
     if (r.kind === 'full') {
       full++;
-      assert.equal(contentTypeCharset(r.headers), Charset.UTF8, value);
+      assert.deepEqual(r.headers.filter(([n]) => n === 'content-type'), [['content-type', FULL_CONTENT_TYPE]], value);
+      assert.notEqual(contentTypeCharset(typed(value)), Charset.OTHER, value);
     } else {
       assert.equal(r.kind, 'app', value);
+      // Only the charset rule or the scope (a media type that is not text/html) passes the page through.
+      if (r.reason === 'charset') assert.equal(contentTypeCharset(typed(value)), Charset.OTHER, value);
+      else assert.equal(r.reason, 'out-of-scope', value);
     }
-    const c = handleResponse({ url: TARGET, build: 'release', allow_http: false, navigation: 'first-visit', snapshot: null }, {
+    const c = handleResponse(clientContext(), {
       status: 200,
       headers: [['content-type', value], ['rq-version', '1']],
       body: handle(firstVisit(), APP, page('page-a')).body,
@@ -142,7 +150,7 @@ test('property: for any Content-Type of A, F has a Content-Type with a UTF-8 cha
 
 // Client, manifest-patch section 1.7, client item 1.
 const fullA = () => handle(firstVisit(), APP, page('page-a')).body;
-const first = { url: TARGET, build: 'release', allow_http: false, navigation: 'first-visit', snapshot: null };
+const first = clientContext();
 const respond = (contentType, body = fullA()) => handleResponse(first, { status: 200, headers: [['content-type', contentType], ['rq-version', '1']], body });
 
 test('client: F is used only with a UTF-8 charset label or a UTF-8 byte order mark', () => {

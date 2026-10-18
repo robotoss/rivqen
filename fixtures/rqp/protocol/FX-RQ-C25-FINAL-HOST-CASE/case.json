@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-C25-FINAL-HOST-CASE",
+  "kind": "client",
+  "description": "The allowlist has https://shop.example.com; a redirect to https://SHOP.Example.COM/catalog has the same serialized origin (lower-case host), so the final request carried RQP fields and the full document is stored (DL-038)",
+  "rules": ["RQP-05", "RQP-24"],
+  "context": {
+    "final_url": "https://SHOP.Example.COM/catalog",
+    "allowlist": ["https://shop.example.com"],
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a"
+    }
+  }
+}

@@ -8,13 +8,26 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { LIMITS, pageRevision, sha256b64u } from '../src/common.mjs';
-import { cacheDirectives, checkFull, handleResponse, requestHeaders, snapshotOf, verifyDelta } from '../src/client.mjs';
+import {
+  cacheDirectives,
+  checkFull,
+  clientStep,
+  deltaPartition,
+  handleResponse,
+  inAllowlist,
+  partitionFor,
+  requestHeaders,
+  setsCookie,
+  snapshotOf,
+  verifyDelta,
+  withoutCredentials,
+} from '../src/client.mjs';
 import { attributeRejected, attributesOf, passesAttributeRule } from '../src/markup.mjs';
 import { fullDocument, handle, manifestOf } from '../src/server.mjs';
-import { APP, TARGET, blockPage, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
+import { APP, TARGET, blockPage, clientContext, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
 
 const snapA = () => snapshotOf(page('page-a'), {}, TARGET);
-const ctx = (fields = {}) => ({ url: TARGET, build: 'release', allow_http: false, navigation: 'delta', snapshot: snapA(), ...fields });
+const ctx = (fields = {}) => clientContext({ navigation: 'delta', snapshot: snapA(), ...fields });
 const DELTA = [['content-type', 'application/vnd.rivqen.delta+json']];
 const HTML = [['content-type', 'text/html; charset=utf-8'], ['rq-version', '1']];
 
@@ -238,10 +251,10 @@ test('a manifest with policy and limits and the matching page revision is accept
 test('the manifest is bound to the response URL: an http URL needs a debug build and the app flag', () => {
   const http = 'http://shop.example.com/catalog';
   const body = fullOf('page-a', {}, http);
-  const on = handleResponse({ url: http, build: 'debug', allow_http: true, navigation: 'first-visit', snapshot: null }, { status: 200, headers: HTML, body });
+  const on = handleResponse(clientContext({ url: http, build: 'debug', allow_http: true }), { status: 200, headers: HTML, body });
   assert.equal(on.outcome, 'stored');
   for (const [build, flag] of [['release', true], ['debug', false]]) {
-    const off = handleResponse({ url: http, build, allow_http: flag, navigation: 'first-visit', snapshot: null }, { status: 200, headers: HTML, body });
+    const off = handleResponse(clientContext({ url: http, build, allow_http: flag }), { status: 200, headers: HTML, body });
     assert.equal(off.outcome, 'normal');
   }
 });
@@ -346,24 +359,163 @@ test('H-62 (2), H-63: unknown credentials count as present; Set-Cookie in the re
 test('H-62 (1): F is used only when the final request carried RQP fields (origin allowlist, RQP-05)', () => {
   const other = 'https://pay.example.net/catalog';
   const run = (fields) => handleResponse(ctx({ snapshot: null, navigation: 'first-visit', final_url: other, ...fields }), { status: 200, headers: HTML, body: fullOf('page-a', {}, other) });
-  assert.deepEqual([run({ allowlisted: false }).outcome, run({ allowlisted: false }).error, run({ allowlisted: false }).snapshot], ['normal', null, null]);
+  assert.deepEqual([run({}).outcome, run({}).error, run({}).snapshot], ['normal', null, null]);
   // Control: the same redirect to an origin in the allowlist stores the snapshot under the final URL.
-  assert.deepEqual([run({}).outcome, run({}).snapshot.url], ['stored', other]);
-  assert.deepEqual([run({ allowlisted: true }).outcome], ['stored']);
+  const listed = run({ allowlist: ['https://shop.example.com', 'https://pay.example.net'] });
+  assert.deepEqual([listed.outcome, listed.snapshot.url], ['stored', other]);
 });
 
-test('H-62 (1): the allowlist flag is about the origin of the final URL', () => {
+test('H-62 (1): the allowlist decides for each URL; a 304 and a delta from another origin fail the cache key', () => {
   const other = 'https://pay.example.net/catalog';
-  // The request URL has another origin, so the request carried RQP fields.
-  assert.deepEqual(requestHeaders(ctx({ final_url: other, allowlisted: false })), deltaRequest('page-a').headers);
-  // Without a redirect the request URL is that origin: no RQP fields, a normal response.
-  assert.deepEqual(requestHeaders(ctx({ allowlisted: false })), [['accept', 'text/html']]);
-  const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', allowlisted: false }), { status: 200, headers: HTML, body: fullOf('page-a') });
+  // The request URL is in the allowlist, so the request carries RQP fields, whatever the final URL is.
+  assert.deepEqual(requestHeaders(ctx({ final_url: other })), deltaRequest('page-a').headers);
+  // A request URL outside the allowlist: no RQP fields, a normal response.
+  assert.deepEqual(requestHeaders(ctx({ allowlist: [] })), [['accept', 'text/html']]);
+  const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', allowlist: ['https://pay.example.net'] }), { status: 200, headers: HTML, body: fullOf('page-a') });
   assert.deepEqual([r.outcome, r.snapshot], ['normal', null]);
   // A 304 and a delta from an origin outside the allowlist never have the cache key of the snapshot.
-  assert.deepEqual([on304({ final_url: other, allowlisted: false }).outcome, on304({ final_url: other, allowlisted: false }).next], ['normal', 'webview-load']);
-  const delta = handleResponse(ctx({ final_url: other, allowlisted: false }), { status: 200, headers: DELTA, body: Buffer.from(JSON.stringify(envelope([['price', '130.00']]))) });
+  assert.deepEqual([on304({ final_url: other }).outcome, on304({ final_url: other }).next], ['normal', 'webview-load']);
+  const delta = handleResponse(ctx({ final_url: other }), { status: 200, headers: DELTA, body: Buffer.from(JSON.stringify(envelope([['price', '130.00']]))) });
   assert.deepEqual([delta.error, delta.next], ['PATCH_INVALID', 'fallback-load']);
+});
+
+// DL-038: the allowlist compares serialized origins by exact match.
+test('DL-038: the serialized origin of the URL matches an allowlist entry exactly; no wildcard, no suffix match', () => {
+  const list = (allowlist) => (url) => inAllowlist({ allowlist }, url);
+  const shop = list(['https://shop.example.com']);
+  for (const url of ['https://shop.example.com/x', 'https://SHOP.Example.COM/x', 'https://shop.example.com:443/x', 'https://user:pw@shop.example.com/x?q#f']) {
+    assert.equal(shop(url), true, url);
+  }
+  for (const url of ['https://shop.example.com.attacker.net/x', 'https://attacker.net/shop.example.com', 'http://shop.example.com/x', 'https://shop.example.com:8443/x',
+    'https://www.shop.example.com/x', 'https://example.com/x', 'https://shop.example.co/x', 'https://shop.example.com./x']) {
+    assert.equal(shop(url), false, url);
+  }
+  // IDNA: the entry is the ASCII serialization (xn--) of the host.
+  assert.equal(list(['https://xn--bcher-kva.example'])('https://BÜCHER.example/x'), true);
+  assert.equal(list(['https://bücher.example'])('https://bücher.example/x'), false);
+  // An entry that is not a serialized origin never matches: no wildcard, no trailing "/", no upper case, no default port.
+  for (const entry of ['*', 'https://*.example.com', '*.example.com', 'https://shop.example.com/', 'https://SHOP.example.com', 'https://shop.example.com:443', 'shop.example.com']) {
+    assert.equal(list([entry])('https://shop.example.com/x'), false, entry);
+  }
+  // Without a list, no origin is in the allowlist (fail closed).
+  for (const allowlist of [undefined, null, 'https://shop.example.com', {}]) assert.equal(inAllowlist({ allowlist }, 'https://shop.example.com/x'), false);
+});
+
+test('DL-038: a final URL that differs only in host case or a default port is the same origin; a suffix host is not', () => {
+  const shop = ['https://shop.example.com'];
+  const run = (final) => handleResponse(ctx({ snapshot: null, navigation: 'first-visit', final_url: final, allowlist: shop }), { status: 200, headers: HTML, body: fullOf('page-a', {}, final) });
+  for (const final of ['https://SHOP.Example.COM/catalog', 'https://shop.example.com:443/catalog']) {
+    assert.deepEqual([run(final).outcome, run(final).snapshot.url], ['stored', TARGET], final);
+  }
+  const suffix = run('https://shop.example.com.attacker.net/catalog');
+  assert.deepEqual([suffix.outcome, suffix.error, suffix.snapshot], ['normal', null, null]);
+  // The request URL is checked the same way.
+  assert.deepEqual(requestHeaders(ctx({ url: 'https://Shop.Example.com:443/catalog', allowlist: shop })), deltaRequest('page-a').headers);
+  assert.deepEqual(requestHeaders(ctx({ url: 'https://shop.example.com.attacker.net/catalog', allowlist: shop })), [['accept', 'text/html']]);
+});
+
+// H-64, H-65, DL-038: the public partition.
+const PUBLIC = { policy: { mode: 'public' } };
+const publicCtx = (fields = {}) => ctx({ snapshot: null, navigation: 'first-visit', public_origin: true, credentials: false, ...fields });
+const storeIn = (fields, headers) => handleResponse(publicCtx(fields), { status: 200, headers: [...HTML, ...headers], body: fullOf('page-a', PUBLIC) }).snapshot.partition;
+
+test('H-64: the public partition only for a response whose header fields the native SDK saw in full', () => {
+  assert.equal(storeIn({}, [['cache-control', 'public']]), 'public');
+  assert.equal(storeIn({}, [['cache-control', 'no-cache']]), 'public');
+  for (const visible of [false, undefined, null, 'true', 1]) {
+    // As if the response had a Set-Cookie field: also an explicit public directive does not help.
+    assert.equal(storeIn({ response_fields_visible: visible }, [['cache-control', 'public']]), 'request', String(visible));
+    assert.equal(storeIn({ response_fields_visible: visible }, [['cache-control', 'no-cache']]), 'request', String(visible));
+  }
+  assert.equal(partitionFor({ public_origin: true, credentials: false }, [], PUBLIC), 'request');
+  assert.equal(partitionFor({ public_origin: true, credentials: false, response_fields_visible: true }, [], PUBLIC), 'public');
+});
+
+test('DL-038: Set-Cookie2 counts as Set-Cookie; field names match ASCII case-insensitively', () => {
+  assert.equal(storeIn({}, [['cache-control', 'public'], ['set-cookie2', 'a=1; Version=1']]), 'request');
+  assert.equal(storeIn({}, [['cache-control', 'public'], ['Set-Cookie2', 'a=1']]), 'request');
+  assert.equal(storeIn({}, [['cache-control', 'public'], ['SET-COOKIE', 'a=1']]), 'request');
+  assert.equal(storeIn({}, [['cache-control', 'public'], ['set-cookie3', 'a=1'], ['x-set-cookie', 'a=1']]), 'public');
+  assert.equal(setsCookie([['set-cookie', '']]), true); // an empty value is still the field
+  assert.equal(setsCookie([['cookie', 'a=1']]), false);
+});
+
+test('withoutCredentials is only the credentials flag; partitionFor is the one place of the Set-Cookie rule', () => {
+  assert.equal(withoutCredentials({ credentials: false }), true);
+  for (const credentials of [true, null, undefined, 0, 'false']) assert.equal(withoutCredentials({ credentials }), false, String(credentials));
+  assert.equal(partitionFor({ public_origin: true, credentials: false, response_fields_visible: true }, [['set-cookie', 'a=1']], PUBLIC), 'request');
+});
+
+const publicSnapshot = () => snapshotOf(page('page-a'), PUBLIC, TARGET, 'public');
+/** A consistent delta from the public snapshot of page-a (its page revision has the policy line). */
+function publicDelta(extraHeaders = []) {
+  const a = revisions('page-a');
+  const content = '130.00';
+  const hash = sha256b64u(Buffer.from(content, 'utf8'));
+  const next = a.blocks.map((b) => (b.id === 'price' ? { ...b, sha256: hash } : b));
+  const env = {
+    type: 'rivqen.patch',
+    protocol: 'rqp/1',
+    base_revision: pageRevision(a.template_revision, a.blocks, PUBLIC),
+    next_revision: pageRevision(a.template_revision, next, PUBLIC),
+    template_revision: a.template_revision,
+    operations: [{ op: 'replace_block', block_id: 'price', format: 'html', content, sha256: hash }],
+  };
+  return { status: 200, headers: [...DELTA, ['cache-control', 'no-store'], ...extraHeaders], body: Buffer.from(JSON.stringify(env)) };
+}
+const onPublic = (fields, extraHeaders) => {
+  const snap = publicSnapshot();
+  const r = handleResponse(ctx({ public_origin: true, credentials: false, snapshot: snap, ...fields }), publicDelta(extraHeaders));
+  // The public snapshot itself does not change (H-65).
+  assert.deepEqual([snap.partition, snap.page_revision, snap.document], [publicSnapshot().partition, publicSnapshot().page_revision, page('page-a')]);
+  return r;
+};
+
+test('H-65: a delta on a public snapshot keeps the result public only under the RQP-25 conditions and known absent credentials', () => {
+  const ok = onPublic({});
+  assert.deepEqual([ok.outcome, ok.snapshot.partition, ok.snapshot.url], ['patched', 'public', TARGET]);
+  assert.equal(ok.snapshot.blocks.find((b) => b.id === 'price').content, '130.00');
+  const cases = [
+    [{ credentials: null }, []],
+    [{ credentials: undefined }, []],
+    [{ credentials: true }, []],
+    // A delta has no-store; an explicit public directive does not replace known absent credentials.
+    [{ credentials: true }, [['cache-control', 'public']]],
+    [{ response_fields_visible: false }, []],
+    [{}, [['set-cookie', 'a=1']]],
+    [{}, [['set-cookie2', 'a=1']]],
+    [{}, [['cache-control', 'private']]],
+    [{ public_origin: false }, []],
+  ];
+  for (const [fields, headers] of cases) {
+    const r = onPublic(fields, headers);
+    assert.deepEqual([r.outcome, r.snapshot.partition], ['patched', 'request'], JSON.stringify([fields, headers]));
+  }
+});
+
+test('H-65: a snapshot in the partition of the request gives a result in the partition of the request', () => {
+  const snap = snapshotOf(page('page-a'), PUBLIC, TARGET);
+  const r = handleResponse(ctx({ public_origin: true, credentials: false, snapshot: snap }), publicDelta([['cache-control', 'public']]));
+  assert.deepEqual([r.outcome, r.snapshot.partition], ['patched', 'request']);
+  assert.equal(deltaPartition({ public_origin: true, credentials: false, response_fields_visible: true }, [], { partition: 'request', members: PUBLIC }), 'request');
+  assert.equal(deltaPartition({ public_origin: true, credentials: false, response_fields_visible: true }, [], { partition: 'public', members: PUBLIC }), 'public');
+});
+
+test('H-65: a 304 on a public snapshot keeps the snapshot as it is, also with Set-Cookie or private on the 304', () => {
+  for (const headers of [[], [['set-cookie', 'a=1']], [['cache-control', 'private']]]) {
+    const snap = publicSnapshot();
+    const r = handleResponse(ctx({ public_origin: true, credentials: null, snapshot: snap }), { status: 304, headers, body: null });
+    assert.deepEqual([r.outcome, r.next, r.snapshot, snap.partition], ['not-modified', 'keep', null, 'public'], JSON.stringify(headers));
+  }
+});
+
+test('the harness interface takes the partition of the context snapshot', () => {
+  const s = publicSnapshot();
+  const plain = { document: page('page-a'), template_revision: s.analysis.template_revision, page_revision: s.page_revision, blocks: [], ...PUBLIC };
+  const context = { ...ctx({ public_origin: true, credentials: false, snapshot: null }), snapshot: { ...plain, partition: 'public' } };
+  assert.equal(clientStep(context, publicDelta()).snapshot.partition, 'public');
+  assert.equal(clientStep({ ...context, snapshot: plain }, publicDelta()).snapshot.partition, 'request');
+  assert.throws(() => clientStep({ ...context, snapshot: { ...plain, partition: 'shared' } }, publicDelta()), /unknown partition shared/);
 });
 
 test('a patched snapshot keeps the cache key of the snapshot', () => {

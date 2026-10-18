@@ -62,7 +62,7 @@ flowchart TD
 |---|---|---|---|
 | T-01 | XSS through a data block or patch | B2 | No script elements, no inline event handlers and no attribute value that starts with `javascript:`, `vbscript:` or `data:` after URL normalization in patched content (H-59, DL-036). Not covered by this rule: later URLs in `srcset`/`ping`, `url()` in `style`, app-specific schemes, DOM clobbering, CSS overlays, full documents ([manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules)). Context-aware insertion; CSP for script gadgets and CSS (SEC-03, SEC-04, SEC-17); no bridge through URL-scheme navigation (SEC-02) |
 | T-02 | Bridge abuse from a third-party iframe | B1 | Frame-origin check by native API; command allowlist (SEC-02, SEC-16) |
-| T-03 | Cross-account cache read | B5 | Partitioned keys, revoke on logout (SEC-05, SEC-18) |
+| T-03 | Cross-account cache read | B5 | Partitioned keys, revoke on logout (SEC-05, SEC-18). The shared `public` partition only for a response that the native SDK saw in full, with no `Set-Cookie` or `Set-Cookie2` and known absent credentials or `Cache-Control: public` (H-61 to H-64, DL-038); the result of a delta on a `public` snapshot stays public only with known absent credentials (H-65) |
 | T-04 | Replay of an old patch | B2 | HTTP: `base_revision` + `next_revision` check + navigation generation (SEC-09, SEC-20); no sequence over HTTP (H-9). Push channels (WP-16): sequence |
 | T-05 | Cache poisoning via shared CDN | B4 | `Cache-Control: private`, `Vary`, no 304 on identity mismatch (SEC-06) |
 | T-06 | Decompression bomb / huge document | B2 | Size and ratio limits (SEC-07, SEC-23) |
@@ -75,6 +75,8 @@ flowchart TD
 | T-13 | Memory corruption in FFI | B1/B2 | Safe Rust, minimal `unsafe`, fuzzing, Miri (SEC-22) |
 | T-14 | Dependency compromise | build | Lockfiles, SBOM, `cargo-deny`, signed releases (SEC-12, SEC-24) |
 | T-15 | Stale private page shown after TLS error | B2 | No sensitive stale on `TLS_ERROR` (SEC-06) |
+| T-16 | Encoding confusion: the WebView decodes a full document or a snapshot with another encoding than UTF-8 and sees other blocks or another manifest position | B2 | UTF-8 only (H-62); every full document has exactly `Content-Type: text/html; charset=utf-8` (H-66); the client gives every document to the WebView as UTF-8 (H-66) ([negotiation §4, §6.3](/engineering/protocol/negotiation#_6-3-response); SEC-17) |
+| T-17 | Allowlist bypass by a look-alike origin (`shop.example.com.attacker.net`, a subdomain) after an open redirect | B2 | Exact match of the serialized origin, no wildcard, no suffix match (DL-038); the client uses a response only from an allowlisted final request (H-62) (SEC-02) |
 
 ## 5. Out of scope
 

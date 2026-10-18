@@ -51,9 +51,9 @@ A patch passes only if **all** checks pass. The checks run in this order. The fi
 
 Step 11 is what makes the 64-bit block digest prefixes of the request safe (H-44): a changed block that the server omits keeps its old full hash in the recomputation, so the revision differs and the client loads the full document. Step 12 checks `next_revision` again after the apply, on the bytes of the patched copy, and gives the block offsets of the new snapshot. Only after step 13 does the engine build the `ValidatedPatch` (section 4). Codes: [error catalog](/engineering/core/errors) (H-50). Steps 12 and 13 give no script element, no inline event handler and no attribute value that starts with `javascript:`, `vbscript:` or `data:` after URL normalization in patched content (DL-036). They are not an HTML sanitizer: later URLs in `srcset` or `ping`, `url()` in `style`, app-specific schemes, DOM clobbering, CSS overlays and script gadgets of a framework are not covered ([manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules)); CSP ([SEC-04](/engineering/security/controls)) and a bridge that URL-scheme navigation cannot reach ([SEC-02](/engineering/security/controls)) control them.
 
-A `304` is not a patch, but it confirms a snapshot as the current page, so the session binds it the same way (H-58; [negotiation §6.3](/engineering/protocol/negotiation#_6-3-response), item 1): the request sent `If-None-Match` with the revision of the snapshot, the final URL has the cache key of the snapshot, and the `ETag` of the `304`, when present, matches that revision by weak comparison. Else the snapshot stays unchanged and the WebView loads the URL normally. Check 3 applies to a `304` too (DL-036): when the partition changed between the request and the response (for example a logout during the revalidation), the session stops with `AUTH_PARTITION_CHANGED`, does not show the snapshot, and the WebView loads the URL normally in the new partition.
+A `304` is not a patch, but it confirms a snapshot as the current page, so the session binds it the same way (H-58; [negotiation §6.3](/engineering/protocol/negotiation#_6-3-response), item 1): the request sent `If-None-Match` with the revision of the snapshot, the final URL has the cache key of the snapshot, and the `ETag` of the `304`, when present, matches that revision by weak comparison. Else the snapshot stays unchanged and the WebView loads the URL normally. Check 3 applies to a `304` too (DL-036): when the partition changed between the request and the response (for example a logout during the revalidation), the session stops with `AUTH_PARTITION_CHANGED`, does not show the snapshot, and the WebView loads the URL normally in the new partition. A `304` on a snapshot in the shared `public` partition keeps that snapshot as it is, in `public` (H-65): a `304` has no content, so no content of this request enters the shared partition.
 
-The session uses a delta, a `304` or a full document only when the final request carried RQP fields: the origin of the final URL is in the allowlist and the build allows its scheme (H-62). A delta or a `304` from an origin outside the allowlist never has the cache key of the snapshot, so check 1 rejects it.
+The session uses a delta, a `304` or a full document only when the final request carried RQP fields: the origin of the final URL is in the allowlist (exact match of the serialized origin, DL-038) and the build allows its scheme (H-62). A delta or a `304` from an origin outside the allowlist never has the cache key of the snapshot, so check 1 rejects it.
 
 Bounds: steps 4 to 6 read at most `maxPatchBytes` bytes; steps 9 to 11 do work linear in the envelope size and in the number of blocks (≤ 256); step 12 is one markup pass over at most `maxDocumentBytes` and one copy of at most that size; step 13 reads only the patched content, which step 12 has already tokenized.
 
@@ -63,9 +63,19 @@ A validated patch becomes a `ValidatedPatch`. It contains:
 
 - The list of block replacements in document order.
 - The new `page_revision`.
-- A `CacheTransaction` for the new snapshot.
+- A `CacheTransaction` for the new snapshot, with its cache key: the canonical URL of the snapshot and the partition below.
 
-The adapter delivers the patch to the web SDK **and** commits the cache. If the web SDK reports a failure, the core invalidates the new snapshot and selects a full reload. The page and the cache are never left in different revisions after the session ends.
+<Badge type="info" text="DESIGN" /> **Partition of the new snapshot (H-65).** The engine selects the partition before it builds the `CacheTransaction`:
+
+| Snapshot | Request and delta response | Partition of the new snapshot |
+|---|---|---|
+| In the partition of the request | Any | The partition of the request |
+| In `public` | The client knows that the request had no credentials; the native SDK saw all header fields of the delta response (H-64); no `Set-Cookie` or `Set-Cookie2`; no `Cache-Control: private`; the origin is declared public; the manifest policy of the snapshot has `"mode": "public"` | `public`: the transaction replaces the `public` snapshot |
+| In `public` | Any other case (also unknown credentials, and an explicit `Cache-Control: public` with credentials) | The partition of the request: a new entry; the `public` snapshot does not change |
+
+Rules: [RQP manifest and patch §1.4](/engineering/protocol/manifest-patch#_1-4-policy), "Delta on a `public` snapshot", and RQP-25 of [negotiation](/engineering/protocol/negotiation#_8-rules). Reason: the server computes the changed blocks for this request, so with credentials the new content can be personal.
+
+The adapter delivers the patch to the web SDK **and** commits the cache. When the adapter gives the patched document (or any snapshot) to the WebView as a document, it gives it as `text/html` with the encoding `utf-8` and decodes it only as UTF-8 (H-66; [negotiation §6.3](/engineering/protocol/negotiation#_6-3-response), "Delivery to the WebView"). If the web SDK reports a failure, the core invalidates the new snapshot and selects a full reload. The page and the cache are never left in different revisions after the session ends.
 
 ## 5. Properties (tested)
 

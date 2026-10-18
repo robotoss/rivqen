@@ -8,18 +8,21 @@
 // results of the client fixtures (FX-RQ-C*), not a client SDK.
 //
 // Modelled context: the request URL (the cache key of the snapshot), the final
-// URL after redirects, the build type and the http flag (H-49, H-58), whether
-// the origin of the final URL is in the origin allowlist (RQP-05, H-62 item 1),
-// whether the request carried credentials (true, false or unknown; H-62 item
-// 2) and whether the app declares the origin public (the partition of a new
-// snapshot, H-61).
+// URL after redirects, the build type and the http flag (H-49, H-58), the
+// origin allowlist as a list of serialized origins (RQP-05, H-62 item 1,
+// DL-038), whether the request carried credentials (true, false or unknown;
+// H-62 item 2), whether the native SDK saw all header fields of the response
+// (H-64), whether the app declares the origin public (the partition of a new
+// snapshot, H-61), and the partition of the context snapshot (request or
+// public; H-65).
 //
 // Not modelled: the partition keys and a partition change
 // (AUTH_PARTITION_CHANGED, also for a 304), the other cache identity inputs
-// (Vary, variant, ignored query parameters), no-store, and the policy effects
-// (freshness, offline). A context snapshot is in the request partition. The
-// manifest members policy and limits are modelled as part of the page revision
-// (H-55), as the patch size hint and, for mode, as the partition choice.
+// (Vary, variant, ignored query parameters), no-store, the policy effects
+// (freshness, offline), and the delivery to the WebView (H-66: text/html with
+// the encoding utf-8; a platform adapter rule). The manifest members policy
+// and limits are modelled as part of the page revision (H-55), as the patch
+// size hint and, for mode, as the partition choice.
 
 import {
   Code,
@@ -64,12 +67,14 @@ function snapshot(document, analysis, members, key = { url: null, partition: Par
 /**
  * A client snapshot from an original document (without the manifest) that is
  * valid for RQP, and the members policy and limits of its manifest. `url` is
- * the URL of its cache key (null: not known).
+ * the URL of its cache key (null: not known); `partition` is the partition of
+ * its cache key (H-61, H-65).
  */
-export function snapshotOf(document, members = {}, url = null) {
+export function snapshotOf(document, members = {}, url = null, partition = Partition.REQUEST) {
   const analysis = analyze(document);
   if (!analysis.valid) throw new Error('a snapshot needs a document that is valid for RQP');
-  return snapshot(document, analysis, members, { url: url === null ? null : canonicalUrl(url), partition: Partition.REQUEST });
+  if (partition !== Partition.REQUEST && partition !== Partition.PUBLIC) throw new Error(`unknown partition ${partition}`);
+  return snapshot(document, analysis, members, { url: url === null ? null : canonicalUrl(url), partition });
 }
 
 /**
@@ -111,13 +116,16 @@ function describe(snap) {
 }
 
 /**
- * Section 6.1, rule 1 (RQP-05, H-62 item 1): the origin of `url` is in the
- * origin allowlist. The context member `allowlisted` (default true) tells it
- * for the origin of the final URL; every other origin of a context is in the
- * allowlist.
+ * Section 6.1, rule 1 (RQP-05, H-62 item 1, DL-038): the origin of `url` is in
+ * the origin allowlist. The client compares the serialized origin of the URL
+ * (WHATWG URL Standard: scheme, lower-case host in its IDNA form, no default
+ * port; cache identity section 2) with each entry by exact string match. There
+ * are no wildcards and no suffix match; an entry that is not a serialized
+ * origin never matches. Without a list (ctx.allowlist not an array) no origin
+ * is in the allowlist (fail closed).
  */
 export function inAllowlist(ctx, url) {
-  return ctx.allowlisted !== false || new URL(url).origin !== new URL(finalUrlOf(ctx)).origin;
+  return Array.isArray(ctx.allowlist) && ctx.allowlist.includes(new URL(url).origin);
 }
 
 /**
@@ -195,26 +203,54 @@ export function cacheDirectives(value) {
 
 /**
  * Manifest-patch section 1.4, mode (H-62 item 2): the request had no
- * credentials only when the client knows it (credentials === false) and the
- * response has no Set-Cookie field. Unknown credentials (null or absent) count
- * as present.
+ * credentials only when the client knows it (credentials === false). Unknown
+ * credentials (null or absent) count as present. A Set-Cookie field in the
+ * response also counts as credentials; partitionFor checks it (one place).
  */
-export function withoutCredentials(ctx, responseHeaders) {
-  return ctx.credentials === false && !has(responseHeaders, 'set-cookie');
+export function withoutCredentials(ctx) {
+  return ctx.credentials === false;
 }
 
 /**
- * Manifest-patch section 1.4, mode (H-61, H-62): the shared public partition
- * only for a manifest with mode "public", an origin that the app declares
- * public, no Cache-Control directive "private", no Set-Cookie field in the
- * response (H-63), and an explicit "public" directive or a request without
- * credentials. Else the partition of the request.
+ * DL-038: a Set-Cookie or a Set-Cookie2 field (RFC 2965, obsolete) in the
+ * response. Field names are compared ASCII case-insensitively
+ * (normalizeHeaders gives lower-case names).
+ */
+export function setsCookie(responseHeaders) {
+  return has(responseHeaders, 'set-cookie') || has(responseHeaders, 'set-cookie2');
+}
+
+/**
+ * Manifest-patch section 1.4, mode (H-61 to H-64, RQP-25): the shared public
+ * partition only for a manifest with mode "public", an origin that the app
+ * declares public, a response whose header fields the native SDK saw in full
+ * (H-64; any other response counts as a response with a Set-Cookie field), no
+ * Set-Cookie field (H-63), no Cache-Control directive "private", and an
+ * explicit "public" directive or a request without credentials. Else the
+ * partition of the request.
  */
 export function partitionFor(ctx, responseHeaders, members) {
   if (members.policy?.mode !== 'public' || ctx.public_origin !== true) return Partition.REQUEST;
+  if (ctx.response_fields_visible !== true || setsCookie(responseHeaders)) return Partition.REQUEST;
   const directives = cacheDirectives(combined(responseHeaders, 'cache-control'));
-  if (directives.has('private') || has(responseHeaders, 'set-cookie')) return Partition.REQUEST;
-  return directives.has('public') || withoutCredentials(ctx, responseHeaders) ? Partition.PUBLIC : Partition.REQUEST;
+  if (directives.has('private')) return Partition.REQUEST;
+  return directives.has('public') || withoutCredentials(ctx) ? Partition.PUBLIC : Partition.REQUEST;
+}
+
+/**
+ * H-65: the partition of the result of a delta. A snapshot in the partition of
+ * the request gives a result in the partition of the request. The result of a
+ * delta on a public snapshot stays public only when the delta response meets
+ * RQP-25 (partitionFor with the policy of the snapshot manifest) and the
+ * client knows that the request had no credentials: a delta has
+ * Cache-Control no-store, so an explicit "public" directive does not count.
+ * Else the result goes to the partition of the request, and the public
+ * snapshot does not change.
+ */
+export function deltaPartition(ctx, responseHeaders, snap) {
+  if (snap.partition !== Partition.PUBLIC) return Partition.REQUEST;
+  const stays = withoutCredentials(ctx) && partitionFor(ctx, responseHeaders, snap.members) === Partition.PUBLIC;
+  return stays ? Partition.PUBLIC : Partition.REQUEST;
 }
 
 /**
@@ -238,7 +274,8 @@ export function decodedAsUtf8(responseHeaders, body) {
  * the request URL, which passed rqpAllowed at the start.
  *
  * @param {{ url: string, final_url?: string, build: string, allow_http: boolean, navigation: string,
- *   snapshot: object|null, allowlisted?: boolean, credentials?: boolean|null, public_origin?: boolean }} ctx
+ *   snapshot: object|null, allowlist: string[], credentials?: boolean|null,
+ *   response_fields_visible?: boolean, public_origin?: boolean }} ctx
  * @param {{ status: number, headers: Array<[string, string]>, body: Uint8Array|null }} response
  */
 export function handleResponse(ctx, response) {
@@ -251,7 +288,7 @@ export function handleResponse(ctx, response) {
     return result('normal', { next: 'webview-load' });
   }
   const type = mediaType(combined(headers, 'content-type'));
-  if (response.status === 200 && type === DELTA_TYPE) return handleDelta(ctx, body);
+  if (response.status === 200 && type === DELTA_TYPE) return handleDelta(ctx, headers, body);
   if (response.status === 200 && type === 'text/html' && rqpAllowed(ctx, finalUrlOf(ctx))) {
     const v = combined(headers, 'rq-version');
     const parsed = v === null ? null : parseItem(v);
@@ -396,7 +433,7 @@ export function verifyDelta(snap, body, offered, maxPatchBytes = LIMITS.maxPatch
   return { snapshot: patchedSnapshot };
 }
 
-function handleDelta(ctx, body) {
+function handleDelta(ctx, headers, body) {
   // Diff-engine step 1 (H-58): the final URL has the cache key of the snapshot.
   // A release build sent RQP fields only for https, so the same key is https too.
   const sameKey = canonicalUrl(finalUrlOf(ctx)) === canonicalUrl(ctx.url);
@@ -410,17 +447,21 @@ function handleDelta(ctx, body) {
       metric: verified.code === Code.PATCH_CONTENT_REJECTED,
     });
   }
-  return result('patched', { snapshot: describe(verified.snapshot) });
+  // H-65: the partition of the result; a public snapshot itself does not change.
+  const partition = deltaPartition(ctx, headers, ctx.snapshot);
+  return result('patched', { snapshot: describe({ ...verified.snapshot, partition }) });
 }
 
 // ---------------------------------------------------------------------------
 // Harness interface (check.mjs --client). A context snapshot is plain data:
-// { document, template_revision, page_revision, blocks, policy?, limits? }.
+// { document, template_revision, page_revision, blocks, policy?, limits?,
+// partition? } (partition "request", the default, or "public"; H-65).
 
 function internal(context) {
   if (context.snapshot === null) return { ...context, snapshot: null };
-  const snap = snapshotOf(Buffer.from(context.snapshot.document), membersOf(context.snapshot), context.url);
-  if (snap.page_revision !== context.snapshot.page_revision) throw new Error('the context snapshot does not match its document');
+  const s = context.snapshot;
+  const snap = snapshotOf(Buffer.from(s.document), membersOf(s), context.url, s.partition ?? Partition.REQUEST);
+  if (snap.page_revision !== s.page_revision) throw new Error('the context snapshot does not match its document');
   return { ...context, snapshot: snap };
 }
 

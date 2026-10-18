@@ -350,13 +350,13 @@ function main(argv) {
     const bp = made.map((p) => ({ ...p, block: { ...(p[key].block_rules ?? {}), ...(p[key].doc_classes ?? {}) } }));
     const bs = classStats(bp, "block");
     const blockOnly = [...bs].filter(([c]) => /^M-(1[4-9]|2[0-5])/.test(c));
-    w("Block rules, all classes (top 14). `M-22.2:<name>`: a forbidden element in the content. `M-22-foreign`: a forbidden or self-closing tag inside an `svg` or `math` of the content (a consequence of `M-22.2:svg`).");
+    w("Block rules, all classes (top 14). `M-22.2:<name>`: a forbidden element in HTML context of the content. `M-22.5`: an element outside `FOREIGN_ALLOWED` in an `svg` or `math` region of the content (H-73).");
     w();
     w(table(["Class", "Total", "Alone", "% of variants"], blockOnly.sort((a, b) => b[1].total - a[1].total).slice(0, 14).map(([c, s]) => [code(c), String(s.total), String(s.alone), pct(s.total, made.length)])));
     w();
     const rej = bp.filter((p) => Object.keys(p.block).length > 0);
-    const svgOnly = rej.filter((p) => Object.keys(p.block).every((c) => ["M-22.2:svg", "M-22.2:math", "M-22-foreign"].includes(c)));
-    w(`Variants that only inline \`svg\` or \`math\` content rejects (\`M-22.2:svg\`, \`M-22.2:math\`, \`M-22-foreign\`): **${svgOnly.length} (${pct(svgOnly.length, made.length)} of the variants)**.`);
+    const svgOnly = rej.filter((p) => Object.keys(p.block).every((c) => ["M-22.5"].includes(c)));
+    w(`Variants that only a foreign element outside \`FOREIGN_ALLOWED\` rejects (\`M-22.5\`, H-73): **${svgOnly.length} (${pct(svgOnly.length, made.length)} of the variants)**.`);
     w();
     const gs = greedy(bp, 5, "block");
     w(table(["Step", "Class removed", "Valid", "%"], [["0", "none", String(ok.length), pct(ok.length, made.length)], ...gs.map((s, i) => [String(i + 1), code(s.rule), String(s.valid), pct(s.valid, made.length)])]));
@@ -421,7 +421,7 @@ function main(argv) {
   w("**DESIGN.** A reading of the numbers above. Relaxing a rule is a human decision; it needs a parse5 study first (markup.md section 5 item 3).");
   w();
   for (const o of obs) w(`- ${o}`);
-  w("- In simulated blocks, the main cost is inline `svg` in the content (`M-22.2:svg` and its consequence `M-22-foreign`), then `script` and `style`. Section 8 has the numbers.");
+  w("- In simulated blocks, the main costs are `script` and `style` in the content; inline `svg` and `math` are allowed with the element allowlist of H-73 (`M-22.5`). Section 8 has the numbers.");
   w();
 
   // 12. Limits

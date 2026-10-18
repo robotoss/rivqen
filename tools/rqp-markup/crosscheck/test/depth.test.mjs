@@ -126,10 +126,114 @@ test("nested tables in cells: 64 levels make D 257", () => {
   assert.deepEqual([run(doc(64)).maxD, run(doc(64)).classes], [257, [CLASSES.depth]]);
 });
 
-test("noscript content does not count in D; the noscript element does", () => {
-  const a = run(`${"<div>".repeat(255)}<noscript>${"<span>".repeat(300)}x${"</span>".repeat(300)}</noscript>x`);
-  assert.deepEqual([a.maxD, a.classes], [256, []]);
+test("H-71: the tags of the noscript content count in D (M-11 item 8, M-26 item 7)", () => {
+  const nested = (divs, spans) =>
+    `${"<div>".repeat(divs)}<noscript>${"<span>".repeat(spans)}x${"</span>".repeat(spans)}</noscript><div data-rq-block="x">y</div>`;
+  // Before H-71 this document was valid with max D 256 (architect decision R5).
+  assert.deepEqual([run(nested(255, 300)).maxD, run(nested(255, 300)).classes], [556, [CLASSES.depth]]);
+  assert.deepEqual([run(nested(155, 100)).maxD, run(nested(155, 100)).classes], [256, []]);
+  assert.deepEqual(run(nested(156, 100)).classes, [CLASSES.depth]);
   assert.deepEqual(run(`${"<div>".repeat(256)}<noscript></noscript>`).classes, [CLASSES.depth]);
+});
+
+test("H-71: after the noscript end tag the main pass continues with D as before C", () => {
+  // C leaves its units in its own pass (the H-75 crossing makes the noscript element dirty there);
+  // the main pass pops the noscript element exactly.
+  const doc = `<noscript><svg><path d="M0"></svg></noscript>${"<div>".repeat(5)}`;
+  assert.equal(run(doc).maxD, 5);
+  assert.equal(analyzeDepth(b(doc), { scripting: false }).maxD, 5);
+});
+
+test("H-71: the main-pass rule classes apply to the tokens of C (M-11 item 8)", () => {
+  const k = '<span data-rq-block="k">y<a href="2">z</a>w</span>';
+  // The T-16 shape (M-09 condition 2 inside C) and the H-36 shape inside C (M-10 item 2).
+  assert.deepEqual(run(`<object><a href="1"><noscript><table><marquee><table></table></marquee></table></noscript>x</a></object>${k}`).classes, [CLASSES.tableCurrent]);
+  assert.deepEqual(run(`<a href="1"><noscript>${"<form><object><form></form></object></form>".repeat(9)}</noscript>x</a>${k}`).classes, [CLASSES.form]);
+  // The element around the noscript element counts: a form outside, a table outside.
+  assert.deepEqual(run("<form><noscript><form>x</form></noscript></form>").classes, [CLASSES.form]);
+  assert.deepEqual(run("<table><noscript><table></table></noscript></table>").classes, [CLASSES.tableCurrent]);
+  // Controls: the same tags in C without the outer element, and a table of C in a cell.
+  assert.deepEqual(run("<noscript><form>x</form><table><tr><td>t</td></tr></table></noscript>").classes, []);
+  assert.deepEqual(run("<table><tr><td><noscript><table></table></noscript></td></tr></table>").classes, []);
+});
+
+test("H-71: M-11 item 7, no html, body or head tag in C", () => {
+  for (const c of ["<body></body>", '<html lang="en"></html>', "<head></head>", "</head>"]) {
+    assert.ok(run(`<noscript>${c}</noscript>`).classes.includes(CLASSES.noscriptDocumentTag), c);
+    assert.equal(checkNoscriptContent(c).documentTag, true, c);
+  }
+  assert.equal(checkNoscriptContent("<header></header><bodyx></bodyx>").documentTag, false);
+});
+
+test("checkNoscriptContent with the main-pass counter: classes go to its set, the counter does not change", () => {
+  const outer = new DepthCounter();
+  outer.startTag("form", false);
+  outer.startTag("noscript", false);
+  const before = JSON.stringify({ stack: outer.stack.map((e) => ({ ...e, implied: [...e.implied] })), d: outer.d });
+  const r = checkNoscriptContent(`${"<i>".repeat(10)}<form></form>${"</i>".repeat(10)}`, outer);
+  assert.equal(r.maxD, 13);
+  assert.deepEqual([...outer.classes], [CLASSES.form]);
+  assert.equal(JSON.stringify({ stack: outer.stack.map((e) => ({ ...e, implied: [...e.implied] })), d: outer.d }), before);
+  assert.equal(outer.maxD, 2);
+});
+
+test("H-74: a foreign region of C has no tokenizer state change and follows M-05 item 2", () => {
+  // No RAWTEXT for style in svg: the svg end tag is a tag (with H-75 it closes the style too).
+  assert.equal(checkNoscriptContent("<svg><style></svg>").balanced, true);
+  // No RCDATA for title in svg: the g start tag in it is a tag, and it is closed.
+  assert.equal(checkNoscriptContent("<svg><title><g></g></title></svg>").balanced, true);
+  // In HTML context of C, title is still RCDATA: the "tags" in it are text.
+  assert.equal(checkNoscriptContent("<title><g></title>").balanced, true);
+  // Self-closing tags in the region are not pushed; a self-closing svg opens no region.
+  assert.equal(checkNoscriptContent('<svg><path d="M0"/><g/></svg><svg/>').balanced, true);
+  // Item 6 also in the region.
+  assert.equal(checkNoscriptContent("<svg><tr></tr></svg>").tablePart, true);
+});
+
+test("H-75 in C: only the end tag of the region root can cross elements of the region", () => {
+  assert.equal(checkNoscriptContent('<a href="/"><svg><path d="M0"></svg></a>').balanced, true);
+  assert.equal(checkNoscriptContent("<svg><g><path></svg>").balanced, true);
+  assert.equal(checkNoscriptContent("<svg><g><path></g></svg>").balanced, false);
+  // A nested svg is pushed in the region: its end tag is not the end tag of the region root.
+  assert.equal(checkNoscriptContent("<svg><svg><path></svg></svg>").balanced, false);
+  assert.equal(checkNoscriptContent("<svg><path>").balanced, false);
+  assert.equal(checkNoscriptContent("<div><svg><path></div>").balanced, false);
+});
+
+test("H-75: the end tag of the region root sets no special-crossed mark; D does not change", () => {
+  const block = '<span data-rq-block="x">y<a>z</a>w</span>';
+  assert.deepEqual(run(`<a href="#"><svg><path d="M0"></svg></a>${block}`).classes, []);
+  assert.deepEqual(run(`<b><math><mrow><mi>x</mi></math></b>${block}`).classes, []);
+  // Other crossings in the region still mark (H-32): an inner end tag, and a nested svg.
+  assert.deepEqual(run(`<a href="#"><svg><g><path d="M0"></g></svg></a>${block}`).classes, [CLASSES.formattingMarked]);
+  assert.deepEqual(run(`<a href="#"><svg><svg><path d="M0"></svg></svg></a>${block}`).classes, [CLASSES.formattingMarked]);
+  // The crossing keeps its units: 3 for each icon.
+  const icons = (n) => `${'<span><svg><path d="M0"></svg></span>'.repeat(n)}<div data-rq-block="d">x</div>`;
+  assert.deepEqual([run(icons(85)).maxD, run(icons(85)).classes], [256, []]);
+  assert.deepEqual(run(icons(86)).classes, [CLASSES.depth]);
+  const { ds } = feed(["<span>", "<svg>", "<path>", "</svg>", "</span>"]);
+  assert.deepEqual(ds, [1, 2, 3, 3, 3]);
+});
+
+test("scripting disabled: the claim of M-26 holds with D counted in C, at the bound", () => {
+  // WHATWG stack in C: html, body, 155 div, noscript, 100 span = 258 = D + 2.
+  const doc = `${"<div>".repeat(155)}<noscript>${"<span>".repeat(100)}x${"</span>".repeat(100)}</noscript><div data-rq-block="x">y</div>`;
+  const off = analyzeDepth(b(doc), { scripting: false });
+  assert.deepEqual([off.maxD, off.maxStack, off.violations], [256, 258, []]);
+  const on = analyzeDepth(b(doc));
+  assert.deepEqual([on.maxD, on.maxStack, on.violations], [256, 158, []]);
+  // Tags in an svg integration point inside C (invalid by M-07): only the disabled view sees them.
+  const bad = `<noscript><svg><desc>${"<table><td>".repeat(3)}x</desc></svg></noscript>`;
+  assert.deepEqual(run(bad).violations, []);
+  assert.ok(analyzeDepth(b(bad), { scripting: false }).violations.length > 0);
+});
+
+test("scripting disabled: classes of C come from the main-pass state at the noscript start tag", () => {
+  const doc = "<form><noscript><form>x</form></noscript></form>";
+  assert.deepEqual(analyzeDepth(b(doc), { scripting: false }).classes, [CLASSES.form]);
+  assert.deepEqual(analyzeDepth(b("<noscript><div><img src=x></div></noscript><p>x</p>"), { scripting: false }).classes, []);
+  // E3 in the disabled view: C is the rest of the input.
+  assert.deepEqual(analyzeDepth(b("<noscript><div>x"), { scripting: false }).classes, [CLASSES.noscriptBalance]);
 });
 
 test("the invariant check reports a violation (tags in an svg integration point: invalid by M-07)", () => {
@@ -196,10 +300,10 @@ test("class H-27: noscript content that is not balanced, also at the end of the 
 });
 
 test("checkNoscriptContent: order, stray end tags, raw text and void elements", () => {
-  assert.deepEqual(checkNoscriptContent("<a><span>x</a></span>"), { balanced: false, nonAsciiType: false, tablePart: false });
-  assert.deepEqual(checkNoscriptContent("</div>"), { balanced: false, nonAsciiType: false, tablePart: false });
-  assert.deepEqual(checkNoscriptContent("<br><img><style><p></style><title><b></title>"), { balanced: true, nonAsciiType: false, tablePart: false });
-  assert.deepEqual(checkNoscriptContent('<script type="text/jävascript"></script>'), { balanced: true, nonAsciiType: true, tablePart: false });
+  assert.deepEqual(checkNoscriptContent("<a><span>x</a></span>"), { balanced: false, nonAsciiType: false, tablePart: false, documentTag: false, maxD: 0 });
+  assert.deepEqual(checkNoscriptContent("</div>"), { balanced: false, nonAsciiType: false, tablePart: false, documentTag: false, maxD: 0 });
+  assert.deepEqual(checkNoscriptContent("<br><img><style><p></style><title><b></title>"), { balanced: true, nonAsciiType: false, tablePart: false, documentTag: false, maxD: 0 });
+  assert.deepEqual(checkNoscriptContent('<script type="text/jävascript"></script>'), { balanced: true, nonAsciiType: true, tablePart: false, documentTag: false, maxD: 0 });
 });
 
 test("class H-28: non-ASCII characters in the raw value of a script type, also in noscript", () => {

@@ -52,7 +52,11 @@ export const CLASSES = {
   form: "M-10-form", // H-36: a form start tag while an HTML form is on the token stack
   noscriptTablePart: "M-11-table-part", // H-38: a table part or col start tag in C without a table on the C stack
   templateFor: "M-10-template-for", // H-43: an HTML template start tag with a for attribute (content patching; parse5 8.0.1 does not implement it)
+  noscriptDocumentTag: "M-11-document-tag", // H-71, M-11 item 7: an html, body or head start or end tag in C
 };
+
+/** M-11 item 7 (H-71): tag names that C must not contain. */
+const DOCUMENT_TAGS = names("html body head");
 
 /**
  * The depth counter D of markup.md M-26 over the token stack of M-05.
@@ -72,6 +76,22 @@ export class DepthCounter {
 
   get inForeign() {
     return this.roots > 0;
+  }
+
+  /**
+   * A copy of the token stack, D and the marks (for the pass of markup.md M-11 item 8 on C, H-71).
+   * The copy shares the set of rule classes, so a class found on the copy is a class of the document.
+   * Its maxD starts at the current D, not at the maxD of this counter.
+   * Memory: one entry for each element on the stack, at most D + 1 entries when D <= 256.
+   */
+  clone() {
+    const c = new DepthCounter();
+    c.stack = this.stack.map((e) => ({ ...e, implied: new Set(e.implied) }));
+    c.d = this.d;
+    c.maxD = this.d;
+    c.roots = this.roots;
+    c.classes = this.classes;
+    return c;
   }
 
   #raise(n) {
@@ -167,8 +187,10 @@ export class DepthCounter {
       if (popped.some((e) => e.marked)) this.classes.add(CLASSES.formattingMarked);
     }
     // M-06 item 4: a crossing over a special or foreign element, or the pop of a marked element,
-    // marks the new current node.
-    if ((crossesSpecial || popped.some((e) => e.marked)) && this.stack.length > 0) {
+    // marks the new current node. H-75: the end tag of the region root (the svg or math element
+    // pushed in HTML context) crosses only elements of its region and sets no mark for them.
+    const rootEnd = !popped[0].foreign && (name === "svg" || name === "math");
+    if (((crossesSpecial && !rootEnd) || popped.some((e) => e.marked)) && this.stack.length > 0) {
       this.stack[this.stack.length - 1].marked = true;
     }
     for (const e of popped) if (!e.foreign && (e.name === "svg" || e.name === "math")) this.roots--;
@@ -200,38 +222,76 @@ export function rawAttrValue(text, location, name) {
 const hasNonAscii = (s) => /[^\x00-\x7f]/.test(s);
 
 /**
- * M-11 with H-27: tokenize the noscript content C (HTML context, M-04) and check that it is
- * balanced. Also applies M-13 (H-28) to script start tags in C, and H-38 (a table part or col
- * needs a table on the C stack).
+ * M-11 for the noscript content C: tokenize C followed by `</noscript>` (M-04 in HTML context of C;
+ * no state change in a foreign region of C, item 9, H-74) and check:
+ * - item 5 (H-27): C is balanced. Exception (H-75): in a foreign region of C, the end tag of the
+ *   region root (the svg or math element pushed in HTML context of C) can cross elements of the region;
+ * - item 6 (H-38): a table part or col needs a table on the C stack (also in a foreign region of C);
+ * - item 7 (H-71): no html, body or head start or end tag;
+ * - M-13 item 3 (H-28) for script start tags.
+ * With `outer` (the main-pass counter while the noscript element is the current node), item 8
+ * (H-71): the tags of C and the end tag noscript also go through a copy of that counter. Its rule
+ * classes go to the classes of `outer` (shared set), and `maxD` is the largest D of that pass.
+ * `outer` itself does not change. The pass ends at the first end tag noscript (item 1).
+ *
+ * Time: one tokenizer pass over C; per end tag a search of the C stack (bounded by the size of C)
+ * and of the copy (at most D + 1 entries while D <= 256).
  * @param {string} c
- * @returns {{ balanced: boolean, nonAsciiType: boolean, tablePart: boolean }}
+ * @param {DepthCounter | null} [outer]
+ * @returns {{ balanced: boolean, nonAsciiType: boolean, tablePart: boolean, documentTag: boolean, maxD: number }}
  */
-export function checkNoscriptContent(c) {
-  const out = { balanced: true, nonAsciiType: false, tablePart: false };
+export function checkNoscriptContent(c, outer = null) {
+  const out = { balanced: true, nonAsciiType: false, tablePart: false, documentTag: false, maxD: 0 };
+  const pass = outer === null ? null : outer.clone();
+  /** @type {string[]} */
   const stack = [];
+  let region = -1; // index in `stack` of the root of the foreign region of C
   let done = false;
   const handler = {
     onStartTag(t) {
       if (done) return;
-      if (t.tagName === "script") {
+      const name = t.tagName;
+      if (DOCUMENT_TAGS.has(name)) out.documentTag = true;
+      if (name === "script") {
         const type = rawAttrValue(text, t.location, "type");
         if (type !== null && hasNonAscii(type)) out.nonAsciiType = true;
       }
-      if ((TABLE_PART.has(t.tagName) || t.tagName === "col") && !stack.includes("table")) out.tablePart = true;
-      if (RCDATA.has(t.tagName)) tok.state = TokenizerMode.RCDATA;
-      else if (RAWTEXT.has(t.tagName)) tok.state = TokenizerMode.RAWTEXT;
-      else if (t.tagName === "script") tok.state = TokenizerMode.SCRIPT_DATA;
-      else if (t.tagName === "plaintext") tok.state = TokenizerMode.PLAINTEXT;
-      if (!VOID.has(t.tagName) && !((t.tagName === "svg" || t.tagName === "math") && t.selfClosing)) stack.push(t.tagName);
+      if ((TABLE_PART.has(name) || name === "col") && !stack.includes("table")) out.tablePart = true;
+      pass?.startTag(name, t.selfClosing, (t.attrs ?? []).map((a) => a.name));
+      if (region >= 0) {
+        // Foreign region of C: M-05 item 2, no state change (M-04).
+        if (!t.selfClosing) stack.push(name);
+        return;
+      }
+      if (RCDATA.has(name)) tok.state = TokenizerMode.RCDATA;
+      else if (RAWTEXT.has(name)) tok.state = TokenizerMode.RAWTEXT;
+      else if (name === "script") tok.state = TokenizerMode.SCRIPT_DATA;
+      else if (name === "plaintext") tok.state = TokenizerMode.PLAINTEXT;
+      const root = name === "svg" || name === "math";
+      if (root && t.selfClosing) return;
+      if (!VOID.has(name)) stack.push(name);
+      if (root) region = stack.length - 1;
     },
     onEndTag(t) {
       if (done) return;
-      if (t.tagName === "noscript") {
+      const name = t.tagName;
+      if (name === "noscript") {
         done = true;
+        pass?.endTag(name);
         return;
       }
-      if (stack.length === 0 || stack[stack.length - 1] !== t.tagName) out.balanced = false;
-      else stack.pop();
+      if (DOCUMENT_TAGS.has(name)) out.documentTag = true;
+      pass?.endTag(name);
+      const top = stack.length - 1;
+      if (top >= 0 && stack[top] === name) {
+        stack.pop();
+      } else if (region >= 0 && stack[region] === name && stack.lastIndexOf(name) === region) {
+        stack.length = region; // H-75: the end tag of the region root crosses elements of the region
+      } else {
+        out.balanced = false;
+        return;
+      }
+      if (stack.length <= region) region = -1;
     },
     onComment() {},
     onDoctype() {},
@@ -244,6 +304,7 @@ export function checkNoscriptContent(c) {
   const tok = new Tokenizer({ sourceCodeLocationInfo: true }, handler);
   tok.write(text, true);
   if (stack.length > 0) out.balanced = false;
+  if (pass !== null) out.maxD = pass.maxD;
   return out;
 }
 
@@ -262,21 +323,30 @@ function isElement(node) {
  */
 
 /**
- * Parse the document with parse5 (scripting enabled), compute D and check the invariant.
+ * Parse the document with parse5, compute D and check the invariant.
+ *
+ * Scripting enabled (default): the RQP view (markup.md M-04); the noscript content C is text, and
+ * the pass of M-11 item 8 runs on a copy of the counter. Scripting disabled: C is markup, so the
+ * counter runs on the tokens of C as they come (that is the pass of item 8, H-71), and after the
+ * end tag noscript it continues with the main-pass state. The invariant then checks the claim of
+ * M-26 for the scripting-disabled tree too.
  *
  * @param {Uint8Array} bytes
- * @param {{ fullStackLimit?: number }} [options] fullStackLimit: check every stack element only
- *   while the stack is not larger than this (default 1024); else only new elements and the current node
+ * @param {{ fullStackLimit?: number, scripting?: boolean }} [options] fullStackLimit: check every
+ *   stack element only while the stack is not larger than this (default 1024); else only new
+ *   elements and the current node. scripting: the parse5 option scriptingEnabled (default true)
  * @returns {DepthAnalysis}
  */
-export function analyzeDepth(bytes, { fullStackLimit = 1024 } = {}) {
+export function analyzeDepth(bytes, { fullStackLimit = 1024, scripting = true } = {}) {
   const empty = { ok: false, maxD: 0, maxStack: 0, maxDepth: 0, violations: [], classes: [] };
   if (bytes.length > MAX_INPUT_BYTES) return empty;
   const decoded = decodeUtf8(bytes);
   if (decoded === null) return empty;
   const text = decoded.text;
 
-  const counter = new DepthCounter();
+  let counter = new DepthCounter();
+  /** @type {DepthCounter | null} the main-pass state at the noscript start tag (scripting disabled) */
+  let saved = null;
   const violations = [];
   const hosts = new WeakMap(); // template content fragment → template element
   /** @type {object[]} */
@@ -362,7 +432,15 @@ export function analyzeDepth(bytes, { fullStackLimit = 1024 } = {}) {
         const type = rawAttrValue(text, token.location, "type");
         if (type !== null && hasNonAscii(type)) counter.classes.add(CLASSES.typeNonAscii);
       }
-      if (htmlContext && token.tagName === "noscript" && token.location) noscriptStart = token.location.endOffset;
+      if (htmlContext && token.tagName === "noscript" && token.location && noscriptStart < 0) {
+        noscriptStart = token.location.endOffset;
+        // Scripting disabled: the tokens of C come in this stream, and the counter runs on them as
+        // the pass of M-11 item 8 (H-71). Keep the main-pass state to continue with it after C.
+        if (!scripting) {
+          saved = counter.clone();
+          saved.maxD = counter.maxD;
+        }
+      }
       super.onStartTag(token);
       this.#after(`<${token.tagName}>`, token.location?.startOffset);
     }
@@ -374,6 +452,12 @@ export function analyzeDepth(bytes, { fullStackLimit = 1024 } = {}) {
         seen.add(token);
         if (token.tagName === "noscript" && noscriptStart >= 0 && token.location) {
           this.#noscript(text.slice(noscriptStart, token.location.startOffset));
+          if (saved !== null) {
+            // After the end tag noscript the main pass continues with its own state (M-11 item 8).
+            saved.maxD = Math.max(saved.maxD, counter.maxD);
+            counter = saved;
+            saved = null;
+          }
         }
         counter.endTag(token.tagName);
       }
@@ -383,10 +467,14 @@ export function analyzeDepth(bytes, { fullStackLimit = 1024 } = {}) {
 
     #noscript(c) {
       noscriptStart = -1;
-      const r = checkNoscriptContent(c);
+      const main = saved ?? counter; // the main-pass state while the noscript element is the current node
+      const r = checkNoscriptContent(c, main);
       if (!r.balanced) counter.classes.add(CLASSES.noscriptBalance);
       if (r.nonAsciiType) counter.classes.add(CLASSES.typeNonAscii);
       if (r.tablePart) counter.classes.add(CLASSES.noscriptTablePart);
+      if (r.documentTag) counter.classes.add(CLASSES.noscriptDocumentTag);
+      // D counts in C (M-26 item 7, H-71).
+      if (r.maxD > main.maxD) main.maxD = r.maxD;
     }
 
     onCharacter(token) {
@@ -417,6 +505,7 @@ export function analyzeDepth(bytes, { fullStackLimit = 1024 } = {}) {
     }
   }
 
-  DepthParser.parse(text, { treeAdapter: adapter, scriptingEnabled: true, sourceCodeLocationInfo: true });
-  return { ok: true, maxD: counter.maxD, maxStack, maxDepth, violations, classes: [...counter.classes].sort() };
+  DepthParser.parse(text, { treeAdapter: adapter, scriptingEnabled: scripting, sourceCodeLocationInfo: true });
+  const maxD = Math.max(counter.maxD, saved?.maxD ?? 0);
+  return { ok: true, maxD, maxStack, maxDepth, violations, classes: [...counter.classes].sort() };
 }

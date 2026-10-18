@@ -144,12 +144,16 @@ export function parseArgs(argv) {
  * @param {string[]} views
  * @param {{ rules?: boolean }} [options] rules: a valid result must not have a rule class of the
  *   security review (depth.mjs CLASSES); use it for results that implement those rules (--expected)
- * @returns {{ name: string, findings: { kind: string, candidate: string, details: string[] }[], cells: Map<string, string>, p5: Map<string, import("./view.mjs").View>, depth: import("./depth.mjs").DepthAnalysis }[]}
+ * @returns {{ name: string, findings: { kind: string, candidate: string, details: string[] }[], cells: Map<string, string>, p5: Map<string, import("./view.mjs").View>, depth: import("./depth.mjs").DepthAnalysis, depthDisabled: import("./depth.mjs").DepthAnalysis | null }[]}
+ *   depthDisabled: the depth analysis in the scripting-disabled view (only when `views` has "disabled")
  */
 export function evaluateDocs(docs, resultsByCandidate, views, { rules = false } = {}) {
   return docs.map((doc) => {
     const p5 = new Map(views.map((v) => [v, parse5View(doc.bytes, { scripting: v === "enabled" })]));
     const depth = analyzeDepth(doc.bytes);
+    // markup.md M-11 item 8 and M-26 item 7 (H-71): D counts in C, so the claim of M-26 also holds
+    // for the scripting-disabled tree.
+    const depthDisabled = views.includes("disabled") ? analyzeDepth(doc.bytes, { scripting: false }) : null;
     const findings = [];
     const cells = new Map();
     const perDoc = new Map();
@@ -182,6 +186,10 @@ export function evaluateDocs(docs, resultsByCandidate, views, { rules = false } 
         findings.push({ kind: "depth-invariant", candidate: cand, details: depth.violations });
         disagreeing.push("depth");
       }
+      if (o.valid && depthDisabled !== null && depthDisabled.violations.length > 0) {
+        findings.push({ kind: "depth-invariant-disabled", candidate: cand, details: depthDisabled.violations });
+        disagreeing.push("depth-disabled");
+      }
       if (rules && o.valid && depth.classes.length > 0) {
         findings.push({ kind: "new-rule", candidate: cand, details: [`valid, but the document has: ${depth.classes.join(", ")}`] });
         disagreeing.push("rules");
@@ -191,7 +199,7 @@ export function evaluateDocs(docs, resultsByCandidate, views, { rules = false } 
     }
     const mismatch = compareCandidates(perDoc);
     if (mismatch.length > 0) findings.push({ kind: "candidates", candidate: "*", details: mismatch });
-    return { name: doc.name, findings, cells, p5, depth };
+    return { name: doc.name, findings, cells, p5, depth, depthDisabled };
   });
 }
 
@@ -367,9 +375,10 @@ async function cmdCases(o, write) {
     failed += run.failed;
     const evaluated = evaluateDocs(docs, run.out, ["enabled", "disabled"]);
     const cands = [...run.out.keys()];
-    write(["case", "parse5 (scripting on)", "parse5 (scripting off)", "depth", ...cands].join(" | "));
+    write(["case", "parse5 (scripting on)", "parse5 (scripting off)", "depth", "depth (scripting off)", ...cands].join(" | "));
     for (const e of evaluated) {
-      const row = [e.name, viewCell(e.p5.get("enabled")), viewCell(e.p5.get("disabled")), depthCell(e.depth)];
+      const off = e.depthDisabled === null ? "-" : depthCell(e.depthDisabled);
+      const row = [e.name, viewCell(e.p5.get("enabled")), viewCell(e.p5.get("disabled")), depthCell(e.depth), off];
       for (const c of cands) row.push(e.cells.get(c) ?? "-");
       write(row.join(" | "));
     }
@@ -390,6 +399,7 @@ async function cmdSweep(o, write) {
   const classDocs = new Map();
   const byClass = new Map();
   const invariant = { docs: 0, accepted: 0 };
+  const invariantOff = { docs: 0, accepted: 0 }; // the same in the scripting-disabled view
   const onlyBy = new Map(); // class → documents that a candidate accepts and that only this class rejects
   // One batch directory with fixed slot names, reused by every chunk: creating and deleting
   // directories is the slowest part on some file systems.
@@ -416,6 +426,10 @@ async function cmdSweep(o, write) {
         if (e.depth.violations.length > 0) {
           invariant.docs++;
           if (e.findings.some((f) => f.kind === "depth-invariant")) invariant.accepted++;
+        }
+        if (e.depthDisabled !== null && e.depthDisabled.violations.length > 0) {
+          invariantOff.docs++;
+          if (e.findings.some((f) => f.kind === "depth-invariant-disabled")) invariantOff.accepted++;
         }
         for (const f of e.findings) countByClass(byClass, f.kind, e.depth.classes);
         const accepted = [...run.out.values()].some((results) => results.get(doc.name)?.valid === true);
@@ -464,6 +478,9 @@ async function cmdSweep(o, write) {
     write(`finding ${kind}: ${c.total} total, ${c.none} without a rule class, ${c.onlyOpen} only ${CLASSES.formattingMarked}; ${parts}`);
   }
   write(`depth invariant: ${invariant.docs} document(s) with a violation, ${invariant.accepted} of them valid for a candidate`);
+  if (o.views.includes("disabled")) {
+    write(`depth invariant (scripting disabled): ${invariantOff.docs} document(s) with a violation, ${invariantOff.accepted} of them valid for a candidate`);
+  }
   const kinds = [...totals.entries()].map(([k, v]) => `${k}=${v}`).join(" ");
   write(`findings: ${kinds === "" ? "none" : kinds}`);
   if (totals.size > 0) write(`saved inputs: ${outDir}`);

@@ -279,18 +279,13 @@ export const FULL_CONTENT_TYPE = 'text/html; charset=utf-8';
 
 /**
  * The header lines of the full document (H-66), or null when the page is invalid for RQP.
- * The page passes through (null) when the charset class is OTHER, or when the value with
- * "; charset=utf-8" appended does not have a UTF-8 charset (for example an unclosed quoted
- * string). Otherwise F has exactly one Content-Type line with the value FULL_CONTENT_TYPE,
- * whatever the text of A was. The line keeps the place of the first Content-Type line of A.
+ * The page passes through (null) when the charset class is OTHER. Otherwise (no charset or a
+ * UTF-8 charset) F has exactly one Content-Type line with the value FULL_CONTENT_TYPE, whatever
+ * the text of A was (DL-039: F never carries the text of A, so no second parse is needed).
+ * The line keeps the place of the first Content-Type line of A.
  */
 export function fullContentType(headers) {
-  const charset = contentTypeCharset(headers);
-  if (charset === CHARSET.OTHER) return null;
-  if (charset === CHARSET.NONE) {
-    const appended = headers.map(([n, v]) => [n, n === 'content-type' ? `${v.replace(/[ \t]+$/, '')}; charset=utf-8` : v]);
-    if (contentTypeCharset(appended) !== CHARSET.UTF8) return null;
-  }
+  if (contentTypeCharset(headers) === CHARSET.OTHER) return null;
   const out = [];
   for (const line of headers) {
     if (line[0] !== 'content-type') out.push(line);

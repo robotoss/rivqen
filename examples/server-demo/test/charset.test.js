@@ -24,11 +24,10 @@ test('H-62 item 2: the name is not trimmed, so "charset " is not a charset and F
   }
 });
 
-test('H-62 item 4: an unclosed quoted string swallows the appended parameter: the page is invalid for RQP', () => {
+test('H-66, DL-039: an unclosed quoted string has no charset: F has the exact Content-Type', () => {
   const r = run('text/html; x="abc');
-  assert.equal(r.mode, 'passthrough');
-  assert.equal(header(r, 'content-type'), 'text/html; x="abc');
-  assert.equal(r.headers.some(([n]) => n.startsWith('rq-')), false);
+  assert.equal(r.mode, 'full');
+  assert.equal(header(r, 'content-type'), 'text/html; charset=utf-8');
 });
 
 test('H-62 item 2: an empty unquoted value does not count; the next valid charset parameter wins', () => {
@@ -69,7 +68,7 @@ test('H-62 item 1: a comma inside a quoted string is not a list separator; empty
   assert.equal(contentTypeCharset([['cache-control', 'no-cache']]), CHARSET.NONE);
 });
 
-test('H-62 item 4: trailing white space of the field value goes before the appended parameter', () => {
+test('H-66: a value with trailing white space and no charset gives F with the exact Content-Type', () => {
   const r = run('text/html \t ');
   assert.equal(r.mode, 'full');
   assert.equal(header(r, 'content-type'), 'text/html; charset=utf-8');

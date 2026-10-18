@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-P39-HEAD-STRAY-BODY",
-  "description": "The head is closed by the body start tag; the only </head> is a stray end tag in the body: no head end tag, the page is sent without RQP (DL-031)",
-  "rules": ["RQP-09"],
+  "description": "The head is closed by the body start tag and the only </head> is a stray end tag in the body: F with the manifest immediately after the head start tag; the head needs no end tag (H-72)",
+  "rules": ["RQP-20"],
   "page": "page-head-stray",
   "app": {
     "status": 200,

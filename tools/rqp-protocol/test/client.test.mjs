@@ -6,6 +6,7 @@
 // and 1.8, and the attribute rule of section 4.2.
 
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { LIMITS, pageRevision, sha256b64u } from '../src/common.mjs';
 import {
@@ -26,7 +27,7 @@ import {
   verifyDelta,
   withoutCredentials,
 } from '../src/client.mjs';
-import { attributeRejected, attributesOf, passesAttributeRule } from '../src/markup.mjs';
+import { attributeRejected, attributesOf, documentHeadStart, passesAttributeRule } from '../src/markup.mjs';
 import { fullDocument, handle, manifestOf } from '../src/server.mjs';
 import { APP, TARGET, blockPage, clientContext, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
 
@@ -204,7 +205,7 @@ test('without Rq-Version 1 the manifest is not used and there is no error', () =
 test('MANIFEST_INVALID: each failed check of sections 1.7 and 1.8', () => {
   const a = revisions('page-a');
   const p = page('page-a');
-  const at = p.indexOf('</head>');
+  const at = documentHeadStart(p);
   const build = (manifest, type = 'application/rivqen-manifest+json', where = at) =>
     Buffer.concat([p.subarray(0, where), Buffer.from(`<script type="${type}">${typeof manifest === 'string' ? manifest : JSON.stringify(manifest)}</script>`), p.subarray(where)]);
   const m = manifestOf(a, TARGET);
@@ -214,6 +215,8 @@ test('MANIFEST_INVALID: each failed check of sections 1.7 and 1.8', () => {
   assert.equal(reasons(build(m, 'application/rıvqen-manifest+json')), 'count');
   assert.equal(reasons(build(m, 'application/rivqen-manifest+json ')), 'count'); // no trimming
   assert.equal(reasons(build(m, undefined, p.indexOf('</body>'))), 'position');
+  assert.equal(reasons(build(m, undefined, p.indexOf('</head>'))), 'position'); // the insertion point before H-72
+  assert.equal(reasons(build(m, undefined, at + 1)), 'position'); // a line feed between <head> and the manifest
   const element = build(m).subarray(at, build(m).length - (p.length - at));
   assert.equal(reasons(Buffer.concat([p.subarray(0, at), element, element, p.subarray(at)])), 'count'); // two elements
   assert.equal(reasons(build(JSON.stringify(m).replace('{', '{"protocol":"rqp/1",'))), 'json-duplicate');
@@ -227,9 +230,18 @@ test('MANIFEST_INVALID: each failed check of sections 1.7 and 1.8', () => {
   assert.equal(reasons(build(`${JSON.stringify(m)}${' '.repeat(LIMITS.maxManifestBytes)}`)), 'size');
 });
 
+test('H-72: each MANIFEST_INVALID case of fixture row C-21 fails the position check of client item 3', () => {
+  const dir = new URL('../../../fixtures/rqp/protocol/', import.meta.url);
+  const cases = ['NO-HEAD-START-TAG', 'OLD-POSITION', 'HEAD-WHITESPACE', 'HEAD-COMMENT-FIRST', 'HEAD-IN-TEMPLATE'];
+  for (const name of cases) {
+    const body = readFileSync(new URL(`FX-RQ-C21-${name}/response.body`, dir));
+    assert.equal(checkFull({ url: TARGET }, body).error, 'position', name);
+  }
+});
+
 test('a manifest text of exactly maxManifestBytes passes the size check; one byte more fails it', () => {
   const p = page('page-a');
-  const at = p.indexOf('</head>');
+  const at = documentHeadStart(p);
   const m = JSON.stringify(manifestOf(revisions('page-a'), TARGET));
   const build = (size) => Buffer.concat([
     p.subarray(0, at),

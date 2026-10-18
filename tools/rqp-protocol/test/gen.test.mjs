@@ -28,7 +28,7 @@ function copyFixture(name) {
 
 test('gen.mjs --check: every committed page and expected file is current', () => {
   const out = execFileSync(process.execPath, [GEN, '--check'], { encoding: 'utf8' });
-  assert.match(out, /160 fixtures are current/);
+  assert.match(out, /168 fixtures are current/);
 });
 
 test('every catalog case P-01 to P-40 and C-01 to C-27 has at least one fixture', () => {
@@ -211,6 +211,26 @@ test('defective cases stop with a case error: id, unknown member, placeholder, p
   expectError({ ...c, page: 'page-zzz' }, /unknown page page-zzz/);
   writeFileSync(file, JSON.stringify({ ...c, request: { ...c.request, headers: [['if-none-match', '{{r1:page-c}}']] } }));
   assert.ok(run({ check: true, dir }).problems.some((p) => /page page-c is not valid for RQP/.test(p)));
+});
+
+test('body recipe manifest_after (H-72): after the first copy of the text; a defective value stops with a case error', () => {
+  const name = 'FX-RQ-C21-HEAD-WHITESPACE';
+  const dir = copyFixture(name);
+  const file = join(dir, name, 'case.json');
+  const c = JSON.parse(readFileSync(file, 'utf8'));
+  const body = expectFixture(dir, name).files['response.body'];
+  const at = pageBytes('page-a').indexOf('<head>\n') + '<head>\n'.length;
+  assert.equal(body.indexOf('<script type="application/rivqen-manifest+json">'), at);
+  const withBody = (extra) => writeFileSync(file, JSON.stringify({ ...c, response: { ...c.response, body: { ...c.response.body, ...extra } } }));
+  for (const [extra, pattern] of [
+    [{ manifest_after: '<nothing>' }, /no such position/],
+    [{ manifest_after: '' }, /manifest_after must be a text/],
+    [{ manifest_after: 3 }, /manifest_after must be a text/],
+    [{ manifest_position: 'body' }, /manifest_position and manifest_after together/],
+  ]) {
+    withBody(extra);
+    assert.throws(() => expectFixture(dir, name), (e) => e instanceof CaseError && pattern.test(e.message), JSON.stringify(extra));
+  }
 });
 
 test('level "should" is copied to expected.json; another level is a defective case', () => {

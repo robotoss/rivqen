@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-C21-NO-HEAD-START-TAG",
   "kind": "client",
-  "description": "Rq-Version 1 and a consistent manifest immediately before the </head> of a page without a <head> start tag: the document has no head end tag, MANIFEST_INVALID (DL-031)",
+  "description": "Rq-Version 1 and a consistent manifest immediately before the </head> of a page without a <head> start tag: the document has no head start tag, MANIFEST_INVALID (H-72)",
   "rules": ["RQP-14"],
   "context": {
     "navigation": "first-visit",

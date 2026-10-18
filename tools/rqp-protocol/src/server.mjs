@@ -31,7 +31,7 @@ import {
   parseEntityTags,
   without,
 } from './http.mjs';
-import { analyze, documentHeadEnd, passesAttributeRule } from './markup.mjs';
+import { analyze, documentHeadStart, passesAttributeRule } from './markup.mjs';
 import { parseDictionary, parseItem, parseList } from './sf.mjs';
 
 const BASE_TAG = /^"(r1\.[A-Za-z0-9_-]{43})"$/;
@@ -125,7 +125,7 @@ export function manifestOf(analysis, target, members = {}) {
   };
 }
 
-/** Step 3: F = P with the manifest element immediately before the head end tag (DL-031). */
+/** Step 3: F = P with the manifest element immediately after the head start tag of the document (H-72). */
 export function fullDocument(page, insertAt, manifest) {
   const text = JSON.stringify(manifest);
   if (text.includes('<')) return null; // manifest-patch section 1.7, server item 3
@@ -235,8 +235,8 @@ export function handle(request, app, pageBytes, config = {}) {
   if (typed === null) return passthrough('charset');
   const analysis = analyze(page);
   if (!analysis.valid) return passthrough('invalid-page');
-  const insertAt = documentHeadEnd(page);
-  if (insertAt < 0) return passthrough('no-head-end');
+  const insertAt = documentHeadStart(page);
+  if (insertAt < 0) return passthrough('no-head-start');
 
   // Step 3.
   const manifest = manifestOf(analysis, request.target, members);

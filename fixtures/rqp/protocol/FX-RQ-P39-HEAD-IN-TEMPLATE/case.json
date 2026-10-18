@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-P39-HEAD-IN-TEMPLATE",
-  "description": "The only </head> closes a head start tag inside a template in the body: no head end tag, the page is sent without RQP (DL-031)",
-  "rules": ["RQP-09"],
+  "description": "The only </head> closes a head start tag inside a template in the body: F with the manifest immediately after the first head start tag, not after the one in the template (H-72)",
+  "rules": ["RQP-20"],
   "page": "page-head-template",
   "app": {
     "status": 200,

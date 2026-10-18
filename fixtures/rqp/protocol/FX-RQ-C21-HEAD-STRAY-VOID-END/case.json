@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-C21-HEAD-STRAY-VOID-END",
   "kind": "client",
-  "description": "Rq-Version 1 and a consistent manifest immediately before the real </head>, after a stray </meta> end tag in the head: the manifest is accepted (DL-034)",
+  "description": "Rq-Version 1 and a consistent manifest immediately after the head start tag of a page with a stray </meta> in the head: the manifest is accepted (H-72)",
   "rules": ["RQP-14"],
   "context": {
     "navigation": "first-visit",

@@ -104,10 +104,11 @@ test('compares F by the bytes around the manifest, the position and the manifest
   const pretty = text.replace(JSON.stringify(m), JSON.stringify(reordered, null, 1));
   assert.deepEqual(ok(pretty), []);
   assert.ok(ok(text.replace('Static header', 'Static_header')).some((f) => f.includes('after the manifest element')));
-  assert.ok(ok(text.replace('<title', '<TITLE')).some((f) => f.includes('before the manifest element')));
+  assert.ok(ok(text.replace('<!DOCTYPE', '<!doctype')).some((f) => f.includes('before the manifest element')));
+  assert.ok(ok(text.replace('<title', '<TITLE')).some((f) => f.includes('after the manifest element')));
   assert.ok(ok(text.replace(m.page_revision, m.template_revision.replace('t1.', 'r1.'))).some((f) => f.includes('manifest value')));
   const moved = text.replace(/<script type="application\/rivqen-manifest\+json">.*?<\/script>/, '').replace('</body>', `<script type="application/rivqen-manifest+json">${JSON.stringify(m)}</script></body>`);
-  assert.ok(ok(moved).some((f) => f.includes('immediately before the head end tag')));
+  assert.ok(ok(moved).some((f) => f.includes('immediately after the head start tag')));
 });
 
 test('detects Rq-* or Accept in Vary of F and a wrong Content-Length', () => {

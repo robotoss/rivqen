@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-C12-MANIFEST-IN-BODY",
   "kind": "client",
-  "description": "Rq-Version 1 and the manifest element before </body>, not before </head> (H-49)",
+  "description": "Rq-Version 1 and the manifest element before </body>, not immediately after the head start tag (H-49, H-72)",
   "rules": ["RQP-14"],
   "context": {
     "navigation": "first-visit",

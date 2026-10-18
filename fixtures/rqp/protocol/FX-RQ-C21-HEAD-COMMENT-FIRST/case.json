@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-C21-HEAD-COMMENT-FIRST",
+  "kind": "client",
+  "description": "Rq-Version 1 and a consistent manifest after the head start tag and a comment: the comment is the first token after the head start tag, MANIFEST_INVALID (H-72)",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-head-late",
+      "manifest_after": "<head><!-- h -->"
+    }
+  }
+}

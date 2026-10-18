@@ -1,6 +1,6 @@
 # Project status
 
-**Current stage:** Phase P0 (Foundation and evidence) is **closed**: milestone **M1 "init docs"** is delivered and gate **G0** is passed. **Now:** Phase P1 — Contracts. WP-17 (RQP specification) sprint S1 is closed: the RQP markup rules are normative and four parser candidates agree on all golden markup fixtures. Now: WP-17 sprint S2 (negotiation, manifest and patch) is running; WP-02 and WP-03 follow.
+**Current stage:** Phase P0 (Foundation and evidence) is **closed**: milestone **M1 "init docs"** is delivered and gate **G0** is passed. **Now:** Phase P1 — Contracts. WP-17 (RQP specification) sprint S1 is closed: the RQP markup rules are normative and four parser candidates agree on all golden markup fixtures. Sprint S2 is closed: negotiation, manifest and patch of `rqp/1` are normative, with JSON Schemas, 160 protocol fixtures and a server demo that passes them. Next: WP-17 sprint S3 (`noscript` and relaxation studies); WP-02 and WP-03 follow.
 
 ## What exists
 
@@ -10,7 +10,7 @@
 | Development plan with work packages | ✅ Available |
 | Upstream VasSonic behavioral audit (summary) | ✅ Available — see [Research](/research/upstream-vassonic) |
 | Upstream server traces (Node.js, PHP, Java) | ✅ Available — see [server traces](/engineering/protocol/legacy-traces) |
-| Rivqen protocol (RQP) specification | 🔄 In progress — markup rules normative ([RQP markup](/engineering/protocol/markup)); negotiation, manifest and patch in WP-17 S2 |
+| Rivqen protocol (RQP) specification | 🔄 In progress — markup, negotiation, manifest and patch normative ([RQP markup](/engineering/protocol/markup), [negotiation](/engineering/protocol/negotiation), [manifest and patch](/engineering/protocol/manifest-patch)); 160 protocol fixtures; S3 next |
 | Server demo (RQP reference behavior) | ✅ Runs — see [Examples: Server](/guide/examples/server) |
 | Golden fixtures | 🔄 RQP markup: 197 fixtures (`fixtures/rqp/markup/`); protocol and legacy fixtures planned (P1) |
 | Rust core | ⏳ Planned (P3) |

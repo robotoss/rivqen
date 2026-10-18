@@ -75,6 +75,18 @@ npx stryker run --mutate "$(node ../../mutation/diff-ranges.mjs --base main --ex
 
 The reports go to `reports/` (ignored by git).
 
+T-09 (WP-17 S3, H-71 to H-75; changed lines of `markup.mjs` and `names.mjs` against `7f36912`, without `--incremental`): 148 of 218 mutants killed before the new tests (68.4 %). The 59 survivors of `names.mjs` were string literals in `FOREIGN_ALLOWED` and `NOSCRIPT_FORBIDDEN`: the old tests iterated the set, so a removed name was not tested. Three tests in `test/s3-rules.test.mjs` fix this (the exact lists of `markup.md` section 2.1, a doctype token in C, an end tag that is not the current node in a `noscript` element at the root of the stack). After them: 210 of 218 (96.3 %). The 8 survivors are equivalent:
+
+| Location | Mutant | Reason |
+|---|---|---|
+| `contentEnd()` | `this.region >= 0` → `> 0` | A region root is inside a block element, so its stack index is at least 1 |
+| `noscriptEnd()` | `this.region >= 0` → `> 0` | A region root in C is above the `noscript` element, so its index is at least 1 |
+| `noscriptRejects()` | `<= this.cBase` → `< this.cBase` | The nearest `table` cannot be the `noscript` element itself |
+| `scanNoscriptTokens()` | `t.start === contentLength` → `true` | The outer tokenizer ends C at the first end tag `noscript`, so no other one is in C |
+| `scanNoscriptTokens()` | `this.charsOnly === null` → `true` | A text-only element takes `</noscript>` as text, so the end tag is never reached while one is open |
+| `noscriptEnd()` | `DOCUMENT_TAGS.has(name)` → `false` | Item 7 is also item 5: a document tag is never the current node of C |
+| `noscriptEnd()` | `top <= this.cBase` → `top < this.cBase` and → `false` | At `top === cBase` the current node is the `noscript` element, whose name is never the name of this end tag |
+
 T-08 (M-24 j, k, E5, E8; changed lines against `4c90861`): 53 of 54 mutants killed (98.1 %). The survivor is equivalent: it puts a string at the bottom of the list-mark array (`this.listMark = ["Stryker was here"]`). That value is never a list item, and M-24 j reads the array only after M-24 c has found a list opened in the content above it.
 
 With the command runner, Stryker has no coverage for each test. An `--incremental` run after a change of the tests only can keep old "Survived" results. Run without `--incremental` to check new tests.

@@ -65,6 +65,13 @@ RQP_MARKUP_FIXTURES="$(git rev-parse --show-toplevel)/fixtures/rqp/markup" \
 
 Each job needs about 450 MB of disk space for its copy of the package and its build.
 
+Result of T-09 (WP-17 S3; cargo-mutants 27.1.0, `--in-diff` of the changed lines of `src/` against `7f36912`, `-j 1 --timeout 60`): 65 mutants, 3 unviable, 60 caught, 2 missed. Kill rate 60/62 = 96.8 %. No test was added. The 2 missed mutants are equivalent:
+
+| Mutant | Why equivalent |
+|---|---|
+| `==` → `!=` in `Pass::content_end` (`target == top`) | The two branches pick the name of the current node or the name of the end tag. They differ only when a region root closes with elements above it, and the names allowed in a region (`FOREIGN_ALLOWED`) have neither the FORMATTING nor the TABLE_FAMILY flag that `close()` reads from this name |
+| `>` → `>=` in `Pass::noscript_end_rules` (`stack.len() > base`) | At `stack.len() == base` the current node is the `noscript` element. Its name is not the name of this end tag, and a region root around C is already rejected by M-07 before this check, so the error is M-11 in both cases |
+
 Result (cargo-mutants 27.1.0, whole package, 2026-10-09): 402 mutants, 30 unviable, 348 caught, 10 timeouts (infinite loops, counted as detected), 14 missed. Kill rate 358/372 = 96.2 %. All 14 missed mutants are equivalent:
 
 | Mutants | Why equivalent |

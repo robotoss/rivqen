@@ -44,6 +44,15 @@ Do these steps in this directory:
 
 `vendor/bin/phpunit --exclude-group limits` skips the 5 MiB resource tests (about 45 s).
 
+Mutation result of T-09 (WP-17 S3; Infection 0.35.6, changed lines against `7f36912`, 4 threads, `--min-msi=80`): 108 of 113 mutants detected (95.6 %: 107 killed, 1 time-out). Before two new tests in `tests/ForeignRegionRulesTest.php` it was 106 of 113 (93.8 %). The new tests check the rule ID of an end tag in a region of C whose root is directly above the `noscript` element, and that M-13 comes before the M-11 checks for a reserved `script` in C. The 5 survivors are equivalent:
+
+| Location | Mutant | Reason |
+|---|---|---|
+| `Parser::nearestIndex()` | `count - 1` → `count - 2` | Both callers call it only when the top element is not the searched name |
+| `Parser::noscriptEndTag()` | `throw` removed at the document-tag check | A document tag is never open in C, so the next check throws with the same rule M-11 |
+| `Parser::noscriptEndTag()` | `$top <= $noscript` → `<`, and its `throw` removed | At `$top === $noscript` the current node is the `noscript` element, so the name check throws with the same rule M-11 |
+| `Parser::noscriptEndTag()` | `$noscript + 1` → `$noscript + 0` | The element at `$noscript` is `noscript`, and its end tag does not reach this check |
+
 | Test file | What it checks |
 |---|---|
 | `tests/TokenizerTest.php` | Token spans in each tokenizer state |

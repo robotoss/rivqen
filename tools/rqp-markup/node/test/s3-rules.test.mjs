@@ -285,3 +285,36 @@ describe('M-11 item 8: the main pass on the noscript content (H-71)', () => {
     assert.equal(errorOf('<noscript><svg><path></svg>'), null);
   });
 });
+
+describe('names of markup.md section 2.1 and the noscript scan at the root of the stack', () => {
+  it('has exactly the names of markup.md section 2.1 in FOREIGN_ALLOWED', () => {
+    const expected = [
+      'svg', 'g', 'path', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'rect', 'defs',
+      'symbol', 'use', 'title', 'desc', 'lineargradient', 'radialgradient', 'stop', 'clippath',
+      'mask', 'pattern', 'marker', 'text', 'tspan', 'filter', 'feblend', 'fecolormatrix',
+      'fecomponenttransfer', 'fecomposite', 'fedisplacementmap', 'fedropshadow', 'feflood',
+      'fefunca', 'fefuncb', 'fefuncg', 'fefuncr', 'fegaussianblur', 'femerge', 'femergenode',
+      'femorphology', 'feoffset', 'feturbulence', 'math', 'mrow', 'mi', 'mo', 'mn', 'ms', 'mtext',
+      'mspace', 'msub', 'msup', 'msubsup', 'mfrac', 'msqrt', 'mroot', 'mstyle', 'munder', 'mover',
+      'munderover', 'mmultiscripts', 'mprescripts', 'none', 'mtable', 'mtr', 'mtd', 'mpadded',
+      'mphantom', 'merror', 'semantics', 'annotation',
+    ];
+    assert.deepEqual([...FOREIGN_ALLOWED].sort(), [...expected].sort());
+  });
+
+  it('has exactly the forbidden start tags of the noscript content', () => {
+    assert.deepEqual(
+      [...NOSCRIPT_FORBIDDEN].sort(),
+      ['frameset', 'math', 'noscript', 'plaintext', 'select', 'template'],
+    );
+  });
+
+  it('accepts a doctype token in the content of a noscript element', () => {
+    assert.equal(errorOf('<noscript><!DOCTYPE html></noscript>'), null);
+  });
+
+  it('requires the end tag of the current node in a noscript element at the root', () => {
+    assert.equal(errorOf('<noscript><div><span></span></div></noscript>'), null);
+    assert.equal(errorOf('<noscript><div><span></div></noscript>'), STRUCTURE);
+  });
+});

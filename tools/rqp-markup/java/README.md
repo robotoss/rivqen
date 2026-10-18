@@ -5,7 +5,7 @@
 
 The Java 21 candidate of WP-17 S1 and S3 (tasks T-05, T-08, T-11, T-13, T-16 and, in S3, T-06). It also implements the rules of WP-17 S3 (H-71, H-73, H-74, H-75): the main-pass rules on the `noscript` content (M-11 items 7 to 9, M-26 item 7), `svg` and `math` in `html` block content with `FOREIGN_ALLOWED` (M-22 item 5, M-23), `svg` in the `noscript` content, and no mark for the end tag of a region root (M-06 item 4). It implements the RQP markup rules of `docs/engineering/protocol/markup.md` §2 (rqp/1, rules M-01 to M-27, with M-24 items j and k), the human decisions on the edge cases E1 to E8 (H-21, H-22; `docs/engineering/protocol/markup-edge-cases.md`), the rules of the security review (H-26 to H-28, H-30 to H-32: M-06 items 2 to 4, M-11 item 5, M-13 item 3, and the depth counter D of M-26), the rules of round 2 of the security review (H-35 to H-38: M-09 conditions 1 and 2, M-10 item 2, M-11 item 6) and the command line of `tools/rqp-markup/CONTRACT.md`.
 
-**Status:** DESIGN (tool for the differential test). All 247 golden fixtures pass (`diff.mjs --only java`: 247/247 OK, WP-17 S3 T-06). The cross-check cases of S3 (`cases/s3-cases.json`, both scripting views) show no finding for this candidate. The mutation results below are from T-16; the S3 diff is not mutation-tested in this lane (the architect runs PIT at integration; changed classes: `Analyzer`, `Name`, `TokenStack`).
+**Status:** DESIGN (tool for the differential test). All 247 golden fixtures pass (`diff.mjs --only java`: 247/247 OK, WP-17 S3 T-06). The cross-check cases of S3 (`cases/s3-cases.json`, both scripting views) show no finding for this candidate. The S3 diff is mutation-tested in T-09 (below).
 
 ## 1. Build
 
@@ -55,6 +55,14 @@ Run these commands in `tools/rqp-markup/java`:
 | Mutation testing (PIT) | `gradle pitest -Ppitest.targetClasses="$(node <root>/tools/mutation/diff-ranges.mjs --base main --ext .java --format pit-classes)"` |
 
 Until WP-17 is merged, use `--base wp/WP-17`: against `main` the whole package is new. The PIT report is in `build/reports/pitest/index.html`. The PIT run leaves out `LinearTimeTest`: it checks time on 5 MiB inputs, not behavior.
+
+Mutation results of T-09 (WP-17 S3; base `7f36912`; PIT 1.30.0; classes `Analyzer`, `Name`, `TokenStack`): the whole classes have 473 of 487 mutants killed (97 %). On the lines that S3 changed, 68 of 72 mutants are killed (94.4 %), and no test was added. The 4 others are equivalent:
+
+| Location | Mutant | Reason |
+|---|---|---|
+| `Analyzer.startTag()`, `endTag()` | `noscriptBase >= 0` → `> 0` | `noscriptBase` is the stack size after the push of the `noscript` element, so it is at least 1 |
+| `Analyzer.contentEndTag()` | `root >= 0` → `> 0` | A region root is inside the block element, so its index is at least 1 |
+| `Analyzer.noscript()` | call of `doctype()` removed | In C, `doctype()` cannot throw: a text-only element takes all tokens as text, `select` and block content do not hold a `noscript` element (M-08, M-22 item 2) |
 
 Mutation results of T-16 (2026-10-11; base `5224828`; PIT 1.30.0):
 

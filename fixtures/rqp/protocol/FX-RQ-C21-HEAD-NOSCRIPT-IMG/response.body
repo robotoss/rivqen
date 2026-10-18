@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head><script type="application/rivqen-manifest+json">{"protocol":"rqp/1","origin":"https://shop.example.com","path":"/catalog","template_revision":"t1.zRJ7apro-oT2bhVLIneuauT_Heo2R7CiTiyNAfewPx0","page_revision":"r1.84FYSbR_YEpiW6oNXOxq34KEmkgXgb7WLd-j8ie6ako","blocks":[{"id":"title","format":"html","sha256":"0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces"},{"id":"price","format":"html","sha256":"Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs"},{"id":"cart","format":"json","sha256":"zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4"}]}</script>
+  <noscript><img src="/pixel.gif" alt=""></noscript>
+  <title data-rq-block="title">Shop</title>
+</head>
+<body>
+  <header>Static header</header>
+  <p class="price" data-rq-block="price">120.00</p>
+  <script type="application/json" data-rq-block="cart">{"items":3}</script>
+</body>
+</html>

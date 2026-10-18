@@ -62,12 +62,14 @@ flowchart TD
 
 Every client gets the same full document: a browser without RQP also gets the manifest, `Rq-Version: 1` and the `ETag` `"r1.…"`. The browser ignores the manifest script.
 
+<Badge type="info" text="DESIGN" /> The manifest element is the first thing in the head: the server inserts it immediately after the `<head>` start tag of the page (H-72). Only white space, comments, the DOCTYPE and the `<html>` start tag can come before `<head>`. A page without such a `<head>` start tag is sent unchanged, without RQP. The head does not need a `</head>` end tag. Details: [manifest and patch §1.7](/engineering/protocol/manifest-patch#_1-7-delivery-in-the-document).
+
 Where the code is:
 
 | File | Content |
 |---|---|
 | `src/rqp.js` | `handle(request, appResponse, pageBytes, config)`: the response selection (steps 1 to 9), the manifest, the page revision with the policy line, the delta |
-| `src/markup.js` | The markup analysis: calls the Node.js parser candidate `tools/rqp-markup/node` in process. Adds the insertion point before the head end tag of the document (DL-031, DL-034) and the attribute rule (H-56, H-59) |
+| `src/markup.js` | The markup analysis: calls the Node.js parser candidate `tools/rqp-markup/node` in process. Adds the insertion point immediately after the head start tag of the document (H-72) and the attribute rule (H-56, H-59) |
 | `src/fields.js`, `src/sf.js` | The request fields and a Structured Field parser |
 | `src/app.js`, `src/server.js` | The HTTP adapter and the start script. The public origin comes from `ORIGIN`, not from the connection |
 
@@ -131,14 +133,14 @@ Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so th
 npm test
 ```
 
-<Badge type="tip" text="FACT" /> The 95 tests check, by behavior:
+<Badge type="tip" text="FACT" /> The 87 tests check, by behavior:
 
 - the response selection: full document, `304`, delta, the size rules, the attribute rule (H-56), invalid pages, the charset rule, a weak `ETag` with a content coding, no state between requests;
 - the known answers of `spec/rqp/examples/kat`: the full documents, both page revisions and the example patches;
 - the request fields and the Structured Field parser;
-- the insertion point of the manifest and the attribute rule;
+- the insertion point of the manifest (immediately after the head start tag, H-72) and the attribute rule;
 - the HTTP adapter on a loopback socket: first visit, revisit, data change, template change, the `Host` check (`421`);
-- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 74 server fixtures pass (`FX-RQ-P*`), also the two `FX-RQ-P35` cases (level SHOULD).
+- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 77 server fixtures pass (`FX-RQ-P*`), also the two `FX-RQ-P35` cases (level SHOULD).
 
 To run the fixtures alone, run this command in `examples/server-demo`:
 

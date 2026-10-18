@@ -9,11 +9,11 @@
 //
 // This module adds two things that the protocol needs on top of the analysis. Both use
 // the tokenizer of the candidate, so they read the document as the analysis does:
-//   - the head end tag of the document (manifest-patch section 1.7, H-49, DL-031);
+//   - the head start tag of the document (manifest-patch section 1.7, H-72);
 //   - the attribute rule for changed html blocks (manifest-patch section 4.2, H-56, H-59).
 
 import { analyze as analyzeMarkup } from '../../../tools/rqp-markup/node/src/markup.mjs';
-import { TEXT_MODE, VOID } from '../../../tools/rqp-markup/node/src/names.mjs';
+import { TEXT_MODE } from '../../../tools/rqp-markup/node/src/names.mjs';
 import { TokenType, Tokenizer, isWs } from '../../../tools/rqp-markup/node/src/tokenizer.mjs';
 
 /**
@@ -25,23 +25,11 @@ export function analyzePage(bytes) {
   return analyzeMarkup(bytes);
 }
 
-// The document head (manifest-patch section 1.7, "Head end tag"; DL-031).
-const HEAD_BEFORE = 0; // no head start tag yet
-const HEAD_OPEN = 1; // the document head is on the token stack
-const HEAD_NONE = 2; // the document has no head end tag (closed, found or never opened)
-
-/** Start tags that can come while the document head is the current node (item 2). */
-const HEAD_CONTENT = new Set(['base', 'basefont', 'bgsound', 'link', 'meta', 'noframes', 'noscript', 'script', 'style', 'template', 'title']);
-
 /**
- * DL-034: an end tag other than head, body, html and br is "any other end tag" of the
- * HTML parser (parse error, ignored) before the head and while the head is the current node.
+ * DL-034 (item 1 of the head rule): an end tag other than head, body, html and br is
+ * "any other end tag" of the HTML parser (parse error, ignored) before the head.
  */
 const NOT_IGNORED_END_TAGS = new Set(['head', 'body', 'html', 'br']);
-const IGNORED_END_TAG = (name) => !NOT_IGNORED_END_TAGS.has(name);
-
-/** The token stack of a valid page is never deeper than this (markup M-26). A deeper walk fails closed. */
-const MAX_STACK = 256;
 
 /** True when every byte in [from, to) is white space. A UTF-8 byte order mark at offset 0 counts (M-02). */
 function onlyWhiteSpace(bytes, from, to) {
@@ -55,76 +43,26 @@ function onlyWhiteSpace(bytes, from, to) {
 }
 
 /**
- * The head rule for one token, before the token stack changes. `gapOk` is true when the
- * bytes since the previous token are white space. Returns the new head state and whether
- * the token is the head end tag of the document.
+ * Byte offset immediately after the ">" of the head start tag of the document, or -1
+ * (manifest-patch section 1.7, "Document head"; H-72). Before the head start tag only
+ * white space, comments, DOCTYPE tokens, html start tags and ignored end tags may come.
+ * The walk stops at the head start tag: what comes after it does not matter.
  */
-function headStep(state, headIndex, depth, token, gapOk) {
-  if (state === HEAD_BEFORE) {
-    // Item 1: only white space, comments, DOCTYPE and html start tags may come before <head>.
-    if (!gapOk) return { state: HEAD_NONE, end: false };
-    const { type, name } = token;
-    if (type === TokenType.COMMENT || type === TokenType.DOCTYPE || type === TokenType.EOF) return { state, end: false };
-    if (type === TokenType.START_TAG && (name === 'html' || name === 'head')) return { state, end: false };
-    if (type === TokenType.END_TAG && IGNORED_END_TAG(name)) return { state, end: false };
-    return { state: HEAD_NONE, end: false };
-  }
-  // Another element is the current node (title, script, template ...): no check here.
-  if (state !== HEAD_OPEN || headIndex !== depth - 1) return { state, end: false };
-  // Item 2: the document head is the current node.
-  if (!gapOk) return { state: HEAD_NONE, end: false };
-  if (token.type === TokenType.COMMENT || token.type === TokenType.DOCTYPE) return { state, end: false };
-  if (token.type === TokenType.START_TAG && HEAD_CONTENT.has(token.name)) return { state, end: false };
-  if (token.type === TokenType.END_TAG && IGNORED_END_TAG(token.name)) return { state, end: false };
-  // Item 3: the first other token ends the head. There is at most one head end tag.
-  return { state: HEAD_NONE, end: token.type === TokenType.END_TAG && token.name === 'head' };
-}
-
-/**
- * Byte offset of the "<" of the head end tag of the document, or -1 (manifest-patch
- * section 1.7, "Head end tag"; DL-031). The head start tag must follow only white space,
- * comments, DOCTYPE and html start tags; only head content may come inside the head;
- * a head end tag in the body, in a template, or in an svg or math region does not count.
- */
-export function documentHeadEnd(bytes) {
+export function documentHeadStart(bytes) {
   const tokenizer = new Tokenizer(bytes);
-  const stack = [];
-  let region = -1; // stack index of the svg or math element that opened the foreign region
-  let head = HEAD_BEFORE;
-  let headIndex = -1;
   let prevEnd = 0;
   for (;;) {
     const token = tokenizer.next();
-    const step = headStep(head, headIndex, stack.length, token, onlyWhiteSpace(bytes, prevEnd, token.start));
-    const opensHead = head === HEAD_BEFORE && step.state === HEAD_BEFORE && token.type === TokenType.START_TAG && token.name === 'head';
-    head = step.state;
-    if (head === HEAD_NONE && !step.end) return -1; // no head end tag can follow: stop the walk
+    if (!onlyWhiteSpace(bytes, prevEnd, token.start)) return -1;
+    const { type, name } = token;
+    if (type === TokenType.START_TAG && name === 'head') return token.end;
+    const before =
+      type === TokenType.COMMENT ||
+      type === TokenType.DOCTYPE ||
+      (type === TokenType.START_TAG && name === 'html') ||
+      (type === TokenType.END_TAG && !NOT_IGNORED_END_TAGS.has(name));
+    if (!before) return -1; // another token, or the end of input
     prevEnd = token.end;
-    if (token.type === TokenType.EOF) return -1;
-    if (token.type === TokenType.START_TAG) {
-      const html = region < 0;
-      const foreignRoot = token.name === 'svg' || token.name === 'math';
-      const push = html ? !(foreignRoot && token.selfClosing) && !VOID.has(token.name) : !token.selfClosing;
-      if (push) {
-        if (stack.length >= MAX_STACK) return -1;
-        stack.push(token.name);
-        if (html && foreignRoot) region = stack.length - 1;
-      }
-      if (opensHead) {
-        head = HEAD_OPEN;
-        headIndex = stack.length - 1;
-      }
-      const mode = html ? TEXT_MODE.get(token.name) : undefined;
-      if (mode !== undefined) tokenizer.switchTo(mode, token.name);
-    } else if (token.type === TokenType.END_TAG) {
-      if (step.end) return token.start;
-      const at = stack.lastIndexOf(token.name);
-      if (at >= 0) {
-        stack.length = at;
-        if (region >= stack.length) region = -1;
-        if (head === HEAD_OPEN && headIndex >= stack.length) return -1; // the head left the stack another way
-      }
-    }
   }
 }
 

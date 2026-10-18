@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import { UnsupportedInput } from '../src/common.mjs';
 import { capabilities, changeSet, deltaBase, handle, notModified, requestVersion, rqHave } from '../src/server.mjs';
 import { acceptsMediaType, parseEntityTags } from '../src/http.mjs';
-import { analyze as analyzeBytes, documentHeadEnd } from '../src/markup.mjs';
+import { analyze as analyzeBytes, documentHeadStart } from '../src/markup.mjs';
 import { APP, TARGET, blockPage, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
 
 const header = (r, name) => r.headers.filter(([n]) => n === name).map(([, v]) => v).join(', ') || null;
@@ -55,103 +55,91 @@ test('step 2: an invalid page gets A unchanged, with the ETag of the application
   assert.equal(header(r, 'rq-version'), null);
 });
 
-test('step 2: a page without </head> in HTML context gets A unchanged (H-49)', () => {
-  const noHead = Buffer.from('<!DOCTYPE html><title>x</title><!-- </head> --><p data-rq-block="a">1</p>', 'utf8');
+test('step 2: a page without a head start tag of the document gets A unchanged (H-72)', () => {
+  const noHead = Buffer.from('<!DOCTYPE html><title>x</title><!-- <head> --></head><p data-rq-block="a">1</p>', 'utf8');
   const r = handle(firstVisit(), APP, noHead);
-  assert.equal(r.reason, 'no-head-end');
+  assert.equal(r.reason, 'no-head-start');
   assert.deepEqual(r.body, noHead);
 });
 
-test('step 2: the manifest goes before the first </head> end tag, not "</head>" text in script data or a comment', () => {
-  const doc = Buffer.from('<!DOCTYPE html><html><head><script>var s = "</head>";</script><!-- </head> --></head><body></body></html>', 'utf8');
+test('step 2: the manifest goes immediately after the head start tag, not after "<head>" text in a comment', () => {
+  const doc = Buffer.from('<!DOCTYPE html><!-- <head> --><html><head><script>var s = "</head>";</script></head><body></body></html>', 'utf8');
   const r = handle(firstVisit(), APP, doc);
   assert.equal(r.kind, 'full');
-  assert.equal(r.body.indexOf('<script type="application/rivqen-manifest+json">'), doc.indexOf('</head><body>'));
+  const at = doc.indexOf('<html><head>') + '<html><head>'.length;
+  assert.equal(r.body.indexOf('<script type="application/rivqen-manifest+json">'), at);
+  assert.ok(r.body.subarray(0, at).equals(doc.subarray(0, at)));
 });
 
-// DL-031: the head end tag of the document (manifest-patch section 1.7).
-const HEAD_BODY = '<body><p data-rq-block="a">1</p></body></html>';
-const headEnd = (prefix) => documentHeadEnd(Buffer.from(prefix + HEAD_BODY, 'utf8'));
+// H-72: the head start tag of the document (manifest-patch section 1.7, "Document head").
+const HEAD_BODY = '<title>t</title></head><body><p data-rq-block="a">1</p></body></html>';
+const headStart = (prefix) => documentHeadStart(Buffer.from(prefix + HEAD_BODY, 'utf8'));
+const afterHead = (prefix) => Buffer.byteLength(prefix, 'utf8');
 
-test('DL-031: the head end tag after white space, comments, DOCTYPE, html, a BOM and the head content', () => {
+test('H-72: the head start tag after white space, comments, DOCTYPE tokens, html start tags and a BOM', () => {
   const ok = [
-    '<!DOCTYPE html><html><head></head>',
-    '﻿ \t\n\r\f<!-- c --><!DOCTYPE html><html><head><!-- c --> <!doctype x></head>',
-    '<head><base href="/"><basefont><bgsound><link rel="a"><meta charset="utf-8"><noframes>n</noframes><noscript>n</noscript>' +
-      '<script>var s = "</head>";</script><style>s</style><template><p>t</p><head></head></template><title>t</title></head>',
-    '<HTML><HEAD/></HEAD>',
+    '<head>',
+    '<!DOCTYPE html><html><head>',
+    '﻿ \t\n\r\f<!-- c --><!DOCTYPE html><!doctype x>\n<html lang="en"><html><head>',
+    '<HTML><HEAD/>', // upper case and the self-closing flag: still the head start tag
+    '<html><head class="a>b">', // a ">" in a quoted attribute value is not the end of the tag
+    '<html><head\n>',
+    '<?pi x?><!x><html><head>', // bogus comments
   ];
-  for (const p of ok) assert.equal(headEnd(p), Buffer.from(p).lastIndexOf('</'), p);
+  for (const p of ok) assert.equal(headStart(p), afterHead(p), JSON.stringify(p));
 });
 
-test('DL-031: no head end tag when something else comes before or in the head', () => {
+test('H-72: only the first head start tag counts, whatever comes after it', () => {
+  // The head needs no end tag: body content, a stray </head> later, a second head start tag.
+  for (const after of ['<body>', '<div>x</div>', 'text', '<svg></svg>', '<head>', '</br>', '<noscript><img src=x></noscript>']) {
+    const doc = `<html><head>${after}</head><body></body></html>`;
+    assert.equal(documentHeadStart(Buffer.from(doc)), '<html><head>'.length, after);
+  }
+});
+
+test('H-72: no head start tag when something else comes before it', () => {
   const none = [
-    '<html><title>t</title></head>', // no <head> start tag
-    '<html>x<head></head>', // text before the head
-    '<p>x</p><head></head>', // another start tag before the head
-    '<html><meta charset="utf-8"><head></head>', // head content before the head start tag (the head is implied)
-    '<html><head>x</head>', // text in the head
-    '<html><head></>', // "</>" gives no token: its bytes are not white space
-    '<html><head><div></head>', // a start tag that is not head content
-    '<html><head><svg><desc>d</desc></svg></head>', // svg closes the head
-    '<html><head><head></head>', // a second head start tag
-    '<html><head><title>t</title><body></head>', // the head is closed by body; </head> is stray
-    '<html><head><template></head></template></head>', // </head> crosses the template
-    '<html><head><template></head></template><div></head>', // the head left the stack: a later </head> never counts
-    '<html><head><title>t</title>', // no </head> at all
+    '', // no head start tag at all
+    '<html>', // the end of input before a head start tag
+    '<html>x<head>', // text before the head
+    '<html>&amp;<head>', // a character reference is text
+    '<p>x</p><head>', // another start tag before the head
+    '<html><meta charset="utf-8"><head>', // head content before the head start tag (the head is implied)
+    '<html><title>t</title><head>',
+    '<body><head>',
+    '<html></><head>', // "</>" gives no token: its bytes are not white space
+    '<svg><head>',
+    '<template><head>',
   ];
-  for (const p of none) assert.equal(headEnd(p), -1, p);
+  for (const p of none) assert.equal(headStart(p), -1, JSON.stringify(p));
+  assert.equal(documentHeadStart(Buffer.alloc(0)), -1);
 });
 
-test('DL-034: an end tag other than head, body, html and br is ignored before and in the head', () => {
-  const ok = [
-    '<html><head><meta charset="utf-8"></meta><link rel="a"></link><base href="/"></base></head>', // stray void end tags
-    '<html><head><script>s</script></script></head>', // a second </script> with no script open
-    '<html><head></p></div></title></head>', // any other name, also of a head content element
-    '</p><html></div><head></head>', // before the head (item 1)
-    '<html><head> </meta> <!-- c --> </head>', // white space around it
-  ];
-  for (const p of ok) assert.equal(headEnd(p), Buffer.from(p).lastIndexOf('</'), p);
+test('H-72 (DL-034 item 1): an end tag other than head, body, html and br is ignored before the head', () => {
+  for (const p of ['</p><html></div><head>', '<html></meta> <!-- c --> </title><head>', '</P><head>']) {
+    assert.equal(headStart(p), afterHead(p), p);
+  }
+  for (const p of ['</br><head>', '</BR><head>', '</body><head>', '</html><head>', '</head><head>', '<html></html><head>', 'x</p><head>']) {
+    assert.equal(headStart(p), -1, p);
+  }
 });
 
-test('DL-034: </body>, </html> and </br> still fail, before and in the head, also without an <html> start tag', () => {
-  const none = [
-    '<html><head></br></head>',
-    '<html><head></body></head>',
-    '<html><head></html></head>',
-    '<head></html></head>', // no <html> start tag: nothing to pop, still a failure
-    '<head></body></head>',
-    '<head></br></head>',
-    '</br><head></head>', // item 1
-    '</body><head></head>',
-    '</html><head></head>',
-    '<html></html><head></head>',
-    '<html><head>x</meta></head>', // the gap before an ignored end tag is still checked
-    'x</p><head></head>', // the same before the head (item 1)
-  ];
-  for (const p of none) assert.equal(headEnd(p), -1, p);
-  // Upper case names are the same names (the tokenizer lowers them).
-  assert.equal(headEnd('<html><head></BR></head>'), -1);
-  const upper = '<html><head></META></head>';
-  assert.equal(headEnd(upper), upper.lastIndexOf('</'));
+test('step 2: a page whose head ends without </head> gets F with the manifest after the head start tag (H-72)', () => {
+  for (const html of [
+    '<!DOCTYPE html><html><head><title>t</title><body><p data-rq-block="a">1</p></head></body></html>', // closed by body; stray </head>
+    '<!DOCTYPE html><html><head><svg><desc>d</desc></svg><p data-rq-block="a">1</p></body></html>', // svg closes the head
+  ]) {
+    const doc = Buffer.from(html, 'utf8');
+    const r = handle(firstVisit(), APP, doc);
+    assert.equal(r.kind, 'full', html);
+    assert.equal(r.body.indexOf('<script type="application/rivqen-manifest+json">'), doc.indexOf('<head>') + 6, html);
+  }
 });
 
-test('DL-031: a later head element and a later </head> never count', () => {
-  assert.equal(headEnd('<html><head><body></body><head></head>'), -1);
-  const once = '<html><head></head><head></head>';
-  assert.equal(headEnd(once), once.indexOf('</head>'));
-});
-
-test('step 2: an svg in the body does not change the head end tag', () => {
-  const doc = Buffer.from('<!DOCTYPE html><html><head><title>x</title></head><body><svg><g></g></svg><p data-rq-block="a">1</p></body></html>', 'utf8');
-  const r = handle(firstVisit(), APP, doc);
-  assert.equal(r.kind, 'full');
-  assert.equal(r.body.indexOf('<script type="application/rivqen-manifest+json">'), doc.indexOf('</head>'));
-});
-
-test('step 2: an svg start tag while the head is the current node closes the head: no RQP (DL-031)', () => {
-  const inHead = Buffer.from('<!DOCTYPE html><html><head><svg><desc>d</desc></svg></head><body><p data-rq-block="a">1</p></body></html>', 'utf8');
-  assert.equal(handle(firstVisit(), APP, inHead).reason, 'no-head-end');
+test('step 2: text before the head start tag means no RQP (H-72)', () => {
+  const doc = Buffer.from('<!DOCTYPE html>x<html><head><title>t</title></head><body><p data-rq-block="a">1</p></body></html>', 'utf8');
+  assert.equal(analyzeBytes(doc).valid, true);
+  assert.equal(handle(firstVisit(), APP, doc).reason, 'no-head-start');
 });
 
 // Step 3.

@@ -363,10 +363,12 @@ export function handleResponse(ctx, response) {
 export function checkFull(ctx, body) {
   const found = findManifestElements(body);
   if (found === null) return { error: 'walk' };
-  // Section 1.7, client items 2 and 3.
+  // Section 1.7, client items 2 and 3. Item 3 (H-72): the manifest start tag
+  // is the first token after the head start tag of the document, with no gap.
+  // headStart is -1 when the document has no head start tag; el.start is never -1.
   if (found.elements.length !== 1) return { error: 'count' };
   const el = found.elements[0];
-  if (el.end < 0 || el.end !== found.headAt) return { error: 'position' };
+  if (el.end < 0 || el.start !== found.headStart) return { error: 'position' };
   const text = body.subarray(el.textStart, el.textEnd);
   // Section 1.8, items 1 to 4.
   if (text.length > LIMITS.maxManifestBytes) return { error: 'size' };

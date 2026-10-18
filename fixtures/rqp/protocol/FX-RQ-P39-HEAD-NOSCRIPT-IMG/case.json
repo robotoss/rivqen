@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P39-HEAD-NOSCRIPT-IMG",
+  "description": "A noscript with an img in the head (with scripting disabled it ends the head early): F with the manifest immediately after the head start tag, before the noscript (H-72)",
+  "rules": ["RQP-20"],
+  "page": "page-head-noscript",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

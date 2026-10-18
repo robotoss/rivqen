@@ -72,13 +72,21 @@ export const EXPECTED = Object.freeze({
   'page-c': { error: 'RQP_MARKUP_DUPLICATE' },
   // An author manifest (the bytes of spec/rqp/examples/kat/full.html): M-13 (DL-030).
   'page-forged': { error: 'RQP_MARKUP_RESERVED' },
-  // Valid for RQP, but without a head end tag of the document (DL-031).
+  // Valid for RQP; the head has no </head> in head position. Under H-72 the head
+  // start tag alone gives the manifest position, so these pages get RQP.
   'page-head-stray': { blocks: ['title', 'price', 'cart'] },
   'page-head-template': { blocks: ['title', 'price', 'cart'] },
-  'page-no-head-start': { blocks: ['title', 'price', 'cart'] },
-  // DL-034: a stray </meta> in the head is ignored (head end tag found); </br> in the head fails.
+  // A stray </meta> (ignored by the parser) and a </br> in the head.
   'page-head-stray-end': { blocks: ['title', 'price', 'cart'] },
   'page-head-br': { blocks: ['title', 'price', 'cart'] },
+  // H-72: a noscript with an img in the head (the head ends early only with scripting disabled).
+  'page-head-noscript': { blocks: ['title', 'price', 'cart'] },
+  // H-72: a comment and a DOCTYPE before the head start tag; a comment after it.
+  'page-head-late': { blocks: ['title', 'price', 'cart'] },
+  // Valid for RQP, but without a head start tag of the document (H-72): no
+  // <head> start tag at all, or text before it.
+  'page-no-head-start': { blocks: ['title', 'price', 'cart'] },
+  'page-text-before-head': { blocks: ['title', 'price', 'cart'] },
   // H-62 (3): page-a with a UTF-8 byte order mark at offset 0 (markup M-02).
   'page-bom': { blocks: ['title', 'price', 'cart'] },
   'page-t2': { blocks: ['title', 'price', 'cart'] },

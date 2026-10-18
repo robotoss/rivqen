@@ -12,10 +12,37 @@
   "status": 200,
   "headers_required": {
     "content-type": "text/html; charset=utf-8",
-    "cache-control": "no-cache"
+    "cache-control": "no-cache",
+    "etag": "\"r1.3WewiRXsXdtDMWk8N49DVIKZQahEXRQyvMxH8ipB5PI\"",
+    "rq-version": "1"
   },
-  "headers_forbidden": ["etag","rq-revision","rq-template-revision","rq-version"],
+  "headers_forbidden": ["last-modified","rq-revision","rq-template-revision"],
   "body": {
-    "kind": "app"
+    "kind": "full",
+    "insert_at": 29,
+    "manifest": {
+      "protocol": "rqp/1",
+      "origin": "https://shop.example.com",
+      "path": "/catalog",
+      "template_revision": "t1.Qi0PAonYo4K8HMOefQReKMFk663BqxqwpBtVH0O5RXA",
+      "page_revision": "r1.3WewiRXsXdtDMWk8N49DVIKZQahEXRQyvMxH8ipB5PI",
+      "blocks": [
+        {
+          "id": "title",
+          "format": "html",
+          "sha256": "0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces"
+        },
+        {
+          "id": "price",
+          "format": "html",
+          "sha256": "Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs"
+        },
+        {
+          "id": "cart",
+          "format": "json",
+          "sha256": "zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4"
+        }
+      ]
+    }
   }
 }

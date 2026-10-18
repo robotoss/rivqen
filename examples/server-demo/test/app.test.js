@@ -46,8 +46,8 @@ const delta = (page_revision, template) => [
 
 const manifestOf = (body) => {
   const text = body.toString('utf8');
-  const m = /<script type="application\/rivqen-manifest\+json">([^<]*)<\/script><\/head>/.exec(text);
-  assert.ok(m, 'the manifest element is before </head>');
+  const m = /<head><script type="application\/rivqen-manifest\+json">([^<]*)<\/script>/.exec(text);
+  assert.ok(m, 'the manifest element is immediately after <head> (H-72)');
   return JSON.parse(m[1]);
 };
 

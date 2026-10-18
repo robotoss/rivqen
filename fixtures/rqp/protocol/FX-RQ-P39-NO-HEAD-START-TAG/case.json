@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-P39-NO-HEAD-START-TAG",
-  "description": "The page has no <head> start tag (the head is implied) and a </head> end tag: no head end tag, the page is sent without RQP (DL-031)",
+  "description": "The page has no <head> start tag (the head is implied) and a </head> end tag: no head start tag of the document, the page is sent without RQP (H-72)",
   "rules": ["RQP-09"],
   "page": "page-no-head-start",
   "app": {

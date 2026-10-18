@@ -13,7 +13,7 @@ import { MANIFEST_END, UnsupportedInput, membersOf, pageRevision, sha256b64u } f
 import { handle, manifestOf } from './server.mjs';
 import { Partition, handleResponse, hasUserinfo, havePrefixes, requestHeaders, snapshotOf, validAllowlistEntry } from './client.mjs';
 import { combined, normalizeHeaders } from './http.mjs';
-import { analyze, documentHeadEnd } from './markup.mjs';
+import { analyze, documentHeadStart } from './markup.mjs';
 import { UnknownPage, pageBytes } from './pages.mjs';
 
 export const FIXTURES_DIR = fileURLToPath(new URL('../../../fixtures/rqp/protocol/', import.meta.url));
@@ -167,7 +167,7 @@ export function expectServer(c) {
   let body;
   if (r.kind === 'full') {
     const a = analyze(page);
-    body = { kind: 'full', insert_at: documentHeadEnd(page), manifest: manifestOf(a, request.target, config) };
+    body = { kind: 'full', insert_at: documentHeadStart(page), manifest: manifestOf(a, request.target, config) };
   } else if (r.kind === 'delta') {
     const env = JSON.parse(r.body.toString('utf8'));
     body = {
@@ -284,7 +284,7 @@ function withDuplicateMember(text) {
 
 /** Body recipe {"full": page, ...}: a full document F, or F with one defect. */
 function fullRecipe(id, recipe, ctx) {
-  onlyKeys(id, recipe, ['full', 'members', 'manifest_of', 'manifest_type', 'manifest_position', 'manifest_count', 'duplicate_member'], 'body');
+  onlyKeys(id, recipe, ['full', 'members', 'manifest_of', 'manifest_type', 'manifest_position', 'manifest_after', 'manifest_count', 'duplicate_member'], 'body');
   const page = pageBytes(recipe.full);
   const a = analysisOf(id, recipe.manifest_of ?? recipe.full);
   // The manifest is consistent with the final URL of the response (H-58).
@@ -292,11 +292,18 @@ function fullRecipe(id, recipe, ctx) {
   if (recipe.duplicate_member === true) text = withDuplicateMember(text);
   const type = recipe.manifest_type ?? 'application/rivqen-manifest+json';
   const element = Buffer.from(`<script type="${type}">${text}${MANIFEST_END}`, 'utf8');
-  // Positions: the head end tag of the document (default, DL-031), the first
-  // "</head>" bytes of the page in any context ("head-text"), or "</body>".
+  // Positions: immediately after the head start tag of the document (default,
+  // H-72), before the first "</head>" bytes of the page in any context
+  // ("head-text"; the insertion point of rqp/1 before H-72), before "</body>",
+  // or immediately after the first copy of the literal text of manifest_after.
   const bodyEnd = page.indexOf('</body>');
   let first;
-  if (recipe.manifest_position === undefined) first = documentHeadEnd(page);
+  if (recipe.manifest_after !== undefined) {
+    if (recipe.manifest_position !== undefined) throw new CaseError(id, 'manifest_position and manifest_after together');
+    if (typeof recipe.manifest_after !== 'string' || recipe.manifest_after === '') throw new CaseError(id, 'manifest_after must be a text');
+    const found = page.indexOf(recipe.manifest_after);
+    first = found < 0 ? -1 : found + Buffer.byteLength(recipe.manifest_after, 'utf8');
+  } else if (recipe.manifest_position === undefined) first = documentHeadStart(page);
   else if (recipe.manifest_position === 'head-text') first = page.indexOf('</head>');
   else if (recipe.manifest_position === 'body') first = bodyEnd;
   else throw new CaseError(id, `manifest_position ${recipe.manifest_position}`);

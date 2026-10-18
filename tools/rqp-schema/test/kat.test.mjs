@@ -244,14 +244,15 @@ for (const [label, doc, m] of [
   ['the full document', full, manifest],
   ['the full document with policy and limits', fullPl, manifestPl],
 ]) {
-  test(`${label} is the KAT document with the manifest element immediately before the first </head>`, () => {
-    // The KAT page has no </head> in raw text or in a comment, so a byte search finds the end tag.
-    const at = page.indexOf('</head>');
+  test(`${label} is the KAT document with the manifest element immediately after the head start tag (H-72)`, () => {
+    // The KAT page has only white space, a DOCTYPE and an html start tag before <head>,
+    // and no "<head>" text in a comment, so a byte search finds the head start tag.
+    const at = page.indexOf('<head>') + '<head>'.length;
+    assert.equal(page.subarray(0, at).toString('latin1'), '<!DOCTYPE html>\n<html>\n<head>');
     const start = doc.indexOf(TYPE);
     const end = doc.indexOf('</script>', start) + '</script>'.length;
     assert.equal(start, at);
     assert.equal(doc.indexOf(TYPE, start + 1), -1, 'exactly one manifest element');
-    assert.equal(doc.subarray(end, end + 7).toString('latin1'), '</head>');
     assert.deepEqual(Buffer.concat([doc.subarray(0, start), doc.subarray(end)]), page);
   });
 

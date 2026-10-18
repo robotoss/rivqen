@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-P39-HEAD-STRAY-VOID-END",
-  "description": "A stray </meta> end tag in the head is ignored as the HTML parser ignores it: F with the manifest immediately before the real </head> (DL-034)",
+  "description": "A stray </meta> end tag in the head: F with the manifest immediately after the head start tag (H-72)",
   "rules": ["RQP-20"],
   "page": "page-head-stray-end",
   "app": {

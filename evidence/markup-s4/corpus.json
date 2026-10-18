@@ -1,0 +1,282 @@
+{
+  "pages": 862,
+  "errors": 0,
+  "valid": 802,
+  "validUtf8": 802,
+  "head": {
+    "shipped": {
+      "explicit": 793,
+      "implied": 0,
+      "none": 9,
+      "rqpPages": 793,
+      "gained": [],
+      "lost": [],
+      "failures": {},
+      "stops": {},
+      "noneStops": {
+        "<meta>": 6,
+        "<script>": 2,
+        "<link>": 1
+      }
+    },
+    "h79": {
+      "explicit": 793,
+      "implied": 9,
+      "none": 0,
+      "rqpPages": 802,
+      "gained": [
+        "https://novayagazeta.eu/articles/2026/10/18/ataki-budut-tolko-usilivatsia",
+        "https://www.linux.org.ru/news/internet/18403728",
+        "https://www.sephora.com/",
+        "https://www.theverge.com/",
+        "https://www.theverge.com/transportation/1013220/robotaxi-self-driving-car-laws",
+        "https://www.vox.com/",
+        "https://www.vox.com/21523212/crossword-puzzles-free-daily-printable",
+        "https://xdaforums.com/",
+        "https://xdaforums.com/t/contact-us-account-problems-useful-links.4641742/"
+      ],
+      "lost": [],
+      "failures": {},
+      "stops": {
+        "<meta>": 6,
+        "<script>": 2,
+        "<link>": 1
+      },
+      "noneStops": {}
+    },
+    "l1": {
+      "explicit": 793,
+      "implied": 9,
+      "none": 0,
+      "rqpPages": 802,
+      "gained": [
+        "https://novayagazeta.eu/articles/2026/10/18/ataki-budut-tolko-usilivatsia",
+        "https://www.linux.org.ru/news/internet/18403728",
+        "https://www.sephora.com/",
+        "https://www.theverge.com/",
+        "https://www.theverge.com/transportation/1013220/robotaxi-self-driving-car-laws",
+        "https://www.vox.com/",
+        "https://www.vox.com/21523212/crossword-puzzles-free-daily-printable",
+        "https://xdaforums.com/",
+        "https://xdaforums.com/t/contact-us-account-problems-useful-links.4641742/"
+      ],
+      "lost": [],
+      "failures": {},
+      "stops": {
+        "<meta>": 6,
+        "<script>": 2,
+        "<link>": 1
+      },
+      "noneStops": {}
+    },
+    "l2": {
+      "explicit": 793,
+      "implied": 9,
+      "none": 0,
+      "rqpPages": 802,
+      "gained": [
+        "https://novayagazeta.eu/articles/2026/10/18/ataki-budut-tolko-usilivatsia",
+        "https://www.linux.org.ru/news/internet/18403728",
+        "https://www.sephora.com/",
+        "https://www.theverge.com/",
+        "https://www.theverge.com/transportation/1013220/robotaxi-self-driving-car-laws",
+        "https://www.vox.com/",
+        "https://www.vox.com/21523212/crossword-puzzles-free-daily-printable",
+        "https://xdaforums.com/",
+        "https://xdaforums.com/t/contact-us-account-problems-useful-links.4641742/"
+      ],
+      "lost": [],
+      "failures": {},
+      "stops": {
+        "<meta>": 6,
+        "<script>": 2,
+        "<link>": 1
+      },
+      "noneStops": {}
+    }
+  },
+  "close": {
+    "off": {
+      "valid": 802,
+      "validUtf8": 802,
+      "gained": [],
+      "lost": 0,
+      "why": {
+        "RQP_MARKUP_LIMIT": 2,
+        "RQP_MARKUP_STRUCTURE": 29,
+        "RQP_MARKUP_ENCODING": 19,
+        "RQP_MARKUP_RESERVED": 4,
+        "M-09": 6
+      },
+      "findings": {},
+      "closures": {}
+    },
+    "b1": {
+      "valid": 806,
+      "validUtf8": 806,
+      "gained": [
+        "https://news.ycombinator.com/",
+        "https://www.cyberforum.ru/",
+        "https://www.cyberforum.ru/assembler-i8080-8085-KP580/",
+        "https://www.yaplakal.com/forum5/topic2502519.html"
+      ],
+      "lost": 0,
+      "why": {
+        "RQP_MARKUP_LIMIT": 2,
+        "RQP_MARKUP_STRUCTURE": 29,
+        "RQP_MARKUP_ENCODING": 19,
+        "RQP_MARKUP_RESERVED": 4,
+        "close-current": 2
+      },
+      "findings": {},
+      "closures": {
+        "cell": 25,
+        "row": 14,
+        "group": 2,
+        "caption": 0,
+        "colgroup": 0
+      }
+    },
+    "b2": {
+      "valid": 806,
+      "validUtf8": 806,
+      "gained": [
+        "https://news.ycombinator.com/",
+        "https://www.cyberforum.ru/",
+        "https://www.cyberforum.ru/assembler-i8080-8085-KP580/",
+        "https://www.yaplakal.com/forum5/topic2502519.html"
+      ],
+      "lost": 0,
+      "why": {
+        "RQP_MARKUP_LIMIT": 4,
+        "RQP_MARKUP_STRUCTURE": 29,
+        "RQP_MARKUP_ENCODING": 19,
+        "RQP_MARKUP_RESERVED": 4
+      },
+      "findings": {},
+      "closures": {
+        "cell": 263,
+        "row": 110,
+        "group": 14,
+        "caption": 0,
+        "colgroup": 0
+      }
+    },
+    "b3": {
+      "valid": 806,
+      "validUtf8": 806,
+      "gained": [
+        "https://news.ycombinator.com/",
+        "https://www.cyberforum.ru/",
+        "https://www.cyberforum.ru/assembler-i8080-8085-KP580/",
+        "https://www.yaplakal.com/forum5/topic2502519.html"
+      ],
+      "lost": 0,
+      "why": {
+        "RQP_MARKUP_LIMIT": 4,
+        "RQP_MARKUP_STRUCTURE": 29,
+        "RQP_MARKUP_ENCODING": 19,
+        "RQP_MARKUP_RESERVED": 4
+      },
+      "findings": {},
+      "closures": {
+        "cell": 265,
+        "row": 111,
+        "group": 14,
+        "caption": 0,
+        "colgroup": 0
+      }
+    },
+    "u": {
+      "valid": 806,
+      "validUtf8": 806,
+      "gained": [
+        "https://news.ycombinator.com/",
+        "https://www.cyberforum.ru/",
+        "https://www.cyberforum.ru/assembler-i8080-8085-KP580/",
+        "https://www.yaplakal.com/forum5/topic2502519.html"
+      ],
+      "lost": 0,
+      "why": {
+        "RQP_MARKUP_LIMIT": 4,
+        "RQP_MARKUP_STRUCTURE": 29,
+        "RQP_MARKUP_ENCODING": 19,
+        "RQP_MARKUP_RESERVED": 4
+      },
+      "findings": {},
+      "closures": {
+        "cell": 263,
+        "row": 110,
+        "group": 14,
+        "caption": 0,
+        "colgroup": 0
+      }
+    }
+  },
+  "variants": {
+    "small": {
+      "off": {
+        "pages": 746,
+        "valid": 609,
+        "gained": 0,
+        "findings": {}
+      },
+      "b1": {
+        "pages": 750,
+        "valid": 613,
+        "gained": 4,
+        "findings": {}
+      },
+      "b2": {
+        "pages": 750,
+        "valid": 613,
+        "gained": 4,
+        "findings": {}
+      },
+      "b3": {
+        "pages": 750,
+        "valid": 613,
+        "gained": 4,
+        "findings": {}
+      },
+      "u": {
+        "pages": 750,
+        "valid": 613,
+        "gained": 4,
+        "findings": {}
+      }
+    },
+    "main": {
+      "off": {
+        "pages": 492,
+        "valid": 167,
+        "gained": 0,
+        "findings": {}
+      },
+      "b1": {
+        "pages": 492,
+        "valid": 167,
+        "gained": 0,
+        "findings": {}
+      },
+      "b2": {
+        "pages": 492,
+        "valid": 167,
+        "gained": 0,
+        "findings": {}
+      },
+      "b3": {
+        "pages": 492,
+        "valid": 167,
+        "gained": 0,
+        "findings": {}
+      },
+      "u": {
+        "pages": 492,
+        "valid": 167,
+        "gained": 0,
+        "findings": {}
+      }
+    }
+  }
+}

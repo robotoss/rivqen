@@ -112,6 +112,19 @@ test('rewrite inserts the implied end tags and maps offsets after them', () => {
   assert.equal(shift(16), 21);
 });
 
+test('b3 is unsafe: a released cell end tag outside a table pops nothing in the tree builder', () => {
+  const s = B('<th><span><div></span></th>x');
+  const b3 = run(s.toString(), 'b3');
+  assert.equal(b3.valid, true);
+  assert.deepEqual(checkResult(s, b3).map((f) => f.kind).sort(), ['depth-disabled', 'depth-enabled']);
+  assert.deepEqual(checkResult(s, run(s.toString(), 'b2')), []);
+});
+
+test('the trace has only table parts in a table of the token stack', () => {
+  assert.deepEqual(run('<thead><td>x</td></thead>', 'off').trace, []);
+  assert.deepEqual(run('<table><tr><td>x</td></tr></table>', 'off').trace, [[7, 'tr', 0], [11, 'td', 7]]);
+});
+
 test('a table start tag in table context stops the trace (the shipped token stack keeps the outer table)', () => {
   const r = run('<table><tr><table></table><td><div data-rq-block="a">x</div></td></tr></table>', 'off');
   assert.equal(r.valid, true);

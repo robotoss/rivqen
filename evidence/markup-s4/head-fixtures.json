@@ -1,0 +1,250 @@
+{
+  "source": "fixtures",
+  "seed": null,
+  "docs": 247,
+  "validDocs": 86,
+  "rules": {
+    "shipped": {
+      "explicit": 218,
+      "implied": 0,
+      "none": 29,
+      "valid": {
+        "explicit": 76,
+        "implied": 0,
+        "none": 10
+      },
+      "stops": {},
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {
+          "explicit-disabled-only": 5,
+          "explicit-disabled-same": 5,
+          "explicit-no-view": 5,
+          "explicit-enabled-only": 3,
+          "explicit-enabled-same": 3,
+          "explicit-client-elements": 1
+        },
+        "examples": {
+          "explicit-disabled-only": [
+            "FX-RQ-MARKUP-EDGE-COMBO-NOSCRIPT-MANIFEST-EOF",
+            "FX-RQ-MARKUP-EDGE-E8-NOSCRIPT-MANIFEST",
+            "FX-RQ-MARKUP-RESERVED"
+          ],
+          "explicit-disabled-same": [
+            "FX-RQ-MARKUP-EDGE-COMBO-NOSCRIPT-MANIFEST-EOF",
+            "FX-RQ-MARKUP-EDGE-E8-NOSCRIPT-MANIFEST",
+            "FX-RQ-MARKUP-RESERVED"
+          ],
+          "explicit-no-view": [
+            "FX-RQ-MARKUP-ENCODING-INVALID",
+            "FX-RQ-MARKUP-ENCODING-OVERLONG",
+            "FX-RQ-MARKUP-ENCODING-SURROGATE"
+          ],
+          "explicit-enabled-only": [
+            "FX-RQ-MARKUP-RESERVED",
+            "FX-RQ-MARKUP-RESERVED-CHARREF",
+            "FX-RQ-MARKUP-TEMPLATE-COL-TEXTAREA"
+          ],
+          "explicit-enabled-same": [
+            "FX-RQ-MARKUP-RESERVED",
+            "FX-RQ-MARKUP-RESERVED-CHARREF",
+            "FX-RQ-MARKUP-TEMPLATE-COL-TEXTAREA"
+          ],
+          "explicit-client-elements": [
+            "FX-RQ-MARKUP-RESERVED"
+          ]
+        }
+      }
+    },
+    "h79": {
+      "explicit": 218,
+      "implied": 0,
+      "none": 29,
+      "valid": {
+        "explicit": 76,
+        "implied": 0,
+        "none": 10
+      },
+      "stops": {},
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {
+          "explicit-disabled-only": 5,
+          "explicit-disabled-same": 5,
+          "explicit-no-view": 5,
+          "explicit-enabled-only": 3,
+          "explicit-enabled-same": 3,
+          "explicit-client-elements": 1
+        },
+        "examples": {
+          "explicit-disabled-only": [
+            "FX-RQ-MARKUP-EDGE-COMBO-NOSCRIPT-MANIFEST-EOF",
+            "FX-RQ-MARKUP-EDGE-E8-NOSCRIPT-MANIFEST",
+            "FX-RQ-MARKUP-RESERVED"
+          ],
+          "explicit-disabled-same": [
+            "FX-RQ-MARKUP-EDGE-COMBO-NOSCRIPT-MANIFEST-EOF",
+            "FX-RQ-MARKUP-EDGE-E8-NOSCRIPT-MANIFEST",
+            "FX-RQ-MARKUP-RESERVED"
+          ],
+          "explicit-no-view": [
+            "FX-RQ-MARKUP-ENCODING-INVALID",
+            "FX-RQ-MARKUP-ENCODING-OVERLONG",
+            "FX-RQ-MARKUP-ENCODING-SURROGATE"
+          ],
+          "explicit-enabled-only": [
+            "FX-RQ-MARKUP-RESERVED",
+            "FX-RQ-MARKUP-RESERVED-CHARREF",
+            "FX-RQ-MARKUP-TEMPLATE-COL-TEXTAREA"
+          ],
+          "explicit-enabled-same": [
+            "FX-RQ-MARKUP-RESERVED",
+            "FX-RQ-MARKUP-RESERVED-CHARREF",
+            "FX-RQ-MARKUP-TEMPLATE-COL-TEXTAREA"
+          ],
+          "explicit-client-elements": [
+            "FX-RQ-MARKUP-RESERVED"
+          ]
+        }
+      }
+    },
+    "l1": {
+      "explicit": 218,
+      "implied": 2,
+      "none": 27,
+      "valid": {
+        "explicit": 76,
+        "implied": 1,
+        "none": 9
+      },
+      "stops": {
+        "<noscript>": 2
+      },
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {
+          "explicit-disabled-only": 5,
+          "explicit-disabled-same": 5,
+          "explicit-no-view": 5,
+          "explicit-enabled-only": 3,
+          "explicit-enabled-same": 3,
+          "explicit-client-elements": 1
+        },
+        "examples": {
+          "explicit-disabled-only": [
+            "FX-RQ-MARKUP-EDGE-COMBO-NOSCRIPT-MANIFEST-EOF",
+            "FX-RQ-MARKUP-EDGE-E8-NOSCRIPT-MANIFEST",
+            "FX-RQ-MARKUP-RESERVED"
+          ],
+          "explicit-disabled-same": [
+            "FX-RQ-MARKUP-EDGE-COMBO-NOSCRIPT-MANIFEST-EOF",
+            "FX-RQ-MARKUP-EDGE-E8-NOSCRIPT-MANIFEST",
+            "FX-RQ-MARKUP-RESERVED"
+          ],
+          "explicit-no-view": [
+            "FX-RQ-MARKUP-ENCODING-INVALID",
+            "FX-RQ-MARKUP-ENCODING-OVERLONG",
+            "FX-RQ-MARKUP-ENCODING-SURROGATE"
+          ],
+          "explicit-enabled-only": [
+            "FX-RQ-MARKUP-RESERVED",
+            "FX-RQ-MARKUP-RESERVED-CHARREF",
+            "FX-RQ-MARKUP-TEMPLATE-COL-TEXTAREA"
+          ],
+          "explicit-enabled-same": [
+            "FX-RQ-MARKUP-RESERVED",
+            "FX-RQ-MARKUP-RESERVED-CHARREF",
+            "FX-RQ-MARKUP-TEMPLATE-COL-TEXTAREA"
+          ],
+          "explicit-client-elements": [
+            "FX-RQ-MARKUP-RESERVED"
+          ]
+        }
+      }
+    },
+    "l2": {
+      "explicit": 218,
+      "implied": 29,
+      "none": 0,
+      "valid": {
+        "explicit": 76,
+        "implied": 10,
+        "none": 0
+      },
+      "stops": {
+        "<div>": 12,
+        "<body>": 2,
+        "<form>": 1,
+        "<span>": 6,
+        "<svg>": 1,
+        "<h1>": 1,
+        "<noscript>": 2,
+        "<b>": 1,
+        "<table>": 2,
+        "<object>": 1
+      },
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {
+          "explicit-disabled-only": 5,
+          "explicit-disabled-same": 5,
+          "explicit-no-view": 5,
+          "implied-client-elements": 5,
+          "explicit-enabled-only": 3,
+          "explicit-enabled-same": 3,
+          "explicit-client-elements": 1
+        },
+        "examples": {
+          "explicit-disabled-only": [
+            "FX-RQ-MARKUP-EDGE-COMBO-NOSCRIPT-MANIFEST-EOF",
+            "FX-RQ-MARKUP-EDGE-E8-NOSCRIPT-MANIFEST",
+            "FX-RQ-MARKUP-RESERVED"
+          ],
+          "explicit-disabled-same": [
+            "FX-RQ-MARKUP-EDGE-COMBO-NOSCRIPT-MANIFEST-EOF",
+            "FX-RQ-MARKUP-EDGE-E8-NOSCRIPT-MANIFEST",
+            "FX-RQ-MARKUP-RESERVED"
+          ],
+          "explicit-no-view": [
+            "FX-RQ-MARKUP-ENCODING-INVALID",
+            "FX-RQ-MARKUP-ENCODING-OVERLONG",
+            "FX-RQ-MARKUP-ENCODING-SURROGATE"
+          ],
+          "implied-client-elements": [
+            "FX-RQ-MARKUP-LIMIT-DEPTH-257",
+            "FX-RQ-MARKUP-LIMIT-DEPTH-CONTENT-FOREIGN-257",
+            "FX-RQ-MARKUP-LIMIT-DEPTH-FOREIGN"
+          ],
+          "explicit-enabled-only": [
+            "FX-RQ-MARKUP-RESERVED",
+            "FX-RQ-MARKUP-RESERVED-CHARREF",
+            "FX-RQ-MARKUP-TEMPLATE-COL-TEXTAREA"
+          ],
+          "explicit-enabled-same": [
+            "FX-RQ-MARKUP-RESERVED",
+            "FX-RQ-MARKUP-RESERVED-CHARREF",
+            "FX-RQ-MARKUP-TEMPLATE-COL-TEXTAREA"
+          ],
+          "explicit-client-elements": [
+            "FX-RQ-MARKUP-RESERVED"
+          ]
+        }
+      }
+    }
+  },
+  "hostile": null,
+  "full": null,
+  "seconds": 1
+}

@@ -102,7 +102,8 @@ export function sweep(o) {
       for (const [k, n] of Object.entries(r.closures)) s.closures[k] += n;
       // b3 changes D also for explicit cell end tags: every result that it accepts is checked.
       if (!(all || gained || control || m === 'b3')) continue;
-      const k = key(r);
+      // b3 has its own D rule (depth claim and rewrite differ), so its findings are its own.
+      const k = m === 'b3' ? `b3 ${key(r)}` : key(r);
       if (!checked.has(k)) checked.set(k, [...new Set(checkResult(bytes, r).map((f) => f.kind))]);
       const kinds = checked.get(k);
       s.checked++;

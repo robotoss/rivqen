@@ -425,7 +425,10 @@ class Scanner {
         // builder (shipped rule, conformance case C3-table-in-row): the token stack
         // keeps it, so the parents of later table parts differ. The trace stops there.
         if (name === 'table' && TABLE_CONTEXT.has(fName)) this.traceStopped = true;
-        if (parents !== undefined && !this.traceStopped) this.trace.push([t.start, name, this.at[f]]);
+        // Only table parts in a table of the token stack: the tree builder ignores a
+        // table part start tag in body ("in body", parse error, ignore the token).
+        const inTable = this.nearest('table') > this.nearest('template');
+        if (parents !== undefined && inTable && !this.traceStopped) this.trace.push([t.start, name, this.at[f]]);
       }
       // M-26 item 3: each implied part counts once for each F.
       const parts = impliedParts(name, fName) & ~this.state[f];

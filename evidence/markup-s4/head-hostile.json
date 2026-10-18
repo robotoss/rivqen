@@ -1,0 +1,116 @@
+{
+  "source": "hostile",
+  "seed": 79,
+  "docs": 200000,
+  "validDocs": 0,
+  "rules": {
+    "shipped": {
+      "explicit": 0,
+      "implied": 0,
+      "none": 0,
+      "valid": {
+        "explicit": 0,
+        "implied": 0,
+        "none": 0
+      },
+      "stops": {},
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {},
+        "examples": {}
+      }
+    },
+    "h79": {
+      "explicit": 0,
+      "implied": 0,
+      "none": 0,
+      "valid": {
+        "explicit": 0,
+        "implied": 0,
+        "none": 0
+      },
+      "stops": {},
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {},
+        "examples": {}
+      }
+    },
+    "l1": {
+      "explicit": 0,
+      "implied": 0,
+      "none": 0,
+      "valid": {
+        "explicit": 0,
+        "implied": 0,
+        "none": 0
+      },
+      "stops": {},
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {},
+        "examples": {}
+      }
+    },
+    "l2": {
+      "explicit": 0,
+      "implied": 0,
+      "none": 0,
+      "valid": {
+        "explicit": 0,
+        "implied": 0,
+        "none": 0
+      },
+      "stops": {},
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {},
+        "examples": {}
+      }
+    }
+  },
+  "hostile": {
+    "positions": 856093,
+    "c1": 624186,
+    "c2": 109368,
+    "c1Only": 514818,
+    "c2Only": 0,
+    "c1OnlyFailures": {
+      "counts": {
+        "enabled-same": 331985,
+        "disabled-same": 331985
+      },
+      "examples": {
+        "enabled-same": [
+          "﻿<!doctype HTML></script>\t<!--a--!><script type=\"application/json\">{\"a\":1}</script> @0",
+          "﻿<!doctype HTML></script>\t<!--a--!><script type=\"application/json\">{\"a\":1}</script> @3",
+          "﻿<!doctype HTML></script>\t<!--a--!><script type=\"application/json\">{\"a\":1}</script> @18"
+        ],
+        "disabled-same": [
+          "﻿<!doctype HTML></script>\t<!--a--!><script type=\"application/json\">{\"a\":1}</script> @0",
+          "﻿<!doctype HTML></script>\t<!--a--!><script type=\"application/json\">{\"a\":1}</script> @3",
+          "﻿<!doctype HTML></script>\t<!--a--!><script type=\"application/json\">{\"a\":1}</script> @18"
+        ]
+      }
+    },
+    "c2Failures": {
+      "counts": {},
+      "examples": {}
+    },
+    "c1OnlyPass": 182833
+  },
+  "full": null,
+  "seconds": 15
+}

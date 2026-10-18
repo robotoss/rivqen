@@ -1,0 +1,213 @@
+{
+  "source": "review3",
+  "seed": 85,
+  "docs": 200000,
+  "controls": 24640,
+  "offNotShipped": 0,
+  "modes": {
+    "off": {
+      "valid": 24640,
+      "gained": 0,
+      "checked": 24640,
+      "withFindings": 1,
+      "findings": {
+        "table-enabled-parent": 1,
+        "table-disabled-parent": 1
+      },
+      "why": {
+        "RQP_MARKUP_STRUCTURE": 132417,
+        "M-09": 733,
+        "RQP_MARKUP_RESERVED": 14110,
+        "M-09.2": 14171,
+        "RQP_MARKUP_LIMIT": 2937,
+        "RQP_MARKUP_NESTED": 5839,
+        "RQP_MARKUP_FORBIDDEN_ELEMENT": 3652,
+        "RQP_MARKUP_BAD_JSON": 1245,
+        "RQP_MARKUP_DUPLICATE": 256
+      },
+      "closures": {
+        "cell": 0,
+        "row": 0,
+        "group": 0,
+        "caption": 0,
+        "colgroup": 0
+      },
+      "examples": {
+        "table-enabled-parent": [
+          "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><template><caption>1 <2</caption><table><colgroup><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1></colgroup></table></template></span></p>"
+        ],
+        "table-disabled-parent": [
+          "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><template><caption>1 <2</caption><table><colgroup><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1></colgroup></table></template></span></p>"
+        ]
+      }
+    },
+    "b1": {
+      "valid": 24693,
+      "gained": 53,
+      "checked": 24693,
+      "withFindings": 1,
+      "findings": {
+        "table-enabled-parent": 1,
+        "table-disabled-parent": 1
+      },
+      "why": {
+        "RQP_MARKUP_STRUCTURE": 132829,
+        "RQP_MARKUP_RESERVED": 14145,
+        "M-09.2": 14211,
+        "RQP_MARKUP_LIMIT": 2948,
+        "RQP_MARKUP_NESTED": 5848,
+        "RQP_MARKUP_FORBIDDEN_ELEMENT": 3658,
+        "close-current": 152,
+        "RQP_MARKUP_BAD_JSON": 1250,
+        "RQP_MARKUP_DUPLICATE": 256,
+        "M-09": 10
+      },
+      "closures": {
+        "cell": 32,
+        "row": 4,
+        "group": 4,
+        "caption": 3,
+        "colgroup": 12
+      },
+      "examples": {
+        "table-enabled-parent": [
+          "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><template><caption>1 <2</caption><table><colgroup><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1></colgroup></table></template></span></p>"
+        ],
+        "table-disabled-parent": [
+          "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><template><caption>1 <2</caption><table><colgroup><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1></colgroup></table></template></span></p>"
+        ]
+      }
+    },
+    "b2": {
+      "valid": 24704,
+      "gained": 64,
+      "checked": 24704,
+      "withFindings": 1,
+      "findings": {
+        "table-enabled-parent": 1,
+        "table-disabled-parent": 1
+      },
+      "why": {
+        "RQP_MARKUP_STRUCTURE": 132876,
+        "RQP_MARKUP_RESERVED": 14151,
+        "M-09.2": 14213,
+        "RQP_MARKUP_LIMIT": 2948,
+        "RQP_MARKUP_NESTED": 5850,
+        "RQP_MARKUP_FORBIDDEN_ELEMENT": 3659,
+        "RQP_MARKUP_BAD_JSON": 1251,
+        "RQP_MARKUP_DUPLICATE": 256,
+        "M-09": 10,
+        "close-context": 67,
+        "close-crossing": 15
+      },
+      "closures": {
+        "cell": 42,
+        "row": 4,
+        "group": 4,
+        "caption": 4,
+        "colgroup": 12
+      },
+      "examples": {
+        "table-enabled-parent": [
+          "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><template><caption>1 <2</caption><table><colgroup><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1></colgroup></table></template></span></p>"
+        ],
+        "table-disabled-parent": [
+          "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><template><caption>1 <2</caption><table><colgroup><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1></colgroup></table></template></span></p>"
+        ]
+      }
+    },
+    "b3": {
+      "valid": 24704,
+      "gained": 64,
+      "checked": 24704,
+      "withFindings": 42,
+      "findings": {
+        "depth-enabled": 41,
+        "depth-disabled": 41,
+        "table-enabled-parent": 1,
+        "table-disabled-parent": 1
+      },
+      "why": {
+        "RQP_MARKUP_STRUCTURE": 132876,
+        "RQP_MARKUP_RESERVED": 14151,
+        "M-09.2": 14213,
+        "RQP_MARKUP_LIMIT": 2948,
+        "RQP_MARKUP_NESTED": 5850,
+        "RQP_MARKUP_FORBIDDEN_ELEMENT": 3659,
+        "RQP_MARKUP_BAD_JSON": 1251,
+        "RQP_MARKUP_DUPLICATE": 256,
+        "M-09": 10,
+        "close-context": 67,
+        "close-crossing": 15
+      },
+      "closures": {
+        "cell": 42,
+        "row": 4,
+        "group": 4,
+        "caption": 4,
+        "colgroup": 12
+      },
+      "examples": {
+        "depth-enabled": [
+          "<!DOCTYPE html><html><head><title>T</title></head><body><td><li><ul></li><li><ul></li><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p></td>",
+          "<td><ul><li><tr>",
+          "<ruby><td><?x><mi><col><table><td><table><td><table><td><span data-rq-block=\"r0\"><b>y</b></span></td></table></td></table></td></table>"
+        ],
+        "depth-disabled": [
+          "<!DOCTYPE html><html><head><title>T</title></head><body><td><li><ul></li><li><ul></li><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p></td>",
+          "<td><ul><li><tr>",
+          "<ruby><td><?x><mi><col><table><td><table><td><table><td><span data-rq-block=\"r0\"><b>y</b></span></td></table></td></table></td></table>"
+        ],
+        "table-enabled-parent": [
+          "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><template><caption>1 <2</caption><table><colgroup><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1></colgroup></table></template></span></p>"
+        ],
+        "table-disabled-parent": [
+          "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><template><caption>1 <2</caption><table><colgroup><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1></colgroup></table></template></span></p>"
+        ]
+      }
+    },
+    "u": {
+      "valid": 24710,
+      "gained": 70,
+      "checked": 24710,
+      "withFindings": 6,
+      "findings": {
+        "rewrite-invalid": 5,
+        "table-enabled-parent": 1,
+        "table-disabled-parent": 1
+      },
+      "why": {
+        "RQP_MARKUP_STRUCTURE": 132936,
+        "RQP_MARKUP_RESERVED": 14155,
+        "M-09.2": 14223,
+        "RQP_MARKUP_LIMIT": 2948,
+        "RQP_MARKUP_NESTED": 5852,
+        "RQP_MARKUP_FORBIDDEN_ELEMENT": 3659,
+        "RQP_MARKUP_BAD_JSON": 1251,
+        "RQP_MARKUP_DUPLICATE": 256,
+        "M-09": 10
+      },
+      "closures": {
+        "cell": 43,
+        "row": 4,
+        "group": 4,
+        "caption": 7,
+        "colgroup": 14
+      },
+      "examples": {
+        "rewrite-invalid": [
+          "<!DOCTYPE html><html><head><title>T</title></head><body><colgroup><rp><button><span><colgroup></colgroup></span></button></rp></colgroup>",
+          "<!DOCTYPE html><html><head><title>T</title></head><body><table><td><table><td><table><td><p data-rq-block=\"r0\">y<nobr>z</nobr>w</p></td></table></td></table></td></table><caption><optgroup></optgroup><a><b><wbr><thead><tr><<option></option><!--><h2></h2>&amp;<table><caption></colgroup><p data-rq-block=\"r1\">y<nobr>z</nobr>w</p></caption></table><h1><span></span></h1></tr></thead></b></a></caption>",
+          "<!DOCTYPE html><html><head><title>T</title></head><body><caption>]]><ol><li><div><a><b></b><foreignObject><colgroup><p><span><style><table><td><table><td><table><td><table><td><table><td><span data-rq-block=\"r0\">y<nobr>z</nobr>w</span></td></table></td></table></td></table></td></table></td></table><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><table><td><div data-rq-block=\"r1\">y<a href=x>z</a>w</div></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table></td></table><span><div></span><span><div></span><span data-rq-block=\"r2\">y<nobr>z</nobr>w</span><a><q><div><div><div><div><div><div><div><div>x</q></a></style></span></p></colgroup></foreignObject></a></div></li></ol></caption>"
+        ],
+        "table-enabled-parent": [
+          "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><template><caption>1 <2</caption><table><colgroup><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1></colgroup></table></template></span></p>"
+        ],
+        "table-disabled-parent": [
+          "<!DOCTYPE html><html><head><title>T</title></head><body><p><span><template><caption>1 <2</caption><table><colgroup><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1></colgroup></table></template></span></p>"
+        ]
+      }
+    }
+  },
+  "seconds": 29
+}

@@ -1,0 +1,1619 @@
+{
+ "date": "2026-10-18",
+ "combos": [
+  "base",
+  "r1",
+  "r1a",
+  "r2",
+  "r3",
+  "r3w",
+  "r1+r3",
+  "r2+r3",
+  "r1+r2",
+  "r1+r2+r3",
+  "r1a+r2+r3",
+  "r1+r2+r3w"
+ ],
+ "pages": 882,
+ "workerErrors": [],
+ "fourAllValid": 798,
+ "fourDisagree": 0,
+ "studyBaseEqualsShipped": 882,
+ "studyBaseEqualsFour": 882,
+ "page": {
+  "base": {
+   "valid": 798,
+   "gained": 0,
+   "gainedUrls": [],
+   "why": {
+    "M-02": 18,
+    "M-06.1": 17,
+    "M-11.3:svg": 15,
+    "M-06.4": 9,
+    "M-09": 6,
+    "M-13": 4,
+    "M-07.3": 3,
+    "M-01": 2,
+    "M-11.5": 2,
+    "M-10.2": 2,
+    "M-07.5": 2,
+    "M-10.3": 1
+   },
+   "findings": {
+    "noscript-end-head": 58,
+    "noscript-outside-head": 55,
+    "noscript-end": 1,
+    "noscript-outside": 1
+   },
+   "gainedFindings": {}
+  },
+  "r1": {
+   "valid": 798,
+   "gained": 0,
+   "gainedUrls": [],
+   "why": {
+    "M-02": 18,
+    "M-06.1": 17,
+    "M-11.3:svg": 15,
+    "M-06.4": 9,
+    "M-09": 6,
+    "M-13": 4,
+    "M-07.3": 3,
+    "M-01": 2,
+    "M-11.5": 2,
+    "M-10.2": 2,
+    "M-07.5": 2,
+    "M-10.3": 1
+   },
+   "findings": {
+    "noscript-end-head": 58,
+    "noscript-outside-head": 55,
+    "noscript-end": 1,
+    "noscript-outside": 1
+   },
+   "gainedFindings": {}
+  },
+  "r1a": {
+   "valid": 798,
+   "gained": 0,
+   "gainedUrls": [],
+   "why": {
+    "M-02": 18,
+    "M-06.1": 17,
+    "M-11.3:svg": 15,
+    "M-06.4": 9,
+    "M-09": 6,
+    "M-13": 4,
+    "M-07.3": 3,
+    "M-01": 2,
+    "M-11.5": 2,
+    "M-10.2": 2,
+    "M-07.5": 2,
+    "M-10.3": 1
+   },
+   "findings": {
+    "noscript-end-head": 58,
+    "noscript-outside-head": 55,
+    "noscript-end": 1,
+    "noscript-outside": 1
+   },
+   "gainedFindings": {}
+  },
+  "r2": {
+   "valid": 813,
+   "gained": 15,
+   "gainedUrls": [
+    "https://www.bbc.com/news",
+    "https://www.bbc.com/future/article/20260128-how-to-make-google-put-trusted-sources-up-top-when-you-search",
+    "https://www.bbc.com/persian",
+    "https://www.bbc.com/persian/iran-features-53961947",
+    "https://www.mk.ru/",
+    "https://www.mk.ru/politics/2026/10/18/posledniy-shans-es-sankcii-protiv-rf-na-grani-sryva.html",
+    "https://www.bbc.com/russian",
+    "https://www.bbc.com/russian/articles/ckly02022p6go",
+    "https://blogs.microsoft.com/",
+    "https://www.chase.com/",
+    "https://www.shopify.com/",
+    "https://www.shopify.com/blog",
+    "https://www.shopify.com/blog/13975985-how-to-find-a-manufacturer-or-supplier-for-your-product-idea",
+    "https://discuss.python.org/",
+    "https://eda.ru/"
+   ],
+   "why": {
+    "M-02": 18,
+    "M-06.1": 17,
+    "M-06.4": 9,
+    "M-09": 6,
+    "M-13": 4,
+    "M-07.3": 3,
+    "M-01": 2,
+    "M-11.5": 2,
+    "M-10.2": 2,
+    "M-07.5": 2,
+    "M-10.3": 1,
+    "M-07.1": 1
+   },
+   "findings": {
+    "noscript-end-head": 58,
+    "noscript-outside-head": 55,
+    "noscript-end": 1,
+    "noscript-outside": 1
+   },
+   "gainedFindings": {
+    "noscript-end-head": 1,
+    "noscript-outside-head": 1
+   }
+  },
+  "r3": {
+   "valid": 805,
+   "gained": 7,
+   "gainedUrls": [
+    "https://www.folha.uol.com.br/",
+    "https://www.elegantthemes.com/blog/",
+    "https://www.elegantthemes.com/blog/divi-resources/exploring-slots-for-components-in-divi-5",
+    "https://colourpop.com/",
+    "https://colourpop.com/products/daybreak-and-moonlight-fresh-kiss-trio",
+    "https://skillbox.ru/course/profession-project-manager-pro/",
+    "http://government.ru/news/60193/"
+   ],
+   "why": {
+    "M-02": 18,
+    "M-06.1": 17,
+    "M-11.3:svg": 15,
+    "M-09": 6,
+    "M-13": 4,
+    "M-11.3:select": 3,
+    "M-07.3": 3,
+    "M-01": 2,
+    "M-11.5": 2,
+    "M-10.2": 2,
+    "M-07.5": 2,
+    "M-10.3": 1
+   },
+   "findings": {
+    "noscript-end-head": 58,
+    "noscript-outside-head": 55,
+    "noscript-end": 1,
+    "noscript-outside": 1
+   },
+   "gainedFindings": {}
+  },
+  "r3w": {
+   "valid": 805,
+   "gained": 7,
+   "gainedUrls": [
+    "https://www.folha.uol.com.br/",
+    "https://www.elegantthemes.com/blog/",
+    "https://www.elegantthemes.com/blog/divi-resources/exploring-slots-for-components-in-divi-5",
+    "https://colourpop.com/",
+    "https://colourpop.com/products/daybreak-and-moonlight-fresh-kiss-trio",
+    "https://skillbox.ru/course/profession-project-manager-pro/",
+    "http://government.ru/news/60193/"
+   ],
+   "why": {
+    "M-02": 18,
+    "M-06.1": 17,
+    "M-11.3:svg": 15,
+    "M-09": 6,
+    "M-13": 4,
+    "M-11.3:select": 3,
+    "M-07.3": 3,
+    "M-01": 2,
+    "M-11.5": 2,
+    "M-10.2": 2,
+    "M-07.5": 2,
+    "M-10.3": 1
+   },
+   "findings": {
+    "noscript-end-head": 58,
+    "noscript-outside-head": 55,
+    "noscript-end": 1,
+    "noscript-outside": 1
+   },
+   "gainedFindings": {}
+  },
+  "r1+r3": {
+   "valid": 805,
+   "gained": 7,
+   "gainedUrls": [
+    "https://www.folha.uol.com.br/",
+    "https://www.elegantthemes.com/blog/",
+    "https://www.elegantthemes.com/blog/divi-resources/exploring-slots-for-components-in-divi-5",
+    "https://colourpop.com/",
+    "https://colourpop.com/products/daybreak-and-moonlight-fresh-kiss-trio",
+    "https://skillbox.ru/course/profession-project-manager-pro/",
+    "http://government.ru/news/60193/"
+   ],
+   "why": {
+    "M-02": 18,
+    "M-06.1": 17,
+    "M-11.3:svg": 15,
+    "M-09": 6,
+    "M-13": 4,
+    "M-11.3:select": 3,
+    "M-07.3": 3,
+    "M-01": 2,
+    "M-11.5": 2,
+    "M-10.2": 2,
+    "M-07.5": 2,
+    "M-10.3": 1
+   },
+   "findings": {
+    "noscript-end-head": 58,
+    "noscript-outside-head": 55,
+    "noscript-end": 1,
+    "noscript-outside": 1
+   },
+   "gainedFindings": {}
+  },
+  "r2+r3": {
+   "valid": 820,
+   "gained": 22,
+   "gainedUrls": [
+    "https://www.bbc.com/news",
+    "https://www.bbc.com/future/article/20260128-how-to-make-google-put-trusted-sources-up-top-when-you-search",
+    "https://www.bbc.com/persian",
+    "https://www.bbc.com/persian/iran-features-53961947",
+    "https://www.folha.uol.com.br/",
+    "https://www.mk.ru/",
+    "https://www.mk.ru/politics/2026/10/18/posledniy-shans-es-sankcii-protiv-rf-na-grani-sryva.html",
+    "https://www.bbc.com/russian",
+    "https://www.bbc.com/russian/articles/ckly02022p6go",
+    "https://blogs.microsoft.com/",
+    "https://www.elegantthemes.com/blog/",
+    "https://www.elegantthemes.com/blog/divi-resources/exploring-slots-for-components-in-divi-5",
+    "https://colourpop.com/",
+    "https://colourpop.com/products/daybreak-and-moonlight-fresh-kiss-trio",
+    "https://www.chase.com/",
+    "https://www.shopify.com/",
+    "https://www.shopify.com/blog",
+    "https://www.shopify.com/blog/13975985-how-to-find-a-manufacturer-or-supplier-for-your-product-idea",
+    "https://skillbox.ru/course/profession-project-manager-pro/",
+    "https://discuss.python.org/",
+    "http://government.ru/news/60193/",
+    "https://eda.ru/"
+   ],
+   "why": {
+    "M-02": 18,
+    "M-06.1": 17,
+    "M-09": 6,
+    "M-13": 4,
+    "M-11.3:select": 3,
+    "M-07.3": 3,
+    "M-01": 2,
+    "M-11.5": 2,
+    "M-10.2": 2,
+    "M-07.5": 2,
+    "M-10.3": 1,
+    "M-07.1": 1
+   },
+   "findings": {
+    "noscript-end-head": 58,
+    "noscript-outside-head": 55,
+    "noscript-end": 1,
+    "noscript-outside": 1
+   },
+   "gainedFindings": {
+    "noscript-end-head": 1,
+    "noscript-outside-head": 1
+   }
+  },
+  "r1+r2": {
+   "valid": 813,
+   "gained": 15,
+   "gainedUrls": [
+    "https://www.bbc.com/news",
+    "https://www.bbc.com/future/article/20260128-how-to-make-google-put-trusted-sources-up-top-when-you-search",
+    "https://www.bbc.com/persian",
+    "https://www.bbc.com/persian/iran-features-53961947",
+    "https://www.mk.ru/",
+    "https://www.mk.ru/politics/2026/10/18/posledniy-shans-es-sankcii-protiv-rf-na-grani-sryva.html",
+    "https://www.bbc.com/russian",
+    "https://www.bbc.com/russian/articles/ckly02022p6go",
+    "https://blogs.microsoft.com/",
+    "https://www.chase.com/",
+    "https://www.shopify.com/",
+    "https://www.shopify.com/blog",
+    "https://www.shopify.com/blog/13975985-how-to-find-a-manufacturer-or-supplier-for-your-product-idea",
+    "https://discuss.python.org/",
+    "https://eda.ru/"
+   ],
+   "why": {
+    "M-02": 18,
+    "M-06.1": 17,
+    "M-06.4": 9,
+    "M-09": 6,
+    "M-13": 4,
+    "M-07.3": 3,
+    "M-01": 2,
+    "M-11.5": 2,
+    "M-10.2": 2,
+    "M-07.5": 2,
+    "M-10.3": 1,
+    "M-07.1": 1
+   },
+   "findings": {
+    "noscript-end-head": 58,
+    "noscript-outside-head": 55,
+    "noscript-end": 1,
+    "noscript-outside": 1
+   },
+   "gainedFindings": {
+    "noscript-end-head": 1,
+    "noscript-outside-head": 1
+   }
+  },
+  "r1+r2+r3": {
+   "valid": 820,
+   "gained": 22,
+   "gainedUrls": [
+    "https://www.bbc.com/news",
+    "https://www.bbc.com/future/article/20260128-how-to-make-google-put-trusted-sources-up-top-when-you-search",
+    "https://www.bbc.com/persian",
+    "https://www.bbc.com/persian/iran-features-53961947",
+    "https://www.folha.uol.com.br/",
+    "https://www.mk.ru/",
+    "https://www.mk.ru/politics/2026/10/18/posledniy-shans-es-sankcii-protiv-rf-na-grani-sryva.html",
+    "https://www.bbc.com/russian",
+    "https://www.bbc.com/russian/articles/ckly02022p6go",
+    "https://blogs.microsoft.com/",
+    "https://www.elegantthemes.com/blog/",
+    "https://www.elegantthemes.com/blog/divi-resources/exploring-slots-for-components-in-divi-5",
+    "https://colourpop.com/",
+    "https://colourpop.com/products/daybreak-and-moonlight-fresh-kiss-trio",
+    "https://www.chase.com/",
+    "https://www.shopify.com/",
+    "https://www.shopify.com/blog",
+    "https://www.shopify.com/blog/13975985-how-to-find-a-manufacturer-or-supplier-for-your-product-idea",
+    "https://skillbox.ru/course/profession-project-manager-pro/",
+    "https://discuss.python.org/",
+    "http://government.ru/news/60193/",
+    "https://eda.ru/"
+   ],
+   "why": {
+    "M-02": 18,
+    "M-06.1": 17,
+    "M-09": 6,
+    "M-13": 4,
+    "M-11.3:select": 3,
+    "M-07.3": 3,
+    "M-01": 2,
+    "M-11.5": 2,
+    "M-10.2": 2,
+    "M-07.5": 2,
+    "M-10.3": 1,
+    "M-07.1": 1
+   },
+   "findings": {
+    "noscript-end-head": 58,
+    "noscript-outside-head": 55,
+    "noscript-end": 1,
+    "noscript-outside": 1
+   },
+   "gainedFindings": {
+    "noscript-end-head": 1,
+    "noscript-outside-head": 1
+   }
+  },
+  "r1a+r2+r3": {
+   "valid": 820,
+   "gained": 22,
+   "gainedUrls": [
+    "https://www.bbc.com/news",
+    "https://www.bbc.com/future/article/20260128-how-to-make-google-put-trusted-sources-up-top-when-you-search",
+    "https://www.bbc.com/persian",
+    "https://www.bbc.com/persian/iran-features-53961947",
+    "https://www.folha.uol.com.br/",
+    "https://www.mk.ru/",
+    "https://www.mk.ru/politics/2026/10/18/posledniy-shans-es-sankcii-protiv-rf-na-grani-sryva.html",
+    "https://www.bbc.com/russian",
+    "https://www.bbc.com/russian/articles/ckly02022p6go",
+    "https://blogs.microsoft.com/",
+    "https://www.elegantthemes.com/blog/",
+    "https://www.elegantthemes.com/blog/divi-resources/exploring-slots-for-components-in-divi-5",
+    "https://colourpop.com/",
+    "https://colourpop.com/products/daybreak-and-moonlight-fresh-kiss-trio",
+    "https://www.chase.com/",
+    "https://www.shopify.com/",
+    "https://www.shopify.com/blog",
+    "https://www.shopify.com/blog/13975985-how-to-find-a-manufacturer-or-supplier-for-your-product-idea",
+    "https://skillbox.ru/course/profession-project-manager-pro/",
+    "https://discuss.python.org/",
+    "http://government.ru/news/60193/",
+    "https://eda.ru/"
+   ],
+   "why": {
+    "M-02": 18,
+    "M-06.1": 17,
+    "M-09": 6,
+    "M-13": 4,
+    "M-11.3:select": 3,
+    "M-07.3": 3,
+    "M-01": 2,
+    "M-11.5": 2,
+    "M-10.2": 2,
+    "M-07.5": 2,
+    "M-10.3": 1,
+    "M-07.1": 1
+   },
+   "findings": {
+    "noscript-end-head": 58,
+    "noscript-outside-head": 55,
+    "noscript-end": 1,
+    "noscript-outside": 1
+   },
+   "gainedFindings": {
+    "noscript-end-head": 1,
+    "noscript-outside-head": 1
+   }
+  },
+  "r1+r2+r3w": {
+   "valid": 820,
+   "gained": 22,
+   "gainedUrls": [
+    "https://www.bbc.com/news",
+    "https://www.bbc.com/future/article/20260128-how-to-make-google-put-trusted-sources-up-top-when-you-search",
+    "https://www.bbc.com/persian",
+    "https://www.bbc.com/persian/iran-features-53961947",
+    "https://www.folha.uol.com.br/",
+    "https://www.mk.ru/",
+    "https://www.mk.ru/politics/2026/10/18/posledniy-shans-es-sankcii-protiv-rf-na-grani-sryva.html",
+    "https://www.bbc.com/russian",
+    "https://www.bbc.com/russian/articles/ckly02022p6go",
+    "https://blogs.microsoft.com/",
+    "https://www.elegantthemes.com/blog/",
+    "https://www.elegantthemes.com/blog/divi-resources/exploring-slots-for-components-in-divi-5",
+    "https://colourpop.com/",
+    "https://colourpop.com/products/daybreak-and-moonlight-fresh-kiss-trio",
+    "https://www.chase.com/",
+    "https://www.shopify.com/",
+    "https://www.shopify.com/blog",
+    "https://www.shopify.com/blog/13975985-how-to-find-a-manufacturer-or-supplier-for-your-product-idea",
+    "https://skillbox.ru/course/profession-project-manager-pro/",
+    "https://discuss.python.org/",
+    "http://government.ru/news/60193/",
+    "https://eda.ru/"
+   ],
+   "why": {
+    "M-02": 18,
+    "M-06.1": 17,
+    "M-09": 6,
+    "M-13": 4,
+    "M-11.3:select": 3,
+    "M-07.3": 3,
+    "M-01": 2,
+    "M-11.5": 2,
+    "M-10.2": 2,
+    "M-07.5": 2,
+    "M-10.3": 1,
+    "M-07.1": 1
+   },
+   "findings": {
+    "noscript-end-head": 58,
+    "noscript-outside-head": 55,
+    "noscript-end": 1,
+    "noscript-outside": 1
+   },
+   "gainedFindings": {
+    "noscript-end-head": 1,
+    "noscript-outside-head": 1
+   }
+  }
+ },
+ "variants": {
+  "small": {
+   "basePages": 798,
+   "noPick": 56,
+   "variantsA": 742,
+   "fourValidA": 416,
+   "fourDisagreeA": 0,
+   "baseEqualsShippedA": 742,
+   "combos": {
+    "base": {
+     "validA": 416,
+     "gainedA": 0,
+     "pagesB": 798,
+     "variantsB": 742,
+     "validB": 416,
+     "why": {
+      "M-22.2:svg": 236,
+      "M-22.2:script": 39,
+      "M-22.2:style": 14,
+      "M-23": 7,
+      "M-22.2:template": 6,
+      "M-19.1": 6,
+      "M-22.2:select": 6,
+      "M-22.2:iframe": 3,
+      "M-24.def": 2,
+      "M-24.a": 2,
+      "M-22.2:meta": 2,
+      "M-22.2:noscript": 1,
+      "M-22.1": 1,
+      "M-22.2:textarea": 1
+     },
+     "findings": {
+      "noscript-end-head": 30,
+      "noscript-outside-head": 29,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "foreignVariants": 0,
+     "noscriptSvgVariants": 0
+    },
+    "r1": {
+     "validA": 611,
+     "gainedA": 195,
+     "pagesB": 798,
+     "variantsB": 742,
+     "validB": 611,
+     "why": {
+      "M-22.2:script": 46,
+      "M-22.2:style": 18,
+      "M-22.2:template": 11,
+      "M-23": 8,
+      "M-22.2:iframe": 6,
+      "M-19.1": 6,
+      "M-22.2:select": 6,
+      "M-22.2:link": 6,
+      "M-22.2:meta": 5,
+      "r1-forbidden:style": 3,
+      "M-24.def": 3,
+      "M-22.2:textarea": 3,
+      "M-26": 2,
+      "M-22.2:noscript": 2,
+      "M-24.a": 2
+     },
+     "findings": {
+      "noscript-end-head": 30,
+      "noscript-outside-head": 29,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {
+      "noscript-end-head": 14,
+      "noscript-outside-head": 13
+     },
+     "foreignVariants": 195,
+     "noscriptSvgVariants": 0
+    },
+    "r1a": {
+     "validA": 607,
+     "gainedA": 191,
+     "pagesB": 798,
+     "variantsB": 742,
+     "validB": 607,
+     "why": {
+      "M-22.2:script": 46,
+      "M-22.2:style": 18,
+      "M-22.2:template": 11,
+      "M-23": 8,
+      "M-22.2:iframe": 6,
+      "M-19.1": 6,
+      "M-22.2:select": 6,
+      "M-22.2:link": 6,
+      "M-22.2:meta": 5,
+      "r1a-not-allowed:style": 3,
+      "M-24.def": 3,
+      "M-22.2:textarea": 3,
+      "M-26": 2,
+      "M-22.2:noscript": 2,
+      "M-24.a": 2
+     },
+     "findings": {
+      "noscript-end-head": 30,
+      "noscript-outside-head": 29,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {
+      "noscript-end-head": 14,
+      "noscript-outside-head": 13
+     },
+     "foreignVariants": 191,
+     "noscriptSvgVariants": 0
+    },
+    "r2": {
+     "validA": 416,
+     "gainedA": 0,
+     "pagesB": 813,
+     "variantsB": 755,
+     "validB": 421,
+     "why": {
+      "M-22.2:svg": 236,
+      "M-22.2:script": 39,
+      "M-22.2:style": 14,
+      "M-23": 7,
+      "M-22.2:template": 6,
+      "M-19.1": 6,
+      "M-22.2:select": 6,
+      "M-22.2:iframe": 3,
+      "M-24.def": 2,
+      "M-24.a": 2,
+      "M-22.2:meta": 2,
+      "M-22.2:noscript": 1,
+      "M-22.1": 1,
+      "M-22.2:textarea": 1
+     },
+     "findings": {
+      "noscript-end-head": 30,
+      "noscript-outside-head": 29,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "foreignVariants": 0,
+     "noscriptSvgVariants": 0
+    },
+    "r3": {
+     "validA": 416,
+     "gainedA": 0,
+     "pagesB": 805,
+     "variantsB": 749,
+     "validB": 420,
+     "why": {
+      "M-22.2:svg": 236,
+      "M-22.2:script": 39,
+      "M-22.2:style": 14,
+      "M-23": 7,
+      "M-22.2:template": 6,
+      "M-19.1": 6,
+      "M-22.2:select": 6,
+      "M-22.2:iframe": 3,
+      "M-24.def": 2,
+      "M-24.a": 2,
+      "M-22.2:meta": 2,
+      "M-22.2:noscript": 1,
+      "M-22.1": 1,
+      "M-22.2:textarea": 1
+     },
+     "findings": {
+      "noscript-end-head": 30,
+      "noscript-outside-head": 29,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "foreignVariants": 0,
+     "noscriptSvgVariants": 0
+    },
+    "r3w": {
+     "validA": 416,
+     "gainedA": 0,
+     "pagesB": 805,
+     "variantsB": 749,
+     "validB": 420,
+     "why": {
+      "M-22.2:svg": 236,
+      "M-22.2:script": 39,
+      "M-22.2:style": 14,
+      "M-23": 7,
+      "M-22.2:template": 6,
+      "M-19.1": 6,
+      "M-22.2:select": 6,
+      "M-22.2:iframe": 3,
+      "M-24.def": 2,
+      "M-24.a": 2,
+      "M-22.2:meta": 2,
+      "M-22.2:noscript": 1,
+      "M-22.1": 1,
+      "M-22.2:textarea": 1
+     },
+     "findings": {
+      "noscript-end-head": 30,
+      "noscript-outside-head": 29,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "foreignVariants": 0,
+     "noscriptSvgVariants": 0
+    },
+    "r1+r3": {
+     "validA": 611,
+     "gainedA": 195,
+     "pagesB": 805,
+     "variantsB": 749,
+     "validB": 616,
+     "why": {
+      "M-22.2:script": 46,
+      "M-22.2:style": 18,
+      "M-22.2:template": 11,
+      "M-23": 8,
+      "M-22.2:iframe": 6,
+      "M-19.1": 6,
+      "M-22.2:select": 6,
+      "M-22.2:link": 6,
+      "M-22.2:meta": 5,
+      "r1-forbidden:style": 3,
+      "M-24.def": 3,
+      "M-22.2:textarea": 3,
+      "M-26": 2,
+      "M-22.2:noscript": 2,
+      "M-24.a": 2
+     },
+     "findings": {
+      "noscript-end-head": 30,
+      "noscript-outside-head": 29,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {
+      "noscript-end-head": 14,
+      "noscript-outside-head": 13
+     },
+     "foreignVariants": 195,
+     "noscriptSvgVariants": 0
+    },
+    "r2+r3": {
+     "validA": 416,
+     "gainedA": 0,
+     "pagesB": 820,
+     "variantsB": 762,
+     "validB": 425,
+     "why": {
+      "M-22.2:svg": 236,
+      "M-22.2:script": 39,
+      "M-22.2:style": 14,
+      "M-23": 7,
+      "M-22.2:template": 6,
+      "M-19.1": 6,
+      "M-22.2:select": 6,
+      "M-22.2:iframe": 3,
+      "M-24.def": 2,
+      "M-24.a": 2,
+      "M-22.2:meta": 2,
+      "M-22.2:noscript": 1,
+      "M-22.1": 1,
+      "M-22.2:textarea": 1
+     },
+     "findings": {
+      "noscript-end-head": 30,
+      "noscript-outside-head": 29,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {},
+     "foreignVariants": 0,
+     "noscriptSvgVariants": 0
+    },
+    "r1+r2": {
+     "validA": 611,
+     "gainedA": 195,
+     "pagesB": 813,
+     "variantsB": 755,
+     "validB": 622,
+     "why": {
+      "M-22.2:script": 46,
+      "M-22.2:style": 18,
+      "M-22.2:template": 11,
+      "M-23": 8,
+      "M-22.2:iframe": 6,
+      "M-19.1": 6,
+      "M-22.2:select": 6,
+      "M-22.2:link": 6,
+      "M-22.2:meta": 5,
+      "r1-forbidden:style": 3,
+      "M-24.def": 3,
+      "M-22.2:textarea": 3,
+      "M-26": 2,
+      "M-22.2:noscript": 2,
+      "M-24.a": 2
+     },
+     "findings": {
+      "noscript-end-head": 30,
+      "noscript-outside-head": 29,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {
+      "noscript-end-head": 14,
+      "noscript-outside-head": 13
+     },
+     "foreignVariants": 195,
+     "noscriptSvgVariants": 0
+    },
+    "r1+r2+r3": {
+     "validA": 611,
+     "gainedA": 195,
+     "pagesB": 820,
+     "variantsB": 762,
+     "validB": 627,
+     "why": {
+      "M-22.2:script": 46,
+      "M-22.2:style": 18,
+      "M-22.2:template": 11,
+      "M-23": 8,
+      "M-22.2:iframe": 6,
+      "M-19.1": 6,
+      "M-22.2:select": 6,
+      "M-22.2:link": 6,
+      "M-22.2:meta": 5,
+      "r1-forbidden:style": 3,
+      "M-24.def": 3,
+      "M-22.2:textarea": 3,
+      "M-26": 2,
+      "M-22.2:noscript": 2,
+      "M-24.a": 2
+     },
+     "findings": {
+      "noscript-end-head": 30,
+      "noscript-outside-head": 29,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {
+      "noscript-end-head": 14,
+      "noscript-outside-head": 13
+     },
+     "foreignVariants": 195,
+     "noscriptSvgVariants": 0
+    },
+    "r1a+r2+r3": {
+     "validA": 607,
+     "gainedA": 191,
+     "pagesB": 820,
+     "variantsB": 762,
+     "validB": 623,
+     "why": {
+      "M-22.2:script": 46,
+      "M-22.2:style": 18,
+      "M-22.2:template": 11,
+      "M-23": 8,
+      "M-22.2:iframe": 6,
+      "M-19.1": 6,
+      "M-22.2:select": 6,
+      "M-22.2:link": 6,
+      "M-22.2:meta": 5,
+      "r1a-not-allowed:style": 3,
+      "M-24.def": 3,
+      "M-22.2:textarea": 3,
+      "M-26": 2,
+      "M-22.2:noscript": 2,
+      "M-24.a": 2
+     },
+     "findings": {
+      "noscript-end-head": 30,
+      "noscript-outside-head": 29,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {
+      "noscript-end-head": 14,
+      "noscript-outside-head": 13
+     },
+     "foreignVariants": 191,
+     "noscriptSvgVariants": 0
+    },
+    "r1+r2+r3w": {
+     "validA": 611,
+     "gainedA": 195,
+     "pagesB": 820,
+     "variantsB": 762,
+     "validB": 627,
+     "why": {
+      "M-22.2:script": 46,
+      "M-22.2:style": 18,
+      "M-22.2:template": 11,
+      "M-23": 8,
+      "M-22.2:iframe": 6,
+      "M-19.1": 6,
+      "M-22.2:select": 6,
+      "M-22.2:link": 6,
+      "M-22.2:meta": 5,
+      "r1-forbidden:style": 3,
+      "M-24.def": 3,
+      "M-22.2:textarea": 3,
+      "M-26": 2,
+      "M-22.2:noscript": 2,
+      "M-24.a": 2
+     },
+     "findings": {
+      "noscript-end-head": 30,
+      "noscript-outside-head": 29,
+      "noscript-end": 1,
+      "noscript-outside": 1
+     },
+     "gainedFindings": {
+      "noscript-end-head": 14,
+      "noscript-outside-head": 13
+     },
+     "foreignVariants": 195,
+     "noscriptSvgVariants": 0
+    }
+   },
+   "attrs": {
+    "variants": 611,
+    "withForeign": 195,
+    "htmlTags": 69349,
+    "foreignTags": 5636,
+    "current": {
+     "html": {
+      "on": 94,
+      "amp": 748,
+      "scheme": 95
+     },
+     "foreign": {
+      "on": 0,
+      "amp": 0,
+      "scheme": 0
+     }
+    },
+    "proposed": {
+     "smil-target": 0,
+     "smil-attributename": 0,
+     "values-scheme": 0
+    },
+    "rejectedCurrent": 100,
+    "rejectedCurrentForeignOnly": 0,
+    "rejectedProposed": 0,
+    "foreignElements": {
+     "path": 2368,
+     "svg": 1885,
+     "g": 520,
+     "use": 244,
+     "circle": 93,
+     "stop": 90,
+     "title": 88,
+     "rect": 70,
+     "defs": 59,
+     "clippath": 49,
+     "lineargradient": 44,
+     "line": 36,
+     "fecolormatrix": 12,
+     "polygon": 11,
+     "text": 11,
+     "mask": 9,
+     "animate": 8,
+     "fegaussianblur": 8,
+     "feblend": 8,
+     "feoffset": 6,
+     "polyline": 4,
+     "ellipse": 3,
+     "desc": 2,
+     "animatetransform": 2,
+     "filter": 2,
+     "feflood": 2,
+     "symbol": 2
+    },
+    "foreignElementVariants": {
+     "svg": 195,
+     "path": 158,
+     "g": 54,
+     "use": 43,
+     "title": 34,
+     "defs": 18,
+     "circle": 18,
+     "clippath": 14,
+     "rect": 14,
+     "lineargradient": 5,
+     "stop": 5,
+     "mask": 5,
+     "line": 5,
+     "polygon": 4,
+     "desc": 2,
+     "animatetransform": 2,
+     "polyline": 2,
+     "animate": 2,
+     "filter": 1,
+     "feflood": 1,
+     "fecolormatrix": 1,
+     "feoffset": 1,
+     "fegaussianblur": 1,
+     "feblend": 1,
+     "symbol": 1,
+     "text": 1,
+     "ellipse": 1
+    },
+    "foreignAttributes": {
+     "d": 2368,
+     "fill": 1873,
+     "viewbox": 1677,
+     "class": 1444,
+     "xmlns": 1415,
+     "width": 1173,
+     "height": 1113,
+     "fill-rule": 681,
+     "aria-hidden": 630,
+     "stroke-width": 575,
+     "stroke": 574,
+     "stroke-linecap": 309,
+     "focusable": 275,
+     "stroke-linejoin": 242,
+     "clip-rule": 234,
+     "xlink:href": 165,
+     "id": 164,
+     "role": 138,
+     "style": 96,
+     "cx": 95,
+     "cy": 95,
+     "href": 93,
+     "r": 92,
+     "stop-color": 88,
+     "xmlns:xlink": 87,
+     "x1": 80,
+     "y1": 80,
+     "x2": 80,
+     "y2": 80,
+     "transform": 61,
+     "y": 57,
+     "clip-path": 54,
+     "x": 52,
+     "offset": 50,
+     "gradientunits": 44,
+     "data-component": 38,
+     "data-element": 36,
+     "version": 34,
+     "rx": 31,
+     "aria-label": 29,
+     "values": 20,
+     "color": 19,
+     "result": 18,
+     "aria-labelledby": 17,
+     "points": 15,
+     "preserveaspectratio": 14,
+     "data-name": 12,
+     "data-slot": 12,
+     "text-anchor": 11,
+     "font-family": 11,
+     "font-size": 11,
+     "font-weight": 11,
+     "attributename": 10,
+     "dur": 10,
+     "data-v-c9043105": 10,
+     "ry": 9,
+     "stroke-miterlimit": 9,
+     "maskunits": 9,
+     "mask": 9,
+     "xml:space": 8
+    }
+   }
+  },
+  "main": {
+   "basePages": 798,
+   "noPick": 318,
+   "variantsA": 480,
+   "fourValidA": 67,
+   "fourDisagreeA": 0,
+   "baseEqualsShippedA": 480,
+   "combos": {
+    "base": {
+     "validA": 67,
+     "gainedA": 0,
+     "pagesB": 798,
+     "variantsB": 480,
+     "validB": 67,
+     "why": {
+      "M-22.2:svg": 214,
+      "M-22.2:script": 83,
+      "M-22.2:style": 39,
+      "M-22.2:link": 20,
+      "M-22.2:meta": 17,
+      "M-22.2:template": 10,
+      "M-23": 10,
+      "M-22.2:noscript": 9,
+      "M-22.2:iframe": 5,
+      "M-22.2:select": 3,
+      "M-22.1": 2,
+      "M-24.j": 1
+     },
+     "findings": {
+      "noscript-end-head": 7,
+      "noscript-outside-head": 7
+     },
+     "gainedFindings": {},
+     "foreignVariants": 0,
+     "noscriptSvgVariants": 0
+    },
+    "r1": {
+     "validA": 175,
+     "gainedA": 108,
+     "pagesB": 798,
+     "variantsB": 480,
+     "validB": 175,
+     "why": {
+      "M-22.2:script": 122,
+      "M-22.2:style": 51,
+      "M-22.2:link": 22,
+      "M-22.2:noscript": 20,
+      "M-22.2:meta": 20,
+      "M-23": 17,
+      "M-22.2:template": 17,
+      "M-22.2:iframe": 12,
+      "M-22.2:select": 6,
+      "M-22.2:textarea": 4,
+      "r1-forbidden:style": 3,
+      "M-24.c": 2,
+      "M-26": 2,
+      "M-24.def": 2,
+      "M-22.1": 2
+     },
+     "findings": {
+      "noscript-end-head": 7,
+      "noscript-outside-head": 7
+     },
+     "gainedFindings": {
+      "noscript-end-head": 8,
+      "noscript-outside-head": 6
+     },
+     "foreignVariants": 108,
+     "noscriptSvgVariants": 0
+    },
+    "r1a": {
+     "validA": 168,
+     "gainedA": 101,
+     "pagesB": 798,
+     "variantsB": 480,
+     "validB": 168,
+     "why": {
+      "M-22.2:script": 121,
+      "M-22.2:style": 51,
+      "M-22.2:link": 22,
+      "M-22.2:noscript": 20,
+      "M-22.2:meta": 20,
+      "M-23": 17,
+      "M-22.2:template": 17,
+      "M-22.2:iframe": 10,
+      "M-22.2:select": 6,
+      "r1a-not-allowed:animatetransform": 6,
+      "r1a-not-allowed:animate": 3,
+      "r1a-not-allowed:style": 3,
+      "M-22.2:textarea": 3,
+      "M-24.c": 2,
+      "M-26": 2
+     },
+     "findings": {
+      "noscript-end-head": 7,
+      "noscript-outside-head": 7
+     },
+     "gainedFindings": {
+      "noscript-end-head": 7,
+      "noscript-outside-head": 5
+     },
+     "foreignVariants": 101,
+     "noscriptSvgVariants": 0
+    },
+    "r2": {
+     "validA": 67,
+     "gainedA": 0,
+     "pagesB": 813,
+     "variantsB": 492,
+     "validB": 69,
+     "why": {
+      "M-22.2:svg": 214,
+      "M-22.2:script": 83,
+      "M-22.2:style": 39,
+      "M-22.2:link": 20,
+      "M-22.2:meta": 17,
+      "M-22.2:template": 10,
+      "M-23": 10,
+      "M-22.2:noscript": 9,
+      "M-22.2:iframe": 5,
+      "M-22.2:select": 3,
+      "M-22.1": 2,
+      "M-24.j": 1
+     },
+     "findings": {
+      "noscript-end-head": 7,
+      "noscript-outside-head": 7
+     },
+     "gainedFindings": {},
+     "foreignVariants": 0,
+     "noscriptSvgVariants": 0
+    },
+    "r3": {
+     "validA": 67,
+     "gainedA": 0,
+     "pagesB": 805,
+     "variantsB": 484,
+     "validB": 67,
+     "why": {
+      "M-22.2:svg": 214,
+      "M-22.2:script": 83,
+      "M-22.2:style": 39,
+      "M-22.2:link": 20,
+      "M-22.2:meta": 17,
+      "M-22.2:template": 10,
+      "M-23": 10,
+      "M-22.2:noscript": 9,
+      "M-22.2:iframe": 5,
+      "M-22.2:select": 3,
+      "M-22.1": 2,
+      "M-24.j": 1
+     },
+     "findings": {
+      "noscript-end-head": 7,
+      "noscript-outside-head": 7
+     },
+     "gainedFindings": {},
+     "foreignVariants": 0,
+     "noscriptSvgVariants": 0
+    },
+    "r3w": {
+     "validA": 67,
+     "gainedA": 0,
+     "pagesB": 805,
+     "variantsB": 484,
+     "validB": 67,
+     "why": {
+      "M-22.2:svg": 214,
+      "M-22.2:script": 83,
+      "M-22.2:style": 39,
+      "M-22.2:link": 20,
+      "M-22.2:meta": 17,
+      "M-22.2:template": 10,
+      "M-23": 10,
+      "M-22.2:noscript": 9,
+      "M-22.2:iframe": 5,
+      "M-22.2:select": 3,
+      "M-22.1": 2,
+      "M-24.j": 1
+     },
+     "findings": {
+      "noscript-end-head": 7,
+      "noscript-outside-head": 7
+     },
+     "gainedFindings": {},
+     "foreignVariants": 0,
+     "noscriptSvgVariants": 0
+    },
+    "r1+r3": {
+     "validA": 175,
+     "gainedA": 108,
+     "pagesB": 805,
+     "variantsB": 484,
+     "validB": 175,
+     "why": {
+      "M-22.2:script": 122,
+      "M-22.2:style": 51,
+      "M-22.2:link": 22,
+      "M-22.2:noscript": 20,
+      "M-22.2:meta": 20,
+      "M-23": 17,
+      "M-22.2:template": 17,
+      "M-22.2:iframe": 12,
+      "M-22.2:select": 6,
+      "M-22.2:textarea": 4,
+      "r1-forbidden:style": 3,
+      "M-24.c": 2,
+      "M-26": 2,
+      "M-24.def": 2,
+      "M-22.1": 2
+     },
+     "findings": {
+      "noscript-end-head": 7,
+      "noscript-outside-head": 7
+     },
+     "gainedFindings": {
+      "noscript-end-head": 8,
+      "noscript-outside-head": 6
+     },
+     "foreignVariants": 108,
+     "noscriptSvgVariants": 0
+    },
+    "r2+r3": {
+     "validA": 67,
+     "gainedA": 0,
+     "pagesB": 820,
+     "variantsB": 496,
+     "validB": 69,
+     "why": {
+      "M-22.2:svg": 214,
+      "M-22.2:script": 83,
+      "M-22.2:style": 39,
+      "M-22.2:link": 20,
+      "M-22.2:meta": 17,
+      "M-22.2:template": 10,
+      "M-23": 10,
+      "M-22.2:noscript": 9,
+      "M-22.2:iframe": 5,
+      "M-22.2:select": 3,
+      "M-22.1": 2,
+      "M-24.j": 1
+     },
+     "findings": {
+      "noscript-end-head": 7,
+      "noscript-outside-head": 7
+     },
+     "gainedFindings": {},
+     "foreignVariants": 0,
+     "noscriptSvgVariants": 0
+    },
+    "r1+r2": {
+     "validA": 175,
+     "gainedA": 108,
+     "pagesB": 813,
+     "variantsB": 492,
+     "validB": 181,
+     "why": {
+      "M-22.2:script": 122,
+      "M-22.2:style": 51,
+      "M-22.2:link": 22,
+      "M-22.2:noscript": 20,
+      "M-22.2:meta": 20,
+      "M-23": 17,
+      "M-22.2:template": 17,
+      "M-22.2:iframe": 12,
+      "M-22.2:select": 6,
+      "M-22.2:textarea": 4,
+      "r1-forbidden:style": 3,
+      "M-24.c": 2,
+      "M-26": 2,
+      "M-24.def": 2,
+      "M-22.1": 2
+     },
+     "findings": {
+      "noscript-end-head": 7,
+      "noscript-outside-head": 7
+     },
+     "gainedFindings": {
+      "noscript-end-head": 8,
+      "noscript-outside-head": 6
+     },
+     "foreignVariants": 108,
+     "noscriptSvgVariants": 0
+    },
+    "r1+r2+r3": {
+     "validA": 175,
+     "gainedA": 108,
+     "pagesB": 820,
+     "variantsB": 496,
+     "validB": 181,
+     "why": {
+      "M-22.2:script": 122,
+      "M-22.2:style": 51,
+      "M-22.2:link": 22,
+      "M-22.2:noscript": 20,
+      "M-22.2:meta": 20,
+      "M-23": 17,
+      "M-22.2:template": 17,
+      "M-22.2:iframe": 12,
+      "M-22.2:select": 6,
+      "M-22.2:textarea": 4,
+      "r1-forbidden:style": 3,
+      "M-24.c": 2,
+      "M-26": 2,
+      "M-24.def": 2,
+      "M-22.1": 2
+     },
+     "findings": {
+      "noscript-end-head": 7,
+      "noscript-outside-head": 7
+     },
+     "gainedFindings": {
+      "noscript-end-head": 8,
+      "noscript-outside-head": 6
+     },
+     "foreignVariants": 108,
+     "noscriptSvgVariants": 0
+    },
+    "r1a+r2+r3": {
+     "validA": 168,
+     "gainedA": 101,
+     "pagesB": 820,
+     "variantsB": 496,
+     "validB": 174,
+     "why": {
+      "M-22.2:script": 121,
+      "M-22.2:style": 51,
+      "M-22.2:link": 22,
+      "M-22.2:noscript": 20,
+      "M-22.2:meta": 20,
+      "M-23": 17,
+      "M-22.2:template": 17,
+      "M-22.2:iframe": 10,
+      "M-22.2:select": 6,
+      "r1a-not-allowed:animatetransform": 6,
+      "r1a-not-allowed:animate": 3,
+      "r1a-not-allowed:style": 3,
+      "M-22.2:textarea": 3,
+      "M-24.c": 2,
+      "M-26": 2
+     },
+     "findings": {
+      "noscript-end-head": 7,
+      "noscript-outside-head": 7
+     },
+     "gainedFindings": {
+      "noscript-end-head": 7,
+      "noscript-outside-head": 5
+     },
+     "foreignVariants": 101,
+     "noscriptSvgVariants": 0
+    },
+    "r1+r2+r3w": {
+     "validA": 175,
+     "gainedA": 108,
+     "pagesB": 820,
+     "variantsB": 496,
+     "validB": 181,
+     "why": {
+      "M-22.2:script": 122,
+      "M-22.2:style": 51,
+      "M-22.2:link": 22,
+      "M-22.2:noscript": 20,
+      "M-22.2:meta": 20,
+      "M-23": 17,
+      "M-22.2:template": 17,
+      "M-22.2:iframe": 12,
+      "M-22.2:select": 6,
+      "M-22.2:textarea": 4,
+      "r1-forbidden:style": 3,
+      "M-24.c": 2,
+      "M-26": 2,
+      "M-24.def": 2,
+      "M-22.1": 2
+     },
+     "findings": {
+      "noscript-end-head": 7,
+      "noscript-outside-head": 7
+     },
+     "gainedFindings": {
+      "noscript-end-head": 8,
+      "noscript-outside-head": 6
+     },
+     "foreignVariants": 108,
+     "noscriptSvgVariants": 0
+    }
+   },
+   "attrs": {
+    "variants": 175,
+    "withForeign": 108,
+    "htmlTags": 106152,
+    "foreignTags": 22665,
+    "current": {
+     "html": {
+      "on": 70,
+      "amp": 986,
+      "scheme": 108
+     },
+     "foreign": {
+      "on": 0,
+      "amp": 0,
+      "scheme": 0
+     }
+    },
+    "proposed": {
+     "smil-target": 0,
+     "smil-attributename": 0,
+     "values-scheme": 0
+    },
+    "rejectedCurrent": 76,
+    "rejectedCurrentForeignOnly": 0,
+    "rejectedProposed": 0,
+    "foreignElements": {
+     "path": 13363,
+     "svg": 4227,
+     "g": 1190,
+     "use": 1132,
+     "title": 511,
+     "stop": 495,
+     "rect": 392,
+     "circle": 314,
+     "defs": 271,
+     "clippath": 233,
+     "line": 214,
+     "lineargradient": 193,
+     "mask": 28,
+     "polygon": 24,
+     "radialgradient": 22,
+     "animatetransform": 6,
+     "desc": 4,
+     "filter": 4,
+     "fegaussianblur": 4,
+     "fecomponenttransfer": 4,
+     "text": 4,
+     "fecolormatrix": 4,
+     "feblend": 4,
+     "animate": 3,
+     "ellipse": 3,
+     "fefuncr": 2,
+     "fefuncg": 2,
+     "fefuncb": 2,
+     "fefunca": 2,
+     "image": 2,
+     "feflood": 2,
+     "feoffset": 2,
+     "fecomposite": 2
+    },
+    "foreignElementVariants": {
+     "svg": 108,
+     "path": 89,
+     "g": 33,
+     "use": 24,
+     "circle": 23,
+     "title": 23,
+     "defs": 18,
+     "rect": 16,
+     "clippath": 14,
+     "lineargradient": 8,
+     "stop": 8,
+     "line": 6,
+     "mask": 5,
+     "animatetransform": 4,
+     "radialgradient": 3,
+     "polygon": 3,
+     "animate": 2,
+     "desc": 2,
+     "filter": 2,
+     "fegaussianblur": 2,
+     "text": 2,
+     "fecomponenttransfer": 1,
+     "fefuncr": 1,
+     "fefuncg": 1,
+     "fefuncb": 1,
+     "fefunca": 1,
+     "image": 1,
+     "ellipse": 1,
+     "feflood": 1,
+     "fecolormatrix": 1,
+     "feoffset": 1,
+     "fecomposite": 1,
+     "feblend": 1
+    },
+    "foreignAttributes": {
+     "d": 13335,
+     "fill": 12869,
+     "class": 5191,
+     "width": 3231,
+     "viewbox": 3153,
+     "height": 3153,
+     "xmlns": 2333,
+     "fill-rule": 1377,
+     "aria-hidden": 1280,
+     "stroke-width": 880,
+     "id": 812,
+     "stroke": 758,
+     "xlink:href": 675,
+     "clip-rule": 651,
+     "role": 552,
+     "href": 504,
+     "stop-color": 491,
+     "stroke-linecap": 476,
+     "focusable": 473,
+     "x1": 403,
+     "x2": 403,
+     "y1": 403,
+     "y2": 403,
+     "style": 382,
+     "offset": 357,
+     "cx": 337,
+     "cy": 336,
+     "r": 336,
+     "stroke-miterlimit": 285,
+     "stroke-linejoin": 259,
+     "clip-path": 237,
+     "y": 228,
+     "transform": 212,
+     "x": 209,
+     "gradientunits": 207,
+     "xmlns:xlink": 207,
+     "data-testid": 143,
+     "stop-opacity": 119,
+     "aria-label": 112,
+     "data-symbol": 92,
+     "version": 76,
+     "data-v-fe9b8def": 68,
+     "data-component": 56,
+     "rx": 46,
+     "data-v-766640b7": 44,
+     "data-v-20bd092c": 42,
+     "vector-effect": 34,
+     "mask": 28,
+     "points": 24,
+     "data-slot": 24,
+     "gradienttransform": 23,
+     "data-v-bcfffaa3": 22,
+     "data-v-b8c897bf": 22,
+     "maskunits": 20,
+     "data-name": 17,
+     "data-v-ed96cf56": 16,
+     "type": 14,
+     "data-area": 14,
+     "data-v-20b4ffb6": 14,
+     "result": 14
+    }
+   }
+  }
+ }
+}

@@ -335,7 +335,7 @@ The client uses the same walk (client item 3), so server and client stay equal. 
 
 ### 5.4 Head: hc (option HC, protocol change)
 
-This is an outline only; the full text needs its own review.
+This is an outline only; the full text needs its own review. The normative text is in `docs/engineering/protocol/manifest-patch.md` §1.7, "Document head" (H-72, WP-17 S3 T-08a).
 
 - Server item 2: the insertion point is immediately after the `>` of the head start tag that item 1 accepts (the document head).
 - Client item 3: the manifest start tag is the first token after the head start tag of the document (item 1), with no gap.

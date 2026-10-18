@@ -12,12 +12,12 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { analyze as analyzeCandidate } from '../../../node/src/markup.mjs';
-import { documentHeadEnd as referenceHeadEnd } from '../../../../rqp-protocol/src/markup.mjs';
+import { documentHeadStart as referenceHeadStart } from '../../../../rqp-protocol/src/markup.mjs';
 import { PAGE_IDS, pageBytes } from '../../../../rqp-protocol/src/pages.mjs';
-import { documentHeadEnd as demoHeadEnd } from '../../../../../examples/server-demo/src/markup.js';
+import { documentHeadStart as demoHeadStart } from '../../../../../examples/server-demo/src/markup.js';
 import { generateDocument } from '../../../crosscheck/src/generator.mjs';
 import { analyzeStudy } from '../src/markup-study.mjs';
-import { documentHeadEndStudy } from '../src/head-study.mjs';
+import { headWalk } from '../src/head-study.mjs';
 import { docSeed, generateNoscriptDocument } from '../src/generator.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -52,10 +52,11 @@ function protocolInputs() {
   return out;
 }
 
+// H-72 shipped option hc: the reference and demo insertion point equals the study headStart.
 function assertHeadEqual(name, bytes) {
-  const want = referenceHeadEnd(bytes);
-  assert.equal(demoHeadEnd(bytes), want, `${name}: demo and reference differ (not a study defect)`);
-  assert.equal(documentHeadEndStudy(bytes, 'shipped'), want, `${name}: study head walk`);
+  const want = referenceHeadStart(bytes);
+  assert.equal(demoHeadStart(bytes), want, `${name}: demo and reference differ (not a study defect)`);
+  assert.equal(headWalk(bytes).headStart, want, `${name}: study head walk (option hc)`);
 }
 
 test('the shipped model equals the Node.js candidate on every golden markup fixture', () => {
@@ -66,15 +67,15 @@ test('the shipped model equals the Node.js candidate on every golden markup fixt
   }
 });
 
-test('the shipped head rule equals the reference and demo head walk on golden and protocol fixtures', () => {
+test('the study option hc equals the shipped H-72 head start of the reference and the demo on golden and protocol fixtures', () => {
   const inputs = [...markupInputs(), ...protocolInputs()];
   assert.ok(inputs.length >= 280, `only ${inputs.length} documents`);
   let found = 0;
   for (const [name, bytes] of inputs) {
     assertHeadEqual(name, bytes);
-    if (referenceHeadEnd(bytes) >= 0) found++;
+    if (referenceHeadStart(bytes) >= 0) found++;
   }
-  assert.ok(found > 100, 'the inputs must reach the head end tag');
+  assert.ok(found > 100, 'the inputs must reach the head start tag');
 });
 
 test('the shipped flags equal the shipped code on generated noscript and review2 documents', () => {

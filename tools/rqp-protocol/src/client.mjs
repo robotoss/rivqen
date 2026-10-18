@@ -87,9 +87,10 @@ export function snapshotOf(document, members = {}, url = null, partition = Parti
  * The URL part of the cache key (H-58): scheme, host, port, path and query as
  * the WHATWG URL parser serializes them, without the fragment. The other steps
  * of cache identity section 2 (percent-encoding, ignored parameters) are not
- * modelled. The user information stays in the string on purpose: the client
- * stores no snapshot for a URL with a user name or a password (H-68), so a URL
- * with user information never compares equal to the key of a snapshot.
+ * modelled. The reference keeps the user information in the string; this is
+ * not what H-68 relies on: rqpAllowed refuses a URL with user information on
+ * every path (F, 304, delta), so an SDK may also remove it from its keys
+ * (cache identity section 2).
  */
 export function canonicalUrl(url) {
   const u = new URL(url);

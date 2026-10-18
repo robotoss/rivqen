@@ -78,7 +78,7 @@ cache_key = SHA-256(partition ‖ origin ‖ canonical_url ‖ method ‖ vary_v
 | Allowlist `https://shop.example.com`; final URL with an upper-case host or the port `443`; final URL `https://shop.example.com.attacker.net/…` | Same origin, RQP is used; another origin, normal page (`FX-RQ-C25-FINAL-*`, DL-038) |
 | Request URL or final URL with a user name and a password, origin in the allowlist | No RQP field, no snapshot, normal page (`FX-RQ-C25-USERINFO-REQUEST`, `FX-RQ-C25-USERINFO-FINAL`, `-FINAL-304`, `-FINAL-DELTA`, H-68) |
 | Final URL `https://attacker.example\@shop.example.com/…` and `https://shop.example.com\@attacker.example/…`; request URL `https://faß.example/…` with the allowlist `https://xn--fa-hia.example` | The WHATWG hosts `attacker.example` (normal page), `shop.example.com` (stored) and `xn--fa-hia.example` (stored) (`FX-RQ-C25-FINAL-BACKSLASH-*`, `FX-RQ-C25-IDN-HOST`, DL-040, L-3) |
-| An allowlist entry that is not its own serialized origin (`https://Shop.example.com`, `https://shop.example.com/`, `*`) | The SDK does not start; the error names the entry (H-69). The fixture loader rejects such a case |
+| An allowlist entry that is not its own serialized origin (`https://Shop.example.com`, `https://shop.example.com/`, `*`) | The SDK does not start; the error names the entry by its index and a reason (for example `allowlist[2]: user information`), never by its raw text, which can hold a password (H-69, DL-042; errors and logging) The fixture loader rejects such a case |
 | The user clears the site data of one site | No snapshot of that site is left; snapshots of other sites stay |
 
 ## Related

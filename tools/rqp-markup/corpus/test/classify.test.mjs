@@ -149,6 +149,8 @@ test("H-71: M-09 on the table parts of C, with F in C or around the noscript ele
   assert.deepEqual(cls("<noscript><table><caption><tr></tr></caption></table></noscript>"), { "M-09": 1 });
   assert.deepEqual(cls("<noscript><table><tr><caption></caption></tr></table></noscript>"), { "M-09": 1 });
   assert.deepEqual(cls("<noscript><table><tbody><th>a</th></tbody><colgroup><col></colgroup></table></noscript>"), {});
+  assert.deepEqual(cls("<noscript><table><thead><tr><td>a</td></tr></thead><tfoot><tr><th>b</th></tr></tfoot><tr><td>c</td></tr></table></noscript>"), {});
+  assert.deepEqual(cls("<noscript><table><tbody><tr><td><tr></tr></td></tr></tbody></table></noscript>"), { "M-09": 1 });
   // A template in C stops the search for F (M-09); the template itself is M-11 item 3.
   assert.deepEqual(cls("<table><tr><td><noscript><template><tr></tr></template></noscript></td></tr></table>"), { "M-11.3": 1, "M-11.6": 1 });
 });

@@ -424,8 +424,18 @@ fn m06_4_special_crossed_mark() {
     // The mark is on the new current node; a formatting end tag that pops
     // it as a crossed element fails too.
     assert_invalid("<a><b><span><div>x</span></a>", STRUCTURE, "M-06");
-    // Item (a) with a foreign crossed element.
-    assert_invalid("<b><svg><g></svg></b>", STRUCTURE, "M-06");
+    // Item (a) with a foreign crossed element: the matching element is not
+    // the region root (H-75).
+    assert_invalid(
+        "<a href=\"#\"><svg><g><path d=\"M0\"></g></svg></a>",
+        STRUCTURE,
+        "M-06",
+    );
+    assert_invalid(
+        "<a href=\"#\"><svg><svg><path d=\"M0\"></svg></svg></a>",
+        STRUCTURE,
+        "M-06",
+    );
     // Item (b): an exact pop of a marked element passes the mark down.
     assert_invalid("<b><p><span><div>x</span></p></b>", STRUCTURE, "M-06");
     assert_invalid(
@@ -450,6 +460,11 @@ fn m06_4_special_crossed_mark() {
         "<a><span><div>a</div></span></a>",
         "<a><li><ul></ul></li></a>",
         "<b><svg><g></g></svg></b>",
+        // H-75: the end tag of the region root crosses its region and sets
+        // no mark, so the formatting end tag below can pop `a` and `b`.
+        "<b><svg><g></svg></b>",
+        "<a href=\"#\"><svg><path d=\"M0\"></svg></a>",
+        "<a href=\"#\"><math><mrow><mi>x</mi></math></a>",
         // A non-formatting end tag may pop a marked element.
         "<div><span><div>x</span></div>",
         // The mark goes away with its element: a new `b` is not marked.
@@ -930,7 +945,7 @@ fn m11_m13_reserved_manifest_in_noscript() {
         "<SCRIPT TYPE=\"X-Rivqen-Manifest\"></SCRIPT>",
         "<script type=application/rivqen-manifest&#43;json></script>",
         "<script type='&'></script>",
-        "<img src=x><script type=\"rivqen-manifest\" data-rq-block=\"a\"></script>",
+        "<img src=x><script type=\"rivqen-manifest\"></script>",
     ] {
         assert_invalid(&format!("<noscript>{script}</noscript>"), reserved, "M-13");
     }
@@ -1077,8 +1092,6 @@ fn m11_6_table_parts_in_noscript() {
     for content in [
         "<table><tr><td>x</td></tr></table>",
         "<table><caption>c</caption><colgroup><col></colgroup><tbody><tr><th>h</th></tr></tbody></table>",
-        // A table on the stack of C is enough; M-09 does not apply in C.
-        "<table><div><td></td></div></table>",
         "<TABLE><tr></tr></TABLE>",
         // The outer table is still open after the inner one closes.
         "<table><table></table><td></td></table>",
@@ -1395,7 +1408,6 @@ fn m22_allowed_tokens() {
         "html",
         "iframe",
         "link",
-        "math",
         "meta",
         "noembed",
         "noframes",
@@ -1407,7 +1419,6 @@ fn m22_allowed_tokens() {
         "script",
         "select",
         "style",
-        "svg",
         "template",
         "textarea",
         "title",
@@ -1989,17 +2000,45 @@ fn m26_depth_is_checked_at_the_push() {
 /// the main pass and do not change D. The `noscript` element itself is
 /// pushed and counts (FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT and -ELEMENT).
 #[test]
-fn m26_depth_does_not_apply_to_noscript_content() {
-    // C is balanced (M-11 item 5) and 300 elements deep.
-    let content = format!("{}{}", "<b>".repeat(300), "</b>".repeat(300));
-    depth_valid(&format!("<noscript>{content}</noscript>"));
+fn m26_depth_counts_noscript_content_and_restores_it() {
+    // M-26 item 7 (H-71): C is balanced and counts in the pass of M-11
+    // item 8. The `noscript` element is one unit, so 255 elements of C fit.
+    let content = |n: usize| format!("{}{}", "<b>".repeat(n), "</b>".repeat(n));
+    depth_valid(&format!("<noscript>{}</noscript>", content(255)));
+    depth_limit(&format!("<noscript>{}</noscript>", content(256)));
     depth_valid(&format!(
-        "{}<noscript>{content}</noscript>",
-        "<div>".repeat(255)
+        "{}<noscript>{}</noscript>",
+        "<div>".repeat(200),
+        content(55)
     ));
     depth_limit(&format!(
-        "{}<noscript>{content}</noscript>",
+        "{}<noscript>{}</noscript>",
+        "<div>".repeat(200),
+        content(56)
+    ));
+    // After the end tag `noscript`, D is the value before C: 256 elements
+    // before the `noscript` element and a block are fine again.
+    depth_limit(&format!(
+        "{}<noscript><b></b></noscript>",
         "<div>".repeat(256)
+    ));
+    depth_valid(&format!(
+        "{}<noscript><b></b></noscript></div>",
+        "<div>".repeat(254)
+    ));
+    // The crossing of a region root makes the new current node dirty in the
+    // pass of item 8 (M-26 item 5), and D is restored with the dirty mark: the
+    // `noscript` end tag gives its unit back.
+    let svg = "<noscript><svg><path d=\"M0\"></svg></noscript>";
+    depth_valid(&format!(
+        "{}{svg}{}",
+        "<div>".repeat(253),
+        "</div>".repeat(253)
+    ));
+    depth_valid(&format!(
+        "{}{}",
+        svg.repeat(300),
+        "<p data-rq-block=\"z\">x</p>"
     ));
 }
 

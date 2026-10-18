@@ -348,6 +348,26 @@ def _noscript_depth(divs: int, spans: int = 300) -> bytes:
     )
 
 
+def _noscript_icon_restore() -> bytes:
+    # H-71 with H-75: in the pass of M-11 item 8 the icon crossing in C makes the noscript element
+    # dirty, so that pass keeps 2 units (D 256 at most). The main pass pops the noscript element
+    # exactly: D is 253 after </noscript>, and the block makes 254 (valid). A parser that keeps the
+    # state of the pass would have D 256 there and reject the block (D 257).
+    return _depth_doc(
+        b"<div>" * 253
+        + b'<noscript><svg><path d="M0"></svg></noscript><div data-rq-block="deep">x</div>'
+        + b"</div>" * 253
+    )
+
+
+def _noscript_icons(reps: int) -> bytes:
+    # H-71 with H-75: each icon in C adds 2 to D in the pass of item 8 (svg and path; the crossing
+    # gives nothing back). noscript + 127 icons = 255 (valid); + 128 icons = 257 (LIMIT).
+    return _depth_doc(
+        b"<noscript>" + b'<svg><path d="M0"></svg>' * reps + b'</noscript><div data-rq-block="deep">x</div>'
+    )
+
+
 def _foreign_subtree(gs: int) -> bytes:
     return b"<svg>" + b"<g>" * gs + b"x" + b"</g>" * gs + b"</svg>"
 
@@ -388,6 +408,9 @@ GENERATED: dict[str, dict[str, Callable[[], bytes]]] = {
     "FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ELEMENT": {"input.html": lambda: _noscript_depth(256)},
     "FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-CONTENT-256": {"input.html": lambda: _noscript_depth(155, 100)},
     "FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-CONTENT-257": {"input.html": lambda: _noscript_depth(156, 100)},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ICON-RESTORE": {"input.html": _noscript_icon_restore},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ICONS-127": {"input.html": lambda: _noscript_icons(127)},
+    "FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ICONS": {"input.html": lambda: _noscript_icons(128)},
     "FX-RQ-MARKUP-LIMIT-DEPTH-CONTENT-FOREIGN-256": {
         "input.html": lambda: _content_foreign_depth(254),
         "content.html": lambda: _foreign_subtree(254),

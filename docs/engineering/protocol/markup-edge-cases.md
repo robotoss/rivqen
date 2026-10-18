@@ -756,14 +756,14 @@ Choices of T-03 that the studies left open (each one is stricter than the other 
 
 ### 9.2 Fixtures
 
-<Badge type="tip" text="FACT" /> 2026-10-18: 244 golden fixtures (84 valid, 160 invalid). Two existing results change by decision:
+<Badge type="tip" text="FACT" /> 2026-10-18: 247 golden fixtures (86 valid, 161 invalid). Two existing results change by decision:
 
 | Fixture | Before | After | Decision |
 |---|---|---|---|
 | `LIMIT-DEPTH-NOSCRIPT` | valid, 1 block | `LIMIT` | H-71 (replaces R5) |
 | `CONTENT-SVG` | `STRUCTURE` | valid, 1 block | H-73 |
 
-New fixtures (47):
+New fixtures (50):
 
 | Decision | Valid | Invalid |
 |---|---|---|
@@ -771,6 +771,7 @@ New fixtures (47):
 | H-73 | `CONTENT-SVG-ICON`, `CONTENT-MATH`, `CONTENT-SVG-SELF-CLOSING-ROOT`, `LIMIT-DEPTH-CONTENT-FOREIGN-256` | `CONTENT-FOREIGN-A`, `-ANIMATE`, `-SET`, `-ANIMATEMOTION`, `-ANIMATETRANSFORM`, `-FOREIGNOBJECT`, `-IMAGE`, `-SCRIPT`, `-STYLE`, `-FEIMAGE`, `-MACTION`, `-ANNOTATION-XML`, `-INTEGRATION`, `-INTEGRATION-MATH`, `-CROSSING`, `-EOF`, `LIMIT-DEPTH-CONTENT-FOREIGN-257` |
 | H-74 | `NOSCRIPT-SVG`, `NOSCRIPT-SVG-HEAD` | `NOSCRIPT-SVG-CROSSING`, `-UNCLOSED`, `-BREAKOUT`, `-TITLE-MARKUP`, `-TABLE-PART`, `NOSCRIPT-MATH` |
 | H-75 | `ICON-ROOT-CROSSING`, `CONTENT-SVG-ICON-CROSSING`, `NOSCRIPT-SVG-ICON`, `LIMIT-DEPTH-ICON-85` | `ICON-INNER-CROSSING`, `ICON-NESTED-SVG-CROSSING`, `LIMIT-DEPTH-ICON` |
+| H-71 with H-75 | `LIMIT-DEPTH-NOSCRIPT-ICON-RESTORE` (after `</noscript>` the main pass has D as before C), `LIMIT-DEPTH-NOSCRIPT-ICONS-127` | `LIMIT-DEPTH-NOSCRIPT-ICONS` (each icon in C keeps 2 units in the pass of item 8) |
 
 Each new invalid fixture breaks one rule item (corpus classifier, `classify.mjs`). The fixtures `NOSCRIPT-TABLE-PART`, `-CAPTION`, `-COL` and `-TH` now break M-11 item 6 and item 8 (M-09); the result is the same (`STRUCTURE`).
 
@@ -780,7 +781,7 @@ Each new invalid fixture breaks one rule item (corpus classifier, `classify.mjs`
 
 | Input | Result |
 |---|---|
-| Golden fixtures, `check --expected --scripting both` | 244 documents, 84 valid; 0 findings (blocks in both views, depth claim in both views, rule classes) |
+| Golden fixtures, `check --expected --scripting both` | 247 documents, 86 valid; 0 findings (blocks in both views, depth claim in both views, rule classes) |
 | `cases/s3-cases.json` (78 cases) and the earlier cases files (162 cases) | Each `expected` field holds for a reference of the decided rules; 0 disagreements in both views and 0 depth-claim violations on the valid cases. The depth claim fails in the scripting-disabled view only on rejected shapes (T-16, H-36 in C, an unclosed `svg` in C) |
 | Sweeps, profiles `classic`, `review`, `review2`, `review3`, seed 71, 100 000 documents each, both views | 81 848 valid documents; 0 findings; 0 depth-claim violations on valid documents in either view (violations on rejected documents: 208 / 4 627, 659 / 8 921, 5 353 / 12 090, 5 130 / 11 721 with scripting enabled / disabled) |
 | The generators of the studies: `relax` (seed 40, 300 000), `body` (seed 42, 1 000 000), `head` (seed 42, 300 000), both views | 578 734 valid documents; 0 findings |

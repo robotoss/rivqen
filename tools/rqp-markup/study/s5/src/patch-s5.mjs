@@ -38,7 +38,7 @@ import {
   attributesOf,
   patchContentFailure,
   startTagOffsets,
-} from '../../../../rqp-protocol/src/markup.mjs';
+} from '../baseline/reference-s4.mjs';
 import { fragmentIndex } from './oracle-s5.mjs';
 
 export const PATCH_RULES = Object.freeze(['shipped', 'p1', 'p2']);

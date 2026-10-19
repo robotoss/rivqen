@@ -256,7 +256,7 @@ Functions changed for H-78, H-84 and H-86: `Names::FORBIDDEN_CONTENT` (10 names 
 
 ### S5 changes (T-06e)
 
-Functions changed for H-94 to H-97 and DL-055: `Names::FORBIDDEN_CONTENT` (`template` and `noscript` removed), `Tokenizer::WATCHED` (adds `shadowrootmode`) and `Tokenizer::watchedName()` (length 14), `Parser::contentStartTag()` (M-22 item 6; M-24 item g with "F is none"). M-11 item 10 needs no new code: the pass of item 8 already calls `startTag()`, which calls `contentStartTag()` when the `noscript` element is in block content. All 355 golden fixtures give the expected result. `tests/ContentTemplateNoscriptTest.php` checks each item with its rule ID. The cross-check cases `s5-cases.json`, `s4-cases.json` and `s4b-cases.json` give no finding with `--scripting both`: no valid php result has different views of parse5 or a different block count. The mutation run is not part of this lane.
+Functions changed for H-94 to H-97 and DL-055: `Names::FORBIDDEN_CONTENT` (`template` and `noscript` removed), `Tokenizer::WATCHED` (adds `shadowrootmode`) and `Tokenizer::watchedName()` (length 14), `Parser::contentStartTag()` (M-22 item 6; M-24 item g with "F is none"). M-11 item 10 needs no new code: the pass of item 8 already calls `startTag()`, which calls `contentStartTag()` when the `noscript` element is in block content. All 355 golden fixtures give the expected result. `tests/ContentTemplateNoscriptTest.php` checks each item with its rule ID. The cross-check cases `s5-cases.json`, `s4-cases.json` and `s4b-cases.json` give no finding with `--scripting both`: no valid php result has different views of parse5 or a different block count. S5 T-07 mutation on these lines: 41/43 killed (95.3 %), 2 equivalent (section "Mutation").
 
 ## Related
 

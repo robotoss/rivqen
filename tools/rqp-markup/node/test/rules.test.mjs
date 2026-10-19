@@ -433,8 +433,8 @@ describe('M-08 select', () => {
 });
 
 describe('M-09 table parts', () => {
-  it('rejects a cell while a cell is open', () => {
-    assert.equal(errorOf(doc('<table><tr><td>a<td>b</td></tr></table>')), STRUCTURE);
+  it('closes an open cell by a cell start tag (H-85a)', () => {
+    assert.equal(errorOf(doc('<table><tr><td>a<td>b</td></tr></table>')), null);
   });
 
   it('accepts explicitly closed cells and rows', () => {

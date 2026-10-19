@@ -75,6 +75,7 @@ const MANIFEST_MARK = 'rivqen-manifest';
 const NOSCRIPT_END = Buffer.from('</noscript>', 'latin1');
 const AMPERSAND = 0x26;
 const NON_ASCII = 0x80;
+const CLOSURE_STEPS = 3; // M-09 implied closure: at most three closures (H-85a)
 
 // State bits of a token-stack entry.
 const DIRTY = 1; // M-26 item 5
@@ -409,6 +410,11 @@ class Scanner {
     // M-10 item 3 (H-43): content patching (<template for>) would act on the
     // nodes between the markers, which the token model reads as comments.
     if (name === 'template' && t.hasFor) return STRUCTURE;
+    // M-09 implied closure (H-85a, DL-050): before condition 1.
+    if (this.block === null && this.cBase < 0 && (TABLE_PART.has(name) || name === 'col')) {
+      const error = this.impliedClosure(name);
+      if (error !== null) return error;
+    }
     const f = this.familyIndex();
     // M-09 condition 1 (H-35): "in column group" in a template ignores the
     // later start tags, also the raw text ones.
@@ -446,6 +452,25 @@ class Scanner {
         start: t.end,
         index: this.names.length - 1,
       };
+    }
+    return null;
+  }
+
+  // M-09 implied closure (H-85a): while F does not allow the start tag, close F
+  // with the rules of its end tag, at most CLOSURE_STEPS times. D is never
+  // released here beyond what close() does (M-26 items 4 and 5), and a table is
+  // never closed, because every list has `table`.
+  impliedClosure(name) {
+    const parents = TABLE_PARENTS.get(name);
+    for (let step = 0; step < CLOSURE_STEPS; step++) {
+      const f = this.familyIndex();
+      if (f < 0) return null;
+      const fName = this.names[f];
+      if (parents.has(fName)) return null;
+      // Step 2: F must be the current node (as in M-09 condition 2).
+      if (TABLE_CONTEXT.has(fName) && f !== this.names.length - 1) return STRUCTURE;
+      const error = this.close(f, fName);
+      if (error !== null) return error;
     }
     return null;
   }

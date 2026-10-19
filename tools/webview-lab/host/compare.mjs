@@ -54,9 +54,15 @@ export function parseResult(text, id, view, where) {
   return { walker: o.walker, tree: str(o.tree), characterSet: str(o.characterSet), probe: str(o.probe), error: str(o.error) };
 }
 
-/** @param {string} s */
-function clip(s) {
-  const t = s.length > 160 ? `${s.slice(0, 160)}...` : s;
+/**
+ * A tree line for the summary: "d<depth> <node>" for a line of the html5lib format (two spaces
+ * per depth after "| "), so a deep line does not show only its indentation; at most 160 characters.
+ * @param {string} s
+ */
+export function clip(s) {
+  const m = /^\| ( *)(.*)$/s.exec(s);
+  const line = m === null ? s : `d${m[1].length / 2} ${m[2]}`;
+  const t = line.length > 160 ? `${line.slice(0, 160)}...` : line;
   return JSON.stringify(t);
 }
 

@@ -6,7 +6,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
-import { buildSummary, compareAll, compareEncoding, compareTree, firstDifference, main, parseResult } from "../compare.mjs";
+import { buildSummary, clip, compareAll, compareEncoding, compareTree, firstDifference, main, parseResult } from "../compare.mjs";
 import { CASES_DIR, MARKER } from "../lab.mjs";
 import { loadParse5 } from "../parse5.mjs";
 import { serializeParse5 } from "../tree.mjs";
@@ -41,7 +41,7 @@ test("a different tree names the first different line", () => {
   const other = tree(html, true);
   const v = compareTree(parse5, Buffer.from(html), "off", ok({ tree: other }));
   assert.equal(v.status, "different");
-  assert.match(v.detail, /^line 5: parse5 "\|       <p>", platform "\|       \\"<p>a<\/p>\\""$/);
+  assert.match(v.detail, /^line 5: parse5 "d3 <p>", platform "d3 \\"<p>a<\/p>\\""$/);
 });
 
 test("a UTF-8 byte order mark in the body is not part of the text", () => {
@@ -170,4 +170,12 @@ test("main exits 2 for a bad platform or a missing results directory", async () 
   assert.equal(await main(["--platform", "web"]), 2);
   assert.equal(await main([]), 2);
   assert.equal(await main(["--platform", "ios", "--results", join(dir, "nope")]), 2);
+});
+
+test("clip shows the depth and the node of a deep tree line", () => {
+  const deep = `| ${"  ".repeat(512)}<span>`;
+  assert.equal(clip(deep), JSON.stringify("d512 <span>"));
+  assert.equal(clip('|   "x"'), JSON.stringify('d1 "x"'));
+  assert.equal(clip("not a tree line"), JSON.stringify("not a tree line"));
+  assert.equal(JSON.parse(clip(`| ${"x".repeat(200)}`)).length, 163);
 });

@@ -396,7 +396,7 @@ function main(argv) {
     const r = new Set(Object.keys(p.classes ?? {}).flatMap((c) => (c === "M-11.4" ? ["M-11", "M-13"] : [ruleOf(c)])));
     return r.has(p.probe_rule);
   }).length;
-  const map5 = { "M-06-formatting": "M-06.2", "M-05-stray-table-end": "M-06.3", "M-11-balance": "M-11.5", "M-13-non-ascii": "M-13.3", "M-26-depth": "M-26", "M-06-formatting-marked": "M-06.4", "M-09-template-col": "M-09.1", "M-09-table-current": "M-09.2", "M-10-form": "M-10.2", "M-10-template-for": "M-10.3", "M-11-table-part": "M-11.6" };
+  const map5 = { "M-06-formatting": "M-06.2", "M-05-stray-table-end": "M-06.3", "M-11-balance": "M-11.5", "M-13-non-ascii": "M-13.3", "M-26-depth": "M-26", "M-06-formatting-marked": "M-06.4", "M-09-template-col": "M-09.1", "M-09-table-current": "M-09.2", "M-10-form": "M-10.2", "M-10-template-for": "M-10.3", "M-11-table-part": "M-11.6", "M-22-shadowrootmode": "M-22.6", "M-24-template-table-part": "M-24.g" };
   let p5same = 0;
   let p5n = 0;
   for (const p of pages) {

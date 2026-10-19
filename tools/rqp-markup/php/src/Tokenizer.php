@@ -34,7 +34,8 @@ namespace Rivqen\Tools\RqpMarkup;
 final class Tokenizer
 {
     /** Attribute names whose raw value the rules need (M-10 item 3, M-13, M-14, M-16). */
-    public const WATCHED = ['data-rq-block' => true, 'type' => true, 'for' => true];
+    public const WATCHED = ['data-rq-block' => true, 'type' => true, 'for' => true,
+        'shadowrootmode' => true];
 
     private const WS = "\t\n\f\r ";
     private const TAG_NAME_END = "\t\n\f\r />";
@@ -508,8 +509,9 @@ final class Tokenizer
     private function watchedName(int $from, int $to, array $attrs): ?string
     {
         $n = $to - $from;
-        // Only the lengths of the watched names can match ('for', 'type', 'data-rq-block').
-        if ($n !== 3 && $n !== 4 && $n !== 13) {
+        // Only the lengths of the watched names can match ('for', 'type',
+        // 'data-rq-block', 'shadowrootmode').
+        if ($n !== 3 && $n !== 4 && $n !== 13 && $n !== 14) {
             return null;
         }
         $name = strtolower(substr($this->input, $from, $n));

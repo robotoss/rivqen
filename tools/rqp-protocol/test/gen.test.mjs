@@ -14,6 +14,8 @@ import { after, test } from 'node:test';
 import { checkPages, run } from '../gen.mjs';
 import { CaseError, FIXTURES_DIR, expectFixture, fixtureNames, formatJson, readJsonFile, substitute } from '../src/fixtures.mjs';
 import { GENERATED, pageBytes } from '../src/pages.mjs';
+import { pageRevision } from '../src/common.mjs';
+import { analyze } from '../src/markup.mjs';
 
 const GEN = fileURLToPath(new URL('../gen.mjs', import.meta.url));
 const tmp = mkdtempSync(join(tmpdir(), 'rqp-protocol-gen-'));
@@ -276,6 +278,112 @@ test('formatJson keeps header lines on one line and is valid JSON', () => {
   const text = formatJson(value);
   assert.deepEqual(JSON.parse(text), value);
   assert.match(text, /\["x","y"\]/);
+});
+
+/** expectFixture of a copy of fixture `name` whose case.json is change(case). */
+function withCase(name, change) {
+  const dir = copyFixture(name);
+  const file = join(dir, name, 'case.json');
+  writeFileSync(file, JSON.stringify(change(JSON.parse(readFileSync(file, 'utf8')))));
+  return () => expectFixture(dir, name);
+}
+
+const isCaseError = (e) => e instanceof CaseError && e.name === 'CaseError' && e.code === 'RQP_FIXTURE_CASE';
+
+test('defective server cases: description, rules, header lines, client page, and an object where one is required', () => {
+  const defects = [
+    (c) => ({ ...c, description: undefined }),
+    (c) => ({ ...c, rules: 'RQP-01' }),
+    (c) => ({ ...c, request: { ...c.request, headers: {} } }),
+    (c) => ({ ...c, request: { ...c.request, headers: ['ab'] } }),
+    (c) => ({ ...c, request: { ...c.request, headers: [['a', 'b', 'c']] } }),
+    (c) => ({ ...c, request: { ...c.request, headers: [[1, 'x']] } }),
+    (c) => ({ ...c, request: { ...c.request, headers: [['a', 1]] } }),
+    (c) => ({ ...c, client_page: 'page-zzz' }),
+    (c) => ({ ...c, app: null }),
+  ];
+  for (const [i, change] of defects.entries()) assert.throws(withCase('FX-RQ-P09-DELTA', change), isCaseError, String(i));
+});
+
+test('server cases: request.target is used, and Date is never a required header', () => {
+  const target = 'https://shop.example.com/other';
+  const date = ['date', 'Sun, 18 Oct 2026 10:00:00 GMT'];
+  const e = withCase('FX-RQ-P01-FIRST-VISIT', (c) => ({ ...c, request: { ...c.request, target }, app: { ...c.app, headers: [...c.app.headers, date] } }))().files['expected.json'];
+  assert.equal(e.request.target, target);
+  assert.equal(e.body.manifest.path, '/other');
+  assert.equal(Object.hasOwn(e.headers_required, 'date'), false);
+});
+
+test('defective client cases: members, context values, header lines and body recipes', () => {
+  const defects = [
+    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, extra: 1 })],
+    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: null })],
+    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, navigation: 'reload' } })],
+    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, build: 'beta' } })],
+    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, allow_http: 'yes' } })],
+    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, public_origin: 1 } })],
+    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, response: { ...c.response, headers: {} } })],
+    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, response: { ...c.response, body: { delta: { from: 'page-a', ops: [{ block_id: 'nope', content: 'x' }] } } } })],
+    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, response: { ...c.response, body: { delta: { from: 'page-zero', to: 'page-a' } } } })],
+    ['FX-RQ-C21-HEAD-WHITESPACE', (c) => ({ ...c, response: { ...c.response, body: { full: 'page-a', manifest_position: 'head' } } })],
+    ['FX-RQ-C21-HEAD-WHITESPACE', (c) => ({ ...c, response: { ...c.response, body: { full: 'page-a', manifest_count: 3 } } })],
+  ];
+  for (const [i, [name, change]] of defects.entries()) assert.throws(withCase(name, change), isCaseError, `${i} ${name}`);
+});
+
+test('client cases: no body member is a null body; manifest_after may match at offset 0', () => {
+  const e = withCase('FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, response: { status: 304, headers: [] } }))().files;
+  assert.equal(e['expected.json'].response.body, null);
+  assert.equal(Object.hasOwn(e, 'response.body'), false);
+  const doctype = '<!DOCTYPE html>';
+  const body = withCase('FX-RQ-C21-HEAD-WHITESPACE', (c) => ({ ...c, response: { ...c.response, body: { full: 'page-a', manifest_after: doctype } } }))().files['response.body'];
+  assert.equal(body.indexOf('<script type="application/rivqen-manifest+json">'), doctype.length);
+});
+
+test('delta recipe: base_revision uses the members of the context snapshot only for a delta from the snapshot page', () => {
+  const members = { limits: { max_patch_bytes: 100000 } };
+  const env = (from) => {
+    const files = withCase('FX-RQ-C01-BASE-MISMATCH', (c) => ({
+      ...c,
+      context: { ...c.context, snapshot: { page: 'page-a', members } },
+      response: { ...c.response, body: { delta: { from, to: from === 'page-a' ? 'page-b' : 'page-a' } } },
+    }))().files;
+    return JSON.parse(files['response.body'].toString('utf8'));
+  };
+  const a = analyze(pageBytes('page-a'));
+  assert.equal(env('page-a').base_revision, pageRevision(a.template_revision, a.blocks, members));
+  assert.equal(env('page-b').base_revision, analyze(pageBytes('page-b')).page_revision);
+});
+
+test('delta recipe "size": exactly one operation with empty content and no sha256, and a reachable size', () => {
+  const sized = (delta) => withCase('FX-RQ-C16-AT-LIMIT', (c) => ({ ...c, response: { ...c.response, body: { delta: { ...c.response.body.delta, ...delta } } } }));
+  const body = sized({ size: 1000 })().files['response.body'];
+  assert.equal(body.length, 1000);
+  // The smallest size: the envelope with empty content.
+  const smallest = 1000 - JSON.parse(body.toString('utf8')).operations[0].content.length;
+  assert.equal(JSON.parse(sized({ size: smallest })().files['response.body'].toString('utf8')).operations[0].content, '');
+  const defects = [
+    { ops: [{ block_id: 'price', content: '' }, { block_id: 'title', content: '' }] },
+    { ops: [{ block_id: 'price', content: 'x' }] },
+    { ops: [{ block_id: 'price', content: '', sha256: 'x' }] },
+    { size: 1000.5 },
+    { size: 10 }, // smaller than the envelope without content
+  ];
+  for (const delta of defects) assert.throws(sized(delta), isCaseError, JSON.stringify(delta));
+});
+
+test('fixtureNames: only FX-RQ-* directories, in byte order', () => {
+  const dir = mkdtempSync(join(tmp, 'names-'));
+  for (const n of ['FX-RQ-a', 'FX-RQ-B', 'FX-RQ-10', 'other']) mkdirSync(join(dir, n));
+  writeFileSync(join(dir, 'FX-RQ-file'), '');
+  writeFileSync(join(dir, 'README.md'), '');
+  assert.deepEqual(fixtureNames(dir), ['FX-RQ-10', 'FX-RQ-B', 'FX-RQ-a']);
+});
+
+test('formatJson: an empty object and an array of scalars with null stay on one line', () => {
+  assert.equal(formatJson({}), '{}');
+  assert.equal(formatJson({ a: {} }), '{\n  "a": {}\n}');
+  assert.equal(formatJson([null, 1, 'x']), '[null,1,"x"]');
 });
 
 test('the usage error exits 2', () => {

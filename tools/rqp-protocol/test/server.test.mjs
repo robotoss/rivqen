@@ -183,6 +183,28 @@ test('step 4: a matching strong, weak or listed tag and "*" give 304 with ETag a
   }
 });
 
+test('step 4: the 304 keeps the fields of RFC 9110 section 15.4.5 from F, in the order of F', () => {
+  const app = {
+    status: 200,
+    headers: [
+      ['date', 'Sun, 18 Oct 2026 10:00:00 GMT'],
+      ...APP.headers,
+      ['expires', 'Sun, 18 Oct 2026 11:00:00 GMT'],
+      ['vary', 'cookie'],
+      ['content-location', '/catalog'],
+      ['x-app', '1'],
+    ],
+  };
+  const r = handle(deltaRequest('page-a'), app, page('page-a'));
+  assert.deepEqual([r.status, r.kind, r.reason], [304, 'none', 'not-modified']);
+  assert.deepEqual(r.headers.map(([n]) => n), ['date', 'cache-control', 'expires', 'vary', 'content-location', 'etag']);
+});
+
+test('step 4: If-Modified-Since together with If-None-Match is modelled (If-None-Match wins)', () => {
+  const r = handle(deltaRequest('page-a', { 'if-modified-since': 'Sun, 18 Oct 2026 10:00:00 GMT' }), APP, page('page-a'));
+  assert.equal(r.status, 304);
+});
+
 test('step 4: HEAD with a matching tag gives 304', () => {
   assert.equal(handle(deltaRequest('page-a', {}, 'HEAD'), APP, page('page-a')).status, 304);
 });
@@ -296,6 +318,27 @@ test('step 7: a delta of exactly the size of F gives F; one byte smaller is sent
 
 test('step 7: a changed html block that fails the attribute rule gives F (H-56)', () => {
   assert.equal(handle(deltaRequest('page-a'), APP, page('page-b-onclick')).reason, 'attribute-rule');
+});
+
+test('step 7: the attribute rule reads only html blocks; a json block with markup text gets a delta', () => {
+  const next = Buffer.from(page('page-a').toString('utf8').replace('{"items":3}', '{"t":"<b onclick=x>"}'), 'utf8');
+  assert.equal(analyzeBytes(next).valid, true);
+  const r = handle(deltaRequest('page-a'), APP, next);
+  assert.deepEqual([r.kind, r.reason], ['delta', 'delta']);
+  assert.deepEqual(JSON.parse(r.body.toString('utf8')).operations.map((op) => op.block_id), ['cart']);
+});
+
+test('step 7: the delta has exactly one Content-Length, the length of D', () => {
+  const app = { status: 200, headers: [...APP.headers, ['content-length', '99999']] };
+  const r = handle(deltaRequest('page-big-a'), app, page('page-big-b'));
+  assert.equal(r.kind, 'delta');
+  assert.deepEqual(r.headers.filter(([n]) => n === 'content-length'), [['content-length', String(r.body.length)]]);
+});
+
+test('step 3: a server configuration whose manifest text would contain "<" passes A through', () => {
+  const r = handle(firstVisit(), APP, page('page-a'), { policy: { mode: 'private', note: '</script>' } });
+  assert.deepEqual([r.kind, r.reason, r.status], ['app', 'server-passthrough', 200]);
+  assert.deepEqual(r.body, page('page-a'));
 });
 
 test('the reference server does not model content codings and other preconditions', () => {

@@ -3,11 +3,14 @@
 //
 // Attribute rule of manifest-patch section 4.2 in a foreign region (svg, math; H-73):
 // the rule reads every start tag that the markup analysis reads, with the token stack
-// of M-05 and the state changes of M-04 only in HTML context.
+// of M-05 and the state changes of M-04 only in HTML context. Also the limits of
+// the walk, the attribute tokenizer, the normalization of item 3 and the byte order
+// mark of the head rule (H-72).
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { analyze, passesAttributeRule, startTagOffsets } from '../src/markup.mjs';
+import { LIMITS } from '../src/common.mjs';
+import { analyze, attributeRejected, documentHeadStart, passesAttributeRule, startTagOffsets } from '../src/markup.mjs';
 
 const b = (s) => Buffer.from(s, 'latin1');
 const rule = (s) => passesAttributeRule(b(s));
@@ -83,6 +86,39 @@ test('a stack deeper than the limit fails closed, nothing throws', () => {
   assert.equal(startTagOffsets(b('<svg>' + '<g>'.repeat(300))), null);
   assert.equal(rule('<svg>' + '<g>'.repeat(200)), true);
   assert.equal(rule('<svg>' + '<g/>'.repeat(300) + '</svg>'), true); // self-closing elements are not open
+});
+
+test('the token stack holds exactly 256 entries', () => {
+  assert.equal(rule('<svg>' + '<g>'.repeat(255)), true);
+  assert.equal(rule('<svg>' + '<g>'.repeat(256)), false);
+});
+
+test('only svg and math open a foreign region; an svg region ends at the end tag of its root', () => {
+  assert.equal(rule('<div><title><a onclick=x></title></div>'), true);
+  assert.equal(rule('<math><mi><title><a onclick=x></title></mi></math>'), false);
+  // An end tag of an element inside the region does not end the region.
+  assert.equal(rule('<svg><g></g><title><a onclick=x></a></title></svg>'), false);
+});
+
+test('attribute tokenizer: "/" ends a tag name and an attribute name; "=" with no value is an attribute', () => {
+  for (const c of ['<a/onclick=x>y</a>', '<a x/onclick=y>z</a>', '<a onclick=>y</a>']) assert.equal(rule(c), false, c);
+});
+
+test('attribute rule item 3: "&amp;" becomes "&", and only leading bytes 00 to 20 go', () => {
+  assert.equal(attributeRejected('href', b('java&amp;script:x')), false);
+  assert.equal(attributeRejected('href', b('java script:x')), false);
+  assert.equal(attributeRejected('href', b(' \x00javascript:x')), true);
+});
+
+test('content over maxBlockBytes fails the rule (fail closed); content of exactly maxBlockBytes is read', () => {
+  assert.equal(passesAttributeRule(Buffer.alloc(LIMITS.maxBlockBytes, 0x61)), true);
+  assert.equal(passesAttributeRule(Buffer.alloc(LIMITS.maxBlockBytes + 1, 0x61)), false);
+});
+
+test('head rule: only EF BB BF at offset 0 counts as white space before the head start tag', () => {
+  const head = (prefix) => documentHeadStart(Buffer.concat([Buffer.from(prefix), Buffer.from('<head>')]));
+  assert.equal(head([0xef, 0xbb, 0xbf]), 9);
+  for (const prefix of [[0xe0, 0xbb, 0xbf], [0xef, 0x80, 0xbf], [0xef, 0xbb, 0x80]]) assert.equal(head(prefix), -1, JSON.stringify(prefix));
 });
 
 // Property: for generated block content that the analysis accepts, the walk reads exactly

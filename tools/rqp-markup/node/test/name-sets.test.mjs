@@ -248,11 +248,12 @@ describe('name sets of markup.md section 2.1', () => {
     for (const [name, parents] of Object.entries(allowed)) {
       for (const f of ['table', 'tbody', 'thead', 'tfoot', 'tr', 'td', 'th', 'caption', 'colgroup']) {
         const ok = parents.includes(f);
-        it(`${ok ? 'accepts' : 'rejects'} ${name} when F is ${f}`, () => {
+        it(`accepts ${name} when F is ${f}${ok ? '' : ' (after the implied closure, H-85a)'}`, () => {
           const tag = name === 'col' ? '<col>' : `<${name}></${name}>`;
           // F = td and th need a row; the row is closed explicitly before.
           const prefix = f === 'td' || f === 'th' ? `<table><tr><${f}>` : open(f);
-          assert.equal(errorOf(doc(`${prefix}${tag}</table>`)), ok ? null : STRUCTURE);
+          // Every F here is the current node, so the closure of M-09 accepts the rest.
+          assert.equal(errorOf(doc(`${prefix}${tag}</table>`)), null);
         });
       }
     }

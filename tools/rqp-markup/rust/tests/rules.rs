@@ -1585,6 +1585,49 @@ fn m22_allowed_tokens() {
     );
 }
 
+/// M-22 item 6 (H-94, H-97, DL-056): an HTML `template` start tag in the
+/// content with an attribute named `shadowrootmode` or `shadowroot`.
+#[test]
+fn m22_6_declarative_shadow_root_attributes() {
+    for attrs in [
+        "shadowrootmode=\"open\"",
+        "SHADOWROOTMODE",
+        "shadowroot=\"open\"",
+        "shadowroot",
+        "SHADOWROOT=closed",
+        "id=\"a\" ShadowRoot=\"\" class=\"b\" shadowroot=\"open\"",
+        "id=\"t\" data-x=\"1\" shadowrootclonable shadowroot=\"open\"",
+    ] {
+        let body = format!("<div data-rq-block=\"b\"><template {attrs}>x</template></div>");
+        assert_invalid(&body, STRUCTURE, "M-22");
+    }
+    // In a template of the content (H-94: the template contents are content).
+    assert_invalid(
+        "<div data-rq-block=\"b\"><template><template shadowroot>x</template></template></div>",
+        STRUCTURE,
+        "M-22",
+    );
+    assert_invalid(
+        "<div data-rq-block=\"b\"><template><b><template SHADOWROOT=open>x</template></b></template></div>",
+        STRUCTURE,
+        "M-22",
+    );
+    // Other names, values, foreign context, other elements and outside the content.
+    for content in [
+        "<template shadowrootx=\"open\" shadowroots>t</template>",
+        "<template data-shadowroot=\"open\" title=\"shadowroot\">t</template>",
+        "<template shadowrootclonable shadowrootdelegatesfocus>t</template>",
+        "<svg><template shadowroot=\"open\"></template></svg>",
+        "<div shadowroot=\"open\">t</div>",
+    ] {
+        let body = format!("<div data-rq-block=\"b\">{content}</div>");
+        assert_eq!(blocks(&body), [html("b", content)], "{content:?}");
+    }
+    assert_valid(
+        "<div><template shadowroot=\"open\">x</template><p data-rq-block=\"b\">y</p></div>",
+    );
+}
+
 /// H-78: the patch-safety elements are allowed in the content (M-22).
 #[test]
 fn m22_patch_safety_elements_are_allowed_in_the_content() {

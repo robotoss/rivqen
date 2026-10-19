@@ -1794,6 +1794,30 @@ class RulesTest {
       assertStructure(body("<div data-rq-block=a>" + open + "x</template></div>"), "M-22");
     }
 
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<template shadowroot=open>",
+          "<template shadowroot>",
+          "<template SHADOWROOT=closed>",
+          "<template shadowroot=\"\">",
+          "<template id=t class=c shadowroot=open>",
+          "<template id=a ShadowRoot=\"\" class=b shadowroot=open>",
+          "<template shadowrootclonable shadowroot=open>"
+        })
+    void templateWithOldShadowRootAttribute(String open) {
+      // M-22 item 6 (DL-056): the old Chromium name, any value, any case, any position.
+      assertStructure(body("<div data-rq-block=a>" + open + "x</template></div>"), "M-22");
+    }
+
+    @Test
+    void oldShadowRootAttributeInTemplateContentsCounts() {
+      assertStructure(
+          body(
+              "<div data-rq-block=a><template><b><template shadowroot>x</template></b></template></div>"),
+          "M-22");
+    }
+
     @Test
     void duplicateShadowRootModeAfterAnotherAttributeCounts() {
       assertStructure(
@@ -1809,7 +1833,12 @@ class RulesTest {
           "shadowrootdelegatesfocus",
           "shadowrootserializable",
           "data-shadowrootmode",
-          "shadowrootmodes"
+          "shadowrootmodes",
+          "shadowrootx",
+          "shadowroots",
+          "data-shadowroot",
+          "shadowroo",
+          "\u017Fhadowroot"
         })
     void templateWithOtherShadowRootAttributeIsValid(String attribute) {
       assertValid(body("<div data-rq-block=a><template " + attribute + "=x>y</template></div>"));
@@ -1820,6 +1849,10 @@ class RulesTest {
       assertValid(body("<template shadowrootmode=open>x</template>" + P));
       assertValid(
           body("<div data-rq-block=a><svg><template shadowrootmode=open></template></svg></div>"));
+      assertValid(body("<template shadowroot=open>x</template>" + P));
+      assertValid(
+          body("<div data-rq-block=a><svg><template shadowroot=open></template></svg></div>"));
+      assertValid(body("<div data-rq-block=a><div shadowroot=open>x</div></div>"));
     }
 
     @ParameterizedTest

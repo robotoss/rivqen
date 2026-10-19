@@ -700,9 +700,9 @@ impl Pass<'_> {
         {
             return Err(structure("M-22"));
         }
-        // Item 6 (H-94, H-97): declarative shadow DOM, any attribute name
-        // `shadowrootmode` on an HTML `template` start tag.
-        if name == Template.id() && tag.has_shadowrootmode {
+        // Item 6 (H-94, H-97, DL-056): declarative shadow DOM, any attribute
+        // name `shadowrootmode` or `shadowroot` on an HTML `template` start tag.
+        if name == Template.id() && tag.has_shadow_root_attr {
             return Err(structure("M-22"));
         }
         let elem = block.elem;

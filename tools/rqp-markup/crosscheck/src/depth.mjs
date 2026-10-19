@@ -23,9 +23,9 @@
 // The counter knows the block content (H-94): after a start tag in HTML context with a data-rq-block
 // attribute, while no block element is on its stack, the elements above that element are the content.
 // It uses this for the closure and for the rule classes of WP-17 S5 that parse5 cannot show:
-// M-22 item 6 (a template with shadowrootmode in the content; parse5 8.0.1 has no declarative shadow
-// DOM) and M-24 item g (a table part or col in a template of the content; parse5 8.0.1 stops its table
-// scope only at table and html, not at template).
+// M-22 item 6 (a template with shadowrootmode or shadowroot in the content; parse5 8.0.1 has no
+// declarative shadow DOM) and M-24 item g (a table part or col in a template of the content; parse5
+// 8.0.1 stops its table scope only at table and html, not at template).
 
 import { Parser, Tokenizer, TokenizerMode, defaultTreeAdapter } from "parse5";
 import { decodeUtf8 } from "./utf8.mjs";
@@ -79,12 +79,12 @@ export const CLASSES = {
   noscriptTablePart: "M-11-table-part", // H-38: a table part or col start tag in C without a table on the C stack
   templateFor: "M-10-template-for", // H-43: an HTML template start tag with a for attribute (content patching; parse5 8.0.1 does not implement it)
   noscriptDocumentTag: "M-11-document-tag", // H-71, M-11 item 7: an html, body or head start or end tag in C
-  shadowRootMode: "M-22-shadowrootmode", // H-94, H-97, M-22 item 6: an HTML template start tag with a shadowrootmode attribute in block content
+  shadowRootMode: "M-22-shadowrootmode", // H-94, H-97, DL-056, M-22 item 6: an HTML template start tag with a shadowrootmode or shadowroot attribute in block content
   templateTablePart: "M-24-template-table-part", // H-94, M-24 item g: a table part or col start tag in block content whose F search stops at a template
 };
 
-/** M-22 item 6 (H-97): the attribute of a declarative shadow root (any value, any case). */
-const SHADOW_ROOT_MODE = "shadowrootmode";
+/** M-22 item 6: the attributes of a declarative shadow root (any value, any case; H-97, DL-056). */
+const SHADOW_ROOT_ATTRS = ["shadowrootmode", "shadowroot"];
 /** M-14: the block attribute. */
 const BLOCK_ATTR = "data-rq-block";
 
@@ -249,8 +249,8 @@ export class DepthCounter {
     if (name === "form" && this.stack.some((e) => e.name === "form")) this.classes.add(CLASSES.form);
     if (name === "template" && attrNames.includes("for")) this.classes.add(CLASSES.templateFor);
     if (this.inContent) {
-      // WP-17 S5: the content rules that parse5 cannot show (H-94, H-97).
-      if (name === "template" && attrNames.includes(SHADOW_ROOT_MODE)) this.classes.add(CLASSES.shadowRootMode);
+      // WP-17 S5: the content rules that parse5 cannot show (H-94, H-97, DL-056).
+      if (name === "template" && SHADOW_ROOT_ATTRS.some((a) => attrNames.includes(a))) this.classes.add(CLASSES.shadowRootMode);
       if ((TABLE_PART.has(name) || name === "col") && this.#familySearch().template) this.classes.add(CLASSES.templateTablePart);
     }
     const top = this.stack[this.stack.length - 1];

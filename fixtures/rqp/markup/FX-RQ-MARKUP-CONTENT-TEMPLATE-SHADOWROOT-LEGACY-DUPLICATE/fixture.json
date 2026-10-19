@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-SHADOWROOT-LEGACY-DUPLICATE",
+  "description": "A template element in the content with an empty shadowroot attribute and a second one in other case that the tokenizer drops (DL-056: every shadowroot attribute counts; M-22 item 6)",
+  "rules": [
+    "M-22"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

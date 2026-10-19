@@ -62,8 +62,9 @@ const BLOCK_HTML = names(`article aside div footer ${H} header main nav p sectio
 // M-22 item 2 after H-78, H-94 and H-95: the names that M-22 keeps (template and noscript left it).
 const FORBIDDEN_CONTENT = names(`body frame frameset head html noembed noframes optgroup option plaintext select
   textarea title xmp`);
-// M-22 item 6 (H-94, H-97): the attribute of a declarative shadow root on an HTML template start tag.
-const SHADOW_ROOT_MODE = "shadowrootmode";
+// M-22 item 6 (H-94, H-97, DL-056): the attributes of a declarative shadow root on an HTML template
+// start tag (shadowroot: the old Chromium name).
+const SHADOW_ROOT_ATTRS = ["shadowrootmode", "shadowroot"];
 // The patch content rule (manifest-patch.md section 4 item 1, H-78): not markup rules. A block with
 // these names is valid; a patch that brings them is rejected. PATCH_FORBIDDEN: start tags in HTML
 // context of the content (noscript: H-96); FOREIGN_ALLOWED (H-73): the only start tags in a foreign
@@ -537,8 +538,9 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
   // html block. `stk` is the token stack before the start tag: the stack of the pass, or (M-11 item
   // 10, H-95) that stack with the open elements of the noscript content C above it. `add(cls,
   // detail)` records a class. Class names: "M-22.2:<name>" for a name that M-22 keeps (H-78);
-  // "M-22.6" for a template with a shadowrootmode attribute (H-94, H-97); "M-24.<item>". The detail
-  // of M-24.g says "in template" when F is none because the search for F stops at a template (H-94).
+  // "M-22.6" for a template with a shadowrootmode or shadowroot attribute (H-94, H-97, DL-056);
+  // "M-24.<item>". The detail of M-24.g says "in template" when F is none because the search for F
+  // stops at a template (H-94).
   const contentRules = (name, selfClosing, attrNames, stk, add) => {
     const b = /** @type {NonNullable<typeof block>} */ (block);
     const isOpenIn = (n) => stk.some((e) => e.name === n && !e.foreign);
@@ -555,7 +557,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
       return null;
     };
     if (FORBIDDEN_CONTENT.has(name)) add(`M-22.2:${name}`, null);
-    if (name === "template" && attrNames.includes(SHADOW_ROOT_MODE)) add("M-22.6", null);
+    if (name === "template" && SHADOW_ROOT_ATTRS.some((a) => attrNames.includes(a))) add("M-22.6", null);
     if (selfClosing && !VOID.has(name) && name !== "svg" && name !== "math") add("M-22.3", `<${safeName(name)}/>`);
     if (PCLOSE.has(name) && (b.name === "p" || b.name === "span")) add("M-24.a", `<${name}> in <${b.name}>`);
     if (HEADINGS.has(name) && (HEADINGS.has(b.name) || openIn(HEADINGS))) add("M-24.b", null);

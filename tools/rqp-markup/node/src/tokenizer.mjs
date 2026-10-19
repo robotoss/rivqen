@@ -100,7 +100,9 @@ export function tagName(b, start, end) {
 const BLOCK_ATTR = 'data-rq-block';
 const TYPE_ATTR = 'type';
 const FOR_ATTR = 'for';
+// M-22 item 6: the declarative shadow DOM attribute (H-97) and the old Chromium name (DL-056).
 const SHADOW_ATTR = 'shadowrootmode';
+const OLD_SHADOW_ATTR = 'shadowroot';
 const SCRIPT = 'script';
 const DOCTYPE = 'doctype';
 const CDATA = '[CDATA[';
@@ -121,7 +123,8 @@ function newTag(type, name, start) {
     typeAttr: null,
     // M-10 item 3: true when the tag has an attribute named "for" (any value).
     hasFor: false,
-    // M-22 item 6: true when any attribute (also a dropped duplicate) is named "shadowrootmode".
+    // M-22 item 6: true when any attribute (also a dropped duplicate) is named "shadowrootmode"
+    // or "shadowroot" (DL-056).
     hasShadowRoot: false,
   };
 }
@@ -512,7 +515,9 @@ export class Tokenizer {
       return SLOT_TYPE;
     }
     if (spanEqualsLower(b, start, end, FOR_ATTR)) token.hasFor = true;
-    if (spanEqualsLower(b, start, end, SHADOW_ATTR)) token.hasShadowRoot = true;
+    if (spanEqualsLower(b, start, end, SHADOW_ATTR) || spanEqualsLower(b, start, end, OLD_SHADOW_ATTR)) {
+      token.hasShadowRoot = true;
+    }
     return SLOT_NONE;
   }
 

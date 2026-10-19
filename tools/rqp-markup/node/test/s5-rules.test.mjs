@@ -3,7 +3,8 @@
 
 // Rules of WP-17 S5 (docs/engineering/protocol/markup.md): H-94 (template and
 // noscript in the content, M-22 item 6, M-24 item g), H-95 (M-11 item 10) and
-// H-97 (every attribute named shadowrootmode counts). Each test checks the code.
+// H-97 (every attribute named shadowrootmode counts), DL-056 (shadowroot too).
+// Each test checks the code.
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -46,10 +47,22 @@ describe('template in the content (H-94, M-22 items 2 and 6)', () => {
     assert.equal(err('<template><template shadowrootmode=open></template></template>'), STRUCTURE);
   });
 
+  it('rejects the old Chromium attribute shadowroot with any value, case and position (DL-056)', () => {
+    for (const attrs of [
+      'shadowroot="open"', 'shadowroot', 'SHADOWROOT=closed', 'ShadowRoot=""',
+      'id=x class=y shadowroot=open', 'shadowrootclonable shadowroot',
+      'id=a ShadowRoot="" class=b shadowroot=open',
+    ]) {
+      assert.equal(err(`<template ${attrs}></template>`), STRUCTURE, attrs);
+    }
+    assert.equal(err('<template><b><template shadowroot>x</template></b></template>'), STRUCTURE);
+  });
+
   it('allows the other shadowroot attributes and similar names', () => {
     for (const attrs of [
       'shadowrootclonable', 'shadowrootdelegatesfocus', 'shadowrootserializable',
-      'data-shadowrootmode=open', 'shadowrootmodes', 'shadowroot',
+      'data-shadowrootmode=open', 'shadowrootmodes', 'shadowrootx=open', 'shadowroots',
+      'data-shadowroot=open', 'shadowroo', 'title=shadowroot', '\u017Fhadowroot',
     ]) {
       assert.equal(err(`<template ${attrs}></template>`), null, attrs);
     }
@@ -58,6 +71,12 @@ describe('template in the content (H-94, M-22 items 2 and 6)', () => {
   it('allows shadowrootmode outside block content and in a foreign region', () => {
     assert.equal(errorOf(doc('<template shadowrootmode=open></template>' + inBlock('x'))), null);
     assert.equal(err('<svg><template shadowrootmode=open></template></svg>'), null);
+  });
+
+  it('allows shadowroot outside block content, in a foreign region and on other elements (DL-056)', () => {
+    assert.equal(errorOf(doc('<template shadowroot=open></template>' + inBlock('x'))), null);
+    assert.equal(err('<svg><template shadowroot=open></template></svg>'), null);
+    assert.equal(err('<div shadowroot=open></div>'), null);
   });
 
   it('allows shadowrootmode on an element that is not a template', () => {

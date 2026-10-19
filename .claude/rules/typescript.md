@@ -14,5 +14,5 @@ Source: `docs/engineering/standards/typescript.md` (full text; change both toget
 - ES modules. No `any`; external data enters as `unknown` and is parsed at the boundary.
 - No `!` non-null assertion, no `as` on external data. Await or handle every promise.
 - Throw `Error` subclasses with `code` and `cause`; never strings.
-- No `innerHTML`, `eval`, `new Function` with update content. Bridge messages only from the allowed origin.
+- No `innerHTML`, `eval`, `new Function` with update content. Exception (H-102): the client patch apply step of manifest-patch §2.4 may set `innerHTML` (or `insertAdjacentHTML`) with block content that passed steps 8 and 9; never `DOMParser`, `parseHTMLUnsafe`, `setHTMLUnsafe` or `createContextualFragment` there. Bridge messages only from the allowed origin.
 - Pure decision core, thin framework adapters. No `console.log` in library code; use the logger with allowlisted fields.

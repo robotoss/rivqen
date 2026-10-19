@@ -1038,5 +1038,68 @@
       "t2n2": "NESTED"
     },
     "input": "<div data-rq-block=\"a\"><template><p data-rq-block=\"b\">x</p></template></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-T-shadowroot-legacy",
+    "study": "S5 T-10",
+    "decision": "DL-056",
+    "element": "template",
+    "expected": "STRUCTURE",
+    "note": "DL-056 (S5 T-10, after the study T-02): no study options",
+    "input": "<div data-rq-block=\"a\"><template shadowroot=\"open\"><slot></slot></template>light</div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-T-shadowroot-legacy-upper",
+    "study": "S5 T-10",
+    "decision": "DL-056",
+    "element": "template",
+    "expected": "STRUCTURE",
+    "note": "DL-056 (S5 T-10, after the study T-02): no study options",
+    "input": "<div data-rq-block=\"a\"><template SHADOWROOT>x</template></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-T-shadowroot-legacy-duplicate",
+    "study": "S5 T-10",
+    "decision": "DL-056",
+    "element": "template",
+    "expected": "STRUCTURE",
+    "note": "DL-056 (S5 T-10, after the study T-02): no study options",
+    "input": "<div data-rq-block=\"a\"><template id=\"t\" ShadowRoot=\"\" class=\"b\" shadowroot=\"open\">x</template></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-T-shadowroot-legacy-nested",
+    "study": "S5 T-10",
+    "decision": "DL-056",
+    "element": "template",
+    "expected": "STRUCTURE",
+    "note": "DL-056 (S5 T-10, after the study T-02): no study options",
+    "input": "<div data-rq-block=\"a\"><template><b><template shadowroot=\"closed\">x</template></b></template></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-T-shadowroot-similar",
+    "study": "S5 T-10",
+    "decision": "DL-056",
+    "element": "template",
+    "expected": "valid 2",
+    "note": "DL-056 (S5 T-10, after the study T-02): no study options",
+    "input": "<div data-rq-block=\"a\"><template shadowrootx=\"open\" shadowroots data-shadowroot=\"open\" title=\"shadowroot\">x</template></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-T-shadowroot-legacy-outside",
+    "study": "S5 T-10",
+    "decision": "DL-056",
+    "element": "template",
+    "expected": "valid 2",
+    "note": "DL-056 (S5 T-10, after the study T-02): no study options",
+    "input": "<div><template shadowroot=\"open\"><slot></slot></template><p data-rq-block=\"a\">x</p></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-T-shadowroot-legacy-svg",
+    "study": "S5 T-10",
+    "decision": "DL-056",
+    "element": "template",
+    "expected": "valid 2",
+    "note": "DL-056 (S5 T-10, after the study T-02): no study options",
+    "input": "<div data-rq-block=\"a\"><svg><template shadowroot=\"open\"></template></svg></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   }
 ]

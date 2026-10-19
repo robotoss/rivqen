@@ -300,6 +300,17 @@ test("H-94 and H-97: template in block content (M-22 item 6, M-24 item g)", () =
   ]) {
     assert.deepEqual(all(doc(ok, true)), [], ok);
   }
+  // DL-056: the old Chromium attribute shadowroot counts the same way; similar names do not.
+  for (const attr of ['shadowroot="open"', "SHADOWROOT", 'id="a" ShadowRoot="" shadowroot="open"']) {
+    assert.deepEqual(blockClasses(`<div data-rq-block="m"><template ${attr}>x</template></div>`), { "M-22.6": 1 }, attr);
+  }
+  for (const ok of [
+    '<div data-rq-block="m"><template shadowrootx="open" data-shadowroot title="shadowroot">x</template></div>',
+    '<div data-rq-block="m"><svg><template shadowroot="open"></template></svg></div>',
+    '<div><template shadowroot="open"><slot></slot></template><p data-rq-block="m">r</p></div>',
+  ]) {
+    assert.deepEqual(all(doc(ok, true)), [], ok);
+  }
   // M-24 item g: a table part in a template needs a table opened in that template (F is not none).
   assert.deepEqual(all(doc('<div data-rq-block="m"><template><table><tr><td>x</td></tr></table></template></div>', true)), []);
   const rows = doc('<div data-rq-block="m"><table><tr><td><template><tr><td>x</td></tr></template></td></tr></table></div>', true);

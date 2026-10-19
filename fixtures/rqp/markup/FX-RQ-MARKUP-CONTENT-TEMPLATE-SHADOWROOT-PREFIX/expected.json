@@ -1,0 +1,15 @@
+{
+  "valid": true,
+  "error": null,
+  "blocks": [
+    {
+      "id": "box",
+      "format": "html",
+      "start": 83,
+      "end": 137,
+      "sha256": "IKi57a1jYcGyruyrQlGszhQSOSNaD5nEV0LqswcCNwk"
+    }
+  ],
+  "template_revision": "t1.wJdGLZ1TgiBhixRnU-iK_RLejjUjkpeaMSzZA8eUdqo",
+  "page_revision": "r1.9W31op_QPQyvCDCmqsHzlk9YQFBC_Y6CCmYatK0hAt0"
+}

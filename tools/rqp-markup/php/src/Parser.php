@@ -578,9 +578,11 @@ final class Parser
         if (isset(Names::FORBIDDEN_CONTENT[$name])) {
             throw new MarkupError(ErrorCode::Structure, 'M-22');
         }
-        // Item 6 (H-94, H-97): the tokenizer keeps the first `shadowrootmode`
-        // of any value, so a dropped duplicate is covered.
-        if ($name === 'template' && $token->attribute('shadowrootmode') !== null) {
+        // Item 6 (H-94, H-97, DL-056): the tokenizer keeps the first
+        // `shadowrootmode` and the first `shadowroot` of any value, so a
+        // dropped duplicate is covered.
+        if ($name === 'template'
+            && ($token->attribute('shadowrootmode') !== null || $token->attribute('shadowroot') !== null)) {
             throw new MarkupError(ErrorCode::Structure, 'M-22');
         }
         $void = isset(Names::VOID[$name]);

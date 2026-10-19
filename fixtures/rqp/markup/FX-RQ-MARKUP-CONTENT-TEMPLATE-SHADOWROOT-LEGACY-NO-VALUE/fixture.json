@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-SHADOWROOT-LEGACY-NO-VALUE",
+  "description": "A template element in the content with a shadowroot attribute without a value (DL-056: any value or none; M-22 item 6)",
+  "rules": [
+    "M-22"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

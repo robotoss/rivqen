@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-SHADOWROOT-PREFIX",
+  "description": "A template element in the content with the attributes shadowrootx and shadowroots (DL-056: only the names shadowroot and shadowrootmode count; valid)",
+  "rules": [
+    "M-22"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "x<template shadowrootx=\"open\" shadowroots>t</template>"
+      }
+    ]
+  }
+}

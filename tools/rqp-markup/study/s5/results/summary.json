@@ -1,0 +1,314 @@
+{
+ "date": "2026-10-19",
+ "documents": 500789,
+ "generated": 500000,
+ "monotonic": 0,
+ "sources": {
+  "cases": 478,
+  "classic": 50000,
+  "fixtures": 311,
+  "mix": 100000,
+  "nos": 100000,
+  "review": 50000,
+  "review2": 50000,
+  "review3": 50000,
+  "tpl": 100000
+ },
+ "combos": {
+  "base": {
+   "valid": 63995,
+   "gained": 0,
+   "findingDocuments": 0,
+   "findings": {},
+   "informative": {
+    "known-p-closure": 206,
+    "known-head-noscript": 973,
+    "depth-template-enabled": 2,
+    "depth-template-disabled": 2
+   },
+   "patchRejected": {
+    "shipped:attribute": 1,
+    "p1:attribute": 1,
+    "p2:attribute": 1,
+    "shipped:foreign": 58,
+    "p1:foreign": 58,
+    "p2:foreign": 58,
+    "shipped:element": 2333,
+    "p1:element": 2333,
+    "p2:element": 2333
+   },
+   "patchFindings": {}
+  },
+  "t1": {
+   "valid": 71709,
+   "gained": 7714,
+   "findingDocuments": 9,
+   "findings": {
+    "content-enabled-parent-tpl": 4,
+    "template-enabled-end": 3,
+    "content-disabled-parent-tpl": 4,
+    "template-disabled-end": 3,
+    "content-spec-missing-tpl": 12,
+    "content-spec-parent-tpl": 3,
+    "fragment-parent-tpl": 4,
+    "content-enabled-missing-tpl": 10,
+    "content-disabled-missing-tpl": 10,
+    "fragment-missing-tpl": 10
+   },
+   "informative": {
+    "known-p-closure": 415,
+    "known-head-noscript": 1069,
+    "depth-template-enabled": 7,
+    "depth-template-disabled": 7,
+    "known-reconstruct": 39
+   },
+   "patchRejected": {
+    "shipped:attribute": 1,
+    "p1:attribute": 1,
+    "p2:attribute": 1,
+    "shipped:foreign": 58,
+    "p1:foreign": 58,
+    "p2:foreign": 58,
+    "shipped:element": 4579,
+    "p1:element": 4579,
+    "p2:element": 4579
+   },
+   "patchFindings": {}
+  },
+  "t2": {
+   "valid": 71675,
+   "gained": 7680,
+   "findingDocuments": 0,
+   "findings": {},
+   "informative": {
+    "known-p-closure": 391,
+    "known-head-noscript": 1069,
+    "depth-template-enabled": 2,
+    "depth-template-disabled": 2,
+    "known-reconstruct": 39
+   },
+   "patchRejected": {
+    "shipped:attribute": 1,
+    "p1:attribute": 1,
+    "p2:attribute": 1,
+    "shipped:foreign": 58,
+    "p1:foreign": 58,
+    "p2:foreign": 58,
+    "shipped:element": 4566,
+    "p1:element": 4566,
+    "p2:element": 4566
+   },
+   "patchFindings": {}
+  },
+  "tu": {
+   "valid": 74073,
+   "gained": 10078,
+   "findingDocuments": 1619,
+   "findings": {
+    "content-enabled-parent-tpl": 4,
+    "template-enabled-end": 1636,
+    "content-disabled-parent-tpl": 4,
+    "template-disabled-end": 1636,
+    "content-spec-missing-tpl": 1647,
+    "content-spec-parent-tpl": 4,
+    "fragment-parent-tpl": 7,
+    "content-enabled-missing-tpl": 1643,
+    "content-disabled-missing-tpl": 1643,
+    "fragment-missing-tpl": 1643,
+    "parse5-enabled-blocks": 1609,
+    "parse5-disabled-blocks": 1609,
+    "parse5-spec-blocks": 1609,
+    "template-spec-end": 1632,
+    "fragment-extra": 1632,
+    "fragment-parent": 1
+   },
+   "informative": {
+    "known-p-closure": 443,
+    "known-head-noscript": 1118,
+    "depth-template-enabled": 9,
+    "depth-template-disabled": 9,
+    "known-reconstruct": 53
+   },
+   "patchRejected": {
+    "shipped:attribute": 1,
+    "p1:attribute": 1,
+    "p2:attribute": 1,
+    "shipped:foreign": 58,
+    "p1:foreign": 58,
+    "p2:foreign": 58,
+    "shipped:element": 6634,
+    "p1:element": 6634,
+    "p2:element": 6634
+   },
+   "patchFindings": {}
+  },
+  "n1": {
+   "valid": 79078,
+   "gained": 15083,
+   "findingDocuments": 0,
+   "findings": {},
+   "informative": {
+    "known-p-closure": 688,
+    "known-head-noscript": 1216,
+    "known-reconstruct": 85,
+    "depth-template-enabled": 3,
+    "depth-template-disabled": 3
+   },
+   "patchRejected": {
+    "shipped:attribute": 1,
+    "p1:attribute": 1,
+    "p2:attribute": 921,
+    "shipped:foreign": 58,
+    "p1:foreign": 58,
+    "p2:foreign": 58,
+    "shipped:element": 5242,
+    "p1:element": 5242,
+    "p2:element": 8901,
+    "p1:noscript": 15868
+   },
+   "patchFindings": {
+    "shipped:patch-unseen-disabled": 25009,
+    "shipped:patch-mode-diff": 11252,
+    "p2:patch-mode-diff": 6673
+   }
+  },
+  "n2": {
+   "valid": 78708,
+   "gained": 14713,
+   "findingDocuments": 0,
+   "findings": {},
+   "informative": {
+    "known-p-closure": 595,
+    "known-head-noscript": 1210,
+    "known-reconstruct": 85,
+    "depth-template-enabled": 3,
+    "depth-template-disabled": 3
+   },
+   "patchRejected": {
+    "shipped:attribute": 1,
+    "p1:attribute": 1,
+    "p2:attribute": 879,
+    "shipped:foreign": 58,
+    "p1:foreign": 58,
+    "p2:foreign": 58,
+    "shipped:element": 5148,
+    "p1:element": 5148,
+    "p2:element": 8670,
+    "p1:noscript": 15443
+   },
+   "patchFindings": {
+    "shipped:patch-unseen-disabled": 23712,
+    "shipped:patch-mode-diff": 10865,
+    "p2:patch-mode-diff": 6465
+   }
+  },
+  "nu": {
+   "valid": 81412,
+   "gained": 17417,
+   "findingDocuments": 475,
+   "findings": {
+    "parse5-disabled-blocks": 462,
+    "content-disabled-parent": 17,
+    "noscript-end-block": 14,
+    "noscript-outside-block": 24,
+    "content-disabled-outside": 384,
+    "noscript-parent-block": 1
+   },
+   "informative": {
+    "known-p-closure": 2223,
+    "known-head-noscript": 1250,
+    "known-reconstruct": 94,
+    "depth-template-enabled": 3,
+    "depth-template-disabled": 3
+   },
+   "patchRejected": {
+    "shipped:attribute": 1,
+    "p1:attribute": 1,
+    "p2:attribute": 1155,
+    "shipped:foreign": 58,
+    "p1:foreign": 58,
+    "p2:foreign": 58,
+    "shipped:element": 5797,
+    "p1:element": 5797,
+    "p2:element": 10290,
+    "p1:noscript": 18603
+   },
+   "patchFindings": {
+    "shipped:patch-unseen-disabled": 32980,
+    "shipped:patch-mode-diff": 13789,
+    "p2:patch-mode-diff": 8142
+   }
+  },
+  "t1n1": {
+   "valid": 93030,
+   "gained": 29035,
+   "findingDocuments": 15,
+   "findings": {
+    "content-enabled-parent-tpl": 5,
+    "template-enabled-end": 4,
+    "content-disabled-parent-tpl": 5,
+    "template-disabled-end": 4,
+    "content-spec-missing-tpl": 19,
+    "content-spec-parent-tpl": 3,
+    "fragment-parent-tpl": 5,
+    "content-enabled-missing-tpl": 16,
+    "content-disabled-missing-tpl": 16,
+    "fragment-missing-tpl": 16
+   },
+   "informative": {
+    "known-p-closure": 1233,
+    "known-head-noscript": 1429,
+    "depth-template-enabled": 10,
+    "depth-template-disabled": 10,
+    "known-reconstruct": 199
+   },
+   "patchRejected": {
+    "shipped:attribute": 1,
+    "p1:attribute": 1,
+    "p2:attribute": 1217,
+    "shipped:foreign": 58,
+    "p1:foreign": 58,
+    "p2:foreign": 58,
+    "shipped:element": 9855,
+    "p1:element": 9855,
+    "p2:element": 14813,
+    "p1:noscript": 21640
+   },
+   "patchFindings": {
+    "shipped:patch-unseen-disabled": 33783,
+    "shipped:patch-mode-diff": 15172,
+    "p2:patch-mode-diff": 8998
+   }
+  },
+  "t2n2": {
+   "valid": 92452,
+   "gained": 28457,
+   "findingDocuments": 0,
+   "findings": {},
+   "informative": {
+    "known-p-closure": 1008,
+    "known-head-noscript": 1418,
+    "known-reconstruct": 199,
+    "depth-template-enabled": 3,
+    "depth-template-disabled": 3
+   },
+   "patchRejected": {
+    "shipped:attribute": 1,
+    "p1:attribute": 1,
+    "p2:attribute": 1168,
+    "shipped:foreign": 58,
+    "p1:foreign": 58,
+    "p2:foreign": 58,
+    "shipped:element": 9674,
+    "p1:element": 9674,
+    "p2:element": 14426,
+    "p1:noscript": 21032
+   },
+   "patchFindings": {
+    "shipped:patch-unseen-disabled": 31987,
+    "shipped:patch-mode-diff": 14618,
+    "p2:patch-mode-diff": 8699
+   }
+  }
+ }
+}

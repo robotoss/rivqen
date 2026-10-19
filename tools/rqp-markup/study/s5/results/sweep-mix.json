@@ -1,0 +1,1158 @@
+{
+ "source": "mix",
+ "seed": 5,
+ "count": 100000,
+ "date": "2026-10-19",
+ "docs": 100000,
+ "combos": {
+  "base": {
+   "valid": 7414,
+   "gained": 0,
+   "withTemplate": 0,
+   "withNoscript": 0,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 134,
+    "known-p-closure": 39,
+    "depth-template-enabled": 1,
+    "depth-template-disabled": 1
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "M-22.2-template": 36047,
+    "M-22.2-noscript": 33714,
+    "M-24a": 5668,
+    "RQP_MARKUP_STRUCTURE": 11827,
+    "M-24hi": 72,
+    "M-22.2": 697,
+    "M-23": 2101,
+    "RQP_MARKUP_NESTED": 594,
+    "M-24b": 290,
+    "M-22.3": 60,
+    "M-24g": 541,
+    "M-22.1": 84,
+    "RQP_MARKUP_RESERVED": 95,
+    "M-24def": 382,
+    "M-24k": 250,
+    "M-20": 33,
+    "M-24c": 116,
+    "C:M-11-content": 3,
+    "M-24j": 2,
+    "C:M-11-end": 1,
+    "C:M-11-balance": 3,
+    "M-09": 6
+   },
+   "patch": {
+    "blocks": 12998,
+    "rejected": {
+     "shipped:element": 681,
+     "p1:element": 681,
+     "p2:element": 681
+    },
+    "findings": {}
+   },
+   "examples": []
+  },
+  "t1": {
+   "valid": 9737,
+   "gained": 2323,
+   "withTemplate": 2323,
+   "withNoscript": 0,
+   "findings": {},
+   "gainedFindings": {
+    "content-enabled-missing-tpl": 2,
+    "content-disabled-missing-tpl": 2,
+    "content-spec-missing-tpl": 2,
+    "fragment-missing-tpl": 2
+   },
+   "informative": {
+    "known-head-noscript": 166,
+    "known-p-closure": 99,
+    "depth-template-enabled": 1,
+    "depth-template-disabled": 1,
+    "known-reconstruct": 3
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 2,
+   "why": {
+    "M-09.1": 2580,
+    "M-22.2-noscript": 45127,
+    "M-24a": 7240,
+    "RQP_MARKUP_STRUCTURE": 12801,
+    "M-24g-template": 9417,
+    "M-24hi": 103,
+    "M-22.2": 1840,
+    "S5-shadowrootmode": 3411,
+    "M-23": 3943,
+    "RQP_MARKUP_NESTED": 778,
+    "M-24b": 399,
+    "M-22.3": 81,
+    "M-24c": 585,
+    "M-24g": 610,
+    "M-22.1": 108,
+    "RQP_MARKUP_RESERVED": 117,
+    "M-24def": 549,
+    "M-24k": 507,
+    "M-20": 44,
+    "M-24j": 7,
+    "C:M-11-content": 3,
+    "M-09": 9,
+    "C:M-11-end": 1,
+    "C:M-11-balance": 3
+   },
+   "patch": {
+    "blocks": 17912,
+    "rejected": {
+     "shipped:element": 1305,
+     "p1:element": 1305,
+     "p2:element": 1305
+    },
+    "findings": {}
+   },
+   "examples": [
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><b><main data-rq-block=\"b0\"><a href=\"#\"><table><tr><td><template><iframe src=x></iframe><caption></caption><div>f</div></template></td></tr></table><br></a><template class=\"x\"></template>x<img src=x><div>d</div></main></b><p data-rq-block=\"b1\">y</p>",
+     "kind": "gained:content-enabled-missing-tpl",
+     "detail": "<caption> at 144 has no element"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><b><main data-rq-block=\"b0\"><a href=\"#\"><table><tr><td><template><iframe src=x></iframe><caption></caption><div>f</div></template></td></tr></table><br></a><template class=\"x\"></template>x<img src=x><div>d</div></main></b><p data-rq-block=\"b1\">y</p>",
+     "kind": "gained:content-disabled-missing-tpl",
+     "detail": "<caption> at 144 has no element"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><b><main data-rq-block=\"b0\"><a href=\"#\"><table><tr><td><template><iframe src=x></iframe><caption></caption><div>f</div></template></td></tr></table><br></a><template class=\"x\"></template>x<img src=x><div>d</div></main></b><p data-rq-block=\"b1\">y</p>",
+     "kind": "gained:content-spec-missing-tpl",
+     "detail": "<caption> at 144 has no element"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><b><main data-rq-block=\"b0\"><a href=\"#\"><table><tr><td><template><iframe src=x></iframe><caption></caption><div>f</div></template></td></tr></table><br></a><template class=\"x\"></template>x<img src=x><div>d</div></main></b><p data-rq-block=\"b1\">y</p>",
+     "kind": "gained:fragment-missing-tpl",
+     "detail": "block b0: <caption> at 144"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><section data-rq-block=\"b0\"><table><tr><td><nobr>n</nobr><template><div>x</div><ul><li></li></ul><h3>h</h3><caption></caption><div>f</div></template><label>l</label></td></tr></table></section><span data-rq-block=\"b1\">y<a href=\"#\">z</a>w</span>",
+     "kind": "gained:content-enabled-missing-tpl",
+     "detail": "<caption> at 163 has no element"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><section data-rq-block=\"b0\"><table><tr><td><nobr>n</nobr><template><div>x</div><ul><li></li></ul><h3>h</h3><caption></caption><div>f</div></template><label>l</label></td></tr></table></section><span data-rq-block=\"b1\">y<a href=\"#\">z</a>w</span>",
+     "kind": "gained:content-disabled-missing-tpl",
+     "detail": "<caption> at 163 has no element"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><section data-rq-block=\"b0\"><table><tr><td><nobr>n</nobr><template><div>x</div><ul><li></li></ul><h3>h</h3><caption></caption><div>f</div></template><label>l</label></td></tr></table></section><span data-rq-block=\"b1\">y<a href=\"#\">z</a>w</span>",
+     "kind": "gained:content-spec-missing-tpl",
+     "detail": "<caption> at 163 has no element"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><section data-rq-block=\"b0\"><table><tr><td><nobr>n</nobr><template><div>x</div><ul><li></li></ul><h3>h</h3><caption></caption><div>f</div></template><label>l</label></td></tr></table></section><span data-rq-block=\"b1\">y<a href=\"#\">z</a>w</span>",
+     "kind": "gained:fragment-missing-tpl",
+     "detail": "block b0: <caption> at 163"
+    }
+   ]
+  },
+  "t2": {
+   "valid": 9730,
+   "gained": 2316,
+   "withTemplate": 2316,
+   "withNoscript": 0,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 166,
+    "known-p-closure": 87,
+    "depth-template-enabled": 1,
+    "depth-template-disabled": 1,
+    "known-reconstruct": 3
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "S5-template-table-part": 12066,
+    "M-22.2-noscript": 45083,
+    "M-24a": 7240,
+    "RQP_MARKUP_STRUCTURE": 12800,
+    "M-24hi": 103,
+    "M-22.2": 1839,
+    "S5-shadowrootmode": 3410,
+    "M-23": 3933,
+    "RQP_MARKUP_NESTED": 777,
+    "M-24b": 398,
+    "M-22.3": 81,
+    "M-24c": 585,
+    "M-24g": 610,
+    "M-22.1": 108,
+    "RQP_MARKUP_RESERVED": 117,
+    "M-24def": 549,
+    "M-24k": 506,
+    "M-20": 44,
+    "M-24j": 7,
+    "C:M-11-content": 3,
+    "C:M-11-end": 1,
+    "C:M-11-balance": 3,
+    "M-09": 7
+   },
+   "patch": {
+    "blocks": 17897,
+    "rejected": {
+     "shipped:element": 1303,
+     "p1:element": 1303,
+     "p2:element": 1303
+    },
+    "findings": {}
+   },
+   "examples": []
+  },
+  "tu": {
+   "valid": 10697,
+   "gained": 3283,
+   "withTemplate": 3283,
+   "withNoscript": 0,
+   "findings": {},
+   "gainedFindings": {
+    "parse5-enabled-blocks": 767,
+    "content-enabled-missing-tpl": 780,
+    "template-enabled-end": 778,
+    "parse5-disabled-blocks": 767,
+    "content-disabled-missing-tpl": 780,
+    "template-disabled-end": 778,
+    "parse5-spec-blocks": 767,
+    "content-spec-missing-tpl": 780,
+    "template-spec-end": 778,
+    "fragment-extra": 778,
+    "fragment-missing-tpl": 780
+   },
+   "informative": {
+    "known-head-noscript": 186,
+    "known-p-closure": 107,
+    "depth-template-enabled": 1,
+    "depth-template-disabled": 1,
+    "known-reconstruct": 6
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 769,
+   "why": {
+    "M-22.2-noscript": 46979,
+    "M-24a": 7560,
+    "RQP_MARKUP_STRUCTURE": 13004,
+    "M-24g-template": 10658,
+    "M-22.2": 2709,
+    "M-24hi": 106,
+    "M-23": 4267,
+    "RQP_MARKUP_NESTED": 831,
+    "M-24b": 414,
+    "M-22.3": 84,
+    "M-24c": 646,
+    "M-24g": 623,
+    "M-22.1": 113,
+    "RQP_MARKUP_RESERVED": 123,
+    "M-24def": 576,
+    "M-24k": 538,
+    "M-20": 49,
+    "M-24j": 7,
+    "C:M-11-content": 3,
+    "M-09": 9,
+    "C:M-11-end": 1,
+    "C:M-11-balance": 3
+   },
+   "patch": {
+    "blocks": 19927,
+    "rejected": {
+     "shipped:element": 2191,
+     "p1:element": 2191,
+     "p2:element": 2191
+    },
+    "findings": {}
+   },
+   "examples": [
+    {
+     "doc": "<button><section data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></section></button><object><main data-rq-block=\"b1\"><hr><svg><path d=M0></svg><button>b</button></main></object>",
+     "kind": "gained:parse5-enabled-blocks",
+     "detail": "block count: candidate 2, parse5 3"
+    },
+    {
+     "doc": "<button><section data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></section></button><object><main data-rq-block=\"b1\"><hr><svg><path d=M0></svg><button>b</button></main></object>",
+     "kind": "gained:content-enabled-missing-tpl",
+     "detail": "<script> at 66 has no element"
+    },
+    {
+     "doc": "<button><section data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></section></button><object><main data-rq-block=\"b1\"><hr><svg><path d=M0></svg><button>b</button></main></object>",
+     "kind": "gained:template-enabled-end",
+     "detail": "template at 51: end tag 149, tree 74"
+    },
+    {
+     "doc": "<button><section data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></section></button><object><main data-rq-block=\"b1\"><hr><svg><path d=M0></svg><button>b</button></main></object>",
+     "kind": "gained:parse5-disabled-blocks",
+     "detail": "block count: candidate 2, parse5 3"
+    },
+    {
+     "doc": "<button><section data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></section></button><object><main data-rq-block=\"b1\"><hr><svg><path d=M0></svg><button>b</button></main></object>",
+     "kind": "gained:content-disabled-missing-tpl",
+     "detail": "<script> at 66 has no element"
+    },
+    {
+     "doc": "<button><section data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></section></button><object><main data-rq-block=\"b1\"><hr><svg><path d=M0></svg><button>b</button></main></object>",
+     "kind": "gained:template-disabled-end",
+     "detail": "template at 51: end tag 149, tree 74"
+    },
+    {
+     "doc": "<button><section data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></section></button><object><main data-rq-block=\"b1\"><hr><svg><path d=M0></svg><button>b</button></main></object>",
+     "kind": "gained:parse5-spec-blocks",
+     "detail": "block count: candidate 2, parse5 3"
+    },
+    {
+     "doc": "<button><section data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></section></button><object><main data-rq-block=\"b1\"><hr><svg><path d=M0></svg><button>b</button></main></object>",
+     "kind": "gained:content-spec-missing-tpl",
+     "detail": "<script> at 66 has no element"
+    },
+    {
+     "doc": "<button><section data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></section></button><object><main data-rq-block=\"b1\"><hr><svg><path d=M0></svg><button>b</button></main></object>",
+     "kind": "gained:template-spec-end",
+     "detail": "template at 51: end tag 149, tree 74"
+    },
+    {
+     "doc": "<button><section data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></section></button><object><main data-rq-block=\"b1\"><hr><svg><path d=M0></svg><button>b</button></main></object>",
+     "kind": "gained:fragment-extra",
+     "detail": "block b0: elements at 113 are no start tag of the content"
+    },
+    {
+     "doc": "<button><section data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></section></button><object><main data-rq-block=\"b1\"><hr><svg><path d=M0></svg><button>b</button></main></object>",
+     "kind": "gained:fragment-missing-tpl",
+     "detail": "block b0: <script> at 66"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><span><section data-rq-block=\"b0\"><table><tr><td><template><col><style></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></style></template></td></tr></table></section></span>",
+     "kind": "gained:parse5-enabled-blocks",
+     "detail": "block count: candidate 1, parse5 2"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><span><section data-rq-block=\"b0\"><table><tr><td><template><col><style></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></style></template></td></tr></table></section></span>",
+     "kind": "gained:content-enabled-missing-tpl",
+     "detail": "<style> at 120 has no element"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><span><section data-rq-block=\"b0\"><table><tr><td><template><col><style></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></style></template></td></tr></table></section></span>",
+     "kind": "gained:template-enabled-end",
+     "detail": "template at 105: end tag 201, tree 127"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><span><section data-rq-block=\"b0\"><table><tr><td><template><col><style></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></style></template></td></tr></table></section></span>",
+     "kind": "gained:parse5-disabled-blocks",
+     "detail": "block count: candidate 1, parse5 2"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><span><section data-rq-block=\"b0\"><table><tr><td><template><col><style></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></style></template></td></tr></table></section></span>",
+     "kind": "gained:content-disabled-missing-tpl",
+     "detail": "<style> at 120 has no element"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><span><section data-rq-block=\"b0\"><table><tr><td><template><col><style></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></style></template></td></tr></table></section></span>",
+     "kind": "gained:template-disabled-end",
+     "detail": "template at 105: end tag 201, tree 127"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><span><section data-rq-block=\"b0\"><table><tr><td><template><col><style></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></style></template></td></tr></table></section></span>",
+     "kind": "gained:parse5-spec-blocks",
+     "detail": "block count: candidate 1, parse5 2"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><span><section data-rq-block=\"b0\"><table><tr><td><template><col><style></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></style></template></td></tr></table></section></span>",
+     "kind": "gained:content-spec-missing-tpl",
+     "detail": "<style> at 120 has no element"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><span><section data-rq-block=\"b0\"><table><tr><td><template><col><style></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></style></template></td></tr></table></section></span>",
+     "kind": "gained:template-spec-end",
+     "detail": "template at 105: end tag 201, tree 127"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><span><section data-rq-block=\"b0\"><table><tr><td><template><col><style></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></style></template></td></tr></table></section></span>",
+     "kind": "gained:fragment-extra",
+     "detail": "block b0: elements at 166 are no start tag of the content"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><span><section data-rq-block=\"b0\"><table><tr><td><template><col><style></template></td></tr></table></section><p data-rq-block=\"z0\">f</p></style></template></td></tr></table></section></span>",
+     "kind": "gained:fragment-missing-tpl",
+     "detail": "block b0: <style> at 120"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><table><tr><td><article data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></article><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></article></td></tr></table><div data-rq-block=\"b1\">y<a href=\"#\">z</a>w</div>",
+     "kind": "gained:parse5-enabled-blocks",
+     "detail": "block count: candidate 2, parse5 3"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><table><tr><td><article data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></article><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></article></td></tr></table><div data-rq-block=\"b1\">y<a href=\"#\">z</a>w</div>",
+     "kind": "gained:content-enabled-missing-tpl",
+     "detail": "<script> at 129 has no element"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><table><tr><td><article data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></article><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></article></td></tr></table><div data-rq-block=\"b1\">y<a href=\"#\">z</a>w</div>",
+     "kind": "gained:template-enabled-end",
+     "detail": "template at 114: end tag 212, tree 137"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><table><tr><td><article data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></article><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></article></td></tr></table><div data-rq-block=\"b1\">y<a href=\"#\">z</a>w</div>",
+     "kind": "gained:parse5-disabled-blocks",
+     "detail": "block count: candidate 2, parse5 3"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><table><tr><td><article data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></article><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></article></td></tr></table><div data-rq-block=\"b1\">y<a href=\"#\">z</a>w</div>",
+     "kind": "gained:content-disabled-missing-tpl",
+     "detail": "<script> at 129 has no element"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><table><tr><td><article data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></article><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></article></td></tr></table><div data-rq-block=\"b1\">y<a href=\"#\">z</a>w</div>",
+     "kind": "gained:template-disabled-end",
+     "detail": "template at 114: end tag 212, tree 137"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><table><tr><td><article data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></article><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></article></td></tr></table><div data-rq-block=\"b1\">y<a href=\"#\">z</a>w</div>",
+     "kind": "gained:parse5-spec-blocks",
+     "detail": "block count: candidate 2, parse5 3"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><table><tr><td><article data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></article><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></article></td></tr></table><div data-rq-block=\"b1\">y<a href=\"#\">z</a>w</div>",
+     "kind": "gained:content-spec-missing-tpl",
+     "detail": "<script> at 129 has no element"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><table><tr><td><article data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></article><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></article></td></tr></table><div data-rq-block=\"b1\">y<a href=\"#\">z</a>w</div>",
+     "kind": "gained:template-spec-end",
+     "detail": "template at 114: end tag 212, tree 137"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><table><tr><td><article data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></article><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></article></td></tr></table><div data-rq-block=\"b1\">y<a href=\"#\">z</a>w</div>",
+     "kind": "gained:fragment-extra",
+     "detail": "block b0: elements at 176 are no start tag of the content"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><table><tr><td><article data-rq-block=\"b0\"><table><tr><td><template><col><script></template></td></tr></table></article><p data-rq-block=\"z0\">f</p></script></template></td></tr></table></article></td></tr></table><div data-rq-block=\"b1\">y<a href=\"#\">z</a>w</div>",
+     "kind": "gained:fragment-missing-tpl",
+     "detail": "block b0: <script> at 129"
+    }
+   ]
+  },
+  "n1": {
+   "valid": 11488,
+   "gained": 4074,
+   "withTemplate": 0,
+   "withNoscript": 4074,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 192,
+    "known-p-closure": 122,
+    "known-reconstruct": 21,
+    "depth-template-enabled": 1,
+    "depth-template-disabled": 1
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "M-22.2-template": 45109,
+    "C:M-11-balance": 3285,
+    "C:M-11-content": 7990,
+    "M-24a": 6880,
+    "RQP_MARKUP_STRUCTURE": 12614,
+    "M-24hi": 95,
+    "C:M-24a": 1926,
+    "M-22.2": 892,
+    "M-23": 3049,
+    "M-24k": 548,
+    "C:M-11-end": 681,
+    "M-24b": 379,
+    "RQP_MARKUP_NESTED": 770,
+    "C:M-22.2": 903,
+    "C:M-24c": 512,
+    "RQP_MARKUP_RESERVED": 464,
+    "C:M-24b": 186,
+    "C:M-24def": 234,
+    "M-22.3": 85,
+    "C:M-24hi": 301,
+    "M-24g": 690,
+    "M-22.1": 98,
+    "C:M-24k": 114,
+    "M-24def": 490,
+    "M-20": 45,
+    "M-24c": 150,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 1,
+    "M-09": 7,
+    "C:M-22.1": 2,
+    "C:M-22.3": 6,
+    "C:M-24j": 4,
+    "M-24j": 2
+   },
+   "patch": {
+    "blocks": 21672,
+    "rejected": {
+     "p1:noscript": 4106,
+     "shipped:element": 1415,
+     "p1:element": 1415,
+     "p2:element": 2261,
+     "p2:attribute": 203
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 5667,
+     "shipped:patch-mode-diff": 2882,
+     "p2:patch-mode-diff": 1833
+    }
+   },
+   "examples": [
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <form> at 124"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <input> at 130"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <b> at 116"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<noscript><img src=x></noscript><span><div data-rq-block=\"b0\"><noscript><form><input></form></noscript><table><caption>c</caption></table><table><caption>c</caption></table></div></span>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<noscript><img src=x></noscript><span><div data-rq-block=\"b0\"><noscript><form><input></form></noscript><table><caption>c</caption></table><table><caption>c</caption></table></div></span>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  },
+  "n2": {
+   "valid": 11403,
+   "gained": 3989,
+   "withTemplate": 0,
+   "withNoscript": 3989,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 191,
+    "known-p-closure": 112,
+    "known-reconstruct": 21,
+    "depth-template-enabled": 1,
+    "depth-template-disabled": 1
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "M-22.2-template": 44898,
+    "C:M-11-balance": 3153,
+    "C:M-11-content": 7829,
+    "M-24a": 6864,
+    "RQP_MARKUP_STRUCTURE": 12592,
+    "C:S5-noscript-pclose": 786,
+    "M-24hi": 95,
+    "C:M-24a": 1924,
+    "M-22.2": 888,
+    "M-23": 3023,
+    "M-24k": 546,
+    "C:M-11-end": 668,
+    "M-24b": 377,
+    "RQP_MARKUP_NESTED": 764,
+    "C:M-22.2": 891,
+    "C:M-24c": 472,
+    "RQP_MARKUP_RESERVED": 461,
+    "C:M-24def": 234,
+    "M-22.3": 83,
+    "C:M-24hi": 299,
+    "M-24g": 689,
+    "M-22.1": 98,
+    "C:M-24k": 95,
+    "M-24def": 490,
+    "C:M-24b": 165,
+    "M-20": 45,
+    "M-24c": 146,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 1,
+    "M-09": 7,
+    "C:M-22.1": 2,
+    "C:M-22.3": 6,
+    "C:M-24j": 4,
+    "M-24j": 2
+   },
+   "patch": {
+    "blocks": 21479,
+    "rejected": {
+     "p1:noscript": 4022,
+     "shipped:element": 1388,
+     "p1:element": 1388,
+     "p2:element": 2207,
+     "p2:attribute": 198
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 5440,
+     "shipped:patch-mode-diff": 2803,
+     "p2:patch-mode-diff": 1786
+    }
+   },
+   "examples": [
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <b> at 58"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <div> at 42"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<noscript><img src=x></noscript><span><div data-rq-block=\"b0\"><noscript><form><input></form></noscript><table><caption>c</caption></table><table><caption>c</caption></table></div></span>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <form> at 72"
+    },
+    {
+     "doc": "<noscript><img src=x></noscript><span><div data-rq-block=\"b0\"><noscript><form><input></form></noscript><table><caption>c</caption></table><table><caption>c</caption></table></div></span>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<noscript><img src=x></noscript><span><div data-rq-block=\"b0\"><noscript><form><input></form></noscript><table><caption>c</caption></table><table><caption>c</caption></table></div></span>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><nobr><main data-rq-block=\"b0\"></main></nobr><p data-rq-block=\"b1\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b1"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><nobr><main data-rq-block=\"b0\"></main></nobr><p data-rq-block=\"b1\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b1"
+    }
+   ]
+  },
+  "nu": {
+   "valid": 11989,
+   "gained": 4575,
+   "withTemplate": 0,
+   "withNoscript": 4575,
+   "findings": {},
+   "gainedFindings": {
+    "parse5-disabled-blocks": 98,
+    "content-disabled-outside": 66,
+    "noscript-end-block": 2,
+    "noscript-outside-block": 3
+   },
+   "informative": {
+    "known-head-noscript": 197,
+    "known-p-closure": 467,
+    "known-reconstruct": 27,
+    "depth-template-enabled": 1,
+    "depth-template-disabled": 1
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 98,
+   "why": {
+    "M-22.2-template": 46357,
+    "C:M-11-balance": 4007,
+    "C:M-11-content": 8893,
+    "M-24a": 7218,
+    "RQP_MARKUP_STRUCTURE": 12727,
+    "M-24hi": 99,
+    "M-22.2": 919,
+    "M-23": 3171,
+    "M-24k": 557,
+    "C:M-11-end": 760,
+    "M-24b": 387,
+    "RQP_MARKUP_NESTED": 792,
+    "RQP_MARKUP_RESERVED": 502,
+    "M-22.3": 91,
+    "M-24g": 709,
+    "M-22.1": 99,
+    "M-24def": 508,
+    "M-20": 46,
+    "M-24c": 155,
+    "C:M-09": 2,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 1,
+    "M-09": 7,
+    "C:M-22.1": 2,
+    "M-24j": 2
+   },
+   "patch": {
+    "blocks": 22789,
+    "rejected": {
+     "p1:noscript": 4641,
+     "shipped:element": 1530,
+     "p1:element": 1530,
+     "p2:element": 2529,
+     "p2:attribute": 238
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 7114,
+     "shipped:patch-mode-diff": 3391,
+     "p2:patch-mode-diff": 2154
+    }
+   },
+   "examples": [
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <form> at 124"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <input> at 130"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <b> at 116"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<noscript><img src=x></noscript><span><div data-rq-block=\"b0\"><noscript><form><input></form></noscript><table><caption>c</caption></table><table><caption>c</caption></table></div></span>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<noscript><img src=x></noscript><span><div data-rq-block=\"b0\"><noscript><form><input></form></noscript><table><caption>c</caption></table><table><caption>c</caption></table></div></span>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<form><div data-rq-block=\"b0\"><noscript><script>a()</script></noscript></div></form><table><tr><td><p data-rq-block=\"b1\"><br><input type=hidden></p></td></tr></table><b><p data-rq-block=\"b2\"><noscript><div>x</div></noscript><ruby>r<rt>t</rt></ruby></p></b><div data-rq-block=\"b3\">y</div>",
+     "kind": "gained:parse5-disabled-blocks",
+     "detail": "block 2 (\"b2\") end: candidate 248, parse5 has no end tag (implied or EOF)"
+    },
+    {
+     "doc": "<form><div data-rq-block=\"b0\"><noscript><script>a()</script></noscript></div></form><table><tr><td><p data-rq-block=\"b1\"><br><input type=hidden></p></td></tr></table><b><p data-rq-block=\"b2\"><noscript><div>x</div></noscript><ruby>r<rt>t</rt></ruby></p></b><div data-rq-block=\"b3\">y</div>",
+     "kind": "gained:content-disabled-outside",
+     "detail": "<ruby> at 224 is not inside block b2"
+    },
+    {
+     "doc": "<form><div data-rq-block=\"b0\"><noscript><script>a()</script></noscript></div></form><table><tr><td><p data-rq-block=\"b1\"><br><input type=hidden></p></td></tr></table><b><p data-rq-block=\"b2\"><noscript><div>x</div></noscript><ruby>r<rt>t</rt></ruby></p></b><div data-rq-block=\"b3\">y</div>",
+     "kind": "gained:content-disabled-outside",
+     "detail": "<rt> at 231 is not inside block b2"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><form><input></form>&amp;</noscript><math><mi>x</mi></math></p>",
+     "kind": "gained:parse5-disabled-blocks",
+     "detail": "block 0 (\"b0\") end: candidate 91, parse5 has no end tag (implied or EOF)"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><form><input></form>&amp;</noscript><math><mi>x</mi></math></p>",
+     "kind": "gained:content-disabled-outside",
+     "detail": "<math> at 68 is not inside block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><form><p data-rq-block=\"b0\"><noscript><ul><li>x</li></ul></noscript>x<label>l</label></p></form><ul><li><section data-rq-block=\"b1\"><!--c--></section></li></ul><ul><li><main data-rq-block=\"b2\">&amp;<div>d</div><div>d</div><b>b</b></main></li></ul><span data-rq-block=\"b3\"><noscript><img src=x></noscript></span>",
+     "kind": "gained:parse5-disabled-blocks",
+     "detail": "block 0 (\"b0\") end: candidate 141, parse5 has no end tag (implied or EOF)"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><button>b</button></noscript></div></button>",
+     "kind": "gained:noscript-end-block",
+     "detail": "noscript at 32: end tag 60, tree null"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><button>b</button></noscript></div></button>",
+     "kind": "gained:noscript-outside-block",
+     "detail": "<button> at 42 is not inside noscript at 32"
+    },
+    {
+     "doc": "<button><h2 data-rq-block=\"b0\"><noscript><img src=x><button>b</button><form></form></noscript></h2></button><ul><li><h2 data-rq-block=\"b1\"><a href=\"#\">a</a><noscript></noscript><!--c--><math><mi>x</mi></math></h2></li></ul><table><tr><td><div data-rq-block=\"b2\"></div></td></tr></table>",
+     "kind": "gained:noscript-end-block",
+     "detail": "noscript at 31: end tag 83, tree null"
+    },
+    {
+     "doc": "<button><h2 data-rq-block=\"b0\"><noscript><img src=x><button>b</button><form></form></noscript></h2></button><ul><li><h2 data-rq-block=\"b1\"><a href=\"#\">a</a><noscript></noscript><!--c--><math><mi>x</mi></math></h2></li></ul><table><tr><td><div data-rq-block=\"b2\"></div></td></tr></table>",
+     "kind": "gained:noscript-outside-block",
+     "detail": "<button> at 52 is not inside noscript at 31"
+    },
+    {
+     "doc": "<button><h2 data-rq-block=\"b0\"><noscript><img src=x><button>b</button><form></form></noscript></h2></button><ul><li><h2 data-rq-block=\"b1\"><a href=\"#\">a</a><noscript></noscript><!--c--><math><mi>x</mi></math></h2></li></ul><table><tr><td><div data-rq-block=\"b2\"></div></td></tr></table>",
+     "kind": "gained:noscript-outside-block",
+     "detail": "<form> at 70 is not inside noscript at 31"
+    }
+   ]
+  },
+  "t1n1": {
+   "valid": 16750,
+   "gained": 9336,
+   "withTemplate": 5262,
+   "withNoscript": 7013,
+   "findings": {},
+   "gainedFindings": {
+    "content-enabled-missing-tpl": 6,
+    "content-disabled-missing-tpl": 6,
+    "content-spec-missing-tpl": 7,
+    "fragment-missing-tpl": 6,
+    "content-enabled-parent-tpl": 1,
+    "template-enabled-end": 1,
+    "content-disabled-parent-tpl": 1,
+    "template-disabled-end": 1,
+    "fragment-parent-tpl": 1
+   },
+   "informative": {
+    "known-head-noscript": 274,
+    "known-p-closure": 368,
+    "depth-template-enabled": 3,
+    "depth-template-disabled": 3,
+    "known-reconstruct": 69
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 6,
+   "why": {
+    "M-09.1": 2785,
+    "C:M-11-balance": 4877,
+    "C:M-11-content": 11138,
+    "M-24a": 9452,
+    "RQP_MARKUP_STRUCTURE": 14299,
+    "M-24g-template": 13594,
+    "C:M-24b": 258,
+    "M-24hi": 148,
+    "C:M-24a": 2534,
+    "M-22.2": 2603,
+    "C:M-22.2": 1313,
+    "S5-shadowrootmode": 4742,
+    "M-23": 6677,
+    "M-24k": 1023,
+    "C:M-11-end": 983,
+    "M-20": 66,
+    "M-24def": 784,
+    "M-24b": 559,
+    "RQP_MARKUP_NESTED": 1096,
+    "C:M-24c": 738,
+    "RQP_MARKUP_RESERVED": 641,
+    "M-24c": 844,
+    "M-24g": 825,
+    "C:M-24hi": 447,
+    "C:M-24def": 353,
+    "M-22.3": 119,
+    "M-22.1": 144,
+    "C:M-24k": 165,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 1,
+    "M-09": 13,
+    "C:M-22.3": 8,
+    "C:M-22.1": 3,
+    "M-24j": 9,
+    "C:M-24j": 9
+   },
+   "patch": {
+    "blocks": 33552,
+    "rejected": {
+     "p1:noscript": 6798,
+     "shipped:element": 3197,
+     "p1:element": 3197,
+     "p2:element": 4660,
+     "p2:attribute": 339
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 9738,
+     "shipped:patch-mode-diff": 4691,
+     "p2:patch-mode-diff": 2889
+    }
+   },
+   "examples": [
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <form> at 124"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <input> at 130"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <b> at 116"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<p><b class=z>x</p><div data-rq-block=\"b0\"><template id=\"row\"><p>p</p><template><script>a</script><svg><path d=M0></svg></template></template><style>a{}</style><noscript><img src=x onerror=alert(1)><img src=x><iframe src=y></iframe></noscript></div><a href=\"#\"><div data-rq-block=\"b1\"></div></a><ruby><article data-rq-block=\"b2\"><noscript><b>x</b></noscript><noscript></noscript></article></ruby>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b2"
+    },
+    {
+     "doc": "<p><b class=z>x</p><div data-rq-block=\"b0\"><template id=\"row\"><p>p</p><template><script>a</script><svg><path d=M0></svg></template></template><style>a{}</style><noscript><img src=x onerror=alert(1)><img src=x><iframe src=y></iframe></noscript></div><a href=\"#\"><div data-rq-block=\"b1\"></div></a><ruby><article data-rq-block=\"b2\"><noscript><b>x</b></noscript><noscript></noscript></article></ruby>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b2"
+    },
+    {
+     "doc": "<b><div data-rq-block=\"b0\"><math><mi>x</mi></math><template class=\"x\"></template><table><tr><td><noscript><img src=x><a href=\"#\"><img src=x></a><picture><img src=x></picture></noscript><object>o</object></td></tr></table><p>p</p></div></b><p><b class=z>x</p><div data-rq-block=\"b1\"><template id=\"row\"><a href=\"#\">a</a></template><template><form></form><table><tr><td><h3>h</h3><template><a href=\"#\">a</a></template><dl><dt>t</dt><dd>d</dd></dl></td></tr></table></template><table><tr><td><template><noscript></noscript><svg><path d=M0></svg><colgroup></colgroup><p>q</p></template></td></tr></table></div>",
+     "kind": "gained:content-enabled-missing-tpl",
+     "detail": "<colgroup> at 541 has no element"
+    },
+    {
+     "doc": "<b><div data-rq-block=\"b0\"><math><mi>x</mi></math><template class=\"x\"></template><table><tr><td><noscript><img src=x><a href=\"#\"><img src=x></a><picture><img src=x></picture></noscript><object>o</object></td></tr></table><p>p</p></div></b><p><b class=z>x</p><div data-rq-block=\"b1\"><template id=\"row\"><a href=\"#\">a</a></template><template><form></form><table><tr><td><h3>h</h3><template><a href=\"#\">a</a></template><dl><dt>t</dt><dd>d</dd></dl></td></tr></table></template><table><tr><td><template><noscript></noscript><svg><path d=M0></svg><colgroup></colgroup><p>q</p></template></td></tr></table></div>",
+     "kind": "gained:content-disabled-missing-tpl",
+     "detail": "<colgroup> at 541 has no element"
+    },
+    {
+     "doc": "<b><div data-rq-block=\"b0\"><math><mi>x</mi></math><template class=\"x\"></template><table><tr><td><noscript><img src=x><a href=\"#\"><img src=x></a><picture><img src=x></picture></noscript><object>o</object></td></tr></table><p>p</p></div></b><p><b class=z>x</p><div data-rq-block=\"b1\"><template id=\"row\"><a href=\"#\">a</a></template><template><form></form><table><tr><td><h3>h</h3><template><a href=\"#\">a</a></template><dl><dt>t</dt><dd>d</dd></dl></td></tr></table></template><table><tr><td><template><noscript></noscript><svg><path d=M0></svg><colgroup></colgroup><p>q</p></template></td></tr></table></div>",
+     "kind": "gained:content-spec-missing-tpl",
+     "detail": "<colgroup> at 541 has no element"
+    },
+    {
+     "doc": "<b><div data-rq-block=\"b0\"><math><mi>x</mi></math><template class=\"x\"></template><table><tr><td><noscript><img src=x><a href=\"#\"><img src=x></a><picture><img src=x></picture></noscript><object>o</object></td></tr></table><p>p</p></div></b><p><b class=z>x</p><div data-rq-block=\"b1\"><template id=\"row\"><a href=\"#\">a</a></template><template><form></form><table><tr><td><h3>h</h3><template><a href=\"#\">a</a></template><dl><dt>t</dt><dd>d</dd></dl></td></tr></table></template><table><tr><td><template><noscript></noscript><svg><path d=M0></svg><colgroup></colgroup><p>q</p></template></td></tr></table></div>",
+     "kind": "gained:fragment-missing-tpl",
+     "detail": "block b1: <colgroup> at 541"
+    },
+    {
+     "doc": "<b><span data-rq-block=\"b0\"></span></b><dl><dd><div data-rq-block=\"b1\"><table><tr><td><hr><template class=\"x\"><span>s</span><tfoot><tr></tr></tfoot></template><template id=\"t\"><button><em>e</em><ruby>r<rt>t</rt></ruby></button><hr></template></td></tr></table><noscript><image src=x></noscript></div></dd></dl><object><p data-rq-block=\"b2\"><template id=\"t\"></template></p></object><span data-rq-block=\"b3\">y<a href=\"#\">z</a>w</span>",
+     "kind": "gained:content-enabled-missing-tpl",
+     "detail": "<tfoot> at 124 has no element"
+    },
+    {
+     "doc": "<b><span data-rq-block=\"b0\"></span></b><dl><dd><div data-rq-block=\"b1\"><table><tr><td><hr><template class=\"x\"><span>s</span><tfoot><tr></tr></tfoot></template><template id=\"t\"><button><em>e</em><ruby>r<rt>t</rt></ruby></button><hr></template></td></tr></table><noscript><image src=x></noscript></div></dd></dl><object><p data-rq-block=\"b2\"><template id=\"t\"></template></p></object><span data-rq-block=\"b3\">y<a href=\"#\">z</a>w</span>",
+     "kind": "gained:content-enabled-missing-tpl",
+     "detail": "<tr> at 131 has no element"
+    },
+    {
+     "doc": "<b><span data-rq-block=\"b0\"></span></b><dl><dd><div data-rq-block=\"b1\"><table><tr><td><hr><template class=\"x\"><span>s</span><tfoot><tr></tr></tfoot></template><template id=\"t\"><button><em>e</em><ruby>r<rt>t</rt></ruby></button><hr></template></td></tr></table><noscript><image src=x></noscript></div></dd></dl><object><p data-rq-block=\"b2\"><template id=\"t\"></template></p></object><span data-rq-block=\"b3\">y<a href=\"#\">z</a>w</span>",
+     "kind": "gained:content-disabled-missing-tpl",
+     "detail": "<tfoot> at 124 has no element"
+    },
+    {
+     "doc": "<b><span data-rq-block=\"b0\"></span></b><dl><dd><div data-rq-block=\"b1\"><table><tr><td><hr><template class=\"x\"><span>s</span><tfoot><tr></tr></tfoot></template><template id=\"t\"><button><em>e</em><ruby>r<rt>t</rt></ruby></button><hr></template></td></tr></table><noscript><image src=x></noscript></div></dd></dl><object><p data-rq-block=\"b2\"><template id=\"t\"></template></p></object><span data-rq-block=\"b3\">y<a href=\"#\">z</a>w</span>",
+     "kind": "gained:content-disabled-missing-tpl",
+     "detail": "<tr> at 131 has no element"
+    },
+    {
+     "doc": "<b><span data-rq-block=\"b0\"></span></b><dl><dd><div data-rq-block=\"b1\"><table><tr><td><hr><template class=\"x\"><span>s</span><tfoot><tr></tr></tfoot></template><template id=\"t\"><button><em>e</em><ruby>r<rt>t</rt></ruby></button><hr></template></td></tr></table><noscript><image src=x></noscript></div></dd></dl><object><p data-rq-block=\"b2\"><template id=\"t\"></template></p></object><span data-rq-block=\"b3\">y<a href=\"#\">z</a>w</span>",
+     "kind": "gained:content-spec-missing-tpl",
+     "detail": "<tfoot> at 124 has no element"
+    },
+    {
+     "doc": "<b><span data-rq-block=\"b0\"></span></b><dl><dd><div data-rq-block=\"b1\"><table><tr><td><hr><template class=\"x\"><span>s</span><tfoot><tr></tr></tfoot></template><template id=\"t\"><button><em>e</em><ruby>r<rt>t</rt></ruby></button><hr></template></td></tr></table><noscript><image src=x></noscript></div></dd></dl><object><p data-rq-block=\"b2\"><template id=\"t\"></template></p></object><span data-rq-block=\"b3\">y<a href=\"#\">z</a>w</span>",
+     "kind": "gained:content-spec-missing-tpl",
+     "detail": "<tr> at 131 has no element"
+    },
+    {
+     "doc": "<b><span data-rq-block=\"b0\"></span></b><dl><dd><div data-rq-block=\"b1\"><table><tr><td><hr><template class=\"x\"><span>s</span><tfoot><tr></tr></tfoot></template><template id=\"t\"><button><em>e</em><ruby>r<rt>t</rt></ruby></button><hr></template></td></tr></table><noscript><image src=x></noscript></div></dd></dl><object><p data-rq-block=\"b2\"><template id=\"t\"></template></p></object><span data-rq-block=\"b3\">y<a href=\"#\">z</a>w</span>",
+     "kind": "gained:fragment-missing-tpl",
+     "detail": "block b1: <tfoot> at 124"
+    },
+    {
+     "doc": "<b><span data-rq-block=\"b0\"></span></b><dl><dd><div data-rq-block=\"b1\"><table><tr><td><hr><template class=\"x\"><span>s</span><tfoot><tr></tr></tfoot></template><template id=\"t\"><button><em>e</em><ruby>r<rt>t</rt></ruby></button><hr></template></td></tr></table><noscript><image src=x></noscript></div></dd></dl><object><p data-rq-block=\"b2\"><template id=\"t\"></template></p></object><span data-rq-block=\"b3\">y<a href=\"#\">z</a>w</span>",
+     "kind": "gained:fragment-missing-tpl",
+     "detail": "block b1: <tr> at 131"
+    },
+    {
+     "doc": "<h1><div data-rq-block=\"b0\"><table><tr><td><b>b</b></td></tr></table><table><tr><td><button><div></div><div><noscript></noscript><img src=x><!--c--></div><template><td><template><td>z</td></template></td><caption>c</caption></template></button></td></tr></table><nobr>n</nobr><template></template><noscript><p>x</p><form><input></form><a href=\"javascript:x\">j</a></noscript></div></h1><p data-rq-block=\"b1\">y<nobr>z</nobr>w</p>",
+     "kind": "gained:content-enabled-parent-tpl",
+     "detail": "<caption> at 204: token parent 154, tree 69"
+    },
+    {
+     "doc": "<h1><div data-rq-block=\"b0\"><table><tr><td><b>b</b></td></tr></table><table><tr><td><button><div></div><div><noscript></noscript><img src=x><!--c--></div><template><td><template><td>z</td></template></td><caption>c</caption></template></button></td></tr></table><nobr>n</nobr><template></template><noscript><p>x</p><form><input></form><a href=\"javascript:x\">j</a></noscript></div></h1><p data-rq-block=\"b1\">y<nobr>z</nobr>w</p>",
+     "kind": "gained:template-enabled-end",
+     "detail": "template at 154: end tag 224, tree null"
+    },
+    {
+     "doc": "<h1><div data-rq-block=\"b0\"><table><tr><td><b>b</b></td></tr></table><table><tr><td><button><div></div><div><noscript></noscript><img src=x><!--c--></div><template><td><template><td>z</td></template></td><caption>c</caption></template></button></td></tr></table><nobr>n</nobr><template></template><noscript><p>x</p><form><input></form><a href=\"javascript:x\">j</a></noscript></div></h1><p data-rq-block=\"b1\">y<nobr>z</nobr>w</p>",
+     "kind": "gained:content-disabled-parent-tpl",
+     "detail": "<caption> at 204: token parent 154, tree 69"
+    },
+    {
+     "doc": "<h1><div data-rq-block=\"b0\"><table><tr><td><b>b</b></td></tr></table><table><tr><td><button><div></div><div><noscript></noscript><img src=x><!--c--></div><template><td><template><td>z</td></template></td><caption>c</caption></template></button></td></tr></table><nobr>n</nobr><template></template><noscript><p>x</p><form><input></form><a href=\"javascript:x\">j</a></noscript></div></h1><p data-rq-block=\"b1\">y<nobr>z</nobr>w</p>",
+     "kind": "gained:template-disabled-end",
+     "detail": "template at 154: end tag 224, tree null"
+    },
+    {
+     "doc": "<h1><div data-rq-block=\"b0\"><table><tr><td><b>b</b></td></tr></table><table><tr><td><button><div></div><div><noscript></noscript><img src=x><!--c--></div><template><td><template><td>z</td></template></td><caption>c</caption></template></button></td></tr></table><nobr>n</nobr><template></template><noscript><p>x</p><form><input></form><a href=\"javascript:x\">j</a></noscript></div></h1><p data-rq-block=\"b1\">y<nobr>z</nobr>w</p>",
+     "kind": "gained:fragment-parent-tpl",
+     "detail": "block b0: <caption> at 204: token parent 154, fragment 69"
+    }
+   ]
+  },
+  "t2n2": {
+   "valid": 16574,
+   "gained": 9160,
+   "withTemplate": 5171,
+   "withNoscript": 6844,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 270,
+    "known-p-closure": 289,
+    "known-reconstruct": 69,
+    "depth-template-enabled": 1,
+    "depth-template-disabled": 1
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "S5-template-table-part": 16407,
+    "C:M-11-balance": 4694,
+    "C:M-11-content": 10909,
+    "M-24a": 9421,
+    "RQP_MARKUP_STRUCTURE": 14257,
+    "C:S5-noscript-pclose": 990,
+    "C:M-24b": 233,
+    "M-24hi": 147,
+    "C:M-24a": 2528,
+    "M-22.2": 2585,
+    "C:M-22.2": 1297,
+    "S5-shadowrootmode": 4717,
+    "M-23": 6572,
+    "M-24k": 1014,
+    "C:M-11-end": 961,
+    "M-20": 66,
+    "M-24def": 780,
+    "M-24b": 555,
+    "RQP_MARKUP_NESTED": 1085,
+    "C:M-24c": 688,
+    "RQP_MARKUP_RESERVED": 633,
+    "M-24c": 831,
+    "M-24g": 823,
+    "C:M-24hi": 441,
+    "C:M-24def": 350,
+    "M-22.3": 117,
+    "M-22.1": 144,
+    "C:M-24k": 142,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 1,
+    "M-09": 9,
+    "C:M-22.3": 8,
+    "C:M-22.1": 3,
+    "M-24j": 9,
+    "C:M-24j": 9
+   },
+   "patch": {
+    "blocks": 33142,
+    "rejected": {
+     "p1:noscript": 6629,
+     "shipped:element": 3129,
+     "p1:element": 3129,
+     "p2:element": 4535,
+     "p2:attribute": 330
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 9290,
+     "shipped:patch-mode-diff": 4537,
+     "p2:patch-mode-diff": 2801
+    }
+   },
+   "examples": [
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <b> at 58"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <div> at 42"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<p><b class=z>x</p><div data-rq-block=\"b0\"><template id=\"row\"><p>p</p><template><script>a</script><svg><path d=M0></svg></template></template><style>a{}</style><noscript><img src=x onerror=alert(1)><img src=x><iframe src=y></iframe></noscript></div><a href=\"#\"><div data-rq-block=\"b1\"></div></a><ruby><article data-rq-block=\"b2\"><noscript><b>x</b></noscript><noscript></noscript></article></ruby>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b2: <b> at 339"
+    },
+    {
+     "doc": "<p><b class=z>x</p><div data-rq-block=\"b0\"><template id=\"row\"><p>p</p><template><script>a</script><svg><path d=M0></svg></template></template><style>a{}</style><noscript><img src=x onerror=alert(1)><img src=x><iframe src=y></iframe></noscript></div><a href=\"#\"><div data-rq-block=\"b1\"></div></a><ruby><article data-rq-block=\"b2\"><noscript><b>x</b></noscript><noscript></noscript></article></ruby>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b2"
+    },
+    {
+     "doc": "<p><b class=z>x</p><div data-rq-block=\"b0\"><template id=\"row\"><p>p</p><template><script>a</script><svg><path d=M0></svg></template></template><style>a{}</style><noscript><img src=x onerror=alert(1)><img src=x><iframe src=y></iframe></noscript></div><a href=\"#\"><div data-rq-block=\"b1\"></div></a><ruby><article data-rq-block=\"b2\"><noscript><b>x</b></noscript><noscript></noscript></article></ruby>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b2"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><b><h2 data-rq-block=\"b0\"><noscript><img src=x></noscript><button>b</button><template><b></b></template></h2></b><button><div data-rq-block=\"b1\"><b>b</b><dl><dt>t</dt><dd>d</dd></dl></div></button><ul><li><div data-rq-block=\"b2\"></div></li></ul><span data-rq-block=\"b3\"><b>y</b></span>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><b><h2 data-rq-block=\"b0\"><noscript><img src=x></noscript><button>b</button><template><b></b></template></h2></b><button><div data-rq-block=\"b1\"><b>b</b><dl><dt>t</dt><dd>d</dd></dl></div></button><ul><li><div data-rq-block=\"b2\"></div></li></ul><span data-rq-block=\"b3\"><b>y</b></span>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  }
+ },
+ "monotonic": 0,
+ "examples": []
+}

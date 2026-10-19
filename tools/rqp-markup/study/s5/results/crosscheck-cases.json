@@ -1,0 +1,311 @@
+{
+ "date": "2026-10-19",
+ "command": "node src/cli.mjs cases --cases cases/s5-cases.json --only node --scripting both",
+ "candidate": "node (pre-S5 rules)",
+ "columns": [
+  "case",
+  "parse5 (scripting on)",
+  "parse5 (scripting off)",
+  "depth",
+  "depth (scripting off)",
+  "node"
+ ],
+ "rows": [
+  {
+   "case": "S5-T-basic",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 4, stack 6, depth 4",
+   "depth (scripting off)": "max D 4, stack 6, depth 4",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-nested",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 3, stack 5, depth 4",
+   "depth (scripting off)": "max D 3, stack 5, depth 4",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-shadowrootmode-open",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 3, stack 5, depth 4",
+   "depth (scripting off)": "max D 3, stack 5, depth 4",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-shadowrootmode-upper",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 2, stack 4, depth 4",
+   "depth (scripting off)": "max D 2, stack 4, depth 4",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-shadowrootmode-svg",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 3, stack 5, depth 5",
+   "depth (scripting off)": "max D 3, stack 5, depth 5",
+   "node": "valid 2"
+  },
+  {
+   "case": "S5-T-for",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 2, stack 4, depth 4 classes M-10-template-for",
+   "depth (scripting off)": "max D 2, stack 4, depth 4 classes M-10-template-for",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-rows-in-cell",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 8, stack 10, depth 7",
+   "depth (scripting off)": "max D 8, stack 10, depth 7",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-rows-no-table",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 4, stack 6, depth 4",
+   "depth (scripting off)": "max D 4, stack 6, depth 4",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-table-in-template",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 6, stack 8, depth 4",
+   "depth (scripting off)": "max D 6, stack 8, depth 4",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-caption-td-depth",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 7, stack 11, depth 7",
+   "depth (scripting off)": "max D 7, stack 11, depth 7",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-table-scope",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 10, stack 9, depth 7",
+   "depth (scripting off)": "max D 10, stack 9, depth 7",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-form-table-mode",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 7, stack 9, depth 7",
+   "depth (scripting off)": "max D 7, stack 9, depth 7",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-col-H35",
+   "parse5 (scripting on)": "3 block(s)",
+   "parse5 (scripting off)": "3 block(s)",
+   "depth": "max D 9, stack 8, depth 7 classes M-05-stray-table-end,M-09-template-col",
+   "depth (scripting off)": "max D 9, stack 8, depth 7 classes M-05-stray-table-end,M-09-template-col",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-template-table-context",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 5, stack 7, depth 4",
+   "depth (scripting off)": "max D 5, stack 7, depth 4",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-p-block-div",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 3, stack 5, depth 4",
+   "depth (scripting off)": "max D 3, stack 5, depth 4",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-a-in-a",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 4, stack 6, depth 4",
+   "depth (scripting off)": "max D 4, stack 6, depth 4",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-reconstruct",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 5, stack 6, depth 5",
+   "depth (scripting off)": "max D 5, stack 6, depth 5",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-T-eof",
+   "parse5 (scripting on)": "1 block(s) 1 no-end",
+   "parse5 (scripting off)": "1 block(s) 1 no-end",
+   "depth": "max D 2, stack 4, depth 3",
+   "depth (scripting off)": "max D 2, stack 4, depth 3",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-img",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 2, stack 4, depth 4",
+   "depth (scripting off)": "max D 2, stack 4, depth 5",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-iframe",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 3, stack 4, depth 4",
+   "depth (scripting off)": "max D 3, stack 5, depth 5",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-text",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 2, stack 4, depth 4",
+   "depth (scripting off)": "max D 2, stack 4, depth 4",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-p-block-div",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s) 1 no-end",
+   "depth": "max D 3, stack 4, depth 4",
+   "depth (scripting off)": "max D 3, stack 4, depth 4",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-p-around",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 4, stack 5, depth 5",
+   "depth (scripting off)": "max D 4, stack 5, depth 5",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-block-end-in-C",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 2, stack 4, depth 4 classes M-11-balance",
+   "depth (scripting off)": "max D 2, stack 4, depth 4 classes M-11-balance",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-block-start-in-C",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "3 block(s)",
+   "depth": "max D 3, stack 4, depth 4",
+   "depth (scripting off)": "max D 3, stack 5, depth 5",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-comment-hides-end",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 2, stack 4, depth 4",
+   "depth (scripting off)": "max D 2, stack 4, depth 4",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-a-in-a",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 4, stack 5, depth 5",
+   "depth (scripting off)": "max D 4, stack 5, depth 5",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-button",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 4, stack 5, depth 5",
+   "depth (scripting off)": "max D 4, stack 5, depth 5",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-li",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 5, stack 6, depth 6",
+   "depth (scripting off)": "max D 5, stack 7, depth 7",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-table-part",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 7, stack 8, depth 8 classes M-11-table-part",
+   "depth (scripting off)": "max D 7, stack 8, depth 8 classes M-11-table-part",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-mxss-shape",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 2, stack 4, depth 4",
+   "depth (scripting off)": "max D 2, stack 4, depth 5",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-manifest",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s) 1 manifest",
+   "depth": "max D 3, stack 4, depth 4",
+   "depth (scripting off)": "max D 3, stack 5, depth 5",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-svg-in-C",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 4, stack 4, depth 4",
+   "depth (scripting off)": "max D 4, stack 6, depth 6",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-N-eof",
+   "parse5 (scripting on)": "1 block(s) 1 no-end",
+   "parse5 (scripting off)": "1 block(s) 1 no-end",
+   "depth": "max D 2, stack 4, depth 4",
+   "depth (scripting off)": "max D 2, stack 4, depth 5",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-X-noscript-in-template",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 3, stack 5, depth 4",
+   "depth (scripting off)": "max D 3, stack 5, depth 4",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-X-template-in-noscript",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 3, stack 4, depth 4",
+   "depth (scripting off)": "max D 3, stack 5, depth 4",
+   "node": "STRUCTURE"
+  },
+  {
+   "case": "S5-X-p-template-noscript",
+   "parse5 (scripting on)": "2 block(s)",
+   "parse5 (scripting off)": "2 block(s)",
+   "depth": "max D 5, stack 6, depth 4",
+   "depth (scripting off)": "max D 5, stack 7, depth 4",
+   "node": "STRUCTURE"
+  }
+ ]
+}

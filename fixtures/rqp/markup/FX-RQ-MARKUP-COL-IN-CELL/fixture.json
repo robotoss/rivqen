@@ -1,7 +1,8 @@
 {
   "id": "FX-RQ-MARKUP-COL-IN-CELL",
-  "description": "A col start tag inside a td",
+  "description": "A col start tag inside a td: the implied closure of M-09 closes the cell and the row, so the later tr end tag is stray (H-85a: M-06 item 3; was M-09)",
   "rules": [
+    "M-06",
     "M-09"
   ],
   "expect": {

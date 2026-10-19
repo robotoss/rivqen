@@ -1,7 +1,15 @@
 {
-  "valid": false,
-  "error": "RQP_MARKUP_STRUCTURE",
-  "blocks": [],
-  "template_revision": null,
-  "page_revision": null
+  "valid": true,
+  "error": null,
+  "blocks": [
+    {
+      "id": "real",
+      "format": "html",
+      "start": 122,
+      "end": 123,
+      "sha256": "RUNJ5CLwUpcZHq0T4h09tSDlq-9SBV5JZLgvshP1k6E"
+    }
+  ],
+  "template_revision": "t1.yXWUmjkbwcP_nXaZjKlWW0ShJjW7Mv0PUosfLnM5GD8",
+  "page_revision": "r1.w47raD8NAcmRGrXG_cUPft_CpXXfs7uSSEBR45yT3bc"
 }

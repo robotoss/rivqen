@@ -242,7 +242,10 @@ def max_depth_counter(data: bytes) -> int:
     Independent of the candidates and of the cross-check tool. Foreign elements are pushed like
     HTML elements (M-05 item 2: the recipes have no self-closing tags). The tags of the noscript
     content C count as main-pass tags (M-11 item 8, M-26 item 7; H-71); at the noscript end tag the
-    main pass continues with D and the token stack that it had after the noscript start tag."""
+    main pass continues with D and the token stack that it had after the noscript start tag. Before
+    a td or tr start tag, the implied closure of M-09 (H-85a) applies the end tag of an open td (for
+    td) or of an open td and tr (for tr): the recipes have no other table part and no closure in
+    block content or C."""
     stack: list[dict] = []
     d = best = 0
     pos = 0
@@ -266,8 +269,13 @@ def _depth_step(stack: list[dict], m: re.Match, d: int, best: int) -> tuple[int,
     """One tag of max_depth_counter: returns the new (best, d)."""
     end, name = m.group(1) == b"/", m.group(2)
     if not end:
-        f = next((e for e in reversed(stack) if e["name"] in (b"table", b"tbody", b"tr", b"td")), None)
-        parts = {b"td": ("rowgroup", "row")} if f is not None and f["name"] == b"table" else {}
+        family = (b"table", b"tbody", b"tr", b"td")
+        closes = {b"td": (b"td",), b"tr": (b"td", b"tr")}.get(name, ())
+        f = next((e for e in reversed(stack) if e["name"] in family), None)
+        while f is not None and f["name"] in closes:
+            best, d = _depth_end(stack, f["name"], d, best)
+            f = next((e for e in reversed(stack) if e["name"] in family), None)
+        parts = {b"td": ("rowgroup", "row"), b"tr": ("rowgroup",)} if f is not None and f["name"] == b"table" else {}
         for part in parts.get(name, ()):
             if part not in f["implied"]:
                 f["implied"].add(part)
@@ -276,6 +284,11 @@ def _depth_step(stack: list[dict], m: re.Match, d: int, best: int) -> tuple[int,
             stack.append({"name": name, "dirty": False, "implied": set()})
             d += 1
         return max(best, d), d
+    return _depth_end(stack, name, d, best)
+
+
+def _depth_end(stack: list[dict], name: bytes, d: int, best: int) -> tuple[int, int]:
+    """An end tag of max_depth_counter (M-05 item 3, M-26 items 4 and 5): returns the new (best, d)."""
     idx = next((i for i in range(len(stack) - 1, -1, -1) if stack[i]["name"] == name), None)
     if idx is None:
         return best, d
@@ -340,6 +353,15 @@ class DepthRecipeTest(unittest.TestCase):
         # does not grow; a structure rule must reject these inputs, not M-26.
         self.check("FX-RQ-MARKUP-FORM-NESTED-DEPTH", 3)
         self.check("FX-RQ-MARKUP-TABLE-FOSTER-MARKER-DEPTH", 5)
+
+    def test_implied_closure(self) -> None:
+        # H-85a: an exact closure gives its units back; a closure over an open span is a crossing.
+        self.check("FX-RQ-MARKUP-TABLE-CLOSE-DEPTH", 5)
+        self.check("FX-RQ-MARKUP-TABLE-CLOSE-DEPTH-CROSSING-126", 256)
+        self.check("FX-RQ-MARKUP-TABLE-CLOSE-DEPTH-CROSSING", 258)  # 257 at the last span, 258 with the block
+        self.assertEqual(max_depth_counter(b"<table><tr><td>a<td>b<tr><td>c</table>"), 4)
+        # Each td closes the one before it; without the closure the ten cells would nest (D 13).
+        self.assertEqual(max_depth_counter(b"<table><tr>" + b"<td>a" * 10 + b"</table>"), 4)
 
     def test_counter_examples(self) -> None:
         self.assertEqual(max_depth_counter(b"<table><td></td><td></td></table><table><td></td></table>"), 4)

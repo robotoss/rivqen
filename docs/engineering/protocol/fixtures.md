@@ -202,7 +202,7 @@ No response of a server case has an `Rq-Revision` or `Rq-Template-Revision` fiel
 
 ### 4.2 Markup fixtures (`FX-RQ-MARKUP-*`)
 
-<Badge type="tip" text="FACT" /> 311 fixtures (129 valid, 182 invalid) in `fixtures/rqp/markup/`, counted on 2026-10-19 after WP-17 S4 T-10a. The decisions H-78, H-84 and H-86 changed 14 results and added 50 fixtures ([edge cases §10.2](/engineering/protocol/markup-edge-cases#_10-2-fixtures)); H-85a (the implied closure of M-09) changed 1 result, changed the rule of 1 fixture and added 14 fixtures ([edge cases §11.2](/engineering/protocol/markup-edge-cases#_11-2-fixtures)). Some fixture ids are older than these decisions (`FORBIDDEN-SCRIPT-TYPE` is valid since H-86, `TABLE-NESTING` since H-85a). All are normative. The 18 fixtures `EDGE-*` cover the edge cases E1–E8, their combinations and the case of the CDATA opener ([markup §2.11](/engineering/protocol/markup#_2-11-decided-edge-cases)), decided by the human (H-21, H-22). The fixtures `FORMATTING-*`, `NOSCRIPT-BALANCED`, `NOSCRIPT-CROSSING`, `NOSCRIPT-EOF-UNBALANCED`, `NOSCRIPT-STRAY-END`, `NOSCRIPT-UNBALANCED*`, `*-NON-ASCII*`, `TABLE-STRAY-*`, `TABLE-IMPLIED-PARTS` and `LIMIT-DEPTH-*` cover the rules of the security review (H-25 to H-38, [markup §2.12](/engineering/protocol/markup#_2-12-rules-from-the-security-review)). The fixtures `TEMPLATE-FOR*` cover H-43 from the conformance study ([edge cases §8](/engineering/protocol/markup-edge-cases#_8-whatwg-conformance-table-round-3)). Each fixture tests the rules of [RQP markup](/engineering/protocol/markup) §2 that it lists. Layout and `fixture.json` format: `fixtures/rqp/markup/README.md`. Result format: `tools/rqp-markup/CONTRACT.md` §3.
+<Badge type="tip" text="FACT" /> 355 fixtures (146 valid, 209 invalid) in `fixtures/rqp/markup/`, counted on 2026-10-19 after WP-17 S5 T-06a. The decisions H-78, H-84 and H-86 changed 14 results and added 50 fixtures ([edge cases §10.2](/engineering/protocol/markup-edge-cases#_10-2-fixtures)); H-85a (the implied closure of M-09) changed 1 result, changed the rule of 1 fixture and added 14 fixtures ([edge cases §11.2](/engineering/protocol/markup-edge-cases#_11-2-fixtures)); H-94 to H-97 (`template` and `noscript` in block content) added 44 fixtures and gave 2 fixtures a new input with the same result (`CONTENT-FORBIDDEN-TEMPLATE`, `CONTENT-FORBIDDEN-NOSCRIPT`; [edge cases §12.3](/engineering/protocol/markup-edge-cases#_12-2-fixtures)). Some fixture ids are older than these decisions (`FORBIDDEN-SCRIPT-TYPE` is valid since H-86, `TABLE-NESTING` since H-85a). All are normative. The 18 fixtures `EDGE-*` cover the edge cases E1–E8, their combinations and the case of the CDATA opener ([markup §2.11](/engineering/protocol/markup#_2-11-decided-edge-cases)), decided by the human (H-21, H-22). The fixtures `FORMATTING-*`, `NOSCRIPT-BALANCED`, `NOSCRIPT-CROSSING`, `NOSCRIPT-EOF-UNBALANCED`, `NOSCRIPT-STRAY-END`, `NOSCRIPT-UNBALANCED*`, `*-NON-ASCII*`, `TABLE-STRAY-*`, `TABLE-IMPLIED-PARTS` and `LIMIT-DEPTH-*` cover the rules of the security review (H-25 to H-38, [markup §2.12](/engineering/protocol/markup#_2-12-rules-from-the-security-review)). The fixtures `CONTENT-TEMPLATE*`, `TEMPLATE-SHADOWROOTMODE-OUTSIDE` and `CONTENT-NOSCRIPT*` cover H-94, H-95 and H-97 ([markup §2.15](/engineering/protocol/markup#_2-15-rules-from-wp-17-s5)). The fixtures `TEMPLATE-FOR*` cover H-43 from the conformance study ([edge cases §8](/engineering/protocol/markup-edge-cases#_8-whatwg-conformance-table-round-3)). Each fixture tests the rules of [RQP markup](/engineering/protocol/markup) §2 that it lists. Layout and `fixture.json` format: `fixtures/rqp/markup/README.md`. Result format: `tools/rqp-markup/CONTRACT.md` §3.
 
 | File | Written by |
 |---|---|
@@ -255,11 +255,11 @@ In the table, the prefix `FX-RQ-MARKUP-` is not shown.
 | `CONTENT-FORBIDDEN-HTML` | `STRUCTURE` | M-22, H-78 | An html element in the content: M-22 keeps it (H-78) |
 | `CONTENT-FORBIDDEN-NOEMBED` | `STRUCTURE` | M-22, H-78 | A noembed element in the content: M-22 keeps it (H-78) |
 | `CONTENT-FORBIDDEN-NOFRAMES` | `STRUCTURE` | M-22, H-78 | A noframes element in the content: M-22 keeps it (H-78) |
-| `CONTENT-FORBIDDEN-NOSCRIPT` | `STRUCTURE` | M-22, H-78 | A noscript element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FORBIDDEN-NOSCRIPT` | `STRUCTURE` | M-11, M-24, H-95 | A div in noscript content C in the content of a p block: M-11 item 10 applies M-24 item a (H-95); with scripting disabled the div would close the block. Before H-95 every noscript in the content was invalid; that shape is CONTENT-NOSCRIPT now |
 | `CONTENT-FORBIDDEN-OPTGROUP` | `STRUCTURE` | M-22, H-78 | An optgroup element in the content: M-22 keeps it (H-78) |
 | `CONTENT-FORBIDDEN-PLAINTEXT` | `STRUCTURE` | M-20, M-22, H-78 | A plaintext element in the content: M-22 keeps it (H-78); PLAINTEXT never ends, so the block has no end tag (M-20) |
 | `CONTENT-FORBIDDEN-SELECT` | `STRUCTURE` | M-22, H-78 | A select element in the content: M-22 keeps it (H-78) |
-| `CONTENT-FORBIDDEN-TEMPLATE` | `STRUCTURE` | M-22, H-78 | A template element in the content: M-22 keeps it (H-78) |
+| `CONTENT-FORBIDDEN-TEMPLATE` | `STRUCTURE` | M-22, H-94, H-97 | A template element with a shadowrootmode attribute in the content (declarative shadow root): M-22 item 6 (H-94, H-97). Before H-94 every template in the content was invalid; that shape is CONTENT-TEMPLATE now |
 | `CONTENT-FORBIDDEN-TEXTAREA` | `STRUCTURE` | M-22, H-78 | A textarea element in the content: M-22 keeps it (H-78) |
 | `CONTENT-FORBIDDEN-TITLE` | `STRUCTURE` | M-22, H-78 | A title element in the content: M-22 keeps it (H-78) |
 | `CONTENT-FORBIDDEN-XMP` | `STRUCTURE` | M-22, H-78 | An xmp element in the content: M-22 keeps it (H-78) |
@@ -286,6 +286,28 @@ In the table, the prefix `FX-RQ-MARKUP-` is not shown.
 | `CONTENT-LINK` | valid, 1 block | M-22, M-23, H-78 | A link element (void) in the content: valid markup since H-78 (the patch content rule rejects it in a patch) |
 | `CONTENT-MATH` | valid, 1 block | M-22, M-24, H-73 | A math element with mrow, mi, mo and mn in the content of a p block (H-73: valid) |
 | `CONTENT-META` | valid, 1 block | M-22, M-23, H-78 | A meta element (void) in the content: valid markup since H-78 (the patch content rule rejects it in a patch) |
+| `CONTENT-NOSCRIPT` | valid, 1 block | M-11, M-22, H-95 | A noscript element with text in the content of a div block (H-95: valid) |
+| `CONTENT-NOSCRIPT-A-IN-A` | `STRUCTURE` | M-11, M-24, H-95 | An a in noscript content C in an a of the content: M-11 item 10 applies M-24 item e (H-95) |
+| `CONTENT-NOSCRIPT-BLOCK-END` | `STRUCTURE` | M-11, M-23 | The end tag of the block element in noscript content C (text with scripting enabled, the block end with scripting disabled): M-11 item 5 |
+| `CONTENT-NOSCRIPT-BLOCK-START` | `STRUCTURE` | M-11 | A block start tag in noscript content C in the content: M-11 item 2 |
+| `CONTENT-NOSCRIPT-DOCTYPE` | `STRUCTURE` | M-11, M-22, H-95 | A DOCTYPE token in noscript content C in the content: M-11 item 10 applies M-22 item 1 (stricter reading of H-95) |
+| `CONTENT-NOSCRIPT-EOF` | `STRUCTURE` | M-11, M-20 | A noscript element without an end tag in the content: C is the rest of the input (E3) and the block has no end tag |
+| `CONTENT-NOSCRIPT-HEADING` | `STRUCTURE` | M-11, M-24, H-95 | An h3 in noscript content C in an h2 block: M-11 item 10 applies M-24 item b (H-95) |
+| `CONTENT-NOSCRIPT-IMG` | valid, 2 blocks | M-11, M-22, H-95 | A tracking fallback in noscript in the content: an img and an iframe in C, then a block with an a element (H-95: valid) |
+| `CONTENT-NOSCRIPT-IN-CELL` | valid, 2 blocks | M-11, M-19, M-24, H-95 | noscript in a block in a table cell, and noscript in a cell of a table of the content (H-95: valid) |
+| `CONTENT-NOSCRIPT-LI-IN-LI` | `STRUCTURE` | M-11, M-24, H-95 | An li in noscript content C in an li of the content: M-11 item 10 applies M-24 item j (H-95) |
+| `CONTENT-NOSCRIPT-LIST-ITEM` | `STRUCTURE` | M-11, M-24, H-95 | An li in noscript content C without a list of the content: M-11 item 10 applies M-24 item c (H-95) |
+| `CONTENT-NOSCRIPT-P-AROUND` | valid, 1 block | M-11, M-24, H-95 | A div in noscript content C while a p of the content is open around the noscript element (H-95: valid; with scripting disabled the div closes the p, which changes parents but not the block bytes, a known class of markup section 5) |
+| `CONTENT-NOSCRIPT-PHRASING` | valid, 2 blocks | M-11, M-24, H-95 | noscript with phrasing content C in a span block and in a p block (H-95: M-22 to M-24 hold for the tags of C; valid) |
+| `CONTENT-NOSCRIPT-RESERVED` | `RESERVED` | M-11, M-13 | A manifest-like script in noscript content C in the content: M-11 item 4 (M-13) |
+| `CONTENT-NOSCRIPT-RUBY` | `STRUCTURE` | M-11, M-24, H-95 | An rt in noscript content C without a ruby of the content: M-11 item 10 applies M-24 item i (H-95) |
+| `CONTENT-NOSCRIPT-SELF-CLOSING` | `STRUCTURE` | M-11, M-22, H-95 | A self-closing span in noscript content C in the content: M-11 item 10 applies M-22 item 3 (H-95) |
+| `CONTENT-NOSCRIPT-SVG` | valid, 1 block | M-11, H-74, H-75, H-95 | svg in noscript content C in the content; the end tag of the region root closes the path (H-95, H-74, H-75: valid) |
+| `CONTENT-NOSCRIPT-TABLE` | valid, 1 block | M-11, M-24, H-95 | A table in noscript content C in the content (H-95: M-11 item 6 and M-24 item g hold; valid) |
+| `CONTENT-NOSCRIPT-TABLE-FOSTER` | `STRUCTURE` | M-11, M-24, H-95 | A b directly in a table of noscript content C in the content: M-11 item 10 applies M-24 item k (H-95) |
+| `CONTENT-NOSCRIPT-TEMPLATE` | `STRUCTURE` | M-11 | A template element in the content C of a noscript element of the content: M-11 item 3 |
+| `CONTENT-NOSCRIPT-TEXTAREA` | `STRUCTURE` | M-11, M-22, H-95 | A textarea in noscript content C in the content: M-11 item 10 applies M-22 item 2 to the tags of C (H-95) |
+| `CONTENT-NOSCRIPT-UNBALANCED` | `STRUCTURE` | M-11, H-95 | An unclosed b in noscript content C in the content: M-11 item 5 is M-23 for C (H-95) |
 | `CONTENT-OBJECT` | valid, 1 block | M-22, M-23, H-78 | An object element with a param and fallback text in the content: valid markup since H-78 (the patch content rule rejects it in a patch) |
 | `CONTENT-OBJECT-CELL` | `STRUCTURE` | M-09, H-78 | A td start tag in an object in a cell in the content: the tree builder closes the cell and the object (H-78, M-09) |
 | `CONTENT-OBJECT-IN-TABLE` | `STRUCTURE` | M-24, H-78 | An object directly in a table in the content is foster-parented (H-78, M-24 item k) |
@@ -307,6 +329,27 @@ In the table, the prefix `FX-RQ-MARKUP-` is not shown.
 | `CONTENT-SVG-ICON` | valid, 1 block | M-07, M-22, M-23, H-73 | An svg icon in the content: title and desc text, a gradient, nested g, self-closing children and use (H-73: valid) |
 | `CONTENT-SVG-ICON-CROSSING` | valid, 1 block | M-06, M-23, H-73, H-75 | The icon shape in the content: an a element with an svg whose end tag crosses an unclosed path (H-73, H-75: valid) |
 | `CONTENT-SVG-SELF-CLOSING-ROOT` | valid, 1 block | M-05, M-22, H-73 | Self-closing svg and math start tags in the content open no foreign region (M-22 item 3, H-73: valid) |
+| `CONTENT-TEMPLATE` | valid, 2 blocks | M-22, M-23, H-94 | A template element in the content of a div block, then a block with an a element (H-94: valid; the template content is read as tokens and follows M-22 to M-24) |
+| `CONTENT-TEMPLATE-CAPTION` | `STRUCTURE` | M-24, H-94 | A caption and a td directly in a template in a cell of the content: the template would switch to a table insertion mode with implied elements that D does not count (H-94: M-24 item g) |
+| `CONTENT-TEMPLATE-CELL` | valid, 1 block | M-19, M-22, M-24, H-94 | A block in a table cell with a template element, and a template element in a cell of a table of the content (H-94: valid; F of the b in the template is none, so M-24 item k does not apply) |
+| `CONTENT-TEMPLATE-COL` | `STRUCTURE` | M-09, M-24, H-35 | A col directly in a template element of the content: M-09 condition 1 (H-35) and M-24 item g |
+| `CONTENT-TEMPLATE-FOR` | `STRUCTURE` | M-10, H-43, H-94 | A template element with a for attribute in the content (H-94 keeps M-10 item 3, H-43) |
+| `CONTENT-TEMPLATE-IN-TABLE` | `STRUCTURE` | M-24 | A template element directly in a table of the content: M-24 item k (F is the table) |
+| `CONTENT-TEMPLATE-NESTED` | valid, 1 block | M-04, M-22, H-78, H-94 | Nested template elements with script and style in the content (H-94, H-78: valid markup; a patch with them is rejected by the patch content rule) |
+| `CONTENT-TEMPLATE-NOSCRIPT` | valid, 1 block | M-11, M-22, H-94, H-95 | A noscript element in a template element of the content (H-94, H-95: valid) |
+| `CONTENT-TEMPLATE-NOSCRIPT-P` | valid, 1 block | M-11, M-24, H-94, H-95 | A div in noscript content C in a template in a p of the content: the template is a scope boundary, so the div cannot close the p (H-94, H-95: valid) |
+| `CONTENT-TEMPLATE-P` | valid, 1 block | M-22, M-24, H-94 | A template element with phrasing content in the content of a p block (H-94: valid) |
+| `CONTENT-TEMPLATE-P-DIV` | `STRUCTURE` | M-24 | A div start tag in a template element in the content of a p block: M-24 item a applies in template content too (stricter than the tree builder, which does not close the p through a template) |
+| `CONTENT-TEMPLATE-ROWS` | `STRUCTURE` | M-24, H-94 | A row template in a cell of a table of the content: the tr start tag in the template has F none, although a table of the content is open (H-94: M-24 item g) |
+| `CONTENT-TEMPLATE-ROWS-NO-TABLE` | `STRUCTURE` | M-24 | A row template in the content without a table: M-24 item g (no table opened in the content, and F is none) |
+| `CONTENT-TEMPLATE-SHADOWROOT-OTHER` | valid, 1 block | M-22, H-97 | A template element in the content with the other shadowroot attributes, a data-shadowrootmode attribute and the text shadowrootmode in a value (H-97: only the attribute shadowrootmode counts; valid) |
+| `CONTENT-TEMPLATE-SHADOWROOTMODE-CASE` | `STRUCTURE` | M-22, H-94, H-97 | A template element in the content with a shadowrootmode attribute in mixed case and without a value (H-94, H-97: M-22 item 6) |
+| `CONTENT-TEMPLATE-SHADOWROOTMODE-DUPLICATE` | `STRUCTURE` | M-22, H-97 | A template element in the content with an empty shadowrootmode attribute and a second one that the tokenizer drops (H-97: every shadowrootmode attribute counts; M-22 item 6) |
+| `CONTENT-TEMPLATE-SHADOWROOTMODE-NESTED` | `STRUCTURE` | M-22, H-94 | A template element with shadowrootmode inside a template element of the content (H-94: M-22 item 6 applies in template content too) |
+| `CONTENT-TEMPLATE-SHADOWROOTMODE-SVG` | valid, 1 block | M-07, M-22, H-94 | A template element with shadowrootmode in svg in the content is a foreign element (H-94: M-22 item 6 is for HTML context; valid) |
+| `CONTENT-TEMPLATE-TABLE` | valid, 1 block | M-09, M-24, H-94 | Table parts and col in a table opened in a template element of the content (H-94: M-24 item g holds, F is the table or the column group) |
+| `CONTENT-TEMPLATE-TABLE-SCOPE` | `STRUCTURE` | M-24, H-94 | A tfoot directly in a template in a cell, then a table in the template: parse5 8.0.1 pops out of the template here, a WHATWG parser ignores the table start tag (H-94: M-24 item g rejects the tfoot) |
+| `CONTENT-TEMPLATE-UNBALANCED` | `STRUCTURE` | M-23 | The end tag of a template element of the content while a b element of the template is open |
 | `CONTENT-VOID-END` | `STRUCTURE` | M-22 | An end tag of a void element (&lt;/br>) in the content |
 | `CONTEXT-TABLE` | `STRUCTURE` | M-19 | A block directly in a table (it would be foster-parented) |
 | `CONTEXT-TEMPLATE` | `STRUCTURE` | M-19 | A block inside a template element |
@@ -526,6 +569,7 @@ In the table, the prefix `FX-RQ-MARKUP-` is not shown.
 | `TEMPLATE-FOR-EMPTY` | `STRUCTURE` | M-10 | A template with a for attribute without a value, in mixed case (H-43: the value does not matter) |
 | `TEMPLATE-FOR-SVG` | valid, 1 block | M-07, M-10 | A template with a for attribute in svg is a foreign element and does not patch (H-43: valid) |
 | `TEMPLATE-OUTSIDE` | valid, 1 block | M-05, M-19 | A template element without blocks, then a block outside it |
+| `TEMPLATE-SHADOWROOTMODE-OUTSIDE` | valid, 1 block | M-19, M-22, H-94 | A template element with shadowrootmode outside block content, before a block in the same parent (H-94: M-22 item 6 is a content rule; the host is not a block element; valid) |
 | `TEMPLATE-TABLE-PARTS` | valid, 1 block | M-09, M-19 | tr and td in a template, col in a table in a template (H-35: valid) |
 | `TEXTAREA-TEXT` | valid, 1 block | M-04, M-14 | Tag-like text in a textarea element (RCDATA) is not a block |
 | `TITLE` | valid, 1 block | M-04, M-16, M-20 | The page title is a block; its RCDATA content is kept as raw bytes |

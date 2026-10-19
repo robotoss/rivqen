@@ -1,6 +1,6 @@
 # RQP markup: edge cases E1–E8
 
-This page is a short risk study of eight edge cases of the [RQP markup rules](/engineering/protocol/markup) (rqp/1). For each case it gives the evidence, the options, the risk and one recommended reading. The human decided each case (protocol decision; E8 is also a security decision). The decided rule text is in [`markup.md`](/engineering/protocol/markup) §2; the cases are listed in [§2.11](/engineering/protocol/markup#_2-11-decided-edge-cases). Section 6 is the study of the findings of the security review (H-25 to H-31, 2026-10-11). Section 7 is round 2 of the review (H-35 to H-38). Section 8 is the WHATWG conformance study (round 3, H-43). Section 9 is the evidence for the `noscript` content model and the relaxations of WP-17 S3 (H-71, H-73 to H-75).
+This page is a short risk study of eight edge cases of the [RQP markup rules](/engineering/protocol/markup) (rqp/1). For each case it gives the evidence, the options, the risk and one recommended reading. The human decided each case (protocol decision; E8 is also a security decision). The decided rule text is in [`markup.md`](/engineering/protocol/markup) §2; the cases are listed in [§2.11](/engineering/protocol/markup#_2-11-decided-edge-cases). Section 6 is the study of the findings of the security review (H-25 to H-31, 2026-10-11). Section 7 is round 2 of the review (H-35 to H-38). Section 8 is the WHATWG conformance study (round 3, H-43). Section 9 is the evidence for the `noscript` content model and the relaxations of WP-17 S3 (H-71, H-73 to H-75). Sections 10 and 11 are the rules of WP-17 S4 (H-78, H-84, H-86, H-85a). Section 12 is `template` and `noscript` in block content (WP-17 S5, H-94 to H-97).
 
 **Status:** <Badge type="warning" text="RESEARCH" /> Study of 2026-10-09, task WP-17/S1/T-07 ([sprint record](/engineering/plan/sprints/WP-17-S1)). <Badge type="info" text="DESIGN" /> **Decided on 2026-10-09:** E1–E7 as recommended (human decision H-21), E8 option A, reject with `RQP_MARKUP_RESERVED` (human decision H-22). The evidence below is the state before the decision ("Today" = the candidates before task T-08).
 
@@ -922,6 +922,76 @@ Each invalid fixture breaks one rule: with that rule removed from the scratch re
 
 <Badge type="warning" text="RESEARCH" /> Corpus: not measured again in T-10a (the corpus data of the study was deleted). The study measured B2 on 2026-10-18: +4 pages, 0 lost, 0 findings (`evidence/markup-s4/report.md` §3 B). The next corpus run of S4 measures the rule with the candidates.
 
+## 12. `template` and `noscript` in block content (WP-17 S5)
+
+<Badge type="info" text="DESIGN" /> **Decided on 2026-10-19** ([sprint record WP-17 S5](/engineering/plan/sprints/WP-17-S5) §1), after the study T-02 (`evidence/markup-s5/report.md`, options in §6): H-94 (option T2: `template` leaves M-22 item 2; M-22 item 6 rejects `shadowrootmode`; M-24 item g also needs an F that is not none), H-95 (option N1: `noscript` leaves M-22 item 2; M-11 item 10 applies M-22 and M-24 to the tokens of C), H-96 (option P1: `noscript` joins `PATCH_FORBIDDEN`) and H-97 (only the attribute `shadowrootmode`, ASCII case-insensitive, any value or none, also a dropped duplicate). Rule text: `markup.md` M-11 item 10, M-22 items 2 and 6, M-24 item g, [§2.10](/engineering/protocol/markup#_2-10-error-codes), [§2.15](/engineering/protocol/markup#_2-15-rules-from-wp-17-s5); [manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules), item 1.1. Task T-06a wrote the rule text, the golden fixtures, the cross-check changes and the classifier changes. The four candidates follow in T-06b to T-06e, the reference and the demo in T-06f.
+
+### 12.1 How the rules fit
+
+<Badge type="info" text="DESIGN" />
+
+| Rule | With `template` and `noscript` in the content of an `html` block |
+|---|---|
+| M-04 | Template contents have the state changes of the body (`script`, `style`, `iframe`, … switch the tokenizer). `noscript` is RAWTEXT in the content too: with scripting enabled C is text |
+| M-05, M-23 | Both elements are pushed and need their own end tag. Nothing in the template can end it earlier: the end tag `template` of the tree builder pops to the template and clears the formatting list to its marker |
+| M-09 | The search for F stops at `template`: F is none in a template until a table of the template. Conditions 1 and 2 apply in templates of the content. No implied closure in the content (H-85a) |
+| M-10 item 3 | `template for` stays invalid in the content |
+| M-11 | Items 1 to 9 hold for C as outside blocks. Item 10 adds M-22 (items 1 to 3 and 6) and M-24 on the tokens of C, with the elements of C counted as "opened in the content". Item 5 is M-23 for C. Item 3 keeps `template` out of C |
+| M-17, M-19 | A block start tag in a template of the content breaks M-17 and M-19 item 1 (two error codes, so no golden fixture; case `S5-T-block-in-template`) |
+| M-22 | Item 2 without `template` and `noscript`; item 6: `shadowrootmode` on an HTML `template` start tag, also in a nested template |
+| M-24 | Items a to f apply in templates (stricter than the tree builder, compatible to relax later). Item g needs an F that is not none. Item k rejects a `template` or `noscript` start tag in table context |
+| M-26 | Each element counts 1. C counts in the pass of item 8. The claim excludes positions with an open template, as before (H-35) |
+| Patch | A `noscript` in a patch is `PATCH_CONTENT_REJECTED` (H-96). The start tags in template contents are start tags of the content for the patch content rule; step 8 rejects `shadowrootmode` (M-22 item 6) and `for` (M-10 item 3) |
+
+<Badge type="tip" text="FACT" /> The parse5 table scope (S5 study §5, code read of parse5 8.0.1 `dist/parser/open-element-stack.js`): `hasInTableScope` and `hasTableBodyContextInTableScope` stop only at `table` and `html`; the WHATWG "has an element in table scope" also stops at `template` (WHATWG HTML Living Standard, "Last Updated 19 October 2026", checked on 2026-10-19). In `<table><tr><td><template><tfoot></tfoot><table><tr><td>c</td></tr></table></template>z</td></tr></table>`, parse5 8.0.1 closes the outer table at the inner `<table>` and puts `z` in the body; with the WHATWG scope the inner `<table>` is ignored, its row goes into the template and `z` stays in the cell (test `view.test.mjs` of the cross-check). M-24 item g rejects the `tfoot` of this shape in block content (fixture `CONTENT-TEMPLATE-TABLE-SCOPE`). Outside block content the shipped rules allow it; the cross-check view `spec` checks such documents with the WHATWG scope.
+
+<Badge type="tip" text="FACT" /> Declarative shadow DOM (`evidence/markup-s5/research-t01.md` §2): the full-document parser and `setHTMLUnsafe`/`parseHTMLUnsafe` attach a shadow root for a `template` with `shadowrootmode`; `innerHTML` does not. Of the attributes that the parser reads (`shadowrootmode`, `shadowrootdelegatesfocus`, `shadowrootserializable`, `shadowrootclonable`), only `shadowrootmode` attaches. <Badge type="warning" text="RESEARCH" /> In block content the same bytes would render in two ways (full document or cold load of the snapshot, against an `innerHTML` patch), and a block element that is a host would keep its shadow root under a patch. parse5 8.0.1 has no declarative shadow DOM, so no tool in the repository can show this; a browser or WebView run is NOT FOUND (study §7 proposes lab cases). Outside block content, a host is not a block element and is not in a block, so a patch does not change it: `TEMPLATE-SHADOWROOTMODE-OUTSIDE` is valid.
+
+Choices of T-06a (each one is the stricter reading or keeps the rule text equal to the reference of the study):
+
+1. **M-22 item 1 in C** (M-11 item 10). The text of H-95 names the start tags of C. The rule text also applies M-22 item 1 to a DOCTYPE token of C, as the reference of the study does (it runs every content rule on the tokens of C). The tree builder ignores a DOCTYPE in the body, so the choice only rejects more. Fixture `CONTENT-NOSCRIPT-DOCTYPE`. Waits for the architect (H-80; corpus cost NOT MEASURED, expected 0).
+2. **Two fixtures get a new input instead of a new result.** `CONTENT-FORBIDDEN-TEMPLATE` and `CONTENT-FORBIDDEN-NOSCRIPT` had the shapes that are valid now. They now hold the shapes that stay forbidden (`shadowrootmode`; a `div` in C of a `p` block), with the same result `STRUCTURE`, so the ids stay true. The old shapes are the new valid fixtures `CONTENT-TEMPLATE` (with a second block) and `CONTENT-NOSCRIPT` (the same bytes). The frozen baseline of the study (`study/s5/baseline/baseline-s4.json`) records results only; the rules before S5 give `STRUCTURE` for both new inputs, so its equality test still passes.
+3. **The cross-check counter knows the block content.** `src/depth.mjs` now finds the block element on its stack (a start tag in HTML context with `data-rq-block` while no block is open). It skips the implied closure in block content (as M-09 says; before, the counter relied on "a valid document has no closure shape there") and sets the two classes of the rules that parse5 cannot show: `M-22-shadowrootmode` and `M-24-template-table-part`. D changes only for documents that the rules reject.
+
+### 12.2 Fixtures
+
+<Badge type="tip" text="FACT" /> 2026-10-19: 355 golden fixtures (146 valid, 209 invalid); 44 new. No result of an existing fixture changes. Two existing fixtures get a new input with the same result (choice 2):
+
+| Fixture | Input before | Input now | Result |
+|---|---|---|---|
+| `CONTENT-FORBIDDEN-TEMPLATE` | `<template>x</template>` in a `div` block | `<template shadowrootmode="open"><slot></slot></template>light` in a `div` block (M-22 item 6) | `STRUCTURE` (before: M-22 item 2) |
+| `CONTENT-FORBIDDEN-NOSCRIPT` | `<noscript>x</noscript>` in a `div` block | `<noscript><div>x</div></noscript>` in a `p` block (M-11 item 10, M-24 item a) | `STRUCTURE` (before: M-22 item 2) |
+
+New fixtures (prefix `FX-RQ-MARKUP-`):
+
+| Decision | Valid | Invalid |
+|---|---|---|
+| H-94, `template` | `CONTENT-TEMPLATE` (the old shape, and a block with an `a` after it), `-P` (phrasing in a `p` block), `-CELL` (a block in a cell; a template in a cell of the content), `-TABLE` (a table, a column group and `col` in templates), `-NESTED` (nested templates with `script` and `style`) | `CONTENT-TEMPLATE-P-DIV` (M-24 item a), `-UNBALANCED` (M-23), `-IN-TABLE` (M-24 item k), `-FOR` (M-10 item 3), `-COL` (M-09 condition 1, M-24 item g) |
+| H-94, M-24 item g | — | `CONTENT-TEMPLATE-ROWS` (a row template in a cell of the content), `-ROWS-NO-TABLE`, `-CAPTION` (caption and `td` in a template: the depth shape), `-TABLE-SCOPE` (the parse5 table-scope shape) |
+| H-94, H-97, M-22 item 6 | `CONTENT-TEMPLATE-SHADOWROOT-OTHER` (the other shadowroot attributes, `data-shadowrootmode`, the word in a value), `-SHADOWROOTMODE-SVG` (a foreign `template`), `TEMPLATE-SHADOWROOTMODE-OUTSIDE` | `CONTENT-FORBIDDEN-TEMPLATE`, `CONTENT-TEMPLATE-SHADOWROOTMODE-CASE` (mixed case, no value), `-DUPLICATE` (empty value and a dropped duplicate), `-NESTED` (in a template of the content) |
+| H-95, `noscript` | `CONTENT-NOSCRIPT` (the old shape), `-IMG` (tracking fallback, a block with an `a` after it), `-PHRASING` (`span` and `p` blocks), `-TABLE`, `-IN-CELL`, `-SVG`, `-P-AROUND` (the known class of N1) | `CONTENT-NOSCRIPT-UNBALANCED` (item 5), `-BLOCK-END` (the block end tag in C), `-BLOCK-START` (item 2), `-RESERVED` (item 4, `RESERVED`), `-EOF` (C to the end of the input, M-20) |
+| H-95, M-11 item 10 | — | `CONTENT-FORBIDDEN-NOSCRIPT` (M-24 a), `CONTENT-NOSCRIPT-HEADING` (b), `-LIST-ITEM` (c), `-A-IN-A` (e), `-RUBY` (i), `-LI-IN-LI` (j), `-TABLE-FOSTER` (k), `-TEXTAREA` (M-22 item 2), `-SELF-CLOSING` (M-22 item 3), `-DOCTYPE` (M-22 item 1, choice 1) |
+| H-94, H-95 | `CONTENT-TEMPLATE-NOSCRIPT`, `CONTENT-TEMPLATE-NOSCRIPT-P` (a `div` in C in a template cannot close a `p` around the template) | `CONTENT-NOSCRIPT-TEMPLATE` (M-11 item 3) |
+
+Each invalid fixture of a new rule breaks only that rule: with the rule removed from the reference of the study, the fixture is valid (option T1 for the M-24 item g fixtures, the control `tu` for M-22 item 6, the control `nu` for M-11 item 10; the DOCTYPE fixture has no such control). `CONTENT-TEMPLATE-COL` and `-ROWS-NO-TABLE` also break the rules before S5 (M-09 condition 1, the first condition of item g).
+
+### 12.3 Cross-check
+
+<Badge type="tip" text="FACT" /> parse5 8.0.1, 2026-10-19, `tools/rqp-markup/crosscheck` with the changes of T-06a: the view `spec` (the WHATWG table scope, `--scripting all`), the profiles `tpl`, `nos` and `mix` (`src/generator-s5.mjs`, the generator of the study), the classes `M-22-shadowrootmode` and `M-24-template-table-part`. The reference of the rules is the frozen study copy `study/s5/src/markup-s5.mjs` with the flags `template: t2`, `noscript: n1`, run as a scratch batch candidate (not committed; the four candidates follow in T-06b to T-06e).
+
+| Input | Result |
+|---|---|
+| Golden fixtures, `check --expected --scripting all` | 355 documents, 146 valid; 0 findings (blocks in three views, depth claim in both scripting views, rule classes) |
+| The reference against the golden fixtures (`diff.mjs`) | 355 of 355 |
+| `cases/s4-cases.json` (126), `s4b-cases.json` (68), `s5-cases.json` (52) | Each `expected` field holds with the reference (`S4-H78-kept-template` and `S4-H78-kept-noscript` are `valid 1` now); `cases` with the four candidates and with the reference: 0 disagreements in the three views |
+| Sweeps `tpl`, `nos`, `mix`, seed 95, 150 000 documents each, three views | 450 000 documents, 77 782 valid (21 408, 31 172, 25 202); 0 findings; 0 depth-claim violations on valid documents in either scripting view; no accepted document has a rule class |
+| Sweeps `classic`, `review`, `review2`, `review3`, seed 96, 25 000 documents each, three views | 20 619 valid; 0 findings |
+| Control: option T1 (no "F is none" in item g), profile `tpl`, seed 97, 50 000 documents | 0 block findings; 14 accepted documents have only the class `M-24-template-table-part` (the shape changes template contents, not block boundaries) |
+| Control: `tu` and `nu` (no item 6, no condition 1 in the content, no item 10), profile `mix`, seed 97, 50 000 documents | 1 689 findings: 536 block disagreements in each view (the H-35 shape in a template of the content), 81 more with scripting disabled (77 without a rule class: the shapes of item 10); 310 accepted documents have only the class `M-22-shadowrootmode` |
+| Corpus classifier (`corpus/classify.mjs`) against the reference, seed 63, profiles `tpl`, `nos`, `mix`, `review2`, 100 000 documents each | No class exactly for the valid documents, except 136 documents with invalid JSON (the classifier does not check M-25) |
+
+<Badge type="warning" text="RESEARCH" /> Corpus: not measured again in T-06a (the study measured T2 + N1 on 2026-10-19: main variants 332 → 393 of 490, small 687 → 701 of 752, 0 lost, 0 findings; `evidence/markup-s5/report.md` §4.2). The corpus run of T-07 measures the rules with the candidates. The WebView lab (T-03, T-04) gets the new `noscript` fixtures as cases (their ids have `NOSCRIPT`); the declarative shadow DOM shapes of study §7 are not lab cases yet.
+
 ## Related
 
 - [RQP markup](/engineering/protocol/markup)
@@ -929,3 +999,4 @@ Each invalid fixture breaks one rule: with that rule removed from the scratch re
 - [Sprint record WP-17 S1](/engineering/plan/sprints/WP-17-S1)
 - [Sprint record WP-17 S3](/engineering/plan/sprints/WP-17-S3)
 - [Sprint record WP-17 S4](/engineering/plan/sprints/WP-17-S4)
+- [Sprint record WP-17 S5](/engineering/plan/sprints/WP-17-S5)

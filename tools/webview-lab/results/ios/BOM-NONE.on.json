@@ -1,10 +1,10 @@
 {
   "characterSet" : "UTF-8",
   "contentType" : "text/plain",
-  "error" : "evaluateJavaScript in WKContentWorld.defaultClient: WKErrorDomain 4: A JavaScript exception occurred (TypeError: undefined is not an object (evaluating 'list.length'))",
+  "error" : null,
   "id" : "BOM-NONE",
   "probe" : null,
-  "tree" : null,
+  "tree" : "| <html>\n|   <head>\n|     <meta>\n|       content=\"light dark\"\n|       name=\"color-scheme\"\n|   <body>\n|     <pre>\n|       style=\"word-wrap: break-word; white-space: pre-wrap;\"\n|       \"<!doctype html>\n<!-- SPDX-License-Identifier: Apache-2.0 -->\n<!-- SPDX-FileCopyrightText: The Rivqen Authors -->\n<html><head><title>q20</title></head><body><p id=\"m\">Grüße – 日本</p></body></html>\n\"",
   "view" : "on",
-  "walker" : "unavailable"
+  "walker" : "ok"
 }

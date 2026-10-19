@@ -2,7 +2,7 @@
   "id": "CONTENT-NOSCRIPT-SVG",
   "view": "on",
   "walker": "ok",
-  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <div>\n|       data-rq-block=\"box\"\n|       <noscript>\n|         \"<svg width=\"1\" height=\"1\"><path d=\"M0\"></svg>\"\n|     \"\n\n\"",
+  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <div>\n|       data-rq-block=\"box\"\n|       <noscript>\n|         \"<svg width=\\\"1\\\" height=\\\"1\\\"><path d=\\\"M0\\\"></svg>\"\n|     \"\\n\\n\"",
   "characterSet": "UTF-8",
   "contentType": "text/html",
   "probe": null,

@@ -1,6 +1,6 @@
 {
   "platform": "android",
-  "date": "2026-10-19T20:00:57.580Z",
+  "date": "2026-10-19T21:28:10.406Z",
   "partial": null,
   "os": {
     "name": "Android",
@@ -28,7 +28,7 @@
   "settleMs": 1000,
   "walker": {
     "method": "androidx.webkit isolated world (view on: reply proxy after onPageFinished plus settleMs; view off: console channel at the load event)",
-    "sha256": "681e21b60adfa8040b3450bc78af228c703346ae5f62c75de428e6dcf5015280",
+    "sha256": "6df2dab09da4a8882411dda1749948e0591751e5dfc26abec61da6dcc47cbebe",
     "labWorldSupported": true,
     "notes": [
       "Method: serialize.js runs only in an isolated JavaScript world of androidx.webkit 1.17.1 (WebViewCompat.getExecutionWorld; a script added with addJavaScriptOnEvent at INJECTION_EVENT_DOCUMENT_END). Page scripts do not share this world.",

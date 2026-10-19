@@ -4,7 +4,7 @@
   "error" : null,
   "id" : "CONTENT-NOSCRIPT-SELF-CLOSING",
   "probe" : null,
-  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <div>\n|       data-rq-block=\"box\"\n|       <noscript>\n|         <span>\n|           \"x\"\n|     \"\n\n\"",
+  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <div>\n|       data-rq-block=\"box\"\n|       <noscript>\n|         <span>\n|           \"x\"\n|     \"\\n\\n\"",
   "view" : "off",
   "walker" : "ok"
 }

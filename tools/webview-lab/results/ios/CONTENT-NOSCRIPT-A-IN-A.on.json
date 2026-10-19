@@ -4,7 +4,7 @@
   "error" : null,
   "id" : "CONTENT-NOSCRIPT-A-IN-A",
   "probe" : null,
-  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <div>\n|       data-rq-block=\"box\"\n|       <a>\n|         href=\"#\"\n|         <noscript>\n|           \"<a href=\"#\">x</a>\"\n|     \"\n\n\"",
+  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <div>\n|       data-rq-block=\"box\"\n|       <a>\n|         href=\"#\"\n|         <noscript>\n|           \"<a href=\\\"#\\\">x</a>\"\n|     \"\\n\\n\"",
   "view" : "on",
   "walker" : "ok"
 }

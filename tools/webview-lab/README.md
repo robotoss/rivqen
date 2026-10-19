@@ -44,11 +44,12 @@ Procedure to install parse5:
 
 - The server writes each response to the socket as raw bytes. The header lines of a case stay as they are, also two lines with the same name.
 - The server adds `Content-Length` and `Connection: close` only when the case has no such line.
+- A case header is checked as bytes, as the server writes them (one byte per code unit). The name has HTTP token bytes only. The value has only HTAB, 0x20 to 0x7E and 0x80 to 0xFF. A code unit above 0xFF is rejected before the encoding, because the latin1 encoding would keep only its low byte (U+010D would become CR).
 - The server does not parse or run a case body. It makes no outbound request. A `source` path outside the repository gives 500.
 
 ### What `serialize.js` reads
 
-`serialize.js` is a plain script. Its value is the tree string. It reads these properties and nothing else:
+`serialize.js` is a plain script. Its value is the tree string. It reads these properties and nothing else. It reads each one with the getter of the DOM prototype (`Node.prototype`, `Element.prototype`, `HTMLTemplateElement.prototype`, `CharacterData.prototype`, `Attr.prototype`, `DocumentType.prototype`), called on the node. It does not read the property of the object, because a form with `<input name="childNodes">` hides the properties of the form (named properties, `LegacyOverrideBuiltIns`). When a platform has no such getter, it falls back to the plain property:
 
 | Node | Properties |
 |---|---|
@@ -60,11 +61,13 @@ Procedure to install parse5:
 
 The output is the html5lib tree format of CONTRACT section 4. Attributes are sorted by the shown name (`xlink href` for a prefixed attribute). The walk uses an explicit stack, so a deep tree does not overflow the call stack.
 
-The tests check `serialize.js` in Node with a fake DOM (`host/test/fake-dom.mjs`) that has only the properties above. The fake DOM is built from parse5 nodes. The tests compare the string with the independent parse5 serializer of `host/tree.mjs` for the same tree, on hand-written expectations and on every Q-19 case in both views.
+Escaping: in text, comment, attribute and doctype strings (and in names), `\` becomes `\\`, `"` becomes `\"`, a line feed becomes `\n` and a carriage return becomes `\r`. So every node is one line and two different trees never give the same string. Both serializers (`serialize.js` and `host/tree.mjs`) use the same rule.
+
+The tests check `serialize.js` in Node with a fake DOM (`host/test/fake-dom.mjs`). The fake DOM has the prototypes `Node`, `Element`, `HTMLTemplateElement`, `CharacterData`, `Attr` and `DocumentType` with getters, as a browser has, so the tests use the same read path as a WebView. One test hides the properties of a form with own properties and checks that the tree stays the same. The fake DOM is built from parse5 nodes. The tests compare the string with the independent parse5 serializer of `host/tree.mjs` for the same tree, on hand-written expectations and on every Q-19 case in both views.
 
 ### Compare
 
-- Q-19: the tree of the platform against the parse5 tree. `scriptingEnabled` is true for `on` and false for `off`. A leading byte order mark is removed before the parse, as a WebView does. Result: `equal`, `different` (with the first different line) or `unavailable` (walker unavailable).
+- Q-19: the tree of the platform against the parse5 tree. `scriptingEnabled` is true for `on` and false for `off`. A leading byte order mark is removed before the parse, as a WebView does. Result: `equal`, `different` or `unavailable` (walker unavailable). A `different` row names the number of different lines, the classes of these lines and the first different line, for example `47 different lines (depth beyond 512 x46, changed line x1); first: line 515: …`. Lines are compared by index, so one missing line makes the lines after it count as different: the count is the size of the difference, not a number of separate faults. Classes: `depth beyond 512` (the parse5 line is deeper than 512), `inside script` (the parse5 line is in a `script` subtree), `missing lines` (the platform tree ends early), `extra lines` (the platform tree is longer), `changed line` (all others).
 - Q-20: `characterSet` and the text of the probe. Expected values:
 
 | Case | Expected |

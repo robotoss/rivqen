@@ -4,7 +4,7 @@
   "error" : null,
   "id" : "NOSCRIPT",
   "probe" : null,
-  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <noscript>\n|       \"<iframe src=\"https://www.example.com/ns.html\" height=\"0\" width=\"0\" style=\"display:none\"></iframe>\"\n|     \"\n\"\n|     <noscript>\n|       \"<img src=\"https://www.example.com/p.gif\" alt=\"\">\"\n|     \"\n\"\n|     <p>\n|       data-rq-block=\"real\"\n|       \"r\"\n|     \"\n\n\"",
+  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <noscript>\n|       \"<iframe src=\\\"https://www.example.com/ns.html\\\" height=\\\"0\\\" width=\\\"0\\\" style=\\\"display:none\\\"></iframe>\"\n|     \"\\n\"\n|     <noscript>\n|       \"<img src=\\\"https://www.example.com/p.gif\\\" alt=\\\"\\\">\"\n|     \"\\n\"\n|     <p>\n|       data-rq-block=\"real\"\n|       \"r\"\n|     \"\\n\\n\"",
   "view" : "on",
   "walker" : "ok"
 }

@@ -4,7 +4,7 @@
   "error" : null,
   "id" : "NOSCRIPT-MAIN-TABLE-CURRENT",
   "probe" : null,
-  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <object>\n|       <a>\n|         href=\"1\"\n|         <noscript>\n|           <marquee>\n|           <table>\n|           <table>\n|         \"x\"\n|     <a>\n|       href=\"1\"\n|       \"\n\"\n|       <span>\n|         data-rq-block=\"k\"\n|         \"y\"\n|     <a>\n|       href=\"2\"\n|       \"z\"\n|     \"w\n\n\"",
+  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <object>\n|       <a>\n|         href=\"1\"\n|         <noscript>\n|           <marquee>\n|           <table>\n|           <table>\n|         \"x\"\n|     <a>\n|       href=\"1\"\n|       \"\\n\"\n|       <span>\n|         data-rq-block=\"k\"\n|         \"y\"\n|     <a>\n|       href=\"2\"\n|       \"z\"\n|     \"w\\n\\n\"",
   "view" : "off",
   "walker" : "ok"
 }

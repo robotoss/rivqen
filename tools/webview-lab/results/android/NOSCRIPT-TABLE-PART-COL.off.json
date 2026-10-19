@@ -2,7 +2,7 @@
   "id": "NOSCRIPT-TABLE-PART-COL",
   "view": "off",
   "walker": "ok",
-  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <div>\n|       data-rq-block=\"x\"\n|       \"a\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <noscript>\n|       <colgroup>\n|         <col>\n|     <table>\n|     \"b\n\n\"",
+  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <div>\n|       data-rq-block=\"x\"\n|       \"a\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <noscript>\n|       <colgroup>\n|         <col>\n|     <table>\n|     \"b\\n\\n\"",
   "characterSet": "UTF-8",
   "contentType": "text/html",
   "probe": null,

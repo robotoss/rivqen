@@ -2,7 +2,7 @@
   "id": "EDGE-COMBO-NOSCRIPT-STYLE-SCRIPT",
   "view": "on",
   "walker": "ok",
-  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <noscript>\n|       \"<style><script type=application/rivqen-manifest+json></style>\"\n|     \"\n\"\n|     <p>\n|       data-rq-block=\"real\"\n|       \"r\"\n|     \"\n\n\"",
+  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <noscript>\n|       \"<style><script type=application/rivqen-manifest+json></style>\"\n|     \"\\n\"\n|     <p>\n|       data-rq-block=\"real\"\n|       \"r\"\n|     \"\\n\\n\"",
   "characterSet": "UTF-8",
   "contentType": "text/html",
   "probe": null,

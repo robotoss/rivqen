@@ -7,6 +7,14 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MATH_NS = "http://www.w3.org/1998/Math/MathML";
 
+/**
+ * Escape backslash, quote, newline and carriage return, as host/serialize.js does.
+ * @param {string} s
+ */
+function esc(s) {
+  return String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n").replace(/\r/g, "\\r");
+}
+
 /** @param {number} depth */
 function pad(depth) {
   return `| ${"  ".repeat(depth)}`;
@@ -38,20 +46,20 @@ export function serializeParse5(doc) {
   while (stack.length > 0) {
     const { node, depth } = /** @type {{ node: any, depth: number }} */ (stack.pop());
     if (node.nodeName === "#text") {
-      lines.push(`${pad(depth)}"${node.value}"`);
+      lines.push(`${pad(depth)}"${esc(node.value)}"`);
     } else if (node.nodeName === "#comment") {
-      lines.push(`${pad(depth)}<!-- ${node.data} -->`);
+      lines.push(`${pad(depth)}<!-- ${esc(node.data)} -->`);
     } else if (node.nodeName === "#documentType") {
       const pub = node.publicId ?? "";
       const sys = node.systemId ?? "";
-      const ids = pub !== "" || sys !== "" ? ` "${pub}" "${sys}"` : "";
-      lines.push(`${pad(depth)}<!DOCTYPE ${node.name ?? ""}${ids}>`);
+      const ids = pub !== "" || sys !== "" ? ` "${esc(pub)}" "${esc(sys)}"` : "";
+      lines.push(`${pad(depth)}<!DOCTYPE ${esc(node.name ?? "")}${ids}>`);
     } else if (typeof node.tagName === "string") {
       const ns = node.namespaceURI === SVG_NS ? "svg " : node.namespaceURI === MATH_NS ? "math " : "";
-      lines.push(`${pad(depth)}<${ns}${node.tagName}>`);
+      lines.push(`${pad(depth)}<${ns}${esc(node.tagName)}>`);
       const attrs = node.attrs.map((/** @type {any} */ a) => ({ n: attrName(a), v: a.value }));
       attrs.sort((/** @type {any} */ a, /** @type {any} */ b) => (a.n < b.n ? -1 : a.n > b.n ? 1 : 0));
-      for (const a of attrs) lines.push(`${pad(depth + 1)}${a.n}="${a.v}"`);
+      for (const a of attrs) lines.push(`${pad(depth + 1)}${esc(a.n)}="${esc(a.v)}"`);
       if (node.content) {
         lines.push(`${pad(depth + 1)}content`);
         push(node.childNodes, depth + 1);

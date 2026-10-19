@@ -35,6 +35,32 @@ export function isValidId(id) {
 }
 
 /**
+ * The bytes the server writes for a header string (one byte per code unit), or null when a code
+ * unit is above 0xFF. The server encodes with latin1, which would keep only the low byte of such a
+ * unit (U+010D would become CR), so the check must run on these bytes and not on the string.
+ * @param {string} s
+ * @returns {Buffer|null}
+ */
+export function headerBytes(s) {
+  for (let i = 0; i < s.length; i++) if (s.charCodeAt(i) > 0xff) return null;
+  return Buffer.from(s, "latin1");
+}
+
+/** A header name: HTTP token bytes only. @param {string} name */
+export function isHeaderName(name) {
+  const b = headerBytes(name);
+  return b !== null && b.length > 0 && /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(b.toString("latin1"));
+}
+
+/** A header value: HTAB, 0x20-0x7E and 0x80-0xFF only (no CR, LF, NUL or other controls). @param {string} value */
+export function isHeaderValue(value) {
+  const b = headerBytes(value);
+  if (b === null) return false;
+  for (const x of b) if (!(x === 0x09 || (x >= 0x20 && x <= 0x7e) || x >= 0x80)) return false;
+  return true;
+}
+
+/**
  * @typedef {object} LabCase
  * @property {string} id
  * @property {"Q-19"|"Q-20"} question
@@ -64,8 +90,7 @@ export function parseCase(raw, where) {
     if (!Array.isArray(h) || h.length !== 2 || typeof h[0] !== "string" || typeof h[1] !== "string") {
       throw bad("bad header line");
     }
-    // A name or a value with CR, LF or NUL would split the response.
-    if (!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(h[0]) || /[\r\n\0]/.test(h[1])) throw bad("bad header line");
+    if (!isHeaderName(h[0]) || !isHeaderValue(h[1])) throw bad("bad header line");
     headers.push([h[0], h[1]]);
   }
   if (!Array.isArray(o.views) || o.views.length === 0) throw bad("bad views");

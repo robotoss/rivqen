@@ -35,7 +35,7 @@ Rows: 150. Equal: 140. Different: 7. Info: 3. Unavailable: 0. Missing: 0.
 | CONTENT-NOSCRIPT-PHRASING | Q-19 | on | equal |  |
 | CONTENT-NOSCRIPT-PHRASING | Q-19 | off | equal |  |
 | CONTENT-NOSCRIPT-RESERVED | Q-19 | on | equal |  |
-| CONTENT-NOSCRIPT-RESERVED | Q-19 | off | different | line 12: parse5 "d4 <script>", platform "d2 \\"" |
+| CONTENT-NOSCRIPT-RESERVED | Q-19 | off | different | 4 different lines (inside script x2, changed line x1, missing lines x1); first: line 11: parse5 "d4 <script>", platform "d2 \\"\\\\n\\\\n\\"" |
 | CONTENT-NOSCRIPT-RUBY | Q-19 | on | equal |  |
 | CONTENT-NOSCRIPT-RUBY | Q-19 | off | equal |  |
 | CONTENT-NOSCRIPT-SELF-CLOSING | Q-19 | on | equal |  |
@@ -57,7 +57,7 @@ Rows: 150. Equal: 140. Different: 7. Info: 3. Unavailable: 0. Missing: 0.
 | CONTENT-TEMPLATE-NOSCRIPT-P | Q-19 | on | equal |  |
 | CONTENT-TEMPLATE-NOSCRIPT-P | Q-19 | off | equal |  |
 | EDGE-COMBO-NOSCRIPT-MANIFEST-EOF | Q-19 | on | equal |  |
-| EDGE-COMBO-NOSCRIPT-MANIFEST-EOF | Q-19 | off | different | line 15: parse5 "d3 <script>", platform (end of tree) |
+| EDGE-COMBO-NOSCRIPT-MANIFEST-EOF | Q-19 | off | different | 3 different lines (inside script x2, missing lines x1); first: line 13: parse5 "d3 <script>", platform (end of tree) |
 | EDGE-COMBO-NOSCRIPT-STYLE-SCRIPT | Q-19 | on | equal |  |
 | EDGE-COMBO-NOSCRIPT-STYLE-SCRIPT | Q-19 | off | equal |  |
 | EDGE-E3-NOSCRIPT-EOF | Q-19 | on | equal |  |
@@ -65,15 +65,15 @@ Rows: 150. Equal: 140. Different: 7. Info: 3. Unavailable: 0. Missing: 0.
 | EDGE-E3-NOSCRIPT-EOF-BLOCK | Q-19 | on | equal |  |
 | EDGE-E3-NOSCRIPT-EOF-BLOCK | Q-19 | off | equal |  |
 | EDGE-E8-NOSCRIPT-MANIFEST | Q-19 | on | equal |  |
-| EDGE-E8-NOSCRIPT-MANIFEST | Q-19 | off | different | line 10: parse5 "d3 <script>", platform "d2 \\"" |
+| EDGE-E8-NOSCRIPT-MANIFEST | Q-19 | off | different | 8 different lines (changed line x3, missing lines x3, inside script x2); first: line 9: parse5 "d3 <script>", platform "d2 \\"\\\\n\\"" |
 | LIMIT-DEPTH-NOSCRIPT | Q-19 | on | equal |  |
-| LIMIT-DEPTH-NOSCRIPT | Q-19 | off | different | line 515: parse5 "d512 <span>", platform "d511 <span>" |
+| LIMIT-DEPTH-NOSCRIPT | Q-19 | off | different | 47 different lines (depth beyond 512 x46, changed line x1); first: line 515: parse5 "d512 <span>", platform "d511 <span>" |
 | LIMIT-DEPTH-NOSCRIPT-CONTENT-256 | Q-19 | on | equal |  |
 | LIMIT-DEPTH-NOSCRIPT-CONTENT-256 | Q-19 | off | equal |  |
 | LIMIT-DEPTH-NOSCRIPT-CONTENT-257 | Q-19 | on | equal |  |
 | LIMIT-DEPTH-NOSCRIPT-CONTENT-257 | Q-19 | off | equal |  |
 | LIMIT-DEPTH-NOSCRIPT-ELEMENT | Q-19 | on | equal |  |
-| LIMIT-DEPTH-NOSCRIPT-ELEMENT | Q-19 | off | different | line 515: parse5 "d512 <span>", platform "d511 <span>" |
+| LIMIT-DEPTH-NOSCRIPT-ELEMENT | Q-19 | off | different | 48 different lines (depth beyond 512 x47, changed line x1); first: line 515: parse5 "d512 <span>", platform "d511 <span>" |
 | LIMIT-DEPTH-NOSCRIPT-ICON-RESTORE | Q-19 | on | equal |  |
 | LIMIT-DEPTH-NOSCRIPT-ICON-RESTORE | Q-19 | off | equal |  |
 | LIMIT-DEPTH-NOSCRIPT-ICONS | Q-19 | on | equal |  |
@@ -113,7 +113,7 @@ Rows: 150. Equal: 140. Different: 7. Info: 3. Unavailable: 0. Missing: 0.
 | NOSCRIPT-MATH | Q-19 | on | equal |  |
 | NOSCRIPT-MATH | Q-19 | off | equal |  |
 | NOSCRIPT-RESERVED-NON-ASCII | Q-19 | on | equal |  |
-| NOSCRIPT-RESERVED-NON-ASCII | Q-19 | off | different | line 10: parse5 "d3 <script>", platform "d2 \\"" |
+| NOSCRIPT-RESERVED-NON-ASCII | Q-19 | off | different | 8 different lines (changed line x3, missing lines x3, inside script x2); first: line 9: parse5 "d3 <script>", platform "d2 \\"\\\\n\\"" |
 | NOSCRIPT-STRAY-END | Q-19 | on | equal |  |
 | NOSCRIPT-STRAY-END | Q-19 | off | equal |  |
 | NOSCRIPT-SVG | Q-19 | on | equal |  |

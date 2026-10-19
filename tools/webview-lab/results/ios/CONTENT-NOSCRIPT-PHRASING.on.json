@@ -4,7 +4,7 @@
   "error" : null,
   "id" : "CONTENT-NOSCRIPT-PHRASING",
   "probe" : null,
-  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <span>\n|       data-rq-block=\"s\"\n|       \"a\"\n|       <noscript>\n|         \"Enable <b>JavaScript</b>\"\n|       \"b\"\n|     \"\n\"\n|     <p>\n|       data-rq-block=\"p\"\n|       \"a\"\n|       <noscript>\n|         \"<a href=\"/x\"><img src=\"/i.png\" alt=\"\"></a>\"\n|       \"b\"\n|     \"\n\n\"",
+  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <span>\n|       data-rq-block=\"s\"\n|       \"a\"\n|       <noscript>\n|         \"Enable <b>JavaScript</b>\"\n|       \"b\"\n|     \"\\n\"\n|     <p>\n|       data-rq-block=\"p\"\n|       \"a\"\n|       <noscript>\n|         \"<a href=\\\"/x\\\"><img src=\\\"/i.png\\\" alt=\\\"\\\"></a>\"\n|       \"b\"\n|     \"\\n\\n\"",
   "view" : "on",
   "walker" : "ok"
 }

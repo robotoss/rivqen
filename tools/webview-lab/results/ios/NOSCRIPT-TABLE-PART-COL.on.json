@@ -4,7 +4,7 @@
   "error" : null,
   "id" : "NOSCRIPT-TABLE-PART-COL",
   "probe" : null,
-  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <noscript>\n|               \"<col>\"\n|             <div>\n|               data-rq-block=\"x\"\n|               \"a\"\n|               <table>\n|               \"b\"\n|     \"\n\n\"",
+  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <noscript>\n|               \"<col>\"\n|             <div>\n|               data-rq-block=\"x\"\n|               \"a\"\n|               <table>\n|               \"b\"\n|     \"\\n\\n\"",
   "view" : "on",
   "walker" : "ok"
 }

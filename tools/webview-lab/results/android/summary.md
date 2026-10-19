@@ -67,13 +67,13 @@ Rows: 150. Equal: 144. Different: 3. Info: 3. Unavailable: 0. Missing: 0.
 | EDGE-E8-NOSCRIPT-MANIFEST | Q-19 | on | equal |  |
 | EDGE-E8-NOSCRIPT-MANIFEST | Q-19 | off | equal |  |
 | LIMIT-DEPTH-NOSCRIPT | Q-19 | on | equal |  |
-| LIMIT-DEPTH-NOSCRIPT | Q-19 | off | different | line 516: parse5 "d513 <span>", platform "d512 <span>" |
+| LIMIT-DEPTH-NOSCRIPT | Q-19 | off | different | 46 different lines (depth beyond 512 x46); first: line 516: parse5 "d513 <span>", platform "d512 <span>" |
 | LIMIT-DEPTH-NOSCRIPT-CONTENT-256 | Q-19 | on | equal |  |
 | LIMIT-DEPTH-NOSCRIPT-CONTENT-256 | Q-19 | off | equal |  |
 | LIMIT-DEPTH-NOSCRIPT-CONTENT-257 | Q-19 | on | equal |  |
 | LIMIT-DEPTH-NOSCRIPT-CONTENT-257 | Q-19 | off | equal |  |
 | LIMIT-DEPTH-NOSCRIPT-ELEMENT | Q-19 | on | equal |  |
-| LIMIT-DEPTH-NOSCRIPT-ELEMENT | Q-19 | off | different | line 516: parse5 "d513 <span>", platform "d512 <span>" |
+| LIMIT-DEPTH-NOSCRIPT-ELEMENT | Q-19 | off | different | 47 different lines (depth beyond 512 x47); first: line 516: parse5 "d513 <span>", platform "d512 <span>" |
 | LIMIT-DEPTH-NOSCRIPT-ICON-RESTORE | Q-19 | on | equal |  |
 | LIMIT-DEPTH-NOSCRIPT-ICON-RESTORE | Q-19 | off | equal |  |
 | LIMIT-DEPTH-NOSCRIPT-ICONS | Q-19 | on | equal |  |

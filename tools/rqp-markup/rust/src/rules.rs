@@ -187,6 +187,27 @@ fn is_json_type(value: &[u8]) -> bool {
 /// The end tag after the content C of a `noscript` element (M-11).
 const NOSCRIPT_END: &[u8] = b"</noscript>";
 
+/// The most implied closure steps for one start tag (M-09, H-85a): a row
+/// group, a row and a cell.
+const CLOSURE_STEPS: usize = 3;
+
+/// M-09: the names that F may have for a table part start tag. `None` for
+/// every other name (also `table`).
+fn allowed_parents(name: NameId) -> Option<&'static [Known]> {
+    use Known::{Caption, Col, Colgroup, Table, Tbody, Td, Tfoot, Th, Thead, Tr};
+    if is_any(name, &[Caption, Colgroup, Tbody, Thead, Tfoot]) {
+        Some(&[Table])
+    } else if name == Col.id() {
+        Some(&[Table, Colgroup])
+    } else if name == Tr.id() {
+        Some(&[Table, Tbody, Thead, Tfoot])
+    } else if is_any(name, &[Td, Th]) {
+        Some(&[Table, Tbody, Thead, Tfoot, Tr])
+    } else {
+        None
+    }
+}
+
 fn is_any(name: NameId, names: &[Known]) -> bool {
     names.iter().any(|k| k.id() == name)
 }
@@ -217,6 +238,9 @@ struct Pass<'a> {
     /// Offset after a `noscript` start tag in HTML context whose RAWTEXT
     /// content is not checked yet (M-11).
     noscript: Option<usize>,
+    /// The pass over a `noscript` content C is running (M-11 item 8): the
+    /// implied closure of M-09 does not apply (H-85a).
+    in_noscript: bool,
 }
 
 /// Runs the pass over `input` (already checked by M-01 and M-02). The
@@ -235,6 +259,7 @@ pub(crate) fn run(input: &[u8], start: usize) -> Result<Vec<RawBlock>, MarkupErr
         blocks: Vec::new(),
         ids: HashSet::new(),
         noscript: None,
+        in_noscript: false,
     };
     let mut tokens = Tokenizer::new(input, start);
     loop {
@@ -498,6 +523,7 @@ impl Pass<'_> {
         }
 
         // M-05 step 1, HTML context.
+        self.implied_closure(name)?;
         self.table_part(name)?;
         self.implied_parts(name)?;
         let is_root = name == Known::Svg.id() || name == Known::Math.id();
@@ -515,10 +541,40 @@ impl Pass<'_> {
         Ok(raw_kind(raw_name))
     }
 
+    /// M-09 implied closure (H-85a). Outside block content and outside the
+    /// pass on C, a table part start tag in HTML context closes F while F
+    /// does not allow the tag. Each step is the end tag of F. At most
+    /// [`CLOSURE_STEPS`] steps; it never closes a `table`.
+    fn implied_closure(&mut self, name: NameId) -> Result<(), MarkupError> {
+        use Known::{Colgroup, Tbody, Tfoot, Thead, Tr};
+        if self.block.is_some() || self.in_noscript {
+            return Ok(());
+        }
+        let Some(allowed) = allowed_parents(name) else {
+            return Ok(());
+        };
+        for _ in 0..CLOSURE_STEPS {
+            let Some((index, context)) = self.table_context_at() else {
+                return Ok(());
+            };
+            if is_any(context, allowed) {
+                return Ok(());
+            }
+            // Step 2: as condition 2, F is the current node.
+            if is_any(context, &[Tr, Tbody, Thead, Tfoot, Colgroup])
+                && index.checked_add(1) != Some(self.stack.len())
+            {
+                return Err(structure("M-09"));
+            }
+            self.close(context, index)?;
+        }
+        Ok(())
+    }
+
     /// M-09 with conditions 1 and 2 for a start tag in HTML context. It runs
     /// before the implied parts of M-26 and before the push.
     fn table_part(&self, name: NameId) -> Result<(), MarkupError> {
-        use Known::{Caption, Col, Colgroup, Table, Tbody, Td, Tfoot, Th, Thead, Tr};
+        use Known::{Col, Colgroup, Table, Tbody, Tfoot, Thead, Tr};
         let part = self.names.has(name, flag::TABLE_PART) || name == Col.id();
         if !part && name != Table.id() {
             return Ok(());
@@ -545,15 +601,7 @@ impl Pass<'_> {
         {
             return Err(structure("M-09"));
         }
-        let allowed: &[Known] = if is_any(name, &[Caption, Colgroup, Tbody, Thead, Tfoot]) {
-            &[Table]
-        } else if name == Col.id() {
-            &[Table, Colgroup]
-        } else if name == Tr.id() {
-            &[Table, Tbody, Thead, Tfoot]
-        } else if is_any(name, &[Td, Th]) {
-            &[Table, Tbody, Thead, Tfoot, Tr]
-        } else {
+        let Some(allowed) = allowed_parents(name) else {
             // `table`: only condition 2.
             return Ok(());
         };
@@ -909,6 +957,7 @@ impl Pass<'_> {
         let saved_depth = self.depth;
         let saved_flags = self.stack.last().map(|e| (e.dirty, e.marked));
         let mut tokens = Tokenizer::new(&text, 0);
+        self.in_noscript = true;
         loop {
             let token = tokens.next_token();
             if tokens.defect() {
@@ -933,6 +982,7 @@ impl Pass<'_> {
                 other => self.other_token(&other)?,
             }
         }
+        self.in_noscript = false;
         self.depth = saved_depth;
         if let (Some(elem), Some((dirty, marked))) = (self.stack.last_mut(), saved_flags) {
             elem.dirty = dirty;

@@ -443,6 +443,45 @@ proptest! {
         }
     }
 
+    /// M-09 implied closure (H-85a): a table with every end tag is valid, and
+    /// leaving out the end tag of a cell or row that a sibling follows keeps
+    /// it valid with the same blocks. The last cell and row of each group
+    /// keep their end tags: the `</tr>` and `</tbody>` need a match.
+    #[test]
+    fn omitting_cell_and_row_end_tags_keeps_the_result(
+        rows in prop::collection::vec(prop::collection::vec(any::<bool>(), 1..5), 1..6),
+        grouped in any::<bool>(),
+    ) {
+        let build = |omit: bool| {
+            let mut out = String::from("<table>");
+            if grouped {
+                out.push_str("<thead>");
+            }
+            for (r, cells) in rows.iter().enumerate() {
+                out.push_str("<tr>");
+                for (c, th) in cells.iter().enumerate() {
+                    let tag = if *th { "th" } else { "td" };
+                    out.push_str(&format!("<{tag}>x"));
+                    if !(omit && c + 1 < cells.len()) {
+                        out.push_str(&format!("</{tag}>"));
+                    }
+                }
+                if !(omit && r + 1 < rows.len()) {
+                    out.push_str("</tr>");
+                }
+            }
+            if grouped {
+                out.push_str("</thead>");
+            }
+            out.push_str("</table><p data-rq-block=\"z\">x</p>");
+            out
+        };
+        let explicit = analyze(build(false).as_bytes()).map(|doc| doc.blocks.len());
+        let omitted = analyze(build(true).as_bytes()).map(|doc| doc.blocks.len());
+        prop_assert_eq!(explicit, Ok(1));
+        prop_assert_eq!(omitted, Ok(1));
+    }
+
     /// M-26 (H-31): for shapes with known costs, the document is valid
     /// exactly when D stays at most 256, else `RQP_MARKUP_LIMIT` (M-26).
     #[test]

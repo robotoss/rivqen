@@ -79,7 +79,9 @@ test('the corpus page row has numbers and tag names only', () => {
   assert.equal(JSON.stringify(table).includes('secret'), false);
   assert.equal(table.close.off.valid, false);
   assert.equal(table.close.b2.valid, true);
-  assert.equal(table.head.h79.pass, undefined, 'no parse5 check for a page that the shipped rules reject');
+  // Since H-85a the shipped rules accept the table page, so the check uses a frameset page (M-10).
+  const rejected = measurePage(Buffer.from('<title>t</title><frameset></frameset>', 'utf8'));
+  assert.equal(rejected.head.h79.pass, undefined, 'no parse5 check for a page that the shipped rules reject');
   assert.equal(headStudy(Buffer.from('<x\u0001y>'), true).h79.stop, '?');
 });
 

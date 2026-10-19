@@ -57,7 +57,7 @@ Mutation result of T-09 (WP-17 S3; Infection 0.35.6, changed lines against `7f36
 |---|---|
 | `tests/TokenizerTest.php` | Token spans in each tokenizer state |
 | `tests/ReferenceTokenizerTest.php` | Differential test against `tests/Fuzz/ReferenceTokenizer.php`, a literal one-character-at-a-time transcription of the WHATWG states (with CR/LF preprocessing, all DOCTYPE states and the processing instruction states): exhaustive short comment bodies, dense inputs per state, 100 000 random inputs |
-| `tests/RulesTest.php` | Each rule M-01 to M-27, each item of M-06 (also items 2 to 4), M-09 (also conditions 1 and 2), M-10 (also items 2 and 3), M-11 (also items 5 and 6), M-13 (also item 3) and M-24 (also j and k), each edge case E1 to E8, and each error code (error code and rule ID). Invalid cases and valid neighbors for each rule of the security review, with the review repros. For M-26: pairs of documents at D = 256 (valid) and D = 257 (`LIMIT`) for each step of the depth counter |
+| `tests/RulesTest.php` | Each rule M-01 to M-27, each item of M-06 (also items 2 to 4), M-09 (also conditions 1 and 2 and the implied closure), M-10 (also items 2 and 3), M-11 (also items 5 and 6), M-13 (also item 3) and M-24 (also j and k), each edge case E1 to E8, and each error code (error code and rule ID). Invalid cases and valid neighbors for each rule of the security review, with the review repros. For M-26: pairs of documents at D = 256 (valid) and D = 257 (`LIMIT`) for each step of the depth counter |
 | `tests/JsonValidatorTest.php` | RFC 8259 rules of M-25 |
 | `tests/RevisionTest.php` | Hashes and revisions of `CONTRACT.md` section 4 |
 | `tests/FixturesTest.php` | Every fixture of `fixtures/rqp/markup/` against `expected.json` |
@@ -120,6 +120,7 @@ The start tag rules of round 2 of the security review need no search. They run i
 
 | Rule | Check |
 |---|---|
+| M-09 implied closure (H-85a) | Outside block content and outside C (`inNoscript`), a start tag in `TABLE_PART` or `col` runs up to 3 steps (constant `CLOSURE_STEPS`) before condition 1: find F (stop at `template`); stop when F is none or allowed; a row, row group or column group that is not the current node is an M-09 error (condition 2); else `endTagPop()` for F (M-06 items 1 and 4, M-26 items 4 and 5; never releases D). A `table` is never closed |
 | M-09 condition 1 (H-35) | A `col` start tag while the top entry of the table index stack (`table`, table parts, `template`) is a `template` is an error |
 | M-09 condition 2 (H-37) | A start tag in `TABLE_PART`, `col` or `table` while F is `table`, `tbody`, `thead`, `tfoot`, `tr` or `colgroup`: the stack index of F must be the index of the current node |
 | M-10 item 2 (H-36) | A count of the `form` elements pushed in HTML context that are on the stack. Every pop changes it, also a pop by a crossing; a `form` pushed in a foreign region does not count. A `form` start tag in HTML context while the count is not 0 is an error |

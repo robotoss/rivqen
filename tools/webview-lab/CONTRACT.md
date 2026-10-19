@@ -39,7 +39,7 @@ The lab answers open questions Q-19 (what a WebView does with the `noscript` sha
 
 - `id`: `[A-Z0-9-]{1,64}`, unique; the file name is `<id>.json`.
 - `source`: a repository path of the body bytes. The server sends these bytes unchanged.
-- `headers`: the response header lines in order, sent exactly; two lines with the same name stay two lines. The server adds only `Content-Length` and `Connection: close` when the case has no such line.
+- `headers`: the response header lines in order, sent exactly; two lines with the same name stay two lines. The server adds only `Content-Length` and `Connection: close` when the case has no such line. A header name is HTTP token bytes only; a header value is HTAB, 0x20–0x7E and 0x80–0xFF only; a code unit above 0xFF is rejected before the encoding to bytes (security review S5 F6).
 - `views`: the scripting views to run: `on` (content JavaScript allowed) and `off` (content JavaScript not allowed).
 - `probe`: `null`, or a CSS selector of one element whose `textContent` the result records (Q-20: the text of a non-ASCII marker).
 
@@ -90,11 +90,11 @@ For each case and each view, an app:
 }
 ```
 
-`tree` is the output of `serialize.js`: the html5lib tree-construction test format ("| " and two spaces per depth; `<svg path>` and `<math mi>` for foreign elements; attributes sorted by name on their own lines; `"text"` for text; `<!-- c -->` for comments; `<!DOCTYPE html>`; `content` for the contents of a `template`). `run.json` holds the platform, the OS version, the WebView or WebKit version, the device or simulator name, the date, and the walker notes.
+`tree` is the output of `serialize.js`: the html5lib tree-construction test format ("| " and two spaces per depth; `<svg path>` and `<math mi>` for foreign elements; attributes sorted by name on their own lines; `"text"` for text; `<!-- c -->` for comments; `<!DOCTYPE html>`; `content` for the contents of a `template`). In text, comment, attribute and doctype strings and in names, `\` is written `\\`, `"` is written `\"`, a line feed `\n` and a carriage return `\r`, so each node is one line and two different trees never give the same string. `serialize.js` reads every DOM property with the getter of its prototype (`Node.prototype`, `Element.prototype`, `HTMLTemplateElement.prototype`, `CharacterData.prototype`, `Attr.prototype`, `DocumentType.prototype`) called on the node, not with the property of the object (a form with `<input name="childNodes">` hides the properties of the form; security review S5 F7). `run.json` holds the platform, the OS version, the WebView or WebKit version, the device or simulator name, the date, and the walker notes.
 
 ## 5. Compare
 
-`node host/compare.mjs --platform ios|android` parses each case body with parse5 8.0.1 (`tools/rqp-markup/crosscheck` dependency), with `scriptingEnabled` true for view `on` and false for view `off`, serializes it in the same format, and compares it with `tree`. For the Q-20 cases it compares `characterSet` and `probe` with the expected values of the case list (UTF-8 and the marker text, except the cases where the rule says another encoding wins). It writes `results/<platform>/summary.md` with one row per case and view: equal, different (with the first different line), or unavailable.
+`node host/compare.mjs --platform ios|android` parses each case body with parse5 8.0.1 (`tools/rqp-markup/crosscheck` dependency), with `scriptingEnabled` true for view `on` and false for view `off`, serializes it in the same format, and compares it with `tree`. For the Q-20 cases it compares `characterSet` and `probe` with the expected values of the case list (UTF-8 and the marker text, except the cases where the rule says another encoding wins). It writes `results/<platform>/summary.md` with one row per case and view: equal, different (with the number of different lines by index, a class list — depth beyond 512, inside script, missing lines, extra lines, changed line — and the first different line; security review S5 F5), or unavailable.
 
 ## 6. Rules
 

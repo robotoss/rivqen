@@ -280,6 +280,36 @@
     "p2:patch-mode-diff": 8998
    }
   },
+  "t2n1": {
+   "valid": 92973,
+   "gained": 28978,
+   "findingDocuments": 0,
+   "findings": {},
+   "informative": {
+    "known-p-closure": 1209,
+    "known-head-noscript": 1429,
+    "known-reconstruct": 199,
+    "depth-template-enabled": 3,
+    "depth-template-disabled": 3
+   },
+   "patchRejected": {
+    "shipped:attribute": 1,
+    "p1:attribute": 1,
+    "p2:attribute": 1215,
+    "shipped:foreign": 58,
+    "p1:foreign": 58,
+    "p2:foreign": 58,
+    "shipped:element": 9827,
+    "p1:element": 9827,
+    "p2:element": 14781,
+    "p1:noscript": 21620
+   },
+   "patchFindings": {
+    "shipped:patch-unseen-disabled": 33750,
+    "shipped:patch-mode-diff": 15154,
+    "p2:patch-mode-diff": 8986
+   }
+  },
   "t2n2": {
    "valid": 92452,
    "gained": 28457,

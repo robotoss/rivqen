@@ -723,6 +723,118 @@
     }
    ]
   },
+  "t2n1": {
+   "valid": 20517,
+   "gained": 12569,
+   "withTemplate": 2793,
+   "withNoscript": 11621,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 360,
+    "known-p-closure": 525,
+    "known-reconstruct": 73
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "RQP_MARKUP_RESERVED": 922,
+    "C:M-11-content": 20003,
+    "RQP_MARKUP_STRUCTURE": 14032,
+    "M-24a": 8401,
+    "C:M-24k": 286,
+    "M-24def": 709,
+    "C:M-24a": 4543,
+    "C:M-11-balance": 8648,
+    "RQP_MARKUP_NESTED": 634,
+    "C:M-11-end": 1797,
+    "M-24g": 887,
+    "M-23": 5592,
+    "C:M-22.2": 2284,
+    "M-24c": 352,
+    "S5-template-table-part": 2737,
+    "C:M-24hi": 744,
+    "C:M-24b": 490,
+    "M-20": 98,
+    "M-22.2": 1508,
+    "C:M-24c": 1302,
+    "S5-shadowrootmode": 921,
+    "C:M-24def": 575,
+    "M-24k": 1074,
+    "M-24b": 488,
+    "M-24hi": 131,
+    "C:M-24j": 18,
+    "M-22.1": 131,
+    "M-22.3": 140,
+    "C:M-22.3": 12,
+    "M-09": 8,
+    "C:M-09": 1,
+    "C:M-22.1": 13,
+    "M-24j": 2
+   },
+   "patch": {
+    "blocks": 42062,
+    "rejected": {
+     "shipped:element": 3503,
+     "p1:element": 3503,
+     "p2:element": 6711,
+     "p1:noscript": 12457,
+     "p2:attribute": 812
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 21537,
+     "shipped:patch-mode-diff": 8678,
+     "p2:patch-mode-diff": 4658
+    }
+   },
+   "examples": [
+    {
+     "doc": "<table><caption><section data-rq-block=\"b0\"></section></caption></table><p><main data-rq-block=\"b1\"><noscript><object>o</object><p>x</p></noscript><table><tr><td></td></tr></table><!--c--></main></p>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b1: <p> at 128"
+    },
+    {
+     "doc": "<table><caption><section data-rq-block=\"b0\"></section></caption></table><p><main data-rq-block=\"b1\"><noscript><object>o</object><p>x</p></noscript><table><tr><td></td></tr></table><!--c--></main></p>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b1: <object> at 110"
+    },
+    {
+     "doc": "<table><caption><section data-rq-block=\"b0\"></section></caption></table><p><main data-rq-block=\"b1\"><noscript><object>o</object><p>x</p></noscript><table><tr><td></td></tr></table><!--c--></main></p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b1"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><table><caption><section data-rq-block=\"b0\"></section></caption></table><b><h2 data-rq-block=\"b1\"><noscript><p>x</p><link rel=stylesheet href=x><input></noscript><noscript></noscript>&amp;</h2></b><p data-rq-block=\"b2\">y<a href=\"#\">z</a>w</p>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b1: <input> at 200"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><table><caption><section data-rq-block=\"b0\"></section></caption></table><b><h2 data-rq-block=\"b1\"><noscript><p>x</p><link rel=stylesheet href=x><input></noscript><noscript></noscript>&amp;</h2></b><p data-rq-block=\"b2\">y<a href=\"#\">z</a>w</p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b1"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><noscript><nobr>n</nobr><image src=x><!--x--></noscript></article><div data-rq-block=\"b1\"><button>y</button></div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><noscript><nobr>n</nobr><image src=x><!--x--></noscript></article><div data-rq-block=\"b1\"><button>y</button></div>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<main data-rq-block=\"b0\"><button>b</button> <script>s()</script></main><p data-rq-block=\"b1\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b1"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><b class=z>x</p><article data-rq-block=\"b0\"><noscript></noscript><noscript><img src=x></noscript><p>p</p><a href=\"#\">a</a><nobr>n</nobr></article>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  },
   "t2n2": {
    "valid": 20183,
    "gained": 12235,

@@ -34,6 +34,10 @@
    "valid": 809,
    "validUtf8": 809
   },
+  "t2n1": {
+   "valid": 809,
+   "validUtf8": 809
+  },
   "t2n2": {
    "valid": 809,
    "validUtf8": 809
@@ -247,6 +251,32 @@
      "patchFindings": {}
     },
     "t1n1": {
+     "pages": 752,
+     "valid": 701,
+     "gained": 14,
+     "lost": 0,
+     "withTemplate": 12,
+     "withNoscript": 2,
+     "patchBlocked": 106,
+     "patchBlockedP2": 105,
+     "why": {
+      "M-24c": 2,
+      "M-23": 16,
+      "RQP_MARKUP_LIMIT": 3,
+      "M-22.3": 2,
+      "M-24def": 3,
+      "RQP_MARKUP_STRUCTURE": 7,
+      "M-22.2": 15,
+      "M-24a": 2,
+      "M-22.1": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 2
+     },
+     "patchFindings": {}
+    },
+    "t2n1": {
      "pages": 752,
      "valid": 701,
      "gained": 14,
@@ -521,6 +551,36 @@
      }
     },
     "t1n1": {
+     "pages": 490,
+     "valid": 393,
+     "gained": 61,
+     "lost": 0,
+     "withTemplate": 26,
+     "withNoscript": 35,
+     "patchBlocked": 228,
+     "patchBlockedP2": 220,
+     "why": {
+      "M-24c": 4,
+      "M-23": 29,
+      "M-22.2": 33,
+      "RQP_MARKUP_LIMIT": 14,
+      "M-24def": 4,
+      "M-22.3": 2,
+      "M-22.1": 2,
+      "S5-shadowrootmode": 5,
+      "M-24j": 3,
+      "M-24k": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 4,
+      "known-head-noscript": 4
+     },
+     "patchFindings": {
+      "shipped:patch-unseen-disabled": 8
+     }
+    },
+    "t2n1": {
      "pages": 490,
      "valid": 393,
      "gained": 61,

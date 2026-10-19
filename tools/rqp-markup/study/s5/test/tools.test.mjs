@@ -61,7 +61,7 @@ test('the census counts shadowrootmode and templates that start with a table par
 });
 
 test('the corpus totals count variants per combination of the pages that it accepts', () => {
-  const combos = (valid) => Object.fromEntries(['base', 't1', 't2', 'tu', 'n1', 'n2', 'nu', 't1n1', 't2n2'].map((c) => [c, valid(c)]));
+  const combos = (valid) => Object.fromEntries(['base', 't1', 't2', 'tu', 'n1', 'n2', 'nu', 't1n1', 't2n1', 't2n2'].map((c) => [c, valid(c)]));
   const v = (ok) => combos((c) => (ok(c) ? { valid: true, templates: c.includes('t') ? 1 : 0, noscripts: 0, patchBlocked: 0 } : { valid: false, why: 'M-22.2-template' }));
   const rows = [
     { id: 'a', charset: 'utf-8', combos: combos(() => ({ valid: true })), variants: { main: { picks: 1, combos: v((c) => c !== 'base' && c[0] === 't'), census: { templates: 1, noscripts: 0, shadowroot: 0, tableFirst: 0, cKinds: {} } } } },

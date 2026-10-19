@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: The Rivqen Authors
 
 // Property checks of the S5 study on small seeded sweeps (the full sweeps are in
-// ../results): the proposed combinations t2, n1, n2 and t2n2 have no finding; every
+// ../results): the proposed combinations t2, n1, n2, t2n1 and t2n2 have no finding; every
 // combination accepts a superset of the smaller ones (monotonic); the controls tu and
 // nu have findings, so the oracle reaches the shapes.
 
@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { sweep } from '../src/sweep.mjs';
 
-const PROPOSED = ['t2', 'n1', 'n2', 't2n2'];
+const PROPOSED = ['t2', 'n1', 'n2', 't2n1', 't2n2'];
 const noFindings = (row) => Object.keys(row.findings).length === 0 && Object.keys(row.gainedFindings).length === 0;
 
 for (const source of ['tpl', 'nos', 'mix', 'review2']) {

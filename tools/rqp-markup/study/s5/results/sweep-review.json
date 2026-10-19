@@ -658,6 +658,115 @@
     }
    ]
   },
+  "t2n1": {
+   "valid": 8555,
+   "gained": 20,
+   "withTemplate": 3,
+   "withNoscript": 17,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 163,
+    "known-p-closure": 10
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "C:M-11-balance": 4468,
+    "M-24a": 3991,
+    "RQP_MARKUP_STRUCTURE": 17375,
+    "RQP_MARKUP_LIMIT": 1085,
+    "RQP_MARKUP_RESERVED": 5722,
+    "C:M-11-content": 1507,
+    "M-23": 1209,
+    "C:M-11-end": 1124,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 971,
+    "RQP_MARKUP_BAD_JSON": 321,
+    "M-24def": 443,
+    "RQP_MARKUP_NESTED": 1551,
+    "M-22.2": 314,
+    "M-24k": 95,
+    "M-24c": 373,
+    "M-20": 60,
+    "M-24g": 318,
+    "C:M-24a": 97,
+    "M-24b": 159,
+    "C:M-24b": 7,
+    "M-22.3": 52,
+    "M-24hi": 79,
+    "RQP_MARKUP_DUPLICATE": 61,
+    "M-24j": 16,
+    "C:M-24c": 16,
+    "M-09": 7,
+    "M-22.1": 22,
+    "S5-template-table-part": 1,
+    "C:M-24k": 1
+   },
+   "patch": {
+    "blocks": 7176,
+    "rejected": {
+     "p1:noscript": 16,
+     "p2:element": 40,
+     "shipped:element": 31,
+     "p1:element": 31,
+     "shipped:foreign": 1,
+     "p1:foreign": 1,
+     "p2:foreign": 1
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 14,
+     "shipped:patch-mode-diff": 14,
+     "p2:patch-mode-diff": 5
+    }
+   },
+   "examples": [
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p data-rq-block=\"b0\">😀<noscript><script type=\"application/json\">{}</script></noscript></p><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><span data-rq-block=\"r1\"><b>y</b></span><!--c--> </em><!x>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <script> at 92"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p data-rq-block=\"b0\">😀<noscript><script type=\"application/json\">{}</script></noscript></p><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><span data-rq-block=\"r1\"><b>y</b></span><!--c--> </em><!x>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 61"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<span><span><div></span></span><p data-rq-block=\"r0\"><button>y</button></p><article data-rq-block=\"b1\"><noscript><script type=\"application/json\">{}</script></noscript></article><title><frameset>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b1: <script> at 113"
+    },
+    {
+     "doc": "<span><span><div></span></span><p data-rq-block=\"r0\"><button>y</button></p><article data-rq-block=\"b1\"><noscript><script type=\"application/json\">{}</script></noscript></article><title><frameset>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b1"
+    },
+    {
+     "doc": "&lt;p&gt;<article data-rq-block=\"b0\"></article><noscript><h1><span>x</span></h1></noscript><span data-rq-block=\"r1\"><b>y</b></span> <li><ul></li><li><ul></li><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><p data-rq-block=\"r2\"><button>y</button></p><div data-rq-block=\"b3\"><noscript><img src=x></noscript></div>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b3"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body>&amp;<h1><span><li><span><a><div><div><div><div><div><div><div><div><a>x</a></div></div></div></div></div></div></div></div></a><div data-rq-block=\"r0\"><table></table>y</div><br><section><menu>a < b</menu><!--><p><b class=z>x</p><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><b><b><b><b></b></b></b>y</b><p data-rq-block=\"r1\"><b>y</b></p></section></span><div data-rq-block=\"b2\"><noscript><img src=x></noscript></div></li></span></h1>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b2"
+    }
+   ]
+  },
   "t2n2": {
    "valid": 8555,
    "gained": 20,

@@ -22,7 +22,7 @@ Today `markup.md` M-22 item 2 rejects a `template` or `noscript` start tag in th
 | | `n2` | `n1`, and in C a start tag in `PCLOSE` rejects while an HTML `p` is open around the `noscript` element (above the nearest `template`) |
 | | `nu` | Control, not a proposal: `n1` without M-22 to M-24 on the start tags of C |
 
-Combinations (`src/options.mjs`): `base`, `t1`, `t2`, `tu`, `n1`, `n2`, `nu`, `t1n1`, `t2n2`.
+Combinations (`src/options.mjs`): `base`, `t1`, `t2`, `tu`, `n1`, `n2`, `nu`, `t1n1`, `t2n1`, `t2n2`.
 
 Patch rule variants (`src/patch-s5.mjs`): `shipped` (the rule of `tools/rqp-protocol`), `p1` (`noscript` added to `PATCH_FORBIDDEN`), `p2` (`noscript` allowed in a patch; the rule also reads the start tags of C).
 

@@ -1037,6 +1037,120 @@
     }
    ]
   },
+  "t2n1": {
+   "valid": 16730,
+   "gained": 9316,
+   "withTemplate": 5242,
+   "withNoscript": 7000,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 274,
+    "known-p-closure": 356,
+    "known-reconstruct": 69,
+    "depth-template-enabled": 1,
+    "depth-template-disabled": 1
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "S5-template-table-part": 16484,
+    "C:M-11-balance": 4871,
+    "C:M-11-content": 11127,
+    "M-24a": 9451,
+    "RQP_MARKUP_STRUCTURE": 14294,
+    "C:M-24b": 257,
+    "M-24hi": 147,
+    "C:M-24a": 2534,
+    "M-22.2": 2599,
+    "C:M-22.2": 1313,
+    "S5-shadowrootmode": 4738,
+    "M-23": 6643,
+    "M-24k": 1022,
+    "C:M-11-end": 981,
+    "M-20": 66,
+    "M-24def": 783,
+    "M-24b": 558,
+    "RQP_MARKUP_NESTED": 1095,
+    "C:M-24c": 737,
+    "RQP_MARKUP_RESERVED": 640,
+    "M-24c": 841,
+    "M-24g": 825,
+    "C:M-24hi": 446,
+    "C:M-24def": 352,
+    "M-22.3": 119,
+    "M-22.1": 144,
+    "C:M-24k": 164,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 1,
+    "M-09": 9,
+    "C:M-22.3": 8,
+    "C:M-22.1": 3,
+    "M-24j": 9,
+    "C:M-24j": 9
+   },
+   "patch": {
+    "blocks": 33502,
+    "rejected": {
+     "p1:noscript": 6785,
+     "shipped:element": 3188,
+     "p1:element": 3188,
+     "p2:element": 4648,
+     "p2:attribute": 337
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 9714,
+     "shipped:patch-mode-diff": 4680,
+     "p2:patch-mode-diff": 2883
+    }
+   },
+   "examples": [
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <form> at 124"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <input> at 130"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <b> at 116"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p>open<div data-rq-block=\"b0\"><noscript><ul><li>x</li></ul><b>x</b><form><input></form></noscript></div><div data-rq-block=\"b1\"><p>p</p><a href=\"#\"></a></div>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<button><div data-rq-block=\"b0\"><noscript><div>x</div>&lt;<b>x</b></noscript></div></button><p data-rq-block=\"b1\">y</p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<p><b class=z>x</p><div data-rq-block=\"b0\"><template id=\"row\"><p>p</p><template><script>a</script><svg><path d=M0></svg></template></template><style>a{}</style><noscript><img src=x onerror=alert(1)><img src=x><iframe src=y></iframe></noscript></div><a href=\"#\"><div data-rq-block=\"b1\"></div></a><ruby><article data-rq-block=\"b2\"><noscript><b>x</b></noscript><noscript></noscript></article></ruby>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b2"
+    },
+    {
+     "doc": "<p><b class=z>x</p><div data-rq-block=\"b0\"><template id=\"row\"><p>p</p><template><script>a</script><svg><path d=M0></svg></template></template><style>a{}</style><noscript><img src=x onerror=alert(1)><img src=x><iframe src=y></iframe></noscript></div><a href=\"#\"><div data-rq-block=\"b1\"></div></a><ruby><article data-rq-block=\"b2\"><noscript><b>x</b></noscript><noscript></noscript></article></ruby>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b2"
+    }
+   ]
+  },
   "t2n2": {
    "valid": 16574,
    "gained": 9160,

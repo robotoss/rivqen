@@ -982,6 +982,112 @@
     }
    ]
   },
+  "t2n1": {
+   "valid": 267,
+   "gained": 14,
+   "withTemplate": 8,
+   "withNoscript": 9,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-p-closure": 15,
+    "known-head-noscript": 6
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "M-24a": 2,
+    "RQP_MARKUP_STRUCTURE": 90,
+    "M-24hi": 1,
+    "C:M-11-content": 15,
+    "C:M-11-end": 2,
+    "M-20": 9,
+    "RQP_MARKUP_RESERVED": 24,
+    "C:M-11-balance": 5,
+    "RQP_MARKUP_LIMIT": 12,
+    "M-23": 7,
+    "M-22.3": 1,
+    "M-24k": 3,
+    "M-24def": 2,
+    "M-09": 4,
+    "M-22.2": 13,
+    "RQP_MARKUP_NESTED": 1,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 4,
+    "RQP_MARKUP_BAD_JSON": 4,
+    "S5-shadowrootmode": 2,
+    "S5-template-table-part": 6,
+    "C:M-24a": 1,
+    "C:M-24def": 2,
+    "C:M-24j": 1
+   },
+   "patch": {
+    "blocks": 275,
+    "rejected": {
+     "shipped:attribute": 1,
+     "p1:attribute": 1,
+     "p2:attribute": 2,
+     "shipped:foreign": 34,
+     "p1:foreign": 34,
+     "p2:foreign": 34,
+     "shipped:element": 35,
+     "p1:element": 35,
+     "p2:element": 36,
+     "p1:noscript": 9
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 8,
+     "shipped:patch-mode-diff": 7,
+     "p2:patch-mode-diff": 5
+    }
+   },
+   "examples": [
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <img> at 34"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-iframe",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <iframe> at 33"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-iframe",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-around",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <div> at 37"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-around",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-around",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-svg-in-C",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    }
+   ]
+  },
   "t2n2": {
    "valid": 266,
    "gained": 13,

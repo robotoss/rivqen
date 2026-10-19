@@ -662,6 +662,116 @@
     }
    ]
   },
+  "t2n1": {
+   "valid": 7423,
+   "gained": 17,
+   "withTemplate": 3,
+   "withNoscript": 15,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 112,
+    "known-p-closure": 14
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "C:M-11-content": 3809,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 934,
+    "RQP_MARKUP_STRUCTURE": 20976,
+    "M-24a": 3139,
+    "RQP_MARKUP_RESERVED": 3851,
+    "S5-template-table-part": 278,
+    "C:M-11-end": 1053,
+    "RQP_MARKUP_BAD_JSON": 299,
+    "RQP_MARKUP_NESTED": 1387,
+    "C:M-11-balance": 3231,
+    "M-23": 930,
+    "M-22.2": 262,
+    "M-24def": 295,
+    "M-24k": 337,
+    "RQP_MARKUP_LIMIT": 796,
+    "M-24c": 273,
+    "M-20": 60,
+    "M-24b": 93,
+    "M-22.3": 49,
+    "M-24g": 286,
+    "M-24hi": 69,
+    "RQP_MARKUP_DUPLICATE": 56,
+    "M-22.1": 21,
+    "M-24j": 11,
+    "C:M-24c": 7,
+    "M-09": 5,
+    "C:M-24a": 61,
+    "C:M-24b": 5,
+    "C:M-24def": 2,
+    "C:M-24k": 2
+   },
+   "patch": {
+    "blocks": 5060,
+    "rejected": {
+     "p1:noscript": 14,
+     "p2:element": 41,
+     "shipped:element": 32,
+     "p1:element": 32,
+     "shipped:foreign": 1,
+     "p1:foreign": 1,
+     "p2:foreign": 1
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 12,
+     "shipped:patch-mode-diff": 12,
+     "p2:patch-mode-diff": 3
+    }
+   },
+   "examples": [
+    {
+     "doc": "<span data-rq-block=\"b0\"><noscript><script type=\"application/json\">{}</script></noscript></span><h1 data-rq-block=\"b1\"><table><tr><td></td></tr></table></h1>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <script> at 35"
+    },
+    {
+     "doc": "<span data-rq-block=\"b0\"><noscript><script type=\"application/json\">{}</script></noscript></span><h1 data-rq-block=\"b1\"><table><tr><td></td></tr></table></h1>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 61"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<col><h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <iframe> at 38"
+    },
+    {
+     "doc": "<col><h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<h2 data-rq-block=\"b0\"><noscript><img src=x></noscript></h2>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<section data-rq-block=\"b0\">1 <2<noscript><img src=x></noscript><table><colgroup><</colgroup></table></section>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  },
   "t2n2": {
    "valid": 7423,
    "gained": 17,

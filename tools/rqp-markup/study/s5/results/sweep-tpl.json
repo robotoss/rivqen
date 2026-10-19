@@ -1168,6 +1168,120 @@
     }
    ]
   },
+  "t2n1": {
+   "valid": 14356,
+   "gained": 6941,
+   "withTemplate": 5824,
+   "withNoscript": 2558,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 230,
+    "known-p-closure": 243,
+    "known-reconstruct": 57,
+    "depth-template-enabled": 2,
+    "depth-template-disabled": 2
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "S5-template-table-part": 28542,
+    "M-24a": 10024,
+    "C:M-11-content": 2301,
+    "RQP_MARKUP_STRUCTURE": 14616,
+    "S5-shadowrootmode": 9014,
+    "C:M-11-balance": 1039,
+    "M-24hi": 153,
+    "M-24k": 1051,
+    "M-22.2": 3787,
+    "M-23": 7827,
+    "M-24c": 1378,
+    "RQP_MARKUP_NESTED": 1623,
+    "C:M-24a": 551,
+    "M-20": 58,
+    "M-24b": 583,
+    "C:M-22.2": 271,
+    "M-24def": 876,
+    "M-24g": 757,
+    "M-22.1": 157,
+    "C:M-24def": 74,
+    "M-22.3": 134,
+    "C:M-11-end": 187,
+    "C:M-24c": 156,
+    "RQP_MARKUP_RESERVED": 278,
+    "C:M-24hi": 94,
+    "C:M-24k": 34,
+    "C:M-24b": 46,
+    "M-09": 10,
+    "M-24j": 17,
+    "C:M-22.1": 1,
+    "C:M-22.3": 2,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 2,
+    "C:M-24j": 1
+   },
+   "patch": {
+    "blocks": 28069,
+    "rejected": {
+     "p1:noscript": 2266,
+     "shipped:element": 2880,
+     "p1:element": 2880,
+     "p2:element": 3124,
+     "p2:attribute": 64
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 2414,
+     "shipped:patch-mode-diff": 1712,
+     "p2:patch-mode-diff": 1404
+    }
+   },
+   "examples": [
+    {
+     "doc": "<p data-rq-block=\"b0\"><template><style>a{}</style><svg><path d=M0></svg></template><script>s()</script><span>s</span></p><span data-rq-block=\"b1\"><noscript><img src=x></noscript></span>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b1: <img> at 156"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><template><style>a{}</style><svg><path d=M0></svg></template><script>s()</script><span>s</span></p><span data-rq-block=\"b1\"><noscript><img src=x></noscript></span>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b1"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><template><style>a{}</style><svg><path d=M0></svg></template><script>s()</script><span>s</span></p><span data-rq-block=\"b1\"><noscript><img src=x></noscript></span>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b1"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><nobr><main data-rq-block=\"b0\"></main></nobr><p data-rq-block=\"b1\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b1: <img> at 133"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><nobr><main data-rq-block=\"b0\"></main></nobr><p data-rq-block=\"b1\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b1"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><nobr><main data-rq-block=\"b0\"></main></nobr><p data-rq-block=\"b1\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b1"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><h2 data-rq-block=\"b0\"><b></b><img src=x><template></template><noscript><iframe src=\"x\"></iframe></noscript><img src=x></h2></p>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <iframe> at 131"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><p><h2 data-rq-block=\"b0\"><b></b><img src=x><template></template><noscript><iframe src=\"x\"></iframe></noscript><img src=x></h2></p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><template><tr><td>x</td></tr></template><b><div data-rq-block=\"b0\"><b><template></template><template class=\"x\"></template></b></div></b><table><caption><h2 data-rq-block=\"b1\"> </h2></caption></table><p data-rq-block=\"b2\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b2"
+    }
+   ]
+  },
   "t2n2": {
    "valid": 14326,
    "gained": 6911,

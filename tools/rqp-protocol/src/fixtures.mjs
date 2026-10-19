@@ -236,11 +236,10 @@ function context(c) {
   for (const flag of ['allow_http', 'redirected', 'response_fields_visible', 'public_enabled', 'public_origin']) {
     if (ctx[flag] !== undefined && typeof ctx[flag] !== 'boolean') throw new CaseError(c.id, `context.${flag} must be a boolean`);
   }
-  // H-81: the public partition is off unless the case turns it on, so a public
-  // context snapshot needs public_enabled (an SDK with it off never has one).
-  if (partition === Partition.PUBLIC && ctx.public_enabled !== true) {
-    throw new CaseError(c.id, 'a public context snapshot needs context.public_enabled true (H-81)');
-  }
+  // H-81: the public partition is off unless the case turns it on. A public
+  // context snapshot with the setting off is allowed: an SDK can hold such an
+  // entry from a time when the setting was on, and must not use it (S4
+  // security review L1; the client acts as if it had no snapshot).
   // H-62 (2): credentials true, false or unknown (absent or null; unknown counts as present).
   if (ctx.credentials !== undefined && ctx.credentials !== null && typeof ctx.credentials !== 'boolean') {
     throw new CaseError(c.id, 'context.credentials must be a boolean or null');

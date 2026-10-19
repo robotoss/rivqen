@@ -15,7 +15,8 @@
 // - srcset: the candidate URLs of "parse a srcset attribute" on the decoded value;
 // - data: the type part of the serialized URL up to the first "," (Fetch, "data: URL
 //   processor"), white space stripped, percent-decoded (stricter than Fetch), and its
-//   essence up to ";". Raster means "image/" and not "image/svg+xml".
+//   essence up to ";". Raster means one of the raster types of H-83a (security review
+//   M1: an allow-list; any other image type counts as not raster).
 
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
@@ -70,6 +71,18 @@ function srcsetCandidates(s) {
   return urls;
 }
 
+/**
+ * The raster types of H-83a (security review M1). Any other essence, also one with a
+ * control byte, white space inside, or another spelling of SVG ("image/svg",
+ * "image/ svg+xml"), may be sniffed or read as SVG by an engine, so the oracle does
+ * not count it as raster (fail closed; the old oracle took every "image/" type except
+ * "image/svg+xml" as raster and so missed M1).
+ */
+const ORACLE_RASTER = new Set([
+  'image/png', 'image/apng', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/avif', 'image/bmp', 'image/x-icon',
+  'image/vnd.microsoft.icon',
+]);
+
 /** True when a data: URL value is a raster image for the browser (see the header). */
 function rasterImage(value) {
   const href = new URL(value, 'https://base.example/').href;
@@ -82,7 +95,7 @@ function rasterImage(value) {
     // An invalid percent sequence stays as it is.
   }
   const essence = type.replace(/^[\t\n\f\r ]+/, '').split(';')[0].replace(/[\t\n\r ]+$/, '').toLowerCase();
-  return essence.startsWith('image/') && essence !== 'image/svg+xml';
+  return ORACLE_RASTER.has(essence);
 }
 
 /** H-83: the elements and attributes where a raster data: image is allowed, in HTML context. */
@@ -143,6 +156,9 @@ const RESTS = [
   'image/svg%2Bxml,x', 'image/svg%2bxml,x', 'image/sv&#103;+xml,x', 'image/svg&plus;xml,x', 'image/svg&#43;xml,x',
   ' image/svg+xml,x', '&#32;image/svg+xml,x', 'image/ svg+xml,x', 'image/svg+xml ;x,y', 'text/html,x', ',x', 'image/png&#59;x,y',
   'image/png;x=%41,y', '/p?a=1&b=2', 'image/gif', 'image/png&#44;x',
+  // Security review M1: other spellings of the SVG type, and raster types with a stray byte.
+  'image/\x0bsvg+xml,x', 'image/\x0csvg+xml,x', 'image/svg\x01+xml,x', 'image/svg,x', 'image/svg-xml,x', 'image/xml,x',
+  'image/png ,x', 'image/png\x0c;base64,x', 'image/webp,x', 'image/x-icon,x', 'image/vnd.microsoft.icon;base64,x', 'image/avif,x',
 ];
 
 /** A raw URL value: lead, a scheme word, a colon and a rest, each with noise. */
@@ -202,6 +218,11 @@ test('the oracle reads the H-77 trap, the srcset split and the data: types as th
   assert.equal(rasterImage('data:image/png;base64,x'), true);
   assert.equal(rasterImage('data:image/svg%2Bxml,x'), false);
   assert.equal(rasterImage('data: image/svg+xml,x'), false);
+  // Security review M1: these spellings are not raster for the oracle.
+  for (const v of ['data:image/ svg+xml,x', 'data:image/\x0bsvg+xml,x', 'data:image/\x0csvg+xml,x', 'data:image/svg,x', 'data:image/xml,x']) {
+    assert.equal(rasterImage(v), false, JSON.stringify(v));
+  }
+  assert.equal(rasterImage('DATA:IMAGE/PNG,x'), true);
   assert.equal(dangerous('data:image/png,x', 'img', 'src', true), false);
   assert.equal(dangerous('data:image/png,x', 'img', 'src', false), true);
   assert.equal(dangerous('/a.png 1x, javascript:x 2x', 'img', 'srcset', true), true);

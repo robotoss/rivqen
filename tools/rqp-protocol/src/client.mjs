@@ -13,8 +13,10 @@
 // list of serialized origins (RQP-05, H-62 item 1, DL-038, H-69), whether the
 // request carried credentials (true, false or unknown; H-62 item 2), whether
 // the native SDK saw all header fields of the response (H-64), whether the app
-// declares the origin public (the partition of a new snapshot, H-61), and the
-// partition of the context snapshot (request or public; H-65). A URL is the
+// declares the origin public (the partition of a new snapshot, H-61), whether
+// the app turned the public partition on (H-81), and the partition of the
+// context snapshot (request or public; H-65; a public context snapshot with
+// the setting off is not used, usableSnapshot). A URL is the
 // WHATWG parse of its string (DL-040 L-3: an SDK takes the URL object of its
 // network stack).
 //
@@ -199,8 +201,24 @@ export function havePrefixes(blocks) {
 }
 
 /**
+ * H-81 (S4 security review L1): the context snapshot that the client may use,
+ * or null. With the app setting of the public partition off (public_enabled
+ * not true), an entry of the public partition is not read, offered
+ * (If-None-Match, Rq-Have), revalidated or shown: the client acts as if it had
+ * no snapshot. Such an entry can exist from a time when the setting was on; an
+ * SDK SHOULD delete it (not modelled). Every path that reads the context
+ * snapshot (request fields, 304, delta) goes through this function.
+ */
+export function usableSnapshot(ctx) {
+  const snap = ctx.snapshot ?? null;
+  if (snap !== null && snap.partition === Partition.PUBLIC && ctx.public_enabled !== true) return null;
+  return snap;
+}
+
+/**
  * Section 6.2: the RQP request fields. navigation is "first-visit", "delta" or
- * "fallback" (section 6.3, item 5). Header lines that are not RQP fields are not shown.
+ * "fallback" (section 6.3, item 5). Header lines that are not RQP fields are
+ * not shown. Validators come only from a usable snapshot (H-81).
  */
 export function requestHeaders(ctx) {
   if (!rqpAllowed(ctx)) return [['accept', 'text/html']];
@@ -208,8 +226,9 @@ export function requestHeaders(ctx) {
     ['rq-version', '1'],
     ['rq-capabilities', '(block-patch)'],
   ];
-  if (ctx.navigation !== 'delta' || ctx.snapshot === null) return [...base, ['accept', 'text/html']];
-  const { analysis, page_revision: pageRev } = ctx.snapshot;
+  const snap = usableSnapshot(ctx);
+  if (ctx.navigation !== 'delta' || snap === null) return [...base, ['accept', 'text/html']];
+  const { analysis, page_revision: pageRev } = snap;
   return [
     ...base,
     ['accept', `text/html, ${DELTA_TYPE}`],
@@ -231,11 +250,13 @@ const result = (outcome, fields = {}) => ({
  * Section 6.3, item 1 (H-58): the client keeps its snapshot on a 304 only when
  * the request sent If-None-Match with exactly the strong tag of the snapshot
  * page revision R, the final URL has the cache key of the snapshot, and the
- * ETag of the 304, when present, matches R by weak comparison.
+ * ETag of the 304, when present, matches R by weak comparison. H-81: a public
+ * snapshot with the app setting off is no snapshot (usableSnapshot).
  */
 export function notModifiedAccepted(ctx, sentHeaders, responseHeaders) {
-  if (ctx.snapshot === null || canonicalUrl(finalUrlOf(ctx)) !== canonicalUrl(ctx.url)) return false;
-  const tag = `"${ctx.snapshot.page_revision}"`;
+  const snap = usableSnapshot(ctx);
+  if (snap === null || canonicalUrl(finalUrlOf(ctx)) !== canonicalUrl(ctx.url)) return false;
+  const tag = `"${snap.page_revision}"`;
   if (combined(sentHeaders, 'if-none-match') !== tag) return false;
   const etag = combined(responseHeaders, 'etag');
   if (etag === null) return true;
@@ -504,8 +525,10 @@ function handleDelta(ctx, headers, body) {
   // H-68: a final URL with user information never gets a delta, also when a key would match.
   const sameKey = rqpAllowed(ctx, finalUrlOf(ctx)) && canonicalUrl(finalUrlOf(ctx)) === canonicalUrl(ctx.url);
   // Step 2: the request offered a delta. Steps 1 and 2 have the same code (PATCH_INVALID).
-  const offered = sameKey && ctx.navigation === 'delta' && ctx.snapshot !== null;
-  const verified = ctx.snapshot === null ? { code: Code.PATCH_INVALID } : verifyDelta(ctx.snapshot, body, offered);
+  // H-81: a public snapshot with the app setting off is no snapshot, so no delta was offered.
+  const snap = usableSnapshot(ctx);
+  const offered = sameKey && ctx.navigation === 'delta' && snap !== null;
+  const verified = snap === null ? { code: Code.PATCH_INVALID } : verifyDelta(snap, body, offered);
   if (verified.code !== undefined) {
     return result('rejected', {
       error: verified.code,
@@ -514,7 +537,7 @@ function handleDelta(ctx, headers, body) {
     });
   }
   // H-65: the partition of the result; a public snapshot itself does not change.
-  const partition = deltaPartition(ctx, headers, ctx.snapshot);
+  const partition = deltaPartition(ctx, headers, snap);
   return result('patched', { snapshot: describe({ ...verified.snapshot, partition }) });
 }
 

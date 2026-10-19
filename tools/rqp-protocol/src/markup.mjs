@@ -325,16 +325,36 @@ function dataImageAllowed(element, name, html) {
 }
 
 /**
- * Item 4.2 (H-83, H-83a, DL-048 b): the copy is a data: URL of a raster image.
- * It starts with "data:image/" and not with "data:image/svg+xml", and its type
- * part (the bytes after "data:" up to the first ";" or ",") has no "%". The type
- * part also has no "&": a reference there (`data:image/svg&#43;xml`) decodes to
- * the SVG type in the browser (DL-051).
+ * Item 4.2 (H-83a, S4 security review M1): the raster image types that a data:
+ * URL can have. An allow-list, not a deny-list of SVG spellings: every other
+ * type part rejects, also one with white space, a control byte, "%" (DL-048 b)
+ * or "&" (DL-051) anywhere in it. Module-private: a frozen Set still has a
+ * working add(), so the list is not exported.
+ */
+const RASTER_IMAGE_TYPES = Object.freeze(
+  new Set([
+    'image/png',
+    'image/apng',
+    'image/jpeg',
+    'image/jpg',
+    'image/gif',
+    'image/webp',
+    'image/avif',
+    'image/bmp',
+    'image/x-icon',
+    'image/vnd.microsoft.icon',
+  ]),
+);
+
+/**
+ * Item 4.2 (H-83, H-83a): the copy (item 3, in ASCII lower case) is a data:
+ * URL of a raster image: its type part (the bytes after "data:" up to the
+ * first ";" or ",", or to the end) is exactly one of RASTER_IMAGE_TYPES.
+ * False for a copy that does not start with "data:".
  */
 function rasterDataImage(copy) {
-  if (!copy.startsWith('data:image/') || copy.startsWith('data:image/svg+xml')) return false;
-  const typePart = /^data:([^;,]*)/.exec(copy)[1];
-  return !typePart.includes('%') && !typePart.includes('&');
+  const typePart = /^data:([^;,]*)/.exec(copy)?.[1];
+  return RASTER_IMAGE_TYPES.has(typePart);
 }
 
 /** Items 2 to 4.2 for one URL value: the whole value, or one candidate URL of srcset. */

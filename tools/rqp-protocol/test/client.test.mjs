@@ -17,6 +17,7 @@ import {
   deltaPartition,
   handleResponse,
   hasUserinfo,
+  notModifiedAccepted,
   inAllowlist,
   partitionFor,
   redirected,
@@ -24,6 +25,7 @@ import {
   rqpAllowed,
   setsCookie,
   snapshotOf,
+  usableSnapshot,
   validAllowlistEntry,
   verifyDelta,
   withoutCredentials,
@@ -621,6 +623,61 @@ test('H-65: a 304 on a public snapshot keeps the snapshot as it is, also with Se
     const r = handleResponse(ctx({ public_enabled: true, public_origin: true, credentials: null, snapshot: snap }), { status: 304, headers, body: null });
     assert.deepEqual([r.outcome, r.next, r.snapshot, snap.partition], ['not-modified', 'keep', null, 'public'], JSON.stringify(headers));
   }
+});
+
+// H-81 (S4 security review L1): with the app setting off, a public entry is not read,
+// offered, revalidated or shown. Such an entry can exist from a time when the setting was on.
+const offPublic = (fields = {}) => ctx({ public_origin: true, credentials: false, snapshot: publicSnapshot(), ...fields });
+
+test('H-81 (L1): a public snapshot without the app setting offers no validators; the setting on offers them', () => {
+  for (const flag of [undefined, false, 'true', 1]) {
+    const sent = requestHeaders(offPublic({ public_enabled: flag }));
+    assert.deepEqual(sent, [['rq-version', '1'], ['rq-capabilities', '(block-patch)'], ['accept', 'text/html']], String(flag));
+  }
+  const on = new Map(requestHeaders(offPublic({ public_enabled: true })));
+  assert.equal(on.get('if-none-match'), `"${publicSnapshot().page_revision}"`);
+  assert.equal(on.has('rq-have'), true);
+  // A snapshot of the request partition is used whatever the setting says.
+  const own = new Map(requestHeaders(ctx({ public_enabled: false })));
+  assert.equal(own.get('if-none-match'), `"${snapA().page_revision}"`);
+});
+
+test('H-81 (L1): a 304 for a public snapshot without the app setting is a normal load, not a revalidation', () => {
+  const tag = `"${publicSnapshot().page_revision}"`;
+  for (const headers of [[], [['etag', tag]]]) {
+    const r = handleResponse(offPublic({ public_enabled: false }), { status: 304, headers, body: null });
+    assert.deepEqual([r.outcome, r.next, r.snapshot], ['normal', 'webview-load', null], JSON.stringify(headers));
+  }
+  const on = handleResponse(offPublic({ public_enabled: true }), { status: 304, headers: [], body: null });
+  assert.deepEqual([on.outcome, on.next], ['not-modified', 'keep']);
+});
+
+test('H-81 (L1): a 304 never revalidates a public snapshot without the app setting, also when its tag was sent', () => {
+  const sent = [['if-none-match', `"${publicSnapshot().page_revision}"`]];
+  assert.equal(notModifiedAccepted(offPublic({ public_enabled: false }), sent, []), false);
+  assert.equal(notModifiedAccepted(offPublic({ public_enabled: true }), sent, []), true);
+});
+
+test('H-81 (L1): a valid delta on a public snapshot without the app setting is rejected as a delta that was not offered', () => {
+  const r = handleResponse(offPublic({ public_enabled: false }), publicDelta());
+  assert.deepEqual([r.outcome, r.error, r.next, r.metric, r.snapshot], ['rejected', 'PATCH_INVALID', 'fallback-load', false, null]);
+  assert.equal(handleResponse(offPublic({ public_enabled: true }), publicDelta()).outcome, 'patched');
+});
+
+test('H-81 (L1): usableSnapshot hides only a public snapshot, and only without the app setting', () => {
+  const pub = publicSnapshot();
+  const own = snapA();
+  assert.equal(usableSnapshot({ snapshot: pub }), null);
+  assert.equal(usableSnapshot({ snapshot: pub, public_enabled: false }), null);
+  assert.equal(usableSnapshot({ snapshot: pub, public_enabled: true }), pub);
+  assert.equal(usableSnapshot({ snapshot: own }), own);
+  assert.equal(usableSnapshot({ snapshot: null, public_enabled: true }), null);
+  assert.equal(usableSnapshot({ public_enabled: true }), null);
+});
+
+test('H-81 (L1): a full document with a public snapshot and the setting off is stored in the partition of the request', () => {
+  const r = handleResponse(offPublic({ public_enabled: false }), { status: 200, headers: [...HTML, ['cache-control', 'public']], body: fullOf('page-b', PUBLIC) });
+  assert.deepEqual([r.outcome, r.snapshot.partition], ['stored', 'request']);
 });
 
 test('the harness interface takes the partition of the context snapshot', () => {

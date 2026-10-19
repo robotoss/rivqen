@@ -191,13 +191,31 @@ function normalizedUrl(value) {
 const IMAGE_ATTRIBUTES = Object.freeze({ img: ['src', 'srcset'], source: ['src', 'srcset'], video: ['poster'] });
 
 /**
- * Item 4.2 (H-83, H-83a, DL-048 b): a raster data: image. "data:image/", not
- * "data:image/svg+xml", and no "%" and no "&" in the type part (after "data:" up to ";"
- * or ","): a character reference there can decode to the SVG type (DL-051).
+ * Item 4.2 (H-83a, S4 security review M1): the raster image types of a data: URL, an
+ * allow-list. Any other type part rejects: white space, a control byte, "%" (DL-048 b)
+ * or "&" (DL-051, a character reference can decode to the SVG type) never match.
+ */
+const RASTER_TYPES = new Set([
+  'image/png',
+  'image/apng',
+  'image/jpeg',
+  'image/jpg',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+  'image/bmp',
+  'image/x-icon',
+  'image/vnd.microsoft.icon',
+]);
+
+/**
+ * Item 4.2 (H-83, H-83a): a raster data: image. The type part of the normalized value
+ * (after "data:" up to the first ";" or ",", or to the end) is exactly a type of
+ * RASTER_TYPES. False for a value that does not start with "data:".
  */
 function isRasterImage(url) {
-  const type = /^data:([^;,]*)/.exec(url)[1];
-  return type.startsWith('image/') && !url.startsWith('data:image/svg+xml') && !/[%&]/.test(type);
+  const type = /^data:([^;,]*)/.exec(url)?.[1];
+  return RASTER_TYPES.has(type);
 }
 
 /** Items 2 to 4.2 for one URL value. `imageOk` is true where H-83 allows a raster data: image. */

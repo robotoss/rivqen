@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-P35-ATTRIBUTE-RULE-DATA-SVG-SPACE",
+  "description": "The changed price block has <img src=\"data:image/ svg+xml,x\">: the type part is not a raster type of item 4.2 (an allow-list of raster types, security review M1): F, not a delta (H-56, H-83a)",
+  "rules": ["RQP-23"],
+  "level": "should",
+  "client_page": "page-a",
+  "page": "page-b-data-svg-space",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-a}}"],
+      ["rq-have", "t={{t1:page-a}}, b={{have:page-a}}"]
+    ]
+  }
+}

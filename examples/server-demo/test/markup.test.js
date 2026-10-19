@@ -157,6 +157,28 @@ test('patch content rule: event handlers and javascript:, vbscript: and data: UR
   }
 });
 
+test('patch content rule: a data: image passes only with a raster type of the allow-list (H-83a, security review M1)', () => {
+  const types = ['image/png', 'image/apng', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/avif', 'image/bmp', 'image/x-icon',
+    'image/vnd.microsoft.icon'];
+  for (const type of types) {
+    for (const html of [`<img src="data:${type};base64,x">`, `<source srcset="data:${type},x 1x">`, `<video poster="data:${type},x"></video>`]) {
+      assert.equal(rule(html), true, html);
+    }
+  }
+  for (const html of ['<img src="DATA:IMAGE/PNG,x">', '<img src="data:image/jpeg;charset=x;base64,x">', '<img src="data:image/gif,x">',
+    '<img src="data:image/p\tng,x">']) {
+    assert.equal(rule(html), true, html);
+  }
+  for (const value of ['data:image/ svg+xml,x', 'data:image/\x0bsvg+xml,x', 'data:image/\x0csvg+xml,x', 'data:image/svg\x01+xml,x',
+    'data:image/svg,x', 'data:image/svg-xml,x', 'data:image/xml,x', 'data:image/png ,x', 'data:image/png\x0c;base64,x', 'data:image/tiff,x',
+    'data:image/,x', 'data:image/png\x7f,x', 'data:image/p\u00e9g,x', 'data:image/png&amp;,x']) {
+    assert.equal(rule(`<img src="${value}">`), false, JSON.stringify(value));
+    // In srcset, ASCII white space ends the candidate URL ("data:image/png ,x" is the URL "data:image/png").
+    if (!/[\t\n\f\r ]/.test(value)) assert.equal(rule(`<img srcset="/a.png 1x, ${value} 2x">`), false, JSON.stringify(value));
+  }
+  assert.equal(rule('<img srcset="data:image/png ,x 2x">'), true);
+});
+
 test('patch content rule: the elements of PATCH_FORBIDDEN in HTML context are rejected (H-78)', () => {
   for (const name of ['script', 'style', 'link', 'meta', 'iframe', 'object', 'embed', 'base', 'basefont', 'bgsound']) {
     assert.equal(rule(`<${name}>`), false, name);

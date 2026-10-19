@@ -282,6 +282,80 @@ test("block rules on simulated blocks", () => {
   assert.deepEqual(all(doc('<td data-rq-block="m">a</td>', true)), ["M-16"]);
 });
 
+test("H-94 and H-97: template in block content (M-22 item 6, M-24 item g)", () => {
+  const blockClasses = (h) => doc(h, true).blockRules?.classes;
+  // template left M-22 item 2; its content follows the content rules.
+  assert.deepEqual(all(doc('<div data-rq-block="m">x<template id="r"><div><b>n</b></div></template></div>', true)), []);
+  assert.deepEqual(all(doc('<p data-rq-block="m">a<template><b>t</b></template>b</p>', true)), []);
+  assert.deepEqual(blockClasses('<p data-rq-block="m">a<template><div>t</div></template></p>'), { "M-24.a": 1 });
+  // M-22 item 6: an attribute shadowrootmode in any case, with any value or none; only in HTML context.
+  for (const attr of ['shadowrootmode="open"', "SHADOWROOTMODE=closed", "ShadowRootMode", 'id="a" shadowrootmode="" shadowrootmode="open"']) {
+    assert.deepEqual(blockClasses(`<div data-rq-block="m"><template ${attr}>x</template></div>`), { "M-22.6": 1 }, attr);
+  }
+  assert.deepEqual(blockClasses('<div data-rq-block="m"><template><i><template shadowrootmode="open">s</template></i></template></div>'), { "M-22.6": 1 });
+  for (const ok of [
+    '<div data-rq-block="m"><template shadowrootclonable data-shadowrootmode="open" title="shadowrootmode">x</template></div>',
+    '<div data-rq-block="m"><svg><template shadowrootmode="open"></template></svg></div>',
+    '<div><template shadowrootmode="open"><slot></slot></template><p data-rq-block="m">r</p></div>',
+  ]) {
+    assert.deepEqual(all(doc(ok, true)), [], ok);
+  }
+  // M-24 item g: a table part in a template needs a table opened in that template (F is not none).
+  assert.deepEqual(all(doc('<div data-rq-block="m"><template><table><tr><td>x</td></tr></table></template></div>', true)), []);
+  const rows = doc('<div data-rq-block="m"><table><tr><td><template><tr><td>x</td></tr></template></td></tr></table></div>', true);
+  // Only the tr: after it, F of the td is the tr of the template.
+  assert.deepEqual(rows.blockRules?.classes, { "M-24.g": 1 });
+  assert.deepEqual(rows.blockRules?.details["M-24.g"], { "<tr> in template": 1 });
+  assert.deepEqual(blockClasses('<div data-rq-block="m"><template><caption></caption></template></div>'), { "M-24.g": 1 });
+  // Outside block content a row template stays valid (M-09: F is none).
+  assert.deepEqual(all(doc('<template><tr><td>x</td></tr></template><p data-rq-block="m">r</p>', true)), []);
+  // M-10 item 3 and M-09 condition 1 still apply in the content; a block in a template is M-17.
+  assert.deepEqual(all(doc('<div data-rq-block="m"><template for="p">x</template></div>', true)), ["M-10.3"]);
+  assert.deepEqual(all(doc('<div data-rq-block="m"><template><col></template></div>', true)), ["M-09.1", "M-24.g"]);
+  assert.deepEqual(all(doc('<div data-rq-block="m"><template><p data-rq-block="n">x</p></template></div>', true)), ["M-17"]);
+});
+
+test("H-95 and H-96: noscript in block content (M-11 item 10) and in a patch", () => {
+  const cls = (h) => doc(h, true);
+  const ok = cls('<div data-rq-block="m">x<noscript><img src="/p.gif"><table><tr><td>t</td></tr></table></noscript>y</div>');
+  assert.deepEqual(all(ok), []);
+  assert.equal(ok.blocks.length, 1);
+  // H-96: noscript is in PATCH_FORBIDDEN; the tags of C (raw text) are not patch classes.
+  assert.deepEqual(ok.patchRules?.classes, { "patch.element:noscript": 1 });
+  // Item 10: the content rules on the tokens of C, with the open elements of C and of the content.
+  for (const [h, detail] of [
+    ['<p data-rq-block="m"><noscript><div>x</div></noscript></p>', "M-24.a"],
+    ['<h2 data-rq-block="m"><noscript><h3>x</h3></noscript></h2>', "M-24.b"],
+    ['<div data-rq-block="m"><noscript><li>x</li></noscript></div>', "M-24.c"],
+    ['<div data-rq-block="m"><button><noscript><button>x</button></noscript></button></div>', "M-24.d"],
+    ['<div data-rq-block="m"><a href="#"><noscript><a href="#">x</a></noscript></a></div>', "M-24.e"],
+    ['<div data-rq-block="m"><noscript><rt>x</rt></noscript></div>', "M-24.i"],
+    ['<div data-rq-block="m"><ul><li>a<noscript><li>x</li></noscript></li></ul></div>', "M-24.j"],
+    ['<div data-rq-block="m"><noscript><table><b>x</b></table></noscript></div>', "M-24.k"],
+    ['<div data-rq-block="m"><noscript><textarea>t</textarea></noscript></div>', "M-22.2:textarea"],
+    ['<div data-rq-block="m"><noscript><span/>x</span></noscript></div>', "M-22.3"],
+    ['<div data-rq-block="m"><noscript><!DOCTYPE html>x</noscript></div>', "M-22.1"],
+  ]) {
+    const r = cls(h);
+    assert.deepEqual(r.blockRules?.classes, { "M-11.10": 1 }, h);
+    assert.deepEqual(Object.keys(r.blockRules?.details["M-11.10"] ?? {}), [detail], h);
+    assert.deepEqual(r.classes, {}, h);
+  }
+  // A list of C and a list of the content around the noscript element both count for item c.
+  assert.deepEqual(all(cls('<div data-rq-block="m"><noscript><ul><li>x</li></ul></noscript></div>')), []);
+  assert.deepEqual(all(cls('<div data-rq-block="m"><ul><noscript><li>x</li></noscript></ul></div>')), []);
+  // The same C outside block content: no item 10.
+  assert.deepEqual(all(cls('<noscript><li>x</li><textarea>t</textarea><!DOCTYPE html></noscript><p data-rq-block="m">r</p>')), []);
+  // In a foreign region of C, the content rules do not apply (M-07 through item 8 does).
+  assert.deepEqual(all(cls('<div data-rq-block="m"><noscript><svg><tr></tr></svg></noscript></div>')), ["M-11.6"]);
+  // A template in a block holds a noscript: item 10 applies there too; the template boundary stops M-24 a only for p blocks.
+  assert.deepEqual(all(cls('<div data-rq-block="m"><p>x<template><noscript><div>y</div></noscript></template>z</p></div>')), []);
+  assert.deepEqual(cls('<p data-rq-block="m"><template><noscript><div>y</div></noscript></template></p>').blockRules?.classes, { "M-11.10": 1 });
+  // M-11 items 2, 3 and 5 stay document classes; the block end tag in C is M-11 item 5.
+  assert.deepEqual(Object.keys(cls('<div data-rq-block="m"><noscript></div></noscript></div>').classes), ["M-11.5-other"]);
+  assert.deepEqual(Object.keys(cls('<div data-rq-block="m"><noscript><template>t</template></noscript></div>').classes), ["M-11.3"]);
+});
+
 test("simulated block picks: h1 and id/class matches without overlap; insertion after the tag name", () => {
   const html = '<main><h1>T</h1><div class="price">1</div><span id="title-x">t</span><p class="content">c</p></main>';
   const r = doc(html);

@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-C09-QUOT",
   "kind": "client",
-  "description": "price content <b title=\"&quot;\">y</b> passes the markup analysis; the attribute rule rejects it",
+  "description": "price content <b title=\"&quot;\">y</b> passes the markup analysis; the decision byte is \"&\" and the reference gives a quotation mark, which ends a scheme, so the attribute rule accepts it: applied (H-77; before H-77: rejected)",
   "rules": ["RQP-13"],
   "context": {
     "navigation": "delta",

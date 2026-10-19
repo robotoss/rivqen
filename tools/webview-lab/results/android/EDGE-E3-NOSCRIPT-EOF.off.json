@@ -2,7 +2,7 @@
   "id": "EDGE-E3-NOSCRIPT-EOF",
   "view": "off",
   "walker": "ok",
-  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <p>\n|       data-rq-block=\"real\"\n|       \"r\"\n|     \"\n\"\n|     <noscript>\n|       <img>\n|         alt=\"\"\n|         src=\"https://www.example.com/p.gif\"",
+  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <p>\n|       data-rq-block=\"real\"\n|       \"r\"\n|     \"\\n\"\n|     <noscript>\n|       <img>\n|         alt=\"\"\n|         src=\"https://www.example.com/p.gif\"",
   "characterSet": "UTF-8",
   "contentType": "text/html",
   "probe": null,

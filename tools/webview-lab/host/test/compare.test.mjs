@@ -6,7 +6,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
-import { buildSummary, clip, compareAll, compareEncoding, compareTree, firstDifference, main, parseResult } from "../compare.mjs";
+import { buildSummary, clip, compareAll, compareEncoding, compareTree, differences, firstDifference, main, parseResult } from "../compare.mjs";
 import { CASES_DIR, MARKER } from "../lab.mjs";
 import { loadParse5 } from "../parse5.mjs";
 import { serializeParse5 } from "../tree.mjs";
@@ -36,12 +36,47 @@ test("the scripting view decides which parse5 tree is the reference", () => {
   assert.equal(compareTree(parse5, Buffer.from(html), "on", ok({ tree: tree(html, true) })).status, "equal");
 });
 
-test("a different tree names the first different line", () => {
+test("a different tree names the count, the classes and the first different line", () => {
   const html = "<body><noscript><p>a</p></noscript>";
   const other = tree(html, true);
   const v = compareTree(parse5, Buffer.from(html), "off", ok({ tree: other }));
   assert.equal(v.status, "different");
-  assert.match(v.detail, /^line 5: parse5 "d3 <p>", platform "d3 \\"<p>a<\/p>\\""$/);
+  assert.equal(
+    v.detail,
+    '2 different lines (changed line x1, missing lines x1); first: line 5: parse5 "d3 <p>", platform "d3 \\"<p>a</p>\\""',
+  );
+});
+
+test("differences counts every different line, not only the first", () => {
+  const exp = ["| <html>", "|   <body>", "|     <p>", '|       "a"', "|     <i>", '|       "b"'].join("\n");
+  const act = ["| <html>", "|   <body>", "|     <p>", '|       "X"', "|     <i>", '|       "Y"'].join("\n");
+  const d = differences(exp, act);
+  assert.equal(d.count, 2);
+  assert.deepEqual(d.classes, [["changed line", 2]]);
+  assert.equal(d.first, 'line 4: parse5 "d3 \\"a\\"", platform "d3 \\"X\\""');
+  assert.equal(differences(exp, exp), null);
+});
+
+test("differences classes: depth beyond 512, inside script, missing and extra lines", () => {
+  const deep = `| ${"  ".repeat(513)}<span>`;
+  const exp = ["| <html>", "|   <script>", '|     "s1"', '|     "s2"', "|   <b>", deep, "|   <i>"].join("\n");
+  const act = ["| <html>", "|   <script>", '|     "x"', '|     "s2"', "|   <b>"].join("\n");
+  const d = differences(exp, act);
+  // Lines: script text changed (inside script); deep line and "<i>" are missing.
+  assert.deepEqual(d.classes, [
+    ["depth beyond 512", 1],
+    ["inside script", 1],
+    ["missing lines", 1],
+  ]);
+  assert.equal(d.count, 3);
+  const extra = differences("| <html>", "| <html>\n|   <a>\n|   <b>");
+  assert.deepEqual(extra.classes, [["extra lines", 2]]);
+});
+
+test("a line after a closed script element is not inside script", () => {
+  const exp = ["| <script>", '|   "s"', "| <p>"].join("\n");
+  const act = ["| <script>", '|   "s"', "| <q>"].join("\n");
+  assert.deepEqual(differences(exp, act).classes, [["changed line", 1]]);
 });
 
 test("a UTF-8 byte order mark in the body is not part of the text", () => {
@@ -157,7 +192,7 @@ test("main exits 0 when platform and parse5 differ, and writes summary.md", asyn
   const d = resultsFor("differs");
   writeFileSync(join(d, "NOSCRIPT.on.json"), JSON.stringify({ id: "NOSCRIPT", view: "on", walker: "ok", tree: "| <html>", error: null }));
   assert.equal(await main(["--platform", "ios", "--results", d]), 0);
-  assert.match(readFileSync(join(d, "summary.md"), "utf8"), /\| NOSCRIPT \| Q-19 \| on \| different \| line 1:/);
+  assert.match(readFileSync(join(d, "summary.md"), "utf8"), /\| NOSCRIPT \| Q-19 \| on \| different \| \d+ different lines \(.*\); first: line 1:/);
 });
 
 test("main exits 1 for a malformed result file", async () => {

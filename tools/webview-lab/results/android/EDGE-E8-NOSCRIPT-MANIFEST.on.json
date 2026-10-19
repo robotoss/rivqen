@@ -2,7 +2,7 @@
   "id": "EDGE-E8-NOSCRIPT-MANIFEST",
   "view": "on",
   "walker": "ok",
-  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <noscript>\n|       \"<script type=\"application/rivqen-manifest+json\">{\"v\":1}</script>\"\n|     \"\n\"\n|     <p>\n|       data-rq-block=\"real\"\n|       \"r\"\n|     \"\n\n\"",
+  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <noscript>\n|       \"<script type=\\\"application/rivqen-manifest+json\\\">{\\\"v\\\":1}</script>\"\n|     \"\\n\"\n|     <p>\n|       data-rq-block=\"real\"\n|       \"r\"\n|     \"\\n\\n\"",
   "characterSet": "UTF-8",
   "contentType": "text/html",
   "probe": null,

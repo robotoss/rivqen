@@ -2,7 +2,7 @@
   "id": "NOSCRIPT-TABLE-PART-CAPTION",
   "view": "off",
   "walker": "ok",
-  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <div>\n|       data-rq-block=\"x\"\n|       \"a\"\n|     <table>\n|       <caption>\n|         <noscript>\n|       <tbody>\n|         <tr>\n|           <td>\n|     <table>\n|     \"b\n\n\"",
+  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <div>\n|       data-rq-block=\"x\"\n|       \"a\"\n|     <table>\n|       <caption>\n|         <noscript>\n|       <tbody>\n|         <tr>\n|           <td>\n|     <table>\n|     \"b\\n\\n\"",
   "characterSet": "UTF-8",
   "contentType": "text/html",
   "probe": null,

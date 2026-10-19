@@ -36,24 +36,24 @@
       "view": "off"
     }
   ],
-  "finishedAt": "2026-10-19T19:56:43Z",
+  "finishedAt": "2026-10-19T20:48:59Z",
   "osName": "iOS",
   "osVersion": "26.5",
   "outcome": "ok",
   "platform": "ios",
   "results": 150,
-  "serializerBytes": 3430,
+  "serializerBytes": 5538,
   "server": "http://127.0.0.1:18091",
   "settleSeconds": 1,
   "simulatorDevice": "iPhone 17 Pro Max",
   "simulatorModel": "iPhone18,2",
   "simulatorRuntime": "26.5",
   "simulatorRuntimeBuild": "23F77",
-  "startedAt": "2026-10-19T19:53:25Z",
+  "startedAt": "2026-10-19T20:45:39Z",
   "timeoutSeconds": 20,
   "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
   "walkerNotes": [
-    "Walker: host/serialize.js (3430 bytes) evaluated with evaluateJavaScript(_:in:in:) in WKContentWorld.defaultClient, 1.0 s after didFinish of the main frame.",
+    "Walker: host/serialize.js (5538 bytes) evaluated with evaluateJavaScript(_:in:in:) in WKContentWorld.defaultClient, 1.0 s after didFinish of the main frame.",
     "View off: allowsContentJavaScript = false in defaultWebpagePreferences and in the preferences of every navigation policy decision. The app never turns content JavaScript on for an off result.",
     "View off: the walker ran in 71 of 71 runs.",
     "Meta: characterSet, contentType and the probe text read with callAsyncJavaScript in WKContentWorld.defaultClient.",
@@ -69,7 +69,7 @@
     "simulatorId": "272E9409-7098-4A54-B64C-8D9824AB02DA",
     "simulatorRuntime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
     "xcode": "Xcode 27.1, Build version 27A9275",
-    "serializerSha256": "681e21b60adfa8040b3450bc78af228c703346ae5f62c75de428e6dcf5015280",
-    "date": "2026-10-19T19:56:44.223Z"
+    "serializerSha256": "6df2dab09da4a8882411dda1749948e0591751e5dfc26abec61da6dcc47cbebe",
+    "date": "2026-10-19T20:49:02.401Z"
   }
 }

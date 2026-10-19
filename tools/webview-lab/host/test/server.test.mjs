@@ -47,6 +47,7 @@ before(async () => {
   writeCase({ ...base, id: "NONE", source: "pages/none.html", headers: [] }, "<p>none");
   writeCase({ ...base, id: "BOM", source: "pages/bom.html", headers: [["Content-Type", "text/html"]] }, Buffer.from([0xef, 0xbb, 0xbf, 0x3c, 0x70, 0x3e, 0xff]));
   writeCase({ ...base, id: "OWN", source: "pages/own.html", headers: [["content-length", "3"], ["connection", "keep-alive"]] }, "abc");
+  writeCase({ ...base, id: "LATIN", source: "pages/latin.html", headers: [["X-Name", "caféÿ"]] }, "l");
   writeFileSync(join(root, "cases", "ESCAPE.json"), JSON.stringify({ ...base, id: "ESCAPE", source: "../outside.html", headers: [] }));
   writeFileSync(join(root, "cases", "BADJSON.json"), "{");
   writeFileSync(join(root, "cases", "index.json"), '["TWO","NONE","BOM"]');
@@ -68,6 +69,13 @@ test("two Content-Type lines of a case stay two lines, in order", async () => {
     "Connection: close",
   ]);
   assert.equal(body.toString(), "<p>two");
+});
+
+test("a Latin-1 header value is written byte for byte", async () => {
+  const buf = await get("/c/LATIN");
+  const at = buf.indexOf("X-Name: ");
+  assert.deepEqual([...buf.subarray(at + 8, at + 8 + 5)], [0x63, 0x61, 0x66, 0xe9, 0xff]);
+  assert.equal(buf[at + 13], 0x0d);
 });
 
 test("a case without a Content-Type line gets none", async () => {

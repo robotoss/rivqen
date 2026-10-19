@@ -87,6 +87,59 @@ export function firstDifference(expected, actual) {
   return null;
 }
 
+/** The depth of a tree line: two spaces per level after "| ". @param {string} line */
+function lineDepth(line) {
+  const m = /^\| ( *)/.exec(line);
+  return m === null ? 0 : Math.floor(m[1].length / 2);
+}
+
+/** Lines deeper than this are the ones a platform may cut (the Q-19 depth finding). */
+export const DEEP_LINE = 512;
+
+/**
+ * All different lines of two trees, line by line (same index), with a class for each.
+ * Classes: "depth beyond 512" (the parse5 line is deeper than 512), "inside script" (the parse5 line
+ * is in a script subtree), "missing lines" (the platform tree ends early), "extra lines" (the
+ * platform tree is longer), "changed line" (any other).
+ * Lines are compared by index, so one missing line makes the lines after it count as different:
+ * read the count as a size of the difference, not as a number of separate faults.
+ * @param {string} expected parse5 tree
+ * @param {string} actual platform tree
+ * @returns {{ count: number, first: string, classes: [string, number][] }|null} null when equal
+ */
+export function differences(expected, actual) {
+  const first = firstDifference(expected, actual);
+  if (first === null) return null;
+  const a = expected.split("\n");
+  const b = actual.split("\n");
+  /** @type {Map<string, number>} */
+  const classes = new Map();
+  let count = 0;
+  let openScript = -1; // depth of the open script element in the parse5 tree, or -1
+  const n = Math.max(a.length, b.length);
+  for (let i = 0; i < n; i++) {
+    const left = i < a.length ? a[i] : null;
+    let inScript = false;
+    if (left !== null) {
+      const d = lineDepth(left);
+      if (openScript >= 0 && d <= openScript) openScript = -1;
+      inScript = openScript >= 0;
+      if (openScript < 0 && /^\| *<(svg )?script>$/.test(left)) openScript = d;
+    }
+    if (left === b[i]) continue;
+    count++;
+    let cls;
+    if (left === null) cls = "extra lines";
+    else if (lineDepth(left) > DEEP_LINE) cls = `depth beyond ${DEEP_LINE}`;
+    else if (inScript) cls = "inside script";
+    else if (i >= b.length) cls = "missing lines";
+    else cls = "changed line";
+    classes.set(cls, (classes.get(cls) ?? 0) + 1);
+  }
+  const sorted = [...classes].sort((x, y) => y[1] - x[1] || (x[0] < y[0] ? -1 : 1));
+  return { count, first, classes: sorted };
+}
+
 /**
  * Q-19: the tree of the platform against the tree of parse5 in the same scripting view.
  * @param {{ parse: (html: string, options?: object) => any }} parse5
@@ -99,8 +152,10 @@ export function compareTree(parse5, body, view, result) {
   if (result.walker === "unavailable") return { status: "unavailable", detail: result.error ?? "no reason given" };
   const html = new TextDecoder("utf-8").decode(body); // strips a leading byte order mark, as a WebView does
   const expected = serializeParse5(parse5.parse(html, { scriptingEnabled: view === "on" }));
-  const diff = firstDifference(expected, /** @type {string} */ (result.tree));
-  return diff === null ? { status: "equal", detail: "" } : { status: "different", detail: diff };
+  const diff = differences(expected, /** @type {string} */ (result.tree));
+  if (diff === null) return { status: "equal", detail: "" };
+  const classes = diff.classes.map(([name, n]) => `${name} x${n}`).join(", ");
+  return { status: "different", detail: `${diff.count} different lines (${classes}); first: ${diff.first}` };
 }
 
 /**

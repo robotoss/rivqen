@@ -117,3 +117,53 @@ test("a meta element with a content attribute is not a template", () => {
   const out = both('<head><meta name="color-scheme" content="light dark"></head>', true);
   assert.match(out, /<meta>\n\|\s+content="light dark"\n\|\s+name="color-scheme"/);
 });
+
+test("text, comment, attribute and doctype strings are escaped the same way in both serializers", () => {
+  const out = both('<!DOCTYPE a\\b PUBLIC "p" "s"><body a="q&quot;\\&#10;n" b="x&#13;y"><!--c\\"\n--><p>t"\\\r\nz</p>', true);
+  assert.ok(out.includes('a="q\\"\\\\\\nn"'), out);
+  assert.ok(out.includes('b="x\\ry"'), out);
+  assert.ok(out.includes('<!-- c\\\\\\"\\n -->'), out);
+  assert.ok(out.includes('"t\\"\\\\\\nz"'), out);
+  assert.ok(out.includes('<!DOCTYPE a\\\\b "p" "s">'), out);
+  // Every node is one line: a newline in a value does not add a line.
+  assert.ok(out.split("\n").every((l) => l.startsWith("| ")), out);
+});
+
+test("two trees that differ only in quotes or newlines give different strings", () => {
+  assert.notEqual(both('<p a="x&quot;">', true), both('<p a="x">', true));
+  assert.notEqual(both("<p>a\nb</p>", true), both("<p>a</p><p>b</p>", true));
+  assert.notEqual(both('<p>a"</p>', true), both("<p>a</p>", true));
+  assert.notEqual(both("<p>a\\n</p>", true), both("<p>a\n</p>", true));
+});
+
+/** The first element named `name` in a fake tree. */
+function find(node, name) {
+  if (node.nodeType === 1 && node.localName === name) return node;
+  for (const c of node.childNodes) {
+    const r = find(c, name);
+    if (r) return r;
+  }
+  return null;
+}
+
+test("a form whose named properties hide childNodes, attributes and the others does not change the tree", () => {
+  const html = '<body><form id="f"><input name="childNodes"><input name="attributes"><p>kept</p></form><template><i>t</i></template>';
+  const doc = parse5.parse(html, { scriptingEnabled: true });
+  const expected = serializeParse5(doc);
+  const fake = fakeDocument(doc);
+  const input = find(fake, "input");
+  // LegacyOverrideBuiltIns: the form object answers these names with the named input element.
+  const form = find(fake, "form");
+  const template = find(fake, "template");
+  for (const name of ["childNodes", "attributes", "nodeType", "localName", "namespaceURI", "content", "nodeName", "firstChild"]) {
+    Object.defineProperty(form, name, { value: input, configurable: true });
+  }
+  Object.defineProperty(template, "content", { value: input });
+  assert.equal(runSerialize(fake), expected);
+});
+
+test("without DOM prototypes the plain properties are read (fallback)", () => {
+  const text = { nodeType: 3, data: "x" };
+  const el = { nodeType: 1, nodeName: "P", localName: "p", namespaceURI: "http://www.w3.org/1999/xhtml", attributes: [], childNodes: [text] };
+  assert.equal(runSerialize({ nodeType: 9, childNodes: [el] }, {}), '| <p>\n|   "x"');
+});

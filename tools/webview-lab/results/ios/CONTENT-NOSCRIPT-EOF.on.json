@@ -4,7 +4,7 @@
   "error" : null,
   "id" : "CONTENT-NOSCRIPT-EOF",
   "probe" : null,
-  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <div>\n|       data-rq-block=\"box\"\n|       <noscript>\n|         \"<img src=\"/p.gif\">\"",
+  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <div>\n|       data-rq-block=\"box\"\n|       <noscript>\n|         \"<img src=\\\"/p.gif\\\">\"",
   "view" : "on",
   "walker" : "ok"
 }

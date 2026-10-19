@@ -2,7 +2,7 @@
   "id": "CONTENT-NOSCRIPT-EOF",
   "view": "on",
   "walker": "ok",
-  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <div>\n|       data-rq-block=\"box\"\n|       <noscript>\n|         \"<img src=\"/p.gif\">\"",
+  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <div>\n|       data-rq-block=\"box\"\n|       <noscript>\n|         \"<img src=\\\"/p.gif\\\">\"",
   "characterSet": "UTF-8",
   "contentType": "text/html",
   "probe": null,

@@ -30,7 +30,7 @@ function copyFixture(name) {
 
 test('gen.mjs --check: every committed page and expected file is current', () => {
   const out = execFileSync(process.execPath, [GEN, '--check'], { encoding: 'utf8' });
-  assert.match(out, /208 fixtures are current/);
+  assert.match(out, /215 fixtures are current/);
 });
 
 test('every catalog case P-01 to P-41 and C-01 to C-28 has at least one fixture', () => {
@@ -323,9 +323,6 @@ test('defective client cases: members, context values, header lines and body rec
     ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, allow_http: 'yes' } })],
     ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, public_origin: 1 } })],
     ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, public_enabled: 'true' } })],
-    // H-81: a public context snapshot needs the app setting.
-    ['FX-RQ-C27-PUBLIC-SNAPSHOT-304', (c) => ({ ...c, context: { ...c.context, public_enabled: undefined } })],
-    ['FX-RQ-C27-PUBLIC-SNAPSHOT-304', (c) => ({ ...c, context: { ...c.context, public_enabled: false } })],
     ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, response: { ...c.response, headers: {} } })],
     ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, response: { ...c.response, body: { delta: { from: 'page-a', ops: [{ block_id: 'nope', content: 'x' }] } } } })],
     ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, response: { ...c.response, body: { delta: { from: 'page-zero', to: 'page-a' } } } })],
@@ -333,6 +330,17 @@ test('defective client cases: members, context values, header lines and body rec
     ['FX-RQ-C21-HEAD-WHITESPACE', (c) => ({ ...c, response: { ...c.response, body: { full: 'page-a', manifest_count: 3 } } })],
   ];
   for (const [i, [name, change]] of defects.entries()) assert.throws(withCase(name, change), isCaseError, `${i} ${name}`);
+});
+
+test('H-81 (L1): a public context snapshot with the app setting off is a valid case; the client acts as without a snapshot', () => {
+  for (const flag of [undefined, false]) {
+    const e = withCase('FX-RQ-C27-PUBLIC-SNAPSHOT-304', (c) => ({ ...c, context: { ...c.context, public_enabled: flag } }))().files['expected.json'];
+    // The harness still gives the snapshot, in the public partition, to the client under test.
+    assert.equal(e.context.snapshot.partition, 'public');
+    assert.equal(e.context.public_enabled, false);
+    assert.equal(e.request.headers.some(([n]) => n === 'if-none-match' || n === 'rq-have'), false);
+    assert.deepEqual([e.result.outcome, e.result.next], ['normal', 'webview-load']);
+  }
 });
 
 test('client cases: no body member is a null body; manifest_after may match at offset 0', () => {

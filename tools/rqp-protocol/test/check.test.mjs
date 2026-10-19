@@ -152,10 +152,20 @@ test('the client fixtures catch a client that ignores H-64, H-65 or the exact or
   };
   // H-64: a client that trusts the fields of every response.
   assert.deepEqual(await failing((c) => ({ ...c, response_fields_visible: true })), ['FX-RQ-C24-PUBLIC-FIELDS-HIDDEN', 'FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-FIELDS-HIDDEN']);
-  // H-81: a client that uses the public partition without the app setting.
-  assert.deepEqual(await failing((c) => ({ ...c, public_enabled: true })), ['FX-RQ-C24-PUBLIC-NOT-ENABLED']);
-  // H-65: a client that forgets the partition of its snapshot.
-  assert.deepEqual(await failing((c) => ({ ...c, snapshot: c.snapshot === null ? null : { ...c.snapshot, partition: 'request' } })), ['FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-STAYS-PUBLIC']);
+  // H-81: a client that uses the public partition without the app setting, also a public
+  // snapshot from a time when the setting was on (security review L1).
+  assert.deepEqual(await failing((c) => ({ ...c, public_enabled: true })), [
+    'FX-RQ-C24-PUBLIC-NOT-ENABLED',
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-NOT-ENABLED-304',
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-NOT-ENABLED-DELTA',
+  ]);
+  // H-65: a client that forgets the partition of its snapshot (and so, with the setting
+  // off, uses a public entry: H-81, security review L1).
+  assert.deepEqual(await failing((c) => ({ ...c, snapshot: c.snapshot === null ? null : { ...c.snapshot, partition: 'request' } })), [
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-STAYS-PUBLIC',
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-NOT-ENABLED-304',
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-NOT-ENABLED-DELTA',
+  ]);
   // DL-038: a client that matches the allowlist by host suffix, or compares the URL text without serialization.
   const suffix = (c) => ({ ...c, allowlist: c.allowlist.some((o) => new URL(c.final_url).origin.startsWith(`${o}.`)) ? [...c.allowlist, new URL(c.final_url).origin] : c.allowlist });
   assert.deepEqual(await failing(suffix), ['FX-RQ-C25-FINAL-HOST-SUFFIX']);
@@ -238,7 +248,8 @@ test('a failed SHOULD fixture is labelled and counted apart from a failed MUST f
   const should = run('FX-RQ-P35-ATTRIBUTE-RULE-DATA');
   assert.equal(should.status, 1);
   assert.match(should.out, /^FAIL \[SHOULD\] FX-RQ-P35-ATTRIBUTE-RULE-DATA: /m);
-  assert.match(should.out, /0 passed, 0 failed, 1 SHOULD failed/);
+  assert.match(should.out, /^FAIL \[SHOULD\] FX-RQ-P35-ATTRIBUTE-RULE-DATA-SVG-SPACE: /m);
+  assert.match(should.out, /0 passed, 0 failed, 2 SHOULD failed/);
   const must = run('FX-RQ-P09-DELTA-WEAK');
   assert.equal(must.status, 1);
   assert.match(must.out, /^FAIL FX-RQ-P09-DELTA-WEAK-BASE: /m);
@@ -252,6 +263,7 @@ test('only the cases of P-35 have level "should" in their expected files', () =>
   assert.deepEqual(levels, [
     'FX-RQ-P35-ATTRIBUTE-RULE',
     'FX-RQ-P35-ATTRIBUTE-RULE-DATA',
+    'FX-RQ-P35-ATTRIBUTE-RULE-DATA-SVG-SPACE',
     'FX-RQ-P35-ATTRIBUTE-RULE-SVG',
     'FX-RQ-P35-PATCH-CONTENT-IFRAME',
     'FX-RQ-P35-PATCH-CONTENT-SCRIPT',

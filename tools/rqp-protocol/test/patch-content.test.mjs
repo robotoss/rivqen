@@ -76,6 +76,53 @@ test('item 4.2 (H-83, DL-048 b): only the type part of a raster data: image is c
   assert.equal(attributeRejected('src', b('data:image/png,x'), 'video', true), true);
 });
 
+/** Item 4.2 (H-83a, security review M1): the raster types, written here from the spec text. */
+const SPEC_RASTER_TYPES = [
+  'image/png', 'image/apng', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/avif', 'image/bmp', 'image/x-icon',
+  'image/vnd.microsoft.icon',
+];
+
+test('item 4.2 (M1): each raster type of the allow-list passes in img src, source src and srcset, and video poster', () => {
+  for (const type of SPEC_RASTER_TYPES) {
+    for (const [element, name] of [['img', 'src'], ['source', 'src'], ['img', 'srcset'], ['source', 'srcset'], ['video', 'poster']]) {
+      assert.equal(attributeRejected(name, b(`data:${type};base64,x`), element, true), false, `${element} ${name} ${type}`);
+      assert.equal(attributeRejected(name, b(`data:${type},x`), element, true), false, `${element} ${name} ${type}`);
+    }
+  }
+});
+
+test('item 4.2 (M1): the type part is compared after ASCII lower case, and parameters after ";" do not count', () => {
+  const img = (v) => attributeRejected('src', b(v), 'img', true);
+  for (const v of ['DATA:IMAGE/PNG,x', 'data:image/jpeg;charset=x;base64,x', 'data:image/gif,x', 'data:Image/WebP;base64,x', 'data:image/x-icon']) {
+    assert.equal(img(v), false, JSON.stringify(v));
+  }
+});
+
+test('item 4.2 (M1): a type part that is not exactly a raster type rejects (other SVG spellings, stray bytes, other images)', () => {
+  const img = (v) => attributeRejected('src', b(v), 'img', true);
+  const rejected = [
+    // The probes of the security review.
+    'data:image/ svg+xml,x', 'data:image/\x0bsvg+xml,x', 'data:image/\x0csvg+xml,x', 'data:image/svg\x01+xml,x', 'data:image/svg,x',
+    'data:image/svg-xml,x', 'data:image/xml,x', 'data:image/png ,x', 'data:image/png\x0c;base64,x',
+    // White space or a control byte inside or around a raster type; other image types; a type without a subtype.
+    'data: image/png,x', 'data:image/png\x00,x', 'data:image/png\x7f,x', 'data:image/ png,x', 'data:image/pngx,x', 'data:image/png+xml,x',
+    'data:image/tiff,x', 'data:image/heic,x', 'data:image/svg+xml,x', 'data:image/svg+xml;base64,x', 'data:image/,x', 'data:image,x',
+    'data:,x', 'data:;base64,x', 'data:text/html,x', 'data:image/png\xa0,x', 'data:image/p\xe9g,x',
+    // "%" (DL-048 b) and "&" (DL-051) in the type part never match.
+    'data:image/p%6eg,x', 'data:image/png&#59;x,y', 'data:image/png&amp;,x',
+  ];
+  for (const v of rejected) assert.equal(img(v), true, JSON.stringify(v));
+  // A tab, LF or CR is removed by item 3 (and by the URL parser), so the type is a raster type.
+  assert.equal(img('data:image/p\tn\ng\r,x'), false);
+});
+
+test('item 4.2 (M1): a raster type in another attribute or element, or in a foreign region, still rejects', () => {
+  assert.equal(attributeRejected('href', b('data:image/png,x'), 'a', true), true);
+  assert.equal(attributeRejected('src', b('data:image/png,x'), 'video', true), true);
+  assert.equal(attributeRejected('href', b('data:image/png,x'), 'image', false), true);
+  assert.equal(attributeRejected('src', b('data:image/png,x'), 'img', false), true);
+});
+
 test('item 4.3 (H-83, DL-048 c): srcset splits on every ASCII white space and on commas', () => {
   for (const sep of ['\t', '\n', '\x0c', '\r', ' ']) {
     // The white space ends the URL "/a.png"; the comma after it starts the next candidate.

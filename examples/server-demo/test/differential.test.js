@@ -27,6 +27,8 @@ const VALUE_PARTS = [
   '&#32;', '&#x09;', '&#44;', '&comma;', '&lpar;', '&#x28;', '\t', '\n', '\r', ' ', '\x01', '\x0c', ',', '(', ')', ' 1x', ' 2x',
   'image/png;base64,iVBO', 'image/svg+xml,x', 'image/svg%2Bxml,x', 'image/svg&#43;xml,x', 'image/gif', 'text/html,x', '/a.png',
   '?a=1&b=2', '&', '&#', '&#x', ';', '&#43;', '&#x2D;', '&#046;', '&#x2e', ', ',
+  // Security review M1: other spellings of the SVG type and raster types of the allow-list.
+  'image/ svg+xml,x', 'image/\x0bsvg+xml,x', 'image/svg,x', 'image/png ,x', 'image/webp,x', 'image/x-icon;base64,x', 'IMAGE/AVIF,x',
 ];
 const ELEMENTS = ['a', 'img', 'img', 'img', 'source', 'source', 'video', 'video', 'b', 'svg', 'math', 'use', 'image', 'p', 'p', 'a', 'textarea', 'title', 'xmp',
   'g', 'path', 'text', 'mi'];

@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C09-DATA-SVG-VT",
+  "kind": "client",
+  "description": "price content <img src=\"data:image/VT svg+xml,x\"> (VT = byte 0B, not ASCII white space, not removed by item 3): not a raster type of item 4.2 (an allow-list of raster types, security review M1; before: applied): rejected",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<img src=\"data:image/\u000bsvg+xml,x\" alt=\"\">"
+          }
+        ]
+      }
+    }
+  }
+}

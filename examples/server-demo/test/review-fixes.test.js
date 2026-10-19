@@ -45,16 +45,34 @@ test('Last-Modified of the application is not sent with the full document (DL-03
   assert.equal(header(r, 'etag'), `"${revisionsOf(page()).page_revision}"`);
 });
 
-test('a page without a head start tag of the document is sent unchanged (H-72)', () => {
+test('a page without a head start tag of the document and without an implied head is sent unchanged (H-72, H-79a)', () => {
   for (const html of [
-    '<html><body><p data-rq-block="a">1</p></body></head></html>', // no <head> start tag
+    '<html><body><p data-rq-block="a">1</p></body></head></html>', // no <head> start tag, body content first
     '<html><p>x</p><head></head><body><p data-rq-block="a">1</p></body></html>', // content before <head>
-    '<html><title>t</title><head></head><body><p data-rq-block="a">1</p></body></html>', // head content before <head>
+    '<html><noscript></noscript><head></head><body><p data-rq-block="a">1</p></body></html>', // noscript is not head content here
+    '<html><template></template><head></head><body><p data-rq-block="a">1</p></body></html>', // nor is template
   ]) {
     const p = Buffer.from(html);
     const r = run(get(), p);
     assert.equal(r.mode, 'passthrough', html);
     assert.deepEqual(r.body, p);
+  }
+});
+
+test('head content before any head start tag implies the head: the manifest goes immediately before it (H-79a)', () => {
+  for (const [html, stop] of [
+    ['<html><title>t</title><head></head><body><p data-rq-block="a">1</p></body></html>', '<title>'],
+    ['<!DOCTYPE html>\n<meta charset="utf-8">\n<title>t</title><p data-rq-block="a">1</p>', '<meta'],
+    ['<html>\n  <link rel="icon" href="/i.png"><body><p data-rq-block="a">1</p></body></html>', '<link'],
+    ['<script src="/a.js"></script><p data-rq-block="a">1</p>', '<script src'],
+  ]) {
+    const r = run(get(), Buffer.from(html));
+    assert.equal(r.mode, 'full', html);
+    const text = r.body.toString('utf8');
+    const at = html.indexOf(stop);
+    assert.equal(text.indexOf('<script type="application/rivqen-manifest+json">'), at, html);
+    assert.equal(text.slice(0, at), html.slice(0, at), html);
+    assert.equal(text.slice(text.indexOf('</script>') + '</script>'.length), html.slice(at), html);
   }
 });
 
@@ -80,7 +98,26 @@ test('a changed block with a data:, vbscript: or javascript: URL gives the full 
   const held = page('120.00');
   for (const href of ['data:text/html,x', ' VBScript:x', '\n\tjava\tscript:x','javascript:x']) {
     const r = run(get(clientLines(held)), page(`<a href="${href}">p</a>`));
-    assert.equal(r.reason, 'attribute-rule', href);
+    assert.equal(r.reason, 'patch-content-rule', href);
   }
   assert.equal(run(get(clientLines(held)), page('<a href="/data:x">p</a>')).mode, 'delta');
+});
+
+test('a changed block with script, style or iframe, or an svg a element, gives the full document (H-78)', () => {
+  const held = page('120.00');
+  for (const content of ['<script>x()</script>', '<style>p{}</style>', '<iframe src="/v"></iframe>', '<svg><a href="#x"><text>t</text></a></svg>']) {
+    const r = run(get(clientLines(held)), page(content));
+    assert.deepEqual([r.mode, r.reason], ['full', 'patch-content-rule'], content);
+  }
+  assert.equal(run(get(clientLines(held)), page('<svg><title>t</title><path d="M0 0"/></svg>')).mode, 'delta');
+});
+
+test('a changed block with a raster data: image or an ordinary query string gets a delta (H-77, H-83)', () => {
+  const held = page('120.00');
+  for (const content of ['<img src="data:image/png;base64,iVBO" alt="">', '<a href="?a=1&b=2">p</a>', '<b title="&#169; &quot;">p</b>']) {
+    assert.equal(run(get(clientLines(held)), page(content)).mode, 'delta', content);
+  }
+  for (const content of ['<img src="data:image/svg+xml,x" alt="">', '<img srcset="/a.png 1x, javascript:x 2x" alt="">', '<a href="java&#x73\ncript:x">p</a>']) {
+    assert.equal(run(get(clientLines(held)), page(content)).reason, 'patch-content-rule', content);
+  }
 });

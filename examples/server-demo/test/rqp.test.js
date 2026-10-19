@@ -168,7 +168,7 @@ test('a changed html block with an on* attribute gives the full document (H-56)'
   const held = page('120.00');
   const current = page('<b onclick="x()">130.00</b>');
   const r = run(get(clientLines(held)), current);
-  assert.equal(r.reason, 'attribute-rule');
+  assert.equal(r.reason, 'patch-content-rule');
   assert.equal(header(r, 'etag'), `"${revisionsOf(current).page_revision}"`);
 });
 

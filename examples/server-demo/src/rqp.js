@@ -26,7 +26,7 @@ import {
   without,
   withoutRqFields,
 } from './fields.js';
-import { analyzePage, documentHeadStart, passesAttributeRule } from './markup.js';
+import { analyzePage, documentHeadStart, passesPatchContentRule } from './markup.js';
 
 export { DELTA_TYPE };
 export const MANIFEST_TYPE = 'application/rivqen-manifest+json';
@@ -86,8 +86,9 @@ export function buildManifest(analysis, target, members) {
 }
 
 /**
- * F: the page with the manifest element immediately after the head start tag of the
- * document (manifest-patch section 1.7, H-72). Returns null when the manifest text has a "<".
+ * F: the page with the manifest element at the insertion point: immediately after the head
+ * start tag of the document, or immediately before the start tag that implies the head
+ * (manifest-patch section 1.7, H-72, H-79a). Returns null when the manifest text has a "<".
  */
 export function insertManifest(page, insertAt, manifest) {
   const text = JSON.stringify(manifest);
@@ -221,12 +222,12 @@ function select(request, status, appHeaders, page, config) {
   const changed = changeSet(analysis.blocks, b);
   if (changed.length === 0) return sendFull('empty-change-set');
 
-  // Step 7: delta. H-56: F when a changed html block fails the attribute rule.
+  // Step 7: delta. H-56, H-78: F when a changed html block fails the patch content rule.
   const failsRule = changed.some((i) => {
     const block = analysis.blocks[i];
-    return block.format === 'html' && !passesAttributeRule(page.subarray(block.start, block.end));
+    return block.format === 'html' && !passesPatchContentRule(page.subarray(block.start, block.end));
   });
-  if (failsRule) return sendFull('attribute-rule');
+  if (failsRule) return sendFull('patch-content-rule');
   const delta = Buffer.from(JSON.stringify(buildDelta(page, analysis, base, manifest.page_revision, changed)), 'utf8');
   const limit = Math.min(config.maxPatchBytes ?? MAX_PATCH_BYTES, members.limits?.max_patch_bytes ?? Infinity);
   if (delta.length > limit) return sendFull('delta-too-large');

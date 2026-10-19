@@ -83,11 +83,11 @@ final class Names
         'span' => true, 'title' => true,
     ];
 
-    /** M-22 item 2 (H-78): start tag names not allowed in the content. */
+    /** M-22 item 2 (H-78, H-94, H-95): start tag names not allowed in the content. */
     public const FORBIDDEN_CONTENT = [
         'body' => true, 'frame' => true, 'frameset' => true, 'head' => true, 'html' => true,
-        'noembed' => true, 'noframes' => true, 'noscript' => true, 'optgroup' => true,
-        'option' => true, 'plaintext' => true, 'select' => true, 'template' => true,
+        'noembed' => true, 'noframes' => true, 'optgroup' => true,
+        'option' => true, 'plaintext' => true, 'select' => true,
         'textarea' => true, 'title' => true, 'xmp' => true,
     ];
 

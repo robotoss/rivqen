@@ -578,6 +578,11 @@ final class Parser
         if (isset(Names::FORBIDDEN_CONTENT[$name])) {
             throw new MarkupError(ErrorCode::Structure, 'M-22');
         }
+        // Item 6 (H-94, H-97): the tokenizer keeps the first `shadowrootmode`
+        // of any value, so a dropped duplicate is covered.
+        if ($name === 'template' && $token->attribute('shadowrootmode') !== null) {
+            throw new MarkupError(ErrorCode::Structure, 'M-22');
+        }
         $void = isset(Names::VOID[$name]);
         if ($token->selfClosing && !$void && $name !== 'svg' && $name !== 'math') {
             throw new MarkupError(ErrorCode::Structure, 'M-22');
@@ -598,7 +603,8 @@ final class Parser
             $name === 'button' => $this->open[self::BUTTON] > 0,
             $name === 'a' => $this->open[self::A] > 0,
             $name === 'nobr' => $this->open[self::NOBR] > 0,
-            isset(Names::TABLE_PART[$name]), $name === 'col' => $this->openInContent[self::TABLE] === 0,
+            isset(Names::TABLE_PART[$name]), $name === 'col' => $this->openInContent[self::TABLE] === 0
+                || $f === null, // item g: F is none (H-94)
             $name === 'rb', $name === 'rtc' => $this->openInContent[self::RUBY] === 0
                 || $this->open[self::RB_RP_RT] > 0 || $this->open[self::RTC] > 0,
             $name === 'rp', $name === 'rt' => $this->openInContent[self::RUBY] === 0 || $this->open[self::RB_RP_RT] > 0,

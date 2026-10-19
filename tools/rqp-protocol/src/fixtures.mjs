@@ -91,7 +91,7 @@ export function loadCase(dir, name) {
     onlyKeys(
       name,
       c.context,
-      ['url', 'final_url', 'redirected', 'build', 'allow_http', 'allowlist', 'navigation', 'snapshot', 'credentials', 'response_fields_visible', 'public_origin'],
+      ['url', 'final_url', 'redirected', 'build', 'allow_http', 'allowlist', 'navigation', 'snapshot', 'credentials', 'response_fields_visible', 'public_enabled', 'public_origin'],
       'context',
     );
     onlyKeys(name, c.response, ['status', 'headers', 'body'], 'response');
@@ -233,8 +233,13 @@ function context(c) {
       throw new CaseError(c.id, 'a public context snapshot needs the member policy with mode public');
     }
   }
-  for (const flag of ['allow_http', 'redirected', 'response_fields_visible', 'public_origin']) {
+  for (const flag of ['allow_http', 'redirected', 'response_fields_visible', 'public_enabled', 'public_origin']) {
     if (ctx[flag] !== undefined && typeof ctx[flag] !== 'boolean') throw new CaseError(c.id, `context.${flag} must be a boolean`);
+  }
+  // H-81: the public partition is off unless the case turns it on, so a public
+  // context snapshot needs public_enabled (an SDK with it off never has one).
+  if (partition === Partition.PUBLIC && ctx.public_enabled !== true) {
+    throw new CaseError(c.id, 'a public context snapshot needs context.public_enabled true (H-81)');
   }
   // H-62 (2): credentials true, false or unknown (absent or null; unknown counts as present).
   if (ctx.credentials !== undefined && ctx.credentials !== null && typeof ctx.credentials !== 'boolean') {
@@ -276,6 +281,8 @@ function context(c) {
     credentials: ctx.credentials ?? null,
     // H-64: the reference client models a native fetch, so it sees every field by default.
     response_fields_visible: ctx.response_fields_visible ?? true,
+    // H-81: the app setting of the public partition; off by default.
+    public_enabled: ctx.public_enabled ?? false,
     public_origin: ctx.public_origin ?? false,
     navigation,
     snapshotPage,
@@ -299,8 +306,9 @@ function fullRecipe(id, recipe, ctx) {
   if (recipe.duplicate_member === true) text = withDuplicateMember(text);
   const type = recipe.manifest_type ?? 'application/rivqen-manifest+json';
   const element = Buffer.from(`<script type="${type}">${text}${MANIFEST_END}`, 'utf8');
-  // Positions: immediately after the head start tag of the document (default,
-  // H-72), before the first "</head>" bytes of the page in any context
+  // Positions: the insertion point of the server (default: immediately after
+  // the head start tag of the document, H-72, or before the start tag that
+  // implies the head, H-79a), before the first "</head>" bytes of the page in any context
   // ("head-text"; the insertion point of rqp/1 before H-72), before "</body>",
   // or immediately after the first copy of the literal text of manifest_after.
   const bodyEnd = page.indexOf('</body>');
@@ -443,6 +451,7 @@ export function expectClient(c) {
         allowlist: ctx.allowlist,
         credentials: ctx.credentials,
         response_fields_visible: ctx.response_fields_visible,
+        public_enabled: ctx.public_enabled,
         public_origin: ctx.public_origin,
         navigation: ctx.navigation,
         snapshot: describeSnapshot(ctx.snapshotPage, ctx.snapshot),

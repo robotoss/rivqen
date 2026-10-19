@@ -4,6 +4,7 @@
   "description": "A snapshot in the public partition and a valid delta; the request had no credentials, the native SDK saw all fields, and the delta response has no Set-Cookie: the result stays in the public partition (H-65)",
   "rules": ["RQP-25"],
   "context": {
+    "public_enabled": true,
     "public_origin": true,
     "navigation": "delta",
     "snapshot": {

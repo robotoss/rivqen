@@ -31,7 +31,7 @@ import {
   parseEntityTags,
   without,
 } from './http.mjs';
-import { analyze, documentHeadStart, passesAttributeRule } from './markup.mjs';
+import { analyze, documentHeadStart, patchContentFailure } from './markup.mjs';
 import { parseDictionary, parseItem, parseList } from './sf.mjs';
 
 const BASE_TAG = /^"(r1\.[A-Za-z0-9_-]{43})"$/;
@@ -125,7 +125,11 @@ export function manifestOf(analysis, target, members = {}) {
   };
 }
 
-/** Step 3: F = P with the manifest element immediately after the head start tag of the document (H-72). */
+/**
+ * Step 3: F = P with the manifest element at the insertion point (H-72,
+ * H-79a): immediately after the head start tag of the document, or before the
+ * start tag that implies the head.
+ */
 export function fullDocument(page, insertAt, manifest) {
   const text = JSON.stringify(manifest);
   if (text.includes('<')) return null; // manifest-patch section 1.7, server item 3
@@ -287,9 +291,11 @@ export function handle(request, app, pageBytes, config = {}) {
 
   // Step 7.
   const envelope = deltaEnvelope(page, analysis, manifest, base, indices);
-  // H-56 (SHOULD): a changed html block that fails the client attribute rule gets F.
+  // H-56, H-78 (SHOULD): a changed html block that fails the client patch content
+  // rule (PATCH_FORBIDDEN, FOREIGN_ALLOWED, the attribute rule) gets F. The same
+  // function as the client step 9.
   for (const op of envelope.operations) {
-    if (op.format === 'html' && !passesAttributeRule(Buffer.from(op.content, 'utf8'))) return sendFull('attribute-rule');
+    if (op.format === 'html' && patchContentFailure(Buffer.from(op.content, 'utf8')) !== null) return sendFull('patch-content-rule');
   }
   const delta = Buffer.from(JSON.stringify(envelope), 'utf8');
   if (delta.length > maxPatchBytes) return sendFull('delta-too-large');

@@ -4,6 +4,7 @@
   "description": "Mode public, a public origin, Cache-Control public, a request without credentials and a Set-Cookie2 field in the response: Set-Cookie2 counts as Set-Cookie, so the partition of the request (DL-038, H-63)",
   "rules": ["RQP-25"],
   "context": {
+    "public_enabled": true,
     "public_origin": true,
     "navigation": "first-visit",
     "snapshot": null,

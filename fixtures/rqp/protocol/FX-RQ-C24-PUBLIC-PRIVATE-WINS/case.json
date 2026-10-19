@@ -4,6 +4,7 @@
   "description": "Mode public, a public origin, a request without credentials, Cache-Control public and private (H-61): the partition of the request",
   "rules": ["RQP-25"],
   "context": {
+    "public_enabled": true,
     "public_origin": true,
     "navigation": "first-visit",
     "snapshot": null,

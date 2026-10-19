@@ -4,6 +4,7 @@
   "description": "Mode public, a public origin, Cache-Control public and a request without credentials, but the native SDK did not see all header fields of the response (for example the WebView loaded it): the client acts as if the response had a Set-Cookie field, so the partition of the request (H-64)",
   "rules": ["RQP-25"],
   "context": {
+    "public_enabled": true,
     "public_origin": true,
     "navigation": "first-visit",
     "snapshot": null,

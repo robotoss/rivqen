@@ -4,6 +4,7 @@
   "description": "A snapshot in the public partition, a request without credentials, all fields seen, and a valid delta that came through a redirect to the same URL (redirected true): the result goes to the partition of the request; the public snapshot does not change (H-67, H-65)",
   "rules": ["RQP-25"],
   "context": {
+    "public_enabled": true,
     "public_origin": true,
     "navigation": "delta",
     "snapshot": {

@@ -4,6 +4,7 @@
   "description": "A snapshot in the public partition, a request with credentials and a valid delta that has Cache-Control public (a server that does not follow negotiation section 4, step 7): for a delta only a request without credentials keeps the result public, so the result goes to the partition of the request (H-65)",
   "rules": ["RQP-25"],
   "context": {
+    "public_enabled": true,
     "public_origin": true,
     "navigation": "delta",
     "snapshot": {

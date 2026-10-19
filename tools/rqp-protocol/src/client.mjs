@@ -50,7 +50,7 @@ import {
   splitList,
   startsWithUtf8Bom,
 } from './http.mjs';
-import { analyze, findManifestElements, passesAttributeRule } from './markup.mjs';
+import { analyze, documentHeadStart, findManifestElements, passesPatchContentRule } from './markup.mjs';
 import { parseStrict } from './json-strict.mjs';
 import { loadSchema, validate } from './schema.mjs';
 import { parseItem } from './sf.mjs';
@@ -277,8 +277,11 @@ export function setsCookie(responseHeaders) {
  * (H-63), no Cache-Control directive "private", and an explicit "public"
  * directive or a request without credentials. Else the partition of the
  * request. deltaPartition uses it, so the redirect rule also covers a delta.
+ * H-81: the public partition is off by default; only an app that turns it on
+ * (ctx.public_enabled === true; an absent flag is off) uses it.
  */
 export function partitionFor(ctx, responseHeaders, members) {
+  if (ctx.public_enabled !== true) return Partition.REQUEST;
   if (members.policy?.mode !== 'public' || ctx.public_origin !== true) return Partition.REQUEST;
   if (redirected(ctx)) return Partition.REQUEST;
   if (ctx.response_fields_visible !== true || setsCookie(responseHeaders)) return Partition.REQUEST;
@@ -328,7 +331,7 @@ export function decodedAsUtf8(responseHeaders, body) {
  *
  * @param {{ url: string, final_url?: string, redirected?: boolean, build: string, allow_http: boolean, navigation: string,
  *   snapshot: object|null, allowlist: string[], credentials?: boolean|null,
- *   response_fields_visible?: boolean, public_origin?: boolean }} ctx
+ *   response_fields_visible?: boolean, public_enabled?: boolean, public_origin?: boolean }} ctx
  * @param {{ status: number, headers: Array<[string, string]>, body: Uint8Array|null }} response
  */
 export function handleResponse(ctx, response) {
@@ -363,12 +366,17 @@ export function handleResponse(ctx, response) {
 export function checkFull(ctx, body) {
   const found = findManifestElements(body);
   if (found === null) return { error: 'walk' };
-  // Section 1.7, client items 2 and 3. Item 3 (H-72): the manifest start tag
-  // is the first token after the head start tag of the document, with no gap.
-  // headStart is -1 when the document has no head start tag; el.start is never -1.
+  // Section 1.7, client items 2 and 3.
   if (found.elements.length !== 1) return { error: 'count' };
   const el = found.elements[0];
-  if (el.end < 0 || el.start !== found.headStart) return { error: 'position' };
+  if (el.end < 0) return { error: 'position' };
+  // Item 5: the original document O is F without the bytes of the element.
+  const original = Buffer.concat([body.subarray(0, el.start), body.subarray(el.end)]);
+  // Item 3 (H-72, H-79a, client rule C2): the insertion point P of the server,
+  // computed on O, is the offset of the manifest start tag in F. A walk on F
+  // would stop at the manifest script itself (an implied head). P is -1 when O
+  // has no head start tag and no implied head; el.start is never -1.
+  if (documentHeadStart(original) !== el.start) return { error: 'position' };
   const text = body.subarray(el.textStart, el.textEnd);
   // Section 1.8, items 1 to 4.
   if (text.length > LIMITS.maxManifestBytes) return { error: 'size' };
@@ -380,7 +388,6 @@ export function checkFull(ctx, body) {
   const url = new URL(finalUrlOf(ctx));
   if (m.origin !== url.origin || m.path !== url.pathname) return { error: 'url' };
   // Item 5 (H-48): the markup analysis of the original document.
-  const original = Buffer.concat([body.subarray(0, el.start), body.subarray(el.end)]);
   const a = analyze(original);
   if (!a.valid) return { error: 'analysis' };
   const same =
@@ -480,9 +487,11 @@ export function verifyDelta(snap, body, offered, maxPatchBytes = LIMITS.maxPatch
   if (!sameShape) return { code: Code.PATCH_CONTENT_REJECTED };
   const patchedSnapshot = snapshot(patched, after, members, { url: snap.url, partition: snap.partition });
   if (patchedSnapshot.page_revision !== env.next_revision) return { code: Code.INTEGRITY_ERROR };
-  // Step 9: the attribute rule on each patched html block.
+  // Step 9 (H-48, H-78, MUST): the patch content rule on each patched html
+  // block. Since H-78 the analysis of step 8 accepts script, style, iframe … in
+  // a block, so this check is the only gate for them. json content is data.
   for (const i of replacements.keys()) {
-    if (analysis.blocks[i].format === 'html' && !passesAttributeRule(replacements.get(i))) {
+    if (analysis.blocks[i].format === 'html' && !passesPatchContentRule(replacements.get(i))) {
       return { code: Code.PATCH_CONTENT_REJECTED };
     }
   }

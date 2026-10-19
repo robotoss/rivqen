@@ -14,6 +14,7 @@ import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /** One group of tests for each rule of {@code markup.md} §2, on small documents. */
@@ -709,26 +710,65 @@ class RulesTest {
 
   @Nested
   class M09TableParts {
+    // H-85a implied closure (M-09): a table part start tag closes F while F does not allow it.
+
     @ParameterizedTest
     @ValueSource(
         strings = {
-          "<table><tr><caption>",
-          "<table><tbody><colgroup>",
-          "<table><tbody><tbody>",
-          "<table><thead><tfoot>",
-          "<table><tr><thead>",
-          "<table><tr><col>",
-          "<table><colgroup><tr>",
-          "<table><tr><tr>",
-          "<table><tr><td><tr>",
-          "<table><caption><td>",
-          "<table><colgroup><td>",
-          "<table><tr><td><td>",
-          "<table><tr><th><th>",
-          "<table><tr><td><col>"
+          "<table><tr><td>a<td>b</td></tr></table>",
+          "<table><tr><th>a<th>b</th></tr></table>",
+          "<table><tr><td>a<tr><td>b</td></tr></table>",
+          "<table><thead><tr><th>h<tbody><tr><td>d</td></tr></tbody></table>",
+          "<table><tbody><tr><td>a<tfoot><tr><td>f</td></tr></tfoot></table>",
+          "<table><caption>c<tr><td>x</td></tr></table>",
+          "<table><caption>c<td>x</td></table>",
+          "<table><colgroup><col><tr><td>x</td></tr></table>",
+          "<table><colgroup><col><tbody><tr><td>x</td></tr></tbody></table>",
+          "<table><tr><td>a<caption>c</caption></table>",
+          "<table><tr><td>a<colgroup><col></colgroup></table>",
+          "<table><tbody><tr><td>a<td>b</td></tr></tbody></table>",
+          "<table><tr><td><div>a<td>b</td></tr></table>",
+          "<table><tr><td><table><tr><td>i<td>j</td></tr></table><td>k</td></tr></table>"
         })
-    void tablePartOutsideItsParent(String markup) {
-      assertStructure(body(markup), "M-09");
+    void tablePartClosesFThatDoesNotAllowIt(String markup) {
+      assertValid(body(markup + P));
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = {
+          // Step 3, M-06 item 1: the closure crosses the guarded a.
+          "<table><tr><td><a href=\"#\">a<td>b</td></tr></table>|M-06",
+          // Step 3, M-06 item 4 (DL-050 (2)): the special-crossed mark.
+          "<a href=\"#\"><table><tr><td><div>x<td>y</td></tr></table></a>|M-06",
+          // Step 2: F is a row and not the current node.
+          "<table><tr><td>a</td><b>x<tr>|M-09",
+          "<table><tbody><b>x<tbody>|M-09",
+          "<table><colgroup><b>x<tr>|M-09",
+          // M-06 item 3: the closure closed the row, so </tr> matches nothing.
+          "<table><tr><td><col></td></tr></table>|M-06",
+          // DL-050 (1): condition 1 runs after the closure.
+          "<template><tr><td>a<col></td></tr></template>|M-09",
+          // No closure in the content of a block or in C.
+          "<div data-rq-block=\"t\"><table><tr><td>a<td>b</td></tr></table></div>|M-09",
+          "<noscript><table><tr><td>a<td>b</td></tr></table></noscript>|M-09"
+        })
+    void impliedClosureRejects(String markup, String rule) {
+      assertStructure(body(markup + P), rule);
+    }
+
+    @Test
+    void impliedClosureNeverClosesATable() {
+      // F is table: every list has table, so the closure stops (a table in a cell is a new table).
+      assertValid(body("<table><tr><td>a<table><tr><td>b</td></tr></table></td></tr></table>" + P));
+    }
+
+    @Test
+    void impliedClosureGivesNoUnitOfDBack() {
+      // The closure crosses the div: it is not an exact pop (M-26 item 5), so D keeps the units of
+      // the div and of the cell. If the closure gave them back, D would stay flat.
+      assertInvalid(body("<table><tr>" + "<td><div>".repeat(200)), ErrorCode.LIMIT, "M-26");
     }
 
     @ParameterizedTest

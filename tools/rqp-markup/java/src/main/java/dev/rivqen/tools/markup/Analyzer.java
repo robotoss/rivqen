@@ -185,6 +185,9 @@ public final class Analyzer {
   // ---------------------------------------------------------------------------------------------
   // Tokens
 
+  /** M-09 implied closure: the loop bound (H-85a). */
+  private static final int MAX_CLOSURES = 3;
+
   private void startTag() {
     String raw = tok.name();
     Name k = Name.of(raw);
@@ -220,8 +223,11 @@ public final class Analyzer {
       foreignStartTag(name, k, selfClosing);
       return;
     }
-    tablePart(k);
     nestedForm(k);
+    if (!inContent && noscriptBase < 0) {
+      impliedClosure(k);
+    }
+    tablePart(k);
     impliedParts(k);
     boolean region = k == Name.SVG || k == Name.MATH;
     if (!(region && selfClosing) && !Name.is(k, Name.Set.VOID)) {
@@ -478,19 +484,7 @@ public final class Analyzer {
     if (f == null) {
       return;
     }
-    boolean allowed =
-        switch (k) {
-          case CAPTION, COLGROUP, TBODY, THEAD, TFOOT -> f == Name.TABLE;
-          case COL -> f == Name.TABLE || f == Name.COLGROUP;
-          case TR -> f == Name.TABLE || f == Name.TBODY || f == Name.THEAD || f == Name.TFOOT;
-          case TD, TH ->
-              f == Name.TABLE
-                  || f == Name.TBODY
-                  || f == Name.THEAD
-                  || f == Name.TFOOT
-                  || f == Name.TR;
-          default -> true; // table
-        };
+    boolean allowed = allowedIn(k, f);
     if (!allowed) {
       throw structure("M-09");
     }
@@ -563,17 +557,60 @@ public final class Analyzer {
       }
       return;
     }
+    guardCrossing(index, k);
+    popTo(index, k);
+  }
+
+  /**
+   * M-06 item 1 in HTML context: no guarded element is crossed by the end tag {@code k} that closes
+   * the element at {@code index}, except a table part crossed by a table-family end tag. No foreign
+   * region is open, so every crossed element was pushed in HTML context (M-06 guards only those).
+   */
+  private void guardCrossing(int index, @Nullable Name k) {
     for (int i = stack.size() - 1; i > index; i--) {
       Name crossed = stack.known(i);
       boolean tableException =
           Name.isAny(k, Name.Set.TABLE_FAMILY) && Name.is(crossed, Name.Set.TABLE_PART);
-      // HTML context: no foreign region is open, so every crossed element was pushed in HTML
-      // context (M-06 guards only those).
       if (Name.is(crossed, Name.Set.GUARDED) && !tableException) {
         throw structure("M-06");
       }
     }
-    popTo(index, k);
+  }
+
+  /**
+   * M-09 implied closure (H-85a): a table part or {@code col} start tag that F does not allow does
+   * the steps of the end tag of F, at most {@link #MAX_CLOSURES} times. F that is a row group, a
+   * row or a column group MUST be the current node (condition 2). The end tag steps are M-06 items
+   * 1 and 4 and M-26 items 4 and 5 ({@link #popTo}); a table is never closed and no unit of D is
+   * released here.
+   */
+  private void impliedClosure(@Nullable Name k) {
+    if (k == null || (!Name.is(k, Name.Set.TABLE_PART) && k != Name.COL)) {
+      return;
+    }
+    for (int n = 0; n < MAX_CLOSURES; n++) {
+      int f = stack.tableFamilyIndex();
+      if (f < 0 || allowedIn(k, stack.known(f))) {
+        return;
+      }
+      Name fk = stack.known(f);
+      if (fk != Name.TD && fk != Name.TH && fk != Name.CAPTION && f != stack.size() - 1) {
+        throw structure("M-09"); // step 2 (condition 2)
+      }
+      guardCrossing(f, fk);
+      popTo(f, fk);
+    }
+  }
+
+  private static boolean allowedIn(Name k, @Nullable Name f) {
+    return switch (k) {
+      case CAPTION, COLGROUP, TBODY, THEAD, TFOOT -> f == Name.TABLE;
+      case COL -> f == Name.TABLE || f == Name.COLGROUP;
+      case TR -> f == Name.TABLE || f == Name.TBODY || f == Name.THEAD || f == Name.TFOOT;
+      case TD, TH ->
+          f == Name.TABLE || f == Name.TBODY || f == Name.THEAD || f == Name.TFOOT || f == Name.TR;
+      default -> true; // table
+    };
   }
 
   /**

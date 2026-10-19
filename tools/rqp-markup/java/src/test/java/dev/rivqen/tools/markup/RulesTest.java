@@ -1063,6 +1063,72 @@ class RulesTest {
                   + P));
     }
 
+    // Item 10 (H-95, DL-055): in block content, M-22 and M-24 apply to the tokens of C.
+
+    @Test
+    void noscriptInContentWithPhrasingIsValid() {
+      assertEquals(
+          List.of("a:html:x<noscript><img src=y><b>z</b></noscript>w"),
+          blocks(body("<div data-rq-block=a>x<noscript><img src=y><b>z</b></noscript>w</div>")));
+    }
+
+    @Test
+    void startTagOfCThatClosesTheParagraphBlockIsInvalid() {
+      // M-24 item a on a tag of C: scripting disabled, the div closes the p block.
+      assertStructure(body("<p data-rq-block=a>x<noscript><div>y</div></noscript>z</p>"), "M-24");
+    }
+
+    @Test
+    void listItemInCWithoutListOfTheContentIsInvalid() {
+      assertStructure(body("<div data-rq-block=a><noscript><li>x</li></noscript></div>"), "M-24");
+    }
+
+    @Test
+    void listItemInCInAListOfTheContentIsValid() {
+      assertValid(
+          body("<div data-rq-block=a><ul><noscript><b>x</b></noscript><li>y</li></ul></div>"));
+    }
+
+    @Test
+    void tableInCThenContentTableContextIsInvalid() {
+      // M-24 item k on a tag of C: in a table of the content, only table parts are allowed.
+      assertStructure(
+          body("<div data-rq-block=a><table><noscript><b>x</b></noscript></table></div>"), "M-24");
+    }
+
+    @Test
+    void doctypeInCInContentIsInvalid() {
+      assertStructure(
+          body("<div data-rq-block=a><noscript><!DOCTYPE html></noscript></div>"), "M-22");
+    }
+
+    @Test
+    void doctypeInCOutsideContentIsValid() {
+      assertValid(body("<noscript><!DOCTYPE html></noscript>" + P));
+    }
+
+    @Test
+    void endTagOfVoidNameInCInContentIsInvalid() {
+      // Item 5 is M-23 for C.
+      assertStructure(body("<div data-rq-block=a><noscript><br></br></noscript></div>"), "M-11");
+    }
+
+    @Test
+    void shadowRootTemplateInNoscriptInContentIsInvalid() {
+      // M-11 item 3 comes first: a template start tag in C is invalid.
+      assertStructure(
+          body(
+              "<div data-rq-block=a><noscript><template shadowrootmode=open></template></noscript></div>"),
+          "M-11");
+    }
+
+    @Test
+    void noscriptInTemplateInContentFollowsItem10() {
+      assertStructure(
+          body("<p data-rq-block=a><template><noscript><div>y</div></noscript></template></p>"),
+          "M-24");
+    }
+
     // Item 5 (H-27): C is balanced, on its own stack.
 
     @Test
@@ -1692,18 +1758,68 @@ class RulesTest {
           "html",
           "noembed",
           "noframes",
-          "noscript",
           "optgroup",
           "option",
           "plaintext",
           "select",
-          "template",
           "textarea",
           "title",
           "xmp"
         })
     void forbiddenContentElement(String name) {
       assertStructure(body("<div data-rq-block=a><" + name + "></div>"), "M-22");
+    }
+
+    @Test
+    void templateAndNoscriptAreAllowedInContent() {
+      // H-94, H-95: both leave M-22 item 2; the content closes them with their own end tags.
+      assertValid(
+          body(
+              "<div data-rq-block=a><template><b>x</b></template><noscript><i>y</i></noscript></div>"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<template shadowrootmode=open>",
+          "<template shadowrootmode>",
+          "<template ShadowRootMode=closed>",
+          "<template shadowrootmode=\"\">",
+          "<template a=1 shadowrootmode=open>",
+          "<template shadowrootmode=open shadowrootmode=closed>",
+          "<template shadowrootclonable shadowrootmode=open>"
+        })
+    void templateWithShadowRootMode(String open) {
+      // M-22 item 6 (H-94, H-97): any value, any case, any position, also a dropped duplicate.
+      assertStructure(body("<div data-rq-block=a>" + open + "x</template></div>"), "M-22");
+    }
+
+    @Test
+    void duplicateShadowRootModeAfterAnotherAttributeCounts() {
+      assertStructure(
+          body(
+              "<div data-rq-block=a><template shadowrootmode=open shadowrootmode=open>x</template></div>"),
+          "M-22");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "shadowrootclonable",
+          "shadowrootdelegatesfocus",
+          "shadowrootserializable",
+          "data-shadowrootmode",
+          "shadowrootmodes"
+        })
+    void templateWithOtherShadowRootAttributeIsValid(String attribute) {
+      assertValid(body("<div data-rq-block=a><template " + attribute + "=x>y</template></div>"));
+    }
+
+    @Test
+    void shadowRootModeOutsideContentOrInForeignRegionIsValid() {
+      assertValid(body("<template shadowrootmode=open>x</template>" + P));
+      assertValid(
+          body("<div data-rq-block=a><svg><template shadowrootmode=open></template></svg></div>"));
     }
 
     @ParameterizedTest
@@ -1994,6 +2110,27 @@ class RulesTest {
               "<div data-rq-block=a><table>t<!-- c --><caption><div>c</div></caption>"
                   + "<colgroup><col></colgroup><tbody> <tr><td><div>d</div><table><tr><th><p>e</p>"
                   + "</th></tr></table></td></tr></tbody></table></div>"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"tr", "td", "th", "tbody", "caption", "colgroup", "col"})
+    void tablePartDirectlyInTemplateIsInvalidEvenInsideATable(String name) {
+      // M-24 item g (H-94): the search for F stops at the template, so F is none.
+      assertStructure(
+          body(
+              "<div data-rq-block=a><table><tr><td><template><"
+                  + name
+                  + "></template></td></tr></table></div>"),
+          "M-24");
+      assertStructure(
+          body("<div data-rq-block=a><template><" + name + "></template></div>"), "M-24");
+    }
+
+    @Test
+    void tablePartInATableInsideATemplateIsValid() {
+      assertValid(
+          body(
+              "<div data-rq-block=a><template><table><caption>c</caption><tr><td>x</td></tr></table></template></div>"));
     }
 
     @Test

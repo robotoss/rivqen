@@ -39,6 +39,7 @@ final class Tokenizer {
   private static final byte[] DATA_RQ_BLOCK = ascii("data-rq-block");
   private static final byte[] TYPE = ascii("type");
   private static final byte[] FOR = ascii("for");
+  private static final byte[] SHADOWROOTMODE = ascii("shadowrootmode");
   private static final byte[] DOCTYPE = ascii("doctype");
   private static final byte[] CDATA_OPEN = ascii("[CDATA[");
   private static final byte[] SCRIPT = ascii("script");
@@ -101,6 +102,7 @@ final class Tokenizer {
   private int typeValueStart = -1;
   private int typeValueEnd = -1;
   private boolean forAttribute;
+  private boolean shadowRootModeAttribute;
 
   private byte[] nameBuf = new byte[32];
   private int nameLen;
@@ -241,6 +243,14 @@ final class Tokenizer {
     return forAttribute;
   }
 
+  /**
+   * True when the start tag has an attribute named {@code shadowrootmode}, in any occurrence (M-22
+   * item 6).
+   */
+  boolean hasShadowRootModeAttribute() {
+    return shadowRootModeAttribute;
+  }
+
   // ---------------------------------------------------------------------------------------------
   // Tags and attributes
 
@@ -269,6 +279,7 @@ final class Tokenizer {
     typeValueStart = -1;
     typeValueEnd = -1;
     forAttribute = false;
+    shadowRootModeAttribute = false;
   }
 
   private void appendName(byte b) {
@@ -411,6 +422,9 @@ final class Tokenizer {
   private int attributeName(int from, int to) {
     if (equalsIgnoreCase(from, to, FOR)) {
       forAttribute = true; // every occurrence counts, also a dropped duplicate
+    }
+    if (equalsIgnoreCase(from, to, SHADOWROOTMODE)) {
+      shadowRootModeAttribute = true; // same: every occurrence counts
     }
     if (blockValueStart < 0 && equalsIgnoreCase(from, to, DATA_RQ_BLOCK)) {
       blockValueStart = to;

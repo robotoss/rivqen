@@ -24,8 +24,8 @@ class NameTest {
 
   /** FORBIDDEN_CONTENT of markup.md section 2.1 (H-78). */
   private static final String FORBIDDEN_CONTENT =
-      "body frame frameset head html noembed noframes noscript optgroup option plaintext select"
-          + " template textarea title xmp";
+      "body frame frameset head html noembed noframes optgroup option plaintext select"
+          + " textarea title xmp";
 
   private static final String FORMATTING = "a b big code em font i nobr s small strike strong tt u";
 
@@ -57,7 +57,9 @@ class NameTest {
     // H-73: they start a region in the content; M-22 item 2 does not reject them.
     assertEquals(false, Name.is(Name.SVG, Name.Set.FORBIDDEN_CONTENT));
     assertEquals(false, Name.is(Name.MATH, Name.Set.FORBIDDEN_CONTENT));
-    assertEquals(true, Name.is(Name.NOSCRIPT, Name.Set.FORBIDDEN_CONTENT));
+    // H-94, H-95: M-22 item 6, M-24 item g and M-11 item 10 make them safe in the content.
+    assertEquals(false, Name.is(Name.NOSCRIPT, Name.Set.FORBIDDEN_CONTENT));
+    assertEquals(false, Name.is(Name.TEMPLATE, Name.Set.FORBIDDEN_CONTENT));
   }
 
   @Test

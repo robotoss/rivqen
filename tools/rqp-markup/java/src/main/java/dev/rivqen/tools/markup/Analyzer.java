@@ -401,6 +401,9 @@ public final class Analyzer {
     if (Name.is(k, Name.Set.FORBIDDEN_CONTENT)) {
       throw structure("M-22");
     }
+    if (k == Name.TEMPLATE && tok.hasShadowRootModeAttribute()) {
+      throw structure("M-22"); // item 6 (H-94, H-97)
+    }
     if (selfClosing && !Name.is(k, Name.Set.VOID) && k != Name.SVG && k != Name.MATH) {
       throw structure("M-22");
     }
@@ -418,7 +421,7 @@ public final class Analyzer {
           case LI, DD, DT -> listItemImplied();
           case BUTTON, A, NOBR -> stack.open(k) > 0;
           case CAPTION, COLGROUP, TBODY, TD, TFOOT, TH, THEAD, TR, COL ->
-              stack.openInContent(Name.TABLE) == 0;
+              stack.openInContent(Name.TABLE) == 0 || stack.tableFamily() == null; // item g
           case RB, RTC -> stack.openInContent(Name.RUBY) == 0 || rubyPartOpen(true);
           case RP, RT -> stack.openInContent(Name.RUBY) == 0 || rubyPartOpen(false);
           default -> false;

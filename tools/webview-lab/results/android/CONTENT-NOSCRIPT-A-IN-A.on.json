@@ -1,0 +1,10 @@
+{
+  "id": "CONTENT-NOSCRIPT-A-IN-A",
+  "view": "on",
+  "walker": "ok",
+  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <div>\n|       data-rq-block=\"box\"\n|       <a>\n|         href=\"#\"\n|         <noscript>\n|           \"<a href=\"#\">x</a>\"\n|     \"\n\n\"",
+  "characterSet": "UTF-8",
+  "contentType": "text/html",
+  "probe": null,
+  "error": null
+}

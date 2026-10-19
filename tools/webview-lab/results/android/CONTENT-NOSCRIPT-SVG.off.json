@@ -1,0 +1,10 @@
+{
+  "id": "CONTENT-NOSCRIPT-SVG",
+  "view": "off",
+  "walker": "ok",
+  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <div>\n|       data-rq-block=\"box\"\n|       <noscript>\n|         <svg svg>\n|           height=\"1\"\n|           width=\"1\"\n|           <svg path>\n|             d=\"M0\"\n|     \"\n\n\"",
+  "characterSet": "UTF-8",
+  "contentType": "text/html",
+  "probe": null,
+  "error": null
+}

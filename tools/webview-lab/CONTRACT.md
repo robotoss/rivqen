@@ -64,7 +64,7 @@ The server serves case `<id>` at `/c/<id>`. `GET /cases.json` gives the list of 
 
 ## 3. Server
 
-- `node host/server.mjs [--port N]` binds `127.0.0.1` only (default port 18090). The Android emulator reaches it at `10.0.2.2:<port>`; the iOS simulator at `127.0.0.1:<port>`.
+- `node host/server.mjs [--port N]` binds `127.0.0.1` only (default port 18090). The Android emulator reaches it at `10.0.2.2:<port>` (Android 17, API 37: the app declares `android.permission.ACCESS_LOCAL_NETWORK` and the run script grants it with `adb shell pm grant`; the app never asks the user; DL-054); the iOS simulator at `127.0.0.1:<port>`.
 - Each response is written to the socket as raw bytes (status line, the header lines of the case, an empty line, the body), so the header lines are exact.
 - No other host is contacted. Case pages are test data; the server does not parse them.
 
@@ -74,7 +74,7 @@ For each case and each view, an app:
 
 1. Creates a new WebView. View `off`: iOS `WKWebpagePreferences.allowsContentJavaScript = false`; Android `WebSettings.setJavaScriptEnabled(false)`. View `on`: content JavaScript allowed.
 2. Loads `/c/<id>` and waits for the end of the main-frame load (iOS `didFinish`; Android `onPageFinished`), plus at most 2 s.
-3. Runs `host/serialize.js` in a context that page scripts do not share (iOS: `evaluateJavaScript` in `WKContentWorld.defaultClient`). When the platform cannot run it in view `off`, the result says so (`"walker": "unavailable"`, the reason in `error`) and the app records the reason in `run.json`. A lane MUST NOT turn content JavaScript on for a view `off` result.
+3. Runs `host/serialize.js` in a context that page scripts do not share (iOS: `evaluateJavaScript` in `WKContentWorld.defaultClient`). When the platform cannot run it in view `off`, the result says so (`"walker": "unavailable"`, the reason in `error`) and the app records the reason in `run.json`. A lane MUST NOT turn content JavaScript on for a view `off` result. Methods in use: iOS runs the walker with `evaluateJavaScript` in `WKContentWorld.defaultClient` (it works with content JavaScript off); Android runs it in an `androidx.webkit` isolated world at the `load` event and sends the tree back through console messages, because `evaluateJavascript` and the web message listener do not work with JavaScript off (S5 T-04).
 4. Writes `results/<platform>/<id>.<view>.json`:
 
 ```json

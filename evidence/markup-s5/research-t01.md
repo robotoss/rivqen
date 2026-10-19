@@ -60,8 +60,8 @@ Spec bases: P = WHATWG HTML §13 Parsing (`https://html.spec.whatwg.org/multipag
 | Chromium: the parser scripting flag comes from the frame (`CanExecuteScripts`, then `ScriptEnabled()`) | FACT | Chromium `third_party/blink/renderer/core/html/parser/html_parser_options.cc`, `core/frame/local_dom_window.cc` |
 | WebKit: the scripting flag needs a frame whose script controller allows execution and content JavaScript allowed | FACT | WebKit `Source/WebCore/html/parser/HTMLParserOptions.cpp` |
 | So `allowsContentJavaScript = false` (iOS) and `setJavaScriptEnabled(false)` (Android) very likely make the document parser use Disabled | RESEARCH | the two sources above |
-| `evaluateJavaScript` in a `WKContentWorld`: DOM changes are visible in all worlds; whether it works with content JavaScript off | FACT / NOT FOUND | Apple `evaluateJavaScript(_:in:in:completionHandler:)` |
-| Android: how an app reads the DOM with JavaScript off | NOT FOUND | — |
+| `evaluateJavaScript` in a `WKContentWorld`: DOM changes are visible in all worlds; it works with content JavaScript off (measured in T-03, iOS 26.5) | FACT | Apple `evaluateJavaScript(_:in:in:completionHandler:)`; `tools/webview-lab/results/ios/run.json` |
+| Android: how an app reads the DOM with JavaScript off | NOT FOUND at T-01; measured in T-04: `evaluateJavascript` does not run and the web message listener is not installed with JavaScript off; an `androidx.webkit` isolated-world script runs (Chromium `ClassicScript::RunScriptInIsolatedWorldAndReturnValue` uses `kExecuteScriptWhenScriptsDisabled`) | `tools/webview-lab/README.md` (Android) |
 
 ## 5. How an SDK can apply a block
 

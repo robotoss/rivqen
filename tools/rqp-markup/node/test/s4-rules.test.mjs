@@ -104,6 +104,7 @@ describe('M-13 item 2: character references in the type (H-84, DL-048 a)', () =>
     'text/x&amp;y', 'text/a&b', 'application&#x2F;x', 'text/&#0000065pp', 'text/plain&#X9',
     'application/rivqen&#45;manifest+json', 'application/r&#305;vqen-manifest+json',
     'a&#32;b', 'a&#0;b', 'a&#43;b', 'a&#46;b', 'a&#48;b', 'a&#57;b', 'a&#128;b',
+    'a&Zb', 'a&zb', 'a&#90;b', 'a&#122;b', 'a&#xA;b', 'a&#xa;b', 'a&#xF;b', 'a&#xf;b',
     'a&#99999999999999999999;b', 'a&#xFFFFFFFFFFFFFFFFFFFF;b', 'a&#65', 'a&#x41',
   ];
   for (const type of rejected) {
@@ -111,6 +112,7 @@ describe('M-13 item 2: character references in the type (H-84, DL-048 a)', () =>
   }
   const accepted = [
     'text/x-tmpl & b', 'text/x&#58;y', 'text/x&#x7E;', 'text/x&#;', 'text/x&#x;', 'text/x&', 'a&#xg',
+    'a&#a;b', 'a&#33a;b', 'a&#x_;b', 'a&#x`;b', 'a&#xG;b', 'a&#xg;b',
     'a&#33;b', 'a&#42;b', 'a&#x7f;b', 'a&&1',
   ];
   for (const type of accepted) {

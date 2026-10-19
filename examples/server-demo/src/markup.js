@@ -192,9 +192,8 @@ const IMAGE_ATTRIBUTES = Object.freeze({ img: ['src', 'srcset'], source: ['src',
 
 /**
  * Item 4.2 (H-83, H-83a, DL-048 b): a raster data: image. "data:image/", not
- * "data:image/svg+xml", and no "%" in the type part (after "data:" up to ";" or ","). The
- * demo also rejects a "&" there, like the reference: a character reference can decode to
- * the SVG type (S4 T-08 finding).
+ * "data:image/svg+xml", and no "%" and no "&" in the type part (after "data:" up to ";"
+ * or ","): a character reference there can decode to the SVG type (DL-051).
  */
 function isRasterImage(url) {
   const type = /^data:([^;,]*)/.exec(url)[1];

@@ -329,8 +329,7 @@ function dataImageAllowed(element, name, html) {
  * It starts with "data:image/" and not with "data:image/svg+xml", and its type
  * part (the bytes after "data:" up to the first ";" or ",") has no "%". The type
  * part also has no "&": a reference there (`data:image/svg&#43;xml`) decodes to
- * the SVG type in the browser. This "&" condition is stricter than the text of
- * item 4.2 (S4 T-08 finding; it waits for a record of the architect).
+ * the SVG type in the browser (DL-051).
  */
 function rasterDataImage(copy) {
   if (!copy.startsWith('data:image/') || copy.startsWith('data:image/svg+xml')) return false;

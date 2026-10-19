@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C09-SRCSET-CHARREF-SPACE",
+  "kind": "client",
+  "description": "price content <img srcset=\"/a.png 1x,&#32;data:text/html,x 2x\">: a reference that decodes to white space (DL-048 c): rejected",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<img srcset=\"/a.png 1x,&#32;data:text/html,x 2x\" alt=\"\">"
+          }
+        ]
+      }
+    }
+  }
+}

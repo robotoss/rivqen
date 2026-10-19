@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C09-DATA-SVG-CHARREF",
+  "kind": "client",
+  "description": "price content <img src=\"data:image/svg&#43;xml,…\">: a \"&\" in the type part, which the browser decodes to the SVG type (S4 T-08 finding, stricter than the text of manifest-patch section 4.2 item 4.2): rejected",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<img src=\"data:image/svg&#43;xml,x\" alt=\"\">"
+          }
+        ]
+      }
+    }
+  }
+}

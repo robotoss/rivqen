@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html>
+<script type="application/rivqen-manifest+json">{"protocol":"rqp/1","origin":"https://shop.example.com","path":"/catalog","template_revision":"t1.QdFXEWKLEKQRG5xfYatcXnhpAq8LlL_Jz2pX1olGakI","page_revision":"r1.EzrCK6pivJb6ONEsYjQnEJgnmL9lsaD6Girc0g8MHwI","blocks":[{"id":"price","format":"html","sha256":"Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs"},{"id":"cart","format":"json","sha256":"zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4"}]}</script><body>
+  <header>Static header</header>
+  <p class="price" data-rq-block="price">120.00</p>
+  <script type="application/json" data-rq-block="cart">{"items":3}</script>
+</body>
+</html>

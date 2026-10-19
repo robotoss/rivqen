@@ -1,0 +1,28 @@
+{
+  "id": "FX-RQ-C24-PUBLIC-NOT-ENABLED",
+  "kind": "client",
+  "description": "As FX-RQ-C24-PUBLIC-EXPLICIT (mode public, a public origin, Cache-Control public), but the app did not turn the public partition on: the partition of the request (H-81)",
+  "rules": ["RQP-25"],
+  "context": {
+    "public_origin": true,
+    "navigation": "first-visit",
+    "snapshot": null,
+    "credentials": true
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "public, max-age=60"]
+    ],
+    "body": {
+      "full": "page-a",
+      "members": {
+        "policy": {
+          "mode": "public"
+        }
+      }
+    }
+  }
+}

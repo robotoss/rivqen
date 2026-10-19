@@ -84,10 +84,26 @@ export const EXPECTED = Object.freeze({
   'page-head-noscript': { blocks: ['title', 'price', 'cart'] },
   // H-72: a comment and a DOCTYPE before the head start tag; a comment after it.
   'page-head-late': { blocks: ['title', 'price', 'cart'] },
-  // Valid for RQP, but without a head start tag of the document (H-72): no
-  // <head> start tag at all, or text before it.
+  // H-78: valid for RQP since H-78 (script, style, iframe in a block), but the
+  // changed block fails the patch content rule.
+  'page-b-script': { blocks: ['title', 'price', 'cart'] },
+  'page-b-style': { blocks: ['title', 'price', 'cart'] },
+  'page-b-iframe': { blocks: ['title', 'price', 'cart'] },
+  // H-86: page-a with an application/ld+json block (format json); b changes price and ld.
+  'page-ld-a': { blocks: ['title', 'price', 'cart', 'ld'] },
+  'page-ld-b': { blocks: ['title', 'price', 'cart', 'ld'] },
+  // Valid for RQP, without a <head> start tag: the title start tag implies the
+  // head (H-79a), so the insertion point is its "<". Text before <html> gives none (H-72).
   'page-no-head-start': { blocks: ['title', 'price', 'cart'] },
   'page-text-before-head': { blocks: ['title', 'price', 'cart'] },
+  // H-79a: a meta start tag implies the head; a head start tag with an attribute.
+  'page-implied-meta': { blocks: ['title', 'price', 'cart'] },
+  'page-head-lang': { blocks: ['title', 'price', 'cart'] },
+  // H-79a: no head start tag and no implied head: noscript or template before
+  // <head> (not in the list), or body content first.
+  'page-noscript-before-head': { blocks: ['title', 'price', 'cart'] },
+  'page-template-before-head': { blocks: ['title', 'price', 'cart'] },
+  'page-no-head-body-first': { blocks: ['price', 'cart'] },
   // H-62 (3): page-a with a UTF-8 byte order mark at offset 0 (markup M-02).
   'page-bom': { blocks: ['title', 'price', 'cart'] },
   'page-t2': { blocks: ['title', 'price', 'cart'] },

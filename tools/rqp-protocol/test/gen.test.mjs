@@ -30,13 +30,13 @@ function copyFixture(name) {
 
 test('gen.mjs --check: every committed page and expected file is current', () => {
   const out = execFileSync(process.execPath, [GEN, '--check'], { encoding: 'utf8' });
-  assert.match(out, /174 fixtures are current/);
+  assert.match(out, /208 fixtures are current/);
 });
 
-test('every catalog case P-01 to P-40 and C-01 to C-27 has at least one fixture', () => {
+test('every catalog case P-01 to P-41 and C-01 to C-28 has at least one fixture', () => {
   const names = fixtureNames();
-  for (let i = 1; i <= 40; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-P${String(i).padStart(2, '0')}-`)), `P-${i}`);
-  for (let i = 1; i <= 27; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-C${String(i).padStart(2, '0')}-`)), `C-${i}`);
+  for (let i = 1; i <= 41; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-P${String(i).padStart(2, '0')}-`)), `P-${i}`);
+  for (let i = 1; i <= 28; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-C${String(i).padStart(2, '0')}-`)), `C-${i}`);
 });
 
 test('context.allowlist (DL-039/DL-040): default the origin of url, required for a cross-origin final_url; another shape is a defective case', () => {
@@ -322,6 +322,10 @@ test('defective client cases: members, context values, header lines and body rec
     ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, build: 'beta' } })],
     ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, allow_http: 'yes' } })],
     ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, public_origin: 1 } })],
+    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, public_enabled: 'true' } })],
+    // H-81: a public context snapshot needs the app setting.
+    ['FX-RQ-C27-PUBLIC-SNAPSHOT-304', (c) => ({ ...c, context: { ...c.context, public_enabled: undefined } })],
+    ['FX-RQ-C27-PUBLIC-SNAPSHOT-304', (c) => ({ ...c, context: { ...c.context, public_enabled: false } })],
     ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, response: { ...c.response, headers: {} } })],
     ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, response: { ...c.response, body: { delta: { from: 'page-a', ops: [{ block_id: 'nope', content: 'x' }] } } } })],
     ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, response: { ...c.response, body: { delta: { from: 'page-zero', to: 'page-a' } } } })],

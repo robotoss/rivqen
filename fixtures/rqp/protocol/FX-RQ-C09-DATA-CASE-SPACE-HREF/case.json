@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C09-DATA-CASE-SPACE-HREF",
+  "kind": "client",
+  "description": "price content <a href=\" TAB Da LF Ta:image/png,x\">y</a>: after the removal of tab, LF and leading space the scheme is data:, and a is not an image element (H-59, H-83): rejected",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<a href=\" \tDa\nTa:image/png,x\">y</a>"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C09-QUERY-AMP-ACCEPTED",
+  "kind": "client",
+  "description": "price content <a href=\"?a=1&b=2\">y</a>: the decision byte is \"?\", not \"&\" (H-77): applied",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<a href=\"?a=1&b=2\">y</a>"
+          }
+        ]
+      }
+    }
+  }
+}

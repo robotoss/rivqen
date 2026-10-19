@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P39-TEMPLATE-BEFORE-HEAD",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html"]
+    ]
+  },
+  "status": 200,
+  "headers_required": {
+    "content-type": "text/html; charset=utf-8",
+    "cache-control": "no-cache"
+  },
+  "headers_forbidden": ["etag","rq-revision","rq-template-revision","rq-version"],
+  "body": {
+    "kind": "app"
+  }
+}

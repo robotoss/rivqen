@@ -45,7 +45,7 @@ The lab answers open questions Q-19 (what a WebView does with the `noscript` sha
 
 ### 2.2 URLs
 
-The server serves case `<id>` at `/c/<id>`. `GET /cases.json` gives the list of the ids in order. Nothing else is served (404).
+The server serves case `<id>` at `/c/<id>`. `GET /cases.json` gives the list of the ids in order: a JSON array of strings (the content of `cases/index.json`, which `host/build-cases.mjs` writes), `Content-Type: application/json`. Nothing else is served (404).
 
 ### 2.3 Case list
 
@@ -59,6 +59,7 @@ The server serves case `<id>` at `/c/<id>`. `GET /cases.json` gives the list of 
   - `BOM-LATIN1`: the page with a UTF-8 byte order mark and `charset=iso-8859-1`.
   - `BOM-NONE`: the page with a UTF-8 byte order mark and no `Content-Type` line.
   - `META-LATIN1`: `charset=utf-8` in the header, `<meta charset="iso-8859-1">` in the page.
+- Q-20 expectations (`host/lab.mjs`, `Q20_CASES`): `CT-UTF8`, `BOM-LATIN1` and `BOM-NONE` expect UTF-8 and the marker text (the byte order mark wins over the header, DL-040); `META-LATIN1` expects UTF-8 (the header charset wins over `meta`); `CT-LATIN1` expects windows-1252 (the label `iso-8859-1` maps to it) and the marker read as windows-1252. `CT-NONE`, `CT-NO-CHARSET` and `CT-TWO-LINES` are "info": no RQP rule decides the WebView result for them (H-66 makes the SDK send one exact `Content-Type` with UTF-8), so the lab records what the WebView does.
 - S5 T-02 adds the `template` and `noscript` block shapes as `S5-*` cases (views `on` and `off`).
 
 ## 3. Server
@@ -73,7 +74,7 @@ For each case and each view, an app:
 
 1. Creates a new WebView. View `off`: iOS `WKWebpagePreferences.allowsContentJavaScript = false`; Android `WebSettings.setJavaScriptEnabled(false)`. View `on`: content JavaScript allowed.
 2. Loads `/c/<id>` and waits for the end of the main-frame load (iOS `didFinish`; Android `onPageFinished`), plus at most 2 s.
-3. Runs `host/serialize.js` in a context that page scripts do not share (iOS: `evaluateJavaScript` in `WKContentWorld.defaultClient`). When the platform cannot run it in view `off`, the result says so (`"walker": "unavailable"` and the reason) and the app records the reason in `run.json`. A lane MUST NOT turn content JavaScript on for a view `off` result.
+3. Runs `host/serialize.js` in a context that page scripts do not share (iOS: `evaluateJavaScript` in `WKContentWorld.defaultClient`). When the platform cannot run it in view `off`, the result says so (`"walker": "unavailable"`, the reason in `error`) and the app records the reason in `run.json`. A lane MUST NOT turn content JavaScript on for a view `off` result.
 4. Writes `results/<platform>/<id>.<view>.json`:
 
 ```json

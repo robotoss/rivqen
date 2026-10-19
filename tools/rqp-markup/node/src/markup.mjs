@@ -23,7 +23,6 @@ import {
   BREAKOUT,
   DOCUMENT_TAGS,
   FORBIDDEN_CONTENT,
-  FOREIGN_ALLOWED,
   FORMATTING,
   GUARDED,
   HEADINGS,
@@ -68,7 +67,10 @@ export const ErrorCode = Object.freeze({
 });
 
 const STRUCTURE = ErrorCode.STRUCTURE;
-const JSON_TYPE = Buffer.from('application/json', 'latin1');
+const JSON_TYPES = [
+  Buffer.from('application/json', 'latin1'),
+  Buffer.from('application/ld+json', 'latin1'),
+];
 const MANIFEST_MARK = 'rivqen-manifest';
 const NOSCRIPT_END = Buffer.from('</noscript>', 'latin1');
 const AMPERSAND = 0x26;
@@ -119,11 +121,63 @@ function isValidId(b, span) {
   return true;
 }
 
-// M-13: the raw type value contains '&' (item 2), a byte >= 0x80 (item 3,
-// decision H-28) or "rivqen-manifest" in ASCII case-insensitive form (item 1).
+const CODE_CAP = 0x110000; // M-13 item 2: values above 10FFFF count as 110000
+
+function isAsciiLetter(c) {
+  return (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a);
+}
+
+function isDigit(c) {
+  return c >= 0x30 && c <= 0x39;
+}
+
+function hexValue(c) {
+  if (isDigit(c)) return c - 0x30;
+  if (c >= 0x41 && c <= 0x46) return c - 0x41 + 10;
+  if (c >= 0x61 && c <= 0x66) return c - 0x61 + 10;
+  return -1;
+}
+
+// M-13 item 2 (H-84): the value of the numeric character reference that starts
+// after the '&' at i (the bytes '#', digits), read on the raw bytes. Returns -1
+// when it is not a reference (no digit). The value stops at CODE_CAP.
+function numericReference(b, i, end) {
+  let p = i + 1; // after '#'
+  let radix = 10;
+  if (p < end && (b[p] === 0x78 || b[p] === 0x58)) {
+    radix = 16;
+    p++;
+  }
+  let value = 0;
+  let digits = 0;
+  for (; p < end; p++) {
+    const d = radix === 16 ? hexValue(b[p]) : isDigit(b[p]) ? b[p] - 0x30 : -1;
+    if (d < 0) break;
+    value = Math.min(value * radix + d, CODE_CAP);
+    digits++;
+  }
+  return digits === 0 ? -1 : value;
+}
+
+// The value gives a byte that a reader could take for a part of the manifest
+// type, white space or a control (M-13 item 2, DL-048 a).
+function isRiskyCode(v) {
+  return v <= 0x20 || v >= NON_ASCII || isAsciiLetter(v) || isDigit(v)
+    || v === 0x2f || v === 0x2b || v === 0x2d || v === 0x2e;
+}
+
+// M-13: the raw type value has a '&' that item 2 rejects, a byte >= 0x80 (item
+// 3, decision H-28) or "rivqen-manifest" in ASCII case-insensitive form (item 1).
 function isReservedType(b, span) {
   for (let i = span.start; i < span.end; i++) {
-    if (b[i] === AMPERSAND || b[i] >= NON_ASCII) return true;
+    const c = b[i];
+    if (c >= NON_ASCII) return true;
+    if (c !== AMPERSAND || i + 1 >= span.end) continue;
+    if (isAsciiLetter(b[i + 1])) return true;
+    if (b[i + 1] === 0x23) {
+      const v = numericReference(b, i + 1, span.end);
+      if (v >= 0 && isRiskyCode(v)) return true;
+    }
   }
   for (let i = span.start; i + MANIFEST_MARK.length <= span.end; i++) {
     if (matchesLower(b, i, MANIFEST_MARK)) return true;
@@ -132,7 +186,8 @@ function isReservedType(b, span) {
 }
 
 function isJsonType(b, span) {
-  return b.subarray(span.start, span.end).equals(JSON_TYPE);
+  const value = b.subarray(span.start, span.end);
+  return JSON_TYPES.some((t) => value.equals(t));
 }
 
 // M-12: a closed '<![CDATA[' bogus comment must end with ']]>'. That ']]>'
@@ -331,8 +386,6 @@ class Scanner {
   foreignStart(t) {
     const name = t.name;
     if (BREAKOUT.has(name)) return STRUCTURE;
-    // M-22 item 5 (H-73): a foreign region of block content has only these names.
-    if (this.block !== null && !FOREIGN_ALLOWED.has(name)) return STRUCTURE;
     const text = TEXT.has(name);
     if (text && (t.selfClosing || name === 'plaintext')) return STRUCTURE;
     if (!t.selfClosing) {

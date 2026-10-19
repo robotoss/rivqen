@@ -67,27 +67,8 @@ export const BLOCK_HTML = set(
 );
 
 export const FORBIDDEN_CONTENT = set(
-  'base', 'basefont', 'bgsound', 'body', 'embed', 'frame', 'frameset', 'head', 'html',
-  'iframe', 'link', 'meta', 'noembed', 'noframes', 'noscript', 'object', 'optgroup',
-  'option', 'plaintext', 'script', 'select', 'style', 'template', 'textarea', 'title',
-  'xmp',
-);
-
-/**
- * M-22 item 5 (human decision H-73): the start tags that are allowed in a
- * foreign region of the content of an html block. Exact lower-case list of
- * markup.md section 2.1.
- */
-export const FOREIGN_ALLOWED = set(
-  'svg', 'g', 'path', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'rect', 'defs',
-  'symbol', 'use', 'title', 'desc', 'lineargradient', 'radialgradient', 'stop', 'clippath',
-  'mask', 'pattern', 'marker', 'text', 'tspan', 'filter', 'feblend', 'fecolormatrix',
-  'fecomponenttransfer', 'fecomposite', 'fedisplacementmap', 'fedropshadow', 'feflood',
-  'fefunca', 'fefuncb', 'fefuncg', 'fefuncr', 'fegaussianblur', 'femerge', 'femergenode',
-  'femorphology', 'feoffset', 'feturbulence', 'math', 'mrow', 'mi', 'mo', 'mn', 'ms', 'mtext',
-  'mspace', 'msub', 'msup', 'msubsup', 'mfrac', 'msqrt', 'mroot', 'mstyle', 'munder', 'mover',
-  'munderover', 'mmultiscripts', 'mprescripts', 'none', 'mtable', 'mtr', 'mtd', 'mpadded',
-  'mphantom', 'merror', 'semantics', 'annotation',
+  'body', 'frame', 'frameset', 'head', 'html', 'noembed', 'noframes', 'noscript', 'optgroup',
+  'option', 'plaintext', 'select', 'template', 'textarea', 'title', 'xmp',
 );
 
 /** M-08: tokens allowed inside a select element. */

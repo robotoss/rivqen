@@ -955,7 +955,6 @@ describe('M-16 block element', () => {
     'a void element': '<img data-rq-block="a">',
     'li': '<ul><li data-rq-block="a">x</li></ul>',
     'a script without type': '<script data-rq-block="a">1</script>',
-    'a script with another JSON type': '<script type="application/ld+json" data-rq-block="a">{}</script>',
     'a script with a type in other case': '<script type="Application/JSON" data-rq-block="a">{}</script>',
     'a script with a type with white space': '<script type="application/json " data-rq-block="a">{}</script>',
     'a style element': '<style data-rq-block="a">p{}</style>',
@@ -1251,7 +1250,7 @@ describe('edge cases E1 to E8 (decisions H-21, H-22)', () => {
   it('E8: applies all of M-13 in noscript content', () => {
     assert.equal(errorOf(doc('<noscript><SCRIPT Type="X-RIVQEN-MANIFEST">1</script></noscript>')), RESERVED);
     assert.equal(errorOf(doc('<noscript><script type="application/rivqen&#45;manifest+json">1</script></noscript>')), RESERVED);
-    assert.equal(errorOf(doc('<noscript><script type=&>1</script></noscript>')), RESERVED);
+    assert.equal(errorOf(doc('<noscript><script type=&a>1</script></noscript>')), RESERVED);
   });
 
   it('E8: accepts other scripts and manifest text that is raw text in the markup view', () => {

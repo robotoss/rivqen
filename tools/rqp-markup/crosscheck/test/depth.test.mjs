@@ -87,6 +87,39 @@ test("H-85a: the implied closure applies the end tag of a cell, a row and a row 
   assert.deepEqual(feed(["<table>", "<tr>", "<td>", "<td>"], { closure: false }).c.stack.map((e) => e.name), ["table", "tr", "td", "td"]);
 });
 
+test("H-85a: the closure happens exactly when F is not in the list of M-09 for the start tag", () => {
+  // The table of markup.md M-09, written out here (independent of ALLOWED_F).
+  const list = {
+    caption: ["table"],
+    colgroup: ["table"],
+    tbody: ["table"],
+    thead: ["table"],
+    tfoot: ["table"],
+    col: ["table", "colgroup"],
+    tr: ["table", "tbody", "thead", "tfoot"],
+    td: ["table", "tbody", "thead", "tfoot", "tr"],
+    th: ["table", "tbody", "thead", "tfoot", "tr"],
+  };
+  // A context in which F is the given element and is the current node.
+  const context = {
+    table: ["<table>"],
+    caption: ["<table>", "<caption>"],
+    colgroup: ["<table>", "<colgroup>"],
+    tbody: ["<table>", "<tbody>"],
+    thead: ["<table>", "<thead>"],
+    tfoot: ["<table>", "<tfoot>"],
+    tr: ["<table>", "<tr>"],
+    td: ["<table>", "<tr>", "<td>"],
+    th: ["<table>", "<tr>", "<th>"],
+  };
+  for (const [name, allowed] of Object.entries(list)) {
+    for (const [f, tokens] of Object.entries(context)) {
+      const { c } = feed([...tokens, `<${name}>`]);
+      assert.equal(c.closures > 0, !allowed.includes(f), `<${name}> with F ${f}`);
+    }
+  }
+});
+
 test("H-85a: a closure over other elements is a crossing: D stays, the row is dirty and gets the mark", () => {
   const { c, ds } = feed(["<table>", "<tr>", "<td>", "<div>", "<td>", "</td>", "</tr>"]);
   assert.deepEqual(ds, [1, 3, 4, 5, 6, 5, 5]);

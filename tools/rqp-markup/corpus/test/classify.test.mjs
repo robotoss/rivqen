@@ -101,8 +101,11 @@ test("H-85a: the implied closure of M-09 with the end-tag rules, outside block c
   const b = doc("<table><tr><td>a</td><b>x<tr><td>c</td></tr></table>");
   assert.deepEqual(b.classes, { "M-09.2": 1 });
   assert.deepEqual(b.details["M-09.2"], { "<b>": 1 });
-  // M-06 item 4: the closure over a div marks the row; </table> passes the mark to the a.
-  assert.deepEqual(doc('<a href="#"><table><tr><td><div>x<td>y</table></a>').classes, { "M-06.4-special": 1 });
+  // M-06 item 4: the closure over a div marks the row; the exact pops pass the mark down to the a.
+  assert.deepEqual(doc('<a href="#"><table><tr><td><div>x<td>y</td></tr></table></a>').classes, { "M-06.4-special": 1 });
+  // The closure pops a cell that an earlier crossing marked, and passes the mark down.
+  assert.deepEqual(doc('<a href="#"><table><tr><td><span><div></span>x<td>y</td></tr></table></a>').classes, { "M-06.4-special": 1 });
+  assert.deepEqual(doc('<a href="#"><table><tr><td><span>x<td>y</td></tr></table></a>').classes, {});
   // M-06 item 3 after the closure: the row is closed, so </tr> is stray.
   assert.deepEqual(doc("<table><tr><td><col></td></tr></table>").classes, { "M-06.3-row": 1 });
   // M-09 condition 1 after the closure: the template is the nearest element.
@@ -114,6 +117,7 @@ test("H-85a: the implied closure of M-09 with the end-tag rules, outside block c
   const content = doc('<div data-rq-block="t"><table><tr><td>a<td>b</td></tr></table></div>', true);
   assert.deepEqual(Object.keys(content.classes), ["M-09"]);
   assert.deepEqual(Object.keys(content.blockRules.classes), ["M-23"]);
+  assert.equal(content.maxD, 6); // the counter follows the stack of the pass: the cells nest
   // After the block the closure applies again.
   assert.deepEqual(doc('<div data-rq-block="t">x</div><table><tr><td>a<td>b</table>', true).classes, {});
 });

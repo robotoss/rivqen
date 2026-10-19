@@ -3,8 +3,10 @@
 
 // With the flag off (noscript 'shipped', head rule 'shipped') the study code gives
 // the shipped results: the Node.js candidate on every golden markup fixture, and the
-// head walk of the protocol reference and of the server demo on every golden and
-// protocol fixture document.
+// head walk of the pre-S4 protocol reference (H-72, frozen copy
+// ../../baseline/reference-s3.mjs) on every golden and protocol fixture document.
+// The shipped reference and the server demo follow H-79a now (S4 T-08), so they are
+// not compared here (the S4 study, study/s4/test/equality.test.mjs, does that).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -13,9 +15,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { digestResults, loadBaseline } from '../../baseline/baseline.mjs';
 import { GROUPS } from '../../baseline/groups.mjs';
-import { documentHeadStart as referenceHeadStart } from '../../../../rqp-protocol/src/markup.mjs';
+import { documentHeadStart as referenceHeadStart } from '../../baseline/reference-s3.mjs';
 import { PAGE_IDS, pageBytes } from '../../../../rqp-protocol/src/pages.mjs';
-import { documentHeadStart as demoHeadStart } from '../../../../../examples/server-demo/src/markup.js';
 import { analyzeStudy } from '../src/markup-study.mjs';
 import { headWalk } from '../src/head-study.mjs';
 
@@ -54,7 +55,8 @@ function protocolInputs() {
 // H-72 shipped option hc: the reference and demo insertion point equals the study headStart.
 function assertHeadEqual(name, bytes) {
   const want = referenceHeadStart(bytes);
-  assert.equal(demoHeadStart(bytes), want, `${name}: demo and reference differ (not a study defect)`);
+  // Changed: the demo comparison is removed. The demo follows H-79a (implied head)
+  // and no longer equals the H-72 head start that option hc models.
   assert.equal(headWalk(bytes).headStart, want, `${name}: study head walk (option hc)`);
 }
 
@@ -70,7 +72,7 @@ test('the shipped model equals the pre-S3 Node.js candidate on every S2 golden m
   }
 });
 
-test('the study option hc equals the shipped H-72 head start of the reference and the demo on golden and protocol fixtures', () => {
+test('the study option hc equals the H-72 head start of the frozen pre-S4 reference on golden and protocol fixtures', () => {
   const inputs = [...markupInputs(), ...protocolInputs()];
   assert.ok(inputs.length >= 280, `only ${inputs.length} documents`);
   let found = 0;

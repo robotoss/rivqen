@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import { compareCandidates, compareWithView, resultShapeError, show } from "./compare.mjs";
 import { CLASSES, analyzeDepth } from "./depth.mjs";
 import { docSeed, generateDocument } from "./generator.mjs";
+import { runHead } from "./head.mjs";
 import { PROFILES as S5_PROFILES, generateS5Document } from "./generator-s5.mjs";
 import { CrosscheckError, buildCandidate, loadCandidates, readResultsFile, runBatch, writeBatchDir } from "./run.mjs";
 import { parse5View } from "./view.mjs";
@@ -30,6 +31,7 @@ const USAGE = `usage:
   node src/cli.mjs check [--fixtures dir | --input file] [--results file.jsonl | --expected] [common options]
   node src/cli.mjs cases [--cases file.json] [common options]
   node src/cli.mjs sweep [--seed n] [--count n] [--max-tokens n] [--profile classic|review|review2|review3|tpl|nos|mix] [--chunk n] [--out dir] [--keep n] [common options]
+  node src/cli.mjs head [--seed n] [--count n] [--chunk n] [--out dir] [--keep n] [common options]   (--scripting: enabled|disabled|both, default both)
 common options: --only name,... --candidates file --timeout seconds --build --scripting enabled|disabled|spec|both|all`;
 
 /** The values of --scripting and their parse5 views ("spec": scripting enabled, WHATWG table scope). */
@@ -56,14 +58,14 @@ function intArg(name, v, min, max) {
 /** Parse the command line. Exported for tests. */
 export function parseArgs(argv) {
   const [command, ...rest] = argv;
-  if (!["check", "cases", "sweep"].includes(command ?? "")) throw new CrosscheckError(USAGE);
+  if (!["check", "cases", "sweep", "head"].includes(command ?? "")) throw new CrosscheckError(USAGE);
   const o = {
     command,
     only: null,
     candidates: DEFAULTS.candidates,
     timeoutMs: 300_000,
     build: false,
-    views: ["enabled"],
+    views: command === "head" ? ["enabled", "disabled"] : ["enabled"],
     fixtures: DEFAULTS.fixtures,
     input: null,
     results: null,
@@ -146,6 +148,7 @@ export function parseArgs(argv) {
         throw new CrosscheckError(`unknown option ${show(flag)}\n${USAGE}`);
     }
   }
+  if (command === "head" && o.views.includes("spec")) throw new CrosscheckError("head: --scripting is enabled, disabled or both");
   return o;
 }
 
@@ -512,6 +515,7 @@ export async function main(argv, { write = (line) => process.stdout.write(`${lin
     const o = parseArgs(argv);
     if (o.command === "check") return await cmdCheck(o, write);
     if (o.command === "cases") return await cmdCases(o, write);
+    if (o.command === "head") return await runHead(o, write, { repoRoot: REPO_ROOT });
     return await cmdSweep(o, write);
   } catch (error) {
     if (error instanceof CrosscheckError) {

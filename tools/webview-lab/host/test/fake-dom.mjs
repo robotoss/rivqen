@@ -33,6 +33,10 @@ export function fakeNode(p) {
       return p.childNodes.map(fakeNode);
     },
   };
+  // A real DOM reflects the content attribute of meta as a string property "content".
+  if (p.tagName === "meta" && p.namespaceURI === "http://www.w3.org/1999/xhtml") {
+    el.content = p.attrs.find((/** @type {any} */ a) => a.name === "content" && !a.prefix)?.value ?? "";
+  }
   if (p.content) {
     Object.defineProperty(el, "content", {
       get: () => ({ nodeType: 11, childNodes: p.content.childNodes.map(fakeNode) }),

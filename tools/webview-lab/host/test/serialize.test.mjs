@@ -111,3 +111,9 @@ test("serialize.js and parse5 agree on every Q-19 case in both views", () => {
   }
   assert.ok(n >= 80, `only ${n} runs`);
 });
+
+test("a meta element with a content attribute is not a template", () => {
+  // The fake DOM gives meta a string property "content", as a real DOM does.
+  const out = both('<head><meta name="color-scheme" content="light dark"></head>', true);
+  assert.match(out, /<meta>\n\|\s+content="light dark"\n\|\s+name="color-scheme"/);
+});

@@ -61,6 +61,11 @@ describe('implied table closure (M-09, H-85a)', () => {
     assert.equal(errorOf(doc('<table><tr><td><noscript><td>x</td></noscript></td></tr></table>')), STRUCTURE);
   });
 
+  it('does not close in the C pass either: a table of C needs the explicit end tag', () => {
+    assert.equal(errorOf(doc('<noscript><table><tr><td>a<td>b</td></tr></table></noscript>')), STRUCTURE);
+    assert.equal(errorOf(doc('<noscript><table><tr><td>a</td><td>b</td></tr></table></noscript>')), null);
+  });
+
   it('never closes a table', () => {
     const nested = '<table><tr><td><table><tr><td>a<td>b</td></tr></table></td></tr></table>';
     assert.equal(errorOf(doc(nested)), null);

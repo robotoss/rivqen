@@ -89,6 +89,20 @@ T-09 (WP-17 S3, H-71 to H-75; changed lines of `markup.mjs` and `names.mjs` agai
 | `noscriptEnd()` | `DOCUMENT_TAGS.has(name)` → `false` | Item 7 is also item 5: a document tag is never the current node of C |
 | `noscriptEnd()` | `top <= this.cBase` → `top < this.cBase` and → `false` | At `top === cBase` the current node is the `noscript` element, whose name is never the name of this end tag |
 
+T-09 (WP-17 S4, H-84, H-85a, H-86; changed lines of `markup.mjs` and `names.mjs` against `9bd8c32`, without `--incremental`; 71 s): 196 of 219 mutants killed before the new tests (89.5 %). The new tests are in `test/s4-rules.test.mjs` (the letters `Z` and `z` after `&`, the hex digits `A`, `a`, `F`, `f`, the bytes `_` and a backtick, which must not count as hex digits, a letter in a decimal reference) and in `test/s4-closure.test.mjs` (the C pass does not use the implied closure). After them: 203 of 219 (92.7 %). The 16 survivors are equivalent:
+
+| Location | Mutant | Reason |
+|---|---|---|
+| `JSON_TYPES` | encoding `'latin1'` → `""` | The two type names are ASCII; the default encoding gives the same bytes |
+| `numericReference()` | `p < end` → `true` or `p <= end` (line 148); `p < end` → `p <= end` (line 154) | The byte at `span.end` is a quote, white space or `>`: it is not `x`, `X` or a digit |
+| `numericReference()` | `digits++` → `digits--` | `digits` is only compared with 0 |
+| `isReservedType()` | `c >= NON_ASCII` → `>` | A lone byte 0x80 is not UTF-8 and is rejected by the encoding check first; as a continuation byte it follows a lead byte that is above 0x80 |
+| `isReservedType()` | `i + 1 >= span.end` → `false`, `>` or `i - 1 >= …` | For a `&` at the last position, the byte at `span.end` is a quote, white space or `>`: not a letter and not `#` |
+| `startTag()` | `this.cBase < 0` → `<= 0` | `cBase` is the stack index of `noscript`, which is at least 1 (`html` is below it) |
+| `startTag()`, `impliedClosure()` | `if (error !== null) return error` → `if (false)` (two places) | The closure fails only when F does not allow the start tag; M-09 condition 1 then gives the same `RQP_MARKUP_STRUCTURE` for the same document |
+| `impliedClosure()` | `step <= CLOSURE_STEPS`, `step--` | The longest chain below `table` has three elements (`tbody`, `tr`, `td`), so the loop ends by F that allows the tag, before a 4th closure |
+| `impliedClosure()` | `f < 0` → `f <= 0` | A table family element is above `html`: its index is at least 1 |
+
 T-08 (M-24 j, k, E5, E8; changed lines against `4c90861`): 53 of 54 mutants killed (98.1 %). The survivor is equivalent: it puts a string at the bottom of the list-mark array (`this.listMark = ["Stryker was here"]`). That value is never a list item, and M-24 j reads the array only after M-24 c has found a list opened in the content above it.
 
 With the command runner, Stryker has no coverage for each test. An `--incremental` run after a change of the tests only can keep old "Survived" results. Run without `--incremental` to check new tests.

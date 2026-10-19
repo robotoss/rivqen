@@ -276,6 +276,9 @@ final class RulesTest extends TestCase
         yield 'M-13.2 the second ampersand counts' => ['<script type="a & b &amp;"></script>', 'M-13', ErrorCode::Reserved];
         yield 'M-13.2 a lower-case letter, last value' => ['<script type="a&#122;"></script>', 'M-13', ErrorCode::Reserved];
         yield 'M-13.2 an upper-case letter, first value' => ['<script type="a&#65;"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 an upper-case letter, last value' => ['<script type="a&#90;b"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 a lower-case letter, first value' => ['<script type="a&#97;b"></script>', 'M-13', ErrorCode::Reserved];
+        yield 'M-13.2 a digit, last value' => ['<script type="a&#57;b"></script>', 'M-13', ErrorCode::Reserved];
         yield 'M-13 unquoted' => ['<script type=rivqen-manifest></script>', 'M-13', ErrorCode::Reserved];
         yield 'M-13 in svg' => ['<svg><script type="rivqen-manifest"></script></svg>', 'M-13', ErrorCode::Reserved];
         yield 'M-13 first type counts' => ['<script type="rivqen-manifest" type="text/javascript"></script>', 'M-13', ErrorCode::Reserved];
@@ -638,6 +641,8 @@ final class RulesTest extends TestCase
         // M-13
         yield 'M-13.2 numeric references that are not reserved' => ['<script type="text/x&#58;y"></script><script type="text/x&#x7E;"></script><script type="a &#59"></script>', []];
         yield 'M-13.2 not references' => ['<script type="text/x-tmpl & b"></script><script type="text/x&#;"></script><script type="text/x&#x;"></script><script type="text/x&"></script><script type="a&#xg"></script><script type="a&#"></script>', []];
+        yield 'M-13.2 the last value below the DEL limit and other safe values' => ['<script type="a&#x7f;b"></script><script type="a&#x3e;b"></script><script type="a&#x29;b"></script>', []];
+        yield 'M-09 the closure works after a noscript element' => ['<table><tr><td><noscript>x</noscript>a<td>b</table>', []];
         yield 'M-13.2 the cap does not overflow' => ['<script type="a&#x' . str_repeat('0', 5000) . '3a;"></script>', []];
         yield 'M-13 manifest text in a script is not a tag' => ['<script>"<script type=rivqen-manifest>"</script>', []];
         yield 'M-13 applies only to script start tags' => [

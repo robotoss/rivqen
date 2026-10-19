@@ -5,7 +5,7 @@
 
 The Java 21 candidate of WP-17 S1 and S3 (tasks T-05, T-08, T-11, T-13, T-16 and, in S3, T-06; in S4, T-06: H-78, H-84, H-86; in S4, T-10d: H-85a). It also implements the rules of WP-17 S3 (H-71, H-73, H-74, H-75): the main-pass rules on the `noscript` content (M-11 items 7 to 9, M-26 item 7), `svg` and `math` in `html` block content with `FOREIGN_ALLOWED` (M-22 item 5, M-23), `svg` in the `noscript` content, and no mark for the end tag of a region root (M-06 item 4). It implements the RQP markup rules of `docs/engineering/protocol/markup.md` §2 (rqp/1, rules M-01 to M-27, with M-24 items j and k), the human decisions on the edge cases E1 to E8 (H-21, H-22; `docs/engineering/protocol/markup-edge-cases.md`), the rules of the security review (H-26 to H-28, H-30 to H-32: M-06 items 2 to 4, M-11 item 5, M-13 item 3, and the depth counter D of M-26), the rules of round 2 of the security review (H-35 to H-38: M-09 conditions 1 and 2, M-10 item 2, M-11 item 6) and the command line of `tools/rqp-markup/CONTRACT.md`.
 
-**Status:** DESIGN (tool for the differential test). All 311 golden fixtures pass (`diff.mjs --only java`: 311/311 OK, WP-17 S4 T-10d). T-10d adds the implied table closure of H-85a (M-09, DL-050): `Analyzer.impliedClosure()` runs after the M-10 checks and before M-09 condition 1, not in block content and not in the C pass. The cross-check cases of `cases/s4b-cases.json` (68 cases, both scripting views) all hold. The T-10d diff is not yet mutation-tested (the architect runs it). The cross-check cases of S3 and S4 (`cases/s3-cases.json`, `cases/s4-cases.json`, both scripting views) show no finding for this candidate (S4: 126 cases). The S3 diff is mutation-tested in T-09; the S4 diff is not yet mutation-tested (the architect runs it). S4 changed `Name` (the `FORBIDDEN_CONTENT` flags; `FOREIGN_ALLOWED` is removed) and `Analyzer.startTag()`, `blockStart()`, `reservedType()` and the new `rejectedReference()` (H-78, H-84, H-86).
+**Status:** DESIGN (tool for the differential test). All 311 golden fixtures pass (`diff.mjs --only java`: 311/311 OK, WP-17 S4 T-10d). T-10d adds the implied table closure of H-85a (M-09, DL-050): `Analyzer.impliedClosure()` runs after the M-10 checks and before M-09 condition 1, not in block content and not in the C pass. The cross-check cases of `cases/s4b-cases.json` (68 cases, both scripting views) all hold. The cross-check cases of S3 and S4 (`cases/s3-cases.json`, `cases/s4-cases.json`, both scripting views) show no finding for this candidate (S4: 126 cases). The S3 and S4 diffs are mutation-tested in T-09. S4 changed `Name` (the `FORBIDDEN_CONTENT` flags; `FOREIGN_ALLOWED` is removed) and `Analyzer.startTag()`, `blockStart()`, `reservedType()` and the new `rejectedReference()` (H-78, H-84, H-86).
 
 ## 1. Build
 
@@ -55,6 +55,16 @@ Run these commands in `tools/rqp-markup/java`:
 | Mutation testing (PIT) | `gradle pitest -Ppitest.targetClasses="$(node <root>/tools/mutation/diff-ranges.mjs --base main --ext .java --format pit-classes)"` |
 
 Until WP-17 is merged, use `--base wp/WP-17`: against `main` the whole package is new. The PIT report is in `build/reports/pitest/index.html`. The PIT run leaves out `LinearTimeTest`: it checks time on 5 MiB inputs, not behavior.
+
+Mutation results of T-09 (WP-17 S4; base `9bd8c32`; PIT 1.30.0; classes `Analyzer` and `Name`; 61 s of analysis, 66 s with the build): the whole classes have 454 of 474 mutants killed (95.8 %) after the new tests (451 before). On the lines that S4 changed, 85 of 92 mutants are killed (92.4 %); before the tests it was 82 of 92 (89.1 %). The new cases in `RulesTest` are the letters `Z`, `a`, `z` after `&`, the references `&#65;`, `&#90;`, `&#97;`, `&#122;`, `&#57;`, `&#xA;`, `&#xf;` (reserved) and `&#64;`, `&#91;`, `&#96;`, `&#123;`, `&#127;`, `&#33a;`, `&#a;` (not reserved). The 7 others are equivalent:
+
+| Location | Mutant | Reason |
+|---|---|---|
+| `startTag()` | `noscriptBase < 0` → `<= 0` | `noscriptBase` is the stack size after the push of `noscript`, so it is at least 1 |
+| `impliedClosure()` | `n < MAX_CLOSURES` → `<=` | The longest chain below `table` has three elements (`tbody`, `tr`, `td`), so the loop ends by F that allows the tag, before a 4th closure |
+| `impliedClosure()` | `f < 0` → `<= 0` | A table family element is above `html`: its index is at least 1 |
+| `rejectedReference()` | `at >= to` → `>`; `i < to` → `<=` (twice) | The byte at `to` is a quote, white space or `>`: it is not a letter, `#`, `x`, `X` or a digit |
+| `rejectedReference()` | `digits++` → `digits--` | `digits` is only compared with 0 |
 
 Mutation results of T-09 (WP-17 S3; base `7f36912`; PIT 1.30.0; classes `Analyzer`, `Name`, `TokenStack`): the whole classes have 473 of 487 mutants killed (97 %). On the lines that S3 changed, 68 of 72 mutants are killed (94.4 %), and no test was added. The 4 others are equivalent:
 

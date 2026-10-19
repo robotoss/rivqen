@@ -53,6 +53,16 @@ Mutation result of T-09 (WP-17 S3; Infection 0.35.6, changed lines against `7f36
 | `Parser::noscriptEndTag()` | `$top <= $noscript` → `<`, and its `throw` removed | At `$top === $noscript` the current node is the `noscript` element, so the name check throws with the same rule M-11 |
 | `Parser::noscriptEndTag()` | `$noscript + 1` → `$noscript + 0` | The element at `$noscript` is `noscript`, and its end tag does not reach this check |
 
+Mutation result of T-09 (WP-17 S4, H-84, H-85a, H-86; Infection 0.35.6, changed lines against `9bd8c32`, 4 threads, `--min-msi=80`; 43 s): 147 of 161 mutants killed before the new tests, plus 2 time-outs (92.5 % detected). The new cases in `tests/RulesTest.php` are: the character references `&#90;`, `&#97;` and `&#57;` (the last value of a range of M-13 item 2), the safe values `&#x7f;`, `&#x3e;` and `&#x29;`, and a closure after a `noscript` element (the flag of the C pass is reset). After them: 152 of 161 killed and 2 time-outs (95.7 % detected). The 7 survivors are equivalent:
+
+| Location | Mutant | Reason |
+|---|---|---|
+| `Parser::impliedClosure()` (line 345) | `$step = 0` → `-1`, `<` → `<=` | The longest chain below `table` has three elements (`tbody`, `tr`, `td`), so the loop ends by F that allows the tag, before a 4th closure |
+| `Parser::reservedNumeric()` | `$code < 0x110000` → `<=` | At the cap, `min()` keeps the cap |
+| `Parser::reservedNumeric()` | cap `0x110000` → `1114111` or `1114113` | Every value from 0x80 up is reserved, so the exact cap does not change the result; it only stops an overflow |
+| `Parser::reservedNumeric()` | `base_convert(…, 16, 10)` → `17, 10` | For the characters `0-9a-fA-F` base 17 gives the same value as base 16 |
+| `Parser::reservedNumeric()` | `(int)` cast removed | PHP reads the numeric string in the sum as the same integer |
+
 | Test file | What it checks |
 |---|---|
 | `tests/TokenizerTest.php` | Token spans in each tokenizer state |
@@ -231,7 +241,7 @@ The human decided these cases (decisions H-21 and H-22 in the WP-17 S1 sprint re
 
 ### S4 changes (T-07)
 
-Functions changed for H-78, H-84 and H-86: `Names::FORBIDDEN_CONTENT` (10 names removed), `Names::FOREIGN_ALLOWED` (removed), `Parser::contentStartTag()`, `Parser::checkReserved()`, `Parser::hasReservedReference()` and `Parser::reservedNumeric()` (new), `Parser::blockStartTag()` (`JSON_TYPES` instead of `JSON_TYPE`). All 297 golden fixtures give the expected result. The cross-check cases of `crosscheck/cases/s4-cases.json` give no finding with `--scripting both`. The mutation run of S4 is not done yet.
+Functions changed for H-78, H-84 and H-86: `Names::FORBIDDEN_CONTENT` (10 names removed), `Names::FOREIGN_ALLOWED` (removed), `Parser::contentStartTag()`, `Parser::checkReserved()`, `Parser::hasReservedReference()` and `Parser::reservedNumeric()` (new), `Parser::blockStartTag()` (`JSON_TYPES` instead of `JSON_TYPE`). All 297 golden fixtures give the expected result. The cross-check cases of `crosscheck/cases/s4-cases.json` give no finding with `--scripting both`. The mutation run of S4 is in the T-09 result above.
 
 ## Related
 

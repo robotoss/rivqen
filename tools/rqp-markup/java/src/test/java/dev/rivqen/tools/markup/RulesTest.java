@@ -1282,7 +1282,17 @@ class RulesTest {
           "text/x&#128;",
           "text/x&#x110000;",
           "text/x&#99999999999999999999999;",
-          "text/x&&a"
+          "text/x&&a",
+          "text/x&Z",
+          "text/x&a",
+          "text/x&z",
+          "text/x&#65;",
+          "text/x&#90;",
+          "text/x&#97;",
+          "text/x&#122;",
+          "text/x&#57;",
+          "text/x&#xA;",
+          "text/x&#xf;"
         })
     void referenceThatCanMakeAManifestTypeIsReserved(String type) {
       // H-84 and DL-048 a: the letter after '&', or the value of a numeric reference.
@@ -1306,7 +1316,14 @@ class RulesTest {
           "text/x&&",
           "text/x&1",
           "text/x&;",
-          "text/x&#"
+          "text/x&#",
+          "text/x&#64;",
+          "text/x&#91;",
+          "text/x&#96;",
+          "text/x&#123;",
+          "text/x&#127;",
+          "text/x&#33a;",
+          "text/x&#a;"
         })
     void otherAmpersandsAreNotReserved(String type) {
       assertValid(body("<script type=\"" + type + "\"></script>" + P));

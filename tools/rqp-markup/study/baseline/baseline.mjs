@@ -10,6 +10,10 @@
 // instead: the results of the pre-S3 Node.js candidate (commit a2836de),
 // recorded once in baseline-s2.json by make.mjs. Do not regenerate the file
 // with a later candidate.
+//
+// The S4 T-03 study (study/s4) has its own baseline in the same form: the
+// results of the pre-S4 Node.js candidate (commit 9bd8c32, before H-78, H-84
+// and H-86), recorded once in baseline-s3.json by make-s3.mjs.
 
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -18,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const BASELINE_FILE = path.join(HERE, 'baseline-s2.json');
+export const BASELINE_S3_FILE = path.join(HERE, 'baseline-s3.json');
 
 /** One digest over a list of result objects, in order (JSON text, one line each). */
 export function digestResults(results) {
@@ -27,6 +32,6 @@ export function digestResults(results) {
 }
 
 /** The recorded baseline: { commit, fixtures: { name: result }, groups: { name: { count, digest } } }. */
-export function loadBaseline() {
-  return JSON.parse(readFileSync(BASELINE_FILE, 'utf8'));
+export function loadBaseline(file = BASELINE_FILE) {
+  return JSON.parse(readFileSync(file, 'utf8'));
 }

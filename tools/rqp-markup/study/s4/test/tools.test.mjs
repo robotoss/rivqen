@@ -32,7 +32,10 @@ test('the sweeps reject unknown sources, missing outputs and counts above 500 00
 test('a small table sweep: no finding for b1, b2 and b3, gains for every closure mode', () => {
   const out = tableSweep({ source: 'tables', seed: 85, count: 3000, examples: 1, control: 10, out: null });
   assert.equal(out.docs, 3000);
-  assert.equal(out.offNotShipped, 0);
+  // offNotShipped compares close off with the shipped candidate, which follows the S4
+  // decisions now (H-78, H-84, H-86, H-85a): it is not 0 any more. The equality of close
+  // off with the pre-S4 candidate is pinned in test/equality.test.mjs (baseline-s3.json).
+  assert.ok(out.offNotShipped < out.docs);
   for (const m of ['b1', 'b2', 'b3']) {
     assert.ok(out.modes[m].gained > 50, `${m} gained ${out.modes[m].gained}`);
     assert.deepEqual(out.modes[m].findings, {}, m);

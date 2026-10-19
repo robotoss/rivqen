@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-CLOSE-GUARDED",
+  "description": "A td start tag while an a element is open in the cell: the implied closure crosses a guarded element (H-85a: M-06 item 1)",
+  "rules": [
+    "M-06",
+    "M-09"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

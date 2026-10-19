@@ -14,6 +14,13 @@
 //      (void elements, the empty p of </p>, ...) has a DOM depth of at most D + 3.
 // DOM depth = number of element ancestors + 1 (html = 1). Elements in template contents count
 // through their template element.
+//
+// The counter applies the implied closure of markup.md M-09 (H-85a): before a start tag with a name
+// in TABLE_PART or col in HTML context, while F is not an allowed F, it applies the end tag of F, at
+// most three times. It does so outside the noscript content C only (the copy of the pass of M-11
+// item 8 and the scripting-disabled view of C have no closure). The counter does not know blocks: in
+// block content the rule has no closure, but a valid document has no closure shape there (M-09), so
+// the counter gives the D of the rule on every valid document.
 
 import { Parser, Tokenizer, TokenizerMode, defaultTreeAdapter } from "parse5";
 import { decodeUtf8 } from "./utf8.mjs";
@@ -34,6 +41,20 @@ export const SPECIAL = names(`address applet area article aside base basefont bg
 const TABLE_FAMILY = names("table caption colgroup tbody td tfoot th thead tr");
 const TABLE_PART = names("caption colgroup tbody td tfoot th thead tr");
 const TABLE_CONTEXT = names("table tbody thead tfoot tr colgroup"); // F values of M-24 item k and H-37
+/** M-09: the allowed F of a table part or col start tag (markup.md, the table of M-09). */
+export const ALLOWED_F = new Map([
+  ["caption", names("table")],
+  ["colgroup", names("table")],
+  ["tbody", names("table")],
+  ["thead", names("table")],
+  ["tfoot", names("table")],
+  ["col", names("table colgroup")],
+  ["tr", names("table tbody thead tfoot")],
+  ["td", names("table tbody thead tfoot tr")],
+  ["th", names("table tbody thead tfoot tr")],
+]);
+/** M-09 (H-85a): the implied closure ends after at most three end tags (a cell, a row, a row group). */
+export const MAX_CLOSURES = 3;
 const ROW_GROUPS = names("tbody thead tfoot");
 const STRAY_TABLE_END = names("tbody thead tfoot tr table");
 const RCDATA = names("title textarea");
@@ -64,7 +85,12 @@ const DOCUMENT_TAGS = names("html body head");
  * markup.md M-06 item 4), implied flags.
  */
 export class DepthCounter {
-  constructor() {
+  /**
+   * @param {{ closure?: boolean }} [options] closure: apply the implied closure of M-09 (H-85a);
+   *   default true. A caller that keeps its own token stack (the corpus classifier) turns it off and
+   *   applies the closure through endTag.
+   */
+  constructor({ closure = true } = {}) {
     /** @type {{ name: string, foreign: boolean, dirty: boolean, marked: boolean, implied: Set<string> }[]} */
     this.stack = [];
     this.d = 0;
@@ -72,6 +98,10 @@ export class DepthCounter {
     this.roots = 0; // svg and math elements pushed in HTML context that are on the stack
     /** @type {Set<string>} */
     this.classes = new Set();
+    /** H-85a: apply the implied closure of M-09 (off in the noscript content C). */
+    this.closure = closure;
+    /** Number of end tags of F that the implied closure applied (test and statistics only). */
+    this.closures = 0;
   }
 
   get inForeign() {
@@ -91,6 +121,7 @@ export class DepthCounter {
     c.maxD = this.d;
     c.roots = this.roots;
     c.classes = this.classes;
+    c.closure = this.closure;
     return c;
   }
 
@@ -127,6 +158,7 @@ export class DepthCounter {
       }
       return;
     }
+    if (this.closure) this.#impliedClosure(name);
     // Elements that the tree builder inserts implicitly for this start tag (M-26, M-09).
     const f = this.#tableContext();
     this.#classifyStart(name, f, attrNames);
@@ -150,6 +182,29 @@ export class DepthCounter {
     this.stack.push({ name, foreign: false, dirty: false, marked: false, implied: new Set() });
     if (name === "svg" || name === "math") this.roots++;
     this.#raise(1);
+  }
+
+  /**
+   * The implied closure of M-09 (H-85a) for a start tag in HTML context: while F is not an allowed F
+   * of the name, apply the end tag of F (M-05 item 3, the marks of M-06 item 4, M-26 items 4 and 5),
+   * at most MAX_CLOSURES times. Every allowed-F set has table, so a table is never closed. The closure
+   * of a row, a row group or a column group needs F as the current node (M-09 condition 2); when it is
+   * not, the class of H-37 is set and the closure goes on as if the condition were removed. A crossing
+   * over a guarded element (M-06 item 1) has no class here: candidates reject it, and the oracle only
+   * checks documents that a candidate accepts.
+   * @param {string} name
+   */
+  #impliedClosure(name) {
+    const allowed = ALLOWED_F.get(name);
+    if (allowed === undefined) return;
+    for (let step = 0; step < MAX_CLOSURES; step++) {
+      const f = this.#tableContext();
+      if (f === null || allowed.has(f.name)) return;
+      if (TABLE_CONTEXT.has(f.name) && f !== this.stack[this.stack.length - 1]) this.classes.add(CLASSES.tableCurrent);
+      // F is the nearest entry with its name: no TABLE_FAMILY entry is above F.
+      this.endTag(f.name);
+      this.closures++;
+    }
   }
 
   /** Rule classes of round 2 of the security review and of H-43 for a start tag in HTML context. */
@@ -243,6 +298,7 @@ const hasNonAscii = (s) => /[^\x00-\x7f]/.test(s);
 export function checkNoscriptContent(c, outer = null) {
   const out = { balanced: true, nonAsciiType: false, tablePart: false, documentTag: false, maxD: 0 };
   const pass = outer === null ? null : outer.clone();
+  if (pass !== null) pass.closure = false; // H-85a: no implied closure in C (M-09 rejects there)
   /** @type {string[]} */
   const stack = [];
   let region = -1; // index in `stack` of the root of the foreign region of C
@@ -439,6 +495,7 @@ export function analyzeDepth(bytes, { fullStackLimit = 1024, scripting = true } 
         if (!scripting) {
           saved = counter.clone();
           saved.maxD = counter.maxD;
+          counter.closure = false; // H-85a: no implied closure in C; `saved` keeps the main-pass setting
         }
       }
       super.onStartTag(token);

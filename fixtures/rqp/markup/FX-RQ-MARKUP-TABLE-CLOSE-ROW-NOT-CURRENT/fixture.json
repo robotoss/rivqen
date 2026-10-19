@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-CLOSE-ROW-NOT-CURRENT",
+  "description": "A tr start tag while a foster-parented b is open above the row: the closure of a row needs the row as the current node (H-85a: M-09 condition 2)",
+  "rules": [
+    "M-09"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

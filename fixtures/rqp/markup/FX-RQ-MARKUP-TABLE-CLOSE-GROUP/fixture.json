@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-CLOSE-GROUP",
+  "description": "Implied closure of a row group: tbody and tfoot start tags close the cell, the row and the row group, three closures each (H-85a: valid)",
+  "rules": [
+    "M-09",
+    "M-19"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "g",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"g\">",
+        "content": "a"
+      }
+    ]
+  }
+}

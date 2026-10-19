@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: The Rivqen Authors
 
-// With the flags off the study code gives the shipped results: the study copy of the
-// Node.js candidate (close 'off') equals tools/rqp-markup/node on the 247 golden
-// fixtures, every cross-check case and generated documents; the head rule 'shipped'
-// equals documentHeadStart of the protocol reference and of the server demo.
+// With the flags off the study code gives the pre-S4 results: the study copy of the
+// Node.js candidate (close 'off') equals the pre-S4 Node.js candidate (commit 9bd8c32,
+// recorded in ../../baseline/baseline-s3.json) on the 247 golden fixtures of that
+// commit, the S3 cross-check cases and generated documents. The shipped candidate
+// follows the S4 decisions (H-78, H-84, H-86, H-85a) now, so the test does not
+// compare with it any more. The head rule 'shipped' equals documentHeadStart of the
+// protocol reference and of the server demo.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { analyze } from '../../../node/src/markup.mjs';
-import { docSeed, generateDocument } from '../../../crosscheck/src/generator.mjs';
+import { BASELINE_S3_FILE, digestResults, loadBaseline } from '../../baseline/baseline.mjs';
+import { GROUPS_S3 } from '../../baseline/groups-s3.mjs';
 import { documentHeadStart as referenceHeadStart } from '../../../../rqp-protocol/src/markup.mjs';
 import { documentHeadStart as demoHeadStart } from '../../../../../examples/server-demo/src/markup.js';
 import { analyzeS4, contractFields } from '../src/markup-s4.mjs';
@@ -20,20 +23,26 @@ import { crosscheckCases, markupFixtures, protocolDocuments } from '../src/input
 
 const off = (bytes) => contractFields(analyzeS4(bytes, { close: 'off' }));
 
-test('close off equals the shipped Node.js candidate on all 247 golden fixtures', () => {
-  const list = markupFixtures();
+test('close off equals the pre-S4 Node.js candidate on the 247 golden fixtures of the study', () => {
+  const baseline = loadBaseline(BASELINE_S3_FILE);
+  const names = Object.keys(baseline.fixtures);
+  assert.equal(names.length, 247);
+  const list = GROUPS_S3.fixtures(names);
   assert.equal(list.length, 247);
-  for (const [name, bytes] of list) assert.deepEqual(off(bytes), analyze(bytes), name);
+  for (const [name, bytes] of list) assert.deepEqual(off(bytes), baseline.fixtures[name], name);
 });
 
-test('close off equals the shipped candidate on every cross-check case and on generated documents', () => {
-  const docs = [...crosscheckCases()];
-  for (const profile of ['classic', 'review', 'review2', 'review3']) {
-    for (let i = 0; i < 400; i++) docs.push([`${profile} ${i}`, Buffer.from(generateDocument(docSeed(4, i), { maxTokens: 24, profile }), 'utf8')]);
+test('close off equals the pre-S4 candidate on the S3 cross-check cases and on generated documents', () => {
+  const baseline = loadBaseline(BASELINE_S3_FILE);
+  let total = 0;
+  for (const [group, make] of Object.entries(GROUPS_S3)) {
+    if (group === 'fixtures') continue;
+    const list = make();
+    total += list.length;
+    assert.equal(list.length, baseline.groups[group].count, group);
+    assert.equal(digestResults(list.map(([, b]) => off(b))), baseline.groups[group].digest, group);
   }
-  for (let i = 0; i < 2000; i++) docs.push([`tables ${i}`, Buffer.from(generateTableDocument(4, i), 'utf8')]);
-  assert.ok(docs.length >= 3800);
-  for (const [name, bytes] of docs) assert.deepEqual(off(bytes), analyze(bytes), name);
+  assert.ok(total >= 3800);
 });
 
 test('the closure modes accept a superset of close off with the same result where off accepts', () => {

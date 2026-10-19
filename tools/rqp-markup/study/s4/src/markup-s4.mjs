@@ -72,7 +72,7 @@ import {
   TEXT_MODE,
   VOID,
   internName,
-} from '../../../node/src/names.mjs';
+} from '../../baseline/names-s3.mjs';
 
 export { ErrorCode, LIMITS };
 

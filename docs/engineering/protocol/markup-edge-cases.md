@@ -860,6 +860,68 @@ The reference of the S4 rules is a copy of the Node.js candidate with four chang
 
 <Badge type="tip" text="FACT" /> Attribute rule (H-77, S4 T-02, 2026-10-18): 300 000 generated values, decoded by parse5 8.0.1 as attribute values and read with the scheme steps of the URL Standard; 127 690 are `javascript:`, `vbscript:` or `data:` URLs, and items 2 to 4 reject all of them. Reading the numeric reference on the copy of item 3 instead misses `java&#x73⏎cript:x` (manifest and patch §4.2).
 
+## 11. Implied table closure (H-85a)
+
+<Badge type="info" text="DESIGN" /> **Decided on 2026-10-19** ([sprint record WP-17 S4](/engineering/plan/sprints/WP-17-S4) §1, H-85a, applied under H-87 after the study T-03): option B2 of the study `evidence/markup-s4/report.md` (§3 B, §4 B, §5). Outside block content and outside the `noscript` content C, a table part or `col` start tag first closes F (`td`, `th`, `tr`, `tbody`, `thead`, `tfoot`, `caption`, `colgroup`) as the end tag of F, with the rules of an end tag, at most three times; a `table` is never closed; a row, a row group and a column group must be the current node. Rule text: `markup.md` [M-09](/engineering/protocol/markup#_2-4-document-rules) ("Implied closure"), M-26, [§2.10](/engineering/protocol/markup#_2-10-error-codes), [§2.14](/engineering/protocol/markup#_2-14-rules-from-wp-17-s4). Task T-10a wrote the rule text, the golden fixtures, the cross-check cases `cases/s4b-cases.json`, the closure in the depth model of the cross-check tool (`src/depth.mjs`) and in the corpus classifier.
+
+### 11.1 How the closure fits the other rules
+
+<Badge type="info" text="DESIGN" />
+
+| Rule | With the closure |
+|---|---|
+| M-05 item 3, M-06 items 1 and 4 | Each step is the end tag of F: the same search, the same guard (M-06 item 1) and the same marks (M-06 item 4). M-06 items 2 and 3 cannot apply: F is not a formatting name, and F is on the token stack |
+| M-26 items 4 and 5 | An exact pop gives the units of F back; a closure over other elements is a crossing and makes the new current node dirty. No release of units (option B3 is unsafe) |
+| M-09 conditions 1 and 2 | Step 2 of the closure is condition 2 for the closed F. After the closure, the list and both conditions apply to the start tag with the new F |
+| M-19 | A block start tag is never a table part, so the closure never runs for it. A block in a cell after `<td>a<td>` has F = the new `td` |
+| M-22 to M-24 | No closure in block content: M-09 rejects there, and M-23 keeps every element of the content explicit. A table that the content opens follows M-24 item g and M-09 without the closure |
+| M-11 | No closure in C (the pass of item 8 rejects by M-09). Items 5 and 6 do not change |
+
+Choices of T-10a (each one is the stricter reading, so a later relaxation stays compatible):
+
+1. **Condition 1 after the closure.** The study code checked condition 1 (`col` in a template) before the closure, the report text (§5) puts the closure first. With the closure first, `<template><tr><td>a<col>` and `<template><caption>a<col>` are invalid: after the closure, the `template` is the nearest element. With the study order they are valid. The tree builder ignores that `col` ("in table body": no row group in table scope) or inserts it in an implied `colgroup` ("in table"), so neither order cuts a block; template contents are inert. Fixture `TABLE-CLOSE-TEMPLATE-COL`. Waits for the architect (H-80: stricter, falls back to the normal page; corpus cost NOT MEASURED, expected 0).
+2. **The marks of the closure.** The closure passes the special-crossed mark as `</td>` does. So `<a href="#"><table><tr><td><div>x<td>y</table></a>` is invalid (M-06 item 4 at `</a>`), although "close the cell" leaves no element open. This is the rule of the end tag of F (H-85a text: "with the end-tag rules"), and it is the result of the same document with `</td>` written. Case `S4-H85a-mark-then-formatting`.
+
+### 11.2 Fixtures
+
+<Badge type="tip" text="FACT" /> 2026-10-19: 311 golden fixtures (129 valid, 182 invalid); 14 new. Two existing fixtures change:
+
+| Fixture | Before | After | Why |
+|---|---|---|---|
+| `TABLE-NESTING` | `STRUCTURE` (M-09) | valid, 1 block | `<td>a<td>b`: the closure ends the cell |
+| `COL-IN-CELL` | `STRUCTURE` (M-09) | `STRUCTURE` (M-06 item 3) | `<td><col></td></tr>`: the `col` closes the cell and the row, so `</tr>` matches nothing |
+
+The inputs of these fixtures are not changed; the descriptions and rule lists are. No other golden fixture changes its result (the scratch reference of the rule against all 297 earlier fixtures).
+
+New fixtures:
+
+| Kind | Valid | Invalid |
+|---|---|---|
+| Closures | `TABLE-CLOSE-CELL`, `-CELL-CROSSING`, `-ROW`, `-GROUP`, `-CAPTION`, `-COLGROUP` | — |
+| Guards | — | `TABLE-CLOSE-GUARDED` (M-06 item 1), `TABLE-CLOSE-ROW-NOT-CURRENT` (step 2), `TABLE-CLOSE-TEMPLATE-COL` (condition 1 after the closure, choice 1) |
+| No closure | — | `TABLE-CLOSE-CONTENT` (block content: M-09, M-23), `NOSCRIPT-TABLE-CLOSE` (C: M-11 item 8) |
+| Depth (generated by `gen.py`) | `TABLE-CLOSE-DEPTH` (300 rows of `<tr><td>a<td>b`, max D 5), `TABLE-CLOSE-DEPTH-CROSSING-126` (D 256) | `TABLE-CLOSE-DEPTH-CROSSING` (127 crossing closures: D 257, `LIMIT`) |
+
+Each invalid fixture breaks one rule: with that rule removed from the scratch reference, the fixture is valid (`NOSCRIPT-TABLE-CLOSE` also breaks M-11 item 5 in a reference that runs the closure in C, so it lists M-09 and M-11).
+
+### 11.3 Cross-check
+
+<Badge type="tip" text="FACT" /> parse5 8.0.1, 2026-10-19, `tools/rqp-markup/crosscheck` with the closure in `src/depth.mjs`, both scripting views. The reference of the rule is a copy of the Node.js candidate (S4 T-02 rules) with the closure of M-09 (scratch, not committed; the four candidates follow in the candidate lanes of T-10).
+
+| Input | Result |
+|---|---|
+| Golden fixtures, `check --expected --scripting both` | 311 documents, 129 valid; 0 findings (blocks, depth claim and rule classes in both views) |
+| `cases/s4b-cases.json` (68 cases), the reference | Each `expected` field holds; 0 block disagreements and 0 depth-claim findings in both views |
+| The earlier case files (373 cases) | The closure changes no result |
+| Sweep of table shapes (the generator of the study, `study/s4/src/table-gen.mjs`), seed 851, 300 000 documents | 29 577 valid (5 512 without the closure); 0 findings; 0 lost, and every document valid without the closure has the same result |
+| Profiles `classic`, `review`, `review2`, `review3`, seed 852, 50 000 documents each | Valid +110, +15, +19, +18; 0 findings; 0 lost |
+| Control: the closure without M-06 item 1, the same table sweep | 175 block disagreements in each view |
+| Control: the closure without step 2 (condition 2), the same table sweep | +357 valid documents, 0 findings: this generator does not reach the H-37 shapes; step 2 stays by decision |
+| Control: condition 1 before the closure (the study order), the same table sweep | No difference |
+| Corpus classifier (`corpus/classify.mjs`) against the reference, 100 000 table shapes (seed 853) | No class exactly for the valid documents (0 differences) |
+
+<Badge type="warning" text="RESEARCH" /> Corpus: not measured again in T-10a (the corpus data of the study was deleted). The study measured B2 on 2026-10-18: +4 pages, 0 lost, 0 findings (`evidence/markup-s4/report.md` §3 B). The next corpus run of S4 measures the rule with the candidates.
+
 ## Related
 
 - [RQP markup](/engineering/protocol/markup)

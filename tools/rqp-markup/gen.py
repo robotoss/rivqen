@@ -392,6 +392,21 @@ def _units_then_block(unit: bytes, reps: int) -> bytes:
     return _depth_doc(unit * reps + b'<div data-rq-block="d">x</div>')
 
 
+def _closure_rows(rows: int) -> bytes:
+    # H-85a, M-09 implied closure: <tr><td>a<td>b without end tags. The second td closes the first
+    # (an exact pop: -1, then +1), and the next tr closes the cell and the row (exact pops). D is at
+    # most 4 in the table (table, implied row group, tr, td); the block after </table> makes 5.
+    return _depth_doc(b"<table>" + b"<tr><td>a<td>b" * rows + b"</table>" + b'<div data-rq-block="deep">x</div>')
+
+
+def _closure_crossing(cells: int) -> bytes:
+    # H-85a with M-26 item 5: each <td><span>a adds 2 (td, span). The next td closes the cell over the
+    # open span: a crossing, so D does not go down and the row becomes dirty (no release of units).
+    # D = 3 (table, implied row group, tr) + 2 per cell. 126 cells: 255, the block after </table>
+    # makes 256 (valid). 127 cells: 257 (LIMIT).
+    return _depth_doc(b"<table><tr>" + b"<td><span>a" * cells + b"</table>" + b'<div data-rq-block="deep">x</div>')
+
+
 GENERATED: dict[str, dict[str, Callable[[], bytes]]] = {
     "FX-RQ-MARKUP-LIMIT-INPUT-SIZE": {"input.html": _input_size},
     "FX-RQ-MARKUP-LIMIT-256": {"input.html": lambda: _many_blocks(256), "fixture.json": _limit_256_fixture},
@@ -421,6 +436,9 @@ GENERATED: dict[str, dict[str, Callable[[], bytes]]] = {
     "FX-RQ-MARKUP-FORM-NESTED-DEPTH": {
         "input.html": lambda: _units_then_block(b"<form><object><form></form></object></form>", 600)
     },
+    "FX-RQ-MARKUP-TABLE-CLOSE-DEPTH": {"input.html": lambda: _closure_rows(300)},
+    "FX-RQ-MARKUP-TABLE-CLOSE-DEPTH-CROSSING-126": {"input.html": lambda: _closure_crossing(126)},
+    "FX-RQ-MARKUP-TABLE-CLOSE-DEPTH-CROSSING": {"input.html": lambda: _closure_crossing(127)},
     "FX-RQ-MARKUP-TABLE-FOSTER-MARKER-DEPTH": {
         "input.html": lambda: _units_then_block(
             b"<object><b><table><marquee><table></table></marquee></table></b></object>", 600

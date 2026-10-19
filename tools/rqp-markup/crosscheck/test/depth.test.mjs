@@ -3,14 +3,14 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { CLASSES, DepthCounter, MAX_D, analyzeDepth, checkNoscriptContent, rawAttrValue } from "../src/depth.mjs";
+import { ALLOWED_F, CLASSES, DepthCounter, MAX_CLOSURES, MAX_D, analyzeDepth, checkNoscriptContent, rawAttrValue } from "../src/depth.mjs";
 
 const b = (s) => Buffer.from(s, "utf8");
 const run = (s) => analyzeDepth(b(s));
 
 /** Feed a token list to a counter: "<x>", "<x/>", "</x>". Returns D after each token. */
-function feed(tokens) {
-  const c = new DepthCounter();
+function feed(tokens, options) {
+  const c = new DepthCounter(options);
   const ds = [];
   for (const t of tokens) {
     const m = /^<(\/?)([a-z0-9]+)(\/?)>$/.exec(t);
@@ -68,6 +68,113 @@ test("implied tbody and tr count once per table and come back with the table", (
   assert.deepEqual(feed(["<table>", "<tr>", "</tr>", "<tr>", "</tr>", "</table>"]).ds, [1, 3, 2, 3, 2, 0]);
   assert.deepEqual(feed(["<table>", "<tbody>", "<td>", "</td>", "</tbody>", "</table>"]).ds, [1, 2, 4, 3, 1, 0]);
   assert.deepEqual(feed(["<table>", "<col>", "<col>", "</table>"]).ds, [1, 2, 2, 0]);
+});
+
+test("H-85a: the implied closure applies the end tag of a cell, a row and a row group, at most three", () => {
+  // Exact pops give the units back: the second td closes the first, the tr closes the cell and the row.
+  const { c, ds } = feed(["<table>", "<tr>", "<td>", "<td>", "<tr>", "<td>"]);
+  assert.deepEqual(ds, [1, 3, 4, 4, 3, 4]);
+  assert.deepEqual(c.stack.map((e) => e.name), ["table", "tr", "td"]);
+  assert.equal(c.closures, 3);
+  // A tbody start tag closes the cell, the row and the row group (three closures), never the table.
+  const g = feed(["<table>", "<thead>", "<tr>", "<th>", "<tbody>"]);
+  assert.deepEqual(g.c.stack.map((e) => e.name), ["table", "tbody"]);
+  assert.equal(g.c.closures, MAX_CLOSURES);
+  // caption and colgroup close; col keeps a colgroup open (an allowed F of col).
+  assert.deepEqual(feed(["<table>", "<caption>", "<tr>"]).c.stack.map((e) => e.name), ["table", "tr"]);
+  assert.deepEqual(feed(["<table>", "<colgroup>", "<col>", "<col>", "<td>"]).c.stack.map((e) => e.name), ["table", "td"]);
+  // Without the closure (the classifier mode) the cells nest.
+  assert.deepEqual(feed(["<table>", "<tr>", "<td>", "<td>"], { closure: false }).c.stack.map((e) => e.name), ["table", "tr", "td", "td"]);
+});
+
+test("H-85a: the closure happens exactly when F is not in the list of M-09 for the start tag", () => {
+  // The table of markup.md M-09, written out here (independent of ALLOWED_F).
+  const list = {
+    caption: ["table"],
+    colgroup: ["table"],
+    tbody: ["table"],
+    thead: ["table"],
+    tfoot: ["table"],
+    col: ["table", "colgroup"],
+    tr: ["table", "tbody", "thead", "tfoot"],
+    td: ["table", "tbody", "thead", "tfoot", "tr"],
+    th: ["table", "tbody", "thead", "tfoot", "tr"],
+  };
+  // A context in which F is the given element and is the current node.
+  const context = {
+    table: ["<table>"],
+    caption: ["<table>", "<caption>"],
+    colgroup: ["<table>", "<colgroup>"],
+    tbody: ["<table>", "<tbody>"],
+    thead: ["<table>", "<thead>"],
+    tfoot: ["<table>", "<tfoot>"],
+    tr: ["<table>", "<tr>"],
+    td: ["<table>", "<tr>", "<td>"],
+    th: ["<table>", "<tr>", "<th>"],
+  };
+  for (const [name, allowed] of Object.entries(list)) {
+    for (const [f, tokens] of Object.entries(context)) {
+      const { c } = feed([...tokens, `<${name}>`]);
+      assert.equal(c.closures > 0, !allowed.includes(f), `<${name}> with F ${f}`);
+    }
+  }
+});
+
+test("H-85a: a closure over other elements is a crossing: D stays, the row is dirty and gets the mark", () => {
+  const { c, ds } = feed(["<table>", "<tr>", "<td>", "<div>", "<td>", "</td>", "</tr>"]);
+  assert.deepEqual(ds, [1, 3, 4, 5, 6, 5, 5]);
+  assert.equal(c.stack.length, 1);
+  assert.equal(c.stack[0].dirty, true);
+  const m = feed(["<table>", "<tr>", "<td>", "<div>", "<td>"]).c;
+  assert.equal(m.stack[1].marked, true);
+  assert.equal(m.stack[1].dirty, true);
+});
+
+test("H-85a: the closure of a row that is not the current node sets the class of H-37", () => {
+  assert.deepEqual(run("<table><tr><td>a</td><b>x<tr><td>c</td></tr></table>").classes, [CLASSES.tableCurrent]);
+  assert.deepEqual(run("<table><tr><td>a<b>x<tr><td>c</td></tr></table>").classes, []);
+  assert.deepEqual(run("<table><tr><td>a<td>b<tr><td>c</table>").classes, []);
+});
+
+test("H-85a: no closure in a template boundary, outside a table family element, or in a foreign region", () => {
+  assert.deepEqual(feed(["<table>", "<tr>", "<td>", "<template>", "<td>"]).c.stack.map((e) => e.name), ["table", "tr", "td", "template", "td"]);
+  assert.deepEqual(feed(["<div>", "<td>"]).c.closures, 0);
+  assert.deepEqual(feed(["<table>", "<tr>", "<td>", "<svg>", "<td>"]).c.stack.map((e) => e.name), ["table", "tr", "td", "svg", "td"]);
+  assert.deepEqual(feed(["<table>", "<td>", "<table>"]).c.stack.map((e) => e.name), ["table", "td", "table"]);
+  // Every allowed F set has table: the loop never closes a table.
+  for (const [name, set] of ALLOWED_F) assert.ok(set.has("table"), name);
+});
+
+test("H-85a: the claim of M-26 holds with the closure in both views; 300 rows of <tr><td>a<td>b keep D at 5", () => {
+  const rows = `<table>${"<tr><td>a<td>b".repeat(300)}</table><div data-rq-block="x">y</div>`;
+  for (const scripting of [true, false]) {
+    const a = analyzeDepth(b(rows), { scripting });
+    assert.deepEqual([a.maxD, a.violations, a.classes], [5, [], []]);
+  }
+  const shapes = [
+    "<table><thead><tr><th>h<tbody><tr><td>a<tfoot><tr><td>f</table>",
+    "<table><caption><i>x<col></table><p>y</p>",
+    "<table><colgroup><col><colgroup><col><tr><td>a</table>",
+    "<table><tr><td><div>a<td><b>b<td><p>c</p></table>",
+    "<td>a<td><p>b</p></td>",
+    "<table><tr><td>a<col><tr><td>b</table>",
+  ];
+  for (const s of shapes) {
+    for (const scripting of [true, false]) assert.deepEqual(analyzeDepth(b(s), { scripting }).violations, [], s);
+  }
+});
+
+test("H-85a: no closure in the noscript content C, in the copy of M-11 item 8 and with scripting disabled", () => {
+  const outer = new DepthCounter();
+  for (const t of ["table", "tr", "td", "noscript"]) outer.startTag(t, false);
+  const r = checkNoscriptContent("<table><tr><td>a<td>b</td></td></tr></table>", outer);
+  assert.equal(r.maxD, 5 + 5); // the C pass nests the cells: table, implied row group, tr, td, td
+  assert.equal(outer.closure, true);
+  const doc = "<noscript><table><tr><td>a<td>b</td></td></tr></table></noscript><table><tr><td>x<td>y<td>z<td>v<td>w</table>";
+  const off = analyzeDepth(b(doc), { scripting: false });
+  // The C pass nests the cells (5 with a closure); after </noscript> the closure applies again (8 without).
+  assert.equal(off.maxD, 6);
+  assert.deepEqual(analyzeDepth(b(doc), { scripting: true }).maxD, 6);
 });
 
 test("implied parts are not counted inside a template in a table (M-09 stops at template)", () => {

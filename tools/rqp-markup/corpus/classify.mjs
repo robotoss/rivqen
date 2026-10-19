@@ -17,6 +17,14 @@
 // elements for the simulated blocks, and (with blocks) checks the block rules M-14 … M-24
 // with their items.
 //
+// The implied closure of M-09 (H-85a): outside block content (known with blocks only) and
+// outside the noscript content C, a table part or col start tag first applies the end tag of F
+// while F is not an allowed F, at most three times. This pass does it on its own token stack
+// (M-06 item 1 with the detail "implied </x>", the marks of M-06 item 4) and gives each end tag
+// to the depth counter, whose own closure is off. A closure of a row, a row group or a column
+// group while F is not the current node is M-09.2; the pass records it and closes anyway, as if
+// the condition were removed.
+//
 // The tokens come from the parse5 8.0.1 tokenizer (the WHATWG tokenizer, M-03), driven
 // without a tree builder: this pass sets the tokenizer state after a start tag by M-04 and
 // the foreign-region flag of M-05, like a candidate does. A `<![CDATA[` is always read as a
@@ -78,6 +86,9 @@ const PICK_MATCH = /price|title|content/i;
 
 /** A tag name for a detail: names from the page that do not look like tag names become "?". */
 const safeName = (name) => (/^[a-z][a-z0-9-]{0,31}$/.test(name) ? name : "?");
+
+/** M-09 (H-85a): the implied closure ends after at most three end tags (a cell, a row, a row group). */
+const MAX_CLOSURES = 3;
 
 /** M-09: the F values that allow a table part or col start tag (null: the name is not a table part or col). */
 function allowedParents(name) {
@@ -416,7 +427,8 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
   if (!decoded.utf8) f.add("M-02");
   const text = decoded.text;
 
-  const depth = new DepthCounter();
+  // The pass applies the implied closure of M-09 on its own stack and gives the end tags to the counter.
+  const depth = new DepthCounter({ closure: false });
   /** @type {{ name: string, foreign: boolean, marks: Set<string>, start: number, pick: Pick | null, inContent: boolean }[]} */
   const stack = [];
   let root = -1; // index of the svg or math element of the foreign region
@@ -427,6 +439,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
   let noscriptInCell = false;
   /** @type {Set<string>} the current node for M-09 condition 2 (detail: "<name>", or "<name> in noscript") */
   const tableCurrentOver = new Set();
+  let closureNotCurrent = false; // H-85a: M-09 condition 2 for an implied closure (the counter does not see it)
   /** @type {Pick[]} */
   const candidates = [];
   const counts = { main: 0, h1: 0, match: 0 };
@@ -475,6 +488,34 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
     if (restrict >= stack.length) restrict = -1;
   };
   let endOffsetOfToken = 0;
+
+  // H-85a: the implied closure of M-09 for a start tag in HTML context outside block content and C.
+  // Each step is the end tag of F (M-05 item 3) with M-06 item 1 and the marks of M-06 item 4; M-06
+  // items 2 and 3 cannot apply (F is not a formatting name and is on the stack). Above F there is no
+  // table-family element (F is the nearest) and no foreign element (HTML context).
+  const impliedClosure = (name) => {
+    const allowed = allowedParents(name);
+    if (allowed === null) return;
+    for (let step = 0; step < MAX_CLOSURES; step++) {
+      const fam = tableContext();
+      if (fam === null || allowed.includes(fam.name)) return;
+      const i = stack.lastIndexOf(fam);
+      const top = stack[stack.length - 1];
+      if (ROW_CONTEXT.has(fam.name) && top !== fam) {
+        tableCurrentOver.add(`<${safeName(top.name)}>`);
+        closureNotCurrent = true;
+      }
+      const crossed = stack.slice(i + 1);
+      const guarded = crossed.find((e) => !e.foreign && GUARDED.has(e.name) && !TABLE_PART.has(e.name));
+      if (guarded) f.add("M-06.1", `implied </${fam.name}> over <${guarded.name}>`);
+      const origins = new Set();
+      if (crossed.some((e) => !e.foreign && SPECIAL.has(e.name))) origins.add("special");
+      for (const e of stack.slice(i)) for (const o of e.marks) origins.add(o);
+      popTo(i);
+      if (origins.size > 0 && stack.length > 0) for (const o of origins) stack[stack.length - 1].marks.add(o);
+      depth.endTag(fam.name);
+    }
+  };
 
   // Block rules M-22 to M-24 for a start tag in the content of an html block.
   // Class names: "M-22.2:<name>" for a name that M-22 keeps (H-78) in HTML context. M-24 applies
@@ -572,6 +613,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
           if (restrict < 0 && (INTEGRATION.has(name) || TEXT.has(name))) restrict = stack.length - 1;
         }
       } else {
+        if (block === null || !block.html) impliedClosure(name);
         const fam = tableContext();
         if (TABLE_PART.has(name) || name === "col") {
           const allowed =
@@ -713,7 +755,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
   if (depth.maxD > 256) f.add(maxUnits > 256 ? "M-26-stack" : "M-26-dirty", `D ${depth.maxD}, units ${maxUnits}`);
   // Round 2 of the security review and H-43: the classes of the cross-check oracle.
   if (depth.classes.has(CLASSES.templateCol)) f.add("M-09.1");
-  if (depth.classes.has(CLASSES.tableCurrent)) {
+  if (depth.classes.has(CLASSES.tableCurrent) || closureNotCurrent) {
     if (tableCurrentOver.size === 0) f.add("M-09.2", "<?>");
     for (const n of tableCurrentOver) f.add("M-09.2", n);
   }

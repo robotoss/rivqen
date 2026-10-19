@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-CLOSE-TEMPLATE-COL",
+  "description": "A col start tag closes a cell and a row in a template; then the template is the nearest element: M-09 condition 1 applies after the closure (H-85a)",
+  "rules": [
+    "M-09"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

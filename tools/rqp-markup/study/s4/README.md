@@ -25,7 +25,7 @@
 | `src/table-gen.mjs`, `src/table-sweep.mjs` | Study B: generator of table shapes; sweep (fixtures, cases, tables, the four cross-check generator profiles) |
 | `src/corpus-page.mjs`, `src/corpus.mjs` | Corpus run of both studies (S1 method, simulated blocks of `../../corpus/classify.mjs`) |
 | `src/inputs.mjs` | Fixtures, cross-check cases and protocol documents of the repository |
-| `test/` | Tests (`node --test`); `test/equality.test.mjs`: with the flags off the study code equals the shipped Node.js candidate (247 golden fixtures) and the shipped head walk of the reference and the demo |
+| `test/` | Tests (`node --test`); `test/equality.test.mjs`: with the flags off the study code equals the pre-S4 Node.js candidate (commit `9bd8c32`, recorded in `../baseline/baseline-s3.json`: 247 golden fixtures, the S3 cases, generated documents) and the shipped head walk of the reference and the demo. The study copy imports the frozen pre-S4 name sets `../baseline/names-s3.mjs`: the shipped candidate follows H-78, H-84, H-86 and H-85a |
 
 ## 3. Procedure
 

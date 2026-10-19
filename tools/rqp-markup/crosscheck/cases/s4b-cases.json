@@ -1,0 +1,410 @@
+[
+  {
+    "id": "S4-H85a-cell-td",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td>a<td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-cell-th",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td>a<th>b<td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-cell-tr",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td>a<tr><td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-cell-tbody",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td>a<tbody><tr><td><div data-rq-block=\"b\">x</div></td></tr></tbody></table>"
+  },
+  {
+    "id": "S4-H85a-cell-thead",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tbody><tr><td>a<thead><tr><th><div data-rq-block=\"b\">x</div></th></tr></thead></table>"
+  },
+  {
+    "id": "S4-H85a-cell-tfoot",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td>a<tfoot><tr><td><div data-rq-block=\"b\">x</div></td></tr></tfoot></table>"
+  },
+  {
+    "id": "S4-H85a-cell-caption",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td>a<caption><div data-rq-block=\"b\">x</div></caption></table>"
+  },
+  {
+    "id": "S4-H85a-cell-colgroup",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td>a<colgroup><col></colgroup><tr><td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-cell-col",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td>a<col><tr><td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-row-tr",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td>a</td><tr><td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-row-tbody",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><thead><tr><th>h</th><tbody><tr><td><div data-rq-block=\"b\">x</div></td></tr></tbody></table>"
+  },
+  {
+    "id": "S4-H85a-group-tbody",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><thead><tr><th>h</th></tr><tbody><tr><td><div data-rq-block=\"b\">x</div></td></tr></tbody></table>"
+  },
+  {
+    "id": "S4-H85a-group-tfoot",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tbody><tr><td>a</td></tr><tfoot><tr><td><div data-rq-block=\"b\">x</div></td></tr></tfoot></table>"
+  },
+  {
+    "id": "S4-H85a-group-caption",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tbody><tr><td>a</td></tr><caption><div data-rq-block=\"b\">x</div></caption></table>"
+  },
+  {
+    "id": "S4-H85a-group-colgroup",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tbody><tr><td>a</td></tr><colgroup><col></colgroup><tr><td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-group-col",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tbody><tr><td>a</td></tr><col><tr><td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-three",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><thead><tr><th>h<tbody><tr><td>a<tfoot><tr><td><div data-rq-block=\"b\">x</div></table>"
+  },
+  {
+    "id": "S4-H85a-caption-tr",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><caption>c<tr><td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-caption-td",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><caption>c<td><div data-rq-block=\"b\">x</div></td></table>"
+  },
+  {
+    "id": "S4-H85a-caption-caption",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><caption>c<caption><div data-rq-block=\"b\">x</div></caption></table>"
+  },
+  {
+    "id": "S4-H85a-caption-col",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><caption><i>c<col><tr><td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-caption-crossing",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><caption><div>c<p>d<tr><td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-colgroup-colgroup",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><colgroup><col><colgroup><col><tr><td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-colgroup-tr",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><colgroup><col><tr><td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-colgroup-td",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><colgroup><td><div data-rq-block=\"b\">x</div></td></table>"
+  },
+  {
+    "id": "S4-H85a-colgroup-caption",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><colgroup><col><caption><div data-rq-block=\"b\">x</div></caption></table>"
+  },
+  {
+    "id": "S4-H85a-cross-div",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td><div>a<td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-cross-formatting",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td><b><i>a<td>y</table><span data-rq-block=\"s\">a<a href=\"#\">b</a>c</span>"
+  },
+  {
+    "id": "S4-H85a-cross-list",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td><ul><li>a<td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-cross-p",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td><p>a<td><p data-rq-block=\"p\">x</p></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-cross-span-formatting-after",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td><span><em>a<td>y</table><span data-rq-block=\"s\">a<a href=\"#\">b</a>c</span>"
+  },
+  {
+    "id": "S4-H85a-cross-form",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td><form>x<td>y</table><form><div data-rq-block=\"b\">x</div></form>"
+  },
+  {
+    "id": "S4-H85a-cross-svg",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td><svg><path d=\"M0\"></svg>a<td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-no-table-td",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<td>a<td><p data-rq-block=\"p\">x</p></td>"
+  },
+  {
+    "id": "S4-H85a-no-table-caption",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<caption>a<td><p data-rq-block=\"p\">x</p></td>"
+  },
+  {
+    "id": "S4-H85a-no-table-tr",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<tr>a<tr><td><p data-rq-block=\"p\">x</p></td></tr>"
+  },
+  {
+    "id": "S4-H85a-no-table-div-crossing",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<td><div>a<td><p data-rq-block=\"p\">x</p></td>"
+  },
+  {
+    "id": "S4-H85a-template-cells",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<template><tr><td>a<td>b</td></tr></template><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-template-rows",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<template><tr><td>a<tr><td>b</td></tr></template><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-nested-table",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td><table><tr><td>a<td>b</table><td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-table-in-row",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><table></table><td>a<td><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-after-table-block",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td>a<td>b<tr><td>c</table><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-rows-300",
+    "decision": "H-85a",
+    "expected": "valid 1",
+    "input": "<table><tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b<tr><td>a<td>b</table><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-b3-counter-th",
+    "decision": "H-85a",
+    "expected": "valid 0",
+    "input": "<th><span><div></span></th>x"
+  },
+  {
+    "id": "S4-H85a-b3-counter-tfoot",
+    "decision": "H-85a",
+    "expected": "valid 0",
+    "input": "<span><table><tfoot><b></tfoot></table>z"
+  },
+  {
+    "id": "S4-H85a-guard-a",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><tr><td><a href=\"#\">a<td>b</td></tr></table><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-guard-button",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><tr><td><button>a<td>b</td></tr></table><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-guard-object",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><tr><td><object>a<td>b</td></tr></table><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-guard-marquee",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><tr><td><marquee>a<td>b</td></tr></table><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-guard-applet",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><tr><td><applet>a<td>b</td></tr></table><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-guard-nobr",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><tr><td><nobr>a<td>b</td></tr></table><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-guard-caption-a",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><caption><a href=\"#\">c<tr><td>b</td></tr></table><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-guard-control-u",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><tr><td><a href=\"#\">y<object><td>x</table>z<span data-rq-block=\"s\">a<a href=\"#\">b</a>c</span>"
+  },
+  {
+    "id": "S4-H85a-row-not-current-b",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><tr><td>a</td><b>x<tr><td>c</td></tr></table><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-row-not-current-div",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><tr><div>x<tr><td>c</td></tr></table><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-row-not-current-object",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><tr><object>x<tr><td>c</td></tr></table><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-group-not-current",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><tbody><b>x<tbody><tr><td>c</td></tr></table><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-colgroup-not-current",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><colgroup><span>x<tr><td>c</td></tr></table><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-mark-then-formatting",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<a href=\"#\"><table><tr><td><div>x<td>y</table></a><span data-rq-block=\"s\">a<a href=\"#\">b</a>c</span>"
+  },
+  {
+    "id": "S4-H85a-content-td",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><table><tr><td>a<td>b</td></tr></table></div>"
+  },
+  {
+    "id": "S4-H85a-content-tr",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><table><tr><td>a</td><tr><td>b</td></tr></table></div>"
+  },
+  {
+    "id": "S4-H85a-content-caption",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><table><caption>c<tr><td>b</td></tr></table></div>"
+  },
+  {
+    "id": "S4-H85a-noscript-td",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<noscript><table><tr><td>a<td>b</td></td></tr></table></noscript><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-noscript-in-cell",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><tr><td><noscript><td>x</td></noscript><div data-rq-block=\"b\">x</div></td></tr></table>"
+  },
+  {
+    "id": "S4-H85a-template-col",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<template><tr><td>a<col></template><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-template-caption-col",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<template><caption>a<col></template><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-col-stray-tr",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><tr><td><col></td></tr></table><div data-rq-block=\"b\">x</div>"
+  },
+  {
+    "id": "S4-H85a-depth-crossing",
+    "decision": "H-85a",
+    "expected": "RQP_MARKUP_LIMIT",
+    "input": "<table><tr><td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a<td><span>a</table><div data-rq-block=\"b\">x</div>"
+  }
+]

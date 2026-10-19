@@ -646,30 +646,32 @@ fn m09_table_parts() {
     assert_valid(
         "<table><caption>c</caption><colgroup><col></colgroup><col><thead><tr><th>h</th></tr></thead><tbody><tr><td>a</td><td>b</td></tr></tbody><tfoot></tfoot><tr><td>x</td></tr></table>",
     );
-    assert_invalid("<table><tr><td>a<td>b</td></tr></table>", STRUCTURE, "M-09");
-    assert_invalid("<table><tr><td><col></td></tr></table>", STRUCTURE, "M-09");
+    // H-85a: the second `td` closes the first (implied closure); `col` in a
+    // cell closes the cell and the row, so `</td>` is ignored and `</tr>`
+    // matches nothing (M-06 item 3).
+    assert_valid("<table><tr><td>a<td>b</td></tr></table>");
+    assert_invalid("<table><tr><td><col></td></tr></table>", STRUCTURE, "M-06");
+    // H-85a: the `caption` closes the row, so `</tr>` matches nothing.
     assert_invalid(
         "<table><tr><caption>c</caption></tr></table>",
         STRUCTURE,
-        "M-09",
+        "M-06",
     );
+    // H-85a: each of these start tags closes F, so the end tag of F that
+    // follows matches nothing (M-06 item 3), or the closure is refused.
     assert_invalid(
         "<table><tbody><tbody></tbody></tbody></table>",
         STRUCTURE,
-        "M-09",
+        "M-06",
     );
-    assert_invalid("<table><tr><tr></tr></tr></table>", STRUCTURE, "M-09");
-    assert_invalid(
-        "<table><colgroup><tr></tr></colgroup></table>",
-        STRUCTURE,
-        "M-09",
-    );
-    assert_invalid(
-        "<table><caption><td></td></caption></table>",
-        STRUCTURE,
-        "M-09",
-    );
-    assert_invalid("<table><thead><col></thead></table>", STRUCTURE, "M-09");
+    assert_invalid("<table><tr><tr></tr></tr></table>", STRUCTURE, "M-06");
+    // A stray `</colgroup>` or `</caption>` is ignored (M-06 item 3 names
+    // only the table end tags), so these are valid.
+    assert_valid("<table><colgroup><tr></tr></colgroup></table>");
+    assert_valid("<table><caption><td></td></caption></table>");
+    assert_invalid("<table><thead><col></thead></table>", STRUCTURE, "M-06");
+    // The refused closure: the row is not the current node.
+    assert_invalid("<table><tr><b>x<tr></tr></table>", STRUCTURE, "M-09");
     // No table-family element open: allowed by M-09.
     assert_valid("<td>a</td><tr></tr><col>");
     // The search stops at template.
@@ -2243,10 +2245,12 @@ fn m26_depth_is_checked_at_the_push() {
     );
     depth_limit(&format!("{content}<i>"));
     // HTML context: M-09 comes first. 252 `div`, `table`, the implied row
-    // group, `tr` and `td` give D = 256; the second `tr` fails M-09 before
-    // its push.
+    // group, `tr` and `td` give D = 256; the second `tr` closes the cell
+    // and the row (H-85a, exact pops), so it fits. A `b` that is not the
+    // current node of a row fails M-09 before the push.
+    depth_valid(&format!("{}<table><tr><td><tr>", "<div>".repeat(252)));
     assert_eq!(
-        error_of(format!("{}<table><tr><td><tr>", "<div>".repeat(252)).as_bytes()),
+        error_of(format!("{}<table><tr><b><tr>", "<div>".repeat(252)).as_bytes()),
         (STRUCTURE, "M-09")
     );
     // The implied parts of a start tag count before its push.
@@ -2969,4 +2973,102 @@ fn m11_8_state_after_noscript_is_the_state_before_it() {
         "{}<p data-rq-block=\"z\">x</p>",
         format!("<div>{icon}</div>").repeat(300)
     ));
+}
+
+// ---- M-09 implied closure (H-85a) ------------------------------------------
+
+#[test]
+fn m09_closure_closes_cell_row_and_group() {
+    for body in [
+        "<td>a<td>b</td>",
+        "<td>a<th>b</th>",
+        "<table><tr><td>a<tr><td>b</td></tr></table>",
+        "<table><thead><tr><th>h<tbody><tr><td>x</td></tr></table>",
+        "<table><thead><tr><th>h<tfoot><tr><td>x</td></tr></table>",
+        "<table><caption>c<tr><td>x</td></tr></table>",
+        "<table><caption>c<colgroup><col></colgroup></table>",
+        "<table><colgroup><col><tr><td>x</td></tr></table>",
+        "<table><colgroup><col><col><tbody><tr><td>x</td></tr></table>",
+        "<table><tr><td><table><tr><td>a<td>b</td></tr></table>x</td></tr></table>",
+        // The closure crosses a special element as `</td>` does.
+        "<table><tr><td><div>a<td>b</td></tr></table>",
+    ] {
+        assert_valid(body);
+    }
+}
+
+#[test]
+fn m09_closure_never_closes_a_table() {
+    // The inner cells close; the outer cell, row and table stay open.
+    assert_valid("<table><tr><td><table><tr><td>a<td>b</td></tr></table>c</td></tr></table>");
+    // A `table` start tag is not a table part: no closure, condition 2 only.
+    assert_invalid("<table><b>x<table>", STRUCTURE, "M-09");
+}
+
+#[test]
+fn m09_closure_needs_the_row_group_or_row_as_current_node() {
+    // Step 2: the `b` is above the row.
+    assert_invalid("<table><tr><td>a</td><b>x<tr>", STRUCTURE, "M-09");
+    assert_invalid("<table><tbody><b>x<tbody>", STRUCTURE, "M-09");
+    assert_invalid("<table><colgroup><b>x<tr>", STRUCTURE, "M-09");
+}
+
+#[test]
+fn m09_closure_applies_m06_item_1_to_the_crossing() {
+    assert_invalid("<td><a href=\"#\">a<td>", STRUCTURE, "M-06");
+    assert_invalid("<td><object>a<td>", STRUCTURE, "M-06");
+}
+
+#[test]
+fn m09_closure_passes_the_special_crossed_mark() {
+    // DL-050 (2): the cell crossed a `div`, so the row has the mark, and the
+    // `</a>` of the formatting element cannot pop it.
+    assert_invalid(
+        "<a href=\"#\"><table><tr><td><div>x<td>y</td></tr></table></a>",
+        STRUCTURE,
+        "M-06",
+    );
+    assert_valid("<a href=\"#\"><table><tr><td>x<td>y</td></tr></table></a>");
+}
+
+#[test]
+fn m09_closure_runs_before_condition_1() {
+    // DL-050 (1): after the closure the `template` is the nearest element.
+    assert_invalid("<template><tr><td>a<col>", STRUCTURE, "M-09");
+    // The same shape with a `table` first has an F that allows `col`.
+    assert_valid("<table><tr><td>a<col></table>");
+}
+
+#[test]
+fn m09_closure_is_off_in_block_content_and_in_noscript_content() {
+    assert_invalid(
+        "<div data-rq-block=\"t\"><table><tr><td>a<td>b</td></tr></table></div>",
+        STRUCTURE,
+        "M-09",
+    );
+    assert_invalid(
+        "<noscript><table><tr><td>a<td>b</table></noscript>",
+        STRUCTURE,
+        "M-09",
+    );
+    assert_invalid(
+        "<table><tr><td><noscript><td>x</noscript>",
+        STRUCTURE,
+        "M-11",
+    );
+}
+
+#[test]
+fn m09_closure_gives_units_of_d_back_for_exact_pops() {
+    let cells = "<tr><td>a<td>b".repeat(300);
+    depth_valid(&format!("<table>{cells}</table>"));
+}
+
+#[test]
+fn m09_closure_crossing_counts_toward_the_limit() {
+    depth_valid(&format!("<table><tr>{}", "<td><span>a".repeat(126)));
+    depth_limit(&format!("<table><tr>{}", "<td><span>a".repeat(127)));
+    // 251 `div`, a table, row group, row and cell, then a span that the
+    // closure crosses: the new `tr` makes D = 257.
+    depth_limit(&format!("{}<table><tr><td><span><tr>", "<div>".repeat(251)));
 }

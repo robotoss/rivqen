@@ -113,7 +113,7 @@ import Testing
     #expect(throws: LabError.self) { try PageMeta.decode(text) }
   }
 
-  @Test func rejectsHugeMeta() {
+  @Test func rejectsHugeMeta() throws {
     // Valid JSON padded with spaces: one byte over the limit fails, the limit itself passes.
     let body = #"{"probe":null}"#
     let over = body + String(repeating: " ", count: PageMeta.maxBytes + 1 - body.utf8.count)

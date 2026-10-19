@@ -104,7 +104,7 @@ import Testing
     #expect(throws: LabError.self) { try LabCase.parseIndex(data(text)) }
   }
 
-  @Test func rejectsAHugeCaseList() {
+  @Test func rejectsAHugeCaseList() throws {
     let ids = (0...LabCase.maxCases).map { "\"C\($0)\"" }.joined(separator: ",")
     #expect(throws: LabError.self) { try LabCase.parseIndex(data("[\(ids)]")) }
     let big = "[" + String(repeating: " ", count: LabCase.maxIndexBytes - 1) + "]"

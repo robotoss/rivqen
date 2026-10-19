@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A1B2C3D4E5F60718293A4B5E /* LabCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F60718293A4B5D /* LabCore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		F8C04A59D227EFCC6B69C78A /* WebViewLab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WebViewLab.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -41,6 +45,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1B2C3D4E5F60718293A4B5E /* LabCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,7 +76,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 386344AC7185DD5C2B817786 /* Build configuration list for PBXNativeTarget "iosApp" */;
 			buildPhases = (
-				C302D9EC9A380D96CEFDDEC1 /* Compile Kotlin Framework */,
 				B8CDE265E996449F0682D545 /* Sources */,
 				0CF4D3BAF1CC4C901608278F /* Frameworks */,
 				E54DB1EE1A4344C6AF12D4BD /* Resources */,
@@ -85,6 +89,7 @@
 			);
 			name = iosApp;
 			packageProductDependencies = (
+				A1B2C3D4E5F60718293A4B5D /* LabCore */,
 			);
 			productName = iosApp;
 			productReference = F8C04A59D227EFCC6B69C78A /* WebViewLab.app */;
@@ -114,6 +119,9 @@
 			);
 			mainGroup = AB1E387908DE58F1ADED0F04;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A1B2C3D4E5F60718293A4B5C /* XCLocalSwiftPackageReference "LabCore" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 68DCDB411893921280D25AB1 /* Products */;
 			projectDirPath = "";
@@ -133,28 +141,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		C302D9EC9A380D96CEFDDEC1 /* Compile Kotlin Framework */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Compile Kotlin Framework";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		B8CDE265E996449F0682D545 /* Sources */ = {
@@ -313,7 +299,7 @@
 					"@executable_path/Frameworks",
 				);
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -341,7 +327,7 @@
 					"@executable_path/Frameworks",
 				);
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -368,6 +354,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A1B2C3D4E5F60718293A4B5C /* XCLocalSwiftPackageReference "LabCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = LabCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A1B2C3D4E5F60718293A4B5D /* LabCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LabCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = EDEADD3DFA2517C369B7A624 /* Project object */;
 }

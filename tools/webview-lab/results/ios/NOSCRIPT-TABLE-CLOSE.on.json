@@ -1,0 +1,10 @@
+{
+  "characterSet" : "UTF-8",
+  "contentType" : "text/html",
+  "error" : null,
+  "id" : "NOSCRIPT-TABLE-CLOSE",
+  "probe" : null,
+  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <noscript>\n|       \"<table><tr><td>a<td>b</td></td></tr></table>\"\n|     \"\n\"\n|     <p>\n|       data-rq-block=\"real\"\n|       \"r\"\n|     \"\n\n\"",
+  "view" : "on",
+  "walker" : "ok"
+}

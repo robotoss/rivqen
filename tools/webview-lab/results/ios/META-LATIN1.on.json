@@ -1,0 +1,10 @@
+{
+  "characterSet" : "UTF-8",
+  "contentType" : "text/html",
+  "error" : null,
+  "id" : "META-LATIN1",
+  "probe" : "Grüße – 日本",
+  "tree" : "| <!DOCTYPE html>\n| <!--  SPDX-License-Identifier: Apache-2.0  -->\n| <!--  SPDX-FileCopyrightText: The Rivqen Authors  -->\n| <html>\n|   <head>\n|     <meta>\n|       charset=\"iso-8859-1\"\n|     <title>\n|       \"q20\"\n|   <body>\n|     <p>\n|       id=\"m\"\n|       \"Grüße – 日本\"\n|     \"\n\"",
+  "view" : "on",
+  "walker" : "ok"
+}

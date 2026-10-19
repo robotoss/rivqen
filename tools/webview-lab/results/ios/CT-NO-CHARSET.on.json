@@ -1,0 +1,10 @@
+{
+  "characterSet" : "windows-1252",
+  "contentType" : "text/html",
+  "error" : null,
+  "id" : "CT-NO-CHARSET",
+  "probe" : "GrÃ¼ÃŸe â€“ æ—¥æœ¬",
+  "tree" : "| <!DOCTYPE html>\n| <!--  SPDX-License-Identifier: Apache-2.0  -->\n| <!--  SPDX-FileCopyrightText: The Rivqen Authors  -->\n| <html>\n|   <head>\n|     <title>\n|       \"q20\"\n|   <body>\n|     <p>\n|       id=\"m\"\n|       \"GrÃ¼ÃŸe â€“ æ—¥æœ¬\"\n|     \"\n\"",
+  "view" : "on",
+  "walker" : "ok"
+}

@@ -1,0 +1,10 @@
+{
+  "characterSet" : "UTF-8",
+  "contentType" : "text/html",
+  "error" : null,
+  "id" : "NOSCRIPT-BALANCED",
+  "probe" : null,
+  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <noscript>\n|       \"<div><a href=\"https://www.example.com/\"><img src=\"https://www.example.com/p.gif\" alt=\"\"></a><table><tr><td>t</td></tr></table><p>text<br></p></div>\"\n|     \"\n\"\n|     <p>\n|       data-rq-block=\"a\"\n|       \"x\"\n|     \"\n\n\"",
+  "view" : "on",
+  "walker" : "ok"
+}

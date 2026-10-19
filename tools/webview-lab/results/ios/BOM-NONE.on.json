@@ -1,0 +1,10 @@
+{
+  "characterSet" : "UTF-8",
+  "contentType" : "text/plain",
+  "error" : "evaluateJavaScript in WKContentWorld.defaultClient: WKErrorDomain 4: A JavaScript exception occurred (TypeError: undefined is not an object (evaluating 'list.length'))",
+  "id" : "BOM-NONE",
+  "probe" : null,
+  "tree" : null,
+  "view" : "on",
+  "walker" : "unavailable"
+}

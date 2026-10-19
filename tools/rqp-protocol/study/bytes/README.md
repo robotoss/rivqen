@@ -20,7 +20,7 @@ This study splits the bytes of `rqp/1` into components and measures candidate wi
 | `src/legacy.mjs` | Client for the upstream lab server (`lab-node`) and the breakdown of a legacy data response |
 | `src/study.mjs`, `src/tables.mjs` | The results object and the Markdown tables of the report |
 | `results/bytes.json` | Results (Node.js 26.8.2, zlib 1.2.12, Brotli 1.2.0, nghttp2 1.70.0; see `environment`) |
-| `results/legacy-lab.json` | Observations of the upstream Node.js server (VasSonic `59936bef`, `sonic_differ` 1.0.7) on 2026-10-19 |
+| `results/legacy-lab.json` | Observations of the upstream Node.js server (VasSonic `59936bef`, `sonic_differ` 1.0.7) on 2026-10-20 |
 | `test/` | `node --test` tests |
 
 ## Method

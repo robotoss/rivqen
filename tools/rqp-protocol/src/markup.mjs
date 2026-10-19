@@ -96,10 +96,10 @@ export function documentHeadStart(bytes) {
 
 /**
  * Walk the tokens of a document with the token stack of markup M-05 and the
- * state changes of M-04, and call `visit(token, html)` for each start and end
- * tag; `html` is true for a start tag in HTML context and false for one in a
- * foreign region. Returns false when the walk stopped early (the stack limit
- * was hit).
+ * state changes of M-04, and call `visit(token, html)` for each start tag and
+ * `visit(token)` for each end tag; `html` is true for a start tag in HTML
+ * context and false for one in a foreign region. Returns false when the walk
+ * stopped early (the stack limit was hit).
  */
 function walk(bytes, visit) {
   const tok = new Tokenizer(bytes);
@@ -121,7 +121,7 @@ function walk(bytes, visit) {
       const mode = html ? TEXT_MODE.get(t.name) : undefined;
       if (mode !== undefined) tok.switchTo(mode, t.name);
     } else if (t.type === TokenType.END_TAG) {
-      visit(t, region < 0);
+      visit(t);
       const at = stack.lastIndexOf(t.name);
       if (at >= 0) {
         stack.length = at;
@@ -248,14 +248,15 @@ const isHexDigit = (c) => isDigit(c) || (c >= 0x41 && c <= 0x46) || (c >= 0x61 &
 const REFERENCE_CAP = 0x110000;
 
 /**
- * The value of the numeric character reference that starts at `at` of the raw
- * bytes, read as markup M-13 says (the WHATWG tokenizer): "&#" and ASCII
- * digits, or "&#x" or "&#X" and ASCII hex digits; all digits, also leading
- * zeros; ";" optional; capped at 110000. -1 when no numeric reference starts
- * there ("&#", "&#x" or "&#X" without a digit is none).
+ * The value of the numeric character reference that starts at the "&" at
+ * offset `at` of the raw bytes (the callers find that "&"), read as markup
+ * M-13 says (the WHATWG tokenizer): "&#" and ASCII digits, or "&#x" or "&#X"
+ * and ASCII hex digits; all digits, also leading zeros; ";" optional; capped at
+ * 110000. -1 when no numeric reference starts there ("&#", "&#x" or "&#X"
+ * without a digit is none).
  */
-export function numericReference(raw, at) {
-  if (raw[at] !== 0x26 || raw[at + 1] !== 0x23) return -1;
+function numericReference(raw, at) {
+  if (raw[at + 1] !== 0x23) return -1;
   let p = at + 2;
   const hex = raw[p] === 0x78 || raw[p] === 0x58;
   if (hex) p++;
@@ -305,18 +306,22 @@ const asciiLowerText = (s) => s.replace(/[A-Z]+/g, (m) => m.toLowerCase());
  */
 const schemeCopy = (raw) => asciiLowerText(raw.toString('latin1').replace(/[\t\n\r]/g, '').replace(/^[\x00-\x20]+/, ''));
 
-/** H-83: the elements and attributes (HTML context only) where a raster data: image can stay. */
+/**
+ * H-83: the elements and attributes (HTML context only) where a raster data:
+ * image can stay. srcset is not listed: item 4.3 reads each of its candidate
+ * URLs as the value of src of the same element (img and source).
+ */
 const DATA_IMAGE_ATTRIBUTES = Object.freeze(
   new Map([
-    ['img', ['src', 'srcset']],
-    ['source', ['src', 'srcset']],
+    ['img', ['src']],
+    ['source', ['src']],
     ['video', ['poster']],
   ]),
 );
 
 /** H-83: true for an element and an attribute of DATA_IMAGE_ATTRIBUTES in HTML context. */
 function dataImageAllowed(element, name, html) {
-  return html && DATA_IMAGE_ATTRIBUTES.has(element) && DATA_IMAGE_ATTRIBUTES.get(element).includes(name);
+  return html === true && DATA_IMAGE_ATTRIBUTES.has(element) && DATA_IMAGE_ATTRIBUTES.get(element).includes(name);
 }
 
 /**
@@ -389,10 +394,10 @@ export function srcsetUrls(raw) {
  * Manifest-patch section 4.2 for one attribute of a start tag: true when the
  * rule rejects it. `name` is the attribute name in lower case, `value` the raw
  * value bytes, `element` the tag name in lower case and `html` true for a start
- * tag in HTML context. The data: exception of H-83 needs both; without them the
- * rule fails closed.
+ * tag in HTML context. The data: exception of H-83 needs both; without them
+ * (undefined) the rule fails closed.
  */
-export function attributeRejected(name, value, element = '', html = false) {
+export function attributeRejected(name, value, element, html) {
   if (name.startsWith('on')) return true; // item 1
   if (name === 'srcset') {
     // Item 4.3: each candidate URL as the value of src of the same element.

@@ -26,7 +26,7 @@ describe('patch-safety elements in the content (H-78, M-22 item 2)', () => {
   }
 
   it('still rejects the other names of FORBIDDEN_CONTENT', () => {
-    for (const name of ['noembed', 'noframes', 'noscript', 'plaintext', 'textarea', 'title', 'xmp', 'template']) {
+    for (const name of ['noembed', 'noframes', 'plaintext', 'textarea', 'title', 'xmp']) {
       assert.equal(errorOf(doc(inBlock(`<${name}>`))), STRUCTURE, name);
     }
   });

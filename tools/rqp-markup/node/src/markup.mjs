@@ -479,6 +479,8 @@ class Scanner {
   contentStart(t) {
     const name = t.name;
     if (FORBIDDEN_CONTENT.has(name)) return STRUCTURE; // M-22 rule 2
+    // M-22 item 6 (H-94, H-97): declarative shadow DOM gives two renderings.
+    if (name === 'template' && t.hasShadowRoot) return STRUCTURE;
     // M-22 rule 3: a self-closing svg or math opens no region (M-05 item 1).
     if (t.selfClosing && !VOID.has(name) && name !== 'svg' && name !== 'math') return STRUCTURE;
     const blockName = this.names[this.block.index];
@@ -496,7 +498,8 @@ class Scanner {
       return STRUCTURE; // d, e, f
     }
     const tablePart = TABLE_PART.has(name) || name === 'col';
-    if (tablePart && !this.isOpenInContent('table')) return STRUCTURE; // g
+    // g (H-94): also invalid when F is none, i.e. a template is nearer than any table part.
+    if (tablePart && (!this.isOpenInContent('table') || this.familyIndex() < 0)) return STRUCTURE;
     // k: in table context the WHATWG parser foster-parents every other start
     // tag, and a table start tag closes the open table.
     if (!tablePart && TABLE_CONTEXT.has(this.currentFamily())) return STRUCTURE;

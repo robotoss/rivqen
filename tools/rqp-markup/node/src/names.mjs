@@ -67,8 +67,8 @@ export const BLOCK_HTML = set(
 );
 
 export const FORBIDDEN_CONTENT = set(
-  'body', 'frame', 'frameset', 'head', 'html', 'noembed', 'noframes', 'noscript', 'optgroup',
-  'option', 'plaintext', 'select', 'template', 'textarea', 'title', 'xmp',
+  'body', 'frame', 'frameset', 'head', 'html', 'noembed', 'noframes', 'optgroup',
+  'option', 'plaintext', 'select', 'textarea', 'title', 'xmp',
 );
 
 /** M-08: tokens allowed inside a select element. */

@@ -61,7 +61,9 @@ test("document rules with items", () => {
   assert.deepEqual(Object.keys(doc("<svg><title/></svg>").classes), ["M-07.4"]);
   assert.deepEqual(Object.keys(doc("<select><div></div></select>").classes), ["M-08"]);
   assert.deepEqual(Object.keys(doc("<select><option>a").classes), ["M-08"]);
-  assert.deepEqual(Object.keys(doc("<table><tr><td>a<td>b</td></tr></table>").classes), ["M-09"]);
+  assert.deepEqual(Object.keys(doc("<table><tr><td><caption>a<td>b</td></table>").classes), []);
+  assert.deepEqual(Object.keys(doc("<td><tr>a</tr></td>").classes), []);
+  assert.deepEqual(Object.keys(doc("<noscript><table><tr><td>a<td>b</td></td></tr></table></noscript>").classes), ["M-09"]);
   assert.deepEqual(Object.keys(doc("<frameset>").classes), ["M-10"]);
   assert.deepEqual(Object.keys(doc("<noscript><img src=\"a</noscript>").classes), ["M-11.1"]);
   assert.deepEqual(Object.keys(doc("<noscript><math></math></noscript>").classes), ["M-11.3"]);
@@ -75,6 +77,45 @@ test("document rules with items", () => {
   assert.deepEqual(Object.keys(doc('<script type="text/jävascript"></script>').classes), ["M-13.3"]);
   assert.deepEqual(Object.keys(classify(new Uint8Array([0x3c, 0x70, 0x3e, 0xe9])).classes), ["M-02"]);
   assert.deepEqual(Object.keys(classify(new Uint8Array(5 * 1024 * 1024 + 1)).classes), ["M-01"]);
+});
+
+test("H-85a: the implied closure of M-09 with the end-tag rules, outside block content and C", () => {
+  // Valid: a cell, a row, a row group, a caption and a column group close; D gives the units back.
+  for (const h of [
+    "<table><tr><td>a<td>b<th>c</table>",
+    "<table><tr><td>a<tr><td>b</table>",
+    "<table><thead><tr><th>h<tbody><tr><td>a<tfoot><tr><td>f</table>",
+    "<table><caption><i>c<tr><td>a</table>",
+    "<table><colgroup><col><colgroup><col><tr><td>a</table>",
+    "<table><tr><td><div>a<td><b>b<td>c</table>",
+  ]) {
+    assert.deepEqual(doc(h).classes, {}, h);
+  }
+  const rows = doc(`<table>${"<tr><td>a<td>b".repeat(300)}</table>`);
+  assert.deepEqual([rows.classes, rows.maxD], [{}, 4]);
+  // M-06 item 1: the closure crosses a guarded element.
+  const a = doc('<table><tr><td><a href="#">a<td>b</td></tr></table>');
+  assert.deepEqual(a.classes, { "M-06.1": 1 });
+  assert.deepEqual(a.details["M-06.1"], { "implied </td> over <a>": 1 });
+  // M-09 condition 2: the row to close is not the current node.
+  const b = doc("<table><tr><td>a</td><b>x<tr><td>c</td></tr></table>");
+  assert.deepEqual(b.classes, { "M-09.2": 1 });
+  assert.deepEqual(b.details["M-09.2"], { "<b>": 1 });
+  // M-06 item 4: the closure over a div marks the row; </table> passes the mark to the a.
+  assert.deepEqual(doc('<a href="#"><table><tr><td><div>x<td>y</table></a>').classes, { "M-06.4-special": 1 });
+  // M-06 item 3 after the closure: the row is closed, so </tr> is stray.
+  assert.deepEqual(doc("<table><tr><td><col></td></tr></table>").classes, { "M-06.3-row": 1 });
+  // M-09 condition 1 after the closure: the template is the nearest element.
+  assert.deepEqual(doc("<template><tr><td>a<col></template>").classes, { "M-09.1": 1 });
+  // M-26: a closure over an open span is a crossing; 127 cells make D 257.
+  const deep = doc(`<table><tr>${"<td><span>a".repeat(127)}</table>`);
+  assert.deepEqual([Object.keys(deep.classes), deep.maxD], [["M-26-dirty"], 257]);
+  // No closure in block content: M-09, and M-23 for the end tags after it.
+  const content = doc('<div data-rq-block="t"><table><tr><td>a<td>b</td></tr></table></div>', true);
+  assert.deepEqual(Object.keys(content.classes), ["M-09"]);
+  assert.deepEqual(Object.keys(content.blockRules.classes), ["M-23"]);
+  // After the block the closure applies again.
+  assert.deepEqual(doc('<div data-rq-block="t">x</div><table><tr><td>a<td>b</table>', true).classes, {});
 });
 
 test("the classifier continues after a violation", () => {

@@ -944,7 +944,7 @@ fn m11_m13_reserved_manifest_in_noscript() {
         "<script type=\"application/rivqen-manifest+json\">{}</script>",
         "<SCRIPT TYPE=\"X-Rivqen-Manifest\"></SCRIPT>",
         "<script type=application/rivqen-manifest&#43;json></script>",
-        "<script type='&'></script>",
+        "<script type='&amp;'></script>",
         "<img src=x><script type=\"rivqen-manifest\"></script>",
     ] {
         assert_invalid(&format!("<noscript>{script}</noscript>"), reserved, "M-13");
@@ -1119,7 +1119,7 @@ fn m13_reserved_manifest() {
         " Application/Rivqen-Manifest+JSON ",
         "x-RIVQEN-MANIFEST",
         "application/rivqen&#45;manifest+json",
-        "&",
+        "text/x&amp;y",
     ] {
         let body = format!("<script type=\"{ty}\">{{}}</script>");
         assert_invalid(&body, ErrorCode::Reserved, "M-13");
@@ -1135,6 +1135,111 @@ fn m13_reserved_manifest() {
         "<div type=\"rivqen-manifest\"></div><script>var t = \"<script type='rivqen-manifest'>\";</script>",
     );
     assert_valid("<script type=\"rivqen-manifes\"></script><script></script>");
+}
+
+/// M-13 item 2 (H-84, DL-048 a): a `&` is reserved when a letter follows, or
+/// when a numeric reference has a value that can make a manifest type.
+#[test]
+fn m13_2_character_references_in_script_types() {
+    let script = |ty: &str| format!("<script type=\"{ty}\">{{}}</script>");
+    for ty in [
+        "text/x-tmpl & b",
+        "text/x&#58;y",
+        "text/x&#x7E;",
+        "text/x&#;",
+        "text/x&#x;",
+        "text/x&#X;",
+        "text/x&",
+        "text/x&#",
+        "text/x&&#58;",
+        "&#33;",
+        "&#x21;",
+        "&#x7f;",
+        "&#127;",
+        "&#00000000000000000000058;",
+        "text/x&#58",
+        "text/x&#xg;",
+        "& ",
+        "&1",
+        "&;",
+    ] {
+        assert_valid(&script(ty));
+        assert_valid(&format!("<noscript>{}</noscript>", script(ty)));
+    }
+    for ty in [
+        "text/x&amp;y",
+        "text/a&b",
+        "&A",
+        "&z",
+        "application&#x2F;x",
+        "application&#47;x",
+        "text/&#0000065pp",
+        "text/&#x41;",
+        "text/&#x61;",
+        "text/plain&#X9",
+        "text/plain&#9;",
+        "text/plain&#32;",
+        "text/plain&#x20;",
+        "text/plain&#0;",
+        "text/plain&#x0",
+        "x&#43;y",
+        "x&#45;y",
+        "x&#46;y",
+        "x&#48;",
+        "x&#57;",
+        "x&#128;",
+        "x&#x80;",
+        "x&#305;",
+        "x&#1114111;",
+        "x&#4294967296;",
+        "x&#xFFFFFFFFFFFFFFFFFFFF;",
+        "x&#99999999999999999999999999",
+        "text/x&#58;&amp;",
+        "text/x&#58;&#65;",
+        "x&#x5A;",
+        "x&#x7A",
+    ] {
+        assert_invalid(&script(ty), ErrorCode::Reserved, "M-13");
+        assert_invalid(
+            &format!("<noscript>{}</noscript>", script(ty)),
+            ErrorCode::Reserved,
+            "M-13",
+        );
+    }
+    // The boundaries of the rejected set.
+    for (value, reserved) in [
+        (0x20, true),
+        (0x21, false),
+        (0x2A, false),
+        (0x2B, true),
+        (0x2C, false),
+        (0x2D, true),
+        (0x2E, true),
+        (0x2F, true),
+        (0x30, true),
+        (0x39, true),
+        (0x3A, false),
+        (0x40, false),
+        (0x41, true),
+        (0x5A, true),
+        (0x5B, false),
+        (0x60, false),
+        (0x61, true),
+        (0x7A, true),
+        (0x7B, false),
+        (0x7F, false),
+        (0x80, true),
+    ] {
+        let decimal = script(&format!("x&#{value};"));
+        let hex = script(&format!("x&#x{value:x};"));
+        for text in [decimal, hex] {
+            if reserved {
+                assert_invalid(&text, ErrorCode::Reserved, "M-13");
+            } else {
+                assert_valid(&text);
+            }
+        }
+    }
 }
 
 /// M-13 item 3 (H-28): a byte >= 0x80 in the first `type` raw value of a
@@ -1253,7 +1358,10 @@ fn m16_block_element() {
         "<style data-rq-block=\"css\">p{}</style>",
         "<textarea data-rq-block=\"t\">t</textarea>",
         "<script data-rq-block=\"code\">1</script>",
-        "<script type=\"application/ld+json\" data-rq-block=\"ld\">{}</script>",
+        "<script type=\"application/ld+JSON\" data-rq-block=\"ld\">{}</script>",
+        "<script type=\"application/ld+json;charset=utf-8\" data-rq-block=\"ld\">{}</script>",
+        "<script type=\"application/ld+json \" data-rq-block=\"ld\">{}</script>",
+        "<script type=\"application/ld-json\" data-rq-block=\"ld\">{}</script>",
         "<script type=\"Application/JSON\" data-rq-block=\"d\">{}</script>",
         "<script type=\" application/json\" data-rq-block=\"d\">{}</script>",
         "<script type=\"application/json;charset=utf-8\" data-rq-block=\"d\">{}</script>",
@@ -1281,6 +1389,27 @@ fn m16_block_element() {
             html("t", "a &amp; <b>"),
             ("j".to_owned(), Format::Json, "{\"a\":\"</p>\"}".to_owned())
         ]
+    );
+    // H-86: `application/ld+json` is a `json` type; M-25 applies to it.
+    assert_eq!(
+        blocks(
+            "<script type=\"application/ld+json\" data-rq-block=\"ld\">{\"@context\":\"x\"}</script>"
+        ),
+        [(
+            "ld".to_owned(),
+            Format::Json,
+            "{\"@context\":\"x\"}".to_owned()
+        )]
+    );
+    assert_invalid(
+        "<script type=\"application/ld+json\" data-rq-block=\"ld\">{\"a\":}</script>",
+        ErrorCode::BadJson,
+        "M-25",
+    );
+    assert_invalid(
+        "<script type=\"application/ld+json\" data-rq-block=\"ld\"></script>",
+        ErrorCode::BadJson,
+        "M-25",
     );
 }
 
@@ -1398,27 +1527,17 @@ fn m22_allowed_tokens() {
         "M-22",
     );
     for name in [
-        "base",
-        "basefont",
-        "bgsound",
         "body",
-        "embed",
         "frame",
         "head",
         "html",
-        "iframe",
-        "link",
-        "meta",
         "noembed",
         "noframes",
         "noscript",
-        "object",
         "optgroup",
         "option",
         "plaintext",
-        "script",
         "select",
-        "style",
         "template",
         "textarea",
         "title",
@@ -1438,6 +1557,22 @@ fn m22_allowed_tokens() {
         "M-22",
     );
     assert_invalid("<div data-rq-block=\"b\"></img></div>", STRUCTURE, "M-22");
+    // Item 3 for `script` and item 4 for the void names that moved (H-78).
+    assert_invalid(
+        "<div data-rq-block=\"b\"><script/></div>",
+        STRUCTURE,
+        "M-22",
+    );
+    assert_invalid("<div data-rq-block=\"b\"><style/></div>", STRUCTURE, "M-22");
+    assert_invalid(
+        "<div data-rq-block=\"b\"><iframe/></div>",
+        STRUCTURE,
+        "M-22",
+    );
+    for name in ["embed", "link", "meta", "base", "basefont", "bgsound"] {
+        let body = format!("<div data-rq-block=\"b\"><{name}></{name}></div>");
+        assert_invalid(&body, STRUCTURE, "M-22");
+    }
     // Comments, character references, void elements with `/>`, other elements.
     assert_eq!(
         blocks(
@@ -1448,6 +1583,128 @@ fn m22_allowed_tokens() {
             "<!-- c --><?pi?>&amp;<br/><img src=\"a\"/><custom-el>x</custom-el>"
         )]
     );
+}
+
+/// H-78: the patch-safety elements are allowed in the content (M-22).
+#[test]
+fn m22_patch_safety_elements_are_allowed_in_the_content() {
+    for content in [
+        "<base href=\"/\">",
+        "<basefont>",
+        "<bgsound>",
+        "<embed src=\"a\">",
+        "<link rel=\"stylesheet\" href=\"a.css\">",
+        "<meta name=\"a\" content=\"b\">",
+        "<object data=\"a\">x</object>",
+        "<script>f()</script>",
+        "<style>p{}</style>",
+        "<iframe src=\"/v\"></iframe>",
+        "<link/><meta/><embed/>",
+    ] {
+        assert_eq!(
+            blocks(&format!("<div data-rq-block=\"b\">{content}</div>")),
+            [html("b", content)],
+            "{content}"
+        );
+    }
+    // An `object` is pushed: its own end tag is needed (M-23).
+    assert_invalid(
+        "<div data-rq-block=\"b\"><object>x</div>",
+        STRUCTURE,
+        "M-23",
+    );
+    // M-13 still applies to a script in the content.
+    assert_invalid(
+        "<div data-rq-block=\"b\"><script type=\"rivqen-manifest\"></script></div>",
+        ErrorCode::Reserved,
+        "M-13",
+    );
+}
+
+/// M-04 in the content (H-78): raw text up to the appropriate end tag.
+#[test]
+fn m04_raw_text_in_the_content() {
+    for content in [
+        // The end tag of the block is only text in script data.
+        "x<script>document.write(\"</div>\")</script>y",
+        "<script>a</scripty></script>",
+        "<script>a</script foo>b",
+        "<SCRIPT>a</SCRIPT >b",
+        "<script>a</script/>b",
+        "<script>a<!--<script>b</script>c--></script>d",
+        "<script><!-- </script> -->",
+        "<script><div data-rq-block=\"x\"><!-- <p></script>",
+        "<style>a</div>b</style>",
+        "<style></styles></style>",
+        "<iframe></div><p></iframe>",
+        "<iframe><!--</iframe>",
+    ] {
+        assert_eq!(
+            blocks(&format!("<div data-rq-block=\"b\">{content}</div>")),
+            [html("b", content)],
+            "{content}"
+        );
+    }
+    // Raw text that does not end before the end of the input: M-20.
+    for body in [
+        "<div data-rq-block=\"b\"><script>a</div>",
+        "<div data-rq-block=\"b\"><script><!--<script>a</script></div>",
+        "<div data-rq-block=\"b\"><style>a</div>",
+        "<div data-rq-block=\"b\"><iframe>a</div>",
+        "<div data-rq-block=\"b\"><script>a</scripty></div>",
+    ] {
+        assert_eq!(error_of(body.as_bytes()), (STRUCTURE, "M-20"), "{body}");
+    }
+    // The raw text element is the current node: the end tag pops it, and the
+    // elements around it still match (M-23).
+    assert_eq!(
+        blocks("<div data-rq-block=\"b\"><p><style>a</style></p></div>"),
+        [html("b", "<p><style>a</style></p>")]
+    );
+    assert_invalid(
+        "<div data-rq-block=\"b\"><span><style>a</style></div></span>",
+        STRUCTURE,
+        "M-23",
+    );
+    // In a foreign region a start tag does not change the state: the
+    // element holds text only (M-07 item 4).
+    assert_eq!(
+        blocks("<div data-rq-block=\"b\"><svg><script>a &lt; b</script></svg></div>").len(),
+        1
+    );
+    assert_invalid(
+        "<div data-rq-block=\"b\"><svg><script>a<b></b></script></svg></div>",
+        STRUCTURE,
+        "M-07",
+    );
+}
+
+/// Raw text in the content is read once (linear work): large inputs of
+/// scripts, styles and unfinished escaped states finish.
+#[test]
+fn m04_raw_text_in_the_content_is_linear() {
+    let n = 20_000;
+    let many = format!(
+        "<div data-rq-block=\"b\">{}</div>",
+        "<script>a</script>".repeat(n)
+    );
+    assert_eq!(blocks(&many).len(), 1);
+    for unit in [
+        "<script><!--<script>",
+        "<style><",
+        "<iframe></ifram",
+        "<script><!--",
+    ] {
+        let body = format!("<div data-rq-block=\"b\">{}", unit.repeat(n));
+        assert_eq!(
+            error_of(page(&body).as_bytes()),
+            (STRUCTURE, "M-20"),
+            "{unit}"
+        );
+    }
+    let amps = format!("<script type=\"x{}\"></script>", "&#0".repeat(50_000));
+    assert_valid(&amps.replace("&#0", "&#58;"));
+    assert_invalid(&amps, ErrorCode::Reserved, "M-13");
 }
 
 #[test]
@@ -2422,8 +2679,8 @@ fn large_nested_inputs_closed_by_end_tags_finish() {
 
 // ---- WP-17 S3: H-71, H-73, H-74, H-75 ----------------------------------------
 
-/// M-22 item 5 (H-73): `svg` and `math` in the content open a region; a start
-/// tag there must be in `FOREIGN_ALLOWED`.
+/// M-05 item 4 (H-73, H-78): `svg` and `math` in the content open a region;
+/// M-07 and M-23 apply there, and M-22 does not.
 #[test]
 fn m22_5_foreign_regions_in_html_block_content() {
     let icon = "<svg viewBox=\"0 0 16 16\"><title>Close</title><path d=\"M0\"/></svg> Close";
@@ -2441,7 +2698,8 @@ fn m22_5_foreign_regions_in_html_block_content() {
         blocks("<p data-rq-block=\"s\"><svg/><math/>x</p>"),
         [html("s", "<svg/><math/>x")]
     );
-    // Names that are not in FOREIGN_ALLOWED fail with item 5.
+    // Since H-78 every element that M-07 allows is allowed: there is no
+    // list of names for a region of the content.
     for name in [
         "a",
         "animate",
@@ -2449,27 +2707,28 @@ fn m22_5_foreign_regions_in_html_block_content() {
         "foreignObject",
         "image",
         "feImage",
-        "script",
-        "style",
         "textPath",
-        "maction",
-        "annotation-xml",
         "unknown-name",
     ] {
-        let body = format!("<p data-rq-block=\"b\"><svg><{name}></{name}></svg></p>");
-        assert_invalid(&body, STRUCTURE, "M-22");
+        let content = format!("<svg><{name}></{name}></svg>");
+        assert_eq!(
+            blocks(&format!("<p data-rq-block=\"b\">{content}</p>")),
+            [html("b", &content)],
+            "{name}"
+        );
     }
-    assert_invalid(
-        "<p data-rq-block=\"b\"><math><maction></maction></math></p>",
-        STRUCTURE,
-        "M-22",
-    );
-    // A self-closing element of the region that is not allowed: item 5 too.
-    assert_invalid(
-        "<p data-rq-block=\"b\"><svg><set attributeName=\"x\"/></svg></p>",
-        STRUCTURE,
-        "M-22",
-    );
+    for content in [
+        "<math><maction></maction></math>",
+        "<svg><set attributeName=\"x\"/></svg>",
+        "<svg><script>a &lt; b</script><style>p{}</style></svg>",
+        "<svg><annotation-xml>t</annotation-xml></svg>",
+    ] {
+        assert_eq!(
+            blocks(&format!("<p data-rq-block=\"b\">{content}</p>")),
+            [html("b", content)],
+            "{content}"
+        );
+    }
     // Items 2 to 4 are for the HTML context only: `title` is forbidden in
     // HTML content, and allowed in the region.
     assert_invalid(

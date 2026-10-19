@@ -689,7 +689,8 @@ impl Pass<'_> {
         foreign: bool,
     ) -> Result<(), MarkupError> {
         use Known::{A, Button, Col, Colgroup, Dd, Dl, Dt, H1, H2, H3, H4, H5, H6, Li, Menu};
-        use Known::{Nobr, Ol, P, Rb, Rp, Rt, Rtc, Ruby, Span, Table, Tbody, Tfoot, Thead, Tr, Ul};
+        use Known::{Nobr, Ol, P, Rb, Rp, Rt, Rtc, Ruby, Span, Table, Tbody, Template, Tfoot};
+        use Known::{Thead, Tr, Ul};
         if foreign {
             return Ok(());
         }
@@ -697,6 +698,11 @@ impl Pass<'_> {
         if self.names.has(name, flag::FORBIDDEN_CONTENT)
             || (tag.self_closing && !self.names.has(name, flag::VOID) && !region_root)
         {
+            return Err(structure("M-22"));
+        }
+        // Item 6 (H-94, H-97): declarative shadow DOM, any attribute name
+        // `shadowrootmode` on an HTML `template` start tag.
+        if name == Template.id() && tag.has_shadowrootmode {
             return Err(structure("M-22"));
         }
         let elem = block.elem;
@@ -721,8 +727,8 @@ impl Pass<'_> {
             list_item && nearest(&[Li, Dd, Dt]) > nearest(&[Ul, Ol, Menu, Dl]),
             // d, e, f
             is_any(name, &[Button, A, Nobr]) && self.names.top(name).is_some(),
-            // g
-            part && !in_content(&[Table]),
+            // g (H-94): also when F is none (a `template` is nearer)
+            part && (!in_content(&[Table]) || self.table_context().is_none()),
             // h
             is_any(name, &[Rb, Rtc]) && (no_ruby || open(&[Rb, Rp, Rt, Rtc])),
             // i

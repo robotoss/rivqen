@@ -182,6 +182,7 @@ async function variant(name, pages, results, opts) {
     v.block_rules = cl.blockRules?.classes ?? null;
     v.block_details = cl.blockRules?.details ?? null;
     v.doc_classes = cl.classes ?? null;
+    v.patch_rules = cl.patchRules?.classes ?? null; // H-78: elements a changed block cannot carry in a patch (the page stays valid)
   });
   const cc = await crosscheck(dir, opts.timeoutS * 1000 * 10);
   log(`crosscheck ${name}: ${cc.summary ?? cc.error}`);

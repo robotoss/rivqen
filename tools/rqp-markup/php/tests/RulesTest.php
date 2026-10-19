@@ -118,15 +118,27 @@ final class RulesTest extends TestCase
         yield 'M-08 block in select' => ['<select><p data-rq-block="a">x</p></select>', 'M-08', $S];
 
         // M-09
-        yield 'M-09 td while td is open' => ['<table><tr><td>a<td>b</td></tr></table>', 'M-09', $S];
-        yield 'M-09 col in td' => ['<table><tr><td><col></td></tr></table>', 'M-09', $S];
-        yield 'M-09 tr in tr' => ['<table><tr><tr>', 'M-09', $S];
-        yield 'M-09 caption in tbody' => ['<table><tbody><caption>', 'M-09', $S];
-        yield 'M-09 tbody in tbody' => ['<table><tbody><tbody>', 'M-09', $S];
-        yield 'M-09 colgroup in colgroup' => ['<table><colgroup><colgroup>', 'M-09', $S];
-        yield 'M-09 thead in tr' => ['<table><tr><thead>', 'M-09', $S];
-        yield 'M-09 th in caption' => ['<table><caption><th>', 'M-09', $S];
-        yield 'M-09 col in tbody' => ['<table><tbody><col>', 'M-09', $S];
+        // M-09 implied closure (H-85a): in block content no closure happens.
+        $B = '<div data-rq-block="a">';
+        yield 'M-09 td while td is open in block content' => [$B . '<table><tr><td>a<td>b</td></tr></table></div>', 'M-09', $S];
+        yield 'M-09 tr in tr in block content' => [$B . '<table><tr><tr>', 'M-09', $S];
+        yield 'M-09 caption in tbody in block content' => [$B . '<table><tbody><caption>', 'M-09', $S];
+        yield 'M-09 tbody in tbody in block content' => [$B . '<table><tbody><tbody>', 'M-09', $S];
+        yield 'M-09 colgroup in colgroup in block content' => [$B . '<table><colgroup><colgroup>', 'M-09', $S];
+        yield 'M-09 thead in tr in block content' => [$B . '<table><tr><thead>', 'M-09', $S];
+        yield 'M-09 th in caption in block content' => [$B . '<table><caption><th>', 'M-09', $S];
+        yield 'M-09 col in tbody in block content' => [$B . '<table><tbody><col>', 'M-09', $S];
+        // The same in the content C of a noscript: M-11 item 8 (M-09 of the main rules).
+        yield 'M-09 td while td is open in noscript content' => ['<noscript><table><tr><td>a<td>b</td></tr></table></noscript>', 'M-09', $S];
+        // The closure cases the rule keeps invalid.
+        yield 'M-09 closure: col in td ends the row, M-06 item 3' => ['<table><tr><td><col></td></tr></table>', 'M-06', $S];
+        yield 'M-09 closure crosses a guarded a, M-06 item 1' => ['<table><tr><td><a href="#">a<td>', 'M-06', $S];
+        yield 'M-09 closure: row is not the current node' => ['<table><tr><td>a</td><b>x<tr>', 'M-09', $S];
+        yield 'M-09 closure: row group is not the current node' => ['<table><tbody><b>x<tbody>', 'M-09', $S];
+        yield 'M-09 closure: colgroup is not the current node' => ['<table><colgroup><b>x<tr>', 'M-09', $S];
+        yield 'M-09 closure ends at a template, then col condition 1' => ['<template><tr><td>a<col>', 'M-09', $S];
+        yield 'M-09 closure crossing a guarded object in a cell' => ['<table><tr><td><object><td>', 'M-06', $S];
+        yield 'M-26 closure: cells that cross a span reach the limit' => ['<table><tr>' . str_repeat('<td><span>a', 127) . '<td>', 'M-26', ErrorCode::Limit];
         // M-09 condition 1 (H-35): `col` while the nearest TABLE_FAMILY or
         // `template` element is a `template`.
         yield 'M-09.1 col in a template, fake block in title (review repro)' => [
@@ -551,6 +563,13 @@ final class RulesTest extends TestCase
         yield 'M-09 template stops the search' => ['<table><tr><td><template><td></td></template></td></tr></table><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-09 nested table in a cell' => ['<table><tr><td><table><tr><td>a</td></tr></table></td></tr></table><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         yield 'M-09 table part outside a table' => ['<td>a</td><tr></tr><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        // M-09 implied closure (H-85a).
+        yield 'M-09 closure: cell after cell' => ['<td>a<td>b<p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        yield 'M-09 closure: row after a cell' => ['<table><tr><td>a<tr><td>b</table><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        yield 'M-09 closure: group after cell, row, group' => ['<table><thead><tr><th>h<tbody><tr><td>1</table><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        yield 'M-09 closure: row after a caption' => ['<table><caption>c<tr><td>1</table><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        yield 'M-09 closure: row after a colgroup' => ['<table><colgroup><col><tr><td>1</table><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
+        yield 'M-09 closure: cell closes over a div' => ['<table><tr><td><div>a<td>b</table><p data-rq-block="a">x</p>', [['a', 'html', 'x']]];
         // Valid neighbors of M-09 condition 1 (H-35).
         yield 'M-09.1 table parts in a template' => ['<template><tr><td>x</td></tr></template><template><caption>c</caption><tbody></tbody></template><p data-rq-block="a">x</p>', $A];
         yield 'M-09.1 col in a table in a template' => ['<template><table><col></table></template><p data-rq-block="a">x</p>', $A];
@@ -931,6 +950,15 @@ final class RulesTest extends TestCase
         $result = Parser::parse($over);
         self::assertSame(ErrorCode::Limit, $result->error);
         self::assertSame('M-26', $result->rule);
+    }
+
+    public function testM26ClosureOfExactPopsGivesBackTheUnits(): void
+    {
+        // H-85a: each closure of an empty cell is an exact pop.
+        $result = Parser::parse('<table>' . str_repeat('<tr><td>a<td>b', 300) . '</table><p data-rq-block="a">x</p>');
+        self::assertTrue($result->valid, (string) $result->rule);
+        $result = Parser::parse('<table><tr>' . str_repeat('<td><span>a', 126) . '<td>');
+        self::assertTrue($result->valid, (string) $result->rule);
     }
 
     public function testM26ReviewReproIsALimitError(): void

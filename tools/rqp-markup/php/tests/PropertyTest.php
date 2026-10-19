@@ -57,6 +57,41 @@ final class PropertyTest extends TestCase
         self::assertGreaterThan(1500, $blocks);
     }
 
+    public function testImpliedClosureReadsAsExplicitEndTags(): void
+    {
+        // H-85a: a table with omitted end tags reads as the same table with
+        // the end tags written (the rewrite D'), with the same result.
+        $random = new Randomizer(new Mt19937(self::SEED + 11));
+        for ($n = 0; $n < 500; $n++) {
+            $implied = '<table>';
+            $explicit = '<table>';
+            $groups = $random->getInt(1, 3);
+            for ($g = 0; $g < $groups; $g++) {
+                $group = ['thead', 'tbody', 'tfoot'][$random->getInt(0, 2)];
+                $implied .= "<$group>";
+                $explicit .= "<$group>";
+                for ($r = $random->getInt(1, 3); $r > 0; $r--) {
+                    $implied .= '<tr>';
+                    $explicit .= '<tr>';
+                    for ($c = $random->getInt(1, 3); $c > 0; $c--) {
+                        $cell = $random->getInt(0, 1) === 0 ? 'td' : 'th';
+                        $inner = ['a', '<div>a</div>', '<b>a</b>', ''][$random->getInt(0, 3)];
+                        $implied .= "<$cell>$inner";
+                        $explicit .= "<$cell>$inner</$cell>";
+                    }
+                    $explicit .= '</tr>';
+                }
+                $explicit .= "</$group>";
+            }
+            $tail = '</table><p data-rq-block="a">x</p>';
+            $a = Parser::parse($implied . $tail);
+            $b = Parser::parse($explicit . $tail);
+            self::assertTrue($b->valid, "document $n");
+            self::assertSame($b->valid, $a->valid, "document $n: $implied");
+            self::assertSame(count($b->blocks), count($a->blocks), "document $n");
+        }
+    }
+
     public function testMutatedValidDocumentsKeepTheInvariants(): void
     {
         $random = new Randomizer(new Mt19937(self::SEED + 4));

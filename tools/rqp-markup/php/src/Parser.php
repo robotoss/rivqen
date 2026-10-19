@@ -100,6 +100,9 @@ final class Parser
     /** Length of the random xxh3 secret of nameKey() (xxh3 accepts 136 to 256 bytes). */
     private const NAME_KEY_SECRET_BYTES = 192;
 
+    /** M-09 implied closure: the most steps for one start tag. */
+    private const CLOSURE_STEPS = 3;
+
     private Tokenizer $tokenizer;
 
     /** @var list<string> Names of the token stack, bottom first. */
@@ -139,6 +142,8 @@ final class Parser
     private int $forms = 0;
     /** Stack index of the foreign INTEGRATION/TEXT element whose content must be characters only (M-07), or null. */
     private ?int $charsOnly = null;
+    /** True while the tokens of a `noscript` content C run through the main rules (M-11 item 8). */
+    private bool $inNoscript = false;
     /** Offset after the start tag of a `noscript` in HTML context (M-11), or null. */
     private ?int $noscriptStart = null;
 
@@ -286,6 +291,7 @@ final class Parser
             if ($this->selects > 0 && !isset(Names::SELECT_START[$name])) {
                 throw new MarkupError(ErrorCode::Structure, 'M-08');
             }
+            $this->impliedClosure($name);
             $this->tableStartTag($name);
             if ($name === 'form' && $this->forms > 0) {
                 throw new MarkupError(ErrorCode::Structure, 'M-10'); // item 2
@@ -320,6 +326,33 @@ final class Parser
             $this->region = $index;
         }
         $this->switchState($name, $token->end);
+    }
+
+    /**
+     * M-09 implied closure (H-85a). Outside block content and outside C, a
+     * TABLE_PART or `col` start tag closes F while F is not allowed for the
+     * name: each step is the end tag of F (endTagPop(): M-06 items 1 and 4,
+     * M-26 items 4 and 5, no release of D). F that is a row, row group or
+     * column group must be the current node (condition 2). At most
+     * CLOSURE_STEPS steps; a `table` is never closed because every list has it.
+     */
+    private function impliedClosure(string $name): void
+    {
+        $allowed = Names::TABLE_START_ALLOWED_F[$name] ?? null;
+        if ($allowed === null || $this->blockIndex !== null || $this->inNoscript) {
+            return;
+        }
+        for ($step = 0; $step < self::CLOSURE_STEPS && $this->tableIndex !== []; $step++) {
+            $index = $this->tableIndex[count($this->tableIndex) - 1];
+            $f = $this->names[$index];
+            if ($f === 'template' || isset($allowed[$f])) {
+                return;
+            }
+            if (isset(Names::TABLE_CONTEXT[$f]) && $index !== count($this->names) - 1) {
+                throw new MarkupError(ErrorCode::Structure, 'M-09'); // condition 2
+            }
+            $this->endTagPop($index, $f);
+        }
     }
 
     /**
@@ -773,6 +806,7 @@ final class Parser
         $tablesBefore = $this->open[self::TABLE];
         $outer = $this->tokenizer;
         $this->tokenizer = new Tokenizer($c);
+        $this->inNoscript = true;
         while (true) {
             $token = $this->tokenizer->next();
             if ($token->type === TokenType::Eof) {
@@ -794,6 +828,7 @@ final class Parser
             }
         }
         $this->tokenizer = $outer;
+        $this->inNoscript = false;
         $this->depth = $depth;
         $this->flags[$noscript] = $flags;
     }

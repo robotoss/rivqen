@@ -1,0 +1,16 @@
+{
+  "id": "LIMIT-DEPTH-NOSCRIPT-ELEMENT",
+  "question": "Q-19",
+  "source": "fixtures/rqp/markup/FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ELEMENT/input.html",
+  "headers": [
+    [
+      "Content-Type",
+      "text/html; charset=utf-8"
+    ]
+  ],
+  "views": [
+    "on",
+    "off"
+  ],
+  "probe": null
+}

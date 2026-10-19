@@ -1,0 +1,10 @@
+{
+  "id": "BOM-NONE",
+  "question": "Q-20",
+  "source": "tools/webview-lab/host/pages/q20-bom.html",
+  "headers": [],
+  "views": [
+    "on"
+  ],
+  "probe": "#m"
+}

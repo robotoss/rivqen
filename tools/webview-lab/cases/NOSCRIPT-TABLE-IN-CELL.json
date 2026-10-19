@@ -1,0 +1,16 @@
+{
+  "id": "NOSCRIPT-TABLE-IN-CELL",
+  "question": "Q-19",
+  "source": "fixtures/rqp/markup/FX-RQ-MARKUP-NOSCRIPT-TABLE-IN-CELL/input.html",
+  "headers": [
+    [
+      "Content-Type",
+      "text/html; charset=utf-8"
+    ]
+  ],
+  "views": [
+    "on",
+    "off"
+  ],
+  "probe": null
+}

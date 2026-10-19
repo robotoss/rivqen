@@ -59,13 +59,16 @@ const BREAKOUT = names(`b big blockquote body br center code dd div dl dt em emb
   meta nobr ol p pre ruby s small span strike strong sub sup table tt u ul var`);
 const INTEGRATION = names("annotation-xml desc foreignobject mi mn mo ms mtext title");
 const BLOCK_HTML = names(`article aside div footer ${H} header main nav p section span title`);
-// M-22 item 2 after H-78: the names that M-22 keeps.
-const FORBIDDEN_CONTENT = names(`body frame frameset head html noembed noframes noscript optgroup option plaintext select
-  template textarea title xmp`);
+// M-22 item 2 after H-78, H-94 and H-95: the names that M-22 keeps (template and noscript left it).
+const FORBIDDEN_CONTENT = names(`body frame frameset head html noembed noframes optgroup option plaintext select
+  textarea title xmp`);
+// M-22 item 6 (H-94, H-97): the attribute of a declarative shadow root on an HTML template start tag.
+const SHADOW_ROOT_MODE = "shadowrootmode";
 // The patch content rule (manifest-patch.md section 4 item 1, H-78): not markup rules. A block with
 // these names is valid; a patch that brings them is rejected. PATCH_FORBIDDEN: start tags in HTML
-// context of the content; FOREIGN_ALLOWED (H-73): the only start tags in a foreign region of it.
-const PATCH_FORBIDDEN = names("base basefont bgsound embed iframe link meta object script style");
+// context of the content (noscript: H-96); FOREIGN_ALLOWED (H-73): the only start tags in a foreign
+// region of it.
+const PATCH_FORBIDDEN = names("base basefont bgsound embed iframe link meta noscript object script style");
 const FOREIGN_ALLOWED = names(`svg g path circle ellipse line polyline polygon rect defs symbol use title desc lineargradient
   radialgradient stop clippath mask pattern marker text tspan filter feblend fecolormatrix fecomponenttransfer fecomposite
   fedisplacementmap fedropshadow feflood fefunca fefuncb fefuncg fefuncr fegaussianblur femerge femergenode femorphology
@@ -238,11 +241,19 @@ function noop() {}
  * table parts (F can be an element around the noscript element) and M-12. The details of the
  * item 8 classes end with "in noscript". M-06 in C needs no class: a crossing or a stray end tag
  * in C is already M-11 item 5.
+ *
+ * Item 10 (H-95): when the noscript element is in the content of an html block, the caller gives
+ * `content`. It gets each DOCTYPE token of C (M-22 item 1) and each start tag in HTML context of C
+ * (M-22 items 2, 3 and 6, M-24), with the names of the open elements of C below it (all pushed in
+ * HTML context: a start tag in a foreign region of C is not a content-rule tag). Item 5 is M-23
+ * for C, so end tags need no call.
  * @param {string} c
  * @param {Findings} f
- * @param {{ inCell: boolean, outer?: DepthCounter | null, outerFamily?: string | null, tableCurrentOver?: Set<string> }} ctx
+ * @param {{ inCell: boolean, outer?: DepthCounter | null, outerFamily?: string | null, tableCurrentOver?: Set<string>,
+ *   content?: ((tag: { name: string, selfClosing: boolean, attrNames: string[] } | null, open: string[]) => void) | null }} ctx
  *   outer: the main-pass counter while the noscript element is the current node; outerFamily: F of
- *   the main pass (M-09; null for none or a template); tableCurrentOver: details of M-09 condition 2
+ *   the main pass (M-09; null for none or a template); tableCurrentOver: details of M-09 condition 2;
+ *   content: the content rules for the tokens of C (item 10; a null tag is a DOCTYPE token)
  */
 export function checkNoscript(c, f, ctx) {
   const r = checkNoscriptContent(c, ctx.outer ?? null);
@@ -294,6 +305,8 @@ export function checkNoscript(c, f, ctx) {
         }
         return;
       }
+      // Item 10 (H-95): the content rules on a start tag in HTML context of C, before its push.
+      ctx.content?.({ name, selfClosing: sc, attrNames: t.attrs.map((a) => a.name) }, stack);
       const parents = allowedParents(name);
       if (parents !== null || name === "table") {
         const fam = family();
@@ -340,6 +353,7 @@ export function checkNoscript(c, f, ctx) {
     onDoctype() {
       if (end >= 0) return;
       if (restrict >= 0) f.add(restrictClass(), "doctype in noscript");
+      ctx.content?.(null, stack); // item 10: M-22 item 1
     },
     onCharacter: noop,
     onNullCharacter: noop,
@@ -469,12 +483,14 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
   };
   const restrictClass = () => (TEXT.has(stack[restrict].name) && !INTEGRATION.has(stack[restrict].name) ? "M-07.4" : "M-07.3");
   // M-11 item 8 (H-71): the main-pass state while the noscript element is the current node.
-  const noscriptContext = () => ({ inCell: noscriptInCell, outer: depth, outerFamily: tableContext()?.name ?? null, tableCurrentOver });
-  const isOpen = (n) => stack.some((e) => e.name === n && !e.foreign);
-  const openInContent = (set) => {
-    for (let i = stack.length - 1; i > (block?.index ?? stack.length); i--) if (set.has(stack[i].name)) return true;
-    return false;
-  };
+  // M-11 item 10 (H-95): in the content of an html block, the content rules also apply to C.
+  const noscriptContext = () => ({
+    inCell: noscriptInCell,
+    outer: depth,
+    outerFamily: tableContext()?.name ?? null,
+    tableCurrentOver,
+    content: block !== null && block.html ? noscriptContentRules : null,
+  });
 
   const popTo = (i) => {
     for (let k = stack.length - 1; k >= i; k--) {
@@ -517,42 +533,80 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
     }
   };
 
-  // Block rules M-22 to M-24 for a start tag in the content of an html block.
-  // Class names: "M-22.2:<name>" for a name that M-22 keeps (H-78) in HTML context. M-24 applies
-  // in HTML context only. The patch content rule (H-78) goes to patchFindings, not to f2:
-  // "patch.element:<name>" for a name in PATCH_FORBIDDEN in HTML context, "patch.foreign" for a
-  // start tag in a foreign region of the content whose name is not in FOREIGN_ALLOWED (H-73).
-  const contentStartTag = (name, selfClosing, f2, inForeign) => {
-    if (inForeign) {
-      if (!FOREIGN_ALLOWED.has(name)) patchFindings.add("patch.foreign", `<${safeName(name)}>`);
-      return;
-    }
-    if (FORBIDDEN_CONTENT.has(name)) f2.add(`M-22.2:${name}`);
-    if (PATCH_FORBIDDEN.has(name)) patchFindings.add(`patch.element:${name}`);
-    if (selfClosing && !VOID.has(name) && name !== "svg" && name !== "math") f2.add("M-22.3", `<${safeName(name)}/>`);
+  // Block rules M-22 items 2, 3 and 6 and M-24 for a start tag in HTML context of the content of an
+  // html block. `stk` is the token stack before the start tag: the stack of the pass, or (M-11 item
+  // 10, H-95) that stack with the open elements of the noscript content C above it. `add(cls,
+  // detail)` records a class. Class names: "M-22.2:<name>" for a name that M-22 keeps (H-78);
+  // "M-22.6" for a template with a shadowrootmode attribute (H-94, H-97); "M-24.<item>". The detail
+  // of M-24.g says "in template" when F is none because the search for F stops at a template (H-94).
+  const contentRules = (name, selfClosing, attrNames, stk, add) => {
     const b = /** @type {NonNullable<typeof block>} */ (block);
-    if (PCLOSE.has(name) && (b.name === "p" || b.name === "span")) f2.add("M-24.a", `<${name}> in <${b.name}>`);
-    if (HEADINGS.has(name) && (HEADINGS.has(b.name) || openInContent(HEADINGS))) f2.add("M-24.b");
-    if (LIST_ITEMS.has(name) && !openInContent(LISTS)) f2.add("M-24.c", `<${name}>`);
-    if (name === "button" && isOpen("button")) f2.add("M-24.d");
-    if (name === "a" && isOpen("a")) f2.add("M-24.e");
-    if (name === "nobr" && isOpen("nobr")) f2.add("M-24.f");
-    if ((TABLE_PART.has(name) || name === "col") && !openInContent(names("table"))) f2.add("M-24.g", `<${name}>`);
-    if ((name === "rb" || name === "rtc") && (!openInContent(names("ruby")) || openInContent(names("rb rp rt rtc")))) f2.add("M-24.h");
-    if ((name === "rp" || name === "rt") && (!openInContent(names("ruby")) || openInContent(names("rb rp rt")))) f2.add("M-24.i");
+    const isOpenIn = (n) => stk.some((e) => e.name === n && !e.foreign);
+    const openIn = (set) => {
+      for (let i = stk.length - 1; i > b.index; i--) if (set.has(stk[i].name)) return true;
+      return false;
+    };
+    /** M-09: the nearest table-family entry; the search stops at a template ("template"). */
+    const family = () => {
+      for (let i = stk.length - 1; i >= 0; i--) {
+        if (stk[i].name === "template") return "template";
+        if (TABLE_FAMILY.has(stk[i].name)) return stk[i].name;
+      }
+      return null;
+    };
+    if (FORBIDDEN_CONTENT.has(name)) add(`M-22.2:${name}`, null);
+    if (name === "template" && attrNames.includes(SHADOW_ROOT_MODE)) add("M-22.6", null);
+    if (selfClosing && !VOID.has(name) && name !== "svg" && name !== "math") add("M-22.3", `<${safeName(name)}/>`);
+    if (PCLOSE.has(name) && (b.name === "p" || b.name === "span")) add("M-24.a", `<${name}> in <${b.name}>`);
+    if (HEADINGS.has(name) && (HEADINGS.has(b.name) || openIn(HEADINGS))) add("M-24.b", null);
+    if (LIST_ITEMS.has(name) && !openIn(LISTS)) add("M-24.c", `<${name}>`);
+    if (name === "button" && isOpenIn("button")) add("M-24.d", null);
+    if (name === "a" && isOpenIn("a")) add("M-24.e", null);
+    if (name === "nobr" && isOpenIn("nobr")) add("M-24.f", null);
+    const fam = family();
+    if (TABLE_PART.has(name) || name === "col") {
+      // M-24 item g (H-94): a table opened in the content is open, and F is not none.
+      if (fam === "template") add("M-24.g", `<${name}> in template`);
+      else if (fam === null || !openIn(names("table"))) add("M-24.g", `<${name}>`);
+    }
+    if ((name === "rb" || name === "rtc") && (!openIn(names("ruby")) || openIn(names("rb rp rt rtc")))) add("M-24.h", null);
+    if ((name === "rp" || name === "rt") && (!openIn(names("ruby")) || openIn(names("rb rp rt")))) add("M-24.i", null);
     if (LIST_ITEMS.has(name)) {
-      for (let i = stack.length - 1; i > b.index; i--) {
-        if (LISTS.has(stack[i].name)) break;
-        if (LIST_ITEMS.has(stack[i].name)) {
-          f2.add("M-24.j");
+      for (let i = stk.length - 1; i > b.index; i--) {
+        if (LISTS.has(stk[i].name)) break;
+        if (LIST_ITEMS.has(stk[i].name)) {
+          add("M-24.j", null);
           break;
         }
       }
     }
-    if (!TABLE_PART.has(name) && name !== "col") {
-      const fam = tableContext();
-      if (fam !== null && ROW_CONTEXT.has(fam.name)) f2.add("M-24.k", `<${name}> in <${fam.name}>`);
+    if (!TABLE_PART.has(name) && name !== "col" && fam !== null && ROW_CONTEXT.has(fam)) add("M-24.k", `<${name}> in <${fam}>`);
+  };
+
+  // Block rules for a start tag in the content of an html block (contentRules), and the patch
+  // content rule (H-78), which goes to patchFindings, not to f2: "patch.element:<name>" for a name
+  // in PATCH_FORBIDDEN in HTML context (noscript: H-96), "patch.foreign" for a start tag in a
+  // foreign region of the content whose name is not in FOREIGN_ALLOWED (H-73).
+  const contentStartTag = (name, selfClosing, attrNames, f2, inForeign) => {
+    if (inForeign) {
+      if (!FOREIGN_ALLOWED.has(name)) patchFindings.add("patch.foreign", `<${safeName(name)}>`);
+      return;
     }
+    if (PATCH_FORBIDDEN.has(name)) patchFindings.add(`patch.element:${name}`);
+    contentRules(name, selfClosing, attrNames, stack, (cls, detail) => f2.add(cls, detail));
+  };
+
+  // M-11 item 10 (H-95): the content rules on the tokens of the noscript content C when the
+  // noscript element is in the content of an html block. The classes are "M-11.10" with the
+  // content-rule class as the detail ("M-24.a", "M-22.1", ...).
+  const noscriptContentRules = (tag, open) => {
+    const add = (cls) => blockFindings.add("M-11.10", cls);
+    if (tag === null) {
+      add("M-22.1");
+      return;
+    }
+    const stk = [...stack, ...open.map((name) => ({ name, foreign: false }))];
+    contentRules(tag.name, tag.selfClosing, tag.attrNames, stk, add);
   };
 
   const blockStart = (t, name, inForeign) => {
@@ -594,7 +648,7 @@ export function classify(bytes, { charset = null, blocks = false } = {}) {
       const isBlockTag = t.attrs.some((a) => a.name === "data-rq-block");
       if (block !== null && block.html) {
         if (isBlockTag) blockFindings.add("M-17");
-        else contentStartTag(name, sc, blockFindings, inForeign);
+        else contentStartTag(name, sc, attrNames, blockFindings, inForeign);
       } else if (isBlockTag && blocks) {
         newBlock = blockStart(t, name, inForeign);
       } else if (isBlockTag) {

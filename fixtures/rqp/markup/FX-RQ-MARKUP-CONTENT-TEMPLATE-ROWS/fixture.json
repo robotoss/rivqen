@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-ROWS",
+  "description": "A row template in a cell of a table of the content: the tr start tag in the template has F none, although a table of the content is open (H-94: M-24 item g)",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

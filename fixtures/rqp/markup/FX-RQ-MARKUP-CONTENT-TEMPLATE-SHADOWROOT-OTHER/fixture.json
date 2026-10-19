@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-SHADOWROOT-OTHER",
+  "description": "A template element in the content with the other shadowroot attributes, a data-shadowrootmode attribute and the text shadowrootmode in a value (H-97: only the attribute shadowrootmode counts; valid)",
+  "rules": [
+    "M-22"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "x<template shadowrootclonable shadowrootdelegatesfocus shadowrootserializable data-shadowrootmode=\"open\" title=\"shadowrootmode\">t</template>"
+      }
+    ]
+  }
+}

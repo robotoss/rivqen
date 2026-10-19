@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-NOSCRIPT-PHRASING",
+  "description": "noscript with phrasing content C in a span block and in a p block (H-95: M-22 to M-24 hold for the tags of C; valid)",
+  "rules": [
+    "M-11",
+    "M-24"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "s",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"s\">",
+        "content": "a<noscript>Enable <b>JavaScript</b></noscript>b"
+      },
+      {
+        "id": "p",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"p\">",
+        "content": "a<noscript><a href=\"/x\"><img src=\"/i.png\" alt=\"\"></a></noscript>b"
+      }
+    ]
+  }
+}

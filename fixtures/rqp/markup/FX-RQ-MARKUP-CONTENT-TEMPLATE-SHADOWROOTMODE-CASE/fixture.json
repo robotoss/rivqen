@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-SHADOWROOTMODE-CASE",
+  "description": "A template element in the content with a shadowrootmode attribute in mixed case and without a value (H-94, H-97: M-22 item 6)",
+  "rules": [
+    "M-22"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

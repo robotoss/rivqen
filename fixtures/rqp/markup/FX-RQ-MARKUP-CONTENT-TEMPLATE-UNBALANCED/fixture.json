@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-UNBALANCED",
+  "description": "The end tag of a template element of the content while a b element of the template is open",
+  "rules": [
+    "M-23"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-NOSCRIPT-DOCTYPE",
+  "description": "A DOCTYPE token in noscript content C in the content: M-11 item 10 applies M-22 item 1 (stricter reading of H-95)",
+  "rules": [
+    "M-11",
+    "M-22"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

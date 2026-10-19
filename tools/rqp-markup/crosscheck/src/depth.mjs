@@ -17,10 +17,15 @@
 //
 // The counter applies the implied closure of markup.md M-09 (H-85a): before a start tag with a name
 // in TABLE_PART or col in HTML context, while F is not an allowed F, it applies the end tag of F, at
-// most three times. It does so outside the noscript content C only (the copy of the pass of M-11
-// item 8 and the scripting-disabled view of C have no closure). The counter does not know blocks: in
-// block content the rule has no closure, but a valid document has no closure shape there (M-09), so
-// the counter gives the D of the rule on every valid document.
+// most three times. It does so outside block content and outside the noscript content C only (the
+// copy of the pass of M-11 item 8 and the scripting-disabled view of C have no closure).
+//
+// The counter knows the block content (H-94): after a start tag in HTML context with a data-rq-block
+// attribute, while no block element is on its stack, the elements above that element are the content.
+// It uses this for the closure and for the rule classes of WP-17 S5 that parse5 cannot show:
+// M-22 item 6 (a template with shadowrootmode in the content; parse5 8.0.1 has no declarative shadow
+// DOM) and M-24 item g (a table part or col in a template of the content; parse5 8.0.1 stops its table
+// scope only at table and html, not at template).
 
 import { Parser, Tokenizer, TokenizerMode, defaultTreeAdapter } from "parse5";
 import { decodeUtf8 } from "./utf8.mjs";
@@ -74,7 +79,14 @@ export const CLASSES = {
   noscriptTablePart: "M-11-table-part", // H-38: a table part or col start tag in C without a table on the C stack
   templateFor: "M-10-template-for", // H-43: an HTML template start tag with a for attribute (content patching; parse5 8.0.1 does not implement it)
   noscriptDocumentTag: "M-11-document-tag", // H-71, M-11 item 7: an html, body or head start or end tag in C
+  shadowRootMode: "M-22-shadowrootmode", // H-94, H-97, M-22 item 6: an HTML template start tag with a shadowrootmode attribute in block content
+  templateTablePart: "M-24-template-table-part", // H-94, M-24 item g: a table part or col start tag in block content whose F search stops at a template
 };
+
+/** M-22 item 6 (H-97): the attribute of a declarative shadow root (any value, any case). */
+const SHADOW_ROOT_MODE = "shadowrootmode";
+/** M-14: the block attribute. */
+const BLOCK_ATTR = "data-rq-block";
 
 /** M-11 item 7 (H-71): tag names that C must not contain. */
 const DOCUMENT_TAGS = names("html body head");
@@ -102,6 +114,13 @@ export class DepthCounter {
     this.closure = closure;
     /** Number of end tags of F that the implied closure applied (test and statistics only). */
     this.closures = 0;
+    /** Stack index of the open block element (HTML context), or -1: the elements above it are the content. */
+    this.block = -1;
+  }
+
+  /** True while a block element is on the stack (the next token is in the block content). */
+  get inContent() {
+    return this.block >= 0;
   }
 
   get inForeign() {
@@ -122,6 +141,7 @@ export class DepthCounter {
     c.roots = this.roots;
     c.classes = this.classes;
     c.closure = this.closure;
+    c.block = this.block;
     return c;
   }
 
@@ -136,12 +156,17 @@ export class DepthCounter {
    * Called in HTML context only, so no element on the stack was pushed in a foreign region.
    */
   #tableContext() {
+    return this.#familySearch().f;
+  }
+
+  /** The search for F of M-09: F (or null), and whether a template stopped the search. */
+  #familySearch() {
     for (let i = this.stack.length - 1; i >= 0; i--) {
       const e = this.stack[i];
-      if (e.name === "template") return null;
-      if (TABLE_FAMILY.has(e.name)) return e;
+      if (e.name === "template") return { f: null, template: true };
+      if (TABLE_FAMILY.has(e.name)) return { f: e, template: false };
     }
-    return null;
+    return { f: null, template: false };
   }
 
   /**
@@ -158,7 +183,8 @@ export class DepthCounter {
       }
       return;
     }
-    if (this.closure) this.#impliedClosure(name);
+    // H-85a: no implied closure in block content (M-09 rejects there) and in C (`closure` off).
+    if (this.closure && !this.inContent) this.#impliedClosure(name);
     // Elements that the tree builder inserts implicitly for this start tag (M-26, M-09).
     const f = this.#tableContext();
     this.#classifyStart(name, f, attrNames);
@@ -181,6 +207,7 @@ export class DepthCounter {
     if (VOID.has(name)) return;
     this.stack.push({ name, foreign: false, dirty: false, marked: false, implied: new Set() });
     if (name === "svg" || name === "math") this.roots++;
+    if (!this.inContent && attrNames.includes(BLOCK_ATTR)) this.block = this.stack.length - 1;
     this.#raise(1);
   }
 
@@ -221,6 +248,11 @@ export class DepthCounter {
     }
     if (name === "form" && this.stack.some((e) => e.name === "form")) this.classes.add(CLASSES.form);
     if (name === "template" && attrNames.includes("for")) this.classes.add(CLASSES.templateFor);
+    if (this.inContent) {
+      // WP-17 S5: the content rules that parse5 cannot show (H-94, H-97).
+      if (name === "template" && attrNames.includes(SHADOW_ROOT_MODE)) this.classes.add(CLASSES.shadowRootMode);
+      if ((TABLE_PART.has(name) || name === "col") && this.#familySearch().template) this.classes.add(CLASSES.templateTablePart);
+    }
     const top = this.stack[this.stack.length - 1];
     if ((TABLE_PART.has(name) || name === "col" || name === "table") && f !== null && TABLE_CONTEXT.has(f.name) && f !== top) {
       this.classes.add(CLASSES.tableCurrent);
@@ -249,6 +281,7 @@ export class DepthCounter {
       this.stack[this.stack.length - 1].marked = true;
     }
     for (const e of popped) if (!e.foreign && (e.name === "svg" || e.name === "math")) this.roots--;
+    if (this.block >= this.stack.length) this.block = -1;
     const top = popped[0];
     if (popped.length === 1 && !top.dirty && name !== "html" && name !== "body") {
       this.d -= 1 + top.implied.size;

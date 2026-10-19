@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-FOR",
+  "description": "A template element with a for attribute in the content (H-94 keeps M-10 item 3, H-43)",
+  "rules": [
+    "M-10"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

@@ -2,667 +2,1041 @@
   {
     "id": "S5-T-basic",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
-    "expected": "STRUCTURE",
+    "expected": "valid 2",
     "options": {
       "base": "STRUCTURE",
       "t1": "valid 2",
       "t2": "valid 2",
+      "tu": "valid 2",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "valid 2",
-      "t2n2": "valid 2",
-      "tu": "valid 2",
-      "nu": "STRUCTURE"
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
     },
     "input": "<div data-rq-block=\"a\">x<template id=\"row\"><div class=\"r\"><b>n</b></div></template>z</div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-nested",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
-    "expected": "STRUCTURE",
+    "expected": "valid 2",
     "options": {
       "base": "STRUCTURE",
       "t1": "valid 2",
       "t2": "valid 2",
+      "tu": "valid 2",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "valid 2",
-      "t2n2": "valid 2",
-      "tu": "valid 2",
-      "nu": "STRUCTURE"
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
     },
     "input": "<div data-rq-block=\"a\"><template><template>i</template><script>s()</script></template></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-shadowrootmode-open",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "valid 2",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "valid 2",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><template shadowrootmode=\"open\"><slot></slot></template>light</div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-shadowrootmode-upper",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "valid 2",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "valid 2",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><template SHADOWROOTMODE=closed>x</template></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-shadowrootmode-svg",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
     "expected": "valid 2",
     "options": {
       "base": "valid 2",
       "t1": "valid 2",
       "t2": "valid 2",
+      "tu": "valid 2",
       "n1": "valid 2",
       "n2": "valid 2",
+      "nu": "valid 2",
       "t1n1": "valid 2",
-      "t2n2": "valid 2",
-      "tu": "valid 2",
-      "nu": "valid 2"
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
     },
     "input": "<div data-rq-block=\"a\"><svg><template shadowrootmode=\"open\"></template></svg></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-for",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><?start name=\"p\">old<?end><template for=\"p\">new</template></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-rows-in-cell",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "valid 2",
       "t2": "STRUCTURE",
+      "tu": "valid 2",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "valid 2",
-      "t2n2": "STRUCTURE",
-      "tu": "valid 2",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><table><tr><td><template><tr><td>x</td></tr></template></td></tr></table></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-rows-no-table",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><template><tr><td>x</td></tr></template></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-table-in-template",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
-    "expected": "STRUCTURE",
+    "expected": "valid 2",
     "options": {
       "base": "STRUCTURE",
       "t1": "valid 2",
       "t2": "valid 2",
+      "tu": "valid 2",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "valid 2",
-      "t2n2": "valid 2",
-      "tu": "valid 2",
-      "nu": "STRUCTURE"
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
     },
     "input": "<div data-rq-block=\"a\"><template><table><tr><td>x</td></tr></table></template></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-caption-td-depth",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "valid 2",
       "t2": "STRUCTURE",
+      "tu": "valid 2",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "valid 2",
-      "t2n2": "STRUCTURE",
-      "tu": "valid 2",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><table><tr><td><template><caption></caption><td>x</td></template></td></tr></table></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-table-scope",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "valid 2",
       "t2": "STRUCTURE",
+      "tu": "valid 2",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "valid 2",
-      "t2n2": "STRUCTURE",
-      "tu": "valid 2",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<section data-rq-block=\"a\"><table><tr><td><template><tfoot></tfoot><table><tr><td>c</td></tr></table></template></td></tr></table>z</section><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-form-table-mode",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "valid 2",
       "t2": "STRUCTURE",
+      "tu": "valid 2",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "valid 2",
-      "t2n2": "STRUCTURE",
-      "tu": "valid 2",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><table><tr><td><template><colgroup></colgroup><form><input></form></template></td></tr></table></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-col-H35",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "valid 2",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "valid 2",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><table><tr><td><template><col><style></template></td></tr></table></div><p data-rq-block=\"b\">f</p></style></template></td></tr></table></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-template-table-context",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><table><template><tr><td>x</td></tr></template></table></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-p-block-div",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<p data-rq-block=\"a\">x<template><div>y</div></template></p><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-a-in-a",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><a href=\"#\">x<template><a href=\"#\">y</a></template></a></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-reconstruct",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
-    "expected": "STRUCTURE",
+    "expected": "valid 2",
     "options": {
       "base": "STRUCTURE",
       "t1": "valid 2",
       "t2": "valid 2",
+      "tu": "valid 2",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "valid 2",
-      "t2n2": "valid 2",
-      "tu": "valid 2",
-      "nu": "STRUCTURE"
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
     },
     "input": "<p><b>x</p><div data-rq-block=\"a\">y<template><i>t</i></template>z</div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-T-eof",
     "study": "S5 T-02",
+    "decision": "H-94",
     "element": "template",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><template>x"
   },
   {
     "id": "S5-N-img",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
-    "expected": "STRUCTURE",
+    "expected": "valid 2",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "valid 2",
       "n2": "valid 2",
+      "nu": "valid 2",
       "t1n1": "valid 2",
-      "t2n2": "valid 2",
-      "tu": "STRUCTURE",
-      "nu": "valid 2"
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
     },
     "input": "<div data-rq-block=\"a\">x<noscript><img src=\"/p.gif\"></noscript>y</div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-N-iframe",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
-    "expected": "STRUCTURE",
+    "expected": "valid 2",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "valid 2",
       "n2": "valid 2",
+      "nu": "valid 2",
       "t1n1": "valid 2",
-      "t2n2": "valid 2",
-      "tu": "STRUCTURE",
-      "nu": "valid 2"
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
     },
     "input": "<div data-rq-block=\"a\"><noscript><iframe src=\"/f\"></iframe></noscript></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-N-text",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
-    "expected": "STRUCTURE",
+    "expected": "valid 2",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "valid 2",
       "n2": "valid 2",
+      "nu": "valid 2",
       "t1n1": "valid 2",
-      "t2n2": "valid 2",
-      "tu": "STRUCTURE",
-      "nu": "valid 2"
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
     },
     "input": "<span data-rq-block=\"a\">x<noscript>Enable JavaScript</noscript></span><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-N-p-block-div",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "valid 2",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "valid 2"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<p data-rq-block=\"a\">x<noscript><div>y</div></noscript>z</p><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-N-p-around",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
-    "expected": "STRUCTURE",
+    "expected": "valid 2",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "valid 2",
       "n2": "STRUCTURE",
+      "nu": "valid 2",
       "t1n1": "valid 2",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "valid 2"
+      "t2n1": "valid 2",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><p>x<noscript><div>y</div></noscript>z</p></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-N-block-end-in-C",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><noscript></div></noscript></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-N-block-start-in-C",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><noscript><p data-rq-block=\"b\">x</p></noscript></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-N-comment-hides-end",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><noscript><!--</noscript>--></noscript></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-N-a-in-a",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "valid 2",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "valid 2"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><a href=\"#\"><noscript><a href=\"#\">x</a></noscript></a></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-N-button",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "valid 2",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "valid 2"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><button><noscript><button>x</button></noscript></button></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-N-li",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "valid 2",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "valid 2"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><ul><li><noscript><li>x</li></noscript></li></ul></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-N-table-part",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><table><tr><td><noscript><td>x</td></noscript></td></tr></table></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-N-mxss-shape",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
-    "expected": "STRUCTURE",
+    "expected": "valid 2",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "valid 2",
       "n2": "valid 2",
+      "nu": "valid 2",
       "t1n1": "valid 2",
-      "t2n2": "valid 2",
-      "tu": "STRUCTURE",
-      "nu": "valid 2"
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
     },
     "input": "<div data-rq-block=\"a\"><noscript><img src=x onerror=alert(1)></noscript></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-N-manifest",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
-    "expected": "STRUCTURE",
+    "expected": "RESERVED",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "RESERVED",
       "n2": "RESERVED",
+      "nu": "RESERVED",
       "t1n1": "RESERVED",
-      "t2n2": "RESERVED",
-      "tu": "STRUCTURE",
-      "nu": "RESERVED"
+      "t2n1": "RESERVED",
+      "t2n2": "RESERVED"
     },
     "input": "<div data-rq-block=\"a\"><noscript><script type=\"application/rivqen-manifest+json\">{}</script></noscript></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-N-svg-in-C",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
-    "expected": "STRUCTURE",
+    "expected": "valid 2",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "valid 2",
       "n2": "valid 2",
+      "nu": "valid 2",
       "t1n1": "valid 2",
-      "t2n2": "valid 2",
-      "tu": "STRUCTURE",
-      "nu": "valid 2"
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
     },
     "input": "<div data-rq-block=\"a\"><noscript><svg><path d=\"M0\"></svg></noscript></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-N-eof",
     "study": "S5 T-02",
+    "decision": "H-95",
     "element": "noscript",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><noscript><img src=x>"
   },
   {
     "id": "S5-X-noscript-in-template",
     "study": "S5 T-02",
+    "decision": "H-94, H-95",
     "element": "both",
-    "expected": "STRUCTURE",
+    "expected": "valid 2",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "valid 2",
-      "t2n2": "valid 2",
-      "tu": "STRUCTURE",
-      "nu": "STRUCTURE"
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
     },
     "input": "<div data-rq-block=\"a\"><template><noscript><img src=x></noscript></template></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-X-template-in-noscript",
     "study": "S5 T-02",
+    "decision": "H-94, H-95",
     "element": "both",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
       "t1n1": "STRUCTURE",
-      "t2n2": "STRUCTURE",
-      "tu": "STRUCTURE",
-      "nu": "STRUCTURE"
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
     "input": "<div data-rq-block=\"a\"><noscript><template>t</template></noscript></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   },
   {
     "id": "S5-X-p-template-noscript",
     "study": "S5 T-02",
+    "decision": "H-94, H-95",
+    "element": "both",
+    "expected": "valid 2",
+    "options": {
+      "base": "STRUCTURE",
+      "t1": "STRUCTURE",
+      "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
+      "n1": "STRUCTURE",
+      "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
+      "t1n1": "valid 2",
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
+    },
+    "input": "<div data-rq-block=\"a\"><p>x<template><noscript><div>y</div></noscript></template>z</p></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-T-shadowrootmode-outside",
+    "study": "S5 T-06a",
+    "decision": "H-94",
+    "element": "template",
+    "expected": "valid 2",
+    "options": {
+      "base": "valid 2",
+      "t1": "valid 2",
+      "t2": "valid 2",
+      "tu": "valid 2",
+      "n1": "valid 2",
+      "n2": "valid 2",
+      "nu": "valid 2",
+      "t1n1": "valid 2",
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
+    },
+    "input": "<div><template shadowrootmode=\"open\"><slot></slot></template><p data-rq-block=\"a\">x</p></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-T-shadowrootmode-duplicate",
+    "study": "S5 T-06a",
+    "decision": "H-94",
+    "element": "template",
+    "expected": "STRUCTURE",
+    "options": {
+      "base": "STRUCTURE",
+      "t1": "STRUCTURE",
+      "t2": "STRUCTURE",
+      "tu": "valid 2",
+      "n1": "STRUCTURE",
+      "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
+      "t1n1": "STRUCTURE",
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
+    },
+    "input": "<div data-rq-block=\"a\"><template id=\"t\" shadowrootmode=\"\" shadowrootmode=\"open\">x</template></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-T-shadowroot-other",
+    "study": "S5 T-06a",
+    "decision": "H-94",
+    "element": "template",
+    "expected": "valid 2",
+    "options": {
+      "base": "STRUCTURE",
+      "t1": "valid 2",
+      "t2": "valid 2",
+      "tu": "valid 2",
+      "n1": "STRUCTURE",
+      "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
+      "t1n1": "valid 2",
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
+    },
+    "input": "<div data-rq-block=\"a\"><template shadowrootclonable shadowrootdelegatesfocus data-shadowrootmode=\"open\">x</template></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-T-table-cell-template",
+    "study": "S5 T-06a",
+    "decision": "H-94",
+    "element": "template",
+    "expected": "valid 2",
+    "options": {
+      "base": "STRUCTURE",
+      "t1": "valid 2",
+      "t2": "valid 2",
+      "tu": "valid 2",
+      "n1": "STRUCTURE",
+      "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
+      "t1n1": "valid 2",
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
+    },
+    "input": "<div data-rq-block=\"a\"><table><tr><td><template><b>u</b></template></td></tr></table></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-T-table-in-template-col",
+    "study": "S5 T-06a",
+    "decision": "H-94",
+    "element": "template",
+    "expected": "valid 2",
+    "options": {
+      "base": "STRUCTURE",
+      "t1": "valid 2",
+      "t2": "valid 2",
+      "tu": "valid 2",
+      "n1": "STRUCTURE",
+      "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
+      "t1n1": "valid 2",
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
+    },
+    "input": "<div data-rq-block=\"a\"><template><table><col></table></template></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-T-in-table-context",
+    "study": "S5 T-06a",
+    "decision": "H-94",
+    "element": "template",
+    "expected": "STRUCTURE",
+    "options": {
+      "base": "STRUCTURE",
+      "t1": "STRUCTURE",
+      "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
+      "n1": "STRUCTURE",
+      "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
+      "t1n1": "STRUCTURE",
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
+    },
+    "input": "<div data-rq-block=\"a\"><table><template><b>x</b></template></table></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-N-doctype-in-C",
+    "study": "S5 T-06a",
+    "decision": "H-95",
+    "element": "noscript",
+    "expected": "STRUCTURE",
+    "options": {
+      "base": "STRUCTURE",
+      "t1": "STRUCTURE",
+      "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
+      "n1": "STRUCTURE",
+      "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
+      "t1n1": "STRUCTURE",
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
+    },
+    "input": "<div data-rq-block=\"a\"><noscript><!DOCTYPE html>x</noscript></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-N-textarea-in-C",
+    "study": "S5 T-06a",
+    "decision": "H-95",
+    "element": "noscript",
+    "expected": "STRUCTURE",
+    "options": {
+      "base": "STRUCTURE",
+      "t1": "STRUCTURE",
+      "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
+      "n1": "STRUCTURE",
+      "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
+      "t1n1": "STRUCTURE",
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
+    },
+    "input": "<div data-rq-block=\"a\"><noscript><textarea></noscript></textarea></noscript></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-N-table-foster-in-C",
+    "study": "S5 T-06a",
+    "decision": "H-95",
+    "element": "noscript",
+    "expected": "STRUCTURE",
+    "options": {
+      "base": "STRUCTURE",
+      "t1": "STRUCTURE",
+      "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
+      "n1": "STRUCTURE",
+      "n2": "STRUCTURE",
+      "nu": "valid 2",
+      "t1n1": "STRUCTURE",
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
+    },
+    "input": "<div data-rq-block=\"a\"><noscript><table><b>x</b></table></noscript></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-N-ruby-in-C",
+    "study": "S5 T-06a",
+    "decision": "H-95",
+    "element": "noscript",
+    "expected": "STRUCTURE",
+    "options": {
+      "base": "STRUCTURE",
+      "t1": "STRUCTURE",
+      "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
+      "n1": "STRUCTURE",
+      "n2": "STRUCTURE",
+      "nu": "valid 2",
+      "t1n1": "STRUCTURE",
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
+    },
+    "input": "<div data-rq-block=\"a\"><noscript><rt>x</rt></noscript></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-N-heading-in-C",
+    "study": "S5 T-06a",
+    "decision": "H-95",
+    "element": "noscript",
+    "expected": "STRUCTURE",
+    "options": {
+      "base": "STRUCTURE",
+      "t1": "STRUCTURE",
+      "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
+      "n1": "STRUCTURE",
+      "n2": "STRUCTURE",
+      "nu": "valid 2",
+      "t1n1": "STRUCTURE",
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
+    },
+    "input": "<h2 data-rq-block=\"a\">T<noscript><h3>x</h3></noscript></h2><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-N-list-in-C",
+    "study": "S5 T-06a",
+    "decision": "H-95",
+    "element": "noscript",
+    "expected": "valid 2",
+    "options": {
+      "base": "STRUCTURE",
+      "t1": "STRUCTURE",
+      "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
+      "n1": "valid 2",
+      "n2": "valid 2",
+      "nu": "valid 2",
+      "t1n1": "valid 2",
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
+    },
+    "input": "<div data-rq-block=\"a\"><noscript><ul><li>x</li></ul></noscript></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-N-span-block-b",
+    "study": "S5 T-06a",
+    "decision": "H-95",
+    "element": "noscript",
+    "expected": "valid 2",
+    "options": {
+      "base": "STRUCTURE",
+      "t1": "STRUCTURE",
+      "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
+      "n1": "valid 2",
+      "n2": "valid 2",
+      "nu": "valid 2",
+      "t1n1": "valid 2",
+      "t2n1": "valid 2",
+      "t2n2": "valid 2"
+    },
+    "input": "<span data-rq-block=\"a\">a<noscript>Enable <b>JavaScript</b></noscript>b</span><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-X-p-block-template-noscript",
+    "study": "S5 T-06a",
+    "decision": "H-94, H-95",
     "element": "both",
     "expected": "STRUCTURE",
     "options": {
       "base": "STRUCTURE",
       "t1": "STRUCTURE",
       "t2": "STRUCTURE",
+      "tu": "STRUCTURE",
       "n1": "STRUCTURE",
       "n2": "STRUCTURE",
-      "t1n1": "valid 2",
-      "t2n2": "valid 2",
-      "tu": "STRUCTURE",
-      "nu": "STRUCTURE"
+      "nu": "STRUCTURE",
+      "t1n1": "STRUCTURE",
+      "t2n1": "STRUCTURE",
+      "t2n2": "STRUCTURE"
     },
-    "input": "<div data-rq-block=\"a\"><p>x<template><noscript><div>y</div></noscript></template>z</p></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+    "input": "<p data-rq-block=\"a\"><template><noscript><div>y</div></noscript></template></p><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "S5-T-block-in-template",
+    "study": "S5 T-06a",
+    "decision": "H-94",
+    "element": "template",
+    "expected": "NESTED|STRUCTURE",
+    "options": {
+      "base": "STRUCTURE",
+      "t1": "NESTED",
+      "t2": "NESTED",
+      "tu": "NESTED",
+      "n1": "STRUCTURE",
+      "n2": "STRUCTURE",
+      "nu": "STRUCTURE",
+      "t1n1": "NESTED",
+      "t2n1": "NESTED",
+      "t2n2": "NESTED"
+    },
+    "input": "<div data-rq-block=\"a\"><template><p data-rq-block=\"b\">x</p></template></div><span data-rq-block=\"z\">y<a href=\"#\">z</a>w</span>"
   }
 ]

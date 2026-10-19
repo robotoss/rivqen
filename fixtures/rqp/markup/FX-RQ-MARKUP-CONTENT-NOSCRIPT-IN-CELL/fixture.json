@@ -1,0 +1,26 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-NOSCRIPT-IN-CELL",
+  "description": "noscript in a block in a table cell, and noscript in a cell of a table of the content (H-95: valid)",
+  "rules": [
+    "M-11",
+    "M-19",
+    "M-24"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "c",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"c\">",
+        "content": "<noscript><img src=\"/p.gif\" alt=\"\"></noscript>"
+      },
+      {
+        "id": "d",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"d\">",
+        "content": "<table><tr><td><noscript><img src=\"/q.gif\" alt=\"\"></noscript></td></tr></table>"
+      }
+    ]
+  }
+}

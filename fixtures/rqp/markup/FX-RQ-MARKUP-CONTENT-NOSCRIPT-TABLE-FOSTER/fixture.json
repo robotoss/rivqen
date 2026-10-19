@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-NOSCRIPT-TABLE-FOSTER",
+  "description": "A b directly in a table of noscript content C in the content: M-11 item 10 applies M-24 item k (H-95)",
+  "rules": [
+    "M-11",
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

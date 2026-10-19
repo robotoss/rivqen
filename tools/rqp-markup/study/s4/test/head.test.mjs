@@ -10,7 +10,7 @@ import { IMPLIED_H79, clientAccepts, fullDocument, headPosition } from '../src/h
 import { checkBothViews, checkView } from '../src/head-views.mjs';
 import { boundaries, checkServer } from '../src/head-sweep.mjs';
 import { protocolDocuments } from '../src/inputs.mjs';
-import { findManifestElements } from '../../../../rqp-protocol/src/markup.mjs';
+import { documentHeadStart as shippedHeadStart, findManifestElements } from '../../../../rqp-protocol/src/markup.mjs';
 
 const B = (s) => Buffer.from(s, 'utf8');
 
@@ -85,7 +85,7 @@ test('boundaries: the token boundaries up to the end of the token that ends item
   assert.deepEqual(boundaries(B('x')), [0, 1]);
 });
 
-test('protocol full documents: the h79 client rules give the shipped answer (no stored F changes)', () => {
+test('protocol full documents: the h79 client rules give the H-72 answer for c1 and the shipped H-79a answer for c2', () => {
   let n = 0;
   for (const [name, bytes] of protocolDocuments()) {
     const found = findManifestElements(bytes);
@@ -94,8 +94,21 @@ test('protocol full documents: the h79 client rules give the shipped answer (no 
     const el = found.elements[0];
     const shipped = clientAccepts(bytes, el.start, el.end, 'shipped');
     const h79 = clientAccepts(bytes, el.start, el.end, 'h79');
-    assert.equal(h79.c2, shipped.c1, name);
-    assert.equal(h79.c1, shipped.c1, name);
+    // Changed: the shipped client uses H-79a now (check C2 on the original O), so
+    // c2 of the adopted option h79 is compared with the shipped documentHeadStart on
+    // O. Since S4 T-08 the stored documents include implied-head fixtures
+    // (FX-RQ-C21-IMPLIED-*) that the old option shipped (H-72, head start tag only)
+    // rejects, so the old equalities (c2 == shipped.c1, c1 == shipped.c1) no longer
+    // hold for all documents. What stays: a document that H-72 accepts is accepted by
+    // h79 with both C1 and C2 (no stored full document loses acceptance). The first
+    // fixture where C1 and C2 differ is FX-RQ-C21-BEFORE-HEAD-LANG: C1 on F accepts
+    // it (the walk stops at the manifest as an implied head), C2 on O rejects it.
+    const original = Buffer.concat([bytes.subarray(0, el.start), bytes.subarray(el.end)]);
+    assert.equal(h79.c2, shippedHeadStart(original) === el.start, name);
+    if (shipped.c1) assert.ok(h79.c1 && h79.c2, name);
+    if (name === 'body:FX-RQ-C21-BEFORE-HEAD-LANG') {
+      assert.deepEqual([shipped.c1, h79.c1, h79.c2], [false, true, false], name);
+    }
   }
   assert.ok(n >= 40, `only ${n} full documents`);
 });

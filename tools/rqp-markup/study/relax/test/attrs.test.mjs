@@ -3,10 +3,15 @@
 
 // The attribute rule of manifest-patch section 4.2 in the study, and the proposed items
 // for foreign content (report section 5.4).
+//
+// Changed (S4 T-08): the study rule models the pre-S4 attribute rule (H-48, H-59, H-73).
+// The tests compare it with the frozen pre-S4 reference (../../baseline/reference-s3.mjs),
+// not with the shipped reference, which follows H-77, H-78 and H-83 now
+// (passesAttributeRule is passesPatchContentRule there).
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { attributeRejected, passesAttributeRule } from '../../../../rqp-protocol/src/markup.mjs';
+import { attributeRejected, passesAttributeRule } from '../../baseline/reference-s3.mjs';
 import { makeRng } from '../../../crosscheck/src/generator.mjs';
 import { attributeReason, attributesOf, blockAttributeStats, foreignReasons, walkStartTags } from '../src/attrs.mjs';
 import { analyzeRelaxed, flagsOf } from '../src/markup-relax.mjs';

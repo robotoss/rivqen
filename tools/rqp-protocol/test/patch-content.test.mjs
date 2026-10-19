@@ -170,7 +170,8 @@ test('H-97: a template with shadowrootmode passes the patch content rule; the an
   const doc = (content) =>
     Buffer.from(`<!DOCTYPE html><html><head><title>T</title></head><body><p data-rq-block="price">${content}</p></body></html>`, 'latin1');
   assert.equal(analyze(doc('<template><span>x</span></template>')).valid, true);
-  for (const attr of ['shadowrootmode="open"', 'SHADOWROOTMODE', 'shadowrootmode=open shadowrootmode=closed']) {
+  // DL-056: the old Chromium name `shadowroot` is rejected the same way.
+  for (const attr of ['shadowrootmode="open"', 'SHADOWROOTMODE', 'shadowrootmode=open shadowrootmode=closed', 'shadowroot="open"', 'ShadowRoot', 'shadowroot=a shadowroot=b']) {
     const content = `<template ${attr}><span>x</span></template>`;
     assert.equal(why(content), null, attr);
     assert.equal(analyze(doc(content)).valid, false, attr);

@@ -1,286 +1,285 @@
 id	url	category	kind	lang	source	http_status	bytes	truncated	corpus	platform
-p0001	https://www.bbc.com/news	news	home	en	listed	200	384006	no	yes	nextjs
+p0001	https://www.bbc.com/news	news	home	en	listed	200	399640	no	yes	nextjs
 p0001d	https://www.bbc.com/future/article/20260128-how-to-make-google-put-trusted-sources-up-top-when-you-search	news	article	en	discovered	200	319700	no	yes	nextjs
-p0002	https://www.bbc.co.uk/	news	home	en	listed	200	651446	no	yes	other
+p0002	https://www.bbc.co.uk/	news	home	en	listed	200	642052	no	yes	other
 p0003	https://edition.cnn.com/	news	home	en	listed	200	5242881	yes	yes	other
-p0004	https://www.theguardian.com/international	news	home	en	listed	200	1453482	no	yes	other
-p0004d	https://www.theguardian.com/environment/2026/oct/19/can-countries-deliver-on-a-deal-to-save-the-worlds-plants-and-animals	news	article	en	discovered	200	356114	no	yes	other
+p0004	https://www.theguardian.com/international	news	home	en	listed	200	1453941	no	yes	other
+p0004d	https://www.theguardian.com/film/2026/oct/19/you-can-see-everything-movie-spoilers-success	news	article	en	discovered	200	338434	no	yes	other
 p0005	https://www.nytimes.com/	news	home	en	listed	403	771	no	no: HTTP 403	
 p0006	https://www.reuters.com/	news	home	en	listed	401	774	no	no: HTTP 401	
 p0007	https://apnews.com/	news	home	en	listed	403	5816	no	no: HTTP 403	
-p0008	https://www.washingtonpost.com/	news	home	en	listed	200	4528793	no	yes	wordpress
+p0008	https://www.washingtonpost.com/	news	home	en	listed	200	4583561	no	yes	wordpress
 p0008d	https://www.washingtonpost.com/world/2026/10/19/maya-collapse-was-blamed-drought-full-story-is-more-complicated/	news	article	en	discovered	200	929710	no	yes	nextjs
-p0009	https://www.aljazeera.com/	news	home	en	listed	200	392508	no	yes	wordpress
-p0009d	https://www.aljazeera.com/news/liveblog/2026/10/18/iran-war-live-tehran-says-netanyahu-seeks-more-war-yemen-fighting-flares	news	article	en	discovered	200	210343	no	yes	wordpress
-p0010	https://www.npr.org/	news	home	en	listed	200	923909	no	yes	other
+p0009	https://www.aljazeera.com/	news	home	en	listed	200	420314	no	yes	wordpress
+p0009d	https://www.aljazeera.com/news/liveblog/2026/10/18/iran-war-live-tehran-says-netanyahu-seeks-more-war-yemen-fighting-flares	news	article	en	discovered	200	212904	no	yes	wordpress
+p0010	https://www.npr.org/	news	home	en	listed	200	954751	no	yes	other
 p0010d	https://www.npr.org/podcasts/510379/wild-card-with-rachel-martin	news	article	en	discovered	200	249664	no	yes	other
-p0011	https://www.foxnews.com/	news	home	en	listed	200	816290	no	yes	other
-p0011d	https://www.foxnews.com/travel/nearly-800000-travelers-just-voted-name-absolute-best-cruise-lines-2026	news	article	en	discovered	200	448149	no	yes	nuxt
-p0012	https://www.usatoday.com/	news	home	en	listed	200	177347	no	yes	other
-p0012d	https://eu.usatoday.com/story/entertainment/tv-streaming/2026/10/19/cnn-christiane-amanpour-leaving/92330198007/	news	article	en	discovered	200	149342	no	yes	other
+p0011	https://www.foxnews.com/	news	home	en	listed	200	817045	no	yes	other
+p0011d	https://www.foxnews.com/travel/nearly-800000-travelers-just-voted-name-absolute-best-cruise-lines-2026	news	article	en	discovered	200	448603	no	yes	nuxt
+p0012	https://www.usatoday.com/	news	home	en	listed	200	185056	no	yes	other
+p0012d	https://eu.usatoday.com/story/news/nation/2026/10/19/amelia-earhart-expedition-search/92329731007/	news	article	en	discovered	200	163878	no	yes	other
 p0013	https://www.bloomberg.com/	news	home	en	listed	403	13856	no	no: HTTP 403	
-p0014	https://www.theverge.com/	news	home	en	listed	200	902339	no	yes	wordpress
-p0014d	https://www.theverge.com/transportation/1013049/maeving-rm2-electric-motorcycle-review-specs	news	article	en	discovered	200	488871	no	yes	wordpress
-p0015	https://techcrunch.com/	news	home	en	listed	200	449728	no	yes	wordpress
-p0015d	https://techcrunch.com/2026/10/19/musk-pledges-to-give-every-kid-in-america-one-of-his-spacex-shares/	news	article	en	discovered	200	237260	no	yes	wordpress
-p0016	https://arstechnica.com/	news	home	en	listed	200	350567	no	yes	wordpress
-p0016d	https://arstechnica.com/gadgets/2026/10/diy-vr-how-to-build-your-own-headset-and-why-you-probably-wont-want-to/	news	article	en	discovered	200	184969	no	yes	wordpress
-p0017	https://www.wired.com/	news	home	en	listed	200	1566716	no	yes	other
+p0014	https://www.theverge.com/	news	home	en	listed	200	881419	no	yes	wordpress
+p0014d	https://www.theverge.com/transportation/1013049/maeving-rm2-electric-motorcycle-review-specs	news	article	en	discovered	200	489165	no	yes	wordpress
+p0015	https://techcrunch.com/	news	home	en	listed	200	448545	no	yes	wordpress
+p0015d	https://techcrunch.com/2026/10/19/musk-pledges-to-give-every-kid-in-america-one-of-his-spacex-shares/	news	article	en	discovered	200	238011	no	yes	wordpress
+p0016	https://arstechnica.com/	news	home	en	listed	200	351285	no	yes	wordpress
+p0016d	https://arstechnica.com/gadgets/2026/10/diy-vr-how-to-build-your-own-headset-and-why-you-probably-wont-want-to/	news	article	en	discovered	200	184928	no	yes	wordpress
+p0017	https://www.wired.com/	news	home	en	listed	200	1571208	no	yes	other
 p0017d	https://www.wired.com/story/nathan-fielder-tells-us-everything/	news	article	en	discovered	200	1487402	no	yes	other
-p0018	https://www.engadget.com/	news	home	en	listed	200	109348	no	yes	wordpress
+p0018	https://www.engadget.com/	news	home	en	listed	200	108950	no	yes	wordpress
 p0018d	https://www.engadget.com/gaming/best-handheld-gaming-system-140018863.html	news	article	en	discovered	200	184259	no	yes	wordpress
 p0019	https://www.theatlantic.com/	news	home	en	listed	403	450384	no	no: HTTP 403	
 p0020	https://www.politico.com/	news	home	en	listed	403	5822	no	no: HTTP 403	
 p0021	https://www.axios.com/	news	home	en	listed	403	5819	no	no: HTTP 403	
-p0022	https://www.independent.co.uk/	news	home	en	listed	200	348900	no	yes	other
-p0022d	https://www.independent.co.uk/news/world/europe/france-protests-paris-riots-students-arrests-live-b3068924.html	news	article	en	discovered	200	311246	no	yes	other
-p0023	https://www.dailymail.co.uk/home/index.html	news	home	en	listed	200	1336158	no	yes	other
-p0023d	https://www.dailymail.com/news/article-16218913/thieves-film-grabbing-familys-rabbit-Peter-garden-ears-stealing-him.html	news	article	en	discovered	200	929243	no	yes	other
+p0022	https://www.independent.co.uk/	news	home	en	listed	200	343119	no	yes	other
+p0022d	https://www.independent.co.uk/news/world/europe/france-protests-paris-riots-students-arrests-live-b3068924.html	news	article	en	discovered	200	304145	no	yes	other
+p0023	https://www.dailymail.co.uk/home/index.html	news	home	en	listed	200	1444592	no	yes	other
+p0023d	https://www.dailymail.com/news/article-16218913/thieves-film-grabbing-familys-rabbit-Peter-garden-ears-stealing-him.html	news	article	en	discovered	200	944976	no	yes	other
 p0024	https://news.sky.com/	news	home	en	listed	403	366	no	no: HTTP 403	
-p0025	https://www.abc.net.au/news	news	home	en	listed	200	844174	no	yes	nextjs
+p0025	https://www.abc.net.au/news	news	home	en	listed	200	837353	no	yes	nextjs
 p0025d	https://www.abc.net.au/news/topic/state-and-territory-government	news	article	en	discovered	200	332239	no	yes	nextjs
-p0026	https://www.cbc.ca/news	news	home	en	listed	200	249382	no	yes	other
-p0026d	https://www.cbc.ca/news/canada/edmonton/livestory/cfb-wainwright-fire-deaths-carney-9.7386478	news	article	en	discovered	200	280909	no	yes	other
-p0027	https://timesofindia.indiatimes.com/	news	home	en	listed	200	1473992	no	yes	other
+p0026	https://www.cbc.ca/news	news	home	en	listed	200	250376	no	yes	other
+p0026d	https://www.cbc.ca/news/canada/edmonton/livestory/cfb-wainwright-fire-deaths-carney-9.7386478	news	article	en	discovered	200	306083	no	yes	other
+p0027	https://timesofindia.indiatimes.com/	news	home	en	listed	200	1477403	no	yes	other
 p0027d	https://timesofindia.indiatimes.com/toi/medithon-world-arthritis-day2026	news	article	en	discovered	200	286909	no	yes	other
-p0028	https://www.hindustantimes.com/	news	home	en	listed	200	972921	no	yes	nextjs
-p0028d	https://www.hindustantimes.com/india-news/tiger-shroff-shooting-case-live-updates-lawrence-bishnoi-gang-anil-pandit-harman-sandhu-mumbai-juhu-tiger-shroff-firing-101792374488160.html	news	article	en	discovered	200	1009622	no	yes	nextjs
-p0029	https://www.scmp.com/	news	home	en	listed	200	2132719	no	yes	nextjs
-p0030	https://www.straitstimes.com/	news	home	en	listed	200	319500	no	yes	other
+p0028	https://www.hindustantimes.com/	news	home	en	listed	200	978103	no	yes	nextjs
+p0028d	https://www.hindustantimes.com/india-news/tiger-shroff-shooting-case-live-updates-lawrence-bishnoi-gang-anil-pandit-harman-sandhu-mumbai-juhu-tiger-shroff-firing-101792374488160.html	news	article	en	discovered	200	1009908	no	yes	nextjs
+p0029	https://www.scmp.com/	news	home	en	listed	200	2120161	no	yes	nextjs
+p0030	https://www.straitstimes.com/	news	home	en	listed	200	319449	no	yes	other
 p0030d	https://www.straitstimes.com/singapore/about-the-straits-times-leadership	news	article	en	discovered	200	110484	no	yes	other
-p0031	https://www.ndtv.com/	news	home	en	listed	200	1028270	no	yes	wordpress
-p0031d	https://www.ndtv.com/india-news/tiger-shroff-assassination-bid-updates-lawrence-bishnoi-gang-salman-khan-juhu-mumbai-12203309	news	article	en	discovered	200	1301918	no	yes	wordpress
-p0032	https://www.cnbc.com/	news	home	en	listed	200	3702775	no	yes	other
+p0031	https://www.ndtv.com/	news	home	en	listed	200	1027047	no	yes	other
+p0031d	https://www.ndtv.com/india-news/tiger-shroff-assassination-bid-updates-lawrence-bishnoi-gang-salman-khan-juhu-mumbai-12203309	news	article	en	discovered	200	1301563	no	yes	other
+p0032	https://www.cnbc.com/	news	home	en	listed	200	3712392	no	yes	other
 p0032d	https://www.cnbc.com/2023/05/11/market-strategist-survey-forecast.html	news	article	en	discovered	200	855966	no	yes	other
-p0033	https://www.nbcnews.com/	news	home	en	listed	200	1416469	no	yes	nextjs
-p0033d	https://www.nbcnews.com/news/nbc-news-now-live-audio-listen-live-news-audio-day-rcna70163	news	article	en	discovered	200	274500	no	yes	nextjs
-p0034	https://www.cbsnews.com/	news	home	en	listed	200	687953	no	yes	other
-p0034d	https://www.cbsnews.com/video/101826-things-that-matter/	news	article	en	discovered	200	843093	no	yes	other
-p0035	https://www.latimes.com/	news	home	en	listed	200	1702771	no	yes	other
+p0033	https://www.nbcnews.com/	news	home	en	listed	200	1427368	no	yes	nextjs
+p0033d	https://www.nbcnews.com/news/nbc-news-now-live-audio-listen-live-news-audio-day-rcna70163	news	article	en	discovered	200	274481	no	yes	nextjs
+p0034	https://www.cbsnews.com/	news	home	en	listed	200	685957	no	yes	other
+p0034d	https://www.cbsnews.com/video/101826-things-that-matter/	news	article	en	discovered	200	843349	no	yes	other
+p0035	https://www.latimes.com/	news	home	en	listed	200	1685119	no	yes	other
 p0035d	https://www.latimes.com/travel/story/2023-10-19/los-angeles-neighborhood-city-guides	news	article	en	discovered	200	617404	no	yes	other
-p0036	https://www.newsweek.com/	news	home	en	listed	200	1246843	no	yes	wordpress
-p0036d	https://www.newsweek.com/entertainment/victorias-secret-fashion-show-bringing-sexy-back-12588236	news	article	en	discovered	200	476803	no	yes	wordpress
-p0037	https://time.com/	news	home	en	listed	200	1332315	no	yes	nextjs
+p0036	https://www.newsweek.com/	news	home	en	listed	200	1256623	no	yes	wordpress
+p0036d	https://www.newsweek.com/entertainment/victorias-secret-fashion-show-bringing-sexy-back-12588236	news	article	en	discovered	200	476603	no	yes	wordpress
+p0037	https://time.com/	news	home	en	listed	200	1332229	no	yes	nextjs
 p0037d	https://time.com/article/2026/10/18/exclusive-israel-qatar-payments-to-gaza/	news	article	en	discovered	200	418413	no	yes	nextjs
-p0038	https://variety.com/	news	home	en	listed	200	716702	no	yes	wordpress
-p0038d	https://variety.com/2026/film/news/locarno-winner-sho-miyake-north-american-retrospective-1236915534/	news	article	en	discovered	200	548587	no	yes	wordpress
-p0039	https://www.rollingstone.com/	news	home	en	listed	200	634294	no	yes	wordpress
-p0039d	https://www.rollingstone.com/music/music-features/50-years-ago-paul-mccartney-greatest-tour-1235644027/	news	article	en	discovered	200	556226	no	yes	wordpress
-p0040	https://www.huffpost.com/	news	home	en	listed	200	1570154	no	yes	other
-p0040d	https://www.huffpost.com/entry/donald-trump-election-schemes_n_6acfb922e4b0e26c18d13461	news	article	en	discovered	200	518764	no	yes	wordpress
-p0041	https://www.vox.com/	news	home	en	listed	200	1036179	no	yes	wordpress
-p0041d	https://www.vox.com/21523212/crossword-puzzles-free-daily-printable	news	article	en	discovered	200	163607	no	yes	wordpress
-p0042	https://www.theregister.com/	news	home	en	listed	200	1154379	no	yes	other
+p0038	https://variety.com/	news	home	en	listed	200	717951	no	yes	wordpress
+p0038d	https://variety.com/2026/scene/columns/hannah-waddingham-crystal-award-tv-women-in-film-wif-honors-1236915019/	news	article	en	discovered	200	566815	no	yes	wordpress
+p0039	https://www.rollingstone.com/	news	home	en	listed	200	634752	no	yes	wordpress
+p0039d	https://www.rollingstone.com/music/music-features/50-years-ago-paul-mccartney-greatest-tour-1235644027/	news	article	en	discovered	200	556242	no	yes	wordpress
+p0040	https://www.huffpost.com/	news	home	en	listed	200	1716375	no	yes	other
+p0040d	https://www.huffpost.com/voices/voices-of-disabled-people	news	article	en	discovered	200	400233	no	yes	other
+p0041	https://www.vox.com/	news	home	en	listed	200	1034310	no	yes	wordpress
+p0041d	https://www.vox.com/21523212/crossword-puzzles-free-daily-printable	news	article	en	discovered	200	163632	no	yes	wordpress
+p0042	https://www.theregister.com/	news	home	en	listed	200	1152003	no	yes	other
 p0042d	https://www.theregister.com/special_features/cloud_infrastructure_month_2026	news	article	en	discovered	200	235120	no	yes	other
-p0043	https://www.zdnet.com/	news	home	en	listed	200	330919	no	yes	wordpress
-p0043d	https://www.zdnet.com/article/best-blood-pressure-watch/	news	article	en	discovered	200	618866	no	yes	wordpress
-p0044	https://www.cnet.com/	news	home	en	listed	200	432359	no	yes	wordpress
+p0043	https://www.zdnet.com/	news	home	en	listed	200	330901	no	yes	wordpress
+p0043d	https://www.zdnet.com/article/best-blood-pressure-watch/	news	article	en	discovered	200	619136	no	yes	wordpress
+p0044	https://www.cnet.com/	news	home	en	listed	200	431991	no	yes	wordpress
 p0044d	https://www.cnet.com/tech/services-and-software/best-identity-theft-protection/	news	article	en	discovered	200	653020	no	yes	wordpress
-p0045	https://www.tomshardware.com/	news	home	en	listed	200	1914905	no	yes	other
-p0045d	https://www.tomshardware.com/coupons/category/ssds-motherboards-and-hardware	news	article	en	discovered	200	1895512	no	yes	other
+p0045	https://www.tomshardware.com/	news	home	en	listed	200	1914521	no	yes	other
+p0045d	https://www.tomshardware.com/coupons/category/ssds-motherboards-and-hardware	news	article	en	discovered	200	1895431	no	yes	other
 p0046	https://www.anandtech.com/	news	home	en	listed	200	9038	no	no: bot wall	other
 p0047	https://www.phoronix.com/	news	home	en	listed	403	5801	no	no: HTTP 403	
-p0048	https://lwn.net/	news	home	en	listed	200	30645	no	yes	other
+p0048	https://lwn.net/	news	home	en	listed	200	30642	no	yes	other
 p0049	https://www.espn.com/	news	home	en	listed	202	1987	no	no: HTTP 202	
-p0050	https://www.irishtimes.com/	news	home	en	listed	200	4360251	no	yes	other
-p0050d	https://www.irishtimes.com/crime-law/2026/10/19/gardai-believe-trio-arrested-after-m50-pursuit-were-involved-in-earlier-crime-spree/	news	article	en	discovered	200	389202	no	yes	other
-p0051	https://www.smh.com.au/	news	home	en	listed	200	1201591	no	yes	other
-p0051d	https://www.smh.com.au/by/the-visual-stories-team-p53776	news	article	en	discovered	200	229755	no	yes	other
-p0052	https://www.nzherald.co.nz/	news	home	en	listed	200	1970994	no	yes	other
+p0050	https://www.irishtimes.com/	news	home	en	listed	200	4272395	no	yes	other
+p0050d	https://www.irishtimes.com/ireland/2026/10/19/waterford-arson-victims-were-a-beautiful-family-who-did-no-wrong-funeral-told/	news	article	en	discovered	200	409622	no	yes	other
+p0051	https://www.smh.com.au/	news	home	en	listed	200	1195311	no	yes	other
+p0051d	https://www.smh.com.au/by/the-visual-stories-team-p53776	news	article	en	discovered	200	229759	no	yes	other
+p0052	https://www.nzherald.co.nz/	news	home	en	listed	200	1963336	no	yes	other
 p0052d	https://www.nzherald.co.nz/topic/public-interest-open-justice/	news	article	en	discovered	200	1118292	no	yes	other
-p0053	https://www.thehindu.com/	news	home	en	listed	200	331668	no	yes	other
-p0053d	https://www.thehindu.com/topic/israel-us-strikes-on-iran/	news	article	en	discovered	200	197225	no	yes	other
+p0053	https://www.thehindu.com/	news	home	en	listed	200	332147	no	yes	other
+p0053d	https://www.thehindu.com/topic/israel-us-strikes-on-iran/	news	article	en	discovered	200	197009	no	yes	other
 p0054	https://www.dawn.com/	news	home	en	listed	403	5818	no	no: HTTP 403	
 p0055	https://www.japantimes.co.jp/	news	home	en	listed	403	5805	no	no: HTTP 403	
-p0056	https://www.france24.com/en/	news	home	en	listed	200	816375	no	yes	other
-p0056d	https://www.france24.com/en/france/20261019-live-french-pm-lecornu-calls-for-partial-curfews-in-cities-hit-by-riots-and-looting	news	article	en	discovered	200	436155	no	yes	other
-p0057	https://www.dw.com/en/	news	home	en	listed	200	304982	no	yes	other
-p0057d	https://www.dw.com/en/latest-videos/st-62391524	news	article	en	discovered	200	1845465	no	yes	other
-p0058	https://www.euronews.com/	news	home	en	listed	200	504342	no	yes	other
-p0058d	https://www.euronews.com/2026/10/19/dutch-pm-rob-jetten-and-partner-expecting-child-via-surrogate-mother-someone-very-special-	news	article	en	discovered	200	303656	no	yes	other
+p0056	https://www.france24.com/en/	news	home	en	listed	200	816268	no	yes	other
+p0056d	https://www.france24.com/en/france/20261019-live-french-pm-lecornu-calls-for-partial-curfews-in-cities-hit-by-riots-and-looting	news	article	en	discovered	200	431601	no	yes	other
+p0057	https://www.dw.com/en/	news	home	en	listed	200	302650	no	yes	other
+p0057d	https://www.dw.com/en/latest-videos/st-62391524	news	article	en	discovered	200	1845420	no	yes	other
+p0058	https://www.euronews.com/	news	home	en	listed	200	504399	no	yes	other
+p0058d	https://www.euronews.com/2026/10/19/albanian-pm-rama-accuses-anti-government-protesters-of-crossing-red-line-amid-violent-demo	news	article	en	discovered	200	309041	no	yes	other
 p0059	https://www.semafor.com/	news	home	en	listed	200	1616546	no	yes	wordpress
 p0059d	https://www.semafor.com/article/10/19/2026/saudi-to-decide-on-postponing-fii-after-wall-street-lobbying	news	article	en	discovered	200	132012	no	yes	other
-p0060	https://www.404media.co/	blog	home	en	listed	200	67994	no	yes	ghost
-p0060d	https://www.404media.co/404-media-now-has-a-full-text-rss-feed/	blog	post	en	discovered	200	65173	no	yes	ghost
-p0061	https://www.spiegel.de/	news	home	de	listed	200	2027381	no	yes	other
-p0061d	https://www.spiegel.de/politik/deutschland/news-des-tages-moegliches-linksbuendnis-in-berlin-belastet-koalition-im-bund-krawalle-in-frankreich-natur-in-der-krise-a-0476abe9-47fd-4ebc-ae5a-27c59d902865	news	article	de	discovered	200	609640	no	yes	other
+p0060	https://www.404media.co/	blog	home	en	listed	200	68663	no	yes	ghost
+p0060d	https://www.404media.co/404-media-now-has-a-full-text-rss-feed/	blog	post	en	discovered	200	65500	no	yes	ghost
+p0061	https://www.spiegel.de/	news	home	de	listed	200	2011633	no	yes	other
+p0061d	https://www.spiegel.de/politik/deutschland/kevin-dorow-staatsanwaltschaft-klagt-afd-politiker-wegen-ns-parole-an-a-01739e4f-e274-4dec-a236-698d910e05a7	news	article	de	discovered	200	551995	no	yes	other
 p0062	https://www.zeit.de/index	news	home	de	listed	403	1065	no	no: HTTP 403	
 p0063	https://www.faz.net/aktuell/	news	home	de	listed	302	586	no	no: HTTP 302	
-p0064	https://www.sueddeutsche.de/	news	home	de	listed	200	2055263	no	yes	other
-p0064d	https://www.sueddeutsche.de/projekte/artikel/politik/nsdap-afd-wahlen-geschichte-deutschland-erfolg-e520919/	news	article	de	discovered	200	92604	no	yes	other
-p0065	https://www.tagesschau.de/	news	home	de	listed	200	1586569	no	yes	other
-p0065d	https://www.tagesschau.de/ausland/europa/europa-proteste-interview-ross-100.html	news	article	de	discovered	200	552147	no	yes	other
-p0066	https://www.heise.de/	news	home	de	listed	200	920003	no	yes	other
-p0066d	https://www.heise.de/news/Kinder-Smartwatches-haben-laut-BSI-Sicherheitsluecken-11493223.html	news	article	de	discovered	200	237655	no	yes	other
-p0067	https://www.lemonde.fr/	news	home	fr	listed	200	949145	no	yes	other
+p0064	https://www.sueddeutsche.de/	news	home	de	listed	200	2066500	no	yes	other
+p0064d	https://www.sueddeutsche.de/kultur/ausschreitungen-frankreich-rathaus-limoges-bedeutung-li.3565576	news	article	de	discovered	200	369156	no	yes	other
+p0065	https://www.tagesschau.de/	news	home	de	listed	200	1653526	no	yes	other
+p0065d	https://www.tagesschau.de/inland/innenpolitik/koalitionsverhandlungen-berlin-spd-linke-gruene-100.html	news	article	de	discovered	200	529097	no	yes	other
+p0066	https://www.heise.de/	news	home	de	listed	200	948694	no	yes	other
+p0066d	https://www.heise.de/news/JAXA-und-ESA-starten-gemeinsame-Mission-zum-Marsmond-Phobos-11493317.html	news	article	de	discovered	200	232991	no	yes	other
+p0067	https://www.lemonde.fr/	news	home	fr	listed	200	945406	no	yes	other
 p0067d	https://www.lemonde.fr/bons-plans-reductions/code-promo-sncf-connect_114532.html	news	article	fr	discovered	402	4200	no	no: HTTP 402	
-p0068	https://www.lefigaro.fr/	news	home	fr	listed	200	1230890	no	yes	other
+p0068	https://www.lefigaro.fr/	news	home	fr	listed	200	1253490	no	yes	other
 p0068d	https://www.lefigaro.fr/newsletters/l-alerte-info/8df76986-2c2b-11e8-a7df-a0369fee8a80	news	article	fr	discovered	200	99780	no	yes	other
 p0069	https://www.liberation.fr/	news	home	fr	listed	403	776	no	no: HTTP 403	
-p0070	https://www.20minutes.fr/	news	home	fr	listed	200	796684	no	yes	other
-p0070d	https://www.20minutes.fr/societe/4255670-20261019-violences-17-octobre-couvre-feux-chomage-partiel-essentiel-annonces-sebastien-lecornu	news	article	fr	discovered	200	463223	no	yes	other
-p0071	https://elpais.com/	news	home	es	listed	200	481232	no	yes	other
-p0071d	https://elpais.com/el-tiempo/2026-10-19/ultima-hora-del-temporal-en-espana-en-directo.html	news	article	es	discovered	200	511860	no	yes	other
-p0072	https://www.elmundo.es/	news	home	es	listed	200	485196	no	yes	other
-p0072d	https://www.elmundo.es/espana/2026/10/19/6ad5b1e83e9f6f8c52575fdb-directo.html	news	article	es	discovered	200	645183	no	yes	other
-p0073	https://www.marca.com/	news	home	es	listed	200	673037	no	yes	other
-p0073d	https://www.marca.com/futbol/primera-division/2026/10/19/iturralde-gonzalez-estalla-laliga-roja-perdonada-gueler-real-madrid-sevilla-estafa-haya-imagen-nitida-agresion.html	news	article	es	discovered	200	286684	no	yes	other
-p0074	https://www.clarin.com/	news	home	es	listed	200	3421416	no	yes	nextjs
-p0074d	https://www.clarin.com/propiedades/rematan-propiedades-caba-us14840-departamentos-palermo-recoleta_0_kCawwW8iJL.html	news	article	es	discovered	200	368504	no	yes	nextjs
-p0075	https://www.corriere.it/	news	home	it	listed	200	1067743	no	yes	wordpress
-p0075d	https://www.corriere.it/economia/finanza/26_ottobre_19/chi-e-mussari-il-banchiere-coinvolto-dalla-commissione-d-inchiesta-nella-morte-di-david-rossi-di-mps-ad585262-8d21-4a0b-963e-ce3fc0c8axlk.shtml	news	article	it	discovered	200	239358	no	yes	other
-p0076	https://www.repubblica.it/	news	home	it	listed	200	469655	no	yes	other
-p0076d	https://www.repubblica.it/sport/dirette/calcio/serie-a-2026/diretta-juventus-lazio-g2638185/	news	article	it	discovered	200	619449	no	yes	other
-p0077	https://nos.nl/	news	home	nl	listed	200	853308	no	yes	nextjs
-p0077d	https://nos.nl/artikel/2635852-moederbedrijf-albert-heijn-doet-na-ruim-een-week-aangifte-om-cyberaanval	news	article	nl	discovered	200	152385	no	yes	nextjs
+p0070	https://www.20minutes.fr/	news	home	fr	listed	200	804272	no	yes	other
+p0070d	https://www.20minutes.fr/societe/4255670-20261019-violences-17-octobre-couvre-feux-chomage-partiel-essentiel-annonces-sebastien-lecornu	news	article	fr	discovered	200	472933	no	yes	other
+p0071	https://elpais.com/	news	home	es	listed	200	477151	no	yes	other
+p0071d	https://elpais.com/el-tiempo/2026-10-19/ultima-hora-del-temporal-en-espana-en-directo.html	news	article	es	discovered	200	528168	no	yes	other
+p0072	https://www.elmundo.es/	news	home	es	listed	200	485499	no	yes	other
+p0072d	https://www.elmundo.es/espana/2026/10/19/6ad5b1e83e9f6f8c52575fdb-directo.html	news	article	es	discovered	200	710324	no	yes	other
+p0073	https://www.marca.com/	news	home	es	listed	200	668919	no	yes	other
+p0073d	https://www.marca.com/futbol/premier-league/2026/10/19/manchester-city-encamina-pasar-dos-anos-championship.html	news	article	es	discovered	200	267159	no	yes	other
+p0074	https://www.clarin.com/	news	home	es	listed	200	3621137	no	yes	nextjs
+p0074d	https://www.clarin.com/propiedades/rematan-propiedades-caba-us14840-departamentos-palermo-recoleta_0_kCawwW8iJL.html	news	article	es	discovered	200	368503	no	yes	nextjs
+p0075	https://www.corriere.it/	news	home	it	listed	200	1029095	no	yes	wordpress
+p0075d	https://www.corriere.it/economia/aziende/26_ottobre_19/negozi-distrutti-durante-le-violenze-a-milano-confimprese-incontro-urgente-con-le-istituzioni-per-misure-efficaci-e-preventive-22221cd1-aef2-4a4b-b0b2-0184fe03axlk.shtml	news	article	it	discovered	200	236289	no	yes	other
+p0076	https://www.repubblica.it/	news	home	it	listed	200	461680	no	yes	other
+p0076d	https://www.repubblica.it/sport/dirette/calcio/serie-a-2026/diretta-monza-cagliari-g2638187/	news	article	it	discovered	200	555410	no	yes	other
+p0077	https://nos.nl/	news	home	nl	listed	200	857890	no	yes	nextjs
+p0077d	https://nos.nl/artikel/2635852-moederbedrijf-albert-heijn-doet-na-ruim-een-week-aangifte-van-cyberaanval	news	article	nl	discovered	200	156665	no	yes	nextjs
 p0078	https://www.nu.nl/	news	home	nl	listed	200	7859	no	no: bot wall	other
-p0079	https://www.aftonbladet.se/	news	home	sv	listed	200	553126	no	yes	other
-p0079d	https://www.aftonbladet.se/sportbladet/fotboll/a/d7Qr9B/uppgifter-manchester-city-kan-fa-massivt-poangavdrag	news	article	sv	discovered	200	197115	no	yes	other
-p0080	https://www.vg.no/	news	home	no	listed	200	468451	no	yes	other
-p0080d	https://www.vg.no/sport/i/GrJ6ym/aleksander-aamodt-kilde-vanskelig-aa-akseptere	news	article	no	discovered	200	271966	no	yes	other
-p0081	https://yle.fi/	news	home	fi	listed	200	510605	no	yes	other
-p0081d	https://yle.fi/t/18-334977/fi	news	article	fi	discovered	200	462781	no	yes	other
-p0082	https://www.onet.pl/	portal	home	pl	listed	200	339097	no	yes	nextjs
-p0083	https://www.wp.pl/	portal	home	pl	listed	200	426317	no	yes	other
-p0084	https://www.idnes.cz/	news	home	cs	listed	200	212847	no	yes	other
-p0084d	https://www.idnes.cz/praha/zpravy/praha-kutnohorska-nehoda-chodkyne-praha-10.A261019_152205_praha-zpravy_tmps	news	article	cs	discovered	200	23334	no	yes	other
-p0085	https://www.seznam.cz/	portal	home	cs	listed	200	1384406	no	yes	other
-p0086	https://www.hurriyet.com.tr/	news	home	tr	listed	200	262456	no	yes	other
+p0079	https://www.aftonbladet.se/	news	home	sv	listed	200	531054	no	yes	other
+p0079d	https://www.aftonbladet.se/nojesbladet/a/b8w6Q5/hjalmar-hjalle-ostmans-ord-efter-jonas-heavy-stentapps-dod	news	article	sv	discovered	200	199556	no	yes	other
+p0080	https://www.vg.no/	news	home	no	listed	200	466799	no	yes	other
+p0080d	https://www.vg.no/nyheter/i/n9bJWB/postnord-overfoerte-millionbeloep-til-innkjoepssjefens-bror	news	article	no	discovered	200	313104	no	yes	other
+p0081	https://yle.fi/	news	home	fi	listed	200	532656	no	yes	other
+p0081d	https://yle.fi/t/18-334977/fi	news	article	fi	discovered	200	460561	no	yes	other
+p0082	https://www.onet.pl/	portal	home	pl	listed	200	339123	no	yes	nextjs
+p0083	https://www.wp.pl/	portal	home	pl	listed	200	427842	no	yes	other
+p0084	https://www.idnes.cz/	news	home	cs	listed	200	215338	no	yes	other
+p0084d	https://www.idnes.cz/zpravy/zahranicni/francie-demonstranti-studenti-blokace-vchod-louvre.A261019_113128_zahranicni_rtn	news	article	cs	discovered	200	23550	no	yes	other
+p0085	https://www.seznam.cz/	portal	home	cs	listed	200	1410018	no	yes	other
+p0086	https://www.hurriyet.com.tr/	news	home	tr	listed	200	263303	no	yes	other
 p0086d	https://www.hurriyet.com.tr/dunya/fransada-kismi-sokaga-cikma-yasagi-ilan-edildi-43347492	news	article	tr	discovered	200	115088	no	yes	other
-p0087	https://www.sozcu.com.tr/	news	home	tr	listed	200	276697	no	yes	other
-p0087d	https://www.sozcu.com.tr/dogan-bekin-yeniden-refah-partisinden-istifa-edecek-mi-p370722	news	article	tr	discovered	200	143223	no	yes	other
-p0088	https://www.ynet.co.il/home/0,7340,L-8,00.html	news	home	he	listed	200	532647	no	yes	other
-p0089	https://www.aljazeera.net/	news	home	ar	listed	200	967982	no	yes	wordpress
-p0089d	https://www.aljazeera.net/news/liveblog/2026/10/19/%C3%98%C2%A7%C3%99%C2%84%C3%99%C2%8A%C3%99%C2%85%C3%99%C2%86-%C3%99%C2%85%C3%98%C2%A8%C3%98%C2%A7%C3%98%C2%B4%C3%98%C2%B1-%C3%98%C2%A7%C3%98%C2%B3%C3%98%C2%AA%C3%99%C2%85%C3%98%C2%B1%C3%98%C2%A7%C3%98%C2%B1-%C3%98%C2%A7%C3%99%C2%84%C3%98%C2%A7%C3%98%C2%B4%C3%98%C2%AA%C3%98%C2%A8%C3%98%C2%A7%C3%99%C2%83%C3%98%C2%A7%C3%98%C2%AA-%C3%99%C2%81%C3%99%C2%8A-%C3%98%C2%A8%C3%98%C2%A7%C3%98%C2%A8	news	article	ar	discovered	404	552480	no	no: HTTP 404	
+p0087	https://www.sozcu.com.tr/	news	home	tr	listed	200	274848	no	yes	other
+p0087d	https://www.sozcu.com.tr/yeni-parti-den-halk-tv-onunde-miting-karari-p370735	news	article	tr	discovered	200	141732	no	yes	other
+p0088	https://www.ynet.co.il/home/0,7340,L-8,00.html	news	home	he	listed	200	532069	no	yes	other
+p0089	https://www.aljazeera.net/	news	home	ar	listed	200	974307	no	yes	wordpress
+p0089d	https://www.aljazeera.net/news/liveblog/2026/10/19/%C3%98%C2%A7%C3%99%C2%84%C3%99%C2%8A%C3%99%C2%85%C3%99%C2%86-%C3%99%C2%85%C3%98%C2%A8%C3%98%C2%A7%C3%98%C2%B4%C3%98%C2%B1-%C3%98%C2%A7%C3%98%C2%B3%C3%98%C2%AA%C3%99%C2%85%C3%98%C2%B1%C3%98%C2%A7%C3%98%C2%B1-%C3%98%C2%A7%C3%99%C2%84%C3%98%C2%A7%C3%98%C2%B4%C3%98%C2%AA%C3%98%C2%A8%C3%98%C2%A7%C3%99%C2%83%C3%98%C2%A7%C3%98%C2%AA-%C3%99%C2%81%C3%99%C2%8A-%C3%98%C2%A8%C3%98%C2%A7%C3%98%C2%A8	news	article	ar	discovered	404	546911	no	no: HTTP 404	
 p0090	https://www.alarabiya.net/	news	home	ar	listed	403	179716	no	no: HTTP 403	
 p0091	https://www.youm7.com/	news	home	ar	listed	TypeError:ECONNRESET	0	no	no: TypeError:ECONNRESET	
-p0092	https://www.bbc.com/persian	news	home	fa	listed	200	467180	no	yes	nextjs
-p0092d	https://www.bbc.com/persian/iran-features-53961947	news	article	fa	discovered	200	682203	no	yes	nextjs
-p0093	https://www.bhaskar.com/	news	home	hi	listed	200	912246	no	yes	other
-p0093d	https://www.bhaskar.com/bhaskar-khaas/bhaskar-explainer/news/tiger-shroff-shooting-case-lawrence-bishnoi-vs-dawood-ibrahim-gang-operation-bollywood-attack-list-139421989.html	news	article	hi	discovered	200	524560	no	yes	other
-p0094	https://www.aajtak.in/	news	home	hi	listed	200	728823	no	yes	other
-p0094d	https://www.aajtak.in/breakingnews/story/latest-breaking-news-in-hindi-19-october-2026-ntc-aktw-2674361-2026-10-19	news	article	hi	discovered	200	476017	no	yes	other
-p0095	https://www.asahi.com/	news	home	ja	listed	200	282524	no	yes	other
-p0095d	http://www.asahi.com/shimen/20261020/index_tokyo_list.html	news	article	ja	discovered	404	74220	no	no: HTTP 404	
-p0096	https://www3.nhk.or.jp/news/	news	home	ja	listed	200	1263088	no	yes	nextjs
+p0092	https://www.bbc.com/persian	news	home	fa	listed	200	465242	no	yes	nextjs
+p0092d	https://www.bbc.com/persian/iran-features-53961947	news	article	fa	discovered	200	674652	no	yes	nextjs
+p0093	https://www.bhaskar.com/	news	home	hi	listed	200	906828	no	yes	other
+p0093d	https://www.bhaskar.com/bhaskar-khaas/bhaskar-explainer/news/tiger-shroff-shooting-case-lawrence-bishnoi-vs-dawood-ibrahim-gang-operation-bollywood-attack-list-139421989.html	news	article	hi	discovered	200	524565	no	yes	other
+p0094	https://www.aajtak.in/	news	home	hi	listed	200	727098	no	yes	other
+p0094d	https://www.aajtak.in/breakingnews/story/latest-breaking-news-in-hindi-19-october-2026-ntc-aktw-2674361-2026-10-19	news	article	hi	discovered	200	485632	no	yes	other
+p0095	https://www.asahi.com/	news	home	ja	listed	200	282817	no	yes	other
+p0095d	http://www.asahi.com/shimen/20261020/index_tokyo_list.html	news	article	ja	discovered	404	74225	no	no: HTTP 404	
+p0096	https://www3.nhk.or.jp/news/	news	home	ja	listed	200	1263182	no	yes	nextjs
 p0096d	https://news.web.nhk/newsweb/dk/editorial-nwa-news-0000000001	news	article	ja	discovered	200	689057	no	yes	nextjs
 p0097	https://news.yahoo.co.jp/	news	home	ja	listed	403	10051	no	no: HTTP 403	
-p0098	https://www.chosun.com/	news	home	ko	listed	200	3274379	no	yes	other
-p0098d	https://www.chosun.com/international/international_general/2025/10/14/LTVPJVWUBRDATHLP226NJWMCKQ/	news	article	ko	discovered	200	276283	no	yes	other
-p0099	https://www.folha.uol.com.br/	news	home	pt	listed	200	1054602	no	yes	other
-p0100	https://g1.globo.com/	news	home	pt	listed	200	902360	no	yes	other
-p0100d	https://g1.globo.com/economia/noticia/2026/10/19/bolsa-familia-pagamentos-calendario.ghtml	news	article	pt	discovered	200	1396208	no	yes	other
-p0101	https://www.uol.com.br/	portal	home	pt	listed	200	703740	no	yes	other
+p0098	https://www.chosun.com/	news	home	ko	listed	200	3274361	no	yes	other
+p0098d	https://www.chosun.com/international/international_general/2025/10/14/LTVPJVWUBRDATHLP226NJWMCKQ/	news	article	ko	discovered	200	276550	no	yes	other
+p0099	https://www.folha.uol.com.br/	news	home	pt	listed	200	1054991	no	yes	other
+p0100	https://g1.globo.com/	news	home	pt	listed	200	902894	no	yes	other
+p0100d	https://g1.globo.com/politica/eleicoes/2026/noticia/2026/10/19/confira-local-votacao-mudancas.ghtml	news	article	pt	discovered	200	1252071	no	yes	other
+p0101	https://www.uol.com.br/	portal	home	pt	listed	200	710669	no	yes	other
 p0102	https://www.publico.pt/	news	home	pt	listed	202	2016	no	no: HTTP 202	
-p0103	https://www.detik.com/	news	home	id	listed	200	378046	no	yes	other
-p0103d	https://www.detik.com/kalimantan/berita/d-8714548/dinkes-kalsel-catat-angka-kasus-ispa-naik-10-ribu-tiap-sepekan	news	article	id	discovered	200	268089	no	yes	other
-p0104	https://www.kompas.com/	news	home	id	listed	200	485153	no	yes	other
-p0104d	http://www.kompas.com/cekfakta/read/2026/10/19/191200482/infografik--konten-satire-sumanto-dilantik-jadi-anggota-wantimpres	news	article	id	discovered	200	442150	no	yes	other
-p0105	https://vnexpress.net/	news	home	vi	listed	200	272975	no	yes	other
-p0105d	https://vnexpress.net/topic/gop-y-van-kien-dai-hoi-14-28310	news	article	vi	discovered	200	207837	no	yes	other
-p0106	https://www.sanook.com/	portal	home	th	listed	200	365485	no	yes	nextjs
-p0106d	https://www.sanook.com/sport/1673238/	portal	article	th	discovered	200	331653	no	yes	nextjs
-p0107	https://www.sina.com.cn/	portal	home	zh	listed	200	401033	no	yes	other
-p0108	https://www.sohu.com/	portal	home	zh	listed	200	207450	no	yes	other
-p0109	https://www.163.com/	portal	home	zh	listed	200	276329	no	yes	other
-p0110	https://www.qq.com/	portal	home	zh	listed	200	133919	no	yes	other
-p0111	https://www.pravda.com.ua/	news	home	uk	listed	200	253955	no	yes	other
+p0103	https://www.detik.com/	news	home	id	listed	200	380950	no	yes	other
+p0103d	https://www.detik.com/jabar/berita/d-8713894/jumlah-fantastis-kasus-ispa-gegara-karhutla-di-ri	news	article	id	discovered	200	682040	no	yes	other
+p0104	https://www.kompas.com/	news	home	id	listed	200	484900	no	yes	other
+p0104d	http://www.kompas.com/cekfakta/read/2026/10/19/191200482/infografik--konten-satire-sumanto-dilantik-jadi-anggota-wantimpres	news	article	id	discovered	200	442163	no	yes	other
+p0105	https://vnexpress.net/	news	home	vi	listed	200	270430	no	yes	other
+p0105d	https://vnexpress.net/topic/gop-y-van-kien-dai-hoi-14-28310	news	article	vi	discovered	200	207834	no	yes	other
+p0106	https://www.sanook.com/	portal	home	th	listed	200	365494	no	yes	nextjs
+p0106d	https://www.sanook.com/sport/1673238/	portal	article	th	discovered	200	331563	no	yes	nextjs
+p0107	https://www.sina.com.cn/	portal	home	zh	listed	200	400336	no	yes	other
+p0108	https://www.sohu.com/	portal	home	zh	listed	200	207485	no	yes	other
+p0109	https://www.163.com/	portal	home	zh	listed	200	275996	no	yes	other
+p0110	https://www.qq.com/	portal	home	zh	listed	200	133914	no	yes	other
+p0111	https://www.pravda.com.ua/	news	home	uk	listed	200	253374	no	yes	other
 p0111d	https://www.pravda.com.ua/projects/2025/11/28/8009446/	news	article	uk	discovered	403	5929	no	no: HTTP 403	
-p0112	https://www.unian.ua/	news	home	uk	listed	200	162670	no	yes	other
-p0112d	https://www.unian.ua/incidents/udar-rosiyan-po-parku-v-noviy-vodolazi-sered-zagiblih-nemovlya-i-diti-novini-harkova-13533843.html	news	article	uk	discovered	200	123282	no	yes	other
-p0113	https://dou.ua/	news	home	uk	listed	200	120534	no	yes	other
-p0113d	https://dou.ua/lenta/articles/job-market-for-juniors-2026/	news	article	uk	discovered	200	66066	no	yes	other
-p0114	https://lenta.ru/	news	home	ru	listed	200	139041	no	yes	other
-p0114d	https://lenta.ru/news/2026/10/19/iran-obratilsya-k-neobychnym-prizyvom-k-evrope-iz-za-ukrainy/	news	article	ru	discovered	200	55979	no	yes	other
-p0115	https://ria.ru/	news	home	ru	listed	TypeError:ECONNRESET	0	no	no: TypeError:ECONNRESET	
+p0112	https://www.unian.ua/	news	home	uk	listed	200	162852	no	yes	other
+p0112d	https://www.unian.ua/weapons/patriot-dlya-ukrajini-gegset-zatrimuye-peredachu-velikoji-partiji-raket-13533909.html	news	article	uk	discovered	200	134685	no	yes	other
+p0113	https://dou.ua/	news	home	uk	listed	200	120799	no	yes	other
+p0113d	https://dou.ua/lenta/articles/job-market-for-juniors-2026/	news	article	uk	discovered	200	66161	no	yes	other
+p0114	https://lenta.ru/	news	home	ru	listed	200	138079	no	yes	other
+p0114d	https://lenta.ru/news/2026/10/19/long-ssha-voennoe-polozhenie/	news	article	ru	discovered	200	79349	no	yes	other
+p0115	https://ria.ru/	news	home	ru	listed	200	199795	no	yes	other
+p0115d	https://ria.ru/20260909/napadenie-medvedya-v-rossii-pravila-mchs-2116647910.html	news	article	ru	discovered	TypeError:ECONNRESET	0	no	no: TypeError:ECONNRESET	
 p0116	https://www.rbc.ru/	news	home	ru	listed	401	290	no	no: HTTP 401	
-p0117	https://www.kommersant.ru/	news	home	ru	listed	200	800260	no	yes	nuxt
-p0117d	https://www.kommersant.ru/daily/166504	news	article	ru	discovered	200	482407	no	yes	nuxt
-p0118	https://meduza.io/	news	home	ru	listed	200	294137	no	yes	other
-p0118d	https://meduza.io/feature/2026/10/19/massovye-protesty-i-besporyadki-uzhe-v-pyati-stranah-evropy-kto-gde-i-pochemu-protestuet	news	article	ru	discovered	200	376256	no	yes	other
-p0119	https://tass.ru/	news	home	ru	listed	200	1765	no	no: bot wall	other
-p0120	https://iz.ru/	news	home	ru	listed	200	474171	no	yes	drupal
-p0120d	https://iz.ru/2186826/lavrov-ukazal-na-nezainteresovannost-rf-v-skachkakh-tcen-na-energorynke-izi	news	article	ru	discovered	403	49141	no	no: HTTP 403	
+p0117	https://www.kommersant.ru/	news	home	ru	listed	200	800271	no	yes	nuxt
+p0117d	https://www.kommersant.ru/daily/166504	news	article	ru	discovered	200	481870	no	yes	nuxt
+p0118	https://meduza.io/	news	home	ru	listed	200	300117	no	yes	other
+p0118d	https://meduza.io/news/2026/10/19/rossiyskiy-dron-udaril-po-parku-v-odnom-iz-poselkov-harkovskoy-oblasti-pogibli-shest-chelovek-v-tom-chisle-dvoe-detey	news	article	ru	discovered	200	263501	no	yes	other
+p0119	https://tass.ru/	news	home	ru	listed	200	1766	no	no: bot wall	other
+p0120	https://iz.ru/	news	home	ru	listed	403	49141	no	no: HTTP 403	
 p0121	https://www.gazeta.ru/	news	home	ru	listed	200	3978	no	no: bot wall	other
-p0122	https://www.mk.ru/	news	home	ru	listed	200	479822	no	yes	other
-p0122d	https://www.mk.ru/politics/2026/10/19/50-f-16-na-predele-polsha-priznala-chto-ukraine-ne-khvataet-samoletov.html	news	article	ru	discovered	200	230600	no	yes	other
-p0123	https://www.kp.ru/	news	home	ru	listed	200	633447	no	yes	other
-p0123d	https://www.kp.ru/daily/socialnaya-podderzhka-ot-gosudarstva/	news	article	ru	discovered	200	541106	no	yes	other
-p0124	https://www.vedomosti.ru/	news	home	ru	listed	200	4444715	no	yes	other
-p0124d	https://www.vedomosti.ru/politics/news/2026/10/19/1238345-reiting-trampa-upal	news	article	ru	discovered	200	215362	no	yes	other
-p0125	https://www.fontanka.ru/	news	home	ru	listed	200	689782	no	yes	other
-p0125d	https://www.fontanka.ru/theme/kubok-fontanki-po-igre-go/	news	article	ru	discovered	200	384894	no	yes	other
-p0126	https://aif.ru/	news	home	ru	listed	200	193950	no	yes	other
-p0126d	https://aif.ru/politics/russia/v-kremle-obyasnili-kadrovye-perestanovki-v-pravitelstve	news	article	ru	discovered	200	158610	no	yes	other
-p0127	https://rg.ru/	news	home	ru	listed	200	176168	no	yes	nextjs
-p0127d	https://rg.ru/2026/10/19/vice-premer-trutnev-zaiavil-chto-ne-brosit-dalnij-vostok.html	news	article	ru	discovered	200	84405	no	yes	nextjs
-p0128	https://www.interfax.ru/	news	home	ru	listed	200	91008	no	yes	other
-p0128d	https://www.interfax.ru/chronicle/operacziya-izrailya-i-ssha-protiv-irana.html	news	article	ru	discovered	200	74359	no	yes	other
-p0129	https://www.ng.ru/	news	home	ru	listed	200	318772	no	yes	bitrix
-p0129d	https://www.ng.ru/news/849331.html	news	article	ru	discovered	200	263220	no	yes	bitrix
-p0130	https://www.vesti.ru/	news	home	ru	listed	200	628165	no	yes	nuxt
-p0130d	https://www.vesti.ru/ns/armiya-rossii-udarila-po-sudnu-dostavlyavshemu-gruzy-dlya-vsu	news	article	ru	discovered	200	401837	no	yes	nuxt
-p0131	https://www.1tv.ru/	media	home	ru	listed	200	415837	no	yes	nextjs
-p0132	https://www.ntv.ru/	media	home	ru	listed	200	276807	no	yes	other
-p0132d	https://www.ntv.ru/novosti/3017158/	media	article	ru	discovered	200	50677	no	yes	other
-p0133	https://www.svoboda.org/	news	home	ru	listed	200	149265	no	yes	other
-p0133d	https://www.svoboda.org/a/putin-podderzhal-krupneyshie-s-2024-goda-perestanovki-v-praviteljstve/33879352.html	news	article	ru	discovered	200	115023	no	yes	other
-p0134	https://www.bbc.com/russian	news	home	ru	listed	200	561336	no	yes	nextjs
-p0134d	https://www.bbc.com/russian/articles/ckly02022p6go	news	article	ru	discovered	200	478992	no	yes	nextjs
-p0135	https://www.dw.com/ru/	news	home	ru	listed	200	293238	no	yes	other
-p0135d	https://www.dw.com/ru/%C3%90%C2%BF%C3%90%C2%BE%C3%91%C2%81%C3%90%C2%BB%C3%90%C2%B5%C3%90%C2%B4%C3%90%C2%BD%C3%90%C2%B8%C3%90%C2%B5-%C3%90%C2%B2%C3%90%C2%B8%C3%90%C2%B4%C3%90%C2%B5%C3%90%C2%BE/st-62894977	news	article	ru	discovered	200	1193340	no	yes	other
-p0136	https://novayagazeta.eu/	news	home	ru	listed	200	284095	no	yes	other
-p0136d	https://novayagazeta.eu/articles/2026/10/19/pust-tiazhelaia-zemlia-stanet-legkoi	news	article	ru	discovered	200	804547	no	yes	other
+p0122	https://www.mk.ru/	news	home	ru	listed	200	477365	no	yes	other
+p0122d	https://www.mk.ru/social/2026/10/19/beglov-zayavil-o-prestupnoy-sushhnosti-ukrainskogo-rezhima.html	news	article	ru	discovered	200	231741	no	yes	other
+p0123	https://www.kp.ru/	news	home	ru	listed	200	637111	no	yes	other
+p0123d	https://www.kp.ru/daily/socialnaya-podderzhka-ot-gosudarstva/	news	article	ru	discovered	200	541107	no	yes	other
+p0124	https://www.vedomosti.ru/	news	home	ru	listed	200	4413203	no	yes	other
+p0124d	https://www.vedomosti.ru/politics/news/2026/10/19/1238372-pezeshkian-nameren-posetit	news	article	ru	discovered	200	226715	no	yes	other
+p0125	https://www.fontanka.ru/	news	home	ru	listed	200	693937	no	yes	other
+p0125d	https://www.fontanka.ru/theme/kubok-fontanki-po-igre-go/	news	article	ru	discovered	200	388962	no	yes	other
+p0126	https://aif.ru/	news	home	ru	listed	200	193947	no	yes	other
+p0126d	https://aif.ru/politics/russia/v-kremle-obyasnili-kadrovye-perestanovki-v-pravitelstve	news	article	ru	discovered	200	158685	no	yes	other
+p0127	https://rg.ru/	news	home	ru	listed	200	179699	no	yes	nextjs
+p0127d	https://rg.ru/2026/10/19/na-ukraine-obvinili-ssha-v-zaderzhke-s-otpravkoj-oplachennyh-raket-patriot.html	news	article	ru	discovered	200	84056	no	yes	nextjs
+p0128	https://www.interfax.ru/	news	home	ru	listed	200	90896	no	yes	other
+p0128d	https://www.interfax.ru/chronicle/voennaya-operacziya-na-ukraine.html	news	article	ru	discovered	200	66577	no	yes	other
+p0129	https://www.ng.ru/	news	home	ru	listed	200	317602	no	yes	bitrix
+p0129d	https://www.ng.ru/economics/2026-10-19/1_9606_russia.html	news	article	ru	discovered	200	163556	no	yes	bitrix
+p0130	https://www.vesti.ru/	news	home	ru	listed	200	624477	no	yes	nuxt
+p0130d	https://www.vesti.ru/ns/ronaldu-diskvalificirovali-na-30-dnej-za-otezd-so-sborov-portugalskoj-sbornoj	news	article	ru	discovered	200	404833	no	yes	nuxt
+p0131	https://www.1tv.ru/	media	home	ru	listed	200	420996	no	yes	nextjs
+p0132	https://www.ntv.ru/	media	home	ru	listed	200	279748	no	yes	other
+p0132d	https://www.ntv.ru/novosti/3017226/	media	article	ru	discovered	200	72634	no	yes	other
+p0133	https://www.svoboda.org/	news	home	ru	listed	200	149350	no	yes	other
+p0133d	https://www.svoboda.org/a/tri-cheloveka-pogibli-pri-udare-po-parku-v-harjkovskoy-oblasti/33879587.html	news	article	ru	discovered	200	110549	no	yes	other
+p0134	https://www.bbc.com/russian	news	home	ru	listed	200	563330	no	yes	nextjs
+p0134d	https://www.bbc.com/russian/articles/ckly02022p6go	news	article	ru	discovered	200	478634	no	yes	nextjs
+p0135	https://www.dw.com/ru/	news	home	ru	listed	200	301130	no	yes	other
+p0135d	https://www.dw.com/ru/%C3%90%C2%BF%C3%90%C2%BE%C3%91%C2%81%C3%90%C2%BB%C3%90%C2%B5%C3%90%C2%B4%C3%90%C2%BD%C3%90%C2%B8%C3%90%C2%B5-%C3%90%C2%B2%C3%90%C2%B8%C3%90%C2%B4%C3%90%C2%B5%C3%90%C2%BE/st-62894977	news	article	ru	discovered	200	1191501	no	yes	other
+p0136	https://novayagazeta.eu/	news	home	ru	listed	200	296372	no	yes	other
+p0136d	https://novayagazeta.eu/articles/2026/10/19/uzhe-neponiatno-kto-tam-glavnyi	news	article	ru	discovered	200	196272	no	yes	other
 p0137	https://www.forbes.ru/	news	home	ru	listed	200	357728	no	yes	nuxt
 p0137d	https://www.forbes.ru/mneniya/570584-perestanovki-vnutri-korporacii-kakim-polucilsa-obnovlennyj-sostav-pravitel-stva	news	article	ru	discovered	200	243817	no	yes	nuxt
-p0138	https://www.bfm.ru/	news	home	ru	listed	200	130588	no	yes	other
-p0138d	https://www.bfm.ru/news/621324	news	article	ru	discovered	200	149497	no	yes	other
-p0139	https://www.e1.ru/	news	home	ru	listed	200	529704	no	yes	other
-p0139d	https://www.e1.ru/opisanie-funkcionalnyh-harakteristik-po/	news	article	ru	discovered	200	483187	no	yes	other
-p0140	https://ngs.ru/	news	home	ru	listed	200	539479	no	yes	other
-p0140d	https://ngs.ru/promo-no-ads-subscription/	news	article	ru	discovered	200	188779	no	yes	other
-p0141	https://www.sports.ru/	news	home	ru	listed	200	933701	no	yes	other
-p0141d	https://www.sports.ru/figure-skating/1117222173-etapy-gran-pri-rossii-v-sezone-2026-27-projdut-v-nizhnem-novgorode-san.html	news	article	ru	discovered	200	771598	no	yes	other
+p0138	https://www.bfm.ru/	news	home	ru	listed	200	131447	no	yes	other
+p0138d	https://www.bfm.ru/news/621324	news	article	ru	discovered	200	149601	no	yes	other
+p0139	https://www.e1.ru/	news	home	ru	listed	403	902	no	no: HTTP 403	
+p0140	https://ngs.ru/	news	home	ru	listed	200	538313	no	yes	other
+p0140d	https://ngs.ru/promo-no-ads-subscription/	news	article	ru	discovered	200	192407	no	yes	other
+p0141	https://www.sports.ru/	news	home	ru	listed	200	926857	no	yes	other
+p0141d	https://www.sports.ru/figure-skating/1117222173-etapy-gran-pri-rossii-v-sezone-2026-27-projdut-v-nizhnem-novgorode-san.html	news	article	ru	discovered	200	772531	no	yes	other
 p0142	https://www.championat.com/	news	home	ru	listed	200	740	no	yes	other
-p0143	https://www.sport-express.ru/	news	home	ru	listed	200	828516	no	yes	other
+p0143	https://www.sport-express.ru/	news	home	ru	listed	200	831630	no	yes	other
 p0143d	https://www.sport-express.ru/obshchestvo/videoreports/sportivnyy-kanal-sport-ekspress-intervyu-obzory-matchey-reportazhi-i-serialy-sport-ekspress-2362239/	news	article	ru	discovered	403	902	no	no: HTTP 403	
-p0144	https://www.ixbt.com/	news	home	ru	listed	200	770275	no	yes	other
-p0144d	https://www.ixbt.com/news/2026/10/19/samsung-vernetsia-vo-vremena-galaxy-s21-lineiku-galaxy-s27-predstaviat-na-neskolko-nedel-ranse-cem-galaxy-s25-i-galaxy-s26.html	news	article	ru	discovered	200	367918	no	yes	other
-p0145	https://3dnews.ru/	news	home	ru	listed	200	267043	no	yes	other
-p0145d	https://3dnews.ru/1150125/ii-vpervie-proshyol-minecraft-bez-pomoshchi-cheloveka-pionerom-stala-flagmanskaya-model-gemini-4-argon-ot-google	news	article	ru	discovered	200	202211	no	yes	other
-p0146	https://overclockers.ru/	news	home	ru	listed	200	292854	no	yes	phpbb
-p0146d	https://overclockers.ru/blog/Global_Chronicles/show/266553/Claude-nashel-na-Mac-skrytyj-majner-kriptovaljuty-grejuschij-processor-do-112-C	news	article	ru	discovered	200	106428	no	yes	phpbb
+p0144	https://www.ixbt.com/	news	home	ru	listed	200	769300	no	yes	other
+p0144d	https://www.ixbt.com/news/2026/10/19/samsung-vernetsia-vo-vremena-galaxy-s21-lineiku-galaxy-s27-predstaviat-na-neskolko-nedel-ranse-cem-galaxy-s25-i-galaxy-s26.html	news	article	ru	discovered	200	368296	no	yes	other
+p0145	https://3dnews.ru/	news	home	ru	listed	200	267649	no	yes	other
+p0145d	https://3dnews.ru/1150133/rossiyane-stali-vozvrashchatsya-k-whatsapp-messendgervpervie-narastil-auditoriyu-posle-blokirovki-v-rossii	news	article	ru	discovered	200	202026	no	yes	other
+p0146	https://overclockers.ru/	news	home	ru	listed	200	292084	no	yes	phpbb
+p0146d	https://overclockers.ru/blog/Global_Chronicles/show/266554/Kitajskie-II-obhodyat-konkurentov-iz-SShA-za-schet-effektivnosti-i-pri-men-shem-kolichestve-videokart	news	article	ru	discovered	200	108267	no	yes	phpbb
 p0147	https://secretmag.ru/	news	home	ru	listed	200	797	no	no: bot wall	other
-p0148	https://www.rambler.ru/	portal	home	ru	listed	200	217494	no	yes	nextjs
-p0149	https://news.rambler.ru/	news	home	ru	listed	200	315430	no	yes	other
-p0149d	https://news.rambler.ru/world/57261608-premer-frantsii-dopustil-vvedenie-chrezvychaynogo-polozheniya-iz-za-besporyadkov/	news	article	ru	discovered	200	194513	no	yes	other
+p0148	https://www.rambler.ru/	portal	home	ru	listed	200	218286	no	yes	nextjs
+p0149	https://news.rambler.ru/	news	home	ru	listed	200	316927	no	yes	other
+p0149d	https://news.rambler.ru/army/57264345-litva-zahotela-poluchit-razreshenie-nato-sbivat-bpla/	news	article	ru	discovered	200	188344	no	yes	other
 p0150	https://dzen.ru/	portal	home	ru	listed	200	3046	no	no: bot wall	other
 p0151	https://mail.ru/	portal	home	ru	listed	200	936	no	no: bot wall	other
-p0152	https://ya.ru/	portal	home	ru	listed	200	492465	no	yes	other
-p0153	https://tengrinews.kz/	news	home	ru	listed	200	458428	no	yes	other
-p0153d	https://tengrinews.kz/news/tokaev-prinyal-zamestiteley-ministra-oboronyi-611186/	news	article	ru	discovered	200	232191	no	yes	other
-p0154	https://www.zakon.kz/	news	home	ru	listed	200	312635	no	yes	other
-p0154d	https://www.zakon.kz/obshestvo/6535575-zamorozki-do-7s-gololed-i-silnyy-veter-shtormovoe-preduprezhdenie-obyavili-v-kazakhstane.html	news	article	ru	discovered	200	183499	no	yes	other
-p0155	https://www.nur.kz/	news	home	ru	listed	200	509179	no	yes	other
+p0152	https://ya.ru/	portal	home	ru	listed	200	519722	no	yes	other
+p0153	https://tengrinews.kz/	news	home	ru	listed	200	487285	no	yes	other
+p0153d	https://tengrinews.kz/news/tokaev-prinyal-zamestiteley-ministra-oboronyi-611186/	news	article	ru	discovered	200	231399	no	yes	other
+p0154	https://www.zakon.kz/	news	home	ru	listed	200	310763	no	yes	other
+p0154d	https://www.zakon.kz/obshestvo/6535575-zamorozki-do-7s-gololed-i-silnyy-veter-shtormovoe-preduprezhdenie-obyavili-v-kazakhstane.html	news	article	ru	discovered	200	183291	no	yes	other
+p0155	https://www.nur.kz/	news	home	ru	listed	200	509385	no	yes	other
 p0155d	https://www.nur.kz/kak-rabotaet-nur-kz/1977609-o-nas-pishut-publikatsii-o-nurkz-v-drugih-media/	news	article	ru	discovered	200	440559	no	yes	other
-p0156	https://korrespondent.net/	news	home	ru	listed	200	168436	no	yes	other
-p0156d	https://ua.korrespondent.net/ukraine/4921511-udar-po-kharkivschyni-sered-shesty-zhertv-try-dytyny	news	article	ru	discovered	200	103961	no	yes	other
-p0157	https://www.onliner.by/	news	home	ru	listed	200	597412	no	yes	phpbb
-p0158	https://habr.com/ru/articles/	blog	home	ru	listed	200	336140	no	yes	other
-p0158d	https://habr.com/ru/articles/1095258/	blog	post	ru	discovered	200	262066	no	yes	other
-p0159	https://habr.com/en/articles/	blog	home	en	listed	200	266843	no	yes	other
+p0156	https://korrespondent.net/	news	home	ru	listed	200	168619	no	yes	other
+p0156d	https://ua.korrespondent.net/city/kiev/4921530-u-ttsk-kyieva-stalasia-strilianyna-shestero-poranenykh	news	article	ru	discovered	200	101432	no	yes	other
+p0157	https://www.onliner.by/	news	home	ru	listed	200	596215	no	yes	phpbb
+p0158	https://habr.com/ru/articles/	blog	home	ru	listed	200	348295	no	yes	other
+p0158d	https://habr.com/ru/articles/1095258/	blog	post	ru	discovered	200	262068	no	yes	other
+p0159	https://habr.com/en/articles/	blog	home	en	listed	200	266841	no	yes	other
 p0159d	https://habr.com/en/companies/postgrespro/articles/1095076/	blog	post	en	discovered	200	158979	no	yes	other
-p0160	https://vc.ru/	blog	home	ru	listed	200	599029	no	yes	other
-p0160d	https://vc.ru/ai/3203663-agenty-gemini-4-argon-pobedili-ender-drakona-v-minecraft	blog	post	ru	discovered	200	165705	no	yes	other
-p0161	https://pikabu.ru/	forum	home	ru	listed	200	312641	no	yes	other
-p0161d	https://pikabu.ru/story/dva_slova_za_15_let_v_seti_14438499	forum	post	ru	discovered	200	218506	no	yes	other
+p0160	https://vc.ru/	blog	home	ru	listed	200	586237	no	yes	other
+p0160d	https://vc.ru/hr/3203689-krizis-na-rynke-truda-doktor-nauk-iz-prinstona-ne-nashyel-rabotu	blog	post	ru	discovered	200	151437	no	yes	other
+p0161	https://pikabu.ru/	forum	home	ru	listed	200	311082	no	yes	other
+p0161d	https://pikabu.ru/story/dva_slova_za_15_let_v_seti_14438499	forum	post	ru	discovered	200	225810	no	yes	other
 p0162	https://www.drive2.ru/	blog	home	ru	listed	403	902	no	no: HTTP 403	
-p0163	https://www.livejournal.com/	blog	home	ru	listed	TypeError:UND_ERR_CONNECT_TIMEOUT	0	no	no: TypeError:UND_ERR_CONNECT_TIMEOUT	
+p0163	https://www.livejournal.com/	blog	home	ru	listed	200	669398	no	yes	other
 p0164	https://medium.com/	blog	home	en	listed	403	5379	no	no: HTTP 403	
-p0165	https://dev.to/	blog	home	en	listed	200	269137	no	yes	other
+p0165	https://dev.to/	blog	home	en	listed	200	257373	no	yes	other
 p0165d	https://dev.to/roobia/que-es-rea-reverse-engineer-anything-el-servidor-mcp-que-alcanzo-115000-estrellas-en-github-en-4311	blog	post	en	discovered	200	96219	no	yes	other
-p0166	https://hashnode.com/	blog	home	en	listed	200	388818	no	yes	nextjs
-p0167	https://substack.com/	blog	home	en	listed	200	225506	no	yes	other
+p0166	https://hashnode.com/	blog	home	en	listed	200	391015	no	yes	nextjs
+p0167	https://substack.com/	blog	home	en	listed	200	228425	no	yes	other
 p0168	https://www.platformer.news/	blog	home	en	listed	200	70538	no	yes	ghost
 p0168d	https://www.platformer.news/openai-states-lawsuit-liability/	blog	post	en	discovered	200	66078	no	yes	ghost
 p0169	https://www.citationneeded.news/	blog	home	en	listed	200	67675	no	yes	ghost
@@ -292,19 +291,19 @@ p0171d	https://blog.codinghorror.com/recommended-reading-for-developers/	blog	po
 p0172	https://ghost.org/	saas	home	en	listed	200	123112	no	yes	hugo
 p0173	https://ghost.org/blog/	blog	home	en	listed	200	74849	no	yes	ghost
 p0173d	https://ghost.org/resources/how-to-setup-your-ghost-publication	blog	post	en	discovered	200	69760	no	yes	ghost
-p0174	https://blog.cloudflare.com/	blog	home	en	listed	200	217452	no	yes	other
-p0174d	https://blog.cloudflare.com/protect-your-netscaler-gateway/	blog	post	en	discovered	200	302102	no	yes	other
+p0174	https://blog.cloudflare.com/	blog	home	en	listed	200	216088	no	yes	other
+p0174d	https://blog.cloudflare.com/protect-your-netscaler-gateway/	blog	post	en	discovered	200	302093	no	yes	other
 p0175	https://blog.mozilla.org/en/	blog	home	en	listed	200	84484	no	yes	wordpress
-p0175d	https://blog.mozilla.org/en/firefox/new-firefox-design-is-here/	blog	post	en	discovered	200	71072	no	yes	wordpress
+p0175d	https://blog.mozilla.org/en/firefox/new-firefox-design-is-here/	blog	post	en	discovered	200	71063	no	yes	wordpress
 p0176	https://blogs.microsoft.com/	blog	home	en	listed	200	145329	no	yes	wordpress
-p0176d	https://blogs.microsoft.com/blog/2026/10/19/securing-the-agentic-insider/	blog	post	en	discovered	200	128948	no	yes	wordpress
-p0177	https://wordpress.org/	saas	home	en	listed	200	177829	no	yes	wordpress
-p0178	https://wordpress.org/news/	blog	home	en	listed	200	155811	no	yes	wordpress
-p0178d	https://wordpress.org/news/2026/10/wordpress-7-1-3-maintenance-and-security-release/	blog	post	en	discovered	200	163427	no	yes	wordpress
-p0179	https://ma.tt/	blog	home	en	listed	200	184519	no	yes	wordpress
+p0176d	https://blogs.microsoft.com/blog/2026/10/19/securing-the-agentic-insider/	blog	post	en	discovered	200	128898	no	yes	wordpress
+p0177	https://wordpress.org/	saas	home	en	listed	200	177653	no	yes	wordpress
+p0178	https://wordpress.org/news/	blog	home	en	listed	200	155679	no	yes	wordpress
+p0178d	https://wordpress.org/news/2026/10/wordpress-7-1-3-maintenance-and-security-release/	blog	post	en	discovered	200	163251	no	yes	wordpress
+p0179	https://ma.tt/	blog	home	en	listed	200	184783	no	yes	wordpress
 p0179d	https://ma.tt/2026/08/me-sh-on-android/	blog	post	en	discovered	200	65845	no	yes	wordpress
-p0180	https://www.wpbeginner.com/	blog	home	en	listed	200	320658	no	yes	wordpress
-p0180d	https://www.wpbeginner.com/news/wpbeginner-spotlight-28-wpvibe-hits-40000-sites-a-new-wpforms-dashboard-and-two-wordpress-security-updates/	blog	post	en	discovered	200	346846	no	yes	wordpress
+p0180	https://www.wpbeginner.com/	blog	home	en	listed	200	320600	no	yes	wordpress
+p0180d	https://www.wpbeginner.com/news/wpbeginner-spotlight-28-wpvibe-hits-40000-sites-a-new-wpforms-dashboard-and-two-wordpress-security-updates/	blog	post	en	discovered	200	347838	no	yes	wordpress
 p0181	https://css-tricks.com/	blog	home	en	listed	200	154152	no	yes	wordpress
 p0181d	https://css-tricks.com/books/fundamental-css-tactics/infinite-scrolling-background-image/	blog	post	en	discovered	200	85684	no	yes	wordpress
 p0182	https://yoast.com/	saas	home	en	listed	200	224026	no	yes	wordpress
@@ -315,17 +314,17 @@ p0184	https://wpengine.com/	saas	home	en	listed	200	363703	no	yes	wordpress
 p0185	https://www.elegantthemes.com/blog/	blog	home	en	listed	200	302238	no	yes	wordpress
 p0185d	https://www.elegantthemes.com/blog/business/the-best-way-to-build-a-website-with-ai-in-2026-is-inside-a-visual-builder	blog	post	en	discovered	200	344390	no	yes	wordpress
 p0186	https://www.smashingmagazine.com/	blog	home	en	listed	200	288621	no	yes	other
-p0186d	https://www.smashingmagazine.com/2026/10/is-your-organization-messing-up-ai-adoption/	blog	post	en	discovered	200	241044	no	yes	other
-p0187	https://alistapart.com/	blog	home	en	listed	200	65251	no	yes	wordpress
-p0187d	https://alistapart.com/article/designed-for-a-dead-language/	blog	post	en	discovered	200	175283	no	yes	wordpress
-p0188	https://daringfireball.net/	blog	home	en	listed	200	128808	no	yes	other
+p0186d	https://www.smashingmagazine.com/2026/10/is-your-organization-messing-up-ai-adoption/	blog	post	en	discovered	200	241152	no	yes	other
+p0187	https://alistapart.com/	blog	home	en	listed	200	65250	no	yes	wordpress
+p0187d	https://alistapart.com/article/designed-for-a-dead-language/	blog	post	en	discovered	200	175159	no	yes	wordpress
+p0188	https://daringfireball.net/	blog	home	en	listed	200	129913	no	yes	other
 p0189	https://www.joelonsoftware.com/	blog	home	en	listed	200	86890	no	yes	wordpress
-p0189d	https://www.joelonsoftware.com/2022/12/19/progress-on-the-block-protocol/	blog	post	en	discovered	200	74006	no	yes	wordpress
+p0189d	https://www.joelonsoftware.com/2022/12/19/progress-on-the-block-protocol/	blog	post	en	discovered	200	74133	no	yes	wordpress
 p0190	https://martinfowler.com/	blog	home	en	listed	200	35851	no	yes	other
 p0190d	https://martinfowler.com/articles/never-send-slides/build-your-slide-template.html	blog	post	en	discovered	200	82248	no	yes	other
 p0191	https://jvns.ca/	blog	home	en	listed	200	147158	no	yes	hugo
 p0191d	https://jvns.ca/blog/2026/09/27/replacing-the-old-battery-on-rechargeable-bike-lights/	blog	post	en	discovered	200	17439	no	yes	other
-p0192	https://simonwillison.net/	blog	home	en	listed	200	95973	no	yes	other
+p0192	https://simonwillison.net/	blog	home	en	listed	200	95960	no	yes	other
 p0192d	https://simonwillison.net/2026/Oct/14/ai-is-mass-decompiling-games/	blog	post	en	discovered	200	15807	no	yes	other
 p0193	https://paulgraham.com/articles.html	blog	listing	en	listed	200	119430	no	yes	other
 p0194	https://www.kalzumeus.com/	blog	home	en	listed	206	11595	no	no: HTTP 206	
@@ -333,90 +332,90 @@ p0195	https://danluu.com/	blog	home	en	listed	200	22688	no	yes	other
 p0195d	https://danluu.com/why-hardware-development-is-hard/	blog	post	en	discovered	200	14660	no	yes	other
 p0196	https://overreacted.io/	blog	home	en	listed	200	89007	no	yes	nextjs
 p0196d	https://overreacted.io/how-i-vibed-a-proof-of-conways-conjecture/	blog	post	en	discovered	200	630636	no	yes	nextjs
-p0197	https://kentcdodds.com/blog	blog	home	en	listed	200	391436	no	yes	other
-p0197d	https://kentcdodds.com/blog/how-to-use-react-context-effectively	blog	post	en	discovered	200	257220	no	yes	other
+p0197	https://kentcdodds.com/blog	blog	home	en	listed	200	391525	no	yes	other
+p0197d	https://kentcdodds.com/blog/introducing-kody-your-personal-software-factory	blog	post	en	discovered	200	120121	no	yes	other
 p0198	https://www.hanselman.com/blog/	blog	home	en	listed	200	97667	no	yes	other
 p0198d	https://www.hanselman.com/blog/debugging-my-new-network-when-10-gigabit-ethernet-runs-at-300-megabits	blog	post	en	discovered	200	30467	no	yes	other
-p0199	https://lifehacker.com/	blog	home	en	listed	200	493684	no	yes	other
-p0199d	https://lifehacker.com/tech/how-to-watch-pornhub-even-if-its-blocked-in-your-state	blog	post	en	discovered	200	306474	no	yes	other
+p0199	https://lifehacker.com/	blog	home	en	listed	200	495606	no	yes	other
+p0199d	https://lifehacker.com/tech/how-to-watch-pornhub-even-if-its-blocked-in-your-state	blog	post	en	discovered	200	306225	no	yes	other
 p0200	https://www.marthastewart.com/	blog	home	en	listed	402	612	no	no: HTTP 402	
 p0201	https://www.seriouseats.com/	blog	home	en	listed	402	612	no	no: HTTP 402	
-p0202	https://pinchofyum.com/	blog	home	en	listed	200	232074	no	yes	wordpress
+p0202	https://pinchofyum.com/	blog	home	en	listed	200	232072	no	yes	wordpress
 p0202d	https://pinchofyum.com/category/making-money-from-a-food-blog	blog	post	en	discovered	200	193675	no	yes	wordpress
-p0203	https://www.loveandlemons.com/	blog	home	en	listed	200	457932	no	yes	wordpress
-p0203d	https://www.loveandlemons.com/pumpkin-chocolate-chip-cookies/	blog	post	en	discovered	200	596407	no	yes	wordpress
+p0203	https://www.loveandlemons.com/	blog	home	en	listed	200	457964	no	yes	wordpress
+p0203d	https://www.loveandlemons.com/pumpkin-chocolate-chip-cookies/	blog	post	en	discovered	200	596405	no	yes	wordpress
 p0204	https://minimalistbaker.com/	blog	home	en	listed	200	429483	no	yes	wordpress
 p0204d	https://minimalistbaker.com/cheesy-vegan-enchilada-skillet/	blog	post	en	discovered	200	505241	no	yes	wordpress
 p0205	https://www.nomadicmatt.com/	blog	home	en	listed	200	330204	no	yes	wordpress
 p0205d	https://www.nomadicmatt.com/travel-blogs/faye-travel-insurance-review/	blog	post	en	discovered	200	284970	no	yes	wordpress
-p0206	https://www.goodreads.com/	media	home	en	listed	200	52016	no	yes	other
+p0206	https://www.goodreads.com/	media	home	en	listed	200	53405	no	yes	other
 p0207	https://www.techradar.com/	news	home	en	listed	200	971282	no	yes	other
 p0207d	https://global.techradar.com/es-es/phones/iphone/apple-iphone-16-analisis-subiendo-el-nivel-del-modelo-basico	news	article	en	discovered	200	1489849	no	yes	other
 p0208	https://www.pcmag.com/	news	home	en	listed	403	5827	no	no: HTTP 403	
-p0209	https://www.howtogeek.com/	news	home	en	listed	200	972507	no	yes	wordpress
-p0209d	https://www.howtogeek.com/category/ai-amp-machine-learning/	news	article	en	discovered	200	285182	no	yes	wordpress
-p0210	https://www.makeuseof.com/	news	home	en	listed	200	931458	no	yes	wordpress
-p0210d	https://www.makeuseof.com/i-tested-lenovos-googlebook-15-and-its-an-easy-laptop-to-like/	news	article	en	discovered	200	401646	no	yes	wordpress
-p0211	https://9to5mac.com/	news	home	en	listed	200	296778	no	yes	wordpress
+p0209	https://www.howtogeek.com/	news	home	en	listed	200	973285	no	yes	wordpress
+p0209d	https://www.howtogeek.com/category/ai-amp-machine-learning/	news	article	en	discovered	200	286040	no	yes	wordpress
+p0210	https://www.makeuseof.com/	news	home	en	listed	200	931950	no	yes	wordpress
+p0210d	https://www.makeuseof.com/google-maps-hides-years-of-street-view-history/	news	article	en	discovered	200	406347	no	yes	wordpress
+p0211	https://9to5mac.com/	news	home	en	listed	200	295696	no	yes	wordpress
 p0211d	https://9to5mac.com/2026/10/18/new-macbook-pro-with-touchscreen-and-oled-november-6-release/	news	article	en	discovered	200	170009	no	yes	wordpress
-p0212	https://www.macrumors.com/	news	home	en	listed	200	394637	no	yes	other
-p0212d	https://www.macrumors.com/2026/10/19/gm-vehicles-iphone-apple-wallet-car-keys/	news	article	en	discovered	200	154524	no	yes	other
+p0212	https://www.macrumors.com/	news	home	en	listed	200	398748	no	yes	other
+p0212d	https://www.macrumors.com/2026/10/19/apple-releases-ios-27-2-rc/	news	article	en	discovered	200	153156	no	yes	other
 p0213	https://www.androidauthority.com/	news	home	en	listed	403	5493	no	no: HTTP 403	
-p0214	https://www.xda-developers.com/	news	home	en	listed	200	963656	no	yes	wordpress
-p0214d	https://www.xda-developers.com/optiscaler-makes-dlss-5-run-faster-and-look-better-on-rtx-40-series-gpus/	news	article	en	discovered	200	416665	no	yes	wordpress
+p0214	https://www.xda-developers.com/	news	home	en	listed	200	963448	no	yes	wordpress
+p0214d	https://www.xda-developers.com/syncthing-is-the-sync-tool-i-forgot-i-installed/	news	article	en	discovered	200	329473	no	yes	wordpress
 p0215	https://www.gamespot.com/	news	home	en	listed	403	5844	no	no: HTTP 403	
-p0216	https://www.ign.com/	news	home	en	listed	200	277964	no	yes	other
-p0216d	https://es.ign.com/playstation-6/234822/ni-pssr-ni-ray-tracing-ni-leches-la-tecnologia-mas-rompedora-de-ps6-podria-haber-sido-revelada	news	article	en	discovered	200	153796	no	yes	other
-p0217	https://www.polygon.com/	news	home	en	listed	200	1191398	no	yes	wordpress
-p0217d	https://www.polygon.com/video/david-dastmalchian-wants-a-street-fighter-commander-deck-shelf-quest/	news	article	en	discovered	200	249744	no	yes	wordpress
-p0218	https://kotaku.com/	news	home	en	listed	200	181397	no	yes	wordpress
+p0216	https://www.ign.com/	news	home	en	listed	200	280448	no	yes	other
+p0216d	https://es.ign.com/playstation-6/234822/ni-pssr-ni-ray-tracing-ni-leches-la-tecnologia-mas-rompedora-de-ps6-podria-haber-sido-revelada	news	article	en	discovered	200	153653	no	yes	other
+p0217	https://www.polygon.com/	news	home	en	listed	200	1192295	no	yes	wordpress
+p0217d	https://www.polygon.com/video/gta-6-leaks-epic-s-ai-woes-no-man-s-sky-mobile-and-the-best-aaa-of-the-year/	news	article	en	discovered	200	232202	no	yes	wordpress
+p0218	https://kotaku.com/	news	home	en	listed	200	181464	no	yes	wordpress
 p0218d	https://kotaku.com/video/john-cena-wwe-six-phases-wrestling-match-break-down-1851785097	news	article	en	discovered	200	220040	no	yes	wordpress
-p0219	https://www.amazon.com/	ecommerce	home	en	listed	200	2162	no	no: bot wall	other
-p0220	https://www.amazon.de/	ecommerce	home	de	listed	200	2161	no	no: bot wall	other
+p0219	https://www.amazon.com/	ecommerce	home	en	listed	202	2007	no	no: HTTP 202	
+p0220	https://www.amazon.de/	ecommerce	home	de	listed	202	2007	no	no: HTTP 202	
 p0221	https://www.ebay.com/	ecommerce	home	en	listed	403	1832	no	no: HTTP 403	
-p0222	https://www.walmart.com/	ecommerce	home	en	listed	200	560729	no	yes	nextjs
-p0223	https://www.target.com/	ecommerce	home	en	listed	200	439745	no	yes	nextjs
+p0222	https://www.walmart.com/	ecommerce	home	en	listed	200	440815	no	yes	nextjs
+p0223	https://www.target.com/	ecommerce	home	en	listed	200	443607	no	yes	nextjs
 p0224	https://www.bestbuy.com/	ecommerce	home	en	listed	200	7047	no	yes	other
 p0225	https://www.etsy.com/	ecommerce	home	en	listed	403	776	no	no: HTTP 403	
-p0226	https://www.aliexpress.com/	ecommerce	home	en	listed	200	413494	no	yes	other
-p0227	https://www.ikea.com/us/en/	ecommerce	home	en	listed	200	1919200	no	yes	other
-p0227d	https://www.ikea.com/us/en/p/vinterfint-wall-decoration-pine-80633386/	ecommerce	product	en	discovered	200	1067222	no	yes	other
-p0228	https://www.zalando.de/	ecommerce	home	de	listed	200	571179	no	yes	other
-p0229	https://www.otto.de/	ecommerce	home	de	listed	200	319138	no	yes	other
-p0229d	https://www.otto.de/sale/deal-des-tages/	ecommerce	listing	de	discovered	200	630558	no	yes	other
+p0226	https://www.aliexpress.com/	ecommerce	home	en	listed	200	418266	no	yes	other
+p0227	https://www.ikea.com/us/en/	ecommerce	home	en	listed	200	1906939	no	yes	other
+p0227d	https://www.ikea.com/us/en/p/vinterfint-wall-decoration-pine-80633386/	ecommerce	product	en	discovered	200	1058386	no	yes	other
+p0228	https://www.zalando.de/	ecommerce	home	de	listed	200	573936	no	yes	other
+p0229	https://www.otto.de/	ecommerce	home	de	listed	200	324767	no	yes	other
+p0229d	https://www.otto.de/sale/deal-des-tages/	ecommerce	listing	de	discovered	200	629071	no	yes	other
 p0230	https://www.asos.com/	ecommerce	home	en	listed	200	280245	no	yes	other
-p0230d	https://www.asos.com/women/	ecommerce	listing	en	discovered	200	293411	no	yes	other
+p0230d	https://www.asos.com/women/	ecommerce	listing	en	discovered	200	293406	no	yes	other
 p0231	https://www2.hm.com/en_us/index.html	ecommerce	home	en	listed	403	391	no	no: HTTP 403	
 p0232	https://www.zara.com/us/	ecommerce	home	en	listed	200	2134	no	no: bot wall	other
-p0233	https://www.nike.com/	ecommerce	home	en	listed	200	721699	no	yes	nextjs
+p0233	https://www.nike.com/	ecommerce	home	en	listed	200	723546	no	yes	nextjs
 p0234	https://www.adidas.com/us	ecommerce	home	en	listed	403	9741	no	no: HTTP 403	
 p0235	https://www.apple.com/	ecommerce	home	en	listed	200	327072	no	yes	other
 p0236	https://www.apple.com/iphone/	ecommerce	product	en	listed	200	692964	no	yes	other
 p0237	https://www.newegg.com/	ecommerce	home	en	listed	403	5824	no	no: HTTP 403	
-p0238	https://www.homedepot.com/	ecommerce	home	en	listed	403	371	no	no: HTTP 403	
+p0238	https://www.homedepot.com/	ecommerce	home	en	listed	403	369	no	no: HTTP 403	
 p0239	https://www.lowes.com/	ecommerce	home	en	listed	200	354789	no	yes	other
-p0240	https://www.costco.com/	ecommerce	home	en	listed	200	3232126	no	yes	nextjs
+p0240	https://www.costco.com/	ecommerce	home	en	listed	200	3245486	no	yes	nextjs
 p0241	https://www.wayfair.com/	ecommerce	home	en	listed	429	5825	no	no: HTTP 429	
-p0242	https://www.rakuten.co.jp/	ecommerce	home	ja	listed	200	173823	no	yes	other
-p0243	https://www.mercadolibre.com.mx/	ecommerce	home	es	listed	200	515411	no	yes	other
-p0244	https://www.flipkart.com/	ecommerce	home	en	listed	200	1315014	no	yes	other
+p0242	https://www.rakuten.co.jp/	ecommerce	home	ja	listed	200	173832	no	yes	other
+p0243	https://www.mercadolibre.com.mx/	ecommerce	home	es	listed	200	515004	no	yes	other
+p0244	https://www.flipkart.com/	ecommerce	home	en	listed	200	1314012	no	yes	other
 p0245	https://allegro.pl/	ecommerce	home	pl	listed	timeout	0	no	no: timeout	
 p0246	https://www.bol.com/nl/nl/	ecommerce	home	nl	listed	403	12662	no	no: HTTP 403	
 p0247	https://www.cdiscount.com/	ecommerce	home	fr	listed	200	14121	no	no: bot wall	other
-p0248	https://www.fnac.com/	ecommerce	home	fr	listed	200	520250	no	yes	other
+p0248	https://www.fnac.com/	ecommerce	home	fr	listed	200	515577	no	yes	other
 p0249	https://www.argos.co.uk/	ecommerce	home	en	listed	403	373	no	no: HTTP 403	
 p0250	https://www.currys.co.uk/	ecommerce	home	en	listed	403	5846	no	no: HTTP 403	
-p0251	https://www.johnlewis.com/	ecommerce	home	en	listed	200	571433	no	yes	nextjs
+p0251	https://www.johnlewis.com/	ecommerce	home	en	listed	200	571482	no	yes	nextjs
 p0252	https://www.uniqlo.com/us/en/	ecommerce	home	en	listed	403	382	no	no: HTTP 403	
-p0253	https://www.decathlon.com/	ecommerce	home	en	listed	200	894004	no	yes	shopify
-p0253d	https://www.decathlon.com/products/men-s-lightweight-down-trekking-jacket-3-c-xplore-khaki	ecommerce	product	en	discovered	200	748689	no	yes	shopify
-p0254	https://www.sephora.com/	ecommerce	home	en	listed	200	923387	no	yes	other
+p0253	https://www.decathlon.com/	ecommerce	home	en	listed	200	913377	no	yes	shopify
+p0253d	https://www.decathlon.com/products/men-s-lightweight-down-trekking-jacket-3-c-xplore-khaki	ecommerce	product	en	discovered	200	730092	no	yes	shopify
+p0254	https://www.sephora.com/	ecommerce	home	en	listed	200	923386	no	yes	other
 p0255	https://www.lego.com/en-us	ecommerce	home	en	listed	403	5940	no	no: HTTP 403	
-p0256	https://www.samsung.com/us/	ecommerce	home	en	listed	200	398003	no	yes	other
-p0257	https://store.steampowered.com/	ecommerce	home	en	listed	200	988428	no	yes	other
-p0258	https://www.gog.com/en/	ecommerce	home	en	listed	200	1538127	no	yes	angular
+p0256	https://www.samsung.com/us/	ecommerce	home	en	listed	200	397765	no	yes	other
+p0257	https://store.steampowered.com/	ecommerce	home	en	listed	200	984121	no	yes	other
+p0258	https://www.gog.com/en/	ecommerce	home	en	listed	200	1538126	no	yes	angular
 p0259	https://www.bhphotovideo.com/	ecommerce	home	en	listed	403	5826	no	no: HTTP 403	
-p0260	https://www.rei.com/	ecommerce	home	en	listed	200	854709	no	yes	other
+p0260	https://www.rei.com/	ecommerce	home	en	listed	200	854683	no	yes	other
 p0260d	https://www.rei.com/product/C08500/rei-co-op-beams-x-rei-co-op-expedition-parka	ecommerce	product	en	discovered	403	468	no	no: HTTP 403	
 p0261	https://www.patagonia.com/home/	ecommerce	home	en	listed	200	331663	no	yes	other
 p0261d	https://www.patagonia.com/stories/guides/product/	ecommerce	product	en	discovered	200	14373	no	yes	other
@@ -425,38 +424,38 @@ p0263	https://www.jd.com/	ecommerce	home	zh	listed	200	14708	no	yes	other
 p0264	https://www.coupang.com/	ecommerce	home	ko	listed	403	369	no	no: HTTP 403	
 p0265	https://www.tokopedia.com/	ecommerce	home	id	listed	200	104972	no	yes	other
 p0266	https://www.kakaku.com/	ecommerce	home	ja	listed	200	109161	no	yes	other
-p0267	https://www.allbirds.com/	ecommerce	home	en	listed	200	721191	no	yes	shopify
+p0267	https://www.allbirds.com/	ecommerce	home	en	listed	200	721253	no	yes	shopify
 p0267d	https://www.allbirds.com/products/mens-runner-nz-slip-on-mushroom	ecommerce	product	en	discovered	200	780719	no	yes	shopify
 p0268	https://www.gymshark.com/	ecommerce	home	en	listed	TypeError:Error	0	no	no: TypeError:Error	
-p0269	https://kyliecosmetics.com/	ecommerce	home	en	listed	200	540754	no	yes	shopify
-p0270	https://colourpop.com/	ecommerce	home	en	listed	200	1276054	no	yes	shopify
-p0270d	https://colourpop.com/products/daybreak-and-moonlight-fresh-kiss-trio	ecommerce	product	en	discovered	200	946475	no	yes	shopify
-p0271	https://www.fashionnova.com/	ecommerce	home	en	listed	200	1437292	no	yes	shopify
-p0271d	https://www.fashionnova.com/es-es/products/gift-cards	ecommerce	product	en	discovered	200	1268811	no	yes	shopify
-p0272	https://bombas.com/	ecommerce	home	en	listed	429	34232	no	no: HTTP 429	
-p0273	https://www.brooklinen.com/	ecommerce	home	en	listed	200	1826233	no	yes	shopify
-p0273d	https://www.brooklinen.com/products/rise-ai-giftcard	ecommerce	product	en	discovered	200	1861428	no	yes	shopify
-p0274	https://ruggable.com/	ecommerce	home	en	listed	200	411630	no	yes	shopify
-p0274d	https://ruggable.com/products/spot-cleaner	ecommerce	product	en	discovered	200	466263	no	yes	shopify
-p0275	https://www.chubbiesshorts.com/	ecommerce	home	en	listed	200	788834	no	yes	shopify
-p0275d	https://www.chubbiesshorts.com/products/baby-american-flag-shorts	ecommerce	product	en	discovered	404	650804	no	no: HTTP 404	
+p0269	https://kyliecosmetics.com/	ecommerce	home	en	listed	200	540963	no	yes	shopify
+p0270	https://colourpop.com/	ecommerce	home	en	listed	200	1276055	no	yes	shopify
+p0270d	https://colourpop.com/products/daybreak-and-moonlight-fresh-kiss-trio	ecommerce	product	en	discovered	200	946476	no	yes	shopify
+p0271	https://www.fashionnova.com/	ecommerce	home	en	listed	200	1440183	no	yes	shopify
+p0271d	https://www.fashionnova.com/es-es/products/gift-cards	ecommerce	product	en	discovered	200	1269526	no	yes	shopify
+p0272	https://bombas.com/	ecommerce	home	en	listed	429	34218	no	no: HTTP 429	
+p0273	https://www.brooklinen.com/	ecommerce	home	en	listed	200	1767248	no	yes	shopify
+p0273d	https://www.brooklinen.com/products/rise-ai-giftcard	ecommerce	product	en	discovered	200	1757751	no	yes	shopify
+p0274	https://ruggable.com/	ecommerce	home	en	listed	200	411624	no	yes	shopify
+p0274d	https://ruggable.com/products/spot-cleaner	ecommerce	product	en	discovered	200	466223	no	yes	shopify
+p0275	https://www.chubbiesshorts.com/	ecommerce	home	en	listed	200	788836	no	yes	shopify
+p0275d	https://www.chubbiesshorts.com/products/baby-american-flag-shorts	ecommerce	product	en	discovered	404	650800	no	no: HTTP 404	
 p0276	https://www.deathwishcoffee.com/	ecommerce	home	en	listed	200	643165	no	yes	shopify
 p0276d	https://www.deathwishcoffee.com/products/death-wish-instant-coffee-1	ecommerce	product	en	discovered	200	402266	no	yes	shopify
 p0277	https://rothys.com/	ecommerce	home	en	listed	200	1098174	no	yes	shopify
 p0277d	https://rothys.com/en-es/products/womens-point-flat-iii-revelvet-russet	ecommerce	product	en	discovered	200	1383529	no	yes	shopify
-p0278	https://skims.com/	ecommerce	home	en	listed	200	1273430	no	yes	shopify
-p0278d	https://skims.com/en-es/products/skims-ultimate-teardrop-push-up-bra-clay	ecommerce	product	en	discovered	200	2466484	no	yes	shopify
+p0278	https://skims.com/	ecommerce	home	en	listed	200	1272964	no	yes	shopify
+p0278d	https://skims.com/en-es/products/skims-ultimate-teardrop-push-up-bra-clay	ecommerce	product	en	discovered	200	2448088	no	yes	shopify
 p0279	https://www.tentree.com/	ecommerce	home	en	listed	200	574508	no	yes	shopify
-p0279d	https://www.tentree.com/products/e-gift-code	ecommerce	product	en	discovered	200	583781	no	yes	shopify
+p0279d	https://www.tentree.com/products/e-gift-code	ecommerce	product	en	discovered	200	583778	no	yes	shopify
 p0280	https://www.mvmt.com/	ecommerce	home	en	listed	200	540640	no	yes	shopify
 p0280d	https://mvmt.com/products/legacy-slim-panther-black-42mm-28000088	ecommerce	product	en	discovered	200	433433	no	yes	shopify
-p0281	https://www.taylorstitch.com/	ecommerce	home	en	listed	200	1095067	no	yes	shopify
+p0281	https://www.taylorstitch.com/	ecommerce	home	en	listed	200	1094701	no	yes	shopify
 p0281d	https://www.taylorstitch.com/products/gift-certificate	ecommerce	product	en	discovered	200	1004134	no	yes	shopify
 p0282	https://www.bluebottlecoffee.com/	ecommerce	home	en	listed	403	4555	no	no: HTTP 403	
 p0283	https://www.beardbrand.com/	ecommerce	home	en	listed	200	407212	no	yes	shopify
 p0283d	https://www.beardbrand.com/products/custom-mens-cologne-set	ecommerce	product	en	discovered	200	640348	no	yes	shopify
 p0284	https://www.huckberry.com/	ecommerce	home	en	listed	403	5021	no	no: HTTP 403	
-p0285	https://www.pela.earth/	ecommerce	home	en	listed	200	336101	no	yes	shopify
+p0285	https://www.pela.earth/	ecommerce	home	en	listed	200	335841	no	yes	shopify
 p0285d	https://lomi.com/products/lomi-3-food-recycler	ecommerce	product	en	discovered	200	399730	no	yes	shopify
 p0286	https://www.tecovas.com/	ecommerce	home	en	listed	200	227304	no	yes	shopify
 p0286d	https://www.tecovas.com/p/friends	ecommerce	product	en	discovered	200	198044	no	yes	shopify
@@ -466,70 +465,70 @@ p0288	https://www.hydroflask.com/	ecommerce	home	en	listed	403	5824	no	no: HTTP 
 p0289	https://www.ridgewallet.com/	ecommerce	home	en	listed	403	4544	no	no: HTTP 403	
 p0290	https://www.nativecos.com/	ecommerce	home	en	listed	200	1842031	no	yes	shopify
 p0290d	https://www.nativecos.com/products/hand-soap	ecommerce	product	en	discovered	200	1878299	no	yes	shopify
-p0291	https://www.olipop.com/	ecommerce	home	en	listed	TypeError:ECONNREFUSED	0	no	no: TypeError:ECONNREFUSED	
+p0291	https://www.olipop.com/	ecommerce	home	en	listed	TypeError:UND_ERR_CONNECT_TIMEOUT	0	no	no: TypeError:UND_ERR_CONNECT_TIMEOUT	
 p0292	https://www.glossier.com/	ecommerce	home	en	listed	200	584725	no	yes	shopify
 p0292d	https://www.glossier.com/en-es/products/balm-dotcom	ecommerce	product	en	discovered	200	2182667	no	yes	shopify
 p0293	https://www.away.com/	ecommerce	home	en	listed	TypeError:ENOTFOUND	0	no	no: TypeError:ENOTFOUND	
-p0294	https://www.everlane.com/	ecommerce	home	en	listed	200	831829	no	yes	shopify
+p0294	https://www.everlane.com/	ecommerce	home	en	listed	200	831821	no	yes	shopify
 p0295	https://www.ozon.ru/	ecommerce	home	ru	listed	TypeError:Error	0	no	no: TypeError:Error	
 p0296	https://www.wildberries.ru/	ecommerce	home	ru	listed	498	1134	no	no: HTTP 498	
 p0297	https://www.avito.ru/	ecommerce	home	ru	listed	429	28368	no	no: HTTP 429	
 p0298	https://www.dns-shop.ru/	ecommerce	home	ru	listed	401	6319	no	no: HTTP 401	
 p0299	https://www.mvideo.ru/	ecommerce	home	ru	listed	200	38679	no	yes	other
-p0300	https://www.citilink.ru/	ecommerce	home	ru	listed	429	9355	no	no: HTTP 429	
+p0300	https://www.citilink.ru/	ecommerce	home	ru	listed	429	9461	no	no: HTTP 429	
 p0301	https://www.eldorado.ru/	ecommerce	home	ru	listed	503	2742	no	no: HTTP 503	
-p0302	https://www.lamoda.ru/	ecommerce	home	ru	listed	200	1795	no	no: bot wall	other
+p0302	https://www.lamoda.ru/	ecommerce	home	ru	listed	200	1794	no	no: bot wall	other
 p0303	https://www.sportmaster.ru/	ecommerce	home	ru	listed	401	10854	no	no: HTTP 401	
 p0304	https://lemanapro.ru/	ecommerce	home	ru	listed	401	265	no	no: HTTP 401	
-p0305	https://www.detmir.ru/	ecommerce	home	ru	listed	200	2278295	no	yes	other
-p0305d	https://www.detmir.ru/catalog/index/name/children_clothes/	ecommerce	listing	ru	discovered	200	10290	no	yes	other
-p0306	https://www.labirint.ru/	ecommerce	home	ru	listed	200	884286	no	yes	other
-p0306d	https://www.labirint.ru/reviews/goods/848214/	ecommerce	product	ru	discovered	200	233840	no	yes	nuxt
+p0305	https://www.detmir.ru/	ecommerce	home	ru	listed	200	2317305	no	yes	other
+p0305d	https://www.detmir.ru/catalog/index/name/children_clothes/	ecommerce	listing	ru	discovered	200	13687	no	yes	other
+p0306	https://www.labirint.ru/	ecommerce	home	ru	listed	200	885024	no	yes	other
+p0306d	https://www.labirint.ru/reviews/goods/328132/	ecommerce	product	ru	discovered	200	298609	no	yes	nuxt
 p0307	https://www.chitai-gorod.ru/	ecommerce	home	ru	listed	403	902	no	no: HTTP 403	
 p0308	https://www.litres.ru/	ecommerce	home	ru	listed	200	679915	no	yes	nextjs
-p0309	https://www.perekrestok.ru/	ecommerce	home	ru	listed	200	2151	no	no: bot wall	other
-p0310	https://vkusvill.ru/	ecommerce	home	ru	listed	200	432430	no	yes	other
-p0310d	https://vkusvill.ru/goods/	ecommerce	product	ru	discovered	200	254559	no	yes	other
+p0309	https://www.perekrestok.ru/	ecommerce	home	ru	listed	200	2152	no	no: bot wall	other
+p0310	https://vkusvill.ru/	ecommerce	home	ru	listed	200	432447	no	yes	other
+p0310d	https://vkusvill.ru/goods/	ecommerce	product	ru	discovered	200	254576	no	yes	other
 p0311	https://www.auchan.ru/	ecommerce	home	ru	listed	401	265	no	no: HTTP 401	
-p0312	https://magnit.ru/	ecommerce	home	ru	listed	200	969315	no	yes	nuxt
+p0312	https://magnit.ru/	ecommerce	home	ru	listed	200	942123	no	yes	nuxt
 p0313	https://www.onlinetrade.ru/	ecommerce	home	ru	listed	200	1698	no	no: bot wall	other
-p0314	https://www.regard.ru/	ecommerce	home	ru	listed	200	2596611	no	yes	nextjs
-p0314d	https://www.regard.ru/catalog/sale	ecommerce	listing	ru	discovered	200	1615953	no	yes	nextjs
+p0314	https://www.regard.ru/	ecommerce	home	ru	listed	200	2596631	no	yes	nextjs
+p0314d	https://www.regard.ru/catalog/sale	ecommerce	listing	ru	discovered	200	1614588	no	yes	nextjs
 p0315	https://www.e-katalog.ru/	ecommerce	home	ru	listed	TypeError:ENOTFOUND	0	no	no: TypeError:ENOTFOUND	
-p0316	https://market.yandex.ru/	ecommerce	home	ru	listed	200	2013660	no	yes	other
-p0317	https://www.cian.ru/	ecommerce	home	ru	listed	200	1916443	no	yes	other
-p0318	https://www.drom.ru/	ecommerce	home	ru	listed	200	195289	no	yes	other
-p0318d	https://www.drom.ru/catalog/	ecommerce	listing	ru	discovered	200	257661	no	yes	other
+p0316	https://market.yandex.ru/	ecommerce	home	ru	listed	200	2008869	no	yes	other
+p0317	https://www.cian.ru/	ecommerce	home	ru	listed	200	1916712	no	yes	other
+p0318	https://www.drom.ru/	ecommerce	home	ru	listed	200	194826	no	yes	other
+p0318d	https://www.drom.ru/catalog/	ecommerce	listing	ru	discovered	200	257585	no	yes	other
 p0319	https://auto.ru/	ecommerce	home	ru	listed	200	6100	no	yes	other
-p0320	https://hh.ru/	saas	home	ru	listed	200	1772173	no	yes	other
-p0321	https://www.superjob.ru/	saas	home	ru	listed	200	490759	no	yes	other
+p0320	https://hh.ru/	saas	home	ru	listed	200	1771942	no	yes	other
+p0321	https://www.superjob.ru/	saas	home	ru	listed	200	520304	no	yes	other
 p0322	https://www.banki.ru/	finance	home	ru	listed	200	13602	no	yes	other
-p0323	https://www.sravni.ru/	finance	home	ru	listed	200	615664	no	yes	nextjs
-p0323d	https://www.sravni.ru/novost/2026/10/19/kakie-banki-povysili-stavki-po-vkladam-pered-zasedaniem-banka-rossii	finance	article	ru	discovered	200	325017	no	yes	nextjs
-p0324	https://otzovik.com/	forum	home	ru	listed	200	169403	no	yes	other
+p0323	https://www.sravni.ru/	finance	home	ru	listed	200	618665	no	yes	nextjs
+p0323d	https://www.sravni.ru/novost/2026/10/19/deputaty-predlozhili-povysit-limit-rashodov-dlya-nalogovogo-vycheta-za-zhile	finance	article	ru	discovered	200	302450	no	yes	nextjs
+p0324	https://otzovik.com/	forum	home	ru	listed	200	168126	no	yes	other
 p0324d	https://otzovik.com/static/img/2023/otzovik.webmanifest	forum	post	ru	discovered	200	490	no	no: not HTML	
 p0325	https://irecommend.ru/	forum	home	ru	listed	521	1495	no	no: HTTP 521	
 p0326	https://rozetka.com.ua/	ecommerce	home	uk	listed	403	5842	no	no: HTTP 403	
-p0327	https://prom.ua/	ecommerce	home	uk	listed	200	245492	no	yes	other
+p0327	https://prom.ua/	ecommerce	home	uk	listed	200	245189	no	yes	other
 p0328	https://www.olx.ua/	ecommerce	home	uk	listed	403	919	no	no: HTTP 403	
 p0329	https://kaspi.kz/	ecommerce	home	ru	listed	200	88759	no	yes	other
-p0330	https://www.1c.ru/	saas	home	ru	listed	200	69060	no	yes	other
+p0330	https://www.1c.ru/	saas	home	ru	listed	200	68880	no	yes	other
 p0331	https://www.1c-bitrix.ru/	saas	home	ru	listed	200	201787	no	yes	bitrix
-p0332	https://www.bitrix24.ru/	saas	home	ru	listed	200	614667	no	yes	bitrix
-p0333	https://www.mts.ru/	finance	home	ru	listed	200	962757	no	yes	angular
+p0332	https://www.bitrix24.ru/	saas	home	ru	listed	200	614560	no	yes	bitrix
+p0333	https://www.mts.ru/	finance	home	ru	listed	200	962683	no	yes	angular
 p0334	https://moskva.megafon.ru/	finance	home	ru	listed	TypeError:ENOTFOUND	0	no	no: TypeError:ENOTFOUND	
-p0335	https://moskva.beeline.ru/customers/products/	finance	home	ru	listed	200	411670	no	yes	other
-p0336	https://t2.ru/	finance	home	ru	listed	503	8938	no	no: HTTP 503	
-p0337	https://www.rt.ru/	finance	home	ru	listed	200	57622	no	yes	other
+p0335	https://moskva.beeline.ru/customers/products/	finance	home	ru	listed	200	411701	no	yes	other
+p0336	https://t2.ru/	finance	home	ru	listed	503	8932	no	no: HTTP 503	
+p0337	https://www.rt.ru/	finance	home	ru	listed	200	55313	no	yes	other
 p0338	https://www.cdek.ru/ru/	travel	home	ru	listed	200	1773	no	no: bot wall	other
 p0339	https://www.pochta.ru/	gov	home	ru	listed	417	127599	no	no: HTTP 417	
-p0340	https://www.tutu.ru/	travel	home	ru	listed	200	277976	no	yes	nextjs
-p0340d	https://www.tutu.ru/poezda/vkz/%D0%B2%D0%BE%D0%BA%D0%B7%D0%B0%D0%BB%D1%8B_%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D1%8B/	travel	article	ru	discovered	200	642098	no	yes	other
-p0341	https://www.aviasales.ru/	travel	home	ru	listed	200	946821	no	yes	other
+p0340	https://www.tutu.ru/	travel	home	ru	listed	200	278394	no	yes	nextjs
+p0340d	https://www.tutu.ru/poezda/vkz/%D0%B2%D0%BE%D0%BA%D0%B7%D0%B0%D0%BB%D1%8B_%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D1%8B/	travel	article	ru	discovered	200	641424	no	yes	other
+p0341	https://www.aviasales.ru/	travel	home	ru	listed	200	946615	no	yes	other
 p0342	https://www.rzd.ru/	travel	home	ru	listed	TypeError:UND_ERR_CONNECT_TIMEOUT	0	no	no: TypeError:UND_ERR_CONNECT_TIMEOUT	
 p0343	https://www.afisha.ru/	media	home	ru	listed	200	3712	no	no: bot wall	other
 p0344	https://www.kinopoisk.ru/	media	home	ru	listed	200	2976	no	no: bot wall	other
-p0345	https://www.ivi.ru/	media	home	ru	listed	200	276040	no	yes	other
+p0345	https://www.ivi.ru/	media	home	ru	listed	200	275813	no	yes	other
 p0346	https://2gis.ru/	saas	home	ru	listed	200	11529	no	yes	other
 p0347	https://tilda.cc/	saas	home	en	listed	200	468754	no	yes	tilda
 p0348	https://tilda.cc/ru/	saas	home	ru	listed	200	468754	no	yes	tilda
@@ -538,21 +537,21 @@ p0349d	https://help-ru.tilda.cc/getstarted	docs	docs	ru	discovered	200	184026	no
 p0350	https://tilda.education/	edu	home	ru	listed	200	1011715	no	yes	tilda
 p0350d	https://tilda.education/en/articles-how-to-become-a-freelance-web-designer	edu	article	ru	discovered	200	284591	no	yes	tilda
 p0351	https://madeontilda.ru/	blog	home	ru	listed	200	95822	no	yes	tilda
-p0352	https://www.wix.com/	saas	home	en	listed	200	3007773	no	yes	wix
+p0352	https://www.wix.com/	saas	home	en	listed	200	2510439	no	yes	wix
 p0353	https://www.squarespace.com/	saas	home	en	listed	200	618672	no	yes	squarespace
 p0354	https://webflow.com/	saas	home	en	listed	200	524520	no	yes	webflow
 p0355	https://webflow.com/blog	blog	home	en	listed	200	472828	no	yes	webflow
 p0355d	https://webflow.com/blog/introducing-source-by-webflow	blog	post	en	discovered	200	410292	no	yes	webflow
 p0356	https://www.framer.com/	saas	home	en	listed	200	1928255	no	yes	shopify
-p0357	https://www.weebly.com/	saas	home	en	listed	200	119989	no	yes	other
-p0358	https://www.paypal.com/us/home	finance	home	en	listed	200	378157	no	yes	other
+p0357	https://www.weebly.com/	saas	home	en	listed	200	119447	no	yes	other
+p0358	https://www.paypal.com/us/home	finance	home	en	listed	200	367446	no	yes	other
 p0359	https://www.chase.com/	finance	home	en	listed	200	316025	no	yes	nextjs
 p0360	https://www.bankofamerica.com/	finance	home	en	listed	200	323714	no	yes	other
 p0361	https://www.revolut.com/	finance	home	en	listed	403	873196	no	no: HTTP 403	
-p0362	https://wise.com/	finance	home	en	listed	200	952390	no	yes	nextjs
+p0362	https://wise.com/	finance	home	en	listed	200	952062	no	yes	nextjs
 p0363	https://www.coinbase.com/	finance	home	en	listed	403	5886	no	no: HTTP 403	
 p0364	https://www.investopedia.com/	reference	home	en	listed	402	612	no	no: HTTP 402	
-p0365	https://www.nerdwallet.com/	finance	home	en	listed	200	1307195	no	yes	wordpress
+p0365	https://www.nerdwallet.com/	finance	home	en	listed	200	1307196	no	yes	wordpress
 p0365d	https://www.nerdwallet.com/credit-cards/learn/credit-card-interest-calculator	finance	article	en	discovered	403	6081	no	no: HTTP 403	
 p0366	https://www.sberbank.ru/ru/person	finance	home	ru	listed	TypeError:SELF_SIGNED_CERT_IN_CHAIN	0	no	no: TypeError:SELF_SIGNED_CERT_IN_CHAIN	
 p0367	https://www.tbank.ru/	finance	home	ru	listed	TypeError:SELF_SIGNED_CERT_IN_CHAIN	0	no	no: TypeError:SELF_SIGNED_CERT_IN_CHAIN	
@@ -563,51 +562,51 @@ p0371	https://www.raiffeisen.ru/	finance	home	ru	listed	200	237743	no	yes	other
 p0372	https://www.cbr.ru/	gov	home	ru	listed	200	73773	no	yes	other
 p0373	https://www.cbr.ru/currency_base/daily/	gov	page	ru	listed	200	39264	no	yes	other
 p0374	https://stripe.com/	saas	home	en	listed	200	730606	no	yes	nextjs
-p0375	https://stripe.com/docs	docs	docs	en	listed	200	1369282	no	yes	other
+p0375	https://stripe.com/docs	docs	docs	en	listed	200	1371186	no	yes	other
 p0376	https://www.notion.com/	saas	home	en	listed	200	210280	no	yes	nextjs
-p0377	https://slack.com/	saas	home	en	listed	200	253063	no	yes	other
+p0377	https://slack.com/	saas	home	en	listed	200	241982	no	yes	other
 p0378	https://www.figma.com/	saas	home	en	listed	200	1801762	no	yes	nextjs
-p0379	https://www.atlassian.com/	saas	home	en	listed	200	2636534	no	yes	other
-p0380	https://github.com/	saas	home	en	listed	200	572404	no	yes	other
+p0379	https://www.atlassian.com/	saas	home	en	listed	200	2636881	no	yes	other
+p0380	https://github.com/	saas	home	en	listed	200	572645	no	yes	other
 p0381	https://about.gitlab.com/	saas	home	en	listed	200	217101	no	yes	nuxt
-p0382	https://vercel.com/	saas	home	en	listed	200	624369	no	yes	nextjs
+p0382	https://vercel.com/	saas	home	en	listed	200	624326	no	yes	nextjs
 p0383	https://www.netlify.com/	saas	home	en	listed	200	415175	no	yes	other
 p0384	https://www.heroku.com/	saas	home	en	listed	200	433842	no	yes	wordpress
 p0385	https://www.cloudflare.com/	saas	home	en	listed	200	1334690	no	yes	other
 p0386	https://www.salesforce.com/	saas	home	en	listed	200	591105	no	yes	wordpress
 p0387	https://www.hubspot.com/	saas	home	en	listed	200	642896	no	yes	other
 p0388	https://zoom.us/	saas	home	en	listed	200	318999	no	yes	other
-p0389	https://www.dropbox.com/	saas	home	en	listed	200	597993	no	yes	other
-p0390	https://mailchimp.com/	saas	home	en	listed	200	521610	no	yes	other
-p0391	https://www.airtable.com/	saas	home	en	listed	200	451662	no	yes	nextjs
+p0389	https://www.dropbox.com/	saas	home	en	listed	200	598045	no	yes	other
+p0390	https://mailchimp.com/	saas	home	en	listed	200	521586	no	yes	other
+p0391	https://www.airtable.com/	saas	home	en	listed	200	438608	no	yes	nextjs
 p0392	https://linear.app/	saas	home	en	listed	200	1257132	no	yes	nextjs
-p0393	https://asana.com/	saas	home	en	listed	200	912387	no	yes	nextjs
+p0393	https://asana.com/	saas	home	en	listed	200	913682	no	yes	nextjs
 p0394	https://monday.com/	saas	home	en	listed	200	624849	no	yes	webflow
 p0395	https://trello.com/	saas	home	en	listed	200	532632	no	yes	other
 p0396	https://www.zendesk.com/	saas	home	en	listed	200	865437	no	yes	nextjs
-p0397	https://www.intercom.com/	saas	home	en	listed	200	1535290	no	yes	nextjs
+p0397	https://www.intercom.com/	saas	home	en	listed	200	1533839	no	yes	nextjs
 p0398	https://www.twilio.com/	saas	home	en	listed	200	725513	no	yes	other
 p0399	https://www.datadoghq.com/	saas	home	en	listed	200	286941	no	yes	other
 p0400	https://sentry.io/	saas	home	en	listed	200	628831	no	yes	other
-p0401	https://www.shopify.com/	saas	home	en	listed	200	718298	no	yes	shopify
-p0402	https://www.shopify.com/blog	blog	home	en	listed	200	740915	no	yes	shopify
-p0402d	https://www.shopify.com/blog/13975985-how-to-find-a-manufacturer-or-supplier-for-your-product-idea	blog	post	en	discovered	200	757874	no	yes	shopify
+p0401	https://www.shopify.com/	saas	home	en	listed	200	718350	no	yes	shopify
+p0402	https://www.shopify.com/blog	blog	home	en	listed	200	741408	no	yes	shopify
+p0402d	https://www.shopify.com/blog/13975985-how-to-find-a-manufacturer-or-supplier-for-your-product-idea	blog	post	en	discovered	200	757744	no	yes	shopify
 p0403	https://www.canva.com/	saas	home	en	listed	403	755119	no	no: HTTP 403	
-p0404	https://miro.com/	saas	home	en	listed	200	925425	no	yes	other
+p0404	https://miro.com/	saas	home	en	listed	200	1028900	no	yes	other
 p0405	https://www.anthropic.com/	saas	home	en	listed	200	172997	no	yes	webflow
-p0406	https://1password.com/	saas	home	en	listed	200	176546	no	yes	nextjs
-p0407	https://bitwarden.com/	saas	home	en	listed	200	724796	no	yes	other
-p0408	https://www.docker.com/	saas	home	en	listed	200	500979	no	yes	wordpress
+p0406	https://1password.com/	saas	home	en	listed	200	176537	no	yes	nextjs
+p0407	https://bitwarden.com/	saas	home	en	listed	200	724740	no	yes	other
+p0408	https://www.docker.com/	saas	home	en	listed	200	419545	no	yes	wordpress
 p0409	https://www.jetbrains.com/	saas	home	en	listed	200	274388	no	yes	other
 p0410	https://www.postman.com/	saas	home	en	listed	200	503268	no	yes	nextjs
 p0411	https://supabase.com/	saas	home	en	listed	200	1340556	no	yes	nextjs
-p0412	https://www.digitalocean.com/	saas	home	en	listed	200	297299	no	yes	nextjs
+p0412	https://www.digitalocean.com/	saas	home	en	listed	200	297306	no	yes	nextjs
 p0413	https://www.mongodb.com/	saas	home	en	listed	200	1000938	no	yes	nextjs
 p0414	https://www.elastic.co/	saas	home	en	listed	200	901695	no	yes	nextjs
-p0415	https://grafana.com/	saas	home	en	listed	200	749507	no	yes	nextjs
-p0416	https://www.hashicorp.com/	saas	home	en	listed	429	34232	no	no: HTTP 429	
+p0415	https://grafana.com/	saas	home	en	listed	200	749895	no	yes	nextjs
+p0416	https://www.hashicorp.com/	saas	home	en	listed	429	34234	no	no: HTTP 429	
 p0417	https://www.fastly.com/	saas	home	en	listed	200	220359	no	yes	other
-p0418	https://www.akamai.com/	saas	home	en	listed	200	222749	no	yes	other
+p0418	https://www.akamai.com/	saas	home	en	listed	200	222707	no	yes	other
 p0419	https://www.oracle.com/	saas	home	en	listed	403	1450	no	no: HTTP 403	
 p0420	https://www.ibm.com/us-en	saas	home	en	listed	200	213446	no	yes	other
 p0421	https://www.microsoft.com/en-us	saas	home	en	listed	403	4410	no	no: HTTP 403	
@@ -616,39 +615,39 @@ p0423	https://www.mozilla.org/en-US/	saas	home	en	listed	200	115077	no	yes	other
 p0424	https://www.mozilla.org/en-US/firefox/	saas	page	en	listed	200	142068	no	yes	other
 p0425	https://www.opera.com/	saas	home	en	listed	200	190102	no	yes	other
 p0426	https://www.spotify.com/us/	media	home	en	listed	200	166355	no	yes	other
-p0427	https://www.netflix.com/	media	home	en	listed	200	663802	no	yes	other
+p0427	https://www.netflix.com/	media	home	en	listed	200	663814	no	yes	other
 p0428	https://www.twitch.tv/	media	home	en	listed	200	219034	no	yes	other
-p0429	https://vimeo.com/	media	home	en	listed	200	1645948	no	yes	nextjs
-p0430	https://www.youtube.com/	media	home	en	listed	200	998912	no	yes	other
-p0431	https://www.tiktok.com/	social	home	en	listed	200	380181	no	yes	other
-p0432	https://www.pinterest.com/	social	home	en	listed	200	1160079	no	yes	other
-p0433	https://www.tumblr.com/	social	home	en	listed	200	118993	no	yes	wordpress
-p0434	https://x.com/	social	home	en	listed	200	41744	no	yes	other
+p0429	https://vimeo.com/	media	home	en	listed	200	1750005	no	yes	nextjs
+p0430	https://www.youtube.com/	media	home	en	listed	200	996735	no	yes	other
+p0431	https://www.tiktok.com/	social	home	en	listed	200	371995	no	yes	other
+p0432	https://www.pinterest.com/	social	home	en	listed	200	1362817	no	yes	other
+p0433	https://www.tumblr.com/	social	home	en	listed	200	121424	no	yes	wordpress
+p0434	https://x.com/	social	home	en	listed	200	41738	no	yes	other
 p0435	https://www.linkedin.com/	social	home	en	listed	200	142558	no	yes	other
 p0436	https://www.facebook.com/	social	home	en	listed	400	1542	no	no: HTTP 400	
-p0437	https://www.instagram.com/	social	home	en	listed	200	587825	no	yes	other
-p0438	https://vk.com/	social	home	ru	listed	200	202926	no	yes	other
-p0439	https://ok.ru/	social	home	ru	listed	200	260941	no	yes	other
-p0440	https://t.me/durov	social	page	ru	listed	200	10954	no	yes	other
+p0437	https://www.instagram.com/	social	home	en	listed	200	587826	no	yes	other
+p0438	https://vk.com/	social	home	ru	listed	200	202927	no	yes	other
+p0439	https://ok.ru/	social	home	ru	listed	200	260925	no	yes	other
+p0440	https://t.me/durov	social	page	ru	listed	200	10955	no	yes	other
 p0441	https://www.imdb.com/	media	home	en	listed	202	1997	no	no: HTTP 202	
-p0442	https://www.rottentomatoes.com/	media	home	en	listed	200	601937	no	yes	wordpress
+p0442	https://www.rottentomatoes.com/	media	home	en	listed	200	589502	no	yes	wordpress
 p0443	https://www.allrecipes.com/	media	home	en	listed	402	612	no	no: HTTP 402	
-p0444	https://www.weather.com/	media	home	en	listed	200	346051	no	yes	nextjs
-p0445	https://www.accuweather.com/	media	home	en	listed	200	223111	no	yes	wordpress
-p0446	https://www.google.com/	portal	home	en	listed	200	293157	no	yes	other
-p0447	https://www.bing.com/	portal	home	en	listed	200	197892	no	yes	other
-p0448	https://www.yahoo.com/	portal	home	en	listed	200	552994	no	yes	nextjs
+p0444	https://www.weather.com/	media	home	en	listed	200	346004	no	yes	nextjs
+p0445	https://www.accuweather.com/	media	home	en	listed	200	223082	no	yes	wordpress
+p0446	https://www.google.com/	portal	home	en	listed	200	293419	no	yes	other
+p0447	https://www.bing.com/	portal	home	en	listed	200	198249	no	yes	other
+p0448	https://www.yahoo.com/	portal	home	en	listed	200	553112	no	yes	nextjs
 p0449	https://duckduckgo.com/	portal	home	en	listed	200	355136	no	yes	nextjs
-p0450	https://www.baidu.com/	portal	home	zh	listed	200	738319	no	yes	other
-p0451	https://www.naver.com/	portal	home	ko	listed	200	230079	no	yes	other
-p0452	https://www.daum.net/	portal	home	ko	listed	200	628079	no	yes	other
+p0450	https://www.baidu.com/	portal	home	zh	listed	200	740689	no	yes	other
+p0451	https://www.naver.com/	portal	home	ko	listed	200	227863	no	yes	other
+p0452	https://www.daum.net/	portal	home	ko	listed	200	631977	no	yes	other
 p0453	https://www.yahoo.co.jp/	portal	home	ja	listed	403	10051	no	no: HTTP 403	
-p0454	https://www.msn.com/en-us	portal	home	en	listed	200	48177	no	yes	other
+p0454	https://www.msn.com/en-us	portal	home	en	listed	200	48553	no	yes	other
 p0455	https://www.livedoor.com/	portal	home	ja	listed	403	3287	no	no: HTTP 403	
-p0456	https://ameblo.jp/	blog	home	ja	listed	200	119536	no	yes	nextjs
-p0457	https://note.com/	blog	home	ja	listed	200	108167	no	yes	nextjs
-p0458	https://www.hatena.ne.jp/	portal	home	ja	listed	200	606836	no	yes	wordpress
-p0459	https://www.bilibili.com/	media	home	zh	listed	200	171424	no	yes	other
+p0456	https://ameblo.jp/	blog	home	ja	listed	200	119542	no	yes	nextjs
+p0457	https://note.com/	blog	home	ja	listed	200	108035	no	yes	nextjs
+p0458	https://www.hatena.ne.jp/	portal	home	ja	listed	200	606073	no	yes	wordpress
+p0459	https://www.bilibili.com/	media	home	zh	listed	200	167124	no	yes	other
 p0460	https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/div	docs	docs	en	listed	200	188983	no	yes	other
 p0461	https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array	docs	docs	en	listed	200	244584	no	yes	other
 p0462	https://developer.mozilla.org/ru/docs/Web/HTML	docs	docs	ru	listed	200	216222	no	yes	other
@@ -658,7 +657,7 @@ p0465	https://docs.python.org/ru/3/tutorial/index.html	docs	docs	ru	listed	200	4
 p0466	https://doc.rust-lang.org/std/vec/struct.Vec.html	docs	docs	en	listed	200	955558	no	yes	other
 p0467	https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html	docs	docs	en	listed	200	55998	no	yes	other
 p0468	https://nodejs.org/api/fs.html	docs	docs	en	listed	200	1108648	no	yes	other
-p0469	https://nodejs.org/en	saas	home	en	listed	200	531725	no	yes	nextjs
+p0469	https://nodejs.org/en	saas	home	en	listed	200	531753	no	yes	nextjs
 p0470	https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html	docs	docs	en	listed	200	245248	no	yes	other
 p0471	https://www.php.net/manual/en/function.array-map.php	docs	docs	en	listed	200	89427	no	yes	other
 p0472	https://www.php.net/manual/ru/function.array-map.php	docs	docs	ru	listed	200	93283	no	yes	other
@@ -687,7 +686,7 @@ p0494	https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html	docs	do
 p0495	https://cloud.google.com/storage/docs/introduction	docs	docs	en	listed	200	213785	no	yes	other
 p0496	https://tailwindcss.com/docs/installation	docs	docs	en	listed	200	329738	no	yes	nextjs
 p0497	https://developer.chrome.com/docs/devtools/overview	docs	docs	en	listed	200	180372	no	yes	other
-p0498	https://web.dev/articles/vitals	docs	docs	en	listed	200	143742	no	yes	other
+p0498	https://web.dev/articles/vitals	docs	docs	en	listed	200	143738	no	yes	other
 p0499	https://www.w3.org/TR/WCAG21/	docs	docs	en	listed	403	5868	no	no: HTTP 403	
 p0500	https://html.spec.whatwg.org/multipage/parsing.html	docs	docs	en	listed	200	826098	no	yes	other
 p0501	https://html.spec.whatwg.org/	docs	docs	en	listed	200	5242881	yes	yes	other
@@ -703,7 +702,7 @@ p0510	https://squidfunk.github.io/mkdocs-material/getting-started/	docs	docs	en	
 p0511	https://kotlinlang.org/docs/home.html	docs	docs	en	listed	200	3819	no	yes	other
 p0512	https://docs.swift.org/swift-book/documentation/the-swift-programming-language/	docs	docs	en	listed	200	3970	no	yes	other
 p0513	https://spring.io/guides/gs/rest-service	docs	docs	en	listed	200	423097	no	yes	gatsby
-p0514	https://laravel.com/docs/routing	docs	docs	en	listed	200	643419	no	yes	other
+p0514	https://laravel.com/docs/routing	docs	docs	en	listed	200	643395	no	yes	other
 p0515	https://symfony.com/doc/current/index.html	docs	docs	en	listed	200	139278	no	yes	other
 p0516	https://www.typescriptlang.org/docs/handbook/2/basic-types.html	docs	docs	en	listed	200	249903	no	yes	gatsby
 p0517	https://expressjs.com/en/starter/hello-world.html	docs	docs	en	listed	200	93432	no	yes	other
@@ -724,7 +723,7 @@ p0531	https://www.gnu.org/software/bash/manual/bash.html	docs	docs	en	listed	200
 p0532	https://www.gnu.org/	saas	home	en	listed	200	31385	no	yes	other
 p0533	https://www.kernel.org/doc/html/latest/admin-guide/README.html	docs	docs	en	listed	200	31133	no	yes	sphinx
 p0534	https://redis.io/docs/latest/	docs	docs	en	listed	200	120401	no	yes	hugo
-p0535	https://www.terraform.io/	saas	home	en	listed	200	146690	no	yes	nextjs
+p0535	https://www.terraform.io/	saas	home	en	listed	200	146357	no	yes	nextjs
 p0536	https://docs.ansible.com/	docs	docs	en	listed	200	23586	no	yes	other
 p0537	https://jquery.com/	docs	home	en	listed	200	26421	no	yes	wordpress
 p0538	https://api.jquery.com/jQuery.ajax/	docs	docs	en	listed	200	103015	no	yes	wordpress
@@ -735,16 +734,16 @@ p0541d	https://www.geeksforgeeks.org/dsa/dsa-tutorial-learn-data-structures-and-
 p0542	https://www.tutorialspoint.com/index.htm	docs	home	en	listed	200	167096	no	yes	other
 p0543	https://ru.hexlet.io/	edu	home	ru	listed	200	465449	no	yes	other
 p0543d	https://ru.hexlet.io/programs/devops-engineer-from-scratch	edu	article	ru	discovered	200	3847468	no	yes	tilda
-p0544	https://stepik.org/	edu	home	ru	listed	502	32260	no	no: HTTP 502	
-p0545	https://practicum.yandex.ru/	edu	home	ru	listed	200	1880787	no	yes	other
-p0546	https://netology.ru/	edu	home	ru	listed	200	912456	no	yes	nextjs
+p0544	https://stepik.org/	edu	home	ru	listed	502	31335	no	no: HTTP 502	
+p0545	https://practicum.yandex.ru/	edu	home	ru	listed	200	1880782	no	yes	other
+p0546	https://netology.ru/	edu	home	ru	listed	200	913141	no	yes	nextjs
 p0547	https://skillbox.ru/	edu	home	ru	listed	200	1885023	no	yes	nuxt
 p0547d	https://skillbox.ru/course/profession-project-manager-pro/	edu	article	ru	discovered	200	762548	no	yes	other
 p0548	https://en.wikipedia.org/wiki/HTML	wiki	wiki	en	listed	200	798525	no	yes	mediawiki
-p0549	https://en.wikipedia.org/wiki/Albert_Einstein	wiki	wiki	en	listed	200	1827435	no	yes	mediawiki
-p0550	https://en.wikipedia.org/wiki/Python_(programming_language)	wiki	wiki	en	listed	200	1014187	no	yes	mediawiki
+p0549	https://en.wikipedia.org/wiki/Albert_Einstein	wiki	wiki	en	listed	200	1827374	no	yes	mediawiki
+p0550	https://en.wikipedia.org/wiki/Python_(programming_language)	wiki	wiki	en	listed	200	1014174	no	yes	mediawiki
 p0551	https://en.wikipedia.org/wiki/London	wiki	wiki	en	listed	200	1894286	no	yes	wordpress
-p0552	https://en.wikipedia.org/wiki/Main_Page	wiki	home	en	listed	200	264547	no	yes	mediawiki
+p0552	https://en.wikipedia.org/wiki/Main_Page	wiki	home	en	listed	200	263756	no	yes	mediawiki
 p0553	https://ru.wikipedia.org/wiki/%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0	wiki	wiki	ru	listed	200	2141813	no	yes	mediawiki
 p0554	https://ru.wikipedia.org/wiki/%D0%9F%D1%83%D1%88%D0%BA%D0%B8%D0%BD,_%D0%90%D0%BB%D0%B5%D0%BA%D1%81%D0%B0%D0%BD%D0%B4%D1%80_%D0%A1%D0%B5%D1%80%D0%B3%D0%B5%D0%B5%D0%B2%D0%B8%D1%87	wiki	wiki	ru	listed	200	1623187	no	yes	wordpress
 p0555	https://ru.wikipedia.org/wiki/HTML	wiki	wiki	ru	listed	200	461564	no	yes	mediawiki
@@ -763,47 +762,47 @@ p0567	https://minecraft.wiki/w/Creeper	wiki	wiki	en	listed	200	475162	no	yes	med
 p0568	https://www.wikihow.com/Tie-a-Tie	wiki	wiki	en	listed	200	639568	no	yes	mediawiki
 p0569	https://www.britannica.com/	reference	home	en	listed	403	5803	no	no: HTTP 403	
 p0570	https://www.merriam-webster.com/dictionary/house	reference	page	en	listed	403	5899	no	no: HTTP 403	
-p0571	https://dictionary.cambridge.org/dictionary/english/house	reference	page	en	listed	200	579782	no	yes	other
-p0572	https://gramota.ru/	reference	home	ru	listed	200	396813	no	yes	other
+p0571	https://dictionary.cambridge.org/dictionary/english/house	reference	page	en	listed	200	579780	no	yes	other
+p0572	https://gramota.ru/	reference	home	ru	listed	200	396985	no	yes	other
 p0573	https://www.multitran.com/	reference	home	ru	listed	200	17632	no	yes	other
-p0574	https://lurkmore.wtf/	wiki	home	ru	listed	200	39881	no	yes	other
+p0574	https://lurkmore.wtf/	wiki	home	ru	listed	200	474	no	no: bot wall	other
 p0575	https://posmotre.li/	wiki	home	ru	listed	TypeError:ECONNREFUSED	0	no	no: TypeError:ECONNREFUSED	
 p0576	https://www.imdb.com/title/tt0111161/	media	page	en	listed	202	1997	no	no: HTTP 202	
-p0577	https://www.goodreads.com/book/show/5470.1984	media	page	en	listed	200	939053	no	yes	nextjs
+p0577	https://www.goodreads.com/book/show/5470.1984	media	page	en	listed	200	938817	no	yes	nextjs
 p0578	https://stackoverflow.com/questions/11227809/why-is-processing-a-sorted-array-faster-than-processing-an-unsorted-array	forum	thread	en	listed	403	5682	no	no: HTTP 403	
 p0579	https://stackoverflow.com/questions	forum	listing	en	listed	403	5305	no	no: HTTP 403	
-p0580	https://superuser.com/	forum	home	en	listed	200	150331	no	yes	other
+p0580	https://superuser.com/	forum	home	en	listed	200	149882	no	yes	other
 p0580d	https://superuser.com/questions	forum	thread	en	discovered	403	5301	no	no: HTTP 403	
-p0581	https://unix.stackexchange.com/	forum	home	en	listed	200	147485	no	yes	other
+p0581	https://unix.stackexchange.com/	forum	home	en	listed	200	147489	no	yes	other
 p0581d	https://unix.stackexchange.com/questions	forum	thread	en	discovered	403	5331	no	no: HTTP 403	
-p0582	https://ru.stackoverflow.com/	forum	home	ru	listed	200	640186	no	yes	other
+p0582	https://ru.stackoverflow.com/	forum	home	ru	listed	200	640370	no	yes	other
 p0582d	https://ru.stackoverflow.com/questions	forum	thread	ru	discovered	403	5329	no	no: HTTP 403	
-p0583	https://news.ycombinator.com/	forum	home	en	listed	200	34751	no	yes	other
-p0584	https://old.reddit.com/r/programming/	forum	listing	en	listed	200	332513	no	yes	other
-p0585	https://www.reddit.com/r/programming/	forum	listing	en	listed	200	8411	no	yes	other
-p0586	https://meta.discourse.org/	forum	home	en	listed	200	459171	no	yes	discourse
-p0587	https://forum.obsidian.md/	forum	home	en	listed	200	244288	no	yes	discourse
-p0587d	https://forum.obsidian.md/t/about-the-bug-reports-category/24/11	forum	thread	en	discovered	200	1102514	no	yes	discourse
-p0588	https://discuss.python.org/	forum	home	en	listed	200	268744	no	yes	discourse
-p0589	https://users.rust-lang.org/	forum	home	en	listed	200	235128	no	yes	discourse
-p0589d	https://users.rust-lang.org/t/welcome-to-the-rust-programming-language-users-forum/77411	forum	thread	en	discovered	200	160628	no	yes	discourse
+p0583	https://news.ycombinator.com/	forum	home	en	listed	200	34493	no	yes	other
+p0584	https://old.reddit.com/r/programming/	forum	listing	en	listed	200	332754	no	yes	other
+p0585	https://www.reddit.com/r/programming/	forum	listing	en	listed	200	8420	no	yes	other
+p0586	https://meta.discourse.org/	forum	home	en	listed	200	467946	no	yes	discourse
+p0587	https://forum.obsidian.md/	forum	home	en	listed	200	244346	no	yes	discourse
+p0587d	https://forum.obsidian.md/t/about-the-bug-reports-category/24/11	forum	thread	en	discovered	200	1101705	no	yes	discourse
+p0588	https://discuss.python.org/	forum	home	en	listed	200	277461	no	yes	discourse
+p0589	https://users.rust-lang.org/	forum	home	en	listed	200	245254	no	yes	discourse
+p0589d	https://users.rust-lang.org/t/welcome-to-the-rust-programming-language-users-forum/77411	forum	thread	en	discovered	200	170331	no	yes	discourse
 p0590	https://community.cloudflare.com/	forum	home	en	listed	403	5830	no	no: HTTP 403	
-p0591	https://lobste.rs/	forum	home	en	listed	200	58199	no	yes	other
-p0591d	https://lobste.rs/comments	forum	thread	en	discovered	200	37797	no	yes	other
-p0592	https://slashdot.org/	forum	home	en	listed	200	153998	no	yes	other
-p0592d	https://slashdot.org/topics.pl	forum	thread	en	discovered	200	88477	no	yes	other
-p0593	https://forums.macrumors.com/	forum	home	en	listed	200	288433	no	yes	xenforo
+p0591	https://lobste.rs/	forum	home	en	listed	200	58248	no	yes	other
+p0591d	https://lobste.rs/comments	forum	thread	en	discovered	200	42839	no	yes	other
+p0592	https://slashdot.org/	forum	home	en	listed	200	145777	no	yes	other
+p0592d	https://slashdot.org/topics.pl	forum	thread	en	discovered	200	88510	no	yes	other
+p0593	https://forums.macrumors.com/	forum	home	en	listed	200	288196	no	yes	xenforo
 p0593d	https://forums.macrumors.com/threads/a-confession-i-feel-angry-im-not-getting-mine-on-launch-day.2491994/	forum	thread	en	discovered	403	6140	no	no: HTTP 403	
-p0594	https://xdaforums.com/	forum	home	en	listed	200	119538	no	yes	xenforo
-p0594d	https://xdaforums.com/t/contact-us-account-problems-useful-links.4641742/	forum	thread	en	discovered	200	119183	no	yes	xenforo
+p0594	https://xdaforums.com/	forum	home	en	listed	200	119453	no	yes	xenforo
+p0594d	https://xdaforums.com/t/contact-us-account-problems-useful-links.4641742/	forum	thread	en	discovered	200	119320	no	yes	xenforo
 p0595	https://www.phpbb.com/community/	forum	home	en	listed	403	5828	no	no: HTTP 403	
 p0596	https://xenforo.com/community/	forum	home	en	listed	403	5847	no	no: HTTP 403	
-p0597	https://forum.ixbt.com/	forum	home	ru	listed	200	82879	no	yes	other
-p0598	https://4pda.to/forum/	forum	home	ru	listed	403	10515	no	no: HTTP 403	
-p0599	https://www.cyberforum.ru/	forum	home	ru	listed	200	247491	no	yes	other
+p0597	https://forum.ixbt.com/	forum	home	ru	listed	200	82993	no	yes	other
+p0598	https://4pda.to/forum/	forum	home	ru	listed	403	10494	no	no: HTTP 403	
+p0599	https://www.cyberforum.ru/	forum	home	ru	listed	200	247493	no	yes	other
 p0599d	https://www.cyberforum.ru/assembler-i8080-8085-KP580/	forum	thread	ru	discovered	200	104480	no	yes	other
-p0600	https://www.yaplakal.com/	forum	home	ru	listed	200	153117	no	yes	other
-p0600d	https://www.yaplakal.com/forum16/topic106064.html	forum	thread	ru	discovered	200	65337	no	yes	other
+p0600	https://www.yaplakal.com/	forum	home	ru	listed	200	161812	no	yes	other
+p0600d	https://www.yaplakal.com/forum16/topic106064.html	forum	thread	ru	discovered	200	65709	no	yes	other
 p0601	https://www.nn.ru/	news	home	ru	listed	428	11675	no	no: HTTP 428	
 p0602	https://www.quora.com/	forum	home	en	listed	403	5819	no	no: HTTP 403	
 p0603	https://forum.unity.com/	forum	home	en	listed	200	482407	no	yes	discourse
@@ -814,9 +813,9 @@ p0607	https://www.head-fi.org/	forum	home	en	listed	200	48591	no	yes	xenforo
 p0607d	https://www.head-fi.org/articles/advertise.12522/	forum	thread	en	discovered	200	48591	no	yes	xenforo
 p0608	https://www.city-data.com/forum/	forum	home	en	listed	429	2318	no	no: HTTP 429	
 p0609	https://www.bogleheads.org/forum/index.php	forum	home	en	listed	403	5899	no	no: HTTP 403	
-p0610	https://www.linux.org.ru/	forum	home	ru	listed	200	61128	no	no: bot wall	other
-p0610d	https://www.linux.org.ru/news/internet/18403728	forum	thread	ru	discovered	200	98329	no	yes	other
-p0611	https://www.opennet.ru/	news	home	ru	listed	200	57495	no	yes	other
+p0610	https://www.linux.org.ru/	forum	home	ru	listed	200	61124	no	no: bot wall	other
+p0610d	https://www.linux.org.ru/news/internet/18403728	forum	thread	ru	discovered	200	106961	no	yes	other
+p0611	https://www.opennet.ru/	news	home	ru	listed	200	57861	no	yes	other
 p0611d	https://www.opennet.ru/tips/3302_valve_vr_game_gamescope_vulkan.shtml	news	article	ru	discovered	200	50414	no	yes	other
 p0612	https://www.gov.uk/	gov	home	en	listed	200	85520	no	yes	other
 p0613	https://www.gov.uk/browse/driving	gov	listing	en	listed	200	68984	no	yes	other
@@ -824,18 +823,18 @@ p0614	https://www.gov.uk/vehicle-tax	gov	page	en	listed	200	69496	no	yes	other
 p0615	https://www.usa.gov/	gov	home	en	listed	200	48647	no	yes	drupal
 p0616	https://www.whitehouse.gov/	gov	home	en	listed	200	298501	no	yes	wordpress
 p0616d	https://www.whitehouse.gov/releases/2026/01/365-wins-in-365-days-president-trumps-return-marks-new-era-of-success-prosperity/	gov	article	en	discovered	200	320554	no	yes	wordpress
-p0617	https://www.state.gov/	gov	home	en	listed	200	248209	no	yes	wordpress
-p0617d	https://www.state.gov/releases/office-of-the-spokesman/2026/10/united-states-hosts-caribbean-dialogue-to-advance-shared-security-and-prosperity/	gov	article	en	discovered	200	177381	no	yes	wordpress
+p0617	https://www.state.gov/	gov	home	en	listed	200	248654	no	yes	wordpress
+p0617d	https://www.state.gov/releases/office-of-the-spokesman/2026/10/united-states-hosts-caribbean-dialogue-to-advance-shared-security-and-prosperity/	gov	article	en	discovered	200	177651	no	yes	wordpress
 p0618	https://www.irs.gov/	gov	home	en	listed	200	147394	no	yes	drupal
 p0619	https://www.irs.gov/forms-instructions	gov	page	en	listed	200	117416	no	yes	drupal
-p0620	https://www.ssa.gov/	gov	home	en	listed	200	142308	no	yes	drupal
-p0621	https://www.cdc.gov/	gov	home	en	listed	200	60763	no	yes	other
+p0620	https://www.ssa.gov/	gov	home	en	listed	200	142307	no	yes	drupal
+p0621	https://www.cdc.gov/	gov	home	en	listed	200	60800	no	yes	other
 p0622	https://www.cdc.gov/flu/index.html	gov	page	en	listed	200	67868	no	yes	other
 p0623	https://www.nih.gov/	gov	home	en	listed	403	5839	no	no: HTTP 403	
-p0624	https://www.nasa.gov/	gov	home	en	listed	200	346233	no	yes	wordpress
+p0624	https://www.nasa.gov/	gov	home	en	listed	200	346753	no	yes	wordpress
 p0624d	https://www.nasa.gov/blogs/missions/2026/10/07/nasa-releases-artemis-ii-lunar-science-data-images/	gov	article	en	discovered	200	280766	no	yes	wordpress
-p0625	https://www.weather.gov/	gov	home	en	listed	200	123156	no	yes	other
-p0626	https://www.census.gov/	gov	home	en	listed	200	389216	no	yes	other
+p0625	https://www.weather.gov/	gov	home	en	listed	200	123158	no	yes	other
+p0626	https://www.census.gov/	gov	home	en	listed	200	389289	no	yes	other
 p0627	https://data.gov/	gov	home	en	listed	200	121850	no	yes	other
 p0628	https://www.nhs.uk/	gov	home	en	listed	200	31459	no	yes	other
 p0629	https://www.nhs.uk/conditions/flu/	gov	page	en	listed	200	42944	no	yes	other
@@ -843,14 +842,14 @@ p0630	https://www.canada.ca/en.html	gov	home	en	listed	200	35492	no	yes	other
 p0631	https://www.canada.ca/en/services/benefits.html	gov	page	en	listed	200	27596	no	yes	other
 p0632	https://www.australia.gov.au/	gov	home	en	listed	200	79527	no	yes	other
 p0633	https://www.service-public.fr/	gov	home	fr	listed	200	53180	no	yes	other
-p0634	https://www.bundesregierung.de/breg-de	gov	home	de	listed	200	202958	no	yes	other
-p0634d	https://www.bundesregierung.de/breg-de/aktuelles/invest-in-germany-summit-2457594	gov	article	de	discovered	200	129878	no	yes	other
+p0634	https://www.bundesregierung.de/breg-de	gov	home	de	listed	200	202954	no	yes	other
+p0634d	https://www.bundesregierung.de/breg-de/aktuelles/invest-in-germany-summit-2457594	gov	article	de	discovered	200	129931	no	yes	other
 p0635	https://www.bund.de/DE/Home/home_node.html	gov	home	de	listed	404	5064	no	no: HTTP 404	
 p0636	https://www.gov.pl/web/gov	gov	home	pl	listed	200	40289	no	yes	other
-p0637	https://www.government.nl/	gov	home	en	listed	200	309526	no	yes	nextjs
+p0637	https://www.government.nl/	gov	home	en	listed	200	309420	no	yes	nextjs
 p0637d	https://www.government.nl/documents/2016/06/17/consent-letter-for-minors-travelling-abroad	gov	article	en	discovered	200	225571	no	yes	nextjs
-p0638	https://www.gov.br/pt-br	gov	home	pt	listed	200	132404	no	yes	other
-p0639	https://www.gob.mx/	gov	home	es	listed	200	99296	no	yes	other
+p0638	https://www.gov.br/pt-br	gov	home	pt	listed	200	132347	no	yes	other
+p0639	https://www.gob.mx/	gov	home	es	listed	200	99293	no	yes	other
 p0640	https://www.india.gov.in/	gov	home	en	listed	200	478659	no	yes	nextjs
 p0641	https://www.gov.sg/	gov	home	en	listed	200	460764	no	yes	nextjs
 p0642	https://www.digital.go.jp/	gov	home	ja	listed	200	99072	no	yes	drupal
@@ -858,15 +857,15 @@ p0643	https://europa.eu/	gov	home	en	listed	200	18182	no	yes	drupal
 p0644	https://commission.europa.eu/index_en	gov	home	en	listed	200	171505	no	yes	drupal
 p0645	https://www.un.org/en/	gov	home	en	listed	200	164780	no	yes	drupal
 p0646	https://www.who.int/	gov	home	en	listed	200	138862	no	yes	other
-p0647	https://www.who.int/news-room/fact-sheets/detail/malaria	gov	page	en	listed	200	125323	no	yes	other
+p0647	https://www.who.int/news-room/fact-sheets/detail/malaria	gov	page	en	listed	200	125404	no	yes	other
 p0648	https://www.gosuslugi.ru/	gov	home	ru	listed	200	9376	no	yes	other
 p0649	https://www.nalog.gov.ru/rn77/	gov	home	ru	listed	200	149134	no	yes	other
 p0650	http://kremlin.ru/	gov	home	ru	listed	200	58969	no	yes	other
 p0651	http://kremlin.ru/events/president/news	gov	listing	ru	listed	200	62855	no	yes	other
-p0652	http://government.ru/	gov	home	ru	listed	200	63440	no	yes	other
-p0652d	http://government.ru/news/60227/	gov	article	ru	discovered	200	109974	no	yes	other
-p0653	http://duma.gov.ru/	gov	home	ru	listed	200	296860	no	yes	other
-p0653d	http://duma.gov.ru/news/64121/	gov	article	ru	discovered	200	234616	no	yes	other
+p0652	http://government.ru/	gov	home	ru	listed	200	63360	no	yes	other
+p0652d	http://government.ru/news/60227/	gov	article	ru	discovered	200	109718	no	yes	other
+p0653	http://duma.gov.ru/	gov	home	ru	listed	200	297142	no	yes	other
+p0653d	http://duma.gov.ru/news/64121/	gov	article	ru	discovered	200	234619	no	yes	other
 p0654	https://www.mos.ru/	gov	home	ru	listed	200	358081	no	yes	nextjs
 p0655	https://www.mos.ru/news/	gov	listing	ru	listed	200	411614	no	yes	other
 p0656	https://www.gov.spb.ru/	gov	home	ru	listed	TypeError:UND_ERR_CONNECT_TIMEOUT	0	no	no: TypeError:UND_ERR_CONNECT_TIMEOUT	
@@ -885,23 +884,23 @@ p0665d	https://www.kmu.gov.ua/news/19102026operatyvna-informatsiia-dsns-shchodo-
 p0666	https://www.mit.edu/	edu	home	en	listed	200	48010	no	yes	drupal
 p0667	https://www.harvard.edu/	edu	home	en	listed	200	186622	no	yes	wordpress
 p0667d	https://www.harvard.edu/academics/professional-and-lifelong-learning/	edu	article	en	discovered	200	147323	no	yes	wordpress
-p0668	https://www.stanford.edu/	edu	home	en	listed	200	786003	no	yes	nextjs
+p0668	https://www.stanford.edu/	edu	home	en	listed	200	785955	no	yes	nextjs
 p0669	https://www.ox.ac.uk/	edu	home	en	listed	403	5797	no	no: HTTP 403	
 p0670	https://www.cam.ac.uk/	edu	home	en	listed	200	112104	no	yes	drupal
 p0670d	https://www.cam.ac.uk/stories/cambridge-laidlaw-students-civic-engagement	edu	article	en	discovered	200	640552	no	yes	drupal
 p0671	https://www.ed.ac.uk/	edu	home	en	listed	200	49999	no	yes	drupal
 p0672	https://www.princeton.edu/	edu	home	en	listed	403	5802	no	no: HTTP 403	
-p0673	https://www.berkeley.edu/	edu	home	en	listed	200	76099	no	yes	wordpress
+p0673	https://www.berkeley.edu/	edu	home	en	listed	200	75967	no	yes	wordpress
 p0674	https://www.ucla.edu/	edu	home	en	listed	200	108419	no	yes	other
 p0675	https://www.ethz.ch/en.html	edu	home	en	listed	200	68588	no	yes	other
-p0676	https://www.tum.de/	edu	home	de	listed	200	469623	no	yes	other
-p0677	https://www.coursera.org/	edu	home	en	listed	200	802331	no	yes	other
+p0676	https://www.tum.de/	edu	home	de	listed	200	470243	no	yes	other
+p0677	https://www.coursera.org/	edu	home	en	listed	200	802046	no	yes	other
 p0678	https://www.khanacademy.org/	edu	home	en	listed	200	3038	no	no: bot wall	other
-p0679	https://www.edx.org/	edu	home	en	listed	200	2459894	no	yes	nextjs
+p0679	https://www.edx.org/	edu	home	en	listed	200	2459996	no	yes	nextjs
 p0680	https://www.udemy.com/	edu	home	en	listed	403	5841	no	no: HTTP 403	
 p0681	https://www.duolingo.com/	edu	home	en	listed	200	11230	no	yes	other
 p0682	https://www.msu.ru/	edu	home	ru	listed	200	3889	no	yes	other
-p0683	https://spbu.ru/	edu	home	ru	listed	200	144060	no	yes	drupal
+p0683	https://spbu.ru/	edu	home	ru	listed	200	144284	no	yes	drupal
 p0683d	https://spbu.ru/studentam/praktika-po-modeli-kliniki-v-spbgu	edu	article	ru	discovered	200	147168	no	yes	drupal
 p0684	https://www.hse.ru/	edu	home	ru	listed	200	111402	no	yes	other
 p0684d	https://www.hse.ru/en/data_protection_regulation	edu	article	ru	discovered	200	146394	no	yes	other
@@ -918,43 +917,43 @@ p0691	https://www.spbstu.ru/	edu	home	ru	listed	200	218043	no	yes	bitrix
 p0691d	https://www.spbstu.ru/structure/representative-office-spbpu-shanghai/	edu	article	ru	discovered	200	94791	no	yes	bitrix
 p0692	https://knu.ua/	edu	home	uk	listed	200	42961	no	yes	other
 p0693	https://www.booking.com/	travel	home	en	listed	202	3962	no	no: HTTP 202	
-p0694	https://www.airbnb.com/	travel	home	en	listed	200	635105	no	yes	other
-p0695	https://www.expedia.com/	travel	home	en	listed	429	113924	no	no: HTTP 429	
+p0694	https://www.airbnb.com/	travel	home	en	listed	200	637034	no	yes	other
+p0695	https://www.expedia.com/	travel	home	en	listed	429	113991	no	no: HTTP 429	
 p0696	https://www.skyscanner.net/	travel	home	en	listed	200	708	no	yes	other
-p0697	https://www.kayak.com/	travel	home	en	listed	200	1707302	no	yes	other
-p0698	https://www.lonelyplanet.com/	travel	home	en	listed	200	1844787	no	yes	other
-p0698d	https://www.lonelyplanet.com/destinations/st-martin-sint-maarten-1336613	travel	article	en	discovered	200	1808007	no	yes	other
+p0697	https://www.kayak.com/	travel	home	en	listed	200	1687432	no	yes	other
+p0698	https://www.lonelyplanet.com/	travel	home	en	listed	200	1845663	no	yes	other
+p0698d	https://www.lonelyplanet.com/destinations/st-martin-sint-maarten-1336613	travel	article	en	discovered	200	1808030	no	yes	other
 p0699	https://www.ryanair.com/gb/en	travel	home	en	listed	200	4743	no	yes	other
 p0700	https://www.lufthansa.com/de/en/homepage	travel	home	en	listed	403	11489	no	no: HTTP 403	
-p0701	https://www.aeroflot.ru/ru-ru	travel	home	ru	listed	503	8406	no	no: HTTP 503	
+p0701	https://www.aeroflot.ru/ru-ru	travel	home	ru	listed	503	8408	no	no: HTTP 503	
 p0702	https://www.s7.ru/	travel	home	ru	listed	200	2122	no	no: bot wall	other
-p0703	https://ostrovok.ru/	travel	home	ru	listed	200	207558	no	yes	nextjs
+p0703	https://ostrovok.ru/	travel	home	ru	listed	200	207555	no	yes	nextjs
 p0704	https://www.sutochno.ru/	travel	home	ru	listed	200	774836	no	yes	other
 p0705	https://www.amtrak.com/home.html	travel	home	en	listed	200	239734	no	yes	other
 p0706	https://www.nationalrail.co.uk/	travel	home	en	listed	200	257174	no	yes	nextjs
 p0707	https://www.bahn.de/	travel	home	de	listed	200	59463	no	yes	other
 p0708	https://www.sncf-connect.com/	travel	home	fr	listed	403	776	no	no: HTTP 403	
-p0709	https://www.metmuseum.org/	media	home	en	listed	429	34223	no	no: HTTP 429	
-p0710	https://www.moma.org/	media	home	en	listed	200	231895	no	yes	other
+p0709	https://www.metmuseum.org/	media	home	en	listed	429	34229	no	no: HTTP 429	
+p0710	https://www.moma.org/	media	home	en	listed	200	231903	no	yes	other
 p0711	https://www.britishmuseum.org/	media	home	en	listed	403	5827	no	no: HTTP 403	
-p0712	https://www.louvre.fr/	media	home	fr	listed	200	399275	no	yes	nextjs
+p0712	https://www.louvre.fr/	media	home	fr	listed	200	353028	no	yes	nextjs
 p0713	https://www.hermitagemuseum.org/	media	home	ru	listed	TypeError:UNABLE_TO_VERIFY_LEAF_SIGNATURE	0	no	no: TypeError:UNABLE_TO_VERIFY_LEAF_SIGNATURE	
 p0714	https://www.tretyakovgallery.ru/	media	home	ru	listed	200	1406724	no	yes	nuxt
 p0714d	https://www.tretyakovgallery.ru/exhibitions/o/aleksandr-ivanov-bibleyskie-eskizy-chudesa-i-propovedi-khrista/	media	article	ru	discovered	200	1299858	no	yes	nuxt
 p0715	https://www.bolshoi.ru/	media	home	ru	listed	401	265	no	no: HTTP 401	
 p0716	https://www.mariinsky.ru/	media	home	ru	listed	200	119547	no	yes	other
-p0717	https://www.nationalgeographic.com/	media	home	en	listed	200	575298	no	yes	other
+p0717	https://www.nationalgeographic.com/	media	home	en	listed	200	576757	no	yes	other
 p0717d	https://www.nationalgeographic.com/tv/show/a3753db0-7f6d-41c0-a97f-841f96b45584	media	article	en	discovered	200	19045	no	yes	other
-p0718	https://www.scientificamerican.com/	news	home	en	listed	200	347936	no	yes	other
-p0718d	https://www.scientificamerican.com/article/plants-move-to-get-away-from-their-decaying-brethren/	news	article	en	discovered	200	128330	no	yes	other
-p0719	https://www.nature.com/	news	home	en	listed	200	232423	no	yes	other
-p0719d	https://www.nature.com/articles/d41586-026-03275-w	news	article	en	discovered	200	240226	no	yes	other
+p0718	https://www.scientificamerican.com/	news	home	en	listed	200	347726	no	yes	other
+p0718d	https://www.scientificamerican.com/article/biohackers-say-this-supplement-lets-you-drink-coffee-at-night-no-one-knows-if-its-safe/	news	article	en	discovered	200	140122	no	yes	other
+p0719	https://www.nature.com/	news	home	en	listed	200	232527	no	yes	other
+p0719d	https://www.nature.com/articles/d41586-026-03265-y	news	article	en	discovered	200	241416	no	yes	other
 p0720	https://www.science.org/	news	home	en	listed	403	5843	no	no: HTTP 403	
 p0721	https://arxiv.org/	reference	home	en	listed	200	38033	no	yes	other
 p0722	https://arxiv.org/abs/1706.03762	reference	page	en	listed	200	43644	no	yes	other
 p0723	https://scholar.archive.org/	reference	home	en	listed	200	8007	no	yes	other
 p0724	https://archive.org/	reference	home	en	listed	200	1951	no	yes	angular
-p0725	https://www.gutenberg.org/	reference	home	en	listed	200	30206	no	yes	other
+p0725	https://www.gutenberg.org/	reference	home	en	listed	200	30198	no	yes	other
 p0726	https://www.gutenberg.org/ebooks/1342	reference	page	en	listed	200	24938	no	yes	other
 p0727	https://lib.ru/	reference	home	ru	listed	200	22333	no	yes	other
 p0728	https://www.craigslist.org/about/sites	ecommerce	listing	en	listed	200	89793	no	yes	other
@@ -970,25 +969,25 @@ p0737	https://www.bbc.co.uk/food	media	home	en	listed	200	410417	no	yes	other
 p0737d	https://www.bbc.co.uk/food/recipes/how_to_make_pancakes_02824	media	article	en	discovered	200	336042	no	yes	other
 p0738	https://www.bbcgoodfood.com/	media	home	en	listed	200	837707	no	yes	nextjs
 p0738d	https://www.bbcgoodfood.com/recipes/collection/quick-and-easy-family-recipes	media	article	en	discovered	200	758687	no	yes	nextjs
-p0739	https://www.povarenok.ru/	media	home	ru	listed	200	318431	no	yes	other
-p0739d	https://www.povarenok.ru/recipes-of-the-day/	media	article	ru	discovered	200	330585	no	yes	other
-p0740	https://www.russianfood.com/	media	home	ru	listed	200	400580	no	yes	other
-p0741	https://eda.ru/	media	home	ru	listed	200	1025140	no	yes	other
-p0741d	https://eda.rambler.ru/recepty/supy/sup-s-kuricey-tanduri-i-kokosovymi-slivkami-175628	media	article	ru	discovered	200	673432	no	yes	other
-p0742	https://www.gismeteo.ru/	media	home	ru	listed	200	199396	no	yes	other
-p0743	https://yandex.ru/pogoda/	media	home	ru	listed	200	1289026	no	yes	nextjs
+p0739	https://www.povarenok.ru/	media	home	ru	listed	200	318323	no	yes	other
+p0739d	https://www.povarenok.ru/recipes-of-the-day/	media	article	ru	discovered	200	330607	no	yes	other
+p0740	https://www.russianfood.com/	media	home	ru	listed	200	400600	no	yes	other
+p0741	https://eda.ru/	media	home	ru	listed	200	1024120	no	yes	other
+p0741d	https://eda.rambler.ru/recepty/supy/sup-s-kuricey-tanduri-i-kokosovymi-slivkami-175628	media	article	ru	discovered	200	674558	no	yes	other
+p0742	https://www.gismeteo.ru/	media	home	ru	listed	200	198899	no	yes	other
+p0743	https://yandex.ru/pogoda/	media	home	ru	listed	200	1282819	no	yes	nextjs
 p0744	https://www.timeanddate.com/	reference	home	en	listed	403	5912	no	no: HTTP 403	
 p0745	https://www.xe.com/	finance	home	en	listed	200	371917	no	yes	nextjs
 p0746	https://www.speedtest.net/	saas	home	en	listed	200	206758	no	yes	other
 p0747	https://downdetector.com/	saas	home	en	listed	403	4669	no	no: HTTP 403	
 p0748	https://www.sqlite.org/index.html	docs	home	en	listed	200	9008	no	yes	other
 p0749	https://www.openssl.org/	saas	home	en	listed	200	7057	no	yes	hugo
-p0750	https://www.python.org/	saas	home	en	listed	200	52313	no	yes	other
-p0750d	https://www.python.org/success-stories/building-a-dependency-graph-of-our-python-codebase/	saas	article	en	discovered	200	41989	no	yes	other
+p0750	https://www.python.org/	saas	home	en	listed	200	52057	no	yes	other
+p0750d	https://www.python.org/success-stories/building-an-open-source-and-cross-platform-azure-cli-with-python/	saas	article	en	discovered	200	38052	no	yes	wordpress
 p0751	https://www.rust-lang.org/	saas	home	en	listed	200	18594	no	yes	other
 p0752	https://www.ruby-lang.org/en/	saas	home	en	listed	200	91962	no	yes	other
 p0752d	https://www.ruby-lang.org/en/news/2026/10/12/ruby-4-1-0-preview1-released/	saas	article	en	discovered	200	93716	no	yes	other
-p0753	https://www.perl.org/	saas	home	en	listed	200	12328	no	yes	other
+p0753	https://www.perl.org/	saas	home	en	listed	200	12315	no	yes	other
 p0754	https://www.haskell.org/	saas	home	en	listed	200	63017	no	yes	other
 p0755	https://www.debian.org/	saas	home	en	listed	200	15864	no	yes	other
 p0756	https://ubuntu.com/	saas	home	en	listed	200	209845	no	yes	other
@@ -1005,9 +1004,9 @@ p0765	https://www.videolan.org/	saas	home	en	listed	200	65375	no	yes	other
 p0766	https://www.7-zip.org/	saas	home	en	listed	200	6787	no	yes	other
 p0767	https://www.mozilla.org/ru/	saas	home	ru	listed	200	124102	no	yes	other
 p0768	https://www.kaspersky.ru/	saas	home	ru	listed	200	1088884	no	yes	nextjs
-p0769	https://www.drweb.ru/	saas	home	ru	listed	200	217164	no	yes	other
+p0769	https://www.drweb.ru/	saas	home	ru	listed	200	217178	no	yes	other
 p0770	https://www.yandex.ru/company/	saas	page	ru	listed	200	511186	no	yes	other
-p0771	https://cloud.yandex.ru/	saas	home	ru	listed	200	42053	no	no: bot wall	other
+p0771	https://cloud.yandex.ru/	saas	home	ru	listed	403	0	no	no: HTTP 403	
 p0772	https://selectel.ru/	saas	home	ru	listed	200	728736	no	yes	wordpress
 p0772d	https://selectel.ru/solutions/artificial-intelligence-machine-learning/	saas	article	ru	discovered	200	695502	no	yes	wordpress
 p0773	https://timeweb.cloud/	saas	home	ru	listed	200	415931	no	yes	nuxt
@@ -1018,36 +1017,36 @@ p0777	https://amocrm.ru/	saas	home	ru	listed	200	67541	no	yes	other
 p0778	https://www.unisender.com/ru/	saas	home	ru	listed	200	207839	no	yes	wordpress
 p0779	https://www.insales.ru/	saas	home	ru	listed	200	289307	no	yes	other
 p0780	https://www.ucoz.ru/	saas	home	ru	listed	200	56503	no	yes	other
-p0781	https://www.liveinternet.ru/	portal	home	ru	listed	200	35219	no	yes	other
-p0782	https://www.kinonews.ru/	media	home	ru	listed	200	79258	no	yes	other
-p0782d	https://www.kinonews.ru/movie_365407/chainsaw-man-the-movie-reze-arc	media	article	ru	discovered	200	37707	no	yes	other
-p0783	https://www.kino-teatr.ru/	media	home	ru	listed	200	124560	no	yes	other
-p0784	https://www.ivd.ru/	media	home	ru	listed	200	112240	no	yes	other
+p0781	https://www.liveinternet.ru/	portal	home	ru	listed	200	34980	no	yes	other
+p0782	https://www.kinonews.ru/	media	home	ru	listed	timeout	0	no	no: timeout	
+p0783	https://www.kino-teatr.ru/	media	home	ru	listed	200	124307	no	yes	other
+p0784	https://www.ivd.ru/	media	home	ru	listed	200	112545	no	yes	other
 p0784d	https://www.ivd.ru/dizajn-i-dekor/kvartira/pochemu-v-etoj-kvartire-tak-udobno-zhit-63-kv-m-gde-produmali-vse-obzor-interera-149922	media	article	ru	discovered	200	138851	no	yes	other
-p0785	https://www.zr.ru/	news	home	ru	listed	200	370429	no	yes	nextjs
-p0785d	https://www.zr.ru/content/news/987211-ilon-mask-predstavil-letayushchij/	news	article	ru	discovered	200	171680	no	yes	nextjs
-p0786	https://www.autonews.ru/	news	home	ru	listed	200	651685	no	yes	other
-p0786d	https://www.autonews.ru/news/6ad5b6999a79474d33c41b48	news	article	ru	discovered	200	327433	no	yes	other
-p0787	https://www.kolesa.ru/	news	home	ru	listed	200	102534	no	yes	other
+p0785	https://www.zr.ru/	news	home	ru	listed	200	372274	no	yes	nextjs
+p0785d	https://www.zr.ru/content/news/987211-ilon-mask-predstavil-letayushchij/	news	article	ru	discovered	200	172757	no	yes	nextjs
+p0786	https://www.autonews.ru/	news	home	ru	listed	200	651703	no	yes	other
+p0786d	https://www.autonews.ru/news/6ad5b6999a79474d33c41b48	news	article	ru	discovered	200	324830	no	yes	other
+p0787	https://www.kolesa.ru/	news	home	ru	listed	200	102352	no	yes	other
 p0787d	https://www.kolesa.ru/article/bednye-no-gordye-o-cem-govorit-statistika-prodaz-novyx-avtomobilei-v-2026-godu	news	article	ru	discovered	200	171770	no	yes	other
 p0788	https://www.ferra.ru/	news	home	ru	listed	200	797	no	no: bot wall	other
-p0789	https://www.cnews.ru/	news	home	ru	listed	200	260498	no	yes	other
-p0789d	https://www.cnews.ru/news/top/2026-10-19_rossijsko-kitajskij_superapp	news	article	ru	discovered	200	138601	no	yes	other
-p0790	https://www.tadviser.ru/	wiki	home	ru	listed	200	319948	no	yes	other
-p0791	https://www.consultant.ru/	reference	home	ru	listed	200	40225	no	yes	other
+p0789	https://www.cnews.ru/	news	home	ru	listed	200	260556	no	yes	other
+p0789d	https://www.cnews.ru/news/top/2026-10-19_rossijsko-kitajskij_superapp	news	article	ru	discovered	200	138482	no	yes	other
+p0790	https://www.tadviser.ru/	wiki	home	ru	listed	200	319610	no	yes	other
+p0791	https://www.consultant.ru/	reference	home	ru	listed	200	40224	no	yes	other
 p0792	https://www.garant.ru/	reference	home	ru	listed	403	902	no	no: HTTP 403	
 p0793	https://www.klerk.ru/	news	home	ru	listed	200	588217	no	yes	nuxt
 p0793d	https://www.klerk.ru/razbory/kak-zapolnit-i-proverit-rsv-za-9-mesyacev-2026-goda/	news	article	ru	discovered	200	395900	no	yes	nuxt
 p0794	https://www.buhonline.ru/	news	home	ru	listed	200	414909	no	yes	other
 p0795	https://www.kinoafisha.info/	media	home	ru	listed	403	902	no	no: HTTP 403	
-p0796	https://www.cosmo.ru/	media	home	ru	listed	200	13602	no	yes	other
+p0796	https://www.cosmo.ru/	media	home	ru	listed	200	477818	no	yes	nuxt
+p0796d	https://www.thevoicemag.ru/lifestyle/stil-zhizni/konkurs-k-hellouinu-razygryvaem-aerogril/	media	article	ru	discovered	200	317509	no	yes	nuxt
 p0797	https://www.elle.ru/	media	home	ru	listed	TypeError:ENOTFOUND	0	no	no: TypeError:ENOTFOUND	
-p0798	https://www.thevoicemag.ru/	media	home	ru	listed	200	13602	no	yes	other
-p0799	https://www.woman.ru/	media	home	ru	listed	200	878908	no	yes	other
-p0799d	https://www.woman.ru/stars/shou-victoria-s-secret-2026-rozi-khantington-uaili-vernulas-cherez-16-let-kaili-dzhenner-vyshla-v-legendarnom-life-za-50-mln-id76709664/	media	article	ru	discovered	200	681797	no	yes	other
-p0800	https://www.7ya.ru/	forum	home	ru	listed	200	167433	no	yes	other
-p0800d	https://www.7ya.ru/article/Kak-mikroklimat-megapolisa-portit-nashi-kvartiry-i-zdorove-detej/	forum	article	ru	discovered	200	111818	no	yes	other
+p0798	https://www.thevoicemag.ru/	media	home	ru	listed	200	477818	no	yes	nuxt
+p0798d	https://www.thevoicemag.ru/lifestyle/stil-zhizni/konkurs-k-hellouinu-razygryvaem-aerogril/	media	article	ru	discovered	200	317509	no	yes	nuxt
+p0799	https://www.woman.ru/	media	home	ru	listed	403	902	no	no: HTTP 403	
+p0800	https://www.7ya.ru/	forum	home	ru	listed	200	167364	no	yes	other
+p0800d	https://www.7ya.ru/article/Kak-mikroklimat-megapolisa-portit-nashi-kvartiry-i-zdorove-detej/	forum	article	ru	discovered	200	112452	no	yes	other
 p0801	https://www.babyblog.ru/	forum	home	ru	listed	401	265	no	no: HTTP 401	
-p0802	https://www.u-mama.ru/	forum	home	ru	listed	200	471245	no	yes	nuxt
+p0802	https://www.u-mama.ru/	forum	home	ru	listed	200	471249	no	yes	nuxt
 p0803	https://www.dom.ru/	finance	home	ru	listed	403	22998	no	no: HTTP 403	
-p0804	https://www.ozon.travel/	travel	home	ru	listed	403	9116	no	no: HTTP 403	
+p0804	https://www.ozon.travel/	travel	home	ru	listed	403	9171	no	no: HTTP 403	

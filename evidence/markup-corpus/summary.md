@@ -11,37 +11,37 @@ Evidence for WP-17 S1, task T-15 (human decision H-39). Measured on 2026-10-19. 
 
 ## 1. Corpus
 
-**FACT.** 1052 URLs fetched once (804 listed by hand, 248 inner pages found on the listed home pages). **868 pages are in the corpus** (HTTP 200, HTML, not a bot wall). Pages larger than 5 MiB: 2 (kept as 5 MiB + 1 byte, so M-01 rejects them).
+**FACT.** 1051 URLs fetched once (804 listed by hand, 247 inner pages found on the listed home pages). **864 pages are in the corpus** (HTTP 200, HTML, not a bot wall). Pages larger than 5 MiB: 2 (kept as 5 MiB + 1 byte, so M-01 rejects them).
 
 | Not in the corpus | URLs |
 |---|--:|
-| HTTP 403 | 92 |
-| bot wall | 25 |
+| HTTP 403 | 95 |
+| bot wall | 23 |
 | HTTP 401 | 8 |
 | HTTP 429 | 8 |
-| HTTP 202 | 5 |
+| HTTP 202 | 7 |
 | HTTP 402 | 5 |
 | HTTP 404 | 5 |
 | TypeError:UND_ERR_CONNECT_TIMEOUT | 5 |
 
-Other reasons (fewer URLs) are in `urls.tsv`. Inner-page discovery: 346 home rows asked for an inner page; 248 were found; for 98 the home page was not fetched or had no matching link.
+Other reasons (fewer URLs) are in `urls.tsv`. Inner-page discovery: 346 home rows asked for an inner page; 247 were found; for 99 the home page was not fetched or had no matching link.
 
 ## 2. Acceptance without blocks
 
-**FACT.** 813 of 868 pages are valid: **93.7 %**. 55 pages are rejected.
+**FACT.** 809 of 864 pages are valid: **93.6 %**. 55 pages are rejected.
 
 | Category | Pages | Valid | % |
 |---|--:|--:|--:|
-| news | 251 | 234 | 93.2 % |
+| news | 249 | 232 | 93.2 % |
 | saas | 103 | 100 | 97.1 % |
 | ecommerce | 91 | 81 | 89.0 % |
-| blog | 79 | 76 | 96.2 % |
+| blog | 80 | 77 | 96.3 % |
 | docs | 76 | 72 | 94.7 % |
 | gov | 59 | 58 | 98.3 % |
-| media | 44 | 39 | 88.6 % |
+| media | 42 | 37 | 88.1 % |
 | edu | 37 | 36 | 97.3 % |
 | forum | 34 | 31 | 91.2 % |
-| wiki | 24 | 22 | 91.7 % |
+| wiki | 23 | 21 | 91.3 % |
 | portal | 22 | 19 | 86.4 % |
 | finance | 14 | 14 | 100.0 % |
 | travel | 14 | 13 | 92.9 % |
@@ -53,27 +53,27 @@ Language group:
 | Language | Pages | Valid | % |
 |---|--:|--:|--:|
 | English | 522 | 499 | 95.6 % |
-| Russian | 233 | 214 | 91.8 % |
+| Russian | 229 | 210 | 91.7 % |
 | Other | 113 | 100 | 88.5 % |
 
 Page type (home page or inner page):
 
 | Type | Pages | Valid | % |
 |---|--:|--:|--:|
-| home | 522 | 489 | 93.7 % |
-| inner | 346 | 324 | 93.6 % |
+| home | 519 | 486 | 93.6 % |
+| inner | 345 | 323 | 93.6 % |
 
 Platform (fingerprint in the page bytes; platforms with at least 5 pages):
 
 | Platform | Pages | Valid | % |
 |---|--:|--:|--:|
-| other | 501 | 461 | 92.0 % |
-| wordpress | 108 | 102 | 94.4 % |
+| other | 496 | 454 | 91.5 % |
+| wordpress | 106 | 102 | 96.2 % |
 | nextjs | 97 | 96 | 99.0 % |
 | shopify | 43 | 38 | 88.4 % |
-| nuxt | 18 | 18 | 100.0 % |
+| nuxt | 22 | 22 | 100.0 % |
 | mediawiki | 18 | 18 | 100.0 % |
-| drupal | 16 | 15 | 93.8 % |
+| drupal | 15 | 14 | 93.3 % |
 | ghost | 11 | 11 | 100.0 % |
 | tilda | 8 | 8 | 100.0 % |
 | discourse | 7 | 7 | 100.0 % |
@@ -158,15 +158,15 @@ By rule (all items of a rule together):
 
 | Step | Class removed | Valid | % |
 |---|--:|--:|--:|
-| 0 | none | 813 | 93.7 % |
-| 1 | `M-06.1` | 827 | 95.3 % |
-| 2 | `M-02` | 840 | 96.8 % |
-| 3 | `M-13.2` | 844 | 97.2 % |
-| 4 | `M-11.3` | 847 | 97.6 % |
-| 5 | `M-01` | 849 | 97.8 % |
-| 6 | `M-07.3` | 851 | 98.0 % |
-| 7 | `M-07.1` | 854 | 98.4 % |
-| 8 | `M-10.2` | 856 | 98.6 % |
+| 0 | none | 809 | 93.6 % |
+| 1 | `M-06.1` | 823 | 95.3 % |
+| 2 | `M-02` | 836 | 96.8 % |
+| 3 | `M-13.2` | 840 | 97.2 % |
+| 4 | `M-11.3` | 843 | 97.6 % |
+| 5 | `M-01` | 845 | 97.8 % |
+| 6 | `M-07.3` | 847 | 98.0 % |
+| 7 | `M-07.1` | 850 | 98.4 % |
+| 8 | `M-10.2` | 852 | 98.6 % |
 
 ## 6. Cost per decision
 
@@ -251,12 +251,12 @@ Pages that only these rules reject:
 - Variant **small**: the first `h1`, and up to two more elements of `BLOCK_HTML` whose `id` or `class` contains `price`, `title` or `content`; no pick overlaps another (at most 3 blocks).
 - Variant **main**: the first `main` element.
 
-**Variant small.** Valid pages without a usable element: 59. Variants: 754. Still valid: **690 (91.5 %)**. Validity disagreements: 0.
+**Variant small.** Valid pages without a usable element: 57. Variants: 752. Still valid: **701 (93.2 %)**. Validity disagreements: 0.
 
 | First error | Variants | % of variants |
 |---|--:|--:|
-| `STRUCTURE M-22` | 37 | 4.9 % |
-| `STRUCTURE M-23` | 10 | 1.3 % |
+| `STRUCTURE M-22` | 23 | 3.1 % |
+| `STRUCTURE M-23` | 11 | 1.5 % |
 | `STRUCTURE M-24` | 7 | 0.9 % |
 | `STRUCTURE M-19` | 7 | 0.9 % |
 | `LIMIT M-26` | 3 | 0.4 % |
@@ -265,92 +265,94 @@ Block rules, all classes (top 14). `M-22.2:<name>`: a forbidden element in HTML 
 
 | Class | Total | Alone | % of variants |
 |---|--:|--:|--:|
-| `M-23` | 15 | 8 | 2.0 % |
-| `M-22.2:template` | 13 | 12 | 1.7 % |
+| `M-23` | 15 | 9 | 2.0 % |
 | `M-22.2:select` | 10 | 1 | 1.3 % |
 | `M-22.2:option` | 9 | 0 | 1.2 % |
-| `M-19.1` | 7 | 5 | 0.9 % |
-| `M-22.2:noscript` | 7 | 2 | 0.9 % |
+| `M-19.1` | 7 | 6 | 0.9 % |
+| `M-22.4` | 5 | 4 | 0.7 % |
 | `M-22.2:textarea` | 5 | 3 | 0.7 % |
-| `M-22.4` | 4 | 3 | 0.5 % |
 | `M-24.e` | 3 | 3 | 0.4 % |
 | `M-24.a` | 3 | 1 | 0.4 % |
 | `M-20` | 3 | 0 | 0.4 % |
 | `M-24.c` | 2 | 2 | 0.3 % |
 | `M-22.3` | 2 | 0 | 0.3 % |
 | `M-22.2:noframes` | 1 | 1 | 0.1 % |
+| `M-22.1` | 1 | 0 | 0.1 % |
+| `M-22.2:body` | 1 | 0 | 0.1 % |
 
-Patch content rule (H-78; not a validity rule): of the 690 valid variants, **73 (10.6 %)** have a block with an element that a patch cannot carry (`patch.element:<name>`) or a foreign element outside `FOREIGN_ALLOWED` (`patch.foreign`); a change of such a block is sent as the full document.
+Patch content rule (H-78; not a validity rule): of the 701 valid variants, **79 (11.3 %)** have a block with an element that a patch cannot carry (`patch.element:<name>`) or a foreign element outside `FOREIGN_ALLOWED` (`patch.foreign`); a change of such a block is sent as the full document.
 | Class | Variants |
 |---|--:|
 | `patch.element:script` | 44 |
-| `patch.element:style` | 24 |
+| `patch.element:style` | 27 |
+| `patch.element:iframe` | 10 |
 | `patch.foreign` | 9 |
-| `patch.element:link` | 9 |
-| `patch.element:iframe` | 8 |
-| `patch.element:meta` | 6 |
+| `patch.element:link` | 8 |
+| `patch.element:meta` | 7 |
+| `patch.element:noscript` | 2 |
 
 | Step | Class removed | Valid | % |
 |---|--:|--:|--:|
-| 0 | none | 690 | 91.5 % |
-| 1 | `M-22.2:template` | 705 | 93.5 % |
-| 2 | `M-23` | 713 | 94.6 % |
-| 3 | `M-19.1` | 718 | 95.2 % |
-| 4 | `M-22.2:noscript` | 722 | 95.8 % |
-| 5 | `M-22.2:textarea` | 726 | 96.3 % |
+| 0 | none | 701 | 93.2 % |
+| 1 | `M-23` | 713 | 94.8 % |
+| 2 | `M-19.1` | 719 | 95.6 % |
+| 3 | `M-22.2:textarea` | 723 | 96.1 % |
+| 4 | `M-22.4` | 728 | 96.8 % |
+| 5 | `M-24.e` | 731 | 97.2 % |
 
 M-24 items: `M-24.e` 3, `M-24.a` 3, `M-24.c` 2.
 M-19 block contexts: `M-19.1` 7. M-19.1 is a block in an open `template` or `select`; M-19.2 is a block that is a direct part of a table.
 
-**Variant main.** Valid pages without a usable element: 318. Variants: 495. Still valid: **329 (66.5 %)**. Validity disagreements: 0.
+**Variant main.** Valid pages without a usable element: 319. Variants: 490. Still valid: **393 (80.2 %)**. Validity disagreements: 0.
 
 | First error | Variants | % of variants |
 |---|--:|--:|
-| `STRUCTURE M-22` | 130 | 26.3 % |
-| `STRUCTURE M-23` | 18 | 3.6 % |
-| `STRUCTURE M-24` | 13 | 2.6 % |
-| `LIMIT M-26` | 5 | 1.0 % |
+| `STRUCTURE M-22` | 49 | 10.0 % |
+| `STRUCTURE M-23` | 22 | 4.5 % |
+| `LIMIT M-26` | 14 | 2.9 % |
+| `STRUCTURE M-24` | 12 | 2.4 % |
 
 Block rules, all classes (top 14). `M-22.2:<name>`: a forbidden element in HTML context of the content (the names that M-22 keeps after H-78).
 
 | Class | Total | Alone | % of variants |
 |---|--:|--:|--:|
-| `M-22.2:noscript` | 65 | 46 | 13.1 % |
-| `M-22.2:template` | 44 | 29 | 8.9 % |
-| `M-23` | 28 | 11 | 5.7 % |
-| `M-22.2:select` | 20 | 0 | 4.0 % |
-| `M-22.2:option` | 19 | 0 | 3.8 % |
-| `M-22.2:textarea` | 15 | 12 | 3.0 % |
-| `M-22.4` | 8 | 6 | 1.6 % |
-| `M-24.c` | 5 | 3 | 1.0 % |
-| `M-24.e` | 5 | 3 | 1.0 % |
+| `M-23` | 28 | 16 | 5.7 % |
+| `M-22.2:select` | 20 | 1 | 4.1 % |
+| `M-22.2:option` | 19 | 0 | 3.9 % |
+| `M-22.2:textarea` | 15 | 12 | 3.1 % |
+| `M-22.4` | 7 | 7 | 1.4 % |
+| `M-24.c` | 5 | 4 | 1.0 % |
 | `M-24.j` | 5 | 0 | 1.0 % |
+| `M-22.6` | 5 | 4 | 1.0 % |
+| `M-24.e` | 4 | 3 | 0.8 % |
 | `M-20` | 3 | 0 | 0.6 % |
 | `M-22.3` | 2 | 0 | 0.4 % |
 | `M-22.1` | 2 | 1 | 0.4 % |
 | `M-22.2:optgroup` | 1 | 0 | 0.2 % |
+| `M-22.2:head` | 1 | 1 | 0.2 % |
 
-Patch content rule (H-78; not a validity rule): of the 329 valid variants, **162 (49.2 %)** have a block with an element that a patch cannot carry (`patch.element:<name>`) or a foreign element outside `FOREIGN_ALLOWED` (`patch.foreign`); a change of such a block is sent as the full document.
+Patch content rule (H-78; not a validity rule): of the 393 valid variants, **215 (54.7 %)** have a block with an element that a patch cannot carry (`patch.element:<name>`) or a foreign element outside `FOREIGN_ALLOWED` (`patch.foreign`); a change of such a block is sent as the full document.
 | Class | Variants |
 |---|--:|
-| `patch.element:script` | 114 |
-| `patch.element:style` | 50 |
-| `patch.element:link` | 25 |
-| `patch.foreign` | 23 |
-| `patch.element:iframe` | 22 |
-| `patch.element:meta` | 21 |
+| `patch.element:script` | 140 |
+| `patch.element:style` | 63 |
+| `patch.element:link` | 37 |
+| `patch.element:noscript` | 35 |
+| `patch.element:meta` | 29 |
+| `patch.foreign` | 27 |
+| `patch.element:iframe` | 24 |
 | `patch.element:object` | 1 |
 
 | Step | Class removed | Valid | % |
 |---|--:|--:|--:|
-| 0 | none | 329 | 66.5 % |
-| 1 | `M-22.2:noscript` | 380 | 76.8 % |
-| 2 | `M-22.2:template` | 414 | 83.6 % |
-| 3 | `M-23` | 430 | 86.9 % |
-| 4 | `M-22.2:textarea` | 443 | 89.5 % |
-| 5 | `M-22.4` | 451 | 91.1 % |
+| 0 | none | 393 | 80.2 % |
+| 1 | `M-23` | 423 | 86.3 % |
+| 2 | `M-22.2:textarea` | 436 | 89.0 % |
+| 3 | `M-22.4` | 443 | 90.4 % |
+| 4 | `M-22.6` | 447 | 91.2 % |
+| 5 | `M-24.c` | 452 | 92.2 % |
 
-M-24 items: `M-24.c` 5, `M-24.e` 5, `M-24.j` 5, `M-24.k` 1.
+M-24 items: `M-24.c` 5, `M-24.j` 5, `M-24.e` 4, `M-24.k` 1.
 M-19 block contexts: none. M-19.1 is a block in an open `template` or `select`; M-19.2 is a block that is a direct part of a table.
 
 ## 9. parse5 cross-check
@@ -361,13 +363,13 @@ No finding: no false accept, no depth-invariant violation on an accepted page.
 
 ## 10. Checks of the classifier
 
-**FACT.** No class ⇔ all candidates valid: 868 of 868 pages. The probe rule is one of the classifier rules: 55 of 55 rejected pages. The rule classes of the security review agree with `depth.mjs` (parse5 tree pass): 851 of 851 UTF-8 pages (the parse5 pass follows the tree builder, so it can differ on pages that break M-07 or M-08). Classifier or depth errors and time-outs: 0. The classifier finds exactly the rule of each invalid golden fixture and no class on the valid ones (`node --test` in `tools/rqp-markup/corpus`).
+**FACT.** No class ⇔ all candidates valid: 864 of 864 pages. The probe rule is one of the classifier rules: 55 of 55 rejected pages. The rule classes of the security review agree with `depth.mjs` (parse5 tree pass): 847 of 847 UTF-8 pages (the parse5 pass follows the tree builder, so it can differ on pages that break M-07 or M-08). Classifier or depth errors and time-outs: 0. The classifier finds exactly the rule of each invalid golden fixture and no class on the valid ones (`node --test` in `tools/rqp-markup/corpus`).
 
 ## 11. Observations
 
 **DESIGN.** A reading of the numbers above. Relaxing a rule is a human decision; it needs a parse5 study first (markup.md section 5 item 3).
 
-- Without the size and encoding classes (an RQP server renders UTF-8 and smaller pages), 828 of 868 pages are valid: 95.4 %.
+- Without the size and encoding classes (an RQP server renders UTF-8 and smaller pages), 824 of 864 pages are valid: 95.4 %.
 - The structure classes that cost the most pages alone: `M-06.1` 14 (total 17), `M-13.2` 4 (total 4), `M-11.3` 3 (total 3), `M-07.3` 2 (total 5).
 - The rules of security review round 1 (H-26, H-27, H-28, H-30, H-31, H-32 special part) are on 10 pages and alone reject 4. The foreign part of H-32 alone rejects 0.
 - The rules of review round 2 and H-43 (M-09 conditions 1 and 2, M-10 items 2 and 3, M-11 item 6) alone reject 3 pages.

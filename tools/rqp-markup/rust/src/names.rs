@@ -325,12 +325,10 @@ const SETS: &[(u32, &[&[u8]], bool)] = &[
             b"html",
             b"noembed",
             b"noframes",
-            b"noscript",
             b"optgroup",
             b"option",
             b"plaintext",
             b"select",
-            b"template",
             b"textarea",
             b"title",
             b"xmp",
@@ -632,6 +630,9 @@ mod tests {
         ] {
             assert!(!has(name, flag::FORBIDDEN_CONTENT), "{name:?}");
         }
+        // H-94, H-95: `template` and `noscript` are allowed in the content.
+        assert!(!has(b"template", flag::FORBIDDEN_CONTENT));
+        assert!(!has(b"noscript", flag::FORBIDDEN_CONTENT));
         assert!(has(b"marquee", flag::GUARDED));
         assert!(!has(b"span", flag::GUARDED));
     }

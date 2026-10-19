@@ -141,6 +141,19 @@ final class LimitsTest extends TestCase
     public static function inputs(): iterable
     {
         $d = self::DEPTH;
+        // M-04 in the content (H-78): script data with the escape states, and RAWTEXT, in blocks of almost 1 MiB.
+        foreach (['script' => '<!--<script>x</script>-->', 'style' => '</styl><', 'iframe' => '</iframe x'] as $tag => $unit) {
+            yield "raw text of $tag in five blocks" => [static function () use ($tag, $unit): string {
+                $html = '';
+                for ($i = 0; $i < 5; $i++) {
+                    $head = "<div data-rq-block=\"r$i\"><$tag>";
+                    $tail = "</$tag></div>";
+                    $n = intdiv(Parser::MAX_BLOCK_BYTES - 1000 - strlen($head . $tail), strlen($unit));
+                    $html .= $head . str_repeat($unit, $n) . $tail;
+                }
+                return $html;
+            }];
+        }
         yield 'stacks of 256 b' => [static fn(): string => self::fill('', str_repeat('<b>', $d) . str_repeat('</b>', $d))];
         yield 'stacks of 256 different names' => [static function () use ($d): string {
             $parts = [];

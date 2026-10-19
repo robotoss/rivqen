@@ -83,34 +83,12 @@ final class Names
         'span' => true, 'title' => true,
     ];
 
+    /** M-22 item 2 (H-78): start tag names not allowed in the content. */
     public const FORBIDDEN_CONTENT = [
-        'base' => true, 'basefont' => true, 'bgsound' => true, 'body' => true, 'embed' => true,
-        'frame' => true, 'frameset' => true, 'head' => true, 'html' => true, 'iframe' => true,
-        'link' => true, 'meta' => true, 'noembed' => true, 'noframes' => true,
-        'noscript' => true, 'object' => true, 'optgroup' => true, 'option' => true,
-        'plaintext' => true, 'script' => true, 'select' => true, 'style' => true,
-        'template' => true, 'textarea' => true, 'title' => true, 'xmp' => true,
-    ];
-
-    /**
-     * M-22 item 5 (H-73): the only start tag names allowed in a foreign region
-     * of the content of an `html` block.
-     */
-    public const FOREIGN_ALLOWED = [
-        'svg' => true, 'g' => true, 'path' => true, 'circle' => true, 'ellipse' => true, 'line' => true,
-        'polyline' => true, 'polygon' => true, 'rect' => true, 'defs' => true, 'symbol' => true,
-        'use' => true, 'title' => true, 'desc' => true, 'lineargradient' => true, 'radialgradient' => true,
-        'stop' => true, 'clippath' => true, 'mask' => true, 'pattern' => true, 'marker' => true,
-        'text' => true, 'tspan' => true, 'filter' => true, 'feblend' => true, 'fecolormatrix' => true,
-        'fecomponenttransfer' => true, 'fecomposite' => true, 'fedisplacementmap' => true,
-        'fedropshadow' => true, 'feflood' => true, 'fefunca' => true, 'fefuncb' => true, 'fefuncg' => true,
-        'fefuncr' => true, 'fegaussianblur' => true, 'femerge' => true, 'femergenode' => true,
-        'femorphology' => true, 'feoffset' => true, 'feturbulence' => true, 'math' => true, 'mrow' => true,
-        'mi' => true, 'mo' => true, 'mn' => true, 'ms' => true, 'mtext' => true, 'mspace' => true,
-        'msub' => true, 'msup' => true, 'msubsup' => true, 'mfrac' => true, 'msqrt' => true, 'mroot' => true,
-        'mstyle' => true, 'munder' => true, 'mover' => true, 'munderover' => true, 'mmultiscripts' => true,
-        'mprescripts' => true, 'none' => true, 'mtable' => true, 'mtr' => true, 'mtd' => true,
-        'mpadded' => true, 'mphantom' => true, 'merror' => true, 'semantics' => true, 'annotation' => true,
+        'body' => true, 'frame' => true, 'frameset' => true, 'head' => true, 'html' => true,
+        'noembed' => true, 'noframes' => true, 'noscript' => true, 'optgroup' => true,
+        'option' => true, 'plaintext' => true, 'select' => true, 'template' => true,
+        'textarea' => true, 'title' => true, 'xmp' => true,
     ];
 
     public const HEADING = [

@@ -106,6 +106,8 @@ T-09 (WP-17 S4, H-84, H-85a, H-86; changed lines of `markup.mjs` and `names.mjs`
 
 T-08 (M-24 j, k, E5, E8; changed lines against `4c90861`): 53 of 54 mutants killed (98.1 %). The survivor is equivalent: it puts a string at the bottom of the list-mark array (`this.listMark = ["Stryker was here"]`). That value is never a list item, and M-24 j reads the array only after M-24 c has found a list opened in the content above it.
 
+T-12 (WP-17 S5, DL-056; the lines that S5 T-10 changed in `markup.mjs` and `tokenizer.mjs`, against `fb29271`, without `--incremental`; 5 s): 7 of 7 mutants killed (100 %). No test was added and no mutant is equivalent.
+
 T-07 (WP-17 S5, H-94 to H-97; changed lines of `markup.mjs`, `names.mjs` and `tokenizer.mjs` against `a56b45d`, without `--incremental`; 14 s): 33 of 35 mutants killed before the new test (94.3 %). The new test in `test/s5-rules.test.mjs` checks that `shadowrootmode` on an element that is not a `template` is valid (M-22 item 6 is about `template` only). After it: 34 of 35 (97.1 %). The survivor is equivalent:
 
 | Location | Mutant | Reason |

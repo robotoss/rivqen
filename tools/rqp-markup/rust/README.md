@@ -65,6 +65,8 @@ RQP_MARKUP_FIXTURES="$(git rev-parse --show-toplevel)/fixtures/rqp/markup" \
 
 Each job needs about 450 MB of disk space for its copy of the package and its build.
 
+Result of T-12 (WP-17 S5, DL-056; cargo-mutants 27.1.0, `--in-diff` of the lines that S5 T-10 changed in `src/` against `fb29271`, paths relative to this directory, `-j 1 --timeout 60`; 36 s): 8 mutants, 1 unviable, 7 caught, 0 missed. Kill rate 7/7 = 100 %. No test was added and no mutant is equivalent.
+
 Result of T-07 (WP-17 S5; cargo-mutants 27.1.0, `--in-diff` of the changed lines of `src/` against `a56b45d`, `-j 1 --timeout 60`; 42 s): 10 mutants, 1 unviable, 9 caught, 0 missed. Kill rate 9/9 = 100 %. No test was added and no mutant is equivalent. The name sets in `names.rs` are data, so cargo-mutants makes no mutant for the two removed names; the unit test in `names.rs` and the fixtures check them.
 
 Result of T-09 (WP-17 S4; cargo-mutants 27.1.0, `--in-diff` of the changed lines of `src/` against `9bd8c32`, `-j 1 --timeout 60`; 105 s): 36 mutants, 2 unviable, 34 caught, 0 missed. Kill rate 34/34 = 100 %. No test was added and no mutant is equivalent. The `--in-diff` file has paths relative to this directory (`src/rules.rs`); with the paths of the repository root, cargo-mutants finds no mutant.

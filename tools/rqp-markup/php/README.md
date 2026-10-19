@@ -53,6 +53,8 @@ Mutation result of T-09 (WP-17 S3; Infection 0.35.6, changed lines against `7f36
 | `Parser::noscriptEndTag()` | `$top <= $noscript` → `<`, and its `throw` removed | At `$top === $noscript` the current node is the `noscript` element, so the name check throws with the same rule M-11 |
 | `Parser::noscriptEndTag()` | `$noscript + 1` → `$noscript + 0` | The element at `$noscript` is `noscript`, and its end tag does not reach this check |
 
+Mutation result of T-12 (WP-17 S5, DL-056; Infection 0.35.6, `--git-diff-lines` against `fb29271` (the lines that S5 T-10 changed in `Parser.php` and `Tokenizer.php`), 4 threads; 66 s): 30 mutants, 29 killed, 1 timeout (counted as detected). MSI 100 %. No test was added and no mutant is equivalent.
+
 Mutation result of T-07 (WP-17 S5, H-94 to H-97; Infection 0.35.6, changed lines against `a56b45d`, 4 threads, `--min-msi=80`; 24 s): 41 of 43 mutants killed (95.3 %). No test was added. The 2 survivors are equivalent:
 
 | Location | Mutant | Reason |

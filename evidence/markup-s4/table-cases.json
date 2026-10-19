@@ -1,0 +1,115 @@
+{
+  "source": "cases",
+  "seed": null,
+  "docs": 247,
+  "controls": 0,
+  "offNotShipped": 0,
+  "modes": {
+    "off": {
+      "valid": 123,
+      "gained": 0,
+      "checked": 123,
+      "withFindings": 0,
+      "findings": {},
+      "why": {
+        "RQP_MARKUP_STRUCTURE": 101,
+        "RQP_MARKUP_RESERVED": 6,
+        "RQP_MARKUP_LIMIT": 11,
+        "M-09.2": 6
+      },
+      "closures": {
+        "cell": 0,
+        "row": 0,
+        "group": 0,
+        "caption": 0,
+        "colgroup": 0
+      },
+      "examples": {}
+    },
+    "b1": {
+      "valid": 123,
+      "gained": 0,
+      "checked": 123,
+      "withFindings": 0,
+      "findings": {},
+      "why": {
+        "RQP_MARKUP_STRUCTURE": 101,
+        "RQP_MARKUP_RESERVED": 6,
+        "RQP_MARKUP_LIMIT": 11,
+        "M-09.2": 6
+      },
+      "closures": {
+        "cell": 0,
+        "row": 0,
+        "group": 0,
+        "caption": 0,
+        "colgroup": 0
+      },
+      "examples": {}
+    },
+    "b2": {
+      "valid": 123,
+      "gained": 0,
+      "checked": 123,
+      "withFindings": 0,
+      "findings": {},
+      "why": {
+        "RQP_MARKUP_STRUCTURE": 101,
+        "RQP_MARKUP_RESERVED": 6,
+        "RQP_MARKUP_LIMIT": 11,
+        "M-09.2": 6
+      },
+      "closures": {
+        "cell": 0,
+        "row": 0,
+        "group": 0,
+        "caption": 0,
+        "colgroup": 0
+      },
+      "examples": {}
+    },
+    "b3": {
+      "valid": 123,
+      "gained": 0,
+      "checked": 123,
+      "withFindings": 0,
+      "findings": {},
+      "why": {
+        "RQP_MARKUP_STRUCTURE": 101,
+        "RQP_MARKUP_RESERVED": 6,
+        "RQP_MARKUP_LIMIT": 11,
+        "M-09.2": 6
+      },
+      "closures": {
+        "cell": 0,
+        "row": 0,
+        "group": 0,
+        "caption": 0,
+        "colgroup": 0
+      },
+      "examples": {}
+    },
+    "u": {
+      "valid": 123,
+      "gained": 0,
+      "checked": 123,
+      "withFindings": 0,
+      "findings": {},
+      "why": {
+        "RQP_MARKUP_STRUCTURE": 101,
+        "RQP_MARKUP_RESERVED": 6,
+        "RQP_MARKUP_LIMIT": 11,
+        "M-09.2": 6
+      },
+      "closures": {
+        "cell": 0,
+        "row": 0,
+        "group": 0,
+        "caption": 0,
+        "colgroup": 0
+      },
+      "examples": {}
+    }
+  },
+  "seconds": 0
+}

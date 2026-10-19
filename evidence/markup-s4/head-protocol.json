@@ -1,0 +1,187 @@
+{
+  "source": "protocol",
+  "seed": null,
+  "docs": 116,
+  "validDocs": 65,
+  "rules": {
+    "shipped": {
+      "explicit": 25,
+      "implied": 0,
+      "none": 43,
+      "valid": {
+        "explicit": 22,
+        "implied": 0,
+        "none": 43
+      },
+      "stops": {},
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {
+          "explicit-enabled-only": 1,
+          "explicit-enabled-same": 1,
+          "explicit-disabled-only": 1,
+          "explicit-disabled-same": 1,
+          "explicit-client-elements": 1
+        },
+        "examples": {
+          "explicit-enabled-only": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-enabled-same": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-disabled-only": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-disabled-same": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-client-elements": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ]
+        }
+      }
+    },
+    "h79": {
+      "explicit": 25,
+      "implied": 1,
+      "none": 42,
+      "valid": {
+        "explicit": 22,
+        "implied": 1,
+        "none": 42
+      },
+      "stops": {
+        "<title>": 1
+      },
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {
+          "explicit-enabled-only": 1,
+          "explicit-enabled-same": 1,
+          "explicit-disabled-only": 1,
+          "explicit-disabled-same": 1,
+          "explicit-client-elements": 1
+        },
+        "examples": {
+          "explicit-enabled-only": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-enabled-same": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-disabled-only": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-disabled-same": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-client-elements": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ]
+        }
+      }
+    },
+    "l1": {
+      "explicit": 25,
+      "implied": 1,
+      "none": 42,
+      "valid": {
+        "explicit": 22,
+        "implied": 1,
+        "none": 42
+      },
+      "stops": {
+        "<title>": 1
+      },
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {
+          "explicit-enabled-only": 1,
+          "explicit-enabled-same": 1,
+          "explicit-disabled-only": 1,
+          "explicit-disabled-same": 1,
+          "explicit-client-elements": 1
+        },
+        "examples": {
+          "explicit-enabled-only": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-enabled-same": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-disabled-only": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-disabled-same": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-client-elements": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ]
+        }
+      }
+    },
+    "l2": {
+      "explicit": 25,
+      "implied": 1,
+      "none": 42,
+      "valid": {
+        "explicit": 22,
+        "implied": 1,
+        "none": 42
+      },
+      "stops": {
+        "<title>": 1
+      },
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {
+          "explicit-enabled-only": 1,
+          "explicit-enabled-same": 1,
+          "explicit-disabled-only": 1,
+          "explicit-disabled-same": 1,
+          "explicit-client-elements": 1
+        },
+        "examples": {
+          "explicit-enabled-only": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-enabled-same": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-disabled-only": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-disabled-same": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ],
+          "explicit-client-elements": [
+            "body:FX-RQ-C13-TWO-MANIFESTS"
+          ]
+        }
+      }
+    }
+  },
+  "hostile": null,
+  "full": {
+    "documents": 48,
+    "failures": {
+      "counts": {},
+      "examples": {}
+    }
+  },
+  "seconds": 0
+}

@@ -1,0 +1,204 @@
+{
+  "source": "cases",
+  "seed": null,
+  "docs": 247,
+  "validDocs": 123,
+  "rules": {
+    "shipped": {
+      "explicit": 15,
+      "implied": 0,
+      "none": 232,
+      "valid": {
+        "explicit": 12,
+        "implied": 0,
+        "none": 111
+      },
+      "stops": {},
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {
+          "explicit-disabled-only": 1,
+          "explicit-disabled-same": 1
+        },
+        "examples": {
+          "explicit-disabled-only": [
+            "edge-cases.json:E8-noscript-manifest-head"
+          ],
+          "explicit-disabled-same": [
+            "edge-cases.json:E8-noscript-manifest-head"
+          ]
+        }
+      }
+    },
+    "h79": {
+      "explicit": 15,
+      "implied": 2,
+      "none": 230,
+      "valid": {
+        "explicit": 12,
+        "implied": 0,
+        "none": 111
+      },
+      "stops": {
+        "<script>": 2
+      },
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {
+          "explicit-disabled-only": 1,
+          "explicit-disabled-same": 1
+        },
+        "examples": {
+          "explicit-disabled-only": [
+            "edge-cases.json:E8-noscript-manifest-head"
+          ],
+          "explicit-disabled-same": [
+            "edge-cases.json:E8-noscript-manifest-head"
+          ]
+        }
+      }
+    },
+    "l1": {
+      "explicit": 15,
+      "implied": 27,
+      "none": 205,
+      "valid": {
+        "explicit": 12,
+        "implied": 8,
+        "none": 103
+      },
+      "stops": {
+        "<noscript>": 20,
+        "<script>": 2,
+        "<template>": 5
+      },
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {
+          "explicit-disabled-only": 1,
+          "explicit-disabled-same": 1,
+          "implied-enabled-only": 1,
+          "implied-enabled-same": 1,
+          "implied-disabled-only": 1,
+          "implied-disabled-same": 1
+        },
+        "examples": {
+          "explicit-disabled-only": [
+            "edge-cases.json:E8-noscript-manifest-head"
+          ],
+          "explicit-disabled-same": [
+            "edge-cases.json:E8-noscript-manifest-head"
+          ],
+          "implied-enabled-only": [
+            "review2-cases.json:H35-template-col-textarea"
+          ],
+          "implied-enabled-same": [
+            "review2-cases.json:H35-template-col-textarea"
+          ],
+          "implied-disabled-only": [
+            "review2-cases.json:H35-template-col-textarea"
+          ],
+          "implied-disabled-same": [
+            "review2-cases.json:H35-template-col-textarea"
+          ]
+        }
+      }
+    },
+    "l2": {
+      "explicit": 15,
+      "implied": 232,
+      "none": 0,
+      "valid": {
+        "explicit": 12,
+        "implied": 111,
+        "none": 0
+      },
+      "stops": {
+        "<p>": 36,
+        "<div>": 61,
+        "<svg>": 16,
+        "<td>": 1,
+        "<caption>": 1,
+        "<tr>": 1,
+        "<body>": 6,
+        "<b>": 3,
+        "<table>": 25,
+        "<select>": 5,
+        "<pre>": 1,
+        "<textarea>": 1,
+        "<math>": 7,
+        "<ruby>": 2,
+        "<ul>": 2,
+        "<dl>": 1,
+        "<h1>": 2,
+        "<a>": 15,
+        "<nobr>": 3,
+        "<noscript>": 20,
+        "<script>": 2,
+        "<span>": 6,
+        "<li>": 1,
+        "<form>": 5,
+        "<template>": 5,
+        "<object>": 4
+      },
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {
+          "explicit-disabled-only": 1,
+          "explicit-disabled-same": 1,
+          "implied-disabled-only": 4,
+          "implied-disabled-same": 4,
+          "implied-enabled-only": 2,
+          "implied-enabled-same": 2,
+          "implied-client-elements": 3
+        },
+        "examples": {
+          "explicit-disabled-only": [
+            "edge-cases.json:E8-noscript-manifest-head"
+          ],
+          "explicit-disabled-same": [
+            "edge-cases.json:E8-noscript-manifest-head"
+          ],
+          "implied-disabled-only": [
+            "edge-cases.json:E8-noscript-manifest-body",
+            "edge-cases.json:E8-noscript-manifest-charref",
+            "edge-cases.json:E8-control-manifest"
+          ],
+          "implied-disabled-same": [
+            "edge-cases.json:E8-noscript-manifest-body",
+            "edge-cases.json:E8-noscript-manifest-charref",
+            "edge-cases.json:E8-control-manifest"
+          ],
+          "implied-enabled-only": [
+            "edge-cases.json:E8-control-manifest",
+            "review2-cases.json:H35-template-col-textarea"
+          ],
+          "implied-enabled-same": [
+            "edge-cases.json:E8-control-manifest",
+            "review2-cases.json:H35-template-col-textarea"
+          ],
+          "implied-client-elements": [
+            "edge-cases.json:E8-control-manifest",
+            "s3-cases.json:S3-H71-deep-old-R5",
+            "s3-cases.json:S3-H73-depth-257"
+          ]
+        }
+      }
+    }
+  },
+  "hostile": null,
+  "full": null,
+  "seconds": 0
+}

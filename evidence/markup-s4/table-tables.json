@@ -1,0 +1,140 @@
+{
+  "source": "tables",
+  "seed": 85,
+  "docs": 500000,
+  "controls": 9056,
+  "offNotShipped": 0,
+  "modes": {
+    "off": {
+      "valid": 9056,
+      "gained": 0,
+      "checked": 9056,
+      "withFindings": 0,
+      "findings": {},
+      "why": {
+        "M-09": 399970,
+        "RQP_MARKUP_STRUCTURE": 79298,
+        "RQP_MARKUP_NESTED": 7057,
+        "M-09.2": 4619
+      },
+      "closures": {
+        "cell": 0,
+        "row": 0,
+        "group": 0,
+        "caption": 0,
+        "colgroup": 0
+      },
+      "examples": {}
+    },
+    "b1": {
+      "valid": 31224,
+      "gained": 22168,
+      "checked": 31224,
+      "withFindings": 0,
+      "findings": {},
+      "why": {
+        "close-current": 206409,
+        "RQP_MARKUP_STRUCTURE": 178353,
+        "M-09": 65171,
+        "M-09.2": 11786,
+        "RQP_MARKUP_NESTED": 7057
+      },
+      "closures": {
+        "cell": 32123,
+        "row": 19194,
+        "group": 5155,
+        "caption": 3182,
+        "colgroup": 3330
+      },
+      "examples": {}
+    },
+    "b2": {
+      "valid": 48927,
+      "gained": 39871,
+      "checked": 48927,
+      "withFindings": 0,
+      "findings": {},
+      "why": {
+        "close-crossing": 72503,
+        "RQP_MARKUP_STRUCTURE": 259343,
+        "M-09": 86128,
+        "M-09.2": 16885,
+        "RQP_MARKUP_NESTED": 7057,
+        "close-context": 9157
+      },
+      "closures": {
+        "cell": 91232,
+        "row": 44156,
+        "group": 11312,
+        "caption": 7047,
+        "colgroup": 5853
+      },
+      "examples": {}
+    },
+    "b3": {
+      "valid": 48927,
+      "gained": 39871,
+      "checked": 48927,
+      "withFindings": 0,
+      "findings": {},
+      "why": {
+        "close-crossing": 72503,
+        "RQP_MARKUP_STRUCTURE": 259343,
+        "M-09": 86128,
+        "M-09.2": 16885,
+        "RQP_MARKUP_NESTED": 7057,
+        "close-context": 9157
+      },
+      "closures": {
+        "cell": 91232,
+        "row": 44156,
+        "group": 11312,
+        "caption": 7047,
+        "colgroup": 5853
+      },
+      "examples": {}
+    },
+    "u": {
+      "valid": 60924,
+      "gained": 51868,
+      "checked": 60924,
+      "withFindings": 11369,
+      "findings": {
+        "rewrite-invalid": 11369,
+        "parse5-enabled-blocks": 297,
+        "parse5-disabled-blocks": 297
+      },
+      "why": {
+        "RQP_MARKUP_STRUCTURE": 312505,
+        "M-09": 99341,
+        "M-09.2": 20173,
+        "RQP_MARKUP_NESTED": 7057
+      },
+      "closures": {
+        "cell": 141113,
+        "row": 66614,
+        "group": 16852,
+        "caption": 9950,
+        "colgroup": 7869
+      },
+      "examples": {
+        "rewrite-invalid": [
+          "<table><TR class=\"r\"><td colspan=\"2\"><h2>h<form></td><td></td>x<tr><th><span>x<h2>h</td><th><form></form><svg><path d=\"M0\"></svg></td><td colspan=\"2\"><form><object><tfoot><tr></tr><TR class=\"r\"></tr><tr><TR class=\"r\"><td><td><noscript><img src=\"x\"></noscript><form></td></tr><tr><td></td></tr></table><a href=\"#\">q</a><div data-rq-block=\"b0\"><a href=\"#\">l</a></div><a href=\"#\">e</a>",
+          "<table><tbody><tr><td><li></th></tr><td colspan=\"2\"><table><colgroup><td colspan=\"2\"></th><td></td><span>x</span><tr><td><div>x</div><div data-rq-block=\"b0\"><table><tr><td>x</td><td>y</td></tr></table></div><b><object><tr><colgroup><col></table><span>x<math><mi>x</mi></math></td><td></th><td></th></table><span data-rq-block=\"b1\">s<b>t</b></span><div data-rq-block=\"b2\">x</div></a>",
+          "<!DOCTYPE html><object><table><thead><TR class=\"r\"><td><u><s>x<div data-rq-block=\"b0\"><table><tr><td>x</td><td>y</td></tr></table></div><form><td><img src=\"x\"><div data-rq-block=\"b1\"><a href=\"#\">l</a></div></td><TR class=\"r\"><td colspan=\"2\"><div data-rq-block=\"b2\"><a href=\"#\">l</a></div><svg><path d=\"M0\"></svg></td><td><td><p data-rq-block=\"b3\">p</p><form></form><a href=\"#\"><marquee><TR class=\"r\"><td colspan=\"2\"></p></b><b>b</b><div data-rq-block=\"b4\"><table><tr><td>x</td><td>y</td></tr></table></div>"
+        ],
+        "parse5-enabled-blocks": [
+          "<i><table><td><div>x<TR class=\"r\"><th><span>x&amp;a < b</th><td><table><tr></table><nobr>n <TR class=\"r\"><th></tr><TR class=\"r\"><td colspan=\"2\"><a href=\"#\">y<object><td></th><th>&amp;<p>x</td><div>x</div></table>z<span data-rq-block=\"tail\">a<a href=\"#\">b</a>c</span><a href=\"#\">e</a>",
+          "<table><tbody><tr></tbody><colgroup><col><tr><td colspan=\"2\"><td><a href=\"#\">y<object><span><div></span></th><th><svg><path d=\"M0\"></svg><!--c--><br></table><span data-rq-block=\"b0\">s<b>t</b></span><span data-rq-block=\"tail\">a<a href=\"#\">b</a>c</span></i>",
+          "<object><table><caption><span>x</span></caption><tfoot><tr><td><p>x</p><i><b>x</i></td><tr></tr><tr><td colspan=\"2\"><math><mi>x</mi></math><a href=\"#\">y<noscript><img src=\"x\"></noscript><td><u><s>x</td><td colspan=\"2\"><a href=\"#\"><marquee><b>x</th>x<tr><td colspan=\"2\"></td><td><div>x<th><svg><path d=\"M0\"></svg></table>z</td>z<span data-rq-block=\"b0\">s<b>t</b></span><span data-rq-block=\"tail\">a<a href=\"#\">b</a>c</span>"
+        ],
+        "parse5-disabled-blocks": [
+          "<i><table><td><div>x<TR class=\"r\"><th><span>x&amp;a < b</th><td><table><tr></table><nobr>n <TR class=\"r\"><th></tr><TR class=\"r\"><td colspan=\"2\"><a href=\"#\">y<object><td></th><th>&amp;<p>x</td><div>x</div></table>z<span data-rq-block=\"tail\">a<a href=\"#\">b</a>c</span><a href=\"#\">e</a>",
+          "<table><tbody><tr></tbody><colgroup><col><tr><td colspan=\"2\"><td><a href=\"#\">y<object><span><div></span></th><th><svg><path d=\"M0\"></svg><!--c--><br></table><span data-rq-block=\"b0\">s<b>t</b></span><span data-rq-block=\"tail\">a<a href=\"#\">b</a>c</span></i>",
+          "<object><table><caption><span>x</span></caption><tfoot><tr><td><p>x</p><i><b>x</i></td><tr></tr><tr><td colspan=\"2\"><math><mi>x</mi></math><a href=\"#\">y<noscript><img src=\"x\"></noscript><td><u><s>x</td><td colspan=\"2\"><a href=\"#\"><marquee><b>x</th>x<tr><td colspan=\"2\"></td><td><div>x<th><svg><path d=\"M0\"></svg></table>z</td>z<span data-rq-block=\"b0\">s<b>t</b></span><span data-rq-block=\"tail\">a<a href=\"#\">b</a>c</span>"
+        ]
+      }
+    }
+  },
+  "seconds": 102
+}

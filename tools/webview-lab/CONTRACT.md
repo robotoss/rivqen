@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
-**Status:** DESIGN. Owner: architect (WP-17 S5). The host part (`host/`) and the two apps (`app/`, a Kotlin Multiplatform project with an Android app and an iOS app) follow this contract. Change it only through the architect.
+**Status:** DESIGN. Owner: architect (WP-17 S5). The host part (`host/`) and the two apps (`app/WebViewLab/`, a Kotlin Multiplatform project with an Android app and an iOS app) follow this contract. Change it only through the architect.
 
 The lab answers open questions Q-19 (what a WebView does with the `noscript` shapes of markup M-11 when scripting is disabled) and Q-20 (whether a WebView follows the delivery rules H-66 and DL-040: the `Content-Type` of a full document, UTF-8, the byte order mark). It compares a real WebView with parse5 8.0.1 in the same scripting view.
 
@@ -17,7 +17,7 @@ The lab answers open questions Q-19 (what a WebView does with the `noscript` sha
 | `host/server.mjs` | Host lane | HTTP/1.1 server on `127.0.0.1` (section 3) |
 | `host/serialize.js` | Host lane | The DOM walker that both apps inject (section 4); plain ES2019, no module syntax, no dependency |
 | `host/compare.mjs` | Host lane | Compares `results/<platform>/` with parse5 (section 5) and writes `results/<platform>/summary.md` |
-| `app/` | Human creates (H-93); iOS lane and Android lane | The Kotlin Multiplatform project: `iosApp` (WKWebView) and the Android app (`android.webkit.WebView`) |
+| `app/WebViewLab/` | Human creates (H-93); iOS lane and Android lane | The Kotlin Multiplatform project (package `dev.rivqen.webviewlab`): `iosApp` (WKWebView), `androidApp` (`android.webkit.WebView`), `shared` (Compose Multiplatform). No JUnit 4 (EPL-1.0) |
 | `results/ios/`, `results/android/` | iOS lane, Android lane | One result per case and view (section 4), plus `run.json` |
 
 ## 2. Cases

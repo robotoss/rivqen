@@ -35,6 +35,10 @@ This page defines which third-party licenses Rivqen accepts, how they are checke
 | PHP | `composer licenses` |
 | All | SBOM (CycloneDX or SPDX) per artifact; REUSE lint for own files |
 
+### WebView lab (`tools/webview-lab/app`, WP-17 S5)
+
+<Badge type="tip" text="FACT" /> The lab is a test tool; nothing in it ships (human decision H-93). Its Kotlin Multiplatform project comes from the IDE template and uses only Apache-2.0 components (checked 2026-10-19 in `gradle/libs.versions.toml`): Kotlin 2.4.20, Compose Multiplatform 1.12.1 (with Material 3 1.12.0-alpha03), Android Gradle Plugin 9.1.1, AndroidX `activity` 1.13.0, `core` 1.19.1, `appcompat` 1.8.0, `lifecycle` 2.11.0, and the Gradle wrapper. The template's JUnit 4 (EPL-1.0, not in the allowed classes) and the Android host and device test set-up were removed; the iOS app uses system frameworks only.
+
 ## 4. Notices in artifacts
 
 1. Each artifact includes `LICENSE`, `NOTICE` and a generated third-party notice file for the dependencies it contains.

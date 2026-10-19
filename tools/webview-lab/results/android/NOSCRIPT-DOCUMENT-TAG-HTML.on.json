@@ -1,0 +1,10 @@
+{
+  "id": "NOSCRIPT-DOCUMENT-TAG-HTML",
+  "view": "on",
+  "walker": "ok",
+  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <noscript>\n|       \"<html lang=\"en\"></html>\"\n|     \"\n\"\n|     <p>\n|       data-rq-block=\"real\"\n|       \"r\"\n|     \"\n\n\"",
+  "characterSet": "UTF-8",
+  "contentType": "text/html",
+  "probe": null,
+  "error": null
+}

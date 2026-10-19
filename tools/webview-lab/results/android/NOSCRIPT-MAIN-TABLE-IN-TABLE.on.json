@@ -1,0 +1,10 @@
+{
+  "id": "NOSCRIPT-MAIN-TABLE-IN-TABLE",
+  "view": "on",
+  "walker": "ok",
+  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <noscript>\n|       \"<table></table>\"\n|     <table>\n|     \"\n\"\n|     <p>\n|       data-rq-block=\"real\"\n|       \"r\"\n|     \"\n\n\"",
+  "characterSet": "UTF-8",
+  "contentType": "text/html",
+  "probe": null,
+  "error": null
+}

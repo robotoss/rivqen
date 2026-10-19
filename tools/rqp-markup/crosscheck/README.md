@@ -23,7 +23,7 @@ When the candidate says **valid**, these must be true. Else the tool reports a f
 | With the view `disabled`: the same claim in the scripting-disabled tree. The counter runs on the tokens of the `noscript` content C as they come (the pass of `markup.md` M-11 item 8, H-71), and after the end tag `noscript` it continues with the main-pass state | `depth-invariant-disabled` |
 | With `--expected` only: the document has none of the rule classes below (the golden fixtures implement the rules of the security review) | `new-rule` |
 
-`src/depth.mjs` computes the depth counter D of M-26 from the parse5 tokens (a `Parser` subclass that sees each tokenizer token once), and it classifies each document by the rules of the security review. The counter follows H-75: the end tag of the region root (the `svg` or `math` element pushed in HTML context) sets no special-crossed mark for its crossing. For the `noscript` content C, `checkNoscriptContent` also runs the main-pass counter on a copy (M-11 item 8, H-71), so the classes below and D come also from the tokens of C, with the foreign region of C (item 9, H-74):
+`src/depth.mjs` computes the depth counter D of M-26 from the parse5 tokens (a `Parser` subclass that sees each tokenizer token once), and it classifies each document by the rules of the security review. The counter applies the implied closure of `markup.md` M-09 (H-85a): before a table part or `col` start tag in HTML context, while F is not an allowed F, it applies the end tag of F, at most three times; not in the `noscript` content C (the copy of M-11 item 8 and the scripting-disabled view of C). The counter does not know blocks; a valid document has no closure shape in block content, so the counter has the D of the rule on every valid document. A closure of a row, a row group or a column group while F is not the current node sets the class `M-09-table-current`. The counter follows H-75: the end tag of the region root (the `svg` or `math` element pushed in HTML context) sets no special-crossed mark for its crossing. For the `noscript` content C, `checkNoscriptContent` also runs the main-pass counter on a copy (M-11 item 8, H-71), so the classes below and D come also from the tokens of C, with the foreign region of C (item 9, H-74):
 
 | Class | Rule | Shape |
 |---|---|---|
@@ -90,6 +90,9 @@ node src/cli.mjs cases --cases cases/s3-cases.json --only rust,node,java,php
 
 # The shapes of the WP-17 S4 decisions H-78, H-84 and H-86 (fields decision and expected)
 node src/cli.mjs cases --cases cases/s4-cases.json --only rust,node,java,php
+
+# The shapes of the WP-17 S4 decision H-85a, the implied closure of M-09 (fields decision and expected)
+node src/cli.mjs cases --cases cases/s4b-cases.json --only rust,node,java,php
 
 # A seeded generator sweep
 TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,java,php --seed 5 --count 100000 --chunk 10000 --scripting both

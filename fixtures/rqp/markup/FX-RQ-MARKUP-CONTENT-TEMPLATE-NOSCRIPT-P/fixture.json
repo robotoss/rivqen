@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-NOSCRIPT-P",
+  "description": "A div in noscript content C in a template in a p of the content: the template is a scope boundary, so the div cannot close the p (H-94, H-95: valid)",
+  "rules": [
+    "M-11",
+    "M-24"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "<p>x<template><noscript><div>y</div></noscript></template>z</p>"
+      }
+    ]
+  }
+}

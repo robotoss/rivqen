@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-TABLE",
+  "description": "Table parts and col in a table opened in a template element of the content (H-94: M-24 item g holds, F is the table or the column group)",
+  "rules": [
+    "M-09",
+    "M-24"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "t",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"t\">",
+        "content": "<template><table><caption>c</caption><colgroup><col></colgroup><tr><td>x</td></tr></table></template><template><table><col></table></template>"
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-CAPTION",
+  "description": "A caption and a td directly in a template in a cell of the content: the template would switch to a table insertion mode with implied elements that D does not count (H-94: M-24 item g)",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

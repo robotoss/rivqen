@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-P-DIV",
+  "description": "A div start tag in a template element in the content of a p block: M-24 item a applies in template content too (stricter than the tree builder, which does not close the p through a template)",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

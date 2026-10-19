@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-NOSCRIPT-BLOCK-END",
+  "description": "The end tag of the block element in noscript content C (text with scripting enabled, the block end with scripting disabled): M-11 item 5",
+  "rules": [
+    "M-11",
+    "M-23"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

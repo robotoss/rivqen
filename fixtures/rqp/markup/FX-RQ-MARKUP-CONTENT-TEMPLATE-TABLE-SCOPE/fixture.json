@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-TABLE-SCOPE",
+  "description": "A tfoot directly in a template in a cell, then a table in the template: parse5 8.0.1 pops out of the template here, a WHATWG parser ignores the table start tag (H-94: M-24 item g rejects the tfoot)",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

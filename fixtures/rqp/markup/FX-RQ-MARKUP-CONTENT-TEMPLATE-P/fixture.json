@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-P",
+  "description": "A template element with phrasing content in the content of a p block (H-94: valid)",
+  "rules": [
+    "M-22",
+    "M-24"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "p",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"p\">",
+        "content": "a<template><b>t</b><img src=\"/i.png\" alt=\"\"></template>b"
+      }
+    ]
+  }
+}

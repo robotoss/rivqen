@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-CELL",
+  "description": "A block in a table cell with a template element, and a template element in a cell of a table of the content (H-94: valid; F of the b in the template is none, so M-24 item k does not apply)",
+  "rules": [
+    "M-19",
+    "M-22",
+    "M-24"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "c",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"c\">",
+        "content": "x<template><span>t</span></template><table><tr><td><template><b>u</b></template></td></tr></table>"
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE",
+  "description": "A template element in the content of a div block, then a block with an a element (H-94: valid; the template content is read as tokens and follows M-22 to M-24)",
+  "rules": [
+    "M-22",
+    "M-23"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "x<template id=\"row\"><div class=\"r\"><b>n</b></div></template>z"
+      },
+      {
+        "id": "z",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"z\">",
+        "content": "y<a href=\"#\">z</a>w"
+      }
+    ]
+  }
+}

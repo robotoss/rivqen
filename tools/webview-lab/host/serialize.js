@@ -59,7 +59,7 @@
           return a.n < b.n ? -1 : a.n > b.n ? 1 : 0;
         });
         for (var j = 0; j < attrs.length; j++) lines.push(pad(depth + 1) + attrs[j].n + '="' + attrs[j].v + '"');
-        if (node.content) {
+        if (node.localName === "template" && node.namespaceURI === "http://www.w3.org/1999/xhtml" && node.content) {
           // A template: its children live in the content fragment.
           lines.push(pad(depth + 1) + "content");
           // The light children of a template (none from a parser) would come after "content".

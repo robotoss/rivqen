@@ -106,6 +106,9 @@ node src/cli.mjs cases --cases cases/s5-cases.json --only rust,node,java,php
 # A sweep with template and noscript in block content (profiles tpl, nos, mix), three views
 TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,node,java,php --seed 95 --count 150000 --chunk 10000 --profile tpl --scripting all
 
+# The head sweep: the insertion point of the manifest element (H-72, H-79a, client rule C2), both views
+TMPDIR=/dev/shm node src/cli.mjs head --only rust,node,java,php --seed 79 --count 200000 --chunk 5000 --scripting both
+
 # A seeded generator sweep
 TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,java,php --seed 5 --count 100000 --chunk 10000 --scripting both
 
@@ -119,19 +122,37 @@ TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,node,java,php --seed 21 --cou
 | `--candidates file` | all | Candidate list | `../candidates.json` |
 | `--timeout s` | all | Limit for each build and each batch run | 300 |
 | `--build` | all | Run the `build` command of each candidate first | off |
-| `--scripting v` | `check`, `sweep` | `enabled`, `disabled`, `spec`, `both` (enabled and disabled) or `all` (the three views) | `enabled` (`cases` always uses the three views) |
+| `--scripting v` | `check`, `sweep`, `head` | `enabled`, `disabled`, `spec`, `both` (enabled and disabled) or `all` (the three views) | `enabled` (`cases` always uses the three views; `head` uses `both` and does not take `spec` or `all`) |
 | `--fixtures dir` | `check` | Directory with `<name>/input.html` | `fixtures/rqp/markup` |
 | `--input file` | `check` | One document | — |
 | `--results file` | `check` | Use these results instead of running candidates | — |
 | `--expected` | `check` | Use the `expected.json` of each fixture as the result: checks the golden fixtures themselves | — |
 | `--cases file` | `cases` | JSON list of `{ "id", "input" }` | `cases/edge-cases.json` |
-| `--seed n` | `sweep` | Seed of the sweep (0 … 2^32 − 1) | 1 |
-| `--count n` | `sweep` | Number of documents (at most 10 000 000) | 1000 |
+| `--seed n` | `sweep`, `head` | Seed of the sweep (0 … 2^32 − 1) | 1 |
+| `--count n` | `sweep`, `head` | Number of documents (at most 10 000 000); for `head` the generated documents, in addition to the fixed inputs | 1000 |
 | `--max-tokens n` | `sweep` | Pieces per document (1 … 200) | 16 |
 | `--profile p` | `sweep` | `classic` (the documents of earlier sweeps, unchanged), `review` (adds the shapes of the security review, unchanged since round 1), `review2` (adds the shapes of round 2: form pointer cycles, template with `col` and raw text, foster-parented elements in tables, `noscript` in cells with table parts) or `review3` (adds the `template for` motif of H-43: processing-instruction markers in or around a block, then a `template` with `for`, or a control; `review` and `review2` documents do not change); `tpl`, `nos` or `mix` (`template`, `noscript` or both in block content, WP-17 S5: `src/generator-s5.mjs`, a copy of the study generator `../study/s5/src/gen-s5.mjs`, so the same seed gives the same documents; `--max-tokens` has no effect) | `classic` |
-| `--chunk n` | `sweep` | Documents per batch run | 2000 |
-| `--out dir` | `sweep` | Where to save the inputs of findings | `$TMPDIR/rqp-crosscheck-sweep-<seed>` |
-| `--keep n` | `sweep` | Saved and printed findings for each kind | 20 |
+| `--chunk n` | `sweep`, `head` | Documents per batch run | 2000 |
+| `--out dir` | `sweep`, `head` | Where to save the inputs of findings | `$TMPDIR/rqp-crosscheck-sweep-<seed>` |
+| `--keep n` | `sweep`, `head` | Saved and printed findings for each kind | 20 |
+
+### The head sweep (WP-17 S5 T-09, Q-21)
+
+The command `head` checks the insertion point of the manifest element (`manifest-patch.md` §1.7 "Document head", H-72, H-79a, client rule C2) again after any rule change. It does not decide a rule; it reads the shipped reference `documentHeadStart` and `fullDocument` of `tools/rqp-protocol`. For each original document O:
+
+| Step | Check | Finding kind |
+|---|---|---|
+| 1 | The full document F is O with the manifest element at the point of `documentHeadStart`. F has exactly one manifest element, and it starts at that point | `client-elements` |
+| 2 | Client rule C2: the position that `documentHeadStart` computes on O (F without the element) is the offset in F | `client-c2` |
+| 3 | When every candidate says that O is valid (the server sends a manifest only for such a page), in each scripting view of parse5: the manifest element is the first child of the `head` element of F (`first`); it is the only manifest-type script (`only`); the tree of F without it is the tree of O (`same`: no head content, `html`, `head` or `body` attribute or body start moved) | `parse5-<view>-first`, `-only`, `-same` |
+| 4 | Block boundaries do not move: the blocks that the candidates give on O, shifted by the length of the element, are the blocks of the parse5 tree of F (id, start, end) | `blocks-<view>` |
+| 5 | Every candidate rejects F (`markup.md` M-13: the original document has no manifest) | `candidate-accepts-f` |
+| 6 | Hostile positions: a manifest element at every token boundary of O up to the end of the token that ends item 1. The client rule C2 accepts none but the server point | `hostile-position`, `hostile-parse5-*` |
+| 7 | The candidates agree on O (validity and blocks) | `candidates` |
+
+Sources: the golden markup fixtures, the protocol pages, response bodies and spec examples, the case files (`cases/*.json`), and `--count` generated documents (`src/head-gen.mjs`, a copy of the head generator of the S4 study, so the same seed gives the same documents; `--max-tokens` and `--profile` have no effect). A fixed input that already holds one manifest element is a full document: the checks run on it only when the element is at the point that `documentHeadStart` gives on O. Else it is a negative control of the protocol fixtures (a manifest in the body, after other head content, and so on) and the summary counts it as skipped. Measured 2026-10-19 (Rust, Node.js, Java, PHP, both views, seed 79, `--count 200000`): `head: 201005 documents, 0 findings` in about 4 minutes; 175 677 documents valid for every candidate; 109 825 with an insertion point; 789 465 hostile positions, of which the client rule accepted 109 779 (only the server point of each document; the hostile count skips the fixed full documents); 15 fixed full documents skipped as negative controls. The summary line is `head: N documents, F findings`; the exit code is 0 only without findings and when every candidate ran.
+
+Run the sweep with all four candidates and `--build`, or limit it with `--only` to the candidates that you have built. A run with fewer candidates checks the blocks with those candidates only.
 
 ### Output and exit code
 
@@ -186,6 +207,7 @@ Run `node --test` in this directory. The tests use a fake candidate (`test-suppo
 | `test/depth.test.mjs` | Depth counter D (pushes, exact pops, dirty mark, implied parts, `noscript` content in D), the invariant on the review shapes and in the scripting-disabled view, the rule classes, the pass on C (H-71), the foreign region of C (H-74), the crossing of the region root (H-75), the block content and the classes of H-94 and H-97 |
 | `test/compare.test.mjs` | Each kind of disagreement, result shapes, candidate comparison |
 | `test/generator.test.mjs` | Deterministic PRNG (known answer), bounded documents, coverage of the needed shapes, the S5 profiles (known answer, shapes of H-94 to H-97) |
+| `test/head.test.mjs` | The head sweep: the insertion point, C2, the four parse5 checks, block shifts, hostile positions, each with a known-bad control (a wrong server point, a wrong client rule, wrong blocks, a candidate that accepts F), the command and its exit codes |
 | `test/cli.test.mjs` | Commands, options, exit codes, saved findings, and that the output never contains document text |
 
 ## 7. Dependencies

@@ -180,7 +180,7 @@ test('patch content rule: a data: image passes only with a raster type of the al
 });
 
 test('patch content rule: the elements of PATCH_FORBIDDEN in HTML context are rejected (H-78)', () => {
-  for (const name of ['script', 'style', 'link', 'meta', 'iframe', 'object', 'embed', 'base', 'basefont', 'bgsound']) {
+  for (const name of ['script', 'style', 'link', 'meta', 'noscript', 'iframe', 'object', 'embed', 'base', 'basefont', 'bgsound']) {
     assert.equal(rule(`<${name}>`), false, name);
     assert.equal(rule(`<${name.toUpperCase()}/>`), false, name);
   }
@@ -245,4 +245,12 @@ test('attribute rule: a stack deeper than the limit fails closed', () => {
   assert.equal(rule('<svg>' + '<g/>'.repeat(300) + '</svg>'), true); // self-closing elements are not open
   assert.equal(rule('<i onclick=x></i onclick=x>'), false);
   assert.equal(rule('<b></b onclick=x>'), true); // an end tag has no attributes for the rule
+});
+
+test('patch content rule: a template is allowed and its contents are read (H-94); noscript is rejected (H-96)', () => {
+  for (const html of ['<NOSCRIPT/>', '<b>x</b><noscript a="1">', '<template><script>x</script></template>', '<template><noscript>x</noscript></template>',
+    '<template><b onclick=x></template>']) {
+    assert.equal(rule(html), false, html);
+  }
+  assert.equal(rule('<template><span>x</span></template>'), true);
 });

@@ -32,7 +32,7 @@ const VALUE_PARTS = [
 ];
 const ELEMENTS = ['a', 'img', 'img', 'img', 'source', 'source', 'video', 'video', 'b', 'svg', 'math', 'use', 'image', 'p', 'p', 'a', 'textarea', 'title', 'xmp',
   'g', 'path', 'text', 'mi'];
-const RARE_ELEMENTS = ['script', 'style', 'iframe', 'link', 'meta', 'object', 'embed', 'base', 'foreignObject', 'animate'];
+const RARE_ELEMENTS = ['script', 'style', 'iframe', 'link', 'meta', 'object', 'embed', 'base', 'noscript', 'template', 'foreignObject', 'animate'];
 const NAMES = ['href', 'src', 'src', 'srcset', 'srcset', 'poster', 'title', 'alt', 'onclick', 'xlink:href', 'data-x', 'SRCSET'];
 
 /** Random block content: start tags with random attributes, text, end tags. */

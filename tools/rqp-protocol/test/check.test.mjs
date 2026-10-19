@@ -266,6 +266,7 @@ test('only the cases of P-35 have level "should" in their expected files', () =>
     'FX-RQ-P35-ATTRIBUTE-RULE-DATA-SVG-SPACE',
     'FX-RQ-P35-ATTRIBUTE-RULE-SVG',
     'FX-RQ-P35-PATCH-CONTENT-IFRAME',
+    'FX-RQ-P35-PATCH-CONTENT-NOSCRIPT',
     'FX-RQ-P35-PATCH-CONTENT-SCRIPT',
     'FX-RQ-P35-PATCH-CONTENT-STYLE',
   ]);

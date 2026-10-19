@@ -1,0 +1,40 @@
+{
+  "id": "FX-RQ-C08-NOSCRIPT",
+  "kind": "client",
+  "description": "price content with a noscript element; valid markup since H-95, but a patch must not have it (H-96)",
+  "rules": [
+    "RQP-13"
+  ],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      [
+        "content-type",
+        "application/vnd.rivqen.delta+json"
+      ],
+      [
+        "rq-version",
+        "1"
+      ],
+      [
+        "cache-control",
+        "no-store"
+      ]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<noscript><span>x</span></noscript>"
+          }
+        ]
+      }
+    }
+  }
+}

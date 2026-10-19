@@ -91,6 +91,8 @@ export const EXPECTED = Object.freeze({
   'page-b-script': { blocks: ['title', 'price', 'cart'] },
   'page-b-style': { blocks: ['title', 'price', 'cart'] },
   'page-b-iframe': { blocks: ['title', 'price', 'cart'] },
+  // H-95, H-96: valid for RQP (noscript in a block); the changed block fails the patch content rule.
+  'page-b-noscript': { blocks: ['title', 'price', 'cart'] },
   // H-86: page-a with an application/ld+json block (format json); b changes price and ld.
   'page-ld-a': { blocks: ['title', 'price', 'cart', 'ld'] },
   'page-ld-b': { blocks: ['title', 'price', 'cart', 'ld'] },

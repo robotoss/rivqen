@@ -1,22 +1,25 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: The Rivqen Authors
+
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
+// The Android app of the WebView lab (tools/webview-lab/CONTRACT.md, WP-17 S5 T-04).
+// A plain Activity with android.webkit.WebView. It does not use the shared Compose UI.
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.composeCompiler)
 }
 
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_11
+        allWarningsAsErrors = true
     }
 }
+
 dependencies {
-    implementation(project(":shared"))
-
-    implementation(libs.androidx.activity.compose)
-
-    implementation(libs.compose.uiToolingPreview)
-    debugImplementation(libs.compose.uiTooling)
+    // Isolated-world JavaScript (WebViewCompat.getExecutionWorld, JavaScriptReplyProxy.executeJavaScript).
+    implementation(libs.androidx.webkit)
+    implementation(libs.kotlinx.coroutines.android)
 }
 
 android {
@@ -48,7 +51,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    buildFeatures {
-        compose = true
+    lint {
+        warningsAsErrors = true
+        abortOnError = true
+        // The lab pins its versions on purpose (CONTRACT section 1); a newer release is not an error.
+        disable += setOf("GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion", "OldTargetApi")
     }
 }

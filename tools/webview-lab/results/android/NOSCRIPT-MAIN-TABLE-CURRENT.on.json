@@ -1,0 +1,10 @@
+{
+  "id": "NOSCRIPT-MAIN-TABLE-CURRENT",
+  "view": "on",
+  "walker": "ok",
+  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\n\"\n|     <object>\n|       <a>\n|         href=\"1\"\n|         <noscript>\n|           \"<table><marquee><table></table></marquee></table>\"\n|         \"x\"\n|     \"\n\"\n|     <span>\n|       data-rq-block=\"k\"\n|       \"y\"\n|       <a>\n|         href=\"2\"\n|         \"z\"\n|       \"w\"\n|     \"\n\n\"",
+  "characterSet": "UTF-8",
+  "contentType": "text/html",
+  "probe": null,
+  "error": null
+}

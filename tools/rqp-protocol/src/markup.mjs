@@ -223,7 +223,7 @@ export function attributesOf(bytes, start, end) {
 
 /** Item 1.1 (H-78): the start tags in HTML context that patched html content must not have. */
 export const PATCH_FORBIDDEN = Object.freeze(
-  new Set(['base', 'basefont', 'bgsound', 'embed', 'iframe', 'link', 'meta', 'object', 'script', 'style']),
+  new Set(['base', 'basefont', 'bgsound', 'embed', 'iframe', 'link', 'meta', 'noscript', 'object', 'script', 'style']),
 );
 
 /** Item 1.2 (H-73, H-78): the only start tags allowed in a foreign region of patched html content. */

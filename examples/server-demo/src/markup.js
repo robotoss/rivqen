@@ -128,7 +128,7 @@ export const MAX_BLOCK_BYTES = 1024 * 1024;
 
 /** Item 1.1 of the patch content rule (H-78): start tags that a changed block must not have in HTML context. */
 export const PATCH_FORBIDDEN = Object.freeze(
-  new Set(['script', 'style', 'link', 'meta', 'iframe', 'object', 'embed', 'base', 'basefont', 'bgsound']),
+  new Set(['script', 'style', 'link', 'meta', 'noscript', 'iframe', 'object', 'embed', 'base', 'basefont', 'bgsound']),
 );
 
 /** Item 1.2 (H-73, H-78): the start tags that a foreign region of a changed block may have. */

@@ -7,13 +7,13 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { attributeRejected, patchContentFailure, srcsetUrls } from '../src/markup.mjs';
+import { analyze, attributeRejected, patchContentFailure, srcsetUrls } from '../src/markup.mjs';
 
 const b = (s) => Buffer.from(s, 'latin1');
 const why = (s) => patchContentFailure(b(s));
 
 /** Manifest-patch section 4, item 1.1 (H-78). */
-const SPEC_PATCH_FORBIDDEN = ['base', 'basefont', 'bgsound', 'embed', 'iframe', 'link', 'meta', 'object', 'script', 'style'];
+const SPEC_PATCH_FORBIDDEN = ['base', 'basefont', 'bgsound', 'embed', 'iframe', 'link', 'meta', 'noscript', 'object', 'script', 'style'];
 
 /** Manifest-patch section 4, FOREIGN_ALLOWED (H-73). */
 const SPEC_FOREIGN_ALLOWED = (
@@ -28,7 +28,7 @@ test('item 1.1: each start tag of PATCH_FORBIDDEN in HTML context rejects, also 
   for (const name of SPEC_PATCH_FORBIDDEN) {
     for (const tag of [`<${name}>`, `<${name.toUpperCase()}/>`, `<b>x</b><${name} a="1">`]) assert.equal(why(tag), 'element', tag);
   }
-  for (const name of ['img', 'div', 'a', 'textarea', 'video', 'source', 'noscript', 'svg', 'math']) assert.equal(why(`<${name}>`), null, name);
+  for (const name of ['img', 'div', 'a', 'textarea', 'video', 'source', 'template', 'svg', 'math']) assert.equal(why(`<${name}>`), null, name);
 });
 
 test('item 1.2: in a foreign region each FOREIGN_ALLOWED start tag passes, every other start tag rejects', () => {
@@ -152,4 +152,27 @@ test('srcsetUrls: the candidate URLs of "parse a srcset attribute"', () => {
   assert.deepEqual(urls('/a.png (x, javascript:y) 2x , /b.png'), ['/a.png', '/b.png']);
   assert.deepEqual(urls(', ,'), []);
   assert.deepEqual(urls(''), []);
+});
+
+test('H-96: noscript is rejected in a patch, in upper case and self-closing too', () => {
+  for (const tag of ['<noscript>', '<NOSCRIPT/>', '<b>x</b><noscript a="1">']) assert.equal(why(tag), 'element', tag);
+});
+
+test('H-94: a template is allowed in a patch and the walk reads the start tags of its contents', () => {
+  assert.equal(why('<template><span>x</span></template>'), null);
+  assert.equal(why('<template><script>x</script></template>'), 'element');
+  assert.equal(why('<template><noscript>x</noscript></template>'), 'element');
+  assert.equal(why('<template><b onclick=x></template>'), 'attribute');
+  assert.equal(why('<template><svg><a/></svg></template>'), 'foreign');
+});
+
+test('H-97: a template with shadowrootmode passes the patch content rule; the analysis of the patched document (step 8) rejects it', () => {
+  const doc = (content) =>
+    Buffer.from(`<!DOCTYPE html><html><head><title>T</title></head><body><p data-rq-block="price">${content}</p></body></html>`, 'latin1');
+  assert.equal(analyze(doc('<template><span>x</span></template>')).valid, true);
+  for (const attr of ['shadowrootmode="open"', 'SHADOWROOTMODE', 'shadowrootmode=open shadowrootmode=closed']) {
+    const content = `<template ${attr}><span>x</span></template>`;
+    assert.equal(why(content), null, attr);
+    assert.equal(analyze(doc(content)).valid, false, attr);
+  }
 });

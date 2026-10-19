@@ -53,6 +53,13 @@ Mutation result of T-09 (WP-17 S3; Infection 0.35.6, changed lines against `7f36
 | `Parser::noscriptEndTag()` | `$top <= $noscript` → `<`, and its `throw` removed | At `$top === $noscript` the current node is the `noscript` element, so the name check throws with the same rule M-11 |
 | `Parser::noscriptEndTag()` | `$noscript + 1` → `$noscript + 0` | The element at `$noscript` is `noscript`, and its end tag does not reach this check |
 
+Mutation result of T-07 (WP-17 S5, H-94 to H-97; Infection 0.35.6, changed lines against `a56b45d`, 4 threads, `--min-msi=80`; 24 s): 41 of 43 mutants killed (95.3 %). No test was added. The 2 survivors are equivalent:
+
+| Location | Mutant | Reason |
+|---|---|---|
+| `Parser::contentStartTag()` (item g) | `$this->openInContent[self::TABLE] === 0` → `=== -1` | The counter is never negative, so the test is false in both versions and the `$f === null` part decides |
+| `Tokenizer::watchedName()` | the length filter `$n !== 3 && … && $n !== 14`, each term negated | The filter is only a shortcut: without it the lookup of the lowercase name in `WATCHED` gives null for any other name |
+
 Mutation result of T-09 (WP-17 S4, H-84, H-85a, H-86; Infection 0.35.6, changed lines against `9bd8c32`, 4 threads, `--min-msi=80`; 43 s): 147 of 161 mutants killed before the new tests, plus 2 time-outs (92.5 % detected). The new cases in `tests/RulesTest.php` are: the character references `&#90;`, `&#97;` and `&#57;` (the last value of a range of M-13 item 2), the safe values `&#x7f;`, `&#x3e;` and `&#x29;`, and a closure after a `noscript` element (the flag of the C pass is reset). After them: 152 of 161 killed and 2 time-outs (95.7 % detected). The 7 survivors are equivalent:
 
 | Location | Mutant | Reason |

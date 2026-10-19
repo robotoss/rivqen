@@ -49,9 +49,10 @@ pub(crate) struct Tag {
     /// The tag has an attribute named `for` (ASCII case-insensitive), with
     /// any value, in any occurrence (M-10 item 3).
     pub(crate) has_for: bool,
-    /// Some attribute is named `shadowrootmode` (ASCII case-insensitive;
-    /// every occurrence counts, also a duplicate that is dropped). M-22.6.
-    pub(crate) has_shadowrootmode: bool,
+    /// Some attribute is named `shadowrootmode` or `shadowroot` (ASCII
+    /// case-insensitive; every occurrence counts, also a duplicate that is
+    /// dropped). M-22.6 (H-97, DL-056).
+    pub(crate) has_shadow_root_attr: bool,
 }
 
 /// A token that the rules use.
@@ -403,7 +404,7 @@ impl<'a> Tokenizer<'a> {
         let mut block_attr: Option<Span> = None;
         let mut type_attr: Option<Span> = None;
         let mut has_for = false;
-        let mut has_shadowrootmode = false;
+        let mut has_shadow_root_attr = false;
         let mut self_closing = false;
 
         loop {
@@ -449,7 +450,8 @@ impl<'a> Tokenizer<'a> {
                         // attribute with a name wins (M-03).
                         let name = self.slice(attr_start, i);
                         has_for |= name.eq_ignore_ascii_case(b"for");
-                        has_shadowrootmode |= name.eq_ignore_ascii_case(b"shadowrootmode");
+                        has_shadow_root_attr |= name.eq_ignore_ascii_case(b"shadowrootmode")
+                            || name.eq_ignore_ascii_case(b"shadowroot");
                         attr = if block_attr.is_none()
                             && name.eq_ignore_ascii_case(b"data-rq-block")
                         {
@@ -560,7 +562,7 @@ impl<'a> Tokenizer<'a> {
             block_attr,
             type_attr,
             has_for,
-            has_shadowrootmode,
+            has_shadow_root_attr,
         })
     }
 
@@ -892,13 +894,13 @@ mod tests {
     }
 
     #[test]
-    fn shadowrootmode_attribute_is_found_by_name_in_any_position() {
+    fn shadow_root_attributes_are_found_by_name_in_any_position() {
         let found = |input: &str| {
             let mut tokenizer = Tokenizer::new(input.as_bytes(), 0);
             let Token::StartTag(tag) = tokenizer.next_token() else {
                 unreachable!("a start tag");
             };
-            tag.has_shadowrootmode
+            tag.has_shadow_root_attr
         };
         assert!(found("<t shadowrootmode>"));
         assert!(found("<t SHADOWROOTMODE=open>"));
@@ -911,6 +913,17 @@ mod tests {
             "<t data-shadowrootmode shadowrootclonable shadowrootmodes>"
         ));
         assert!(!found("<t a=\"shadowrootmode\" b=shadowrootmode>"));
+        // DL-056: the old Chromium attribute `shadowroot` counts the same way.
+        assert!(found("<t shadowroot>"));
+        assert!(found("<t ShadowRoot=open>"));
+        assert!(found("<t id=a shadowroot=\"\" shadowroot=open>"));
+        assert!(found("<t a=b c shadowroot=\"closed\">"));
+        assert!(!found(
+            "<t shadowrootx shadowroots data-shadowroot shadowroo hadowroot>"
+        ));
+        assert!(!found("<t a=shadowroot b=\"shadowroot\">"));
+        // ASCII case-insensitive only: U+017F is not `s`.
+        assert!(!found("<t \u{17f}hadowroot>"));
     }
 
     #[test]

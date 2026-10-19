@@ -14,7 +14,8 @@ use Rivqen\Tools\RqpMarkup\Parser;
 
 /**
  * The WP-17 S5 rules (H-94 to H-97, DL-055): `template` and `noscript` are
- * allowed in block content (M-22 item 2), M-22 item 6 (`shadowrootmode`),
+ * allowed in block content (M-22 item 2), M-22 item 6 (`shadowrootmode`, and
+ * `shadowroot` since DL-056),
  * M-24 item g with "F is none", and M-11 item 10 (M-22 and M-24 on the tokens
  * of C in a block). Each invalid case checks the rule ID.
  */
@@ -33,6 +34,11 @@ final class ContentTemplateNoscriptTest extends TestCase
         yield 'M-22.6 other shadowroot attributes' => [$B . '<template shadowrootclonable shadowrootdelegatesfocus shadowrootserializable data-shadowrootmode="open"></template></div>'];
         yield 'M-22.6 shadowrootmode outside the content' => ['<template shadowrootmode="open"></template>' . $B . 'x</div>'];
         yield 'M-22.6 a foreign template with shadowrootmode' => [$B . '<svg><template shadowrootmode="open"></template></svg></div>'];
+        yield 'M-22.6 names like shadowroot (DL-056)' => [$B . '<template shadowrootx="open" shadowroots data-shadowroot shadowroo title="shadowroot"></template></div>'];
+        yield 'M-22.6 a non-ASCII look-alike of shadowroot (DL-056)' => [$B . "<template \u{17F}hadowroot></template></div>"];
+        yield 'M-22.6 shadowroot outside the content (DL-056)' => ['<template shadowroot="open"></template>' . $B . 'x</div>'];
+        yield 'M-22.6 a foreign template with shadowroot (DL-056)' => [$B . '<svg><template shadowroot="open"></template></svg></div>'];
+        yield 'M-22.6 shadowroot on another element (DL-056)' => [$B . '<div shadowroot="open"></div></div>'];
         yield 'M-24.g table in a template' => [$B . '<template><table><tr><td>x</td></tr></table></template></div>'];
         yield 'M-24.g table in the content, template in a cell' => [$B . '<table><tr><td><template><p>x</p></template></td></tr></table></div>'];
         yield 'M-11.10 table in noscript in the content' => [$B . '<noscript><table><tr><td>x</td></tr></table></noscript></div>'];
@@ -60,6 +66,13 @@ final class ContentTemplateNoscriptTest extends TestCase
         yield 'M-22.6 shadowrootmode after other attributes' => [$B . '<template id="t" shadowrootclonable shadowrootmode></template></div>', 'M-22'];
         yield 'M-22.6 a duplicate shadowrootmode' => [$B . '<template shadowrootmode shadowrootmode="open"></template></div>', 'M-22'];
         yield 'M-22.6 nested template' => [$B . '<template><template shadowrootmode="open"></template></template></div>', 'M-22'];
+        // M-22 item 6, the old Chromium name (DL-056).
+        yield 'M-22.6 shadowroot with a value' => [$B . '<template shadowroot="open"></template></div>', 'M-22'];
+        yield 'M-22.6 shadowroot without a value' => [$B . '<template shadowroot></template></div>', 'M-22'];
+        yield 'M-22.6 shadowroot in upper case' => [$B . '<template SHADOWROOT=closed></template></div>', 'M-22'];
+        yield 'M-22.6 shadowroot after other attributes' => [$B . '<template id="t" class="c" shadowrootclonable shadowroot="open"></template></div>', 'M-22'];
+        yield 'M-22.6 a duplicate shadowroot' => [$B . '<template ShadowRoot="" class="b" shadowroot="open"></template></div>', 'M-22'];
+        yield 'M-22.6 shadowroot in a nested template' => [$B . '<template><b><template shadowroot></template></b></template></div>', 'M-22'];
         // M-24 item g with F none.
         yield 'M-24.g tr in a template without a table' => [$B . '<template><tr></tr></template></div>', 'M-24'];
         yield 'M-24.g td in a template of a table' => [$B . '<table><template><td>x</td></template></table></div>', 'M-24'];

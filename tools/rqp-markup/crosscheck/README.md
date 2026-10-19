@@ -40,7 +40,7 @@ When the candidate says **valid**, these must be true. Else the tool reports a f
 | `M-11-table-part` | M-11 item 6 (H-38) | A table part or `col` in the `noscript` content without a `table` opened in it |
 | `M-10-template-for` | M-10 item 3 (H-43) | A `template` start tag in HTML context with a `for` attribute (any value) |
 | `M-11-document-tag` | M-11 item 7 (H-71) | An `html`, `body` or `head` start or end tag in the `noscript` content |
-| `M-22-shadowrootmode` | M-22 item 6 (H-94, H-97) | An HTML `template` start tag with a `shadowrootmode` attribute (any value, any case) in block content |
+| `M-22-shadowrootmode` | M-22 item 6 (H-94, H-97, DL-056) | An HTML `template` start tag with a `shadowrootmode` attribute or the old Chromium attribute `shadowroot` (any value, any case) in block content. The class keeps its name for both attributes |
 | `M-24-template-table-part` | M-24 item g (H-94) | A table part or `col` start tag in HTML context of block content whose search for F (M-09) stops at a `template` |
 
 The classifier is a test oracle for these rules only. It does not decide validity.
@@ -100,7 +100,8 @@ node src/cli.mjs cases --cases cases/s4-cases.json --only rust,node,java,php
 node src/cli.mjs cases --cases cases/s4b-cases.json --only rust,node,java,php
 
 # The shapes of the WP-17 S5 decisions H-94 to H-97: template and noscript in block content
-# (fields decision, expected = the decided rule, options = the results of the study options)
+# (fields decision, expected = the decided rule, options = the results of the study options;
+# the 7 cases of T-10 with "decision": "DL-056" have no options)
 node src/cli.mjs cases --cases cases/s5-cases.json --only rust,node,java,php
 
 # A sweep with template and noscript in block content (profiles tpl, nos, mix), three views
@@ -184,7 +185,7 @@ The batch runs write one file for each document. On a slow temporary file system
    - `<![CDATA[` in an SVG or MathML integration point (`desc`, `mi`, …) gives a comment in parse5. The WHATWG check is on the namespace of the adjusted current node, which gives a CDATA section there. The end byte is the same when `markup.md` M-12 holds.
    - `<?` gives a bogus comment in parse5. The WHATWG standard parses processing instructions since whatwg/html PR #12118 (merged 2026-06-25).
    - The table scope of parse5 does not stop at `template` (FACT, `evidence/markup-s5/report.md` §5). The view `spec` corrects this one function; it is a local patch of parse5, not a second implementation.
-   - parse5 has no declarative shadow DOM (`shadowrootmode`; 0 matches in `dist/`) and no content patching (`template for`). The rules of `markup.md` M-22 item 6 and M-10 item 3 rest on the WHATWG text and on browser runs (`markup-edge-cases.md` §8.5, §12), not on this tool.
+   - parse5 has no declarative shadow DOM (`shadowrootmode`; 0 matches in `dist/`) and no content patching (`template for`). M-22 item 6 rests on the WHATWG text and on the Chromium history of the attribute `shadowroot` (chromestatus.com and the Chromium source, `markup-edge-cases.md` §12, §12.4). A browser or WebView run of the shapes of item 6 (declarative shadow DOM in block content, the full document against an `innerHTML` patch) is NOT FOUND: the WebView lab has no such case. The only browser run with declarative shadow DOM is the conformance case `C3-template-shadowroot` in Chrome 154: a `template` with `shadowrootmode` outside block content, where the block stays in the light DOM (`markup-edge-cases.md` §8.3 item 9, §8.4). M-10 item 3 rests on the WHATWG text and on Chrome 154 runs of the conformance cases (`markup-edge-cases.md` §8.5). Neither rule rests on this tool.
 2. parse5 needs time that grows faster than the nesting depth (about 25 s for 50 000 nested elements). Sweep documents are small; do not run the tool on large untrusted documents in a time-limited job.
 3. The generator (`src/generator.mjs`) is tag soup with list and table patterns. It does not reach every shape. A sweep without findings is evidence, not a proof. The `classic` profile did not reach the shapes of the security review (2026-10-11); the `review` profile adds them.
 4. The depth pass uses the parse5 token stream. For a valid document it is the token stream of `markup.md` M-03/M-04. For a document that breaks M-07 or M-09 (for example tags in an SVG integration point), parse5 builds elements that the token stack does not see, and the invariant can fail. So the `depth-invariant` finding applies only to results that say valid; the sweep also counts the violations on all documents, for information. The check is skipped while a `template` element is open: the claim excludes template contents (H-35). While the WHATWG stack has more than 1024 elements, the check covers only new elements and the current node (bounded time).
@@ -204,7 +205,7 @@ Run `node --test` in this directory. The tests use a fake candidate (`test-suppo
 |---|---|
 | `test/utf8.test.mjs` | Strict UTF-8, BOM, UTF-16 to UTF-8 offsets |
 | `test/view.test.mjs` | parse5 view: byte offsets (non-BMP, CR LF, BOM), implied ends, template and foreign content, manifests (also Unicode look-alikes), scripting views, the WHATWG table scope (`withSpecTableScope`), limits |
-| `test/depth.test.mjs` | Depth counter D (pushes, exact pops, dirty mark, implied parts, `noscript` content in D), the invariant on the review shapes and in the scripting-disabled view, the rule classes, the pass on C (H-71), the foreign region of C (H-74), the crossing of the region root (H-75), the block content and the classes of H-94 and H-97 |
+| `test/depth.test.mjs` | Depth counter D (pushes, exact pops, dirty mark, implied parts, `noscript` content in D), the invariant on the review shapes and in the scripting-disabled view, the rule classes, the pass on C (H-71), the foreign region of C (H-74), the crossing of the region root (H-75), the block content and the classes of H-94, H-97 and DL-056 |
 | `test/compare.test.mjs` | Each kind of disagreement, result shapes, candidate comparison |
 | `test/generator.test.mjs` | Deterministic PRNG (known answer), bounded documents, coverage of the needed shapes, the S5 profiles (known answer, shapes of H-94 to H-97) |
 | `test/head.test.mjs` | The head sweep: the insertion point, C2, the four parse5 checks, block shifts, hostile positions, each with a known-bad control (a wrong server point, a wrong client rule, wrong blocks, a candidate that accepts F), the command and its exit codes |

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-SHADOWROOT-LEGACY-UPPER",
+  "description": "A template element in the content with a shadowroot attribute in upper case (DL-056: ASCII case-insensitive; M-22 item 6)",
+  "rules": [
+    "M-22"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

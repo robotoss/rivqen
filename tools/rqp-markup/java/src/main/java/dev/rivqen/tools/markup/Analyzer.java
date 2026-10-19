@@ -401,8 +401,8 @@ public final class Analyzer {
     if (Name.is(k, Name.Set.FORBIDDEN_CONTENT)) {
       throw structure("M-22");
     }
-    if (k == Name.TEMPLATE && tok.hasShadowRootModeAttribute()) {
-      throw structure("M-22"); // item 6 (H-94, H-97)
+    if (k == Name.TEMPLATE && tok.hasShadowRootAttribute()) {
+      throw structure("M-22"); // item 6 (H-94, H-97, DL-056)
     }
     if (selfClosing && !Name.is(k, Name.Set.VOID) && k != Name.SVG && k != Name.MATH) {
       throw structure("M-22");

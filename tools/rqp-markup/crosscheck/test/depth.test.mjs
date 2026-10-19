@@ -578,6 +578,25 @@ test("class H-94/H-97: a template with shadowrootmode in block content (M-22 ite
   }
 });
 
+test("class DL-056: a template with the old Chromium attribute shadowroot in block content (M-22 item 6)", () => {
+  const k = '<span data-rq-block="k">y</span>';
+  for (const attr of ['shadowroot="open"', "shadowroot", "SHADOWROOT=closed", 'id="a" ShadowRoot="" class="b" shadowroot="open"', 'x=1 shadowroot']) {
+    assert.deepEqual(run(`<div data-rq-block="a"><template ${attr}>x</template></div>${k}`).classes, [CLASSES.shadowRootMode], attr);
+  }
+  assert.deepEqual(run('<div data-rq-block="a"><template><b><template shadowroot>x</template></b></template></div>').classes, [
+    CLASSES.shadowRootMode,
+  ]);
+  // Not outside block content, not in a foreign region, not for similar names or other elements.
+  for (const ok of [
+    `<div><template shadowroot="open"><slot></slot></template>${k}</div>`,
+    '<div data-rq-block="a"><svg><template shadowroot="open"></template></svg></div>',
+    '<div data-rq-block="a"><template shadowrootx="open" shadowroots data-shadowroot title="shadowroot">x</template></div>',
+    '<div data-rq-block="a"><div shadowroot="open">x</div></div>',
+  ]) {
+    assert.deepEqual(run(ok).classes, [], ok);
+  }
+});
+
 test("class H-94: a table part or col in a template of the block content (M-24 item g)", () => {
   const cls = (s) => run(s).classes;
   assert.deepEqual(cls('<div data-rq-block="a"><table><tr><td><template><tr><td>x</td></tr></template></td></tr></table></div>'), [

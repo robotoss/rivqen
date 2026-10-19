@@ -479,7 +479,7 @@ class Scanner {
   contentStart(t) {
     const name = t.name;
     if (FORBIDDEN_CONTENT.has(name)) return STRUCTURE; // M-22 rule 2
-    // M-22 item 6 (H-94, H-97): declarative shadow DOM gives two renderings.
+    // M-22 item 6 (H-94, H-97, DL-056): declarative shadow DOM gives two renderings.
     if (name === 'template' && t.hasShadowRoot) return STRUCTURE;
     // M-22 rule 3: a self-closing svg or math opens no region (M-05 item 1).
     if (t.selfClosing && !VOID.has(name) && name !== 'svg' && name !== 'math') return STRUCTURE;

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-SHADOWROOT-LEGACY",
+  "description": "A template element in the content with the old Chromium declarative shadow DOM attribute shadowroot (Chrome and WebView 90 to 120): M-22 item 6 (DL-056)",
+  "rules": [
+    "M-22"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

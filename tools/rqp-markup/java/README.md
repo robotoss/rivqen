@@ -56,6 +56,8 @@ Run these commands in `tools/rqp-markup/java`:
 
 Until WP-17 is merged, use `--base wp/WP-17`: against `main` the whole package is new. The PIT report is in `build/reports/pitest/index.html`. The PIT run leaves out `LinearTimeTest`: it checks time on 5 MiB inputs, not behavior.
 
+Mutation results of T-07 (WP-17 S5; base `a56b45d`; PIT 1.30.0; classes `Analyzer`, `Name`, `Tokenizer`; 166 s): the whole classes have 754 of 788 mutants killed (95.7 %). On the lines that S5 changed (`Analyzer` 404 to 406 and 424, `Name` 89 and 121, `Tokenizer` 42, 105, 246 to 253, 282 and 426 to 428), 7 of 7 mutants are killed (100 %). No test was added and no survivor is on these lines.
+
 Mutation results of T-09 (WP-17 S4; base `9bd8c32`; PIT 1.30.0; classes `Analyzer` and `Name`; 61 s of analysis, 66 s with the build): the whole classes have 454 of 474 mutants killed (95.8 %) after the new tests (451 before). On the lines that S4 changed, 85 of 92 mutants are killed (92.4 %); before the tests it was 82 of 92 (89.1 %). The new cases in `RulesTest` are the letters `Z`, `a`, `z` after `&`, the references `&#65;`, `&#90;`, `&#97;`, `&#122;`, `&#57;`, `&#xA;`, `&#xf;` (reserved) and `&#64;`, `&#91;`, `&#96;`, `&#123;`, `&#127;`, `&#33a;`, `&#a;` (not reserved). The 7 others are equivalent:
 
 | Location | Mutant | Reason |

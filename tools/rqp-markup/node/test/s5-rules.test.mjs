@@ -60,6 +60,11 @@ describe('template in the content (H-94, M-22 items 2 and 6)', () => {
     assert.equal(err('<svg><template shadowrootmode=open></template></svg>'), null);
   });
 
+  it('allows shadowrootmode on an element that is not a template', () => {
+    assert.equal(err('<div shadowrootmode=open></div>'), null);
+    assert.equal(err('<span shadowrootmode></span>'), null);
+  });
+
   it('keeps M-10 item 3 (for) in a template of the content', () => {
     assert.equal(err('<template for=x></template>'), STRUCTURE);
   });

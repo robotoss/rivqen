@@ -106,6 +106,12 @@ T-09 (WP-17 S4, H-84, H-85a, H-86; changed lines of `markup.mjs` and `names.mjs`
 
 T-08 (M-24 j, k, E5, E8; changed lines against `4c90861`): 53 of 54 mutants killed (98.1 %). The survivor is equivalent: it puts a string at the bottom of the list-mark array (`this.listMark = ["Stryker was here"]`). That value is never a list item, and M-24 j reads the array only after M-24 c has found a list opened in the content above it.
 
+T-07 (WP-17 S5, H-94 to H-97; changed lines of `markup.mjs`, `names.mjs` and `tokenizer.mjs` against `a56b45d`, without `--incremental`; 14 s): 33 of 35 mutants killed before the new test (94.3 %). The new test in `test/s5-rules.test.mjs` checks that `shadowrootmode` on an element that is not a `template` is valid (M-22 item 6 is about `template` only). After it: 34 of 35 (97.1 %). The survivor is equivalent:
+
+| Location | Mutant | Reason |
+|---|---|---|
+| `contentStart()` | `this.familyIndex() < 0` → `<= 0` (M-24 item g) | A table part is rejected here only when a table is open in the content, and that table is a table family element at index 1 or more; F is then at least that index, so F is never at index 0 |
+
 With the command runner, Stryker has no coverage for each test. An `--incremental` run after a change of the tests only can keep old "Survived" results. Run without `--incremental` to check new tests.
 
 T-13 (rules of the security review, F-4, F-7; changed lines against `4fff64f`, without `--incremental`): 358 killed and 4 timeouts of 369 mutants (98.1 %). The timeouts are real hangs (for example, without `O_NONBLOCK` the FIFO test waits for its 20 s limit). The 7 survivors:

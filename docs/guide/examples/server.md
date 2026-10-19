@@ -2,7 +2,7 @@
 
 `examples/server-demo` is a small Node.js server. It shows the Rivqen protocol (RQP) from the server side: block markup, manifest, `304`, block patch and safe fallback.
 
-**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 91 tests pass, and the demo passes all 78 server protocol fixtures (checked 2026-10-18, Node.js 22 or later). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
+**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 99 tests pass, and the demo passes all 87 server protocol fixtures (checked 2026-10-19, Node.js 22 or later; WP-17 S4: the patch content rule, the attribute rule of H-77 and H-83, and the implied head of H-79a). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
 
 [[toc]]
 
@@ -62,14 +62,14 @@ flowchart TD
 
 Every client gets the same full document: a browser without RQP also gets the manifest, `Rq-Version: 1` and the `ETag` `"r1.…"`. The browser ignores the manifest script.
 
-<Badge type="tip" text="FACT" /> The manifest element is the first thing in the head: the server inserts it immediately after the `<head>` start tag of the page (H-72). Only white space, comments, DOCTYPE tokens, `<html>` start tags and ignored end tags can come before `<head>` ([manifest and patch §1.7](/engineering/protocol/manifest-patch#_1-7-delivery-in-the-document), server item 2). A page without such a `<head>` start tag is sent unchanged, without RQP. The head does not need a `</head>` end tag. Details: [manifest and patch §1.7](/engineering/protocol/manifest-patch#_1-7-delivery-in-the-document).
+<Badge type="tip" text="FACT" /> The manifest element is the first thing in the head: the server inserts it immediately after the `<head>` start tag of the page (H-72). Only white space, comments, DOCTYPE tokens, `<html>` start tags and ignored end tags can come before `<head>` ([manifest and patch §1.7](/engineering/protocol/manifest-patch#_1-7-delivery-in-the-document), server item 2). A page without a `<head>` start tag whose first head content (`<meta>`, `<title>`, `<link>`, `<script>`, `<style>`, `<base>`, `<basefont>`, `<bgsound>` or `<noframes>`) comes first has an implied head: the server inserts the manifest immediately before that start tag (H-79a). Any other page (for example with text, `<noscript>`, `<template>` or `<body>` first) is sent unchanged, without RQP. The head does not need a `</head>` end tag. Details: [manifest and patch §1.7](/engineering/protocol/manifest-patch#_1-7-delivery-in-the-document).
 
 Where the code is:
 
 | File | Content |
 |---|---|
 | `src/rqp.js` | `handle(request, appResponse, pageBytes, config)`: the response selection (steps 1 to 9), the manifest, the page revision with the policy line, the delta |
-| `src/markup.js` | The markup analysis: calls the Node.js parser candidate `tools/rqp-markup/node` in process. Adds the insertion point immediately after the head start tag of the document (H-72) and the attribute rule (H-56, H-59) |
+| `src/markup.js` | The markup analysis: calls the Node.js parser candidate `tools/rqp-markup/node` in process. Adds the insertion point (after the head start tag of the document, H-72, or before the start tag that implies the head, H-79a) and the patch content rule (H-56, H-78: `PATCH_FORBIDDEN`, `FOREIGN_ALLOWED` and the attribute rule of H-59, H-73, H-77, H-83). It is a second implementation (DL-036, DL-046), not a copy of `tools/rqp-protocol` |
 | `src/fields.js`, `src/sf.js` | The request fields and a Structured Field parser |
 | `src/app.js`, `src/server.js` | The HTTP adapter and the start script. The public origin comes from `ORIGIN`, not from the connection |
 
@@ -133,14 +133,15 @@ Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so th
 npm test
 ```
 
-<Badge type="tip" text="FACT" /> The 91 tests check, by behavior:
+<Badge type="tip" text="FACT" /> The 99 tests check, by behavior:
 
-- the response selection: full document, `304`, delta, the size rules, the attribute rule (H-56), invalid pages, the charset rule, a weak `ETag` with a content coding, no state between requests;
+- the response selection: full document, `304`, delta, the size rules, the patch content rule (H-56, H-78), invalid pages, the charset rule, a weak `ETag` with a content coding, no state between requests;
 - the known answers of `spec/rqp/examples/kat`: the full documents, both page revisions and the example patches;
 - the request fields and the Structured Field parser;
-- the insertion point of the manifest (immediately after the head start tag, H-72) and the attribute rule;
+- the insertion point of the manifest (after the head start tag, H-72, or before the start tag that implies the head, H-79a) and the patch content rule: `PATCH_FORBIDDEN`, `FOREIGN_ALLOWED`, event handlers, `javascript:`, `vbscript:` and `data:` URLs except raster images in `img`, `source` and `video` (H-83), and character references at the scheme decision byte (H-77);
+- differential tests against the reference of `tools/rqp-protocol` (tests only): 20 000 random blocks for the patch content rule and 20 000 random documents for the insertion point;
 - the HTTP adapter on a loopback socket: first visit, revisit, data change, template change, the `Host` check (`421`);
-- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 78 server fixtures pass (`FX-RQ-P*`), also the two `FX-RQ-P35` cases (level SHOULD).
+- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 87 server fixtures pass (`FX-RQ-P*`), also the six `FX-RQ-P35` cases (level SHOULD).
 
 To run the fixtures alone, run this command in `examples/server-demo`:
 

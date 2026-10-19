@@ -133,6 +133,9 @@ test('patch content rule: event handlers and javascript:, vbscript: and data: UR
     '<a href="javascript&#58;x">',
     '<a href="vb&#115cript:x">',
     '<a href="&#0;javascript:x">',
+    '<a href="&#43;x:y">', // "+", "-" and "." continue a scheme
+    '<a href="a&#x2D;b:y">',
+    '<a href="&#046;x:y">',
     // H-83, H-83a, DL-048: not a raster image, or not an image place.
     '<img src="data:image/svg+xml,x">',
     '<img src="data:IMAGE/SVG+XML;base64,x">',
@@ -147,6 +150,7 @@ test('patch content rule: event handlers and javascript:, vbscript: and data: UR
     '<source srcset="/a.png 1x, javascript:x 2x">',
     '<img srcset="/a.png 1x,&#32;data:text/html,x 2x">',
     '<img srcset="/a.png&comma;javascript:x">',
+    '<img srcset="/a.png, javascript:x">', // a trailing comma ends the candidate: no descriptors
     '<a srcset="data:image/png,x">',
   ]) {
     assert.equal(rule(html), false, html);

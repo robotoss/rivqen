@@ -112,6 +112,15 @@ test('a changed block with script, style or iframe, or an svg a element, gives t
   assert.equal(run(get(clientLines(held)), page('<svg><title>t</title><path d="M0 0"/></svg>')).mode, 'delta');
 });
 
+test('the patch content rule reads only html blocks: a json block with markup text in a string gets a delta (H-78)', () => {
+  const held = page('120.00');
+  const current = Buffer.from(held.toString('utf8').replace('{"n":1}', '{"t":"<b onclick=x><script>"}'), 'utf8');
+  assert.equal(revisionsOf(current).valid, true);
+  const r = run(get(clientLines(held)), current);
+  assert.equal(r.mode, 'delta');
+  assert.deepEqual(JSON.parse(r.body.toString('utf8')).operations.map((op) => op.block_id), ['cart']);
+});
+
 test('a changed block with a raster data: image or an ordinary query string gets a delta (H-77, H-83)', () => {
   const held = page('120.00');
   for (const content of ['<img src="data:image/png;base64,iVBO" alt="">', '<a href="?a=1&b=2">p</a>', '<b title="&#169; &quot;">p</b>']) {

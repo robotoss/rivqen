@@ -26,7 +26,7 @@ const VALUE_PARTS = [
   '&#106;', '&#x6A', '&#0000115;', '&#x73\n', '&#169;', '&quot;', '&amp;', '&Tab;', '&NewLine;', '&fjlig;', '&plus;', '&period;',
   '&#32;', '&#x09;', '&#44;', '&comma;', '&lpar;', '&#x28;', '\t', '\n', '\r', ' ', '\x01', '\x0c', ',', '(', ')', ' 1x', ' 2x',
   'image/png;base64,iVBO', 'image/svg+xml,x', 'image/svg%2Bxml,x', 'image/svg&#43;xml,x', 'image/gif', 'text/html,x', '/a.png',
-  '?a=1&b=2', '&', '&#', '&#x', ';',
+  '?a=1&b=2', '&', '&#', '&#x', ';', '&#43;', '&#x2D;', '&#046;', '&#x2e', ', ',
 ];
 const ELEMENTS = ['a', 'img', 'img', 'img', 'source', 'source', 'video', 'video', 'b', 'svg', 'math', 'use', 'image', 'p', 'p', 'a', 'textarea', 'title', 'xmp',
   'g', 'path', 'text', 'mi'];

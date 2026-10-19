@@ -3,7 +3,8 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parse5View } from "../src/view.mjs";
+import { parse, serialize } from "parse5";
+import { parse5View, withSpecTableScope } from "../src/view.mjs";
 
 const b = (s) => Buffer.from(s, "utf8");
 const ranges = (v) => v.blocks.map((x) => [x.id, x.start, x.end]);
@@ -97,4 +98,21 @@ test("deep nesting does not overflow the stack", () => {
   const depth = 8_000;
   const v = parse5View(b(`${"<div>".repeat(depth)}<span data-rq-block="d">x</span>`));
   assert.equal(v.blocks.length, 1);
+});
+
+test("the WHATWG table scope stops at template; parse5 8.0.1 does not (evidence/markup-s5 section 5)", () => {
+  // In a template in a table insertion mode, parse5 finds the outer table in table scope, pops out of
+  // the template and closes the outer table; a WHATWG parser ignores the inner table start tag.
+  const doc = "<table><tr><td><template><tfoot></tfoot><table><tr><td>c</td></tr></table></template>z</td></tr></table>";
+  const p5 = serialize(parse(doc));
+  const spec = withSpecTableScope(() => serialize(parse(doc)));
+  assert.match(p5, /<\/table><table>.*<\/table>z<\/body>/);
+  assert.match(spec, /<template><tfoot><\/tfoot><tbody><tr><td>c<\/td><\/tr><\/tbody><\/template>z<\/td>/);
+  // The patch is undone after the call, also after an exception.
+  assert.equal(serialize(parse(doc)), p5);
+  assert.throws(() => withSpecTableScope(() => { throw new RangeError("x"); }), RangeError);
+  assert.equal(serialize(parse(doc)), p5);
+  // The view with the option: the same blocks for a document without this shape.
+  const block = b('<table><tr><td><div data-rq-block="a">x<template><tr><td>t</td></tr></template></div></td></tr></table>');
+  assert.deepEqual(ranges(parse5View(block, { specTableScope: true })), ranges(parse5View(block)));
 });

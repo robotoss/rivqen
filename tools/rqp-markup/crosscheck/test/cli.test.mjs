@@ -157,7 +157,7 @@ test("usage and input errors exit with 2", async () => {
   assert.equal((await run(["cases", "--cases", bad])).code, 2);
 });
 
-test("cases: one row per case with both parse5 views and each candidate", async () => {
+test("cases: one row per case with the three parse5 views and each candidate", async () => {
   const file = path.join(TMP, "cases.json");
   writeFileSync(
     file,
@@ -169,9 +169,9 @@ test("cases: one row per case with both parse5 views and each candidate", async 
   const r = await run(["cases", "--cases", file, "--candidates", candidatesFile("cs", ["p5", "valid0"])]);
   assert.equal(r.code, 0);
   const rows = r.out.split("\n");
-  assert.equal(rows[0], "case | parse5 (scripting on) | parse5 (scripting off) | depth | depth (scripting off) | fake-p5 | fake-valid0");
-  assert.equal(rows[1], "c1 | 1 block(s) | 1 block(s) | max D 1, stack 3, depth 3 | max D 1, stack 3, depth 3 | valid 1 | valid 0 DISAGREE(enabled,disabled)");
-  assert.equal(rows[2], "c2 | 0 block(s) | 0 block(s) 1 manifest | max D 2, stack 3, depth 3 | max D 2, stack 3, depth 3 | valid 0 DISAGREE(disabled) | valid 0 DISAGREE(disabled)");
+  assert.equal(rows[0], "case | parse5 (scripting on) | parse5 (scripting off) | parse5 (WHATWG table scope) | depth | depth (scripting off) | fake-p5 | fake-valid0");
+  assert.equal(rows[1], "c1 | 1 block(s) | 1 block(s) | 1 block(s) | max D 1, stack 3, depth 3 | max D 1, stack 3, depth 3 | valid 1 | valid 0 DISAGREE(enabled,disabled,spec)");
+  assert.equal(rows[2], "c2 | 0 block(s) | 0 block(s) 1 manifest | 0 block(s) | max D 2, stack 3, depth 3 | max D 2, stack 3, depth 3 | valid 0 DISAGREE(disabled) | valid 0 DISAGREE(disabled)");
 });
 
 test("sweep: an agreeing candidate gives no finding and the same summary on every run", async () => {
@@ -198,12 +198,24 @@ test("sweep: findings are saved as files, at most --keep of each kind", async ()
   }
 });
 
-test("parseArgs: --profile is classic, review, review2 or review3", () => {
+test("parseArgs: --profile is classic, review, review2, review3, tpl, nos or mix", () => {
   assert.equal(parseArgs(["sweep"]).profile, "classic");
-  assert.equal(parseArgs(["sweep", "--profile", "review"]).profile, "review");
-  assert.equal(parseArgs(["sweep", "--profile", "review2"]).profile, "review2");
-  assert.equal(parseArgs(["sweep", "--profile", "review3"]).profile, "review3");
-  assert.throws(() => parseArgs(["sweep", "--profile", "other"]), /classic, review, review2 or review3/);
+  for (const p of ["review", "review2", "review3", "tpl", "nos", "mix"]) assert.equal(parseArgs(["sweep", "--profile", p]).profile, p);
+  assert.throws(() => parseArgs(["sweep", "--profile", "other"]), /classic, review, review2, review3, tpl, nos or mix/);
+});
+
+test("parseArgs: --scripting spec and all add the WHATWG table-scope view", () => {
+  assert.deepEqual(parseArgs(["check", "--scripting", "spec"]).views, ["spec"]);
+  assert.deepEqual(parseArgs(["check", "--scripting", "all"]).views, ["enabled", "disabled", "spec"]);
+  assert.throws(() => parseArgs(["check", "--scripting", "constructor"]), /enabled, disabled, spec, both or all/);
+});
+
+test("sweep --profile tpl uses the S5 generator (template and noscript in block content)", async () => {
+  const r = await run(["sweep", "--count", "40", "--chunk", "20", "--seed", "4", "--profile", "tpl", "--scripting", "all", "--candidates", candidatesFile("swt", ["p5"])]);
+  assert.equal(r.code, 0);
+  assert.match(r.out, /profile=tpl/);
+  assert.match(r.out, /scripting=enabled,disabled,spec/);
+  assert.match(r.out, /findings: none/);
 });
 
 test("check --expected: a valid fixture with a shape of a security-review rule is a finding", async () => {

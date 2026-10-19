@@ -3,7 +3,9 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { createHash } from "node:crypto";
 import { docSeed, generateDocument, makeRng } from "../src/generator.mjs";
+import { PROFILES as S5_PROFILES, generateS5Document } from "../src/generator-s5.mjs";
 
 test("makeRng is deterministic and in [0, 1)", () => {
   const a = makeRng(42);
@@ -114,6 +116,34 @@ test("the review3 profile reaches the template for shapes of H-43 and keeps revi
     const s = docSeed(51, i);
     assert.doesNotMatch(generateDocument(s, { profile: "review2", maxTokens: 20 }), /<template (for|FOR)/);
   }
+});
+
+test("S5 profiles: known answer (the documents of the S5 study generator), and unknown profiles throw", () => {
+  // generator-s5.mjs is a copy of study/s5/src/gen-s5.mjs: the same seeds give the study documents.
+  const digest = (profile) => {
+    const h = createHash("sha256");
+    for (let i = 0; i < 200; i++) h.update(`${generateS5Document(docSeed(7, i), profile)}\n`);
+    return h.digest("hex").slice(0, 16);
+  };
+  assert.deepEqual(S5_PROFILES, ["tpl", "nos", "mix"]);
+  assert.deepEqual(S5_PROFILES.map(digest), ["9a7e89eeca02990d", "150d9f4611c59876", "7748ef5fa59e06bc"]);
+  assert.throws(() => generateS5Document(1, "classic"), RangeError);
+});
+
+test("S5 profiles reach template and noscript in block content with the shapes of H-94 to H-97", () => {
+  const docs = S5_PROFILES.flatMap((p) => Array.from({ length: 2000 }, (_, i) => generateS5Document(docSeed(1, i), p)));
+  const has = (re) => docs.some((d) => re.test(d));
+  assert.ok(has(/data-rq-block="b\d+">[^]*<template[ >]/), "template in block content");
+  assert.ok(has(/<template[^>]*shadowrootmode/i), "shadowrootmode");
+  assert.ok(has(/<template[^>]*SHADOWROOTMODE/), "upper-case shadowrootmode");
+  assert.ok(has(/<template>(<tr>|<td>|<caption>|<colgroup>|<tbody>)/), "a table part as the first child of a template");
+  assert.ok(has(/<template><table>/), "a table in a template");
+  assert.ok(has(/<template for="m">/), "template for");
+  assert.ok(has(/data-rq-block="b\d+">[^]*<noscript>/), "noscript in block content");
+  assert.ok(has(/<p data-rq-block="b\d+">[^<]*<noscript>[^]*<div>/), "a PCLOSE tag in C of a p block");
+  assert.ok(has(/<noscript><template>/) && has(/<template><noscript>/), "nested template and noscript");
+  assert.ok(has(/<noscript>[^]*<\/div>[^]*<\/noscript>/), "an end tag of a block element in C");
+  for (const d of docs) assert.ok(d.length < 20_000);
 });
 
 test("review documents are bounded", () => {

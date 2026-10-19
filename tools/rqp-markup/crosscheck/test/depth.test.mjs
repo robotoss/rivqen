@@ -534,3 +534,60 @@ test("rawAttrValue reads quoted, unquoted and empty values without decoding", ()
 test("invalid UTF-8 gives no analysis", () => {
   assert.equal(analyzeDepth(Buffer.from([0x3c, 0xc3, 0x28])).ok, false);
 });
+
+test("WP-17 S5: the counter knows the block content; no implied closure there (H-85a, H-94)", () => {
+  const c = new DepthCounter();
+  c.startTag("div", false, ["data-rq-block"]);
+  assert.equal(c.inContent, true);
+  for (const t of ["table", "tr", "td", "td"]) c.startTag(t, false);
+  assert.equal(c.closures, 0);
+  assert.deepEqual(c.stack.map((e) => e.name), ["div", "table", "tr", "td", "td"]);
+  // The end tag of the block element ends the content; the closure applies again after it.
+  c.endTag("div");
+  assert.equal(c.inContent, false);
+  for (const t of ["table", "tr", "td", "td"]) c.startTag(t, false);
+  assert.equal(c.closures, 1);
+  // A block start tag in a foreign region or on a void element opens no content; a copy keeps it.
+  const f = new DepthCounter();
+  f.startTag("svg", false);
+  f.startTag("g", false, ["data-rq-block"]);
+  assert.equal(f.inContent, false);
+  const v = new DepthCounter();
+  v.startTag("img", false, ["data-rq-block"]);
+  assert.equal(v.inContent, false);
+  v.startTag("p", false, ["data-rq-block"]);
+  assert.equal(v.clone().inContent, true);
+});
+
+test("class H-94/H-97: a template with shadowrootmode in block content (M-22 item 6)", () => {
+  const k = '<span data-rq-block="k">y</span>';
+  for (const attr of ['shadowrootmode="open"', "SHADOWROOTMODE", 'shadowrootmode="" shadowrootmode="open"']) {
+    assert.deepEqual(run(`<div data-rq-block="a"><template ${attr}>x</template></div>${k}`).classes, [CLASSES.shadowRootMode], attr);
+  }
+  assert.deepEqual(run('<div data-rq-block="a"><template><b><template shadowrootmode="open">x</template></b></template></div>').classes, [
+    CLASSES.shadowRootMode,
+  ]);
+  // Not outside block content, not in a foreign region, not for other attributes.
+  for (const ok of [
+    `<div><template shadowrootmode="open"><slot></slot></template>${k}</div>`,
+    '<div data-rq-block="a"><svg><template shadowrootmode="open"></template></svg></div>',
+    '<div data-rq-block="a"><template shadowrootclonable data-shadowrootmode="open">x</template></div>',
+    '<div data-rq-block="a">x</div><template shadowrootmode="open">y</template>',
+  ]) {
+    assert.deepEqual(run(ok).classes, [], ok);
+  }
+});
+
+test("class H-94: a table part or col in a template of the block content (M-24 item g)", () => {
+  const cls = (s) => run(s).classes;
+  assert.deepEqual(cls('<div data-rq-block="a"><table><tr><td><template><tr><td>x</td></tr></template></td></tr></table></div>'), [
+    CLASSES.templateTablePart,
+  ]);
+  assert.deepEqual(cls('<div data-rq-block="a"><template><caption></caption></template></div>'), [CLASSES.templateTablePart]);
+  assert.deepEqual(cls('<div data-rq-block="a"><template><col></template></div>'), [CLASSES.templateCol, CLASSES.templateTablePart].sort());
+  // A table opened in the template is F; outside block content a row template has no class.
+  assert.deepEqual(cls('<div data-rq-block="a"><template><table><tr><td>x</td></tr></table></template></div>'), []);
+  assert.deepEqual(cls('<template><tr><td>x</td></tr></template><p data-rq-block="a">x</p>'), []);
+  // A noscript in block content, scripting disabled: the counter runs on the tokens of C.
+  assert.deepEqual(analyzeDepth(b('<div data-rq-block="a"><noscript><img src=x></noscript></div>'), { scripting: false }).classes, []);
+});

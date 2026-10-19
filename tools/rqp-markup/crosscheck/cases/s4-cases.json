@@ -283,14 +283,14 @@
   },
   {
     "id": "S4-H78-kept-noscript",
-    "decision": "H-78",
-    "expected": "RQP_MARKUP_STRUCTURE",
+    "decision": "H-78, H-95",
+    "expected": "valid 1",
     "input": "<div data-rq-block=\"b\"><noscript>x</noscript></div>"
   },
   {
     "id": "S4-H78-kept-template",
-    "decision": "H-78",
-    "expected": "RQP_MARKUP_STRUCTURE",
+    "decision": "H-78, H-94",
+    "expected": "valid 1",
     "input": "<div data-rq-block=\"b\"><template>x</template></div>"
   },
   {

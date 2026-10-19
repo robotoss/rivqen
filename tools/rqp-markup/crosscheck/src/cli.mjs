@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import { compareCandidates, compareWithView, resultShapeError, show } from "./compare.mjs";
 import { CLASSES, analyzeDepth } from "./depth.mjs";
 import { docSeed, generateDocument } from "./generator.mjs";
+import { PROFILES as S5_PROFILES, generateS5Document } from "./generator-s5.mjs";
 import { CrosscheckError, buildCandidate, loadCandidates, readResultsFile, runBatch, writeBatchDir } from "./run.mjs";
 import { parse5View } from "./view.mjs";
 
@@ -28,8 +29,20 @@ const MAX_DETAIL_LINES = 6;
 const USAGE = `usage:
   node src/cli.mjs check [--fixtures dir | --input file] [--results file.jsonl | --expected] [common options]
   node src/cli.mjs cases [--cases file.json] [common options]
-  node src/cli.mjs sweep [--seed n] [--count n] [--max-tokens n] [--profile classic|review|review2|review3] [--chunk n] [--out dir] [--keep n] [common options]
-common options: --only name,... --candidates file --timeout seconds --build --scripting enabled|disabled|both`;
+  node src/cli.mjs sweep [--seed n] [--count n] [--max-tokens n] [--profile classic|review|review2|review3|tpl|nos|mix] [--chunk n] [--out dir] [--keep n] [common options]
+common options: --only name,... --candidates file --timeout seconds --build --scripting enabled|disabled|spec|both|all`;
+
+/** The values of --scripting and their parse5 views ("spec": scripting enabled, WHATWG table scope). */
+const SCRIPTING = {
+  enabled: ["enabled"],
+  disabled: ["disabled"],
+  spec: ["spec"],
+  both: ["enabled", "disabled"],
+  all: ["enabled", "disabled", "spec"],
+};
+/** The views of the cases command. */
+export const CASE_VIEWS = SCRIPTING.all;
+const PROFILES = ["classic", "review", "review2", "review3", ...S5_PROFILES];
 
 /** @param {string} name @param {string | undefined} v @param {number} min @param {number} max */
 function intArg(name, v, min, max) {
@@ -86,8 +99,8 @@ export function parseArgs(argv) {
         break;
       case "--scripting": {
         const v = value();
-        if (!["enabled", "disabled", "both"].includes(v)) throw new CrosscheckError("--scripting is enabled, disabled or both");
-        o.views = v === "both" ? ["enabled", "disabled"] : [v];
+        if (!Object.hasOwn(SCRIPTING, v)) throw new CrosscheckError("--scripting is enabled, disabled, spec, both or all");
+        o.views = SCRIPTING[v];
         break;
       }
       case "--fixtures":
@@ -116,7 +129,7 @@ export function parseArgs(argv) {
         break;
       case "--profile": {
         const v = value();
-        if (!["classic", "review", "review2", "review3"].includes(v)) throw new CrosscheckError("--profile is classic, review, review2 or review3");
+        if (!PROFILES.includes(v)) throw new CrosscheckError("--profile is classic, review, review2, review3, tpl, nos or mix");
         o.profile = v;
         break;
       }
@@ -149,7 +162,7 @@ export function parseArgs(argv) {
  */
 export function evaluateDocs(docs, resultsByCandidate, views, { rules = false } = {}) {
   return docs.map((doc) => {
-    const p5 = new Map(views.map((v) => [v, parse5View(doc.bytes, { scripting: v === "enabled" })]));
+    const p5 = new Map(views.map((v) => [v, parse5View(doc.bytes, { scripting: v !== "disabled", specTableScope: v === "spec" })]));
     const depth = analyzeDepth(doc.bytes);
     // markup.md M-11 item 8 and M-26 item 7 (H-71): D counts in C, so the claim of M-26 also holds
     // for the scripting-disabled tree.
@@ -373,12 +386,12 @@ async function cmdCases(o, write) {
     let failed = await buildAll(o, write);
     const run = await candidateResults(o, tmp, write);
     failed += run.failed;
-    const evaluated = evaluateDocs(docs, run.out, ["enabled", "disabled"]);
+    const evaluated = evaluateDocs(docs, run.out, CASE_VIEWS);
     const cands = [...run.out.keys()];
-    write(["case", "parse5 (scripting on)", "parse5 (scripting off)", "depth", "depth (scripting off)", ...cands].join(" | "));
+    write(["case", "parse5 (scripting on)", "parse5 (scripting off)", "parse5 (WHATWG table scope)", "depth", "depth (scripting off)", ...cands].join(" | "));
     for (const e of evaluated) {
       const off = e.depthDisabled === null ? "-" : depthCell(e.depthDisabled);
-      const row = [e.name, viewCell(e.p5.get("enabled")), viewCell(e.p5.get("disabled")), depthCell(e.depth), off];
+      const row = [e.name, viewCell(e.p5.get("enabled")), viewCell(e.p5.get("disabled")), viewCell(e.p5.get("spec")), depthCell(e.depth), off];
       for (const c of cands) row.push(e.cells.get(c) ?? "-");
       write(row.join(" | "));
     }
@@ -411,7 +424,9 @@ async function cmdSweep(o, write) {
       const docs = [];
       for (let k = 0; k < n; k++) {
         const i = first + k;
-        const text = generateDocument(docSeed(o.seed, i), { maxTokens: o.maxTokens, profile: o.profile });
+        const text = S5_PROFILES.includes(o.profile)
+          ? generateS5Document(docSeed(o.seed, i), o.profile)
+          : generateDocument(docSeed(o.seed, i), { maxTokens: o.maxTokens, profile: o.profile });
         docs.push({ name: `s${String(k).padStart(6, "0")}`, bytes: Buffer.from(text, "utf8"), index: i });
       }
       for (let k = n; k < slots; k++) rmSync(path.join(dir, `s${String(k).padStart(6, "0")}`), { recursive: true, force: true });

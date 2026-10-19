@@ -5,11 +5,53 @@
 // WHATWG tree, with the byte offsets of their content, and the manifest-like scripts.
 // parse5 8.0.1 implements the WHATWG tree builder; it is the reference, not a candidate.
 
-import { parse } from "parse5";
+import { Parser, html, parse } from "parse5";
 import { decodeUtf8, utf16ToUtf8Map } from "./utf8.mjs";
 
 export const HTML_NS = "http://www.w3.org/1999/xhtml";
 export const MAX_INPUT_BYTES = 5 * 1024 * 1024;
+
+/**
+ * Run `fn` with the WHATWG definition of "has an element in table scope": the walk stops at an
+ * HTML `html`, `table` or `template` element (WHATWG HTML 13.2.4.2). parse5 8.0.1 stops only at
+ * `html` and `table` (`hasInTableScope` and `hasTableBodyContextInTableScope` of its stack of open
+ * elements), so in template contents in a table insertion mode it pops out of the template where a
+ * WHATWG parser ignores the token (evidence/markup-s5/report.md section 5). The patch replaces the
+ * two prototype functions for the call and restores them after it; parse5 is synchronous, so no
+ * other parse sees the patch.
+ *
+ * @template T
+ * @param {() => T} fn
+ * @returns {T}
+ */
+export function withSpecTableScope(fn) {
+  const proto = Object.getPrototypeOf(new Parser().openElements);
+  const saved = [proto.hasInTableScope, proto.hasTableBodyContextInTableScope];
+  const { TAG_ID } = html;
+  const boundary = (id) => id === TAG_ID.TABLE || id === TAG_ID.HTML || id === TAG_ID.TEMPLATE;
+  proto.hasInTableScope = function hasInTableScope(tagId) {
+    for (let i = this.stackTop; i >= 0; i--) {
+      if (this.treeAdapter.getNamespaceURI(this.items[i]) !== HTML_NS) continue;
+      if (this.tagIDs[i] === tagId) return true;
+      if (boundary(this.tagIDs[i])) return false;
+    }
+    return true;
+  };
+  proto.hasTableBodyContextInTableScope = function hasTableBodyContextInTableScope() {
+    for (let i = this.stackTop; i >= 0; i--) {
+      if (this.treeAdapter.getNamespaceURI(this.items[i]) !== HTML_NS) continue;
+      const id = this.tagIDs[i];
+      if (id === TAG_ID.TBODY || id === TAG_ID.THEAD || id === TAG_ID.TFOOT) return true;
+      if (boundary(id)) return false;
+    }
+    return true;
+  };
+  try {
+    return fn();
+  } finally {
+    [proto.hasInTableScope, proto.hasTableBodyContextInTableScope] = saved;
+  }
+}
 
 /**
  * @typedef {object} ViewBlock
@@ -31,15 +73,18 @@ export const MAX_INPUT_BYTES = 5 * 1024 * 1024;
  * Parse the input with parse5 and collect the block elements.
  *
  * @param {Uint8Array} bytes
- * @param {{ scripting?: boolean }} [options] scripting: the parse5 option scriptingEnabled (default true)
+ * @param {{ scripting?: boolean, specTableScope?: boolean }} [options] scripting: the parse5 option
+ *   scriptingEnabled (default true); specTableScope: parse with the WHATWG table scope
+ *   (withSpecTableScope; default false)
  * @returns {View}
  */
-export function parse5View(bytes, { scripting = true } = {}) {
+export function parse5View(bytes, { scripting = true, specTableScope = false } = {}) {
   if (bytes.length > MAX_INPUT_BYTES) return { ok: false, reason: "input larger than 5 MiB", blocks: [], manifests: 0 };
   const decoded = decodeUtf8(bytes);
   if (decoded === null) return { ok: false, reason: "input is not valid UTF-8", blocks: [], manifests: 0 };
   const map = utf16ToUtf8Map(decoded.text, decoded.bomBytes);
-  const doc = parse(decoded.text, { sourceCodeLocationInfo: true, scriptingEnabled: scripting });
+  const run = () => parse(decoded.text, { sourceCodeLocationInfo: true, scriptingEnabled: scripting });
+  const doc = specTableScope ? withSpecTableScope(run) : run();
 
   /** @type {ViewBlock[]} */
   const blocks = [];

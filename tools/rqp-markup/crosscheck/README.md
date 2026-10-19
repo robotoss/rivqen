@@ -21,9 +21,10 @@ When the candidate says **valid**, these must be true. Else the tool reports a f
 | The tree has no `script` element whose `type` contains `rivqen-manifest` (case-insensitive, after character reference decoding; also after Unicode upper-case mapping, so `ı` and `ſ` count as `i` and `s`, `markup.md` M-13 item 3) | `parse5-<view>-manifest` |
 | The depth claim of `markup.md` M-26 holds after every token (scripting enabled): the WHATWG stack has at most D + 2 elements, each open element has a DOM depth of at most D + 2, each element that the tree builder closes at once at most D + 3 | `depth-invariant` |
 | With the view `disabled`: the same claim in the scripting-disabled tree. The counter runs on the tokens of the `noscript` content C as they come (the pass of `markup.md` M-11 item 8, H-71), and after the end tag `noscript` it continues with the main-pass state | `depth-invariant-disabled` |
+| With the view `spec`: the same block checks against the tree that parse5 builds with the WHATWG table scope (below) | `parse5-spec-<categories>` |
 | With `--expected` only: the document has none of the rule classes below (the golden fixtures implement the rules of the security review) | `new-rule` |
 
-`src/depth.mjs` computes the depth counter D of M-26 from the parse5 tokens (a `Parser` subclass that sees each tokenizer token once), and it classifies each document by the rules of the security review. The counter applies the implied closure of `markup.md` M-09 (H-85a): before a table part or `col` start tag in HTML context, while F is not an allowed F, it applies the end tag of F, at most three times; not in the `noscript` content C (the copy of M-11 item 8 and the scripting-disabled view of C). The counter does not know blocks; a valid document has no closure shape in block content, so the counter has the D of the rule on every valid document. A closure of a row, a row group or a column group while F is not the current node sets the class `M-09-table-current`. The counter follows H-75: the end tag of the region root (the `svg` or `math` element pushed in HTML context) sets no special-crossed mark for its crossing. For the `noscript` content C, `checkNoscriptContent` also runs the main-pass counter on a copy (M-11 item 8, H-71), so the classes below and D come also from the tokens of C, with the foreign region of C (item 9, H-74):
+`src/depth.mjs` computes the depth counter D of M-26 from the parse5 tokens (a `Parser` subclass that sees each tokenizer token once), and it classifies each document by the rules of the security review. The counter knows the block content (WP-17 S5): after a start tag in HTML context with a `data-rq-block` attribute, while no block element is on its stack, the elements above that element are the content. The counter applies the implied closure of `markup.md` M-09 (H-85a): before a table part or `col` start tag in HTML context, while F is not an allowed F, it applies the end tag of F, at most three times; not in block content and not in the `noscript` content C (the copy of M-11 item 8 and the scripting-disabled view of C). A closure of a row, a row group or a column group while F is not the current node sets the class `M-09-table-current`. The counter follows H-75: the end tag of the region root (the `svg` or `math` element pushed in HTML context) sets no special-crossed mark for its crossing. For the `noscript` content C, `checkNoscriptContent` also runs the main-pass counter on a copy (M-11 item 8, H-71), so the classes below and D come also from the tokens of C, with the foreign region of C (item 9, H-74):
 
 | Class | Rule | Shape |
 |---|---|---|
@@ -39,12 +40,16 @@ When the candidate says **valid**, these must be true. Else the tool reports a f
 | `M-11-table-part` | M-11 item 6 (H-38) | A table part or `col` in the `noscript` content without a `table` opened in it |
 | `M-10-template-for` | M-10 item 3 (H-43) | A `template` start tag in HTML context with a `for` attribute (any value) |
 | `M-11-document-tag` | M-11 item 7 (H-71) | An `html`, `body` or `head` start or end tag in the `noscript` content |
+| `M-22-shadowrootmode` | M-22 item 6 (H-94, H-97) | An HTML `template` start tag with a `shadowrootmode` attribute (any value, any case) in block content |
+| `M-24-template-table-part` | M-24 item g (H-94) | A table part or `col` start tag in HTML context of block content whose search for F (M-09) stops at a `template` |
 
 The classifier is a test oracle for these rules only. It does not decide validity.
 
-parse5 8.0.1 does not implement content patching (`template for`) and reads `<?…>` as a bogus comment, so it never disagrees with a candidate on the shape of `M-10-template-for`. For this class the sweep only counts the documents that a candidate accepts; the evidence for the rule is Chrome 154 (`docs/engineering/protocol/markup-edge-cases.md` §8.5).
+parse5 8.0.1 does not implement content patching (`template for`) and reads `<?…>` as a bogus comment, so it never disagrees with a candidate on the shape of `M-10-template-for`. For this class the sweep only counts the documents that a candidate accepts; the evidence for the rule is Chrome 154 (`docs/engineering/protocol/markup-edge-cases.md` §8.5). In the same way, parse5 8.0.1 has no declarative shadow DOM (`M-22-shadowrootmode`), and the shapes of `M-24-template-table-part` change elements in template contents, not block boundaries (`evidence/markup-s5/report.md` §3.1, §4.1). The cross-check does not compare elements in the content; the study tool `../study/s5` does.
 
-`<view>` is `enabled` (scripting enabled, the RQP view of `markup.md` M-04) or `disabled` (scripting disabled: `noscript` content is markup). The default is `enabled`. Use `--scripting both` to check the claim of `markup.md` §5 item 2 too.
+`<view>` is `enabled` (scripting enabled, the RQP view of `markup.md` M-04), `disabled` (scripting disabled: `noscript` content is markup) or `spec` (scripting enabled, with the WHATWG table scope). The default is `enabled`. Use `--scripting both` to check the claim of `markup.md` §5 item 2 too, and `--scripting all` for the three views.
+
+The view `spec` exists because of a FACT of the S5 study (`evidence/markup-s5/report.md` §5, code read of parse5 8.0.1 `dist/parser/open-element-stack.js`): the parse5 functions `hasInTableScope` and `hasTableBodyContextInTableScope` stop only at `table` and `html`, but the WHATWG "has an element in table scope" also stops at `template`. So in template contents in a table insertion mode, parse5 pops out of the template where a WHATWG parser ignores the token (for example `<td><template><tfoot></tfoot><table>…</template>` closes the outer table in parse5). `src/view.mjs` `withSpecTableScope` replaces the two functions for one parse and restores them after it.
 
 The tool also compares the candidates with each other (finding kind `candidates`): validity and blocks must be the same. Error codes are not compared (a document with two errors can give either code, `CONTRACT.md` §5).
 
@@ -94,6 +99,13 @@ node src/cli.mjs cases --cases cases/s4-cases.json --only rust,node,java,php
 # The shapes of the WP-17 S4 decision H-85a, the implied closure of M-09 (fields decision and expected)
 node src/cli.mjs cases --cases cases/s4b-cases.json --only rust,node,java,php
 
+# The shapes of the WP-17 S5 decisions H-94 to H-97: template and noscript in block content
+# (fields decision, expected = the decided rule, options = the results of the study options)
+node src/cli.mjs cases --cases cases/s5-cases.json --only rust,node,java,php
+
+# A sweep with template and noscript in block content (profiles tpl, nos, mix), three views
+TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,node,java,php --seed 95 --count 150000 --chunk 10000 --profile tpl --scripting all
+
 # A seeded generator sweep
 TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,java,php --seed 5 --count 100000 --chunk 10000 --scripting both
 
@@ -107,7 +119,7 @@ TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,node,java,php --seed 21 --cou
 | `--candidates file` | all | Candidate list | `../candidates.json` |
 | `--timeout s` | all | Limit for each build and each batch run | 300 |
 | `--build` | all | Run the `build` command of each candidate first | off |
-| `--scripting v` | `check`, `sweep` | `enabled`, `disabled` or `both` | `enabled` (`cases` always uses both) |
+| `--scripting v` | `check`, `sweep` | `enabled`, `disabled`, `spec`, `both` (enabled and disabled) or `all` (the three views) | `enabled` (`cases` always uses the three views) |
 | `--fixtures dir` | `check` | Directory with `<name>/input.html` | `fixtures/rqp/markup` |
 | `--input file` | `check` | One document | — |
 | `--results file` | `check` | Use these results instead of running candidates | — |
@@ -116,7 +128,7 @@ TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,node,java,php --seed 21 --cou
 | `--seed n` | `sweep` | Seed of the sweep (0 … 2^32 − 1) | 1 |
 | `--count n` | `sweep` | Number of documents (at most 10 000 000) | 1000 |
 | `--max-tokens n` | `sweep` | Pieces per document (1 … 200) | 16 |
-| `--profile p` | `sweep` | `classic` (the documents of earlier sweeps, unchanged), `review` (adds the shapes of the security review, unchanged since round 1), `review2` (adds the shapes of round 2: form pointer cycles, template with `col` and raw text, foster-parented elements in tables, `noscript` in cells with table parts) or `review3` (adds the `template for` motif of H-43: processing-instruction markers in or around a block, then a `template` with `for`, or a control; `review` and `review2` documents do not change) | `classic` |
+| `--profile p` | `sweep` | `classic` (the documents of earlier sweeps, unchanged), `review` (adds the shapes of the security review, unchanged since round 1), `review2` (adds the shapes of round 2: form pointer cycles, template with `col` and raw text, foster-parented elements in tables, `noscript` in cells with table parts) or `review3` (adds the `template for` motif of H-43: processing-instruction markers in or around a block, then a `template` with `for`, or a control; `review` and `review2` documents do not change); `tpl`, `nos` or `mix` (`template`, `noscript` or both in block content, WP-17 S5: `src/generator-s5.mjs`, a copy of the study generator `../study/s5/src/gen-s5.mjs`, so the same seed gives the same documents; `--max-tokens` has no effect) | `classic` |
 | `--chunk n` | `sweep` | Documents per batch run | 2000 |
 | `--out dir` | `sweep` | Where to save the inputs of findings | `$TMPDIR/rqp-crosscheck-sweep-<seed>` |
 | `--keep n` | `sweep` | Saved and printed findings for each kind | 20 |
@@ -125,7 +137,7 @@ TMPDIR=/dev/shm node src/cli.mjs sweep --only rust,node,java,php --seed 21 --cou
 
 - `check` prints one line for each finding, then one summary line for each candidate.
 - `check --input` also prints a line `depth:` (max D, WHATWG stack, DOM depth, rule classes).
-- `cases` prints a table: case, parse5 with scripting on, parse5 with scripting off, depth (max D, WHATWG stack, DOM depth, rule classes), depth with scripting off, one cell for each candidate (`valid <n>` or the error code, plus `DISAGREE(<views>)`; `depth` or `depth-disabled` for a depth-invariant finding).
+- `cases` prints a table: case, parse5 with scripting on, parse5 with scripting off, parse5 with the WHATWG table scope, depth (max D, WHATWG stack, DOM depth, rule classes), depth with scripting off, one cell for each candidate (`valid <n>` or the error code, plus `DISAGREE(<views>)`; `depth` or `depth-disabled` for a depth-invariant finding).
 - `sweep` prints the first findings of each kind, a table (documents, valid, valid with blocks, findings for each candidate), the number of documents in each rule class, one line for each finding kind (findings without a rule class, findings that only the open question explains, findings by class), the depth invariant line (documents with a violation, and how many of them a candidate accepts; a second line for the scripting-disabled view when it is checked), and the total for each finding kind.
 
 | Exit code | Meaning |
@@ -150,6 +162,8 @@ The batch runs write one file for each document. On a slow temporary file system
 1. parse5 is one implementation of the WHATWG parser, not the specification. A false accept that parse5 shares with a candidate is not found. Known differences of parse5 8.0.1 (RESEARCH, see `docs/engineering/protocol/markup-edge-cases.md`):
    - `<![CDATA[` in an SVG or MathML integration point (`desc`, `mi`, …) gives a comment in parse5. The WHATWG check is on the namespace of the adjusted current node, which gives a CDATA section there. The end byte is the same when `markup.md` M-12 holds.
    - `<?` gives a bogus comment in parse5. The WHATWG standard parses processing instructions since whatwg/html PR #12118 (merged 2026-06-25).
+   - The table scope of parse5 does not stop at `template` (FACT, `evidence/markup-s5/report.md` §5). The view `spec` corrects this one function; it is a local patch of parse5, not a second implementation.
+   - parse5 has no declarative shadow DOM (`shadowrootmode`; 0 matches in `dist/`) and no content patching (`template for`). The rules of `markup.md` M-22 item 6 and M-10 item 3 rest on the WHATWG text and on browser runs (`markup-edge-cases.md` §8.5, §12), not on this tool.
 2. parse5 needs time that grows faster than the nesting depth (about 25 s for 50 000 nested elements). Sweep documents are small; do not run the tool on large untrusted documents in a time-limited job.
 3. The generator (`src/generator.mjs`) is tag soup with list and table patterns. It does not reach every shape. A sweep without findings is evidence, not a proof. The `classic` profile did not reach the shapes of the security review (2026-10-11); the `review` profile adds them.
 4. The depth pass uses the parse5 token stream. For a valid document it is the token stream of `markup.md` M-03/M-04. For a document that breaks M-07 or M-09 (for example tags in an SVG integration point), parse5 builds elements that the token stack does not see, and the invariant can fail. So the `depth-invariant` finding applies only to results that say valid; the sweep also counts the violations on all documents, for information. The check is skipped while a `template` element is open: the claim excludes template contents (H-35). While the WHATWG stack has more than 1024 elements, the check covers only new elements and the current node (bounded time).
@@ -168,10 +182,10 @@ Run `node --test` in this directory. The tests use a fake candidate (`test-suppo
 | Test file | What it checks |
 |---|---|
 | `test/utf8.test.mjs` | Strict UTF-8, BOM, UTF-16 to UTF-8 offsets |
-| `test/view.test.mjs` | parse5 view: byte offsets (non-BMP, CR LF, BOM), implied ends, template and foreign content, manifests (also Unicode look-alikes), scripting views, limits |
-| `test/depth.test.mjs` | Depth counter D (pushes, exact pops, dirty mark, implied parts, `noscript` content in D), the invariant on the review shapes and in the scripting-disabled view, the rule classes, the pass on C (H-71), the foreign region of C (H-74), the crossing of the region root (H-75) |
+| `test/view.test.mjs` | parse5 view: byte offsets (non-BMP, CR LF, BOM), implied ends, template and foreign content, manifests (also Unicode look-alikes), scripting views, the WHATWG table scope (`withSpecTableScope`), limits |
+| `test/depth.test.mjs` | Depth counter D (pushes, exact pops, dirty mark, implied parts, `noscript` content in D), the invariant on the review shapes and in the scripting-disabled view, the rule classes, the pass on C (H-71), the foreign region of C (H-74), the crossing of the region root (H-75), the block content and the classes of H-94 and H-97 |
 | `test/compare.test.mjs` | Each kind of disagreement, result shapes, candidate comparison |
-| `test/generator.test.mjs` | Deterministic PRNG (known answer), bounded documents, coverage of the needed shapes |
+| `test/generator.test.mjs` | Deterministic PRNG (known answer), bounded documents, coverage of the needed shapes, the S5 profiles (known answer, shapes of H-94 to H-97) |
 | `test/cli.test.mjs` | Commands, options, exit codes, saved findings, and that the output never contains document text |
 
 ## 7. Dependencies

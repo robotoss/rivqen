@@ -43,7 +43,7 @@ Rivqen does not promise a speed-up without a baseline. This page defines what we
 
 ## 4. First measurements
 
-<Badge type="tip" text="FACT" /> The server demo measures transferred bytes for four visits (cold, unchanged, data changed, template changed). Results are in `evidence/benchmarks/rqp-bytes.json` and on the [Performance](/guide/performance#measured-bytes) page. Timing on devices is not measured yet.
+<Badge type="tip" text="FACT" /> The server demo measures transferred bytes for four visits (cold, unchanged, data changed, template changed). Latest run: 2026-10-19, `evidence/benchmarks/rqp-bytes-2026-10-19.json` (earlier run: `rqp-bytes.json`). The run includes a legacy column from the unmodified upstream Node.js server (commit `59936bef`, lab `tools/upstream-lab`, started with `LEGACY_URL` and `LEGACY_PAGES`). Result: legacy sends fewer bytes than RQP on the cold visit (gzip 2,244 vs 2,707) and on a data change (gzip 294 vs 526); both send `304` when nothing changed. Method and tables: [Performance](/guide/performance#measured-bytes). Timing on devices is not measured yet.
 
 ## 5. Acceptance
 

@@ -1,0 +1,123 @@
+{
+  "date": "2026-10-19T18:23:09.542Z",
+  "page_bytes": 19538,
+  "blocks": [
+    "title",
+    "price",
+    "stock",
+    "cart"
+  ],
+  "results": [
+    {
+      "visit": "1. cold",
+      "plain": {
+        "status": 200,
+        "raw": 20250,
+        "gzip": 2707,
+        "br": 1686
+      },
+      "http_etag": {
+        "status": 200,
+        "raw": 20250,
+        "gzip": 2707,
+        "br": 1686
+      },
+      "rqp": {
+        "status": 200,
+        "kind": "full",
+        "raw": 20250,
+        "gzip": 2707,
+        "br": 1686
+      }
+    },
+    {
+      "visit": "2. revisit, unchanged",
+      "plain": {
+        "status": 200,
+        "raw": 20250,
+        "gzip": 2707,
+        "br": 1686
+      },
+      "http_etag": {
+        "status": 304,
+        "raw": 0,
+        "gzip": 0,
+        "br": 0
+      },
+      "rqp": {
+        "status": 304,
+        "kind": "304",
+        "raw": 0,
+        "gzip": 0,
+        "br": 0
+      }
+    },
+    {
+      "visit": "3. data changed",
+      "plain": {
+        "status": 200,
+        "raw": 20250,
+        "gzip": 2718,
+        "br": 1625
+      },
+      "http_etag": {
+        "status": 200,
+        "raw": 20250,
+        "gzip": 2718,
+        "br": 1625
+      },
+      "rqp": {
+        "status": 200,
+        "kind": "delta",
+        "raw": 836,
+        "gzip": 526,
+        "br": 467
+      }
+    },
+    {
+      "visit": "4. template changed",
+      "plain": {
+        "status": 200,
+        "raw": 20293,
+        "gzip": 2733,
+        "br": 1693
+      },
+      "http_etag": {
+        "status": 200,
+        "raw": 20293,
+        "gzip": 2733,
+        "br": 1693
+      },
+      "rqp": {
+        "status": 200,
+        "kind": "full",
+        "raw": 20293,
+        "gzip": 2733,
+        "br": 1693
+      }
+    },
+    {
+      "visit": "legacy (upstream server)",
+      "legacy": {
+        "cold": {
+          "status": 200,
+          "raw": 19641,
+          "gzip": 2244,
+          "br": 1248
+        },
+        "unchanged": {
+          "status": 304,
+          "raw": 0,
+          "gzip": 0,
+          "br": 0
+        },
+        "data_changed": {
+          "status": 200,
+          "raw": 512,
+          "gzip": 294,
+          "br": 253
+        }
+      }
+    }
+  ]
+}

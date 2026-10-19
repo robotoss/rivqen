@@ -115,6 +115,8 @@ Whole package, 2026-10-19 (WP-17, the first run with a tool; before it only manu
 
 The first run found one defect: a delta recipe with a `size` smaller than the envelope without content stopped `gen.mjs` with a `RangeError` instead of a case error. `src/fixtures.mjs` now reports it as a defective case.
 
+Changed lines of WP-17 S4 T-08 (2026-10-19; the patch content rule, the attribute rule of H-77 and H-83, the implied head of H-79a, H-81): 586/603 detected (97.2 %; `markup.mjs` 469/483, 97.1 %). The first run gave 77.9 % for `markup.mjs`: the names of `FOREIGN_ALLOWED` and the edges of item 2 had no test. `test/patch-content.test.mjs` adds behavior tests for them, and four branches without behavior were removed. The 17 survivors are in the groups of the table below: loop bounds that read `undefined` (10), `'latin1'` or `'utf8'` → `''` (3), the anchor of a regular expression on a text with a fixed start and `[A-Z]+` → `[A-Z]` (2), `el.end <= 0` (1), and one message text (accepted).
+
 The 182 survivors: 141 equivalent, 41 accepted.
 
 | Group | n | Status | Reason |

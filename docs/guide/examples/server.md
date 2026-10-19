@@ -2,7 +2,7 @@
 
 `examples/server-demo` is a small Node.js server. It shows the Rivqen protocol (RQP) from the server side: block markup, manifest, `304`, block patch and safe fallback.
 
-**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 99 tests pass, and the demo passes all 87 server protocol fixtures (checked 2026-10-19, Node.js 22 or later; WP-17 S4: the patch content rule, the attribute rule of H-77 and H-83, and the implied head of H-79a). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
+**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 100 tests pass, and the demo passes all 87 server protocol fixtures (checked 2026-10-19, Node.js 22 or later; WP-17 S4: the patch content rule, the attribute rule of H-77 and H-83, and the implied head of H-79a). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
 
 [[toc]]
 
@@ -133,7 +133,7 @@ Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so th
 npm test
 ```
 
-<Badge type="tip" text="FACT" /> The 99 tests check, by behavior:
+<Badge type="tip" text="FACT" /> The 100 tests check, by behavior:
 
 - the response selection: full document, `304`, delta, the size rules, the patch content rule (H-56, H-78), invalid pages, the charset rule, a weak `ETag` with a content coding, no state between requests;
 - the known answers of `spec/rqp/examples/kat`: the full documents, both page revisions and the example patches;

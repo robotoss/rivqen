@@ -4,6 +4,7 @@
   "description": "A snapshot in the public partition and a 304 without ETag to its revalidation, unknown credentials: the client keeps the snapshot as it is, in the public partition; a 304 has no content, so no content of this request enters the public partition (H-65)",
   "rules": ["RQP-24", "RQP-25"],
   "context": {
+    "public_enabled": true,
     "public_origin": true,
     "navigation": "delta",
     "snapshot": {

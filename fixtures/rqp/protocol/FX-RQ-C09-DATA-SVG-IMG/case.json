@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C09-DATA-SVG-IMG",
+  "kind": "client",
+  "description": "price content <img src=\"data:image/svg+xml,…\">: SVG is not a raster type (H-83a): rejected",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<img src=\"data:image/svg+xml,%3Csvg%2F%3E\" alt=\"\">"
+          }
+        ]
+      }
+    }
+  }
+}

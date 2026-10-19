@@ -28,7 +28,7 @@ import {
   verifyDelta,
   withoutCredentials,
 } from '../src/client.mjs';
-import { analyze, attributeRejected, attributesOf, documentHeadStart, findManifestElements, isManifestType, passesAttributeRule } from '../src/markup.mjs';
+import { analyze, attributeRejected, attributesOf, documentHeadStart, findManifestElements, isManifestType, patchContentFailure, passesPatchContentRule } from '../src/markup.mjs';
 import { fullDocument, handle, manifestOf } from '../src/server.mjs';
 import { APP, TARGET, blockPage, clientContext, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
 
@@ -151,7 +151,7 @@ test('INTEGRITY_ERROR: next_revision with another policy line than the snapshot 
 });
 
 test('PATCH_CONTENT_REJECTED: markup analysis of the patched document (step 8)', () => {
-  for (const [id, content] of [['price', '<script>alert(1)</script>'], ['price', '1</p><p>2'], ['title', '</title>'], ['cart', ''], ['cart', '{']]) {
+  for (const [id, content] of [['price', '<textarea>x</textarea>'], ['price', '1</p><p>2'], ['title', '</title>'], ['cart', ''], ['cart', '{']]) {
     assert.equal(code(envelope([[id, content]])), 'PATCH_CONTENT_REJECTED', `${id}: ${content}`);
   }
 });
@@ -159,6 +159,29 @@ test('PATCH_CONTENT_REJECTED: markup analysis of the patched document (step 8)',
 test('PATCH_CONTENT_REJECTED: the attribute rule (step 9) after a valid analysis', () => {
   assert.equal(code(envelope([['price', '<a onclick="x">y</a>']])), 'PATCH_CONTENT_REJECTED');
   assert.equal(code(envelope([['price', '<a href="/p?a=1&amp;b=2">y</a>']])), null);
+});
+
+test('PATCH_CONTENT_REJECTED: step 9 is the only gate for PATCH_FORBIDDEN and FOREIGN_ALLOWED (H-78)', () => {
+  const patched = (content) => {
+    const doc = Buffer.from(page('page-a').toString('utf8').replace('>120.00<', `>${content}<`), 'utf8');
+    return analyze(doc).valid;
+  };
+  const forbidden = ['<script>alert(1)</script>', '<style>p{}</style>', '<iframe src="/v"></iframe>', '<object data="/o"></object>',
+    '<embed src="/e">', '<link rel="x">', '<meta name="x">', '<base href="/">', '<basefont>', '<bgsound src="/s">', '<LINK/>'];
+  const foreign = ['<svg><a href="#x"><text>t</text></a></svg>', '<svg><foreignObject>t</foreignObject></svg>', '<svg><script>x</script></svg>',
+    '<svg><animate attributeName="x"/></svg>', '<math><maction>x</maction></math>', '<svg><image href="/i.png"/></svg>'];
+  for (const [list, reason] of [[forbidden, 'element'], [foreign, 'foreign']]) {
+    for (const content of list) {
+      // Valid markup since H-78 (step 8 passes), rejected by step 9.
+      assert.equal(patched(content), true, `${content}: valid markup`);
+      assert.equal(patchContentFailure(Buffer.from(content)), reason, content);
+      assert.equal(code(envelope([['price', content]])), 'PATCH_CONTENT_REJECTED', content);
+    }
+  }
+  // The same names are allowed where the other list applies: title in a region, a script type in a json block.
+  assert.equal(code(envelope([['price', '<svg><title>t</title><text>u</text></svg>']])), null);
+  assert.equal(code(envelope([['cart', '{"s":"<script>x</script>"}']])), 'PATCH_CONTENT_REJECTED'); // M-25/M-04: ends the json block
+  assert.equal(code(envelope([['cart', '{"s":"<style>x"}']])), null);
 });
 
 test('PATCH_CONTENT_REJECTED sets the metric and asks for the fallback load', () => {
@@ -237,6 +260,44 @@ test('H-72: each MANIFEST_INVALID case of fixture row C-21 fails the position ch
   for (const name of cases) {
     const body = readFileSync(new URL(`FX-RQ-C21-${name}/response.body`, dir));
     assert.equal(checkFull({ url: TARGET }, body).error, 'position', name);
+  }
+});
+
+/** F of an original document with the manifest element of that document at byte offset `at`. */
+const fullAt = (original, at) => {
+  const m = JSON.stringify(manifestOf(analyze(original), TARGET));
+  return Buffer.concat([original.subarray(0, at), Buffer.from(`<script type="application/rivqen-manifest+json">${m}</script>`), original.subarray(at)]);
+};
+
+test('H-79a: an implied head: the manifest before the first head content is accepted at the server position only', () => {
+  const o = Buffer.from('<!DOCTYPE html>\n<html>\n<meta charset="utf-8">\n<title data-rq-block="t">T</title>\n<p data-rq-block="p">1</p>\n', 'utf8');
+  assert.equal(analyze(o).valid, true);
+  const p = o.indexOf('<meta');
+  assert.equal(documentHeadStart(o), p);
+  assert.equal(checkFull({ url: TARGET }, fullAt(o, p)).error, undefined);
+  // The server F is what the reference server sends.
+  assert.deepEqual(handle(firstVisit(), APP, o).body, fullAt(o, p));
+  // White space after the manifest (before <meta>), or the manifest after <meta>: not the server position.
+  assert.equal(checkFull({ url: TARGET }, fullAt(o, p - 1)).error, 'position');
+  assert.equal(checkFull({ url: TARGET }, fullAt(o, o.indexOf('\n<title'))).error, 'position');
+  assert.equal(checkFull({ url: TARGET }, fullAt(o, 0)).error, 'position');
+});
+
+test('H-79a client rule C2: the position is computed on O, so a walk on F that stops at the manifest itself is not enough', () => {
+  // Each F below passes a walk on F (C1): the manifest script is the first head content.
+  // On O the server position is elsewhere, or O has none, so the client rejects F.
+  const cases = [
+    ['<!DOCTYPE html>\n<html>\n<head lang="en">\n<title data-rq-block="t">T</title>\n</head>\n<body></body></html>\n', '<html>\n'.length + 16], // a later <head lang>
+    ['<!DOCTYPE html>\n<html>\n<body>\n<p data-rq-block="p">1</p>\n</body></html>\n', '<!DOCTYPE html>\n<html>\n'.length], // body content
+    ['<!DOCTYPE html>\nShop<html><title data-rq-block="t">T</title>\n', '<!DOCTYPE html>\n'.length], // text
+    ['<!DOCTYPE html>\n<!-- c --><meta charset="utf-8"><title data-rq-block="t">T</title>\n', '<!DOCTYPE html>\n'.length], // a comment
+  ];
+  for (const [doc, at] of cases) {
+    const o = Buffer.from(doc, 'utf8');
+    assert.equal(analyze(o).valid, true, doc);
+    const f = fullAt(o, at);
+    assert.equal(documentHeadStart(f), at, `C1 would accept: ${doc}`);
+    assert.equal(checkFull({ url: TARGET }, f).error, 'position', doc);
   }
 });
 
@@ -353,7 +414,7 @@ test('H-58: a release build does not use a manifest from an http final URL; a de
 test('H-61: the public partition needs mode public, a public origin, no private, and public or no credentials', () => {
   const store = (fields, cacheControl, members = { policy: { mode: 'public' } }) => {
     const headers = cacheControl === null ? HTML : [...HTML, ['cache-control', cacheControl]];
-    const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', public_origin: true, credentials: true, ...fields }), { status: 200, headers, body: fullOf('page-a', members) });
+    const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', public_enabled: true, public_origin: true, credentials: true, ...fields }), { status: 200, headers, body: fullOf('page-a', members) });
     return r.snapshot.partition;
   };
   assert.equal(store({}, 'public, max-age=60'), 'public');
@@ -372,10 +433,28 @@ test('H-61: the public partition needs mode public, a public origin, no private,
   assert.deepEqual([...cacheDirectives('a, B=1 , c="x,private"')], ['a', 'b', 'c']);
 });
 
+test('H-81: the public partition is off by default; only public_enabled true turns it on', () => {
+  const PUBLIC = { policy: { mode: 'public' } };
+  const open = { public_origin: true, credentials: false, response_fields_visible: true, redirected: false };
+  assert.equal(partitionFor({ ...open, public_enabled: true }, [['cache-control', 'public']], PUBLIC), 'public');
+  for (const flag of [undefined, false, 1, 'true']) {
+    assert.equal(partitionFor({ ...open, public_enabled: flag }, [['cache-control', 'public']], PUBLIC), 'request', String(flag));
+  }
+  // A delta on a public snapshot also needs the app setting (deltaPartition uses partitionFor).
+  assert.equal(deltaPartition({ ...open, public_enabled: false }, [], { partition: 'public', members: PUBLIC }), 'request');
+  assert.equal(deltaPartition({ ...open, public_enabled: true }, [], { partition: 'public', members: PUBLIC }), 'public');
+  const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', public_origin: true, credentials: false }), {
+    status: 200,
+    headers: [...HTML, ['cache-control', 'public']],
+    body: fullOf('page-a', PUBLIC),
+  });
+  assert.deepEqual([r.outcome, r.snapshot.partition], ['stored', 'request']);
+});
+
 test('H-62 (2), H-63: unknown credentials count as present; Set-Cookie in the response counts as credentials', () => {
   const store = (credentials, extra = [], cacheControl = 'no-cache') => {
     const headers = [...HTML, ['cache-control', cacheControl], ...extra];
-    const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', public_origin: true, credentials }), { status: 200, headers, body: fullOf('page-a', { policy: { mode: 'public' } }) });
+    const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', public_enabled: true, public_origin: true, credentials }), { status: 200, headers, body: fullOf('page-a', { policy: { mode: 'public' } }) });
     return r.snapshot.partition;
   };
   assert.equal(store(false), 'public');
@@ -451,7 +530,7 @@ test('DL-038: a final URL that differs only in host case or a default port is th
 
 // H-64, H-65, DL-038: the public partition.
 const PUBLIC = { policy: { mode: 'public' } };
-const publicCtx = (fields = {}) => ctx({ snapshot: null, navigation: 'first-visit', public_origin: true, credentials: false, ...fields });
+const publicCtx = (fields = {}) => ctx({ snapshot: null, navigation: 'first-visit', public_enabled: true, public_origin: true, credentials: false, ...fields });
 const storeIn = (fields, headers) => handleResponse(publicCtx(fields), { status: 200, headers: [...HTML, ...headers], body: fullOf('page-a', PUBLIC) }).snapshot.partition;
 
 test('H-64: the public partition only for a response whose header fields the native SDK saw in full', () => {
@@ -462,8 +541,8 @@ test('H-64: the public partition only for a response whose header fields the nat
     assert.equal(storeIn({ response_fields_visible: visible }, [['cache-control', 'public']]), 'request', String(visible));
     assert.equal(storeIn({ response_fields_visible: visible }, [['cache-control', 'no-cache']]), 'request', String(visible));
   }
-  assert.equal(partitionFor({ public_origin: true, credentials: false, redirected: false }, [], PUBLIC), 'request');
-  assert.equal(partitionFor({ public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [], PUBLIC), 'public');
+  assert.equal(partitionFor({ public_enabled: true, public_origin: true, credentials: false, redirected: false }, [], PUBLIC), 'request');
+  assert.equal(partitionFor({ public_enabled: true, public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [], PUBLIC), 'public');
 });
 
 test('DL-038: Set-Cookie2 counts as Set-Cookie; field names match ASCII case-insensitively', () => {
@@ -478,7 +557,7 @@ test('DL-038: Set-Cookie2 counts as Set-Cookie; field names match ASCII case-ins
 test('withoutCredentials is only the credentials flag; partitionFor is the one place of the Set-Cookie rule', () => {
   assert.equal(withoutCredentials({ credentials: false }), true);
   for (const credentials of [true, null, undefined, 0, 'false']) assert.equal(withoutCredentials({ credentials }), false, String(credentials));
-  assert.equal(partitionFor({ public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [['set-cookie', 'a=1']], PUBLIC), 'request');
+  assert.equal(partitionFor({ public_enabled: true, public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [['set-cookie', 'a=1']], PUBLIC), 'request');
 });
 
 const publicSnapshot = () => snapshotOf(page('page-a'), PUBLIC, TARGET, 'public');
@@ -500,7 +579,7 @@ function publicDelta(extraHeaders = []) {
 }
 const onPublic = (fields, extraHeaders) => {
   const snap = publicSnapshot();
-  const r = handleResponse(ctx({ public_origin: true, credentials: false, snapshot: snap, ...fields }), publicDelta(extraHeaders));
+  const r = handleResponse(ctx({ public_enabled: true, public_origin: true, credentials: false, snapshot: snap, ...fields }), publicDelta(extraHeaders));
   // The public snapshot itself does not change (H-65).
   assert.deepEqual([snap.partition, snap.page_revision, snap.document], [publicSnapshot().partition, publicSnapshot().page_revision, page('page-a')]);
   return r;
@@ -530,16 +609,16 @@ test('H-65: a delta on a public snapshot keeps the result public only under the 
 
 test('H-65: a snapshot in the partition of the request gives a result in the partition of the request', () => {
   const snap = snapshotOf(page('page-a'), PUBLIC, TARGET);
-  const r = handleResponse(ctx({ public_origin: true, credentials: false, snapshot: snap }), publicDelta([['cache-control', 'public']]));
+  const r = handleResponse(ctx({ public_enabled: true, public_origin: true, credentials: false, snapshot: snap }), publicDelta([['cache-control', 'public']]));
   assert.deepEqual([r.outcome, r.snapshot.partition], ['patched', 'request']);
-  assert.equal(deltaPartition({ public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [], { partition: 'request', members: PUBLIC }), 'request');
-  assert.equal(deltaPartition({ public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [], { partition: 'public', members: PUBLIC }), 'public');
+  assert.equal(deltaPartition({ public_enabled: true, public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [], { partition: 'request', members: PUBLIC }), 'request');
+  assert.equal(deltaPartition({ public_enabled: true, public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [], { partition: 'public', members: PUBLIC }), 'public');
 });
 
 test('H-65: a 304 on a public snapshot keeps the snapshot as it is, also with Set-Cookie or private on the 304', () => {
   for (const headers of [[], [['set-cookie', 'a=1']], [['cache-control', 'private']]]) {
     const snap = publicSnapshot();
-    const r = handleResponse(ctx({ public_origin: true, credentials: null, snapshot: snap }), { status: 304, headers, body: null });
+    const r = handleResponse(ctx({ public_enabled: true, public_origin: true, credentials: null, snapshot: snap }), { status: 304, headers, body: null });
     assert.deepEqual([r.outcome, r.next, r.snapshot, snap.partition], ['not-modified', 'keep', null, 'public'], JSON.stringify(headers));
   }
 });
@@ -547,7 +626,7 @@ test('H-65: a 304 on a public snapshot keeps the snapshot as it is, also with Se
 test('the harness interface takes the partition of the context snapshot', () => {
   const s = publicSnapshot();
   const plain = { document: page('page-a'), template_revision: s.analysis.template_revision, page_revision: s.page_revision, blocks: [], ...PUBLIC };
-  const context = { ...ctx({ public_origin: true, credentials: false, snapshot: null }), snapshot: { ...plain, partition: 'public' } };
+  const context = { ...ctx({ public_enabled: true, public_origin: true, credentials: false, snapshot: null }), snapshot: { ...plain, partition: 'public' } };
   assert.equal(clientStep(context, publicDelta()).snapshot.partition, 'public');
   assert.equal(clientStep({ ...context, snapshot: plain }, publicDelta()).snapshot.partition, 'request');
   assert.throws(() => clientStep({ ...context, snapshot: { ...plain, partition: 'shared' } }, publicDelta()), /unknown partition shared/);
@@ -573,7 +652,7 @@ test('H-67: F that comes through a redirect goes to the partition of the request
   assert.deepEqual([moved.outcome, moved.snapshot.url, moved.snapshot.partition], ['stored', final, 'request']);
   assert.equal(storeIn({ redirected: true }, [['cache-control', 'public']]), 'request');
   assert.equal(storeIn({ redirected: true, final_url: TARGET }, []), 'request');
-  assert.equal(partitionFor({ public_origin: true, credentials: false, response_fields_visible: true, url: TARGET, redirected: true }, [['cache-control', 'public']], PUBLIC), 'request');
+  assert.equal(partitionFor({ public_enabled: true, public_origin: true, credentials: false, response_fields_visible: true, url: TARGET, redirected: true }, [['cache-control', 'public']], PUBLIC), 'request');
 });
 
 test('H-67: a delta on a public snapshot that comes through a redirect gives a result in the partition of the request', () => {
@@ -581,12 +660,12 @@ test('H-67: a delta on a public snapshot that comes through a redirect gives a r
     const r = onPublic(fields, []);
     assert.deepEqual([r.outcome, r.snapshot.url, r.snapshot.partition], ['patched', TARGET, 'request'], JSON.stringify(fields));
   }
-  assert.equal(deltaPartition({ public_origin: true, credentials: false, response_fields_visible: true, url: TARGET, redirected: true }, [], { partition: 'public', members: PUBLIC }), 'request');
+  assert.equal(deltaPartition({ public_enabled: true, public_origin: true, credentials: false, response_fields_visible: true, url: TARGET, redirected: true }, [], { partition: 'public', members: PUBLIC }), 'request');
 });
 
 test('H-67: a 304 on a public snapshot after a redirect to the same URL keeps the snapshot as it is', () => {
   const snap = publicSnapshot();
-  const r = handleResponse(ctx({ public_origin: true, credentials: false, redirected: true, snapshot: snap }), { status: 304, headers: [], body: null });
+  const r = handleResponse(ctx({ public_enabled: true, public_origin: true, credentials: false, redirected: true, snapshot: snap }), { status: 304, headers: [], body: null });
   assert.deepEqual([r.outcome, r.next, r.snapshot, snap.partition], ['not-modified', 'keep', null, 'public']);
 });
 
@@ -662,15 +741,25 @@ test('request fields: R(snapshot) for a delta navigation, no delta fields otherw
 // Attribute rule (manifest-patch section 4.2 table).
 test('attribute rule: the examples of manifest-patch section 4.2', () => {
   const rejected = ['<a onclick="x()">y</a>', '<a ONLOAD=x>y</a>', '<a href="javascript:x">y</a>', '<a href=" JavaScript:x">y</a>',
-    '<a href="java&#x09;script:x">y</a>', '<b title="a &quot; b">y</b>', '<a href="?a=1&b=2">y</a>', '<a href="java\tscript:x">y</a>',
-    "<a href='\x01javascript:x'>y</a>", '<a title="x" title="javascript:y">z</a>', '<a href=&AMP;>y</a>',
+    '<a href="java&#x09;script:x">y</a>', '<a href="&#106;avascript:x">y</a>', '<a href="java&colon;x">y</a>', '<a href="&Tab;javascript:x">y</a>',
+    '<a href="java&#x73\ncript:x">y</a>', '<a href="java\tscript:x">y</a>',
+    "<a href='\x01javascript:x'>y</a>", '<a title="x" title="javascript:y">z</a>',
     // H-59: vbscript: and data: with the same normalization.
-    '<a href="vbscript:x">y</a>', '<a href="data:text/html,x">y</a>', '<img src="DATA:image/png,x">', '<a href=" \tDa\nTa:x">y</a>',
-    '<a href="\x00VbScRiPt:x">y</a>', "<a title='data:x'>y</a>", '<a href=data:x>y</a>'];
+    '<a href="vbscript:x">y</a>', '<a href="data:text/html,x">y</a>', '<a href=" \tDa\nTa:x">y</a>',
+    '<a href="\x00VbScRiPt:x">y</a>', "<a title='data:x'>y</a>", '<a href=data:x>y</a>',
+    // H-83: only raster images, only in img/source src and srcset and video poster, only in HTML context.
+    '<img src="data:image/svg+xml,x">', '<img src="data:text/html,x">', '<a href="data:image/png,x">y</a>', '<svg><image href="data:image/png,x"/></svg>',
+    '<img srcset="/a.png 1x, data:image/svg+xml,x 2x">', '<source srcset="/a.png 1x, javascript:x 2x">', '<img srcset="/a.png 1x,&#32;data:text/html,x 2x">',
+    '<img src="data:image/svg%2Bxml,x">', '<video src="data:image/png,x">', '<img poster="data:image/png,x">'];
   const accepted = ['<a href="/p?a=1&amp;b=2">y</a>', '<b title="Tom &amp; Jerry">y</b>', '<a data-x="javascript">y</a>', '<a href="/javascript:x">y</a>', 'text & more', '<!-- <a onclick=x> -->',
-    '<a href="/data:x">y</a>', '<a href="database:x">y</a>', '<a href="data">y</a>', '<a href="vbscript">y</a>', '<a href="x-data:y">y</a>'];
-  for (const c of rejected) assert.equal(passesAttributeRule(Buffer.from(c)), false, c);
-  for (const c of accepted) assert.equal(passesAttributeRule(Buffer.from(c)), true, c);
+    '<a href="/data:x">y</a>', '<a href="database:x">y</a>', '<a href="data">y</a>', '<a href="vbscript">y</a>', '<a href="x-data:y">y</a>',
+    // H-77: the decision byte is not "&", or its reference gives a character that ends the scheme.
+    '<b title="a &quot; b">y</b>', '<a href="?a=1&b=2">y</a>', '<b alt="&#169; 2026">y</b>', '<a href="data&amp;:x">y</a>', '<a href="&COLON;x">y</a>', '<a href=&AMP;>y</a>',
+    // H-83: raster data: images.
+    '<img src="data:image/png;base64,iVBO">', '<img src="DATA:image/png,x">', '<video poster="data:image/jpeg;base64,x">', '<source src="data:image/webp,x">',
+    '<img srcset="/a.png 1x, data:image/png;base64,iVBO 2x">'];
+  for (const c of rejected) assert.equal(passesPatchContentRule(Buffer.from(c)), false, c);
+  for (const c of accepted) assert.equal(passesPatchContentRule(Buffer.from(c)), true, c);
 });
 
 test('attribute tokenizer: quoted, unquoted, valueless, duplicate and "=" names', () => {
@@ -678,7 +767,7 @@ test('attribute tokenizer: quoted, unquoted, valueless, duplicate and "=" names'
   const got = attributesOf(tag, 0, tag.length).map(({ name, value }) => [name, value.toString()]);
   assert.deepEqual(got, [['b', '1'], ['c', '2'], ['d', '3'], ['e', ''], ['f', '4'], ['=g', ''], ['h', '5'], ['x', '6']]);
   assert.equal(attributeRejected('onx', Buffer.alloc(0)), true);
-  assert.equal(attributeRejected('o', Buffer.from('&amp')), true);
+  assert.equal(attributeRejected('o', Buffer.from('&amp')), false); // H-77: "amp" is not one of the six names
 });
 
 test('the server never inserts a manifest text that contains "<" (manifest-patch section 1.7, server item 3)', () => {

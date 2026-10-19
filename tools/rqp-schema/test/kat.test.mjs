@@ -202,7 +202,8 @@ test('the replace_block of an html block with empty content passes all client ch
 // of the patched document (H-48) finds the defect.
 const rejected = {
   'empty content of a json block (M-25)': ['cart', ''],
-  'a script element in html content (M-22)': ['price', '<script>alert(1)</script>'],
+  // H-78: script, style, iframe … are valid markup in a block; the patch content rule (step 9) rejects them.
+  'a textarea element in html content (M-22, kept by H-78)': ['price', '<textarea>x</textarea>'],
   'an end tag that closes the block early (M-23)': ['price', '1</p><p>2'],
   'the end tag of a title block in its content': ['title', 'Shop</title><script>x</script><title>'],
 };

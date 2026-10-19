@@ -4,6 +4,7 @@
   "description": "A snapshot in the public partition, a request without credentials and a valid delta with Cache-Control no-store, private: the result goes to the partition of the request (H-61, H-65; DL-040 I-2)",
   "rules": ["RQP-25"],
   "context": {
+    "public_enabled": true,
     "public_origin": true,
     "navigation": "delta",
     "snapshot": {

@@ -4,6 +4,7 @@
   "description": "As FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-REDIRECT, but the redirect goes to https://SHOP.example.com/catalog (the same cache key; redirected by default because final_url differs from url): the delta is applied and the result goes to the partition of the request (H-67)",
   "rules": ["RQP-24", "RQP-25"],
   "context": {
+    "public_enabled": true,
     "public_origin": true,
     "navigation": "delta",
     "snapshot": {

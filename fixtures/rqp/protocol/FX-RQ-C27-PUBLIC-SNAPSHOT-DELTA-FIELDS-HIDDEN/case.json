@@ -4,6 +4,7 @@
   "description": "A snapshot in the public partition, a request without credentials and a valid delta, but the native SDK did not see all header fields of the delta response: the result goes to the partition of the request (H-64, H-65; DL-040 I-2)",
   "rules": ["RQP-25"],
   "context": {
+    "public_enabled": true,
     "public_origin": true,
     "navigation": "delta",
     "snapshot": {

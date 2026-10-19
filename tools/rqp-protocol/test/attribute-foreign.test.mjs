@@ -10,10 +10,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { LIMITS } from '../src/common.mjs';
-import { analyze, attributeRejected, documentHeadStart, passesAttributeRule, startTagOffsets } from '../src/markup.mjs';
+import { analyze, attributeRejected, documentHeadStart, patchContentFailure, passesPatchContentRule, startTagOffsets } from '../src/markup.mjs';
 
 const b = (s) => Buffer.from(s, 'latin1');
-const rule = (s) => passesAttributeRule(b(s));
+const rule = (s) => passesPatchContentRule(b(s));
+const why = (s) => patchContentFailure(b(s));
 
 /** True when the markup analysis accepts the content as the content of an html block. */
 const valid = (content) => analyze(b(`<p data-rq-block="x">${content}</p>`)).valid;
@@ -33,7 +34,7 @@ test('an attribute of an svg or math element that the rule denies rejects the co
   ];
   for (const c of rejected) {
     assert.equal(valid(c), true, `${c}: must be valid markup`);
-    assert.equal(rule(c), false, c);
+    assert.equal(why(c), 'attribute', c);
   }
 });
 
@@ -56,15 +57,17 @@ test('in a foreign region a title start tag opens no RCDATA state: later start t
   assert.deepEqual(startTagOffsets(b('<svg><title/><g/></svg>')), [0, 5, 13]);
 });
 
-test('in HTML context a title start tag is RCDATA and a style start tag is RAWTEXT', () => {
+test('in HTML context a title start tag is RCDATA and an xmp start tag is RAWTEXT: no start tag inside', () => {
   assert.equal(rule('<title><a onclick=x></title><b>y</b>'), true);
-  assert.equal(rule('<style><a onclick=x></style><b>y</b>'), true);
+  assert.equal(rule('<xmp><a onclick=x><script></xmp><b>y</b>'), true);
   assert.equal(rule('<textarea><a onclick=x></textarea>'), true);
+  // style is RAWTEXT too, but its own start tag fails item 1.1 (H-78), before its text is read.
+  assert.equal(why('<style><a onclick=x></style><b>y</b>'), 'element');
 });
 
 test('the state changes apply again after the region is closed', () => {
-  assert.equal(rule('<svg><g></g></svg><style><a onclick=x></style>'), true);
-  assert.equal(rule('<svg></svg><style><a onclick=x></style><i onclick=x></i>'), false);
+  assert.equal(rule('<svg><g></g></svg><xmp><a onclick=x></xmp>'), true);
+  assert.equal(why('<svg></svg><xmp><a onclick=x></xmp><i onclick=x></i>'), 'attribute');
 });
 
 test('an end tag has no attributes for the rule', () => {
@@ -72,13 +75,16 @@ test('an end tag has no attributes for the rule', () => {
 });
 
 test('a self-closing svg or math opens no region', () => {
-  assert.equal(rule('<svg/><style><a onclick=x></style>'), true);
+  assert.equal(rule('<svg/><xmp><a onclick=x></xmp>'), true);
   assert.equal(rule('<math/><title><a onclick=x></title>'), true);
+  // In HTML context after <svg/>, PATCH_FORBIDDEN applies, not FOREIGN_ALLOWED.
+  assert.equal(why('<svg/><script>x</script>'), 'element');
+  assert.equal(rule('<svg/><b>x</b>'), true);
 });
 
 test('an unclosed region reads start tags to the end of the content', () => {
   assert.equal(rule('<svg><g>'), true);
-  assert.equal(rule('<svg><g><title/><g onload=x>'), false);
+  assert.equal(why('<svg><g><title/><g onload=x>'), 'attribute');
 });
 
 test('a stack deeper than the limit fails closed, nothing throws', () => {
@@ -90,29 +96,33 @@ test('a stack deeper than the limit fails closed, nothing throws', () => {
 
 test('the token stack holds exactly 256 entries', () => {
   assert.equal(rule('<svg>' + '<g>'.repeat(255)), true);
-  assert.equal(rule('<svg>' + '<g>'.repeat(256)), false);
+  assert.equal(why('<svg>' + '<g>'.repeat(256)), 'walk');
 });
 
 test('only svg and math open a foreign region; an svg region ends at the end tag of its root', () => {
   assert.equal(rule('<div><title><a onclick=x></title></div>'), true);
-  assert.equal(rule('<math><mi><title><a onclick=x></title></mi></math>'), false);
+  // In a math region a title opens no RCDATA state: the a start tag is read (and is not in FOREIGN_ALLOWED).
+  assert.equal(why('<math><mi><title><a onclick=x></title></mi></math>'), 'foreign');
+  assert.equal(why('<math><mi><title><mo onclick=x></mo></title></mi></math>'), 'attribute');
   // An end tag of an element inside the region does not end the region.
-  assert.equal(rule('<svg><g></g><title><a onclick=x></a></title></svg>'), false);
+  assert.equal(why('<svg><g></g><title><a onclick=x></a></title></svg>'), 'foreign');
+  assert.equal(why('<svg><g></g></svg><a onclick=x></a>'), 'attribute');
 });
 
 test('attribute tokenizer: "/" ends a tag name and an attribute name; "=" with no value is an attribute', () => {
   for (const c of ['<a/onclick=x>y</a>', '<a x/onclick=y>z</a>', '<a onclick=>y</a>']) assert.equal(rule(c), false, c);
 });
 
-test('attribute rule item 3: "&amp;" becomes "&", and only leading bytes 00 to 20 go', () => {
+test('attribute rule item 3: character references stay in the copy (H-77), and only leading bytes 00 to 20 go', () => {
   assert.equal(attributeRejected('href', b('java&amp;script:x')), false);
   assert.equal(attributeRejected('href', b('java script:x')), false);
   assert.equal(attributeRejected('href', b(' \x00javascript:x')), true);
+  assert.equal(attributeRejected('href', b('x\x01javascript:x')), false);
 });
 
 test('content over maxBlockBytes fails the rule (fail closed); content of exactly maxBlockBytes is read', () => {
-  assert.equal(passesAttributeRule(Buffer.alloc(LIMITS.maxBlockBytes, 0x61)), true);
-  assert.equal(passesAttributeRule(Buffer.alloc(LIMITS.maxBlockBytes + 1, 0x61)), false);
+  assert.equal(passesPatchContentRule(Buffer.alloc(LIMITS.maxBlockBytes, 0x61)), true);
+  assert.equal(patchContentFailure(Buffer.alloc(LIMITS.maxBlockBytes + 1, 0x61)), 'size');
 });
 
 test('head rule: only EF BB BF at offset 0 counts as white space before the head start tag', () => {
@@ -225,7 +235,9 @@ test('property: the walk reads the start tags of the tokenizer for random svg bl
     if (!valid(content)) continue;
     checked++;
     assert.deepEqual(startTagOffsets(b(content)), visible, content);
-    assert.equal(rule(content), true, content);
+    // A style start tag in HTML context is valid markup since H-78, but fails item 1.1.
+    const forbidden = content.includes('<style>');
+    assert.equal(why(content), forbidden ? 'element' : null, content);
     // Every visible start tag is checked: an event handler on any of them is found.
     for (const at of visible) {
       const end = content.indexOf('>', at);
@@ -233,6 +245,7 @@ test('property: the walk reads the start tags of the tokenizer for random svg bl
       const bad = `${content.slice(0, cut)} onload=x${content.slice(cut)}`;
       if (!valid(bad)) continue;
       assert.equal(rule(bad), false, bad);
+      if (!forbidden) assert.equal(why(bad), 'attribute', bad);
     }
   }
   assert.ok(checked > 100, `only ${checked} valid samples`);

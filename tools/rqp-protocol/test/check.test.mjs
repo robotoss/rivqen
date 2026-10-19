@@ -108,7 +108,7 @@ test('compares F by the bytes around the manifest, the position and the manifest
   assert.ok(ok(text.replace('<title', '<TITLE')).some((f) => f.includes('after the manifest element')));
   assert.ok(ok(text.replace(m.page_revision, m.template_revision.replace('t1.', 'r1.'))).some((f) => f.includes('manifest value')));
   const moved = text.replace(/<script type="application\/rivqen-manifest\+json">.*?<\/script>/, '').replace('</body>', `<script type="application/rivqen-manifest+json">${JSON.stringify(m)}</script></body>`);
-  assert.ok(ok(moved).some((f) => f.includes('immediately after the head start tag')));
+  assert.ok(ok(moved).some((f) => f.includes('at the insertion point')));
 });
 
 test('detects Rq-* or Accept in Vary of F and a wrong Content-Length', () => {
@@ -152,6 +152,8 @@ test('the client fixtures catch a client that ignores H-64, H-65 or the exact or
   };
   // H-64: a client that trusts the fields of every response.
   assert.deepEqual(await failing((c) => ({ ...c, response_fields_visible: true })), ['FX-RQ-C24-PUBLIC-FIELDS-HIDDEN', 'FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-FIELDS-HIDDEN']);
+  // H-81: a client that uses the public partition without the app setting.
+  assert.deepEqual(await failing((c) => ({ ...c, public_enabled: true })), ['FX-RQ-C24-PUBLIC-NOT-ENABLED']);
   // H-65: a client that forgets the partition of its snapshot.
   assert.deepEqual(await failing((c) => ({ ...c, snapshot: c.snapshot === null ? null : { ...c.snapshot, partition: 'request' } })), ['FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-STAYS-PUBLIC']);
   // DL-038: a client that matches the allowlist by host suffix, or compares the URL text without serialization.
@@ -247,5 +249,12 @@ test('only the cases of P-35 have level "should" in their expected files', () =>
   const levels = fixtureNames()
     .filter((n) => n.startsWith('FX-RQ-P'))
     .filter((n) => readJsonFile(join(FIXTURES_DIR, n, 'expected.json')).level === 'should');
-  assert.deepEqual(levels, ['FX-RQ-P35-ATTRIBUTE-RULE', 'FX-RQ-P35-ATTRIBUTE-RULE-DATA', 'FX-RQ-P35-ATTRIBUTE-RULE-SVG']);
+  assert.deepEqual(levels, [
+    'FX-RQ-P35-ATTRIBUTE-RULE',
+    'FX-RQ-P35-ATTRIBUTE-RULE-DATA',
+    'FX-RQ-P35-ATTRIBUTE-RULE-SVG',
+    'FX-RQ-P35-PATCH-CONTENT-IFRAME',
+    'FX-RQ-P35-PATCH-CONTENT-SCRIPT',
+    'FX-RQ-P35-PATCH-CONTENT-STYLE',
+  ]);
 });

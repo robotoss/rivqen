@@ -55,11 +55,22 @@ test('step 2: an invalid page gets A unchanged, with the ETag of the application
   assert.equal(header(r, 'rq-version'), null);
 });
 
-test('step 2: a page without a head start tag of the document gets A unchanged (H-72)', () => {
-  const noHead = Buffer.from('<!DOCTYPE html><title>x</title><!-- <head> --></head><p data-rq-block="a">1</p>', 'utf8');
+test('step 2: a page without a head start tag and without an implied head gets A unchanged (H-72, H-79a)', () => {
+  const noHead = Buffer.from('<!DOCTYPE html><div>x</div><!-- <head> --></head><p data-rq-block="a">1</p>', 'utf8');
+  assert.equal(analyzeBytes(noHead).valid, true);
   const r = handle(firstVisit(), APP, noHead);
   assert.equal(r.reason, 'no-head-start');
   assert.deepEqual(r.body, noHead);
+});
+
+test('step 3: a page whose first head content comes before any head start tag gets F with the manifest before it (H-79a)', () => {
+  const doc = Buffer.from('<!DOCTYPE html>\n<meta charset="utf-8"><title>x</title><p data-rq-block="a">1</p>', 'utf8');
+  const r = handle(firstVisit(), APP, doc);
+  assert.equal(r.kind, 'full');
+  const at = doc.indexOf('<meta');
+  assert.equal(r.body.indexOf('<script type="application/rivqen-manifest+json">'), at);
+  assert.ok(r.body.subarray(0, at).equals(doc.subarray(0, at)));
+  assert.ok(r.body.subarray(r.body.indexOf('</script>') + '</script>'.length).equals(doc.subarray(at)));
 });
 
 test('step 2: the manifest goes immediately after the head start tag, not after "<head>" text in a comment', () => {
@@ -72,7 +83,8 @@ test('step 2: the manifest goes immediately after the head start tag, not after 
 });
 
 // H-72: the head start tag of the document (manifest-patch section 1.7, "Document head").
-const HEAD_BODY = '<title>t</title></head><body><p data-rq-block="a">1</p></body></html>';
+// Body content first: a title or meta here would imply a head (H-79a) for the prefixes without a head start tag.
+const HEAD_BODY = '<div>t</div></head><body><p data-rq-block="a">1</p></body></html>';
 const headStart = (prefix) => documentHeadStart(Buffer.from(prefix + HEAD_BODY, 'utf8'));
 const afterHead = (prefix) => Buffer.byteLength(prefix, 'utf8');
 
@@ -104,15 +116,32 @@ test('H-72: no head start tag when something else comes before it', () => {
     '<html>x<head>', // text before the head
     '<html>&amp;<head>', // a character reference is text
     '<p>x</p><head>', // another start tag before the head
-    '<html><meta charset="utf-8"><head>', // head content before the head start tag (the head is implied)
-    '<html><title>t</title><head>',
     '<body><head>',
     '<html></><head>', // "</>" gives no token: its bytes are not white space
     '<svg><head>',
-    '<template><head>',
+    '<template><head>', // H-79a: template is not in the list
+    '<noscript></noscript><head>', // H-79a: noscript is not in the list
+    '<html>x<meta>', // text before head content
   ];
   for (const p of none) assert.equal(headStart(p), -1, JSON.stringify(p));
   assert.equal(documentHeadStart(Buffer.alloc(0)), -1);
+});
+
+test('H-79a: head content before any head start tag implies the head: the insertion point is its "<"', () => {
+  for (const name of ['base', 'basefont', 'bgsound', 'link', 'meta', 'noframes', 'script', 'style', 'title', 'META', 'Title']) {
+    for (const prefix of ['', '<!DOCTYPE html>\n<html lang="en">\n', '﻿<!-- c --></p> ']) {
+      const doc = `${prefix}<${name} x="<head>">t</${name}><head>`;
+      assert.equal(documentHeadStart(Buffer.from(doc, 'utf8')), Buffer.byteLength(prefix, 'utf8'), JSON.stringify(doc));
+    }
+  }
+  // The first stop wins: a later head start tag does not move the point.
+  assert.equal(documentHeadStart(Buffer.from('<html><meta charset="utf-8"><head lang="en">')), '<html>'.length);
+  // Self-closing flag and attributes do not change it.
+  assert.equal(documentHeadStart(Buffer.from('<link/><head>')), 0);
+  // Another name, also one that starts like a list name, is not a stop.
+  for (const doc of ['<metadata><head>', '<tit><head>', '<scripts>']) assert.equal(documentHeadStart(Buffer.from(doc)), -1, doc);
+  // An end tag of a list name is an ignored end tag (DL-034), not a stop.
+  assert.equal(documentHeadStart(Buffer.from('<html></title><head>')), '<html></title><head>'.length);
 });
 
 test('H-72 (DL-034 item 1): an end tag other than head, body, html and br is ignored before the head', () => {
@@ -317,10 +346,21 @@ test('step 7: a delta of exactly the size of F gives F; one byte smaller is sent
 });
 
 test('step 7: a changed html block that fails the attribute rule gives F (H-56)', () => {
-  assert.equal(handle(deltaRequest('page-a'), APP, page('page-b-onclick')).reason, 'attribute-rule');
+  assert.equal(handle(deltaRequest('page-a'), APP, page('page-b-onclick')).reason, 'patch-content-rule');
 });
 
-test('step 7: the attribute rule reads only html blocks; a json block with markup text gets a delta', () => {
+test('step 7: a changed html block with an element of PATCH_FORBIDDEN or a foreign element outside FOREIGN_ALLOWED gives F (H-78)', () => {
+  const withPrice = (content) => Buffer.from(page('page-a').toString('utf8').replace('>120.00<', `>${content}<`), 'utf8');
+  for (const content of ['<script>x()</script>', '<style>p{}</style>', '<iframe src="/v"></iframe>', '<link rel="x">', '<svg><a href="#x"><text>t</text></a></svg>']) {
+    const doc = withPrice(content);
+    assert.equal(analyzeBytes(doc).valid, true, content);
+    assert.deepEqual([handle(deltaRequest('page-a'), APP, doc).kind, handle(deltaRequest('page-a'), APP, doc).reason], ['full', 'patch-content-rule'], content);
+  }
+  // Control: the same block with allowed content gets a delta.
+  assert.equal(handle(deltaRequest('page-a'), APP, withPrice('<b>130.00</b>')).kind, 'delta');
+});
+
+test('step 7: the patch content rule reads only html blocks; a json block with markup text gets a delta', () => {
   const next = Buffer.from(page('page-a').toString('utf8').replace('{"items":3}', '{"t":"<b onclick=x>"}'), 'utf8');
   assert.equal(analyzeBytes(next).valid, true);
   const r = handle(deltaRequest('page-a'), APP, next);

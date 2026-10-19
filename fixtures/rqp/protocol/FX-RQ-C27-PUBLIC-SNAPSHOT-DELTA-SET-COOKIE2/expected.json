@@ -10,6 +10,7 @@
     "allowlist": ["https://shop.example.com"],
     "credentials": false,
     "response_fields_visible": true,
+    "public_enabled": true,
     "public_origin": true,
     "navigation": "delta",
     "snapshot": {

@@ -1,0 +1,24 @@
+{
+  "id": "FX-RQ-P41-LD-JSON-DELTA",
+  "description": "The price and the application/ld+json block changed: a delta with two operations; the ld operation has the format json and the raw JSON text (H-86)",
+  "rules": ["RQP-11"],
+  "client_page": "page-ld-a",
+  "page": "page-ld-b",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-ld-a}}"],
+      ["rq-have", "t={{t1:page-ld-a}}, b={{have:page-ld-a}}"]
+    ]
+  }
+}

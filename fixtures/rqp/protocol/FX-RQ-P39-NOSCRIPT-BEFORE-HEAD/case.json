@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P39-NOSCRIPT-BEFORE-HEAD",
+  "description": "A noscript element before <head>: noscript is not in the H-79a list, so the page has no insertion point and is sent without RQP",
+  "rules": ["RQP-09"],
+  "page": "page-noscript-before-head",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

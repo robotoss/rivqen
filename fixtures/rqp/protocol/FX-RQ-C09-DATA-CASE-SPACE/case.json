@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-C09-DATA-CASE-SPACE",
   "kind": "client",
-  "description": "price content <img src=\" TAB Da LF Ta:x\">: after the removal of tab, LF and leading space the scheme is data: (ASCII case-insensitive, H-59)",
+  "description": "price content <img src=\" TAB Da LF Ta:image/png,x\">: after the removal of tab, LF and leading space the scheme is data: (ASCII case-insensitive, H-59) with a raster image type in img src, so the attribute rule accepts it: applied (H-83; before H-83: rejected; the same value in a href: FX-RQ-C09-DATA-CASE-SPACE-HREF)",
   "rules": ["RQP-13"],
   "context": {
     "navigation": "delta",

@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-C21-MANIFEST-BEFORE-BODY",
+  "kind": "client",
+  "description": "Rq-Version 1, page-no-head-body-first with the manifest before <body>: O has no insertion point, MANIFEST_INVALID (H-79a, rule C2; a walk on F would accept it)",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-no-head-body-first",
+      "manifest_after": "<html>\n"
+    }
+  }
+}

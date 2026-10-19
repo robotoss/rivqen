@@ -19,7 +19,7 @@
 // Client module: export clientStep(context, response) -> { outcome, error,
 // next, metric, snapshot } and optionally clientRequest(context) -> [[name,
 // value]]. context = { url, final_url, redirected, build, allow_http,
-// allowlist, credentials, response_fields_visible, public_origin, navigation,
+// allowlist, credentials, response_fields_visible, public_enabled, public_origin, navigation,
 // snapshot: null | { document, template_revision, page_revision, blocks,
 // policy?, limits?, partition } }. url is the request URL and the cache key of
 // the snapshot; final_url is the URL of the response after redirects (a client
@@ -61,7 +61,7 @@ function toBuffer(body) {
 function compareFull(expected, page, body, fail) {
   const at = expected.insert_at;
   if (!body.subarray(0, at).equals(page.subarray(0, at))) return fail('body: the bytes before the manifest element differ from the page');
-  if (!body.subarray(at, at + START.length).equals(START)) return fail('body: no manifest start tag immediately after the head start tag of the document');
+  if (!body.subarray(at, at + START.length).equals(START)) return fail('body: no manifest start tag at the insertion point (after the head start tag of the document, or before the start tag that implies the head)');
   const textStart = at + START.length;
   const lt = body.indexOf(0x3c, textStart);
   if (lt < 0 || !body.subarray(lt, lt + END.length).equals(END)) return fail('body: the manifest text has "<" or no </script>');
@@ -222,6 +222,7 @@ export async function runClient(mod, { dir = FIXTURES_DIR, only = '' } = {}) {
       allowlist: ctx.allowlist,
       credentials: ctx.credentials,
       response_fields_visible: ctx.response_fields_visible,
+      public_enabled: ctx.public_enabled,
       public_origin: ctx.public_origin,
       navigation: ctx.navigation,
       snapshot,

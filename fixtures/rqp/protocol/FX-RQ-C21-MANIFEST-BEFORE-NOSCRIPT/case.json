@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-C21-MANIFEST-BEFORE-NOSCRIPT",
+  "kind": "client",
+  "description": "Rq-Version 1, page-noscript-before-head with the manifest before <noscript>: O has no insertion point (noscript is not in the H-79a list), MANIFEST_INVALID",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-noscript-before-head",
+      "manifest_after": "<html>\n"
+    }
+  }
+}

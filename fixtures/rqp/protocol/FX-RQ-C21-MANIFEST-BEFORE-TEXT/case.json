@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-C21-MANIFEST-BEFORE-TEXT",
+  "kind": "client",
+  "description": "Rq-Version 1, page-text-before-head with the manifest after the DOCTYPE, before the text: O has no insertion point, MANIFEST_INVALID (H-79a, rule C2; a walk on F would accept it)",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-text-before-head",
+      "manifest_after": "<!DOCTYPE html>\n"
+    }
+  }
+}

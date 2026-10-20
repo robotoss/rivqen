@@ -43,7 +43,7 @@ The model has no DNS time, no TCP slow start, no CPU contention, no JavaScript c
 
 ## 3. Measured bytes {#measured-bytes}
 
-Source: `evidence/benchmarks/rqp-bytes-2026-10-19.json`, made with `npm run measure` in [`examples/server-demo`](/guide/examples/server). Run date: 2026-10-19. The earlier run of 2026-10-12 is `evidence/benchmarks/rqp-bytes.json` (no legacy column). Page: the demo catalog with four blocks (`title`, `price`, `stock`, `cart`). The page source is 19,538 bytes. The served document with the manifest is 20,250 bytes. Compression: Node.js zlib defaults, computed locally on the decoded body. <Badge type="tip" text="FACT" />
+Source: `evidence/benchmarks/rqp-bytes-2026-10-19.json`, made with `npm run measure` in [`examples/server-demo`](/guide/examples/server). Run date: 2026-10-19. This run is the wire format before H-103 and H-104; the values after them are in [After H-103 and H-104](#after-p1). The earlier run of 2026-10-12 is `evidence/benchmarks/rqp-bytes.json` (no legacy column). Page: the demo catalog with four blocks (`title`, `price`, `stock`, `cart`). The page source is 19,538 bytes. The served document with the manifest is 20,250 bytes. Compression: Node.js zlib defaults, computed locally on the decoded body. <Badge type="tip" text="FACT" />
 
 ### Body bytes per visit (gzip)
 
@@ -83,12 +83,24 @@ xychart-beta
 
 <Badge type="tip" text="FACT" /> Legacy is smaller than RQP in this run. Cold: 18 % smaller with gzip (2,232 vs 2,707) and 26 % with Brotli. Data changed: 40 % smaller with gzip (316 vs 526) and 44 % with Brotli (260 vs 467). The byte study splits these differences: the cold difference is the manifest (485 bytes gzip), the data change difference is mostly the per-operation hashes and the revisions (`evidence/rqp-bytes/report.md`). Unchanged: equal. Possible reasons <Badge type="info" text="DESIGN" />: the RQP document carries a manifest, and each RQP operation carries a block hash and revision fields; the legacy answer carries the changed data only. The raw cold sizes differ by 609 bytes, but this is not only the manifest, because the two pages use different block markers. This run does not isolate each cause, and it does not measure the cost of the RQP safety checks against their benefit.
 
+### After H-103 and H-104 {#after-p1}
+
+<Badge type="tip" text="FACT" /> The human decisions H-103 and H-104 ([WP-17 S6](/engineering/plan/sprints/WP-17-S6) §1, proposal P1 of `evidence/rqp-bytes/report.md` §6) remove from the wire what the client computes itself: the block list and the template revision of the manifest, the default members of `policy` and `limits`, and every envelope member except `next_revision` and the operations (`block_id`, `content`). Measured on 2026-10-20 with the reference server step (`tools/rqp-protocol/src/server.mjs`, `handle()`) on the demo catalog page of the byte study (`tools/rqp-protocol/study/bytes/src/pages.mjs`, data steps 0 and 1), with the method of the study (Node.js 26.8.2, zlib 1.2.12, Brotli 1.2.0). The legacy values are the like-for-like lab values above. Raw / gzip / Brotli:
+
+| Visit | RQP before | RQP after (P1) | Legacy |
+|---|---:|---:|---:|
+| 1. Cold | 20,250 / 2,707 / 1,686 | 19,731 / 2,357 / 1,296 | 19,593 / 2,232 / 1,252 |
+| 2. Revisit, unchanged | `304`, 0 | `304`, 0 | `304`, 0 |
+| 3. Data changed | 836 / 526 / 467 | 293 / 221 / 171 | 497 / 316 / 260 |
+
+<Badge type="tip" text="FACT" /> The manifest element is 193 bytes (before: 712). The cold value is the P1 value of the study (2,357 gzip, 1,296 Brotli). The data change is 1 byte gzip more and 25 bytes Brotli less than the study value (220 / 196) at the same raw size: the study modeled the envelope with the `next_revision` of the old manifest members (with the default `policy` and `limits`), and the 43 random characters of the new `next_revision` compress differently. The demo server (`examples/server-demo`) still sends the form before H-103 and H-104 until task T-02b of S6; `npm run measure` gives the demo values after that task.
+
 ### What the numbers say
 
-1. On a data change, the RQP delta is **81 % smaller** than the full document F with gzip (526 vs 2,718 bytes) and 71 % smaller with Brotli (467 vs 1,625 bytes).
+1. On a data change, the RQP delta is **81 % smaller** than the full document F with gzip (526 vs 2,718 bytes) and 71 % smaller with Brotli (467 vs 1,625 bytes). After H-103 and H-104 it is 91 % smaller with gzip (221 vs 2,363 bytes, F of the new page) and 87 % smaller with Brotli (171 vs 1,300 bytes).
 2. On an unchanged revisit, RQP and plain HTTP ETag are equal: both send `304`. The gain there is time (cache first), not bytes.
 3. On the first visit and on a template change, RQP and the "plain" strategy send the same bytes. The demo "plain" strategy sends the full document F with the manifest, so the run does not measure the cost of the manifest against a page without it. The legacy column gives an upper bound of this cost for the cold visit (475 bytes gzip, 434 bytes Brotli, with other differences included; the manifest alone: 485 bytes gzip).
-4. The upstream legacy server sends fewer bytes than RQP on the cold visit and on a data change (see the legacy column). RQP does not claim a byte advantage over legacy.
+4. Before H-103 and H-104, the upstream legacy server sent fewer bytes than RQP on the cold visit and on a data change (see the legacy column). After them (reference server, [After H-103 and H-104](#after-p1)), RQP sends 125 bytes more than legacy on the cold visit (2,357 vs 2,232 gzip) and 95 bytes fewer on the data change of the demo (221 vs 316 gzip). RQP does not claim a byte advantage over legacy for the cold visit.
 
 ::: info Bytes are not time
 These values count body bytes only, without headers and TLS framing. For a small page on a fast network, the byte saving changes little. The saving grows with page size, slow networks and frequent data changes.

@@ -8,7 +8,7 @@
 // computes them (kat.json member `computed`) and checks them through page_revision.
 // Since H-104 and H-107 the envelope is the binding and the operations (block_id,
 // content): the client computes the next page revision R' and checks the binding of the
-// URL, its base revision and R' (section 2.4, step 7).
+// URL, its base revision, the nonce of its request (H-108) and R' (section 2.4, step 7).
 
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -28,6 +28,8 @@ const patches = kat.patches.map((p) => ({ name: p, env: readJson(join(KAT, p)) }
 const computed = kat.computed;
 /** U of the binding (H-107): the URL of the KAT manifest (no query). */
 const URL_U = `${manifest.origin}${manifest.path}`;
+/** N of the binding (H-108): the text of the KAT nonce, the bytes 00 to 0F. */
+const NONCE = kat.nonce.n;
 
 function analyze(bytes) {
   const dir = mkdtempSync(join(tmpdir(), 'rqp-kat-'));
@@ -61,9 +63,10 @@ function template(bytes, blocks) {
  * the code of the first failed check. The client computes the hash of each content; the
  * template revision is the one of its snapshot (`current` and `t`). `snap` is the snapshot
  * manifest: its policy and limits give the policy line of the preimage (H-55). B of the
- * binding is the page revision of the snapshot (its blocks and policy line); `url` is U.
+ * binding is the page revision of the snapshot (its blocks and policy line); `url` is U;
+ * `nonce` is N, the nonce that the request of the client sent (H-108).
  */
-function applyToBlocks(current, env, snap = manifest, t = computed.template_revision, url = URL_U) {
+function applyToBlocks(current, env, snap = manifest, t = computed.template_revision, url = URL_U, nonce = NONCE) {
   const next = current.map((b) => ({ ...b }));
   let last = -1;
   for (const op of env.operations) {
@@ -72,7 +75,7 @@ function applyToBlocks(current, env, snap = manifest, t = computed.template_revi
     last = i;
     next[i].sha256 = contentHash(op.content);
   }
-  if (deltaBinding(url, pageRevision(t, current, snap), pageRevision(t, next, snap)) !== env.binding) return 'INTEGRITY_ERROR';
+  if (deltaBinding(url, pageRevision(t, current, snap), nonce, pageRevision(t, next, snap)) !== env.binding) return 'INTEGRITY_ERROR';
   return next;
 }
 
@@ -111,7 +114,7 @@ function checkManifest(original, m) {
 function patchOne(id, content) {
   const blocks = computed.blocks.map((b) => (b.id === id ? { ...b, sha256: contentHash(content) } : b));
   return {
-    binding: deltaBinding(URL_U, manifest.page_revision, pageRevision(computed.template_revision, blocks, manifest)),
+    binding: deltaBinding(URL_U, manifest.page_revision, NONCE, pageRevision(computed.template_revision, blocks, manifest)),
     operations: [{ block_id: id, content }],
   };
 }
@@ -175,36 +178,64 @@ for (const { name, env } of patches) {
   });
 }
 
-test('kat.json bindings: each entry has the URL, the base and next revisions, the preimage and the binding of its patch (H-107)', () => {
+test('kat.json bindings: each entry has the URL, the base revision, the nonce, the next revision, the preimage and the binding of its patch (H-107, H-108)', () => {
   const entries = [...kat.bindings, ...kat.with_policy_limits.bindings];
   assert.deepEqual(entries.map((e) => e.patch), [...kat.patches, ...kat.with_policy_limits.patches]);
   for (const e of entries) {
     assert.equal(e.url, URL_U);
-    assert.equal(e.preimage, `rqp-d1\n${e.url}\n${e.base_revision}\n${e.next_revision}\n`);
+    assert.equal(e.nonce, NONCE);
+    assert.equal(e.preimage, `rqp-d1\n${e.url}\n${e.base_revision}\n${e.nonce}\n${e.next_revision}\n`);
     assert.equal('d1.' + sha256b64u(Buffer.from(e.preimage, 'utf8')), e.binding);
     assert.equal(readJson(join(KAT, e.patch)).binding, e.binding);
   }
   assert.equal(kat.bindings[0].base_revision, manifest.page_revision);
 });
 
-test('the exact binding preimage of the KAT price patch, written out by hand (H-107)', () => {
+test('the exact binding preimage of the KAT price patch, written out by hand (H-107, H-108)', () => {
   const p =
     'rqp-d1\n' +
     'https://shop.example.com/catalog\n' +
     'r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\n' +
+    'AAECAwQFBgcICQoLDA0ODw\n' +
     'r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI\n';
-  // The bytes: 6 + 1 + 32 + 1 + 46 + 1 + 46 + 1, all ASCII, each line ends with 0A.
-  assert.equal(Buffer.byteLength(p, 'utf8'), 134);
-  assert.equal('d1.' + sha256b64u(Buffer.from(p, 'utf8')), 'd1.SGYLGtFc4PsLoFIzWsurTmxLupiief5xgV7ZCtXDcpc');
-  assert.equal(patches[0].env.binding, 'd1.SGYLGtFc4PsLoFIzWsurTmxLupiief5xgV7ZCtXDcpc');
+  // The bytes: 6 + 1 + 32 + 1 + 46 + 1 + 22 + 1 + 46 + 1, all ASCII, each line ends with 0A.
+  assert.equal(Buffer.byteLength(p, 'utf8'), 157);
+  assert.equal('d1.' + sha256b64u(Buffer.from(p, 'utf8')), 'd1.orrx-_-Iflnnjs7DvvuOOdxW3FzbZpU_PTlR0jdWw54');
+  assert.equal(patches[0].env.binding, 'd1.orrx-_-Iflnnjs7DvvuOOdxW3FzbZpU_PTlR0jdWw54');
+});
+
+test('the KAT nonce: N is base64url without padding of the 16 bytes 00 to 0F; Rq-Have member n is the base64 Byte Sequence (H-108)', () => {
+  const bytes = Buffer.from(kat.nonce.bytes_hex, 'hex');
+  assert.equal(bytes.length, 16);
+  assert.deepEqual([...bytes], [...Array(16).keys()]);
+  assert.equal(kat.nonce.n, 'AAECAwQFBgcICQoLDA0ODw');
+  assert.equal(bytes.toString('base64url'), kat.nonce.n);
+  assert.equal(kat.nonce.sf, `:${bytes.toString('base64')}:`);
+  assert.equal(kat.nonce.sf, ':AAECAwQFBgcICQoLDA0ODw==:');
+});
+
+test('H-108: a patch applies only for the nonce of its request (A -> B -> A, replay with another nonce)', () => {
+  // The same U, B and R': before H-108 a cache that ignores no-store could replay it to a later
+  // request from the same snapshot (also after the page went A -> B -> A).
+  for (const { env } of patches) assert.ok(Array.isArray(applyToBlocks(computed.blocks, env)));
+  const other = Buffer.from([...Array(16).keys()].map((i) => i + 16)).toString('base64url');
+  const lastBit = Buffer.from([...Array(15).keys(), 14]).toString('base64url');
+  for (const n of [other, lastBit]) {
+    for (const { env } of patches) {
+      assert.equal(applyToBlocks(computed.blocks, env, manifest, computed.template_revision, URL_U, n), 'INTEGRITY_ERROR', n);
+    }
+  }
+  // The padded base64 form or the standard alphabet is not N: another preimage.
+  assert.equal(applyToBlocks(computed.blocks, patches[0].env, manifest, computed.template_revision, URL_U, `${NONCE}==`), 'INTEGRITY_ERROR');
 });
 
 test('U has the query and no fragment; host case and the default port are normalized by the URL serializer (H-107)', () => {
   const q = kat.binding_with_query;
   assert.equal(bindingUrl(q.url_input), q.url);
   assert.equal(q.url, 'https://shop.example.com/catalog?sort=price&page=2');
-  assert.equal(deltaBinding(q.url, q.base_revision, q.next_revision), q.binding);
-  assert.equal(q.binding, 'd1.3suck1gLHbFVWy0goIS-Q6G8z3wdhw5_BqlUJ7yv93U');
+  assert.equal(q.nonce, NONCE);
+  assert.equal(deltaBinding(q.url, q.base_revision, q.nonce, q.next_revision), q.binding);
+  assert.equal(q.binding, 'd1.9tOh97k3psr9cLv3_twQfmdbRWJ2c1LXACllNPOGc-8');
   // The same base and next revision without the query: another binding. A client that leaves out the query fails.
   assert.notEqual(q.binding, patches[0].env.binding);
   assert.equal(applyToBlocks(computed.blocks, patches[0].env, manifest, computed.template_revision, q.url), 'INTEGRITY_ERROR');
@@ -289,10 +320,10 @@ test('a manifest with the page revision of another document is rejected (H-48, H
   assert.equal(checkManifest(page, wrong), 'MANIFEST_INVALID');
 });
 
-test('the Rq-Have example is t and the 8-byte digest prefixes of the computed blocks (H-44, H-103)', () => {
+test('the Rq-Have example is t, the 8-byte digest prefixes of the computed blocks and the nonce n (H-44, H-103, H-108)', () => {
   const b = Buffer.concat(computed.blocks.map((x) => Buffer.from(x.sha256, 'base64url').subarray(0, 8)));
   assert.equal(b.length, 8 * computed.blocks.length);
-  assert.equal(kat.rq_have, `t=${computed.template_revision}, b=:${b.toString('base64')}:`);
+  assert.equal(kat.rq_have, `t=${computed.template_revision}, b=:${b.toString('base64')}:, n=${kat.nonce.sf}`);
 });
 
 const TYPE = '<script type="application/rivqen-manifest+json">';
@@ -376,7 +407,7 @@ for (const { name, env } of patchesPl) {
   test(`${name}: R' and B of the binding include the policy line of the snapshot (H-55, H-107)`, () => {
     const entry = pl.bindings.find((e) => e.patch === name);
     assert.deepEqual([entry.base_revision, entry.next_revision], [manifestPl.page_revision, pl.page_revision_b]);
-    assert.equal(env.binding, deltaBinding(URL_U, manifestPl.page_revision, pl.page_revision_b));
+    assert.equal(env.binding, deltaBinding(URL_U, manifestPl.page_revision, NONCE, pl.page_revision_b));
     assert.ok(Array.isArray(applyToBlocks(computed.blocks, env, manifestPl)));
     assert.equal(checkPatchedDocument(page, base.blocks, env, manifestPl), null);
   });

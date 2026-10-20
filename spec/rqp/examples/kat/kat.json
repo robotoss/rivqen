@@ -26,7 +26,12 @@
     "../valid/patch/shop-price.json",
     "../valid/patch/shop-all.json"
   ],
-  "rq_have": "t=t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:",
+  "nonce": {
+    "bytes_hex": "000102030405060708090a0b0c0d0e0f",
+    "n": "AAECAwQFBgcICQoLDA0ODw",
+    "sf": ":AAECAwQFBgcICQoLDA0ODw==:"
+  },
+  "rq_have": "t=t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:, n=:AAECAwQFBgcICQoLDA0ODw==:",
   "with_policy_limits": {
     "full_document": "full-policy.html",
     "manifest": "../valid/manifest/shop-policy.json",
@@ -40,9 +45,10 @@
         "patch": "../valid/patch/shop-policy-price.json",
         "url": "https://shop.example.com/catalog",
         "base_revision": "r1.pONNMoySlMlYw50BpgdvbUlGESnMzZBCOmQ4SlebDxs",
+        "nonce": "AAECAwQFBgcICQoLDA0ODw",
         "next_revision": "r1.kX-KQFiXmNtLNzjvXP7GR3K-_79Fc1l4WEtReCgqwQQ",
-        "preimage": "rqp-d1\nhttps://shop.example.com/catalog\nr1.pONNMoySlMlYw50BpgdvbUlGESnMzZBCOmQ4SlebDxs\nr1.kX-KQFiXmNtLNzjvXP7GR3K-_79Fc1l4WEtReCgqwQQ\n",
-        "binding": "d1.PiAdJ6Vn0at_qUHyUNWRlMpUeWQTtsYdHEiGxyy5Fqc"
+        "preimage": "rqp-d1\nhttps://shop.example.com/catalog\nr1.pONNMoySlMlYw50BpgdvbUlGESnMzZBCOmQ4SlebDxs\nAAECAwQFBgcICQoLDA0ODw\nr1.kX-KQFiXmNtLNzjvXP7GR3K-_79Fc1l4WEtReCgqwQQ\n",
+        "binding": "d1.EUnn36GVzn_lKlAtaSEe_lptZRybHwIXuaw2jQTIwQU"
       }
     ]
   },
@@ -51,25 +57,28 @@
       "patch": "../valid/patch/shop-price.json",
       "url": "https://shop.example.com/catalog",
       "base_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
+      "nonce": "AAECAwQFBgcICQoLDA0ODw",
       "next_revision": "r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI",
-      "preimage": "rqp-d1\nhttps://shop.example.com/catalog\nr1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\nr1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI\n",
-      "binding": "d1.SGYLGtFc4PsLoFIzWsurTmxLupiief5xgV7ZCtXDcpc"
+      "preimage": "rqp-d1\nhttps://shop.example.com/catalog\nr1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\nAAECAwQFBgcICQoLDA0ODw\nr1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI\n",
+      "binding": "d1.orrx-_-Iflnnjs7DvvuOOdxW3FzbZpU_PTlR0jdWw54"
     },
     {
       "patch": "../valid/patch/shop-all.json",
       "url": "https://shop.example.com/catalog",
       "base_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
+      "nonce": "AAECAwQFBgcICQoLDA0ODw",
       "next_revision": "r1.ZvwDE73CDqBdDTTbZio2YJhfiHVi38DPliYIJGwg8-A",
-      "preimage": "rqp-d1\nhttps://shop.example.com/catalog\nr1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\nr1.ZvwDE73CDqBdDTTbZio2YJhfiHVi38DPliYIJGwg8-A\n",
-      "binding": "d1.kkDwRteIOEcuQw6k3WA-OLJ_ve_73ZVFFWy1tZxNOug"
+      "preimage": "rqp-d1\nhttps://shop.example.com/catalog\nr1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\nAAECAwQFBgcICQoLDA0ODw\nr1.ZvwDE73CDqBdDTTbZio2YJhfiHVi38DPliYIJGwg8-A\n",
+      "binding": "d1.EcTw23uAwgp3LYnFbLmTcuAAunRBFfRRIPy_yVPbSFM"
     }
   ],
   "binding_with_query": {
     "url_input": "https://SHOP.Example.com:443/catalog?sort=price&page=2#reviews",
     "url": "https://shop.example.com/catalog?sort=price&page=2",
     "base_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
+    "nonce": "AAECAwQFBgcICQoLDA0ODw",
     "next_revision": "r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI",
-    "preimage": "rqp-d1\nhttps://shop.example.com/catalog?sort=price&page=2\nr1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\nr1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI\n",
-    "binding": "d1.3suck1gLHbFVWy0goIS-Q6G8z3wdhw5_BqlUJ7yv93U"
+    "preimage": "rqp-d1\nhttps://shop.example.com/catalog?sort=price&page=2\nr1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\nAAECAwQFBgcICQoLDA0ODw\nr1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI\n",
+    "binding": "d1.9tOh97k3psr9cLv3_twQfmdbRWJ2c1LXACllNPOGc-8"
   }
 }

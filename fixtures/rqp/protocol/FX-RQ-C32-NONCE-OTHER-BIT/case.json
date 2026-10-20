@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-C32-NONCE-OTHER-BIT",
+  "kind": "client",
+  "description": "A delta page-a -> page-b whose binding has a nonce that differs from the nonce of this request in the last bit only (00 to 0E, 0E in place of 0F): every bit of N is bound, INTEGRITY_ERROR at step 7 (H-108)",
+  "rules": ["RQP-13", "RQP-29"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b",
+        "nonce": "AAECAwQFBgcICQoLDA0ODg"
+      }
+    }
+  }
+}

@@ -9,8 +9,8 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MANIFEST_END, UnsupportedInput, canonicalUrl, deltaBinding, membersOf, pageRevision, sha256b64u } from './common.mjs';
-import { deltaBase, handle, manifestOf, writtenMembers } from './server.mjs';
+import { MANIFEST_END, UnsupportedInput, canonicalUrl, deltaBinding, isNonceText, membersOf, nonceText, pageRevision, sha256b64u } from './common.mjs';
+import { deltaBase, handle, manifestOf, rqHave, writtenMembers } from './server.mjs';
 import { Partition, handleResponse, hasUserinfo, havePrefixes, requestHeaders, snapshotOf, validAllowlistEntry } from './client.mjs';
 import { combined, normalizeHeaders } from './http.mjs';
 import { analyze, documentHeadStart } from './markup.mjs';
@@ -19,6 +19,12 @@ import { UnknownPage, pageBytes } from './pages.mjs';
 export const FIXTURES_DIR = fileURLToPath(new URL('../../../fixtures/rqp/protocol/', import.meta.url));
 export const DEFAULT_TARGET = 'https://shop.example.com/catalog';
 export const RESPONSE_BODY = 'response.body';
+/**
+ * The nonce N of a client case without the member context.nonce (H-108): the
+ * bytes 00 to 0F. The fixtures need fixed values; an SDK makes a new nonce
+ * from a CSPRNG for every request and never uses a fixed value.
+ */
+export const DEFAULT_NONCE = 'AAECAwQFBgcICQoLDA0ODw';
 const ALWAYS_FORBIDDEN = ['rq-revision', 'rq-template-revision']; // H-54, RQP-21
 
 /** A defect in a case.json file. */
@@ -91,7 +97,7 @@ export function loadCase(dir, name) {
     onlyKeys(
       name,
       c.context,
-      ['url', 'final_url', 'redirected', 'build', 'allow_http', 'allowlist', 'navigation', 'snapshot', 'credentials', 'response_fields_visible', 'public_enabled', 'public_origin'],
+      ['url', 'final_url', 'redirected', 'build', 'allow_http', 'allowlist', 'navigation', 'snapshot', 'credentials', 'response_fields_visible', 'public_enabled', 'public_origin', 'nonce'],
       'context',
     );
     onlyKeys(name, c.response, ['status', 'headers', 'body'], 'response');
@@ -173,16 +179,17 @@ export function expectServer(c) {
     // H-104, H-107: the envelope is the binding and the operations. `sha256` is
     // the hash of the current content of each changed block; the checker
     // compares it with the hash of the content that the server sent.
-    // binding_inputs are U, B and R' of the binding, for the diagnosis of a
+    // binding_inputs are U, B, N (H-108) and R' of the binding, for the diagnosis of a
     // server under test; the checker compares only the binding.
     const env = JSON.parse(r.body.toString('utf8'));
     const a = analyze(page);
     const inputs = {
       url: canonicalUrl(request.target),
       base_revision: deltaBase(normalizeHeaders(request.headers)),
+      nonce: nonceText(rqHave(normalizeHeaders(request.headers)).n),
       next_revision: pageRevision(a.template_revision, a.blocks, writtenMembers(config)),
     };
-    if (deltaBinding(inputs.url, inputs.base_revision, inputs.next_revision) !== env.binding) {
+    if (deltaBinding(inputs.url, inputs.base_revision, inputs.nonce, inputs.next_revision) !== env.binding) {
       throw new CaseError(c.id, 'the binding of the reference server is not the binding of its inputs');
     }
     body = {
@@ -284,7 +291,11 @@ function context(c) {
   }
   // H-68: the client stores no snapshot for a URL with user information, so no context snapshot can have one.
   if (snapshotPage !== null && hasUserinfo(url)) throw new CaseError(c.id, 'a context snapshot needs a url without user information (H-68)');
+  // H-108: the nonce of the request, a fixed value so that the request fields and the binding are fixed.
+  const nonce = ctx.nonce === undefined ? DEFAULT_NONCE : ctx.nonce;
+  if (!isNonceText(nonce)) throw new CaseError(c.id, 'context.nonce must be base64url without padding of 16 bytes (H-108)');
   return {
+    nonce,
     url,
     final_url: finalUrl,
     redirected: wasRedirected,
@@ -362,8 +373,10 @@ function fullRecipe(id, recipe, ctx) {
  * built from the page `from`, or one with one defect. Without `ops` the
  * operations are the blocks of `to` that differ from `from`; with
  * `all_blocks` they are all blocks of `to` (a request without `b`, H-7). The
- * binding (H-107) has U = the canonical URL of `binding_url` (default: the
- * final URL of the context), B = the page revision of `from` (with the members
+ * binding (H-107, H-108) has U = the canonical URL of `binding_url` (default:
+ * the final URL of the context), N = `nonce` (default: the nonce of the
+ * context, the request that the server answered; another value is a delta
+ * that the server built for another request), B = the page revision of `from` (with the members
  * of the snapshot when `from` is the snapshot page), and R' = the page
  * revision of the blocks of `from` with the contents of the operations and the
  * template revision of `from`, or the page revision of the page
@@ -381,7 +394,7 @@ function deltaRecipe(id, recipe, ctx) {
   onlyKeys(
     id,
     d,
-    ['from', 'to', 'ops', 'all_blocks', 'binding_url', 'next_revision', 'next_members', 'size', 'duplicate_member', 'old_envelope', 'next_revision_envelope', 'operation_sha256'],
+    ['from', 'to', 'ops', 'all_blocks', 'binding_url', 'nonce', 'next_revision', 'next_members', 'size', 'duplicate_member', 'old_envelope', 'next_revision_envelope', 'operation_sha256'],
     'body.delta',
   );
   for (const flag of ['all_blocks', 'duplicate_member', 'old_envelope', 'next_revision_envelope', 'operation_sha256']) {
@@ -394,6 +407,10 @@ function deltaRecipe(id, recipe, ctx) {
   } catch {
     throw new CaseError(id, `body.delta.binding_url ${d.binding_url} is not a URL`);
   }
+  // H-108: N of the binding is the nonce of the request that the server
+  // answered; default: the nonce of the context (the request of this case).
+  const nonce = d.nonce ?? ctx.nonce;
+  if (!isNonceText(nonce)) throw new CaseError(id, 'body.delta.nonce must be base64url without padding of 16 bytes (H-108)');
   const from = analysisOf(id, d.from);
   // The policy and limits of the snapshot manifest (H-55): next_revision uses
   // next_members when they are given, else the members of the snapshot when the
@@ -454,7 +471,7 @@ function deltaRecipe(id, recipe, ctx) {
       env = {
         ...(d.next_revision_envelope === true
           ? { next_revision: nextRevision }
-          : { binding: deltaBinding(bindingUrl, baseRevision, nextRevision) }),
+          : { binding: deltaBinding(bindingUrl, baseRevision, nonce, nextRevision) }),
         operations: ops.map((op) => ({
           block_id: op.block_id,
           content: op.content,
@@ -465,7 +482,7 @@ function deltaRecipe(id, recipe, ctx) {
     const text = JSON.stringify(env);
     if (d.duplicate_member !== true) return Buffer.from(text, 'utf8');
     if (env.binding === undefined) throw new CaseError(id, 'duplicate_member needs the envelope with the binding');
-    return Buffer.from(withDuplicateMember(text, 'binding', deltaBinding(bindingUrl, baseRevision, baseRevision)), 'utf8');
+    return Buffer.from(withDuplicateMember(text, 'binding', deltaBinding(bindingUrl, baseRevision, nonce, baseRevision)), 'utf8');
   };
   if (d.size === undefined) return build();
   // Fill the content of the only operation with "x" up to the exact envelope size.
@@ -529,6 +546,7 @@ export function expectClient(c) {
         public_enabled: ctx.public_enabled,
         public_origin: ctx.public_origin,
         navigation: ctx.navigation,
+        nonce: ctx.nonce,
         snapshot: describeSnapshot(ctx.snapshotPage, ctx.snapshot),
       },
       request: { method: 'GET', headers: requestHeaders(ctx) },

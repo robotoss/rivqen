@@ -13,6 +13,7 @@
     "public_enabled": false,
     "public_origin": false,
     "navigation": "first-visit",
+    "nonce": "AAECAwQFBgcICQoLDA0ODw",
     "snapshot": null
   },
   "request": {
@@ -32,7 +33,7 @@
     ],
     "body": "response.body",
     "body_bytes": 115,
-    "body_sha256": "B1zGQMWrjm7LvVo3GO05DUJTAJE3M4yGTStl17fRKys"
+    "body_sha256": "SSYxtscrwzzL0Bjp9vaoAPSE0L3q6nOURBwKPd_lmCU"
   },
   "result": {
     "outcome": "rejected",

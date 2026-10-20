@@ -85,12 +85,19 @@ export function parseList(value) {
   });
 }
 
-/** Parse a Dictionary into a Map key -> member. A later key overwrites an earlier one (section 4.2.2). */
-export function parseDictionary(value) {
+/**
+ * Parse a Dictionary into a Map key -> member. A later key overwrites an
+ * earlier one (section 4.2.2). `counts`, when given, is a Map that gets the
+ * number of times each key appears in the field value (a caller that needs a
+ * stricter rule for a repeated key, H-108). On a parse failure its content is
+ * not defined.
+ */
+export function parseDictionary(value, counts = null) {
   return parseField(value, (input) => {
     const dict = new Map();
     while (!input.empty) {
       const key = parseKey(input);
+      if (counts !== null) counts.set(key, (counts.get(key) ?? 0) + 1);
       let member;
       if (input.peek() === '=') {
         input.take();

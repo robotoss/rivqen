@@ -16,7 +16,8 @@
 // declares the origin public (the partition of a new snapshot, H-61), whether
 // the app turned the public partition on (H-81), and the partition of the
 // context snapshot (request or public; H-65; a public context snapshot with
-// the setting off is not used, usableSnapshot). A URL is the
+// the setting off is not used, usableSnapshot), and the client nonce of the
+// request (H-108; the request keeps it for the delta check). A URL is the
 // WHATWG parse of its string (DL-040 L-3: an SDK takes the URL object of its
 // network stack).
 //
@@ -32,15 +33,19 @@
 // and limits are modelled as part of the page revision (H-55), as the patch
 // size hint and, for mode, as the partition choice.
 
+import { randomBytes } from 'node:crypto';
 import {
   Code,
   asciiLower,
   DELTA_TYPE,
   LIMITS,
+  NONCE_BYTES,
   canonicalUrl,
   deltaBinding,
   digestPrefix,
+  isNonceText,
   membersOf,
+  nonceText,
   pageRevision,
   sha256b64u,
 } from './common.mjs';
@@ -171,9 +176,11 @@ export function hasUserinfo(url) {
  * H-62): the client sends RQP fields to `url` only when the URL has no user
  * name and no password, its origin is in the allowlist, and only for https;
  * for http only in a debug build with the app flag. `url` defaults to the
- * request URL.
+ * request URL. A value that the WHATWG URL parser rejects (or no value) is
+ * not allowed (fail closed; S6 security re-review B6): never throws.
  */
 export function rqpAllowed(ctx, url = ctx.url) {
+  if (url === null || url === undefined || !URL.canParse(url)) return false;
   if (hasUserinfo(url) || !inAllowlist(ctx, url)) return false;
   const scheme = new URL(url).protocol;
   if (scheme === 'https:') return true;
@@ -215,9 +222,31 @@ export function usableSnapshot(ctx) {
 }
 
 /**
+ * H-108: a new client nonce, the text N of 16 bytes from the CSPRNG of
+ * Node.js (crypto.randomBytes). An SDK makes one for every delta request and
+ * never uses it again.
+ */
+export function newNonce() {
+  return nonceText(randomBytes(NONCE_BYTES));
+}
+
+/**
+ * H-108: the nonce N of the request of the context (ctx.nonce, the text of
+ * 16 bytes; isNonceText), or null when the context has no valid nonce (for
+ * example an SDK whose CSPRNG failed). The client keeps N with the request:
+ * the delta check of section 6.3 uses the N that this request sent.
+ */
+export function requestNonce(ctx) {
+  return isNonceText(ctx.nonce) ? ctx.nonce : null;
+}
+
+/**
  * Section 6.2: the RQP request fields. navigation is "first-visit", "delta" or
  * "fallback" (section 6.3, item 5). Header lines that are not RQP fields are
- * not shown. Validators come only from a usable snapshot (H-81).
+ * not shown. Validators come only from a usable snapshot (H-81). A delta
+ * request has the nonce N of the context in the Rq-Have member n (H-108); a
+ * context without a valid nonce offers no delta (no Rq-Have, no delta media
+ * type) and keeps If-None-Match, so a 304 stays possible (fail closed).
  */
 export function requestHeaders(ctx) {
   if (!rqpAllowed(ctx)) return [['accept', 'text/html']];
@@ -228,11 +257,14 @@ export function requestHeaders(ctx) {
   const snap = usableSnapshot(ctx);
   if (ctx.navigation !== 'delta' || snap === null) return [...base, ['accept', 'text/html']];
   const { analysis, page_revision: pageRev } = snap;
+  const nonce = requestNonce(ctx);
+  if (nonce === null) return [...base, ['accept', 'text/html'], ['if-none-match', `"${pageRev}"`]];
+  const n = Buffer.from(nonce, 'base64url').toString('base64');
   return [
     ...base,
     ['accept', `text/html, ${DELTA_TYPE}`],
     ['if-none-match', `"${pageRev}"`],
-    ['rq-have', `t=${analysis.template_revision}, b=:${havePrefixes(analysis.blocks)}:`],
+    ['rq-have', `t=${analysis.template_revision}, b=:${havePrefixes(analysis.blocks)}:, n=:${n}:`],
   ];
 }
 
@@ -351,7 +383,7 @@ export function decodedAsUtf8(responseHeaders, body) {
  *
  * @param {{ url: string, final_url?: string, redirected?: boolean, build: string, allow_http: boolean, navigation: string,
  *   snapshot: object|null, allowlist: string[], credentials?: boolean|null,
- *   response_fields_visible?: boolean, public_enabled?: boolean, public_origin?: boolean }} ctx
+ *   response_fields_visible?: boolean, public_enabled?: boolean, public_origin?: boolean, nonce?: string|null }} ctx
  * @param {{ status: number, headers: Array<[string, string]>, body: Uint8Array|null }} response
  */
 export function handleResponse(ctx, response) {
@@ -464,15 +496,37 @@ export function splice(document, blocks, replacements) {
 }
 
 /**
- * Verify a delta against a snapshot. Returns { code } for the first failed
- * check, or { snapshot } with the new snapshot. `offered` is diff-engine step 2.
- * `maxPatchBytes` is the client resource limit (initial value 256 KiB; the
- * fixtures use the initial value). `url` is the final URL of the delta
- * response, the U of the binding (H-107); the default is the cache key URL of
- * the snapshot, which handleDelta has checked to be the same (step 1, H-58).
- * Without a URL there is no binding to check: INTEGRITY_ERROR (fail closed).
+ * The binding that the client expects (manifest-patch section 2.2, step 7;
+ * H-107, H-108), or null when an input is missing or has no valid form: `url`
+ * is not a string that the WHATWG URL parser accepts, `base` is not a page
+ * revision, `nonce` is not the text of 16 bytes. Never throws (S6 security
+ * re-review B6): the caller turns null into INTEGRITY_ERROR.
  */
-export function verifyDelta(snap, body, offered, maxPatchBytes = LIMITS.maxPatchBytes, url = snap.url) {
+export function expectedBinding(url, base, nonce, next) {
+  if (typeof url !== 'string' || !URL.canParse(url)) return null;
+  try {
+    return deltaBinding(canonicalUrl(url), base, nonce, next);
+  } catch (error) {
+    if (error instanceof TypeError) return null; // an input without its form: no binding can match
+    throw error;
+  }
+}
+
+/**
+ * Verify a delta against a snapshot. Returns { code } for the first failed
+ * check, or { snapshot } with the new snapshot. Never throws for any body,
+ * URL or nonce. `offered` is diff-engine step 2. `maxPatchBytes` is the
+ * client resource limit (initial value 256 KiB; the fixtures use the initial
+ * value). `url` is the final URL of the delta response, the U of the binding
+ * (H-107); the default is the cache key URL of the snapshot, which
+ * handleDelta has checked to be the same (step 1, H-58). `nonce` is the text
+ * N of the nonce that the request of this response sent (H-108). When the
+ * client cannot compute an input of the binding (no URL, a URL that does not
+ * parse, no valid nonce), no binding can match: INTEGRITY_ERROR at step 7
+ * (fail closed, S6 security re-review B6), and the caller does one fallback
+ * load.
+ */
+export function verifyDelta(snap, body, offered, maxPatchBytes = LIMITS.maxPatchBytes, url = snap.url, nonce = null) {
   if (!offered) return { code: Code.PATCH_INVALID };
   const limit = Math.min(maxPatchBytes, snap.members.limits?.max_patch_bytes ?? Infinity);
   if (body.length > limit) return { code: Code.PATCH_TOO_LARGE };
@@ -492,22 +546,21 @@ export function verifyDelta(snap, body, offered, maxPatchBytes = LIMITS.maxPatch
     if (bytes.length > LIMITS.maxBlockBytes) return { code: Code.PATCH_TOO_LARGE };
     replacements.set(indices[k], bytes);
   }
-  // Steps 4 to 7 (H-44, H-104, H-107): the client computes the hash of each new
-  // content and keeps the full snapshot hash for each block without an
+  // Steps 4 to 7 (H-44, H-104, H-107, H-108): the client computes the hash of
+  // each new content and keeps the full snapshot hash for each block without an
   // operation; with the template revision and the policy line of the snapshot
   // (H-55) they give the next page revision R'. The binding of U (the final
-  // URL), B (the page revision of the snapshot, the value of If-None-Match) and
-  // R' must be the binding of the envelope. This is the only integrity check of
-  // the envelope.
+  // URL), B (the page revision of the snapshot, the value of If-None-Match), N
+  // (the nonce that this request sent) and R' must be the binding of the
+  // envelope. This is the only integrity check of the envelope.
   const next = analysis.blocks.map((b, i) => ({
     id: b.id,
     format: b.format,
     sha256: replacements.has(i) ? sha256b64u(replacements.get(i)) : b.sha256,
   }));
   const nextRevision = pageRevision(analysis.template_revision, next, members);
-  if (typeof url !== 'string' || deltaBinding(canonicalUrl(url), snap.page_revision, nextRevision) !== env.binding) {
-    return { code: Code.INTEGRITY_ERROR };
-  }
+  const expected = expectedBinding(url, snap.page_revision, nonce, nextRevision);
+  if (expected === null || expected !== env.binding) return { code: Code.INTEGRITY_ERROR };
   // Step 8 (H-48).
   const patched = splice(document, analysis.blocks, replacements);
   if (patched.length > LIMITS.maxDocumentBytes) return { code: Code.PATCH_TOO_LARGE };
@@ -540,12 +593,14 @@ function handleDelta(ctx, headers, body) {
   const sameKey = rqpAllowed(ctx, finalUrlOf(ctx)) && canonicalUrl(finalUrlOf(ctx)) === canonicalUrl(ctx.url);
   // Step 2: the request offered a delta. Steps 1 and 2 have the same code (PATCH_INVALID).
   // H-81: a public snapshot with the app setting off is no snapshot, so no delta was offered.
+  // H-108: a request without a valid nonce sent no Rq-Have (requestHeaders), so no delta was offered.
   const snap = usableSnapshot(ctx);
-  const offered = sameKey && ctx.navigation === 'delta' && snap !== null;
+  const nonce = requestNonce(ctx);
+  const offered = sameKey && ctx.navigation === 'delta' && snap !== null && nonce !== null;
   // H-107: U of the binding is the final URL of the response (the URL of the
   // request that the server answered). Step 1 has made sure it has the cache key
-  // of the snapshot.
-  const verified = snap === null ? { code: Code.PATCH_INVALID } : verifyDelta(snap, body, offered, LIMITS.maxPatchBytes, finalUrlOf(ctx));
+  // of the snapshot. H-108: N is the nonce that this request sent.
+  const verified = snap === null ? { code: Code.PATCH_INVALID } : verifyDelta(snap, body, offered, LIMITS.maxPatchBytes, finalUrlOf(ctx), nonce);
   if (verified.code !== undefined) {
     return result('rejected', {
       error: verified.code,
@@ -562,13 +617,19 @@ function handleDelta(ctx, headers, body) {
 // Harness interface (check.mjs --client). A context snapshot is plain data:
 // { document, template_revision, page_revision, blocks, policy?, limits?,
 // partition? } (partition "request", the default, or "public"; H-65).
+// context.nonce is the text N of the nonce of the request (H-108). The
+// fixtures give it, so that the request fields and the binding are fixed
+// values; a context without the member gets a new nonce from newNonce (as an
+// SDK makes one for every request), and a context with another value (for
+// example null) has no valid nonce (requestNonce).
 
 function internal(context) {
-  if (context.snapshot === null) return { ...context, snapshot: null };
+  const nonce = context.nonce === undefined ? newNonce() : context.nonce;
+  if (context.snapshot === null) return { ...context, nonce, snapshot: null };
   const s = context.snapshot;
   const snap = snapshotOf(Buffer.from(s.document), membersOf(s), context.url, s.partition ?? Partition.REQUEST);
   if (snap.page_revision !== s.page_revision) throw new Error('the context snapshot does not match its document');
-  return { ...context, snapshot: snap };
+  return { ...context, nonce, snapshot: snap };
 }
 
 /** The request fields that the client sends for a context (negotiation section 6.2). */

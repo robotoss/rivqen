@@ -111,17 +111,18 @@ export function pageRevision(templateRev, blocks, m = {}) {
 }
 
 /**
- * The preimage of the delta binding (manifest-patch.md section 2.2, H-107) as a string:
- * "rqp-d1" LF U LF B LF R' LF. U is the canonical URL (WHATWG serialization without the
- * fragment), B the base page revision, R' the next page revision.
+ * The preimage of the delta binding (manifest-patch.md section 2.2, H-107, H-108) as a string:
+ * "rqp-d1" LF U LF B LF N LF R' LF. U is the canonical URL (WHATWG serialization without the
+ * fragment), B the base page revision, N the client nonce of the request (base64url without
+ * padding of 16 bytes), R' the next page revision.
  */
-export function deltaBindingPreimage(url, base, next) {
-  return 'rqp-d1\n' + url + '\n' + base + '\n' + next + '\n';
+export function deltaBindingPreimage(url, base, nonce, next) {
+  return 'rqp-d1\n' + url + '\n' + base + '\n' + nonce + '\n' + next + '\n';
 }
 
-/** The delta binding value of rqp/1 (H-107): "d1." + B64U(SHA-256(UTF-8 of the preimage)). */
-export function deltaBinding(url, base, next) {
-  return 'd1.' + sha256b64u(Buffer.from(deltaBindingPreimage(url, base, next), 'utf8'));
+/** The delta binding value of rqp/1 (H-107, H-108): "d1." + B64U(SHA-256(UTF-8 of the preimage)). */
+export function deltaBinding(url, base, nonce, next) {
+  return 'd1.' + sha256b64u(Buffer.from(deltaBindingPreimage(url, base, nonce, next), 'utf8'));
 }
 
 /** The URL U of the binding: the WHATWG URL serialization without the fragment (H-107, H-58). */

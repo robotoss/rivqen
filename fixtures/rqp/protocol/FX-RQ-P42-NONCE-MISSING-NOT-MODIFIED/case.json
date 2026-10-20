@@ -1,0 +1,24 @@
+{
+  "id": "FX-RQ-P42-NONCE-MISSING-NOT-MODIFIED",
+  "description": "The client has the current page and sends no n: 304 as FX-RQ-P05-NOT-MODIFIED; the nonce is a condition of a delta only (H-108)",
+  "rules": ["RQP-03", "RQP-29"],
+  "page": "page-a",
+  "client_page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-a}}"],
+      ["rq-have", "t={{t1:page-a}}, b={{have:page-a}}"]
+    ]
+  }
+}

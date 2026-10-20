@@ -14,7 +14,7 @@ import { test } from 'node:test';
 import { compareClient, compareServer, runClient, runServer } from '../check.mjs';
 import * as client from '../src/client.mjs';
 import * as server from '../src/server.mjs';
-import { FIXTURES_DIR, fixtureNames, readJsonFile } from '../src/fixtures.mjs';
+import { DEFAULT_NONCE, FIXTURES_DIR, fixtureNames, readJsonFile } from '../src/fixtures.mjs';
 import { page } from './helpers.mjs';
 
 const CHECK = fileURLToPath(new URL('../check.mjs', import.meta.url));
@@ -89,9 +89,13 @@ test('detects a delta with a wrong revision, a wrong content or a schema defect'
   const send = (e) => compareServer(expected, p, { ...reference, headers: reference.headers.filter(([n]) => n !== 'content-length'), body: Buffer.from(typeof e === 'string' ? e : JSON.stringify(e)) });
   assert.deepEqual(send(env), []);
   const other = load('FX-RQ-P05-NOT-MODIFIED').expected.headers_required.etag.slice(1, -1);
-  // H-107: another binding fails, and the failure names the inputs U, B and R' of the expected one.
+  // H-107, H-108: another binding fails, and the failure names the inputs U, B, N and R' of the expected one.
   const wrong = send({ ...env, binding: load('FX-RQ-P09-DELTA-QUERY').expected.body.binding });
-  assert.ok(wrong.some((f) => f.startsWith('body: binding d1.') && f.includes(`(U https://shop.example.com/catalog, B ${expected.body.binding_inputs.base_revision}, R' `)), wrong.join('; '));
+  const inputs = expected.body.binding_inputs;
+  assert.ok(wrong.some((f) => f.startsWith('body: binding d1.') && f.includes(`(U https://shop.example.com/catalog, B ${inputs.base_revision}, N ${inputs.nonce}, R' `)), wrong.join('; '));
+  // H-108: a server that ignores the nonce of the request (the binding of another N) fails.
+  const otherNonce = send({ ...env, binding: load('FX-RQ-P42-NONCE-OTHER').expected.body.binding });
+  assert.ok(otherNonce.some((f) => f.startsWith('body: binding d1.')), otherNonce.join('; '));
   // The envelope of H-104 (next_revision in place of the binding) fails the schema.
   const { binding: _binding, ...rest } = env;
   assert.ok(send({ next_revision: other, ...rest }).some((f) => f.includes('fails the schema')));
@@ -221,6 +225,22 @@ test('the client fixtures catch a client that ignores H-67, H-68 or the WHATWG p
   // user information and takes the host after it.
   const rfc = (u) => u.replace(/^https:\/\/[^/?#]*\\@/, 'https://');
   assert.deepEqual(await failing((c) => ({ ...c, final_url: rfc(c.final_url) })), ['FX-RQ-C25-FINAL-BACKSLASH-ALLOWED-HOST', 'FX-RQ-C25-FINAL-BACKSLASH-OTHER-HOST']);
+});
+
+test('H-108: the client fixtures catch a client that does not use the nonce of the context', async () => {
+  const failing = async (change) => {
+    const mod = { clientStep: (context, response) => client.clientStep(change(context), response), clientRequest: (context) => client.clientRequest(change(context)) };
+    return (await runClient(mod)).filter((r) => r.failures.length > 0).map((r) => r.name);
+  };
+  // A client that sends one fixed nonce for every request.
+  assert.deepEqual(await failing((c) => ({ ...c, nonce: DEFAULT_NONCE })), ['FX-RQ-C32-NONCE-ACCEPTED']);
+  // A client that makes its own nonce (not the one of the harness), and a client that sends no nonce.
+  for (const nonce of [undefined, null]) {
+    const names = await failing((c) => ({ ...c, nonce }));
+    for (const name of ['FX-RQ-C31-ALL-BLOCKS-ACCEPTED', 'FX-RQ-C31-QUERY-ACCEPTED', 'FX-RQ-C32-NONCE-ACCEPTED', 'FX-RQ-C32-NONCE-ROLLBACK-A-B-A']) {
+      assert.ok(names.includes(name), `${String(nonce)}: ${name}`);
+    }
+  }
 });
 
 test('a missing response.body fails that client fixture only', async () => {

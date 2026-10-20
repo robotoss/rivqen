@@ -13,6 +13,7 @@
     "public_enabled": false,
     "public_origin": false,
     "navigation": "delta",
+    "nonce": "AAECAwQFBgcICQoLDA0ODw",
     "snapshot": {
       "page": "page-a",
       "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
@@ -44,7 +45,7 @@
       ["rq-capabilities","(block-patch)"],
       ["accept","text/html, application/vnd.rivqen.delta+json"],
       ["if-none-match","\"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\""],
-      ["rq-have","t=t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:"]
+      ["rq-have","t=t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:, n=:AAECAwQFBgcICQoLDA0ODw==:"]
     ]
   },
   "response": {
@@ -56,7 +57,7 @@
     ],
     "body": "response.body",
     "body_bytes": 131,
-    "body_sha256": "GnN63VW06QY2DqO9UIIyr2toAMnq33RiZWHhAqBJvtA"
+    "body_sha256": "jGxDnpodnze4199nVANfs1JgzHI2qt-xnDgW5sKzTtE"
   },
   "result": {
     "outcome": "rejected",

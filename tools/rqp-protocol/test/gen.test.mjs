@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { after, test } from 'node:test';
 import { checkPages, run } from '../gen.mjs';
-import { CaseError, FIXTURES_DIR, expectFixture, fixtureNames, formatJson, readJsonFile, substitute } from '../src/fixtures.mjs';
+import { CaseError, DEFAULT_NONCE, FIXTURES_DIR, expectFixture, fixtureNames, formatJson, readJsonFile, substitute } from '../src/fixtures.mjs';
 import { GENERATED, pageBytes } from '../src/pages.mjs';
 import { deltaBinding, pageRevision, sha256b64u } from '../src/common.mjs';
 import { analyze } from '../src/markup.mjs';
@@ -30,7 +30,7 @@ function copyFixture(name) {
 
 test('gen.mjs --check: every committed page and expected file is current', () => {
   const out = execFileSync(process.execPath, [GEN, '--check'], { encoding: 'utf8' });
-  assert.match(out, /241 fixtures are current/);
+  assert.match(out, /253 fixtures are current/);
 });
 
 test('every catalog case P-01 to P-41 and C-01 to C-31 has at least one fixture', () => {
@@ -50,7 +50,7 @@ test('H-107: in each rejected C-31 case only B or U of the binding differs; R\' 
     const next = pageRevision(snap.template_revision, snap.blocks.map((b) => ({ ...b, sha256: hashes.get(b.id) ?? b.sha256 })));
     assert.equal(next, analyze(pageBytes('page-b')).page_revision, name);
     // The binding of the snapshot (U of the context, B of the snapshot) with this R' is not the binding of the envelope.
-    assert.notEqual(deltaBinding(expected.context.url, snap.page_revision, next), env.binding, name);
+    assert.notEqual(deltaBinding(expected.context.url, snap.page_revision, expected.context.nonce, next), env.binding, name);
   }
 });
 
@@ -396,12 +396,16 @@ test('delta recipe: B and R\' of the binding use the members of the context snap
   const b = analyze(pageBytes('page-b'));
   const aRev = pageRevision(a.template_revision, a.blocks, members);
   const bRev = pageRevision(b.template_revision, b.blocks, members);
-  assert.equal(env('page-a').binding, deltaBinding(T, aRev, bRev));
-  assert.equal(env('page-b').binding, deltaBinding(T, b.page_revision, a.page_revision));
+  assert.equal(env('page-a').binding, deltaBinding(T, aRev, DEFAULT_NONCE, bRev));
+  assert.equal(env('page-b').binding, deltaBinding(T, b.page_revision, DEFAULT_NONCE, a.page_revision));
   // H-104, H-107: the envelope has exactly the binding and operations of block_id and content.
-  assert.deepEqual(env('page-a'), { binding: deltaBinding(T, aRev, bRev), operations: [{ block_id: 'price', content: '130.00' }] });
+  assert.deepEqual(env('page-a'), { binding: deltaBinding(T, aRev, DEFAULT_NONCE, bRev), operations: [{ block_id: 'price', content: '130.00' }] });
   // binding_url replaces U; all_blocks writes every block of `to`.
-  assert.equal(env('page-a', { binding_url: 'https://shop.example.com/x#f' }).binding, deltaBinding('https://shop.example.com/x', aRev, bRev));
+  assert.equal(env('page-a', { binding_url: 'https://shop.example.com/x#f' }).binding, deltaBinding('https://shop.example.com/x', aRev, DEFAULT_NONCE, bRev));
+  // H-108: nonce replaces N (a delta that the server built for another request).
+  const other = 'EBESExQVFhcYGRobHB0eHw';
+  assert.equal(env('page-a', { nonce: other }).binding, deltaBinding(T, aRev, other, bRev));
+  assert.throws(() => env('page-a', { nonce: 'AAECAwQFBgcICQoLDA0ODw==' }), (e) => isCaseError(e) && /nonce/.test(e.message));
   assert.deepEqual(env('page-a', { all_blocks: true }).operations.map((op) => op.block_id), ['title', 'price', 'cart']);
   // next_revision_envelope: the form of H-104 (next_revision = R' in place of the binding).
   assert.deepEqual(env('page-a', { next_revision_envelope: true }), { next_revision: bRev, operations: [{ block_id: 'price', content: '130.00' }] });
@@ -423,8 +427,8 @@ test('delta and full recipes: the duplicate member is written first, with anothe
   const files = (body) => withCase('FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, response: { ...c.response, body } }))().files['response.body'].toString('utf8');
   const a = analyze(pageBytes('page-a'));
   const T = 'https://shop.example.com/catalog';
-  const first = deltaBinding(T, a.page_revision, a.page_revision);
-  const second = deltaBinding(T, a.page_revision, analyze(pageBytes('page-b')).page_revision);
+  const first = deltaBinding(T, a.page_revision, DEFAULT_NONCE, a.page_revision);
+  const second = deltaBinding(T, a.page_revision, DEFAULT_NONCE, analyze(pageBytes('page-b')).page_revision);
   assert.ok(files({ delta: { from: 'page-a', to: 'page-b', duplicate_member: true } }).startsWith(`{"binding":"${first}","binding":"${second}",`));
   assert.ok(files({ full: 'page-a', duplicate_member: true }).includes('{"protocol":"rqp/1","protocol":"rqp/1",'));
   // old_manifest: the manifest before H-103 (template_revision and the block list).
@@ -436,13 +440,32 @@ test('delta and full recipes: the duplicate member is written first, with anothe
   assert.throws(() => files({ full: 'page-a', old_manifest: 'yes' }), isCaseError);
 });
 
-test('server delta expected: binding_inputs are U, B and R\' of the binding, for the diagnosis', () => {
+test('server delta expected: binding_inputs are U, B, N and R\' of the binding, for the diagnosis', () => {
   const e = expectFixture(FIXTURES_DIR, 'FX-RQ-P09-DELTA-QUERY').files['expected.json'];
   const i = e.body.binding_inputs;
   assert.equal(i.url, 'https://shop.example.com/catalog?sort=price&page=2');
   assert.equal(i.base_revision, analyze(pageBytes('page-big-a')).page_revision);
   assert.equal(i.next_revision, analyze(pageBytes('page-big-b')).page_revision);
-  assert.equal(e.body.binding, deltaBinding(i.url, i.base_revision, i.next_revision));
+  assert.equal(i.nonce, DEFAULT_NONCE);
+  assert.deepEqual(Object.keys(i), ['url', 'base_revision', 'nonce', 'next_revision']);
+  assert.equal(e.body.binding, deltaBinding(i.url, i.base_revision, i.nonce, i.next_revision));
+  // H-108: N is the base64url text of the decoded n of the request (FX-RQ-P42-NONCE-OTHER: + and / in the Byte Sequence).
+  const other = expectFixture(FIXTURES_DIR, 'FX-RQ-P42-NONCE-OTHER').files['expected.json'].body.binding_inputs;
+  assert.equal(other.nonce, '8PHy8_T19vf4-fr7_P3-_w');
+});
+
+test('H-108: context.nonce is DEFAULT_NONCE by default and is written in expected.json; the request sends it in n; another form is a defective case', () => {
+  const run = (nonce) => withCase('FX-RQ-C31-ALL-BLOCKS-ACCEPTED', (c) => ({ ...c, context: { ...c.context, ...(nonce === undefined ? {} : { nonce }) } }))().files['expected.json'];
+  const def = run(undefined);
+  assert.equal(def.context.nonce, DEFAULT_NONCE);
+  assert.ok(def.request.headers.find(([n]) => n === 'rq-have')[1].endsWith(', n=:AAECAwQFBgcICQoLDA0ODw==:'));
+  const other = run('EBESExQVFhcYGRobHB0eHw');
+  assert.equal(other.context.nonce, 'EBESExQVFhcYGRobHB0eHw');
+  // The delta recipe takes the nonce of the context by default, so the delta of this request is applied.
+  assert.equal(other.result.outcome, 'patched');
+  for (const bad of ['AAECAwQFBgcICQoLDA0ODw==', 'AAECAwQFBgcICQoLDA0O', 7, null]) {
+    assert.throws(() => run(bad), (e) => isCaseError(e) && /nonce/.test(e.message), String(bad));
+  }
 });
 
 test('delta recipe "size": exactly one operation with empty content and no sha256, and a reachable size', () => {

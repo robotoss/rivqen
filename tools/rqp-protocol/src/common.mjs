@@ -121,22 +121,51 @@ export function canonicalUrl(url) {
   return u.href;
 }
 
+/** The length of the client nonce of a delta request in bytes (H-108). */
+export const NONCE_BYTES = 16;
+
+/** The text N of a nonce: canonical base64url without padding of 16 bytes (22 characters, H-108). */
+const NONCE_TEXT = /^[A-Za-z0-9_-]{21}[AQgw]$/;
+
 /**
- * The preimage of the delta binding (manifest-patch section 2.2, H-107):
- * "rqp-d1" LF U LF B LF R' LF. `url` is U (canonicalUrl), `base` the base page
- * revision B, `next` the next page revision R'. Throws a TypeError when U has
- * a line feed or B or R' is not a page revision: one preimage has one parse.
+ * True when `text` is the text N of a nonce (H-108): base64url without
+ * padding of exactly 16 bytes, in the canonical form (the last character has
+ * no set pad bits), so one nonce has one text. Never throws.
  */
-export function deltaBindingPreimage(url, base, next) {
-  if (typeof url !== 'string' || url.includes('\n')) throw new TypeError('the binding URL is not a canonical URL');
-  if (typeof base !== 'string' || !REVISION.test(base)) throw new TypeError('the binding base is not a page revision');
-  if (typeof next !== 'string' || !REVISION.test(next)) throw new TypeError('the binding next revision is not a page revision');
-  return `rqp-d1\n${url}\n${base}\n${next}\n`;
+export function isNonceText(text) {
+  return typeof text === 'string' && NONCE_TEXT.test(text);
 }
 
-/** The delta binding value (H-107): "d1." + B64U(SHA-256(UTF-8 of the preimage)). */
-export function deltaBinding(url, base, next) {
-  return `d1.${sha256b64u(deltaBindingPreimage(url, base, next))}`;
+/**
+ * The text N of nonce bytes (H-108): base64url without padding. The server
+ * decodes the Byte Sequence of the Rq-Have member n and writes it in this
+ * form, so a padded and an unpadded member give the same N. Throws a
+ * TypeError for a value that is not a Buffer of 16 bytes.
+ */
+export function nonceText(bytes) {
+  if (!Buffer.isBuffer(bytes) || bytes.length !== NONCE_BYTES) throw new TypeError('the nonce is not 16 bytes');
+  return bytes.toString('base64url');
+}
+
+/**
+ * The preimage of the delta binding (manifest-patch section 2.2, H-107,
+ * H-108): "rqp-d1" LF U LF B LF N LF R' LF. `url` is U (canonicalUrl), `base`
+ * the base page revision B, `nonce` the text N of the client nonce of the
+ * request (isNonceText), `next` the next page revision R'. Throws a TypeError
+ * when U has a line feed or B, N or R' does not have its form: one preimage
+ * has one parse.
+ */
+export function deltaBindingPreimage(url, base, nonce, next) {
+  if (typeof url !== 'string' || url.includes('\n')) throw new TypeError('the binding URL is not a canonical URL');
+  if (typeof base !== 'string' || !REVISION.test(base)) throw new TypeError('the binding base is not a page revision');
+  if (!isNonceText(nonce)) throw new TypeError('the binding nonce is not the text of 16 bytes');
+  if (typeof next !== 'string' || !REVISION.test(next)) throw new TypeError('the binding next revision is not a page revision');
+  return `rqp-d1\n${url}\n${base}\n${nonce}\n${next}\n`;
+}
+
+/** The delta binding value (H-107, H-108): "d1." + B64U(SHA-256(UTF-8 of the preimage)). */
+export function deltaBinding(url, base, nonce, next) {
+  return `d1.${sha256b64u(deltaBindingPreimage(url, base, nonce, next))}`;
 }
 
 /**

@@ -31,8 +31,8 @@
       ["cache-control","no-cache"]
     ],
     "body": "response.body",
-    "body_bytes": 817,
-    "body_sha256": "u5xQSm1SsAa6DPVZZ4sjerpphatpcC0OfZ6A2gE6lrk"
+    "body_bytes": 480,
+    "body_sha256": "5R8VH0frYhaeOvAe7fGf_mTRcA82woDIlNWuq75yGmM"
   },
   "result": {
     "outcome": "normal",

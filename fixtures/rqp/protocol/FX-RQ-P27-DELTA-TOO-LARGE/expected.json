@@ -26,15 +26,7 @@
       "protocol": "rqp/1",
       "origin": "https://shop.example.com",
       "path": "/catalog",
-      "template_revision": "t1.3petNrlgiYCi30b_qoaEjGWQRnolHXj4MKTRGg7py74",
-      "page_revision": "r1.X7O14ASHjflBMvoCkC65PzNPuo5JAcGP58gq-QrcJhM",
-      "blocks": [
-        {
-          "id": "huge",
-          "format": "html",
-          "sha256": "UlhQGQvLDdz0TNrRjw9JpGaU9cELMxBmDO_o4YqZB0o"
-        }
-      ]
+      "page_revision": "r1.X7O14ASHjflBMvoCkC65PzNPuo5JAcGP58gq-QrcJhM"
     }
   }
 }

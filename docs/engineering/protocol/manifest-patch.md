@@ -2,7 +2,7 @@
 
 This page defines the two RQP documents of `rqp/1`: the **page manifest** (what a page version contains) and the **patch envelope** (how a client goes from one page version to the next). It also defines the block hashes and the revisions.
 
-**Status:** <Badge type="info" text="DESIGN" /> Normative for `rqp/1` from WP-17 S2. Human decisions ([WP-17 S1](/engineering/plan/sprints/WP-17-S1) §1, [WP-17 S2](/engineering/plan/sprints/WP-17-S2) §1): H-1 (inline manifest only), H-2 (full SHA-256, base64url), H-8 (revisions `t1.` and `r1.`), H-9 (no `page_id` and no `sequence` over HTTP), H-10 (hash in each operation), H-11 (JSON envelope, content as a string, no JCS), H-28 (ASCII case-insensitive match of the manifest type), H-44 (client block digests; the client verifies `next_revision`), H-45 (caching of full and delta responses), H-46 (`If-None-Match` carries the client revision), H-47 (only `replace_block`), H-48 (client markup analysis of the original and the patched document; attribute rule), H-49 (`http` only in debug builds; manifest position, replaced by H-72), H-50 (error codes, `maxManifestBytes`), H-51 (the same full document for every request), H-55 (`policy` and `limits` in the page revision), H-56 (the server sends the full document when a changed block fails the attribute rule), H-58 (binding to the final URL), H-59 (`vbscript:` and `data:` in the attribute rule), H-60 (privacy of the digests), H-61 (the `public` partition), H-62 (allowlisted final request, unknown credentials, UTF-8 only), H-63 (`Set-Cookie` gives the request partition), H-64 (the `public` partition only for a response whose header fields the native SDK saw in full), H-65 (the result of a delta on a `public` snapshot), H-66 (the exact `Content-Type` of the full document; the client gives every document to the WebView as UTF-8), H-67 (no `public` partition for a result that comes through a redirect), H-68 (no RQP for a URL with user information), H-69 (the SDK rejects an invalid allowlist entry); [WP-17 S3](/engineering/plan/sprints/WP-17-S3) §1: H-72 (the manifest immediately after the head start tag of the document; replaces the insertion point of H-49 and the head walk of DL-031 and DL-034), H-73 (the attribute rule also reads the start tags of a foreign region). H-71, H-74 and H-75 are markup rules ([markup](/engineering/protocol/markup)); [WP-17 S4](/engineering/plan/sprints/WP-17-S4) §1: H-77 (the attribute rule reads a character reference only at the scheme decision byte), H-78 (the patch content rule: `PATCH_FORBIDDEN` and `FOREIGN_ALLOWED` move from markup M-22 to §4 item 1), H-79a (the implied head insertion point; the client computes it on the original document), H-81 (the `public` partition is off by default), H-83 and H-83a (raster `data:` images in `img`, `source` and `video`), H-86 (`application/ld+json` blocks). H-84 and H-85a are markup rules; [WP-17 S5](/engineering/plan/sprints/WP-17-S5) §1: H-96 (`noscript` joins `PATCH_FORBIDDEN`, section 4 item 1.1), H-102 (the DOM apply of an `html` block as `innerHTML`, section 2.4). H-94, H-95 and H-97 (`template` and `noscript` in block content) and DL-056 (`shadowroot` in M-22 item 6) are markup rules. Architect decisions: DL-030 (`Rq-*` fields of the application response), DL-031 (the head end tag of the document; replaced by H-72), DL-034 (the precise head rule; only its "before the head" item stays), DL-036 (the exact claim of the attribute rule), DL-037 (the details of the charset rule and of H-62), DL-038 (exact origin match of the allowlist, `Set-Cookie2`, two client charset cases), DL-039 (the details of H-64 to H-66; two entries of one cache key), DL-040 (bytes to the WebView, the origin from the URL object of the network stack, the metadata of a `public` entry after a `304`), DL-048 (stricter edges of H-83 and H-84), DL-051 (no `&` in the type part of a `data:` image), DL-052 (the raster types of a `data:` image are an allow-list; with the `public` partition off, the client does not use a `public` entry). JSON Schemas: `spec/rqp/schemas/`. Headers and the choice between a full document, a delta and `304`: [negotiation](/engineering/protocol/negotiation). Block markup: [markup](/engineering/protocol/markup).
+**Status:** <Badge type="info" text="DESIGN" /> Normative for `rqp/1` from WP-17 S2. Human decisions ([WP-17 S1](/engineering/plan/sprints/WP-17-S1) §1, [WP-17 S2](/engineering/plan/sprints/WP-17-S2) §1): H-1 (inline manifest only), H-2 (full SHA-256, base64url), H-8 (revisions `t1.` and `r1.`), H-9 (no `page_id` and no `sequence` over HTTP), H-10 (hash in each operation; replaced by H-104), H-11 (JSON envelope, content as a string, no JCS), H-28 (ASCII case-insensitive match of the manifest type), H-44 (client block digests; the client verifies `next_revision`), H-45 (caching of full and delta responses), H-46 (`If-None-Match` carries the client revision), H-47 (one operation: replace the content of a block; the `op` name `replace_block` is removed by H-104), H-48 (client markup analysis of the original and the patched document; attribute rule), H-49 (`http` only in debug builds; manifest position, replaced by H-72), H-50 (error codes, `maxManifestBytes`), H-51 (the same full document for every request), H-55 (`policy` and `limits` in the page revision), H-56 (the server sends the full document when a changed block fails the attribute rule), H-58 (binding to the final URL), H-59 (`vbscript:` and `data:` in the attribute rule), H-60 (privacy of the digests), H-61 (the `public` partition), H-62 (allowlisted final request, unknown credentials, UTF-8 only), H-63 (`Set-Cookie` gives the request partition), H-64 (the `public` partition only for a response whose header fields the native SDK saw in full), H-65 (the result of a delta on a `public` snapshot), H-66 (the exact `Content-Type` of the full document; the client gives every document to the WebView as UTF-8), H-67 (no `public` partition for a result that comes through a redirect), H-68 (no RQP for a URL with user information), H-69 (the SDK rejects an invalid allowlist entry); [WP-17 S3](/engineering/plan/sprints/WP-17-S3) §1: H-72 (the manifest immediately after the head start tag of the document; replaces the insertion point of H-49 and the head walk of DL-031 and DL-034), H-73 (the attribute rule also reads the start tags of a foreign region). H-71, H-74 and H-75 are markup rules ([markup](/engineering/protocol/markup)); [WP-17 S4](/engineering/plan/sprints/WP-17-S4) §1: H-77 (the attribute rule reads a character reference only at the scheme decision byte), H-78 (the patch content rule: `PATCH_FORBIDDEN` and `FOREIGN_ALLOWED` move from markup M-22 to §4 item 1), H-79a (the implied head insertion point; the client computes it on the original document), H-81 (the `public` partition is off by default), H-83 and H-83a (raster `data:` images in `img`, `source` and `video`), H-86 (`application/ld+json` blocks). H-84 and H-85a are markup rules; [WP-17 S5](/engineering/plan/sprints/WP-17-S5) §1: H-96 (`noscript` joins `PATCH_FORBIDDEN`, section 4 item 1.1), H-102 (the DOM apply of an `html` block as `innerHTML`, section 2.4); [WP-17 S6](/engineering/plan/sprints/WP-17-S6) §1: H-103 (the manifest has no block list and no template revision, and no member with its default value; the client computes the template revision and the block hashes and checks them through the page revision; replaces the manifest members of H-44 and the text of section 1.3, rule 3), H-104 (the envelope is `next_revision` and the operations with `block_id` and `content`; no hash in an operation, no base or template revision, no `type`, `protocol`, `op` or `format`; replaces H-10 and steps 1 and 2 of section 2.4), H-105 (no further compaction in `rqp/1`), H-106 (64-bit prefixes in `Rq-Have`). H-94, H-95 and H-97 (`template` and `noscript` in block content) and DL-056 (`shadowroot` in M-22 item 6) are markup rules. Architect decisions: DL-030 (`Rq-*` fields of the application response), DL-031 (the head end tag of the document; replaced by H-72), DL-034 (the precise head rule; only its "before the head" item stays), DL-036 (the exact claim of the attribute rule), DL-037 (the details of the charset rule and of H-62), DL-038 (exact origin match of the allowlist, `Set-Cookie2`, two client charset cases), DL-039 (the details of H-64 to H-66; two entries of one cache key), DL-040 (bytes to the WebView, the origin from the URL object of the network stack, the metadata of a `public` entry after a `304`), DL-048 (stricter edges of H-83 and H-84), DL-051 (no `&` in the type part of a `data:` image), DL-052 (the raster types of a `data:` image are an allow-list; with the `public` partition off, the client does not use a `public` entry). JSON Schemas: `spec/rqp/schemas/`. Headers and the choice between a full document, a delta and `304`: [negotiation](/engineering/protocol/negotiation). Block markup: [markup](/engineering/protocol/markup).
 
 [[toc]]
 
@@ -29,47 +29,46 @@ The manifest of the example page of [markup §1](/engineering/protocol/markup#_1
   "protocol": "rqp/1",
   "origin": "https://shop.example.com",
   "path": "/catalog",
-  "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
-  "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
-  "blocks": [
-    { "id": "title", "format": "html",
-      "sha256": "0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces" },
-    { "id": "price", "format": "html",
-      "sha256": "Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs" },
-    { "id": "cart", "format": "json",
-      "sha256": "zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4" }
-  ]
+  "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8"
 }
 ```
 
+The manifest has no template revision and no block list (H-103). The client computes them from the document with its markup analysis (section 1.8). For this page the client computes these values (`kat.json` member `computed`):
+
+| Value | Computed by the client |
+|---|---|
+| Template revision | `t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM` |
+| `title`, `html` | `0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces` |
+| `price`, `html` | `Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs` |
+| `cart`, `json` | `zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4` |
+
 ### 1.2 Fields
 
-<Badge type="info" text="DESIGN" /> The manifest is a JSON object with exactly these members. A member that is not in this table makes the manifest invalid; a new member needs a new protocol version.
+<Badge type="info" text="DESIGN" /> The manifest is a JSON object with exactly these members (H-103). A member that is not in this table makes the manifest invalid (`MANIFEST_INVALID`), also a member of the manifest before H-103 (`template_revision`, `blocks`); a new member needs a new protocol version.
 
 | Member | Required | Rule |
 |---|---|---|
 | `protocol` | yes | The string `"rqp/1"` |
 | `origin` | yes | Section 1.6 |
 | `path` | yes | Section 1.6 |
-| `template_revision` | yes | Section 1.3 |
 | `page_revision` | yes | Section 1.3 |
-| `blocks` | yes | Array of 0 to 256 block objects in document order (markup M-27). Also present for a page without blocks (`[]`). |
-| `policy` | no | Section 1.4 |
-| `limits` | no | Section 1.5 |
+| `policy` | no | Section 1.4. Only with members that are not the default |
+| `limits` | no | Section 1.5. Only with a hint |
 
-Block object, exactly these members:
+**Computed values (H-103, H-48).** <Badge type="info" text="DESIGN" /> The client computes these values from the original document with the markup analysis of [markup §2](/engineering/protocol/markup), and checks them through `page_revision` (section 1.8, item 5). After the check it uses them for the snapshot, for the `next_revision` check of a patch (section 2.4) and for `Rq-Have` ([negotiation §3.4](/engineering/protocol/negotiation#_3-4-rq-have)).
 
-| Member | Rule |
+| Value | Rule |
 |---|---|
-| `id` | The block id: `^[a-z0-9][a-z0-9_-]{0,63}$` ([markup](/engineering/protocol/markup) M-15). The ids in one manifest are unique (M-21). |
-| `format` | `"html"` or `"json"` (M-16). `json` is the format of both `json` types of M-16, `application/json` and `application/ld+json` (H-86); the type is in the template, so the manifest does not name it |
-| `sha256` | `B64U(SHA-256(content))` over the exact content bytes of the block (section 1.3, H-2). 43 characters. |
+| Template revision | Section 1.3, steps 2 and 3 |
+| Block list | The blocks in document order (markup M-27), 0 to 256. For each block: the id (`^[a-z0-9][a-z0-9_-]{0,63}$`, M-15; unique, M-21), the format `html` or `json` (M-16; `json` is the format of both `json` types, `application/json` and `application/ld+json`, H-86) and the block hash `B64U(SHA-256(content))` over the exact content bytes (section 1.3, step 1; H-2) |
+
+**Default members (H-103).** <Badge type="info" text="DESIGN" /> A server MUST NOT write a member of `policy` whose value is the default of section 1.4 (`"mode": "private"`, `"ttl_seconds": 0`, `"offline": false`), and MUST NOT write `policy` or `limits` as an object without members. `max_patch_bytes` has no default value (section 1.5), so a hint is always a member that is not the default; a server SHOULD NOT write a hint that is not smaller than its own `maxPatchBytes` (section 1.5). A client MUST treat an absent member as its default. A client accepts a manifest that has a default member: the schema allows it, and the page revision covers the members that the manifest has (section 1.3, policy line rule 1), so the check of section 1.8 works for both forms. Reason: H-103 removes bytes that carry no information; it is a server rule, not a new client check (evidence `evidence/rqp-bytes/report.md` §5, option M1: "a server SHOULD, not a format change"). Fixtures: `FX-RQ-P36-POLICY-DEFAULTS`, `FX-RQ-P36-LIMITS-SERVER-LIMIT` (level SHOULD), `FX-RQ-C29-MANIFEST-DEFAULT-MEMBERS`.
 
 The manifest MUST NOT contain cookies, tokens, personal data, block content or executable code. It contains no query string (section 1.6).
 
 ### 1.3 Hashes and revisions
 
-<Badge type="info" text="DESIGN" /> This section is the normative text of the hash and revision algorithm (H-2, H-8, H-11, H-55). The parser contract `tools/rqp-markup/CONTRACT.md` §4 implements it. A server computes the values on the **original document**: the bytes of the page before the server inserts the manifest (section 1.7). Markup rule M-13 makes sure that the original document has no manifest.
+<Badge type="info" text="DESIGN" /> This section is the normative text of the hash and revision algorithm (H-2, H-8, H-11, H-55). The parser contract `tools/rqp-markup/CONTRACT.md` §4 implements it. A server computes the values on the **original document**: the bytes of the page before the server inserts the manifest (section 1.7). Markup rule M-13 makes sure that the original document has no manifest. The manifest carries only the page revision (H-103); the template revision and the block hashes are computed values (section 1.2) that the server uses for the page revision, the `ETag` and the change set of a delta, and that the client computes again.
 
 Let the original document have the blocks `b1 … bn` in document order (markup M-27). Each block has `id`, `format` and the byte range `[start, end)` of its content.
 
@@ -96,7 +95,7 @@ D(n) is the decimal digits of the integer n: no sign, no leading zero, `0` for z
 
 <Badge type="info" text="DESIGN" /> Rules of the policy line:
 
-1. **Members, not effective values.** S has the members that the manifest has. A missing member writes no item; its default (section 1.4) is not written. So no `policy` member, `"policy": {}` and `"policy": {"mode": "private"}` give three different page revisions, although the client applies the same policy for all three. Reason: the page revision then fixes every member of the manifest except `protocol`, `origin` and `path`, and these come from the protocol version and the target URI (section 1.7, server item 6). A strong ETag needs this.
+1. **Members, not effective values.** S has the members that the manifest has. A missing member writes no item; its default (section 1.4) is not written. So no `policy` member, `"policy": {}` and `"policy": {"mode": "private"}` give three different page revisions, although the client applies the same policy for all three. Reason: the page revision then fixes every member of the manifest except `protocol`, `origin` and `path`, and these come from the protocol version and the target URI (section 1.7, server item 6). A strong ETag needs this. Since H-103 a server writes no default member (section 1.2), so for a conforming server one effective policy gives one policy line; the rule stays for the manifests with default members that a client accepts.
 2. **Absent line.** A manifest without `policy` and without `limits` has no policy line. P is then the same as before H-55, so no earlier value changes: the markup fixtures, the parser candidates and the first known-answer set keep their page revisions.
 3. **Position.** PL is the third line, before the block lines, at the same place for every number of blocks. A verifier (section 2.4, step 6) writes the two header lines, the PL of its snapshot and then the block lines in one pass.
 4. **No ambiguity.** A block id starts with `a`–`z` or `0`–`9` (M-15), so a line that starts with `PL` is never a block line. The item names are different, and the values come from closed sets (two `mode` values, digits, `true`, `false`), so they contain no `;`, `=`, tab or line feed. One preimage therefore has exactly one parse into template revision, policy line and block lines.
@@ -114,33 +113,35 @@ cart	json	zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4
 
 Each line ends with `0A`, also the last one. The separators in the block lines are `09` (tab). `SHA-256(P)` gives `r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8`. <Badge type="tip" text="FACT" /> The test `tools/rqp-schema/test/kat.test.mjs` computes these values from `spec/rqp/examples/kat/page.html` and compares them with the Node.js markup candidate.
 
-The same page with `"policy": {"mode": "private", "ttl_seconds": 60, "offline": false}` and `"limits": {"max_patch_bytes": 262144}` (second known-answer set, `spec/rqp/examples/valid/manifest/shop-policy.json`) has this preimage:
+The same page with `"policy": {"ttl_seconds": 60, "offline": true}` and `"limits": {"max_patch_bytes": 65536}` (second known-answer set, `spec/rqp/examples/valid/manifest/shop-policy.json`; since H-103 the set has only members that are not the default) has this preimage:
 
 ```text
 rqp-r1
 t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM
-PL	policy;mode=private;ttl_seconds=60;offline=false;limits;max_patch_bytes=262144
+PL	policy;ttl_seconds=60;offline=true;limits;max_patch_bytes=65536
 title	html	0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces
 price	html	Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs
 cart	json	zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4
 ```
 
-The separator after `PL` is `09` (tab). `SHA-256(P)` gives `r1.ke0dIjtkqBtefkyyLQU5ICLWPia5PfammTko2xmMLOQ`. With the price `130.00` (block hash `bB9ScYcQQzKWqPCBW62MTsc9Ff_djve7Denf3YMoCUg`) the page revision is `r1.0MisoW_Jyga-Mg3DpBueKx95g3OvhROWUgWwXI6t5uc` (patch `spec/rqp/examples/valid/patch/shop-policy-price.json`). The template revision and the block hashes are the same as in the first set. <Badge type="tip" text="FACT" /> The test `tools/rqp-schema/test/kat.test.mjs` computes both page revisions from a preimage that the test writes out itself and with the helper of the test package; `openssl dgst -sha256` gives the same values (checked 2026-10-12). The test `tools/rqp-schema/test/revision.test.mjs` checks the policy line rules on 112 combinations of present and missing members (with boundary values): each combination is schema-valid and has its own preimage, and only the combination without both members has no policy line.
+The separator after `PL` is `09` (tab). `SHA-256(P)` gives `r1.pONNMoySlMlYw50BpgdvbUlGESnMzZBCOmQ4SlebDxs`. With the price `130.00` (block hash `bB9ScYcQQzKWqPCBW62MTsc9Ff_djve7Denf3YMoCUg`) the page revision is `r1.kX-KQFiXmNtLNzjvXP7GR3K-_79Fc1l4WEtReCgqwQQ` (patch `spec/rqp/examples/valid/patch/shop-policy-price.json`). The template revision and the block hashes are the same as in the first set. <Badge type="tip" text="FACT" /> The test `tools/rqp-schema/test/kat.test.mjs` computes both page revisions from a preimage that the test writes out itself and with the helper of the test package; `openssl dgst -sha256` gives the same values (OpenSSL 4.0.3, checked 2026-10-20). H-103 changed the members of the second set (before: `"mode": "private"`, `"offline": false` and the hint 262 144, which a server no longer writes), so its two page revisions changed on 2026-10-20 (before: `r1.ke0dIjtk…` and `r1.0MisoW_J…`); the algorithm did not change, and the page revisions of the first set and of every fixture page are the same as before H-103. The test `tools/rqp-schema/test/revision.test.mjs` checks the policy line rules on 112 combinations of present and missing members (with boundary values): each combination is schema-valid and has its own preimage, and only the combination without both members has no policy line.
 
 **Rules for all implementations:**
 
 1. Hashes and revisions are compared as ASCII strings, byte for byte. An implementation never decodes them for a comparison.
 2. The encoding is canonical: 43 characters from the base64url alphabet, no padding, and the last character is one of `A E I M Q U Y c g k o s w 0 4 8` (its two low bits are zero). The schemas reject every other form. (A lenient decoder accepts other last characters for the same 32 bytes; the string comparison of item 1 would then fail.)
-3. **Clients compute revisions only to check them.** A client stores the revisions of the manifest, sends them back ([negotiation](/engineering/protocol/negotiation)) and compares them. It never uses a revision that it computed in place of a revision that the server sent. A client computes revisions in three checks, all with this algorithm:
-   - the markup analysis of the original document of a full response gives the block hashes and both revisions, and the client compares them with the manifest (section 1.8, H-48);
-   - the verification of `next_revision` of a patch (section 2.4, steps 5 to 7; H-44) computes steps 4 and 5 from the stored `template_revision` string, the policy line of the snapshot manifest and the full block hashes of the snapshot and of the operations. It needs no template bytes;
+3. **Clients compute the values and use them after a check (H-103, replaces the text of H-44).** The manifest has only the page revision. The client computes the template revision and the block hashes with its markup analysis, computes the page revision from them, and compares it with the page revision that the server sent. Only after this check passes does the client use its computed values: in the snapshot, in `Rq-Have` ([negotiation §3.4](/engineering/protocol/negotiation#_3-4-rq-have)) and in the `next_revision` check of the next patch. It sends the page revision of the manifest in `If-None-Match`; after the check it is equal to the computed one. A client computes revisions in three checks, all with this algorithm:
+   - the markup analysis of the original document of a full response gives the template revision and the block hashes; with the policy line of the manifest they give a page revision that MUST be equal to `page_revision` (section 1.8, item 5; H-48, H-55, H-103);
+   - the verification of `next_revision` of a patch (section 2.4, steps 4 to 7; H-44, H-104) computes steps 4 and 5 from the template revision of the snapshot, the policy line of the snapshot manifest, the full block hashes of the snapshot and the hashes of the new contents that the client computes. It needs no template bytes;
    - the markup analysis of the patched document gives the template revision and the block hashes again, and the client computes the page revision from them with the policy line of the snapshot manifest (section 2.4, step 8; H-48, H-55).
+
+   <Badge type="info" text="DESIGN" /> **Why the manifest needs no more (H-103).** Equal page revisions mean equal preimages unless SHA-256 has a collision (H-2). So when the computed page revision is equal to `page_revision`, the template revision, the policy line and every block line (id, format, hash) of the client are the values of the server, and a list of them in the manifest adds no integrity. What the client loses: an error no longer names the block or the value that differs (`MANIFEST_INVALID` for all of them), and a tool that reads the manifest without the markup analysis has no block list. What the protocol gains: a client that skips the markup analysis cannot use the manifest at all, so the MUST of H-48 enforces itself. Evidence: `evidence/rqp-bytes/report.md` §5 (options M2, M3).
 4. A keyed variant of the revisions for private pages (HMAC) is decided in WP-18. It will have its own prefix and its own client rule. In `rqp/1` the only prefixes are `t1.` and `r1.`.
 5. **Privacy (H-60).** The revisions and the block hashes are unkeyed. The client sends them in `If-None-Match` and in `Rq-Have` (64-bit prefixes), so the header logs of a CDN or a proxy can hold them. A party that reads such logs and can guess a block content can test the guess. Deployments SHOULD exclude `Rq-Have` and `If-None-Match` from intermediary header logs until the keyed revisions of WP-18 ([negotiation §10](/engineering/protocol/negotiation#_10-security-and-privacy), item 4).
 
 ### 1.4 Policy
 
-<Badge type="info" text="DESIGN" /> `policy` is an object with these optional members. A missing member has its default. `"policy": {}` and no `policy` member give the same client behavior. They give different page revisions (section 1.3, policy line rule 1).
+<Badge type="info" text="DESIGN" /> `policy` is an object with these optional members. A missing member has its default. `"policy": {}` and no `policy` member give the same client behavior. They give different page revisions (section 1.3, policy line rule 1). A server writes only the members whose value is not the default, and no `policy` member when all values are the defaults (H-103, section 1.2).
 
 | Member | Type and range | Default |
 |---|---|---|
@@ -183,7 +184,7 @@ The manifest policy never allows what the HTTP headers ([freshness](/engineering
 |---|---|---|
 | `max_patch_bytes` | Integer, 1 024 to 5 242 880 | Server hint: the largest patch envelope that the server sends for this page |
 
-A missing member means "no hint". `"limits": {}` and no `limits` member give the same client behavior and different page revisions (section 1.3). The client limit for one envelope is `E = min(maxPatchBytes, max_patch_bytes)`, where `maxPatchBytes` is the client limit of [resource limits](/engineering/core/resource-limits) (256 KiB initial value). The size is the number of bytes of the envelope JSON text after content decoding (gzip, br, zstd). The client takes `max_patch_bytes` from the manifest of its current snapshot. The upper bound of the range is `maxDocumentBytes`: a patch larger than a full document has no use. A server SHOULD send the full document when the patch would be larger than its own hint. A client rejects a larger envelope (`PATCH_TOO_LARGE`) and loads the full document; this costs time, not correctness.
+`max_patch_bytes` has no default value: a missing member means "no hint". `"limits": {}` and no `limits` member give the same client behavior and different page revisions (section 1.3); a server does not write `"limits": {}` (H-103). A server SHOULD write the hint only when it is smaller than the server limit `maxPatchBytes`: section 2.5, item 5 uses the smaller of the two values, so a larger or equal hint bounds nothing and only adds bytes (H-103; fixture `FX-RQ-P36-LIMITS-SERVER-LIMIT`, level SHOULD). The client limit for one envelope is `E = min(maxPatchBytes, max_patch_bytes)`, where `maxPatchBytes` is the client limit of [resource limits](/engineering/core/resource-limits) (256 KiB initial value). The size is the number of bytes of the envelope JSON text after content decoding (gzip, br, zstd). The client takes `max_patch_bytes` from the manifest of its current snapshot. The upper bound of the range is `maxDocumentBytes`: a patch larger than a full document has no use. A server SHOULD send the full document when the patch would be larger than its own hint. A client rejects a larger envelope (`PATCH_TOO_LARGE`) and loads the full document; this costs time, not correctness.
 
 ### 1.6 Origin and path
 
@@ -278,15 +279,15 @@ Tag names are in lower case, as the tokenizer gives them (`<HEAD>` is a `head` s
 
 <Badge type="info" text="DESIGN" /> The client accepts a manifest only when all checks pass, in this order:
 
-1. M is at most 64 KiB (`maxManifestBytes`, [resource limits](/engineering/core/resource-limits); H-50). A manifest with 256 blocks and the longest ids has about 37 KiB.
+1. M is at most 64 KiB (`maxManifestBytes`, [resource limits](/engineering/core/resource-limits); H-50). Since H-103 a manifest without white space has at most 4 819 bytes (an `origin` of 512 and a `path` of 4 096 characters, and every member of `policy` and `limits`; before H-103 about 37 KiB with 256 blocks); the limit stays, because JSON white space between tokens is allowed (section 3.2).
 2. M is a JSON text by section 3.2 and is valid against `manifest.schema.json`.
-3. The block ids are unique.
+3. *Removed by H-103.* The manifest has no block list. The markup analysis of item 5 gives each block id once (markup M-21), or the document is invalid.
 4. `origin` and `path` match the response URL (section 1.6).
-5. **Markup analysis of the original document (H-48, MUST).** The client runs the markup analysis of [markup §2](/engineering/protocol/markup) on the original document (section 1.7, client item 5). The document is valid for RQP, and the result has the same blocks as `blocks` (the same `id`, `format` and `sha256`, in the same order) and the same `template_revision`. The page revision that section 1.3 gives for this template revision, these blocks and the policy line of the manifest is equal to `page_revision` (H-55). For a manifest without `policy` and `limits` this is the `page_revision` of the analysis.
+5. **Markup analysis and page revision (H-48, H-103, MUST).** The client runs the markup analysis of [markup §2](/engineering/protocol/markup) on the original document (section 1.7, client item 5). The document MUST be valid for RQP. The analysis gives the template revision and the block list (id, format, hash; section 1.2, computed values). The client computes the page revision with section 1.3, steps 4 and 5, from these values and the policy line of the manifest (H-55). It MUST be equal to `page_revision`. For a manifest without `policy` and `limits` this is the page revision of the analysis. After this check the client uses its computed template revision and block hashes for the snapshot, for `Rq-Have` and for the next patch (section 1.3, rule 3).
 
-On a failure of these items or of the client items of section 1.7 (also item 6, UTF-8), the client shows the document as a normal page (it is a complete HTML document), does not store an RQP snapshot of it, and reports `MANIFEST_INVALID` (section 5).
+On a failure of these items or of the client items of section 1.7 (also item 6, UTF-8), the client shows the document as a normal page (it is a complete HTML document), does not store an RQP snapshot of it, and reports `MANIFEST_INVALID` (section 5). A difference of the page revision in item 5 is `MANIFEST_INVALID`, the code of the comparison of the manifest blocks and template revision before H-103.
 
-Item 5 has two reasons. First, the `next_revision` check of section 2.4 starts from the block hashes of the snapshot; a server defect in the manifest would give a wrong base, and every later patch would fail or, worse, describe a page that the client does not have. Second, the client needs the block offsets of the snapshot to splice a later patch into it. The analysis is one pass over at most `maxDocumentBytes`. Item 5 also finds a manifest whose `policy` or `limits` changed without a new page revision. <Badge type="tip" text="FACT" /> The test `tools/rqp-schema/test/kat.test.mjs` shows a manifest that is consistent in itself (its page revision matches its block list) but not with the document, and manifests that add or remove `policy` or `limits` and keep the old page revision; only item 5 finds them.
+Item 5 has two reasons. First, the `next_revision` check of section 2.4 starts from the block hashes of the snapshot; the page revision check proves that they are the values of the server, so every later patch starts from the page that the server described. Second, the client needs the block offsets of the snapshot to splice a later patch into it. The analysis is one pass over at most `maxDocumentBytes`. Item 5 also finds a manifest whose `policy` or `limits` changed without a new page revision. <Badge type="tip" text="FACT" /> The test `tools/rqp-schema/test/kat.test.mjs` shows a manifest with the page revision of another document (the price of page B with the body of page A), and manifests that add or remove `policy` or `limits` and keep the old page revision; item 5 rejects them. The reference client test `tools/rqp-protocol/test/client.test.mjs` checks that a page revision computed with another template revision, another block id, another format, one more block or another block hash is rejected (fixture `FX-RQ-C11-MANIFEST-OTHER-PAGE`).
 
 ## 2. Patch envelope
 
@@ -296,79 +297,87 @@ A delta response (`Content-Type: application/vnd.rivqen.delta+json`, [negotiatio
 
 ```json
 {
-  "type": "rivqen.patch",
-  "protocol": "rqp/1",
-  "base_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
   "next_revision": "r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI",
-  "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
   "operations": [
-    { "op": "replace_block", "block_id": "price", "format": "html",
-      "content": "130.00",
-      "sha256": "bB9ScYcQQzKWqPCBW62MTsc9Ff_djve7Denf3YMoCUg" }
+    { "block_id": "price", "content": "130.00" }
   ]
 }
 ```
 
+The client computes the hash of the new content (`bB9ScYcQQzKWqPCBW62MTsc9Ff_djve7Denf3YMoCUg`) and the page revision of the result, and compares it with `next_revision` (section 2.4).
+
 ### 2.2 Fields
 
-<Badge type="info" text="DESIGN" /> The envelope is a JSON object with exactly these members. There is no `page_id` and no `sequence`: these are fields of push channels only (H-9, WP-16).
+<Badge type="info" text="DESIGN" /> The envelope is a JSON object with exactly these members (H-104). The media type `application/vnd.rivqen.delta+json` does not change. There is no `page_id` and no `sequence`: these are fields of push channels only (H-9, WP-16).
 
 | Member | Rule |
 |---|---|
-| `type` | The string `"rivqen.patch"` |
-| `protocol` | The string `"rqp/1"`, the same representation as in the manifest |
-| `base_revision` | The page revision that the patch applies to. The server takes it from the request: it is the client revision in `If-None-Match` (H-46, [negotiation](/engineering/protocol/negotiation)). |
 | `next_revision` | The page revision of the server document after the patch (section 1.3) |
-| `template_revision` | The template revision of the server document. The same as the client template revision; else the server sends the full document. |
 | `operations` | Array of 1 to 256 operations (section 2.3) |
+
+**Unknown members (H-104, fail closed).** A member that is not in this table, or not in the operation table of section 2.3, makes the envelope invalid: `PATCH_INVALID` (schema, `additionalProperties: false`). This includes the members of the envelope before H-104: `type`, `protocol`, `base_revision`, `template_revision`, and `op`, `format` and `sha256` in an operation, also when their values are correct (fixtures `FX-RQ-C30-DELTA-OLD-FORM`, `FX-RQ-C30-DELTA-OPERATION-SHA256`). Reason: one envelope form for each version. A client that ignored unknown members would accept an envelope to which a later version gives another meaning, and a server that still sends the old form would pass the client fixtures.
+
+**What the envelope does not carry (H-104).** <Badge type="info" text="DESIGN" />
+
+| Removed member | Why it is not needed |
+|---|---|
+| `template_revision` | The client takes the template revision of its snapshot for the page revision R′ (section 2.4, step 6). A delta for another template gives another R′ than `next_revision`: `INTEGRITY_ERROR` at step 7 (before H-104: `TEMPLATE_MISMATCH` at step 1) |
+| `base_revision` | R′ starts from the full block hashes of the snapshot. A delta for another base gives another R′, unless its operations cover every block that differs, and then the result is the page of the server: `INTEGRITY_ERROR` at step 7 (before: `PATCH_BASE_MISMATCH` at step 2) |
+| `sha256` in an operation | The client computes the hash of the content (section 2.3, rule 6); `next_revision` binds it. Content that is not the content of the server gives another R′: `INTEGRITY_ERROR` at step 7 (before: at step 4). Replaces H-10 |
+| `type`, `protocol` | The media type, `Rq-Version: 1` and the "offered" check of the client name the document and its version |
+| `op`, `format` | `rqp/1` has one operation (H-47). The format of a block is its format in the snapshot, which the template fixes |
+
+**Replay.** <Badge type="info" text="DESIGN" /> A delta has `Cache-Control: no-store` ([negotiation §5.2](/engineering/protocol/negotiation#_5-2-delta)). A cache that keeps a delta against this rule can send it to another snapshot. Step 7 then passes only when the result has a page revision that the server sent, so the result is a genuine page of the server, possibly an earlier one. With `base_revision` the same replay worked on its own base. Neither form gives freshness: TLS, `no-store` and the navigation generation of the session ([INV-12](/engineering/architecture/invariants)) do. Evidence: `evidence/rqp-bytes/report.md` §5, options D1 to D5.
 
 ### 2.3 Operations
 
-<Badge type="info" text="DESIGN" /> The template fixes the block list: the start and end tags of the blocks, with their `data-rq-block` ids, are template bytes (section 1.3, step 2). So two documents with the same `template_revision` have the same blocks (ids, formats, order). An operation changes only the content of a block.
+<Badge type="info" text="DESIGN" /> The template fixes the block list: the start and end tags of the blocks, with their `data-rq-block` ids, are template bytes (section 1.3, step 2). So two documents with the same template revision have the same blocks (ids, formats, order). An operation changes only the content of a block.
 
-`rqp/1` has **one operation**, `replace_block` (H-47):
+`rqp/1` has **one operation**: replace the content of a block (H-47). The operation has no `op` member (H-104):
 
-| `op` | Members (exactly) | Effect |
-|---|---|---|
-| `replace_block` | `op`, `block_id`, `format`, `content`, `sha256` | The content of the block becomes the UTF-8 bytes of `content`. |
+| Members (exactly) | Effect |
+|---|---|
+| `block_id`, `content` | The content of the block becomes the UTF-8 bytes of `content`. |
 
-- There is no `insert_block`: a new block changes the template, so the server sends the full document.
-- There is no `remove_block`: `replace_block` with `"content": ""` gives the same result for an `html` block (the block element stays, its hash becomes `47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU`, the SHA-256 of no bytes). Empty content of a `json` block is not a JSON text (M-25), so the client rejects it (section 2.4, step 8).
-- A new operation in a later version needs a new capability token ([negotiation §3.3](/engineering/protocol/negotiation#_3-3-rq-capabilities)). A client of `rqp/1` rejects every other `op` value (schema, `PATCH_INVALID`).
+- There is no insert operation: a new block changes the template, so the server sends the full document.
+- There is no remove operation: `"content": ""` gives the same result for an `html` block (the block element stays, its hash becomes `47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU`, the SHA-256 of no bytes). Empty content of a `json` block is not a JSON text (M-25), so the client rejects it (section 2.4, step 8).
+- A new operation in a later version needs a new capability token ([negotiation §3.3](/engineering/protocol/negotiation#_3-3-rq-capabilities)) and a new envelope form. A client of `rqp/1` rejects an operation with another member (schema, `PATCH_INVALID`).
 
-Rules for the operation list:
+Rules for the operation list (client check: section 2.4, step 3; error `PATCH_INVALID`):
 
-1. `block_id` names a block of the client snapshot.
-2. A block has at most one operation in a patch.
-3. The operations are in document order of their blocks.
-4. `format` is equal to the format of the block in the snapshot.
+1. `block_id` names a block of the client snapshot (fixture `FX-RQ-C30-DELTA-UNKNOWN-BLOCK`).
+2. A block has at most one operation in a patch (`FX-RQ-C30-DELTA-DUPLICATE-BLOCK`).
+3. The operations are in document order of their blocks (`FX-RQ-C30-DELTA-ORDER`). The envelope has at least one operation (schema; `FX-RQ-C30-DELTA-EMPTY-OPERATIONS`).
+4. *Removed by H-104.* The operation has no `format`; the block keeps the format of the snapshot.
 5. `content` is a JSON string, also for a `json` block (H-11). For a `json` block the string is the raw JSON text of the block: the exact characters between `<script type="application/json" data-rq-block="…">` (or `type="application/ld+json"`, H-86) and `</script>`, for example `"{\"items\":4}"`. It is never an embedded JSON value.
-6. `sha256` is `B64U(SHA-256(UTF-8(content)))`: SHA-256 over the UTF-8 bytes of the **decoded** string value (H-10, H-11), not over the JSON text of the string with its quotes and escapes. The JSON strings `"\u003cb>"` and `"<b>"` decode to the same three characters, so they have the same hash.
+6. **The hash of the new content** is `B64U(SHA-256(UTF-8(content)))`: SHA-256 over the UTF-8 bytes of the **decoded** string value (H-11), not over the JSON text of the string with its quotes and escapes. The JSON strings `"\u003cb>"` and `"<b>"` decode to the same three characters, so they have the same hash. The client computes it (section 2.4, step 4); the envelope does not carry it (H-104).
 7. The UTF-8 encoding of `content` is at most 1 MiB (`maxBlockBytes`, M-26). The schema limit `maxLength` counts code points, so the client also checks the bytes.
 
 ### 2.4 Client verification and apply
 
-<Badge type="info" text="DESIGN" /> Let the client snapshot have the template revision `T`, the page revision `R` and the block list `L = [(id, format, h)]` in document order, where `h` is the **full** hash of the block content in the snapshot. The client verifies a patch in this order. Before step 1, the [diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation) does the transport checks: a delta from a final URL without the cache key of the snapshot (H-58) or for a request that did not offer one is `PATCH_INVALID` ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response)), then the size, the JSON rules of section 3.2 and the schema.
+<Badge type="info" text="DESIGN" /> Let the client snapshot have the template revision `T`, the page revision `R` and the block list `L = [(id, format, h)]` in document order, where `h` is the **full** hash of the block content in the snapshot. `T` and `L` are the values that the client computed with its markup analysis and checked through `R` (section 1.8, item 5; H-103). The client verifies a patch in this order. Before step 1, the [diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation) does the transport checks: a delta from a final URL without the cache key of the snapshot (H-58) or for a request that did not offer one is `PATCH_INVALID` ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response)), then the size, the JSON rules of section 3.2 and the schema (also: no unknown member, section 2.2).
 
-1. `template_revision` is equal to `T`. Else `TEMPLATE_MISMATCH`.
-2. `base_revision` is equal to `R`. Else `PATCH_BASE_MISMATCH`.
-3. The operation list follows the rules 1 to 4 of section 2.3. Else `PATCH_INVALID`.
-4. For each operation: the UTF-8 bytes of `content` are at most `maxBlockBytes` (else `PATCH_TOO_LARGE`), and `B64U(SHA-256(UTF-8(content)))` is equal to `sha256` (else `INTEGRITY_ERROR`).
-5. Build the new list `L'`: a copy of `L` in which each block with an operation gets the `sha256` of its operation. Every other block keeps its full hash `h` from the snapshot.
-6. Compute `R'` with section 1.3, steps 4 and 5, from the string `T`, the policy line of the snapshot manifest (H-55) and the list `L'`.
-7. `R'` is equal to `next_revision`. Else `INTEGRITY_ERROR`.
+1. *Removed by H-104.* The envelope has no `template_revision`. A delta for another template fails step 7 (before H-104: `TEMPLATE_MISMATCH`).
+2. *Removed by H-104.* The envelope has no `base_revision`. A delta for another base fails step 7 (before H-104: `PATCH_BASE_MISMATCH`).
+3. The operation list follows the rules 1 to 3 of section 2.3: each `block_id` names a block of the snapshot, at most one operation per block, document order. Else `PATCH_INVALID`.
+4. For each operation: the UTF-8 bytes of `content` are at most `maxBlockBytes` (else `PATCH_TOO_LARGE`). The client computes the hash of the new content, `B64U(SHA-256(UTF-8(content)))` (section 2.3, rule 6). There is no hash in the envelope to compare it with (H-104).
+5. Build the new list `L'`: a copy of `L` in which each block with an operation gets the hash of its new content from step 4. Every other block keeps its full hash `h` from the snapshot. The format of each block is its format in `L`.
+6. Compute `R'` with section 1.3, steps 4 and 5, from `T`, the policy line of the snapshot manifest (H-55) and the list `L'`.
+7. `R'` is equal to `next_revision`. Else `INTEGRITY_ERROR`. This is the only integrity check of the envelope (H-104): a delta for another template (`FX-RQ-C06-OTHER-TEMPLATE`), for another base (`FX-RQ-C01-OTHER-BASE`), with content that the server did not hash (`FX-RQ-C07-OPERATION-CONTENT`), without a changed block (`FX-RQ-C02-OMITTED-BLOCK`) or with another policy line (`FX-RQ-C19-POLICY-CHANGED`) fails here.
 8. **Markup analysis of the patched document (H-48, MUST).** Build the patched document on a copy: the original document of the snapshot with the content bytes of each patched block replaced by the UTF-8 bytes of `content`. If it is larger than `maxDocumentBytes`, stop with `PATCH_TOO_LARGE`. Run the markup analysis of [markup §2](/engineering/protocol/markup) on it. The result MUST be valid for RQP, MUST have the template revision `T` and the same blocks as `L` (`id`, `format`, order); else `PATCH_CONTENT_REJECTED`. The page revision of the result (section 1.3, with the policy line of the snapshot manifest) MUST be equal to `next_revision`; else `INTEGRITY_ERROR`.
 9. **Patch content rule (H-48, H-78, MUST).** The content of each patched `html` block passes the patch content rule of section 4, item 1: no element of `PATCH_FORBIDDEN`, no foreign element outside `FOREIGN_ALLOWED`, and the attribute rule of section 4.2. Else `PATCH_CONTENT_REJECTED`.
 
 On any failure the client does not change the page or the snapshot ([INV-13](/engineering/architecture/invariants)) and does one fallback load of the full document ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response), item 5).
 
-Steps 1 to 7 need only the hashes. Step 8 needs the bytes of the original document of the snapshot. After step 7 passes, the block hashes of the patched document are the hashes of `L'` (step 4 checked them), so a different page revision in step 8 means a changed template or block list; step 8 reports the first of these checks that fails.
+Steps 3 to 7 need only the hashes of the snapshot and the new contents. Step 8 needs the bytes of the original document of the snapshot. After step 7 passes, the block hashes of the patched document are the hashes of `L'` (step 4 computed them from the same bytes), so a different page revision in step 8 means a changed template or block list; step 8 reports the first of these checks that fails.
+
+**Why step 7 is sufficient (H-104).** <Badge type="info" text="DESIGN" /> `R'` = `next_revision` means equal preimages unless SHA-256 has a collision (H-2). The preimage has `T`, the policy line and one line (id, format, hash) for each block. So the template revision and the policy line of the snapshot are those of the server, every block hash of `L'` is the hash of the server's block, and the patched document is byte for byte the server's document. The removed fields of section 2.2 were checks of parts of this preimage; they gave an earlier and more precise error, not more integrity. The cost: one error code (`INTEGRITY_ERROR`) for five causes, so a client log cannot tell them apart (evidence `evidence/rqp-bytes/report.md` §5).
 
 **Why step 7 is required (H-44).** The client tells the server its blocks with 64-bit prefixes of the block hashes ([negotiation](/engineering/protocol/negotiation)), and the server sends only the blocks whose prefix differs. When a changed block has the same 64-bit prefix as the client block (by chance, or made on purpose by a party that controls block content), the server omits it. In step 5 the client then keeps its own full hash for that block, so `R'` is not equal to the server's `next_revision`, and the client loads the full document. A prefix collision therefore costs one full load; it never gives a wrong page. This holds only when the client uses its own full hashes in step 5, never the prefixes it sent. Step 7 also finds a server that omits a changed block for any other reason, and a client snapshot that differs from what the server assumed.
 
 **Policy and limits (H-55).** A patch carries no `policy` and no `limits`. The client computes `R'` with the policy line of its snapshot. When the server changed `policy` or `limits` after the client stored the snapshot, `next_revision` has the new policy line, `R'` is different, and the client loads the full document (`INTEGRITY_ERROR`, one extra request). When only `policy` or `limits` changed and no block changed, the change set is empty and the server sends the full document at once ([negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server), step 6). So after a patch that passes step 7, the policy and limits of the snapshot are those of the server.
 
-**Apply.** When all checks pass, the new snapshot is the patched document of step 8 (with the block offsets of its analysis), the block list `L'`, the page revision `next_revision`, the same template revision, and the same `policy` and `limits` (step 7 showed that they did not change). The content of a patched `json` block is the UTF-8 bytes of `content`. The new snapshot has the canonical URL of the snapshot; its partition is the partition of the snapshot, except for a snapshot in the `public` partition: the result stays in `public` only under the conditions of section 1.4, "Delta on a `public` snapshot"; else it goes to the partition of the request and the `public` snapshot does not change (H-65). The page and the cache change together ([diff engine §4](/engineering/core/diff-engine#_4-apply-plan)).
+**Apply.** When all checks pass, the new snapshot is the patched document of step 8 (with the block offsets of its analysis), the block list `L'` (its hashes are the ones that the client computed), the page revision `next_revision`, the same template revision, and the same `policy` and `limits` (step 7 showed that they did not change). The next `Rq-Have` comes from these values. The content of a patched `json` block is the UTF-8 bytes of `content`. The new snapshot has the canonical URL of the snapshot; its partition is the partition of the snapshot, except for a snapshot in the `public` partition: the result stays in `public` only under the conditions of section 1.4, "Delta on a `public` snapshot"; else it goes to the partition of the request and the `public` snapshot does not change (H-65). The page and the cache change together ([diff engine §4](/engineering/core/diff-engine#_4-apply-plan)).
 
 <Badge type="info" text="DESIGN" /> **DOM apply of an `html` block (H-102, MUST).** After steps 8 and 9 pass, the client MUST put the new content of each patched `html` block into the page with the HTML fragment parsing algorithm, with the block element as the context element, with the scripting mode of the document, and with declarative shadow roots not allowed. This is what `innerHTML` and `insertAdjacentHTML` do; for example, set `innerHTML` of the block element to `content`. The client MUST NOT use `DOMParser`, `Document.parseHTMLUnsafe`, `Element.setHTMLUnsafe` or `Range.createContextualFragment` for this step. Reason: steps 8 and 9 check the content as the markup analysis reads it (with scripting enabled, `noscript` content is text; markup M-04, M-22 item 6), and the study evidence for the fragment parse uses the block element as the context ([markup §2.6](/engineering/protocol/markup#_2-6-content-of-html-blocks)). An API with another scripting mode or with declarative shadow roots builds other elements than the ones the checks saw. The TypeScript standard allows `innerHTML` for this one step only ([TypeScript](/engineering/standards/typescript), rule 5).
 
@@ -383,9 +392,9 @@ Steps 1 to 7 need only the hashes. Step 8 needs the bytes of the original docume
 
 <Badge type="info" text="DESIGN" />
 
-1. A server builds a patch only from a current document that is valid for RQP ([markup §2](/engineering/protocol/markup)) and whose `template_revision` is equal to the template revision of the client.
+1. A server builds a patch only from a current document that is valid for RQP ([markup §2](/engineering/protocol/markup)) and whose template revision is equal to the template revision of the client (the member `t` of `Rq-Have`, [negotiation §3.4](/engineering/protocol/negotiation#_3-4-rq-have)).
 2. With the client block information ([negotiation](/engineering/protocol/negotiation), H-44) the server sends an operation for each block whose hash prefix differs. Without it, the server sends an operation for every block (H-7 fallback). Both give the same `next_revision`.
-3. The server writes one `replace_block` operation per changed block, in document order (H-47). Empty new content is `"content": ""`.
+3. The server writes one operation (`block_id`, `content`) per changed block, in document order (H-47), and no other member (H-104). Empty new content is `"content": ""`.
 4. `content` is the exact content bytes of the block in the current document, as a JSON string. The bytes are valid UTF-8 (M-02), so every content has a JSON string form.
 5. When the envelope would be larger than its `max_patch_bytes` (section 1.5) or than `maxPatchBytes`, or would not be smaller than the full document, the server sends the full document ([negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server), step 7). The server SHOULD also send the full document when a changed `html` block fails the attribute rule (item 7).
 6. Caching of the delta response (`Cache-Control: no-store`, no `ETag`; H-45) is defined in [negotiation](/engineering/protocol/negotiation).
@@ -516,16 +525,15 @@ A server SHOULD apply the same rule, with the same schemes and the same `data:` 
 
 ## 5. Error codes
 
-<Badge type="info" text="DESIGN" /> The codes come from the [error catalog](/engineering/core/errors) (H-50). Every code ends in the documented fallback: the client shows the page from the network ([INV-05](/engineering/architecture/invariants)).
+<Badge type="info" text="DESIGN" /> The codes come from the [error catalog](/engineering/core/errors) (H-50; changed by H-104). Every code ends in the documented fallback: the client shows the page from the network ([INV-05](/engineering/architecture/invariants)).
 
 | Code | Category | When |
 |---|---|---|
 | `MANIFEST_INVALID` | Protocol | A check of section 1.7 (client) or 1.8 fails, also the UTF-8 check (client item 6, H-62) and the markup analysis of the original document |
 | `PATCH_TOO_LARGE` | ResourceLimit | Envelope larger than `E` (section 1.5), content larger than `maxBlockBytes`, or patched document larger than `maxDocumentBytes` |
-| `PATCH_INVALID` | Protocol | A delta for a request that did not offer one; section 3.2; the schema (also an `op` other than `replace_block`); the operation rules of section 2.3; a final URL whose cache key (scheme, host, port, path, query, partition) is not the cache key of the snapshot (H-58) |
-| `TEMPLATE_MISMATCH` | Protocol | Section 2.4, step 1 |
-| `PATCH_BASE_MISMATCH` | Protocol | Section 2.4, step 2 |
-| `INTEGRITY_ERROR` | Protocol | Section 2.4, step 4 (operation hash), step 7 (`next_revision` from the hashes; also after a change of `policy` or `limits` on the server) or step 8 (page revision of the patched document) |
+| `PATCH_INVALID` | Protocol | A delta for a request that did not offer one; section 3.2; the schema (also an unknown member, such as a member of the envelope before H-104); the operation rules of section 2.3 (section 2.4, step 3); a final URL whose cache key (scheme, host, port, path, query, partition) is not the cache key of the snapshot (H-58) |
+| `INTEGRITY_ERROR` | Protocol | Section 2.4, step 7 (`next_revision` from the computed hashes; also a delta for another template or another base, content that the server did not hash, and a change of `policy` or `limits` on the server; H-104) or step 8 (page revision of the patched document) |
+| `TEMPLATE_MISMATCH`, `PATCH_BASE_MISMATCH` | Protocol | Not produced by `rqp/1` since H-104: steps 1 and 2 of section 2.4 are removed, and their cases give `INTEGRITY_ERROR` at step 7. The codes stay reserved in the [error catalog](/engineering/core/errors): an `rqp/1` client MUST NOT report them for a delta, and a later version MUST NOT give them another meaning |
 | `PATCH_CONTENT_REJECTED` | SecurityViolation | Section 4: the markup analysis of the patched document (section 2.4, step 8) or the patch content rule (step 9). The client also counts a metric (errors rule 3) |
 | `AUTH_PARTITION_CHANGED` | AuthChanged | The partition changed between the request and the response ([diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation)), also for a `304` ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response), item 1; DL-036) |
 
@@ -535,11 +543,11 @@ The client logs the code, the revisions and the sizes; never content, the URL qu
 
 | Item | Limit | Name in [resource limits](/engineering/core/resource-limits) |
 |---|---|---|
-| Blocks in a manifest | 256 | `maxBlocks` |
+| Blocks in a page (markup analysis; the manifest has no block list, H-103) | 256 | `maxBlocks` |
 | Operations in a patch | 256 (one per block) | `maxBlocks` |
 | Block id | 64 characters (M-15) | — |
 | Content of one block | 1 MiB (UTF-8 bytes) | `maxBlockBytes` |
-| Manifest text | 64 KiB | `maxManifestBytes` |
+| Manifest text | 64 KiB (a compact manifest has at most 4 819 bytes, section 1.8) | `maxManifestBytes` |
 | Original and patched document | 5 MiB | `maxDocumentBytes` |
 | Envelope | `min(maxPatchBytes, max_patch_bytes)` | `maxPatchBytes` |
 | JSON depth | 3 used; parser limit 16 | `maxJsonDepth` |
@@ -551,12 +559,12 @@ The client logs the code, the revisions and the sizes; never content, the URL qu
 |---|---|
 | `spec/rqp/schemas/manifest.schema.json` | `$id` `urn:rivqen:rqp:1:manifest`, JSON Schema Draft 2020-12 |
 | `spec/rqp/schemas/patch.schema.json` | `$id` `urn:rivqen:rqp:1:patch`, JSON Schema Draft 2020-12 |
-| `spec/rqp/examples/` | Valid and invalid instances (each invalid instance has one defect and the expected error) and two known-answer sets in `kat/`: the example page without and with `policy` and `limits` |
+| `spec/rqp/examples/` | Valid and invalid instances (each invalid instance has one defect and the expected error) and two known-answer sets in `kat/`: the example page without and with `policy` and `limits`; `kat.json` has the values that the client computes (`computed`: template revision and block list, H-103) |
 | `tools/rqp-schema/` | Tests: `npm ci --ignore-scripts`, then `npm test` |
 
-<Badge type="info" text="DESIGN" /> The schemas reject unknown members (`additionalProperties: false`) and check the patterns of ids, hashes and revisions and the ranges of this page. A schema check is necessary, not sufficient: unique block ids, duplicate member names, the order and uniqueness of operations, byte sizes, hashes, `next_revision` and the content rules are client checks of sections 1.8, 2.4, 3.2 and 4. When this page and a schema disagree, this page is right.
+<Badge type="info" text="DESIGN" /> The schemas reject unknown members (`additionalProperties: false`; also the members of the documents before H-103 and H-104) and check the patterns of block ids and revisions and the ranges of this page. A schema check is necessary, not sufficient: the page revision check of the manifest, duplicate member names, the known block ids, the order and uniqueness of operations, byte sizes, `next_revision` and the content rules are client checks of sections 1.8, 2.4, 3.2 and 4. The server rule on default members (section 1.2) is not a schema rule. When this page and a schema disagree, this page is right.
 
-<Badge type="tip" text="FACT" /> On 2026-10-12, `tools/rqp-schema` (Ajv 8.20.0, strict mode) passed 142 tests: both schemas are valid Draft 2020-12 schemas, 10 valid and 67 invalid instances give the expected results (`remove_block` and `insert_block` fail, H-47), and both known-answer sets agree with the Node.js markup candidate, also for the patched documents. The tests also cover the client checks of H-48 (sections 1.8 and 4.1), the policy line of H-55 (section 1.3), the full documents `kat/full.html` and `kat/full-policy.html` (section 1.7) and the `Rq-Have` value of the example page. On 2026-10-18 the same 142 tests passed with the full documents of H-72 (the manifest immediately after `<head>`).
+<Badge type="tip" text="FACT" /> On 2026-10-20 (WP-17 S6, H-103 and H-104), `tools/rqp-schema` (Ajv 8.20.0, strict mode) passed 133 tests: both schemas are valid Draft 2020-12 schemas, 10 valid and 57 invalid instances give the expected results (every member of the documents before H-103 and H-104 fails as an unknown member), and both known-answer sets agree with the Node.js markup candidate, also for the patched documents. The tests also cover the client checks of H-48 and H-103 (sections 1.8 and 4.1), the client verification of H-104 (section 2.4, steps 3 to 7), the policy line of H-55 (section 1.3), the full documents `kat/full.html` and `kat/full-policy.html` (section 1.7) and the `Rq-Have` value of the example page. Before H-103 the package had 142 tests with 67 invalid instances (2026-10-12 and 2026-10-18).
 
 ## Related
 

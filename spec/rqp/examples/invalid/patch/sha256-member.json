@@ -1,0 +1,17 @@
+{
+  "description": "No hash per operation (H-104, replaces H-10): the client computes it, next_revision binds it",
+  "expect": {
+    "keyword": "additionalProperties",
+    "instancePath": "/operations/0"
+  },
+  "instance": {
+    "next_revision": "r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI",
+    "operations": [
+      {
+        "block_id": "price",
+        "content": "130.00",
+        "sha256": "bB9ScYcQQzKWqPCBW62MTsc9Ff_djve7Denf3YMoCUg"
+      }
+    ]
+  }
+}

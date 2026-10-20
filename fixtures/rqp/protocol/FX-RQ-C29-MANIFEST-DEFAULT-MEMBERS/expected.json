@@ -1,0 +1,76 @@
+{
+  "id": "FX-RQ-C29-MANIFEST-DEFAULT-MEMBERS",
+  "kind": "client",
+  "context": {
+    "url": "https://shop.example.com/catalog",
+    "final_url": "https://shop.example.com/catalog",
+    "redirected": false,
+    "build": "release",
+    "allow_http": false,
+    "allowlist": ["https://shop.example.com"],
+    "credentials": null,
+    "response_fields_visible": true,
+    "public_enabled": false,
+    "public_origin": false,
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html"]
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"],
+      ["rq-version","1"],
+      ["cache-control","no-cache"]
+    ],
+    "body": "response.body",
+    "body_bytes": 534,
+    "body_sha256": "d6Fz6av-UIjC0XDJo1z7sJi2CzcXokosvojTMH7frKc"
+  },
+  "result": {
+    "outcome": "stored",
+    "error": null,
+    "next": "show",
+    "metric": false,
+    "snapshot": {
+      "url": "https://shop.example.com/catalog",
+      "partition": "request",
+      "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
+      "page_revision": "r1.7fPX1ft68yzn5vuZaTvuJrslggPcxfoHL_tLQsY6GbE",
+      "policy": {
+        "mode": "private",
+        "ttl_seconds": 0,
+        "offline": false
+      },
+      "limits": {},
+      "blocks": [
+        {
+          "id": "title",
+          "format": "html",
+          "sha256": "0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces",
+          "content": "Shop"
+        },
+        {
+          "id": "price",
+          "format": "html",
+          "sha256": "Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs",
+          "content": "120.00"
+        },
+        {
+          "id": "cart",
+          "format": "json",
+          "sha256": "zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4",
+          "content": "{\"items\":3}"
+        }
+      ],
+      "document_sha256": "xzb0cXdSHvu0CtK8DkDnFU_oof2RpisnvRVGspmq62c"
+    }
+  }
+}

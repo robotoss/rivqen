@@ -1,0 +1,33 @@
+{
+  "id": "FX-RQ-C30-DELTA-ORDER",
+  "kind": "client",
+  "description": "Operations for price and then title: not in document order (rule 3 of section 2.3)",
+  "rules": ["RQP-13","RQP-28"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","application/vnd.rivqen.delta+json"],
+      ["rq-version","1"],
+      ["cache-control","no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "130.00"
+          },
+          {
+            "block_id": "title",
+            "content": "Shop"
+          }
+        ]
+      }
+    }
+  }
+}

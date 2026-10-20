@@ -32,8 +32,8 @@
       ["set-cookie2","a=1; Version=1"]
     ],
     "body": "response.body",
-    "body_bytes": 826,
-    "body_sha256": "6VCiCfWZGxIBbyuKLOTbmpndc0Ik8UfPm9UxaHtPZrs"
+    "body_bytes": 489,
+    "body_sha256": "AV8XF1J8oJIWbBV1puOSlq_HFK4Sr9I4Sl_EtXHPYac"
   },
   "result": {
     "outcome": "stored",

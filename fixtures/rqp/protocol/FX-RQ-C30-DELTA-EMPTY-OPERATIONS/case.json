@@ -1,0 +1,24 @@
+{
+  "id": "FX-RQ-C30-DELTA-EMPTY-OPERATIONS",
+  "kind": "client",
+  "description": "A delta without operations (schema: at least one operation)",
+  "rules": ["RQP-13","RQP-28"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","application/vnd.rivqen.delta+json"],
+      ["rq-version","1"],
+      ["cache-control","no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": []
+      }
+    }
+  }
+}

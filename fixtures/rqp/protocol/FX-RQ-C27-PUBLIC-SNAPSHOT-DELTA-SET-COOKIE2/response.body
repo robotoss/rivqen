@@ -1,1 +1,1 @@
-{"type":"rivqen.patch","protocol":"rqp/1","base_revision":"r1.VCXU66nwnESilJkne1O_34-OYUQiGlMbZoX2wic7rIY","next_revision":"r1.Tp_YGphMrWn2d9JNR61TOb-mMO7CBT-E7NVXkPzV8bk","template_revision":"t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM","operations":[{"op":"replace_block","block_id":"price","format":"html","content":"130.00","sha256":"bB9ScYcQQzKWqPCBW62MTsc9Ff_djve7Denf3YMoCUg"}]}
+{"next_revision":"r1.Tp_YGphMrWn2d9JNR61TOb-mMO7CBT-E7NVXkPzV8bk","operations":[{"block_id":"price","content":"130.00"}]}

@@ -1,16 +1,9 @@
 {
-  "type": "rivqen.patch",
-  "protocol": "rqp/1",
-  "base_revision": "r1.zQqphWFHtsW0_yt9_uXaIKo4JTCZ7xtKZKztIzya_ik",
   "next_revision": "r1.qqlAJmTxpB9A67xSyZk-tmrrNmYClY_fqig7ceZNsSM",
-  "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
   "operations": [
     {
-      "op": "replace_block",
       "block_id": "note",
-      "format": "html",
-      "content": "<b>café</b>\n",
-      "sha256": "LbJ-ra4r8ZsZ23vVOUPu4261Eh38xSb9r9KeYiNPVcE"
+      "content": "<b>café</b>\n"
     }
   ]
 }

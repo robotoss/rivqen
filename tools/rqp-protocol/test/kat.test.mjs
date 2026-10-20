@@ -19,11 +19,14 @@ const manifest = readJson(join(KAT_DIR, kat.manifest));
 const set2 = kat.with_policy_limits;
 const manifest2 = readJson(join(KAT_DIR, set2.manifest));
 const members2 = { policy: manifest2.policy, limits: manifest2.limits };
+// H-103: the manifest has no template revision and no block list; kat.json has the computed values.
+const computed = kat.computed;
 
-test('page-a is the KAT page and gives the KAT revisions', () => {
+test('page-a is the KAT page and gives the KAT revisions and the computed values', () => {
   assert.deepEqual(page('page-a'), readFileSync(join(KAT_DIR, kat.document)));
   const a = revisions('page-a');
-  assert.equal(a.template_revision, manifest.template_revision);
+  assert.equal(a.template_revision, computed.template_revision);
+  assert.deepEqual(a.blocks.map(({ id, format, sha256 }) => ({ id, format, sha256 })), computed.blocks);
   assert.equal(a.page_revision, manifest.page_revision);
 });
 
@@ -43,7 +46,7 @@ test('the r1 placeholder with client members has the policy line (H-55)', () => 
 
 test('the policy line of the second KAT set', () => {
   assert.equal(`PL\t${policyLimitsText(members2)}\n`, set2.policy_line);
-  assert.equal(pageRevision(manifest2.template_revision, manifest2.blocks, members2), manifest2.page_revision);
+  assert.equal(pageRevision(computed.template_revision, computed.blocks, members2), manifest2.page_revision);
   assert.equal(policyLimitsText({}), '');
 });
 
@@ -76,9 +79,24 @@ test('the reference client accepts the KAT full documents and applies the KAT pa
     const stored = clientStep(ctx, { status: 200, headers: html, body: readFileSync(join(KAT_DIR, fullFile)) });
     assert.equal(stored.outcome, 'stored');
     assert.equal(stored.snapshot.page_revision, m.page_revision);
-    const snapshot = { ...m, document: page('page-a') };
+    // The harness snapshot: the stored document, the computed values and the manifest members.
+    const snapshot = { ...computed, ...m, document: page('page-a') };
     const patched = clientStep({ ...ctx, navigation: 'delta', snapshot }, { status: 200, headers: json, body: readFileSync(join(KAT_DIR, patchFile)) });
     assert.equal(patched.outcome, 'patched', String(patched.error));
     assert.equal(patched.snapshot.page_revision, readJson(join(KAT_DIR, patchFile)).next_revision);
   }
+});
+
+test('H-103: the KAT manifests have only protocol, origin, path, page_revision and the non-default members', () => {
+  assert.deepEqual(Object.keys(manifest), ['protocol', 'origin', 'path', 'page_revision']);
+  assert.deepEqual(Object.keys(manifest2), ['protocol', 'origin', 'path', 'page_revision', 'policy', 'limits']);
+  assert.equal(manifest2.policy.mode, undefined); // the default "private" is not written
+});
+
+test('H-103: the server writes no default member: a configuration of default values gives the manifest of set 1', () => {
+  const defaults = { policy: { mode: 'private', ttl_seconds: 0, offline: false }, limits: {} };
+  assert.deepEqual(handle(firstVisit(), APP, page('page-a'), defaults).body, readFileSync(join(KAT_DIR, kat.full_document)));
+  // A hint that is not smaller than the server limit bounds nothing (SHOULD): not written.
+  const limitOnly = handle(firstVisit(), APP, page('page-a'), { limits: { max_patch_bytes: 262144 } });
+  assert.deepEqual(limitOnly.body, readFileSync(join(KAT_DIR, kat.full_document)));
 });

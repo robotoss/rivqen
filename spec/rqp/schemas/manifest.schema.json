@@ -2,21 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:rivqen:rqp:1:manifest",
   "title": "RQP page manifest (rqp/1)",
-  "description": "Normative text: docs/engineering/protocol/manifest-patch.md section 1. The schema does not check rules that need more than one value: unique block ids, binding to the navigation URL, the byte size of the manifest text, duplicate member names, the lexical form of integers.",
+  "description": "Normative text: docs/engineering/protocol/manifest-patch.md section 1. Since H-103 the manifest has no block list and no template revision: the client computes them with its markup analysis and checks them through page_revision (section 1.8). The schema does not check rules that need more than one value or the document: the page revision check, the binding to the navigation URL, the byte size of the manifest text, duplicate member names, the lexical form of integers, the server rule that no default member is written (section 1.2).",
   "type": "object",
   "additionalProperties": false,
-  "required": ["protocol", "origin", "path", "template_revision", "page_revision", "blocks"],
+  "required": ["protocol", "origin", "path", "page_revision"],
   "properties": {
     "protocol": { "const": "rqp/1" },
     "origin": { "$ref": "#/$defs/origin" },
     "path": { "$ref": "#/$defs/path" },
-    "template_revision": { "$ref": "#/$defs/template_revision" },
     "page_revision": { "$ref": "#/$defs/page_revision" },
-    "blocks": {
-      "type": "array",
-      "maxItems": 256,
-      "items": { "$ref": "#/$defs/block" }
-    },
     "policy": { "$ref": "#/$defs/policy" },
     "limits": { "$ref": "#/$defs/limits" }
   },
@@ -34,18 +28,8 @@
       "maxLength": 4096,
       "pattern": "^/[!$-;=@-~]*$"
     },
-    "block": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "format", "sha256"],
-      "properties": {
-        "id": { "$ref": "#/$defs/block_id" },
-        "format": { "$ref": "#/$defs/format" },
-        "sha256": { "$ref": "#/$defs/sha256" }
-      }
-    },
     "policy": {
-      "description": "Section 1.4. Part of page_revision (section 1.3, policy line, H-55): the members that are present, also an empty object, change the page revision; a default value is not written for a missing member.",
+      "description": "Section 1.4. Part of page_revision (section 1.3, policy line, H-55): the members that are present, also an empty object, change the page revision. A server writes no member with its default value and no empty object (H-103); a client accepts them and treats an absent member as its default.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -55,27 +39,12 @@
       }
     },
     "limits": {
-      "description": "Section 1.5. Part of page_revision (section 1.3, policy line, H-55), as policy.",
+      "description": "Section 1.5. Part of page_revision (section 1.3, policy line, H-55), as policy. max_patch_bytes has no default value: an absent member means no hint.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "max_patch_bytes": { "type": "integer", "minimum": 1024, "maximum": 5242880 }
       }
-    },
-    "block_id": {
-      "description": "Markup rule M-15.",
-      "type": "string",
-      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
-    },
-    "format": { "enum": ["html", "json"] },
-    "sha256": {
-      "description": "SHA-256, base64url without padding, canonical form (the last character has its two low bits zero).",
-      "type": "string",
-      "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
-    },
-    "template_revision": {
-      "type": "string",
-      "pattern": "^t1\\.[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
     },
     "page_revision": {
       "type": "string",

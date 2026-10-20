@@ -1,1 +1,1 @@
-{"type":"rivqen.patch","protocol":"rqp/1","base_revision":"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8","next_revision":"r1.r1ZhwzKDzu5uxz0sUOE9qrR6yHjaFeP1FxOzCngo0_c","template_revision":"t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM","operations":[{"op":"replace_block","block_id":"price","format":"html","content":"<iframe src=\"/v\"></iframe>","sha256":"w_1-ShLq_obIj-rji90mAg-oy9U3sxyy3YESvI93SU4"}]}
+{"next_revision":"r1.r1ZhwzKDzu5uxz0sUOE9qrR6yHjaFeP1FxOzCngo0_c","operations":[{"block_id":"price","content":"<iframe src=\"/v\"></iframe>"}]}

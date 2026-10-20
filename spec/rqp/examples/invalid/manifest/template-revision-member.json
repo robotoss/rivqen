@@ -1,0 +1,20 @@
+{
+  "description": "The manifest has no template_revision: the client computes it with its markup analysis (H-103)",
+  "expect": {
+    "keyword": "additionalProperties",
+    "instancePath": ""
+  },
+  "instance": {
+    "protocol": "rqp/1",
+    "origin": "https://shop.example.com",
+    "path": "/catalog",
+    "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
+    "policy": {
+      "ttl_seconds": 60
+    },
+    "limits": {
+      "max_patch_bytes": 65536
+    },
+    "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM"
+  }
+}

@@ -59,8 +59,8 @@
       ["set-cookie","session=1; Secure; HttpOnly"]
     ],
     "body": "response.body",
-    "body_bytes": 388,
-    "body_sha256": "94I1aW2fFxalZh34ipK47RORRLPCcTuwNPoyhO-Dhrg"
+    "body_bytes": 121,
+    "body_sha256": "ocbu_lcwO1tBMimHOOEjFI8PzqX0iMPfH53P5t0Yw_4"
   },
   "result": {
     "outcome": "patched",

@@ -55,8 +55,8 @@
       ["cache-control","no-store"]
     ],
     "body": "response.body",
-    "body_bytes": 417,
-    "body_sha256": "uV4qP-OhG_up_bXTp0DzwElA_PCzkn3EIjWMDedaTig"
+    "body_bytes": 150,
+    "body_sha256": "LdTLXQoExaSw-YmnxM9OnoK6GxGAQmxIb8gLi5yfSj8"
   },
   "result": {
     "outcome": "rejected",

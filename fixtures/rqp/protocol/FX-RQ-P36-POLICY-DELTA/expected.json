@@ -28,13 +28,10 @@
   "headers_forbidden": ["etag","expires","last-modified","rq-revision","rq-template-revision"],
   "body": {
     "kind": "delta",
-    "base_revision": "r1.ntmvLE4csBiPR_ylX60ewp2aSpkrgPShEGuipBzU8Ac",
     "next_revision": "r1.yjMbAcWhFvAKHjQyW_nP16A2Vzt_s5iDE0nqZkDASME",
-    "template_revision": "t1.UDAGcPAhlaAytet6ltzfl_jk0ucsCZ3Qw1nrSGA5pwA",
     "blocks": [
       {
         "id": "price",
-        "format": "html",
         "sha256": "bB9ScYcQQzKWqPCBW62MTsc9Ff_djve7Denf3YMoCUg"
       }
     ]

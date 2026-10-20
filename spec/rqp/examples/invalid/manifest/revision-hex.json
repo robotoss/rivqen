@@ -1,0 +1,19 @@
+{
+  "description": "Hex SHA-256 is the old draft form (H-2)",
+  "expect": {
+    "keyword": "pattern",
+    "instancePath": "/page_revision"
+  },
+  "instance": {
+    "protocol": "rqp/1",
+    "origin": "https://shop.example.com",
+    "path": "/catalog",
+    "page_revision": "r1.2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+    "policy": {
+      "ttl_seconds": 60
+    },
+    "limits": {
+      "max_patch_bytes": 65536
+    }
+  }
+}

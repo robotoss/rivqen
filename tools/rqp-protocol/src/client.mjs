@@ -399,24 +399,21 @@ export function checkFull(ctx, body) {
   // has no head start tag and no implied head; el.start is never -1.
   if (documentHeadStart(original) !== el.start) return { error: 'position' };
   const text = body.subarray(el.textStart, el.textEnd);
-  // Section 1.8, items 1 to 4.
+  // Section 1.8, items 1, 2 and 4 (item 3 is removed: no block list, H-103).
   if (text.length > LIMITS.maxManifestBytes) return { error: 'size' };
   const json = parseStrict(text);
   if (!json.ok) return { error: `json-${json.rule}` };
   if (validate(SCHEMAS.manifest, json.value).length > 0) return { error: 'schema' };
   const m = json.value;
-  if (new Set(m.blocks.map((b) => b.id)).size !== m.blocks.length) return { error: 'ids' };
   const url = new URL(finalUrlOf(ctx));
   if (m.origin !== url.origin || m.path !== url.pathname) return { error: 'url' };
-  // Item 5 (H-48): the markup analysis of the original document.
+  // Item 5 (H-48, H-103): the markup analysis of the original document gives the
+  // template revision and the block digests. The manifest has neither (H-103):
+  // the page revision that they give with the policy line of this manifest
+  // (H-55) must be page_revision. After this check the client uses its computed
+  // values (snapshot, Rq-Have).
   const a = analyze(original);
   if (!a.valid) return { error: 'analysis' };
-  const same =
-    a.template_revision === m.template_revision &&
-    a.blocks.length === m.blocks.length &&
-    a.blocks.every((b, i) => b.id === m.blocks[i].id && b.format === m.blocks[i].format && b.sha256 === m.blocks[i].sha256);
-  if (!same) return { error: 'analysis' };
-  // H-55: the page revision with the policy line of this manifest.
   // H-58: the snapshot is bound to the cache key of the final URL.
   const snap = snapshot(original, a, m, { url: canonicalUrl(url.href), partition: Partition.REQUEST });
   if (snap.page_revision !== m.page_revision) return { error: 'revision' };
@@ -435,13 +432,19 @@ function handleFull(ctx, headers, body) {
 // ---------------------------------------------------------------------------
 // Delta: diff-engine section 3, steps 2 and 4 to 13 (manifest-patch section 2.4).
 
-/** Rules 1 to 4 of manifest-patch section 2.3: null, or the block index of each operation. */
+/**
+ * Rules 1 to 3 of manifest-patch section 2.3 (step 3): null, or the block
+ * index of each operation. Each block_id names a block of the snapshot, a block
+ * has at most one operation, and the operations are in document order (a
+ * strictly growing index gives the last two rules). Rule 4 (format) is removed
+ * by H-104: the block keeps the format of the snapshot.
+ */
 function operationIndices(blocks, operations) {
   const out = [];
   let last = -1;
   for (const op of operations) {
     const i = blocks.findIndex((b) => b.id === op.block_id);
-    if (i < 0 || i <= last || op.format !== blocks[i].format) return null;
+    if (i <= last) return null; // also i === -1: not a block of the snapshot
     out.push(i);
     last = i;
   }
@@ -476,19 +479,21 @@ export function verifyDelta(snap, body, offered, maxPatchBytes = LIMITS.maxPatch
   if (validate(SCHEMAS.patch, json.value).length > 0) return { code: Code.PATCH_INVALID };
   const env = json.value;
   const { analysis, document, members } = snap;
-  if (env.template_revision !== analysis.template_revision) return { code: Code.TEMPLATE_MISMATCH };
-  if (env.base_revision !== snap.page_revision) return { code: Code.PATCH_BASE_MISMATCH };
+  // Steps 1 and 2 are removed (H-104): the envelope has no template_revision and
+  // no base_revision. A delta for another template or another base fails step 7.
   const indices = operationIndices(analysis.blocks, env.operations);
   if (indices === null) return { code: Code.PATCH_INVALID };
   const replacements = new Map();
   for (const [k, op] of env.operations.entries()) {
     const bytes = Buffer.from(op.content, 'utf8');
     if (bytes.length > LIMITS.maxBlockBytes) return { code: Code.PATCH_TOO_LARGE };
-    if (sha256b64u(bytes) !== op.sha256) return { code: Code.INTEGRITY_ERROR };
     replacements.set(indices[k], bytes);
   }
-  // Steps 5 to 7: the full snapshot hash for each block without an operation,
-  // and the policy line of the snapshot manifest (H-55).
+  // Steps 4 to 7 (H-44, H-104): the client computes the hash of each new content
+  // and keeps the full snapshot hash for each block without an operation; with
+  // the template revision and the policy line of the snapshot (H-55) the page
+  // revision R' must be next_revision. This is the only integrity check of the
+  // envelope.
   const next = analysis.blocks.map((b, i) => ({
     id: b.id,
     format: b.format,

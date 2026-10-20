@@ -49,32 +49,13 @@ test('every invalid example has exactly one defect: no error outside the expecte
   }
 });
 
-test('valid replace_block examples carry the SHA-256 of the UTF-8 bytes of the decoded content string', () => {
-  for (const { name, path } of exampleFiles('valid', 'patch')) {
-    for (const op of readJson(path).operations) {
-      if (op.op === 'replace_block') assert.equal(op.sha256, contentHash(op.content), `${name} ${op.block_id}`);
-    }
-  }
-});
-
 // Boundary values are generated here to keep the example files small.
 
 const shop = () => readJson(exampleFiles('valid', 'manifest').find((f) => f.name === 'shop.json').path);
 const price = () => readJson(exampleFiles('valid', 'patch').find((f) => f.name === 'shop-price.json').path);
-const block = (i) => ({ id: `b${i}`, format: 'html', sha256: contentHash(String(i)) });
-
-test('a manifest with 256 blocks passes', () => {
-  const m = { ...shop(), blocks: Array.from({ length: 256 }, (_, i) => block(i)) };
-  assert.equal(errorsOf('manifest', m), null);
-});
-
-test('a manifest with 257 blocks fails with maxItems', () => {
-  const m = { ...shop(), blocks: Array.from({ length: 257 }, (_, i) => block(i)) };
-  assert.deepEqual(errorsOf('manifest', m).map((e) => [e.keyword, e.instancePath]), [['maxItems', '/blocks']]);
-});
 
 test('a patch with 256 operations passes and one with 257 fails with maxItems', () => {
-  const op = (i) => ({ op: 'replace_block', block_id: `b${i}`, format: 'html', content: '', sha256: contentHash('') });
+  const op = (i) => ({ block_id: `b${i}`, content: '' });
   assert.equal(errorsOf('patch', { ...price(), operations: Array.from({ length: 256 }, (_, i) => op(i)) }), null);
   const errors = errorsOf('patch', { ...price(), operations: Array.from({ length: 257 }, (_, i) => op(i)) });
   assert.deepEqual(errors.map((e) => [e.keyword, e.instancePath]), [['maxItems', '/operations']]);
@@ -84,7 +65,6 @@ test('content of 1 048 576 code points passes and 1 048 577 fails with maxLength
   const at = (n) => {
     const p = price();
     p.operations[0].content = 'x'.repeat(n);
-    p.operations[0].sha256 = contentHash(p.operations[0].content);
     return p;
   };
   assert.equal(errorsOf('patch', at(1048576)), null);
@@ -96,33 +76,52 @@ test('an empty block content has the hash 47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3
   assert.equal(contentHash(''), '47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU');
 });
 
-test('replace_block is the only operation (H-47): remove_block and insert_block fail at /operations/0/op', () => {
+test('an operation has no op member (H-104): replace_block, remove_block and insert_block fail at /operations/0', () => {
   const p = price();
-  assert.deepEqual(readJson(schemaPath('patch')).properties.operations.items, { $ref: '#/$defs/replace_block' });
-  for (const op of ['remove_block', 'insert_block']) {
-    const env = { ...p, operations: [{ ...p.operations[0], op }] };
-    assert.deepEqual(errorsOf('patch', env).map((e) => [e.keyword, e.instancePath]), [['const', '/operations/0/op']], op);
+  assert.deepEqual(readJson(schemaPath('patch')).properties.operations.items, { $ref: '#/$defs/operation' });
+  for (const op of ['replace_block', 'remove_block', 'insert_block']) {
+    const env = { ...p, operations: [{ op, ...p.operations[0] }] };
+    assert.deepEqual(errorsOf('patch', env).map((e) => [e.keyword, e.instancePath]), [['additionalProperties', '/operations/0']], op);
   }
 });
 
-test('replace_block with empty content passes the schema (the result of the withdrawn remove_block)', () => {
+test('an operation with empty content passes the schema (the result of the withdrawn remove_block)', () => {
   const p = price();
-  p.operations[0] = { ...p.operations[0], content: '', sha256: contentHash('') };
+  p.operations[0] = { ...p.operations[0], content: '' };
   assert.equal(errorsOf('patch', p), null);
 });
 
-test('each of the 16 canonical last characters passes and the 48 others fail', () => {
+test('H-103, H-104: every member of the documents before H-103 and H-104 is an unknown member, also with a valid value', () => {
+  const m = shop();
+  const t = 't1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM';
+  for (const extra of [{ template_revision: t }, { blocks: [] }]) {
+    assert.deepEqual(errorsOf('manifest', { ...m, ...extra }).map((e) => [e.keyword, e.instancePath]), [['additionalProperties', '']], Object.keys(extra)[0]);
+  }
+  const p = price();
+  for (const extra of [{ type: 'rivqen.patch' }, { protocol: 'rqp/1' }, { base_revision: m.page_revision }, { template_revision: t }]) {
+    assert.deepEqual(errorsOf('patch', { ...p, ...extra }).map((e) => [e.keyword, e.instancePath]), [['additionalProperties', '']], Object.keys(extra)[0]);
+  }
+  for (const extra of [{ op: 'replace_block' }, { format: 'html' }, { sha256: contentHash('130.00') }]) {
+    const env = { ...p, operations: [{ ...p.operations[0], ...extra }] };
+    assert.deepEqual(errorsOf('patch', env).map((e) => [e.keyword, e.instancePath]), [['additionalProperties', '/operations/0']], Object.keys(extra)[0]);
+  }
+});
+
+test('each of the 16 canonical last characters of a revision passes and the 48 others fail', () => {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
   for (let i = 0; i < 64; i += 1) {
-    const m = shop();
-    m.blocks[0].sha256 = 'A'.repeat(42) + alphabet[i];
-    const ok = errorsOf('manifest', m) === null;
-    assert.equal(ok, i % 4 === 0, `last character ${alphabet[i]}`);
+    const value = 'r1.' + 'A'.repeat(42) + alphabet[i];
+    const m = { ...shop(), page_revision: value };
+    const p = { ...price(), next_revision: value };
+    assert.equal(errorsOf('manifest', m) === null, i % 4 === 0, `manifest, last character ${alphabet[i]}`);
+    assert.equal(errorsOf('patch', p) === null, i % 4 === 0, `patch, last character ${alphabet[i]}`);
   }
 });
 
 test('the JSON Schema does not see duplicate member names: the client parser must reject them', () => {
   // JSON.parse keeps the last value; the schema then validates a different object than other parsers see.
-  const text = JSON.stringify(price()).replace('"type":"rivqen.patch"', '"type":"x","type":"rivqen.patch"');
+  const p = price();
+  const text = JSON.stringify(p).replace('"next_revision"', `"next_revision":"${shop().page_revision}","next_revision"`);
   assert.equal(errorsOf('patch', JSON.parse(text)), null);
+  assert.equal(JSON.parse(text).next_revision, p.next_revision);
 });

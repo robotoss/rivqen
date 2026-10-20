@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-P36-POLICY-DEFAULTS",
+  "description": "The server configuration has policy members of the default value and an empty limits object: F without policy and limits, the ETag r1(page-a) (H-103)",
+  "rules": ["RQP-08","RQP-27"],
+  "page": "page-a",
+  "server_config": {
+    "policy": {
+      "mode": "private",
+      "ttl_seconds": 0,
+      "offline": false
+    },
+    "limits": {}
+  },
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"],
+      ["cache-control","no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html"]
+    ]
+  }
+}

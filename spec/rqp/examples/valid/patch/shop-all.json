@@ -1,30 +1,17 @@
 {
-  "type": "rivqen.patch",
-  "protocol": "rqp/1",
-  "base_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
   "next_revision": "r1.ZvwDE73CDqBdDTTbZio2YJhfiHVi38DPliYIJGwg8-A",
-  "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
   "operations": [
     {
-      "op": "replace_block",
       "block_id": "title",
-      "format": "html",
-      "content": "",
-      "sha256": "47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU"
+      "content": ""
     },
     {
-      "op": "replace_block",
       "block_id": "price",
-      "format": "html",
-      "content": "130.00",
-      "sha256": "bB9ScYcQQzKWqPCBW62MTsc9Ff_djve7Denf3YMoCUg"
+      "content": "130.00"
     },
     {
-      "op": "replace_block",
       "block_id": "cart",
-      "format": "json",
-      "content": "{\"items\":4}",
-      "sha256": "iwlMhuc-GVro_tpmVyO8xFme7MqQsl-cEnrge5SN9qw"
+      "content": "{\"items\":4}"
     }
   ]
 }

@@ -55,8 +55,8 @@
       ["cache-control","no-store"]
     ],
     "body": "response.body",
-    "body_bytes": 439,
-    "body_sha256": "S9X9P_naQC8_JR0_CqxkuflU94UlU_H8xEfnsywBDXY"
+    "body_bytes": 172,
+    "body_sha256": "FWBKlGXr6T2mj5UYXK7xasIjAHpCHOz3_aGOh3Qyl-U"
   },
   "result": {
     "outcome": "patched",

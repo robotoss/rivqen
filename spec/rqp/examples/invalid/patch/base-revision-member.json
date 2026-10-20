@@ -1,0 +1,17 @@
+{
+  "description": "No base_revision (H-104): a delta for another base fails the next_revision check",
+  "expect": {
+    "keyword": "additionalProperties",
+    "instancePath": ""
+  },
+  "instance": {
+    "next_revision": "r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI",
+    "operations": [
+      {
+        "block_id": "price",
+        "content": "130.00"
+      }
+    ],
+    "base_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8"
+  }
+}

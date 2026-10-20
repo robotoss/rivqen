@@ -10,7 +10,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MANIFEST_END, UnsupportedInput, membersOf, pageRevision, sha256b64u } from './common.mjs';
-import { handle, manifestOf } from './server.mjs';
+import { handle, manifestOf, writtenMembers } from './server.mjs';
 import { Partition, handleResponse, hasUserinfo, havePrefixes, requestHeaders, snapshotOf, validAllowlistEntry } from './client.mjs';
 import { combined, normalizeHeaders } from './http.mjs';
 import { analyze, documentHeadStart } from './markup.mjs';
@@ -167,15 +167,17 @@ export function expectServer(c) {
   let body;
   if (r.kind === 'full') {
     const a = analyze(page);
-    body = { kind: 'full', insert_at: documentHeadStart(page), manifest: manifestOf(a, request.target, config) };
+    // H-103: the manifest has the members of the configuration that are not the default.
+    body = { kind: 'full', insert_at: documentHeadStart(page), manifest: manifestOf(a, request.target, writtenMembers(config)) };
   } else if (r.kind === 'delta') {
+    // H-104: the envelope is next_revision and the operations. `sha256` is the
+    // hash of the current content of each changed block; the checker compares
+    // it with the hash of the content that the server sent.
     const env = JSON.parse(r.body.toString('utf8'));
     body = {
       kind: 'delta',
-      base_revision: env.base_revision,
       next_revision: env.next_revision,
-      template_revision: env.template_revision,
-      blocks: env.operations.map((op) => ({ id: op.block_id, format: op.format, sha256: op.sha256 })),
+      blocks: env.operations.map((op) => ({ id: op.block_id, sha256: sha256b64u(Buffer.from(op.content, 'utf8')) })),
     };
   } else {
     body = { kind: r.kind };
@@ -289,20 +291,28 @@ function context(c) {
   };
 }
 
-const DUPLICATE_PREFIX = '{"protocol":"rqp/1",';
-
-function withDuplicateMember(text) {
-  return DUPLICATE_PREFIX + text.slice(1);
+/** A JSON object text with `member` written first a second time, with `value` (manifest-patch section 3.2, rule 2). */
+function withDuplicateMember(text, member, value) {
+  return `{${JSON.stringify(member)}:${JSON.stringify(value)},${text.slice(1)}`;
 }
 
 /** Body recipe {"full": page, ...}: a full document F, or F with one defect. */
 function fullRecipe(id, recipe, ctx) {
-  onlyKeys(id, recipe, ['full', 'members', 'manifest_of', 'manifest_type', 'manifest_position', 'manifest_after', 'manifest_count', 'duplicate_member'], 'body');
+  onlyKeys(id, recipe, ['full', 'members', 'manifest_of', 'manifest_type', 'manifest_position', 'manifest_after', 'manifest_count', 'duplicate_member', 'old_manifest'], 'body');
   const page = pageBytes(recipe.full);
   const a = analysisOf(id, recipe.manifest_of ?? recipe.full);
-  // The manifest is consistent with the final URL of the response (H-58).
-  let text = JSON.stringify(manifestOf(a, ctx.final_url, membersOf(recipe.members)));
-  if (recipe.duplicate_member === true) text = withDuplicateMember(text);
+  // The manifest is consistent with the final URL of the response (H-58). The
+  // members are written as the case gives them, also default values (a client
+  // accepts them; only a server must not write them, H-103).
+  let manifest = manifestOf(a, ctx.final_url, membersOf(recipe.members));
+  if (recipe.old_manifest === true) {
+    // The manifest of rqp/1 before H-103: also template_revision and the block list.
+    const { protocol, origin, path, page_revision: pageRev, ...rest } = manifest;
+    const blocks = a.blocks.map(({ id: blockId, format, sha256 }) => ({ id: blockId, format, sha256 }));
+    manifest = { protocol, origin, path, template_revision: a.template_revision, page_revision: pageRev, blocks, ...rest };
+  } else if (recipe.old_manifest !== undefined) throw new CaseError(id, 'old_manifest must be true when present');
+  let text = JSON.stringify(manifest);
+  if (recipe.duplicate_member === true) text = withDuplicateMember(text, 'protocol', 'rqp/1');
   const type = recipe.manifest_type ?? 'application/rivqen-manifest+json';
   const element = Buffer.from(`<script type="${type}">${text}${MANIFEST_END}`, 'utf8');
   // Positions: the insertion point of the server (default: immediately after
@@ -335,16 +345,32 @@ function fullRecipe(id, recipe, ctx) {
   return Buffer.concat(parts);
 }
 
-/** Body recipe {"delta": {...}}: a delta envelope from a snapshot page, or one with one defect. */
+/**
+ * Body recipe {"delta": {...}}: a delta envelope (H-104) from the page `from`,
+ * or one with one defect. Without `ops` the operations are the blocks of `to`
+ * that differ from `from`. next_revision is computed from the blocks of
+ * `from` with the contents of the operations and the template revision of
+ * `from`, or is the page revision of the page `next_revision`. `old_envelope`
+ * writes the envelope of rqp/1 before H-104 (type, protocol, base_revision,
+ * template_revision; op, format and sha256 in each operation);
+ * `operation_sha256` adds only the hash of each operation (H-10, replaced by
+ * H-104); `duplicate_member` writes next_revision a second time, first, with the
+ * page revision of `from` (the value a first-wins parser would read).
+ */
 function deltaRecipe(id, recipe, ctx) {
   const d = recipe.delta;
   onlyKeys(id, recipe, ['delta'], 'body');
-  onlyKeys(id, d, ['from', 'to', 'ops', 'base_revision', 'next_revision', 'next_members', 'template_revision', 'size', 'duplicate_member'], 'body.delta');
+  onlyKeys(id, d, ['from', 'to', 'ops', 'next_revision', 'next_members', 'size', 'duplicate_member', 'old_envelope', 'operation_sha256'], 'body.delta');
+  for (const flag of ['duplicate_member', 'old_envelope', 'operation_sha256']) {
+    if (d[flag] !== undefined && d[flag] !== true) throw new CaseError(id, `body.delta.${flag} must be true when present`);
+  }
   const from = analysisOf(id, d.from);
-  // The policy and limits of the snapshot manifest (H-55): base_revision is the
-  // snapshot page revision; next_revision uses next_members when they are given.
+  // The policy and limits of the snapshot manifest (H-55): next_revision uses
+  // next_members when they are given, else the members of the snapshot when the
+  // delta is from the snapshot page.
   const baseMembers = ctx.snapshot !== null && ctx.snapshotPage === d.from ? ctx.snapshot.members : {};
   const nextMembers = d.next_members === undefined ? baseMembers : membersOf(d.next_members);
+  // Only the envelope before H-104 needs the block of an operation (its format).
   const blockOf = (blockId) => {
     const b = from.blocks.find((x) => x.id === blockId);
     if (b === undefined) throw new CaseError(id, `block ${blockId} is not in ${d.from}`);
@@ -352,49 +378,64 @@ function deltaRecipe(id, recipe, ctx) {
   };
   let ops;
   if (d.ops !== undefined) {
+    if (!Array.isArray(d.ops)) throw new CaseError(id, 'body.delta.ops must be a list');
     ops = d.ops.map((op) => {
-      onlyKeys(id, op, ['block_id', 'content', 'sha256'], 'body.delta.ops[]');
-      return { block_id: op.block_id, content: op.content, sha256: op.sha256 };
+      onlyKeys(id, op, ['block_id', 'content'], 'body.delta.ops[]');
+      return { block_id: op.block_id, content: op.content };
     });
   } else {
     const toPage = pageBytes(d.to);
     const to = analysisOf(id, d.to);
+    // `to` is a later version of the same page: the same block ids in the same order.
+    if (to.blocks.map((b) => b.id).join('\n') !== from.blocks.map((b) => b.id).join('\n')) {
+      throw new CaseError(id, `${d.to} does not have the blocks of ${d.from}`);
+    }
     ops = to.blocks
       .filter((b, i) => b.sha256 !== from.blocks[i]?.sha256)
       .map((b) => ({ block_id: b.id, content: toPage.toString('utf8', b.start, b.end) }));
   }
+  const hashOf = (content) => sha256b64u(Buffer.from(content, 'utf8'));
   const build = () => {
-    const operations = ops.map((op) => ({
-      op: 'replace_block',
-      block_id: op.block_id,
-      format: blockOf(op.block_id).format,
-      content: op.content,
-      sha256: op.sha256 ?? sha256b64u(Buffer.from(op.content, 'utf8')),
-    }));
-    // A consistent next_revision: the snapshot blocks with the hashes of the real contents.
-    const contentHash = new Map(ops.map((op) => [op.block_id, sha256b64u(Buffer.from(op.content, 'utf8'))]));
+    // A consistent next_revision: the blocks of `from` with the hashes of the
+    // contents. An operation for a block that `from` does not have is a
+    // defect of the envelope (step 3); it does not change next_revision.
+    const contentHash = new Map(ops.map((op) => [op.block_id, hashOf(op.content)]));
     const next = from.blocks.map((b) => ({ id: b.id, format: b.format, sha256: contentHash.get(b.id) ?? b.sha256 }));
-    const env = {
-      type: 'rivqen.patch',
-      protocol: 'rqp/1',
-      base_revision:
-        d.base_revision === undefined
-          ? pageRevision(from.template_revision, from.blocks, baseMembers)
-          : analysisOf(id, d.base_revision).page_revision,
-      next_revision:
-        d.next_revision === undefined
-          ? pageRevision(from.template_revision, next, nextMembers)
-          : analysisOf(id, d.next_revision).page_revision,
-      template_revision: d.template_revision === undefined ? from.template_revision : analysisOf(id, d.template_revision).template_revision,
-      operations,
-    };
+    const nextRevision = d.next_revision === undefined ? pageRevision(from.template_revision, next, nextMembers) : analysisOf(id, d.next_revision).page_revision;
+    let env;
+    if (d.old_envelope === true) {
+      env = {
+        type: 'rivqen.patch',
+        protocol: 'rqp/1',
+        base_revision: pageRevision(from.template_revision, from.blocks, baseMembers),
+        next_revision: nextRevision,
+        template_revision: from.template_revision,
+        operations: ops.map((op) => ({
+          op: 'replace_block',
+          block_id: op.block_id,
+          format: blockOf(op.block_id).format,
+          content: op.content,
+          sha256: hashOf(op.content),
+        })),
+      };
+    } else {
+      env = {
+        next_revision: nextRevision,
+        operations: ops.map((op) => ({
+          block_id: op.block_id,
+          content: op.content,
+          ...(d.operation_sha256 === true ? { sha256: hashOf(op.content) } : {}),
+        })),
+      };
+    }
     const text = JSON.stringify(env);
-    return Buffer.from(d.duplicate_member === true ? withDuplicateMember(text) : text, 'utf8');
+    const first = pageRevision(from.template_revision, from.blocks, baseMembers);
+    return Buffer.from(d.duplicate_member === true ? withDuplicateMember(text, 'next_revision', first) : text, 'utf8');
   };
   if (d.size === undefined) return build();
   // Fill the content of the only operation with "x" up to the exact envelope size.
-  if (ops.length !== 1 || ops[0].content !== '' || ops[0].sha256 !== undefined) {
-    throw new CaseError(id, 'size needs exactly one operation with empty content and no sha256');
+  if (ops.length !== 1 || ops[0].content !== '') {
+    throw new CaseError(id, 'size needs exactly one operation with empty content');
   }
   const fill = d.size - build().length;
   if (!(fill >= 0)) throw new CaseError(id, `size ${d.size} is smaller than the envelope without content`);

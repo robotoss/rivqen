@@ -1,0 +1,19 @@
+{
+  "description": "The last character must have its two low bits zero",
+  "expect": {
+    "keyword": "pattern",
+    "instancePath": "/page_revision"
+  },
+  "instance": {
+    "protocol": "rqp/1",
+    "origin": "https://shop.example.com",
+    "path": "/catalog",
+    "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz9",
+    "policy": {
+      "ttl_seconds": 60
+    },
+    "limits": {
+      "max_patch_bytes": 65536
+    }
+  }
+}

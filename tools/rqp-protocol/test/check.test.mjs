@@ -83,15 +83,20 @@ test('detects a wrong changed-block list in a delta', () => {
   assert.ok(failures.some((f) => f.startsWith('body: changed blocks [title,price,cart], expected [price]')), failures.join('; '));
 });
 
-test('detects a delta with a wrong revision, a wrong hash or a schema defect', () => {
+test('detects a delta with a wrong revision, a wrong content or a schema defect', () => {
   const { expected, reference, page: p } = load('FX-RQ-P09-DELTA');
   const env = JSON.parse(reference.body.toString('utf8'));
-  const send = (e) => compareServer(expected, p, { ...reference, body: Buffer.from(JSON.stringify(e)) });
-  assert.ok(send({ ...env, next_revision: env.base_revision }).some((f) => f.startsWith('body: next_revision')));
+  const send = (e) => compareServer(expected, p, { ...reference, headers: reference.headers.filter(([n]) => n !== 'content-length'), body: Buffer.from(typeof e === 'string' ? e : JSON.stringify(e)) });
+  assert.deepEqual(send(env), []);
+  const other = load('FX-RQ-P05-NOT-MODIFIED').expected.headers_required.etag.slice(1, -1);
+  assert.ok(send({ ...env, next_revision: other }).some((f) => f.startsWith('body: next_revision')));
   const op = env.operations[0];
-  assert.ok(send({ ...env, operations: [{ ...op, content: 'x' }] }).some((f) => f.includes('does not match its sha256')));
+  assert.ok(send({ ...env, operations: [{ ...op, content: 'x' }] }).some((f) => f.includes('is not the current content of the block')));
   assert.ok(send({ ...env, page_id: 'x' }).some((f) => f.includes('fails the schema')));
-  assert.ok(compareServer(expected, p, { ...reference, body: Buffer.from(JSON.stringify(env).replace('{', '{"type":"rivqen.patch",')) }).some((f) => f.includes('duplicate')));
+  // H-104: the members of the envelope before H-104 fail the schema.
+  assert.ok(send({ ...env, base_revision: other }).some((f) => f.includes('fails the schema (additionalProperties at "")')));
+  assert.ok(send({ ...env, operations: [{ ...op, sha256: 'x' }] }).some((f) => f.includes('fails the schema (additionalProperties at "/operations/0")')));
+  assert.ok(send(JSON.stringify(env).replace('{', `{"next_revision":"${other}",`)).some((f) => f.includes('duplicate')));
 });
 
 test('compares F by the bytes around the manifest, the position and the manifest value', () => {
@@ -100,13 +105,14 @@ test('compares F by the bytes around the manifest, the position and the manifest
   const ok = (body) => compareServer(expected, p, { ...reference, headers: reference.headers.filter(([n]) => n !== 'content-length'), body: Buffer.from(body) });
   // Other white space and member order in the manifest: still conforming.
   const m = JSON.parse(text.split('application/rivqen-manifest+json">')[1].split('</script>')[0]);
-  const reordered = { blocks: m.blocks, ...m };
+  const reordered = { page_revision: m.page_revision, ...m };
   const pretty = text.replace(JSON.stringify(m), JSON.stringify(reordered, null, 1));
   assert.deepEqual(ok(pretty), []);
   assert.ok(ok(text.replace('Static header', 'Static_header')).some((f) => f.includes('after the manifest element')));
   assert.ok(ok(text.replace('<!DOCTYPE', '<!doctype')).some((f) => f.includes('before the manifest element')));
   assert.ok(ok(text.replace('<title', '<TITLE')).some((f) => f.includes('after the manifest element')));
-  assert.ok(ok(text.replace(m.page_revision, m.template_revision.replace('t1.', 'r1.'))).some((f) => f.includes('manifest value')));
+  const otherRevision = load('FX-RQ-P09-DELTA').expected.body.next_revision;
+  assert.ok(ok(text.replace(m.page_revision, otherRevision)).some((f) => f.includes('manifest value')));
   const moved = text.replace(/<script type="application\/rivqen-manifest\+json">.*?<\/script>/, '').replace('</body>', `<script type="application/rivqen-manifest+json">${JSON.stringify(m)}</script></body>`);
   assert.ok(ok(moved).some((f) => f.includes('at the insertion point')));
 });
@@ -215,11 +221,11 @@ test('the client fixtures catch a client that ignores H-67, H-68 or the WHATWG p
 test('a missing response.body fails that client fixture only', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'rqp-protocol-check-'));
   try {
-    for (const name of ['FX-RQ-C01-BASE-MISMATCH', 'FX-RQ-C02-OMITTED-BLOCK']) cpSync(join(FIXTURES_DIR, name), join(dir, name), { recursive: true });
-    rmSync(join(dir, 'FX-RQ-C01-BASE-MISMATCH', 'response.body'));
+    for (const name of ['FX-RQ-C01-OTHER-BASE', 'FX-RQ-C02-OMITTED-BLOCK']) cpSync(join(FIXTURES_DIR, name), join(dir, name), { recursive: true });
+    rmSync(join(dir, 'FX-RQ-C01-OTHER-BASE', 'response.body'));
     const results = await runClient(client, { dir });
     assert.deepEqual(results, [
-      { name: 'FX-RQ-C01-BASE-MISMATCH', failures: ['response.body is missing'] },
+      { name: 'FX-RQ-C01-OTHER-BASE', failures: ['response.body is missing'] },
       { name: 'FX-RQ-C02-OMITTED-BLOCK', failures: [] },
     ]);
   } finally {
@@ -256,7 +262,7 @@ test('a failed SHOULD fixture is labelled and counted apart from a failed MUST f
   assert.match(must.out, /0 passed, 1 failed, 0 SHOULD failed/);
 });
 
-test('only the cases of P-35 have level "should" in their expected files', () => {
+test('only the cases of P-35 and P36-LIMITS-SERVER-LIMIT have level "should" in their expected files', () => {
   const levels = fixtureNames()
     .filter((n) => n.startsWith('FX-RQ-P'))
     .filter((n) => readJsonFile(join(FIXTURES_DIR, n, 'expected.json')).level === 'should');
@@ -269,5 +275,6 @@ test('only the cases of P-35 have level "should" in their expected files', () =>
     'FX-RQ-P35-PATCH-CONTENT-NOSCRIPT',
     'FX-RQ-P35-PATCH-CONTENT-SCRIPT',
     'FX-RQ-P35-PATCH-CONTENT-STYLE',
+    'FX-RQ-P36-LIMITS-SERVER-LIMIT', // H-103: a hint that is not smaller than the server limit (SHOULD)
   ]);
 });

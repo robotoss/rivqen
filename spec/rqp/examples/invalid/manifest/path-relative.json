@@ -8,32 +8,12 @@
     "protocol": "rqp/1",
     "origin": "https://shop.example.com",
     "path": "catalog",
-    "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
     "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
-    "blocks": [
-      {
-        "id": "title",
-        "format": "html",
-        "sha256": "0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces"
-      },
-      {
-        "id": "price",
-        "format": "html",
-        "sha256": "Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs"
-      },
-      {
-        "id": "cart",
-        "format": "json",
-        "sha256": "zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4"
-      }
-    ],
     "policy": {
-      "mode": "private",
-      "ttl_seconds": 60,
-      "offline": false
+      "ttl_seconds": 60
     },
     "limits": {
-      "max_patch_bytes": 262144
+      "max_patch_bytes": 65536
     }
   }
 }

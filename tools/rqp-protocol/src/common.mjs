@@ -24,13 +24,16 @@ export const MANIFEST_TYPE = 'application/rivqen-manifest+json';
 export const MANIFEST_START = `<script type="${MANIFEST_TYPE}">`;
 export const MANIFEST_END = '</script>';
 
-/** Client error codes of manifest-patch section 5 (H-50). */
+/**
+ * Client error codes of manifest-patch section 5 (H-50). Since H-104 an rqp/1
+ * delta never gives TEMPLATE_MISMATCH or PATCH_BASE_MISMATCH: a delta for
+ * another template or another base fails the next_revision check of step 7
+ * (INTEGRITY_ERROR), so the reference has no step that produces them.
+ */
 export const Code = Object.freeze({
   MANIFEST_INVALID: 'MANIFEST_INVALID',
   PATCH_TOO_LARGE: 'PATCH_TOO_LARGE',
   PATCH_INVALID: 'PATCH_INVALID',
-  TEMPLATE_MISMATCH: 'TEMPLATE_MISMATCH',
-  PATCH_BASE_MISMATCH: 'PATCH_BASE_MISMATCH',
   INTEGRITY_ERROR: 'INTEGRITY_ERROR',
   PATCH_CONTENT_REJECTED: 'PATCH_CONTENT_REJECTED',
 });
@@ -98,6 +101,13 @@ export function pageRevision(templateRevision, blocks, members = {}) {
   for (const b of blocks) p += `${b.id}\t${b.format}\t${b.sha256}\n`;
   return `r1.${sha256b64u(p)}`;
 }
+
+/**
+ * The default values of the members of `policy` (manifest-patch section 1.4).
+ * `limits.max_patch_bytes` has no default value: an absent member means "no
+ * hint" (section 1.5).
+ */
+export const POLICY_DEFAULTS = Object.freeze({ mode: 'private', ttl_seconds: 0, offline: false });
 
 /** Only the members `policy` and `limits` of an object (a manifest or a server configuration). */
 export function membersOf(obj) {

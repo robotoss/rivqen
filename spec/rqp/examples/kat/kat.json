@@ -2,6 +2,26 @@
   "document": "page.html",
   "full_document": "full.html",
   "manifest": "../valid/manifest/shop.json",
+  "computed": {
+    "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
+    "blocks": [
+      {
+        "id": "title",
+        "format": "html",
+        "sha256": "0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces"
+      },
+      {
+        "id": "price",
+        "format": "html",
+        "sha256": "Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs"
+      },
+      {
+        "id": "cart",
+        "format": "json",
+        "sha256": "zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4"
+      }
+    ]
+  },
   "patches": [
     "../valid/patch/shop-price.json",
     "../valid/patch/shop-all.json"
@@ -13,7 +33,7 @@
     "patches": [
       "../valid/patch/shop-policy-price.json"
     ],
-    "policy_line": "PL\tpolicy;mode=private;ttl_seconds=60;offline=false;limits;max_patch_bytes=262144\n",
-    "page_revision_b": "r1.0MisoW_Jyga-Mg3DpBueKx95g3OvhROWUgWwXI6t5uc"
+    "policy_line": "PL\tpolicy;ttl_seconds=60;offline=true;limits;max_patch_bytes=65536\n",
+    "page_revision_b": "r1.kX-KQFiXmNtLNzjvXP7GR3K-_79Fc1l4WEtReCgqwQQ"
   }
 }

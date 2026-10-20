@@ -18,7 +18,7 @@ This register lists every security control. Each control has a test that proves 
 | `SEC-06` | `no-store`, `private` and server TTL beat acceleration | Do not cache forbidden responses | Header matrix tests |
 | `SEC-07` | Protocol bounds and timeouts | Stop zip bombs, OOM, slow streams | Fuzz + chaos tests |
 | `SEC-08` | No cookies, auth headers, personal data or page HTML in logs | Privacy | Log scanning in CI and on devices |
-| `SEC-09` | Base revision check and atomic commit | Stop replay and out-of-order patches | Property tests |
+| `SEC-09` | `next_revision` check (the page revision that the client computes from its snapshot and the patch equals `next_revision`; since H-104 this check also covers the base, which the envelope no longer carries) and atomic commit | Stop replay and out-of-order patches | Property tests |
 | `SEC-10` | Safe downgrade and fallback only by policy | No silent weakening | Negotiation tests |
 | `SEC-11` | OWASP MASVS test suite for WebView | Known mobile risk classes | MASTG test cases |
 | `SEC-12` | Dependency audit, SBOM, signed releases | Supply chain | CI gates |
@@ -38,7 +38,7 @@ This column says what the audit must establish about upstream. It is **not** a c
 | `SEC-17` | Diff / HTML | Where updates become DOM and which trust checks exist | Typed diff schema; context escaping; CSP; no JS in diffs. UTF-8 only: the full document has exactly `Content-Type: text/html; charset=utf-8`, and the client gives every document to the WebView as UTF-8 bytes; with a string API it removes a leading byte order mark first (H-62, H-66, DL-040) | HTML/patch fuzz + browser suite; protocol fixtures `FX-RQ-P40-*`, `FX-RQ-C26-*`; a WebView test that each platform adapter delivers a snapshot as UTF-8; the same test with a snapshot that starts with `EF BB BF` (`page-bom`): the head elements of the WebView are those of the snapshot, with no text before the head (DL-040) |
 | `SEC-18` | Cache partition | What binds the cache to cookies, session and account | Namespace = app + environment + profile + tenant + origin + auth scope | Multi-account and logout tests |
 | `SEC-19` | Cache crypto | Whether private content is protected at rest | AEAD for private entries; platform-wrapped keys | Key rotation, tamper, restore, logout tests |
-| `SEC-20` | Freshness / rollback | How revision, template tag, etag and 304 work | Monotonic revision per session; base check; atomic commit | Old patch never changes the page |
+| `SEC-20` | Freshness / rollback | How revision, template tag, etag and 304 work | Monotonic revision per session; `next_revision` check against the snapshot (H-104); atomic commit | Old patch never changes the page |
 | `SEC-21` | Transport | How fallback and redirects work | System TLS; auth/origin policy fixed across H3→H2→H1/WS fallback | TLS/redirect/fallback matrix; fail-closed tests |
 | `SEC-22` | Rust + FFI | Bounds and lifetime checks in legacy native code | Checked lengths and ownership; minimal `unsafe`; isolated ABI | Miri/ASan where possible; FFI fuzz; cancel races |
 | `SEC-23` | DoS | Limits on streams, HTML size, resources | Memory/time/CPU budgets; backpressure; nesting and decompression limits | Fuzz with big, broken, slow streams |

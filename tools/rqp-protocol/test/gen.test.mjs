@@ -64,6 +64,10 @@ test('context.allowlist (DL-039/DL-040): default the origin of url, required for
     return expectFixture(dir, name).files['expected.json'];
   };
   const { allowlist: _allowlist, ...rest } = c.context;
+  // H-108: a context nonce that is not the text of 16 bytes is a defective case.
+  for (const bad of ['short', 5, `${'A'.repeat(21)}B`]) {
+    assert.throws(() => withContext({ ...c.context, nonce: bad }), (e) => e instanceof CaseError && /context\.nonce must be base64url/.test(e.message), String(bad));
+  }
   assert.throws(() => withContext(rest), (e) => e instanceof CaseError && /allowlist is required/.test(e.message));
   assert.equal(withContext({ ...rest, allowlist: ['https://shop.example.com', 'https://pay.example.net'] }).result.outcome, 'stored');
   const { final_url: _final, ...noRedirect } = rest;

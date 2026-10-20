@@ -19,11 +19,8 @@ import { handle } from './rqp.js';
 import { renderCatalog, nextData, nextTemplate, demoState } from './pages.js';
 import { log, logError, safeUrl } from './log.js';
 
-/** Manifest members of this server. They are part of the page revision (H-55). */
-export const CONFIG = Object.freeze({
-  policy: { mode: 'private', ttl_seconds: 0, offline: false },
-  limits: { max_patch_bytes: 262144 },
-});
+/** Manifest members of this server: none, so the manifest has no policy and no limits (H-103). */
+export const CONFIG = Object.freeze({});
 
 /** Fields of every response of the demo. */
 const COMMON = { 'X-Content-Type-Options': 'nosniff' };

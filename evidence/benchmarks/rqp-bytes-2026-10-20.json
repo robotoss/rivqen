@@ -1,0 +1,100 @@
+{
+  "date": "2026-10-20T08:52:12.141Z",
+  "page_bytes": 19538,
+  "blocks": [
+    "title",
+    "price",
+    "stock",
+    "cart"
+  ],
+  "results": [
+    {
+      "visit": "1. cold",
+      "plain": {
+        "status": 200,
+        "raw": 19731,
+        "gzip": 2357,
+        "br": 1296
+      },
+      "http_etag": {
+        "status": 200,
+        "raw": 19731,
+        "gzip": 2357,
+        "br": 1296
+      },
+      "rqp": {
+        "status": 200,
+        "kind": "full",
+        "raw": 19731,
+        "gzip": 2357,
+        "br": 1296
+      }
+    },
+    {
+      "visit": "2. revisit, unchanged",
+      "plain": {
+        "status": 200,
+        "raw": 19731,
+        "gzip": 2357,
+        "br": 1296
+      },
+      "http_etag": {
+        "status": 304,
+        "raw": 0,
+        "gzip": 0,
+        "br": 0
+      },
+      "rqp": {
+        "status": 304,
+        "kind": "304",
+        "raw": 0,
+        "gzip": 0,
+        "br": 0
+      }
+    },
+    {
+      "visit": "3. data changed",
+      "plain": {
+        "status": 200,
+        "raw": 19731,
+        "gzip": 2363,
+        "br": 1300
+      },
+      "http_etag": {
+        "status": 200,
+        "raw": 19731,
+        "gzip": 2363,
+        "br": 1300
+      },
+      "rqp": {
+        "status": 200,
+        "kind": "delta",
+        "raw": 293,
+        "gzip": 221,
+        "br": 171
+      }
+    },
+    {
+      "visit": "4. template changed",
+      "plain": {
+        "status": 200,
+        "raw": 19774,
+        "gzip": 2377,
+        "br": 1420
+      },
+      "http_etag": {
+        "status": 200,
+        "raw": 19774,
+        "gzip": 2377,
+        "br": 1420
+      },
+      "rqp": {
+        "status": 200,
+        "kind": "full",
+        "raw": 19774,
+        "gzip": 2377,
+        "br": 1420
+      }
+    }
+  ]
+}

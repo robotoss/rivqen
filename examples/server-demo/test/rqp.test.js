@@ -4,10 +4,12 @@
 // Response selection of the demo (negotiation section 4), by behavior.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDelta, changeSet, handle, pageRevision, policyLineText } from '../src/rqp.js';
+import { createHash } from 'node:crypto';
+import { buildDelta, buildManifest, changeSet, handle, membersOf, pageRevision, policyLineText } from '../src/rqp.js';
 import { APP, TARGET, clientLines, exampleJson, get, header, katBytes, page, revisionsOf } from './helpers.js';
 
-const POLICY = { policy: { mode: 'private', ttl_seconds: 60, offline: false }, limits: { max_patch_bytes: 262144 } };
+// The members of the second known-answer set (shop-policy.json): none of them is a default.
+const POLICY = { policy: { ttl_seconds: 60, offline: true }, limits: { max_patch_bytes: 65536 } };
 const run = (request, p = page('130.00'), config = {}) => handle(request, structuredClone(APP), p, config);
 
 test('every request gets the same full document, with Rq-Version and a strong ETag of the page revision', () => {
@@ -28,7 +30,7 @@ test('the full document is the page with the manifest before the first </head> (
   assert.deepEqual(run(get(), katBytes('page.html')).body, katBytes('full.html'));
   const withPolicy = run(get(), katBytes('page.html'), POLICY);
   assert.deepEqual(withPolicy.body, katBytes('full-policy.html'));
-  assert.equal(header(withPolicy, 'etag'), '"r1.ke0dIjtkqBtefkyyLQU5ICLWPia5PfammTko2xmMLOQ"');
+  assert.equal(header(withPolicy, 'etag'), '"r1.pONNMoySlMlYw50BpgdvbUlGESnMzZBCOmQ4SlebDxs"');
 });
 
 test('the page revision with a policy line follows the second known-answer set', () => {
@@ -37,6 +39,26 @@ test('the page revision with a policy line follows the second known-answer set',
   assert.equal(pageRevision(r.template_revision, r.blocks, POLICY), kat.page_revision);
   assert.equal(pageRevision(r.template_revision, r.blocks, {}), r.page_revision);
   assert.equal(policyLineText({ policy: {}, limits: {} }), 'policy;limits');
+});
+
+test('default members are not written: defaults, empty objects and a hint not smaller than the server limit (H-103, DL-057, DL-058)', () => {
+  const defaults = { policy: { mode: 'private', ttl_seconds: 0, offline: false }, limits: { max_patch_bytes: 262144 } };
+  assert.deepEqual(membersOf(defaults), {});
+  assert.deepEqual(membersOf({ policy: {}, limits: {} }), {});
+  assert.deepEqual(membersOf(defaults, 262145), { limits: { max_patch_bytes: 262144 } });
+  assert.deepEqual(membersOf({ policy: { mode: 'public', ttl_seconds: 0, offline: false } }), { policy: { mode: 'public' } });
+  assert.deepEqual(membersOf({ policy: { ttl_seconds: 1 } }), { policy: { ttl_seconds: 1 } });
+  assert.deepEqual(membersOf({ policy: { offline: true } }), { policy: { offline: true } });
+  const p = katBytes('page.html');
+  const r = run(get(), p, defaults);
+  assert.deepEqual(r.body, katBytes('full.html'));
+  assert.equal(header(r, 'etag'), `"${revisionsOf(p).page_revision}"`);
+});
+
+test('the manifest has exactly protocol, origin, path and page_revision, then policy and limits when they are not default (H-103)', () => {
+  const a = revisionsOf(katBytes('page.html'));
+  assert.deepEqual(Object.keys(buildManifest(a, TARGET, {})), ['protocol', 'origin', 'path', 'page_revision']);
+  assert.deepEqual(Object.keys(buildManifest(a, TARGET, POLICY)), ['protocol', 'origin', 'path', 'page_revision', 'policy', 'limits']);
 });
 
 test('the same If-None-Match as the page revision gives 304 without body and with the cache fields', () => {
@@ -63,8 +85,8 @@ test('a changed block gives a delta with only that block, no-store and no ETag',
   assert.equal(header(r, 'cache-control'), 'no-store');
   assert.equal(header(r, 'etag'), null);
   const delta = JSON.parse(r.body);
-  assert.deepEqual(delta.operations.map((o) => [o.op, o.block_id, o.content]), [['replace_block', 'price', '130.00']]);
-  assert.equal(delta.base_revision, revisionsOf(held).page_revision);
+  assert.deepEqual(Object.keys(delta), ['next_revision', 'operations']); // H-104: no other member
+  assert.deepEqual(delta.operations, [{ block_id: 'price', content: '130.00' }]);
   assert.equal(delta.next_revision, revisionsOf(page('130.00')).page_revision);
 });
 
@@ -159,7 +181,7 @@ test('the size rules are exact: a delta of exactly the limit is sent; a delta as
   while (run(get(base), quotes(n)).mode === 'delta') n++;
   const full = run(get(base), quotes(n));
   const analysis = revisionsOf(quotes(n));
-  const envelope = buildDelta(quotes(n), analysis, revisionsOf(heldQuotes).page_revision, analysis.page_revision, [0]);
+  const envelope = buildDelta(quotes(n), analysis, analysis.page_revision, [0]);
   assert.equal(full.reason, 'delta-not-smaller');
   assert.equal(Buffer.byteLength(JSON.stringify(envelope)), full.body.length);
 });
@@ -251,7 +273,7 @@ test('property: the delta of random price changes leads to the revision of the c
     const delta = JSON.parse(r.body);
     const merged = revisionsOf(held).blocks.map((b) => {
       const op = delta.operations.find((o) => o.block_id === b.id);
-      return op === undefined ? b : { id: op.block_id, format: op.format, sha256: op.sha256 };
+      return op === undefined ? b : { id: b.id, format: b.format, sha256: createHash('sha256').update(op.content).digest('base64url') };
     });
     assert.equal(pageRevision(cur.template_revision, merged, {}), delta.next_revision);
     assert.equal(delta.next_revision, cur.page_revision);
@@ -264,7 +286,8 @@ test('changeSet and buildDelta: one operation per changed block, in the given or
   const prefixes = Buffer.concat(held.blocks.map((b) => Buffer.from(b.sha256, 'base64url').subarray(0, 8)));
   assert.deepEqual(changeSet(cur.blocks, prefixes), [1]);
   assert.deepEqual(changeSet(cur.blocks, null), [0, 1, 2]);
-  const delta = buildDelta(page('2'), cur, 'r1.a', 'r1.b', [1, 2]);
+  const delta = buildDelta(page('2'), cur, 'r1.b', [1, 2]);
+  assert.equal(delta.next_revision, 'r1.b');
   assert.deepEqual(delta.operations.map((o) => o.block_id), ['price', 'cart']);
 });
 

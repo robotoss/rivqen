@@ -15,12 +15,14 @@ import {
   LIMITS,
   MANIFEST_END,
   MANIFEST_START,
+  NONCE_BYTES,
   POLICY_DEFAULTS,
   UnsupportedInput,
   canonicalUrl,
   deltaBinding,
   digestPrefix,
   membersOf,
+  nonceText,
   pageRevision,
 } from './common.mjs';
 import {
@@ -63,21 +65,36 @@ export function capabilities(headers) {
 }
 
 /**
- * Section 3.4: { t, b } of Rq-Have, where t is the template revision token and
- * b the decoded bytes or null (absent). Returns null when Rq-Have is absent.
- * The check of b against N is done by the caller (steps 5 and 6 of section 3.4
- * need the current page).
+ * Section 3.4: { t, b, n } of Rq-Have, where t is the template revision token,
+ * b the decoded bytes or null (absent), and n the decoded client nonce (H-108)
+ * or null (absent: missing, not a Byte Sequence, or not exactly 16 bytes).
+ * Returns null when Rq-Have is absent. The check of b against the block count
+ * is done by the caller (steps 5 and 6 of section 3.4 need the current page).
+ * A key that appears two times has the later value (RFC 9651 section 4.2.2),
+ * except n: a field value with n more than one time has no n (H-108, fail
+ * closed; also when every copy is valid).
  */
 export function rqHave(headers) {
   const v = combined(headers, 'rq-have');
   if (v === null || byteLength(v) > LIMITS.maxRqHaveBytes) return null;
-  const dict = parseDictionary(v);
+  const counts = new Map();
+  const dict = parseDictionary(v, counts);
   if (dict === null) return null;
   const t = dict.get('t');
   if (t === undefined || t.inner || t.item.type !== 'token') return null;
-  const b = dict.get('b');
-  const bytes = b !== undefined && !b.inner && b.item.type === 'bytes' ? b.item.value : null;
-  return { t: t.item.value, b: bytes };
+  const n = counts.get('n') === 1 ? nonceOf(dict.get('n')) : null;
+  return { t: t.item.value, b: byteSequence(dict.get('b')), n };
+}
+
+/** The bytes of a Dictionary member that is a Byte Sequence (parameters ignored), else null. */
+function byteSequence(member) {
+  return member !== undefined && !member.inner && member.item.type === 'bytes' ? member.item.value : null;
+}
+
+/** Section 3.4, step 7 (H-108): the member n when it is a Byte Sequence of exactly 16 bytes, else null. */
+function nonceOf(member) {
+  const bytes = byteSequence(member);
+  return bytes !== null && bytes.length === NONCE_BYTES ? bytes : null;
 }
 
 /** Section 3.5: the base revision B, or null. */
@@ -183,9 +200,10 @@ export function changeSet(blocks, b) {
  * binding value and one operation (block id and content) for each block in
  * the change set, in document order. No base or template revision, no type,
  * no format and no hash: the client computes the block hashes and the next
- * page revision, and checks the binding. `binding` is deltaBinding(U, B, R'):
+ * page revision, and checks the binding. `binding` is deltaBinding(U, B, N, R'):
  * U the canonical URL of this request, B the base revision of If-None-Match
- * (section 3.5), R' the page revision of the current page.
+ * (section 3.5), N the client nonce of this request (Rq-Have member n, H-108),
+ * R' the page revision of the current page.
  */
 export function deltaEnvelope(page, analysis, binding, indices) {
   return {
@@ -310,6 +328,8 @@ export function handle(request, app, pageBytes, config = {}) {
     have !== null &&
     have.t === analysis.template_revision;
   if (!eligible) return sendFull('not-eligible');
+  // H-108: a delta only for a request with a valid client nonce n; else F.
+  if (have.n === null) return sendFull('no-nonce');
 
   // Step 6. Section 3.4, steps 5 and 6: a b of the wrong length is absent.
   const n = analysis.blocks.length;
@@ -325,9 +345,10 @@ export function handle(request, app, pageBytes, config = {}) {
     const b = analysis.blocks[i];
     if (b.format === 'html' && patchContentFailure(page.subarray(b.start, b.end)) !== null) return sendFull('patch-content-rule');
   }
-  // H-107: U is the canonical URL of the request that this server answers (the
-  // final request of the client), B the base of step 5, R' the current page revision.
-  const binding = deltaBinding(canonicalUrl(request.target), base, manifest.page_revision);
+  // H-107, H-108: U is the canonical URL of the request that this server answers
+  // (the final request of the client), B the base of step 5, N the nonce of this
+  // request (Rq-Have member n), R' the current page revision.
+  const binding = deltaBinding(canonicalUrl(request.target), base, nonceText(have.n), manifest.page_revision);
   const envelope = deltaEnvelope(page, analysis, binding, indices);
   const delta = Buffer.from(JSON.stringify(envelope), 'utf8');
   if (delta.length > maxPatchBytes) return sendFull('delta-too-large');

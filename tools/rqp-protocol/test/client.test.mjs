@@ -15,13 +15,16 @@ import {
   clientRequest,
   clientStep,
   deltaPartition,
+  expectedBinding,
   handleResponse,
   hasUserinfo,
   notModifiedAccepted,
   inAllowlist,
+  newNonce,
   partitionFor,
   redirected,
   requestHeaders,
+  requestNonce,
   rqpAllowed,
   setsCookie,
   snapshotOf,
@@ -32,7 +35,7 @@ import {
 } from '../src/client.mjs';
 import { analyze, attributeRejected, attributesOf, documentHeadStart, findManifestElements, isManifestType, patchContentFailure, passesPatchContentRule } from '../src/markup.mjs';
 import { fullDocument, handle, manifestOf } from '../src/server.mjs';
-import { APP, TARGET, blockPage, clientContext, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
+import { APP, NONCE, TARGET, blockPage, clientContext, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
 
 const snapA = () => snapshotOf(page('page-a'), {}, TARGET);
 const ctx = (fields = {}) => clientContext({ navigation: 'delta', snapshot: snapA(), ...fields });
@@ -44,20 +47,23 @@ const HTML = [['content-type', 'text/html; charset=utf-8'], ['rq-version', '1']]
  * TARGET: ops = [[blockId, content]]. Options: `members` are the policy and
  * limits of the snapshot (H-55); `next` replaces R' (default: page-a with the
  * contents of ops), `base` replaces B (default: the page revision of page-a
- * with `members`), `url` replaces U. `extra` adds or replaces members.
+ * with `members`), `url` replaces U, `nonce` replaces N (default: NONCE, the
+ * nonce of the test request; H-108). `extra` adds or replaces members.
  */
-function envelope(ops, { members = {}, next, base, url = TARGET } = {}, extra = {}) {
+function envelope(ops, { members = {}, next, base, url = TARGET, nonce = NONCE } = {}, extra = {}) {
   const a = revisions('page-a');
   const hashes = new Map(ops.map(([id, c]) => [id, sha256b64u(Buffer.from(c, 'utf8'))]));
   const blocks = a.blocks.map((b) => ({ ...b, sha256: hashes.get(b.id) ?? b.sha256 }));
   return {
-    binding: deltaBinding(url, base ?? pageRevision(a.template_revision, a.blocks, members), next ?? pageRevision(a.template_revision, blocks, members)),
+    binding: deltaBinding(url, base ?? pageRevision(a.template_revision, a.blocks, members), nonce, next ?? pageRevision(a.template_revision, blocks, members)),
     operations: ops.map(([id, content]) => ({ block_id: id, content })),
     ...extra,
   };
 }
 
-const verify = (env, snap = snapA()) => verifyDelta(snap, Buffer.from(typeof env === 'string' ? env : JSON.stringify(env), 'utf8'), true);
+/** verifyDelta with the nonce NONCE of the test requests (H-108) and the URL of the snapshot. */
+const vd = (snap, body, offered, maxPatchBytes = LIMITS.maxPatchBytes, url = snap.url, nonce = NONCE) => verifyDelta(snap, body, offered, maxPatchBytes, url, nonce);
+const verify = (env, snap = snapA()) => vd(snap, Buffer.from(typeof env === 'string' ? env : JSON.stringify(env), 'utf8'), true);
 const code = (env, snap) => verify(env, snap).code ?? null;
 
 // Delta: diff-engine section 3 order.
@@ -81,22 +87,22 @@ test('PATCH_INVALID: an unsolicited delta (no snapshot, first visit, fallback lo
 
 test('PATCH_TOO_LARGE: an envelope over the client limit, before any JSON check', () => {
   const big = Buffer.alloc(LIMITS.maxPatchBytes + 1, 0x20);
-  assert.equal(verifyDelta(snapA(), big, true).code, 'PATCH_TOO_LARGE');
+  assert.equal(vd(snapA(), big, true).code, 'PATCH_TOO_LARGE');
   const small = { ...snapA(), members: { limits: { max_patch_bytes: 1024 } } };
-  assert.equal(verifyDelta(small, Buffer.alloc(1025, 0x20), true).code, 'PATCH_TOO_LARGE');
-  assert.equal(verifyDelta(small, Buffer.alloc(1024, 0x20), true).code, 'PATCH_INVALID');
+  assert.equal(vd(small, Buffer.alloc(1025, 0x20), true).code, 'PATCH_TOO_LARGE');
+  assert.equal(vd(small, Buffer.alloc(1024, 0x20), true).code, 'PATCH_INVALID');
 });
 
 test('PATCH_TOO_LARGE: content over maxBlockBytes, with a client limit that lets the envelope pass', () => {
   const wide = 4 * LIMITS.maxBlockBytes;
   // ASCII over 1 MiB: the schema maxLength (code points) fails first.
   const over = Buffer.from(JSON.stringify(envelope([['price', 'x'.repeat(LIMITS.maxBlockBytes + 1)]])));
-  assert.equal(verifyDelta(snapA(), over, true, wide).code, 'PATCH_INVALID');
+  assert.equal(vd(snapA(), over, true, wide).code, 'PATCH_INVALID');
   // Multi-byte characters pass maxLength: 524289 two-byte characters are 1048578 UTF-8 bytes.
   const utf8 = Buffer.from(JSON.stringify(envelope([['price', 'é'.repeat(LIMITS.maxBlockBytes / 2 + 1)]])));
-  assert.equal(verifyDelta(snapA(), utf8, true, wide).code, 'PATCH_TOO_LARGE');
+  assert.equal(vd(snapA(), utf8, true, wide).code, 'PATCH_TOO_LARGE');
   const at = Buffer.from(JSON.stringify(envelope([['price', 'x'.repeat(LIMITS.maxBlockBytes)]])));
-  assert.equal(verifyDelta(snapA(), at, true, wide).code, undefined);
+  assert.equal(vd(snapA(), at, true, wide).code, undefined);
 });
 
 test('PATCH_INVALID: JSON rules, schema and operation rules', () => {
@@ -193,10 +199,81 @@ test('H-107: U is the canonical final URL with its query; a binding without the 
 
 test('H-107: verifyDelta binds the URL that it gets; without a URL the binding cannot match (fail closed)', () => {
   const body = Buffer.from(JSON.stringify(envelope([['price', '130.00']])));
-  assert.equal(verifyDelta(snapA(), body, true, LIMITS.maxPatchBytes, TARGET).code, undefined);
-  assert.equal(verifyDelta(snapA(), body, true, LIMITS.maxPatchBytes, 'https://shop.example.com/other').code, 'INTEGRITY_ERROR');
-  assert.equal(verifyDelta(snapshotOf(page('page-a')), body, true).code, 'INTEGRITY_ERROR');
-  assert.equal(verifyDelta(snapA(), body, true, LIMITS.maxPatchBytes, null).code, 'INTEGRITY_ERROR');
+  assert.equal(vd(snapA(), body, true, LIMITS.maxPatchBytes, TARGET).code, undefined);
+  assert.equal(vd(snapA(), body, true, LIMITS.maxPatchBytes, 'https://shop.example.com/other').code, 'INTEGRITY_ERROR');
+  assert.equal(vd(snapshotOf(page('page-a')), body, true).code, 'INTEGRITY_ERROR');
+  assert.equal(vd(snapA(), body, true, LIMITS.maxPatchBytes, null).code, 'INTEGRITY_ERROR');
+});
+
+test('B6: an input of the binding that the client cannot compute gives INTEGRITY_ERROR, never an exception', () => {
+  const body = Buffer.from(JSON.stringify(envelope([['price', '130.00']])));
+  const max = LIMITS.maxPatchBytes;
+  // URL: not a URL, empty, a URL object (not the string of the network stack), no snapshot URL.
+  for (const url of ['not a url', '', 'https://', new URL(TARGET), 7, null]) {
+    assert.equal(verifyDelta(snapA(), body, true, max, url, NONCE).code, 'INTEGRITY_ERROR', String(url));
+  }
+  assert.equal(verifyDelta(snapshotOf(page('page-a')), body, true, max, undefined, NONCE).code, 'INTEGRITY_ERROR');
+  // Nonce: absent, null, padded, standard base64 bytes, 15 or 17 bytes, a Buffer.
+  for (const nonce of [undefined, null, `${NONCE}==`, 'AAECAwQFBgcICQoLDA0O', 'AAECAwQFBgcICQoLDA0ODxA', Buffer.alloc(16), 7]) {
+    assert.equal(verifyDelta(snapA(), body, true, max, TARGET, nonce).code, 'INTEGRITY_ERROR', String(nonce));
+  }
+  // The exact inputs pass: the failures above are the inputs, not the envelope.
+  assert.equal(verifyDelta(snapA(), body, true, max, TARGET, NONCE).code, undefined);
+});
+
+test('B6: clientStep with a final URL that does not parse falls back without an exception', () => {
+  const body = Buffer.from(JSON.stringify(envelope([['price', '130.00']])));
+  for (const finalUrl of ['not a url', 'https://']) {
+    const c = ctx({ final_url: finalUrl, redirected: true });
+    const d = handleResponse(c, { status: 200, headers: DELTA, body });
+    // Step 1 (H-58): no cache key, so the transport check rejects it before the binding.
+    assert.deepEqual([d.outcome, d.error, d.next], ['rejected', 'PATCH_INVALID', 'fallback-load'], finalUrl);
+    assert.deepEqual([handleResponse(c, { status: 304, headers: [], body: null }).outcome], ['normal']);
+    assert.equal(handleResponse(c, { status: 200, headers: HTML, body: fullOf('page-b') }).outcome, 'normal');
+    assert.equal(rqpAllowed(c, finalUrl), false);
+  }
+  assert.equal(rqpAllowed(ctx(), null), false);
+});
+
+test('H-108: the request has the nonce of its context in Rq-Have member n; without a valid nonce no delta is offered', () => {
+  const sent = new Map(requestHeaders(ctx()));
+  assert.match(sent.get('rq-have'), /, n=:AAECAwQFBgcICQoLDA0ODw==:$/);
+  const other = Buffer.alloc(16, 0xfb);
+  assert.ok(new Map(requestHeaders(ctx({ nonce: other.toString('base64url') }))).get('rq-have').endsWith(`, n=:${other.toString('base64')}:`));
+  for (const nonce of [null, undefined, 'x', `${NONCE}==`]) {
+    const c = ctx({ nonce });
+    const h = requestHeaders(c);
+    // No Rq-Have and no delta media type; If-None-Match stays, so a 304 still keeps the snapshot.
+    assert.deepEqual(h, [['rq-version', '1'], ['rq-capabilities', '(block-patch)'], ['accept', 'text/html'], ['if-none-match', `"${snapA().page_revision}"`]], String(nonce));
+    assert.equal(handleResponse(c, { status: 304, headers: [], body: null }).outcome, 'not-modified');
+    const d = handleResponse(c, { status: 200, headers: DELTA, body: Buffer.from(JSON.stringify(envelope([['price', '130.00']]))) });
+    assert.deepEqual([d.error, d.next], ['PATCH_INVALID', 'fallback-load'], String(nonce));
+  }
+});
+
+test('H-108: the harness interface makes a new nonce for a context without one, so two requests never share N', () => {
+  const s = snapA();
+  const plain = { document: page('page-a'), template_revision: s.analysis.template_revision, page_revision: s.page_revision, blocks: [] };
+  const context = { ...ctx(), snapshot: plain };
+  delete context.nonce;
+  const have = () => new Map(clientRequest(context)).get('rq-have');
+  const n = (v) => /n=:([^:]+):$/.exec(v)[1];
+  assert.notEqual(n(have()), n(have()));
+  assert.equal(Buffer.from(n(have()), 'base64').length, 16);
+  assert.notEqual(newNonce(), newNonce());
+  assert.match(newNonce(), /^[A-Za-z0-9_-]{21}[AQgw]$/);
+  assert.equal(requestNonce({ nonce: NONCE }), NONCE);
+  assert.equal(requestNonce({}), null);
+});
+
+test('H-108: expectedBinding is the binding of the exact inputs, or null for an input without its form', () => {
+  const a = revisions('page-a');
+  const b = revisions('page-b');
+  assert.equal(expectedBinding(TARGET, a.page_revision, NONCE, b.page_revision), deltaBinding(TARGET, a.page_revision, NONCE, b.page_revision));
+  assert.equal(expectedBinding(`${TARGET}#x`, a.page_revision, NONCE, b.page_revision), deltaBinding(TARGET, a.page_revision, NONCE, b.page_revision));
+  for (const args of [[null, a.page_revision, NONCE, b.page_revision], ['nope', a.page_revision, NONCE, b.page_revision], [TARGET, 'r1.x', NONCE, b.page_revision], [TARGET, a.page_revision, 'x', b.page_revision], [TARGET, a.page_revision, NONCE, null]]) {
+    assert.equal(expectedBinding(...args), null, JSON.stringify(args));
+  }
 });
 
 test('H-107: handleDelta binds the final URL of the response', () => {
@@ -280,8 +357,8 @@ test('PATCH_TOO_LARGE: a patched document over maxDocumentBytes', () => {
   const content = 'b'.repeat(300);
   const a = snap.analysis;
   const blocks = [{ ...a.blocks[0], sha256: sha256b64u(content) }];
-  const env = { binding: deltaBinding(TARGET, snap.page_revision, pageRevision(a.template_revision, blocks)), operations: [{ block_id: 'x', content }] };
-  assert.equal(verifyDelta(snap, Buffer.from(JSON.stringify(env)), true).code, 'PATCH_TOO_LARGE');
+  const env = { binding: deltaBinding(TARGET, snap.page_revision, NONCE, pageRevision(a.template_revision, blocks)), operations: [{ block_id: 'x', content }] };
+  assert.equal(vd(snap, Buffer.from(JSON.stringify(env)), true).code, 'PATCH_TOO_LARGE');
 });
 
 // Full document: manifest-patch sections 1.7 and 1.8.
@@ -644,7 +721,7 @@ function publicDelta(extraHeaders = []) {
   const content = '130.00';
   const hash = sha256b64u(Buffer.from(content, 'utf8'));
   const next = a.blocks.map((b) => (b.id === 'price' ? { ...b, sha256: hash } : b));
-  const binding = deltaBinding(TARGET, pageRevision(a.template_revision, a.blocks, PUBLIC), pageRevision(a.template_revision, next, PUBLIC));
+  const binding = deltaBinding(TARGET, pageRevision(a.template_revision, a.blocks, PUBLIC), NONCE, pageRevision(a.template_revision, next, PUBLIC));
   const env = { binding, operations: [{ block_id: 'price', content }] };
   return { status: 200, headers: [...DELTA, ['cache-control', 'no-store'], ...extraHeaders], body: Buffer.from(JSON.stringify(env)) };
 }
@@ -1006,8 +1083,8 @@ test('a patched document of exactly maxDocumentBytes is applied', () => {
   const a = snap.analysis;
   const sha = sha256b64u(content);
   const next = pageRevision(a.template_revision, [{ ...a.blocks[0], sha256: sha }]);
-  const env = { binding: deltaBinding(TARGET, snap.page_revision, next), operations: [{ block_id: 'x', content }] };
-  const r = verifyDelta(snap, Buffer.from(JSON.stringify(env)), true);
+  const env = { binding: deltaBinding(TARGET, snap.page_revision, NONCE, next), operations: [{ block_id: 'x', content }] };
+  const r = vd(snap, Buffer.from(JSON.stringify(env)), true);
   assert.equal(r.code, undefined);
   assert.equal(r.snapshot.document.length, LIMITS.maxDocumentBytes);
 });
@@ -1037,7 +1114,7 @@ function probeContext(doc, url, members = {}, fields = {}) {
   const s = snapshotOf(doc, members, url);
   return {
     url, final_url: url, redirected: false, build: 'release', allow_http: false, allowlist: [new URL(url).origin],
-    credentials: null, response_fields_visible: true, public_enabled: false, public_origin: false, navigation: 'delta',
+    credentials: null, response_fields_visible: true, public_enabled: false, public_origin: false, navigation: 'delta', nonce: NONCE,
     snapshot: { document: doc, template_revision: s.analysis.template_revision, page_revision: s.page_revision, blocks: [], ...members },
     ...fields,
   };
@@ -1079,5 +1156,46 @@ test('S6 security review F1 (probe 3): a logged-in delta replayed to the public 
   const anonymous = probeContext(probePage('Welcome', '5', 'empty'), url, cfg, pub);
   anonymous.snapshot.partition = 'public';
   const r = clientStep(anonymous, d);
+  assert.deepEqual([r.outcome, r.error, r.snapshot], ['rejected', 'INTEGRITY_ERROR', null]);
+});
+
+// S6 security re-review (probe 5, cases 1 and 2): the same U and B, so H-107 alone accepted
+// both. The nonce of H-108 binds the delta to the request that the server answered.
+test('S6 security re-review B2 (probe 5, case 1): A -> B -> A, the delta D(v1 -> v2) on v3 with the bytes of v1, gives INTEGRITY_ERROR (H-108)', () => {
+  const url = 'https://a.example/p';
+  const v1 = probePage('Shop', '10', 'e');
+  const v2 = probePage('Shop', '12', 'e');
+  const v3 = probePage('Shop', '10', 'e');
+  const first = probeContext(v1, url, {}, { nonce: 'EBESExQVFhcYGRobHB0eHw' });
+  const d = handle({ method: 'GET', target: url, headers: clientRequest(first) }, APP, v2, {});
+  assert.equal(d.kind, 'delta');
+  // The request that got D applies it; the later request from v3 (another nonce) does not.
+  assert.equal(clientStep(first, d).outcome, 'patched');
+  const later = probeContext(v3, url);
+  assert.equal(later.snapshot.page_revision, first.snapshot.page_revision);
+  const r = clientStep(later, d);
+  assert.deepEqual([r.outcome, r.error, r.next], ['rejected', 'INTEGRITY_ERROR', 'fallback-load']);
+  // A context without a nonce member gets a new random nonce, as in the probe: also rejected.
+  const { nonce: _n, ...noNonce } = later;
+  assert.equal(clientStep(noNonce, d).error, 'INTEGRITY_ERROR');
+});
+
+test('S6 security re-review B1 (probe 5, case 2): the personal delta of a credentialed request replayed to an anonymous client with the same public base gives INTEGRITY_ERROR (H-108)', () => {
+  const url = 'https://a.example/home';
+  const cfg = { policy: { mode: 'public' } };
+  const anon = probePage('Welcome', '5', 'empty');
+  const pub = (fields) => {
+    const c = probeContext(anon, url, cfg, { public_enabled: true, public_origin: true, ...fields });
+    c.snapshot.partition = 'public';
+    return c;
+  };
+  const bob = pub({ credentials: true, nonce: 'EBESExQVFhcYGRobHB0eHw' });
+  const d = handle({ method: 'GET', target: url, headers: clientRequest(bob) }, APP, probePage('Hi Bob', '5', 'bob-cart: 2 items, card *4242'), cfg);
+  assert.equal(d.kind, 'delta');
+  // The request of user 1 applies it (in the partition of the request, H-65).
+  const own = clientStep(bob, d);
+  assert.deepEqual([own.outcome, own.snapshot.partition], ['patched', 'request']);
+  // User 2: no credentials, the same public snapshot (same B) and URL (same U), another nonce.
+  const r = clientStep(pub({ credentials: false }), d);
   assert.deepEqual([r.outcome, r.error, r.snapshot], ['rejected', 'INTEGRITY_ERROR', null]);
 });

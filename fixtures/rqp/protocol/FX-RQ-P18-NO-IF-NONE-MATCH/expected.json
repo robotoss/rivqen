@@ -7,7 +7,7 @@
       ["rq-version","1"],
       ["rq-capabilities","(block-patch)"],
       ["accept","text/html, application/vnd.rivqen.delta+json"],
-      ["rq-have","t=t1.UDAGcPAhlaAytet6ltzfl_jk0ucsCZ3Qw1nrSGA5pwA, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:"]
+      ["rq-have","t=t1.UDAGcPAhlaAytet6ltzfl_jk0ucsCZ3Qw1nrSGA5pwA, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:, n=:AAECAwQFBgcICQoLDA0ODw==:"]
     ]
   },
   "status": 200,

@@ -6,11 +6,12 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { UnsupportedInput, deltaBinding } from '../src/common.mjs';
+import { UnsupportedInput, deltaBinding, nonceText } from '../src/common.mjs';
 import { capabilities, changeSet, deltaBase, handle, notModified, requestVersion, rqHave, writtenMembers } from '../src/server.mjs';
 import { acceptsMediaType, parseEntityTags } from '../src/http.mjs';
 import { analyze as analyzeBytes, documentHeadStart } from '../src/markup.mjs';
-import { APP, TARGET, blockPage, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
+import { APP, NONCE, NONCE_SF, TARGET, blockPage, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
+import { havePrefixes } from '../src/client.mjs';
 
 const header = (r, name) => r.headers.filter(([n]) => n === name).map(([, v]) => v).join(', ') || null;
 const lines = (h) => h.map(([n, v]) => [n, v]);
@@ -296,14 +297,14 @@ test('step 6: with b, only the blocks whose prefix differs; without b, all block
 
 test('step 6: b of the wrong length is absent and gives all blocks', () => {
   const t = revisions('page-big-a').template_revision;
-  const r = handle(deltaRequest('page-big-a', { 'rq-have': `t=${t}, b=:${Buffer.alloc(16).toString('base64')}:` }), APP, page('page-big-b'));
+  const r = handle(deltaRequest('page-big-a', { 'rq-have': `t=${t}, b=:${Buffer.alloc(16).toString('base64')}:, n=${NONCE_SF}` }), APP, page('page-big-b'));
   assert.deepEqual(JSON.parse(r.body.toString('utf8')).operations.map((o) => o.block_id), ['title', 'price', 'cart']);
 });
 
 test('step 6: an empty change set gives F', () => {
   const t = revisions('page-big-a').template_revision;
   const prefixes = Buffer.concat(revisions('page-big-b').blocks.map((b) => Buffer.from(b.sha256, 'base64url').subarray(0, 8)));
-  const r = handle(deltaRequest('page-big-a', { 'rq-have': `t=${t}, b=:${prefixes.toString('base64')}:` }), APP, page('page-big-b'));
+  const r = handle(deltaRequest('page-big-a', { 'rq-have': `t=${t}, b=:${prefixes.toString('base64')}:, n=${NONCE_SF}` }), APP, page('page-big-b'));
   assert.equal(r.reason, 'empty-change-set');
 });
 
@@ -318,7 +319,7 @@ test('step 7: the delta has the delta fields, no ETag, Last-Modified or Expires,
   const env = JSON.parse(r.body.toString('utf8'));
   // H-104, H-107: exactly the binding and the operations; each operation exactly block_id and content.
   assert.deepEqual(Object.keys(env), ['binding', 'operations']);
-  assert.equal(env.binding, deltaBinding(TARGET, revisions('page-big-a').page_revision, revisions('page-big-b').page_revision));
+  assert.equal(env.binding, deltaBinding(TARGET, revisions('page-big-a').page_revision, NONCE, revisions('page-big-b').page_revision));
   const changed = revisions('page-big-b').blocks[1];
   assert.deepEqual(env.operations, [{ block_id: changed.id, content: page('page-big-b').toString('utf8', changed.start, changed.end) }]);
 });
@@ -328,14 +329,24 @@ test('step 7, H-107: the binding has U of the request target, B of If-None-Match
   const a = revisions('page-big-a').page_revision;
   const b = revisions('page-big-b').page_revision;
   // A weak base gives the same B: the r1. value between the quotes.
-  assert.equal(binding(deltaRequest('page-big-a', { 'if-none-match': `W/"${a}"` })), deltaBinding(TARGET, a, b));
+  assert.equal(binding(deltaRequest('page-big-a', { 'if-none-match': `W/"${a}"` })), deltaBinding(TARGET, a, NONCE, b));
   // U is the WHATWG serialization of the target with its query and without the fragment.
   const target = 'https://SHOP.example.com:443/catalog?page=2#top';
-  assert.equal(binding({ ...deltaRequest('page-big-a'), target }), deltaBinding('https://shop.example.com/catalog?page=2', a, b));
+  assert.equal(binding({ ...deltaRequest('page-big-a'), target }), deltaBinding('https://shop.example.com/catalog?page=2', a, NONCE, b));
   assert.notEqual(binding({ ...deltaRequest('page-big-a'), target }), binding(deltaRequest('page-big-a')));
   // Another base (a client with another snapshot that sends the same prefixes) gives another binding.
   const other = revisions('page-a').page_revision;
-  assert.equal(binding(deltaRequest('page-big-a', { 'if-none-match': `"${other}"` })), deltaBinding(TARGET, other, b));
+  assert.equal(binding(deltaRequest('page-big-a', { 'if-none-match': `"${other}"` })), deltaBinding(TARGET, other, NONCE, b));
+  // H-108: N is the nonce of this request, as the base64url text of the decoded Byte Sequence.
+  const bytes = Buffer.from([...Array(16).keys()].map((i) => 255 - i));
+  const sf = bytes.toString('base64');
+  assert.ok(sf.includes('/') || sf.includes('+'));
+  const have = (n) => `t=${revisions('page-big-a').template_revision}, b=:${havePrefixes(revisions('page-big-a').blocks)}:, n=${n}`;
+  const withNonce = binding(deltaRequest('page-big-a', { 'rq-have': have(`:${sf}:`) }));
+  assert.equal(withNonce, deltaBinding(TARGET, a, nonceText(bytes), b));
+  assert.notEqual(withNonce, binding(deltaRequest('page-big-a')));
+  // Without padding (RFC 9651 section 4.2.7) the bytes and so N are the same.
+  assert.equal(binding(deltaRequest('page-big-a', { 'rq-have': have(`:${sf.replace(/=+$/, '')}:`) })), withNonce);
 });
 
 test('step 7: a delta larger than maxPatchBytes gives F; at the limit it is sent', () => {
@@ -370,7 +381,7 @@ test('step 7: a delta of exactly the size of F gives F; one byte smaller is sent
         ['rq-capabilities', '(block-patch)'],
         ['accept', 'application/vnd.rivqen.delta+json'],
         ['if-none-match', `"${before.page_revision}"`],
-        ['rq-have', `t=${before.template_revision}`],
+        ['rq-have', `t=${before.template_revision}, n=${NONCE_SF}`],
       ],
     };
     return handle(request, APP, doc(pad, quotes));
@@ -456,7 +467,7 @@ test('Rq-Capabilities: one Inner List of Tokens; any other shape is empty (H-53)
 
 test('Rq-Have: t must be a Token; b a Byte Sequence; the last key wins; 4096 bytes at most', () => {
   const h = (v) => rqHave([['rq-have', v]]);
-  assert.deepEqual(h('t=t1.x, b=:AAAAAAAAAAA=:'), { t: 't1.x', b: Buffer.alloc(8) });
+  assert.deepEqual(h('t=t1.x, b=:AAAAAAAAAAA=:'), { t: 't1.x', b: Buffer.alloc(8), n: null });
   assert.equal(h('t="t1.x"'), null);
   assert.equal(h('b=:AAAA:'), null);
   assert.equal(h('t='), null);
@@ -466,7 +477,42 @@ test('Rq-Have: t must be a Token; b a Byte Sequence; the last key wins; 4096 byt
   // 't=t1.x, y="' and '"' are 12 bytes.
   assert.equal(h(`t=t1.x, y="${'a'.repeat(4096 - 12)}"`).t, 't1.x');
   assert.equal(h(`t=t1.x, y="${'a'.repeat(4097 - 12)}"`), null);
-  assert.deepEqual(rqHave([['rq-have', 't=t1.x'], ['rq-have', 'b=::']]), { t: 't1.x', b: Buffer.alloc(0) });
+  assert.deepEqual(rqHave([['rq-have', 't=t1.x'], ['rq-have', 'b=::']]), { t: 't1.x', b: Buffer.alloc(0), n: null });
+});
+
+test('Rq-Have member n (H-108): exactly one Byte Sequence of 16 bytes, else absent; parameters are ignored', () => {
+  const n = (v) => rqHave([['rq-have', `t=t1.x, ${v}`]]).n;
+  const sixteen = Buffer.from([...Array(16).keys()]);
+  assert.deepEqual(n(`n=:${sixteen.toString('base64')}:`), sixteen);
+  assert.deepEqual(n(`n=:${sixteen.toString('base64').replace(/=+$/, '')}:`), sixteen);
+  assert.deepEqual(n(`n=:${sixteen.toString('base64')}:;x=1`), sixteen);
+  assert.equal(rqHave([['rq-have', 't=t1.x']]).n, null);
+  assert.equal(n(`n=:${Buffer.alloc(15).toString('base64')}:`), null);
+  assert.equal(n(`n=:${Buffer.alloc(17).toString('base64')}:`), null);
+  assert.equal(n('n=::'), null);
+  assert.equal(n(`n="${sixteen.toString('base64url')}"`), null);
+  assert.equal(n(`n=${'A'.repeat(22)}`), null);
+  assert.equal(n('n'), null);
+  assert.equal(n('n=?1'), null);
+  assert.equal(n('n=1'), null);
+  assert.equal(n(`n=(:${sixteen.toString('base64')}:)`), null);
+  // A duplicate n is no n (fail closed), also when both values are valid; other keys keep last-wins.
+  const other = Buffer.alloc(16, 0xff);
+  assert.equal(n(`n=:${sixteen.toString('base64')}:, n=:${other.toString('base64')}:`), null);
+  assert.equal(n(`n=:${other.toString('base64')}:, n=:${sixteen.toString('base64')}:`), null);
+  assert.equal(n(`n=:${Buffer.alloc(15).toString('base64')}:, n=:${sixteen.toString('base64')}:`), null);
+  assert.deepEqual(n(`b=::, n=:${sixteen.toString('base64')}:, b=:AAAAAAAAAAA=:`), sixteen);
+});
+
+test('H-108: a delta only for a request with a valid n; the 304 does not need it', () => {
+  const t = revisions('page-big-a').template_revision;
+  const have = `t=${t}, b=:${Buffer.concat(revisions('page-big-a').blocks.map((b) => Buffer.from(b.sha256, 'base64url').subarray(0, 8))).toString('base64')}:`;
+  for (const v of [have, `${have}, n=:${Buffer.alloc(15).toString('base64')}:`, `${have}, n=${NONCE_SF}, n=${NONCE_SF}`]) {
+    const r = handle(deltaRequest('page-big-a', { 'rq-have': v }), APP, page('page-big-b'));
+    assert.deepEqual([r.kind, r.reason], ['full', 'no-nonce'], v);
+  }
+  assert.equal(handle(deltaRequest('page-big-a', { 'rq-have': have }), APP, page('page-big-a')).status, 304);
+  assert.equal(handle(deltaRequest('page-big-a'), APP, page('page-big-b')).kind, 'delta');
 });
 
 test('If-None-Match gives a base only for exactly one r1. tag, strong or weak', () => {
@@ -561,7 +607,7 @@ test('the delta carries the exact content of a block with quotes, escapes, contr
       ['rq-capabilities', '(block-patch)'],
       ['accept', 'application/vnd.rivqen.delta+json'],
       ['if-none-match', `"${before.page_revision}"`],
-      ['rq-have', `t=${before.template_revision}`],
+      ['rq-have', `t=${before.template_revision}, n=${NONCE_SF}`],
     ],
   };
   const r = handle(request, APP, blockPage(content));

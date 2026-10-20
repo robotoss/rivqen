@@ -13,6 +13,7 @@
     "public_enabled": false,
     "public_origin": false,
     "navigation": "fallback",
+    "nonce": "AAECAwQFBgcICQoLDA0ODw",
     "snapshot": {
       "page": "page-a",
       "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",

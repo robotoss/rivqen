@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-C32-NONCE-ROLLBACK-A-B-A",
+  "kind": "client",
+  "description": "Rollback A -> B -> A (S6 security re-review B2): the page was v1 (page-a), then v2 (page-b), then v3 with the bytes of v1. The client holds v3 (page-a, the same page revision as v1) and a cache that ignores no-store returns the delta D(v1 -> v2) of an earlier request. U and B are equal, so H-107 alone accepted it; the server built it for the nonce of the earlier request (bytes 10 to 1F), not for the nonce of this request: INTEGRITY_ERROR at step 7 (H-108)",
+  "rules": ["RQP-13", "RQP-29"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b",
+        "nonce": "EBESExQVFhcYGRobHB0eHw"
+      }
+    }
+  }
+}

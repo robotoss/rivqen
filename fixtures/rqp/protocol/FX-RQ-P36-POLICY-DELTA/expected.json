@@ -8,7 +8,7 @@
       ["rq-capabilities","(block-patch)"],
       ["accept","text/html, application/vnd.rivqen.delta+json"],
       ["if-none-match","\"r1.ntmvLE4csBiPR_ylX60ewp2aSpkrgPShEGuipBzU8Ac\""],
-      ["rq-have","t=t1.UDAGcPAhlaAytet6ltzfl_jk0ucsCZ3Qw1nrSGA5pwA, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:"]
+      ["rq-have","t=t1.UDAGcPAhlaAytet6ltzfl_jk0ucsCZ3Qw1nrSGA5pwA, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:, n=:AAECAwQFBgcICQoLDA0ODw==:"]
     ]
   },
   "server_config": {
@@ -28,10 +28,11 @@
   "headers_forbidden": ["etag","expires","last-modified","rq-revision","rq-template-revision"],
   "body": {
     "kind": "delta",
-    "binding": "d1.4NEvHkC49af_VC-JA5Ne6xnk8_SRkyfQOZaA7MdpPIE",
+    "binding": "d1.RPL_vF0RjeQQgCI2eBWd8LelU0oiaAgvriQ2VzUcHKs",
     "binding_inputs": {
       "url": "https://shop.example.com/catalog",
       "base_revision": "r1.ntmvLE4csBiPR_ylX60ewp2aSpkrgPShEGuipBzU8Ac",
+      "nonce": "AAECAwQFBgcICQoLDA0ODw",
       "next_revision": "r1.yjMbAcWhFvAKHjQyW_nP16A2Vzt_s5iDE0nqZkDASME"
     },
     "blocks": [

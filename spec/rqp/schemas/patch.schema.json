@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:rivqen:rqp:1:patch",
   "title": "RQP patch envelope (rqp/1, HTTP)",
-  "description": "Normative text: docs/engineering/protocol/manifest-patch.md section 2. Since H-104 and H-107 the envelope is the binding and the operations; the client computes the block hash of each content and the next page revision R', and checks the binding of the URL, its base revision and R' (section 2.4, step 7). Unknown members, also the members of the envelope before H-104 (type, protocol, base_revision, template_revision, op, format, sha256) and next_revision of the envelope of H-104 (replaced by H-107), make the envelope invalid. The schema does not check rules that need more than one value or the client state: block ids known, unique and in document order, the binding recomputation, content rules, byte sizes, duplicate member names.",
+  "description": "Normative text: docs/engineering/protocol/manifest-patch.md section 2. Since H-104 and H-107 the envelope is the binding and the operations; the client computes the block hash of each content and the next page revision R', and checks the binding of the URL, its base revision, the nonce of its request (H-108) and R' (section 2.4, step 7). Unknown members, also the members of the envelope before H-104 (type, protocol, base_revision, template_revision, op, format, sha256) and next_revision of the envelope of H-104 (replaced by H-107), make the envelope invalid. The schema does not check rules that need more than one value or the client state: block ids known, unique and in document order, the binding recomputation, content rules, byte sizes, duplicate member names.",
   "type": "object",
   "additionalProperties": false,
   "required": ["binding", "operations"],
@@ -36,7 +36,7 @@
       "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
     },
     "binding": {
-      "description": "Delta binding value (H-107): d1. and B64U(SHA-256(\"rqp-d1\" LF U LF B LF R' LF)), canonical base64url (manifest-patch section 1.3, rule 2).",
+      "description": "Delta binding value (H-107, H-108): d1. and B64U(SHA-256(\"rqp-d1\" LF U LF B LF N LF R' LF)), canonical base64url (manifest-patch section 1.3, rule 2). N is the client nonce of the request (Rq-Have member n).",
       "type": "string",
       "pattern": "^d1\\.[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
     }

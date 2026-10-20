@@ -1,0 +1,37 @@
+{
+  "id": "FX-RQ-P42-NONCE-OTHER",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match","\"r1.QZWQveB3Od0paA9JtInsnGdvGe4b3NIqT4xsP6rdKMU\""],
+      ["rq-have","t=t1.UDAGcPAhlaAytet6ltzfl_jk0ucsCZ3Qw1nrSGA5pwA, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:, n=:8PHy8/T19vf4+fr7/P3+/w==:"]
+    ]
+  },
+  "status": 200,
+  "headers_required": {
+    "content-type": "application/vnd.rivqen.delta+json",
+    "rq-version": "1",
+    "cache-control": "no-store"
+  },
+  "headers_forbidden": ["etag","expires","last-modified","rq-revision","rq-template-revision"],
+  "body": {
+    "kind": "delta",
+    "binding": "d1.Q7ZVGu04Dqy1Gxth_MtyWigy8aKNUhEMyC7lIFRKb6M",
+    "binding_inputs": {
+      "url": "https://shop.example.com/catalog",
+      "base_revision": "r1.QZWQveB3Od0paA9JtInsnGdvGe4b3NIqT4xsP6rdKMU",
+      "nonce": "8PHy8_T19vf4-fr7_P3-_w",
+      "next_revision": "r1.zmkAXEJQ1oWyDB37krArJho2A9THkC_QRUnIlPolfwk"
+    },
+    "blocks": [
+      {
+        "id": "price",
+        "sha256": "bB9ScYcQQzKWqPCBW62MTsc9Ff_djve7Denf3YMoCUg"
+      }
+    ]
+  }
+}

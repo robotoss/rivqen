@@ -30,21 +30,22 @@ test('page-a is the KAT page and gives the KAT revisions and the computed values
   assert.equal(a.page_revision, manifest.page_revision);
 });
 
-test('page-a and page-b give B and R\' of the binding of the KAT price patch (H-107)', () => {
+test('page-a and page-b give B and R\' of the binding of the KAT price patch (H-107); N is the KAT nonce (H-108)', () => {
   const patch = readJson(join(KAT_DIR, kat.patches[0]));
   const entry = kat.bindings.find((e) => e.patch === kat.patches[0]);
   assert.deepEqual([entry.base_revision, entry.next_revision], [revisions('page-a').page_revision, revisions('page-b').page_revision]);
   assert.equal(entry.url, TARGET);
-  assert.equal(deltaBindingPreimage(entry.url, entry.base_revision, entry.next_revision), entry.preimage);
-  assert.equal(deltaBinding(entry.url, entry.base_revision, entry.next_revision), patch.binding);
+  assert.equal(entry.nonce, kat.nonce.n);
+  assert.equal(deltaBindingPreimage(entry.url, entry.base_revision, entry.nonce, entry.next_revision), entry.preimage);
+  assert.equal(deltaBinding(entry.url, entry.base_revision, entry.nonce, entry.next_revision), patch.binding);
   assert.equal(entry.binding, patch.binding);
 });
 
 test('the KAT binding with a query: U of the reference is the canonical URL of url_input (H-107)', () => {
   const q = kat.binding_with_query;
   assert.equal(canonicalUrl(q.url_input), q.url);
-  assert.equal(deltaBindingPreimage(q.url, q.base_revision, q.next_revision), q.preimage);
-  assert.equal(deltaBinding(q.url, q.base_revision, q.next_revision), q.binding);
+  assert.equal(deltaBindingPreimage(q.url, q.base_revision, q.nonce, q.next_revision), q.preimage);
+  assert.equal(deltaBinding(q.url, q.base_revision, q.nonce, q.next_revision), q.binding);
   // The reference server writes this binding for the target url_input (a fragment never reaches a server, but U drops it anyway).
   const r = handle({ ...deltaRequest('page-a'), target: q.url_input }, APP, page('page-b'));
   assert.equal(JSON.parse(r.body.toString('utf8')).binding, q.binding);
@@ -52,7 +53,7 @@ test('the KAT binding with a query: U of the reference is the canonical URL of u
 
 test('the placeholders give the KAT If-None-Match and Rq-Have values', () => {
   assert.equal(substitute('T', '{{r1:page-a}}'), `"${manifest.page_revision}"`);
-  assert.equal(substitute('T', 't={{t1:page-a}}, b={{have:page-a}}'), kat.rq_have);
+  assert.equal(substitute('T', `t={{t1:page-a}}, b={{have:page-a}}, n=${kat.nonce.sf}`), kat.rq_have);
 });
 
 test('the r1 placeholder with client members has the policy line (H-55)', () => {

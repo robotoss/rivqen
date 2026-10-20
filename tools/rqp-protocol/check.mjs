@@ -20,7 +20,7 @@
 // next, metric, snapshot } and optionally clientRequest(context) -> [[name,
 // value]]. context = { url, final_url, redirected, build, allow_http,
 // allowlist, credentials, response_fields_visible, public_enabled, public_origin, navigation,
-// snapshot: null | { document, template_revision, page_revision, blocks,
+// nonce, snapshot: null | { document, template_revision, page_revision, blocks,
 // policy?, limits?, partition } }; template_revision and blocks are the values
 // that a client computes with its markup analysis (H-103: the manifest has
 // neither), page_revision, policy and limits come from the manifest. url is the request URL and the cache key of
@@ -31,7 +31,10 @@
 // entry is valid, H-69);
 // credentials is true, false or null (unknown); response_fields_visible tells
 // whether the native SDK saw all header fields of the response (H-64);
-// partition is the partition of the snapshot, "request" or "public" (H-65).
+// partition is the partition of the snapshot, "request" or "public" (H-65);
+// nonce is the text N (base64url without padding) of the 16-byte client nonce
+// that the client sends in Rq-Have member n and puts into the binding (H-108):
+// a client under test uses this value in place of its CSPRNG (a test seam only).
 //
 // Comparison rules: docs/engineering/protocol/fixtures.md section 4.1
 // ("Comparison of F") and section 5; README.md of the fixtures; and RQP-08
@@ -79,7 +82,7 @@ function compareFull(expected, page, body, fail) {
  * changed blocks; H-104, H-107). The envelope must pass the patch schema, so
  * it has no member of an earlier envelope form (also no next_revision). The
  * binding is compared exactly; on a difference the failure names the inputs
- * U, B and R' of the expected binding. The content of each operation must be
+ * U, B, N and R' of the expected binding. The content of each operation must be
  * the current content of its block: its SHA-256 is the expected hash.
  */
 function compareDelta(expected, body, fail) {
@@ -90,7 +93,7 @@ function compareDelta(expected, body, fail) {
   const env = json.value;
   if (env.binding !== expected.binding) {
     const i = expected.binding_inputs;
-    fail(`body: binding ${env.binding}, expected ${expected.binding} (U ${i.url}, B ${i.base_revision}, R' ${i.next_revision})`);
+    fail(`body: binding ${env.binding}, expected ${expected.binding} (U ${i.url}, B ${i.base_revision}, N ${i.nonce}, R' ${i.next_revision})`);
   }
   const got = env.operations.map((op) => op.block_id);
   const want = expected.blocks.map((b) => b.id);
@@ -233,6 +236,7 @@ export async function runClient(mod, { dir = FIXTURES_DIR, only = '' } = {}) {
       public_enabled: ctx.public_enabled,
       public_origin: ctx.public_origin,
       navigation: ctx.navigation,
+      nonce: ctx.nonce,
       snapshot,
     };
     const bodyPath = join(dir, name, 'response.body');

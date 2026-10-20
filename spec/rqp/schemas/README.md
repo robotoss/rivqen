@@ -13,6 +13,6 @@ Normative text: `docs/engineering/protocol/manifest-patch.md` (published at `/en
 - JSON Schema Draft 2020-12. Both schemas are self-contained (no external `$ref`), so a validator needs no schema registry.
 - No `format` keyword: every string rule is a `pattern` (ECMA-262 and Rust `regex` compatible: no look-around, no back-references).
 - A schema check is necessary, not sufficient. The spec page lists the rules that a schema cannot express (the page revision check of the manifest, known and unique block ids of a patch, duplicate member names, byte sizes, revision recomputation, content rules).
-- Since H-103 the manifest has no `template_revision` and no `blocks`; since H-104 and H-107 the envelope is `binding` and the operations (`block_id`, `content`). Both schemas reject every other member, also the members of the forms before these decisions (`next_revision` of H-104 too). The binding pattern is `d1.` and 43 canonical base64url characters.
+- Since H-103 the manifest has no `template_revision` and no `blocks`; since H-104 and H-107 the envelope is `binding` and the operations (`block_id`, `content`). Both schemas reject every other member, also the members of the forms before these decisions (`next_revision` of H-104 too). The binding pattern is `d1.` and 43 canonical base64url characters. Since H-108 the preimage of the binding also has the client nonce N; the pattern does not change.
 
 Examples: `spec/rqp/examples/` (valid, invalid with the expected error, and a known-answer set in `kat/`). Tests: `tools/rqp-schema/`.

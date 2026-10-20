@@ -13,6 +13,7 @@
     "public_enabled": false,
     "public_origin": true,
     "navigation": "first-visit",
+    "nonce": "AAECAwQFBgcICQoLDA0ODw",
     "snapshot": null
   },
   "request": {

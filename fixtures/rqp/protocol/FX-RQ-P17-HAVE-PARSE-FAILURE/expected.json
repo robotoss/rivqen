@@ -8,7 +8,7 @@
       ["rq-capabilities","(block-patch)"],
       ["accept","text/html, application/vnd.rivqen.delta+json"],
       ["if-none-match","\"r1.QZWQveB3Od0paA9JtInsnGdvGe4b3NIqT4xsP6rdKMU\""],
-      ["rq-have","t="]
+      ["rq-have","t=, n=:AAECAwQFBgcICQoLDA0ODw==:"]
     ]
   },
   "status": 200,

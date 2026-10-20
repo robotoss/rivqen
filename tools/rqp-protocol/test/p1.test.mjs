@@ -20,14 +20,19 @@
 //    and a stale replay on the own target (D(v1 -> v2) on v2) give
 //    INTEGRITY_ERROR, also when the operations cover every block that
 //    differs, so that the page revision R' alone (the check of H-104) passes.
+// 6. H-108 (S6 security re-review B1, B2): a delta is accepted only with the
+//    nonce of its request. The same snapshot, URL and base with another nonce
+//    (a replay to a later request, also after A -> B -> A, and the replay of a
+//    personal delta to another user with the same public base) gives
+//    INTEGRITY_ERROR.
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { POLICY_DEFAULTS, deltaBinding, pageRevision, sha256b64u } from '../src/common.mjs';
+import { LIMITS, POLICY_DEFAULTS, deltaBinding, nonceText, pageRevision, sha256b64u } from '../src/common.mjs';
 import { handleResponse, havePrefixes, snapshotOf, verifyDelta } from '../src/client.mjs';
 import { analyze } from '../src/markup.mjs';
 import { handle, writtenMembers } from '../src/server.mjs';
-import { ALLOWLIST, TARGET } from './helpers.mjs';
+import { ALLOWLIST, NONCE, TARGET } from './helpers.mjs';
 
 const RUNS = 300;
 const APP = { status: 200, headers: [['content-type', 'text/html; charset=utf-8']] };
@@ -112,10 +117,14 @@ const ctx = (fields = {}) => ({
 });
 
 const first = { method: 'GET', target: TARGET, headers: [['rq-version', '1'], ['rq-capabilities', '(block-patch)'], ['accept', 'text/html']] };
-/** The delta request of a client with `snap` to `target`; without `b` when `withPrefixes` is false (all blocks, H-7). */
-function revisit(snap, target = TARGET, withPrefixes = true) {
+/**
+ * The delta request of a client with `snap` to `target`; without `b` when
+ * `withPrefixes` is false (all blocks, H-7); `nonce` is the text N of its nonce (H-108).
+ */
+function revisit(snap, target = TARGET, withPrefixes = true, nonce = NONCE) {
   const a = snap.analysis;
-  const have = withPrefixes ? `t=${a.template_revision}, b=:${havePrefixes(a.blocks)}:` : `t=${a.template_revision}`;
+  const n = `n=:${Buffer.from(nonce, 'base64url').toString('base64')}:`;
+  const have = withPrefixes ? `t=${a.template_revision}, b=:${havePrefixes(a.blocks)}:, ${n}` : `t=${a.template_revision}, ${n}`;
   return {
     method: 'GET',
     target,
@@ -128,6 +137,12 @@ function revisit(snap, target = TARGET, withPrefixes = true) {
     ],
   };
 }
+
+/** verifyDelta of the request with the nonce `nonce` (H-108), at the URL of the snapshot. */
+const vd = (snap, body, nonce = NONCE) => verifyDelta(snap, body, true, LIMITS.maxPatchBytes, snap.url, nonce);
+
+/** A random nonce text N from the seeded PRNG (the tests are deterministic; an SDK uses a CSPRNG). */
+const randomNonce = (rand) => nonceText(Buffer.from(Array.from({ length: 16 }, () => Math.floor(rand() * 256))));
 
 const manifestOfF = (body) => {
   const text = body.toString('utf8');
@@ -172,33 +187,33 @@ test('property: a delta of the server gives the current page byte for byte; a ch
     const d = handle(revisit(snap), APP, b, config);
     if (d.kind !== 'delta') continue;
     deltas++;
-    const ok = verifyDelta(snap, d.body, true);
+    const ok = vd(snap, d.body);
     assert.equal(ok.code, undefined, String(ok.code));
     assert.deepEqual(ok.snapshot.document, b);
     const bAnalysis = analyze(b);
     assert.equal(ok.snapshot.page_revision, pageRevision(bAnalysis.template_revision, bAnalysis.blocks, members));
     const env = JSON.parse(d.body.toString('utf8'));
     assert.deepEqual(Object.keys(env), ['binding', 'operations']);
-    assert.equal(env.binding, deltaBinding(TARGET, snap.page_revision, ok.snapshot.page_revision));
+    assert.equal(env.binding, deltaBinding(TARGET, snap.page_revision, NONCE, ok.snapshot.page_revision));
     // A changed content: the hash that the client computes is not the one that the binding binds.
     const k = Math.floor(rand() * env.operations.length);
     const tampered = { ...env, operations: env.operations.map((op, i) => (i === k ? { ...op, content: `${op.content}q` } : op)) };
-    assert.equal(verifyDelta(snap, Buffer.from(JSON.stringify(tampered)), true).code, 'INTEGRITY_ERROR');
+    assert.equal(vd(snap, Buffer.from(JSON.stringify(tampered))).code, 'INTEGRITY_ERROR');
     // A dropped operation (as after a prefix collision, H-44).
     if (env.operations.length > 1) {
       const dropped = { ...env, operations: env.operations.filter((_, i) => i !== k) };
-      assert.equal(verifyDelta(snap, Buffer.from(JSON.stringify(dropped)), true).code, 'INTEGRITY_ERROR');
+      assert.equal(vd(snap, Buffer.from(JSON.stringify(dropped))).code, 'INTEGRITY_ERROR');
     }
     // Another snapshot (another base): a block without an operation differs.
     const untouched = pageA.blocks.find((x) => !env.operations.some((op) => op.block_id === x.id) && x.kind === 'html');
     if (untouched !== undefined) {
       const other = { ...pageA, contents: new Map(pageA.contents).set(untouched.id, `${pageA.contents.get(untouched.id)}w`) };
       const otherSnap = snapshotOf(render(other), members, TARGET);
-      assert.equal(verifyDelta(otherSnap, d.body, true).code, 'INTEGRITY_ERROR');
+      assert.equal(vd(otherSnap, d.body).code, 'INTEGRITY_ERROR');
     }
     // Another template (another base page text): the template revision of the snapshot differs.
     const otherTemplate = snapshotOf(render({ ...pageA, text: `${pageA.text}!` }), members, TARGET);
-    assert.equal(verifyDelta(otherTemplate, d.body, true).code, 'INTEGRITY_ERROR');
+    assert.equal(vd(otherTemplate, d.body).code, 'INTEGRITY_ERROR');
   }
   assert.ok(deltas > RUNS / 4, `only ${deltas} deltas`);
 });
@@ -238,9 +253,9 @@ function resultRevision(snap, env, members) {
   return pageRevision(a.template_revision, a.blocks.map((b) => ({ ...b, sha256: hashes.get(b.id) ?? b.sha256 })), members);
 }
 
-test('property: H-107: a delta is accepted only on its exact base and URL; a rollback, another base, another URL and a stale replay give INTEGRITY_ERROR', () => {
+test('property: H-107, H-108: a delta is accepted only with its exact U, B and N; a rollback (also A -> B -> A), another base, another URL, a stale replay and another nonce give INTEGRITY_ERROR', () => {
   const rand = prng(107);
-  const counts = { stale: 0, rollback: 0, base: 0, url: 0, all: 0 };
+  const counts = { stale: 0, rollback: 0, base: 0, url: 0, all: 0, nonce: 0, aba: 0 };
   for (let run = 0; run < RUNS; run++) {
     const v1 = randomPage(rand);
     if (v1.blocks.length === 0) continue;
@@ -251,21 +266,39 @@ test('property: H-107: a delta is accepted only on its exact base and URL; a rol
     // Half of the requests have no b: the delta has every block (H-7), the strongest case before H-107.
     const withPrefixes = rand() < 0.5;
     const snap1 = snapshotOf(render(v1), members, url);
-    const d = handle(revisit(snap1, url, withPrefixes), APP, render(v2), config);
+    const n1 = randomNonce(rand);
+    const d = handle(revisit(snap1, url, withPrefixes, n1), APP, render(v2), config);
     if (d.kind !== 'delta') continue;
     if (!withPrefixes) counts.all++;
     const env = JSON.parse(d.body.toString('utf8'));
     const covered = env.operations.map((op) => op.block_id);
-    const ok = verifyDelta(snap1, d.body, true);
+    const ok = vd(snap1, d.body, n1);
     assert.equal(ok.code, undefined, String(ok.code));
     const r2 = ok.snapshot.page_revision;
-    assert.equal(env.binding, deltaBinding(url, snap1.page_revision, r2));
+    assert.equal(env.binding, deltaBinding(url, snap1.page_revision, n1, r2));
     // Each snapshot below differs from the base only in blocks that the operations cover, so R'
     // alone is the page revision of the server (the delta was accepted before H-107). Only B or U differs.
     const rejected = (snap, label) => {
       assert.equal(resultRevision(snap, env, members), r2, `${label}: R' alone passes`);
-      assert.equal(verifyDelta(snap, d.body, true).code, 'INTEGRITY_ERROR', label);
+      assert.equal(vd(snap, d.body, n1).code, 'INTEGRITY_ERROR', label);
     };
+    // H-108: the exact base and URL of the delta, but the request of another nonce: a replay
+    // to a later request from the same snapshot, and A -> B -> A (a snapshot of v3 with the
+    // bytes of v1 gets D(v1 -> v2) again). U, B and R' are equal; only N differs.
+    const n2 = randomNonce(rand);
+    if (n2 !== n1) {
+      assert.equal(resultRevision(snap1, env, members), r2);
+      assert.equal(vd(snap1, d.body, n2).code, 'INTEGRITY_ERROR', 'another nonce');
+      counts.nonce++;
+      const snapAba = snapshotOf(render({ ...v1, contents: new Map(v1.contents) }), members, url);
+      assert.equal(snapAba.page_revision, snap1.page_revision);
+      if (snapAba.page_revision !== r2) {
+        assert.equal(vd(snapAba, d.body, n2).code, 'INTEGRITY_ERROR', 'A -> B -> A');
+        counts.aba++;
+      }
+    }
+    // Without a nonce the client cannot compute the binding: INTEGRITY_ERROR, never a thrown exception (B6).
+    assert.equal(verifyDelta(snap1, d.body, true, LIMITS.maxPatchBytes, url).code, 'INTEGRITY_ERROR');
     const snap2 = snapshotOf(render(v2), members, url);
     if (snap2.page_revision !== snap1.page_revision) {
       rejected(snap2, 'stale replay on the own target');

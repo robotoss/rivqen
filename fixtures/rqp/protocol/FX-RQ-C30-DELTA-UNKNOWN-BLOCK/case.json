@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C30-DELTA-UNKNOWN-BLOCK",
+  "kind": "client",
+  "description": "An operation for the block stock, which the snapshot does not have (rule 1 of section 2.3)",
+  "rules": ["RQP-13","RQP-28"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","application/vnd.rivqen.delta+json"],
+      ["rq-version","1"],
+      ["cache-control","no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "stock",
+            "content": "1"
+          }
+        ]
+      }
+    }
+  }
+}

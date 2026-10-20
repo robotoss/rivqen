@@ -39,24 +39,18 @@ const ctx = (fields = {}) => clientContext({ navigation: 'delta', snapshot: snap
 const DELTA = [['content-type', 'application/vnd.rivqen.delta+json']];
 const HTML = [['content-type', 'text/html; charset=utf-8'], ['rq-version', '1']];
 
-/** A consistent envelope from the snapshot of page-a: ops = [[blockId, content]]. */
-function envelope(ops, change = {}) {
+/**
+ * A consistent envelope (H-104) from the snapshot of page-a: ops =
+ * [[blockId, content]]; `members` are the policy and limits of the snapshot
+ * (H-55); `change` replaces or adds members.
+ */
+function envelope(ops, change = {}, members = {}) {
   const a = revisions('page-a');
   const hashes = new Map(ops.map(([id, c]) => [id, sha256b64u(Buffer.from(c, 'utf8'))]));
   const next = a.blocks.map((b) => ({ ...b, sha256: hashes.get(b.id) ?? b.sha256 }));
   return {
-    type: 'rivqen.patch',
-    protocol: 'rqp/1',
-    base_revision: a.page_revision,
-    next_revision: pageRevision(a.template_revision, next),
-    template_revision: a.template_revision,
-    operations: ops.map(([id, content]) => ({
-      op: 'replace_block',
-      block_id: id,
-      format: a.blocks.find((b) => b.id === id).format,
-      content,
-      sha256: hashes.get(id),
-    })),
+    next_revision: pageRevision(a.template_revision, next, members),
+    operations: ops.map(([id, content]) => ({ block_id: id, content })),
     ...change,
   };
 }
@@ -106,30 +100,57 @@ test('PATCH_TOO_LARGE: content over maxBlockBytes, with a client limit that lets
 test('PATCH_INVALID: JSON rules, schema and operation rules', () => {
   const ok = envelope([['price', '130.00']]);
   const text = JSON.stringify(ok);
-  assert.equal(code(text.replace('{', '{"type":"rivqen.patch",')), 'PATCH_INVALID'); // duplicate member
+  assert.equal(code(ok), null);
+  assert.equal(code(text.replace('{', `{"next_revision":"${revisions('page-a').page_revision}",`)), 'PATCH_INVALID'); // duplicate member
   assert.equal(code(text.slice(0, -1)), 'PATCH_INVALID'); // syntax
   assert.equal(code({ ...ok, page_id: 'x' }), 'PATCH_INVALID'); // schema: unknown member
   assert.equal(code({ ...ok, operations: [] }), 'PATCH_INVALID'); // schema: minItems
-  assert.equal(code({ ...ok, operations: [{ ...ok.operations[0], op: 'remove_block' }] }), 'PATCH_INVALID');
   assert.equal(code({ ...ok, operations: [{ ...ok.operations[0], block_id: 'nope' }] }), 'PATCH_INVALID'); // rule 1
   assert.equal(code({ ...ok, operations: [ok.operations[0], ok.operations[0]] }), 'PATCH_INVALID'); // rule 2
-  assert.equal(code({ ...ok, operations: [{ ...ok.operations[0], format: 'json' }] }), 'PATCH_INVALID'); // rule 4
   const two = envelope([['title', 'S'], ['price', '1']]);
   assert.equal(code({ ...two, operations: [...two.operations].reverse() }), 'PATCH_INVALID'); // rule 3
   assert.equal(code(two), null);
+  // H-104: the members of the envelope before H-104 are unknown members (schema), also with correct values.
+  const a = revisions('page-a');
+  const sha256 = sha256b64u('130.00');
+  for (const extra of [{ type: 'rivqen.patch' }, { protocol: 'rqp/1' }, { base_revision: a.page_revision }, { template_revision: a.template_revision }]) {
+    assert.equal(code({ ...ok, ...extra }), 'PATCH_INVALID', Object.keys(extra)[0]);
+  }
+  for (const extra of [{ op: 'replace_block' }, { format: 'html' }, { sha256 }]) {
+    assert.equal(code({ ...ok, operations: [{ ...ok.operations[0], ...extra }] }), 'PATCH_INVALID', Object.keys(extra)[0]);
+  }
 });
 
-test('TEMPLATE_MISMATCH comes before PATCH_BASE_MISMATCH', () => {
-  const ok = envelope([['price', '130.00']]);
-  const t2 = revisions('page-t2').template_revision;
-  assert.equal(code({ ...ok, template_revision: t2, base_revision: revisions('page-b').page_revision }), 'TEMPLATE_MISMATCH');
-  assert.equal(code({ ...ok, base_revision: revisions('page-b').page_revision }), 'PATCH_BASE_MISMATCH');
+test('INTEGRITY_ERROR at step 7 for a delta built for another template (H-104; before: TEMPLATE_MISMATCH)', () => {
+  const t2 = revisions('page-t2');
+  const next = t2.blocks.map((b) => (b.id === 'price' ? { ...b, sha256: sha256b64u('130.00') } : b));
+  const env = envelope([['price', '130.00']], { next_revision: pageRevision(t2.template_revision, next) });
+  assert.equal(code(env), 'INTEGRITY_ERROR');
 });
 
-test('INTEGRITY_ERROR: an operation hash that is not the hash of its content (step 4)', () => {
-  const ok = envelope([['price', '130.00']]);
-  const wrong = { ...ok, operations: [{ ...ok.operations[0], sha256: sha256b64u('131.00') }] };
-  assert.equal(code(wrong), 'INTEGRITY_ERROR');
+test('INTEGRITY_ERROR at step 7 for a delta built for another base (H-104; before: PATCH_BASE_MISMATCH)', () => {
+  // The server thought the client had page-b with another title: it sent only the price.
+  const b = revisions('page-b');
+  const serverNext = b.blocks.map((x) => (x.id === 'title' ? { ...x, sha256: sha256b64u('Shop 2') } : x));
+  const env = envelope([['price', '130.00']], { next_revision: pageRevision(b.template_revision, serverNext) });
+  assert.equal(code(env), 'INTEGRITY_ERROR');
+  // The same operations for the base of the client: applied. The base is not in the envelope.
+  assert.equal(code(envelope([['price', '130.00']])), null);
+});
+
+test('INTEGRITY_ERROR at step 7 for content that next_revision does not bind (H-104; before: step 4)', () => {
+  const env = envelope([['price', '131.00']], { next_revision: revisions('page-b').page_revision });
+  assert.equal(code(env), 'INTEGRITY_ERROR');
+});
+
+test('a replayed delta passes step 7 only when its result is a page revision of the server (H-104)', () => {
+  // The delta page-a -> page-b on a snapshot of page-b: the result is page-b again.
+  const snapB = snapshotOf(page('page-b'), {}, TARGET);
+  assert.equal(code(envelope([['price', '130.00']]), snapB), null);
+  // A delta for page-a -> page-b with an operation for the title on a snapshot of page-b: another result.
+  const env = envelope([['title', 'Shop']], { next_revision: revisions('page-b').page_revision });
+  assert.equal(code(env, snapB), null);
+  assert.equal(code(env), 'INTEGRITY_ERROR');
 });
 
 test('INTEGRITY_ERROR: next_revision does not match the blocks (step 7), also after an omitted block', () => {
@@ -143,11 +164,7 @@ test('INTEGRITY_ERROR: next_revision with another policy line than the snapshot 
   const content = '130.00';
   const hash = sha256b64u(content);
   const blocks = a.blocks.map((b) => (b.id === 'price' ? { ...b, sha256: hash } : b));
-  const env = (ttl) => ({
-    ...envelope([['price', content]]),
-    base_revision: snap.page_revision,
-    next_revision: pageRevision(a.template_revision, blocks, { policy: { ttl_seconds: ttl } }),
-  });
+  const env = (ttl) => envelope([['price', content]], { next_revision: pageRevision(a.template_revision, blocks, { policy: { ttl_seconds: ttl } }) });
   assert.equal(code(env(61), snap), 'INTEGRITY_ERROR');
   assert.equal(code(env(60), snap), null);
 });
@@ -200,14 +217,7 @@ test('PATCH_TOO_LARGE: a patched document over maxDocumentBytes', () => {
   const content = 'b'.repeat(300);
   const a = snap.analysis;
   const blocks = [{ ...a.blocks[0], sha256: sha256b64u(content) }];
-  const env = {
-    type: 'rivqen.patch',
-    protocol: 'rqp/1',
-    base_revision: snap.page_revision,
-    next_revision: pageRevision(a.template_revision, blocks),
-    template_revision: a.template_revision,
-    operations: [{ op: 'replace_block', block_id: 'x', format: 'html', content, sha256: blocks[0].sha256 }],
-  };
+  const env = { next_revision: pageRevision(a.template_revision, blocks), operations: [{ block_id: 'x', content }] };
   assert.equal(verifyDelta(snap, Buffer.from(JSON.stringify(env)), true).code, 'PATCH_TOO_LARGE');
 });
 
@@ -247,12 +257,14 @@ test('MANIFEST_INVALID: each failed check of sections 1.7 and 1.8', () => {
   assert.equal(reasons(Buffer.concat([p.subarray(0, at), element, element, p.subarray(at)])), 'count'); // two elements
   assert.equal(reasons(build(JSON.stringify(m).replace('{', '{"protocol":"rqp/1",'))), 'json-duplicate');
   assert.equal(reasons(build({ ...m, extra: 1 })), 'schema');
-  assert.equal(reasons(build({ ...m, blocks: [m.blocks[0], m.blocks[0]] })), 'ids');
+  // H-103: the members of the manifest before H-103 are unknown members, also with correct values.
+  assert.equal(reasons(build({ ...m, template_revision: a.template_revision })), 'schema');
+  assert.equal(reasons(build({ ...m, blocks: a.blocks.map(({ id, format, sha256 }) => ({ id, format, sha256 })) })), 'schema');
   assert.equal(reasons(build({ ...m, origin: 'https://other.example.com' })), 'url');
   assert.equal(reasons(build({ ...m, path: '/other' })), 'url');
-  const bBlocks = revisions('page-b').blocks.map(({ id, format, sha256 }) => ({ id, format, sha256 }));
-  assert.equal(reasons(build({ ...m, blocks: bBlocks, page_revision: revisions('page-b').page_revision })), 'analysis');
+  assert.equal(reasons(build({ ...m, page_revision: revisions('page-b').page_revision })), 'revision'); // the page revision of another page
   assert.equal(reasons(build({ ...m, policy: { ttl_seconds: 60 } })), 'revision'); // H-55: policy without a new r1
+  assert.equal(reasons(Buffer.from(build(m).toString('utf8').replace('<header>', '<header data-rq-block="price">'))), 'analysis'); // invalid for RQP (M-21)
   assert.equal(reasons(build(`${JSON.stringify(m)}${' '.repeat(LIMITS.maxManifestBytes)}`)), 'size');
 });
 
@@ -569,14 +581,7 @@ function publicDelta(extraHeaders = []) {
   const content = '130.00';
   const hash = sha256b64u(Buffer.from(content, 'utf8'));
   const next = a.blocks.map((b) => (b.id === 'price' ? { ...b, sha256: hash } : b));
-  const env = {
-    type: 'rivqen.patch',
-    protocol: 'rqp/1',
-    base_revision: pageRevision(a.template_revision, a.blocks, PUBLIC),
-    next_revision: pageRevision(a.template_revision, next, PUBLIC),
-    template_revision: a.template_revision,
-    operations: [{ op: 'replace_block', block_id: 'price', format: 'html', content, sha256: hash }],
-  };
+  const env = { next_revision: pageRevision(a.template_revision, next, PUBLIC), operations: [{ block_id: 'price', content }] };
   return { status: 200, headers: [...DELTA, ['cache-control', 'no-store'], ...extraHeaders], body: Buffer.from(JSON.stringify(env)) };
 }
 const onPublic = (fields, extraHeaders) => {
@@ -873,23 +878,39 @@ test('only a 200 with the delta type is a delta, and only a 200 text/html with R
   }
 });
 
-test('MANIFEST_INVALID: the manifest names the template revision and the blocks of the analysis, also with a matching page revision', () => {
+test('MANIFEST_INVALID: the page revision that the client computes from its analysis is not page_revision (H-103)', () => {
   const p = page('page-a');
   const at = documentHeadStart(p);
-  const m = manifestOf(revisions('page-a'), TARGET);
+  const a = revisions('page-a');
+  const m = manifestOf(a, TARGET);
   const error = (manifest, doc = p, where = at) => {
     const element = Buffer.from(`<script type="application/rivqen-manifest+json">${JSON.stringify(manifest)}</script>`);
     return checkFull({ url: TARGET }, Buffer.concat([doc.subarray(0, where), element, doc.subarray(where)])).error ?? null;
   };
   assert.equal(error(m), null);
-  const renamed = (i, change) => m.blocks.map((b, k) => (k === i ? { ...b, ...change } : b));
-  assert.equal(error({ ...m, template_revision: revisions('page-t2').template_revision }), 'analysis');
-  assert.equal(error({ ...m, blocks: [...m.blocks, { id: 'extra', format: 'html', sha256: m.blocks[0].sha256 }] }), 'analysis');
-  assert.equal(error({ ...m, blocks: renamed(1, { id: 'cost' }) }), 'analysis');
-  assert.equal(error({ ...m, blocks: renamed(2, { format: 'html' }) }), 'analysis');
+  // A page revision of the same blocks with another template revision, another block id, another format or one more block.
+  const renamed = (i, change) => a.blocks.map((b, k) => (k === i ? { ...b, ...change } : b));
+  const wrong = [
+    pageRevision(revisions('page-t2').template_revision, a.blocks),
+    pageRevision(a.template_revision, [...a.blocks, { id: 'extra', format: 'html', sha256: a.blocks[0].sha256 }]),
+    pageRevision(a.template_revision, renamed(1, { id: 'cost' })),
+    pageRevision(a.template_revision, renamed(2, { format: 'html' })),
+    pageRevision(a.template_revision, renamed(1, { sha256: sha256b64u('130.00') })),
+  ];
+  for (const r of wrong) assert.equal(error({ ...m, page_revision: r }), 'revision', r);
   // An original document that is not valid for RQP.
   const c = page('page-c');
   assert.equal(error(m, c, documentHeadStart(c)), 'analysis');
+});
+
+test('H-103: after the page revision check the client uses its computed template revision and digests', () => {
+  const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit' }), { status: 200, headers: HTML, body: fullOf('page-a') });
+  const a = revisions('page-a');
+  assert.equal(r.snapshot.template_revision, a.template_revision);
+  assert.deepEqual(r.snapshot.blocks.map(({ id, format, sha256 }) => ({ id, format, sha256 })), a.blocks.map(({ id, format, sha256 }) => ({ id, format, sha256 })));
+  // Rq-Have of the next request comes from the same values.
+  const snap = snapshotOf(page('page-a'), {}, TARGET);
+  assert.deepEqual(requestHeaders(ctx({ snapshot: snap })), deltaRequest('page-a').headers);
 });
 
 test('manifest elements: only a script start tag with exactly the 32 bytes of the type, ASCII case-insensitive', () => {
@@ -920,14 +941,7 @@ test('a patched document of exactly maxDocumentBytes is applied', () => {
   const snap = snapshotOf(Buffer.from(head + filler + tail));
   const a = snap.analysis;
   const sha = sha256b64u(content);
-  const env = {
-    type: 'rivqen.patch',
-    protocol: 'rqp/1',
-    base_revision: snap.page_revision,
-    next_revision: pageRevision(a.template_revision, [{ ...a.blocks[0], sha256: sha }]),
-    template_revision: a.template_revision,
-    operations: [{ op: 'replace_block', block_id: 'x', format: 'html', content, sha256: sha }],
-  };
+  const env = { next_revision: pageRevision(a.template_revision, [{ ...a.blocks[0], sha256: sha }]), operations: [{ block_id: 'x', content }] };
   const r = verifyDelta(snap, Buffer.from(JSON.stringify(env)), true);
   assert.equal(r.code, undefined);
   assert.equal(r.snapshot.document.length, LIMITS.maxDocumentBytes);

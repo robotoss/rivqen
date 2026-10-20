@@ -7,7 +7,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { UnsupportedInput } from '../src/common.mjs';
-import { capabilities, changeSet, deltaBase, handle, notModified, requestVersion, rqHave } from '../src/server.mjs';
+import { capabilities, changeSet, deltaBase, handle, notModified, requestVersion, rqHave, writtenMembers } from '../src/server.mjs';
 import { acceptsMediaType, parseEntityTags } from '../src/http.mjs';
 import { analyze as analyzeBytes, documentHeadStart } from '../src/markup.mjs';
 import { APP, TARGET, blockPage, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
@@ -189,9 +189,30 @@ test('step 3: F does not depend on RQP request fields (H-51)', () => {
   assert.deepEqual(b.headers, a.headers);
 });
 
-test('step 3: F of a page without blocks has "blocks": []', () => {
-  const r = handle(firstVisit(), APP, page('page-zero'));
-  assert.match(r.body.toString('utf8'), /"blocks":\[\]/);
+test('step 3: the manifest has no block list and no template revision (H-103), also for a page without blocks', () => {
+  for (const id of ['page-a', 'page-zero']) {
+    const r = handle(firstVisit(), APP, page(id));
+    const text = r.body.toString('utf8');
+    const m = JSON.parse(text.slice(text.indexOf('{'), text.indexOf('</script>')));
+    assert.deepEqual(m, { protocol: 'rqp/1', origin: 'https://shop.example.com', path: '/catalog', page_revision: revisions(id).page_revision }, id);
+  }
+});
+
+test('writtenMembers: no default member and no empty object (MUST), no hint that is not smaller than the server limit (SHOULD); H-103', () => {
+  assert.deepEqual(writtenMembers({}), {});
+  assert.deepEqual(writtenMembers({ policy: { mode: 'private', ttl_seconds: 0, offline: false }, limits: {} }), {});
+  assert.deepEqual(writtenMembers({ policy: { mode: 'public', ttl_seconds: 0, offline: true } }), { policy: { mode: 'public', offline: true } });
+  assert.deepEqual(writtenMembers({ policy: { mode: 'private', ttl_seconds: 1 } }), { policy: { ttl_seconds: 1 } });
+  assert.deepEqual(writtenMembers({ limits: { max_patch_bytes: 262143 } }), { limits: { max_patch_bytes: 262143 } });
+  assert.deepEqual(writtenMembers({ limits: { max_patch_bytes: 262144 } }), {});
+  assert.deepEqual(writtenMembers({ limits: { max_patch_bytes: 524288 } }, 1048576), { limits: { max_patch_bytes: 524288 } });
+  assert.deepEqual(writtenMembers({ limits: { max_patch_bytes: 1048576 } }, 1048576), {});
+  // A value that is not the default keeps its member, whatever its type (the schema check is not the job of this function).
+  assert.deepEqual(writtenMembers({ policy: { offline: 'false', ttl_seconds: '0' } }), { policy: { offline: 'false', ttl_seconds: '0' } });
+  // The ETag of F: default members do not change the page revision of F.
+  const plain = handle(firstVisit(), APP, page('page-a'));
+  const defaults = handle(firstVisit(), APP, page('page-a'), { policy: { mode: 'private' }, limits: { max_patch_bytes: 262144 } });
+  assert.deepEqual([header(defaults, 'etag'), defaults.body], [header(plain, 'etag'), plain.body]);
 });
 
 test('step 3: a manifest that would contain "<" makes the server pass A through', () => {
@@ -295,8 +316,11 @@ test('step 7: the delta has the delta fields, no ETag, Last-Modified or Expires,
   assert.equal(header(r, 'cache-control'), 'no-store');
   assert.equal(header(r, 'content-length'), String(r.body.length));
   const env = JSON.parse(r.body.toString('utf8'));
-  assert.equal(env.base_revision, revisions('page-big-a').page_revision);
+  // H-104: exactly next_revision and the operations; each operation exactly block_id and content.
+  assert.deepEqual(Object.keys(env), ['next_revision', 'operations']);
   assert.equal(env.next_revision, revisions('page-big-b').page_revision);
+  const changed = revisions('page-big-b').blocks[1];
+  assert.deepEqual(env.operations, [{ block_id: changed.id, content: page('page-big-b').toString('utf8', changed.start, changed.end) }]);
 });
 
 test('step 7: a delta larger than maxPatchBytes gives F; at the limit it is sent', () => {
@@ -528,6 +552,5 @@ test('the delta carries the exact content of a block with quotes, escapes, contr
   const r = handle(request, APP, blockPage(content));
   assert.equal(r.kind, 'delta');
   const op = JSON.parse(r.body.toString('utf8')).operations[0];
-  assert.equal(op.content, content);
-  assert.equal(op.sha256, analyzeBytes(blockPage(content)).blocks[0].sha256);
+  assert.deepEqual(op, { block_id: 'x', content });
 });

@@ -15,6 +15,7 @@ import {
   LIMITS,
   MANIFEST_END,
   MANIFEST_START,
+  POLICY_DEFAULTS,
   UnsupportedInput,
   digestPrefix,
   membersOf,
@@ -106,21 +107,46 @@ function inScope(request, app, appHeaders) {
 }
 
 /**
- * The page manifest of an analyzed page (manifest-patch section 1.2). `members`
- * holds the optional policy and limits of the server configuration; the page
- * revision includes their policy line (section 1.3, H-55). The markup analysis
- * gives the page revision without a policy line, so it is computed again here.
+ * The members `policy` and `limits` that the server writes in the manifest
+ * (manifest-patch sections 1.2, 1.4 and 1.5; H-103): the server configuration
+ * without the members whose value is the default (MUST), without a hint
+ * `max_patch_bytes` that is not smaller than the server limit (SHOULD: such a
+ * hint bounds nothing, section 2.5 item 5 uses the smaller value), and without
+ * an object that has no member left. The members keep the order of the
+ * configuration; the policy line has a fixed order anyway (section 1.3).
+ */
+export function writtenMembers(config, serverLimit = LIMITS.maxPatchBytes) {
+  const m = membersOf(config);
+  const out = {};
+  if (m.policy !== undefined) {
+    const policy = Object.fromEntries(
+      Object.entries(m.policy).filter(([k, v]) => !(Object.hasOwn(POLICY_DEFAULTS, k) && POLICY_DEFAULTS[k] === v)),
+    );
+    if (Object.keys(policy).length > 0) out.policy = policy;
+  }
+  if (m.limits !== undefined) {
+    const limits = Object.fromEntries(Object.entries(m.limits).filter(([k, v]) => !(k === 'max_patch_bytes' && v >= serverLimit)));
+    if (Object.keys(limits).length > 0) out.limits = limits;
+  }
+  return out;
+}
+
+/**
+ * The page manifest of an analyzed page (manifest-patch section 1.2; H-103):
+ * protocol, origin, path, page_revision and the members of `members` as they
+ * are. No block list and no template revision: the client computes them with
+ * its markup analysis and checks them through the page revision (section
+ * 1.8). The page revision includes the policy line of `members` (section 1.3,
+ * H-55); the markup analysis gives the page revision without a policy line,
+ * so it is computed again here. The server step passes writtenMembers(config).
  */
 export function manifestOf(analysis, target, members = {}) {
   const url = new URL(target);
-  const blocks = analysis.blocks.map(({ id, format, sha256 }) => ({ id, format, sha256 }));
   return {
     protocol: 'rqp/1',
     origin: url.origin,
     path: url.pathname,
-    template_revision: analysis.template_revision,
-    page_revision: pageRevision(analysis.template_revision, blocks, members),
-    blocks,
+    page_revision: pageRevision(analysis.template_revision, analysis.blocks, members),
     ...membersOf(members),
   };
 }
@@ -150,23 +176,18 @@ export function changeSet(blocks, b) {
   return out;
 }
 
-/** Step 7: the delta envelope (manifest-patch section 2). */
-export function deltaEnvelope(page, analysis, manifest, base, indices) {
+/**
+ * Step 7: the delta envelope (manifest-patch section 2; H-104): next_revision
+ * and one operation (block id and content) for each block in the change set,
+ * in document order. No base or template revision, no type, no format and no
+ * hash: the client computes the block hashes and checks next_revision.
+ */
+export function deltaEnvelope(page, analysis, manifest, indices) {
   return {
-    type: 'rivqen.patch',
-    protocol: 'rqp/1',
-    base_revision: base,
     next_revision: manifest.page_revision,
-    template_revision: manifest.template_revision,
     operations: indices.map((i) => {
       const b = analysis.blocks[i];
-      return {
-        op: 'replace_block',
-        block_id: b.id,
-        format: b.format,
-        content: page.toString('utf8', b.start, b.end),
-        sha256: b.sha256,
-      };
+      return { block_id: b.id, content: page.toString('utf8', b.start, b.end) };
     }),
   };
 }
@@ -217,9 +238,11 @@ function unsupported(headers) {
  *   configuration: the manifest members policy and limits, and the server limit
  */
 export function handle(request, app, pageBytes, config = {}) {
-  const members = membersOf(config);
+  const serverLimit = config.maxPatchBytes ?? LIMITS.maxPatchBytes;
+  // H-103: the manifest has no member with its default value.
+  const members = writtenMembers(config, serverLimit);
   // Manifest-patch section 2.5, item 5: also the hint max_patch_bytes of the server.
-  const maxPatchBytes = Math.min(config.maxPatchBytes ?? LIMITS.maxPatchBytes, members.limits?.max_patch_bytes ?? Infinity);
+  const maxPatchBytes = Math.min(serverLimit, members.limits?.max_patch_bytes ?? Infinity);
   const reqHeaders = normalizeHeaders(request.headers);
   // DL-030: no outcome (passthrough, F, D, 304) carries an Rq-* field of A.
   const appHeaders = withoutRqFields(normalizeHeaders(app.headers));
@@ -290,13 +313,14 @@ export function handle(request, app, pageBytes, config = {}) {
   if (indices.length === 0) return sendFull('empty-change-set');
 
   // Step 7.
-  const envelope = deltaEnvelope(page, analysis, manifest, base, indices);
   // H-56, H-78 (SHOULD): a changed html block that fails the client patch content
   // rule (PATCH_FORBIDDEN, FOREIGN_ALLOWED, the attribute rule) gets F. The same
   // function as the client step 9.
-  for (const op of envelope.operations) {
-    if (op.format === 'html' && patchContentFailure(Buffer.from(op.content, 'utf8')) !== null) return sendFull('patch-content-rule');
+  for (const i of indices) {
+    const b = analysis.blocks[i];
+    if (b.format === 'html' && patchContentFailure(page.subarray(b.start, b.end)) !== null) return sendFull('patch-content-rule');
   }
+  const envelope = deltaEnvelope(page, analysis, manifest, indices);
   const delta = Buffer.from(JSON.stringify(envelope), 'utf8');
   if (delta.length > maxPatchBytes) return sendFull('delta-too-large');
   if (delta.length >= full.length) return sendFull('delta-not-smaller');

@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-C29-MANIFEST-OLD-FORM",
+  "kind": "client",
+  "description": "A manifest of the form before H-103 (also template_revision and the block list), otherwise consistent: unknown members, MANIFEST_INVALID",
+  "rules": ["RQP-14","RQP-27"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"],
+      ["rq-version","1"],
+      ["etag","{{r1:page-a}}"],
+      ["cache-control","no-cache"]
+    ],
+    "body": {
+      "full": "page-a",
+      "old_manifest": true
+    }
+  }
+}

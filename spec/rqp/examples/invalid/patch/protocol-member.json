@@ -1,0 +1,17 @@
+{
+  "description": "No protocol member (H-104): Rq-Version and the media type name the version",
+  "expect": {
+    "keyword": "additionalProperties",
+    "instancePath": ""
+  },
+  "instance": {
+    "protocol": "rqp/1",
+    "next_revision": "r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI",
+    "operations": [
+      {
+        "block_id": "price",
+        "content": "130.00"
+      }
+    ]
+  }
+}

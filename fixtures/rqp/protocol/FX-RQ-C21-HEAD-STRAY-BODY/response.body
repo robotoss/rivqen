@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<head><script type="application/rivqen-manifest+json">{"protocol":"rqp/1","origin":"https://shop.example.com","path":"/catalog","template_revision":"t1.oKws2PB3VLw6pFuuL2Hf_cHeUkHK50cgp-Brlpnuwc8","page_revision":"r1.7y7a2QnYMWn8th_yR2MdmvIHTLtF4dNLttu1byfXrlo","blocks":[{"id":"title","format":"html","sha256":"0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces"},{"id":"price","format":"html","sha256":"Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs"},{"id":"cart","format":"json","sha256":"zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4"}]}</script>
+<head><script type="application/rivqen-manifest+json">{"protocol":"rqp/1","origin":"https://shop.example.com","path":"/catalog","page_revision":"r1.7y7a2QnYMWn8th_yR2MdmvIHTLtF4dNLttu1byfXrlo"}</script>
   <title data-rq-block="title">Shop</title>
 <body>
   <header>Static header</header>

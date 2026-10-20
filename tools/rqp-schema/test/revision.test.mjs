@@ -42,13 +42,12 @@ function* combinations() {
   }
 }
 
+// H-103: no template revision and no block list in the manifest; the client computes them.
 const manifestOf = (m) => ({
   protocol: 'rqp/1',
   origin: 'https://example.com',
   path: '/',
-  template_revision: T,
   page_revision: pageRevision(T, BLOCKS, m),
-  blocks: BLOCKS,
   ...m,
 });
 

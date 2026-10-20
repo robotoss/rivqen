@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C29-MANIFEST-DEFAULT-MEMBERS",
+  "kind": "client",
+  "description": "A manifest with policy members of the default value and an empty limits object, with the page revision of these members: stored (a server must not write them, a client accepts them; H-103)",
+  "rules": ["RQP-14","RQP-27"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"],
+      ["rq-version","1"],
+      ["cache-control","no-cache"]
+    ],
+    "body": {
+      "full": "page-a",
+      "members": {
+        "policy": {
+          "mode": "private",
+          "ttl_seconds": 0,
+          "offline": false
+        },
+        "limits": {}
+      }
+    }
+  }
+}

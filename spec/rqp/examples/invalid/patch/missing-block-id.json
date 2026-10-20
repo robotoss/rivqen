@@ -1,0 +1,15 @@
+{
+  "description": "An operation has a block_id",
+  "expect": {
+    "keyword": "required",
+    "instancePath": "/operations/0"
+  },
+  "instance": {
+    "next_revision": "r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI",
+    "operations": [
+      {
+        "content": "130.00"
+      }
+    ]
+  }
+}

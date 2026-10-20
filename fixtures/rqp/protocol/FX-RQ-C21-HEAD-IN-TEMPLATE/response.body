@@ -3,7 +3,7 @@
 <head>
   <title data-rq-block="title">Shop</title>
 <body>
-  <template><head><script type="application/rivqen-manifest+json">{"protocol":"rqp/1","origin":"https://shop.example.com","path":"/catalog","template_revision":"t1.Qi0PAonYo4K8HMOefQReKMFk663BqxqwpBtVH0O5RXA","page_revision":"r1.3WewiRXsXdtDMWk8N49DVIKZQahEXRQyvMxH8ipB5PI","blocks":[{"id":"title","format":"html","sha256":"0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces"},{"id":"price","format":"html","sha256":"Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs"},{"id":"cart","format":"json","sha256":"zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4"}]}</script></head></template>
+  <template><head><script type="application/rivqen-manifest+json">{"protocol":"rqp/1","origin":"https://shop.example.com","path":"/catalog","page_revision":"r1.3WewiRXsXdtDMWk8N49DVIKZQahEXRQyvMxH8ipB5PI"}</script></head></template>
   <header>Static header</header>
   <p class="price" data-rq-block="price">120.00</p>
   <script type="application/json" data-rq-block="cart">{"items":3}</script>

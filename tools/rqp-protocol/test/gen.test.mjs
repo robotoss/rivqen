@@ -30,13 +30,13 @@ function copyFixture(name) {
 
 test('gen.mjs --check: every committed page and expected file is current', () => {
   const out = execFileSync(process.execPath, [GEN, '--check'], { encoding: 'utf8' });
-  assert.match(out, /222 fixtures are current/);
+  assert.match(out, /232 fixtures are current/);
 });
 
-test('every catalog case P-01 to P-41 and C-01 to C-28 has at least one fixture', () => {
+test('every catalog case P-01 to P-41 and C-01 to C-30 has at least one fixture', () => {
   const names = fixtureNames();
   for (let i = 1; i <= 41; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-P${String(i).padStart(2, '0')}-`)), `P-${i}`);
-  for (let i = 1; i <= 28; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-C${String(i).padStart(2, '0')}-`)), `C-${i}`);
+  for (let i = 1; i <= 30; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-C${String(i).padStart(2, '0')}-`)), `C-${i}`);
 });
 
 test('context.allowlist (DL-039/DL-040): default the origin of url, required for a cross-origin final_url; another shape is a defective case', () => {
@@ -191,9 +191,9 @@ test('--check reports an unknown file and a response.body that the case does not
 });
 
 test('a stale response.body of a client case is found', () => {
-  const dir = copyFixture('FX-RQ-C01-BASE-MISMATCH');
-  writeFileSync(join(dir, 'FX-RQ-C01-BASE-MISMATCH', 'response.body'), '{}');
-  assert.deepEqual(run({ check: true, dir }).problems, ['FX-RQ-C01-BASE-MISMATCH/response.body: stale']);
+  const dir = copyFixture('FX-RQ-C01-OTHER-BASE');
+  writeFileSync(join(dir, 'FX-RQ-C01-OTHER-BASE', 'response.body'), '{}');
+  assert.deepEqual(run({ check: true, dir }).problems, ['FX-RQ-C01-OTHER-BASE/response.body: stale']);
 });
 
 test('defective cases stop with a case error: id, unknown member, placeholder, page', () => {
@@ -316,20 +316,26 @@ test('server cases: request.target is used, and Date is never a required header'
 
 test('defective client cases: members, context values, header lines and body recipes', () => {
   const defects = [
-    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, extra: 1 })],
-    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: null })],
-    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, navigation: 'reload' } })],
-    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, build: 'beta' } })],
-    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, allow_http: 'yes' } })],
-    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, public_origin: 1 } })],
-    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, context: { ...c.context, public_enabled: 'true' } })],
-    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, response: { ...c.response, headers: {} } })],
-    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, response: { ...c.response, body: { delta: { from: 'page-a', ops: [{ block_id: 'nope', content: 'x' }] } } } })],
-    ['FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, response: { ...c.response, body: { delta: { from: 'page-zero', to: 'page-a' } } } })],
+    ['FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, extra: 1 })],
+    ['FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, context: null })],
+    ['FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, context: { ...c.context, navigation: 'reload' } })],
+    ['FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, context: { ...c.context, build: 'beta' } })],
+    ['FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, context: { ...c.context, allow_http: 'yes' } })],
+    ['FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, context: { ...c.context, public_origin: 1 } })],
+    ['FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, context: { ...c.context, public_enabled: 'true' } })],
+    ['FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, response: { ...c.response, headers: {} } })],
+    // H-104: an operation of a recipe has only block_id and content.
+    ['FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, response: { ...c.response, body: { delta: { from: 'page-a', ops: [{ block_id: 'price', content: 'x', format: 'html' }] } } } })],
+    // The envelope before H-104 needs the format of each block: an unknown block is a defect there.
+    ['FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, response: { ...c.response, body: { delta: { from: 'page-a', ops: [{ block_id: 'nope', content: 'x' }], old_envelope: true } } } })],
+    ['FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, response: { ...c.response, body: { delta: { from: 'page-zero', to: 'page-a' } } } })],
     ['FX-RQ-C21-HEAD-WHITESPACE', (c) => ({ ...c, response: { ...c.response, body: { full: 'page-a', manifest_position: 'head' } } })],
     ['FX-RQ-C21-HEAD-WHITESPACE', (c) => ({ ...c, response: { ...c.response, body: { full: 'page-a', manifest_count: 3 } } })],
   ];
   for (const [i, [name, change]] of defects.entries()) assert.throws(withCase(name, change), isCaseError, `${i} ${name}`);
+  // An operation for a block that the page does not have is a valid recipe (FX-RQ-C30-DELTA-UNKNOWN-BLOCK): the client rejects it.
+  const unknown = withCase('FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, response: { ...c.response, body: { delta: { from: 'page-a', ops: [{ block_id: 'nope', content: 'x' }] } } } }))();
+  assert.equal(unknown.files['expected.json'].result.error, 'PATCH_INVALID');
 });
 
 test('H-81 (L1): a public context snapshot with the app setting off is a valid case; the client acts as without a snapshot', () => {
@@ -344,7 +350,7 @@ test('H-81 (L1): a public context snapshot with the app setting off is a valid c
 });
 
 test('client cases: no body member is a null body; manifest_after may match at offset 0', () => {
-  const e = withCase('FX-RQ-C01-BASE-MISMATCH', (c) => ({ ...c, response: { status: 304, headers: [] } }))().files;
+  const e = withCase('FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, response: { status: 304, headers: [] } }))().files;
   assert.equal(e['expected.json'].response.body, null);
   assert.equal(Object.hasOwn(e, 'response.body'), false);
   const doctype = '<!DOCTYPE html>';
@@ -352,19 +358,42 @@ test('client cases: no body member is a null body; manifest_after may match at o
   assert.equal(body.indexOf('<script type="application/rivqen-manifest+json">'), doctype.length);
 });
 
-test('delta recipe: base_revision uses the members of the context snapshot only for a delta from the snapshot page', () => {
+test('delta recipe: next_revision uses the members of the context snapshot only for a delta from the snapshot page', () => {
   const members = { limits: { max_patch_bytes: 100000 } };
-  const env = (from) => {
-    const files = withCase('FX-RQ-C01-BASE-MISMATCH', (c) => ({
+  const env = (from, extra = {}) => {
+    const files = withCase('FX-RQ-C01-OTHER-BASE', (c) => ({
       ...c,
       context: { ...c.context, snapshot: { page: 'page-a', members } },
-      response: { ...c.response, body: { delta: { from, to: from === 'page-a' ? 'page-b' : 'page-a' } } },
+      response: { ...c.response, body: { delta: { from, to: from === 'page-a' ? 'page-b' : 'page-a', ...extra } } },
     }))().files;
     return JSON.parse(files['response.body'].toString('utf8'));
   };
+  const b = analyze(pageBytes('page-b'));
+  assert.equal(env('page-a').next_revision, pageRevision(b.template_revision, b.blocks, members));
+  assert.equal(env('page-b').next_revision, analyze(pageBytes('page-a')).page_revision);
+  // H-104: the envelope has exactly next_revision and operations of block_id and content.
+  assert.deepEqual(env('page-a'), { next_revision: pageRevision(b.template_revision, b.blocks, members), operations: [{ block_id: 'price', content: '130.00' }] });
+  // old_envelope: the form before H-104, with the base revision of the snapshot members.
   const a = analyze(pageBytes('page-a'));
-  assert.equal(env('page-a').base_revision, pageRevision(a.template_revision, a.blocks, members));
-  assert.equal(env('page-b').base_revision, analyze(pageBytes('page-b')).page_revision);
+  const old = env('page-a', { old_envelope: true });
+  assert.deepEqual(Object.keys(old), ['type', 'protocol', 'base_revision', 'next_revision', 'template_revision', 'operations']);
+  assert.equal(old.base_revision, pageRevision(a.template_revision, a.blocks, members));
+  assert.deepEqual(old.operations[0], { op: 'replace_block', block_id: 'price', format: 'html', content: '130.00', sha256: b.blocks[1].sha256 });
+  assert.deepEqual(env('page-a', { operation_sha256: true }).operations, [{ block_id: 'price', content: '130.00', sha256: b.blocks[1].sha256 }]);
+});
+
+test('delta and full recipes: the duplicate member is written first, with another value', () => {
+  const files = (body) => withCase('FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, response: { ...c.response, body } }))().files['response.body'].toString('utf8');
+  const a = analyze(pageBytes('page-a'));
+  assert.ok(files({ delta: { from: 'page-a', to: 'page-b', duplicate_member: true } }).startsWith(`{"next_revision":"${a.page_revision}","next_revision":"${analyze(pageBytes('page-b')).page_revision}",`));
+  assert.ok(files({ full: 'page-a', duplicate_member: true }).includes('{"protocol":"rqp/1","protocol":"rqp/1",'));
+  // old_manifest: the manifest before H-103 (template_revision and the block list).
+  const full = files({ full: 'page-a', old_manifest: true });
+  assert.ok(full.includes(`"template_revision":"${a.template_revision}","page_revision":"${a.page_revision}","blocks":[{"id":"title"`));
+  for (const flag of ['duplicate_member', 'old_envelope', 'operation_sha256']) {
+    assert.throws(() => files({ delta: { from: 'page-a', to: 'page-b', [flag]: 1 } }), isCaseError, flag);
+  }
+  assert.throws(() => files({ full: 'page-a', old_manifest: 'yes' }), isCaseError);
 });
 
 test('delta recipe "size": exactly one operation with empty content and no sha256, and a reachable size', () => {
@@ -377,7 +406,8 @@ test('delta recipe "size": exactly one operation with empty content and no sha25
   const defects = [
     { ops: [{ block_id: 'price', content: '' }, { block_id: 'title', content: '' }] },
     { ops: [{ block_id: 'price', content: 'x' }] },
-    { ops: [{ block_id: 'price', content: '', sha256: 'x' }] },
+    { ops: [{ block_id: 'price', content: '', sha256: 'x' }] }, // no sha256 in a recipe operation since H-104
+    { ops: 'price' },
     { size: 1000.5 },
     { size: 10 }, // smaller than the envelope without content
   ];

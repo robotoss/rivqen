@@ -21,7 +21,9 @@
 // value]]. context = { url, final_url, redirected, build, allow_http,
 // allowlist, credentials, response_fields_visible, public_enabled, public_origin, navigation,
 // snapshot: null | { document, template_revision, page_revision, blocks,
-// policy?, limits?, partition } }. url is the request URL and the cache key of
+// policy?, limits?, partition } }; template_revision and blocks are the values
+// that a client computes with its markup analysis (H-103: the manifest has
+// neither), page_revision, policy and limits come from the manifest. url is the request URL and the cache key of
 // the snapshot; final_url is the URL of the response after redirects (a client
 // parses both with the WHATWG URL parser, DL-040); redirected tells whether the
 // response came through a redirect, also one to the same URL (H-67); allowlist
@@ -72,23 +74,24 @@ function compareFull(expected, page, body, fail) {
   return undefined;
 }
 
-/** Compare the body of a delta D (README.md: envelope fields and the ordered changed blocks). */
+/**
+ * Compare the body of a delta D (README.md: next_revision and the ordered
+ * changed blocks; H-104). The envelope must pass the patch schema, so it has
+ * no member of the envelope before H-104. The content of each operation must
+ * be the current content of its block: its SHA-256 is the expected hash.
+ */
 function compareDelta(expected, body, fail) {
   const json = parseStrict(body);
   if (!json.ok) return fail(`body: the delta is not a valid JSON text (${json.rule})`);
   const errors = validate(PATCH_SCHEMA, json.value);
   if (errors.length > 0) return fail(`body: the delta fails the schema (${errors[0].keyword} at "${errors[0].instancePath}")`);
   const env = json.value;
-  for (const f of ['base_revision', 'next_revision', 'template_revision']) {
-    if (env[f] !== expected[f]) fail(`body: ${f} ${env[f]}, expected ${expected[f]}`);
-  }
+  if (env.next_revision !== expected.next_revision) fail(`body: next_revision ${env.next_revision}, expected ${expected.next_revision}`);
   const got = env.operations.map((op) => op.block_id);
   const want = expected.blocks.map((b) => b.id);
   if (got.join(',') !== want.join(',')) return fail(`body: changed blocks [${got}], expected [${want}]`);
   env.operations.forEach((op, i) => {
-    if (op.format !== expected.blocks[i].format) fail(`body: block ${op.block_id} format ${op.format}`);
-    if (op.sha256 !== expected.blocks[i].sha256) fail(`body: block ${op.block_id} sha256 is not the hash of the current content`);
-    if (sha256b64u(Buffer.from(op.content, 'utf8')) !== op.sha256) fail(`body: block ${op.block_id} content does not match its sha256`);
+    if (sha256b64u(Buffer.from(op.content, 'utf8')) !== expected.blocks[i].sha256) fail(`body: block ${op.block_id} content is not the current content of the block`);
   });
   return undefined;
 }

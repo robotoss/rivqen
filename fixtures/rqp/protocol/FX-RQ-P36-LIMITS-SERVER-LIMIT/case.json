@@ -1,0 +1,30 @@
+{
+  "id": "FX-RQ-P36-LIMITS-SERVER-LIMIT",
+  "description": "The server configuration has the hint max_patch_bytes 262144, the server limit maxPatchBytes: the hint bounds nothing, F without limits (H-103)",
+  "rules": ["RQP-27"],
+  "level": "should",
+  "page": "page-a",
+  "server_config": {
+    "policy": {
+      "ttl_seconds": 60
+    },
+    "limits": {
+      "max_patch_bytes": 262144
+    }
+  },
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"],
+      ["cache-control","no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html"]
+    ]
+  }
+}

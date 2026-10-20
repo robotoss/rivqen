@@ -111,6 +111,8 @@ export const EXPECTED = Object.freeze({
   // H-62 (3): page-a with a UTF-8 byte order mark at offset 0 (markup M-02).
   'page-bom': { blocks: ['title', 'price', 'cart'] },
   'page-t2': { blocks: ['title', 'price', 'cart'] },
+  // H-104: page-a with the title content "Shop 2" (the same template): the base of a delta for another client.
+  'page-title-2': { blocks: ['title', 'price', 'cart'] },
   'page-zero': { blocks: [] },
   'page-big-a': { blocks: ['title', 'price', 'cart'] },
   'page-big-b': { blocks: ['title', 'price', 'cart'] },

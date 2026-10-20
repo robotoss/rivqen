@@ -1,0 +1,17 @@
+{
+  "description": "No format member (H-104): the block keeps the format of the snapshot",
+  "expect": {
+    "keyword": "additionalProperties",
+    "instancePath": "/operations/0"
+  },
+  "instance": {
+    "next_revision": "r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI",
+    "operations": [
+      {
+        "block_id": "price",
+        "content": "130.00",
+        "format": "html"
+      }
+    ]
+  }
+}

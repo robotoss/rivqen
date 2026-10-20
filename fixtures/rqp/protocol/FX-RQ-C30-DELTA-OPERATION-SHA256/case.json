@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-C30-DELTA-OPERATION-SHA256",
+  "kind": "client",
+  "description": "A delta whose operation also has the hash of its content (H-10, replaced by H-104): an unknown operation member",
+  "rules": ["RQP-13","RQP-28"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","application/vnd.rivqen.delta+json"],
+      ["rq-version","1"],
+      ["cache-control","no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b",
+        "operation_sha256": true
+      }
+    }
+  }
+}

@@ -27,25 +27,7 @@
       "protocol": "rqp/1",
       "origin": "https://shop.example.com",
       "path": "/catalog",
-      "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
-      "page_revision": "r1.4ZbU2ByOehRvEa1K6lIs2S3B2sGmHyy9wJZNyB7vK2E",
-      "blocks": [
-        {
-          "id": "title",
-          "format": "html",
-          "sha256": "0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces"
-        },
-        {
-          "id": "price",
-          "format": "html",
-          "sha256": "QYkag6wG84gliDbDvoGn4-hQ93LgSCB4eAQbCDZI65M"
-        },
-        {
-          "id": "cart",
-          "format": "json",
-          "sha256": "zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4"
-        }
-      ]
+      "page_revision": "r1.4ZbU2ByOehRvEa1K6lIs2S3B2sGmHyy9wJZNyB7vK2E"
     }
   }
 }

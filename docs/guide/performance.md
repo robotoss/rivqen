@@ -93,6 +93,8 @@ xychart-beta
 | 2. Revisit, unchanged | `304`, 0 | `304`, 0 | `304`, 0 |
 | 3. Data changed | 836 / 526 / 467 | 293 / 221 / 171 | 497 / 316 / 260 |
 
+<Badge type="tip" text="FACT" /> The server demo gives the same values after H-103 and H-104: `evidence/benchmarks/rqp-bytes-2026-10-20.json` (`npm run measure`, 2026-10-20): cold 19,731 / 2,357 / 1,296, unchanged `304`, data change 293 / 221 / 171 (a delta with 4 operations), template change 19,774 / 2,377 / 1,420. In the demo the manifest is about 165 bytes (origin `http://127.0.0.1:8787`); the 193 bytes above are for the longer origin of the study page.
+
 <Badge type="tip" text="FACT" /> The manifest element is 193 bytes (before: 712). The cold value is the P1 value of the study (2,357 gzip, 1,296 Brotli). The data change is 1 byte gzip more and 25 bytes Brotli less than the study value (220 / 196) at the same raw size: the study modeled the envelope with the `next_revision` of the old manifest members (with the default `policy` and `limits`), and the 43 random characters of the new `next_revision` compress differently. The demo server (`examples/server-demo`) still sends the form before H-103 and H-104 until task T-02b of S6; `npm run measure` gives the demo values after that task.
 
 ### What the numbers say

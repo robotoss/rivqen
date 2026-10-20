@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
-import { compareClient, compareServer, runClient, runServer } from '../check.mjs';
+import { compareClient, compareServer, compareServerShould, runClient, runServer } from '../check.mjs';
 import * as client from '../src/client.mjs';
 import * as server from '../src/server.mjs';
 import { DEFAULT_NONCE, FIXTURES_DIR, fixtureNames, readJsonFile } from '../src/fixtures.mjs';
@@ -134,6 +134,65 @@ test('detects Rq-* or Accept in Vary of F and a wrong Content-Length', () => {
   assert.deepEqual(compareServer(expected, p, withHeaders(reference, (h) => [...h, ['vary', 'Accept-Encoding']])), []);
   const length = compareServer(expected, p, withHeaders(reference, (h) => h.map(([n, v]) => [n, n === 'content-length' ? '1' : v])));
   assert.ok(length.some((f) => f.startsWith('header content-length 1')));
+});
+
+test('DL-063 (L2): Vary of a passthrough and of D lists no Rq-* member; a passthrough may list Accept', () => {
+  const app = load('FX-RQ-P30-APP-404');
+  assert.deepEqual(compareServer(app.expected, app.page, withHeaders(app.reference, (h) => [...h, ['vary', 'Accept']])), []);
+  assert.deepEqual(compareServer(app.expected, app.page, withHeaders(app.reference, (h) => [...h, ['vary', 'Accept, RQ-Nonce']])), ['header vary: lists rq-nonce (RQP-08)']);
+  const d = load('FX-RQ-P09-DELTA');
+  // Rq-Nonce is allowed on D (expected.vary.should); another Rq-* member is not.
+  assert.deepEqual(compareServer(d.expected, d.page, d.reference), []);
+  assert.deepEqual(compareServer(d.expected, d.page, withHeaders(d.reference, (h) => [...h, ['vary', 'Rq-Have']])), ['header vary: lists rq-have (RQP-08)']);
+});
+
+test('DL-063 (L2): the Vary members of A that are not Rq-* must stay; the comparison is a set of names in any case and any number of lines', () => {
+  const { expected, reference, page: p } = load('FX-RQ-P43-APP-VARY-FULL');
+  assert.deepEqual(expected.vary, { required: ['accept-encoding'], should: [] });
+  assert.deepEqual(compareServer(expected, p, reference), []);
+  const noVary = withHeaders(reference, (h) => h.filter(([n]) => n !== 'vary'));
+  assert.deepEqual(compareServer(expected, p, noVary), ['header vary: does not list accept-encoding']);
+  assert.deepEqual(compareServer(expected, p, withHeaders(noVary, (h) => [...h, ['vary', 'ACCEPT-ENCODING']])), []);
+  assert.deepEqual(compareServer(expected, p, withHeaders(noVary, (h) => [...h, ['vary', ' '], ['vary', 'Cookie, accept-encoding']])), []);
+  // The application's Rq-Nonce kept on F fails (the defect of L2).
+  assert.deepEqual(compareServer(expected, p, withHeaders(noVary, (h) => [...h, ['vary', 'Accept-Encoding, Rq-Nonce']])), ['header vary: lists rq-nonce (RQP-08)']);
+});
+
+test('DL-063 (L1): D without X-Content-Type-Options: nosniff fails (MUST); D without Vary: Rq-Nonce fails a SHOULD only', () => {
+  const { expected, reference, page: p } = load('FX-RQ-P43-APP-VARY-DELTA');
+  assert.deepEqual(expected.vary, { required: ['accept-encoding'], should: ['rq-nonce'] });
+  assert.equal(expected.headers_required['x-content-type-options'], 'nosniff');
+  assert.deepEqual(compareServerShould(expected, reference), []);
+  const sniff = compareServer(expected, p, withHeaders(reference, (h) => h.filter(([n]) => n !== 'x-content-type-options')));
+  assert.deepEqual(sniff, ['header x-content-type-options: absent, expected "nosniff"']);
+  const noNonce = withHeaders(reference, (h) => h.filter(([n, v]) => !(n === 'vary' && v === 'Rq-Nonce')));
+  assert.deepEqual(compareServer(expected, p, noNonce), []);
+  assert.deepEqual(compareServerShould(expected, noNonce), ['header vary: does not list rq-nonce']);
+  // Rq-Nonce in another case or in one line with the other member counts.
+  assert.deepEqual(compareServerShould(expected, withHeaders(noNonce, (h) => [...h.filter(([n]) => n !== 'vary'), ['vary', 'accept-encoding, rq-nonce']])), []);
+  // Without Rq-Nonce and without Accept-Encoding: one MUST failure and one SHOULD failure.
+  const none = withHeaders(reference, (h) => h.filter(([n]) => n !== 'vary'));
+  assert.deepEqual(compareServer(expected, p, none), ['header vary: does not list accept-encoding']);
+  assert.deepEqual(compareServerShould(expected, none), ['header vary: does not list rq-nonce']);
+  // A fixture without the member vary has no SHOULD rule.
+  const full = load('FX-RQ-P01-FIRST-VISIT');
+  assert.deepEqual(compareServerShould(full.expected, full.reference), []);
+});
+
+test('DL-063: a server whose deltas lack Vary: Rq-Nonce fails at level SHOULD only, labelled and counted apart', () => {
+  const mod = fileURLToPath(new URL('./fixtures/no-vary-delta-server.mjs', import.meta.url));
+  let status = 0;
+  let out;
+  try {
+    out = execFileSync(process.execPath, [CHECK, '--server', mod, '--only', 'FX-RQ-P09'], { encoding: 'utf8', stdio: 'pipe' });
+  } catch (e) {
+    status = e.status;
+    out = e.stdout.toString();
+  }
+  assert.equal(status, 1);
+  assert.match(out, /^FAIL \[SHOULD\] FX-RQ-P09-DELTA: header vary: does not list rq-nonce$/m);
+  assert.doesNotMatch(out, /^FAIL FX-RQ/m);
+  assert.match(out, /0 passed, 0 failed, 3 SHOULD failed/);
 });
 
 test('detects a body on a 304 or a HEAD and a changed passthrough body', () => {
@@ -262,14 +321,23 @@ test('H-109: the server fixtures catch a server that relaxes one Rq-Nonce rule o
     const list = parseList(lines.join(', '));
     return list === null || list.length === 0 || list[0].inner ? others(h) : [...others(h), ['rq-nonce', `${lines.join(', ').split(',')[0].split(';')[0].trim()}`]];
   };
-  assert.deepEqual(await failing(firstOfList), ['FX-RQ-P42-NONCE-PARSE-FAILURE', 'FX-RQ-P42-NONCE-TWO-LINES']);
+  // The model writes the first member without its parameters, so it also drops the filler of TOO-LONG.
+  assert.deepEqual(await failing(firstOfList), ['FX-RQ-P42-NONCE-PARSE-FAILURE', 'FX-RQ-P42-NONCE-TOO-LONG', 'FX-RQ-P42-NONCE-TWO-LINES']);
+  // DL-063: parses a line of any length (no 128-byte limit). The model drops the
+  // parameters of a long line that is a valid Item, as such a server reads it.
+  const noLimit = (h) => others(h).concat(nonceLines(h).map((v) => {
+    const item = parseItem(v);
+    return ['rq-nonce', v.length > 128 && item !== null && item.item.type === 'bytes' ? `:${item.item.value.toString('base64')}:` : v];
+  }));
+  assert.deepEqual(await failing(noLimit), ['FX-RQ-P42-NONCE-TOO-LONG']);
   // Accepts any length (it would use 16 bytes of it).
   const anyLength = (h) => others(h).concat(nonceLines(h).map((v) => {
     const item = parseItem(v);
     if (item === null || item.item.type !== 'bytes' || item.item.value.length === 0) return ['rq-nonce', v];
     return ['rq-nonce', sf(Buffer.concat([item.item.value, Buffer.alloc(16)]).subarray(0, 16))];
   }));
-  assert.deepEqual(await failing(anyLength), ['FX-RQ-P42-NONCE-15-BYTES', 'FX-RQ-P42-NONCE-17-BYTES']);
+  // The model writes 16 bytes without the parameters, so it also drops the filler of TOO-LONG.
+  assert.deepEqual(await failing(anyLength), ['FX-RQ-P42-NONCE-15-BYTES', 'FX-RQ-P42-NONCE-17-BYTES', 'FX-RQ-P42-NONCE-TOO-LONG']);
   // Accepts the base64url text of a String, or a Boolean as some nonce.
   const anyType = (type) => (h) => others(h).concat(nonceLines(h).map((v) => {
     const item = parseItem(v);
@@ -279,7 +347,8 @@ test('H-109: the server fixtures catch a server that relaxes one Rq-Nonce rule o
   assert.deepEqual(await failing(anyType('string')), ['FX-RQ-P42-NONCE-STRING']);
   assert.deepEqual(await failing(anyType('boolean')), ['FX-RQ-P42-NONCE-BOOLEAN']);
   // Rejects a field with parameters.
-  assert.deepEqual(await failing((h) => others(h).concat(nonceLines(h).filter((v) => !v.includes(';')).map((v) => ['rq-nonce', v]))), ['FX-RQ-P42-NONCE-PARAMETER']);
+  // AT-LIMIT reaches 128 bytes with a parameter, so this model fails it too.
+  assert.deepEqual(await failing((h) => others(h).concat(nonceLines(h).filter((v) => !v.includes(';')).map((v) => ['rq-nonce', v]))), ['FX-RQ-P42-NONCE-AT-LIMIT', 'FX-RQ-P42-NONCE-PARAMETER']);
   // A server of H-108: the nonce is the Rq-Have member n; Rq-Nonce is not read.
   const h108 = (h) => {
     const have = parseDictionary(h.filter(([n]) => n === 'rq-have').map(([, v]) => v).join(', '));

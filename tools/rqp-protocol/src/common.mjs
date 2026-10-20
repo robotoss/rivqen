@@ -12,6 +12,7 @@ export const LIMITS = Object.freeze({
   maxPatchBytes: 262144, // negotiation section 4 (server) and manifest-patch section 1.5 (client)
   maxRqHaveBytes: 4096, // negotiation section 3.4
   maxRqCapabilitiesBytes: 1024, // negotiation section 3.3
+  maxRqNonceBytes: 128, // negotiation section 3.9 (DL-063): a longer Rq-Nonce field line is no nonce
   maxManifestBytes: 65536, // manifest-patch section 1.8 (H-50)
   maxDocumentBytes: 5 * 1024 * 1024,
   maxBlockBytes: 1024 * 1024,

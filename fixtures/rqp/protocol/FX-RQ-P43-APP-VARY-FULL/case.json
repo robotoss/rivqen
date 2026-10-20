@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-P43-APP-VARY-FULL",
+  "description": "The application sends Vary: Accept-Encoding, Rq-Nonce; F lists Accept-Encoding and no Rq-* member (RQP-08, DL-063)",
+  "rules": ["RQP-08"],
+  "page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"],
+      ["vary", "Accept-Encoding, Rq-Nonce"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

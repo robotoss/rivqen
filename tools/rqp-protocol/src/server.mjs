@@ -18,6 +18,7 @@ import {
   NONCE_BYTES,
   POLICY_DEFAULTS,
   UnsupportedInput,
+  asciiLower,
   canonicalUrl,
   deltaBinding,
   digestPrefix,
@@ -34,6 +35,7 @@ import {
   mediaType,
   normalizeHeaders,
   parseEntityTags,
+  trimOws,
   without,
 } from './http.mjs';
 import { analyze, documentHeadStart, patchContentFailure } from './markup.mjs';
@@ -88,17 +90,21 @@ export function rqHave(headers) {
 /**
  * Section 3.9 (H-109): the client nonce of the request, the 16 bytes of the
  * field Rq-Nonce, or null (no nonce). The field must have exactly one field
- * line (two lines, also with equal values, are no nonce: fail closed), its
- * value must parse as an Item (RFC 9651 section 4.2) whose bare item is a Byte
+ * line (two lines, also with equal values, are no nonce: fail closed). A line
+ * whose value (without leading and trailing white space) is longer than
+ * maxRqNonceBytes (128) is no nonce and is not parsed (DL-063). Else the value
+ * must parse as an Item (RFC 9651 section 4.2) whose bare item is a Byte
  * Sequence of exactly 16 bytes; parameters are ignored. A Byte Sequence
  * without padding or with non-zero pad bits is accepted (section 4.2.7), and
- * the caller uses only the decoded bytes. The parse is linear in the length
- * of the field line, which the HTTP stack bounds, as for Rq-Version.
+ * the caller uses only the decoded bytes. A valid line has 26 bytes; the limit
+ * leaves room for white space and parameters (reserved for later versions).
  */
 export function rqNonce(headers) {
   const lines = headers.filter(([n]) => n === 'rq-nonce');
   if (lines.length !== 1) return null;
-  const parsed = parseItem(combined(lines, 'rq-nonce'));
+  const value = combined(lines, 'rq-nonce');
+  if (byteLength(value) > LIMITS.maxRqNonceBytes) return null;
+  const parsed = parseItem(value);
   if (parsed === null || parsed.item.type !== 'bytes') return null;
   return parsed.item.value.length === NONCE_BYTES ? parsed.item.value : null;
 }
@@ -229,6 +235,31 @@ export function withoutRqFields(headers) {
   return headers.filter(([name]) => !name.startsWith('rq-'));
 }
 
+/**
+ * DL-063 (L2): the fields of A without the Rq-* members of its Vary field, in
+ * every outcome (negotiation section 4, before step 1). A member is removed
+ * when its first three characters are "rq-" by ASCII case-insensitive match
+ * (also "RQ-Nonce"). A Vary line without such a member stays byte for byte;
+ * a line with one is written again as its other members joined with ", "
+ * (empty list elements go, RFC 9110 section 5.6.1), and a line with no member
+ * left goes. Vary has no quoted strings (RFC 9110 section 12.5.5), so a split
+ * on "," is exact. Linear in the field values.
+ */
+export function withoutRqVary(headers) {
+  const out = [];
+  for (const [name, value] of headers) {
+    if (name !== 'vary') {
+      out.push([name, value]);
+      continue;
+    }
+    const members = value.split(',').map(trimOws).filter((m) => m !== '');
+    const kept = members.filter((m) => asciiLower(m.slice(0, 3)) !== 'rq-');
+    if (kept.length === members.length) out.push([name, value]);
+    else if (kept.length > 0) out.push([name, kept.join(', ')]);
+  }
+  return out;
+}
+
 /** H-66: the exact Content-Type field value of every F. */
 export const FULL_CONTENT_TYPE = 'text/html; charset=utf-8';
 
@@ -274,7 +305,8 @@ export function handle(request, app, pageBytes, config = {}) {
   const maxPatchBytes = Math.min(serverLimit, members.limits?.max_patch_bytes ?? Infinity);
   const reqHeaders = normalizeHeaders(request.headers);
   // DL-030: no outcome (passthrough, F, D, 304) carries an Rq-* field of A.
-  const appHeaders = withoutRqFields(normalizeHeaders(app.headers));
+  // DL-063 (L2): and no Rq-* member of the Vary of A (RQP-08, RQP-09).
+  const appHeaders = withoutRqVary(withoutRqFields(normalizeHeaders(app.headers)));
   const page = Buffer.from(pageBytes.buffer, pageBytes.byteOffset, pageBytes.byteLength);
   unsupported(appHeaders);
   const passthrough = (reason) => ({ status: app.status, headers: appHeaders, body: page, kind: 'app', reason });
@@ -361,13 +393,21 @@ export function handle(request, app, pageBytes, config = {}) {
   const delta = Buffer.from(JSON.stringify(envelope), 'utf8');
   if (delta.length > maxPatchBytes) return sendFull('delta-too-large');
   if (delta.length >= full.length) return sendFull('delta-not-smaller');
+  // DL-063 (L1): D MUST have X-Content-Type-Options: nosniff (one line; it
+  // replaces a field of A), so that a load without RQP that gets a stored or
+  // collapsed D keeps the delta media type, a JSON text type, and never reads
+  // the body as HTML. D SHOULD list Rq-Nonce in Vary (one more field line
+  // after a Vary of A), so that a cache that ignores no-store but honours
+  // Vary matches D with no other request.
   return {
     status: 200,
     headers: [
-      ...without(appHeaders, 'etag', 'last-modified', 'expires', 'content-type', 'cache-control', 'content-length'),
+      ...without(appHeaders, 'etag', 'last-modified', 'expires', 'content-type', 'cache-control', 'content-length', 'x-content-type-options'),
       ['content-type', DELTA_TYPE],
+      ['x-content-type-options', 'nosniff'],
       ['rq-version', '1'],
       ['cache-control', 'no-store'],
+      ['vary', 'Rq-Nonce'],
       ['content-length', String(delta.length)],
     ],
     body: delta,

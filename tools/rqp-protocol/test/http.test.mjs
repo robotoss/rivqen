@@ -19,6 +19,10 @@ import {
   parseEntityTags,
   splitList,
   startsWithUtf8Bom,
+  trimChars,
+  trimOws,
+  trimOwsEnd,
+  varyMembers,
 } from '../src/http.mjs';
 import { cacheDirectives, decodedAsUtf8 } from '../src/client.mjs';
 
@@ -100,4 +104,71 @@ test('Accept: the q value grammar of RFC 9110 section 12.4.2; parameters other t
 
 test('Cache-Control directive names: a name ends at "=" and loses trailing white space only', () => {
   assert.deepEqual([...cacheDirectives('Private \t="x", max-age=0, pub lic')], ['private', 'max-age', 'pub lic']);
+});
+
+test('trimChars, trimOws, trimOwsEnd: only the given characters, only at the given ends', () => {
+  assert.equal(trimOws(' \t a \t b \t '), 'a \t b');
+  assert.equal(trimOws('\n a \r'), '\n a \r'); // OWS is SP and HTAB only
+  assert.equal(trimOws(''), '');
+  assert.equal(trimOws(' \t '), '');
+  assert.equal(trimOwsEnd(' a \t'), ' a');
+  const digits = (c) => c >= 0x30 && c <= 0x39;
+  assert.equal(trimChars('12a3b45', digits), 'a3b');
+  assert.equal(trimChars('12a3b45', digits, { start: false }), '12a3b');
+  assert.equal(trimChars('12a3b45', digits, { end: false }), 'a3b45');
+  assert.equal(trimChars('123', digits), '');
+});
+
+test('property (DL-063): trimOws gives the result of the regular expression it replaced', () => {
+  let s = 0x7e1;
+  const rnd = () => {
+    s = (Math.imul(s, 1103515245) + 12345) >>> 0;
+    return s / 4294967296;
+  };
+  const alphabet = ' \t\n\ra,';
+  for (let i = 0; i < 5000; i++) {
+    let v = '';
+    const n = Math.floor(rnd() * 10);
+    for (let k = 0; k < n; k++) v += alphabet[Math.floor(rnd() * alphabet.length)];
+    assert.equal(trimOws(v), v.replace(/^[ \t]+|[ \t]+$/g, ''), JSON.stringify(v));
+    assert.equal(trimOwsEnd(v), v.replace(/[ \t]+$/, ''), JSON.stringify(v));
+  }
+});
+
+test('M1 (DL-063): each field helper is linear: 64 KB of white space inside a value takes under 50 ms', () => {
+  // A trim with /^[ \t]+|[ \t]+$/g tries the second alternative at each position
+  // of a run of white space inside the value: 64 KB took 1.4 s to 3 s per call.
+  const ws = ' \t'.repeat(32768);
+  const fastestMs = (fn) => {
+    let best = Infinity;
+    for (let i = 0; i < 3; i++) {
+      const t = process.hrtime.bigint();
+      fn();
+      best = Math.min(best, Number(process.hrtime.bigint() - t) / 1e6);
+    }
+    return best;
+  };
+  const calls = {
+    combined: () => combined([['x', `a${ws}b`]], 'x'),
+    mediaType: () => mediaType(`text/html${ws}x`),
+    parseEntityTags: () => parseEntityTags(`"a"${ws}x`),
+    splitList: () => splitList(`a${ws}b, c`),
+    'acceptsMediaType (essence)': () => acceptsMediaType(`${DELTA}${ws}x`, DELTA),
+    'acceptsMediaType (q)': () => acceptsMediaType(`${DELTA};q${ws}=1`, DELTA),
+    charsetParameter: () => charsetParameter(`text/html;charset=utf-8${ws}x`),
+    isUtf8Label: () => isUtf8Label(`utf-8${ws}x`),
+    contentTypeCharset: () => contentTypeCharset([['content-type', `text/html; charset="utf-8${ws}x"`]]),
+    cacheDirectives: () => cacheDirectives(`private${ws}x=1`),
+    varyMembers: () => varyMembers([['vary', `a${ws}b`]]),
+  };
+  const slow = Object.entries(calls)
+    .map(([name, fn]) => [name, fastestMs(fn)])
+    .filter(([, ms]) => ms >= 50);
+  assert.deepEqual(slow, []);
+});
+
+test('varyMembers (DL-063): lower-case field names of every Vary line, without white space and empty elements', () => {
+  assert.deepEqual(varyMembers([['vary', ' Accept-Encoding ,, RQ-Nonce'], ['content-type', 'x'], ['vary', '*']]), ['accept-encoding', 'rq-nonce', '*']);
+  assert.deepEqual(varyMembers([['vary', '']]), []);
+  assert.deepEqual(varyMembers([]), []);
 });

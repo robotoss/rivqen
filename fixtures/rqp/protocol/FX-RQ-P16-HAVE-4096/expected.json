@@ -15,10 +15,15 @@
   "status": 200,
   "headers_required": {
     "content-type": "application/vnd.rivqen.delta+json",
+    "x-content-type-options": "nosniff",
     "rq-version": "1",
     "cache-control": "no-store"
   },
   "headers_forbidden": ["etag","expires","last-modified","rq-revision","rq-template-revision"],
+  "vary": {
+    "required": [],
+    "should": ["rq-nonce"]
+  },
   "body": {
     "kind": "delta",
     "binding": "d1.jNT_49mKFo8cfDwGao955sUPEpsRs-cPgS7YGlDKnTs",

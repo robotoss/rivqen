@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import { parseDictionary, parseItem, parseList } from '../src/sf.mjs';
 import { acceptsMediaType, parseEntityTags } from '../src/http.mjs';
 import { parseStrict } from '../src/json-strict.mjs';
-import { handle } from '../src/server.mjs';
+import { handle, requestVersion, rqNonce } from '../src/server.mjs';
 import { handleResponse, snapshotOf } from '../src/client.mjs';
 import { APP, clientContext, deltaRequest, page } from './helpers.mjs';
 
@@ -150,4 +150,135 @@ test('property: random bodies never make the client step throw', () => {
     const full = handleResponse(ctx, { status: 200, headers: [['content-type', 'text/html; charset=utf-8'], ['rq-version', '1']], body });
     assert.ok(['rejected', 'stored'].includes(full.outcome));
   }
+});
+
+// ---------------------------------------------------------------------------
+// M1 (S6 final security review, DL-063): the parse is linear. Before DL-063 the
+// Byte Sequence parse removed the padding with /=+$/ after a check that allowed
+// "=" anywhere, so ":" + "=" x n + "A:" took quadratic time (64 KB: 1.2 s;
+// 256 KB: 41 s), through Rq-Nonce and Rq-Version (no RQP byte limit). The OWS
+// trim of combined() (src/http.mjs) had the same defect for white space inside
+// a value (64 KB: 1.4 s). Linear work for 64 KB is a few milliseconds; the
+// bound of 50 ms leaves room for a slow CI machine and stays far below the
+// quadratic times. Each time is the shortest of three runs, so one pause of
+// the garbage collector does not fail the test.
+
+const KB64 = 65536;
+const LIMIT_MS = 50;
+
+/** The shortest of three runs in milliseconds (the first run also warms up the code). */
+function fastestMs(fn) {
+  let best = Infinity;
+  for (let i = 0; i < 3; i++) {
+    const t = process.hrtime.bigint();
+    fn();
+    best = Math.min(best, Number(process.hrtime.bigint() - t) / 1e6);
+  }
+  return best;
+}
+
+const fill = (unit, n = KB64) => unit.repeat(Math.ceil(n / unit.length)).slice(0, n);
+
+/** Adversarial values of about 64 KB for each bare item type, for parameters and for white space. */
+const ADVERSARIAL = {
+  'integer, too many digits': fill('9'),
+  'decimal, too many digits': `1.${fill('1')}`,
+  'string, escapes and no end quote': `"${fill('\\"')}`,
+  'string, valid and long': `"${fill('a')}"`,
+  'token, valid and long': `a${fill('b')}`,
+  'token, then a quote': `${fill('a')}"`,
+  'bytes, "=" run then "A" (review M1)': `:${fill('=')}A:`,
+  'bytes, "A=" alternating': `:${fill('A=')}A:`,
+  'bytes, valid and long': `:${fill('AAAA')}:`,
+  'bytes, no end colon': `:${fill('A')}`,
+  'bytes, colons only': fill(':'),
+  'boolean with many parameters': `?1${fill(';a')}`,
+  'boolean with a long parameter key': `?1;${fill('a')}`,
+  'date, too many digits': `@${fill('1')}`,
+  'display string, valid and long': `%"${fill('%c3%bc')}"`,
+  'display string, percent run': `%"${fill('%')}`,
+  'parameter with a bytes value': `1;a=:${fill('=')}A:`,
+  'white space inside': `1${fill(' \t')}x`,
+  'white space only': fill(' '),
+};
+
+/** The four RQP request fields of the parse and their shapes (RFC 9651 section 4.2). */
+const FIELDS = {
+  'rq-version': { parse: parseItem, shapes: (v) => [v] },
+  'rq-nonce': { parse: parseItem, shapes: (v) => [v] },
+  'rq-capabilities': { parse: parseList, shapes: (v) => [v, `(${v})`, `(a ${v})`] },
+  'rq-have': { parse: parseDictionary, shapes: (v) => [`t=${v}`, `t=t1.x, b=${v}`, `b=(${v})`] },
+};
+
+test('M1 (DL-063): 64 KB adversarial values of every bare item type parse in under 50 ms in Rq-Version, Rq-Capabilities, Rq-Have and Rq-Nonce', () => {
+  const slow = [];
+  for (const [field, { parse, shapes }] of Object.entries(FIELDS)) {
+    for (const [name, value] of Object.entries(ADVERSARIAL)) {
+      for (const shaped of shapes(value)) {
+        // The parser alone (as a server without the RQP byte limits would run it) ...
+        const parseMs = fastestMs(() => parse(shaped));
+        // ... and the full server step with the field in a delta request (combined(), limits, all steps).
+        const request = deltaRequest('page-big-a', { [field]: shaped });
+        const handleMs = fastestMs(() => handle(request, APP, page('page-big-b')));
+        if (parseMs >= LIMIT_MS || handleMs >= LIMIT_MS) slow.push(`${field} ${name}: parse ${parseMs.toFixed(1)} ms, handle ${handleMs.toFixed(1)} ms`);
+      }
+    }
+  }
+  assert.deepEqual(slow, []);
+});
+
+test('M1 (DL-063) regression: ":" + "=" x 65536 + "A:" is no Byte Sequence and parses in linear time', () => {
+  const value = `:${'='.repeat(KB64)}A:`;
+  assert.ok(fastestMs(() => assert.equal(parseItem(value), null)) < LIMIT_MS);
+  assert.ok(fastestMs(() => assert.equal(parseDictionary(`t=t1.x, b=${value}`), null)) < LIMIT_MS);
+  assert.ok(fastestMs(() => assert.equal(parseList(`(${value})`), null)) < LIMIT_MS);
+  // Rq-Version has no RQP byte limit, so it reaches the parser.
+  assert.ok(fastestMs(() => assert.equal(requestVersion([['rq-version', value]]), null)) < LIMIT_MS);
+  // Rq-Nonce: the 128-byte limit stops the line before the parse.
+  assert.ok(fastestMs(() => assert.equal(rqNonce([['rq-nonce', value]]), null)) < LIMIT_MS);
+  // Linear growth: four times the input stays under four times the bound (quadratic: sixteen times).
+  assert.ok(fastestMs(() => parseItem(`:${'='.repeat(4 * KB64)}A:`)) < 4 * LIMIT_MS);
+});
+
+/** The Byte Sequence rule of the parse before DL-063 (quadratic, but correct): the oracle of the property test. */
+function byteSequenceBeforeDl063(b64) {
+  for (const c of b64) if (!/[A-Za-z0-9+/=]/.test(c)) return null;
+  const data = b64.replace(/=+$/, '');
+  if (data.includes('=') || b64.length - data.length > 2 || data.length % 4 === 1) return null;
+  return Buffer.from(data, 'base64');
+}
+
+test('property (DL-063): the linear Byte Sequence parse accepts exactly the values of the parse before DL-063, with the same bytes', () => {
+  const rnd = prng(0xb64);
+  const alphabet = 'AQgw+/=$-_a9';
+  let accepted = 0;
+  for (let i = 0; i < 20000; i++) {
+    let s = '';
+    const n = Math.floor(rnd() * 14);
+    for (let k = 0; k < n; k++) s += alphabet[Math.floor(rnd() * alphabet.length)];
+    const want = byteSequenceBeforeDl063(s);
+    const got = parseItem(`:${s}:`);
+    if (want === null) {
+      assert.equal(got, null, JSON.stringify(s));
+    } else {
+      accepted++;
+      assert.deepEqual(got, { item: { type: 'bytes', value: want }, params: new Map() }, JSON.stringify(s));
+    }
+  }
+  assert.ok(accepted > 500, `only ${accepted} accepted values`);
+});
+
+test('Byte Sequence (DL-063): at most two "=" and only at the end; "=" alone is the empty sequence', () => {
+  assert.deepEqual(item('::'), { type: 'bytes', value: Buffer.alloc(0) });
+  assert.deepEqual(item(':=:'), { type: 'bytes', value: Buffer.alloc(0) });
+  assert.deepEqual(item(':==:'), { type: 'bytes', value: Buffer.alloc(0) });
+  assert.deepEqual(item(':AQID=:'), { type: 'bytes', value: Buffer.from([1, 2, 3]) });
+  assert.deepEqual(item(':AQ==:'), { type: 'bytes', value: Buffer.from([1]) });
+  assert.deepEqual(item(':+/+/:'), { type: 'bytes', value: Buffer.from([0xfb, 0xff, 0xbf]) });
+  for (const f of [':===:', ':AQ===:', ':A=Q=:', ':=A:', ':A:', ':AAAAA:', ':AAAAA==:', ':A==:', ':AQ=$:', ':AQ-_:', ':AQ.=:']) {
+    assert.equal(parseItem(f), null, f);
+  }
+  // The parse ends at the first ":" after the start; the rest is parameters or a failure.
+  assert.deepEqual(parseItem(':AQ==:;a=:AQ==:').params.get('a'), { type: 'bytes', value: Buffer.from([1]) });
+  assert.equal(parseItem(':AQ==::'), null);
 });

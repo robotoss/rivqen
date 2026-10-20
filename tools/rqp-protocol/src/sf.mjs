@@ -7,8 +7,15 @@
 //
 // The functions return null on a parse failure ("the entire field is ignored",
 // RFC 9651 section 2.2) and never throw for a string input. Work is linear in
-// the input length: every loop consumes at least one character. The callers
-// bound the input length before they parse (negotiation section 7).
+// the input length: every loop consumes at least one character, every scan
+// starts where the previous one stopped, and no regular expression can
+// backtrack over more than one character (each one tests one character, or two
+// for a Display String escape). The test "M1 (DL-063)" in test/sf.test.mjs
+// checks 64 KB adversarial values of every bare item type. Before DL-063 the
+// Byte Sequence parse removed the padding with a regular expression that was
+// quadratic for a long run of "=" (S6 final security review M1). The callers
+// bound Rq-Have (4096 bytes), Rq-Capabilities (1024) and Rq-Nonce (128) before
+// they parse; Rq-Version has no RQP limit (negotiation section 7).
 
 const DIGIT = /[0-9]/;
 const LCALPHA = /[a-z]/;
@@ -16,7 +23,6 @@ const ALPHA = /[A-Za-z]/;
 const KEY_CHAR = /[a-z0-9_\-.*]/;
 // tchar of RFC 9110 section 5.6.2, plus ":" and "/" (RFC 9651 section 3.3.4).
 const TOKEN_CHAR = /[!#$%&'*+\-.^_`|~0-9A-Za-z:/]/;
-const B64_CHAR = /[A-Za-z0-9+/=]/;
 
 class Input {
   constructor(s) {
@@ -236,17 +242,39 @@ function parseToken(input) {
   return { type: 'token', value: out };
 }
 
-// Section 4.2.7. Missing padding is accepted; "=" only at the end.
+// Section 4.2.7. Missing padding is accepted; "=" only at the end, at most two.
+// One pass over the characters (DL-063, M1): after the first "=" only "=" may
+// follow, and the third "=" fails. No regular expression.
 function parseByteSequence(input) {
   input.take(); // ":"
-  const end = input.s.indexOf(':', input.i);
+  const start = input.i;
+  const end = input.s.indexOf(':', start);
   if (end < 0) fail();
-  const b64 = input.s.slice(input.i, end);
+  let pad = 0;
+  for (let k = start; k < end; k++) {
+    const code = input.s.charCodeAt(k);
+    if (code === 0x3d) {
+      pad++;
+      if (pad > 2) fail();
+    } else if (pad > 0 || !isBase64Char(code)) {
+      fail();
+    }
+  }
+  const dataLength = end - start - pad;
+  if (dataLength % 4 === 1) fail();
   input.i = end + 1;
-  for (const c of b64) if (!B64_CHAR.test(c)) fail();
-  const data = b64.replace(/=+$/, '');
-  if (data.includes('=') || b64.length - data.length > 2 || data.length % 4 === 1) fail();
-  return { type: 'bytes', value: Buffer.from(data, 'base64') };
+  return { type: 'bytes', value: Buffer.from(input.s.slice(start, start + dataLength), 'base64') };
+}
+
+/** A character of the base64 alphabet of RFC 4648 section 4, without "=". */
+function isBase64Char(code) {
+  return (
+    (code >= 0x41 && code <= 0x5a) || // A-Z
+    (code >= 0x61 && code <= 0x7a) || // a-z
+    (code >= 0x30 && code <= 0x39) || // 0-9
+    code === 0x2b || // +
+    code === 0x2f // /
+  );
 }
 
 // Section 4.2.8.

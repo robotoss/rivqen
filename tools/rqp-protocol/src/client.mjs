@@ -59,6 +59,7 @@ import {
   normalizeHeaders,
   splitList,
   startsWithUtf8Bom,
+  trimOwsEnd,
 } from './http.mjs';
 import { analyze, documentHeadStart, findManifestElements, passesPatchContentRule } from './markup.mjs';
 import { parseStrict } from './json-strict.mjs';
@@ -224,8 +225,11 @@ export function usableSnapshot(ctx) {
 
 /**
  * H-108: a new client nonce, the text N of 16 bytes from the CSPRNG of
- * Node.js (crypto.randomBytes). An SDK makes one for every delta request and
- * never uses it again.
+ * Node.js (crypto.randomBytes). An SDK makes one for every network attempt
+ * of a delta request and never uses it again (RQP-29; negotiation section
+ * 3.9). A release build takes N only from a CSPRNG; the context member
+ * `nonce` of the harness is a test input, which an SDK has only in a debug or
+ * test build (DL-063, L3).
  */
 export function newNonce() {
   return nonceText(randomBytes(NONCE_BYTES));
@@ -301,7 +305,7 @@ export function notModifiedAccepted(ctx, sentHeaders, responseHeaders) {
 /** The directive names of a Cache-Control value, in lower case. */
 export function cacheDirectives(value) {
   if (value === null) return new Set();
-  return new Set(splitList(value).map((d) => asciiLower(d.split('=')[0].replace(/[ \t]+$/, ''))));
+  return new Set(splitList(value).map((d) => asciiLower(trimOwsEnd(d.split('=')[0]))));
 }
 
 /**
@@ -623,9 +627,14 @@ function handleDelta(ctx, headers, body) {
 // partition? } (partition "request", the default, or "public"; H-65).
 // context.nonce is the text N of the nonce of the request (H-108). The
 // fixtures give it, so that the request fields and the binding are fixed
-// values; a context without the member gets a new nonce from newNonce (as an
-// SDK makes one for every request), and a context with another value (for
-// example null) has no valid nonce (requestNonce).
+// values; a context with another value (for example null) has no valid nonce
+// (requestNonce). A context without the member gets a new nonce from newNonce
+// in EACH call: clientRequest and clientStep then use two different nonces,
+// so a delta that a server built for the request of clientRequest never
+// passes the binding check of clientStep (INTEGRITY_ERROR; S6 final security
+// review I3). A test that sends a request and checks its delta must set
+// context.nonce once (for example to newNonce()) and pass the same context to
+// both calls. An SDK keeps the nonce with the request (negotiation section 3.9).
 
 function internal(context) {
   const nonce = context.nonce === undefined ? newNonce() : context.nonce;

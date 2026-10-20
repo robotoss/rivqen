@@ -7,7 +7,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { UnsupportedInput, deltaBinding, nonceText } from '../src/common.mjs';
-import { capabilities, changeSet, deltaBase, handle, notModified, requestVersion, rqHave, rqNonce, writtenMembers } from '../src/server.mjs';
+import { capabilities, changeSet, deltaBase, handle, notModified, requestVersion, rqHave, rqNonce, withoutRqVary, writtenMembers } from '../src/server.mjs';
 import { acceptsMediaType, parseEntityTags } from '../src/http.mjs';
 import { analyze as analyzeBytes, documentHeadStart } from '../src/markup.mjs';
 import { APP, NONCE, NONCE_SF, TARGET, blockPage, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
@@ -313,8 +313,11 @@ test('step 7: the delta has the delta fields, no ETag, Last-Modified or Expires,
   const app = { status: 200, headers: [...APP.headers, ['etag', '"a"'], ['last-modified', 'x'], ['expires', 'y'], ['x-app', '1']] };
   const r = handle(deltaRequest('page-big-a'), app, page('page-big-b'));
   assert.equal(r.kind, 'delta');
-  assert.deepEqual(r.headers.map(([n]) => n), ['x-app', 'content-type', 'rq-version', 'cache-control', 'content-length']);
+  assert.deepEqual(r.headers.map(([n]) => n), ['x-app', 'content-type', 'x-content-type-options', 'rq-version', 'cache-control', 'vary', 'content-length']);
   assert.equal(header(r, 'cache-control'), 'no-store');
+  // DL-063 (L1): nosniff (MUST) and Vary: Rq-Nonce (SHOULD).
+  assert.equal(header(r, 'x-content-type-options'), 'nosniff');
+  assert.equal(header(r, 'vary'), 'Rq-Nonce');
   assert.equal(header(r, 'content-length'), String(r.body.length));
   const env = JSON.parse(r.body.toString('utf8'));
   // H-104, H-107: exactly the binding and the operations; each operation exactly block_id and content.
@@ -525,6 +528,68 @@ test('Rq-Nonce (H-109): one field line, an Item whose bare item is a Byte Sequen
   for (const length of [0, 1, 15, 17, 32]) assert.equal(n(`:${Buffer.alloc(length).toString('base64')}:`), null, String(length));
   // Field names are lower case here (normalizeHeaders); another field is not Rq-Nonce.
   assert.equal(rqNonce([['rq-nonce-x', sf]]), null);
+});
+
+test('Rq-Nonce (DL-063): a field value longer than 128 bytes is no nonce and is not parsed; outer white space does not count', () => {
+  const sixteen = Buffer.from([...Array(16).keys()]);
+  const withFiller = (length) => `${NONCE_SF};x="${'a'.repeat(length - NONCE_SF.length - 5)}"`;
+  assert.equal(withFiller(128).length, 128);
+  assert.deepEqual(rqNonce([['rq-nonce', withFiller(128)]]), sixteen);
+  assert.equal(rqNonce([['rq-nonce', withFiller(129)]]), null);
+  // The limit applies to the value without leading and trailing white space, as for Rq-Have (combined value).
+  assert.deepEqual(rqNonce([['rq-nonce', ` \t${withFiller(128)} \t`]]), sixteen);
+  // White space inside the value counts: SP after ";" is valid (RFC 9651 section 4.2.3.2).
+  assert.deepEqual(rqNonce([['rq-nonce', `${NONCE_SF};${' '.repeat(100)}a`]]), sixteen);
+  assert.equal(rqNonce([['rq-nonce', `${NONCE_SF};${' '.repeat(101)}a`]]), null);
+  // The cap is in bytes: a line of 128 characters is 128 bytes only in ASCII (a non-ASCII byte fails the parse anyway).
+  assert.equal(rqNonce([['rq-nonce', `${NONCE_SF};x="${'é'.repeat(40)}"`]]), null);
+  // F for a request whose only defect is the length.
+  const r = handle(deltaRequest('page-big-a', { 'rq-nonce': withFiller(129) }), APP, page('page-big-b'));
+  assert.deepEqual([r.kind, r.reason], ['full', 'no-nonce']);
+  assert.equal(handle(deltaRequest('page-big-a', { 'rq-nonce': withFiller(128) }), APP, page('page-big-b')).kind, 'delta');
+});
+
+test('withoutRqVary (DL-063, L2): Rq-* members of Vary go (ASCII case-insensitive); a line without one stays byte for byte', () => {
+  const lines = [
+    ['content-type', 'text/html'],
+    ['vary', 'Accept-Encoding,Cookie'], // no Rq-* member: unchanged, also without a space after the comma
+    ['vary', ' Accept-Encoding , Rq-Nonce,,RQ-Have, rq-x'],
+    ['vary', 'Rq-Nonce'], // only Rq-*: the line goes
+    ['vary', 'Rqx, X-Rq-Nonce, rq'], // not Rq-*: "Rq-" must be the first three characters
+    ['x-vary', 'Rq-Nonce'], // another field
+  ];
+  assert.deepEqual(withoutRqVary(lines), [
+    ['content-type', 'text/html'],
+    ['vary', 'Accept-Encoding,Cookie'],
+    ['vary', 'Accept-Encoding'],
+    ['vary', 'Rqx, X-Rq-Nonce, rq'],
+    ['x-vary', 'Rq-Nonce'],
+  ]);
+  assert.deepEqual(withoutRqVary([['vary', ' , ']]), [['vary', ' , ']]); // no member at all: unchanged
+  assert.deepEqual(withoutRqVary([]), []);
+});
+
+test('DL-063 (L1, L2): Vary of A loses its Rq-* members in every outcome; D lists Rq-Nonce and has X-Content-Type-Options: nosniff', () => {
+  const app = (status = 200) => ({ status, headers: [...APP.headers, ['vary', 'Accept-Encoding, RQ-Nonce'], ['vary', 'rq-have'], ['x-content-type-options', 'other']] });
+  const cases = [
+    ['out-of-scope', handle(deltaRequest('page-a'), app(404), page('page-a')), 'Accept-Encoding'],
+    ['invalid-page', handle(firstVisit(), app(), page('page-c')), 'Accept-Encoding'],
+    ['full', handle(firstVisit(), app(), page('page-a')), 'Accept-Encoding'],
+    ['head', handle(firstVisit('HEAD'), app(), page('page-a')), 'Accept-Encoding'],
+    ['not-modified', handle(deltaRequest('page-a'), app(), page('page-a')), 'Accept-Encoding'],
+    ['delta', handle(deltaRequest('page-big-a'), app(), page('page-big-b')), 'Accept-Encoding, Rq-Nonce'],
+  ];
+  const reasons = { full: 'not-eligible', head: 'not-eligible' };
+  for (const [what, r, vary] of cases) {
+    assert.equal(r.reason, reasons[what] ?? what, what);
+    assert.equal(header(r, 'vary'), vary, what);
+    // D replaces the X-Content-Type-Options of A with exactly one line nosniff; the other outcomes keep the field of A.
+    const xcto = r.headers.filter(([n]) => n === 'x-content-type-options').map(([, v]) => v);
+    assert.deepEqual(xcto, what === 'delta' ? ['nosniff'] : what === 'not-modified' ? [] : ['other'], what);
+  }
+  // Without a Vary of A, D has exactly one Vary line, Rq-Nonce; F has none.
+  assert.deepEqual(handle(deltaRequest('page-big-a'), APP, page('page-big-b')).headers.filter(([n]) => n === 'vary'), [['vary', 'Rq-Nonce']]);
+  assert.equal(header(handle(firstVisit(), APP, page('page-a')), 'vary'), null);
 });
 
 test('H-108, H-109: a delta only for a request with exactly one valid Rq-Nonce; the 304 does not need it', () => {

@@ -65,6 +65,22 @@ test('H-107: an input that would make the preimage ambiguous stops the reference
   for (const args of bad) assert.throws(() => deltaBindingPreimage(...args), TypeError, JSON.stringify(args));
 });
 
+test('H-107: each defective input of the preimage is named, and a revision has no prefix', () => {
+  const failure = (args) => {
+    try {
+      deltaBindingPreimage(...args);
+    } catch (e) {
+      return e;
+    }
+    return null;
+  };
+  assert.match(failure([undefined, R_A, R_B]).message, /URL/);
+  assert.match(failure(['https://a.example/', 7, R_B]).message, /base/);
+  assert.match(failure(['https://a.example/', R_A, 7]).message, /next revision/);
+  assert.match(failure(['https://a.example/', `x${R_A}`, R_B]).message, /base/);
+  assert.match(failure(['https://a.example/', R_A, `x${R_B}`]).message, /next revision/);
+});
+
 test('H-107: U is the WHATWG serialization without the fragment; it has no line feed', () => {
   assert.equal(canonicalUrl('https://SHOP.example.com:443/catalog?b=1&a=2#top'), 'https://shop.example.com/catalog?b=1&a=2');
   assert.equal(canonicalUrl('https://shop.example.com/a\nb?c\td'), 'https://shop.example.com/ab?cd');

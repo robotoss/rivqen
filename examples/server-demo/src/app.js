@@ -99,7 +99,9 @@ export function createDemoServer({ origin }) {
   const defaultPort = parsed.port !== '' ? undefined : parsed.protocol === 'https:' ? 443 : 80;
 
   function handleCatalog(req, res, ctx) {
-    const request = { method: req.method, target: `${origin}/catalog`, headers: requestLines(req.rawHeaders) };
+    // U keeps the query (H-107, B3): public origin + path + query of the request target.
+    const url = new URL(req.url ?? '/', ownOrigin);
+    const request = { method: req.method, target: `${ownOrigin}${url.pathname}${url.search}`, headers: requestLines(req.rawHeaders) };
     const result = handle(request, appResponse(), Buffer.from(renderCatalog(), 'utf8'), CONFIG);
     ctx.mode = result.mode;
     ctx.reason = result.reason;

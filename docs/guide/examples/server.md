@@ -2,7 +2,7 @@
 
 `examples/server-demo` is a small Node.js server. It shows the Rivqen protocol (RQP) from the server side: block markup, manifest, `304`, block patch and safe fallback.
 
-**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 108 tests pass, and the demo passes all 92 server protocol fixtures (checked 2026-10-20, Node.js 22 or later; WP-17 S4: the patch content rule, the attribute rule of H-77 and H-83, and the implied head of H-79a; WP-17 S5: `noscript` in `PATCH_FORBIDDEN`, H-96; WP-17 S6: the short manifest and the short envelope, H-103 and H-104; the delta binding, H-107). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
+**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The demo tests pass except the protocol-fixture check, which waits for the H-108 fixtures of [WP-17 S6](/engineering/plan/sprints/WP-17-S6) task T-06a (before H-108: 108 tests and all 92 server protocol fixtures; checked 2026-10-20, Node.js 22 or later; WP-17 S4: the patch content rule, the attribute rule of H-77 and H-83, and the implied head of H-79a; WP-17 S5: `noscript` in `PATCH_FORBIDDEN`, H-96; WP-17 S6: the short manifest and the short envelope, H-103 and H-104; the delta binding, H-107; the client nonce, H-108). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
 
 [[toc]]
 
@@ -79,7 +79,7 @@ Where the code is:
 {"protocol":"rqp/1","origin":"https://shop.example.com","path":"/catalog","page_revision":"r1.kQSg0GU87wq6jDSiFlsmQmk68argQjG5MSAqEYUUFic"}
 ```
 
-The delta has two members (H-104, H-107): `binding` and the operations. `binding` is a SHA-256 value over the URL of the request, the page revision that `If-None-Match` names (the base) and the page revision of the new page ([manifest and patch §2.2](/engineering/protocol/manifest-patch#_2-2-fields)). The client computes the same three values and compares; a delta for another URL or another base page is rejected. Example from the data change of section 5 (U = `http://127.0.0.1:8787/catalog`, base `r1.kQSg0GU8…`, new page `r1.MsBRD8KQ…`; shortened to two operations):
+The delta has two members (H-104, H-107): `binding` and the operations. `binding` is a SHA-256 value over the URL of the request (with the query), the page revision that `If-None-Match` names (the base), the client nonce `n` of `Rq-Have` (H-108) and the page revision of the new page ([manifest and patch §2.2](/engineering/protocol/manifest-patch#_2-2-fields)). The client computes the same three values and compares; a delta for another URL or another base page is rejected. Example from the data change of section 5, recorded before H-108 (the formula had no N; with a nonce the value differs and the shape is the same) (U = `http://127.0.0.1:8787/catalog`, base `r1.kQSg0GU8…`, new page `r1.MsBRD8KQ…`; shortened to two operations):
 
 ```json
 {"binding":"d1.hrnKM4loPBpIbwydw96aySAw4xNKVioKyIh_QqXzqJc","operations":[{"block_id":"title","content":"Shop — Catalog (125.00)"},{"block_id":"price","content":"125.00"}]}
@@ -127,7 +127,7 @@ curl -s -X POST http://127.0.0.1:8787/__demo/next-data -H 'Rq-Demo-Action: 1'
 curl -si http://127.0.0.1:8787/catalog \
   -H 'Rq-Version: 1' -H 'Rq-Capabilities: (block-patch)' \
   -H 'Accept: text/html, application/vnd.rivqen.delta+json' \
-  -H "If-None-Match: $ETAG" -H "Rq-Have: t=$TPL"
+  -H "If-None-Match: $ETAG" -H "Rq-Have: t=$TPL, n=:$(openssl rand -base64 16):"
 ```
 
 6. Make sure that the response has `Content-Type: application/vnd.rivqen.delta+json`, `Cache-Control: no-store` and no `ETag`.
@@ -142,7 +142,7 @@ Recorded output (2026-10-20, Node.js 22 or later, Rq-Have without `b`; the revis
 | 4 | `{"data":1,"template":0}` |
 | 5, 6 | `HTTP/1.1 200 OK`, `content-type: application/vnd.rivqen.delta+json`, `rq-version: 1`, `cache-control: no-store`, `content-length: 287`, no `etag`. The body starts with `{"binding":"d1.hrnK…","operations":[{"block_id":"title"` and has four operations (H-107; before H-107: `content-length: 293`, `{"next_revision":"r1.MsBR…"`) |
 
-Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so the delta has an operation for every block (all-blocks fallback, H-7). A real client sends `b`, and the delta has only the changed blocks. If you omit any of the fields of step 5, the server sends the full document.
+Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so the delta has an operation for every block (all-blocks fallback, H-7). A real client sends `b`, and the delta has only the changed blocks. `n` is a fresh random 16-byte nonce for each request (H-108); the binding of the delta depends on it. If you omit any of the fields of step 5, or `n` is not exactly 16 bytes, the server sends the full document.
 
 ## 6. Run the tests
 
@@ -158,7 +158,7 @@ npm test
 - the insertion point of the manifest (after the head start tag, H-72, or before the start tag that implies the head, H-79a) and the patch content rule: `PATCH_FORBIDDEN`, `FOREIGN_ALLOWED`, event handlers, `javascript:`, `vbscript:` and `data:` URLs except raster images in `img`, `source` and `video` (H-83), and character references at the scheme decision byte (H-77);
 - differential tests against the reference of `tools/rqp-protocol` (tests only): 20 000 random blocks for the patch content rule and 20 000 random documents for the insertion point;
 - the HTTP adapter on a loopback socket: first visit, revisit, data change, template change, the `Host` check (`421`);
-- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 92 server fixtures pass (`FX-RQ-P*`), also the SHOULD cases (the eight `FX-RQ-P35` cases and `FX-RQ-P36-LIMITS-SERVER-LIMIT`).
+- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. Before H-108, all 92 server fixtures passed (`FX-RQ-P*`); the check passes again when the fixtures of task T-06a are merged. It covers also the SHOULD cases (the eight `FX-RQ-P35` cases and `FX-RQ-P36-LIMITS-SERVER-LIMIT`).
 
 To run the fixtures alone, run this command in `examples/server-demo`:
 

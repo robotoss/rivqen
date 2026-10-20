@@ -14,7 +14,7 @@
 // plus gzip and brotli sizes computed locally with Node zlib (level defaults).
 
 import { gzipSync, brotliCompressSync } from 'node:zlib';
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { analyzePage } from '../src/markup.js';
 import { cacheKeyUrl, deltaBinding, pageRevision } from '../src/rqp.js';
@@ -52,17 +52,23 @@ function snapshotOf(body) {
   return analysis.valid && analysis.page_revision === JSON.parse(m[1]).page_revision ? analysis : null;
 }
 
-/** Request fields of an rqp/1 client: If-None-Match with the page revision, Rq-Have with t and b (H-44, H-46). */
+/**
+ * Request fields of an rqp/1 client: If-None-Match with the page revision, Rq-Have with t, b (H-44, H-46)
+ * and a fresh 16-byte nonce n from a CSPRNG (H-108). Returns the nonce too, for the binding check.
+ */
 function rqpFields() {
-  if (!snapshot) return RQ;
+  if (!snapshot) return { fields: RQ, nonce: null };
+  const nonce = randomBytes(16);
   const b = Buffer.concat(snapshot.blocks.map((x) => Buffer.from(x.sha256, 'base64url').subarray(0, 8))).toString('base64');
-  return { ...RQ, 'If-None-Match': `"${snapshot.page_revision}"`, 'Rq-Have': `t=${snapshot.template_revision}, b=:${b}:` };
+  const fields = { ...RQ, 'If-None-Match': `"${snapshot.page_revision}"`, 'Rq-Have': `t=${snapshot.template_revision}, b=:${b}:, n=:${nonce.toString('base64')}:` };
+  return { fields, nonce };
 }
 
 async function visit(name) {
   const plain = await get();
   const http = await get(etag ? { 'If-None-Match': etag } : {});
-  const rqp = await get(rqpFields());
+  const { fields, nonce } = rqpFields();
+  const rqp = await get(fields);
   etag = plain.headers.get('etag');
   const kind = rqp.status === 304 ? '304' : (rqp.headers.get('content-type') ?? '').includes('delta') ? 'delta' : 'full';
   if (kind === 'full') snapshot = snapshotOf(rqp.body);
@@ -70,10 +76,11 @@ async function visit(name) {
     // The client applies the delta: new page revision, new hashes (computed from the content) for the changed blocks.
     const d = JSON.parse(rqp.body);
     const blocks = snapshot.blocks.map((x) => d.operations.find((o) => o.block_id === x.id) ? { ...x, sha256: createHash('sha256').update(d.operations.find((o) => o.block_id === x.id).content).digest('base64url') } : x);
-    // H-107: the client computes R' from the patched blocks and checks the binding (U, B, R').
+    // H-107, H-108: the client computes R' from the patched blocks and checks the binding (U, B, N, R').
     const next = pageRevision(snapshot.template_revision, blocks, {});
-    const expected = deltaBinding(cacheKeyUrl(`${new URL(process.env.ORIGIN ?? BASE).origin}/catalog`), snapshot.page_revision, next);
-    if (d.binding !== expected) throw new Error(`delta binding mismatch: ${d.binding} != ${expected}`);
+    const expected = deltaBinding(cacheKeyUrl(`${new URL(process.env.ORIGIN ?? BASE).origin}/catalog`), snapshot.page_revision, nonce, next);
+    // The message holds no binding value: the values depend on the nonce and must not reach logs.
+    if (d.binding !== expected) throw new Error('delta binding mismatch');
     snapshot = { ...snapshot, page_revision: next, blocks };
   }
   results.push({

@@ -138,10 +138,11 @@ export function cacheKeyUrl(target) {
 
 /**
  * The delta binding value (H-107): "d1." + base64url (no padding) of SHA-256 over the UTF-8 bytes of
- * "rqp-d1" LF U LF B LF R' LF. U is the cache-key URL, B the base page revision, R' the next one.
+ * "rqp-d1" LF U LF B LF N LF R' LF (H-108). U is the cache-key URL, B the base page revision, N the
+ * client nonce (the 16 bytes of Rq-Have n, written as base64url without padding), R' the next revision.
  */
-export function deltaBinding(url, base, nextRevision) {
-  return `d1.${sha256b64u(Buffer.from(`rqp-d1\n${url}\n${base}\n${nextRevision}\n`, 'utf8'))}`;
+export function deltaBinding(url, base, nonce, nextRevision) {
+  return `d1.${sha256b64u(Buffer.from(`rqp-d1\n${url}\n${base}\n${Buffer.from(nonce).toString('base64url')}\n${nextRevision}\n`, 'utf8'))}`;
 }
 
 /** Step 7: the delta envelope D (manifest-patch section 2, H-104, H-107). One operation per changed block. */
@@ -234,6 +235,7 @@ function select(request, status, appHeaders, page, config) {
     acceptsDelta(reqHeaders) &&
     base !== null &&
     have !== null &&
+    have.n !== null && // H-108: no valid client nonce, no delta
     have.t === analysis.template_revision;
   if (!eligible) return sendFull('not-eligible');
 
@@ -248,7 +250,7 @@ function select(request, status, appHeaders, page, config) {
     return block.format === 'html' && !passesPatchContentRule(page.subarray(block.start, block.end));
   });
   if (failsRule) return sendFull('patch-content-rule');
-  const delta = Buffer.from(JSON.stringify(buildDelta(page, analysis, deltaBinding(cacheKeyUrl(request.target), base, manifest.page_revision), changed)), 'utf8');
+  const delta = Buffer.from(JSON.stringify(buildDelta(page, analysis, deltaBinding(cacheKeyUrl(request.target), base, have.n, manifest.page_revision), changed)), 'utf8');
   const limit = Math.min(serverLimit, members.limits?.max_patch_bytes ?? Infinity);
   if (delta.length > limit) return sendFull('delta-too-large');
   if (delta.length >= full.length) return sendFull('delta-not-smaller');

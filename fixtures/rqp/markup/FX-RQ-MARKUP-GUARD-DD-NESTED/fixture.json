@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-GUARD-DD-NESTED",
+  "description": "A dt start tag in the content while a dd opened in the content is open above the nearest dl (the WHATWG parser closes the dd; the next end tag dd then closes the block)",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-ID-TOO-LONG",
+  "description": "Id of 65 characters",
+  "rules": [
+    "M-15"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_INVALID_ID"
+  }
+}

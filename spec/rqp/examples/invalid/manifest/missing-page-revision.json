@@ -1,0 +1,18 @@
+{
+  "description": "page_revision is required",
+  "expect": {
+    "keyword": "required",
+    "instancePath": ""
+  },
+  "instance": {
+    "protocol": "rqp/1",
+    "origin": "https://shop.example.com",
+    "path": "/catalog",
+    "policy": {
+      "ttl_seconds": 60
+    },
+    "limits": {
+      "max_patch_bytes": 65536
+    }
+  }
+}

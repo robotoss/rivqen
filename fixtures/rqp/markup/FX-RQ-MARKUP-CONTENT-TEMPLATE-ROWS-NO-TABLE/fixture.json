@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-ROWS-NO-TABLE",
+  "description": "A row template in the content without a table: M-24 item g (no table opened in the content, and F is none)",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

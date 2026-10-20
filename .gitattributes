@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+
+# Golden fixtures are exact bytes: no line-end conversion, no diff merging.
+fixtures/** -text
+spec/rqp/examples/kat/** -text
+# WebView lab pages with exact bytes (BOM, Latin-1 meta), Q-20.
+tools/webview-lab/host/pages/** -text

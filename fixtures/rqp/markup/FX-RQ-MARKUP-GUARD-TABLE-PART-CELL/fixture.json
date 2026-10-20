@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-GUARD-TABLE-PART-CELL",
+  "description": "A td start tag in the content of a block inside a td",
+  "rules": [
+    "M-09",
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

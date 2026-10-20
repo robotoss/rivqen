@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-P03-VERSION-2",
+  "description": "Rq-Version 2 is not supported: F, no delta (H-51)",
+  "rules": ["RQP-20"],
+  "page": "page-big-b",
+  "client_page": "page-big-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "2"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-big-a}}"],
+      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "NOSCRIPT-MAIN-FORM-OUTSIDE",
+  "question": "Q-19",
+  "source": "fixtures/rqp/markup/FX-RQ-MARKUP-NOSCRIPT-MAIN-FORM-OUTSIDE/input.html",
+  "headers": [
+    [
+      "Content-Type",
+      "text/html; charset=utf-8"
+    ]
+  ],
+  "views": [
+    "on",
+    "off"
+  ],
+  "probe": null
+}

@@ -6,7 +6,7 @@
 // Compared strategies:
 //   plain      — no Rivqen, no revalidation: full page every time
 //   http-etag  — standard HTTP revalidation: 304 when unchanged, full page otherwise
-//   rqp        — Rivqen protocol: 304, or a patch with only changed blocks, or full page
+//   rqp        — Rivqen protocol rqp/1: 304, or a delta with only the changed blocks, or full page
 //   legacy     — optional: the same page through the UPSTREAM legacy server (LEGACY_URL + LEGACY_PAGES)
 //
 // Usage: node scripts/measure.js [--out file.json]
@@ -14,34 +14,75 @@
 // plus gzip and brotli sizes computed locally with Node zlib (level defaults).
 
 import { gzipSync, brotliCompressSync } from 'node:zlib';
+import { createHash, randomBytes } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
-import { analyze } from '../src/rqp.js';
+import { analyzePage } from '../src/markup.js';
+import { cacheKeyUrl, deltaBinding, pageRevision } from '../src/rqp.js';
 import { renderCatalog } from '../src/pages.js';
 
 const BASE = process.env.DEMO_URL ?? 'http://127.0.0.1:8787';
+// The server answers only its own Host (DL-036 I4): send the host of ORIGIN (or of DEMO_URL).
+const HOST = new URL(process.env.ORIGIN ?? BASE).host;
 const out = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : null;
 
 const sizes = (body) => ({ raw: Buffer.byteLength(body), gzip: body ? gzipSync(body).length : 0, br: body ? brotliCompressSync(body).length : 0 });
 
 async function get(headers = {}) {
-  const r = await fetch(`${BASE}/catalog`, { headers });
+  const r = await fetch(`${BASE}/catalog`, { headers: { Host: HOST, ...headers } });
   const body = r.status === 304 ? '' : await r.text();
   return { status: r.status, headers: r.headers, body };
 }
-const post = (p) => fetch(`${BASE}${p}`, { method: 'POST' }).then((r) => r.json());
+// The POST endpoints need the custom header (cross-site protection). fetch sends no Origin header here.
+const post = (p) => fetch(`${BASE}${p}`, { method: 'POST', headers: { Host: HOST, 'Rq-Demo-Action': '1' } }).then((r) => r.json());
 
-const RQ = { 'Rq-Version': '1', 'Rq-Capabilities': '(block-patch manifest)' };
+const RQ = { 'Rq-Version': '1', 'Rq-Capabilities': '(block-patch)', Accept: 'text/html, application/vnd.rivqen.delta+json' };
 const results = [];
-let rqpRev = null;
+let snapshot = null; // what an rqp/1 client holds: { page_revision, template_revision, blocks }
 let etag = null;
+
+/**
+ * What an rqp/1 client holds after a full document (H-103): the manifest has only the page
+ * revision, so the client removes the manifest element, runs the markup analysis on the original
+ * document and checks the page revision. The demo does the same with its own analysis.
+ */
+function snapshotOf(body) {
+  const m = /<script type="application\/rivqen-manifest\+json">([^<]*)<\/script>/.exec(body);
+  if (!m) return null;
+  const analysis = analyzePage(Buffer.from(body.replace(m[0], ''), 'utf8'));
+  return analysis.valid && analysis.page_revision === JSON.parse(m[1]).page_revision ? analysis : null;
+}
+
+/**
+ * Request fields of an rqp/1 client: If-None-Match with the page revision, Rq-Have with t, b (H-44, H-46)
+ * and Rq-Nonce with a fresh 16-byte nonce from a CSPRNG (H-108, H-109). Returns the nonce too, for the binding check.
+ */
+function rqpFields() {
+  if (!snapshot) return { fields: RQ, nonce: null };
+  const nonce = randomBytes(16);
+  const b = Buffer.concat(snapshot.blocks.map((x) => Buffer.from(x.sha256, 'base64url').subarray(0, 8))).toString('base64');
+  const fields = { ...RQ, 'If-None-Match': `"${snapshot.page_revision}"`, 'Rq-Have': `t=${snapshot.template_revision}, b=:${b}:`, 'Rq-Nonce': `:${nonce.toString('base64')}:` };
+  return { fields, nonce };
+}
 
 async function visit(name) {
   const plain = await get();
   const http = await get(etag ? { 'If-None-Match': etag } : {});
-  const rqp = await get(rqpRev ? { ...RQ, 'Rq-Base-Revision': `"${rqpRev}"`, 'If-None-Match': `"${rqpRev}"` } : RQ);
+  const { fields, nonce } = rqpFields();
+  const rqp = await get(fields);
   etag = plain.headers.get('etag');
-  rqpRev = (rqp.headers.get('rq-revision') ?? '').replace(/"/g, '') || rqpRev;
-  const kind = rqp.status === 304 ? '304' : (rqp.headers.get('content-type') ?? '').includes('delta') ? 'patch' : 'full';
+  const kind = rqp.status === 304 ? '304' : (rqp.headers.get('content-type') ?? '').includes('delta') ? 'delta' : 'full';
+  if (kind === 'full') snapshot = snapshotOf(rqp.body);
+  if (kind === 'delta') {
+    // The client applies the delta: new page revision, new hashes (computed from the content) for the changed blocks.
+    const d = JSON.parse(rqp.body);
+    const blocks = snapshot.blocks.map((x) => d.operations.find((o) => o.block_id === x.id) ? { ...x, sha256: createHash('sha256').update(d.operations.find((o) => o.block_id === x.id).content).digest('base64url') } : x);
+    // H-107, H-108: the client computes R' from the patched blocks and checks the binding (U, B, N, R').
+    const next = pageRevision(snapshot.template_revision, blocks, {});
+    const expected = deltaBinding(cacheKeyUrl(`${new URL(process.env.ORIGIN ?? BASE).origin}/catalog`), snapshot.page_revision, nonce, next);
+    // The message holds no binding value: the values depend on the nonce and must not reach logs.
+    if (d.binding !== expected) throw new Error('delta binding mismatch');
+    snapshot = { ...snapshot, page_revision: next, blocks };
+  }
   results.push({
     visit: name,
     plain: { status: plain.status, ...sizes(plain.body) },
@@ -60,7 +101,10 @@ await visit('4. template changed');
 // Optional legacy comparison through an upstream legacy server (see tools/upstream-lab).
 if (process.env.LEGACY_URL && process.env.LEGACY_PAGES) {
   const { writeFileSync: w } = await import('node:fs');
+  // The first title element is the implicit legacy title block: it gets no markers, only the
+  // data-rq-block attribute goes (markers around it break the legacy title rule; S6 byte study F-1).
   const toLegacy = (html) => html
+    .replace(/<title data-rq-block="title">/, '<title>')
     .replace(/<script type="application\/json" data-rq-block="(\w+)">([\s\S]*?)<\/script>/g, '<!--sonicdiff-$1--><script type="application/json">$2</script><!--sonicdiff-$1-end-->')
     .replace(/<(\w+)([^>]*?) data-rq-block="(\w+)"([^>]*)>([\s\S]*?)<\/\1>/g, '<!--sonicdiff-$3--><$1$2$4>$5</$1><!--sonicdiff-$3-end-->');
   // Reproduce states 1 (before data change) and 2 (after) with the same template.
@@ -90,7 +134,7 @@ function renderCatalogAt(dataStep) {
     .replace(/"items":\d+/, `"items":${dataStep % 4}`);
 }
 
-const page = analyze(renderCatalog());
+const page = analyzePage(Buffer.from(renderCatalog(), 'utf8'));
 const report = { date: new Date().toISOString(), page_bytes: Buffer.byteLength(renderCatalog()), blocks: page.blocks.map((b) => b.id), results };
 console.log(JSON.stringify(report, null, 2));
 if (out) writeFileSync(out, JSON.stringify(report, null, 2) + '\n');

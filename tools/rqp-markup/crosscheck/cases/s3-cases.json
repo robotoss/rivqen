@@ -1,0 +1,512 @@
+[
+  {
+    "id": "S3-H71-T16",
+    "decision": "H-71",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<object><a href=\"1\"><noscript><table><marquee><table></table></marquee></table></noscript>x</a></object><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-T16-control",
+    "decision": "H-71",
+    "expected": "valid 1",
+    "input": "<object><a href=\"1\"><noscript><table><tr><td>t</td></tr></table></noscript>x</a></object><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-H36-in-C-a",
+    "decision": "H-71",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<a href=\"1\"><noscript><form><object><form></form></object></form><form><object><form></form></object></form><form><object><form></form></object></form><form><object><form></form></object></form><form><object><form></form></object></form><form><object><form></form></object></form><form><object><form></form></object></form><form><object><form></form></object></form><form><object><form></form></object></form></noscript>x</a><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-H36-in-C",
+    "decision": "H-71",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<noscript><form><object><form></form></object></form></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-form-outside",
+    "decision": "H-71",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<form><noscript><form>x</form></noscript></form><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-form-after",
+    "decision": "H-71",
+    "expected": "valid 1",
+    "input": "<form></form><noscript><form>x</form></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-table-in-table",
+    "decision": "H-71",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<table><noscript><table></table></noscript></table><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-table-in-cell",
+    "decision": "H-71",
+    "expected": "valid 1",
+    "input": "<table><tr><td><noscript><table></table></noscript></td></tr></table><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-template-col",
+    "decision": "H-71",
+    "expected": "valid 1",
+    "input": "<template><noscript><table><col></table></noscript></template><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-body",
+    "decision": "H-71",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<noscript><body></body></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-html",
+    "decision": "H-71",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<noscript><html></html></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-head",
+    "decision": "H-71",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<noscript><head></head></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-head-in-head",
+    "decision": "H-71",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<head><noscript><head></head></noscript></head><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-cdata",
+    "decision": "H-71",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<noscript><![CDATA[a>b]]></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-cdata-ok",
+    "decision": "H-71",
+    "expected": "valid 1",
+    "input": "<noscript><![CDATA[a]]></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-p-closed-by-C",
+    "decision": "H-71",
+    "expected": "valid 1",
+    "input": "<p>a<noscript><div>q</div></noscript>b</p><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-deep-256",
+    "decision": "H-71",
+    "expected": "valid 1",
+    "input": "<div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><noscript><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span>x</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-deep-257",
+    "decision": "H-71",
+    "expected": "RQP_MARKUP_LIMIT",
+    "input": "<div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><noscript><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span>x</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H71-deep-old-R5",
+    "decision": "H-71",
+    "expected": "RQP_MARKUP_LIMIT",
+    "input": "<div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><noscript><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span>x</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H73-svg-icon",
+    "decision": "H-73",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"d\"><svg viewBox=\"0 0 16 16\"><title>Close</title><desc>a &lt; b</desc><g fill=\"red\"><path d=\"M0\"/><circle r=\"1\"></circle></g><use href=\"#p\"/></svg></div>"
+  },
+  {
+    "id": "S3-H73-math",
+    "decision": "H-73",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"d\"><math><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></math></div>"
+  },
+  {
+    "id": "S3-H73-self-closing-roots",
+    "decision": "H-73",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"d\"><svg/><math/>x</div>"
+  },
+  {
+    "id": "S3-H73-nested-svg-math",
+    "decision": "H-73",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"d\"><svg><g><svg><path/></svg></g></svg><math><mrow><mi>x</mi></mrow></math></div>"
+  },
+  {
+    "id": "S3-H73-svg-in-p-block",
+    "decision": "H-73",
+    "expected": "valid 1",
+    "input": "<p data-rq-block=\"d\">a<svg><path/></svg>b</p>"
+  },
+  {
+    "id": "S3-H73-svg-in-cell-block",
+    "decision": "H-73",
+    "expected": "valid 1",
+    "input": "<table><tr><td><div data-rq-block=\"d\"><svg><rect/></svg></div></td></tr></table>"
+  },
+  {
+    "id": "S3-H73-cdata-in-text",
+    "decision": "H-73",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"d\"><svg><text><![CDATA[a<b]]></text></svg></div>"
+  },
+  {
+    "id": "S3-H73-use-data-url",
+    "decision": "H-73",
+    "expected": "valid 1 (markup; the attribute rule rejects the value)",
+    "input": "<div data-rq-block=\"d\"><svg><use href=\"data:image/svg+xml,x\"/></svg></div>"
+  },
+  {
+    "id": "S3-H73-a",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><a href=\"#x\"><path d=\"M0\"/></a></svg></div>"
+  },
+  {
+    "id": "S3-H73-a-javascript",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><a href=\"javascript:alert(1)\"><text>t</text></a></svg></div>"
+  },
+  {
+    "id": "S3-H73-animate",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><rect><animate attributeName=\"width\" to=\"2\"/></rect></svg></div>"
+  },
+  {
+    "id": "S3-H73-animate-href",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><a href=\"#\"><animate attributeName=\"href\" values=\"#;javascript:alert(1)\"/><text>t</text></a></svg></div>"
+  },
+  {
+    "id": "S3-H73-set",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><rect><set attributeName=\"width\" to=\"2\"/></rect></svg></div>"
+  },
+  {
+    "id": "S3-H73-animatemotion",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><circle><animateMotion path=\"M0 0L1 1\"/></circle></svg></div>"
+  },
+  {
+    "id": "S3-H73-animatetransform",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><g><animateTransform attributeName=\"transform\" type=\"rotate\" to=\"90\"/></g></svg></div>"
+  },
+  {
+    "id": "S3-H73-discard",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><g><discard/></g></svg></div>"
+  },
+  {
+    "id": "S3-H73-foreignobject",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><foreignObject>t</foreignObject></svg></div>"
+  },
+  {
+    "id": "S3-H73-foreignobject-html",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><foreignObject><img src=\"x\" onerror=\"alert(1)\"></foreignObject></svg></div>"
+  },
+  {
+    "id": "S3-H73-image",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><image href=\"https://www.example.com/i.png\"/></svg></div>"
+  },
+  {
+    "id": "S3-H73-feimage",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><filter><feImage href=\"#a\"/></filter></svg></div>"
+  },
+  {
+    "id": "S3-H73-script",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><script>void 0</script></svg></div>"
+  },
+  {
+    "id": "S3-H73-script-self-closing",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><script href=\"https://www.example.com/s.js\"/></svg></div>"
+  },
+  {
+    "id": "S3-H73-style",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><style>.a{fill:red}</style></svg></div>"
+  },
+  {
+    "id": "S3-H73-textpath",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><text><textPath href=\"#p\">t</textPath></text></svg></div>"
+  },
+  {
+    "id": "S3-H73-maction",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><math><maction actiontype=\"toggle\"><mi>x</mi></maction></math></div>"
+  },
+  {
+    "id": "S3-H73-annotation-xml",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><math><semantics><mi>x</mi><annotation-xml encoding=\"text/html\">t</annotation-xml></semantics></math></div>"
+  },
+  {
+    "id": "S3-H73-unknown-name",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><x-icon></x-icon></svg></div>"
+  },
+  {
+    "id": "S3-H73-integration-desc-g",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><desc><g></g></desc></svg></div>"
+  },
+  {
+    "id": "S3-H73-integration-mi-mrow",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><math><mi><mrow></mrow></mi></math></div>"
+  },
+  {
+    "id": "S3-H73-breakout-p",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><p>x</p></svg></div>"
+  },
+  {
+    "id": "S3-H73-breakout-font-color",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><font color=\"red\">x</font></svg></div>"
+  },
+  {
+    "id": "S3-H73-crossing-inner",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<span data-rq-block=\"d\"><svg><g><path d=\"M0\"></g></svg></span>"
+  },
+  {
+    "id": "S3-H73-crossing-root",
+    "decision": "H-73",
+    "expected": "valid 1",
+    "input": "<span data-rq-block=\"d\"><svg><g><path d=\"M0\"></svg></span>"
+  },
+  {
+    "id": "S3-H73-end-tag-leaves-region",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg></div>"
+  },
+  {
+    "id": "S3-H73-eof",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"d\"><svg><path d=\"M0\"/>"
+  },
+  {
+    "id": "S3-H73-depth-256",
+    "decision": "H-73",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"d\"><svg><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g>x</g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></svg></div>"
+  },
+  {
+    "id": "S3-H73-depth-257",
+    "decision": "H-73",
+    "expected": "RQP_MARKUP_LIMIT",
+    "input": "<div data-rq-block=\"d\"><svg><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g><g>x</g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></g></svg></div>"
+  },
+  {
+    "id": "S3-H74-svg-pixel",
+    "decision": "H-74",
+    "expected": "valid 1",
+    "input": "<noscript><img src=\"https://www.example.com/p.gif\" alt=\"\"><svg width=\"1\" height=\"1\"><path d=\"M0\"></path></svg></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H74-svg-icon",
+    "decision": "H-74",
+    "expected": "valid 1",
+    "input": "<noscript><a href=\"/\"><svg><path d=\"M0\"></svg>Home</a></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H74-svg-inner-crossing",
+    "decision": "H-74",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<noscript><svg><g><path d=\"M0\"></g></svg></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H74-svg-unclosed",
+    "decision": "H-74",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<noscript><svg><path d=\"M0\"></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H74-svg-breakout",
+    "decision": "H-74",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<noscript><svg><p>x</p></svg></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H74-svg-title-markup",
+    "decision": "H-74",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<noscript><svg><title><g></g></title></svg></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H74-svg-foreignobject-img",
+    "decision": "H-74",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<noscript><svg><foreignObject><img src=\"x\"></foreignObject></svg></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H74-svg-style-cdata",
+    "decision": "H-74",
+    "expected": "valid 1",
+    "input": "<noscript><svg><style><![CDATA[.a{}]]></style></svg></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H74-svg-style-cdata-gt",
+    "decision": "H-74",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<noscript><svg><style><![CDATA[a>b]]></style></svg></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H74-svg-tr",
+    "decision": "H-74",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<noscript><svg><tr></tr></svg></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H74-svg-in-cell",
+    "decision": "H-74",
+    "expected": "valid 1",
+    "input": "<table><tr><td><noscript><svg><path/></svg></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span></td></tr></table>"
+  },
+  {
+    "id": "S3-H74-svg-in-p",
+    "decision": "H-74",
+    "expected": "valid 1",
+    "input": "<p>a<noscript><svg><path/></svg></noscript>b</p><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H74-svg-head",
+    "decision": "H-74",
+    "expected": "valid 1",
+    "input": "<head><noscript><svg width=\"1\" height=\"1\"></svg></noscript></head><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H74-math",
+    "decision": "H-74",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<noscript><math><mi>x</mi></math></noscript><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H75-icon-a",
+    "decision": "H-75",
+    "expected": "valid 1",
+    "input": "<a href=\"#\"><svg><path d=\"M0\"></svg></a><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H75-icon-b-math",
+    "decision": "H-75",
+    "expected": "valid 1",
+    "input": "<b><math><mrow><mi>x</mi></math></b><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H75-icon-deep",
+    "decision": "H-75",
+    "expected": "valid 1",
+    "input": "<a href=\"#\"><svg><g><g><path d=\"M0\"></svg></a><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H75-inner",
+    "decision": "H-75",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<a href=\"#\"><svg><g><path d=\"M0\"></g></svg></a><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H75-nested-svg",
+    "decision": "H-75",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<a href=\"#\"><svg><svg><path d=\"M0\"></svg></svg></a><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S3-H75-icon-in-block",
+    "decision": "H-75",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"d\"><a href=\"#\"><svg><path d=\"M0\"></svg></a></div>"
+  },
+  {
+    "id": "S3-H75-depth-85",
+    "decision": "H-75",
+    "expected": "valid 1",
+    "input": "<span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><div data-rq-block=\"d\">x</div>"
+  },
+  {
+    "id": "S3-H75-depth-86",
+    "decision": "H-75",
+    "expected": "RQP_MARKUP_LIMIT",
+    "input": "<span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><span><svg><path d=\"M0\"></svg></span><div data-rq-block=\"d\">x</div>"
+  },
+  {
+    "id": "S3-PI-GT-IN-ATTR",
+    "decision": "DL-044",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><html><head><title>t</title></head><body><?a b=\"x>y\"?><span data-rq-block=\"k\">y</span></body></html>"
+  },
+  {
+    "id": "S3-PI-SPACE-GT",
+    "decision": "DL-044",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><html><head><title>t</title></head><body><?a ><span data-rq-block=\"k\">y</span></body></html>"
+  },
+  {
+    "id": "S3-PI-QUESTION-GT",
+    "decision": "DL-044",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><html><head><title>t</title></head><body><?a ?><span data-rq-block=\"k\">y</span></body></html>"
+  },
+  {
+    "id": "S3-PI-EMPTY",
+    "decision": "DL-044",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><html><head><title>t</title></head><body><?><span data-rq-block=\"k\">y</span></body></html>"
+  },
+  {
+    "id": "S3-PI-DIGIT",
+    "decision": "DL-044",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><html><head><title>t</title></head><body><?1><span data-rq-block=\"k\">y</span></body></html>"
+  },
+  {
+    "id": "S3-PI-XML",
+    "decision": "DL-044",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><html><head><title>t</title></head><body><?xml ?><span data-rq-block=\"k\">y</span></body></html>"
+  },
+  {
+    "id": "S3-PI-EOF",
+    "decision": "DL-044",
+    "expected": "valid 1",
+    "input": "<!DOCTYPE html><html><head><title>t</title></head><body><span data-rq-block=\"k\">y</span><?a b"
+  }
+]

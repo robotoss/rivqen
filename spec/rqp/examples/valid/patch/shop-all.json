@@ -1,0 +1,17 @@
+{
+  "binding": "d1.EcTw23uAwgp3LYnFbLmTcuAAunRBFfRRIPy_yVPbSFM",
+  "operations": [
+    {
+      "block_id": "title",
+      "content": ""
+    },
+    {
+      "block_id": "price",
+      "content": "130.00"
+    },
+    {
+      "block_id": "cart",
+      "content": "{\"items\":4}"
+    }
+  ]
+}

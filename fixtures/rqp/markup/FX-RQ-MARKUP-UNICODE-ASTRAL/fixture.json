@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-UNICODE-ASTRAL",
+  "description": "Non-BMP characters (4 byte UTF-8, 2 UTF-16 units) before and in a block",
+  "rules": [
+    "M-02",
+    "M-27"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "sale",
+        "format": "html",
+        "start_tag": "<h2 data-rq-block=\"sale\">",
+        "content": "Sale 🎉 𝄞"
+      }
+    ]
+  }
+}

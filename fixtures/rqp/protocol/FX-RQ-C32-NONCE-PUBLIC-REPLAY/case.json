@@ -1,0 +1,36 @@
+{
+  "id": "FX-RQ-C32-NONCE-PUBLIC-REPLAY",
+  "kind": "client",
+  "description": "Public partition replay (S6 security re-review B1): a request with credentials (user 1) from the public snapshot of page-a got its personal delta page-a -> page-b; a cache that ignores no-store returns it to the request of user 2 without credentials from the same public snapshot (the same U and B). With H-107 alone it was applied and stayed public (H-65); the binding has the nonce of the request of user 1 (bytes 10 to 1F): INTEGRITY_ERROR at step 7 and the public snapshot does not change (H-108)",
+  "rules": ["RQP-13", "RQP-29"],
+  "context": {
+    "public_enabled": true,
+    "public_origin": true,
+    "navigation": "delta",
+    "snapshot": {
+      "page": "page-a",
+      "members": {
+        "policy": {
+          "mode": "public"
+        }
+      },
+      "partition": "public"
+    },
+    "credentials": false
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b",
+        "nonce": "EBESExQVFhcYGRobHB0eHw"
+      }
+    }
+  }
+}

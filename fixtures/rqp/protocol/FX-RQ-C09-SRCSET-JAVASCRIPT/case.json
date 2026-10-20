@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C09-SRCSET-JAVASCRIPT",
+  "kind": "client",
+  "description": "price content <img srcset=\"/a.png 1x, javascript:x 2x\">: every srcset candidate is checked; the second is javascript: (H-83): rejected",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<img srcset=\"/a.png 1x, javascript:x 2x\" alt=\"\">"
+          }
+        ]
+      }
+    }
+  }
+}

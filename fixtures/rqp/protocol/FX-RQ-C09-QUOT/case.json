@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C09-QUOT",
+  "kind": "client",
+  "description": "price content <b title=\"&quot;\">y</b> passes the markup analysis; the decision byte is \"&\" and the reference gives a quotation mark, which ends a scheme, so the attribute rule accepts it: applied (H-77; before H-77: rejected)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<b title=\"&quot;\">y</b>"
+          }
+        ]
+      }
+    }
+  }
+}

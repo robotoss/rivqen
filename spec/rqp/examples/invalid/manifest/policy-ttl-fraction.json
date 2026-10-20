@@ -1,0 +1,19 @@
+{
+  "description": "ttl_seconds is an integer",
+  "expect": {
+    "keyword": "type",
+    "instancePath": "/policy/ttl_seconds"
+  },
+  "instance": {
+    "protocol": "rqp/1",
+    "origin": "https://shop.example.com",
+    "path": "/catalog",
+    "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
+    "policy": {
+      "ttl_seconds": 1.5
+    },
+    "limits": {
+      "max_patch_bytes": 65536
+    }
+  }
+}

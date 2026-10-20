@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-FORBIDDEN-SVG",
+  "description": "An svg title is not the HTML title and cannot be a block",
+  "rules": [
+    "M-16"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_FORBIDDEN_ELEMENT"
+  }
+}

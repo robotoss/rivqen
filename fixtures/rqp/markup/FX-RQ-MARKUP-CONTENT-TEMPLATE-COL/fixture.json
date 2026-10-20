@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-COL",
+  "description": "A col directly in a template element of the content: M-09 condition 1 (H-35) and M-24 item g",
+  "rules": [
+    "M-09",
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

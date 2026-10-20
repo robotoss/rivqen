@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-LIMIT-DEPTH-257",
+  "description": "256 nested div elements and a div block inside them: the push of the block element makes D 257 (M-26, H-25, H-31)",
+  "rules": [
+    "M-26"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_LIMIT"
+  }
+}

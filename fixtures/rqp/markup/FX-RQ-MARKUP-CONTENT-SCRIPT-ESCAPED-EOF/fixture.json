@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-SCRIPT-ESCAPED-EOF",
+  "description": "A script in the content stays in the double-escaped state to the end of the input: the block has no end tag (H-78, M-04, M-20)",
+  "rules": [
+    "M-04",
+    "M-20"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

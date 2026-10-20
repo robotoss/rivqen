@@ -1,0 +1,24 @@
+{
+  "id": "FX-RQ-C23-HTTP-FINAL-RELEASE",
+  "kind": "client",
+  "description": "Release build: a redirect to an http URL; a full document with Rq-Version 1 and a manifest for that URL: a normal page, no snapshot, no error (H-58)",
+  "rules": ["RQP-22", "RQP-24"],
+  "context": {
+    "final_url": "http://shop.example.com/catalog",
+    "allowlist": ["https://shop.example.com", "http://shop.example.com"],
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["etag", "{{r1:page-a}}"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a"
+    }
+  }
+}

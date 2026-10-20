@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-C21-HEAD-IN-TEMPLATE",
+  "kind": "client",
+  "description": "Rq-Version 1 and a consistent manifest immediately after a head start tag in a template in the body: not the head start tag of the document, MANIFEST_INVALID (H-72)",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-head-template",
+      "manifest_after": "<template><head>"
+    }
+  }
+}

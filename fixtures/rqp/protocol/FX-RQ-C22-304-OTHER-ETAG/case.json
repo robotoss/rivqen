@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-C22-304-OTHER-ETAG",
+  "kind": "client",
+  "description": "A 304 to R(page-a) with the ETag of page-b: not accepted, normal load (H-58)",
+  "rules": ["RQP-24"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 304,
+    "headers": [
+      ["etag", "{{r1:page-b}}"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": null
+  }
+}

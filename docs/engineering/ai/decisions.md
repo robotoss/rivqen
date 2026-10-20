@@ -22,6 +22,8 @@ The architect decides most questions. The human decides critical questions. Ever
 
 When you are not sure if a question is critical, treat it as critical.
 
+**Delegated: fail-closed fixes from reviews (human decision H-80, 2026-10-19).** The architect decides a fix from a code or security review when all of these hold: it only makes a rule stricter (a document, patch or response that passed before can now fail, never the reverse); the fail case falls back to the normal page or the full document; and it costs at most 2 pages of the markup corpus (0.25 %) or none. The architect writes it in the decision log with the four-part record of DL-028 and the corpus cost, and lists it in the merge request, where the human can reverse it. A relaxation, a rule that costs more, and every API/ABI, license, scope or crypto question stay with the human.
+
 ## 2. Non-critical: the architect decides
 
 1. Collect the options. Ask the researcher or a senior for facts if needed.

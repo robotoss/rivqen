@@ -1,0 +1,24 @@
+{
+  "id": "FX-RQ-C31-STALE-OWN-TARGET",
+  "kind": "client",
+  "description": "A stale delta on its own target: the delta page-a -> page-b on a snapshot of page-b. The result is page-b again, so the check of H-104 accepted it as a no-op and the client stayed on page-b (stale pinning, S6 security review F1). The binding has B = r1(page-a): INTEGRITY_ERROR at step 7 (H-107)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-b"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b"
+      }
+    }
+  }
+}

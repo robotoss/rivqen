@@ -1,0 +1,28 @@
+{
+  "id": "FX-RQ-P37-APP-RQ-NOT-MODIFIED",
+  "description": "The application sends Rq-Revision and another Rq-* field: the 304 has none of them (DL-030)",
+  "rules": ["RQP-03", "RQP-21"],
+  "client_page": "page-a",
+  "page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"],
+      ["rq-version", "1"],
+      ["rq-revision", "r1.app"],
+      ["rq-x-app", "1"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-a}}"],
+      ["rq-have", "t={{t1:page-a}}, b={{have:page-a}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  }
+}

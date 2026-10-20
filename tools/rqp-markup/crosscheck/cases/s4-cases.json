@@ -1,0 +1,758 @@
+[
+  {
+    "id": "S4-H78-script",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><script>1</script></div>"
+  },
+  {
+    "id": "S4-H78-script-end-tag-text",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\">x<script>document.write(\"</div>\");</script>y</div>"
+  },
+  {
+    "id": "S4-H78-script-escaped",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><script>a<!--<script>b</script>c--></script>x</div>"
+  },
+  {
+    "id": "S4-H78-script-escaped-only",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><script><!--</div>--></script>x</div>"
+  },
+  {
+    "id": "S4-H78-script-escaped-eof",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><script><!--<script></script></div><p>after</p>"
+  },
+  {
+    "id": "S4-H78-script-block-text",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><script>var t = \"<p data-rq-block=\\\"x\\\">\";</script></div>"
+  },
+  {
+    "id": "S4-H78-script-end-tag-attrs",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><script>1</script foo=\"</div>\">x</div>"
+  },
+  {
+    "id": "S4-H78-script-end-tag-upper",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><script>1</SCRIPT >x</div>"
+  },
+  {
+    "id": "S4-H78-script-not-end-tag",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><script>a</scripty></div>b</script>c</div>"
+  },
+  {
+    "id": "S4-H78-script-self-closing",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><script/>x</script></div>"
+  },
+  {
+    "id": "S4-H78-script-reserved",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<div data-rq-block=\"b\"><script type=\"application/rivqen-manifest+json\">{}</script></div>"
+  },
+  {
+    "id": "S4-H78-script-json-type",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><script type=\"application/json\">{\"a\":1}</script></div>"
+  },
+  {
+    "id": "S4-H78-script-in-p",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<p data-rq-block=\"b\">a<script>1</script>b</p>"
+  },
+  {
+    "id": "S4-H78-script-in-span-end-text",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<span data-rq-block=\"b\">a<script>'</span>'</script>b</span>"
+  },
+  {
+    "id": "S4-H78-script-in-h1",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<h1 data-rq-block=\"b\">T<script>1</script></h1>"
+  },
+  {
+    "id": "S4-H78-script-in-title",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<title data-rq-block=\"t\">a<script>b</script>c</title>"
+  },
+  {
+    "id": "S4-H78-script-in-cell-block",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<table><tr><td><div data-rq-block=\"b\"><script>1</script></div></td></tr></table>"
+  },
+  {
+    "id": "S4-H78-script-in-table-context",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><table><script>1</script><tr><td>x</td></tr></table></div>"
+  },
+  {
+    "id": "S4-H78-style",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><style>p{color:red}</style>x</div>"
+  },
+  {
+    "id": "S4-H78-style-comment-text",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<span data-rq-block=\"b\"><style><!--</span>--></style>t</span>"
+  },
+  {
+    "id": "S4-H78-style-unclosed",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><style>p{}</div>"
+  },
+  {
+    "id": "S4-H78-style-end-upper",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><style>a{}</STYLE\t>x</div>"
+  },
+  {
+    "id": "S4-H78-iframe",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><iframe src=\"/v\" title=\"v\"></iframe></div>"
+  },
+  {
+    "id": "S4-H78-iframe-text",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><iframe><p>fallback</div><iframe></iframe>x</div>"
+  },
+  {
+    "id": "S4-H78-iframe-unclosed",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><iframe>x</div>"
+  },
+  {
+    "id": "S4-H78-rawtext-mix",
+    "decision": "H-78",
+    "expected": "valid 2",
+    "input": "<div data-rq-block=\"b\"><script>1</script><style>a{}</style><iframe></iframe></div><section data-rq-block=\"c\"><script>2</script></section>"
+  },
+  {
+    "id": "S4-H78-object",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><object data=\"/a.svg\" type=\"image/svg+xml\"><param name=\"a\" value=\"1\">Fallback</object></div>"
+  },
+  {
+    "id": "S4-H78-object-table",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><object><table><tr><td>x</td></tr></table></object></div>"
+  },
+  {
+    "id": "S4-H78-object-nested",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><object><object>x</object></object></div>"
+  },
+  {
+    "id": "S4-H78-object-formatting",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<b><div data-rq-block=\"b\"><object><b>x</b></object></div></b>"
+  },
+  {
+    "id": "S4-H78-object-a-in-a",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<a href=\"1\"><div data-rq-block=\"b\"><object><a href=\"2\">x</a></object></div></a>"
+  },
+  {
+    "id": "S4-H78-object-unbalanced",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><object>x</div>"
+  },
+  {
+    "id": "S4-H78-object-stray-end",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<object><div data-rq-block=\"b\">x</object></div></object>"
+  },
+  {
+    "id": "S4-H78-object-in-table",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><table><object></object></table></div>"
+  },
+  {
+    "id": "S4-H78-object-cell",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><table><tr><td><object><td>x</td></object></td></tr></table></div>"
+  },
+  {
+    "id": "S4-H78-object-before-block",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<object><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span></object>"
+  },
+  {
+    "id": "S4-H78-object-then-block-a",
+    "decision": "H-78",
+    "expected": "valid 2",
+    "input": "<div data-rq-block=\"b\"><object><a href=\"1\">x</a></object></div><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S4-H78-link",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><link rel=\"stylesheet\" href=\"/a.css\">x</div>"
+  },
+  {
+    "id": "S4-H78-meta",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><meta itemprop=\"p\" content=\"1\">x</div>"
+  },
+  {
+    "id": "S4-H78-meta-charset",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><meta charset=\"windows-1252\">x</div>"
+  },
+  {
+    "id": "S4-H78-base",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><base target=\"_top\">x</div>"
+  },
+  {
+    "id": "S4-H78-basefont",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><basefont size=\"3\">x</div>"
+  },
+  {
+    "id": "S4-H78-bgsound",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><bgsound src=\"/a.wav\">x</div>"
+  },
+  {
+    "id": "S4-H78-embed",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><embed src=\"/a.svg\" type=\"image/svg+xml\">x</div>"
+  },
+  {
+    "id": "S4-H78-link-self-closing",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><link rel=\"x\"/>x</div>"
+  },
+  {
+    "id": "S4-H78-embed-end-tag",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><embed></embed></div>"
+  },
+  {
+    "id": "S4-H78-link-end-tag",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><link></link></div>"
+  },
+  {
+    "id": "S4-H78-kept-noscript",
+    "decision": "H-78, H-95",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><noscript>x</noscript></div>"
+  },
+  {
+    "id": "S4-H78-kept-template",
+    "decision": "H-78, H-94",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><template>x</template></div>"
+  },
+  {
+    "id": "S4-H78-kept-textarea",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><textarea>x</textarea></div>"
+  },
+  {
+    "id": "S4-H78-kept-title",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><title>x</title></div>"
+  },
+  {
+    "id": "S4-H78-kept-xmp",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><xmp>x</xmp></div>"
+  },
+  {
+    "id": "S4-H78-kept-noembed",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><noembed>x</noembed></div>"
+  },
+  {
+    "id": "S4-H78-kept-noframes",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><noframes>x</noframes></div>"
+  },
+  {
+    "id": "S4-H78-kept-select",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><select><option>a</option></select></div>"
+  },
+  {
+    "id": "S4-H78-kept-option",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><option>a</option></div>"
+  },
+  {
+    "id": "S4-H78-kept-optgroup",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><optgroup></optgroup></div>"
+  },
+  {
+    "id": "S4-H78-kept-frame",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><frame></div>"
+  },
+  {
+    "id": "S4-H78-kept-body",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><body></body></div>"
+  },
+  {
+    "id": "S4-H78-kept-html",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><html></html></div>"
+  },
+  {
+    "id": "S4-H78-kept-head",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><head></head></div>"
+  },
+  {
+    "id": "S4-H78-kept-plaintext",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><plaintext>x</div>"
+  },
+  {
+    "id": "S4-H78-foreign-a",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><svg><a href=\"#x\"><path d=\"M0\"/></a></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-animate",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><svg><rect><animate attributeName=\"x\" dur=\"1s\"/></rect></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-set",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><svg><set attributeName=\"x\" to=\"1\"/></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-foreignobject",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><svg><foreignObject>t</foreignObject></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-image",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><svg><image href=\"/i.png\"/></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-script",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><svg><script>void 0</script></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-script-cdata",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><svg><script><![CDATA[if (a<b) f()]]></script></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-style",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><svg><style>.a{fill:red}</style></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-maction",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><math><maction><mi>x</mi></maction></math></div>"
+  },
+  {
+    "id": "S4-H78-foreign-annotation-xml",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><math><semantics><mi>x</mi><annotation-xml encoding=\"text/html\">t</annotation-xml></semantics></math></div>"
+  },
+  {
+    "id": "S4-H78-foreign-textpath",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><svg><text><textPath href=\"#p\">t</textPath></text></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-unknown",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><svg><x-y/><future-element></future-element></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-iframe",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><svg><iframe></iframe></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-discard",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><svg><discard/></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-a-in-html-a",
+    "decision": "H-78",
+    "expected": "valid 1",
+    "input": "<a href=\"/\"><span data-rq-block=\"i\"><svg><a href=\"#x\"><path d=\"M0\"/></a></svg>Home</span></a>"
+  },
+  {
+    "id": "S4-H78-foreign-a-in-html-a-then-a",
+    "decision": "H-78",
+    "expected": "valid 2",
+    "input": "<a href=\"1\"><span data-rq-block=\"i\">y<svg><a href=\"2\"><path d=\"M0\"/></a></svg>w</span></a><span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"
+  },
+  {
+    "id": "S4-H78-foreign-a-crossing",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><svg><a href=\"#x\"><path d=\"M0\"></a></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-foreignobject-markup",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><svg><foreignObject><div>x</div></foreignObject></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-script-lt",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><svg><script>a<b</script></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-style-comment",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><svg><style><!--x--></style></svg></div>"
+  },
+  {
+    "id": "S4-H78-foreign-annotation-xml-markup",
+    "decision": "H-78",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<div data-rq-block=\"b\"><math><annotation-xml encoding=\"text/html\"><p>x</p></annotation-xml></math></div>"
+  },
+  {
+    "id": "S4-H84-valid-space",
+    "decision": "H-84",
+    "expected": "valid 1",
+    "input": "<script type=\"text/x-a & b\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-valid-colon",
+    "decision": "H-84",
+    "expected": "valid 1",
+    "input": "<script type=\"text/x&#58;y\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-valid-tilde",
+    "decision": "H-84",
+    "expected": "valid 1",
+    "input": "<script type=\"text/x&#x7E;\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-valid-no-ref",
+    "decision": "H-84",
+    "expected": "valid 1",
+    "input": "<script type=\"text/x&#;\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-valid-no-hex-ref",
+    "decision": "H-84",
+    "expected": "valid 1",
+    "input": "<script type=\"text/x&#x;\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-valid-underscore",
+    "decision": "H-84",
+    "expected": "valid 1",
+    "input": "<script type=\"text/x&#X5f\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-valid-bang-zeros",
+    "decision": "H-84",
+    "expected": "valid 1",
+    "input": "<script type=\"text/x&#0000033;\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-valid-end",
+    "decision": "H-84",
+    "expected": "valid 1",
+    "input": "<script type=\"text/x&\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-valid-del",
+    "decision": "H-84",
+    "expected": "valid 1",
+    "input": "<script type=\"text/x&#x7f;\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-valid-semicolon",
+    "decision": "H-84",
+    "expected": "valid 1",
+    "input": "<script type=\"text/x&;\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-amp",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<script type=\"text/x&amp;y\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-letter",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<script type=\"text/a&b\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-slash",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<script type=\"application&#x2F;x\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-minus",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<script type=\"application/rivqen&#45;manifest+json\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-plus",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<script type=\"text/a&#43;b\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-dot",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<script type=\"text/a&#46;b\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-digit",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<script type=\"text/a&#x31;\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-zeros",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<script type=\"text/&#0000065pp\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-tab",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<script type=\"text/plain&#X9\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-nul",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<script type=\"text/a&#0;\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-space-ref",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<script type=\"&#32;text/plain\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-dotless-i",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<script type=\"application/r&#305;vqen-manifest+json\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-long-s",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<script type=\"application/rivqen-manife&#x17f;t+json\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-c1",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<script type=\"text/a&#x80;\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-huge",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<script type=\"text/a&#99999999999;\"></script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H84-invalid-noscript",
+    "decision": "H-84",
+    "expected": "RQP_MARKUP_RESERVED",
+    "input": "<noscript><script type=\"text/a&b\"></script></noscript><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "S4-H86-ld-head",
+    "decision": "H-86",
+    "expected": "valid 1",
+    "input": "<html><head><script type=\"application/ld+json\" data-rq-block=\"ld\">{\"@context\":\"https://schema.org\",\"@type\":\"Product\",\"name\":\"Shop\"}</script></head><body><p>x</p></body></html>"
+  },
+  {
+    "id": "S4-H86-ld-body",
+    "decision": "H-86",
+    "expected": "valid 1",
+    "input": "<script type=\"application/ld+json\" data-rq-block=\"ld\">{\"@context\":\"https://schema.org\",\"@type\":\"Product\",\"name\":\"Shop\"}</script>"
+  },
+  {
+    "id": "S4-H86-ld-and-json",
+    "decision": "H-86",
+    "expected": "valid 2",
+    "input": "<script type=\"application/ld+json\" data-rq-block=\"ld\">{\"@context\":\"https://schema.org\",\"@type\":\"Product\",\"name\":\"Shop\"}</script><script type=\"application/json\" data-rq-block=\"j\">[1]</script>"
+  },
+  {
+    "id": "S4-H86-ld-graph",
+    "decision": "H-86",
+    "expected": "valid 1",
+    "input": "<script type=\"application/ld+json\" data-rq-block=\"ld\">{\"@graph\":[{\"@type\":\"A\"},{\"@type\":\"B\",\"url\":\"https:\\/\\/x\"}]}</script>"
+  },
+  {
+    "id": "S4-H86-ld-escaped-script",
+    "decision": "H-86",
+    "expected": "valid 1",
+    "input": "<script type=\"application/ld+json\" data-rq-block=\"ld\">{\"a\":\"<\\/script>\",\"b\":\"<!--\"}</script>"
+  },
+  {
+    "id": "S4-H86-ld-double-escaped",
+    "decision": "H-86",
+    "expected": "RQP_MARKUP_STRUCTURE",
+    "input": "<script type=\"application/ld+json\" data-rq-block=\"ld\">{\"a\":\"<!--<script>\"}</script><p>x</p>"
+  },
+  {
+    "id": "S4-H86-ld-in-cell",
+    "decision": "H-86",
+    "expected": "valid 1",
+    "input": "<table><tr><td><script type=\"application/ld+json\" data-rq-block=\"ld\">{\"@context\":\"https://schema.org\",\"@type\":\"Product\",\"name\":\"Shop\"}</script></td></tr></table>"
+  },
+  {
+    "id": "S4-H86-ld-in-html-block",
+    "decision": "H-86",
+    "expected": "RQP_MARKUP_NESTED",
+    "input": "<div data-rq-block=\"b\"><script type=\"application/ld+json\" data-rq-block=\"ld\">{\"@context\":\"https://schema.org\",\"@type\":\"Product\",\"name\":\"Shop\"}</script></div>"
+  },
+  {
+    "id": "S4-H86-ld-unmarked-in-block",
+    "decision": "H-86",
+    "expected": "valid 1",
+    "input": "<div data-rq-block=\"b\"><script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"Product\",\"name\":\"Shop\"}</script></div>"
+  },
+  {
+    "id": "S4-H86-ld-case",
+    "decision": "H-86",
+    "expected": "RQP_MARKUP_FORBIDDEN_ELEMENT",
+    "input": "<script type=\"application/LD+JSON\" data-rq-block=\"ld\">{}</script>"
+  },
+  {
+    "id": "S4-H86-ld-param",
+    "decision": "H-86",
+    "expected": "RQP_MARKUP_FORBIDDEN_ELEMENT",
+    "input": "<script type=\"application/ld+json; charset=utf-8\" data-rq-block=\"ld\">{}</script>"
+  },
+  {
+    "id": "S4-H86-ld-space",
+    "decision": "H-86",
+    "expected": "RQP_MARKUP_FORBIDDEN_ELEMENT",
+    "input": "<script type=\"application/ld+json \" data-rq-block=\"ld\">{}</script>"
+  },
+  {
+    "id": "S4-H86-ld-second-type",
+    "decision": "H-86",
+    "expected": "RQP_MARKUP_FORBIDDEN_ELEMENT",
+    "input": "<script type=\"text/javascript\" type=\"application/ld+json\" data-rq-block=\"ld\">{}</script>"
+  },
+  {
+    "id": "S4-H86-ld-trailing-comma",
+    "decision": "H-86",
+    "expected": "RQP_MARKUP_BAD_JSON",
+    "input": "<script type=\"application/ld+json\" data-rq-block=\"ld\">{\"a\":1,}</script>"
+  },
+  {
+    "id": "S4-H86-ld-empty",
+    "decision": "H-86",
+    "expected": "RQP_MARKUP_BAD_JSON",
+    "input": "<script type=\"application/ld+json\" data-rq-block=\"ld\"></script>"
+  },
+  {
+    "id": "S4-H86-ld-bom",
+    "decision": "H-86",
+    "expected": "RQP_MARKUP_BAD_JSON",
+    "input": "<script type=\"application/ld+json\" data-rq-block=\"ld\">﻿{}</script>"
+  },
+  {
+    "id": "S4-H86-ld-depth-65",
+    "decision": "H-86",
+    "expected": "RQP_MARKUP_BAD_JSON",
+    "input": "<script type=\"application/ld+json\" data-rq-block=\"ld\">[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]</script>"
+  }
+]

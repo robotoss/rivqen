@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-E6-PI-EOF",
+  "description": "Edge case E6 (H-21): a <? that reaches the end of the input is a comment to EOF (M-03); a comment in a foreign integration point (svg desc) is invalid (M-07 item 3)",
+  "rules": [
+    "M-03",
+    "M-07"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

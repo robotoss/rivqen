@@ -1,0 +1,646 @@
+{
+ "pages": 864,
+ "errors": 0,
+ "combos": {
+  "base": {
+   "valid": 809,
+   "validUtf8": 809
+  },
+  "t1": {
+   "valid": 809,
+   "validUtf8": 809
+  },
+  "t2": {
+   "valid": 809,
+   "validUtf8": 809
+  },
+  "tu": {
+   "valid": 809,
+   "validUtf8": 809
+  },
+  "n1": {
+   "valid": 809,
+   "validUtf8": 809
+  },
+  "n2": {
+   "valid": 809,
+   "validUtf8": 809
+  },
+  "nu": {
+   "valid": 809,
+   "validUtf8": 809
+  },
+  "t1n1": {
+   "valid": 809,
+   "validUtf8": 809
+  },
+  "t2n1": {
+   "valid": 809,
+   "validUtf8": 809
+  },
+  "t2n2": {
+   "valid": 809,
+   "validUtf8": 809
+  }
+ },
+ "variants": {
+  "small": {
+   "documents": 752,
+   "noPicks": 57,
+   "errors": 0,
+   "census": {
+    "variantsWithTemplate": 12,
+    "variantsWithNoscript": 4,
+    "templates": 30,
+    "noscripts": 60,
+    "shadowroot": 0,
+    "tableFirst": 0,
+    "cKinds": {
+     "void": 50,
+     "text": 3,
+     "markup": 7
+    }
+   },
+   "combos": {
+    "base": {
+     "pages": 752,
+     "valid": 687,
+     "gained": 0,
+     "lost": 0,
+     "withTemplate": 0,
+     "withNoscript": 0,
+     "patchBlocked": 98,
+     "patchBlockedP2": 98,
+     "why": {
+      "M-24c": 2,
+      "M-23": 15,
+      "M-22.2-template": 12,
+      "RQP_MARKUP_LIMIT": 3,
+      "M-22.3": 2,
+      "M-24def": 3,
+      "RQP_MARKUP_STRUCTURE": 7,
+      "M-22.2": 14,
+      "M-22.2-noscript": 4,
+      "M-24a": 2,
+      "M-22.1": 1
+     },
+     "findings": {},
+     "informative": {},
+     "patchFindings": {}
+    },
+    "t1": {
+     "pages": 752,
+     "valid": 699,
+     "gained": 12,
+     "lost": 0,
+     "withTemplate": 12,
+     "withNoscript": 0,
+     "patchBlocked": 104,
+     "patchBlockedP2": 104,
+     "why": {
+      "M-24c": 2,
+      "M-23": 15,
+      "RQP_MARKUP_LIMIT": 3,
+      "M-22.3": 2,
+      "M-24def": 3,
+      "RQP_MARKUP_STRUCTURE": 7,
+      "M-22.2": 14,
+      "M-22.2-noscript": 4,
+      "M-24a": 2,
+      "M-22.1": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 1
+     },
+     "patchFindings": {}
+    },
+    "t2": {
+     "pages": 752,
+     "valid": 699,
+     "gained": 12,
+     "lost": 0,
+     "withTemplate": 12,
+     "withNoscript": 0,
+     "patchBlocked": 104,
+     "patchBlockedP2": 104,
+     "why": {
+      "M-24c": 2,
+      "M-23": 15,
+      "RQP_MARKUP_LIMIT": 3,
+      "M-22.3": 2,
+      "M-24def": 3,
+      "RQP_MARKUP_STRUCTURE": 7,
+      "M-22.2": 14,
+      "M-22.2-noscript": 4,
+      "M-24a": 2,
+      "M-22.1": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 1
+     },
+     "patchFindings": {}
+    },
+    "tu": {
+     "pages": 752,
+     "valid": 699,
+     "gained": 12,
+     "lost": 0,
+     "withTemplate": 12,
+     "withNoscript": 0,
+     "patchBlocked": 104,
+     "patchBlockedP2": 104,
+     "why": {
+      "M-24c": 2,
+      "M-23": 15,
+      "RQP_MARKUP_LIMIT": 3,
+      "M-22.3": 2,
+      "M-24def": 3,
+      "RQP_MARKUP_STRUCTURE": 7,
+      "M-22.2": 14,
+      "M-22.2-noscript": 4,
+      "M-24a": 2,
+      "M-22.1": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 1
+     },
+     "patchFindings": {}
+    },
+    "n1": {
+     "pages": 752,
+     "valid": 689,
+     "gained": 2,
+     "lost": 0,
+     "withTemplate": 0,
+     "withNoscript": 2,
+     "patchBlocked": 100,
+     "patchBlockedP2": 99,
+     "why": {
+      "M-24c": 2,
+      "M-23": 16,
+      "M-22.2-template": 12,
+      "RQP_MARKUP_LIMIT": 3,
+      "M-22.3": 2,
+      "M-24def": 3,
+      "RQP_MARKUP_STRUCTURE": 7,
+      "M-22.2": 15,
+      "M-24a": 2,
+      "M-22.1": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 1
+     },
+     "patchFindings": {}
+    },
+    "n2": {
+     "pages": 752,
+     "valid": 689,
+     "gained": 2,
+     "lost": 0,
+     "withTemplate": 0,
+     "withNoscript": 2,
+     "patchBlocked": 100,
+     "patchBlockedP2": 99,
+     "why": {
+      "M-24c": 2,
+      "M-23": 16,
+      "M-22.2-template": 12,
+      "RQP_MARKUP_LIMIT": 3,
+      "M-22.3": 2,
+      "M-24def": 3,
+      "RQP_MARKUP_STRUCTURE": 7,
+      "M-22.2": 15,
+      "M-24a": 2,
+      "M-22.1": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 1
+     },
+     "patchFindings": {}
+    },
+    "nu": {
+     "pages": 752,
+     "valid": 689,
+     "gained": 2,
+     "lost": 0,
+     "withTemplate": 0,
+     "withNoscript": 2,
+     "patchBlocked": 100,
+     "patchBlockedP2": 99,
+     "why": {
+      "M-24c": 2,
+      "M-23": 16,
+      "M-22.2-template": 12,
+      "RQP_MARKUP_LIMIT": 3,
+      "M-22.3": 2,
+      "M-24def": 3,
+      "RQP_MARKUP_STRUCTURE": 7,
+      "M-22.2": 15,
+      "M-24a": 2,
+      "M-22.1": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 1
+     },
+     "patchFindings": {}
+    },
+    "t1n1": {
+     "pages": 752,
+     "valid": 701,
+     "gained": 14,
+     "lost": 0,
+     "withTemplate": 12,
+     "withNoscript": 2,
+     "patchBlocked": 106,
+     "patchBlockedP2": 105,
+     "why": {
+      "M-24c": 2,
+      "M-23": 16,
+      "RQP_MARKUP_LIMIT": 3,
+      "M-22.3": 2,
+      "M-24def": 3,
+      "RQP_MARKUP_STRUCTURE": 7,
+      "M-22.2": 15,
+      "M-24a": 2,
+      "M-22.1": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 2
+     },
+     "patchFindings": {}
+    },
+    "t2n1": {
+     "pages": 752,
+     "valid": 701,
+     "gained": 14,
+     "lost": 0,
+     "withTemplate": 12,
+     "withNoscript": 2,
+     "patchBlocked": 106,
+     "patchBlockedP2": 105,
+     "why": {
+      "M-24c": 2,
+      "M-23": 16,
+      "RQP_MARKUP_LIMIT": 3,
+      "M-22.3": 2,
+      "M-24def": 3,
+      "RQP_MARKUP_STRUCTURE": 7,
+      "M-22.2": 15,
+      "M-24a": 2,
+      "M-22.1": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 2
+     },
+     "patchFindings": {}
+    },
+    "t2n2": {
+     "pages": 752,
+     "valid": 701,
+     "gained": 14,
+     "lost": 0,
+     "withTemplate": 12,
+     "withNoscript": 2,
+     "patchBlocked": 106,
+     "patchBlockedP2": 105,
+     "why": {
+      "M-24c": 2,
+      "M-23": 16,
+      "RQP_MARKUP_LIMIT": 3,
+      "M-22.3": 2,
+      "M-24def": 3,
+      "RQP_MARKUP_STRUCTURE": 7,
+      "M-22.2": 15,
+      "M-24a": 2,
+      "M-22.1": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 2
+     },
+     "patchFindings": {}
+    }
+   }
+  },
+  "main": {
+   "documents": 490,
+   "noPicks": 319,
+   "errors": 0,
+   "census": {
+    "variantsWithTemplate": 37,
+    "variantsWithNoscript": 53,
+    "templates": 205,
+    "noscripts": 577,
+    "shadowroot": 61,
+    "tableFirst": 0,
+    "cKinds": {
+     "void": 556,
+     "text": 9,
+     "markup": 12
+    }
+   },
+   "combos": {
+    "base": {
+     "pages": 490,
+     "valid": 332,
+     "gained": 0,
+     "lost": 0,
+     "withTemplate": 0,
+     "withNoscript": 0,
+     "patchBlocked": 178,
+     "patchBlockedP2": 178,
+     "why": {
+      "M-24c": 4,
+      "M-23": 25,
+      "M-22.2-template": 36,
+      "M-22.2": 28,
+      "RQP_MARKUP_LIMIT": 4,
+      "M-22.2-noscript": 49,
+      "M-24def": 4,
+      "M-22.3": 2,
+      "M-22.1": 2,
+      "M-24j": 3,
+      "M-24k": 1
+     },
+     "findings": {},
+     "informative": {},
+     "patchFindings": {}
+    },
+    "t1": {
+     "pages": 490,
+     "valid": 358,
+     "gained": 26,
+     "lost": 0,
+     "withTemplate": 26,
+     "withNoscript": 0,
+     "patchBlocked": 193,
+     "patchBlockedP2": 193,
+     "why": {
+      "M-24c": 4,
+      "M-23": 25,
+      "M-22.2": 30,
+      "RQP_MARKUP_LIMIT": 5,
+      "M-22.2-noscript": 51,
+      "M-24def": 4,
+      "M-22.3": 2,
+      "M-22.1": 2,
+      "S5-shadowrootmode": 5,
+      "M-24j": 3,
+      "M-24k": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 3,
+      "known-head-noscript": 1
+     },
+     "patchFindings": {}
+    },
+    "t2": {
+     "pages": 490,
+     "valid": 358,
+     "gained": 26,
+     "lost": 0,
+     "withTemplate": 26,
+     "withNoscript": 0,
+     "patchBlocked": 193,
+     "patchBlockedP2": 193,
+     "why": {
+      "M-24c": 4,
+      "M-23": 25,
+      "M-22.2": 30,
+      "RQP_MARKUP_LIMIT": 5,
+      "M-22.2-noscript": 51,
+      "M-24def": 4,
+      "M-22.3": 2,
+      "M-22.1": 2,
+      "S5-shadowrootmode": 5,
+      "M-24j": 3,
+      "M-24k": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 3,
+      "known-head-noscript": 1
+     },
+     "patchFindings": {}
+    },
+    "tu": {
+     "pages": 490,
+     "valid": 360,
+     "gained": 28,
+     "lost": 0,
+     "withTemplate": 28,
+     "withNoscript": 0,
+     "patchBlocked": 195,
+     "patchBlockedP2": 195,
+     "why": {
+      "M-24c": 5,
+      "M-23": 25,
+      "M-22.2": 30,
+      "RQP_MARKUP_LIMIT": 5,
+      "M-22.2-noscript": 53,
+      "M-24def": 4,
+      "M-22.3": 2,
+      "M-22.1": 2,
+      "M-24j": 3,
+      "M-24k": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 4,
+      "known-head-noscript": 1
+     },
+     "patchFindings": {}
+    },
+    "n1": {
+     "pages": 490,
+     "valid": 367,
+     "gained": 35,
+     "lost": 0,
+     "withTemplate": 0,
+     "withNoscript": 35,
+     "patchBlocked": 213,
+     "patchBlockedP2": 205,
+     "why": {
+      "M-24c": 4,
+      "M-23": 29,
+      "M-22.2-template": 37,
+      "M-22.2": 29,
+      "RQP_MARKUP_LIMIT": 12,
+      "M-24def": 4,
+      "M-22.3": 2,
+      "M-22.1": 2,
+      "M-24j": 3,
+      "M-24k": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 1,
+      "known-head-noscript": 3
+     },
+     "patchFindings": {
+      "shipped:patch-unseen-disabled": 8
+     }
+    },
+    "n2": {
+     "pages": 490,
+     "valid": 367,
+     "gained": 35,
+     "lost": 0,
+     "withTemplate": 0,
+     "withNoscript": 35,
+     "patchBlocked": 213,
+     "patchBlockedP2": 205,
+     "why": {
+      "M-24c": 4,
+      "M-23": 29,
+      "M-22.2-template": 37,
+      "M-22.2": 29,
+      "RQP_MARKUP_LIMIT": 12,
+      "M-24def": 4,
+      "M-22.3": 2,
+      "M-22.1": 2,
+      "M-24j": 3,
+      "M-24k": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 1,
+      "known-head-noscript": 3
+     },
+     "patchFindings": {
+      "shipped:patch-unseen-disabled": 8
+     }
+    },
+    "nu": {
+     "pages": 490,
+     "valid": 367,
+     "gained": 35,
+     "lost": 0,
+     "withTemplate": 0,
+     "withNoscript": 35,
+     "patchBlocked": 213,
+     "patchBlockedP2": 205,
+     "why": {
+      "M-24c": 4,
+      "M-23": 29,
+      "M-22.2-template": 37,
+      "M-22.2": 29,
+      "RQP_MARKUP_LIMIT": 12,
+      "M-24def": 4,
+      "M-22.3": 2,
+      "M-22.1": 2,
+      "M-24j": 3,
+      "M-24k": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 1,
+      "known-head-noscript": 3
+     },
+     "patchFindings": {
+      "shipped:patch-unseen-disabled": 8
+     }
+    },
+    "t1n1": {
+     "pages": 490,
+     "valid": 393,
+     "gained": 61,
+     "lost": 0,
+     "withTemplate": 26,
+     "withNoscript": 35,
+     "patchBlocked": 228,
+     "patchBlockedP2": 220,
+     "why": {
+      "M-24c": 4,
+      "M-23": 29,
+      "M-22.2": 33,
+      "RQP_MARKUP_LIMIT": 14,
+      "M-24def": 4,
+      "M-22.3": 2,
+      "M-22.1": 2,
+      "S5-shadowrootmode": 5,
+      "M-24j": 3,
+      "M-24k": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 4,
+      "known-head-noscript": 4
+     },
+     "patchFindings": {
+      "shipped:patch-unseen-disabled": 8
+     }
+    },
+    "t2n1": {
+     "pages": 490,
+     "valid": 393,
+     "gained": 61,
+     "lost": 0,
+     "withTemplate": 26,
+     "withNoscript": 35,
+     "patchBlocked": 228,
+     "patchBlockedP2": 220,
+     "why": {
+      "M-24c": 4,
+      "M-23": 29,
+      "M-22.2": 33,
+      "RQP_MARKUP_LIMIT": 14,
+      "M-24def": 4,
+      "M-22.3": 2,
+      "M-22.1": 2,
+      "S5-shadowrootmode": 5,
+      "M-24j": 3,
+      "M-24k": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 4,
+      "known-head-noscript": 4
+     },
+     "patchFindings": {
+      "shipped:patch-unseen-disabled": 8
+     }
+    },
+    "t2n2": {
+     "pages": 490,
+     "valid": 393,
+     "gained": 61,
+     "lost": 0,
+     "withTemplate": 26,
+     "withNoscript": 35,
+     "patchBlocked": 228,
+     "patchBlockedP2": 220,
+     "why": {
+      "M-24c": 4,
+      "M-23": 29,
+      "M-22.2": 33,
+      "RQP_MARKUP_LIMIT": 14,
+      "M-24def": 4,
+      "M-22.3": 2,
+      "M-22.1": 2,
+      "S5-shadowrootmode": 5,
+      "M-24j": 3,
+      "M-24k": 1
+     },
+     "findings": {},
+     "informative": {
+      "known-p-closure": 4,
+      "known-head-noscript": 4
+     },
+     "patchFindings": {
+      "shipped:patch-unseen-disabled": 8
+     }
+    }
+   }
+  }
+ }
+}

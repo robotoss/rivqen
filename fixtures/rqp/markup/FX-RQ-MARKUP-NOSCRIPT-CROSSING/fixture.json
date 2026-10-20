@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-CROSSING",
+  "description": "noscript content closes elements out of order (H-27: each end tag in C closes the last open element of C)",
+  "rules": [
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

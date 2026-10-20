@@ -1,0 +1,15 @@
+{
+  "valid": true,
+  "error": null,
+  "blocks": [
+    {
+      "id": "sale",
+      "format": "html",
+      "start": 88,
+      "end": 102,
+      "sha256": "P4lMgR3UDOBsJjeN_pUxOdMPv5KVyh9odyi6ubmQaZ0"
+    }
+  ],
+  "template_revision": "t1.wEl4jiJsAabm4TL6Ks4E6vWKGr2wirHKce6vqJ8s5wU",
+  "page_revision": "r1.MnCgi5V33v-9DdRvYhaiImFArlfTNm0rVwBSHvOeL1E"
+}

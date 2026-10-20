@@ -1,0 +1,75 @@
+{
+  "blockedNavigations": [
+    {
+      "caseId": "NOSCRIPT",
+      "url": "https://www.example.com/ns.html",
+      "view": "off"
+    }
+  ],
+  "controls": [
+    {
+      "defaultClientCallAsync": "ok",
+      "defaultClientEvaluation": "ok",
+      "dom": {
+        "dataScriptInDOM": true,
+        "noscriptDataScriptInDOM": false,
+        "noscriptParsedAsMarkup": false,
+        "onclickAttributeInDOM": true,
+        "pageScriptRan": true,
+        "scriptElements": 2
+      },
+      "pageWorldEvaluation": "ok",
+      "view": "on"
+    },
+    {
+      "defaultClientCallAsync": "ok",
+      "defaultClientEvaluation": "ok",
+      "dom": {
+        "dataScriptInDOM": false,
+        "noscriptDataScriptInDOM": false,
+        "noscriptParsedAsMarkup": true,
+        "onclickAttributeInDOM": false,
+        "pageScriptRan": false,
+        "scriptElements": 0
+      },
+      "pageWorldEvaluation": "ok",
+      "view": "off"
+    }
+  ],
+  "finishedAt": "2026-10-19T20:48:59Z",
+  "osName": "iOS",
+  "osVersion": "26.5",
+  "outcome": "ok",
+  "platform": "ios",
+  "results": 150,
+  "serializerBytes": 5538,
+  "server": "http://127.0.0.1:18091",
+  "settleSeconds": 1,
+  "simulatorDevice": "iPhone 17 Pro Max",
+  "simulatorModel": "iPhone18,2",
+  "simulatorRuntime": "26.5",
+  "simulatorRuntimeBuild": "23F77",
+  "startedAt": "2026-10-19T20:45:39Z",
+  "timeoutSeconds": 20,
+  "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+  "walkerNotes": [
+    "Walker: host/serialize.js (5538 bytes) evaluated with evaluateJavaScript(_:in:in:) in WKContentWorld.defaultClient, 1.0 s after didFinish of the main frame.",
+    "View off: allowsContentJavaScript = false in defaultWebpagePreferences and in the preferences of every navigation policy decision. The app never turns content JavaScript on for an off result.",
+    "View off: the walker ran in 71 of 71 runs.",
+    "Meta: characterSet, contentType and the probe text read with callAsyncJavaScript in WKContentWorld.defaultClient.",
+    "Requests: the navigation delegate allows only http://127.0.0.1:18091, about:blank and about:srcdoc; a WKContentRuleList blocks every other load (WebKit does not report subresource blocks to the app).",
+    "Isolation: a new WKWebView and a new non-persistent website data store per case and view; data detectors off; no new windows."
+  ],
+  "walkerOk": 150,
+  "walkerUnavailable": 0,
+  "webKitBundleVersion": "8624.2.5.10.4",
+  "webKitVersion": "8624",
+  "host": {
+    "simulatorName": "iPhone 17 Pro Max",
+    "simulatorId": "272E9409-7098-4A54-B64C-8D9824AB02DA",
+    "simulatorRuntime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+    "xcode": "Xcode 27.1, Build version 27A9275",
+    "serializerSha256": "6df2dab09da4a8882411dda1749948e0591751e5dfc26abec61da6dcc47cbebe",
+    "date": "2026-10-19T20:49:02.401Z"
+  }
+}

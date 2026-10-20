@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-SVG-CROSSING",
+  "description": "In noscript content C, a g end tag crosses an unclosed svg path (M-11 item 5, H-74, H-75)",
+  "rules": [
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

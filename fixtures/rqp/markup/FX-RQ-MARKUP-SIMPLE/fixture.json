@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-MARKUP-SIMPLE",
+  "description": "One html block in the body",
+  "rules": [
+    "M-14",
+    "M-15",
+    "M-16",
+    "M-20",
+    "M-27"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "price",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"price\">",
+        "content": "120.00"
+      }
+    ]
+  }
+}

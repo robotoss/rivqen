@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-DOCTYPE",
+  "description": "A DOCTYPE token in the content",
+  "rules": [
+    "M-22"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

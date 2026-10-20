@@ -22,7 +22,7 @@ Rivqen is an independent, clean-room re-implementation of the ideas of Tencent V
 
 1. **Clean-room.** Never copy code from VasSonic or from any source with an incompatible license. Describe upstream behavior with `upstream:<path>:<line>` references at commit `59936bef`. See `docs/legal/provenance.md`.
 2. **Naming.** The product is Rivqen. The protocol is RQP. Write "Sonic"/"VasSonic" only for attribution and literal legacy wire tokens.
-3. **Decisions.** API/ABI, protocol, security/crypto, licenses/dependencies, and scope/schedule are decided by the human (ask the human, recommended option first). Everything else: the architect decides and writes it in `docs/engineering/plan/decision-log.md`. See `docs/engineering/ai/decisions.md`.
+3. **Decisions.** API/ABI, protocol, security/crypto, licenses/dependencies, and scope/schedule are decided by the human (ask the human, recommended option first). Exception (H-80): a fail-closed fix from a review that only makes a rule stricter and costs at most 2 corpus pages is decided by the architect, recorded, and listed in the merge request. Everything else: the architect decides and writes it in `docs/engineering/plan/decision-log.md`. See `docs/engineering/ai/decisions.md`.
 4. **Errors.** No ignored errors. Propagate with context. Release builds never crash and fall back to normal HTTPS. No secrets or personal data in logs. See `docs/engineering/architecture/errors-logging.md`.
 5. **Tests.** Write tests with the code, in small steps. Run the mutation check on your diff (`docs/engineering/quality/mutation.md`). Do not change legacy fixtures to make code pass. Do not write tests only to raise a number.
 6. **Docs as you go.** A task is done only when its pages are updated (`docs/engineering/ai/documentation.md`). Mark statements FACT / DESIGN / RESEARCH / GATE. English; ASD-STE100 for procedures.
@@ -46,6 +46,9 @@ Rivqen is an independent, clean-room re-implementation of the ideas of Tencent V
 | Server demo tests | `cd examples/server-demo && npm test` |
 | Server demo bytes | `cd examples/server-demo && npm start` then `npm run measure` |
 | Upstream lab | `UPSTREAM=<VasSonic checkout> sh tools/upstream-lab/start.sh` |
+| Markup parsers agree on all fixtures | `node tools/rqp-markup/diff.mjs` |
+| Protocol fixtures current and passing | `node tools/rqp-protocol/gen.mjs --check` then `node tools/rqp-protocol/check.mjs` |
+| Protocol reference tests | `cd tools/rqp-protocol && npm test` |
 
 Per-language checks and mutation commands: `docs/engineering/standards/` and `docs/engineering/quality/mutation.md`.
 

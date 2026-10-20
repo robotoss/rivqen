@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-STRAY-TABLE",
+  "description": "A table end tag with no table on the token stack, outside tables (H-30)",
+  "rules": [
+    "M-06"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

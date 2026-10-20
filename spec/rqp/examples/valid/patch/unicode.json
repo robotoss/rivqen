@@ -1,0 +1,13 @@
+{
+  "binding": "d1.E4fCXuTa7CF9_oRvqRkubPLUyLOhgZ5oPyHnrboIjVo",
+  "operations": [
+    {
+      "block_id": "note",
+      "content": "café 😀 <b>&amp;</b>\r\n"
+    },
+    {
+      "block_id": "data",
+      "content": "{\"s\":\"\\u00e9\\ud83d\\ude00\",\"n\":1e400}"
+    }
+  ]
+}

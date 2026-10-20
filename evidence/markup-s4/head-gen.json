@@ -1,0 +1,131 @@
+{
+  "source": "gen",
+  "seed": 79,
+  "docs": 500000,
+  "validDocs": 438407,
+  "rules": {
+    "shipped": {
+      "explicit": 27088,
+      "implied": 0,
+      "none": 472912,
+      "valid": {
+        "explicit": 24195,
+        "implied": 0,
+        "none": 414212
+      },
+      "stops": {},
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {},
+        "examples": {}
+      }
+    },
+    "h79": {
+      "explicit": 27088,
+      "implied": 246423,
+      "none": 226489,
+      "valid": {
+        "explicit": 24195,
+        "implied": 221304,
+        "none": 192908
+      },
+      "stops": {
+        "<script>": 70440,
+        "<link>": 23677,
+        "<meta>": 58790,
+        "<style>": 23216,
+        "<base>": 11718,
+        "<title>": 23364,
+        "<noframes>": 11746,
+        "<basefont>": 11776,
+        "<bgsound>": 11696
+      },
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {},
+        "examples": {}
+      }
+    },
+    "l1": {
+      "explicit": 27088,
+      "implied": 291974,
+      "none": 180938,
+      "valid": {
+        "explicit": 24195,
+        "implied": 262063,
+        "none": 152149
+      },
+      "stops": {
+        "<script>": 70440,
+        "<link>": 23677,
+        "<meta>": 58790,
+        "<noscript>": 27152,
+        "<style>": 23216,
+        "<base>": 11718,
+        "<title>": 23364,
+        "<noframes>": 11746,
+        "<template>": 18399,
+        "<basefont>": 11776,
+        "<bgsound>": 11696
+      },
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {},
+        "examples": {}
+      }
+    },
+    "l2": {
+      "explicit": 27088,
+      "implied": 382876,
+      "none": 90036,
+      "valid": {
+        "explicit": 24195,
+        "implied": 335369,
+        "none": 78843
+      },
+      "stops": {
+        "<script>": 70440,
+        "<div>": 9122,
+        "<link>": 23677,
+        "<meta>": 58790,
+        "<noscript>": 27152,
+        "<frameset>": 8926,
+        "<svg>": 9086,
+        "<style>": 23216,
+        "<base>": 11718,
+        "<title>": 23364,
+        "<noframes>": 11746,
+        "<input>": 9157,
+        "<template>": 18399,
+        "<basefont>": 11776,
+        "<a>": 9159,
+        "<span>": 9138,
+        "<bgsound>": 11696,
+        "<table>": 9207,
+        "<body>": 9096,
+        "<img>": 8996,
+        "<p>": 9015
+      },
+      "failures": {
+        "counts": {},
+        "examples": {}
+      },
+      "failuresAnyPage": {
+        "counts": {},
+        "examples": {}
+      }
+    }
+  },
+  "hostile": null,
+  "full": null,
+  "seconds": 32
+}

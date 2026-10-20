@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-NOSCRIPT-IMG",
+  "description": "A tracking fallback in noscript in the content: an img and an iframe in C, then a block with an a element (H-95: valid)",
+  "rules": [
+    "M-11",
+    "M-22"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "x<noscript><img src=\"/p.gif\" alt=\"\"><iframe src=\"/f\"></iframe></noscript>y"
+      },
+      {
+        "id": "z",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"z\">",
+        "content": "y<a href=\"#\">z</a>w"
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-NOSCRIPT-EOF",
+  "description": "A noscript element without an end tag in the content: C is the rest of the input (E3) and the block has no end tag",
+  "rules": [
+    "M-11",
+    "M-20"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

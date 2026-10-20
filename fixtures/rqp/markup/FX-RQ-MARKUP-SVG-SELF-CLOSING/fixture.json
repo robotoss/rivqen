@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-SVG-SELF-CLOSING",
+  "description": "A self-closing svg start tag opens no foreign region",
+  "rules": [
+    "M-05",
+    "M-16"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "s",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"s\">",
+        "content": "x"
+      }
+    ]
+  }
+}

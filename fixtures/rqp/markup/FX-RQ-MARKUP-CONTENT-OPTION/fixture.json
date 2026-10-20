@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-OPTION",
+  "description": "An option element in the content",
+  "rules": [
+    "M-22"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

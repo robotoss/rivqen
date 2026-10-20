@@ -1,0 +1,24 @@
+{
+  "id": "FX-RQ-P37-APP-RQ-FULL",
+  "description": "The application sends Rq-Version, Rq-Revision and another Rq-* field on a valid page: F has exactly one Rq-Version 1 and no Rq-* field of the application (DL-030)",
+  "rules": ["RQP-20", "RQP-21"],
+  "page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"],
+      ["rq-version", "1"],
+      ["rq-revision", "r1.app"],
+      ["rq-x-app", "1"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

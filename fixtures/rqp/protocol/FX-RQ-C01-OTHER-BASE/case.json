@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C01-OTHER-BASE",
+  "kind": "client",
+  "description": "A delta that the server built for another base (page-title-2, title \"Shop 2\") with the price 130.00, for example from a cache that ignores no-store: the binding has B = r1(page-title-2), not the page revision of the snapshot, and the title of the snapshot differs, so R' differs too (H-104, H-107: INTEGRITY_ERROR at step 7, before H-104 PATCH_BASE_MISMATCH)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-title-2",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "130.00"
+          }
+        ]
+      }
+    }
+  }
+}

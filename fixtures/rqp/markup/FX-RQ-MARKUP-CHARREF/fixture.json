@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-CHARREF",
+  "description": "Character references stay as raw bytes; escaped markup is not a block",
+  "rules": [
+    "M-14",
+    "M-27"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "text",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"text\">",
+        "content": "&lt;p data-rq-block=&quot;x&quot;&gt; &amp; &#x1F600;"
+      }
+    ]
+  }
+}

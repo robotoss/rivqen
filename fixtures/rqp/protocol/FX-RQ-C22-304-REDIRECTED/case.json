@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-C22-304-REDIRECTED",
+  "kind": "client",
+  "description": "A 304 after a redirect to the same path with another query: not accepted, normal load (H-58)",
+  "rules": ["RQP-24"],
+  "context": {
+    "final_url": "https://shop.example.com/catalog?page=2",
+    "allowlist": ["https://shop.example.com"],
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 304,
+    "headers": [
+      ["etag", "{{r1:page-a}}"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": null
+  }
+}

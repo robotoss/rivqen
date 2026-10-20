@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-EOF-TITLE",
+  "description": "The input ends in the RCDATA content of a title block",
+  "rules": [
+    "M-20"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

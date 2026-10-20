@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-BAD-JSON-EMPTY",
+  "description": "Empty content is not a JSON text",
+  "rules": [
+    "M-25"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_BAD_JSON"
+  }
+}

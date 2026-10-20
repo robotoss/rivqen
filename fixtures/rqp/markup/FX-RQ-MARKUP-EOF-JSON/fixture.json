@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-EOF-JSON",
+  "description": "The input ends in the script data of a json block",
+  "rules": [
+    "M-20"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

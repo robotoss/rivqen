@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-FOREIGN-INTEGRATION",
+  "description": "HTML markup inside svg foreignObject",
+  "rules": [
+    "M-07"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

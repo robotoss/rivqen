@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-SHADOWROOTMODE-NESTED",
+  "description": "A template element with shadowrootmode inside a template element of the content (H-94: M-22 item 6 applies in template content too)",
+  "rules": [
+    "M-22"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

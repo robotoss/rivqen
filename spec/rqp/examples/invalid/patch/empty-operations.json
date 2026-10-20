@@ -1,0 +1,11 @@
+{
+  "description": "A patch has at least one operation",
+  "expect": {
+    "keyword": "minItems",
+    "instancePath": "/operations"
+  },
+  "instance": {
+    "binding": "d1.orrx-_-Iflnnjs7DvvuOOdxW3FzbZpU_PTlR0jdWw54",
+    "operations": []
+  }
+}

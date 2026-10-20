@@ -1,0 +1,868 @@
+{
+ "source": "classic",
+ "seed": 5,
+ "count": 50000,
+ "date": "2026-10-19",
+ "docs": 50000,
+ "combos": {
+  "base": {
+   "valid": 17545,
+   "gained": 0,
+   "withTemplate": 0,
+   "withNoscript": 1,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 168,
+    "known-p-closure": 32
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "C:M-11-end": 2193,
+    "M-22.2-noscript": 1379,
+    "C:M-11-content": 2518,
+    "M-22.1": 103,
+    "C:M-11-balance": 2157,
+    "RQP_MARKUP_RESERVED": 1589,
+    "RQP_MARKUP_STRUCTURE": 10779,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 2096,
+    "M-24g": 1150,
+    "RQP_MARKUP_NESTED": 3598,
+    "M-24a": 941,
+    "RQP_MARKUP_BAD_JSON": 703,
+    "RQP_MARKUP_DUPLICATE": 505,
+    "M-24c": 579,
+    "M-20": 152,
+    "M-22.2-template": 91,
+    "M-24k": 204,
+    "M-23": 393,
+    "M-22.2": 723,
+    "M-24hi": 267,
+    "M-24def": 19,
+    "M-24b": 117,
+    "M-22.3": 157,
+    "M-24j": 23,
+    "M-09": 19
+   },
+   "patch": {
+    "blocks": 6061,
+    "rejected": {
+     "shipped:element": 106,
+     "p1:element": 106,
+     "p2:element": 106,
+     "shipped:foreign": 7,
+     "p1:foreign": 7,
+     "p2:foreign": 7
+    },
+    "findings": {}
+   },
+   "examples": []
+  },
+  "t1": {
+   "valid": 17565,
+   "gained": 20,
+   "withTemplate": 20,
+   "withNoscript": 1,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 169,
+    "known-p-closure": 32
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "C:M-11-end": 2193,
+    "M-22.2-noscript": 1388,
+    "C:M-11-content": 2520,
+    "M-22.1": 103,
+    "C:M-11-balance": 2158,
+    "RQP_MARKUP_RESERVED": 1589,
+    "RQP_MARKUP_STRUCTURE": 10782,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 2096,
+    "M-24g": 1155,
+    "RQP_MARKUP_NESTED": 3620,
+    "M-24a": 944,
+    "RQP_MARKUP_BAD_JSON": 703,
+    "RQP_MARKUP_DUPLICATE": 505,
+    "M-24c": 584,
+    "M-20": 153,
+    "M-24k": 204,
+    "M-23": 399,
+    "M-22.2": 729,
+    "M-24hi": 267,
+    "M-24def": 20,
+    "M-24b": 118,
+    "M-22.3": 159,
+    "M-24j": 23,
+    "M-09": 19,
+    "M-24g-template": 4
+   },
+   "patch": {
+    "blocks": 6084,
+    "rejected": {
+     "shipped:element": 107,
+     "p1:element": 107,
+     "p2:element": 107,
+     "shipped:foreign": 7,
+     "p1:foreign": 7,
+     "p2:foreign": 7
+    },
+    "findings": {}
+   },
+   "examples": []
+  },
+  "t2": {
+   "valid": 17565,
+   "gained": 20,
+   "withTemplate": 20,
+   "withNoscript": 1,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 169,
+    "known-p-closure": 32
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "C:M-11-end": 2193,
+    "M-22.2-noscript": 1388,
+    "C:M-11-content": 2520,
+    "M-22.1": 103,
+    "C:M-11-balance": 2158,
+    "RQP_MARKUP_RESERVED": 1589,
+    "RQP_MARKUP_STRUCTURE": 10782,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 2096,
+    "M-24g": 1155,
+    "RQP_MARKUP_NESTED": 3620,
+    "M-24a": 944,
+    "RQP_MARKUP_BAD_JSON": 703,
+    "RQP_MARKUP_DUPLICATE": 505,
+    "M-24c": 584,
+    "M-20": 153,
+    "M-24k": 204,
+    "M-23": 399,
+    "M-22.2": 729,
+    "M-24hi": 267,
+    "M-24def": 20,
+    "M-24b": 118,
+    "M-22.3": 159,
+    "M-24j": 23,
+    "M-09": 19,
+    "S5-template-table-part": 4
+   },
+   "patch": {
+    "blocks": 6084,
+    "rejected": {
+     "shipped:element": 107,
+     "p1:element": 107,
+     "p2:element": 107,
+     "shipped:foreign": 7,
+     "p1:foreign": 7,
+     "p2:foreign": 7
+    },
+    "findings": {}
+   },
+   "examples": []
+  },
+  "tu": {
+   "valid": 17565,
+   "gained": 20,
+   "withTemplate": 20,
+   "withNoscript": 1,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 169,
+    "known-p-closure": 32
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "C:M-11-end": 2193,
+    "M-22.2-noscript": 1388,
+    "C:M-11-content": 2520,
+    "M-22.1": 103,
+    "C:M-11-balance": 2158,
+    "RQP_MARKUP_RESERVED": 1589,
+    "RQP_MARKUP_STRUCTURE": 10782,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 2096,
+    "M-24g": 1155,
+    "RQP_MARKUP_NESTED": 3620,
+    "M-24a": 944,
+    "RQP_MARKUP_BAD_JSON": 703,
+    "RQP_MARKUP_DUPLICATE": 505,
+    "M-24c": 584,
+    "M-20": 153,
+    "M-24k": 204,
+    "M-23": 399,
+    "M-22.2": 729,
+    "M-24hi": 267,
+    "M-24def": 20,
+    "M-24b": 118,
+    "M-22.3": 159,
+    "M-24j": 23,
+    "M-09": 19,
+    "M-24g-template": 4
+   },
+   "patch": {
+    "blocks": 6084,
+    "rejected": {
+     "shipped:element": 107,
+     "p1:element": 107,
+     "p2:element": 107,
+     "shipped:foreign": 7,
+     "p1:foreign": 7,
+     "p2:foreign": 7
+    },
+    "findings": {}
+   },
+   "examples": []
+  },
+  "n1": {
+   "valid": 17613,
+   "gained": 68,
+   "withTemplate": 0,
+   "withNoscript": 69,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 168,
+    "known-p-closure": 32
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "C:M-11-end": 2439,
+    "C:M-11-content": 2813,
+    "M-22.1": 104,
+    "C:M-11-balance": 2433,
+    "RQP_MARKUP_RESERVED": 1703,
+    "RQP_MARKUP_STRUCTURE": 10978,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 2097,
+    "M-24g": 1160,
+    "RQP_MARKUP_NESTED": 3648,
+    "M-24a": 960,
+    "RQP_MARKUP_BAD_JSON": 703,
+    "RQP_MARKUP_DUPLICATE": 508,
+    "M-24c": 584,
+    "M-20": 159,
+    "M-22.2-template": 94,
+    "M-24k": 232,
+    "M-23": 399,
+    "M-22.2": 728,
+    "M-24hi": 272,
+    "M-24def": 20,
+    "M-24b": 119,
+    "M-22.3": 163,
+    "M-24j": 23,
+    "C:M-24a": 26,
+    "M-09": 19,
+    "C:M-22.2": 2,
+    "C:M-24c": 1
+   },
+   "patch": {
+    "blocks": 6137,
+    "rejected": {
+     "p1:noscript": 64,
+     "shipped:element": 110,
+     "p1:element": 110,
+     "p2:element": 129,
+     "shipped:foreign": 7,
+     "p1:foreign": 7,
+     "p2:foreign": 7
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 44,
+     "shipped:patch-mode-diff": 44,
+     "p2:patch-mode-diff": 25
+    }
+   },
+   "examples": [
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 104"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 32"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <iframe> at 33"
+    },
+    {
+     "doc": "<h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><tbody></tbody><dl><dt><div><h2 data-rq-block=\"b0\"><noscript><img src=x></noscript></h2></div><h1>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  },
+  "n2": {
+   "valid": 17613,
+   "gained": 68,
+   "withTemplate": 0,
+   "withNoscript": 69,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 168,
+    "known-p-closure": 32
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "C:M-11-end": 2439,
+    "C:M-11-content": 2813,
+    "M-22.1": 104,
+    "C:M-11-balance": 2429,
+    "RQP_MARKUP_RESERVED": 1703,
+    "RQP_MARKUP_STRUCTURE": 10978,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 2097,
+    "M-24g": 1160,
+    "RQP_MARKUP_NESTED": 3648,
+    "M-24a": 960,
+    "RQP_MARKUP_BAD_JSON": 703,
+    "RQP_MARKUP_DUPLICATE": 508,
+    "M-24c": 584,
+    "M-20": 159,
+    "M-22.2-template": 94,
+    "M-24k": 232,
+    "M-23": 399,
+    "M-22.2": 728,
+    "M-24hi": 272,
+    "M-24def": 20,
+    "M-24b": 119,
+    "M-22.3": 163,
+    "C:S5-noscript-pclose": 4,
+    "M-24j": 23,
+    "C:M-24a": 26,
+    "M-09": 19,
+    "C:M-22.2": 2,
+    "C:M-24c": 1
+   },
+   "patch": {
+    "blocks": 6137,
+    "rejected": {
+     "p1:noscript": 64,
+     "shipped:element": 110,
+     "p1:element": 110,
+     "p2:element": 129,
+     "shipped:foreign": 7,
+     "p1:foreign": 7,
+     "p2:foreign": 7
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 44,
+     "shipped:patch-mode-diff": 44,
+     "p2:patch-mode-diff": 25
+    }
+   },
+   "examples": [
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 104"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 32"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <iframe> at 33"
+    },
+    {
+     "doc": "<h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><tbody></tbody><dl><dt><div><h2 data-rq-block=\"b0\"><noscript><img src=x></noscript></h2></div><h1>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  },
+  "nu": {
+   "valid": 17613,
+   "gained": 68,
+   "withTemplate": 0,
+   "withNoscript": 69,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 168,
+    "known-p-closure": 32
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "C:M-11-end": 2439,
+    "C:M-11-content": 2816,
+    "M-22.1": 104,
+    "C:M-11-balance": 2458,
+    "RQP_MARKUP_RESERVED": 1704,
+    "RQP_MARKUP_STRUCTURE": 10978,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 2097,
+    "M-24g": 1160,
+    "RQP_MARKUP_NESTED": 3648,
+    "M-24a": 960,
+    "RQP_MARKUP_BAD_JSON": 703,
+    "RQP_MARKUP_DUPLICATE": 508,
+    "M-24c": 584,
+    "M-20": 159,
+    "M-22.2-template": 94,
+    "M-24k": 232,
+    "M-23": 399,
+    "M-22.2": 728,
+    "M-24hi": 272,
+    "M-24def": 20,
+    "M-24b": 119,
+    "M-22.3": 163,
+    "M-24j": 23,
+    "M-09": 19
+   },
+   "patch": {
+    "blocks": 6137,
+    "rejected": {
+     "p1:noscript": 64,
+     "shipped:element": 110,
+     "p1:element": 110,
+     "p2:element": 129,
+     "shipped:foreign": 7,
+     "p1:foreign": 7,
+     "p2:foreign": 7
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 44,
+     "shipped:patch-mode-diff": 44,
+     "p2:patch-mode-diff": 25
+    }
+   },
+   "examples": [
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 104"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 32"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <iframe> at 33"
+    },
+    {
+     "doc": "<h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><tbody></tbody><dl><dt><div><h2 data-rq-block=\"b0\"><noscript><img src=x></noscript></h2></div><h1>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  },
+  "t1n1": {
+   "valid": 17633,
+   "gained": 88,
+   "withTemplate": 20,
+   "withNoscript": 69,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 169,
+    "known-p-closure": 32
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "C:M-11-end": 2440,
+    "C:M-11-content": 2816,
+    "M-22.1": 104,
+    "C:M-11-balance": 2435,
+    "RQP_MARKUP_RESERVED": 1704,
+    "RQP_MARKUP_STRUCTURE": 10986,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 2097,
+    "M-24g": 1165,
+    "RQP_MARKUP_NESTED": 3671,
+    "M-24a": 963,
+    "RQP_MARKUP_BAD_JSON": 703,
+    "RQP_MARKUP_DUPLICATE": 508,
+    "M-24c": 589,
+    "M-20": 160,
+    "M-24k": 232,
+    "M-23": 406,
+    "M-22.2": 734,
+    "M-24hi": 272,
+    "M-24def": 21,
+    "M-24b": 120,
+    "M-22.3": 165,
+    "M-24j": 23,
+    "C:M-24a": 27,
+    "M-09": 19,
+    "C:M-22.2": 2,
+    "M-24g-template": 4,
+    "C:M-24c": 1
+   },
+   "patch": {
+    "blocks": 6160,
+    "rejected": {
+     "p1:noscript": 64,
+     "shipped:element": 111,
+     "p1:element": 111,
+     "p2:element": 130,
+     "shipped:foreign": 7,
+     "p1:foreign": 7,
+     "p2:foreign": 7
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 44,
+     "shipped:patch-mode-diff": 44,
+     "p2:patch-mode-diff": 25
+    }
+   },
+   "examples": [
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 104"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 32"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <iframe> at 33"
+    },
+    {
+     "doc": "<h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><tbody></tbody><dl><dt><div><h2 data-rq-block=\"b0\"><noscript><img src=x></noscript></h2></div><h1>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  },
+  "t2n1": {
+   "valid": 17633,
+   "gained": 88,
+   "withTemplate": 20,
+   "withNoscript": 69,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 169,
+    "known-p-closure": 32
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "C:M-11-end": 2440,
+    "C:M-11-content": 2816,
+    "M-22.1": 104,
+    "C:M-11-balance": 2435,
+    "RQP_MARKUP_RESERVED": 1704,
+    "RQP_MARKUP_STRUCTURE": 10986,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 2097,
+    "M-24g": 1165,
+    "RQP_MARKUP_NESTED": 3671,
+    "M-24a": 963,
+    "RQP_MARKUP_BAD_JSON": 703,
+    "RQP_MARKUP_DUPLICATE": 508,
+    "M-24c": 589,
+    "M-20": 160,
+    "M-24k": 232,
+    "M-23": 406,
+    "M-22.2": 734,
+    "M-24hi": 272,
+    "M-24def": 21,
+    "M-24b": 120,
+    "M-22.3": 165,
+    "M-24j": 23,
+    "C:M-24a": 27,
+    "M-09": 19,
+    "C:M-22.2": 2,
+    "S5-template-table-part": 4,
+    "C:M-24c": 1
+   },
+   "patch": {
+    "blocks": 6160,
+    "rejected": {
+     "p1:noscript": 64,
+     "shipped:element": 111,
+     "p1:element": 111,
+     "p2:element": 130,
+     "shipped:foreign": 7,
+     "p1:foreign": 7,
+     "p2:foreign": 7
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 44,
+     "shipped:patch-mode-diff": 44,
+     "p2:patch-mode-diff": 25
+    }
+   },
+   "examples": [
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 104"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 32"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <iframe> at 33"
+    },
+    {
+     "doc": "<h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><tbody></tbody><dl><dt><div><h2 data-rq-block=\"b0\"><noscript><img src=x></noscript></h2></div><h1>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  },
+  "t2n2": {
+   "valid": 17633,
+   "gained": 88,
+   "withTemplate": 20,
+   "withNoscript": 69,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 169,
+    "known-p-closure": 32
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "C:M-11-end": 2440,
+    "C:M-11-content": 2816,
+    "M-22.1": 104,
+    "C:M-11-balance": 2431,
+    "RQP_MARKUP_RESERVED": 1704,
+    "RQP_MARKUP_STRUCTURE": 10986,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 2097,
+    "M-24g": 1165,
+    "RQP_MARKUP_NESTED": 3671,
+    "M-24a": 963,
+    "RQP_MARKUP_BAD_JSON": 703,
+    "RQP_MARKUP_DUPLICATE": 508,
+    "M-24c": 589,
+    "M-20": 160,
+    "M-24k": 232,
+    "M-23": 406,
+    "M-22.2": 734,
+    "M-24hi": 272,
+    "M-24def": 21,
+    "M-24b": 120,
+    "M-22.3": 165,
+    "C:S5-noscript-pclose": 4,
+    "M-24j": 23,
+    "C:M-24a": 27,
+    "M-09": 19,
+    "C:M-22.2": 2,
+    "S5-template-table-part": 4,
+    "C:M-24c": 1
+   },
+   "patch": {
+    "blocks": 6160,
+    "rejected": {
+     "p1:noscript": 64,
+     "shipped:element": 111,
+     "p1:element": 111,
+     "p2:element": 130,
+     "shipped:foreign": 7,
+     "p1:foreign": 7,
+     "p2:foreign": 7
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 44,
+     "shipped:patch-mode-diff": 44,
+     "p2:patch-mode-diff": 25
+    }
+   },
+   "examples": [
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 104"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><article data-rq-block=\"b0\"><article>x<noscript><img src=x></noscript> </article></article> <rb></rb></rb>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 32"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<p data-rq-block=\"b0\"><noscript><img src=x></noscript></p>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <iframe> at 33"
+    },
+    {
+     "doc": "<h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<!DOCTYPE html><html><head><title>T</title></head><body><tbody></tbody><dl><dt><div><h2 data-rq-block=\"b0\"><noscript><img src=x></noscript></h2></div><h1>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  }
+ },
+ "monotonic": 0,
+ "examples": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-TABLE-CLOSE",
+  "description": "A td start tag while a td of the noscript content is open: no implied closure in C (H-85a: M-11 item 8, M-09)",
+  "rules": [
+    "M-09",
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

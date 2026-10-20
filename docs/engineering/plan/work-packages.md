@@ -24,10 +24,10 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | [WP-11](#wp-11) | iOS SDK | P5 | iOS engineer | WP-09 | XL | Planned |
 | [WP-12](#wp-12) | Web core, React adapter, JS bridge | P6 | Web engineer | WP-09, WP-13 | L | Planned |
 | [WP-13](#wp-13) | Node.js server SDK | P4 | Backend engineer | WP-02 | M | Planned |
-| [WP-14](#wp-14) | Java server SDK | P4 | Backend engineer | WP-02 | M | Planned |
-| [WP-15](#wp-15) | PHP server SDK | P4 | Backend engineer | WP-02 | M | Planned |
+| [WP-14](#wp-13) | Java server SDK | P4 | Backend engineer | WP-02 | M | Planned |
+| [WP-15](#wp-13) | PHP server SDK | P4 | Backend engineer | WP-02 | M | Planned |
 | [WP-16](#wp-16) | Transport extensions (realtime, dictionary compression) | P8 | Protocol designer | WP-10, WP-11 | L | Planned |
-| [WP-17](#wp-17) | Rivqen protocol (RQP) specification | P1 | Protocol designer | WP-00 | L | **Draft in docs** |
+| [WP-17](#wp-17) | Rivqen protocol (RQP) specification | P1 | Protocol designer | WP-00 | L | **Done — MR pending** ([S1](/engineering/plan/sprints/WP-17-S1)…[S6](/engineering/plan/sprints/WP-17-S6) closed; the human opens the MR, H-89) |
 | [WP-18](#wp-18) | Security engineering | P0–P7 | Security engineer | — (continuous) | L | Planned |
 | [WP-19](#wp-19) | Test infrastructure, benchmarks, observability | P1–P7 | Performance engineer | WP-02 | L | Planned |
 | [WP-20](#wp-20) | CI/CD and supply chain | P1–P7 | Integrator | WP-05 | M | Planned |
@@ -112,7 +112,7 @@ flowchart TD
 | Field | Content |
 |---|---|
 | Goal | The base of the Rust core. |
-| Deliverables | Cargo workspace; `rivqen-core` facade skeleton; data model types; error types; `rivqen-testkit` with fixture loader, fake clock and fake transport; CI for Rust. |
+| Deliverables | Cargo workspace; `rivqen-core` facade skeleton; data model types; error types; `rivqen-testkit` with fixture loader, fake clock and fake transport; `rivqen-proto` crate (RQP types, manifest, patch and header parsing, checked against `fixtures/rqp/protocol`; moved from WP-17); CI for Rust. |
 | Acceptance | `cargo test` runs fixtures as data; `#![forbid(unsafe_code)]` in all crates except `rivqen-ffi`. |
 
 ### WP-06 — Template engine {#wp-06}
@@ -195,7 +195,7 @@ flowchart TD
 | Field | Content |
 |---|---|
 | Goal | The default, versioned, typed protocol of Rivqen: `data-rq-block` markup, manifest, `Rq-*` headers, patches. |
-| Deliverables | RQP specification ([markup](/engineering/protocol/markup), [negotiation](/engineering/protocol/negotiation), [manifest and patch](/engineering/protocol/manifest-patch)); JSON Schemas; fixtures `fixtures/rqp`; `rivqen-proto` crate (in P3); ADR-006 accepted. |
+| Deliverables | RQP specification ([markup](/engineering/protocol/markup), [negotiation](/engineering/protocol/negotiation), [manifest and patch](/engineering/protocol/manifest-patch)); JSON Schemas; fixtures `fixtures/rqp`; ADR-006 accepted. The `rivqen-proto` crate moved to [WP-05](#wp-05) (P3; human, 2026-10-18). |
 | Acceptance | Specification reviewed; fixtures exist before SDK code; parsers in Rust, Node.js, Java and PHP agree on all markup fixtures. |
 
 ### WP-18 — Security engineering {#wp-18}

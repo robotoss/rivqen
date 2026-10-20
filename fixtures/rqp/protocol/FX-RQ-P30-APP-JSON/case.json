@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-P30-APP-JSON",
+  "description": "A 200 with application/json is out of scope: unchanged",
+  "rules": ["RQP-04"],
+  "page": "page-a",
+  "client_page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/json"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-a}}"],
+      ["rq-have", "t={{t1:page-a}}, b={{have:page-a}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  }
+}

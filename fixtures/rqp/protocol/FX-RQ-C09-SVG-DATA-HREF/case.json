@@ -1,0 +1,40 @@
+{
+  "id": "FX-RQ-C09-SVG-DATA-HREF",
+  "kind": "client",
+  "description": "price content <svg><desc>d</desc><use href=\"data:image/svg+xml,x\"/></svg> passes the markup analysis; the attribute rule rejects it (H-73, H-59)",
+  "rules": [
+    "RQP-13"
+  ],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      [
+        "content-type",
+        "application/vnd.rivqen.delta+json"
+      ],
+      [
+        "rq-version",
+        "1"
+      ],
+      [
+        "cache-control",
+        "no-store"
+      ]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<svg><desc>d</desc><use href=\"data:image/svg+xml,x\"/></svg>"
+          }
+        ]
+      }
+    }
+  }
+}

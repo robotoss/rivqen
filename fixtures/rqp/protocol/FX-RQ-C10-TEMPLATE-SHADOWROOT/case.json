@@ -1,0 +1,40 @@
+{
+  "id": "FX-RQ-C10-TEMPLATE-SHADOWROOT",
+  "kind": "client",
+  "description": "price content with a template that has shadowrootmode: the patch content rule passes, the analysis of the patched document rejects it (M-22 item 6, H-97, step 8)",
+  "rules": [
+    "RQP-13"
+  ],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      [
+        "content-type",
+        "application/vnd.rivqen.delta+json"
+      ],
+      [
+        "rq-version",
+        "1"
+      ],
+      [
+        "cache-control",
+        "no-store"
+      ]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<template shadowrootmode=\"open\"><span>x</span></template>"
+          }
+        ]
+      }
+    }
+  }
+}

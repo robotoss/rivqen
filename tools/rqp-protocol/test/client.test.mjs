@@ -1,0 +1,1213 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: The Rivqen Authors
+//
+// Reference client step: each error code of manifest-patch.md section 5, the
+// check order of diff-engine.md section 3, the manifest checks of sections 1.7
+// and 1.8, and the attribute rule of section 4.2.
+
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { test } from 'node:test';
+import { LIMITS, deltaBinding, pageRevision, sha256b64u } from '../src/common.mjs';
+import {
+  cacheDirectives,
+  checkFull,
+  clientRequest,
+  clientStep,
+  deltaPartition,
+  expectedBinding,
+  handleResponse,
+  havePrefixes,
+  hasUserinfo,
+  notModifiedAccepted,
+  inAllowlist,
+  newNonce,
+  partitionFor,
+  redirected,
+  requestHeaders,
+  requestNonce,
+  rqpAllowed,
+  setsCookie,
+  snapshotOf,
+  usableSnapshot,
+  validAllowlistEntry,
+  verifyDelta,
+  withoutCredentials,
+} from '../src/client.mjs';
+import { analyze, attributeRejected, attributesOf, documentHeadStart, findManifestElements, isManifestType, patchContentFailure, passesPatchContentRule } from '../src/markup.mjs';
+import { fullDocument, handle, manifestOf } from '../src/server.mjs';
+import { APP, NONCE, TARGET, blockPage, clientContext, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
+
+const snapA = () => snapshotOf(page('page-a'), {}, TARGET);
+const ctx = (fields = {}) => clientContext({ navigation: 'delta', snapshot: snapA(), ...fields });
+const DELTA = [['content-type', 'application/vnd.rivqen.delta+json']];
+const HTML = [['content-type', 'text/html; charset=utf-8'], ['rq-version', '1']];
+
+/**
+ * A consistent envelope (H-104, H-107) that a server built from page-a for
+ * TARGET: ops = [[blockId, content]]. Options: `members` are the policy and
+ * limits of the snapshot (H-55); `next` replaces R' (default: page-a with the
+ * contents of ops), `base` replaces B (default: the page revision of page-a
+ * with `members`), `url` replaces U, `nonce` replaces N (default: NONCE, the
+ * nonce of the test request; H-108). `extra` adds or replaces members.
+ */
+function envelope(ops, { members = {}, next, base, url = TARGET, nonce = NONCE } = {}, extra = {}) {
+  const a = revisions('page-a');
+  const hashes = new Map(ops.map(([id, c]) => [id, sha256b64u(Buffer.from(c, 'utf8'))]));
+  const blocks = a.blocks.map((b) => ({ ...b, sha256: hashes.get(b.id) ?? b.sha256 }));
+  return {
+    binding: deltaBinding(url, base ?? pageRevision(a.template_revision, a.blocks, members), nonce, next ?? pageRevision(a.template_revision, blocks, members)),
+    operations: ops.map(([id, content]) => ({ block_id: id, content })),
+    ...extra,
+  };
+}
+
+/** verifyDelta with the nonce NONCE of the test requests (H-108) and the URL of the snapshot. */
+const vd = (snap, body, offered, maxPatchBytes = LIMITS.maxPatchBytes, url = snap.url, nonce = NONCE) => verifyDelta(snap, body, offered, maxPatchBytes, url, nonce);
+const verify = (env, snap = snapA()) => vd(snap, Buffer.from(typeof env === 'string' ? env : JSON.stringify(env), 'utf8'), true);
+const code = (env, snap) => verify(env, snap).code ?? null;
+
+// Delta: diff-engine section 3 order.
+test('a consistent delta is applied: new revision and block contents', () => {
+  const r = handleResponse(ctx(), { status: 200, headers: DELTA, body: Buffer.from(JSON.stringify(envelope([['price', '130.00']]))) });
+  assert.equal(r.outcome, 'patched');
+  assert.equal(r.snapshot.page_revision, revisions('page-b').page_revision);
+  assert.equal(r.snapshot.blocks.find((b) => b.id === 'price').content, '130.00');
+  assert.equal(r.snapshot.document_sha256, sha256b64u(page('page-b')));
+});
+
+test('PATCH_INVALID: an unsolicited delta (no snapshot, first visit, fallback load)', () => {
+  const body = Buffer.from(JSON.stringify(envelope([['price', '130.00']])));
+  const noSnap = handleResponse(ctx({ snapshot: null, navigation: 'first-visit' }), { status: 200, headers: DELTA, body });
+  assert.deepEqual([noSnap.error, noSnap.next], ['PATCH_INVALID', 'fallback-load']);
+  const first = handleResponse(ctx({ navigation: 'first-visit' }), { status: 200, headers: DELTA, body });
+  assert.equal(first.error, 'PATCH_INVALID');
+  const fallback = handleResponse(ctx({ navigation: 'fallback' }), { status: 200, headers: DELTA, body });
+  assert.deepEqual([fallback.error, fallback.next], ['PATCH_INVALID', 'webview-load']);
+});
+
+test('PATCH_TOO_LARGE: an envelope over the client limit, before any JSON check', () => {
+  const big = Buffer.alloc(LIMITS.maxPatchBytes + 1, 0x20);
+  assert.equal(vd(snapA(), big, true).code, 'PATCH_TOO_LARGE');
+  const small = { ...snapA(), members: { limits: { max_patch_bytes: 1024 } } };
+  assert.equal(vd(small, Buffer.alloc(1025, 0x20), true).code, 'PATCH_TOO_LARGE');
+  assert.equal(vd(small, Buffer.alloc(1024, 0x20), true).code, 'PATCH_INVALID');
+});
+
+test('PATCH_TOO_LARGE: content over maxBlockBytes, with a client limit that lets the envelope pass', () => {
+  const wide = 4 * LIMITS.maxBlockBytes;
+  // ASCII over 1 MiB: the schema maxLength (code points) fails first.
+  const over = Buffer.from(JSON.stringify(envelope([['price', 'x'.repeat(LIMITS.maxBlockBytes + 1)]])));
+  assert.equal(vd(snapA(), over, true, wide).code, 'PATCH_INVALID');
+  // Multi-byte characters pass maxLength: 524289 two-byte characters are 1048578 UTF-8 bytes.
+  const utf8 = Buffer.from(JSON.stringify(envelope([['price', 'é'.repeat(LIMITS.maxBlockBytes / 2 + 1)]])));
+  assert.equal(vd(snapA(), utf8, true, wide).code, 'PATCH_TOO_LARGE');
+  const at = Buffer.from(JSON.stringify(envelope([['price', 'x'.repeat(LIMITS.maxBlockBytes)]])));
+  assert.equal(vd(snapA(), at, true, wide).code, undefined);
+});
+
+test('PATCH_INVALID: JSON rules, schema and operation rules', () => {
+  const ok = envelope([['price', '130.00']]);
+  const text = JSON.stringify(ok);
+  assert.equal(code(ok), null);
+  assert.equal(code(text.replace('{', `{"binding":"${ok.binding}",`)), 'PATCH_INVALID'); // duplicate member, also with the same value
+  assert.equal(code(text.slice(0, -1)), 'PATCH_INVALID'); // syntax
+  assert.equal(code({ ...ok, page_id: 'x' }), 'PATCH_INVALID'); // schema: unknown member
+  assert.equal(code({ ...ok, operations: [] }), 'PATCH_INVALID'); // schema: minItems
+  assert.equal(code({ ...ok, operations: [{ ...ok.operations[0], block_id: 'nope' }] }), 'PATCH_INVALID'); // rule 1
+  assert.equal(code({ ...ok, operations: [ok.operations[0], ok.operations[0]] }), 'PATCH_INVALID'); // rule 2
+  const two = envelope([['title', 'S'], ['price', '1']]);
+  assert.equal(code({ ...two, operations: [...two.operations].reverse() }), 'PATCH_INVALID'); // rule 3
+  assert.equal(code(two), null);
+  // H-104: the members of the envelope before H-104 are unknown members (schema), also with correct values.
+  const a = revisions('page-a');
+  const sha256 = sha256b64u('130.00');
+  for (const extra of [{ type: 'rivqen.patch' }, { protocol: 'rqp/1' }, { base_revision: a.page_revision }, { template_revision: a.template_revision }]) {
+    assert.equal(code({ ...ok, ...extra }), 'PATCH_INVALID', Object.keys(extra)[0]);
+  }
+  // H-107: the envelope of H-104 (next_revision in place of the binding), also next to a correct binding.
+  const { binding, ...rest } = ok;
+  assert.equal(code({ next_revision: revisions('page-b').page_revision, ...rest }), 'PATCH_INVALID');
+  assert.equal(code({ binding, next_revision: revisions('page-b').page_revision, ...rest }), 'PATCH_INVALID');
+  for (const extra of [{ op: 'replace_block' }, { format: 'html' }, { sha256 }]) {
+    assert.equal(code({ ...ok, operations: [{ ...ok.operations[0], ...extra }] }), 'PATCH_INVALID', Object.keys(extra)[0]);
+  }
+});
+
+test('INTEGRITY_ERROR at step 7 for a delta built for another template (H-104; before: TEMPLATE_MISMATCH)', () => {
+  const t2 = revisions('page-t2');
+  const next = t2.blocks.map((b) => (b.id === 'price' ? { ...b, sha256: sha256b64u('130.00') } : b));
+  const env = envelope([['price', '130.00']], { base: t2.page_revision, next: pageRevision(t2.template_revision, next) });
+  assert.equal(code(env), 'INTEGRITY_ERROR');
+});
+
+test('INTEGRITY_ERROR at step 7 for a delta built for another base (H-104, H-107; before: PATCH_BASE_MISMATCH)', () => {
+  // The server thought the client had page-title-2 (title Shop 2): it sent only the price.
+  const t = revisions('page-title-2');
+  const serverNext = t.blocks.map((x) => (x.id === 'price' ? { ...x, sha256: sha256b64u('130.00') } : x));
+  const env = envelope([['price', '130.00']], { base: t.page_revision, next: pageRevision(t.template_revision, serverNext) });
+  assert.equal(code(env), 'INTEGRITY_ERROR');
+  // The same operations for the base of the client: applied.
+  assert.equal(code(envelope([['price', '130.00']])), null);
+});
+
+test('INTEGRITY_ERROR at step 7 for content that the binding does not bind (H-104; before: step 4)', () => {
+  const env = envelope([['price', '131.00']], { next: revisions('page-b').page_revision });
+  assert.equal(code(env), 'INTEGRITY_ERROR');
+});
+
+test('H-107: a delta applies only to its base: a stale replay on its own target and a rollback are INTEGRITY_ERROR', () => {
+  // D(page-a -> page-b) on a snapshot of page-b: before H-107 a no-op that passed (stale pinning).
+  const d = envelope([['price', '130.00']]);
+  assert.equal(code(d, snapshotOf(page('page-b'), {}, TARGET)), 'INTEGRITY_ERROR');
+  // Versions v1 = page-title-2 (title Shop 2), v2 = page-a (title Shop), v3 = page-a with the title Shop 3.
+  // D(v1 -> v2) on a snapshot of v3: before H-107 the result was v2, a page revision of the
+  // server, so it passed (rollback v3 -> v2).
+  const v1 = revisions('page-title-2');
+  const back = envelope([['title', 'Shop']], { base: v1.page_revision, next: revisions('page-a').page_revision });
+  const v3 = Buffer.from(page('page-a').toString('utf8').replace('>Shop<', '>Shop 3<'), 'utf8');
+  assert.notEqual(snapshotOf(v3).page_revision, revisions('page-a').page_revision);
+  assert.equal(code(back, snapshotOf(v3, {}, TARGET)), 'INTEGRITY_ERROR');
+  // The same delta on its base: applied.
+  assert.equal(code(back, snapshotOf(page('page-title-2'), {}, TARGET)), null);
+});
+
+test('H-107: an all-blocks delta applies only to its base and its URL', () => {
+  // Every block of page-b, as a server sends for a request without the member b (H-7).
+  const ops = revisions('page-b').blocks.map((b) => [b.id, page('page-b').toString('utf8', b.start, b.end)]);
+  // Built for page-title-2 (another client): every block is replaced, so R' is r1(page-b) on any snapshot of the template.
+  const other = envelope(ops, { base: revisions('page-title-2').page_revision });
+  assert.equal(code(other), 'INTEGRITY_ERROR');
+  // Built for page-a at another URL with the same template.
+  const otherUrl = envelope(ops, { url: 'https://shop.example.com/catalog/2' });
+  assert.equal(code(otherUrl), 'INTEGRITY_ERROR');
+  // Built for page-a at this URL: applied, the result is page-b.
+  const ok = verify(envelope(ops));
+  assert.equal(ok.snapshot.page_revision, revisions('page-b').page_revision);
+});
+
+test('H-107: U is the canonical final URL with its query; a binding without the query or with a fragment form does not match', () => {
+  const withQuery = 'https://shop.example.com/catalog?page=2';
+  const snapQ = snapshotOf(page('page-a'), {}, withQuery);
+  assert.equal(code(envelope([['price', '130.00']], { url: withQuery }), snapQ), null);
+  // A server that binds origin and path only (the manifest members) fails on a URL with a query.
+  assert.equal(code(envelope([['price', '130.00']], { url: TARGET }), snapQ), 'INTEGRITY_ERROR');
+  // The serializer gives one form: host case, the default port and the fragment do not change U.
+  const snapUpper = snapshotOf(page('page-a'), {}, 'https://SHOP.example.com:443/catalog#x');
+  assert.equal(snapUpper.url, TARGET);
+  assert.equal(code(envelope([['price', '130.00']]), snapUpper), null);
+});
+
+test('H-107: verifyDelta binds the URL that it gets; without a URL the binding cannot match (fail closed)', () => {
+  const body = Buffer.from(JSON.stringify(envelope([['price', '130.00']])));
+  assert.equal(vd(snapA(), body, true, LIMITS.maxPatchBytes, TARGET).code, undefined);
+  assert.equal(vd(snapA(), body, true, LIMITS.maxPatchBytes, 'https://shop.example.com/other').code, 'INTEGRITY_ERROR');
+  assert.equal(vd(snapshotOf(page('page-a')), body, true).code, 'INTEGRITY_ERROR');
+  assert.equal(vd(snapA(), body, true, LIMITS.maxPatchBytes, null).code, 'INTEGRITY_ERROR');
+});
+
+test('B6: an input of the binding that the client cannot compute gives INTEGRITY_ERROR, never an exception', () => {
+  const body = Buffer.from(JSON.stringify(envelope([['price', '130.00']])));
+  const max = LIMITS.maxPatchBytes;
+  // URL: not a URL, empty, a URL object (not the string of the network stack), no snapshot URL.
+  for (const url of ['not a url', '', 'https://', new URL(TARGET), 7, null]) {
+    assert.equal(verifyDelta(snapA(), body, true, max, url, NONCE).code, 'INTEGRITY_ERROR', String(url));
+  }
+  assert.equal(verifyDelta(snapshotOf(page('page-a')), body, true, max, undefined, NONCE).code, 'INTEGRITY_ERROR');
+  // Nonce: absent, null, padded, standard base64 bytes, 15 or 17 bytes, a Buffer.
+  for (const nonce of [undefined, null, `${NONCE}==`, 'AAECAwQFBgcICQoLDA0O', 'AAECAwQFBgcICQoLDA0ODxA', Buffer.alloc(16), 7]) {
+    assert.equal(verifyDelta(snapA(), body, true, max, TARGET, nonce).code, 'INTEGRITY_ERROR', String(nonce));
+  }
+  // The exact inputs pass: the failures above are the inputs, not the envelope.
+  assert.equal(verifyDelta(snapA(), body, true, max, TARGET, NONCE).code, undefined);
+});
+
+test('B6: clientStep with a final URL that does not parse falls back without an exception', () => {
+  const body = Buffer.from(JSON.stringify(envelope([['price', '130.00']])));
+  for (const finalUrl of ['not a url', 'https://']) {
+    const c = ctx({ final_url: finalUrl, redirected: true });
+    const d = handleResponse(c, { status: 200, headers: DELTA, body });
+    // Step 1 (H-58): no cache key, so the transport check rejects it before the binding.
+    assert.deepEqual([d.outcome, d.error, d.next], ['rejected', 'PATCH_INVALID', 'fallback-load'], finalUrl);
+    assert.deepEqual([handleResponse(c, { status: 304, headers: [], body: null }).outcome], ['normal']);
+    assert.equal(handleResponse(c, { status: 200, headers: HTML, body: fullOf('page-b') }).outcome, 'normal');
+    assert.equal(rqpAllowed(c, finalUrl), false);
+  }
+  assert.equal(rqpAllowed(ctx(), null), false);
+});
+
+test('H-108, H-109: the request has the nonce of its context in one Rq-Nonce line; Rq-Have has only t and b; without a valid nonce no delta is offered', () => {
+  const h = requestHeaders(ctx());
+  const sent = new Map(h);
+  assert.equal(sent.get('rq-nonce'), ':AAECAwQFBgcICQoLDA0ODw==:');
+  assert.equal(h.filter(([name]) => name === 'rq-nonce').length, 1);
+  assert.equal(sent.get('rq-have'), `t=${snapA().analysis.template_revision}, b=:${havePrefixes(snapA().analysis.blocks)}:`);
+  // The order of the delta request fields: Rq-Nonce follows Rq-Have.
+  assert.deepEqual(h.map(([name]) => name), ['rq-version', 'rq-capabilities', 'accept', 'if-none-match', 'rq-have', 'rq-nonce']);
+  const other = Buffer.alloc(16, 0xfb);
+  const otherSent = new Map(requestHeaders(ctx({ nonce: other.toString('base64url') })));
+  assert.equal(otherSent.get('rq-nonce'), `:${other.toString('base64')}:`);
+  // Rq-Have is the same for every request from one snapshot (H-109: HPACK can index it).
+  assert.equal(otherSent.get('rq-have'), sent.get('rq-have'));
+  // No Rq-Nonce without a snapshot, and none on a fallback load.
+  assert.equal(new Map(requestHeaders(ctx({ snapshot: null }))).has('rq-nonce'), false);
+  assert.equal(new Map(requestHeaders(ctx({ navigation: 'fallback' }))).has('rq-nonce'), false);
+  for (const nonce of [null, undefined, 'x', `${NONCE}==`]) {
+    const c = ctx({ nonce });
+    const h = requestHeaders(c);
+    // No Rq-Have, no Rq-Nonce and no delta media type; If-None-Match stays, so a 304 still keeps the snapshot.
+    assert.deepEqual(h, [['rq-version', '1'], ['rq-capabilities', '(block-patch)'], ['accept', 'text/html'], ['if-none-match', `"${snapA().page_revision}"`]], String(nonce));
+    assert.equal(handleResponse(c, { status: 304, headers: [], body: null }).outcome, 'not-modified');
+    const d = handleResponse(c, { status: 200, headers: DELTA, body: Buffer.from(JSON.stringify(envelope([['price', '130.00']]))) });
+    assert.deepEqual([d.error, d.next], ['PATCH_INVALID', 'fallback-load'], String(nonce));
+  }
+});
+
+test('H-108: the harness interface makes a new nonce for a context without one, so two requests never share N', () => {
+  const s = snapA();
+  const plain = { document: page('page-a'), template_revision: s.analysis.template_revision, page_revision: s.page_revision, blocks: [] };
+  const context = { ...ctx(), snapshot: plain };
+  delete context.nonce;
+  const sent = () => new Map(clientRequest(context)).get('rq-nonce');
+  const n = (v) => /^:([^:]+):$/.exec(v)[1];
+  assert.notEqual(n(sent()), n(sent()));
+  assert.equal(Buffer.from(n(sent()), 'base64').length, 16);
+  assert.notEqual(newNonce(), newNonce());
+  assert.match(newNonce(), /^[A-Za-z0-9_-]{21}[AQgw]$/);
+  assert.equal(requestNonce({ nonce: NONCE }), NONCE);
+  assert.equal(requestNonce({}), null);
+});
+
+test('H-108: expectedBinding is the binding of the exact inputs, or null for an input without its form', () => {
+  const a = revisions('page-a');
+  const b = revisions('page-b');
+  assert.equal(expectedBinding(TARGET, a.page_revision, NONCE, b.page_revision), deltaBinding(TARGET, a.page_revision, NONCE, b.page_revision));
+  assert.equal(expectedBinding(`${TARGET}#x`, a.page_revision, NONCE, b.page_revision), deltaBinding(TARGET, a.page_revision, NONCE, b.page_revision));
+  for (const args of [[null, a.page_revision, NONCE, b.page_revision], ['nope', a.page_revision, NONCE, b.page_revision], [TARGET, 'r1.x', NONCE, b.page_revision], [TARGET, a.page_revision, 'x', b.page_revision], [TARGET, a.page_revision, NONCE, null]]) {
+    assert.equal(expectedBinding(...args), null, JSON.stringify(args));
+  }
+});
+
+test('H-107: handleDelta binds the final URL of the response', () => {
+  // A redirect to the same cache key (host case): U is the canonical final URL, the same as the key.
+  const body = Buffer.from(JSON.stringify(envelope([['price', '130.00']])));
+  const r = handleResponse(ctx({ final_url: 'https://SHOP.example.com/catalog', redirected: true }), { status: 200, headers: DELTA, body });
+  assert.equal(r.outcome, 'patched');
+});
+
+test('H-107: a delta response without a usable snapshot is PATCH_INVALID and falls back', () => {
+  const body = Buffer.from(JSON.stringify(envelope([['price', '130.00']])));
+  const r = handleResponse(ctx({ snapshot: null }), { status: 200, headers: DELTA, body });
+  assert.equal(r.outcome, 'rejected');
+  assert.equal(r.error, 'PATCH_INVALID');
+});
+
+test('INTEGRITY_ERROR: the binding does not match the blocks (step 7), also after an omitted block', () => {
+  const omitted = envelope([['title', 'Shop']], { next: revisions('page-b').page_revision });
+  assert.equal(code(omitted), 'INTEGRITY_ERROR');
+});
+
+test('INTEGRITY_ERROR: a binding with another policy line than the snapshot (H-55)', () => {
+  const members = { policy: { ttl_seconds: 60 } };
+  const snap = snapshotOf(page('page-a'), members, TARGET);
+  const a = revisions('page-a');
+  const content = '130.00';
+  const hash = sha256b64u(content);
+  const blocks = a.blocks.map((b) => (b.id === 'price' ? { ...b, sha256: hash } : b));
+  const env = (ttl) => envelope([['price', content]], { members, next: pageRevision(a.template_revision, blocks, { policy: { ttl_seconds: ttl } }) });
+  assert.equal(code(env(61), snap), 'INTEGRITY_ERROR');
+  assert.equal(code(env(60), snap), null);
+  // B with the policy line of the server (61) and R' of the snapshot line: the base differs.
+  assert.equal(code(envelope([['price', content]], { members, base: pageRevision(a.template_revision, a.blocks, { policy: { ttl_seconds: 61 } }) }), snap), 'INTEGRITY_ERROR');
+});
+
+test('PATCH_CONTENT_REJECTED: markup analysis of the patched document (step 8)', () => {
+  for (const [id, content] of [['price', '<textarea>x</textarea>'], ['price', '1</p><p>2'], ['title', '</title>'], ['cart', ''], ['cart', '{']]) {
+    assert.equal(code(envelope([[id, content]])), 'PATCH_CONTENT_REJECTED', `${id}: ${content}`);
+  }
+});
+
+test('PATCH_CONTENT_REJECTED: the attribute rule (step 9) after a valid analysis', () => {
+  assert.equal(code(envelope([['price', '<a onclick="x">y</a>']])), 'PATCH_CONTENT_REJECTED');
+  assert.equal(code(envelope([['price', '<a href="/p?a=1&amp;b=2">y</a>']])), null);
+});
+
+test('PATCH_CONTENT_REJECTED: step 9 is the only gate for PATCH_FORBIDDEN and FOREIGN_ALLOWED (H-78)', () => {
+  const patched = (content) => {
+    const doc = Buffer.from(page('page-a').toString('utf8').replace('>120.00<', `>${content}<`), 'utf8');
+    return analyze(doc).valid;
+  };
+  const forbidden = ['<script>alert(1)</script>', '<style>p{}</style>', '<iframe src="/v"></iframe>', '<object data="/o"></object>',
+    '<embed src="/e">', '<link rel="x">', '<meta name="x">', '<base href="/">', '<basefont>', '<bgsound src="/s">', '<LINK/>'];
+  const foreign = ['<svg><a href="#x"><text>t</text></a></svg>', '<svg><foreignObject>t</foreignObject></svg>', '<svg><script>x</script></svg>',
+    '<svg><animate attributeName="x"/></svg>', '<math><maction>x</maction></math>', '<svg><image href="/i.png"/></svg>'];
+  for (const [list, reason] of [[forbidden, 'element'], [foreign, 'foreign']]) {
+    for (const content of list) {
+      // Valid markup since H-78 (step 8 passes), rejected by step 9.
+      assert.equal(patched(content), true, `${content}: valid markup`);
+      assert.equal(patchContentFailure(Buffer.from(content)), reason, content);
+      assert.equal(code(envelope([['price', content]])), 'PATCH_CONTENT_REJECTED', content);
+    }
+  }
+  // The same names are allowed where the other list applies: title in a region, a script type in a json block.
+  assert.equal(code(envelope([['price', '<svg><title>t</title><text>u</text></svg>']])), null);
+  assert.equal(code(envelope([['cart', '{"s":"<script>x</script>"}']])), 'PATCH_CONTENT_REJECTED'); // M-25/M-04: ends the json block
+  assert.equal(code(envelope([['cart', '{"s":"<style>x"}']])), null);
+});
+
+test('PATCH_CONTENT_REJECTED sets the metric and asks for the fallback load', () => {
+  const body = Buffer.from(JSON.stringify(envelope([['price', '<a onclick="x">y</a>']])));
+  const r = handleResponse(ctx(), { status: 200, headers: DELTA, body });
+  assert.deepEqual([r.outcome, r.error, r.next, r.metric, r.snapshot], ['rejected', 'PATCH_CONTENT_REJECTED', 'fallback-load', true, null]);
+});
+
+test('PATCH_TOO_LARGE: a patched document over maxDocumentBytes', () => {
+  // Snapshot of a document just under the limit; the patch adds enough bytes to pass it.
+  const filler = 'a'.repeat(LIMITS.maxDocumentBytes - 200);
+  const doc = Buffer.from(`<!DOCTYPE html><html><head><title>t</title></head><body><p>${filler}</p><div data-rq-block="x">1</div></body></html>`);
+  const snap = snapshotOf(doc, {}, TARGET);
+  const content = 'b'.repeat(300);
+  const a = snap.analysis;
+  const blocks = [{ ...a.blocks[0], sha256: sha256b64u(content) }];
+  const env = { binding: deltaBinding(TARGET, snap.page_revision, NONCE, pageRevision(a.template_revision, blocks)), operations: [{ block_id: 'x', content }] };
+  assert.equal(vd(snap, Buffer.from(JSON.stringify(env)), true).code, 'PATCH_TOO_LARGE');
+});
+
+// Full document: manifest-patch sections 1.7 and 1.8.
+const fullOf = (id, members = {}, url = TARGET) => handle({ ...firstVisit(), target: url }, APP, page(id), members).body;
+
+test('a full document with Rq-Version 1 is stored with the manifest revisions', () => {
+  const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit' }), { status: 200, headers: HTML, body: fullOf('page-a') });
+  assert.equal(r.outcome, 'stored');
+  assert.equal(r.snapshot.page_revision, revisions('page-a').page_revision);
+  assert.equal(r.snapshot.document_sha256, sha256b64u(page('page-a')));
+});
+
+test('without Rq-Version 1 the manifest is not used and there is no error', () => {
+  for (const headers of [[['content-type', 'text/html']], [['content-type', 'text/html'], ['rq-version', '2']], [['content-type', 'text/html'], ['rq-version', '"1"']]]) {
+    const r = handleResponse(ctx({ snapshot: null }), { status: 200, headers, body: fullOf('page-a') });
+    assert.deepEqual([r.outcome, r.error], ['normal', null]);
+  }
+});
+
+test('MANIFEST_INVALID: each failed check of sections 1.7 and 1.8', () => {
+  const a = revisions('page-a');
+  const p = page('page-a');
+  const at = documentHeadStart(p);
+  const build = (manifest, type = 'application/rivqen-manifest+json', where = at) =>
+    Buffer.concat([p.subarray(0, where), Buffer.from(`<script type="${type}">${typeof manifest === 'string' ? manifest : JSON.stringify(manifest)}</script>`), p.subarray(where)]);
+  const m = manifestOf(a, TARGET);
+  const reasons = (body) => checkFull({ url: TARGET }, body).error ?? null;
+  assert.equal(reasons(build(m)), null);
+  assert.equal(reasons(p), 'count'); // no manifest element
+  assert.equal(reasons(build(m, 'application/rıvqen-manifest+json')), 'count');
+  assert.equal(reasons(build(m, 'application/rivqen-manifest+json ')), 'count'); // no trimming
+  assert.equal(reasons(build(m, undefined, p.indexOf('</body>'))), 'position');
+  assert.equal(reasons(build(m, undefined, p.indexOf('</head>'))), 'position'); // the insertion point before H-72
+  assert.equal(reasons(build(m, undefined, at + 1)), 'position'); // a line feed between <head> and the manifest
+  const element = build(m).subarray(at, build(m).length - (p.length - at));
+  assert.equal(reasons(Buffer.concat([p.subarray(0, at), element, element, p.subarray(at)])), 'count'); // two elements
+  assert.equal(reasons(build(JSON.stringify(m).replace('{', '{"protocol":"rqp/1",'))), 'json-duplicate');
+  assert.equal(reasons(build({ ...m, extra: 1 })), 'schema');
+  // H-103: the members of the manifest before H-103 are unknown members, also with correct values.
+  assert.equal(reasons(build({ ...m, template_revision: a.template_revision })), 'schema');
+  assert.equal(reasons(build({ ...m, blocks: a.blocks.map(({ id, format, sha256 }) => ({ id, format, sha256 })) })), 'schema');
+  assert.equal(reasons(build({ ...m, origin: 'https://other.example.com' })), 'url');
+  assert.equal(reasons(build({ ...m, path: '/other' })), 'url');
+  assert.equal(reasons(build({ ...m, page_revision: revisions('page-b').page_revision })), 'revision'); // the page revision of another page
+  assert.equal(reasons(build({ ...m, policy: { ttl_seconds: 60 } })), 'revision'); // H-55: policy without a new r1
+  assert.equal(reasons(Buffer.from(build(m).toString('utf8').replace('<header>', '<header data-rq-block="price">'))), 'analysis'); // invalid for RQP (M-21)
+  assert.equal(reasons(build(`${JSON.stringify(m)}${' '.repeat(LIMITS.maxManifestBytes)}`)), 'size');
+});
+
+test('H-72: each MANIFEST_INVALID case of fixture row C-21 fails the position check of client item 3', () => {
+  const dir = new URL('../../../fixtures/rqp/protocol/', import.meta.url);
+  const cases = ['NO-HEAD-START-TAG', 'OLD-POSITION', 'HEAD-WHITESPACE', 'HEAD-COMMENT-FIRST', 'HEAD-IN-TEMPLATE'];
+  for (const name of cases) {
+    const body = readFileSync(new URL(`FX-RQ-C21-${name}/response.body`, dir));
+    assert.equal(checkFull({ url: TARGET }, body).error, 'position', name);
+  }
+});
+
+/** F of an original document with the manifest element of that document at byte offset `at`. */
+const fullAt = (original, at) => {
+  const m = JSON.stringify(manifestOf(analyze(original), TARGET));
+  return Buffer.concat([original.subarray(0, at), Buffer.from(`<script type="application/rivqen-manifest+json">${m}</script>`), original.subarray(at)]);
+};
+
+test('H-79a: an implied head: the manifest before the first head content is accepted at the server position only', () => {
+  const o = Buffer.from('<!DOCTYPE html>\n<html>\n<meta charset="utf-8">\n<title data-rq-block="t">T</title>\n<p data-rq-block="p">1</p>\n', 'utf8');
+  assert.equal(analyze(o).valid, true);
+  const p = o.indexOf('<meta');
+  assert.equal(documentHeadStart(o), p);
+  assert.equal(checkFull({ url: TARGET }, fullAt(o, p)).error, undefined);
+  // The server F is what the reference server sends.
+  assert.deepEqual(handle(firstVisit(), APP, o).body, fullAt(o, p));
+  // White space after the manifest (before <meta>), or the manifest after <meta>: not the server position.
+  assert.equal(checkFull({ url: TARGET }, fullAt(o, p - 1)).error, 'position');
+  assert.equal(checkFull({ url: TARGET }, fullAt(o, o.indexOf('\n<title'))).error, 'position');
+  assert.equal(checkFull({ url: TARGET }, fullAt(o, 0)).error, 'position');
+});
+
+test('H-79a client rule C2: the position is computed on O, so a walk on F that stops at the manifest itself is not enough', () => {
+  // Each F below passes a walk on F (C1): the manifest script is the first head content.
+  // On O the server position is elsewhere, or O has none, so the client rejects F.
+  const cases = [
+    ['<!DOCTYPE html>\n<html>\n<head lang="en">\n<title data-rq-block="t">T</title>\n</head>\n<body></body></html>\n', '<html>\n'.length + 16], // a later <head lang>
+    ['<!DOCTYPE html>\n<html>\n<body>\n<p data-rq-block="p">1</p>\n</body></html>\n', '<!DOCTYPE html>\n<html>\n'.length], // body content
+    ['<!DOCTYPE html>\nShop<html><title data-rq-block="t">T</title>\n', '<!DOCTYPE html>\n'.length], // text
+    ['<!DOCTYPE html>\n<!-- c --><meta charset="utf-8"><title data-rq-block="t">T</title>\n', '<!DOCTYPE html>\n'.length], // a comment
+  ];
+  for (const [doc, at] of cases) {
+    const o = Buffer.from(doc, 'utf8');
+    assert.equal(analyze(o).valid, true, doc);
+    const f = fullAt(o, at);
+    assert.equal(documentHeadStart(f), at, `C1 would accept: ${doc}`);
+    assert.equal(checkFull({ url: TARGET }, f).error, 'position', doc);
+  }
+});
+
+test('a manifest element without an end tag fails client item 3, also when the bytes after it are a consistent manifest', () => {
+  // Without the end tag check, M would be the bytes up to the last byte and the
+  // original document "<html><head>\n": a consistent pair that the WebView does not show.
+  const original = Buffer.from('<html><head>\n');
+  const m = JSON.stringify(manifestOf(analyze(original), TARGET));
+  const body = Buffer.from(`<html><head><script type="application/rivqen-manifest+json">${m}\n`);
+  assert.equal(checkFull({ url: TARGET }, body).error, 'position');
+});
+
+test('the manifest walk fails closed when its token stack would have more than 256 entries', () => {
+  const p = page('page-a');
+  const at = documentHeadStart(p);
+  const element = `<script type="application/rivqen-manifest+json">${JSON.stringify(manifestOf(revisions('page-a'), TARGET))}</script>`;
+  const deep = (n) => Buffer.concat([p.subarray(0, at), Buffer.from(element), p.subarray(at).subarray(0, -8), Buffer.from(`${'<div>'.repeat(n)}</html>\n`)]);
+  assert.equal(checkFull({ url: TARGET }, deep(300)).error, 'walk');
+  assert.notEqual(checkFull({ url: TARGET }, deep(10)).error, 'walk');
+});
+
+test('a manifest text of exactly maxManifestBytes passes the size check; one byte more fails it', () => {
+  const p = page('page-a');
+  const at = documentHeadStart(p);
+  const m = JSON.stringify(manifestOf(revisions('page-a'), TARGET));
+  const build = (size) => Buffer.concat([
+    p.subarray(0, at),
+    Buffer.from(`<script type="application/rivqen-manifest+json">${m}${' '.repeat(size - m.length)}</script>`),
+    p.subarray(at),
+  ]);
+  assert.equal(checkFull({ url: TARGET }, build(LIMITS.maxManifestBytes)).error, undefined);
+  assert.equal(checkFull({ url: TARGET }, build(LIMITS.maxManifestBytes + 1)).error, 'size');
+});
+
+test('MANIFEST_INVALID: an upper-case manifest type is accepted (ASCII case-insensitive, H-28)', () => {
+  const body = Buffer.from(fullOf('page-a').toString('utf8').replace('application/rivqen-manifest+json', 'APPLICATION/Rivqen-Manifest+JSON'));
+  assert.equal(checkFull({ url: TARGET }, body).error, undefined);
+});
+
+test('a manifest with policy and limits and the matching page revision is accepted (H-55)', () => {
+  const members = { policy: { mode: 'public', ttl_seconds: 0 }, limits: { max_patch_bytes: 2048 } };
+  const r = handleResponse(ctx({ snapshot: null }), { status: 200, headers: HTML, body: fullOf('page-a', members) });
+  assert.equal(r.outcome, 'stored');
+  assert.deepEqual(r.snapshot.limits, members.limits);
+});
+
+test('the manifest is bound to the response URL: an http URL needs a debug build and the app flag', () => {
+  const http = 'http://shop.example.com/catalog';
+  const body = fullOf('page-a', {}, http);
+  const on = handleResponse(clientContext({ url: http, build: 'debug', allow_http: true }), { status: 200, headers: HTML, body });
+  assert.equal(on.outcome, 'stored');
+  for (const [build, flag] of [['release', true], ['debug', false]]) {
+    const off = handleResponse(clientContext({ url: http, build, allow_http: flag }), { status: 200, headers: HTML, body });
+    assert.equal(off.outcome, 'normal');
+  }
+});
+
+test('304 keeps the snapshot', () => {
+  assert.deepEqual(handleResponse(ctx(), { status: 304, headers: [], body: null }).next, 'keep');
+});
+
+// H-58: response binding.
+const r1 = (id) => `"${revisions(id).page_revision}"`;
+const on304 = (fields, etag) => handleResponse(ctx(fields), { status: 304, headers: etag === undefined ? [] : [['etag', etag]], body: null });
+
+test('H-58: a 304 is kept only for a request that sent If-None-Match "R" and an ETag that matches R weakly', () => {
+  for (const etag of [undefined, r1('page-a'), `W/${r1('page-a')}`, ` ${r1('page-a')} `]) {
+    assert.deepEqual([on304({}, etag).outcome, on304({}, etag).next], ['not-modified', 'keep'], String(etag));
+  }
+  for (const etag of [r1('page-b'), `W/${r1('page-b')}`, `${r1('page-a')}, ${r1('page-a')}`, '*', 'r1.x', `w/${r1('page-a')}`]) {
+    assert.deepEqual([on304({}, etag).outcome, on304({}, etag).next, on304({}, etag).error], ['normal', 'webview-load', null], etag);
+  }
+});
+
+test('H-58: a 304 for a request without the RQP If-None-Match gives a normal load', () => {
+  for (const fields of [{ navigation: 'fallback' }, { navigation: 'first-visit' }, { snapshot: null }]) {
+    assert.deepEqual([on304(fields).outcome, on304(fields).next], ['normal', 'webview-load'], JSON.stringify(Object.keys(fields)));
+  }
+});
+
+test('H-58: a 304 from another final URL gives a normal load; a fragment is not part of the key', () => {
+  assert.equal(on304({ final_url: `${TARGET}?page=2` }).next, 'webview-load');
+  assert.equal(on304({ final_url: 'https://shop.example.com:8443/catalog' }).next, 'webview-load');
+  assert.equal(on304({ final_url: `${TARGET}#top` }).next, 'keep');
+});
+
+test('H-58: a delta from a final URL with another cache key is PATCH_INVALID', () => {
+  const body = Buffer.from(JSON.stringify(envelope([['price', '130.00']])));
+  for (const final of [`${TARGET}?page=2`, 'http://shop.example.com/catalog', 'https://other.example.com/catalog', 'https://shop.example.com/catalog/']) {
+    const r = handleResponse(ctx({ final_url: final }), { status: 200, headers: DELTA, body });
+    assert.deepEqual([r.error, r.next], ['PATCH_INVALID', 'fallback-load'], final);
+  }
+  assert.equal(handleResponse(ctx({ final_url: `${TARGET}#x` }), { status: 200, headers: DELTA, body }).outcome, 'patched');
+});
+
+test('H-58: a full document is checked against the final URL and stored under its cache key', () => {
+  const final = 'https://shop.example.com/catalog?page=2';
+  const ok = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', final_url: final }), { status: 200, headers: HTML, body: fullOf('page-a', {}, final) });
+  assert.deepEqual([ok.outcome, ok.snapshot.url], ['stored', final]);
+  const moved = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', final_url: 'https://shop.example.com/other' }), { status: 200, headers: HTML, body: fullOf('page-a') });
+  assert.deepEqual([moved.outcome, moved.error], ['rejected', 'MANIFEST_INVALID']);
+});
+
+test('H-58: a release build does not use a manifest from an http final URL; a debug build with the flag does', () => {
+  const http = 'http://shop.example.com/catalog';
+  const body = fullOf('page-a', {}, http);
+  const run = (build, flag) => handleResponse(ctx({ snapshot: null, navigation: 'first-visit', final_url: http, build, allow_http: flag }), { status: 200, headers: HTML, body });
+  assert.deepEqual([run('release', true).outcome, run('release', true).error, run('release', true).snapshot], ['normal', null, null]);
+  assert.equal(run('debug', false).outcome, 'normal');
+  assert.deepEqual([run('debug', true).outcome, run('debug', true).snapshot.url], ['stored', http]);
+});
+
+// H-61: the public partition.
+test('H-61: the public partition needs mode public, a public origin, no private, and public or no credentials', () => {
+  const store = (fields, cacheControl, members = { policy: { mode: 'public' } }) => {
+    const headers = cacheControl === null ? HTML : [...HTML, ['cache-control', cacheControl]];
+    const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', public_enabled: true, public_origin: true, credentials: true, ...fields }), { status: 200, headers, body: fullOf('page-a', members) });
+    return r.snapshot.partition;
+  };
+  assert.equal(store({}, 'public, max-age=60'), 'public');
+  assert.equal(store({}, 'Public'), 'public');
+  assert.equal(store({ credentials: false }, null), 'public');
+  assert.equal(store({ credentials: false }, 'no-cache'), 'public');
+  assert.equal(store({}, null), 'request');
+  assert.equal(store({}, 'no-cache, max-age=0'), 'request');
+  assert.equal(store({}, 'public, private'), 'request');
+  assert.equal(store({ credentials: false }, 'private="set-cookie"'), 'request');
+  assert.equal(store({ public_origin: false }, 'public'), 'request');
+  assert.equal(store({ public_origin: undefined, credentials: false }, 'public'), 'request');
+  assert.equal(store({ credentials: undefined }, null), 'request'); // unknown credentials: fail closed
+  assert.equal(store({}, 'public', { policy: { mode: 'private' } }), 'request');
+  assert.equal(store({}, 'public', {}), 'request');
+  assert.deepEqual([...cacheDirectives('a, B=1 , c="x,private"')], ['a', 'b', 'c']);
+});
+
+test('H-81: the public partition is off by default; only public_enabled true turns it on', () => {
+  const PUBLIC = { policy: { mode: 'public' } };
+  const open = { public_origin: true, credentials: false, response_fields_visible: true, redirected: false };
+  assert.equal(partitionFor({ ...open, public_enabled: true }, [['cache-control', 'public']], PUBLIC), 'public');
+  for (const flag of [undefined, false, 1, 'true']) {
+    assert.equal(partitionFor({ ...open, public_enabled: flag }, [['cache-control', 'public']], PUBLIC), 'request', String(flag));
+  }
+  // A delta on a public snapshot also needs the app setting (deltaPartition uses partitionFor).
+  assert.equal(deltaPartition({ ...open, public_enabled: false }, [], { partition: 'public', members: PUBLIC }), 'request');
+  assert.equal(deltaPartition({ ...open, public_enabled: true }, [], { partition: 'public', members: PUBLIC }), 'public');
+  const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', public_origin: true, credentials: false }), {
+    status: 200,
+    headers: [...HTML, ['cache-control', 'public']],
+    body: fullOf('page-a', PUBLIC),
+  });
+  assert.deepEqual([r.outcome, r.snapshot.partition], ['stored', 'request']);
+});
+
+test('H-62 (2), H-63: unknown credentials count as present; Set-Cookie in the response counts as credentials', () => {
+  const store = (credentials, extra = [], cacheControl = 'no-cache') => {
+    const headers = [...HTML, ['cache-control', cacheControl], ...extra];
+    const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', public_enabled: true, public_origin: true, credentials }), { status: 200, headers, body: fullOf('page-a', { policy: { mode: 'public' } }) });
+    return r.snapshot.partition;
+  };
+  assert.equal(store(false), 'public');
+  assert.equal(store(null), 'request');
+  assert.equal(store(undefined), 'request');
+  assert.equal(store(true), 'request');
+  assert.equal(store(false, [['set-cookie', 'a=1']]), 'request');
+  assert.equal(store(false, [['Set-Cookie', 'a=1']]), 'request'); // field names are case-insensitive
+  // The explicit public directive does not depend on credentials (H-61).
+  assert.equal(store(null, [], 'public'), 'public');
+  // H-63: a Set-Cookie field gives the request partition also with an explicit public directive.
+  assert.equal(store(false, [['set-cookie', 'a=1']], 'public'), 'request');
+  assert.equal(store(null, [['Set-Cookie', 'a=1']], 'public'), 'request');
+});
+
+test('H-62 (1): F is used only when the final request carried RQP fields (origin allowlist, RQP-05)', () => {
+  const other = 'https://pay.example.net/catalog';
+  const run = (fields) => handleResponse(ctx({ snapshot: null, navigation: 'first-visit', final_url: other, ...fields }), { status: 200, headers: HTML, body: fullOf('page-a', {}, other) });
+  assert.deepEqual([run({}).outcome, run({}).error, run({}).snapshot], ['normal', null, null]);
+  // Control: the same redirect to an origin in the allowlist stores the snapshot under the final URL.
+  const listed = run({ allowlist: ['https://shop.example.com', 'https://pay.example.net'] });
+  assert.deepEqual([listed.outcome, listed.snapshot.url], ['stored', other]);
+});
+
+test('H-62 (1): the allowlist decides for each URL; a 304 and a delta from another origin fail the cache key', () => {
+  const other = 'https://pay.example.net/catalog';
+  // The request URL is in the allowlist, so the request carries RQP fields, whatever the final URL is.
+  assert.deepEqual(requestHeaders(ctx({ final_url: other })), deltaRequest('page-a').headers);
+  // A request URL outside the allowlist: no RQP fields, a normal response.
+  assert.deepEqual(requestHeaders(ctx({ allowlist: [] })), [['accept', 'text/html']]);
+  const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', allowlist: ['https://pay.example.net'] }), { status: 200, headers: HTML, body: fullOf('page-a') });
+  assert.deepEqual([r.outcome, r.snapshot], ['normal', null]);
+  // A 304 and a delta from an origin outside the allowlist never have the cache key of the snapshot.
+  assert.deepEqual([on304({ final_url: other }).outcome, on304({ final_url: other }).next], ['normal', 'webview-load']);
+  const delta = handleResponse(ctx({ final_url: other }), { status: 200, headers: DELTA, body: Buffer.from(JSON.stringify(envelope([['price', '130.00']]))) });
+  assert.deepEqual([delta.error, delta.next], ['PATCH_INVALID', 'fallback-load']);
+});
+
+// DL-038: the allowlist compares serialized origins by exact match.
+test('DL-038: the serialized origin of the URL matches an allowlist entry exactly; no wildcard, no suffix match', () => {
+  const list = (allowlist) => (url) => inAllowlist({ allowlist }, url);
+  const shop = list(['https://shop.example.com']);
+  for (const url of ['https://shop.example.com/x', 'https://SHOP.Example.COM/x', 'https://shop.example.com:443/x', 'https://user:pw@shop.example.com/x?q#f']) {
+    assert.equal(shop(url), true, url);
+  }
+  for (const url of ['https://shop.example.com.attacker.net/x', 'https://attacker.net/shop.example.com', 'http://shop.example.com/x', 'https://shop.example.com:8443/x',
+    'https://www.shop.example.com/x', 'https://example.com/x', 'https://shop.example.co/x', 'https://shop.example.com./x']) {
+    assert.equal(shop(url), false, url);
+  }
+  // IDNA: the entry is the ASCII serialization (xn--) of the host.
+  assert.equal(list(['https://xn--bcher-kva.example'])('https://BÜCHER.example/x'), true);
+  assert.equal(list(['https://bücher.example'])('https://bücher.example/x'), false);
+  // An entry that is not a serialized origin never matches: no wildcard, no trailing "/", no upper case, no default port.
+  for (const entry of ['*', 'https://*.example.com', '*.example.com', 'https://shop.example.com/', 'https://SHOP.example.com', 'https://shop.example.com:443', 'shop.example.com']) {
+    assert.equal(list([entry])('https://shop.example.com/x'), false, entry);
+  }
+  // Without a list, no origin is in the allowlist (fail closed).
+  for (const allowlist of [undefined, null, 'https://shop.example.com', {}]) assert.equal(inAllowlist({ allowlist }, 'https://shop.example.com/x'), false);
+});
+
+test('DL-038: a final URL that differs only in host case or a default port is the same origin; a suffix host is not', () => {
+  const shop = ['https://shop.example.com'];
+  const run = (final) => handleResponse(ctx({ snapshot: null, navigation: 'first-visit', final_url: final, allowlist: shop }), { status: 200, headers: HTML, body: fullOf('page-a', {}, final) });
+  for (const final of ['https://SHOP.Example.COM/catalog', 'https://shop.example.com:443/catalog']) {
+    assert.deepEqual([run(final).outcome, run(final).snapshot.url], ['stored', TARGET], final);
+  }
+  const suffix = run('https://shop.example.com.attacker.net/catalog');
+  assert.deepEqual([suffix.outcome, suffix.error, suffix.snapshot], ['normal', null, null]);
+  // The request URL is checked the same way.
+  assert.deepEqual(requestHeaders(ctx({ url: 'https://Shop.Example.com:443/catalog', allowlist: shop })), deltaRequest('page-a').headers);
+  assert.deepEqual(requestHeaders(ctx({ url: 'https://shop.example.com.attacker.net/catalog', allowlist: shop })), [['accept', 'text/html']]);
+});
+
+// H-64, H-65, DL-038: the public partition.
+const PUBLIC = { policy: { mode: 'public' } };
+const publicCtx = (fields = {}) => ctx({ snapshot: null, navigation: 'first-visit', public_enabled: true, public_origin: true, credentials: false, ...fields });
+const storeIn = (fields, headers) => handleResponse(publicCtx(fields), { status: 200, headers: [...HTML, ...headers], body: fullOf('page-a', PUBLIC) }).snapshot.partition;
+
+test('H-64: the public partition only for a response whose header fields the native SDK saw in full', () => {
+  assert.equal(storeIn({}, [['cache-control', 'public']]), 'public');
+  assert.equal(storeIn({}, [['cache-control', 'no-cache']]), 'public');
+  for (const visible of [false, undefined, null, 'true', 1]) {
+    // As if the response had a Set-Cookie field: also an explicit public directive does not help.
+    assert.equal(storeIn({ response_fields_visible: visible }, [['cache-control', 'public']]), 'request', String(visible));
+    assert.equal(storeIn({ response_fields_visible: visible }, [['cache-control', 'no-cache']]), 'request', String(visible));
+  }
+  assert.equal(partitionFor({ public_enabled: true, public_origin: true, credentials: false, redirected: false }, [], PUBLIC), 'request');
+  assert.equal(partitionFor({ public_enabled: true, public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [], PUBLIC), 'public');
+});
+
+test('DL-038: Set-Cookie2 counts as Set-Cookie; field names match ASCII case-insensitively', () => {
+  assert.equal(storeIn({}, [['cache-control', 'public'], ['set-cookie2', 'a=1; Version=1']]), 'request');
+  assert.equal(storeIn({}, [['cache-control', 'public'], ['Set-Cookie2', 'a=1']]), 'request');
+  assert.equal(storeIn({}, [['cache-control', 'public'], ['SET-COOKIE', 'a=1']]), 'request');
+  assert.equal(storeIn({}, [['cache-control', 'public'], ['set-cookie3', 'a=1'], ['x-set-cookie', 'a=1']]), 'public');
+  assert.equal(setsCookie([['set-cookie', '']]), true); // an empty value is still the field
+  assert.equal(setsCookie([['cookie', 'a=1']]), false);
+});
+
+test('withoutCredentials is only the credentials flag; partitionFor is the one place of the Set-Cookie rule', () => {
+  assert.equal(withoutCredentials({ credentials: false }), true);
+  for (const credentials of [true, null, undefined, 0, 'false']) assert.equal(withoutCredentials({ credentials }), false, String(credentials));
+  assert.equal(partitionFor({ public_enabled: true, public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [['set-cookie', 'a=1']], PUBLIC), 'request');
+});
+
+const publicSnapshot = () => snapshotOf(page('page-a'), PUBLIC, TARGET, 'public');
+/** A consistent delta from the public snapshot of page-a (its page revision has the policy line). */
+function publicDelta(extraHeaders = []) {
+  const a = revisions('page-a');
+  const content = '130.00';
+  const hash = sha256b64u(Buffer.from(content, 'utf8'));
+  const next = a.blocks.map((b) => (b.id === 'price' ? { ...b, sha256: hash } : b));
+  const binding = deltaBinding(TARGET, pageRevision(a.template_revision, a.blocks, PUBLIC), NONCE, pageRevision(a.template_revision, next, PUBLIC));
+  const env = { binding, operations: [{ block_id: 'price', content }] };
+  return { status: 200, headers: [...DELTA, ['cache-control', 'no-store'], ...extraHeaders], body: Buffer.from(JSON.stringify(env)) };
+}
+const onPublic = (fields, extraHeaders) => {
+  const snap = publicSnapshot();
+  const r = handleResponse(ctx({ public_enabled: true, public_origin: true, credentials: false, snapshot: snap, ...fields }), publicDelta(extraHeaders));
+  // The public snapshot itself does not change (H-65).
+  assert.deepEqual([snap.partition, snap.page_revision, snap.document], [publicSnapshot().partition, publicSnapshot().page_revision, page('page-a')]);
+  return r;
+};
+
+test('H-65: a delta on a public snapshot keeps the result public only under the RQP-25 conditions and known absent credentials', () => {
+  const ok = onPublic({});
+  assert.deepEqual([ok.outcome, ok.snapshot.partition, ok.snapshot.url], ['patched', 'public', TARGET]);
+  assert.equal(ok.snapshot.blocks.find((b) => b.id === 'price').content, '130.00');
+  const cases = [
+    [{ credentials: null }, []],
+    [{ credentials: undefined }, []],
+    [{ credentials: true }, []],
+    // A delta has no-store; an explicit public directive does not replace known absent credentials.
+    [{ credentials: true }, [['cache-control', 'public']]],
+    [{ response_fields_visible: false }, []],
+    [{}, [['set-cookie', 'a=1']]],
+    [{}, [['set-cookie2', 'a=1']]],
+    [{}, [['cache-control', 'private']]],
+    [{ public_origin: false }, []],
+  ];
+  for (const [fields, headers] of cases) {
+    const r = onPublic(fields, headers);
+    assert.deepEqual([r.outcome, r.snapshot.partition], ['patched', 'request'], JSON.stringify([fields, headers]));
+  }
+});
+
+test('H-65: a snapshot in the partition of the request gives a result in the partition of the request', () => {
+  const snap = snapshotOf(page('page-a'), PUBLIC, TARGET);
+  const r = handleResponse(ctx({ public_enabled: true, public_origin: true, credentials: false, snapshot: snap }), publicDelta([['cache-control', 'public']]));
+  assert.deepEqual([r.outcome, r.snapshot.partition], ['patched', 'request']);
+  assert.equal(deltaPartition({ public_enabled: true, public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [], { partition: 'request', members: PUBLIC }), 'request');
+  assert.equal(deltaPartition({ public_enabled: true, public_origin: true, credentials: false, response_fields_visible: true, redirected: false }, [], { partition: 'public', members: PUBLIC }), 'public');
+});
+
+test('H-65: a 304 on a public snapshot keeps the snapshot as it is, also with Set-Cookie or private on the 304', () => {
+  for (const headers of [[], [['set-cookie', 'a=1']], [['cache-control', 'private']]]) {
+    const snap = publicSnapshot();
+    const r = handleResponse(ctx({ public_enabled: true, public_origin: true, credentials: null, snapshot: snap }), { status: 304, headers, body: null });
+    assert.deepEqual([r.outcome, r.next, r.snapshot, snap.partition], ['not-modified', 'keep', null, 'public'], JSON.stringify(headers));
+  }
+});
+
+// H-81 (S4 security review L1): with the app setting off, a public entry is not read,
+// offered, revalidated or shown. Such an entry can exist from a time when the setting was on.
+const offPublic = (fields = {}) => ctx({ public_origin: true, credentials: false, snapshot: publicSnapshot(), ...fields });
+
+test('H-81 (L1): a public snapshot without the app setting offers no validators; the setting on offers them', () => {
+  for (const flag of [undefined, false, 'true', 1]) {
+    const sent = requestHeaders(offPublic({ public_enabled: flag }));
+    assert.deepEqual(sent, [['rq-version', '1'], ['rq-capabilities', '(block-patch)'], ['accept', 'text/html']], String(flag));
+  }
+  const on = new Map(requestHeaders(offPublic({ public_enabled: true })));
+  assert.equal(on.get('if-none-match'), `"${publicSnapshot().page_revision}"`);
+  assert.equal(on.has('rq-have'), true);
+  // A snapshot of the request partition is used whatever the setting says.
+  const own = new Map(requestHeaders(ctx({ public_enabled: false })));
+  assert.equal(own.get('if-none-match'), `"${snapA().page_revision}"`);
+});
+
+test('H-81 (L1): a 304 for a public snapshot without the app setting is a normal load, not a revalidation', () => {
+  const tag = `"${publicSnapshot().page_revision}"`;
+  for (const headers of [[], [['etag', tag]]]) {
+    const r = handleResponse(offPublic({ public_enabled: false }), { status: 304, headers, body: null });
+    assert.deepEqual([r.outcome, r.next, r.snapshot], ['normal', 'webview-load', null], JSON.stringify(headers));
+  }
+  const on = handleResponse(offPublic({ public_enabled: true }), { status: 304, headers: [], body: null });
+  assert.deepEqual([on.outcome, on.next], ['not-modified', 'keep']);
+});
+
+test('H-81 (L1): a 304 never revalidates a public snapshot without the app setting, also when its tag was sent', () => {
+  const sent = [['if-none-match', `"${publicSnapshot().page_revision}"`]];
+  assert.equal(notModifiedAccepted(offPublic({ public_enabled: false }), sent, []), false);
+  assert.equal(notModifiedAccepted(offPublic({ public_enabled: true }), sent, []), true);
+});
+
+test('H-81 (L1): a valid delta on a public snapshot without the app setting is rejected as a delta that was not offered', () => {
+  const r = handleResponse(offPublic({ public_enabled: false }), publicDelta());
+  assert.deepEqual([r.outcome, r.error, r.next, r.metric, r.snapshot], ['rejected', 'PATCH_INVALID', 'fallback-load', false, null]);
+  assert.equal(handleResponse(offPublic({ public_enabled: true }), publicDelta()).outcome, 'patched');
+});
+
+test('H-81 (L1): usableSnapshot hides only a public snapshot, and only without the app setting', () => {
+  const pub = publicSnapshot();
+  const own = snapA();
+  assert.equal(usableSnapshot({ snapshot: pub }), null);
+  assert.equal(usableSnapshot({ snapshot: pub, public_enabled: false }), null);
+  assert.equal(usableSnapshot({ snapshot: pub, public_enabled: true }), pub);
+  assert.equal(usableSnapshot({ snapshot: own }), own);
+  assert.equal(usableSnapshot({ snapshot: null, public_enabled: true }), null);
+  assert.equal(usableSnapshot({ public_enabled: true }), null);
+});
+
+test('H-81 (L1): a full document with a public snapshot and the setting off is stored in the partition of the request', () => {
+  const r = handleResponse(offPublic({ public_enabled: false }), { status: 200, headers: [...HTML, ['cache-control', 'public']], body: fullOf('page-b', PUBLIC) });
+  assert.deepEqual([r.outcome, r.snapshot.partition], ['stored', 'request']);
+});
+
+test('the harness interface takes the partition of the context snapshot', () => {
+  const s = publicSnapshot();
+  const plain = { document: page('page-a'), template_revision: s.analysis.template_revision, page_revision: s.page_revision, blocks: [], ...PUBLIC };
+  const context = { ...ctx({ public_enabled: true, public_origin: true, credentials: false, snapshot: null }), snapshot: { ...plain, partition: 'public' } };
+  assert.equal(clientStep(context, publicDelta()).snapshot.partition, 'public');
+  assert.equal(clientStep({ ...context, snapshot: plain }, publicDelta()).snapshot.partition, 'request');
+  assert.throws(() => clientStep({ ...context, snapshot: { ...plain, partition: 'shared' } }, publicDelta()), /unknown partition shared/);
+});
+
+// H-67: a result that comes through a redirect never goes to the public partition.
+test('H-67: redirected is true for any redirect, also to the same URL; only false with the same final URL means no redirect', () => {
+  assert.equal(redirected({ url: TARGET, redirected: false }), false);
+  assert.equal(redirected({ url: TARGET, final_url: TARGET, redirected: false }), false);
+  assert.equal(redirected({ url: TARGET, final_url: TARGET, redirected: true }), true);
+  // Another final URL is a redirect, also with the flag false and for the same cache key.
+  for (const final of ['https://shop.example.com/other', 'https://SHOP.example.com/catalog', `${TARGET}#x`]) {
+    assert.equal(redirected({ url: TARGET, final_url: final, redirected: false }), true, final);
+  }
+  // Fails closed: a flag that is not false counts as a redirect.
+  for (const flag of [undefined, null, 0, 'false']) assert.equal(redirected({ url: TARGET, redirected: flag }), true, String(flag));
+});
+
+test('H-67: F that comes through a redirect goes to the partition of the request, also with Cache-Control public', () => {
+  assert.equal(storeIn({}, [['cache-control', 'public']]), 'public'); // control: no redirect
+  const final = 'https://shop.example.com/catalog?page=1';
+  const moved = handleResponse(publicCtx({ final_url: final }), { status: 200, headers: [...HTML, ['cache-control', 'public']], body: fullOf('page-a', PUBLIC, final) });
+  assert.deepEqual([moved.outcome, moved.snapshot.url, moved.snapshot.partition], ['stored', final, 'request']);
+  assert.equal(storeIn({ redirected: true }, [['cache-control', 'public']]), 'request');
+  assert.equal(storeIn({ redirected: true, final_url: TARGET }, []), 'request');
+  assert.equal(partitionFor({ public_enabled: true, public_origin: true, credentials: false, response_fields_visible: true, url: TARGET, redirected: true }, [['cache-control', 'public']], PUBLIC), 'request');
+});
+
+test('H-67: a delta on a public snapshot that comes through a redirect gives a result in the partition of the request', () => {
+  for (const fields of [{ redirected: true }, { final_url: 'https://SHOP.example.com:443/catalog' }]) {
+    const r = onPublic(fields, []);
+    assert.deepEqual([r.outcome, r.snapshot.url, r.snapshot.partition], ['patched', TARGET, 'request'], JSON.stringify(fields));
+  }
+  assert.equal(deltaPartition({ public_enabled: true, public_origin: true, credentials: false, response_fields_visible: true, url: TARGET, redirected: true }, [], { partition: 'public', members: PUBLIC }), 'request');
+});
+
+test('H-67: a 304 on a public snapshot after a redirect to the same URL keeps the snapshot as it is', () => {
+  const snap = publicSnapshot();
+  const r = handleResponse(ctx({ public_enabled: true, public_origin: true, credentials: false, redirected: true, snapshot: snap }), { status: 304, headers: [], body: null });
+  assert.deepEqual([r.outcome, r.next, r.snapshot, snap.partition], ['not-modified', 'keep', null, 'public']);
+});
+
+// H-68: no RQP for a URL with a user name or a password.
+test('H-68: hasUserinfo is true for a user name, a password or both; an empty user information does not count', () => {
+  for (const url of ['https://user:secret@shop.example.com/catalog', 'https://user@shop.example.com/catalog', 'https://:secret@shop.example.com/catalog', 'https://shop.example.com@attacker.example/']) {
+    assert.equal(hasUserinfo(url), true, url);
+  }
+  for (const url of [TARGET, 'https://@shop.example.com/catalog', 'https://:@shop.example.com/catalog', 'https://shop.example.com/a@b', 'https://shop.example.com\\@attacker.example/']) {
+    assert.equal(hasUserinfo(url), false, url);
+  }
+});
+
+test('H-68: no RQP field to a URL with user information, also when its origin is in the allowlist', () => {
+  const allowlist = ['https://shop.example.com'];
+  for (const url of ['https://user:secret@shop.example.com/catalog', 'https://user@shop.example.com/catalog', 'https://:secret@shop.example.com/catalog']) {
+    assert.equal(inAllowlist({ allowlist }, url), true, url); // the origin has no user information
+    assert.equal(rqpAllowed(clientContext({ url, allowlist })), false, url);
+    assert.deepEqual(requestHeaders(clientContext({ url, allowlist, navigation: 'first-visit' })), [['accept', 'text/html']], url);
+    const r = handleResponse(clientContext({ url, allowlist }), { status: 200, headers: HTML, body: fullOf('page-a') });
+    assert.deepEqual([r.outcome, r.error, r.snapshot], ['normal', null, null], url);
+  }
+  assert.equal(rqpAllowed(clientContext({ url: 'https://@shop.example.com/catalog', allowlist })), true);
+});
+
+test('H-68: a final URL with user information: F gives a normal page, a 304 and a delta fail the cache key', () => {
+  const final = 'https://user:secret@shop.example.com/catalog';
+  const full = handleResponse(ctx({ snapshot: null, navigation: 'first-visit', final_url: final }), { status: 200, headers: HTML, body: fullOf('page-a', {}, final) });
+  assert.deepEqual([full.outcome, full.error, full.snapshot], ['normal', null, null]);
+  assert.deepEqual([on304({ final_url: final }).outcome, on304({ final_url: final }).next], ['normal', 'webview-load']);
+  const delta = handleResponse(ctx({ final_url: final }), { status: 200, headers: DELTA, body: Buffer.from(JSON.stringify(envelope([['price', '130.00']]))) });
+  assert.deepEqual([delta.outcome, delta.error, delta.next], ['rejected', 'PATCH_INVALID', 'fallback-load']);
+});
+
+// H-69: an allowlist entry is its own serialized origin.
+test('H-69: validAllowlistEntry accepts only a string that is its own serialized origin', () => {
+  for (const entry of ['https://shop.example.com', 'http://shop.example.com', 'https://shop.example.com:8443', 'https://xn--fa-hia.example', 'https://[::1]', 'https://192.0.2.1']) {
+    assert.equal(validAllowlistEntry(entry), true, entry);
+  }
+  const invalid = ['HTTPS://shop.example.com', 'https://SHOP.example.com', 'https://shop.example.com:443', 'http://shop.example.com:80', 'https://shop.example.com/',
+    'https://shop.example.com/catalog', 'https://faß.example', 'https://bücher.example', '*', '*.example.com', 'shop.example.com', ' https://shop.example.com',
+    'https://shop.example.com ', 'https://user:pw@shop.example.com', 'https://shop.example.com?q', 'https://shop.example.com#f', 'null', 'file:///x', '', 'https://[0:0::1]',
+    'https://*.example.com', 'http://*', 'https://shop*.example.com', 'wss://shop.example.com', 'ftp://shop.example.com'];
+  for (const entry of invalid) assert.equal(validAllowlistEntry(entry), false, entry);
+  // Never throws: also not for a value that cannot become a string.
+  for (const entry of [null, undefined, 1, ['https://shop.example.com'], { href: 'https://shop.example.com' }, Symbol('x')]) assert.equal(validAllowlistEntry(entry), false, typeof entry);
+});
+
+// DL-040 L-3: the origin is the one of the WHATWG parse of the URL.
+test('DL-040 L-3: a backslash in an https URL is a path separator, and an IDN host has its nontransitional xn-- form', () => {
+  const shop = { allowlist: ['https://shop.example.com'] };
+  assert.equal(inAllowlist(shop, 'https://attacker.example\\@shop.example.com/catalog'), false);
+  assert.equal(inAllowlist(shop, 'https://shop.example.com\\@attacker.example/catalog'), true);
+  assert.equal(inAllowlist(shop, 'https://shop.example.com@attacker.example/catalog'), false);
+  assert.equal(inAllowlist({ allowlist: ['https://xn--fa-hia.example'] }, 'https://faß.example/'), true);
+  assert.equal(inAllowlist({ allowlist: ['https://fass.example'] }, 'https://faß.example/'), false);
+});
+
+test('a patched snapshot keeps the cache key of the snapshot', () => {
+  const r = handleResponse(ctx(), { status: 200, headers: DELTA, body: Buffer.from(JSON.stringify(envelope([['price', '130.00']]))) });
+  assert.deepEqual([r.snapshot.url, r.snapshot.partition], [TARGET, 'request']);
+});
+
+// Request fields (negotiation section 6.2).
+test('request fields: R(snapshot) for a delta navigation, no delta fields otherwise', () => {
+  assert.deepEqual(requestHeaders(ctx()), deltaRequest('page-a').headers);
+  const first = requestHeaders(ctx({ snapshot: null, navigation: 'first-visit' }));
+  assert.deepEqual(first, firstVisit().headers);
+  assert.deepEqual(requestHeaders(ctx({ navigation: 'fallback' })), firstVisit().headers);
+  assert.deepEqual(requestHeaders(ctx({ url: 'http://shop.example.com/catalog' })), [['accept', 'text/html']]);
+});
+
+// Attribute rule (manifest-patch section 4.2 table).
+test('attribute rule: the examples of manifest-patch section 4.2', () => {
+  const rejected = ['<a onclick="x()">y</a>', '<a ONLOAD=x>y</a>', '<a href="javascript:x">y</a>', '<a href=" JavaScript:x">y</a>',
+    '<a href="java&#x09;script:x">y</a>', '<a href="&#106;avascript:x">y</a>', '<a href="java&colon;x">y</a>', '<a href="&Tab;javascript:x">y</a>',
+    '<a href="java&#x73\ncript:x">y</a>', '<a href="java\tscript:x">y</a>',
+    "<a href='\x01javascript:x'>y</a>", '<a title="x" title="javascript:y">z</a>',
+    // H-59: vbscript: and data: with the same normalization.
+    '<a href="vbscript:x">y</a>', '<a href="data:text/html,x">y</a>', '<a href=" \tDa\nTa:x">y</a>',
+    '<a href="\x00VbScRiPt:x">y</a>', "<a title='data:x'>y</a>", '<a href=data:x>y</a>',
+    // H-83: only raster images, only in img/source src and srcset and video poster, only in HTML context.
+    '<img src="data:image/svg+xml,x">', '<img src="data:text/html,x">', '<a href="data:image/png,x">y</a>', '<svg><image href="data:image/png,x"/></svg>',
+    '<img srcset="/a.png 1x, data:image/svg+xml,x 2x">', '<source srcset="/a.png 1x, javascript:x 2x">', '<img srcset="/a.png 1x,&#32;data:text/html,x 2x">',
+    '<img src="data:image/svg%2Bxml,x">', '<video src="data:image/png,x">', '<img poster="data:image/png,x">'];
+  const accepted = ['<a href="/p?a=1&amp;b=2">y</a>', '<b title="Tom &amp; Jerry">y</b>', '<a data-x="javascript">y</a>', '<a href="/javascript:x">y</a>', 'text & more', '<!-- <a onclick=x> -->',
+    '<a href="/data:x">y</a>', '<a href="database:x">y</a>', '<a href="data">y</a>', '<a href="vbscript">y</a>', '<a href="x-data:y">y</a>',
+    // H-77: the decision byte is not "&", or its reference gives a character that ends the scheme.
+    '<b title="a &quot; b">y</b>', '<a href="?a=1&b=2">y</a>', '<b alt="&#169; 2026">y</b>', '<a href="data&amp;:x">y</a>', '<a href="&COLON;x">y</a>', '<a href=&AMP;>y</a>',
+    // H-83: raster data: images.
+    '<img src="data:image/png;base64,iVBO">', '<img src="DATA:image/png,x">', '<video poster="data:image/jpeg;base64,x">', '<source src="data:image/webp,x">',
+    '<img srcset="/a.png 1x, data:image/png;base64,iVBO 2x">'];
+  for (const c of rejected) assert.equal(passesPatchContentRule(Buffer.from(c)), false, c);
+  for (const c of accepted) assert.equal(passesPatchContentRule(Buffer.from(c)), true, c);
+});
+
+test('attribute tokenizer: quoted, unquoted, valueless, duplicate and "=" names', () => {
+  const tag = Buffer.from('<a b="1" c=\'2\' d=3 e f = "4"/ =g h="5"x=6>');
+  const got = attributesOf(tag, 0, tag.length).map(({ name, value }) => [name, value.toString()]);
+  assert.deepEqual(got, [['b', '1'], ['c', '2'], ['d', '3'], ['e', ''], ['f', '4'], ['=g', ''], ['h', '5'], ['x', '6']]);
+  assert.equal(attributeRejected('onx', Buffer.alloc(0)), true);
+  assert.equal(attributeRejected('o', Buffer.from('&amp')), false); // H-77: "amp" is not one of the six names
+});
+
+test('the server never inserts a manifest text that contains "<" (manifest-patch section 1.7, server item 3)', () => {
+  assert.equal(fullDocument(page('page-a'), 0, { a: '<' }), null);
+  assert.equal(snapshotOf(blockPage('é')).analysis.blocks[0].id, 'x');
+});
+
+const pick = (r) => [r.outcome, r.error, r.next];
+/** page-a with `extra` immediately after its title element. */
+const p2 = (extra) => page('page-a').toString('utf8').replace('</title>', `</title>${extra}`);
+
+test('a snapshot needs a document that is valid for RQP', () => {
+  assert.throws(() => snapshotOf(page('page-c')), /valid for RQP/);
+});
+
+test('a block of exactly 4096 bytes lists its content in the result; one byte more does not', () => {
+  const stored = (n) => {
+    const body = handle(firstVisit(), APP, blockPage('a'.repeat(n))).body;
+    return handleResponse(ctx({ snapshot: null, navigation: 'first-visit' }), { status: 200, headers: HTML, body }).snapshot.blocks[0];
+  };
+  assert.equal(stored(4096).content, 'a'.repeat(4096));
+  assert.equal(Object.hasOwn(stored(4097), 'content'), false);
+});
+
+test('rule 5: no scheme other than https and http gets RQP, also in a debug build with the http flag', () => {
+  for (const url of ['ftp://shop.example.com/catalog', 'ws://shop.example.com/catalog']) {
+    const c = clientContext({ url, allowlist: [new URL(url).origin], build: 'debug', allow_http: true });
+    assert.equal(rqpAllowed(c), false, url);
+  }
+});
+
+test('only a 200 with the delta type is a delta, and only a 200 text/html with Rq-Version 1 is a full document', () => {
+  const delta = Buffer.from(JSON.stringify(envelope([['price', '130.00']])));
+  for (const status of [203, 206]) {
+    assert.deepEqual(pick(handleResponse(ctx(), { status, headers: DELTA, body: delta })), ['normal', null, 'show'], String(status));
+  }
+  const full = fullOf('page-a');
+  const first = ctx({ snapshot: null, navigation: 'first-visit' });
+  const cases = [
+    [404, HTML],
+    [200, [['content-type', 'application/xhtml+xml; charset=utf-8'], ['rq-version', '1']]],
+    [200, [['content-type', 'text/html; charset=utf-8'], ['rq-version', '1.0']]],
+  ];
+  for (const [status, headers] of cases) {
+    assert.deepEqual(pick(handleResponse(first, { status, headers, body: full })), ['normal', null, 'show'], JSON.stringify([status, headers]));
+  }
+});
+
+test('MANIFEST_INVALID: the page revision that the client computes from its analysis is not page_revision (H-103)', () => {
+  const p = page('page-a');
+  const at = documentHeadStart(p);
+  const a = revisions('page-a');
+  const m = manifestOf(a, TARGET);
+  const error = (manifest, doc = p, where = at) => {
+    const element = Buffer.from(`<script type="application/rivqen-manifest+json">${JSON.stringify(manifest)}</script>`);
+    return checkFull({ url: TARGET }, Buffer.concat([doc.subarray(0, where), element, doc.subarray(where)])).error ?? null;
+  };
+  assert.equal(error(m), null);
+  // A page revision of the same blocks with another template revision, another block id, another format or one more block.
+  const renamed = (i, change) => a.blocks.map((b, k) => (k === i ? { ...b, ...change } : b));
+  const wrong = [
+    pageRevision(revisions('page-t2').template_revision, a.blocks),
+    pageRevision(a.template_revision, [...a.blocks, { id: 'extra', format: 'html', sha256: a.blocks[0].sha256 }]),
+    pageRevision(a.template_revision, renamed(1, { id: 'cost' })),
+    pageRevision(a.template_revision, renamed(2, { format: 'html' })),
+    pageRevision(a.template_revision, renamed(1, { sha256: sha256b64u('130.00') })),
+  ];
+  for (const r of wrong) assert.equal(error({ ...m, page_revision: r }), 'revision', r);
+  // An original document that is not valid for RQP.
+  const c = page('page-c');
+  assert.equal(error(m, c, documentHeadStart(c)), 'analysis');
+});
+
+test('H-103: after the page revision check the client uses its computed template revision and digests', () => {
+  const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit' }), { status: 200, headers: HTML, body: fullOf('page-a') });
+  const a = revisions('page-a');
+  assert.equal(r.snapshot.template_revision, a.template_revision);
+  assert.deepEqual(r.snapshot.blocks.map(({ id, format, sha256 }) => ({ id, format, sha256 })), a.blocks.map(({ id, format, sha256 }) => ({ id, format, sha256 })));
+  // Rq-Have of the next request comes from the same values.
+  const snap = snapshotOf(page('page-a'), {}, TARGET);
+  assert.deepEqual(requestHeaders(ctx({ snapshot: snap })), deltaRequest('page-a').headers);
+});
+
+test('manifest elements: only a script start tag with exactly the 32 bytes of the type, ASCII case-insensitive', () => {
+  const span = (s) => [Buffer.from(s), { start: 0, end: Buffer.byteLength(s) }];
+  assert.equal(isManifestType(...span('application/rivqen-manifest+json')), true);
+  assert.equal(isManifestType(...span('application/rivqen-manifest+jsox')), false);
+  assert.equal(isManifestType(Buffer.alloc(0), null), false);
+  const doc = Buffer.from('<html><head></head><body><div type="application/rivqen-manifest+json"></div><p></script type="application/rivqen-manifest+json"></body>');
+  assert.deepEqual(findManifestElements(doc).elements, []);
+  // A classic script (no type attribute) is not a manifest element.
+  const classic = Buffer.from(p2('<script>var n = 1;</script>'));
+  assert.equal(analyze(classic).valid, true);
+  const r = handleResponse(ctx({ snapshot: null, navigation: 'first-visit' }), { status: 200, headers: HTML, body: handle(firstVisit(), APP, classic).body });
+  assert.equal(r.outcome, 'stored');
+});
+
+test('diff-engine order: a wrong binding (step 7) is found before the markup analysis of the patched document (step 8)', () => {
+  const env = envelope([['price', '<span data-rq-block="y">a</span>']], { next: revisions('page-b').page_revision });
+  assert.equal(code(env), 'INTEGRITY_ERROR');
+  assert.equal(code(envelope([['price', '<span data-rq-block="y">a</span>']])), 'PATCH_CONTENT_REJECTED');
+});
+
+test('a patched document of exactly maxDocumentBytes is applied', () => {
+  const content = 'b'.repeat(300);
+  const head = '<!DOCTYPE html><html><head><title>t</title></head><body><p>';
+  const tail = '</p><div data-rq-block="x">1</div></body></html>';
+  const filler = 'a'.repeat(LIMITS.maxDocumentBytes - head.length - tail.length - content.length + 1);
+  const snap = snapshotOf(Buffer.from(head + filler + tail), {}, TARGET);
+  const a = snap.analysis;
+  const sha = sha256b64u(content);
+  const next = pageRevision(a.template_revision, [{ ...a.blocks[0], sha256: sha }]);
+  const env = { binding: deltaBinding(TARGET, snap.page_revision, NONCE, next), operations: [{ block_id: 'x', content }] };
+  const r = vd(snap, Buffer.from(JSON.stringify(env)), true);
+  assert.equal(r.code, undefined);
+  assert.equal(r.snapshot.document.length, LIMITS.maxDocumentBytes);
+});
+
+test('step 9: the attribute rule reads only html blocks; a json block with markup text is applied', () => {
+  const r = verify(envelope([['cart', '{"t":"<b onclick=x>"}']]));
+  assert.equal(r.code, undefined);
+  assert.equal(r.snapshot.analysis.blocks[2].id, 'cart');
+});
+
+test('harness interface: the request fields of a context, and a context snapshot that does not match its document', () => {
+  const s = snapA();
+  const plain = { document: page('page-a'), template_revision: s.analysis.template_revision, page_revision: s.page_revision, blocks: [] };
+  const context = { ...ctx(), snapshot: plain };
+  assert.deepEqual(clientRequest(context), deltaRequest('page-a').headers);
+  assert.deepEqual(clientRequest({ ...context, snapshot: null, navigation: 'first-visit' }), firstVisit().headers);
+  assert.throws(() => clientStep({ ...context, snapshot: { ...plain, page_revision: revisions('page-b').page_revision } }, { status: 304, headers: [], body: null }), /does not match/);
+});
+
+// S6 security review F1 (probes 1 to 3): a delta of the reference server that a cache
+// replays to another snapshot. Each was applied before H-107; each is INTEGRITY_ERROR now.
+const probePage = (title, price, cart) => Buffer.from(
+  `<!DOCTYPE html>\n<html>\n<head>\n<title data-rq-block="title">${title}</title>\n</head>\n<body>\n` +
+  `<p data-rq-block="price">${price}</p>\n<div data-rq-block="cart">${cart}</div>\n<p>${'static '.repeat(80)}</p>\n</body>\n</html>\n`, 'utf8');
+/** The harness context of a snapshot of `doc` at `url` (the members `members`). */
+function probeContext(doc, url, members = {}, fields = {}) {
+  const s = snapshotOf(doc, members, url);
+  return {
+    url, final_url: url, redirected: false, build: 'release', allow_http: false, allowlist: [new URL(url).origin],
+    credentials: null, response_fields_visible: true, public_enabled: false, public_origin: false, navigation: 'delta', nonce: NONCE,
+    snapshot: { document: doc, template_revision: s.analysis.template_revision, page_revision: s.page_revision, blocks: [], ...members },
+    ...fields,
+  };
+}
+/** The delta of the reference server for a client with `base` at `url`, to the page `current`. */
+function probeDelta(base, current, url, members = {}) {
+  const d = handle({ method: 'GET', target: url, headers: clientRequest(probeContext(base, url, members)) }, APP, current, members);
+  assert.equal(d.kind, 'delta');
+  return { status: d.status, headers: d.headers, body: d.body };
+}
+
+test('S6 security review F1: rollback, stale pinning, cross-user and cross-URL deltas give INTEGRITY_ERROR (H-107)', () => {
+  const url = 'https://a.example/p';
+  const v1 = probePage('Shop', '10', 'e');
+  const v2 = probePage('Shop', '12', 'e');
+  const d12 = probeDelta(v1, v2, url);
+  const cases = [
+    ['rollback v3 -> v2', probeContext(probePage('Shop', '15', 'e'), url)],
+    ['stale replay at v2', probeContext(v2, url)],
+  ];
+  for (const [label, context] of cases) {
+    const r = clientStep(context, d12);
+    assert.deepEqual([r.outcome, r.error, r.next], ['rejected', 'INTEGRITY_ERROR', 'fallback-load'], label);
+  }
+  assert.equal(clientStep(probeContext(v1, url), d12).outcome, 'patched');
+  // Cross-URL: an all-blocks change on /p/1 replayed to /p/2 (same template).
+  const cross = probeDelta(probePage('Phone', '100', 'a'), probePage('Phone X', '110', 'b'), 'https://a.example/p/1');
+  assert.equal(clientStep(probeContext(probePage('Laptop', '900', 'c'), 'https://a.example/p/2'), cross).error, 'INTEGRITY_ERROR');
+  // Cross-user: Bob's delta (title and cart) on Carol's snapshot of the same URL.
+  const bob = probeDelta(probePage('Hi Bob', '5', 'bob-cart-1'), probePage('Hi Bob!', '5', 'bob-cart-2'), 'https://a.example/account');
+  assert.equal(clientStep(probeContext(probePage('Hi Carol', '5', 'carol-cart'), 'https://a.example/account'), bob).error, 'INTEGRITY_ERROR');
+});
+
+test('S6 security review F1 (probe 3): a logged-in delta replayed to the public snapshot of an anonymous client gives INTEGRITY_ERROR (H-107)', () => {
+  const url = 'https://a.example/home';
+  const cfg = { policy: { mode: 'public' } };
+  const pub = { public_enabled: true, public_origin: true, credentials: false };
+  const d = probeDelta(probePage('Welcome', '5', 'bob-cart-1'), probePage('Hi Bob', '5', 'bob-cart-2'), url, cfg);
+  const anonymous = probeContext(probePage('Welcome', '5', 'empty'), url, cfg, pub);
+  anonymous.snapshot.partition = 'public';
+  const r = clientStep(anonymous, d);
+  assert.deepEqual([r.outcome, r.error, r.snapshot], ['rejected', 'INTEGRITY_ERROR', null]);
+});
+
+// S6 security re-review (probe 5, cases 1 and 2): the same U and B, so H-107 alone accepted
+// both. The nonce of H-108 binds the delta to the request that the server answered.
+test('S6 security re-review B2 (probe 5, case 1): A -> B -> A, the delta D(v1 -> v2) on v3 with the bytes of v1, gives INTEGRITY_ERROR (H-108)', () => {
+  const url = 'https://a.example/p';
+  const v1 = probePage('Shop', '10', 'e');
+  const v2 = probePage('Shop', '12', 'e');
+  const v3 = probePage('Shop', '10', 'e');
+  const first = probeContext(v1, url, {}, { nonce: 'EBESExQVFhcYGRobHB0eHw' });
+  const d = handle({ method: 'GET', target: url, headers: clientRequest(first) }, APP, v2, {});
+  assert.equal(d.kind, 'delta');
+  // The request that got D applies it; the later request from v3 (another nonce) does not.
+  assert.equal(clientStep(first, d).outcome, 'patched');
+  const later = probeContext(v3, url);
+  assert.equal(later.snapshot.page_revision, first.snapshot.page_revision);
+  const r = clientStep(later, d);
+  assert.deepEqual([r.outcome, r.error, r.next], ['rejected', 'INTEGRITY_ERROR', 'fallback-load']);
+  // A context without a nonce member gets a new random nonce, as in the probe: also rejected.
+  const { nonce: _n, ...noNonce } = later;
+  assert.equal(clientStep(noNonce, d).error, 'INTEGRITY_ERROR');
+});
+
+test('S6 security re-review B1 (probe 5, case 2): the personal delta of a credentialed request replayed to an anonymous client with the same public base gives INTEGRITY_ERROR (H-108)', () => {
+  const url = 'https://a.example/home';
+  const cfg = { policy: { mode: 'public' } };
+  const anon = probePage('Welcome', '5', 'empty');
+  const pub = (fields) => {
+    const c = probeContext(anon, url, cfg, { public_enabled: true, public_origin: true, ...fields });
+    c.snapshot.partition = 'public';
+    return c;
+  };
+  const bob = pub({ credentials: true, nonce: 'EBESExQVFhcYGRobHB0eHw' });
+  const d = handle({ method: 'GET', target: url, headers: clientRequest(bob) }, APP, probePage('Hi Bob', '5', 'bob-cart: 2 items, card *4242'), cfg);
+  assert.equal(d.kind, 'delta');
+  // The request of user 1 applies it (in the partition of the request, H-65).
+  const own = clientStep(bob, d);
+  assert.deepEqual([own.outcome, own.snapshot.partition], ['patched', 'request']);
+  // User 2: no credentials, the same public snapshot (same B) and URL (same U), another nonce.
+  const r = clientStep(pub({ credentials: false }), d);
+  assert.deepEqual([r.outcome, r.error, r.snapshot], ['rejected', 'INTEGRITY_ERROR', null]);
+});

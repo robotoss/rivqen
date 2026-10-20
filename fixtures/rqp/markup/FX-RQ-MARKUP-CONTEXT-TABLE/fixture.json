@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTEXT-TABLE",
+  "description": "A block directly in a table (it would be foster-parented)",
+  "rules": [
+    "M-19"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

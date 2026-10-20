@@ -1,0 +1,424 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: The Rivqen Authors
+//
+// The conformance harness: it passes the reference steps on every fixture and
+// detects each kind of defect in a server or client response.
+
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { cpSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { test } from 'node:test';
+import { compareClient, compareServer, compareServerShould, runClient, runServer } from '../check.mjs';
+import * as client from '../src/client.mjs';
+import * as server from '../src/server.mjs';
+import { DEFAULT_NONCE, FIXTURES_DIR, fixtureNames, readJsonFile } from '../src/fixtures.mjs';
+import { parseDictionary, parseItem, parseList } from '../src/sf.mjs';
+import { page } from './helpers.mjs';
+
+const CHECK = fileURLToPath(new URL('../check.mjs', import.meta.url));
+const load = (name) => {
+  const c = readJsonFile(join(FIXTURES_DIR, name, 'case.json'));
+  const expected = readJsonFile(join(FIXTURES_DIR, name, 'expected.json'));
+  const reference = server.handle(expected.request, c.app, page(c.page), expected.server_config ?? {});
+  return { c, expected, reference, page: page(c.page) };
+};
+const withHeaders = (r, f) => ({ ...r, headers: f(r.headers.map(([n, v]) => [n, v])) });
+
+test('the reference server passes every server fixture', async () => {
+  const results = await runServer(server);
+  assert.ok(results.length >= 57);
+  assert.deepEqual(results.filter((r) => r.failures.length > 0), []);
+});
+
+test('the reference client passes every client fixture', async () => {
+  const results = await runClient(client);
+  assert.ok(results.length >= 31);
+  assert.deepEqual(results.filter((r) => r.failures.length > 0), []);
+});
+
+test('detects a wrong status', () => {
+  const { expected, reference, page: p } = load('FX-RQ-P05-NOT-MODIFIED');
+  const failures = compareServer(expected, p, { ...reference, status: 200 });
+  assert.ok(failures.some((f) => f.startsWith('status 200')), failures.join('; '));
+});
+
+test('detects a missing required header and a wrong value', () => {
+  const { expected, reference, page: p } = load('FX-RQ-P09-DELTA');
+  const missing = compareServer(expected, p, withHeaders(reference, (h) => h.filter(([n]) => n !== 'cache-control')));
+  assert.ok(missing.includes('header cache-control: absent, expected "no-store"'), missing.join('; '));
+  const wrong = compareServer(expected, p, withHeaders(reference, (h) => h.map(([n, v]) => [n, n === 'rq-version' ? '2' : v])));
+  assert.ok(wrong.some((f) => f.startsWith('header rq-version: "2"')));
+});
+
+test('detects a forbidden header: ETag on a delta, Rq-Revision, Rq-Version on a passthrough', () => {
+  const delta = load('FX-RQ-P09-DELTA');
+  assert.ok(compareServer(delta.expected, delta.page, withHeaders(delta.reference, (h) => [...h, ['ETag', '"x"']])).includes('header etag: forbidden'));
+  const full = load('FX-RQ-P01-FIRST-VISIT');
+  assert.ok(compareServer(full.expected, full.page, withHeaders(full.reference, (h) => [...h, ['rq-revision', 'r1.x']])).includes('header rq-revision: forbidden'));
+  const app = load('FX-RQ-P29-INVALID-PAGE-FIRST-VISIT');
+  assert.ok(compareServer(app.expected, app.page, withHeaders(app.reference, (h) => [...h, ['rq-version', '1']])).includes('header rq-version: forbidden'));
+});
+
+test('DL-036 (I2): Rq-Version on a 304 is optional, and when present exactly one line with the value 1', () => {
+  const { expected, reference, page: p } = load('FX-RQ-P05-NOT-MODIFIED');
+  assert.deepEqual(expected.headers_optional, { 'rq-version': '1' });
+  const add = (...values) => compareServer(expected, p, withHeaders(reference, (h) => [...h, ...values.map((v) => ['rq-version', v])]));
+  assert.deepEqual(add(), []);
+  assert.deepEqual(add('1'), []);
+  assert.deepEqual(add(' 1 '), []); // field values have no outer white space (RFC 9110 section 5.5)
+  assert.ok(add('2').includes('header rq-version: "2", expected "1" or absent'));
+  assert.ok(add('1;v=2').some((f) => f.startsWith('header rq-version: "1;v=2"')));
+  assert.ok(add('1, 1').some((f) => f.startsWith('header rq-version: "1, 1"')));
+  assert.ok(add('1', '1').includes('header rq-version: 2 field lines, expected at most one'));
+  // F has no headers_optional: there Rq-Version is required.
+  assert.equal(load('FX-RQ-P01-FIRST-VISIT').expected.headers_optional, undefined);
+});
+
+test('detects a wrong changed-block list in a delta', () => {
+  const { expected, page: p } = load('FX-RQ-P09-DELTA');
+  const all = load('FX-RQ-P10-DELTA-NO-B').reference; // all three blocks for the same pages
+  const failures = compareServer(expected, p, all);
+  assert.ok(failures.some((f) => f.startsWith('body: changed blocks [title,price,cart], expected [price]')), failures.join('; '));
+});
+
+test('detects a delta with a wrong revision, a wrong content or a schema defect', () => {
+  const { expected, reference, page: p } = load('FX-RQ-P09-DELTA');
+  const env = JSON.parse(reference.body.toString('utf8'));
+  const send = (e) => compareServer(expected, p, { ...reference, headers: reference.headers.filter(([n]) => n !== 'content-length'), body: Buffer.from(typeof e === 'string' ? e : JSON.stringify(e)) });
+  assert.deepEqual(send(env), []);
+  const other = load('FX-RQ-P05-NOT-MODIFIED').expected.headers_required.etag.slice(1, -1);
+  // H-107, H-108: another binding fails, and the failure names the inputs U, B, N and R' of the expected one.
+  const wrong = send({ ...env, binding: load('FX-RQ-P09-DELTA-QUERY').expected.body.binding });
+  const inputs = expected.body.binding_inputs;
+  assert.ok(wrong.some((f) => f.startsWith('body: binding d1.') && f.includes(`(U https://shop.example.com/catalog, B ${inputs.base_revision}, N ${inputs.nonce}, R' `)), wrong.join('; '));
+  // H-108: a server that ignores the nonce of the request (the binding of another N) fails.
+  const otherNonce = send({ ...env, binding: load('FX-RQ-P42-NONCE-OTHER').expected.body.binding });
+  assert.ok(otherNonce.some((f) => f.startsWith('body: binding d1.')), otherNonce.join('; '));
+  // The envelope of H-104 (next_revision in place of the binding) fails the schema.
+  const { binding: _binding, ...rest } = env;
+  assert.ok(send({ next_revision: other, ...rest }).some((f) => f.includes('fails the schema')));
+  const op = env.operations[0];
+  assert.ok(send({ ...env, operations: [{ ...op, content: 'x' }] }).some((f) => f.includes('is not the current content of the block')));
+  assert.ok(send({ ...env, page_id: 'x' }).some((f) => f.includes('fails the schema')));
+  // H-104: the members of the envelope before H-104 fail the schema.
+  assert.ok(send({ ...env, base_revision: other }).some((f) => f.includes('fails the schema (additionalProperties at "")')));
+  assert.ok(send({ ...env, operations: [{ ...op, sha256: 'x' }] }).some((f) => f.includes('fails the schema (additionalProperties at "/operations/0")')));
+  assert.ok(send(JSON.stringify(env).replace('{', `{"binding":"${env.binding}",`)).some((f) => f.includes('duplicate')));
+});
+
+test('compares F by the bytes around the manifest, the position and the manifest value', () => {
+  const { expected, reference, page: p } = load('FX-RQ-P01-FIRST-VISIT');
+  const text = reference.body.toString('utf8');
+  const ok = (body) => compareServer(expected, p, { ...reference, headers: reference.headers.filter(([n]) => n !== 'content-length'), body: Buffer.from(body) });
+  // Other white space and member order in the manifest: still conforming.
+  const m = JSON.parse(text.split('application/rivqen-manifest+json">')[1].split('</script>')[0]);
+  const reordered = { page_revision: m.page_revision, ...m };
+  const pretty = text.replace(JSON.stringify(m), JSON.stringify(reordered, null, 1));
+  assert.deepEqual(ok(pretty), []);
+  assert.ok(ok(text.replace('Static header', 'Static_header')).some((f) => f.includes('after the manifest element')));
+  assert.ok(ok(text.replace('<!DOCTYPE', '<!doctype')).some((f) => f.includes('before the manifest element')));
+  assert.ok(ok(text.replace('<title', '<TITLE')).some((f) => f.includes('after the manifest element')));
+  const otherRevision = load('FX-RQ-P09-DELTA').expected.body.binding_inputs.next_revision;
+  assert.ok(ok(text.replace(m.page_revision, otherRevision)).some((f) => f.includes('manifest value')));
+  const moved = text.replace(/<script type="application\/rivqen-manifest\+json">.*?<\/script>/, '').replace('</body>', `<script type="application/rivqen-manifest+json">${JSON.stringify(m)}</script></body>`);
+  assert.ok(ok(moved).some((f) => f.includes('at the insertion point')));
+});
+
+test('detects Rq-* or Accept in Vary of F and a wrong Content-Length', () => {
+  const { expected, reference, page: p } = load('FX-RQ-P01-FIRST-VISIT');
+  const vary = compareServer(expected, p, withHeaders(reference, (h) => [...h, ['vary', 'Accept-Encoding, Rq-Have']]));
+  assert.ok(vary.includes('header vary: lists rq-have (RQP-08)'));
+  assert.deepEqual(compareServer(expected, p, withHeaders(reference, (h) => [...h, ['vary', 'Accept-Encoding']])), []);
+  const length = compareServer(expected, p, withHeaders(reference, (h) => h.map(([n, v]) => [n, n === 'content-length' ? '1' : v])));
+  assert.ok(length.some((f) => f.startsWith('header content-length 1')));
+});
+
+test('DL-063 (L2): Vary of a passthrough and of D lists no Rq-* member; a passthrough may list Accept', () => {
+  const app = load('FX-RQ-P30-APP-404');
+  assert.deepEqual(compareServer(app.expected, app.page, withHeaders(app.reference, (h) => [...h, ['vary', 'Accept']])), []);
+  assert.deepEqual(compareServer(app.expected, app.page, withHeaders(app.reference, (h) => [...h, ['vary', 'Accept, RQ-Nonce']])), ['header vary: lists rq-nonce (RQP-08)']);
+  const d = load('FX-RQ-P09-DELTA');
+  // Rq-Nonce is allowed on D (expected.vary.should); another Rq-* member is not.
+  assert.deepEqual(compareServer(d.expected, d.page, d.reference), []);
+  assert.deepEqual(compareServer(d.expected, d.page, withHeaders(d.reference, (h) => [...h, ['vary', 'Rq-Have']])), ['header vary: lists rq-have (RQP-08)']);
+});
+
+test('DL-063 (L2): the Vary members of A that are not Rq-* must stay; the comparison is a set of names in any case and any number of lines', () => {
+  const { expected, reference, page: p } = load('FX-RQ-P43-APP-VARY-FULL');
+  assert.deepEqual(expected.vary, { required: ['accept-encoding'], should: [] });
+  assert.deepEqual(compareServer(expected, p, reference), []);
+  const noVary = withHeaders(reference, (h) => h.filter(([n]) => n !== 'vary'));
+  assert.deepEqual(compareServer(expected, p, noVary), ['header vary: does not list accept-encoding']);
+  assert.deepEqual(compareServer(expected, p, withHeaders(noVary, (h) => [...h, ['vary', 'ACCEPT-ENCODING']])), []);
+  assert.deepEqual(compareServer(expected, p, withHeaders(noVary, (h) => [...h, ['vary', ' '], ['vary', 'Cookie, accept-encoding']])), []);
+  // The application's Rq-Nonce kept on F fails (the defect of L2).
+  assert.deepEqual(compareServer(expected, p, withHeaders(noVary, (h) => [...h, ['vary', 'Accept-Encoding, Rq-Nonce']])), ['header vary: lists rq-nonce (RQP-08)']);
+});
+
+test('DL-063 (L1): D without X-Content-Type-Options: nosniff fails (MUST); D without Vary: Rq-Nonce fails a SHOULD only', () => {
+  const { expected, reference, page: p } = load('FX-RQ-P43-APP-VARY-DELTA');
+  assert.deepEqual(expected.vary, { required: ['accept-encoding'], should: ['rq-nonce'] });
+  assert.equal(expected.headers_required['x-content-type-options'], 'nosniff');
+  assert.deepEqual(compareServerShould(expected, reference), []);
+  const sniff = compareServer(expected, p, withHeaders(reference, (h) => h.filter(([n]) => n !== 'x-content-type-options')));
+  assert.deepEqual(sniff, ['header x-content-type-options: absent, expected "nosniff"']);
+  const noNonce = withHeaders(reference, (h) => h.filter(([n, v]) => !(n === 'vary' && v === 'Rq-Nonce')));
+  assert.deepEqual(compareServer(expected, p, noNonce), []);
+  assert.deepEqual(compareServerShould(expected, noNonce), ['header vary: does not list rq-nonce']);
+  // Rq-Nonce in another case or in one line with the other member counts.
+  assert.deepEqual(compareServerShould(expected, withHeaders(noNonce, (h) => [...h.filter(([n]) => n !== 'vary'), ['vary', 'accept-encoding, rq-nonce']])), []);
+  // Without Rq-Nonce and without Accept-Encoding: one MUST failure and one SHOULD failure.
+  const none = withHeaders(reference, (h) => h.filter(([n]) => n !== 'vary'));
+  assert.deepEqual(compareServer(expected, p, none), ['header vary: does not list accept-encoding']);
+  assert.deepEqual(compareServerShould(expected, none), ['header vary: does not list rq-nonce']);
+  // A fixture without the member vary has no SHOULD rule.
+  const full = load('FX-RQ-P01-FIRST-VISIT');
+  assert.deepEqual(compareServerShould(full.expected, full.reference), []);
+});
+
+test('DL-063: a server whose deltas lack Vary: Rq-Nonce fails at level SHOULD only, labelled and counted apart', () => {
+  const mod = fileURLToPath(new URL('./fixtures/no-vary-delta-server.mjs', import.meta.url));
+  let status = 0;
+  let out;
+  try {
+    out = execFileSync(process.execPath, [CHECK, '--server', mod, '--only', 'FX-RQ-P09'], { encoding: 'utf8', stdio: 'pipe' });
+  } catch (e) {
+    status = e.status;
+    out = e.stdout.toString();
+  }
+  assert.equal(status, 1);
+  assert.match(out, /^FAIL \[SHOULD\] FX-RQ-P09-DELTA: header vary: does not list rq-nonce$/m);
+  assert.doesNotMatch(out, /^FAIL FX-RQ/m);
+  assert.match(out, /0 passed, 0 failed, 3 SHOULD failed/);
+});
+
+test('detects a body on a 304 or a HEAD and a changed passthrough body', () => {
+  const nm = load('FX-RQ-P05-NOT-MODIFIED');
+  assert.ok(compareServer(nm.expected, nm.page, { ...nm.reference, body: Buffer.from('x') }).includes('body: 1 bytes, expected none'));
+  const app = load('FX-RQ-P30-POST');
+  assert.ok(compareServer(app.expected, app.page, { ...app.reference, body: Buffer.from('x') }).includes('body: not the application response body'));
+});
+
+test('accepts headers as a plain object and a body as a string', () => {
+  const { expected, reference, page: p } = load('FX-RQ-P09-DELTA');
+  const headers = Object.fromEntries(reference.headers);
+  assert.deepEqual(compareServer(expected, p, { status: 200, headers, body: reference.body.toString('utf8') }), []);
+});
+
+test('client comparison detects a wrong code, next action, snapshot and request field', () => {
+  const expected = readJsonFile(join(FIXTURES_DIR, 'FX-RQ-C09-AMP-ACCEPTED', 'expected.json'));
+  const good = expected.result;
+  assert.deepEqual(compareClient(expected, good, expected.request.headers), []);
+  assert.ok(compareClient(expected, { ...good, error: 'PATCH_INVALID' }).some((f) => f.startsWith('error')));
+  assert.ok(compareClient(expected, { ...good, next: 'fallback-load' }).some((f) => f.startsWith('next')));
+  assert.ok(compareClient(expected, { ...good, snapshot: null }).includes('snapshot differs'));
+  const req = expected.request.headers.map(([n, v]) => [n, n === 'rq-have' ? 'x' : v]);
+  assert.ok(compareClient(expected, good, req).some((f) => f.startsWith('request rq-have')));
+  assert.ok(compareClient(expected, good, [...expected.request.headers, ['rq-base-revision', 'x']]).some((f) => f.includes('not an rqp/1 field')));
+});
+
+test('the client fixtures catch a client that ignores H-64, H-65 or the exact origin match of DL-038', async () => {
+  const failing = async (change) => {
+    const mod = { clientStep: (context, response) => client.clientStep(change(context), response), clientRequest: client.clientRequest };
+    return (await runClient(mod)).filter((r) => r.failures.length > 0).map((r) => r.name);
+  };
+  // H-64: a client that trusts the fields of every response.
+  assert.deepEqual(await failing((c) => ({ ...c, response_fields_visible: true })), ['FX-RQ-C24-PUBLIC-FIELDS-HIDDEN', 'FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-FIELDS-HIDDEN']);
+  // H-81: a client that uses the public partition without the app setting, also a public
+  // snapshot from a time when the setting was on (security review L1).
+  assert.deepEqual(await failing((c) => ({ ...c, public_enabled: true })), [
+    'FX-RQ-C24-PUBLIC-NOT-ENABLED',
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-NOT-ENABLED-304',
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-NOT-ENABLED-DELTA',
+  ]);
+  // H-65: a client that forgets the partition of its snapshot (and so, with the setting
+  // off, uses a public entry: H-81, security review L1).
+  assert.deepEqual(await failing((c) => ({ ...c, snapshot: c.snapshot === null ? null : { ...c.snapshot, partition: 'request' } })), [
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-STAYS-PUBLIC',
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-NOT-ENABLED-304',
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-NOT-ENABLED-DELTA',
+  ]);
+  // DL-038: a client that matches the allowlist by host suffix, or compares the URL text without serialization.
+  const suffix = (c) => ({ ...c, allowlist: c.allowlist.some((o) => new URL(c.final_url).origin.startsWith(`${o}.`)) ? [...c.allowlist, new URL(c.final_url).origin] : c.allowlist });
+  assert.deepEqual(await failing(suffix), ['FX-RQ-C25-FINAL-HOST-SUFFIX']);
+  const raw = (c) => ({ ...c, allowlist: c.allowlist.includes(c.final_url.split('/').slice(0, 3).join('/')) ? c.allowlist : [] });
+  assert.deepEqual(await failing(raw), [
+    'FX-RQ-C25-FINAL-BACKSLASH-ALLOWED-HOST',
+    'FX-RQ-C25-FINAL-DEFAULT-PORT',
+    'FX-RQ-C25-FINAL-HOST-CASE',
+    'FX-RQ-C25-IDN-HOST',
+    'FX-RQ-C25-USERINFO-FINAL-304',
+    'FX-RQ-C25-USERINFO-FINAL-DELTA',
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-REDIRECT-HOST-CASE',
+  ]);
+});
+
+test('the client fixtures catch a client that ignores H-67, H-68 or the WHATWG parse of DL-040 L-3', async () => {
+  const failing = async (change) => {
+    const mod = { clientStep: (context, response) => client.clientStep(change(context), response), clientRequest: (context) => client.clientRequest(change(context)) };
+    return (await runClient(mod)).filter((r) => r.failures.length > 0).map((r) => r.name);
+  };
+  // H-67: a client that forgets the redirect when it chooses the partition (it looks at the final request only).
+  assert.deepEqual(await failing((c) => (c.public_origin ? { ...c, url: c.final_url, redirected: false } : c)), [
+    'FX-RQ-C24-PUBLIC-REDIRECT',
+    'FX-RQ-C24-PUBLIC-REDIRECT-SAME-URL',
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-REDIRECT',
+    'FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-REDIRECT-HOST-CASE',
+  ]);
+  // H-68: a client that removes the user information before its checks.
+  const strip = (u) => {
+    const x = new URL(u);
+    x.username = '';
+    x.password = '';
+    return x.href;
+  };
+  assert.deepEqual(await failing((c) => ({ ...c, url: strip(c.url), final_url: strip(c.final_url), redirected: c.redirected })), [
+    'FX-RQ-C25-USERINFO-FINAL',
+    'FX-RQ-C25-USERINFO-FINAL-304',
+    'FX-RQ-C25-USERINFO-FINAL-DELTA',
+    'FX-RQ-C25-USERINFO-REQUEST',
+  ]);
+  // DL-040 L-3: a client that parses the URL again with a parser that reads the text before a backslash and "@" as
+  // user information and takes the host after it.
+  const rfc = (u) => u.replace(/^https:\/\/[^/?#]*\\@/, 'https://');
+  assert.deepEqual(await failing((c) => ({ ...c, final_url: rfc(c.final_url) })), ['FX-RQ-C25-FINAL-BACKSLASH-ALLOWED-HOST', 'FX-RQ-C25-FINAL-BACKSLASH-OTHER-HOST']);
+});
+
+test('H-108: the client fixtures catch a client that does not use the nonce of the context', async () => {
+  const failing = async (change) => {
+    const mod = { clientStep: (context, response) => client.clientStep(change(context), response), clientRequest: (context) => client.clientRequest(change(context)) };
+    return (await runClient(mod)).filter((r) => r.failures.length > 0).map((r) => r.name);
+  };
+  // A client that sends one fixed nonce for every request.
+  assert.deepEqual(await failing((c) => ({ ...c, nonce: DEFAULT_NONCE })), ['FX-RQ-C32-NONCE-ACCEPTED']);
+  // A client that makes its own nonce (not the one of the harness), and a client that sends no nonce.
+  for (const nonce of [undefined, null]) {
+    const names = await failing((c) => ({ ...c, nonce }));
+    for (const name of ['FX-RQ-C31-ALL-BLOCKS-ACCEPTED', 'FX-RQ-C31-QUERY-ACCEPTED', 'FX-RQ-C32-NONCE-ACCEPTED', 'FX-RQ-C32-NONCE-ROLLBACK-A-B-A']) {
+      assert.ok(names.includes(name), `${String(nonce)}: ${name}`);
+    }
+  }
+});
+
+test('H-109: the server fixtures catch a server that relaxes one Rq-Nonce rule or still reads the nonce of H-108', async () => {
+  // Each model server changes the Rq-Nonce lines of the request as a server with that defect reads them.
+  const failing = async (change) => {
+    const mod = { handle: (request, ...rest) => server.handle({ ...request, headers: change(request.headers) }, ...rest) };
+    return (await runServer(mod)).filter((r) => r.failures.length > 0).map((r) => r.name);
+  };
+  const nonceLines = (h) => h.filter(([n]) => n === 'rq-nonce').map(([, v]) => v);
+  const others = (h) => h.filter(([n]) => n !== 'rq-nonce');
+  const sf = (bytes) => `:${bytes.toString('base64')}:`;
+  // Takes the first of several field lines.
+  assert.deepEqual(await failing((h) => [...others(h), ...nonceLines(h).slice(0, 1).map((v) => ['rq-nonce', v])]), ['FX-RQ-P42-NONCE-TWO-LINES']);
+  // Parses the combined value as a List and takes its first member.
+  const firstOfList = (h) => {
+    const lines = nonceLines(h);
+    if (lines.length === 0) return h;
+    const list = parseList(lines.join(', '));
+    return list === null || list.length === 0 || list[0].inner ? others(h) : [...others(h), ['rq-nonce', `${lines.join(', ').split(',')[0].split(';')[0].trim()}`]];
+  };
+  // The model writes the first member without its parameters, so it also drops the filler of TOO-LONG.
+  assert.deepEqual(await failing(firstOfList), ['FX-RQ-P42-NONCE-PARSE-FAILURE', 'FX-RQ-P42-NONCE-TOO-LONG', 'FX-RQ-P42-NONCE-TWO-LINES']);
+  // DL-063: parses a line of any length (no 128-byte limit). The model drops the
+  // parameters of a long line that is a valid Item, as such a server reads it.
+  const noLimit = (h) => others(h).concat(nonceLines(h).map((v) => {
+    const item = parseItem(v);
+    return ['rq-nonce', v.length > 128 && item !== null && item.item.type === 'bytes' ? `:${item.item.value.toString('base64')}:` : v];
+  }));
+  assert.deepEqual(await failing(noLimit), ['FX-RQ-P42-NONCE-TOO-LONG']);
+  // Accepts any length (it would use 16 bytes of it).
+  const anyLength = (h) => others(h).concat(nonceLines(h).map((v) => {
+    const item = parseItem(v);
+    if (item === null || item.item.type !== 'bytes' || item.item.value.length === 0) return ['rq-nonce', v];
+    return ['rq-nonce', sf(Buffer.concat([item.item.value, Buffer.alloc(16)]).subarray(0, 16))];
+  }));
+  // The model writes 16 bytes without the parameters, so it also drops the filler of TOO-LONG.
+  assert.deepEqual(await failing(anyLength), ['FX-RQ-P42-NONCE-15-BYTES', 'FX-RQ-P42-NONCE-17-BYTES', 'FX-RQ-P42-NONCE-TOO-LONG']);
+  // Accepts the base64url text of a String, or a Boolean as some nonce.
+  const anyType = (type) => (h) => others(h).concat(nonceLines(h).map((v) => {
+    const item = parseItem(v);
+    if (item === null || item.item.type !== type) return ['rq-nonce', v];
+    return ['rq-nonce', sf(type === 'string' ? Buffer.from(item.item.value, 'base64url') : Buffer.alloc(16))];
+  }));
+  assert.deepEqual(await failing(anyType('string')), ['FX-RQ-P42-NONCE-STRING']);
+  assert.deepEqual(await failing(anyType('boolean')), ['FX-RQ-P42-NONCE-BOOLEAN']);
+  // Rejects a field with parameters.
+  // AT-LIMIT reaches 128 bytes with a parameter, so this model fails it too.
+  assert.deepEqual(await failing((h) => others(h).concat(nonceLines(h).filter((v) => !v.includes(';')).map((v) => ['rq-nonce', v]))), ['FX-RQ-P42-NONCE-AT-LIMIT', 'FX-RQ-P42-NONCE-PARAMETER']);
+  // A server of H-108: the nonce is the Rq-Have member n; Rq-Nonce is not read.
+  const h108 = (h) => {
+    const have = parseDictionary(h.filter(([n]) => n === 'rq-have').map(([, v]) => v).join(', '));
+    const n = have?.get('n');
+    const ok = n !== undefined && !n.inner && n.item.type === 'bytes' && n.item.value.length === 16;
+    return ok ? [...others(h), ['rq-nonce', sf(n.item.value)]] : others(h);
+  };
+  const names = await failing(h108);
+  const deltaCases = fixtureNames(FIXTURES_DIR).filter((n) => n.startsWith('FX-RQ-P') && readJsonFile(join(FIXTURES_DIR, n, 'expected.json')).body?.kind === 'delta');
+  assert.ok(deltaCases.length >= 15 && deltaCases.includes('FX-RQ-P42-NONCE-IN-HAVE-IGNORED'));
+  assert.deepEqual(names, [...deltaCases, 'FX-RQ-P42-NONCE-IN-HAVE'].sort());
+});
+
+test('a missing response.body fails that client fixture only', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'rqp-protocol-check-'));
+  try {
+    for (const name of ['FX-RQ-C01-OTHER-BASE', 'FX-RQ-C02-OMITTED-BLOCK']) cpSync(join(FIXTURES_DIR, name), join(dir, name), { recursive: true });
+    rmSync(join(dir, 'FX-RQ-C01-OTHER-BASE', 'response.body'));
+    const results = await runClient(client, { dir });
+    assert.deepEqual(results, [
+      { name: 'FX-RQ-C01-OTHER-BASE', failures: ['response.body is missing'] },
+      { name: 'FX-RQ-C02-OMITTED-BLOCK', failures: [] },
+    ]);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a server module that throws fails its fixtures, and the command exits 1', async () => {
+  const results = await runServer({ handle: () => { throw new TypeError('x'); } }, { only: 'FX-RQ-P01' });
+  assert.ok(results.length > 0 && results.every((r) => r.failures[0] === 'the server threw TypeError'));
+  assert.throws(() => execFileSync(process.execPath, [CHECK, '--server', fileURLToPath(new URL('./fixtures/broken-server.mjs', import.meta.url)), '--only', 'FX-RQ-P01'], { stdio: 'pipe' }), (e) => e.status === 1);
+  assert.throws(() => execFileSync(process.execPath, [CHECK, '--bad'], { stdio: 'pipe' }), (e) => e.status === 2);
+  const out = execFileSync(process.execPath, [CHECK, '--only', 'FX-RQ-P09'], { encoding: 'utf8' });
+  assert.match(out, /3 passed, 0 failed, 0 SHOULD failed/); // P09-DELTA, -DELTA-QUERY, -DELTA-WEAK-BASE
+});
+
+test('a failed SHOULD fixture is labelled and counted apart from a failed MUST fixture', () => {
+  const app = fileURLToPath(new URL('./fixtures/app-only-server.mjs', import.meta.url));
+  const run = (only) => {
+    try {
+      return { status: 0, out: execFileSync(process.execPath, [CHECK, '--server', app, '--only', only], { encoding: 'utf8', stdio: 'pipe' }) };
+    } catch (e) {
+      return { status: e.status, out: e.stdout.toString() };
+    }
+  };
+  const should = run('FX-RQ-P35-ATTRIBUTE-RULE-DATA');
+  assert.equal(should.status, 1);
+  assert.match(should.out, /^FAIL \[SHOULD\] FX-RQ-P35-ATTRIBUTE-RULE-DATA: /m);
+  assert.match(should.out, /^FAIL \[SHOULD\] FX-RQ-P35-ATTRIBUTE-RULE-DATA-SVG-SPACE: /m);
+  assert.match(should.out, /0 passed, 0 failed, 2 SHOULD failed/);
+  const must = run('FX-RQ-P09-DELTA-WEAK');
+  assert.equal(must.status, 1);
+  assert.match(must.out, /^FAIL FX-RQ-P09-DELTA-WEAK-BASE: /m);
+  assert.match(must.out, /0 passed, 1 failed, 0 SHOULD failed/);
+});
+
+test('only the cases of P-35 and P36-LIMITS-SERVER-LIMIT have level "should" in their expected files', () => {
+  const levels = fixtureNames()
+    .filter((n) => n.startsWith('FX-RQ-P'))
+    .filter((n) => readJsonFile(join(FIXTURES_DIR, n, 'expected.json')).level === 'should');
+  assert.deepEqual(levels, [
+    'FX-RQ-P35-ATTRIBUTE-RULE',
+    'FX-RQ-P35-ATTRIBUTE-RULE-DATA',
+    'FX-RQ-P35-ATTRIBUTE-RULE-DATA-SVG-SPACE',
+    'FX-RQ-P35-ATTRIBUTE-RULE-SVG',
+    'FX-RQ-P35-PATCH-CONTENT-IFRAME',
+    'FX-RQ-P35-PATCH-CONTENT-NOSCRIPT',
+    'FX-RQ-P35-PATCH-CONTENT-SCRIPT',
+    'FX-RQ-P35-PATCH-CONTENT-STYLE',
+    'FX-RQ-P36-LIMITS-SERVER-LIMIT', // H-103: a hint that is not smaller than the server limit (SHOULD)
+  ]);
+});

@@ -16,7 +16,7 @@ This page defines the main data structures of the Rust core. Adapters, fixtures 
 | `NavigationId` | opaque string | One navigation as seen by the page | Sent to the web SDK in bridge messages. |
 | `PartitionId` | 256-bit keyed hash | Account / tenant / environment scope | Computed by the adapter from non-secret IDs and a device key. Never a token. |
 | `CacheKey` | 256-bit hash | One cache entry | See [Cache identity](/engineering/cache/identity). |
-| `Revision` | opaque string, ≤ 128 bytes | Version of a page or template | legacy: derived from `etag` / `template-tag`. RQP: server-issued. |
+| `Revision` | string, ≤ 128 bytes | Version of a page or template | legacy: opaque, derived from `etag` / `template-tag`. RQP: content-derived `t1.…` / `r1.…`, 46 ASCII characters ([manifest and patch §1.3](/engineering/protocol/manifest-patch#_1-3-hashes-and-revisions)); compared byte for byte. |
 | `V1SessionKey` | string | Upstream-compatible session/cache id derived from the URL | Only in legacy mode. See [legacy client behavior](/engineering/protocol/legacy-client). |
 
 ## 2. Request context
@@ -25,7 +25,7 @@ This page defines the main data structures of the Rust core. Adapters, fixtures 
 
 | Field | Type | Notes |
 |---|---|---|
-| `url` | `SafeUrl` | Parsed, normalized, `https` only (or `http` for `localhost` in debug builds). |
+| `url` | `SafeUrl` | Parsed, normalized, `https` only. `http` only in a debug build when the app sets an explicit flag (H-49). |
 | `method` | enum | `GET` only for document sessions. |
 | `partition` | `PartitionId` | Required. There is no default partition for authenticated pages. |
 | `policy` | `SessionPolicy` | Protocol modes, cache rules, timeouts, limits for this session. |
@@ -50,7 +50,7 @@ flowchart TD
 |---|---|---|
 | `CacheEntry` | `key`, `meta`, `snapshot_ref` | One logical page in one partition. |
 | `EntryMeta` | `created_at`, `last_validated_at`, `expires_at`, `validators`, `policy`, `size`, `schema_version` | Stored in the metadata database. |
-| `Validators` | `etag`, `template_tag`, `last_modified`, `v2_revision`, `v2_template_revision` | legacy and RQP fields are separate. |
+| `Validators` | `etag`, `template_tag`, `last_modified`, `rqp_page_revision`, `rqp_template_revision` | legacy and RQP fields are separate. `rqp_page_revision` comes from the manifest, not from the `ETag` header. `rqp_template_revision` is the value that the client computes (H-103). |
 | `Snapshot` | `template`, `data`, `rendered_html?`, `integrity` | Immutable once committed. |
 | `TemplateBody` | bytes + `template_revision` | Template with placeholders. |
 | `DataBlocks` | ordered map `block_id → BlockValue` | Order is significant for re-rendering. |
@@ -71,11 +71,13 @@ flowchart TD
 
 | Type | Fields | Notes |
 |---|---|---|
-| `Capabilities` | set of tokens | Negotiated per request. |
-| `PageManifest` | `protocol`, `origin`, `path`, `template_revision`, `page_revision`, `base_revision?`, `blocks[]`, `policy`, `limits` | See [RQP manifest and patch](/engineering/protocol/manifest-patch). |
-| `BlockDescriptor` | `id`, `format` (`html`/`json`), `sha256` | Hash over canonical bytes. |
-| `PatchEnvelope` | `type`, `protocol`, `page_id`, `base_revision`, `next_revision`, `template_revision`, `sequence`, `operations[]` | Validated before apply. |
-| `PatchOp` | `replace_block`, `remove_block`, `insert_block` | No operation can carry executable code. |
+| `Capabilities` | set of tokens | Sent by the client in `Rq-Capabilities` as one Inner List of Tokens (H-53); `rqp/1` defines `block-patch`. The server does not announce capabilities ([negotiation §3.3](/engineering/protocol/negotiation#_3-3-rq-capabilities)). |
+| `PageManifest` | `protocol`, `origin`, `path`, `page_revision`; optional `policy`, `limits` | No block list and no template revision (H-103): the client computes them. See [RQP manifest and patch](/engineering/protocol/manifest-patch). |
+| `RqHave` | template revision (member `t`), `digest_prefixes` (member `b`; 8 bytes per block, document order) | Request field `Rq-Have` (H-44, H-106), at most 4096 bytes. Built from the snapshot, so the value is the same for every request from one snapshot (H-109: no nonce member). |
+| `RqNonce` | `nonce` (16 bytes) | Request field `Rq-Nonce` (H-108, H-109): one field line, a Byte Sequence. Sent with every `RqHave`; new random bytes from a CSPRNG for each network attempt (a release build has no test input of N; DL-063); the server ignores a field over 128 bytes, never used again. The client keeps the nonce with the request until the response is handled. Not logged (RQP-17). |
+| `BlockDescriptor` | `id`, `format` (`html`/`json`), `sha256` | Computed by the client, not sent in the manifest (H-103). SHA-256 (base64url) over the exact content bytes; no normalization (H-2, H-11). |
+| `PatchEnvelope` | `binding`, `operations[]` | No `type`, `protocol`, base, template or page revision (H-104, H-107). `binding` is a SHA-256 value over the canonical final URL, the base page revision, the nonce of the request and the next page revision (H-108); the client computes all four and compares ([manifest and patch §2.2](/engineering/protocol/manifest-patch#_2-2-fields)). The new snapshot has the page revision that the client computed. Validated before apply ([diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation)). No `page_id` and no `sequence` over HTTP (H-9). |
+| `PatchOp` | `block_id`, `content` | The only operation of `rqp/1`: replace the content of a block (H-47). No `op`, `format` or `sha256` (H-104); the client computes the hash. The client rejects content with script or event handlers ([manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules)). |
 
 ## 5. Events and actions
 
@@ -112,7 +114,7 @@ The core is an event-driven state machine. The adapter sends **events**. The cor
 | Data | Format | Canonical form |
 |---|---|---|
 | Fixtures | JSON + raw HTTP files | UTF-8, LF line ends, sorted keys in JSON |
-| RQP manifest and patch | JSON | Defined by JSON Schema in WP-17; hashes over canonical block bytes, not over JSON text |
+| RQP manifest and patch | JSON | JSON Schemas `spec/rqp/schemas/` (WP-17) and the JSON rules of [manifest and patch §3.2](/engineering/protocol/manifest-patch#_3-2-json-text-of-the-manifest-and-the-envelope); hashes over the exact block bytes, not over JSON text |
 | Cache metadata | SQLite rows | `schema_version` column; migrations are forward-only |
 | FFI payloads | Generated bindings (UniFFI) or C structs | See [FFI boundary](/engineering/core/ffi) |
 

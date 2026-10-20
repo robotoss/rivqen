@@ -1,0 +1,10 @@
+{
+  "id": "NOSCRIPT-SVG-ICON",
+  "view": "off",
+  "walker": "ok",
+  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <noscript>\n|       <a>\n|         href=\"https://www.example.com/\"\n|         <svg svg>\n|           viewBox=\"0 0 1 1\"\n|           <svg path>\n|             d=\"M0\"\n|         \"Home\"\n|     \"\\n\"\n|     <p>\n|       data-rq-block=\"real\"\n|       \"r\"\n|     \"\\n\\n\"",
+  "characterSet": "UTF-8",
+  "contentType": "text/html",
+  "probe": null,
+  "error": null
+}

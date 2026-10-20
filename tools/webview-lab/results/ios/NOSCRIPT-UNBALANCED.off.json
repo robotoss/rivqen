@@ -1,0 +1,10 @@
+{
+  "characterSet" : "UTF-8",
+  "contentType" : "text/html",
+  "error" : null,
+  "id" : "NOSCRIPT-UNBALANCED",
+  "probe" : null,
+  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <noscript>\n|       <button>\n|         <div>\n|           data-rq-block=\"a\"\n|           \"x\"\n|       <button>\n|         \"y\"\n|       \"z\\n\\n\"",
+  "view" : "off",
+  "walker" : "ok"
+}

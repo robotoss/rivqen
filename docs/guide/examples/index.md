@@ -10,7 +10,7 @@ This section describes the example apps. Each example shows the same page — a 
 
 | Example | Folder | State | What you can do now |
 |---|---|---|---|
-| [Server](/guide/examples/server) | `examples/server-demo` | **Runs**, 14 tests pass | Start it, send RQP requests, measure bytes |
+| [Server](/guide/examples/server) | `examples/server-demo` | **Runs**, 91 tests pass | Start it, send RQP requests, measure bytes |
 | [Android](/guide/examples/android) | `examples/android-demo` | Planned (P5) | Read the screen plan and the planned API |
 | [iOS](/guide/examples/ios) | `examples/ios-demo` | Planned (P5) | Read the screen plan and the planned API |
 | [Web](/guide/examples/web) | `examples/web-demo` | Planned (P6) | Read the screen plan and the planned API |
@@ -46,8 +46,8 @@ Each mobile and web demo has the same control panel:
 | Control | Effect |
 |---|---|
 | **Open page** | Opens the catalog in a new session |
-| **Change data** | Calls `POST /__demo/next-data` |
-| **Change template** | Calls `POST /__demo/next-template` |
+| **Change data** | Calls `POST /__demo/next-data` with the header `Rq-Demo-Action: 1` |
+| **Change template** | Calls `POST /__demo/next-template` with the header `Rq-Demo-Action: 1` |
 | **Clear cache** | Calls `clearCache` for the demo partition |
 | **Rivqen on / off** | Opens the same page in a plain web view, for comparison |
 | **Event log** | Shows session outcomes: `FirstLoad`, `CacheHitNotModified`, `DataUpdated`, `TemplateChanged`, `ServedStale`, `Fallback` |

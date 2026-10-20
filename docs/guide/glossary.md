@@ -24,7 +24,7 @@ Use these terms with exactly these meanings in all Rivqen documents. Do not use 
 | **Gate** | A go/no-go decision at the end of a phase. |
 | **Generation** | A number that increases when a session restarts. Old events are ignored. |
 | **L0 / L1 / L2** | Cache layers: active session / memory / disk. |
-| **Manifest (page manifest)** | In Rivqen protocol, a description of a page version: revisions, blocks and their hashes, policy. |
+| **Manifest (page manifest)** | In Rivqen protocol, a description of a page version: the page revision, the URL (origin and path) and the policy. The client computes the block hashes. |
 | **Marker** | An HTML comment or attribute that shows the start and end of a data block. |
 | **Origin** | Scheme + host + port of a URL, as defined by the web platform. |
 | **Outcome** | The result of a navigation: first load, not modified, data updated, template changed, served stale, fallback. |

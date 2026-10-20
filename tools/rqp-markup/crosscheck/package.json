@@ -1,0 +1,17 @@
+{
+  "name": "rqp-markup-crosscheck",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Differential cross-check of RQP markup parser candidates against the WHATWG tree builder parse5",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "parse5": "8.0.1"
+  }
+}

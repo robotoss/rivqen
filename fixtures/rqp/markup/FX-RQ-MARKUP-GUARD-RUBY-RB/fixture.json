@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-GUARD-RUBY-RB",
+  "description": "An rb start tag in the content while an rt is open",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

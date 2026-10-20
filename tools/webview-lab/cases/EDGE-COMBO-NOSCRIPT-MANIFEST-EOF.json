@@ -1,0 +1,16 @@
+{
+  "id": "EDGE-COMBO-NOSCRIPT-MANIFEST-EOF",
+  "question": "Q-19",
+  "source": "fixtures/rqp/markup/FX-RQ-MARKUP-EDGE-COMBO-NOSCRIPT-MANIFEST-EOF/input.html",
+  "headers": [
+    [
+      "Content-Type",
+      "text/html; charset=utf-8"
+    ]
+  ],
+  "views": [
+    "on",
+    "off"
+  ],
+  "probe": null
+}

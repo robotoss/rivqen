@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-E7-FOREIGN-FRAMESET",
+  "description": "Edge case E7 (H-21): a frameset start tag inside svg is invalid (M-10 applies in every context, also in a foreign region)",
+  "rules": [
+    "M-10"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

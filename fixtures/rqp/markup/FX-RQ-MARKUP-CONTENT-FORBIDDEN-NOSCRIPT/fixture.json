@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-FORBIDDEN-NOSCRIPT",
+  "description": "A div in noscript content C in the content of a p block: M-11 item 10 applies M-24 item a (H-95); with scripting disabled the div would close the block. Before H-95 every noscript in the content was invalid; that shape is CONTENT-NOSCRIPT now",
+  "rules": [
+    "M-11",
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

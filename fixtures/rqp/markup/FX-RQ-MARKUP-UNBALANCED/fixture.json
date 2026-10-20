@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-UNBALANCED",
+  "description": "The block end tag comes while an element of the content is open",
+  "rules": [
+    "M-23"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

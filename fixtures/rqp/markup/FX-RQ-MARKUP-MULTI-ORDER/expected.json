@@ -1,0 +1,43 @@
+{
+  "valid": true,
+  "error": null,
+  "blocks": [
+    {
+      "id": "title",
+      "format": "html",
+      "start": 57,
+      "end": 61,
+      "sha256": "0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces"
+    },
+    {
+      "id": "header",
+      "format": "html",
+      "start": 111,
+      "end": 124,
+      "sha256": "SZwZj4TaZuWqiv4_flyzVKnT0iD6he21hNdmkCczaX4"
+    },
+    {
+      "id": "price",
+      "format": "html",
+      "start": 175,
+      "end": 181,
+      "sha256": "Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs"
+    },
+    {
+      "id": "cart",
+      "format": "json",
+      "start": 246,
+      "end": 257,
+      "sha256": "zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4"
+    },
+    {
+      "id": "footer",
+      "format": "html",
+      "start": 305,
+      "end": 320,
+      "sha256": "ms_uftvpqR0WPQ-MGRAK8I2VXHKqjLL5esZK8iTcwv0"
+    }
+  ],
+  "template_revision": "t1.VkqzZ2Y_jdtq7l1z2xGCb_Mc69hQaWwPuvzkBnAKf5s",
+  "page_revision": "r1.HbWvL1ZhZiYcHPjqnBoj8RPMLCmyWGWO0AdPF8MnE6o"
+}

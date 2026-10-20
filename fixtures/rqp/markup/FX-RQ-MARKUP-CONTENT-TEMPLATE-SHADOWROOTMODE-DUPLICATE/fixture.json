@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-SHADOWROOTMODE-DUPLICATE",
+  "description": "A template element in the content with an empty shadowrootmode attribute and a second one that the tokenizer drops (H-97: every shadowrootmode attribute counts; M-22 item 6)",
+  "rules": [
+    "M-22"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

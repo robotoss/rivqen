@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-E1-FOREIGN-LT",
+  "description": "Edge case E1 (H-21): a < that the tokenizer emits as a character in foreign integration points (svg desc, math mi) and a foreign text element (svg style) is valid (M-07 items 3 and 4)",
+  "rules": [
+    "M-07"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

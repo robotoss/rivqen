@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P39-HEAD-BR-END",
+  "description": "A </br> end tag in the head closes the head (the parser treats it as a br start tag): F with the manifest immediately after the head start tag, before the </br> (H-72)",
+  "rules": ["RQP-20"],
+  "page": "page-head-br",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "FX-RQ-P43-APP-VARY-PASSTHROUGH",
+  "description": "A 404 of the application with Vary: Accept-Encoding, Rq-Nonce is out of scope: unchanged, except that Vary loses its Rq-* member (RQP-09, DL-063)",
+  "rules": ["RQP-09"],
+  "page": "page-a",
+  "client_page": "page-a",
+  "app": {
+    "status": 404,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"],
+      ["vary", "Accept-Encoding, Rq-Nonce"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-a}}"],
+      ["rq-have", "t={{t1:page-a}}, b={{have:page-a}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  }
+}

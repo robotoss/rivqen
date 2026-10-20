@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-C31-ALL-BLOCKS-OTHER-BASE",
+  "kind": "client",
+  "description": "An all-blocks delta (a request without b, H-7) that the server built for another base (page-title-2, for example another user) to page-b, on a snapshot of page-a. Every block is replaced, so the result is page-b and the check of H-104 accepted it (cross-user content, S6 security review F1). The binding has B = r1(page-title-2): INTEGRITY_ERROR at step 7 (H-107)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-title-2",
+        "to": "page-b",
+        "all_blocks": true
+      }
+    }
+  }
+}

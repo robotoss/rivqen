@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-NOSCRIPT",
+  "description": "A noscript element with text in the content of a div block (H-95: valid)",
+  "rules": [
+    "M-11",
+    "M-22"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "<noscript>x</noscript>"
+      }
+    ]
+  }
+}

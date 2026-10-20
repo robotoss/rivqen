@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-CLOSE-CAPTION",
+  "description": "Implied closure of a caption by a tr start tag, and by a col start tag over an open i (H-85a: valid)",
+  "rules": [
+    "M-09",
+    "M-19"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "cap",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"cap\">",
+        "content": "c"
+      }
+    ]
+  }
+}

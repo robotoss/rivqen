@@ -1,0 +1,10 @@
+{
+  "id": "NOSCRIPT-SVG",
+  "view": "off",
+  "walker": "ok",
+  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <noscript>\n|       <img>\n|         alt=\"\"\n|         src=\"https://www.example.com/p.gif\"\n|       <svg svg>\n|         height=\"1\"\n|         width=\"1\"\n|         <svg path>\n|           d=\"M0\"\n|         <svg g>\n|           <svg use>\n|             href=\"#i\"\n|       <svg svg>\n|     \"\\n\"\n|     <p>\n|       data-rq-block=\"real\"\n|       \"r\"\n|     \"\\n\\n\"",
+  "characterSet": "UTF-8",
+  "contentType": "text/html",
+  "probe": null,
+  "error": null
+}

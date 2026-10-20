@@ -1,0 +1,70 @@
+{
+  "id": "FX-RQ-C06-OTHER-TEMPLATE",
+  "kind": "client",
+  "context": {
+    "url": "https://shop.example.com/catalog",
+    "final_url": "https://shop.example.com/catalog",
+    "redirected": false,
+    "build": "release",
+    "allow_http": false,
+    "allowlist": ["https://shop.example.com"],
+    "credentials": null,
+    "response_fields_visible": true,
+    "public_enabled": false,
+    "public_origin": false,
+    "navigation": "delta",
+    "nonce": "AAECAwQFBgcICQoLDA0ODw",
+    "snapshot": {
+      "page": "page-a",
+      "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
+      "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
+      "blocks": [
+        {
+          "id": "title",
+          "format": "html",
+          "sha256": "0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces"
+        },
+        {
+          "id": "price",
+          "format": "html",
+          "sha256": "Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs"
+        },
+        {
+          "id": "cart",
+          "format": "json",
+          "sha256": "zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4"
+        }
+      ],
+      "partition": "request"
+    }
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match","\"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\""],
+      ["rq-have","t=t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:"],
+      ["rq-nonce",":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","application/vnd.rivqen.delta+json"],
+      ["rq-version","1"],
+      ["cache-control","no-store"]
+    ],
+    "body": "response.body",
+    "body_bytes": 115,
+    "body_sha256": "fKlOAO23qBCtZbQ8lhmARUy7eZli0ZluZquvjX-sSNs"
+  },
+  "result": {
+    "outcome": "rejected",
+    "error": "INTEGRITY_ERROR",
+    "next": "fallback-load",
+    "metric": false,
+    "snapshot": null
+  }
+}

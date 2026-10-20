@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-C20-FORGED-MANIFEST",
+  "kind": "client",
+  "description": "The response of FX-RQ-P38-APP-RQ-FORGED-MANIFEST: a page with a consistent author manifest and no Rq-Version: a normal page, no snapshot, no error (DL-030)",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "page": "page-forged"
+    }
+  }
+}

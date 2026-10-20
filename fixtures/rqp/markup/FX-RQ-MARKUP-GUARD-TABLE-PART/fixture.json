@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-GUARD-TABLE-PART",
+  "description": "Table part start tags in the content without a table opened in the content",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-FORMATTING-MARKED-LIST",
+  "description": "Four li end tags each cross a ul (the browser ignores them: ul ends the list item scope); the mark passes down to the a, then the a end tag pops it (H-32)",
+  "rules": [
+    "M-06"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

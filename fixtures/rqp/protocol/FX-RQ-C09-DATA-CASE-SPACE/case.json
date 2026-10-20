@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C09-DATA-CASE-SPACE",
+  "kind": "client",
+  "description": "price content <img src=\" TAB Da LF Ta:image/png,x\">: after the removal of tab, LF and leading space the scheme is data: (ASCII case-insensitive, H-59) with a raster image type in img src, so the attribute rule accepts it: applied (H-83; before H-83: rejected; the same value in a href: FX-RQ-C09-DATA-CASE-SPACE-HREF)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<img src=\" \tDa\nTa:image/png,x\">"
+          }
+        ]
+      }
+    }
+  }
+}

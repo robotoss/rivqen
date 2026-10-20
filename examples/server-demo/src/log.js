@@ -8,7 +8,7 @@ const LEVELS = { debug: 10, info: 20, warn: 30, error: 40 };
 const threshold = LEVELS[process.env.LOG_LEVEL ?? 'info'] ?? LEVELS.info;
 const SAFE_DETAIL = new Set(['id', 'parent', 'element', 'code', 'bytes', 'blocks', 'operations', 'base', 'revision', 'template', 'status', 'mode', 'duration_ms']);
 
-/** Keep origin + path only. */
+/** The path of a request URL, without query and fragment. The caller maps it to a route template before logging. */
 export function safeUrl(url) {
   try {
     const u = new URL(url, 'http://localhost');

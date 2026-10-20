@@ -1,0 +1,40 @@
+{
+  "id": "FX-RQ-C25-USERINFO-FINAL-DELTA",
+  "kind": "client",
+  "description": "A consistent delta after a redirect to the same URL with user information: PATCH_INVALID, fallback (H-68)",
+  "rules": [
+    "RQP-05",
+    "RQP-24"
+  ],
+  "context": {
+    "final_url": "https://u:p@shop.example.com/catalog",
+    "allowlist": [
+      "https://shop.example.com"
+    ],
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      [
+        "content-type",
+        "application/vnd.rivqen.delta+json"
+      ],
+      [
+        "rq-version",
+        "1"
+      ],
+      [
+        "cache-control",
+        "no-store"
+      ]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b"
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-SVG-CROSSING",
+  "description": "Inside svg an end tag can cross other svg elements",
+  "rules": [
+    "M-06",
+    "M-07"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-RESERVED-CHARREF",
+  "description": "A script type with a character reference that could decode to the manifest type",
+  "rules": [
+    "M-13"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_RESERVED"
+  }
+}

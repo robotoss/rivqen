@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-P25-HEAD-NOT-MODIFIED",
+  "description": "HEAD with R(page-big-b): 304",
+  "rules": ["RQP-03"],
+  "page": "page-big-b",
+  "client_page": "page-big-b",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "HEAD",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-big-b}}"],
+      ["rq-have", "t={{t1:page-big-b}}, b={{have:page-big-b}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  }
+}

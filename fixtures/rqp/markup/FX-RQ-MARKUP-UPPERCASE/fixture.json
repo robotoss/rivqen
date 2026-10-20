@@ -1,0 +1,38 @@
+{
+  "id": "FX-RQ-MARKUP-UPPERCASE",
+  "description": "Upper-case and mixed-case tag and attribute names",
+  "rules": [
+    "M-03",
+    "M-14",
+    "M-16"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "title",
+        "format": "html",
+        "start_tag": "<TITLE DATA-RQ-BLOCK=\"title\">",
+        "content": "T"
+      },
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<DIV DATA-RQ-BLOCK=\"box\">",
+        "content": "<B>x</B>"
+      },
+      {
+        "id": "para",
+        "format": "html",
+        "start_tag": "<P Data-Rq-Block=\"para\">",
+        "content": "y"
+      },
+      {
+        "id": "data",
+        "format": "json",
+        "start_tag": "<SCRIPT TYPE=\"application/json\" DATA-RQ-BLOCK=\"data\">",
+        "content": "[1]"
+      }
+    ]
+  }
+}

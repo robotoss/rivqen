@@ -1,0 +1,2271 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: The Rivqen Authors
+
+package dev.rivqen.tools.markup;
+
+import static dev.rivqen.tools.markup.Docs.assertInvalid;
+import static dev.rivqen.tools.markup.Docs.assertStructure;
+import static dev.rivqen.tools.markup.Docs.assertValid;
+import static dev.rivqen.tools.markup.Docs.blocks;
+import static dev.rivqen.tools.markup.Docs.body;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.List;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+
+/** One group of tests for each rule of {@code markup.md} §2, on small documents. */
+class RulesTest {
+
+  private static final String P = "<p data-rq-block=\"a\">x</p>";
+
+  @Nested
+  class M03Tokenizer {
+    @Test
+    void greaterThanInQuotedValueDoesNotEndTheTag() {
+      assertEquals(
+          List.of("a:html:v"),
+          blocks(body("<p title='>' data-rq-block=\"a\" x=\"<p data-rq-block=b>\">v</p>")));
+    }
+
+    @Test
+    void tagLikeTextInCommentsIsNotABlock() {
+      assertEquals(List.of("a:html:x"), blocks(body("<!-- <p data-rq-block=\"b\">y</p> -->" + P)));
+    }
+
+    @Test
+    void shortCommentsEndEarly() {
+      assertEquals(
+          List.of("a:html:x", "b:html:y"),
+          blocks(body("<!--><p data-rq-block=a>x</p><!---><p data-rq-block=b>y</p>")));
+    }
+
+    @Test
+    void commentEndsAtDashDashBangGreaterThan() {
+      assertEquals(List.of("a:html:x"), blocks(body("<!-- c --!>" + P)));
+    }
+
+    @Test
+    void bogusCommentAndProcessingInstructionEndAtFirstGreaterThan() {
+      assertEquals(
+          List.of("a:html:x"),
+          blocks(
+              body(
+                  "<!x <p data-rq-block=b>></ <p data-rq-block=c>><?pi <p data-rq-block=d>>" + P)));
+    }
+
+    @Test
+    void processingInstructionToEndOfInputIsAComment() {
+      // E6 (H-21): a "<?" without ">" is a comment that ends at the end of the input.
+      assertEquals(List.of("a:html:x"), blocks(P + "<?php echo 1; <p data-rq-block=b"));
+      assertStructure(P + "<svg><desc><?x", "M-07");
+    }
+
+    @Test
+    void doctypeEndsAtFirstGreaterThan() {
+      assertEquals(List.of("a:html:x"), blocks("<!DOCTYPE html \"<p data-rq-block=b>\">" + P));
+    }
+
+    @Test
+    void endTagAttributesAndSelfClosingFlagHaveNoEffect() {
+      assertEquals(List.of("a:html:x"), blocks(body("<p data-rq-block=a>x</p data-rq-block=b/>")));
+    }
+
+    @Test
+    void firstDuplicateAttributeWins() {
+      assertEquals(
+          List.of("a:html:x"), blocks(body("<p data-rq-block=a DATA-RQ-BLOCK=\"Bad Id\">x</p>")));
+    }
+
+    @Test
+    void startTagEndsAfterMissingAttributeValue() {
+      assertEquals(List.of("a:html:x"), blocks(body("<p data-rq-block=a b=>x</p>")));
+    }
+
+    @Test
+    void attributeDirectlyAfterQuotedValue() {
+      assertEquals(List.of("a:html:y"), blocks(body("<p data-rq-block=\"a\"class=x>y</p>")));
+    }
+
+    @Test
+    void equalsSignStartsAnAttributeNameAfterAValue() {
+      // WHATWG "before attribute name state": '=' starts a new attribute named "=".
+      assertEquals(List.of("z:html:y"), blocks(body("<p a=\"x\" = data-rq-block=z>y</p>")));
+      assertEquals(List.of("z:html:y"), blocks(body("<p a=x = data-rq-block=z>y</p>")));
+    }
+
+    @Test
+    void emptyEndTagEmitsNothing() {
+      assertEquals(List.of("a:html:x</>"), blocks(body("<p data-rq-block=a>x</></p>")));
+    }
+
+    @Test
+    void lessThanSignWithoutTagIsText() {
+      assertEquals(List.of("a:html:1 < 2 <3"), blocks(body("<p data-rq-block=a>1 < 2 <3</p>")));
+    }
+  }
+
+  @Nested
+  class M04RawText {
+    @ParameterizedTest
+    @ValueSource(
+        strings = {"title", "textarea", "iframe", "noembed", "noframes", "style", "xmp", "script"})
+    void blockMarkupInRawTextIsText(String name) {
+      assertEquals(
+          List.of("a:html:x"),
+          blocks(body("<" + name + "><p data-rq-block=b>y</p></" + name + ">" + P)));
+    }
+
+    @Test
+    void plaintextNeverEnds() {
+      assertEquals(List.of(), blocks(body("<plaintext></plaintext>" + P)));
+    }
+
+    @Test
+    void selfClosingFlagStillSwitchesState() {
+      assertEquals(List.of(), blocks(body("<title/><p data-rq-block=b>y</p>")));
+    }
+
+    @Test
+    void endTagNameIsCaseInsensitiveAndNeedsATerminator() {
+      assertEquals(
+          List.of("t:html:a</titlex></tit>"),
+          blocks("<title data-rq-block=t>a</titlex></tit></TITLE >"));
+      assertEquals(List.of("t:html:a"), blocks("<title data-rq-block=t>a</title/>"));
+    }
+
+    @Test
+    void scriptDataEscapedStatesHideEndTag() {
+      assertEquals(
+          List.of("a:html:x"),
+          blocks(body("<script><!--<script>a</script><p data-rq-block=b>--></script>" + P)));
+    }
+
+    @Test
+    void scriptDataEscapedEndTagEndsScript() {
+      assertEquals(List.of("a:html:x"), blocks(body("<script><!-- a </script>" + P)));
+    }
+
+    @Test
+    void startTagInForeignRegionDoesNotSwitchState() {
+      assertStructure(body("<svg><title><g></g></title></svg>"), "M-07");
+    }
+  }
+
+  @Nested
+  class M05TokenStack {
+    @Test
+    void strayEndTagOutsideBlocksIsIgnored() {
+      assertValid(body("</span></foo>" + P));
+    }
+
+    @Test
+    void selfClosingSvgOpensNoRegion() {
+      assertEquals(List.of("a:html:x"), blocks(body("<svg/>" + P)));
+    }
+
+    @Test
+    void selfClosingMathOpensNoRegion() {
+      assertEquals(List.of("a:html:x"), blocks(body("<math/>" + P)));
+    }
+
+    @Test
+    void voidElementIsNotPushed() {
+      assertValid(body("<div><br><img></div>" + P));
+    }
+
+    @Test
+    void selfClosingFlagOnOtherHtmlElementIsIgnored() {
+      // The div is pushed, so its end tag crosses the button.
+      assertStructure(body("<div/><button></div>"), "M-06");
+      assertValid(body("<div/>" + P + "</div>"));
+    }
+
+    @Test
+    void selfClosingForeignElementIsNotPushed() {
+      assertValid(body("<svg><g/><path/></svg>" + P));
+    }
+
+    @Test
+    void elementAtTheBottomOfTheStackIsPoppedByItsEndTag() {
+      // No html or body tags: the first element is at index 0 of the token stack.
+      assertValid("<button></button><div data-rq-block=a><button>x</button></div>");
+      assertValid("<a><a></a></a><div data-rq-block=k><a>x</a></div>");
+    }
+
+    @Test
+    void blockAtTheBottomOfTheStack() {
+      assertStructure("<div data-rq-block=a><span/></div>", "M-22");
+      assertStructure("<div data-rq-block=a><!DOCTYPE x></div>", "M-22");
+    }
+
+    @Test
+    void regionAtTheBottomOfTheStack() {
+      assertStructure("<svg><p></svg>", "M-07");
+      assertStructure("<svg></div></svg>", "M-07");
+    }
+
+    @Test
+    void tableAtTheBottomOfTheStack() {
+      assertStructure("<table><div data-rq-block=a>x</div>", "M-19");
+    }
+
+    @Test
+    void regionEndsWithItsOwnEndTag() {
+      assertEquals(List.of("a:html:x"), blocks(body("<svg><svg></svg></svg>" + P)));
+    }
+
+    @Test
+    void tokenStackIgnoresImpliedEndTagsOutsideBlocks() {
+      assertValid(body("<ul><li>a<li>b</ul><p>x<p>y<div data-rq-block=a>z</div>"));
+    }
+  }
+
+  @Nested
+  class M06Crossing {
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "a",
+          "applet",
+          "button",
+          "caption",
+          "colgroup",
+          "marquee",
+          "nobr",
+          "object",
+          "table",
+          "tbody",
+          "td",
+          "template",
+          "tfoot",
+          "th",
+          "thead",
+          "tr"
+        })
+    void endTagMustNotCrossGuardedElement(String name) {
+      assertStructure(body("<div><" + name + ">a</div>"), "M-06");
+    }
+
+    @Test
+    void endTagCanCrossOtherElements() {
+      assertValid(body("<div><span><b>a</div><ul><li>b</ul>" + P));
+    }
+
+    @Test
+    void tableFamilyEndTagCanCrossTableParts() {
+      assertValid(body("<table><tbody><tr><td>a</table><table><tr><td>b</tr></table>" + P));
+    }
+
+    @Test
+    void tableFamilyEndTagCannotCrossOtherGuardedElements() {
+      assertStructure(body("<table><tr><td><button>a</table>"), "M-06");
+    }
+
+    @Test
+    void elementsPushedInForeignRegionAreNotGuarded() {
+      assertValid(body("<svg><a><g></svg>" + P));
+    }
+
+    // Item 2 (H-26): a FORMATTING end tag crosses no special and no foreign element.
+
+    @Test
+    void formattingEndTagCanCrossPhrasingElements() {
+      assertValid(body("<a href=\"#\"><span>a</a><b><i>a</b><p><b>a</p><s><q><em>x</s>" + P));
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "a", "b", "big", "code", "em", "font", "i", "nobr", "s", "small", "strike", "strong",
+          "tt", "u"
+        })
+    void formattingEndTagMustNotCrossSpecialElement(String name) {
+      assertStructure(body("<" + name + "><div>a</" + name + ">"), "M-06");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "address",
+          "article",
+          "aside",
+          "blockquote",
+          "body",
+          "center",
+          "dd",
+          "details",
+          "dir",
+          "div",
+          "dl",
+          "dt",
+          "fieldset",
+          "figcaption",
+          "figure",
+          "footer",
+          "form",
+          "h1",
+          "h6",
+          "head",
+          "header",
+          "hgroup",
+          "html",
+          "li",
+          "listing",
+          "main",
+          "menu",
+          "nav",
+          "ol",
+          "p",
+          "pre",
+          "search",
+          "section",
+          "summary",
+          "ul"
+        })
+    void everySpecialElementStopsAFormattingEndTag(String special) {
+      assertStructure(body("<b><" + special + ">a</b>"), "M-06");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"dialog", "span", "q", "ruby", "sub", "x-y", "option", "desc"})
+    void otherElementsDoNotStopAFormattingEndTag(String name) {
+      assertValid(body("<b><" + name + ">a</b>" + P));
+    }
+
+    @Test
+    void otherEndTagsCanCrossSpecialElements() {
+      // Item 2 is about FORMATTING end tags only (p, span and div are not in the set).
+      assertValid(body("<span><div>a</span><q><p>b</q>" + P));
+    }
+
+    @Test
+    void reviewReproEightDivsUnderA() {
+      // Security review (H-26): </a> over 8 div elements; a later <a> cuts the block in parse5.
+      String html = "<a>" + "<div>".repeat(8) + "x</a><span data-rq-block=\"x\">y<a>z</a>w</span>";
+      assertStructure(body(html), "M-06");
+      assertStructure(body(html.replace("a>", "nobr>")), "M-06");
+    }
+
+    @Test
+    void formattingEndTagMustNotCrossForeignElement() {
+      assertStructure(body("<svg><a><text>t</a></svg>"), "M-06");
+      assertStructure(body("<math><a><mrow></a></math>"), "M-06");
+    }
+
+    @Test
+    void formattingEndTagInForeignRegionWithoutCrossing() {
+      assertValid(body("<svg><a><text>t</text></a><g><path></g></svg>" + P));
+    }
+
+    // Item 3 (H-30): table end tags that match nothing.
+
+    @ParameterizedTest
+    @ValueSource(strings = {"tbody", "thead", "tfoot", "tr"})
+    void strayTableEndTagInCell(String name) {
+      assertStructure(body("<table><td>a</" + name + ">"), "M-06");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"tbody", "thead", "tfoot", "tr", "table"})
+    void strayTableEndTagOutsideTables(String name) {
+      assertStructure(body("<div>a</" + name + "></div>"), "M-06");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"td", "th", "caption", "colgroup", "col"})
+    void otherStrayTableEndTagsAreIgnored(String name) {
+      assertValid(body("<table><td>a</" + name + "></td></table></" + name + ">" + P));
+    }
+
+    @Test
+    void impliedRowGroupAndRowStayAllowed() {
+      assertValid(body("<table><td>a</td></table><table><tr><td>b</td></tr></table>" + P));
+    }
+
+    @Test
+    void tableEndTagThatMatchesIsNotStray() {
+      assertValid(
+          body(
+              "<table><tbody><tr><td>a</td></tr></tbody></table><table><thead></thead>"
+                  + "<tfoot></tfoot></table>"
+                  + P));
+    }
+
+    @Test
+    void tableEndTagCanCrossTheCell() {
+      // The table end tag matches the table: it is not stray (item 1 allows the crossing).
+      assertValid(body("<table><td>a</table>" + P));
+    }
+
+    @Test
+    void strayTableEndTagInForeignRegionIsM07() {
+      assertStructure(body("<svg></tbody></svg>"), "M-07");
+    }
+
+    @Test
+    void strayTableEndTagInBlockContentIsM23() {
+      assertStructure(body("<div data-rq-block=a></tr></div>"), "M-23");
+    }
+
+    // Item 4 (H-32): the special-crossed mark.
+
+    @Test
+    void formattingEndTagMustNotPopAMarkedElement() {
+      // </span> crosses the div and marks the a (markup.md examples).
+      assertStructure(body("<a><span><div>a</span></a>"), "M-06");
+      assertStructure(body("<a><li><ul></li></a>"), "M-06");
+    }
+
+    @Test
+    void reviewReproCrossingBelowAFormattingElement() {
+      // Q-T12-1: </span> crosses 8 div elements; the exact </a> runs the adoption agency with 8
+      // furthest blocks in the browser, and a later <a> cuts the block.
+      String tail = "x</span></a><span data-rq-block=\"x\">y<a>z</a>w</span>";
+      assertStructure(body("<a><span>" + "<div>".repeat(8) + tail), "M-06");
+      String nobr = "<nobr><span>" + "<div>".repeat(8) + "x</span></nobr>";
+      assertStructure(body(nobr + "<span data-rq-block=\"x\">y<nobr>z</nobr>w</span>"), "M-06");
+      String list = "<a>" + "<li><ul>".repeat(4) + "</li>".repeat(4) + "x</a>";
+      assertStructure(body(list + "<span data-rq-block=\"x\">y<a>z</a>w</span>"), "M-06");
+    }
+
+    @Test
+    void crossingOfPhrasingElementsSetsNoMark() {
+      // </span> crosses only i (not special): nothing gets the mark.
+      assertValid(body("<a href=\"#\"><b><span><i>a</span></b></a>" + P));
+    }
+
+    @Test
+    void markPassesDownOnEachPop() {
+      // The q gets the mark, its pop passes it to the b.
+      assertStructure(body("<b><q><span><div>a</span></q></b>"), "M-06");
+      assertStructure(body("<b><q><span><div>a</span></q>x</b>"), "M-06");
+    }
+
+    @Test
+    void formattingEndTagMustNotCrossAMarkedElement() {
+      // The q is marked; </b> crosses it (q and i are not special: item 2 alone allows this).
+      assertStructure(body("<b><q><span><div>a</span><i>x</b>"), "M-06");
+      assertValid(body("<b><q><span>a</span><i>x</b>" + P));
+    }
+
+    @Test
+    void crossingOfForeignElementSetsTheMark() {
+      // `</g>` crosses `path`; the mark goes to `svg`, and `</svg>` passes it to `b` (item 4 b).
+      assertStructure(body("<b><svg><g><path></g></svg></b>"), "M-06");
+      assertValid(body("<b><svg><g><path></path></g></svg></b>" + P));
+    }
+
+    @Test
+    void endTagOfTheRegionRootSetsNoMark() {
+      // H-75: `</svg>` crosses `g` and `path` and sets no mark by them.
+      assertValid(body("<b><svg><g><path></svg></b>" + P));
+      assertValid(body("<a href=x><svg><path d=M0></svg></a>" + P));
+      assertValid(body("<b><math><mrow><msup></math></b>" + P));
+    }
+
+    @Test
+    void endTagOfAnInnerSvgSetsTheMark() {
+      // The inner `svg` is a foreign element, not the region root (M-05 item 4).
+      assertStructure(body("<a href=x><svg><svg><path d=M0></svg></svg></a>"), "M-06");
+    }
+
+    @Test
+    void endTagOfTheRegionRootPassesAMarkDown() {
+      // Item 4 (b): `</g>` crosses `path` and marks `svg`; `</svg>` pops the marked `svg`.
+      assertStructure(body("<a href=x><svg><g><path></g></svg></a>"), "M-06");
+    }
+
+    @Test
+    void endTagOfTheRegionRootStillMakesTheNewCurrentNodeDirty() {
+      // D does not go down after the crossing: each icon keeps 3 units (H-75, M-26 item 5).
+      String icon = "<span><svg><path d=M0></svg></span>";
+      assertValid(icon.repeat(85) + "<i>"); // D = 256
+      assertInvalid(icon.repeat(85) + "<i><i>", ErrorCode.LIMIT, "M-26");
+    }
+
+    @Test
+    void markedElementCanBePoppedByOtherEndTags() {
+      // The div gets the mark, a non-formatting end tag pops it, and the mark goes with it.
+      assertValid(body("<div><span><div>a</span></div><b>x</b>" + P));
+    }
+
+    @Test
+    void elementPushedAfterTheCrossingHasNoMark() {
+      assertValid(body("<q><span><div>a</span><b>x</b></q>" + P));
+    }
+
+    @Test
+    void markAloneIsNoError() {
+      // The b gets the mark, but no formatting end tag pops it (</body> is not in FORMATTING).
+      assertValid(body("<b><q><span><div>a</span></q></x>"));
+    }
+
+    @Test
+    void strayEndTagKeepsTheMark() {
+      assertStructure(body("<b><q><span><div>a</span></q></i></b>"), "M-06");
+    }
+  }
+
+  @Nested
+  class M07Foreign {
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "b",
+          "big",
+          "blockquote",
+          "body",
+          "br",
+          "center",
+          "code",
+          "dd",
+          "div",
+          "dl",
+          "dt",
+          "em",
+          "embed",
+          "font",
+          "h1",
+          "h6",
+          "head",
+          "hr",
+          "i",
+          "img",
+          "li",
+          "listing",
+          "menu",
+          "meta",
+          "nobr",
+          "ol",
+          "p",
+          "pre",
+          "ruby",
+          "s",
+          "small",
+          "span",
+          "strike",
+          "strong",
+          "sub",
+          "sup",
+          "table",
+          "tt",
+          "u",
+          "ul",
+          "var"
+        })
+    void breakoutStartTagInRegion(String name) {
+      assertStructure(body("<svg><" + name + "></svg>"), "M-07");
+      assertStructure(body("<math><mrow><" + name + "></math>"), "M-07");
+    }
+
+    @Test
+    void strayEndTagInRegion() {
+      assertStructure(body("<svg></g></svg>"), "M-07");
+    }
+
+    @Test
+    void endTagAfterClosedIntegrationPointIsStray() {
+      assertStructure(body("<svg><title>t</title></title></svg>"), "M-07");
+    }
+
+    @Test
+    void endTagOfHtmlElementOutsideRegion() {
+      assertStructure(body("<div><svg></div>"), "M-07");
+    }
+
+    @Test
+    void endTagCanCrossRegionElements() {
+      assertValid(body("<math><mrow><msup></math>" + P));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"<b>", "</g>", "<!-- c -->", "<![cdata[x]]>", "<!DOCTYPE x>", "<g/>"})
+    void integrationPointContentIsTextOnly(String token) {
+      // A lower-case "<![cdata[" is a bogus comment, not a CDATA section.
+      assertStructure(body("<svg><foreignObject>a" + token + "</foreignObject></svg>"), "M-07");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "annotation-xml",
+          "desc",
+          "foreignObject",
+          "mi",
+          "mn",
+          "mo",
+          "ms",
+          "mtext",
+          "title"
+        })
+    void integrationPointsWithTextAreValid(String name) {
+      assertValid(body("<math><" + name + ">a &lt; b < c</" + name + "></math>" + P));
+    }
+
+    @Test
+    void selfClosingIntegrationPointHasNoContent() {
+      assertValid(body("<svg><foreignObject/><g></g></svg>" + P));
+    }
+
+    @Test
+    void textElementInRegionMustNotBeSelfClosing() {
+      assertStructure(body("<svg><style/></svg>"), "M-07");
+      // title is in TEXT and in INTEGRATION; the TEXT rule applies.
+      assertStructure(body("<svg><title/></svg>"), "M-07");
+    }
+
+    @Test
+    void textElementContentInRegionIsTextOnly() {
+      assertStructure(body("<svg><script>if (a<b) x()</script></svg>"), "M-07");
+      assertValid(body("<svg><script>if (a < b) x()</script></svg>" + P));
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "annotation-xml",
+          "desc",
+          "foreignObject",
+          "mi",
+          "mn",
+          "mo",
+          "ms",
+          "mtext",
+          "title",
+          "style",
+          "script",
+          "noscript",
+          "textarea",
+          "xmp"
+        })
+    void cdataInTextOnlyContent(String name) {
+      // E5 (H-21): a CDATA section that satisfies M-12 is allowed in text-only content.
+      assertValid(body("<svg><" + name + ">a<![CDATA[x<y]]>b</" + name + "></svg>" + P));
+      assertValid(body("<math><" + name + "><![CDATA[]]><![CDATA[1]]></" + name + "></math>" + P));
+      assertStructure(body("<svg><" + name + "><![CDATA[a>b]]></" + name + "></svg>" + P), "M-12");
+    }
+
+    @Test
+    void cdataInTextOnlyContentToEndOfInput() {
+      // E4 and E5: no ">" after "<![CDATA[": both readings end at the end of the input.
+      assertValid(P + "<svg><style><![CDATA[a{}");
+    }
+
+    @Test
+    void lessThanAsTextInForeignTextContent() {
+      // E1 (H-21): a "<" that the tokenizer emits as a character is allowed.
+      assertValid(body("<svg><desc>a < b <1 <= 2</desc><style>a<{}</style></svg>" + P));
+    }
+
+    @Test
+    void endOfInputInIntegrationPointIsNoErrorByItself() {
+      assertValid(P + "<svg><foreignObject>abc");
+    }
+
+    @Test
+    void plaintextInRegion() {
+      assertStructure(body("<svg><plaintext>a</plaintext></svg>"), "M-07");
+    }
+  }
+
+  @Nested
+  class M08Select {
+    @Test
+    void optionsGroupsAndCommentsAreAllowed() {
+      assertValid(
+          body(
+              "<select><!-- c --><option>a<option>b<optgroup><option>c</optgroup><hr></select>"
+                  + P));
+    }
+
+    @Test
+    void otherStartTagInSelect() {
+      assertStructure(body("<select><b>a</b></select>"), "M-08");
+    }
+
+    @Test
+    void otherEndTagInSelect() {
+      assertStructure(body("<div><select></div></select>"), "M-08");
+    }
+
+    @Test
+    void doctypeInSelect() {
+      assertStructure(body("<select><!DOCTYPE html></select>"), "M-08");
+    }
+
+    @Test
+    void selectNeedsExplicitEndTag() {
+      assertStructure(P + "<select><option>a", "M-08");
+    }
+
+    @Test
+    void foreignSelectIsNotHtmlSelect() {
+      assertValid(body("<svg><select><g></g></select></svg>" + P));
+    }
+  }
+
+  @Nested
+  class M09TableParts {
+    // H-85a implied closure (M-09): a table part start tag closes F while F does not allow it.
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<table><tr><td>a<td>b</td></tr></table>",
+          "<table><tr><th>a<th>b</th></tr></table>",
+          "<table><tr><td>a<tr><td>b</td></tr></table>",
+          "<table><thead><tr><th>h<tbody><tr><td>d</td></tr></tbody></table>",
+          "<table><tbody><tr><td>a<tfoot><tr><td>f</td></tr></tfoot></table>",
+          "<table><caption>c<tr><td>x</td></tr></table>",
+          "<table><caption>c<td>x</td></table>",
+          "<table><colgroup><col><tr><td>x</td></tr></table>",
+          "<table><colgroup><col><tbody><tr><td>x</td></tr></tbody></table>",
+          "<table><tr><td>a<caption>c</caption></table>",
+          "<table><tr><td>a<colgroup><col></colgroup></table>",
+          "<table><tbody><tr><td>a<td>b</td></tr></tbody></table>",
+          "<table><tr><td><div>a<td>b</td></tr></table>",
+          "<table><tr><td><table><tr><td>i<td>j</td></tr></table><td>k</td></tr></table>"
+        })
+    void tablePartClosesFThatDoesNotAllowIt(String markup) {
+      assertValid(body(markup + P));
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = {
+          // Step 3, M-06 item 1: the closure crosses the guarded a.
+          "<table><tr><td><a href=\"#\">a<td>b</td></tr></table>|M-06",
+          // Step 3, M-06 item 4 (DL-050 (2)): the special-crossed mark.
+          "<a href=\"#\"><table><tr><td><div>x<td>y</td></tr></table></a>|M-06",
+          // Step 2: F is a row and not the current node.
+          "<table><tr><td>a</td><b>x<tr>|M-09",
+          "<table><tbody><b>x<tbody>|M-09",
+          "<table><colgroup><b>x<tr>|M-09",
+          // M-06 item 3: the closure closed the row, so </tr> matches nothing.
+          "<table><tr><td><col></td></tr></table>|M-06",
+          // DL-050 (1): condition 1 runs after the closure.
+          "<template><tr><td>a<col></td></tr></template>|M-09",
+          // No closure in the content of a block or in C.
+          "<div data-rq-block=\"t\"><table><tr><td>a<td>b</td></tr></table></div>|M-09",
+          "<noscript><table><tr><td>a<td>b</td></tr></table></noscript>|M-09"
+        })
+    void impliedClosureRejects(String markup, String rule) {
+      assertStructure(body(markup + P), rule);
+    }
+
+    @Test
+    void impliedClosureNeverClosesATable() {
+      // F is table: every list has table, so the closure stops (a table in a cell is a new table).
+      assertValid(body("<table><tr><td>a<table><tr><td>b</td></tr></table></td></tr></table>" + P));
+    }
+
+    @Test
+    void impliedClosureGivesNoUnitOfDBack() {
+      // The closure crosses the div: it is not an exact pop (M-26 item 5), so D keeps the units of
+      // the div and of the cell. If the closure gave them back, D would stay flat.
+      assertInvalid(body("<table><tr>" + "<td><div>".repeat(200)), ErrorCode.LIMIT, "M-26");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<table><caption>c</caption><colgroup><col></colgroup><col><thead><tr><th>h</th></tr></thead>"
+              + "<tbody><tr><td>d</td></tr></tbody><tfoot><tr><td>f</td></tr></tfoot><tr><td>r</td></tr></table>",
+          "<table><td>a</td></table>",
+          "<td>a</td><tr></tr><caption></caption>",
+          "<table><template><td>a</td></template></table>"
+        })
+    void tablePartsInTheirParents(String markup) {
+      assertValid(body(markup + P));
+    }
+
+    // Condition 1 (H-35): no col where the search for F stops at a template.
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<template><col></template>",
+          "<template><div><col></div></template>",
+          "<template><col/></template>",
+          "<table><template><col></template></table>",
+          "<table><tr><td><template><b><col></b></template></td></tr></table>"
+        })
+    void colInTemplate(String markup) {
+      assertStructure(body(markup + P), "M-09");
+    }
+
+    @Test
+    void reviewReprosColInTemplate() {
+      // The tree builder ignores the title or textarea after <template><col>: its text is markup.
+      assertStructure(
+          body(
+              P
+                  + "<template><col><title></template><p data-rq-block=\"z\">f</p></title></template>"),
+          "M-09");
+      assertStructure(
+          "<html><head><template><col><textarea></template>"
+              + "<script type=\"application/rivqen-manifest+json\">{}</script>"
+              + "</textarea></template></head><body>"
+              + P,
+          "M-09");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<template><tr><td>x</td></tr></template>",
+          "<template><table><col></table></template>",
+          "<template><colgroup><col></colgroup></template>",
+          "<template><div><table><colgroup><col></colgroup></table></div></template>",
+          "<template></template><table><col></table>",
+          "<template><svg><col/></svg></template>",
+          "<template><title>t</title><textarea>a</textarea></template>"
+        })
+    void colInATableOfATemplateAndOtherTemplates(String markup) {
+      assertValid(body(markup + P));
+    }
+
+    // Condition 2 (H-37): in table context, F is the current node.
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<table><marquee><table>",
+          "<table><tr><object><td>",
+          "<table><form><tr>",
+          "<table><div><caption>",
+          "<table><div><colgroup>",
+          "<table><div><col>",
+          "<table><b><tbody>",
+          "<table><span><thead>",
+          "<table><i><tfoot>",
+          "<table><applet><td>",
+          "<table><div><table>",
+          "<table><tbody><span><tr>",
+          "<table><thead><b><td>",
+          "<table><tfoot><b><th>",
+          "<table><tbody><tr><b><td>",
+          "<table><tr><x-y><th>",
+          "<table><tr><div><table>",
+          "<table><colgroup><b><col>",
+          "<table><colgroup><b><table>"
+        })
+    void tablePartAboveAnOpenElementInTableContext(String markup) {
+      assertStructure(body(markup), "M-09");
+    }
+
+    @Test
+    void reviewReproFosterParentedMarquee() {
+      assertStructure(
+          body(
+              "<object><a href=\"1\"><table><marquee><table></table></marquee></table>x</a></object>"
+                  + "<span data-rq-block=\"k\">y<a href=\"2\">z</a>w</span>"),
+          "M-09");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<table><div></div><tr><td>x</td></tr></table>",
+          "<table><b></b><colgroup><col></colgroup><col></table>",
+          "<table><tr><td><div><table><tr><td>n</td></tr></table></div></td></tr></table>",
+          "<table><caption><div><table></table></div></caption></table>",
+          "<table><tr><th><b><table></table></b></th></tr></table>",
+          "<table><template><div></div></template><tr></tr></table>",
+          "<table><table></table></table>",
+          "<div><b><table><tbody><tr><td>x</td></tr></tbody></table></b></div>"
+        })
+    void tablePartWhereFIsTheCurrentNode(String markup) {
+      assertValid(body(markup + P));
+    }
+
+    @Test
+    void currentNodeConditionComesBeforeTheImpliedParts() {
+      // D is 256 after <b>; the row group and row of <td> would make it 258.
+      String divs = "<div>".repeat(Analyzer.MAX_OPEN_ELEMENTS - 2);
+      assertStructure(divs + "<table><b><td>", "M-09");
+      assertInvalid(divs + "<table><td>", ErrorCode.LIMIT, "M-26");
+    }
+  }
+
+  @Nested
+  class M10FramesetAndForms {
+    @Test
+    void framesetStartTag() {
+      assertStructure("<html><frameset><frame></frameset></html>", "M-10");
+    }
+
+    @Test
+    void framesetInForeignRegion() {
+      assertStructure(body("<svg><frameset></frameset></svg>"), "M-10");
+    }
+
+    @Test
+    void framesetEndTagAlone() {
+      assertValid(body("</frameset>" + P));
+    }
+
+    // Item 2 (H-36): no form start tag while an HTML form is on the token stack.
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<form><form>",
+          "<form><div><form>",
+          "<form><object><form></form></object></form>",
+          "<form><svg></svg><form>",
+          "<div><form><span></span><form></form></form></div>",
+          "<form><table><tr><td><form>",
+          "<form><template><form>",
+          "<div data-rq-block=a><form><form></form></form></div>",
+          "<form><div data-rq-block=a><form></form></div></form>"
+        })
+    void nestedForm(String markup) {
+      assertStructure(body(markup), "M-10");
+    }
+
+    @Test
+    void reviewReproNestedFormsInObject() {
+      String unit = "<form><object><form></form></object></form>";
+      assertStructure(
+          body(
+              "<a href=\"1\">"
+                  + unit.repeat(9)
+                  + "x</a><span data-rq-block=\"k\">y<a>z</a>w</span>"),
+          "M-10");
+      assertStructure(unit.repeat(600) + P, "M-10");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<form><input name=q></form><form><input name=r></form>",
+          "<div><form></div><form>x</form>",
+          "<div><form><span></div><form>x</form>",
+          "<form><svg><form></form></svg></form>",
+          "<svg><form></svg><form></form>",
+          "<form></form><div><form></form></div>",
+          "</form><form></form>"
+        })
+    void formAfterTheFormIsPoppedOrInAForeignRegion(String markup) {
+      assertValid(body(markup + P));
+    }
+
+    // Item 3 (H-43): no template start tag with a "for" attribute in HTML context.
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<template for=\"p\"><b>n</b></template>",
+          "<template FOR=\"\"></template>",
+          "<template for></template>",
+          "<template for=p></template>",
+          "<template id=t for=p></template>",
+          "<template for=a for=b></template>",
+          "<template id=t fOr='x'/>",
+          "<table><template for=p></template></table>"
+        })
+    void templateWithForAttribute(String markup) {
+      assertStructure("<div data-rq-block=\"a\">x</div>" + markup, "M-10");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<template id=\"t\"></template>",
+          "<template data-for=p format=x></template>",
+          "<template forx=p></template>",
+          "<div for=p></div>",
+          "<svg><template for=\"p\"></template></svg>"
+        })
+    void templateWithoutForAttributeOrForeign(String markup) {
+      assertValid("<div data-rq-block=\"a\">x</div>" + markup);
+    }
+  }
+
+  @Nested
+  class M11Noscript {
+    @Test
+    void typicalFallbacksAreValid() {
+      assertEquals(
+          List.of("a:html:x"),
+          blocks(
+              body(
+                  "<noscript><iframe src=\"https://example.com/\"></iframe></noscript>"
+                      + "<noscript><img src=x><style>a{}</style><title>t</title></noscript>"
+                      + P)));
+    }
+
+    @Test
+    void contentMustEndOutsideAComment() {
+      assertStructure(body("<noscript><!-- </noscript>" + P + "<!-- --></noscript>"), "M-11");
+    }
+
+    @Test
+    void contentMustEndOutsideATag() {
+      assertStructure(body("<noscript><a title=\"</noscript>\">x</a>"), "M-11");
+    }
+
+    @Test
+    void contentMustEndOutsideRawText() {
+      assertStructure(body("<noscript><style></noscript>"), "M-11");
+    }
+
+    @Test
+    void contentMustNotContainBlockMarkup() {
+      assertStructure(body("<noscript><p data-rq-block=a>x</p></noscript>"), "M-11");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"frameset", "math", "noscript", "plaintext", "select", "template"})
+    void contentMustNotContainForbiddenStartTag(String name) {
+      assertStructure(body("<noscript><" + name + "></noscript>"), "M-11");
+    }
+
+    @Test
+    void noscriptWithoutEndTagChecksTheRestOfTheInput() {
+      assertValid("<p data-rq-block=a>x</p><noscript><img src=x>");
+      assertStructure(body("<noscript><!-- x"), "M-11");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<script type=\"application/rivqen-manifest+json\">{}</script>",
+          "<SCRIPT TYPE='X/RIVQEN-Manifest'></SCRIPT>",
+          "<script type=application/rivqen-manifest&#43;json></script>",
+          "<script type=\"&amp;\"></script>",
+          "<img src=x><script defer type=rivqen-manifest data-x=1></script>"
+        })
+    void reservedScriptInNoscript(String markup) {
+      // E8 (H-22): M-13 applies also to C; a reader with scripting disabled sees the script.
+      assertInvalid(body("<noscript>" + markup + "</noscript>" + P), ErrorCode.RESERVED, "M-13");
+    }
+
+    @Test
+    void reservedScriptInNoscriptWithoutEndTag() {
+      assertInvalid(
+          P + "<noscript><script type=rivqen-manifest>{}</script>", ErrorCode.RESERVED, "M-13");
+    }
+
+    @Test
+    void otherScriptsInNoscript() {
+      assertValid(
+          body(
+              "<noscript><script>a()</script><script type=text/javascript type=rivqen-manifest>"
+                  + "</script><div type=rivqen-manifest></div>"
+                  + "<style><script type=rivqen-manifest></style></noscript>"
+                  + P));
+    }
+
+    // Item 10 (H-95, DL-055): in block content, M-22 and M-24 apply to the tokens of C.
+
+    @Test
+    void noscriptInContentWithPhrasingIsValid() {
+      assertEquals(
+          List.of("a:html:x<noscript><img src=y><b>z</b></noscript>w"),
+          blocks(body("<div data-rq-block=a>x<noscript><img src=y><b>z</b></noscript>w</div>")));
+    }
+
+    @Test
+    void startTagOfCThatClosesTheParagraphBlockIsInvalid() {
+      // M-24 item a on a tag of C: scripting disabled, the div closes the p block.
+      assertStructure(body("<p data-rq-block=a>x<noscript><div>y</div></noscript>z</p>"), "M-24");
+    }
+
+    @Test
+    void listItemInCWithoutListOfTheContentIsInvalid() {
+      assertStructure(body("<div data-rq-block=a><noscript><li>x</li></noscript></div>"), "M-24");
+    }
+
+    @Test
+    void listItemInCInAListOfTheContentIsValid() {
+      assertValid(
+          body("<div data-rq-block=a><ul><noscript><b>x</b></noscript><li>y</li></ul></div>"));
+    }
+
+    @Test
+    void tableInCThenContentTableContextIsInvalid() {
+      // M-24 item k on a tag of C: in a table of the content, only table parts are allowed.
+      assertStructure(
+          body("<div data-rq-block=a><table><noscript><b>x</b></noscript></table></div>"), "M-24");
+    }
+
+    @Test
+    void doctypeInCInContentIsInvalid() {
+      assertStructure(
+          body("<div data-rq-block=a><noscript><!DOCTYPE html></noscript></div>"), "M-22");
+    }
+
+    @Test
+    void doctypeInCOutsideContentIsValid() {
+      assertValid(body("<noscript><!DOCTYPE html></noscript>" + P));
+    }
+
+    @Test
+    void endTagOfVoidNameInCInContentIsInvalid() {
+      // Item 5 is M-23 for C.
+      assertStructure(body("<div data-rq-block=a><noscript><br></br></noscript></div>"), "M-11");
+    }
+
+    @Test
+    void shadowRootTemplateInNoscriptInContentIsInvalid() {
+      // M-11 item 3 comes first: a template start tag in C is invalid.
+      assertStructure(
+          body(
+              "<div data-rq-block=a><noscript><template shadowrootmode=open></template></noscript></div>"),
+          "M-11");
+    }
+
+    @Test
+    void noscriptInTemplateInContentFollowsItem10() {
+      assertStructure(
+          body("<p data-rq-block=a><template><noscript><div>y</div></noscript></template></p>"),
+          "M-24");
+    }
+
+    // Item 5 (H-27): C is balanced, on its own stack.
+
+    @Test
+    void balancedContentIsValid() {
+      assertValid(
+          body(
+              "<noscript><div><b>a</b><span/></span><x-y></X-Y><br><img src=x></div>"
+                  + "<textarea><b></textarea><script><i></script></noscript>"
+                  + P));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"<button>", "<table>", "<div>", "<b>", "<span/>", "<x-y>"})
+    void unclosedElementInContent(String start) {
+      // Security review: with scripting disabled, </noscript> is ignored over an open button.
+      assertStructure(body("<noscript>" + start + "</noscript>" + P), "M-11");
+    }
+
+    @Test
+    void reviewReproButtonInNoscript() {
+      String html =
+          "<noscript><button></noscript><div data-rq-block=\"a\">x<button>y</button>z</div>";
+      assertStructure(body(html), "M-11");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"</p>", "</br>", "</div>", "<b></i></b>"})
+    void strayEndTagInContent(String markup) {
+      assertStructure(body("<noscript>" + markup + "</noscript>" + P), "M-11");
+    }
+
+    @Test
+    void crossingInContent() {
+      assertStructure(body("<noscript><b><i>a</b></i></noscript>" + P), "M-11");
+      assertStructure(body("<noscript><div><span>a</div></noscript>" + P), "M-11");
+    }
+
+    @Test
+    void contentWithoutEndTagMustBeBalanced() {
+      // E3: C is the rest of the input.
+      assertValid(P + "<noscript><b>a</b><img src=x>");
+      assertStructure(P + "<noscript><b>a", "M-11");
+      assertStructure(body("<noscript><img src=x>"), "M-11"); // </body> and </html> are in C
+    }
+
+    @Test
+    void contentStackStartsEmptyForEachNoscript() {
+      assertValid(body("<noscript><b></b></noscript><noscript><i></i></noscript>" + P));
+      assertStructure(body("<noscript><b></noscript><noscript></b></noscript>" + P), "M-11");
+    }
+
+    @Test
+    void contentElementsAreNotOnTheTokenStack() {
+      // The b of C does not match the </b> after the noscript element in the main pass.
+      assertValid(body("<b><noscript><b></b></noscript></b>" + P));
+    }
+
+    @Test
+    void namesAfterTheInternTableIsFullStillMatch() {
+      StringBuilder c = new StringBuilder();
+      for (int i = 0; i < NameTable.CAPACITY + 100; i++) {
+        c.append("<e").append(i).append("></e").append(i).append('>');
+      }
+      assertValid(body("<noscript>" + c + "</noscript>" + P));
+      assertStructure(body("<noscript>" + c + "<e1></e2></noscript>" + P), "M-11");
+      assertValid(body(c + "<e2000><e1></e1></e2000>" + P));
+    }
+
+    // Item 6 (H-38): a table part or col in C needs an open table of C.
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<td></td>",
+          "<th></th>",
+          "<tr></tr>",
+          "<tbody></tbody>",
+          "<thead></thead>",
+          "<tfoot></tfoot>",
+          "<caption></caption>",
+          "<colgroup></colgroup>",
+          "<col>",
+          "<table></table><tr></tr>",
+          "<div><table></table><td></td></div>",
+          "<table><tr><td><table></table></td></tr></table><col>",
+          "<b><caption></caption></b>"
+        })
+    void tablePartInNoscriptWithoutTable(String markup) {
+      assertStructure(body("<noscript>" + markup + "</noscript>" + P), "M-11");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<table><tr><td><noscript><td></td></noscript>",
+          "<table><caption><noscript><td></td></noscript>",
+          "<table><tr><td><noscript><col></noscript>",
+          "<table><tr><th><noscript><tr></tr></noscript>"
+        })
+    void reviewReprosTablePartInNoscriptInACell(String start) {
+      String block = "<div data-rq-block=\"x\">a<table></table>b</div>";
+      String end = start.contains("<caption>") ? "</caption></table>" : "</td></tr></table>";
+      assertStructure(body(start + block + end), "M-11");
+    }
+
+    @Test
+    void tablePartInNoscriptWithoutEndTag() {
+      // E3: C is the rest of the input.
+      assertStructure(P + "<noscript><td></td>", "M-11");
+      assertValid(P + "<noscript><table><tr><td>x</td></tr></table>");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<table><tr><td>x</td></tr></table>",
+          "<table><caption>c</caption><colgroup><col></colgroup><col><thead></thead>"
+              + "<tbody><tr><th>h</th></tr></tbody><tfoot></tfoot></table>",
+          "<table><tr><td><table></table></td><td>y</td></tr></table>",
+          "<div><table><tr><td><b>x</b></td></tr></table></div>",
+          "<table></table><table><col></table>",
+          "<textarea><td></textarea><style>td{}</style>"
+        })
+    void tablePartInATableOfNoscript(String markup) {
+      assertValid(body("<noscript>" + markup + "</noscript>" + P));
+      assertValid(
+          body("<table><tr><td><noscript>" + markup + "</noscript>" + P + "</td></tr></table>"));
+    }
+
+    @Test
+    void noscriptInForeignRegionIsATextElement() {
+      // Not RAWTEXT (M-04), but a TEXT name in a foreign region: text only (M-07 rule 4).
+      assertValid(body("<svg><noscript>a &lt; b</noscript></svg>" + P));
+      assertStructure(body("<svg><noscript><g></g></noscript></svg>"), "M-07");
+    }
+  }
+
+  @Nested
+  class M12Cdata {
+    @Test
+    void greaterThanInsideCdata() {
+      assertStructure(body("<p><![CDATA[ a > b ]]></p>"), "M-12");
+    }
+
+    @Test
+    void greaterThanAfterSingleBracket() {
+      assertStructure(body("<svg><![CDATA[ a ]></svg>"), "M-12");
+    }
+
+    @Test
+    void bracketsMustStartAfterTheOpener() {
+      assertStructure(body("<svg><![CDATA[></svg>"), "M-12");
+      assertStructure(body("<svg><![CDATA[]></svg>"), "M-12");
+    }
+
+    @Test
+    void cdataWithoutGreaterThanInside() {
+      assertValid(body("<svg><![CDATA[ a < b ]]><![CDATA[]]></svg>" + P));
+    }
+
+    @Test
+    void cdataUntilEndOfInput() {
+      assertValid(P + "<![CDATA[ a");
+    }
+
+    @Test
+    void lowerCaseCdataIsABogusComment() {
+      assertValid(body("<![cdata[ a > b ]]>" + P));
+    }
+
+    @Test
+    void cdataInRawTextIsText() {
+      assertValid(body("<style><![CDATA[ a > b ]]></style>" + P));
+    }
+  }
+
+  @Nested
+  class M13Reserved {
+    @Test
+    void manifestScript() {
+      assertInvalid(
+          body("<script type=\"application/rivqen-manifest+json\">{}</script>"),
+          ErrorCode.RESERVED,
+          "M-13");
+    }
+
+    @Test
+    void manifestTypeAnyCase() {
+      assertInvalid(
+          body("<SCRIPT TYPE=' x/RIVQEN-Manifest '>{}</SCRIPT>"), ErrorCode.RESERVED, "M-13");
+    }
+
+    @Test
+    void characterReferenceInType() {
+      assertInvalid(
+          body("<script type=\"text/javascript&#x20;\"></script>"), ErrorCode.RESERVED, "M-13");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "text/x&amp;y",
+          "text/a&b",
+          "text/x&A",
+          "application&#x2F;x",
+          "application&#x2f",
+          "text/&#0000065pp",
+          "text/&#X41;",
+          "text/plain&#X9",
+          "text/plain&#0;",
+          "text/plain&#32;",
+          "text/x&#48;",
+          "text/x&#43;y",
+          "application/rivqen&#45;manifest+json",
+          "text/x&#46;y",
+          "application/r&#305;vqen-manifest+json",
+          "text/x&#128;",
+          "text/x&#x110000;",
+          "text/x&#99999999999999999999999;",
+          "text/x&&a",
+          "text/x&Z",
+          "text/x&a",
+          "text/x&z",
+          "text/x&#65;",
+          "text/x&#90;",
+          "text/x&#97;",
+          "text/x&#122;",
+          "text/x&#57;",
+          "text/x&#xA;",
+          "text/x&#xf;"
+        })
+    void referenceThatCanMakeAManifestTypeIsReserved(String type) {
+      // H-84 and DL-048 a: the letter after '&', or the value of a numeric reference.
+      assertInvalid(body("<script type=\"" + type + "\"></script>"), ErrorCode.RESERVED, "M-13");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "text/x-tmpl & b",
+          "text/x&#58;y",
+          "text/x&#x7E;",
+          "text/x&#33;",
+          "text/x&#x21",
+          "text/x&#;",
+          "text/x&#x;",
+          "text/x&#X;",
+          "text/x&#xg",
+          "text/x&#g",
+          "text/x&",
+          "text/x&&",
+          "text/x&1",
+          "text/x&;",
+          "text/x&#",
+          "text/x&#64;",
+          "text/x&#91;",
+          "text/x&#96;",
+          "text/x&#123;",
+          "text/x&#127;",
+          "text/x&#33a;",
+          "text/x&#a;"
+        })
+    void otherAmpersandsAreNotReserved(String type) {
+      assertValid(body("<script type=\"" + type + "\"></script>" + P));
+    }
+
+    @Test
+    void referenceRuleAlsoAppliesInNoscriptContent() {
+      // M-11 item 4 uses M-13 item 2.
+      assertInvalid(
+          body("<noscript><script type=\"text/x&amp;y\"></script></noscript>" + P),
+          ErrorCode.RESERVED,
+          "M-13");
+      assertValid(body("<noscript><script type=\"text/x&#58;y\"></script></noscript>" + P));
+    }
+
+    @Test
+    void onlyTheFirstTypeAttributeCounts() {
+      assertValid(
+          body("<script type=text/javascript type=application/rivqen-manifest+json></script>" + P));
+    }
+
+    @Test
+    void otherElementsAndPartialNamesAreNotReserved() {
+      assertValid(
+          body(
+              "<div type=\"application/rivqen-manifest+json\"></div>"
+                  + "<script type=\"rivqen-manifes\"></script><script></script>"
+                  + P));
+    }
+
+    @Test
+    void scriptInForeignRegion() {
+      assertInvalid(
+          body("<svg><script type=\"rivqen-manifest\"></script></svg>"),
+          ErrorCode.RESERVED,
+          "M-13");
+    }
+
+    @Test
+    void scriptMarkupInRawText() {
+      assertValid(body("<textarea><script type=\"rivqen-manifest\"></textarea>" + P));
+    }
+
+    // Item 3 (H-28): a byte of 0x80 or more in the raw type value.
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "application/rıvqen-manifest+json", // dotless i
+          "application/rivqen-manifeſt+json", // long s
+          "text/jävascript",
+          "module ",
+          "😀"
+        })
+    void nonAsciiTypeIsReserved(String type) {
+      assertInvalid(body("<script type=\"" + type + "\"></script>"), ErrorCode.RESERVED, "M-13");
+      assertInvalid(body("<script type=" + type + "></script>"), ErrorCode.RESERVED, "M-13");
+    }
+
+    @Test
+    void nonAsciiTypeInNoscriptContentIsReserved() {
+      assertInvalid(
+          body("<noscript><script type=\"application/rıvqen-manifest+json\"></script>"),
+          ErrorCode.RESERVED,
+          "M-13");
+    }
+
+    @Test
+    void nonAsciiTypeInForeignRegionIsReserved() {
+      assertInvalid(body("<svg><script type=\"é\"></script></svg>"), ErrorCode.RESERVED, "M-13");
+    }
+
+    @Test
+    void asciiControlCharactersInTypeAreNotReserved() {
+      // Item 3 is about bytes of 0x80 or more only; U+0000 and U+007F are ASCII.
+      assertValid(body("<script type=\"text/javascript\u0000\u0001\u007F\"></script>" + P));
+    }
+
+    @Test
+    void nonAsciiOutsideTheFirstScriptTypeIsAllowed() {
+      assertValid(
+          body(
+              "<script data-x=\"é\" type=text/javascript type=\"é\">é</script>"
+                  + "<div type=\"ı\"></div><script type=module>'ſ'</script>"
+                  + "<noscript><p type=\"é\">é</p></noscript>"
+                  + P));
+    }
+  }
+
+  @Nested
+  class M14BlockStartTag {
+    @Test
+    void attributeNameIsCaseInsensitive() {
+      assertEquals(
+          List.of("a:html:x", "b:html:y"),
+          blocks(body("<DIV DATA-RQ-BLOCK=a>x</DIV><P Data-Rq-Block=b>y</p>")));
+    }
+
+    @Test
+    void similarAttributeNamesAreNotMarkers() {
+      assertEquals(
+          List.of(),
+          blocks(body("<p data-rq-block-x=a data-rq-blocks=b data-rq=c =data-rq-block=d>x</p>")));
+    }
+
+    @Test
+    void markerInAttributeValueIsNotABlock() {
+      assertEquals(List.of(), blocks(body("<p title=\"<p data-rq-block=a>\">x</p>")));
+    }
+  }
+
+  @Nested
+  class M15Id {
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "a",
+          "0",
+          "a_b-c",
+          "z9",
+          "0123456789012345678901234567890123456789012345678901234567890123"
+        })
+    void validIds(String id) {
+      assertEquals(List.of(id + ":html:x"), blocks(body("<p data-rq-block=\"" + id + "\">x</p>")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "",
+          "-a",
+          "_a",
+          "A",
+          "aB",
+          "a.b",
+          "a b",
+          "a/",
+          "a:b",
+          "é",
+          "&#97;",
+          "01234567890123456789012345678901234567890123456789012345678901234"
+        })
+    void invalidIds(String id) {
+      assertInvalid(body("<p data-rq-block=\"" + id + "\">x</p>"), ErrorCode.INVALID_ID, "M-15");
+    }
+
+    @Test
+    void attributeWithoutValueHasEmptyId() {
+      assertInvalid(body("<p data-rq-block>x</p>"), ErrorCode.INVALID_ID, "M-15");
+      assertInvalid(body("<p data-rq-block >x</p>"), ErrorCode.INVALID_ID, "M-15");
+      assertInvalid(body("<p data-rq-block=>x</p>"), ErrorCode.INVALID_ID, "M-15");
+    }
+  }
+
+  @Nested
+  class M16BlockElement {
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "article", "aside", "div", "footer", "h1", "h2", "h3", "h4", "h5", "h6", "header", "main",
+          "nav", "p", "section", "span"
+        })
+    void htmlBlockElements(String name) {
+      assertEquals(
+          List.of("a:html:x"), blocks(body("<" + name + " data-rq-block=a>x</" + name + ">")));
+    }
+
+    @Test
+    void titleBlockKeepsRawContent() {
+      assertEquals(
+          List.of("t:html:a &amp; <b>"), blocks("<title data-rq-block=t>a &amp; <b></title>"));
+    }
+
+    @Test
+    void jsonBlock() {
+      assertEquals(
+          List.of("j:json:{\"a\":[1,\"</p>\"]}"),
+          blocks(
+              body(
+                  "<script type=\"application/json\" data-rq-block=j>{\"a\":[1,\"</p>\"]}</script>")));
+    }
+
+    @Test
+    void jsonLdBlockIsAJsonBlock() {
+      // H-86: application/ld+json is a json type; M-25 applies to it.
+      assertEquals(
+          List.of("j:json:{\"@id\":1}"),
+          blocks(
+              body("<script type=\"application/ld+json\" data-rq-block=j>{\"@id\":1}</script>")));
+      assertInvalid(
+          body("<script type=\"application/ld+json\" data-rq-block=j>{</script>"),
+          ErrorCode.BAD_JSON,
+          "M-25");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<li data-rq-block=a>x</li>",
+          "<img data-rq-block=a>",
+          "<style data-rq-block=a>x</style>",
+          "<textarea data-rq-block=a>x</textarea>",
+          "<template data-rq-block=a>x</template>",
+          "<script data-rq-block=a>1</script>",
+          "<script type=\"Application/LD+JSON\" data-rq-block=a>1</script>",
+          "<script type=\"application/ld+json \" data-rq-block=a>1</script>",
+          "<script type=\"application/jsonld\" data-rq-block=a>1</script>",
+          "<script type=\"Application/JSON\" data-rq-block=a>1</script>",
+          "<script type=\"application/json \" data-rq-block=a>1</script>",
+          "<script type=text/plain type=application/json data-rq-block=a>1</script>",
+          "<svg><title data-rq-block=a>x</title></svg>",
+          "<math><mrow data-rq-block=a>x</mrow></math>",
+          "<foo data-rq-block=a>x</foo>"
+        })
+    void otherElementsCannotBeBlocks(String markup) {
+      assertInvalid(body(markup), ErrorCode.FORBIDDEN_ELEMENT, "M-16");
+    }
+  }
+
+  @Nested
+  class M17Nesting {
+    @Test
+    void blockInBlockContent() {
+      assertInvalid(
+          body("<div data-rq-block=a><p data-rq-block=b>x</p></div>"), ErrorCode.NESTED, "M-17");
+    }
+
+    @Test
+    void nestingIsCheckedBeforeTheInnerId() {
+      assertInvalid(
+          body("<div data-rq-block=a><p data-rq-block=\"B B\">x</p></div>"),
+          ErrorCode.NESTED,
+          "M-17");
+    }
+
+    @Test
+    void blocksAfterEachOtherAreNotNested() {
+      assertEquals(
+          List.of("a:html:x", "b:html:y"),
+          blocks(body("<div data-rq-block=a>x</div><div data-rq-block=b>y</div>")));
+    }
+  }
+
+  @Nested
+  class M18SelfClosing {
+    @Test
+    void selfClosingBlockStartTag() {
+      assertStructure(body("<div data-rq-block=\"a\"/>x</div>"), "M-18");
+    }
+
+    @Test
+    void slashInUnquotedValueIsNotSelfClosing() {
+      assertInvalid(body("<div data-rq-block=a/>x</div>"), ErrorCode.INVALID_ID, "M-15");
+    }
+  }
+
+  @Nested
+  class M19Context {
+    @Test
+    void blockInsideTemplate() {
+      assertStructure(body("<template><p data-rq-block=a>x</p></template>"), "M-19");
+    }
+
+    @Test
+    void blockInsideSelect() {
+      assertStructure(body("<select><option><p data-rq-block=a>x</p></select>"), "M-08");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<table>",
+          "<table><tbody>",
+          "<table><thead>",
+          "<table><tfoot>",
+          "<table><tr>",
+          "<table><colgroup>"
+        })
+    void blockDirectlyInTablePart(String markup) {
+      assertStructure(body(markup + P), "M-19");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"<table><tr><td>", "<table><tr><th>", "<table><caption>"})
+    void blockInCellOrCaption(String markup) {
+      assertEquals(List.of("a:html:x"), blocks(body(markup + P + "</table>")));
+    }
+
+    @Test
+    void blockAfterTemplateAndTable() {
+      assertValid(body("<template><p>x</p></template><table><tr><td>a</td></tr></table>" + P));
+    }
+
+    @Test
+    void blockInDivInsideTable() {
+      // F is the table: the div does not stop the search.
+      assertStructure(body("<table><div>" + P), "M-19");
+    }
+  }
+
+  @Nested
+  class M20EndTag {
+    @Test
+    void endOfInputInHtmlBlock() {
+      assertStructure("<div data-rq-block=a>abc", "M-20");
+    }
+
+    @Test
+    void endOfInputInsideTheEndTag() {
+      assertStructure("<div data-rq-block=a>abc</div", "M-20");
+      assertStructure("<div data-rq-block=a>abc</div class=\">", "M-20");
+    }
+
+    @Test
+    void endOfInputInTitleBlock() {
+      assertStructure("<title data-rq-block=t>abc</title", "M-20");
+    }
+
+    @Test
+    void endOfInputInJsonBlock() {
+      assertStructure("<script type=application/json data-rq-block=j>[1]", "M-20");
+    }
+
+    @Test
+    void endTagWithAttributesEndsRawTextBlock() {
+      assertEquals(List.of("t:html:a"), blocks("<title data-rq-block=t>a</title class=\"x\">"));
+    }
+
+    @Test
+    void blockEndsAtItsOwnEndTagWhenItIsTheCurrentNode() {
+      assertEquals(
+          List.of("a:html:<div>x</div>y"),
+          blocks(body("<div data-rq-block=a><div>x</div>y</div>")));
+    }
+  }
+
+  @Nested
+  class M21Duplicate {
+    @Test
+    void sameIdTwice() {
+      assertInvalid(body(P + P), ErrorCode.DUPLICATE, "M-21");
+    }
+
+    @Test
+    void sameIdOnDifferentFormats() {
+      assertInvalid(
+          "<title data-rq-block=a>t</title><script type=application/json data-rq-block=a>1</script>",
+          ErrorCode.DUPLICATE,
+          "M-21");
+    }
+  }
+
+  @Nested
+  class M22ContentTokens {
+    @Test
+    void doctypeInContent() {
+      assertStructure(body("<div data-rq-block=a><!DOCTYPE html></div>"), "M-22");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "body",
+          "frame",
+          "head",
+          "html",
+          "noembed",
+          "noframes",
+          "optgroup",
+          "option",
+          "plaintext",
+          "select",
+          "textarea",
+          "title",
+          "xmp"
+        })
+    void forbiddenContentElement(String name) {
+      assertStructure(body("<div data-rq-block=a><" + name + "></div>"), "M-22");
+    }
+
+    @Test
+    void templateAndNoscriptAreAllowedInContent() {
+      // H-94, H-95: both leave M-22 item 2; the content closes them with their own end tags.
+      assertValid(
+          body(
+              "<div data-rq-block=a><template><b>x</b></template><noscript><i>y</i></noscript></div>"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<template shadowrootmode=open>",
+          "<template shadowrootmode>",
+          "<template ShadowRootMode=closed>",
+          "<template shadowrootmode=\"\">",
+          "<template a=1 shadowrootmode=open>",
+          "<template shadowrootmode=open shadowrootmode=closed>",
+          "<template shadowrootclonable shadowrootmode=open>"
+        })
+    void templateWithShadowRootMode(String open) {
+      // M-22 item 6 (H-94, H-97): any value, any case, any position, also a dropped duplicate.
+      assertStructure(body("<div data-rq-block=a>" + open + "x</template></div>"), "M-22");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<template shadowroot=open>",
+          "<template shadowroot>",
+          "<template SHADOWROOT=closed>",
+          "<template shadowroot=\"\">",
+          "<template id=t class=c shadowroot=open>",
+          "<template id=a ShadowRoot=\"\" class=b shadowroot=open>",
+          "<template shadowrootclonable shadowroot=open>"
+        })
+    void templateWithOldShadowRootAttribute(String open) {
+      // M-22 item 6 (DL-056): the old Chromium name, any value, any case, any position.
+      assertStructure(body("<div data-rq-block=a>" + open + "x</template></div>"), "M-22");
+    }
+
+    @Test
+    void oldShadowRootAttributeInTemplateContentsCounts() {
+      assertStructure(
+          body(
+              "<div data-rq-block=a><template><b><template shadowroot>x</template></b></template></div>"),
+          "M-22");
+    }
+
+    @Test
+    void duplicateShadowRootModeAfterAnotherAttributeCounts() {
+      assertStructure(
+          body(
+              "<div data-rq-block=a><template shadowrootmode=open shadowrootmode=open>x</template></div>"),
+          "M-22");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "shadowrootclonable",
+          "shadowrootdelegatesfocus",
+          "shadowrootserializable",
+          "data-shadowrootmode",
+          "shadowrootmodes",
+          "shadowrootx",
+          "shadowroots",
+          "data-shadowroot",
+          "shadowroo",
+          "\u017Fhadowroot"
+        })
+    void templateWithOtherShadowRootAttributeIsValid(String attribute) {
+      assertValid(body("<div data-rq-block=a><template " + attribute + "=x>y</template></div>"));
+    }
+
+    @Test
+    void shadowRootModeOutsideContentOrInForeignRegionIsValid() {
+      assertValid(body("<template shadowrootmode=open>x</template>" + P));
+      assertValid(
+          body("<div data-rq-block=a><svg><template shadowrootmode=open></template></svg></div>"));
+      assertValid(body("<template shadowroot=open>x</template>" + P));
+      assertValid(
+          body("<div data-rq-block=a><svg><template shadowroot=open></template></svg></div>"));
+      assertValid(body("<div data-rq-block=a><div shadowroot=open>x</div></div>"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"<span/>", "<foo/>", "<div/>"})
+    void selfClosingNonVoidElement(String tag) {
+      assertStructure(body("<div data-rq-block=a>" + tag + "</div>"), "M-22");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<base href=x>",
+          "<basefont>",
+          "<bgsound src=x>",
+          "<embed src=x>",
+          "<link rel=x>",
+          "<meta name=x>",
+          "<iframe src=x></iframe>",
+          "<object data=x><param name=a></object>",
+          "<script>init()</script>",
+          "<style>p{}</style>"
+        })
+    void patchSafetyElementsAreValidMarkup(String markup) {
+      // H-78: the patch content rule rejects these in a patch; the markup rule does not.
+      String content = "x" + markup + "y";
+      assertEquals(
+          List.of("a:html:" + content), blocks(body("<div data-rq-block=a>" + content + "</div>")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"<script/>", "<style/>", "<iframe/>"})
+    void selfClosingRawTextElementIsStillInvalid(String tag) {
+      assertStructure(body("<div data-rq-block=a>" + tag + "</div>"), "M-22");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {"</embed>", "</link>", "</meta>", "</base>", "</basefont>", "</bgsound>"})
+    void endTagOfMovedVoidElement(String tag) {
+      assertStructure(body("<div data-rq-block=a>" + tag + "</div>"), "M-22");
+    }
+
+    @Test
+    void selfClosingVoidElement() {
+      assertValid(body("<div data-rq-block=a><br/><img src=x /></div>"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"</br>", "</img>", "</col>", "</input>"})
+    void endTagOfVoidElement(String tag) {
+      assertStructure(body("<div data-rq-block=a>" + tag + "</div>"), "M-22");
+    }
+
+    @Test
+    void commentsCharacterReferencesAndOtherElements() {
+      assertValid(
+          body("<div data-rq-block=a><!-- c --><?pi?>&amp;<custom-el x=y>z</custom-el></div>"));
+    }
+  }
+
+  @Nested
+  class M23Balance {
+    @Test
+    void elementOpenAtBlockEnd() {
+      assertStructure(body("<div data-rq-block=a><span>x</div>"), "M-23");
+    }
+
+    @Test
+    void strayEndTagInContent() {
+      assertStructure(body("<div data-rq-block=a>x</span></div>"), "M-23");
+    }
+
+    @Test
+    void endTagOfElementOpenedBeforeBlock() {
+      assertStructure(body("<span><div data-rq-block=a>x</span></div>"), "M-23");
+    }
+
+    @Test
+    void optionalEndTagsMustBeExplicitInContent() {
+      assertStructure(body("<div data-rq-block=a><ul><li>a</ul></div>"), "M-23");
+      assertStructure(body("<div data-rq-block=a><table><tr><td>a</tr></table></div>"), "M-23");
+      assertValid(body("<div data-rq-block=a><ul><li>a</li><li>b</li></ul></div>"));
+    }
+  }
+
+  @Nested
+  class M24ImpliedEnd {
+    @ParameterizedTest
+    @ValueSource(strings = {"p", "span"})
+    void pcloseStartTagInParagraphOrSpanBlock(String block) {
+      for (String inner : List.of("div", "ul", "p", "table", "hr", "h2", "address", "pre")) {
+        assertStructure(
+            body("<" + block + " data-rq-block=a><" + inner + ">x</" + inner + "></" + block + ">"),
+            "M-24");
+      }
+    }
+
+    @Test
+    void pcloseStartTagInDivBlock() {
+      assertValid(body("<div data-rq-block=a><p>x</p><div>y</div><hr></div>"));
+    }
+
+    @Test
+    void headingInHeadingBlock() {
+      assertStructure(body("<h1 data-rq-block=a><h2>x</h2></h1>"), "M-24");
+    }
+
+    @Test
+    void headingInHeadingOpenedInContent() {
+      assertStructure(body("<div data-rq-block=a><h2>x<h3>y</h3></h2></div>"), "M-24");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"h1", "h2", "h3", "h4", "h5", "h6"})
+    void headingWhileAnyHeadingLevelIsOpenInContent(String open) {
+      assertStructure(
+          body("<div data-rq-block=a><" + open + ">x<h1>y</h1></" + open + "></div>"), "M-24");
+    }
+
+    @Test
+    void headingsAfterEachOther() {
+      assertValid(body("<h1><div data-rq-block=a><h2>x</h2><h3>y</h3></div></h1>"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"li", "dd", "dt"})
+    void listItemWithoutListInContent(String item) {
+      assertStructure(
+          body("<ul><li><div data-rq-block=a><" + item + ">x</" + item + "></div></li></ul>"),
+          "M-24");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ul", "ol", "menu", "dl"})
+    void listItemInListOpenedInContent(String list) {
+      assertValid(
+          body(
+              "<div data-rq-block=a><"
+                  + list
+                  + "><li>x</li><dd>y</dd><dt>z</dt></"
+                  + list
+                  + "></div>"));
+    }
+
+    @Test
+    void listItemWithListOpenedOnlyBeforeBlock() {
+      assertStructure(body("<ul><div data-rq-block=a><li>x</li></div></ul>"), "M-24");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "ul,li,li",
+          "ol,li,dd",
+          "menu,li,dt",
+          "dl,dd,dd",
+          "dl,dd,dt",
+          "dl,dt,li",
+          "ul,li,dt"
+        })
+    void listItemWhileItemIsOpenAboveList(String names) {
+      // M-24 j (H-18 A1): the WHATWG parser would close the open item and the div in it.
+      String[] n = names.split(",", -1);
+      String list = n[0];
+      String open = n[1];
+      String item = n[2];
+      assertStructure(
+          body(
+              "<div data-rq-block=a><"
+                  + list
+                  + "><"
+                  + open
+                  + "><div><"
+                  + item
+                  + ">x</"
+                  + item
+                  + "></div></"
+                  + open
+                  + "></"
+                  + list
+                  + "></div>"),
+          "M-24");
+      assertStructure(
+          body("<div data-rq-block=a><" + list + "><" + open + "><" + item + ">x"), "M-24");
+    }
+
+    @Test
+    void listItemInNestedListInsideItem() {
+      assertValid(
+          body(
+              "<div data-rq-block=a><ul><li><ol><li>x</li></ol><div><dl><dt>y</dt><dd>z</dd>"
+                  + "</dl></div></li></ul></div>"));
+    }
+
+    @Test
+    void listItemOpenedBeforeBlockIsBelowTheList() {
+      assertValid(body("<ul><li><div data-rq-block=a><ul><li>x</li></ul></div></li></ul>"));
+      assertValid(body("<dl><dd><div data-rq-block=a><dl><dt>x</dt></dl></div></dd></dl>"));
+    }
+
+    @Test
+    void listItemInListAfterNestedListClosed() {
+      assertStructure(
+          body("<div data-rq-block=a><ul><li><ol><li>x</li></ol><li>y</li></li></ul></div>"),
+          "M-24");
+    }
+
+    @Test
+    void listItemAfterListClosed() {
+      assertStructure(body("<div data-rq-block=a><ul></ul><li>x</li></div>"), "M-24");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"button", "a", "nobr"})
+    void formattingOrButtonWhileOpen(String name) {
+      assertStructure(
+          body(
+              "<"
+                  + name
+                  + "><div data-rq-block=b><"
+                  + name
+                  + ">x</"
+                  + name
+                  + "></div></"
+                  + name
+                  + ">"),
+          "M-24");
+      assertStructure(
+          body(
+              "<div data-rq-block=b><"
+                  + name
+                  + "><"
+                  + name
+                  + ">x</"
+                  + name
+                  + "></"
+                  + name
+                  + "></div>"),
+          "M-24");
+      assertValid(
+          body(
+              "<div data-rq-block=b><"
+                  + name
+                  + ">x</"
+                  + name
+                  + "><"
+                  + name
+                  + ">y</"
+                  + name
+                  + "></div>"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {"caption", "colgroup", "tbody", "td", "tfoot", "th", "thead", "tr", "col"})
+    void tablePartWithoutTableInContent(String name) {
+      assertStructure(body("<div data-rq-block=a><" + name + "></div>"), "M-24");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+          "<table>",
+          "<table><tbody>",
+          "<table><thead>",
+          "<table><tfoot>",
+          "<table><tr>",
+          "<table><tbody><tr>",
+          "<table><colgroup>"
+        })
+    void startTagInTableContext(String context) {
+      // M-24 k (H-18 B1): foster parenting; a table start tag closes the open table.
+      for (String tag : List.of("<div>", "<x-y>", "<table>", "<b>", "<br>", "<input>", "<p>")) {
+        assertStructure(body("<div data-rq-block=a>" + context + tag), "M-24");
+      }
+    }
+
+    @Test
+    void tablePartInTableContextIsCheckedByM09() {
+      assertStructure(body("<div data-rq-block=a><table><tr><tbody>"), "M-09");
+      assertStructure(body("<div data-rq-block=a><table><tr><col>"), "M-09");
+    }
+
+    @Test
+    void textCommentsAndCellContentInTableContext() {
+      assertValid(
+          body(
+              "<div data-rq-block=a><table>t<!-- c --><caption><div>c</div></caption>"
+                  + "<colgroup><col></colgroup><tbody> <tr><td><div>d</div><table><tr><th><p>e</p>"
+                  + "</th></tr></table></td></tr></tbody></table></div>"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"tr", "td", "th", "tbody", "caption", "colgroup", "col"})
+    void tablePartDirectlyInTemplateIsInvalidEvenInsideATable(String name) {
+      // M-24 item g (H-94): the search for F stops at the template, so F is none.
+      assertStructure(
+          body(
+              "<div data-rq-block=a><table><tr><td><template><"
+                  + name
+                  + "></template></td></tr></table></div>"),
+          "M-24");
+      assertStructure(
+          body("<div data-rq-block=a><template><" + name + "></template></div>"), "M-24");
+    }
+
+    @Test
+    void tablePartInATableInsideATemplateIsValid() {
+      assertValid(
+          body(
+              "<div data-rq-block=a><template><table><caption>c</caption><tr><td>x</td></tr></table></template></div>"));
+    }
+
+    @Test
+    void tableContextOutsideContentIsNotChecked() {
+      assertValid(body("<table><div>x</div><b>y</b></table>" + P));
+    }
+
+    @Test
+    void tableInContent() {
+      assertValid(
+          body(
+              "<div data-rq-block=a><table><colgroup><col></colgroup><tr><td>x</td></tr></table></div>"));
+    }
+
+    @Test
+    void rubyPartWithoutRubyInContent() {
+      assertStructure(body("<ruby>a<p data-rq-block=a><rt>b</rt></p></ruby>"), "M-24");
+      assertStructure(body("<ruby>a<p data-rq-block=a><rb>b</rb></p></ruby>"), "M-24");
+      assertStructure(body("<ruby>a<p data-rq-block=a><rtc>b</rtc></p></ruby>"), "M-24");
+      assertStructure(body("<ruby>a<p data-rq-block=a><rp>b</rp></p></ruby>"), "M-24");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"rb", "rp", "rt"})
+    void rbOrRtcWhileRubyPartOpen(String open) {
+      assertStructure(
+          body("<div data-rq-block=a><ruby><" + open + ">x<rb>y</rb></" + open + "></ruby></div>"),
+          "M-24");
+      assertStructure(
+          body(
+              "<div data-rq-block=a><ruby><" + open + ">x<rtc>y</rtc></" + open + "></ruby></div>"),
+          "M-24");
+    }
+
+    @Test
+    void rbWhileRtcOpen() {
+      assertStructure(
+          body("<div data-rq-block=a><ruby><rtc>x<rb>y</rb></rtc></ruby></div>"), "M-24");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"rb", "rp", "rt"})
+    void rpOrRtWhileRubyPartOpen(String open) {
+      assertStructure(
+          body("<div data-rq-block=a><ruby><" + open + ">x<rt>y</rt></" + open + "></ruby></div>"),
+          "M-24");
+      assertStructure(
+          body("<div data-rq-block=a><ruby><" + open + ">x<rp>y</rp></" + open + "></ruby></div>"),
+          "M-24");
+    }
+
+    @Test
+    void rtInsideRtcIsAllowed() {
+      assertValid(body("<div data-rq-block=a><ruby>a<rtc><rt>b</rt><rp>c</rp></rtc></ruby></div>"));
+    }
+
+    @Test
+    void rubyPartsAfterEachOther() {
+      assertValid(
+          body(
+              "<div data-rq-block=a><ruby><rb>a</rb><rp>(</rp><rt>b</rt><rp>)</rp><rtc>c</rtc></ruby></div>"));
+    }
+  }
+
+  @Nested
+  class M25Json {
+    @Test
+    void invalidJson() {
+      assertInvalid(
+          body("<script type=application/json data-rq-block=j>[1,]</script>"),
+          ErrorCode.BAD_JSON,
+          "M-25");
+    }
+
+    @Test
+    void emptyJson() {
+      assertInvalid(
+          body("<script type=application/json data-rq-block=j></script>"),
+          ErrorCode.BAD_JSON,
+          "M-25");
+    }
+  }
+
+  @Nested
+  class M27Result {
+    @Test
+    void offsetsAreUtf8BytesAfterByteOrderMark() {
+      byte[] in = Docs.utf8(Docs.BOM + "<p>😀</p><p data-rq-block=a>é\r\n</p>");
+      Result r = Analyzer.analyze(in);
+      assertEquals(1, r.blocks().size());
+      Result.Block b = r.blocks().get(0);
+      assertEquals(3 + 3 + 4 + 4 + 19, b.start());
+      assertEquals(b.start() + 4, b.end());
+    }
+
+    @Test
+    void emptyDocumentIsValidWithoutBlocks() {
+      Result r = Docs.analyze("");
+      assertEquals(null, r.error());
+      assertEquals(List.of(), r.blocks());
+      assertEquals("t1.", r.templateRevision().substring(0, 3));
+      assertEquals("r1.", r.pageRevision().substring(0, 3));
+    }
+  }
+}

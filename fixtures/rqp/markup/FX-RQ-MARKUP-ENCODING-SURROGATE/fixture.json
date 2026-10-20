@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-ENCODING-SURROGATE",
+  "description": "UTF-8 encoded surrogate code point (ED A0 80)",
+  "rules": [
+    "M-02"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_ENCODING"
+  }
+}

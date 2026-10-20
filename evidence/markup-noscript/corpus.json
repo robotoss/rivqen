@@ -1,0 +1,1902 @@
+{
+ "date": "2026-10-18",
+ "pages": 882,
+ "errors": [],
+ "candidateMismatch": [],
+ "modelADivergences": [],
+ "noscript": {
+  "pagesAny": 567,
+  "pagesHead": 225,
+  "pagesPreHead": 0,
+  "pagesOther": 464,
+  "elementsHead": 527,
+  "elementsPreHead": 0,
+  "elementsOther": 2056
+ },
+ "headNoscript": {
+  "pagesText": 6,
+  "pagesComment": 2,
+  "pagesEmptyOnly": 62,
+  "pagesPassH1": 154,
+  "pagesPassH2": 154,
+  "tags": {
+   "link": 69,
+   "img": 56,
+   "style": 31,
+   "div": 25,
+   "meta": 10,
+   "iframe": 9,
+   "picture": 2,
+   "br": 1
+  },
+  "h1Failures": {
+   "<img>": 36,
+   "<div>": 25,
+   "<iframe>": 9,
+   "text": 4,
+   "<picture>": 2
+  },
+  "h2Failures": {
+   "<img>": 36,
+   "<div>": 25,
+   "<iframe>": 9,
+   "text": 4,
+   "<picture>": 2
+  }
+ },
+ "otherNoscript": {
+  "pagesText": 95,
+  "tags": {
+   "img": 248,
+   "iframe": 185,
+   "div": 143,
+   "a": 40,
+   "p": 33,
+   "style": 29,
+   "svg": 21,
+   "span": 19,
+   "link": 18,
+   "path": 17,
+   "li": 15,
+   "ul": 15,
+   "h2": 8,
+   "meta": 8,
+   "nav": 8,
+   "button": 7,
+   "footer": 7,
+   "header": 7,
+   "strong": 7,
+   "h1": 5,
+   "h3": 5,
+   "details": 4,
+   "label": 4,
+   "picture": 4,
+   "source": 4,
+   "summary": 4,
+   "table": 4,
+   "tbody": 4,
+   "td": 4,
+   "th": 4,
+   "thead": 4,
+   "tr": 4,
+   "use": 4,
+   "circle": 3,
+   "ellipse": 3,
+   "option": 3,
+   "select": 3,
+   "title": 3,
+   "br": 2,
+   "code": 2,
+   "em": 2,
+   "figure": 2,
+   "i": 2,
+   "input": 2,
+   "script": 2,
+   "time": 2,
+   "a-iframe": 1,
+   "a-video": 1,
+   "aside": 1,
+   "b": 1,
+   "dd": 1,
+   "dl": 1,
+   "dt": 1,
+   "ol": 1,
+   "section": 1
+  }
+ },
+ "markup": {
+  "shipped": {
+   "valid": 798,
+   "lost": 0,
+   "lostReasons": {},
+   "lostPages": [],
+   "disagree": {
+    "enabled": [],
+    "disabled": []
+   }
+  },
+  "a": {
+   "valid": 798,
+   "lost": 0,
+   "lostReasons": {},
+   "lostPages": [],
+   "disagree": {
+    "enabled": [],
+    "disabled": []
+   }
+  },
+  "a-fx": {
+   "valid": 813,
+   "lost": 0,
+   "lostReasons": {},
+   "lostPages": [],
+   "disagree": {
+    "enabled": [],
+    "disabled": []
+   }
+  },
+  "b0": {
+   "valid": 767,
+   "lost": 31,
+   "lostReasons": {
+    "B:header": 6,
+    "B:picture": 6,
+    "B:h1": 3,
+    "B:details": 2,
+    "B:figure": 2,
+    "B:h2": 2,
+    "B:i": 2,
+    "B:script": 2,
+    "B:br": 1,
+    "B:button": 1,
+    "B:dl": 1,
+    "B:input": 1,
+    "B:section": 1,
+    "B:strong": 1
+   },
+   "lostPages": [
+    {
+     "id": "p0008",
+     "url": "https://www.washingtonpost.com/",
+     "why": "B:details"
+    },
+    {
+     "id": "p0008d",
+     "url": "https://www.washingtonpost.com/politics/2026/10/18/trump-approval-hits-record-low-handing-democrats-clear-midterm-edge/",
+     "why": "B:details"
+    },
+    {
+     "id": "p0066",
+     "url": "https://www.heise.de/",
+     "why": "B:figure"
+    },
+    {
+     "id": "p0066d",
+     "url": "https://www.heise.de/tests/Fitbit-Air-vs-Whoop-5-am-iPhone-im-Test-Messen-deuten-coachen-11475053.html",
+     "why": "B:script"
+    },
+    {
+     "id": "p0068",
+     "url": "https://www.lefigaro.fr/",
+     "why": "B:picture"
+    },
+    {
+     "id": "p0074d",
+     "url": "https://www.clarin.com/internacional/jovenes-devolvieron-us-130000-recibieron-banco-recompenso-paquetitos-gominolas_0_nwwPB4NPEs.html",
+     "why": "B:figure"
+    },
+    {
+     "id": "p0155",
+     "url": "https://www.nur.kz/",
+     "why": "B:picture"
+    },
+    {
+     "id": "p0155d",
+     "url": "https://www.nur.kz/kak-rabotaet-nur-kz/1977609-o-nas-pishut-publikatsii-o-nurkz-v-drugih-media/",
+     "why": "B:picture"
+    },
+    {
+     "id": "p0235",
+     "url": "https://www.apple.com/",
+     "why": "B:picture"
+    },
+    {
+     "id": "p0236",
+     "url": "https://www.apple.com/iphone/",
+     "why": "B:picture"
+    },
+    {
+     "id": "p0239",
+     "url": "https://www.lowes.com/",
+     "why": "B:script"
+    },
+    {
+     "id": "p0337",
+     "url": "https://www.rt.ru/",
+     "why": "B:br"
+    },
+    {
+     "id": "p0356",
+     "url": "https://www.framer.com/",
+     "why": "B:input"
+    },
+    {
+     "id": "p0382",
+     "url": "https://vercel.com/",
+     "why": "B:picture"
+    },
+    {
+     "id": "p0476",
+     "url": "https://developer.apple.com/documentation/webkit/wkwebview",
+     "why": "B:h1"
+    },
+    {
+     "id": "p0494",
+     "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html",
+     "why": "B:strong"
+    },
+    {
+     "id": "p0506",
+     "url": "https://pypi.org/project/requests/",
+     "why": "B:i"
+    },
+    {
+     "id": "p0512",
+     "url": "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/",
+     "why": "B:h1"
+    },
+    {
+     "id": "p0586",
+     "url": "https://meta.discourse.org/",
+     "why": "B:header"
+    },
+    {
+     "id": "p0587",
+     "url": "https://forum.obsidian.md/",
+     "why": "B:header"
+    },
+    {
+     "id": "p0587d",
+     "url": "https://forum.obsidian.md/t/about-the-bug-reports-category/24/11",
+     "why": "B:header"
+    },
+    {
+     "id": "p0589",
+     "url": "https://users.rust-lang.org/",
+     "why": "B:header"
+    },
+    {
+     "id": "p0589d",
+     "url": "https://users.rust-lang.org/t/welcome-to-the-rust-programming-language-users-forum/77411",
+     "why": "B:header"
+    },
+    {
+     "id": "p0603",
+     "url": "https://forum.unity.com/",
+     "why": "B:header"
+    },
+    {
+     "id": "p0638",
+     "url": "https://www.gov.br/pt-br",
+     "why": "B:dl"
+    },
+    {
+     "id": "p0694",
+     "url": "https://www.airbnb.com/",
+     "why": "B:i"
+    },
+    {
+     "id": "p0724",
+     "url": "https://archive.org/",
+     "why": "B:h2"
+    },
+    {
+     "id": "p0729",
+     "url": "https://sfbay.craigslist.org/",
+     "why": "B:h1"
+    },
+    {
+     "id": "p0737d",
+     "url": "https://www.bbc.co.uk/food/recipes/how_to_make_pancakes_02824",
+     "why": "B:h2"
+    },
+    {
+     "id": "p0756",
+     "url": "https://ubuntu.com/",
+     "why": "B:section"
+    },
+    {
+     "id": "p0779",
+     "url": "https://www.insales.ru/",
+     "why": "B:button"
+    }
+   ],
+   "disagree": {
+    "enabled": [],
+    "disabled": []
+   }
+  },
+  "b1": {
+   "valid": 785,
+   "lost": 13,
+   "lostReasons": {
+    "B:details": 2,
+    "B:figure": 2,
+    "B:script": 2,
+    "B:table": 2,
+    "B:time": 2,
+    "B:aside": 1,
+    "B:button": 1,
+    "B:dl": 1
+   },
+   "lostPages": [
+    {
+     "id": "p0008",
+     "url": "https://www.washingtonpost.com/",
+     "why": "B:details"
+    },
+    {
+     "id": "p0008d",
+     "url": "https://www.washingtonpost.com/politics/2026/10/18/trump-approval-hits-record-low-handing-democrats-clear-midterm-edge/",
+     "why": "B:details"
+    },
+    {
+     "id": "p0066",
+     "url": "https://www.heise.de/",
+     "why": "B:figure"
+    },
+    {
+     "id": "p0066d",
+     "url": "https://www.heise.de/tests/Fitbit-Air-vs-Whoop-5-am-iPhone-im-Test-Messen-deuten-coachen-11475053.html",
+     "why": "B:script"
+    },
+    {
+     "id": "p0074d",
+     "url": "https://www.clarin.com/internacional/jovenes-devolvieron-us-130000-recibieron-banco-recompenso-paquetitos-gominolas_0_nwwPB4NPEs.html",
+     "why": "B:figure"
+    },
+    {
+     "id": "p0239",
+     "url": "https://www.lowes.com/",
+     "why": "B:script"
+    },
+    {
+     "id": "p0587",
+     "url": "https://forum.obsidian.md/",
+     "why": "B:table"
+    },
+    {
+     "id": "p0587d",
+     "url": "https://forum.obsidian.md/t/about-the-bug-reports-category/24/11",
+     "why": "B:time"
+    },
+    {
+     "id": "p0589",
+     "url": "https://users.rust-lang.org/",
+     "why": "B:table"
+    },
+    {
+     "id": "p0589d",
+     "url": "https://users.rust-lang.org/t/welcome-to-the-rust-programming-language-users-forum/77411",
+     "why": "B:time"
+    },
+    {
+     "id": "p0638",
+     "url": "https://www.gov.br/pt-br",
+     "why": "B:dl"
+    },
+    {
+     "id": "p0729",
+     "url": "https://sfbay.craigslist.org/",
+     "why": "B:aside"
+    },
+    {
+     "id": "p0779",
+     "url": "https://www.insales.ru/",
+     "why": "B:button"
+    }
+   ],
+   "disagree": {
+    "enabled": [],
+    "disabled": []
+   }
+  }
+ },
+ "head": {
+  "shipped": {
+   "found": 853,
+   "foundShippedValid": 773,
+   "lostShippedValid": 0,
+   "gainedShippedValid": 0,
+   "lostPages": [],
+   "disagreeShippedValid": {
+    "enabled": [],
+    "disabled": [
+     "p0004",
+     "p0004d",
+     "p0043",
+     "p0043d",
+     "p0044",
+     "p0044d",
+     "p0053",
+     "p0053d",
+     "p0094",
+     "p0094d",
+     "p0101",
+     "p0106",
+     "p0106d",
+     "p0115",
+     "p0120",
+     "p0120d",
+     "p0126",
+     "p0129",
+     "p0129d",
+     "p0130",
+     "p0130d",
+     "p0137",
+     "p0137d",
+     "p0149",
+     "p0149d",
+     "p0155",
+     "p0155d",
+     "p0163",
+     "p0212",
+     "p0212d",
+     "p0216",
+     "p0216d",
+     "p0218",
+     "p0218d",
+     "p0226",
+     "p0327",
+     "p0330",
+     "p0335",
+     "p0388",
+     "p0399",
+     "p0410",
+     "p0439",
+     "p0665",
+     "p0665d",
+     "p0670",
+     "p0670d",
+     "p0683",
+     "p0683d",
+     "p0686",
+     "p0686d",
+     "p0716",
+     "p0741d",
+     "p0784",
+     "p0784d"
+    ]
+   },
+   "disagreeAll": {
+    "enabled": 0,
+    "disabled": 59
+   }
+  },
+  "h0": {
+   "found": 640,
+   "foundShippedValid": 579,
+   "lostShippedValid": 194,
+   "gainedShippedValid": 0,
+   "lostPages": [
+    {
+     "id": "p0004",
+     "url": "https://www.theguardian.com/international"
+    },
+    {
+     "id": "p0004d",
+     "url": "https://www.theguardian.com/world/2026/oct/18/lagos-hypemen-redefining-afrobeats-music-afrohype"
+    },
+    {
+     "id": "p0008",
+     "url": "https://www.washingtonpost.com/"
+    },
+    {
+     "id": "p0008d",
+     "url": "https://www.washingtonpost.com/politics/2026/10/18/trump-approval-hits-record-low-handing-democrats-clear-midterm-edge/"
+    },
+    {
+     "id": "p0023",
+     "url": "https://www.dailymail.co.uk/home/index.html"
+    },
+    {
+     "id": "p0023d",
+     "url": "https://www.dailymail.com/news/article-16218361/Moment-French-rioters-attack-shopkeeper.html"
+    },
+    {
+     "id": "p0025",
+     "url": "https://www.abc.net.au/news"
+    },
+    {
+     "id": "p0025d",
+     "url": "https://www.abc.net.au/news/topic/state-and-territory-government"
+    },
+    {
+     "id": "p0028",
+     "url": "https://www.hindustantimes.com/"
+    },
+    {
+     "id": "p0029",
+     "url": "https://www.scmp.com/"
+    },
+    {
+     "id": "p0033",
+     "url": "https://www.nbcnews.com/"
+    },
+    {
+     "id": "p0033d",
+     "url": "https://www.nbcnews.com/news/nbc-news-now-live-audio-listen-live-news-audio-day-rcna70163"
+    },
+    {
+     "id": "p0038",
+     "url": "https://variety.com/"
+    },
+    {
+     "id": "p0038d",
+     "url": "https://variety.com/2026/tv/global/snl-uk-james-austin-johnson-trump-surprise-cold-open-1236915603/"
+    },
+    {
+     "id": "p0040",
+     "url": "https://www.huffpost.com/"
+    },
+    {
+     "id": "p0040d",
+     "url": "https://www.huffpost.com/voices/voices-of-disabled-people"
+    },
+    {
+     "id": "p0043",
+     "url": "https://www.zdnet.com/"
+    },
+    {
+     "id": "p0043d",
+     "url": "https://www.zdnet.com/article/best-blood-pressure-watch/"
+    },
+    {
+     "id": "p0044",
+     "url": "https://www.cnet.com/"
+    },
+    {
+     "id": "p0044d",
+     "url": "https://www.cnet.com/tech/services-and-software/best-identity-theft-protection/"
+    },
+    {
+     "id": "p0051",
+     "url": "https://www.smh.com.au/"
+    },
+    {
+     "id": "p0053",
+     "url": "https://www.thehindu.com/"
+    },
+    {
+     "id": "p0053d",
+     "url": "https://www.thehindu.com/topic/israel-us-strikes-on-iran/"
+    },
+    {
+     "id": "p0056",
+     "url": "https://www.france24.com/en/"
+    },
+    {
+     "id": "p0056d",
+     "url": "https://www.france24.com/en/europe/20261018-live-vance-blames-immigration-for-violence-during-protests-in-france"
+    },
+    {
+     "id": "p0060",
+     "url": "https://www.404media.co/"
+    },
+    {
+     "id": "p0060d",
+     "url": "https://www.404media.co/404-media-now-has-a-full-text-rss-feed/"
+    },
+    {
+     "id": "p0066d",
+     "url": "https://www.heise.de/tests/Fitbit-Air-vs-Whoop-5-am-iPhone-im-Test-Messen-deuten-coachen-11475053.html"
+    },
+    {
+     "id": "p0067",
+     "url": "https://www.lemonde.fr/"
+    },
+    {
+     "id": "p0068",
+     "url": "https://www.lefigaro.fr/"
+    },
+    {
+     "id": "p0068d",
+     "url": "https://www.lefigaro.fr/newsletters/l-alerte-info/8df76986-2c2b-11e8-a7df-a0369fee8a80"
+    },
+    {
+     "id": "p0074",
+     "url": "https://www.clarin.com/"
+    },
+    {
+     "id": "p0074d",
+     "url": "https://www.clarin.com/internacional/jovenes-devolvieron-us-130000-recibieron-banco-recompenso-paquetitos-gominolas_0_nwwPB4NPEs.html"
+    },
+    {
+     "id": "p0077",
+     "url": "https://nos.nl/"
+    },
+    {
+     "id": "p0077d",
+     "url": "https://nos.nl/artikel/2635476-opstart-bezorging-door-albert-heijn-opnieuw-uitgesteld-app-en-site-werken-weer"
+    },
+    {
+     "id": "p0079d",
+     "url": "https://www.aftonbladet.se/nyheter/a/L3QMWP/aklagaren-om-mordade-kvinnan-har-forstatt-att-hon-var-i-tjanst"
+    },
+    {
+     "id": "p0082",
+     "url": "https://www.onet.pl/"
+    },
+    {
+     "id": "p0085",
+     "url": "https://www.seznam.cz/"
+    },
+    {
+     "id": "p0094",
+     "url": "https://www.aajtak.in/"
+    },
+    {
+     "id": "p0094d",
+     "url": "https://www.aajtak.in/breakingnews/story/latest-breaking-news-in-hindi-18-october-2026-ntc-aktw-2673659-2026-10-18"
+    },
+    {
+     "id": "p0101",
+     "url": "https://www.uol.com.br/"
+    },
+    {
+     "id": "p0105",
+     "url": "https://vnexpress.net/"
+    },
+    {
+     "id": "p0105d",
+     "url": "https://vnexpress.net/topic/gop-y-van-kien-dai-hoi-14-28310"
+    },
+    {
+     "id": "p0106",
+     "url": "https://www.sanook.com/"
+    },
+    {
+     "id": "p0106d",
+     "url": "https://www.sanook.com/sport/1673172/"
+    },
+    {
+     "id": "p0115",
+     "url": "https://ria.ru/"
+    },
+    {
+     "id": "p0120",
+     "url": "https://iz.ru/"
+    },
+    {
+     "id": "p0120d",
+     "url": "https://iz.ru/2186305/2026-10-18/rossiiskie-voennye-nanesli-udar-po-sudnu-s-voennym-gruzom-pod-odessoi"
+    },
+    {
+     "id": "p0125",
+     "url": "https://www.fontanka.ru/"
+    },
+    {
+     "id": "p0125d",
+     "url": "https://www.fontanka.ru/theme/kubok-fontanki-po-igre-go/"
+    },
+    {
+     "id": "p0126",
+     "url": "https://aif.ru/"
+    },
+    {
+     "id": "p0127",
+     "url": "https://rg.ru/"
+    },
+    {
+     "id": "p0127d",
+     "url": "https://rg.ru/2026/10/18/ekspert-aleksej-zhivov-pochemu-ukraina-ne-poluchila-dostup-k-sisteme-starshield.html"
+    },
+    {
+     "id": "p0129",
+     "url": "https://www.ng.ru/"
+    },
+    {
+     "id": "p0129d",
+     "url": "https://www.ng.ru/news/849246.html"
+    },
+    {
+     "id": "p0130",
+     "url": "https://www.vesti.ru/"
+    },
+    {
+     "id": "p0130d",
+     "url": "https://www.vesti.ru/ns/zelenskij-vashington-vozobnovil-obmen-razveddannymi-s-kievom"
+    },
+    {
+     "id": "p0137",
+     "url": "https://www.forbes.ru/"
+    },
+    {
+     "id": "p0137d",
+     "url": "https://www.forbes.ru/society/570475-analitika-apokalipsisa-pocemu-eksperty-opasautsa-gibeli-celovecestva-uze-v-xxi-veke"
+    },
+    {
+     "id": "p0139",
+     "url": "https://www.e1.ru/"
+    },
+    {
+     "id": "p0139d",
+     "url": "https://www.e1.ru/opisanie-funkcionalnyh-harakteristik-po/"
+    },
+    {
+     "id": "p0140",
+     "url": "https://ngs.ru/"
+    },
+    {
+     "id": "p0149",
+     "url": "https://news.rambler.ru/"
+    },
+    {
+     "id": "p0149d",
+     "url": "https://news.rambler.ru/world/57256751-obraschenie-makrona-k-natsii-i-krupnyy-uscherb-chto-proishodit-vo-frantsii/"
+    },
+    {
+     "id": "p0153",
+     "url": "https://tengrinews.kz/"
+    },
+    {
+     "id": "p0153d",
+     "url": "https://tengrinews.kz/private_finance/naznachenie-posobiy-kazahstane-poyavilsya-ofitsialnyiy-611029/"
+    },
+    {
+     "id": "p0155",
+     "url": "https://www.nur.kz/"
+    },
+    {
+     "id": "p0155d",
+     "url": "https://www.nur.kz/kak-rabotaet-nur-kz/1977609-o-nas-pishut-publikatsii-o-nurkz-v-drugih-media/"
+    },
+    {
+     "id": "p0163",
+     "url": "https://www.livejournal.com/"
+    },
+    {
+     "id": "p0180",
+     "url": "https://www.wpbeginner.com/"
+    },
+    {
+     "id": "p0180d",
+     "url": "https://www.wpbeginner.com/news/wpbeginner-spotlight-28-wpvibe-hits-40000-sites-a-new-wpforms-dashboard-and-two-wordpress-security-updates/"
+    },
+    {
+     "id": "p0181",
+     "url": "https://css-tricks.com/"
+    },
+    {
+     "id": "p0181d",
+     "url": "https://css-tricks.com/books/fundamental-css-tactics/infinite-scrolling-background-image/"
+    },
+    {
+     "id": "p0184",
+     "url": "https://wpengine.com/"
+    },
+    {
+     "id": "p0197",
+     "url": "https://kentcdodds.com/blog"
+    },
+    {
+     "id": "p0197d",
+     "url": "https://kentcdodds.com/blog/common-mistakes-with-react-testing-library"
+    },
+    {
+     "id": "p0204",
+     "url": "https://minimalistbaker.com/"
+    },
+    {
+     "id": "p0204d",
+     "url": "https://minimalistbaker.com/cheesy-vegan-enchilada-skillet/"
+    },
+    {
+     "id": "p0205",
+     "url": "https://www.nomadicmatt.com/"
+    },
+    {
+     "id": "p0205d",
+     "url": "https://www.nomadicmatt.com/travel-blogs/faye-travel-insurance-review/"
+    },
+    {
+     "id": "p0209",
+     "url": "https://www.howtogeek.com/"
+    },
+    {
+     "id": "p0209d",
+     "url": "https://www.howtogeek.com/category/ai-amp-machine-learning/"
+    },
+    {
+     "id": "p0210",
+     "url": "https://www.makeuseof.com/"
+    },
+    {
+     "id": "p0212",
+     "url": "https://www.macrumors.com/"
+    },
+    {
+     "id": "p0212d",
+     "url": "https://www.macrumors.com/2026/10/17/top-stories-apple-homeview-intro/"
+    },
+    {
+     "id": "p0214",
+     "url": "https://www.xda-developers.com/"
+    },
+    {
+     "id": "p0216",
+     "url": "https://www.ign.com/"
+    },
+    {
+     "id": "p0216d",
+     "url": "https://es.ign.com/castlevania-belmonts-curse/234793/creia-que-los-ninos-rata-eran-lo-peor-pero-hay-otro-tipo-de-jugador-que-me-hastia-todavia-mas"
+    },
+    {
+     "id": "p0217",
+     "url": "https://www.polygon.com/"
+    },
+    {
+     "id": "p0218",
+     "url": "https://kotaku.com/"
+    },
+    {
+     "id": "p0218d",
+     "url": "https://kotaku.com/video/john-cena-wwe-six-phases-wrestling-match-break-down-1851785097"
+    },
+    {
+     "id": "p0222",
+     "url": "https://www.walmart.com/"
+    },
+    {
+     "id": "p0223",
+     "url": "https://www.target.com/"
+    },
+    {
+     "id": "p0226",
+     "url": "https://www.aliexpress.com/"
+    },
+    {
+     "id": "p0233",
+     "url": "https://www.nike.com/"
+    },
+    {
+     "id": "p0243",
+     "url": "https://www.mercadolibre.com.mx/"
+    },
+    {
+     "id": "p0248",
+     "url": "https://www.fnac.com/"
+    },
+    {
+     "id": "p0251",
+     "url": "https://www.johnlewis.com/"
+    },
+    {
+     "id": "p0274",
+     "url": "https://ruggable.com/"
+    },
+    {
+     "id": "p0274d",
+     "url": "https://ruggable.com/products/spot-cleaner"
+    },
+    {
+     "id": "p0281",
+     "url": "https://www.taylorstitch.com/"
+    },
+    {
+     "id": "p0281d",
+     "url": "https://www.taylorstitch.com/products/gift-certificate"
+    },
+    {
+     "id": "p0283",
+     "url": "https://www.beardbrand.com/"
+    },
+    {
+     "id": "p0283d",
+     "url": "https://www.beardbrand.com/products/custom-mens-cologne-set"
+    },
+    {
+     "id": "p0285",
+     "url": "https://www.pela.earth/"
+    },
+    {
+     "id": "p0285d",
+     "url": "https://lomi.com/products/lomi-3-food-recycler"
+    },
+    {
+     "id": "p0294",
+     "url": "https://www.everlane.com/"
+    },
+    {
+     "id": "p0299",
+     "url": "https://www.mvideo.ru/"
+    },
+    {
+     "id": "p0314",
+     "url": "https://www.regard.ru/"
+    },
+    {
+     "id": "p0314d",
+     "url": "https://www.regard.ru/catalog/sale"
+    },
+    {
+     "id": "p0323d",
+     "url": "https://www.sravni.ru/novost/2026/10/18/detskie-posobiya-v-noyabre-2026-goda"
+    },
+    {
+     "id": "p0327",
+     "url": "https://prom.ua/"
+    },
+    {
+     "id": "p0330",
+     "url": "https://www.1c.ru/"
+    },
+    {
+     "id": "p0335",
+     "url": "https://moskva.beeline.ru/customers/products/"
+    },
+    {
+     "id": "p0340",
+     "url": "https://www.tutu.ru/"
+    },
+    {
+     "id": "p0340d",
+     "url": "https://www.tutu.ru/poezda/vkz/%D0%B2%D0%BE%D0%BA%D0%B7%D0%B0%D0%BB%D1%8B_%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D1%8B/"
+    },
+    {
+     "id": "p0347",
+     "url": "https://tilda.cc/"
+    },
+    {
+     "id": "p0348",
+     "url": "https://tilda.cc/ru/"
+    },
+    {
+     "id": "p0349d",
+     "url": "https://help-ru.tilda.cc/getstarted"
+    },
+    {
+     "id": "p0351",
+     "url": "https://madeontilda.ru/"
+    },
+    {
+     "id": "p0354",
+     "url": "https://webflow.com/"
+    },
+    {
+     "id": "p0355",
+     "url": "https://webflow.com/blog"
+    },
+    {
+     "id": "p0355d",
+     "url": "https://webflow.com/blog/introducing-source-by-webflow"
+    },
+    {
+     "id": "p0358",
+     "url": "https://www.paypal.com/us/home"
+    },
+    {
+     "id": "p0362",
+     "url": "https://wise.com/"
+    },
+    {
+     "id": "p0370",
+     "url": "https://www.gazprombank.ru/"
+    },
+    {
+     "id": "p0374",
+     "url": "https://stripe.com/"
+    },
+    {
+     "id": "p0376",
+     "url": "https://www.notion.com/"
+    },
+    {
+     "id": "p0377",
+     "url": "https://slack.com/"
+    },
+    {
+     "id": "p0388",
+     "url": "https://zoom.us/"
+    },
+    {
+     "id": "p0393",
+     "url": "https://asana.com/"
+    },
+    {
+     "id": "p0396",
+     "url": "https://www.zendesk.com/"
+    },
+    {
+     "id": "p0399",
+     "url": "https://www.datadoghq.com/"
+    },
+    {
+     "id": "p0404",
+     "url": "https://miro.com/"
+    },
+    {
+     "id": "p0406",
+     "url": "https://1password.com/"
+    },
+    {
+     "id": "p0410",
+     "url": "https://www.postman.com/"
+    },
+    {
+     "id": "p0413",
+     "url": "https://www.mongodb.com/"
+    },
+    {
+     "id": "p0414",
+     "url": "https://www.elastic.co/"
+    },
+    {
+     "id": "p0425",
+     "url": "https://www.opera.com/"
+    },
+    {
+     "id": "p0439",
+     "url": "https://ok.ru/"
+    },
+    {
+     "id": "p0449",
+     "url": "https://duckduckgo.com/"
+    },
+    {
+     "id": "p0450",
+     "url": "https://www.baidu.com/"
+    },
+    {
+     "id": "p0456",
+     "url": "https://ameblo.jp/"
+    },
+    {
+     "id": "p0466",
+     "url": "https://doc.rust-lang.org/std/vec/struct.Vec.html"
+    },
+    {
+     "id": "p0477",
+     "url": "https://docs.github.com/en/get-started/start-your-journey/hello-world"
+    },
+    {
+     "id": "p0481",
+     "url": "https://react.dev/learn"
+    },
+    {
+     "id": "p0482",
+     "url": "https://ru.react.dev/learn"
+    },
+    {
+     "id": "p0505",
+     "url": "https://docs.rs/serde/latest/serde/"
+    },
+    {
+     "id": "p0506",
+     "url": "https://pypi.org/project/requests/"
+    },
+    {
+     "id": "p0513",
+     "url": "https://spring.io/guides/gs/rest-service"
+    },
+    {
+     "id": "p0520",
+     "url": "https://angular.dev/overview"
+    },
+    {
+     "id": "p0535",
+     "url": "https://www.terraform.io/"
+    },
+    {
+     "id": "p0541",
+     "url": "https://www.geeksforgeeks.org/"
+    },
+    {
+     "id": "p0541d",
+     "url": "https://www.geeksforgeeks.org/dsa/dsa-tutorial-learn-data-structures-and-algorithms/"
+    },
+    {
+     "id": "p0546",
+     "url": "https://netology.ru/"
+    },
+    {
+     "id": "p0553",
+     "url": "https://ru.wikipedia.org/wiki/%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0"
+    },
+    {
+     "id": "p0555",
+     "url": "https://ru.wikipedia.org/wiki/HTML"
+    },
+    {
+     "id": "p0558",
+     "url": "https://es.wikipedia.org/wiki/Madrid"
+    },
+    {
+     "id": "p0567",
+     "url": "https://minecraft.wiki/w/Creeper"
+    },
+    {
+     "id": "p0577",
+     "url": "https://www.goodreads.com/book/show/5470.1984"
+    },
+    {
+     "id": "p0580",
+     "url": "https://superuser.com/"
+    },
+    {
+     "id": "p0581",
+     "url": "https://unix.stackexchange.com/"
+    },
+    {
+     "id": "p0582",
+     "url": "https://ru.stackoverflow.com/"
+    },
+    {
+     "id": "p0630",
+     "url": "https://www.canada.ca/en.html"
+    },
+    {
+     "id": "p0631",
+     "url": "https://www.canada.ca/en/services/benefits.html"
+    },
+    {
+     "id": "p0654",
+     "url": "https://www.mos.ru/"
+    },
+    {
+     "id": "p0665",
+     "url": "https://www.kmu.gov.ua/"
+    },
+    {
+     "id": "p0665d",
+     "url": "https://www.kmu.gov.ua/news/181026operatyvna-informatsiia-dsns-shchodo-likvidatsii-naslidkiv-vedennia-boiovykh-dii-rosiiskoiu-federatsiieiu-ta-roboty-pirotekhnichnykh-pidrozdiliv"
+    },
+    {
+     "id": "p0670",
+     "url": "https://www.cam.ac.uk/"
+    },
+    {
+     "id": "p0670d",
+     "url": "https://www.cam.ac.uk/stories/cambridge-laidlaw-students-civic-engagement"
+    },
+    {
+     "id": "p0681",
+     "url": "https://www.duolingo.com/"
+    },
+    {
+     "id": "p0683",
+     "url": "https://spbu.ru/"
+    },
+    {
+     "id": "p0683d",
+     "url": "https://spbu.ru/studentam/praktika-po-modeli-kliniki-v-spbgu"
+    },
+    {
+     "id": "p0685",
+     "url": "https://mipt.ru/"
+    },
+    {
+     "id": "p0686",
+     "url": "https://itmo.ru/"
+    },
+    {
+     "id": "p0686d",
+     "url": "https://itmo.ru/sveden/svedeniya_ob_obrazovatelnoy_organizacii.htm"
+    },
+    {
+     "id": "p0703",
+     "url": "https://ostrovok.ru/"
+    },
+    {
+     "id": "p0706",
+     "url": "https://www.nationalrail.co.uk/"
+    },
+    {
+     "id": "p0712",
+     "url": "https://www.louvre.fr/"
+    },
+    {
+     "id": "p0716",
+     "url": "https://www.mariinsky.ru/"
+    },
+    {
+     "id": "p0731",
+     "url": "https://www.zillow.com/"
+    },
+    {
+     "id": "p0735",
+     "url": "https://www.ted.com/"
+    },
+    {
+     "id": "p0736",
+     "url": "https://www.ted.com/talks"
+    },
+    {
+     "id": "p0738",
+     "url": "https://www.bbcgoodfood.com/"
+    },
+    {
+     "id": "p0738d",
+     "url": "https://www.bbcgoodfood.com/recipes/collection/quick-and-easy-family-recipes"
+    },
+    {
+     "id": "p0741d",
+     "url": "https://eda.rambler.ru/recepty/supy/sup-s-kuricey-tanduri-i-kokosovymi-slivkami-175628"
+    },
+    {
+     "id": "p0745",
+     "url": "https://www.xe.com/"
+    },
+    {
+     "id": "p0752",
+     "url": "https://www.ruby-lang.org/en/"
+    },
+    {
+     "id": "p0754",
+     "url": "https://www.haskell.org/"
+    },
+    {
+     "id": "p0768",
+     "url": "https://www.kaspersky.ru/"
+    },
+    {
+     "id": "p0778",
+     "url": "https://www.unisender.com/ru/"
+    },
+    {
+     "id": "p0784",
+     "url": "https://www.ivd.ru/"
+    },
+    {
+     "id": "p0784d",
+     "url": "https://www.ivd.ru/dizajn-i-dekor/kvartira/pochemu-v-etoj-kvartire-tak-udobno-zhit-63-kv-m-gde-produmali-vse-obzor-interera-149922"
+    },
+    {
+     "id": "p0794",
+     "url": "https://www.buhonline.ru/"
+    }
+   ],
+   "disagreeShippedValid": {
+    "enabled": [],
+    "disabled": []
+   },
+   "disagreeAll": {
+    "enabled": 0,
+    "disabled": 0
+   }
+  },
+  "h1": {
+   "found": 790,
+   "foundShippedValid": 719,
+   "lostShippedValid": 54,
+   "gainedShippedValid": 0,
+   "lostPages": [
+    {
+     "id": "p0004",
+     "url": "https://www.theguardian.com/international"
+    },
+    {
+     "id": "p0004d",
+     "url": "https://www.theguardian.com/world/2026/oct/18/lagos-hypemen-redefining-afrobeats-music-afrohype"
+    },
+    {
+     "id": "p0043",
+     "url": "https://www.zdnet.com/"
+    },
+    {
+     "id": "p0043d",
+     "url": "https://www.zdnet.com/article/best-blood-pressure-watch/"
+    },
+    {
+     "id": "p0044",
+     "url": "https://www.cnet.com/"
+    },
+    {
+     "id": "p0044d",
+     "url": "https://www.cnet.com/tech/services-and-software/best-identity-theft-protection/"
+    },
+    {
+     "id": "p0053",
+     "url": "https://www.thehindu.com/"
+    },
+    {
+     "id": "p0053d",
+     "url": "https://www.thehindu.com/topic/israel-us-strikes-on-iran/"
+    },
+    {
+     "id": "p0094",
+     "url": "https://www.aajtak.in/"
+    },
+    {
+     "id": "p0094d",
+     "url": "https://www.aajtak.in/breakingnews/story/latest-breaking-news-in-hindi-18-october-2026-ntc-aktw-2673659-2026-10-18"
+    },
+    {
+     "id": "p0101",
+     "url": "https://www.uol.com.br/"
+    },
+    {
+     "id": "p0106",
+     "url": "https://www.sanook.com/"
+    },
+    {
+     "id": "p0106d",
+     "url": "https://www.sanook.com/sport/1673172/"
+    },
+    {
+     "id": "p0115",
+     "url": "https://ria.ru/"
+    },
+    {
+     "id": "p0120",
+     "url": "https://iz.ru/"
+    },
+    {
+     "id": "p0120d",
+     "url": "https://iz.ru/2186305/2026-10-18/rossiiskie-voennye-nanesli-udar-po-sudnu-s-voennym-gruzom-pod-odessoi"
+    },
+    {
+     "id": "p0126",
+     "url": "https://aif.ru/"
+    },
+    {
+     "id": "p0129",
+     "url": "https://www.ng.ru/"
+    },
+    {
+     "id": "p0129d",
+     "url": "https://www.ng.ru/news/849246.html"
+    },
+    {
+     "id": "p0130",
+     "url": "https://www.vesti.ru/"
+    },
+    {
+     "id": "p0130d",
+     "url": "https://www.vesti.ru/ns/zelenskij-vashington-vozobnovil-obmen-razveddannymi-s-kievom"
+    },
+    {
+     "id": "p0137",
+     "url": "https://www.forbes.ru/"
+    },
+    {
+     "id": "p0137d",
+     "url": "https://www.forbes.ru/society/570475-analitika-apokalipsisa-pocemu-eksperty-opasautsa-gibeli-celovecestva-uze-v-xxi-veke"
+    },
+    {
+     "id": "p0149",
+     "url": "https://news.rambler.ru/"
+    },
+    {
+     "id": "p0149d",
+     "url": "https://news.rambler.ru/world/57256751-obraschenie-makrona-k-natsii-i-krupnyy-uscherb-chto-proishodit-vo-frantsii/"
+    },
+    {
+     "id": "p0155",
+     "url": "https://www.nur.kz/"
+    },
+    {
+     "id": "p0155d",
+     "url": "https://www.nur.kz/kak-rabotaet-nur-kz/1977609-o-nas-pishut-publikatsii-o-nurkz-v-drugih-media/"
+    },
+    {
+     "id": "p0163",
+     "url": "https://www.livejournal.com/"
+    },
+    {
+     "id": "p0212",
+     "url": "https://www.macrumors.com/"
+    },
+    {
+     "id": "p0212d",
+     "url": "https://www.macrumors.com/2026/10/17/top-stories-apple-homeview-intro/"
+    },
+    {
+     "id": "p0216",
+     "url": "https://www.ign.com/"
+    },
+    {
+     "id": "p0216d",
+     "url": "https://es.ign.com/castlevania-belmonts-curse/234793/creia-que-los-ninos-rata-eran-lo-peor-pero-hay-otro-tipo-de-jugador-que-me-hastia-todavia-mas"
+    },
+    {
+     "id": "p0218",
+     "url": "https://kotaku.com/"
+    },
+    {
+     "id": "p0218d",
+     "url": "https://kotaku.com/video/john-cena-wwe-six-phases-wrestling-match-break-down-1851785097"
+    },
+    {
+     "id": "p0226",
+     "url": "https://www.aliexpress.com/"
+    },
+    {
+     "id": "p0327",
+     "url": "https://prom.ua/"
+    },
+    {
+     "id": "p0330",
+     "url": "https://www.1c.ru/"
+    },
+    {
+     "id": "p0335",
+     "url": "https://moskva.beeline.ru/customers/products/"
+    },
+    {
+     "id": "p0388",
+     "url": "https://zoom.us/"
+    },
+    {
+     "id": "p0399",
+     "url": "https://www.datadoghq.com/"
+    },
+    {
+     "id": "p0410",
+     "url": "https://www.postman.com/"
+    },
+    {
+     "id": "p0439",
+     "url": "https://ok.ru/"
+    },
+    {
+     "id": "p0665",
+     "url": "https://www.kmu.gov.ua/"
+    },
+    {
+     "id": "p0665d",
+     "url": "https://www.kmu.gov.ua/news/181026operatyvna-informatsiia-dsns-shchodo-likvidatsii-naslidkiv-vedennia-boiovykh-dii-rosiiskoiu-federatsiieiu-ta-roboty-pirotekhnichnykh-pidrozdiliv"
+    },
+    {
+     "id": "p0670",
+     "url": "https://www.cam.ac.uk/"
+    },
+    {
+     "id": "p0670d",
+     "url": "https://www.cam.ac.uk/stories/cambridge-laidlaw-students-civic-engagement"
+    },
+    {
+     "id": "p0683",
+     "url": "https://spbu.ru/"
+    },
+    {
+     "id": "p0683d",
+     "url": "https://spbu.ru/studentam/praktika-po-modeli-kliniki-v-spbgu"
+    },
+    {
+     "id": "p0686",
+     "url": "https://itmo.ru/"
+    },
+    {
+     "id": "p0686d",
+     "url": "https://itmo.ru/sveden/svedeniya_ob_obrazovatelnoy_organizacii.htm"
+    },
+    {
+     "id": "p0716",
+     "url": "https://www.mariinsky.ru/"
+    },
+    {
+     "id": "p0741d",
+     "url": "https://eda.rambler.ru/recepty/supy/sup-s-kuricey-tanduri-i-kokosovymi-slivkami-175628"
+    },
+    {
+     "id": "p0784",
+     "url": "https://www.ivd.ru/"
+    },
+    {
+     "id": "p0784d",
+     "url": "https://www.ivd.ru/dizajn-i-dekor/kvartira/pochemu-v-etoj-kvartire-tak-udobno-zhit-63-kv-m-gde-produmali-vse-obzor-interera-149922"
+    }
+   ],
+   "disagreeShippedValid": {
+    "enabled": [],
+    "disabled": []
+   },
+   "disagreeAll": {
+    "enabled": 0,
+    "disabled": 0
+   }
+  },
+  "h2": {
+   "found": 790,
+   "foundShippedValid": 719,
+   "lostShippedValid": 54,
+   "gainedShippedValid": 0,
+   "lostPages": [
+    {
+     "id": "p0004",
+     "url": "https://www.theguardian.com/international"
+    },
+    {
+     "id": "p0004d",
+     "url": "https://www.theguardian.com/world/2026/oct/18/lagos-hypemen-redefining-afrobeats-music-afrohype"
+    },
+    {
+     "id": "p0043",
+     "url": "https://www.zdnet.com/"
+    },
+    {
+     "id": "p0043d",
+     "url": "https://www.zdnet.com/article/best-blood-pressure-watch/"
+    },
+    {
+     "id": "p0044",
+     "url": "https://www.cnet.com/"
+    },
+    {
+     "id": "p0044d",
+     "url": "https://www.cnet.com/tech/services-and-software/best-identity-theft-protection/"
+    },
+    {
+     "id": "p0053",
+     "url": "https://www.thehindu.com/"
+    },
+    {
+     "id": "p0053d",
+     "url": "https://www.thehindu.com/topic/israel-us-strikes-on-iran/"
+    },
+    {
+     "id": "p0094",
+     "url": "https://www.aajtak.in/"
+    },
+    {
+     "id": "p0094d",
+     "url": "https://www.aajtak.in/breakingnews/story/latest-breaking-news-in-hindi-18-october-2026-ntc-aktw-2673659-2026-10-18"
+    },
+    {
+     "id": "p0101",
+     "url": "https://www.uol.com.br/"
+    },
+    {
+     "id": "p0106",
+     "url": "https://www.sanook.com/"
+    },
+    {
+     "id": "p0106d",
+     "url": "https://www.sanook.com/sport/1673172/"
+    },
+    {
+     "id": "p0115",
+     "url": "https://ria.ru/"
+    },
+    {
+     "id": "p0120",
+     "url": "https://iz.ru/"
+    },
+    {
+     "id": "p0120d",
+     "url": "https://iz.ru/2186305/2026-10-18/rossiiskie-voennye-nanesli-udar-po-sudnu-s-voennym-gruzom-pod-odessoi"
+    },
+    {
+     "id": "p0126",
+     "url": "https://aif.ru/"
+    },
+    {
+     "id": "p0129",
+     "url": "https://www.ng.ru/"
+    },
+    {
+     "id": "p0129d",
+     "url": "https://www.ng.ru/news/849246.html"
+    },
+    {
+     "id": "p0130",
+     "url": "https://www.vesti.ru/"
+    },
+    {
+     "id": "p0130d",
+     "url": "https://www.vesti.ru/ns/zelenskij-vashington-vozobnovil-obmen-razveddannymi-s-kievom"
+    },
+    {
+     "id": "p0137",
+     "url": "https://www.forbes.ru/"
+    },
+    {
+     "id": "p0137d",
+     "url": "https://www.forbes.ru/society/570475-analitika-apokalipsisa-pocemu-eksperty-opasautsa-gibeli-celovecestva-uze-v-xxi-veke"
+    },
+    {
+     "id": "p0149",
+     "url": "https://news.rambler.ru/"
+    },
+    {
+     "id": "p0149d",
+     "url": "https://news.rambler.ru/world/57256751-obraschenie-makrona-k-natsii-i-krupnyy-uscherb-chto-proishodit-vo-frantsii/"
+    },
+    {
+     "id": "p0155",
+     "url": "https://www.nur.kz/"
+    },
+    {
+     "id": "p0155d",
+     "url": "https://www.nur.kz/kak-rabotaet-nur-kz/1977609-o-nas-pishut-publikatsii-o-nurkz-v-drugih-media/"
+    },
+    {
+     "id": "p0163",
+     "url": "https://www.livejournal.com/"
+    },
+    {
+     "id": "p0212",
+     "url": "https://www.macrumors.com/"
+    },
+    {
+     "id": "p0212d",
+     "url": "https://www.macrumors.com/2026/10/17/top-stories-apple-homeview-intro/"
+    },
+    {
+     "id": "p0216",
+     "url": "https://www.ign.com/"
+    },
+    {
+     "id": "p0216d",
+     "url": "https://es.ign.com/castlevania-belmonts-curse/234793/creia-que-los-ninos-rata-eran-lo-peor-pero-hay-otro-tipo-de-jugador-que-me-hastia-todavia-mas"
+    },
+    {
+     "id": "p0218",
+     "url": "https://kotaku.com/"
+    },
+    {
+     "id": "p0218d",
+     "url": "https://kotaku.com/video/john-cena-wwe-six-phases-wrestling-match-break-down-1851785097"
+    },
+    {
+     "id": "p0226",
+     "url": "https://www.aliexpress.com/"
+    },
+    {
+     "id": "p0327",
+     "url": "https://prom.ua/"
+    },
+    {
+     "id": "p0330",
+     "url": "https://www.1c.ru/"
+    },
+    {
+     "id": "p0335",
+     "url": "https://moskva.beeline.ru/customers/products/"
+    },
+    {
+     "id": "p0388",
+     "url": "https://zoom.us/"
+    },
+    {
+     "id": "p0399",
+     "url": "https://www.datadoghq.com/"
+    },
+    {
+     "id": "p0410",
+     "url": "https://www.postman.com/"
+    },
+    {
+     "id": "p0439",
+     "url": "https://ok.ru/"
+    },
+    {
+     "id": "p0665",
+     "url": "https://www.kmu.gov.ua/"
+    },
+    {
+     "id": "p0665d",
+     "url": "https://www.kmu.gov.ua/news/181026operatyvna-informatsiia-dsns-shchodo-likvidatsii-naslidkiv-vedennia-boiovykh-dii-rosiiskoiu-federatsiieiu-ta-roboty-pirotekhnichnykh-pidrozdiliv"
+    },
+    {
+     "id": "p0670",
+     "url": "https://www.cam.ac.uk/"
+    },
+    {
+     "id": "p0670d",
+     "url": "https://www.cam.ac.uk/stories/cambridge-laidlaw-students-civic-engagement"
+    },
+    {
+     "id": "p0683",
+     "url": "https://spbu.ru/"
+    },
+    {
+     "id": "p0683d",
+     "url": "https://spbu.ru/studentam/praktika-po-modeli-kliniki-v-spbgu"
+    },
+    {
+     "id": "p0686",
+     "url": "https://itmo.ru/"
+    },
+    {
+     "id": "p0686d",
+     "url": "https://itmo.ru/sveden/svedeniya_ob_obrazovatelnoy_organizacii.htm"
+    },
+    {
+     "id": "p0716",
+     "url": "https://www.mariinsky.ru/"
+    },
+    {
+     "id": "p0741d",
+     "url": "https://eda.rambler.ru/recepty/supy/sup-s-kuricey-tanduri-i-kokosovymi-slivkami-175628"
+    },
+    {
+     "id": "p0784",
+     "url": "https://www.ivd.ru/"
+    },
+    {
+     "id": "p0784d",
+     "url": "https://www.ivd.ru/dizajn-i-dekor/kvartira/pochemu-v-etoj-kvartire-tak-udobno-zhit-63-kv-m-gde-produmali-vse-obzor-interera-149922"
+    }
+   ],
+   "disagreeShippedValid": {
+    "enabled": [],
+    "disabled": []
+   },
+   "disagreeAll": {
+    "enabled": 0,
+    "disabled": 0
+   }
+  },
+  "hc": {
+   "found": 868,
+   "foundShippedValid": 786,
+   "lostShippedValid": 0,
+   "gainedShippedValid": 13,
+   "lostPages": [],
+   "disagreeShippedValid": {
+    "enabled": [],
+    "disabled": []
+   },
+   "disagreeAll": {
+    "enabled": 0,
+    "disabled": 0
+   }
+  }
+ },
+ "combined": {
+  "shipped+shipped": 773,
+  "shipped+h0": 579,
+  "shipped+h1": 719,
+  "shipped+h2": 719,
+  "shipped+hc": 786,
+  "a+shipped": 773,
+  "a+h0": 579,
+  "a+h1": 719,
+  "a+h2": 719,
+  "a+hc": 786,
+  "a-fx+shipped": 788,
+  "a-fx+h0": 587,
+  "a-fx+h1": 733,
+  "a-fx+h2": 733,
+  "a-fx+hc": 801,
+  "b0+shipped": 744,
+  "b0+h0": 558,
+  "b0+h1": 692,
+  "b0+h2": 692,
+  "b0+hc": 755,
+  "b1+shipped": 760,
+  "b1+h0": 570,
+  "b1+h1": 706,
+  "b1+h2": 706,
+  "b1+hc": 773
+ },
+ "variants": {
+  "small": {
+   "documents": 742,
+   "insertRefused": 0,
+   "shipped": {
+    "valid": 416,
+    "validWithBlocks": 416,
+    "lost": 0,
+    "lostReasons": {},
+    "disagree": {
+     "enabled": [],
+     "disabled": []
+    }
+   },
+   "a": {
+    "valid": 416,
+    "validWithBlocks": 416,
+    "lost": 0,
+    "lostReasons": {},
+    "disagree": {
+     "enabled": [],
+     "disabled": []
+    }
+   },
+   "a-fx": {
+    "valid": 416,
+    "validWithBlocks": 416,
+    "lost": 0,
+    "lostReasons": {},
+    "disagree": {
+     "enabled": [],
+     "disabled": []
+    }
+   },
+   "b0": {
+    "valid": 403,
+    "validWithBlocks": 403,
+    "lost": 13,
+    "lostReasons": {
+     "B:picture": 3,
+     "B:figure": 2,
+     "B:i": 2,
+     "B:details": 1,
+     "B:dl": 1,
+     "B:h1": 1,
+     "B:input": 1,
+     "B:section": 1,
+     "B:strong": 1
+    },
+    "disagree": {
+     "enabled": [],
+     "disabled": []
+    }
+   },
+   "b1": {
+    "valid": 411,
+    "validWithBlocks": 411,
+    "lost": 5,
+    "lostReasons": {
+     "B:figure": 2,
+     "B:aside": 1,
+     "B:details": 1,
+     "B:dl": 1
+    },
+    "disagree": {
+     "enabled": [],
+     "disabled": []
+    }
+   }
+  },
+  "main": {
+   "documents": 480,
+   "insertRefused": 0,
+   "shipped": {
+    "valid": 67,
+    "validWithBlocks": 67,
+    "lost": 0,
+    "lostReasons": {},
+    "disagree": {
+     "enabled": [],
+     "disabled": []
+    }
+   },
+   "a": {
+    "valid": 67,
+    "validWithBlocks": 67,
+    "lost": 0,
+    "lostReasons": {},
+    "disagree": {
+     "enabled": [],
+     "disabled": []
+    }
+   },
+   "a-fx": {
+    "valid": 67,
+    "validWithBlocks": 67,
+    "lost": 0,
+    "lostReasons": {},
+    "disagree": {
+     "enabled": [],
+     "disabled": []
+    }
+   },
+   "b0": {
+    "valid": 65,
+    "validWithBlocks": 65,
+    "lost": 2,
+    "lostReasons": {
+     "B:i": 2
+    },
+    "disagree": {
+     "enabled": [],
+     "disabled": []
+    }
+   },
+   "b1": {
+    "valid": 67,
+    "validWithBlocks": 67,
+    "lost": 0,
+    "lostReasons": {},
+    "disagree": {
+     "enabled": [],
+     "disabled": []
+    }
+   }
+  }
+ }
+}

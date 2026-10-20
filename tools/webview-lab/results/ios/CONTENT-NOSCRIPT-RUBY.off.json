@@ -1,0 +1,10 @@
+{
+  "characterSet" : "UTF-8",
+  "contentType" : "text/html",
+  "error" : null,
+  "id" : "CONTENT-NOSCRIPT-RUBY",
+  "probe" : null,
+  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <div>\n|       data-rq-block=\"box\"\n|       <noscript>\n|         <rt>\n|           \"x\"\n|     \"\\n\\n\"",
+  "view" : "off",
+  "walker" : "ok"
+}

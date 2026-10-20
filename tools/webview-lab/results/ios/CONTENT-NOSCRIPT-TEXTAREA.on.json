@@ -1,0 +1,10 @@
+{
+  "characterSet" : "UTF-8",
+  "contentType" : "text/html",
+  "error" : null,
+  "id" : "CONTENT-NOSCRIPT-TEXTAREA",
+  "probe" : null,
+  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <div>\n|       data-rq-block=\"box\"\n|       <noscript>\n|         \"<textarea>t</textarea>\"\n|     \"\\n\\n\"",
+  "view" : "on",
+  "walker" : "ok"
+}

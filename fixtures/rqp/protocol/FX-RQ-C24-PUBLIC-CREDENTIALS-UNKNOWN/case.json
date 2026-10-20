@@ -1,0 +1,28 @@
+{
+  "id": "FX-RQ-C24-PUBLIC-CREDENTIALS-UNKNOWN",
+  "kind": "client",
+  "description": "Mode public, a public origin, no public directive, and the client does not know whether credentials were sent: unknown counts as present, so the partition of the request (H-62)",
+  "rules": ["RQP-25"],
+  "context": {
+    "public_enabled": true,
+    "public_origin": true,
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a",
+      "members": {
+        "policy": {
+          "mode": "public"
+        }
+      }
+    }
+  }
+}

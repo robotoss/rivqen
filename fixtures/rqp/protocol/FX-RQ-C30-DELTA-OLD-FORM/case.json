@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-C30-DELTA-OLD-FORM",
+  "kind": "client",
+  "description": "A delta of the envelope form before H-104 (type, protocol, base_revision, template_revision; op, format and sha256 in the operation), otherwise consistent: unknown members (H-104)",
+  "rules": ["RQP-13","RQP-28"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","application/vnd.rivqen.delta+json"],
+      ["rq-version","1"],
+      ["cache-control","no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b",
+        "old_envelope": true
+      }
+    }
+  }
+}

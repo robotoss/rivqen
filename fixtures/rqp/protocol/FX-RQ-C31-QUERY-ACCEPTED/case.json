@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-C31-QUERY-ACCEPTED",
+  "kind": "client",
+  "description": "Control: the snapshot of page-a at https://shop.example.com/catalog?page=2 and a consistent delta to page-b whose binding has U = the URL with its query: applied (H-107; U is the canonical URL with the query, H-58)",
+  "rules": ["RQP-13"],
+  "context": {
+    "url": "https://shop.example.com/catalog?page=2",
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b"
+      }
+    }
+  }
+}

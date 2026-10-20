@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P40-CHARSET-UNCLOSED-QUOTE",
+  "description": "The Content-Type of A has an unclosed quoted string and no charset parameter, so the page is not passed through; F does not keep the text of A and has exactly Content-Type: text/html; charset=utf-8 (H-66; before H-66 the appended parameter fell inside the quoted string and the page was passed through)",
+  "rules": ["RQP-08", "RQP-26"],
+  "page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; x=\"abc"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

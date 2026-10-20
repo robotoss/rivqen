@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-C25-REDIRECT-OFF-ALLOWLIST",
+  "kind": "client",
+  "description": "A redirect to an origin outside the allowlist, so the final request carried no RQP fields; a full document with Rq-Version 1 and a manifest that is consistent with the final URL: a normal page, no snapshot, no error (H-62, RQP-05)",
+  "rules": ["RQP-05", "RQP-24"],
+  "context": {
+    "final_url": "https://pay.example.net/catalog",
+    "allowlist": ["https://shop.example.com"],
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a"
+    }
+  }
+}

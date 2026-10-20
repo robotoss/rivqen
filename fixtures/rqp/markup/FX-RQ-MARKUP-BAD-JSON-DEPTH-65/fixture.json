@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-BAD-JSON-DEPTH-65",
+  "description": "Nesting depth 65 is more than the maximum (64)",
+  "rules": [
+    "M-25"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_BAD_JSON"
+  }
+}

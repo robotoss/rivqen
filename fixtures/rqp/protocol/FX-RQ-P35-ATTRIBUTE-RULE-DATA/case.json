@@ -1,0 +1,26 @@
+{
+  "id": "FX-RQ-P35-ATTRIBUTE-RULE-DATA",
+  "description": "The changed price block has a data: URL: F, not a delta (H-56, H-59)",
+  "rules": ["RQP-23"],
+  "level": "should",
+  "client_page": "page-a",
+  "page": "page-b-data",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-a}}"],
+      ["rq-have", "t={{t1:page-a}}, b={{have:page-a}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  }
+}

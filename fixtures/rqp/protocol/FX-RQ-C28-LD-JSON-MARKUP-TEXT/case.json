@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C28-LD-JSON-MARKUP-TEXT",
+  "kind": "client",
+  "description": "A delta whose ld+json content has markup text in a JSON string: json content is data, the patch content rule does not apply; applied (H-86, manifest-patch section 4 item 2)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-ld-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-ld-a",
+        "ops": [
+          {
+            "block_id": "ld",
+            "content": "{\"@type\":\"Product\",\"name\":\"<b onclick=x>\"}"
+          }
+        ]
+      }
+    }
+  }
+}

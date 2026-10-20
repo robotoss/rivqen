@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-P08-NOT-MODIFIED-STAR",
+  "description": "If-None-Match: * with a current representation: 304",
+  "rules": ["RQP-03"],
+  "page": "page-a",
+  "client_page": "page-b",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "*"],
+      ["rq-have", "t={{t1:page-b}}, b={{have:page-b}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  }
+}

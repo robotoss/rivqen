@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-E5-FOREIGN-CDATA-GT",
+  "description": "Edge case E5 (H-21): a CDATA section with > inside, in a foreign text element (svg style); M-12 does not hold, so M-07 item 5 does not allow it",
+  "rules": [
+    "M-07",
+    "M-12"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

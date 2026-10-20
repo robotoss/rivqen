@@ -1,0 +1,14 @@
+{
+  "protocol": "rqp/1",
+  "origin": "http://[::1]:8080",
+  "path": "/a/b%20c/;x=1/~!$&'()*+,=@:_.-",
+  "page_revision": "r1.GKw-c0PwFokMUQ6T-TUmEWnZ4_VlQ2Qpgw-vCTT0-OQ",
+  "policy": {
+    "mode": "public",
+    "ttl_seconds": 31536000,
+    "offline": true
+  },
+  "limits": {
+    "max_patch_bytes": 1024
+  }
+}

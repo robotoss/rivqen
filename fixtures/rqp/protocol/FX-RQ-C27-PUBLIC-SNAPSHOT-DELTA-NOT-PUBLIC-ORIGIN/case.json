@@ -1,0 +1,35 @@
+{
+  "id": "FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-NOT-PUBLIC-ORIGIN",
+  "kind": "client",
+  "description": "A snapshot in the public partition, a request without credentials and a valid delta, but the app no longer declares the origin public: the result goes to the partition of the request (H-61, H-65; DL-040 I-2)",
+  "rules": ["RQP-25"],
+  "context": {
+    "public_enabled": true,
+    "public_origin": false,
+    "navigation": "delta",
+    "snapshot": {
+      "page": "page-a",
+      "members": {
+        "policy": {
+          "mode": "public"
+        }
+      },
+      "partition": "public"
+    },
+    "credentials": false
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b"
+      }
+    }
+  }
+}

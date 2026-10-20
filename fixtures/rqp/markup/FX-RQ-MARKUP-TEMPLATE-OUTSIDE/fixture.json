@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-TEMPLATE-OUTSIDE",
+  "description": "A template element without blocks, then a block outside it",
+  "rules": [
+    "M-05",
+    "M-19"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

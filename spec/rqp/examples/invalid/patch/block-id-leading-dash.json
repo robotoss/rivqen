@@ -1,0 +1,16 @@
+{
+  "description": "A block id starts with a letter or a digit (M-15)",
+  "expect": {
+    "keyword": "pattern",
+    "instancePath": "/operations/0/block_id"
+  },
+  "instance": {
+    "binding": "d1.orrx-_-Iflnnjs7DvvuOOdxW3FzbZpU_PTlR0jdWw54",
+    "operations": [
+      {
+        "block_id": "-price",
+        "content": "130.00"
+      }
+    ]
+  }
+}

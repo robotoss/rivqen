@@ -1,0 +1,16 @@
+{
+  "id": "LIMIT-DEPTH-NOSCRIPT-ICONS-127",
+  "question": "Q-19",
+  "source": "fixtures/rqp/markup/FX-RQ-MARKUP-LIMIT-DEPTH-NOSCRIPT-ICONS-127/input.html",
+  "headers": [
+    [
+      "Content-Type",
+      "text/html; charset=utf-8"
+    ]
+  ],
+  "views": [
+    "on",
+    "off"
+  ],
+  "probe": null
+}

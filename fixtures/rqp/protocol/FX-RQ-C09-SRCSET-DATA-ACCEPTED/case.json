@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C09-SRCSET-DATA-ACCEPTED",
+  "kind": "client",
+  "description": "price content <img srcset=\"/a.png 1x, data:image/png;base64,… 2x\">: each candidate passes (H-83): applied",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<img srcset=\"/a.png 1x, data:image/png;base64,iVBORw0KGgo= 2x\" alt=\"\">"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "CT-TWO-LINES",
+  "question": "Q-20",
+  "source": "tools/webview-lab/host/pages/q20.html",
+  "headers": [
+    [
+      "Content-Type",
+      "text/html; charset=utf-8"
+    ],
+    [
+      "Content-Type",
+      "text/html; charset=iso-8859-1"
+    ]
+  ],
+  "views": [
+    "on"
+  ],
+  "probe": "#m"
+}

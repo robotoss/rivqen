@@ -2,7 +2,7 @@
 
 An **ADR** records one important decision: the context, the options, the decision and its consequences. ADRs make decisions traceable. A decision in an ADR can change only through a new ADR that supersedes it.
 
-**Status:** <Badge type="info" text="DESIGN" /> All ADRs below are **Proposed**. Each has an owner work package and the evidence that will close it.
+**Status:** <Badge type="info" text="DESIGN" /> ADR-005 and ADR-006 are **Accepted** (human, 2026-10-09). All other ADRs below are **Proposed**. Each has an owner work package and the evidence that will close it.
 
 [[toc]]
 
@@ -56,8 +56,8 @@ An **ADR** records one important decision: the context, the options, the decisio
 | [ADR-002](#adr-002) | FFI technology: UniFFI vs C ABI | WP-09 | Bindings | UniFFI for control plane; narrow C ABI for byte streams if measured |
 | [ADR-003](#adr-003) | iOS navigation strategy | WP-11 | iOS SDK | Decide after spike IOS-P1/P2/P3 |
 | [ADR-004](#adr-004) | Cache storage format | WP-07 | Cache | Files for bodies + SQLite for metadata, atomic rename |
-| [ADR-005](#adr-005) | Legacy protocol exact semantics and profiles | WP-01, WP-02 | legacy compatibility | Golden fixtures define truth; one profile per upstream divergence |
-| [ADR-006](#adr-006) | RQP wire schema and markup | WP-17 | RQP | **Accepted direction:** `data-rq-block` attributes, manifest, `Rq-*` Structured Field headers |
+| [ADR-005](#adr-005) | Legacy protocol exact semantics and profiles | WP-01, WP-02 | legacy compatibility | **Accepted:** "Rivqen canonical" profile + `legacy-java`, `legacy-node`, `legacy-php` profiles |
+| [ADR-006](#adr-006) | RQP wire schema and markup | WP-17 | RQP | **Accepted:** `data-rq-block` attributes, inline manifest, `Rq-*` Structured Field headers, base64url SHA-256 |
 | [ADR-007](#adr-007) | WebSocket vs WebTransport | WP-16 | Realtime | WebSocket first; WebTransport experimental |
 | [ADR-008](#adr-008) | Security and privacy model | WP-18 | Release | Per threat model |
 | [ADR-009](#adr-009) | Streaming ABI and buffer ownership | WP-09 | Streaming | Bounded chunk API with single owner |
@@ -100,12 +100,18 @@ An **ADR** records one important decision: the context, the options, the decisio
 ## ADR-005: Legacy protocol exact semantics {#adr-005}
 
 - **Context.** The upstream Java, Node.js and PHP servers and the Android and iOS clients do not behave identically. See [Divergences](/engineering/protocol/legacy-divergences).
-- **Recommendation.** Define one **canonical legacy profile** that matches the Android client + the upstream server behavior most deployments used. Offer named compatibility profiles for other divergent behaviors.
-- **Verification.** Golden fixtures for each profile.
+- **Status: Accepted** (human, 2026-10-09; closes Q-14).
+- **Decision.** The canonical legacy profile `legacy-canonical` is the "Rivqen canonical" column of [Divergences](/engineering/protocol/legacy-divergences) and section 4 of the [markers grammar](/engineering/protocol/legacy-markers). Named profiles `legacy-java`, `legacy-node` and `legacy-php` reproduce each upstream server. A profile gets its own fixture only where its behavior differs from `legacy-canonical`.
+- **Verification.** Golden fixtures for each profile (WP-02); the reference server selects the profile by configuration (WP-03).
 
 ## ADR-006: RQP wire schema and markup {#adr-006}
 
-- **Decision direction (owner approved, 2026-10-09):** blocks are marked with the `data-rq-block` attribute on normal HTML elements; the server publishes a page manifest with revisions and SHA-256 block hashes; headers use the `Rq-` prefix and Structured Field Values (RFC 9651). Bodies are JSON with JSON Schemas. A delta response uses its own media type and `Vary`.
+- **Status: Accepted** (human, 2026-10-09). Refinements: the page manifest is delivered **inline only**, in `<script type="application/rivqen-manifest+json">` in `<head>` (no header link); block hashes are **full SHA-256 encoded as base64url without padding** (43 characters; closes Q-15).
+- **Further refinements** (human, 2026-10-09; [WP-17 S1](/engineering/plan/sprints/WP-17-S1) H-7…H-12): the client sends its block digests and a stateless server answers with changed blocks only (fallback: all blocks); revisions are normative and content-derived (`t1.`/`r1.` + base64url SHA-256); `page_id` and `sequence` exist only on push channels; each patch operation keeps its block hash; the envelope is JSON, block content is a string, and the hash covers the UTF-8 bytes of that string (no JCS); a block element without an explicit end tag makes the document invalid for RQP.
+- **Further refinements** (human, 2026-10-12; [WP-17 S2](/engineering/plan/sprints/WP-17-S2) H-44…H-56): the client sends `Rq-Have` (template revision and 64-bit digest prefixes) and `If-None-Match` with its page revision; a delta has `Cache-Control: no-store` and no ETag; the full document is the same for every request, with ETag `r1.…` (weak with a content coding); `Rq-Capabilities` is an Inner List of Tokens; the only patch operation is `replace_block`; the client re-runs the markup analysis on the original and the patched document; `policy` and `limits` are part of the page revision; the server sends the full document when a changed block fails the client attribute rule.
+- **Further refinements** (human, 2026-10-12 to 2026-10-18; [WP-17 S2](/engineering/plan/sprints/WP-17-S2) rounds 2–5 and [WP-17 S3](/engineering/plan/sprints/WP-17-S3); H-58, H-61…H-70, H-71…H-76): response binding and cache partitions (a `304` only for a matching `If-None-Match`; an explicit `public` for the `public` partition; no `public` after a redirect or a URL with userinfo); one exact `Content-Type` for the full document and UTF-8 only; allowlist entries must equal their serialized origin; the `noscript` content model, `svg` and `math` in blocks, and SVG ids in patch content (H-71, H-73…H-76). **H-72 changes the wire format:** the manifest element goes immediately after the head start tag of the document, not at the first `</head>`. An old client that expects the earlier position does not find the manifest, falls back to the normal page and reports `MANIFEST_INVALID`.
+- **Further refinements** (human, [WP-17 S6](/engineering/plan/sprints/WP-17-S6) H-103…H-109): the manifest is `protocol`, `origin`, `path`, `page_revision` and optional `policy` and `limits`; the delta is `binding` (H-107, H-108: SHA-256 over the final URL, the base page revision, the client nonce of the field `Rq-Nonce` (H-109) and the next page revision) and `operations` of `block_id` and `content`; the client computes the template revision and the block hashes and checks them through the page revision; `TEMPLATE_MISMATCH` and `PATCH_BASE_MISMATCH` are reserved; `Rq-Have` keeps 64-bit prefixes.
+- **Decision:** blocks are marked with the `data-rq-block` attribute on normal HTML elements; the server publishes a page manifest with revisions and SHA-256 block hashes (amended by H-103, [WP-17 S6](/engineering/plan/sprints/WP-17-S6): the manifest has the page revision only; the client computes the block digests and the template revision); headers use the `Rq-` prefix and Structured Field Values (RFC 9651). Bodies are JSON with JSON Schemas. A delta response uses its own media type and `Cache-Control: no-store` (amended 2026-10-12 by the human decision H-45, [WP-17 S2](/engineering/plan/sprints/WP-17-S2)).
 - **Why:** the legacy comment markers were matched differently by five implementations (see [divergences](/engineering/protocol/legacy-divergences)); attributes are parsed by real HTML tokenizers and survive minifiers.
 - **Verification:** interop tests across Rust, Node.js, Java and PHP parsers; intermediary tests through CDN and proxies.
 

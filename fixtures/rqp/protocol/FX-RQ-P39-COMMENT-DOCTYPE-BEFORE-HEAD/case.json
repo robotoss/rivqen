@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P39-COMMENT-DOCTYPE-BEFORE-HEAD",
+  "description": "A comment, a DOCTYPE and an html start tag before the head start tag, a comment after it: F with the manifest immediately after the head start tag, before that comment (H-72)",
+  "rules": ["RQP-20"],
+  "page": "page-head-late",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

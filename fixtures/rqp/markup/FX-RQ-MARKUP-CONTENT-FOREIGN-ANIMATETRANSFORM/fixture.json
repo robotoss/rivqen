@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-FOREIGN-ANIMATETRANSFORM",
+  "description": "An svg animateTransform element (SMIL) in the content: outside FOREIGN_ALLOWED, valid markup since H-78 (FOREIGN_ALLOWED is a patch content rule; M-07 holds)",
+  "rules": [
+    "M-07",
+    "M-22",
+    "M-23"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "<svg><g><animateTransform attributeName=\"transform\" type=\"rotate\" from=\"0\" to=\"360\" dur=\"1s\"/></g></svg>"
+      }
+    ]
+  }
+}

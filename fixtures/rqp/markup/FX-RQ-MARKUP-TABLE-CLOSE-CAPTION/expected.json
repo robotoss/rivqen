@@ -1,0 +1,15 @@
+{
+  "valid": true,
+  "error": null,
+  "blocks": [
+    {
+      "id": "cap",
+      "format": "html",
+      "start": 100,
+      "end": 101,
+      "sha256": "Ln0sA6lQeuJl7PW1NWiFpTOTogKdJBOUmXJloaJa78Y"
+    }
+  ],
+  "template_revision": "t1.GwROWoFL-toJVIMGjaX-caqapWZ6SWBo5UuG5aSJbew",
+  "page_revision": "r1.CRwL_iLMUeyKXDEkLZMvHgGYVGenS1-yRRsBjVu9Hqc"
+}

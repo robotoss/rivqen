@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-FORMATTING-CROSS-FOREIGN",
+  "description": "An a end tag in svg crosses an svg text element (H-26: a formatting end tag must not cross a foreign element)",
+  "rules": [
+    "M-06",
+    "M-07"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

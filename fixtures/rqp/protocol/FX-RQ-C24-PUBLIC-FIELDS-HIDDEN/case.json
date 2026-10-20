@@ -1,0 +1,30 @@
+{
+  "id": "FX-RQ-C24-PUBLIC-FIELDS-HIDDEN",
+  "kind": "client",
+  "description": "Mode public, a public origin, Cache-Control public and a request without credentials, but the native SDK did not see all header fields of the response (for example the WebView loaded it): the client acts as if the response had a Set-Cookie field, so the partition of the request (H-64)",
+  "rules": ["RQP-25"],
+  "context": {
+    "public_enabled": true,
+    "public_origin": true,
+    "navigation": "first-visit",
+    "snapshot": null,
+    "credentials": false,
+    "response_fields_visible": false
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "public, max-age=60"]
+    ],
+    "body": {
+      "full": "page-a",
+      "members": {
+        "policy": {
+          "mode": "public"
+        }
+      }
+    }
+  }
+}

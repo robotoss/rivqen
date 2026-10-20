@@ -1,0 +1,146 @@
+{
+  "source": "fixtures",
+  "seed": null,
+  "docs": 247,
+  "controls": 0,
+  "offNotShipped": 0,
+  "modes": {
+    "off": {
+      "valid": 86,
+      "gained": 0,
+      "checked": 86,
+      "withFindings": 0,
+      "findings": {},
+      "why": {
+        "RQP_MARKUP_BAD_JSON": 5,
+        "RQP_MARKUP_STRUCTURE": 100,
+        "M-09": 2,
+        "RQP_MARKUP_DUPLICATE": 1,
+        "RQP_MARKUP_RESERVED": 9,
+        "RQP_MARKUP_ENCODING": 4,
+        "RQP_MARKUP_FORBIDDEN_ELEMENT": 9,
+        "RQP_MARKUP_INVALID_ID": 10,
+        "RQP_MARKUP_LIMIT": 16,
+        "RQP_MARKUP_NESTED": 1,
+        "M-09.2": 4
+      },
+      "closures": {
+        "cell": 0,
+        "row": 0,
+        "group": 0,
+        "caption": 0,
+        "colgroup": 0
+      },
+      "examples": {}
+    },
+    "b1": {
+      "valid": 87,
+      "gained": 1,
+      "checked": 87,
+      "withFindings": 0,
+      "findings": {},
+      "why": {
+        "RQP_MARKUP_BAD_JSON": 5,
+        "RQP_MARKUP_STRUCTURE": 101,
+        "RQP_MARKUP_DUPLICATE": 1,
+        "RQP_MARKUP_RESERVED": 9,
+        "RQP_MARKUP_ENCODING": 4,
+        "RQP_MARKUP_FORBIDDEN_ELEMENT": 9,
+        "RQP_MARKUP_INVALID_ID": 10,
+        "RQP_MARKUP_LIMIT": 16,
+        "RQP_MARKUP_NESTED": 1,
+        "M-09.2": 4
+      },
+      "closures": {
+        "cell": 1,
+        "row": 0,
+        "group": 0,
+        "caption": 0,
+        "colgroup": 0
+      },
+      "examples": {}
+    },
+    "b2": {
+      "valid": 87,
+      "gained": 1,
+      "checked": 87,
+      "withFindings": 0,
+      "findings": {},
+      "why": {
+        "RQP_MARKUP_BAD_JSON": 5,
+        "RQP_MARKUP_STRUCTURE": 101,
+        "RQP_MARKUP_DUPLICATE": 1,
+        "RQP_MARKUP_RESERVED": 9,
+        "RQP_MARKUP_ENCODING": 4,
+        "RQP_MARKUP_FORBIDDEN_ELEMENT": 9,
+        "RQP_MARKUP_INVALID_ID": 10,
+        "RQP_MARKUP_LIMIT": 16,
+        "RQP_MARKUP_NESTED": 1,
+        "M-09.2": 4
+      },
+      "closures": {
+        "cell": 1,
+        "row": 0,
+        "group": 0,
+        "caption": 0,
+        "colgroup": 0
+      },
+      "examples": {}
+    },
+    "b3": {
+      "valid": 87,
+      "gained": 1,
+      "checked": 87,
+      "withFindings": 0,
+      "findings": {},
+      "why": {
+        "RQP_MARKUP_BAD_JSON": 5,
+        "RQP_MARKUP_STRUCTURE": 101,
+        "RQP_MARKUP_DUPLICATE": 1,
+        "RQP_MARKUP_RESERVED": 9,
+        "RQP_MARKUP_ENCODING": 4,
+        "RQP_MARKUP_FORBIDDEN_ELEMENT": 9,
+        "RQP_MARKUP_INVALID_ID": 10,
+        "RQP_MARKUP_LIMIT": 16,
+        "RQP_MARKUP_NESTED": 1,
+        "M-09.2": 4
+      },
+      "closures": {
+        "cell": 1,
+        "row": 0,
+        "group": 0,
+        "caption": 0,
+        "colgroup": 0
+      },
+      "examples": {}
+    },
+    "u": {
+      "valid": 87,
+      "gained": 1,
+      "checked": 87,
+      "withFindings": 0,
+      "findings": {},
+      "why": {
+        "RQP_MARKUP_BAD_JSON": 5,
+        "RQP_MARKUP_STRUCTURE": 101,
+        "RQP_MARKUP_DUPLICATE": 1,
+        "RQP_MARKUP_RESERVED": 9,
+        "RQP_MARKUP_ENCODING": 4,
+        "RQP_MARKUP_FORBIDDEN_ELEMENT": 9,
+        "RQP_MARKUP_INVALID_ID": 10,
+        "RQP_MARKUP_LIMIT": 16,
+        "RQP_MARKUP_NESTED": 1,
+        "M-09.2": 4
+      },
+      "closures": {
+        "cell": 1,
+        "row": 0,
+        "group": 0,
+        "caption": 0,
+        "colgroup": 0
+      },
+      "examples": {}
+    }
+  },
+  "seconds": 1
+}

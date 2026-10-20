@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-ICON-NESTED-SVG-CROSSING",
+  "description": "The end tag of a nested svg (pushed in a foreign region, not the region root) crosses a path: the mark goes to the a element (M-06 item 4, H-75)",
+  "rules": [
+    "M-06"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

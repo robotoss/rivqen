@@ -1,0 +1,30 @@
+{
+  "id": "FX-RQ-C24-PUBLIC-SET-COOKIE",
+  "kind": "client",
+  "description": "Mode public, a public origin, no public directive, a request without credentials, but the response has Set-Cookie: it counts as credentials, so the partition of the request (H-62)",
+  "rules": ["RQP-25"],
+  "context": {
+    "public_enabled": true,
+    "public_origin": true,
+    "navigation": "first-visit",
+    "snapshot": null,
+    "credentials": false
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"],
+      ["set-cookie", "visit=example; Path=/; Secure"]
+    ],
+    "body": {
+      "full": "page-a",
+      "members": {
+        "policy": {
+          "mode": "public"
+        }
+      }
+    }
+  }
+}

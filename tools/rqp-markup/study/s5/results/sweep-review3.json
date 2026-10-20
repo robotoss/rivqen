@@ -1,0 +1,885 @@
+{
+ "source": "review3",
+ "seed": 5,
+ "count": 50000,
+ "date": "2026-10-19",
+ "docs": 50000,
+ "combos": {
+  "base": {
+   "valid": 7350,
+   "gained": 0,
+   "withTemplate": 0,
+   "withNoscript": 0,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 113,
+    "known-p-closure": 14
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "RQP_MARKUP_STRUCTURE": 21894,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 914,
+    "M-24a": 2952,
+    "RQP_MARKUP_RESERVED": 3600,
+    "C:M-11-content": 3321,
+    "M-24k": 280,
+    "C:M-11-end": 954,
+    "RQP_MARKUP_LIMIT": 691,
+    "RQP_MARKUP_NESTED": 1416,
+    "RQP_MARKUP_BAD_JSON": 302,
+    "M-22.2-template": 291,
+    "C:M-11-balance": 2847,
+    "M-23": 874,
+    "M-22.2-noscript": 870,
+    "M-22.2": 251,
+    "M-24def": 299,
+    "M-24c": 260,
+    "M-22.3": 44,
+    "M-24g": 289,
+    "M-24b": 89,
+    "M-24hi": 74,
+    "RQP_MARKUP_DUPLICATE": 53,
+    "M-20": 51,
+    "M-22.1": 20,
+    "M-09": 4,
+    "M-24j": 10
+   },
+   "patch": {
+    "blocks": 5046,
+    "rejected": {
+     "shipped:element": 29,
+     "p1:element": 29,
+     "p2:element": 29,
+     "shipped:foreign": 1,
+     "p1:foreign": 1,
+     "p2:foreign": 1
+    },
+    "findings": {}
+   },
+   "examples": []
+  },
+  "t1": {
+   "valid": 7352,
+   "gained": 2,
+   "withTemplate": 2,
+   "withNoscript": 0,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 113,
+    "known-p-closure": 14
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "RQP_MARKUP_STRUCTURE": 21895,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 914,
+    "M-24a": 2961,
+    "RQP_MARKUP_RESERVED": 3601,
+    "C:M-11-content": 3321,
+    "M-24k": 284,
+    "C:M-11-end": 954,
+    "RQP_MARKUP_LIMIT": 691,
+    "RQP_MARKUP_NESTED": 1420,
+    "RQP_MARKUP_BAD_JSON": 302,
+    "M-24g-template": 255,
+    "C:M-11-balance": 2847,
+    "M-23": 875,
+    "M-22.2-noscript": 875,
+    "M-22.2": 252,
+    "M-24def": 300,
+    "M-24c": 263,
+    "M-22.3": 46,
+    "M-24g": 289,
+    "M-24b": 89,
+    "M-24hi": 74,
+    "RQP_MARKUP_DUPLICATE": 53,
+    "M-20": 51,
+    "M-22.1": 21,
+    "M-09": 4,
+    "M-24j": 10,
+    "M-09.1": 1
+   },
+   "patch": {
+    "blocks": 5048,
+    "rejected": {
+     "shipped:element": 29,
+     "p1:element": 29,
+     "p2:element": 29,
+     "shipped:foreign": 1,
+     "p1:foreign": 1,
+     "p2:foreign": 1
+    },
+    "findings": {}
+   },
+   "examples": []
+  },
+  "t2": {
+   "valid": 7352,
+   "gained": 2,
+   "withTemplate": 2,
+   "withNoscript": 0,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 113,
+    "known-p-closure": 14
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "RQP_MARKUP_STRUCTURE": 21895,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 914,
+    "M-24a": 2961,
+    "RQP_MARKUP_RESERVED": 3601,
+    "C:M-11-content": 3321,
+    "M-24k": 284,
+    "C:M-11-end": 954,
+    "RQP_MARKUP_LIMIT": 691,
+    "RQP_MARKUP_NESTED": 1420,
+    "RQP_MARKUP_BAD_JSON": 302,
+    "S5-template-table-part": 256,
+    "C:M-11-balance": 2847,
+    "M-23": 875,
+    "M-22.2-noscript": 875,
+    "M-22.2": 252,
+    "M-24def": 300,
+    "M-24c": 263,
+    "M-22.3": 46,
+    "M-24g": 289,
+    "M-24b": 89,
+    "M-24hi": 74,
+    "RQP_MARKUP_DUPLICATE": 53,
+    "M-20": 51,
+    "M-22.1": 21,
+    "M-09": 4,
+    "M-24j": 10
+   },
+   "patch": {
+    "blocks": 5048,
+    "rejected": {
+     "shipped:element": 29,
+     "p1:element": 29,
+     "p2:element": 29,
+     "shipped:foreign": 1,
+     "p1:foreign": 1,
+     "p2:foreign": 1
+    },
+    "findings": {}
+   },
+   "examples": []
+  },
+  "tu": {
+   "valid": 7352,
+   "gained": 2,
+   "withTemplate": 2,
+   "withNoscript": 0,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 113,
+    "known-p-closure": 14
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "RQP_MARKUP_STRUCTURE": 21895,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 914,
+    "M-24a": 2961,
+    "RQP_MARKUP_RESERVED": 3601,
+    "C:M-11-content": 3321,
+    "M-24k": 284,
+    "C:M-11-end": 954,
+    "RQP_MARKUP_LIMIT": 691,
+    "RQP_MARKUP_NESTED": 1420,
+    "RQP_MARKUP_BAD_JSON": 302,
+    "M-24g-template": 255,
+    "C:M-11-balance": 2847,
+    "M-23": 875,
+    "M-22.2-noscript": 875,
+    "M-22.2": 253,
+    "M-24def": 300,
+    "M-24c": 263,
+    "M-22.3": 46,
+    "M-24g": 289,
+    "M-24b": 89,
+    "M-24hi": 74,
+    "RQP_MARKUP_DUPLICATE": 53,
+    "M-20": 51,
+    "M-22.1": 21,
+    "M-09": 4,
+    "M-24j": 10
+   },
+   "patch": {
+    "blocks": 5048,
+    "rejected": {
+     "shipped:element": 29,
+     "p1:element": 29,
+     "p2:element": 29,
+     "shipped:foreign": 1,
+     "p1:foreign": 1,
+     "p2:foreign": 1
+    },
+    "findings": {}
+   },
+   "examples": []
+  },
+  "n1": {
+   "valid": 7359,
+   "gained": 9,
+   "withTemplate": 0,
+   "withNoscript": 9,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 113,
+    "known-p-closure": 14
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "RQP_MARKUP_STRUCTURE": 21948,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 914,
+    "M-24a": 2962,
+    "RQP_MARKUP_RESERVED": 3681,
+    "C:M-11-content": 3545,
+    "M-24k": 299,
+    "C:M-11-end": 1013,
+    "RQP_MARKUP_LIMIT": 691,
+    "RQP_MARKUP_NESTED": 1577,
+    "RQP_MARKUP_BAD_JSON": 302,
+    "M-22.2-template": 295,
+    "C:M-11-balance": 2992,
+    "M-23": 885,
+    "M-22.2": 252,
+    "M-24def": 304,
+    "M-24c": 264,
+    "M-20": 57,
+    "M-22.3": 45,
+    "M-24g": 292,
+    "M-24b": 90,
+    "M-24hi": 74,
+    "RQP_MARKUP_DUPLICATE": 53,
+    "M-22.1": 20,
+    "C:M-24c": 9,
+    "C:M-24a": 58,
+    "M-09": 4,
+    "M-24j": 10,
+    "C:M-24b": 4,
+    "C:M-24k": 1
+   },
+   "patch": {
+    "blocks": 5058,
+    "rejected": {
+     "p1:noscript": 8,
+     "shipped:element": 30,
+     "p1:element": 30,
+     "p2:element": 34,
+     "shipped:foreign": 1,
+     "p1:foreign": 1,
+     "p2:foreign": 1
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 7,
+     "shipped:patch-mode-diff": 7,
+     "p2:patch-mode-diff": 3
+    }
+   },
+   "examples": [
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 61"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<col><h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <iframe> at 38"
+    },
+    {
+     "doc": "<col><h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "</dl><p><b>x</p>y<p><b>x</p>y<div data-rq-block=\"r0\"><b>y</b></div><div data-rq-block=\"b1\"><noscript><iframe src=x></iframe></noscript>&lt;p&gt;</div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b1: <iframe> at 101"
+    },
+    {
+     "doc": "</dl><p><b>x</p>y<p><b>x</p>y<div data-rq-block=\"r0\"><b>y</b></div><div data-rq-block=\"b1\"><noscript><iframe src=x></iframe></noscript>&lt;p&gt;</div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b1"
+    },
+    {
+     "doc": "<h2 data-rq-block=\"b0\"><noscript><img src=x></noscript></h2>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<section data-rq-block=\"b0\">1 <2<noscript><img src=x></noscript><table><colgroup><</colgroup></table></section>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  },
+  "n2": {
+   "valid": 7359,
+   "gained": 9,
+   "withTemplate": 0,
+   "withNoscript": 9,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 113,
+    "known-p-closure": 14
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "RQP_MARKUP_STRUCTURE": 21948,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 914,
+    "M-24a": 2962,
+    "RQP_MARKUP_RESERVED": 3681,
+    "C:M-11-content": 3544,
+    "M-24k": 299,
+    "C:M-11-end": 1013,
+    "RQP_MARKUP_LIMIT": 691,
+    "RQP_MARKUP_NESTED": 1575,
+    "RQP_MARKUP_BAD_JSON": 302,
+    "M-22.2-template": 295,
+    "C:M-11-balance": 2990,
+    "M-23": 885,
+    "M-22.2": 252,
+    "M-24def": 304,
+    "M-24c": 264,
+    "M-20": 57,
+    "M-22.3": 45,
+    "M-24g": 292,
+    "M-24b": 90,
+    "M-24hi": 74,
+    "RQP_MARKUP_DUPLICATE": 53,
+    "M-22.1": 20,
+    "C:M-24c": 9,
+    "C:M-24a": 58,
+    "M-09": 4,
+    "M-24j": 10,
+    "C:S5-noscript-pclose": 5,
+    "C:M-24b": 4,
+    "C:M-24k": 1
+   },
+   "patch": {
+    "blocks": 5058,
+    "rejected": {
+     "p1:noscript": 8,
+     "shipped:element": 30,
+     "p1:element": 30,
+     "p2:element": 34,
+     "shipped:foreign": 1,
+     "p1:foreign": 1,
+     "p2:foreign": 1
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 7,
+     "shipped:patch-mode-diff": 7,
+     "p2:patch-mode-diff": 3
+    }
+   },
+   "examples": [
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 61"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<col><h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <iframe> at 38"
+    },
+    {
+     "doc": "<col><h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "</dl><p><b>x</p>y<p><b>x</p>y<div data-rq-block=\"r0\"><b>y</b></div><div data-rq-block=\"b1\"><noscript><iframe src=x></iframe></noscript>&lt;p&gt;</div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b1: <iframe> at 101"
+    },
+    {
+     "doc": "</dl><p><b>x</p>y<p><b>x</p>y<div data-rq-block=\"r0\"><b>y</b></div><div data-rq-block=\"b1\"><noscript><iframe src=x></iframe></noscript>&lt;p&gt;</div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b1"
+    },
+    {
+     "doc": "<h2 data-rq-block=\"b0\"><noscript><img src=x></noscript></h2>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<section data-rq-block=\"b0\">1 <2<noscript><img src=x></noscript><table><colgroup><</colgroup></table></section>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  },
+  "nu": {
+   "valid": 7359,
+   "gained": 9,
+   "withTemplate": 0,
+   "withNoscript": 9,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 113,
+    "known-p-closure": 14
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "RQP_MARKUP_STRUCTURE": 21948,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 914,
+    "M-24a": 2962,
+    "RQP_MARKUP_RESERVED": 3681,
+    "C:M-11-content": 3546,
+    "M-24k": 299,
+    "C:M-11-end": 1013,
+    "RQP_MARKUP_LIMIT": 691,
+    "RQP_MARKUP_NESTED": 1601,
+    "RQP_MARKUP_BAD_JSON": 302,
+    "M-22.2-template": 295,
+    "C:M-11-balance": 3039,
+    "M-23": 885,
+    "M-22.2": 252,
+    "M-24def": 304,
+    "M-24c": 264,
+    "M-20": 57,
+    "M-22.3": 45,
+    "M-24g": 292,
+    "M-24b": 90,
+    "M-24hi": 74,
+    "RQP_MARKUP_DUPLICATE": 53,
+    "M-22.1": 20,
+    "M-09": 4,
+    "M-24j": 10
+   },
+   "patch": {
+    "blocks": 5058,
+    "rejected": {
+     "p1:noscript": 8,
+     "shipped:element": 30,
+     "p1:element": 30,
+     "p2:element": 34,
+     "shipped:foreign": 1,
+     "p1:foreign": 1,
+     "p2:foreign": 1
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 7,
+     "shipped:patch-mode-diff": 7,
+     "p2:patch-mode-diff": 3
+    }
+   },
+   "examples": [
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 61"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<col><h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <iframe> at 38"
+    },
+    {
+     "doc": "<col><h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "</dl><p><b>x</p>y<p><b>x</p>y<div data-rq-block=\"r0\"><b>y</b></div><div data-rq-block=\"b1\"><noscript><iframe src=x></iframe></noscript>&lt;p&gt;</div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b1: <iframe> at 101"
+    },
+    {
+     "doc": "</dl><p><b>x</p>y<p><b>x</p>y<div data-rq-block=\"r0\"><b>y</b></div><div data-rq-block=\"b1\"><noscript><iframe src=x></iframe></noscript>&lt;p&gt;</div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b1"
+    },
+    {
+     "doc": "<h2 data-rq-block=\"b0\"><noscript><img src=x></noscript></h2>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<section data-rq-block=\"b0\">1 <2<noscript><img src=x></noscript><table><colgroup><</colgroup></table></section>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  },
+  "t1n1": {
+   "valid": 7361,
+   "gained": 11,
+   "withTemplate": 2,
+   "withNoscript": 9,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 113,
+    "known-p-closure": 14
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "RQP_MARKUP_STRUCTURE": 21949,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 914,
+    "M-24a": 2971,
+    "RQP_MARKUP_RESERVED": 3684,
+    "C:M-11-content": 3547,
+    "M-24k": 303,
+    "C:M-11-end": 1013,
+    "RQP_MARKUP_LIMIT": 691,
+    "RQP_MARKUP_NESTED": 1581,
+    "RQP_MARKUP_BAD_JSON": 302,
+    "M-24g-template": 259,
+    "C:M-11-balance": 2993,
+    "M-23": 886,
+    "M-22.2": 253,
+    "M-24def": 305,
+    "M-24c": 267,
+    "M-20": 57,
+    "M-22.3": 47,
+    "M-24g": 292,
+    "M-24b": 90,
+    "M-24hi": 74,
+    "RQP_MARKUP_DUPLICATE": 53,
+    "M-22.1": 21,
+    "C:M-24c": 9,
+    "C:M-24a": 58,
+    "M-09": 4,
+    "M-24j": 10,
+    "C:M-24b": 4,
+    "M-09.1": 1,
+    "C:M-24k": 1
+   },
+   "patch": {
+    "blocks": 5060,
+    "rejected": {
+     "p1:noscript": 8,
+     "shipped:element": 30,
+     "p1:element": 30,
+     "p2:element": 34,
+     "shipped:foreign": 1,
+     "p1:foreign": 1,
+     "p2:foreign": 1
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 7,
+     "shipped:patch-mode-diff": 7,
+     "p2:patch-mode-diff": 3
+    }
+   },
+   "examples": [
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 61"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<col><h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <iframe> at 38"
+    },
+    {
+     "doc": "<col><h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "</dl><p><b>x</p>y<p><b>x</p>y<div data-rq-block=\"r0\"><b>y</b></div><div data-rq-block=\"b1\"><noscript><iframe src=x></iframe></noscript>&lt;p&gt;</div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b1: <iframe> at 101"
+    },
+    {
+     "doc": "</dl><p><b>x</p>y<p><b>x</p>y<div data-rq-block=\"r0\"><b>y</b></div><div data-rq-block=\"b1\"><noscript><iframe src=x></iframe></noscript>&lt;p&gt;</div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b1"
+    },
+    {
+     "doc": "<h2 data-rq-block=\"b0\"><noscript><img src=x></noscript></h2>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<section data-rq-block=\"b0\">1 <2<noscript><img src=x></noscript><table><colgroup><</colgroup></table></section>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  },
+  "t2n1": {
+   "valid": 7361,
+   "gained": 11,
+   "withTemplate": 2,
+   "withNoscript": 9,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 113,
+    "known-p-closure": 14
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "RQP_MARKUP_STRUCTURE": 21949,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 914,
+    "M-24a": 2971,
+    "RQP_MARKUP_RESERVED": 3684,
+    "C:M-11-content": 3547,
+    "M-24k": 303,
+    "C:M-11-end": 1013,
+    "RQP_MARKUP_LIMIT": 691,
+    "RQP_MARKUP_NESTED": 1581,
+    "RQP_MARKUP_BAD_JSON": 302,
+    "S5-template-table-part": 260,
+    "C:M-11-balance": 2993,
+    "M-23": 886,
+    "M-22.2": 253,
+    "M-24def": 305,
+    "M-24c": 267,
+    "M-20": 57,
+    "M-22.3": 47,
+    "M-24g": 292,
+    "M-24b": 90,
+    "M-24hi": 74,
+    "RQP_MARKUP_DUPLICATE": 53,
+    "M-22.1": 21,
+    "C:M-24c": 9,
+    "C:M-24a": 58,
+    "M-09": 4,
+    "M-24j": 10,
+    "C:M-24b": 4,
+    "C:M-24k": 1
+   },
+   "patch": {
+    "blocks": 5060,
+    "rejected": {
+     "p1:noscript": 8,
+     "shipped:element": 30,
+     "p1:element": 30,
+     "p2:element": 34,
+     "shipped:foreign": 1,
+     "p1:foreign": 1,
+     "p2:foreign": 1
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 7,
+     "shipped:patch-mode-diff": 7,
+     "p2:patch-mode-diff": 3
+    }
+   },
+   "examples": [
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 61"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<col><h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <iframe> at 38"
+    },
+    {
+     "doc": "<col><h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "</dl><p><b>x</p>y<p><b>x</p>y<div data-rq-block=\"r0\"><b>y</b></div><div data-rq-block=\"b1\"><noscript><iframe src=x></iframe></noscript>&lt;p&gt;</div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b1: <iframe> at 101"
+    },
+    {
+     "doc": "</dl><p><b>x</p>y<p><b>x</p>y<div data-rq-block=\"r0\"><b>y</b></div><div data-rq-block=\"b1\"><noscript><iframe src=x></iframe></noscript>&lt;p&gt;</div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b1"
+    },
+    {
+     "doc": "<h2 data-rq-block=\"b0\"><noscript><img src=x></noscript></h2>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<section data-rq-block=\"b0\">1 <2<noscript><img src=x></noscript><table><colgroup><</colgroup></table></section>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  },
+  "t2n2": {
+   "valid": 7361,
+   "gained": 11,
+   "withTemplate": 2,
+   "withNoscript": 9,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-head-noscript": 113,
+    "known-p-closure": 14
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "RQP_MARKUP_STRUCTURE": 21949,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 914,
+    "M-24a": 2971,
+    "RQP_MARKUP_RESERVED": 3684,
+    "C:M-11-content": 3546,
+    "M-24k": 303,
+    "C:M-11-end": 1013,
+    "RQP_MARKUP_LIMIT": 691,
+    "RQP_MARKUP_NESTED": 1579,
+    "RQP_MARKUP_BAD_JSON": 302,
+    "S5-template-table-part": 260,
+    "C:M-11-balance": 2991,
+    "M-23": 886,
+    "M-22.2": 253,
+    "M-24def": 305,
+    "M-24c": 267,
+    "M-20": 57,
+    "M-22.3": 47,
+    "M-24g": 292,
+    "M-24b": 90,
+    "M-24hi": 74,
+    "RQP_MARKUP_DUPLICATE": 53,
+    "M-22.1": 21,
+    "C:M-24c": 9,
+    "C:M-24a": 58,
+    "M-09": 4,
+    "M-24j": 10,
+    "C:S5-noscript-pclose": 5,
+    "C:M-24b": 4,
+    "C:M-24k": 1
+   },
+   "patch": {
+    "blocks": 5060,
+    "rejected": {
+     "p1:noscript": 8,
+     "shipped:element": 30,
+     "p1:element": 30,
+     "p2:element": 34,
+     "shipped:foreign": 1,
+     "p1:foreign": 1,
+     "p2:foreign": 1
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 7,
+     "shipped:patch-mode-diff": 7,
+     "p2:patch-mode-diff": 3
+    }
+   },
+   "examples": [
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <img> at 61"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "\n</option><div data-rq-block=\"b0\"><!x><ruby></ruby><noscript><img src=x></noscript></div>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<col><h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b0: <iframe> at 38"
+    },
+    {
+     "doc": "<col><h1 data-rq-block=\"b0\"><noscript><iframe src=x></iframe></noscript></h1>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "</dl><p><b>x</p>y<p><b>x</p>y<div data-rq-block=\"r0\"><b>y</b></div><div data-rq-block=\"b1\"><noscript><iframe src=x></iframe></noscript>&lt;p&gt;</div>",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block b1: <iframe> at 101"
+    },
+    {
+     "doc": "</dl><p><b>x</p>y<p><b>x</p>y<div data-rq-block=\"r0\"><b>y</b></div><div data-rq-block=\"b1\"><noscript><iframe src=x></iframe></noscript>&lt;p&gt;</div>",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block b1"
+    },
+    {
+     "doc": "<h2 data-rq-block=\"b0\"><noscript><img src=x></noscript></h2>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    },
+    {
+     "doc": "<section data-rq-block=\"b0\">1 <2<noscript><img src=x></noscript><table><colgroup><</colgroup></table></section>",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block b0"
+    }
+   ]
+  }
+ },
+ "monotonic": 0,
+ "examples": []
+}

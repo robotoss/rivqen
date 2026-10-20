@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-FOREIGN-SCRIPT-CDATA",
+  "description": "An svg script with a CDATA section that has a < in the content (H-78, M-07 items 4 and 5, M-12)",
+  "rules": [
+    "M-07",
+    "M-12"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "<svg><script><![CDATA[if (a<b) f()]]></script></svg>"
+      }
+    ]
+  }
+}

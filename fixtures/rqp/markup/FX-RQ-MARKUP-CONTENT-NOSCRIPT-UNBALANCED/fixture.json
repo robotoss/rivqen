@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-NOSCRIPT-UNBALANCED",
+  "description": "An unclosed b in noscript content C in the content: M-11 item 5 is M-23 for C (H-95)",
+  "rules": [
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

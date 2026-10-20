@@ -1,0 +1,44 @@
+{
+  "id": "FX-RQ-C14-HTTP-RELEASE",
+  "kind": "client",
+  "context": {
+    "url": "http://shop.example.com/catalog",
+    "final_url": "http://shop.example.com/catalog",
+    "redirected": false,
+    "build": "release",
+    "allow_http": false,
+    "allowlist": ["http://shop.example.com"],
+    "credentials": null,
+    "response_fields_visible": true,
+    "public_enabled": false,
+    "public_origin": false,
+    "navigation": "first-visit",
+    "nonce": "AAECAwQFBgcICQoLDA0ODw",
+    "snapshot": null
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["accept","text/html"]
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"],
+      ["rq-version","1"],
+      ["etag","\"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\""],
+      ["cache-control","no-cache"]
+    ],
+    "body": "response.body",
+    "body_bytes": 461,
+    "body_sha256": "ItSMVQdtlnNF_bhaOq5xL5o7MZ91EtJtkZttiSpyklU"
+  },
+  "result": {
+    "outcome": "normal",
+    "error": null,
+    "next": "show",
+    "metric": false,
+    "snapshot": null
+  }
+}

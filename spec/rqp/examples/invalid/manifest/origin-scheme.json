@@ -1,0 +1,19 @@
+{
+  "description": "Only http and https origins",
+  "expect": {
+    "keyword": "pattern",
+    "instancePath": "/origin"
+  },
+  "instance": {
+    "protocol": "rqp/1",
+    "origin": "ftp://shop.example.com",
+    "path": "/catalog",
+    "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
+    "policy": {
+      "ttl_seconds": 60
+    },
+    "limits": {
+      "max_patch_bytes": 65536
+    }
+  }
+}

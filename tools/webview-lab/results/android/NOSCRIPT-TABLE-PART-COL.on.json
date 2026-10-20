@@ -1,0 +1,10 @@
+{
+  "id": "NOSCRIPT-TABLE-PART-COL",
+  "view": "on",
+  "walker": "ok",
+  "tree": "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <noscript>\n|               \"<col>\"\n|             <div>\n|               data-rq-block=\"x\"\n|               \"a\"\n|               <table>\n|               \"b\"\n|     \"\\n\\n\"",
+  "characterSet": "UTF-8",
+  "contentType": "text/html",
+  "probe": null,
+  "error": null
+}

@@ -1,0 +1,72 @@
+{
+  "id": "FX-RQ-C05-TYPE-UPPERCASE",
+  "kind": "client",
+  "context": {
+    "url": "https://shop.example.com/catalog",
+    "final_url": "https://shop.example.com/catalog",
+    "redirected": false,
+    "build": "release",
+    "allow_http": false,
+    "allowlist": ["https://shop.example.com"],
+    "credentials": null,
+    "response_fields_visible": true,
+    "public_enabled": false,
+    "public_origin": false,
+    "navigation": "first-visit",
+    "nonce": "AAECAwQFBgcICQoLDA0ODw",
+    "snapshot": null
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html"]
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"],
+      ["rq-version","1"],
+      ["etag","\"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\""],
+      ["cache-control","no-cache"]
+    ],
+    "body": "response.body",
+    "body_bytes": 462,
+    "body_sha256": "loBi5gV36SbPqKdZxkB0iw_PpuNTyVDCTfyuwGljubo"
+  },
+  "result": {
+    "outcome": "stored",
+    "error": null,
+    "next": "show",
+    "metric": false,
+    "snapshot": {
+      "url": "https://shop.example.com/catalog",
+      "partition": "request",
+      "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
+      "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
+      "blocks": [
+        {
+          "id": "title",
+          "format": "html",
+          "sha256": "0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces",
+          "content": "Shop"
+        },
+        {
+          "id": "price",
+          "format": "html",
+          "sha256": "Xg3oaiol3ywUdxTQZNp7JJJu7_R8kUL-HK4accfrDKs",
+          "content": "120.00"
+        },
+        {
+          "id": "cart",
+          "format": "json",
+          "sha256": "zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4",
+          "content": "{\"items\":3}"
+        }
+      ],
+      "document_sha256": "xzb0cXdSHvu0CtK8DkDnFU_oof2RpisnvRVGspmq62c"
+    }
+  }
+}

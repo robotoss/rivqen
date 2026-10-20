@@ -1,0 +1,26 @@
+{
+  "id": "FX-RQ-P35-ATTRIBUTE-RULE",
+  "description": "The changed price block has an onclick attribute: F, not a delta (H-56)",
+  "rules": ["RQP-23"],
+  "level": "should",
+  "page": "page-b-onclick",
+  "client_page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-a}}"],
+      ["rq-have", "t={{t1:page-a}}, b={{have:page-a}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "description": "A serialized port has no leading zero",
+  "expect": {
+    "keyword": "pattern",
+    "instancePath": "/origin"
+  },
+  "instance": {
+    "protocol": "rqp/1",
+    "origin": "https://shop.example.com:0443",
+    "path": "/catalog",
+    "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
+    "policy": {
+      "ttl_seconds": 60
+    },
+    "limits": {
+      "max_patch_bytes": 65536
+    }
+  }
+}

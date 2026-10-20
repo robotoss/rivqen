@@ -1,0 +1,13 @@
+{
+  "id": "FX-RQ-MARKUP-EDGE-CDATA-LOWERCASE-FOREIGN",
+  "description": "The CDATA section opener is case-sensitive: <![cdata[ in svg desc is a bogus comment, which M-07 item 5 does not allow",
+  "rules": [
+    "M-04",
+    "M-07",
+    "M-12"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

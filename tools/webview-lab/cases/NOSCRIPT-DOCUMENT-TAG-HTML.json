@@ -1,0 +1,16 @@
+{
+  "id": "NOSCRIPT-DOCUMENT-TAG-HTML",
+  "question": "Q-19",
+  "source": "fixtures/rqp/markup/FX-RQ-MARKUP-NOSCRIPT-DOCUMENT-TAG-HTML/input.html",
+  "headers": [
+    [
+      "Content-Type",
+      "text/html; charset=utf-8"
+    ]
+  ],
+  "views": [
+    "on",
+    "off"
+  ],
+  "probe": null
+}

@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-MARKUP-ATTR-DUPLICATE",
+  "description": "Duplicate data-rq-block attributes on one tag: the first one wins",
+  "rules": [
+    "M-03",
+    "M-14"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "first",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"first\" data-rq-block=\"second\">",
+        "content": "x"
+      },
+      {
+        "id": "a1",
+        "format": "html",
+        "start_tag": "<span DATA-RQ-BLOCK=\"a1\" data-rq-block=\"BAD ID\">",
+        "content": "y"
+      }
+    ]
+  }
+}

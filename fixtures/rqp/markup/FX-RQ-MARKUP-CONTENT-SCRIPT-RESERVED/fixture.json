@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-SCRIPT-RESERVED",
+  "description": "A manifest-like script in the content: M-13 applies (RESERVED), M-22 no longer does (H-78)",
+  "rules": [
+    "M-13"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_RESERVED"
+  }
+}

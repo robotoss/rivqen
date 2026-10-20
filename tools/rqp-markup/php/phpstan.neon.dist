@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+parameters:
+    level: max
+    paths:
+        - src
+        - bin/rqp-markup
+        - tests

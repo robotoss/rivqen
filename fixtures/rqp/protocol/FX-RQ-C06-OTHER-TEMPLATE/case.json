@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C06-OTHER-TEMPLATE",
+  "kind": "client",
+  "description": "A delta built for another template (page-t2, price 130.00): the binding has B = r1(page-t2) and an R' with t1(page-t2), so the binding that the client computes with its template differs (H-104: INTEGRITY_ERROR at step 7, before H-104 TEMPLATE_MISMATCH)",
+  "rules": ["RQP-13","RQP-28"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","application/vnd.rivqen.delta+json"],
+      ["rq-version","1"],
+      ["cache-control","no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-t2",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "130.00"
+          }
+        ]
+      }
+    }
+  }
+}

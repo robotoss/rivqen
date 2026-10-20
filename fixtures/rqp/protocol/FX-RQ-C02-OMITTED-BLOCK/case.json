@@ -1,0 +1,30 @@
+{
+  "id": "FX-RQ-C02-OMITTED-BLOCK",
+  "kind": "client",
+  "description": "One operation for title (unchanged content) and a binding with R' = r1(page-b): the server omitted price, as after a prefix collision (H-44)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "title",
+            "content": "Shop"
+          }
+        ],
+        "next_revision": "page-b"
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P39-NO-HEAD-BODY-FIRST",
+  "description": "No head start tag and no head content: <body> comes first, so the page has no insertion point and is sent without RQP (H-72, H-79a)",
+  "rules": ["RQP-09"],
+  "page": "page-no-head-body-first",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

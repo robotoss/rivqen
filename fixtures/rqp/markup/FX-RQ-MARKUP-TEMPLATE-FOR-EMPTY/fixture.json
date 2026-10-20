@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-TEMPLATE-FOR-EMPTY",
+  "description": "A for attribute without a value, in mixed case, on a template after the block is also invalid (H-43): the name match is case-insensitive and the value does not matter",
+  "rules": [
+    "M-10"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

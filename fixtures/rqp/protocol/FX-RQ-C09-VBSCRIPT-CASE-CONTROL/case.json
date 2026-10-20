@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C09-VBSCRIPT-CASE-CONTROL",
+  "kind": "client",
+  "description": "price content <a title=\"U+0001 VbScRiPt:x\">y</a>: leading C0 control and space are removed, mixed case matches; every attribute is checked (H-59)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<a title=\"\u0001 VbScRiPt:x\">y</a>"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-FORMATTING-CROSS-SPECIAL",
+  "description": "An a end tag crosses 8 div elements (H-26). The adoption agency stops after 8 passes, the a stays open in the browser, and the a start tag in the later span block cuts the block (security review repro)",
+  "rules": [
+    "M-06"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

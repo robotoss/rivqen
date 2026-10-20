@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-ENCODING-TRUNCATED",
+  "description": "The input ends in a truncated UTF-8 sequence (E2 82)",
+  "rules": [
+    "M-02"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_ENCODING"
+  }
+}

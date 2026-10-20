@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-NOSCRIPT-LI-IN-LI",
+  "description": "An li in noscript content C in an li of the content: M-11 item 10 applies M-24 item j (H-95)",
+  "rules": [
+    "M-11",
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

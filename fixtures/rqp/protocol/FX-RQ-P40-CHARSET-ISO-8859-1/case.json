@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P40-CHARSET-ISO-8859-1",
+  "description": "The application sends charset=iso-8859-1, which is not a UTF-8 label: the page is invalid for RQP and the application response is sent unchanged (H-62)",
+  "rules": ["RQP-09", "RQP-26"],
+  "page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=iso-8859-1"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

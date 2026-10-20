@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-TEMPLATE-FOR-SVG",
+  "description": "A template with a for attribute in an svg element is a foreign element and does not patch (H-43 applies in HTML context only); the start marker in the block is a comment",
+  "rules": [
+    "M-10",
+    "M-07"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "a",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"a\">",
+        "content": "<?start name=\"m\">x"
+      }
+    ]
+  }
+}

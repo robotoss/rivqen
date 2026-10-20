@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-RESERVED-CHARREF-SPACE",
+  "description": "A script type with a hexadecimal reference with X and without ; to a tab: M-13 item 2 rejects it (H-84)",
+  "rules": [
+    "M-13"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_RESERVED"
+  }
+}

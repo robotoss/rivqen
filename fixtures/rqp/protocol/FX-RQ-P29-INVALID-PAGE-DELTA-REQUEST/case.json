@@ -1,0 +1,26 @@
+{
+  "id": "FX-RQ-P29-INVALID-PAGE-DELTA-REQUEST",
+  "description": "Invalid page (duplicate block id): the application response unchanged; its ETag stays",
+  "rules": ["RQP-09"],
+  "page": "page-c",
+  "client_page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"],
+      ["etag", "\"app-7\""]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-a}}"],
+      ["rq-have", "t={{t1:page-a}}, b={{have:page-a}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  }
+}

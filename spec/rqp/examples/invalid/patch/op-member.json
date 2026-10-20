@@ -1,0 +1,17 @@
+{
+  "description": "No op member (H-104): rqp/1 has one operation (H-47)",
+  "expect": {
+    "keyword": "additionalProperties",
+    "instancePath": "/operations/0"
+  },
+  "instance": {
+    "binding": "d1.orrx-_-Iflnnjs7DvvuOOdxW3FzbZpU_PTlR0jdWw54",
+    "operations": [
+      {
+        "op": "replace_block",
+        "block_id": "price",
+        "content": "130.00"
+      }
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-C25-IDN-HOST",
+  "kind": "client",
+  "description": "The request URL https://faß.example/catalog and the allowlist https://xn--fa-hia.example: the WHATWG URL parser maps the host with UTS 46 nontransitional processing (ß stays, then Punycode), so the origin is in the allowlist and the snapshot has the URL https://xn--fa-hia.example/catalog. Transitional processing gives fass.example and fails this case (DL-040 L-3, DL-038)",
+  "rules": ["RQP-05", "RQP-24"],
+  "context": {
+    "url": "https://faß.example/catalog",
+    "allowlist": ["https://xn--fa-hia.example"],
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-SVG-ICON",
+  "description": "An svg icon in the content: title and desc text, a gradient, nested g, self-closing children and use (H-73: valid)",
+  "rules": [
+    "M-07",
+    "M-22",
+    "M-23"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "icon",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"icon\">",
+        "content": "<svg viewBox=\"0 0 16 16\" aria-hidden=\"true\"><title>Close</title><desc>x &lt; y</desc><defs><linearGradient id=\"g\"><stop offset=\"0\"/></linearGradient></defs><g fill=\"url(#g)\"><path d=\"M0 0h16v16z\"/><circle cx=\"8\" cy=\"8\" r=\"2\"></circle></g><use href=\"#p\"/></svg> Close"
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-OBJECT-CELL",
+  "description": "A td start tag in an object in a cell in the content: the tree builder closes the cell and the object (H-78, M-09)",
+  "rules": [
+    "M-09"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

@@ -113,6 +113,7 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
     items: [
       { text: 'Overview', link: '/engineering/protocol/' },
       { text: 'RQP: block markup', link: '/engineering/protocol/markup' },
+      { text: 'RQP markup: edge cases', link: '/engineering/protocol/markup-edge-cases' },
       { text: 'RQP: negotiation', link: '/engineering/protocol/negotiation' },
       { text: 'RQP: manifest and patch', link: '/engineering/protocol/manifest-patch' },
       { text: 'Versioning and legacy end of life', link: '/engineering/protocol/versioning' },
@@ -234,6 +235,12 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'Open questions', link: '/engineering/plan/open-questions' },
       { text: 'Decision log', link: '/engineering/plan/decision-log' },
       { text: 'Sprint records', link: '/engineering/plan/sprints/' },
+      { text: 'WP-17 S1', link: '/engineering/plan/sprints/WP-17-S1' },
+      { text: 'WP-17 S2', link: '/engineering/plan/sprints/WP-17-S2' },
+      { text: 'WP-17 S3', link: '/engineering/plan/sprints/WP-17-S3' },
+      { text: 'WP-17 S4', link: '/engineering/plan/sprints/WP-17-S4' },
+      { text: 'WP-17 S5', link: '/engineering/plan/sprints/WP-17-S5' },
+      { text: 'WP-17 S6', link: '/engineering/plan/sprints/WP-17-S6' },
       { text: 'Sprint record template', link: '/engineering/plan/sprints/template' }
     ]
   }

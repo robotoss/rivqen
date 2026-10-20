@@ -1,0 +1,1201 @@
+{
+ "source": "cases",
+ "seed": 5,
+ "count": 478,
+ "date": "2026-10-19",
+ "docs": 478,
+ "combos": {
+  "base": {
+   "valid": 253,
+   "gained": 0,
+   "withTemplate": 1,
+   "withNoscript": 0,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-p-closure": 13,
+    "known-head-noscript": 6
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "M-24a": 1,
+    "RQP_MARKUP_STRUCTURE": 89,
+    "M-24hi": 1,
+    "C:M-11-content": 12,
+    "C:M-11-end": 1,
+    "M-20": 7,
+    "RQP_MARKUP_RESERVED": 23,
+    "C:M-11-balance": 4,
+    "RQP_MARKUP_LIMIT": 12,
+    "M-23": 7,
+    "M-22.3": 1,
+    "M-24k": 2,
+    "M-24def": 1,
+    "M-09": 4,
+    "M-22.2-noscript": 18,
+    "M-22.2-template": 20,
+    "M-22.2": 13,
+    "RQP_MARKUP_NESTED": 1,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 4,
+    "RQP_MARKUP_BAD_JSON": 4
+   },
+   "patch": {
+    "blocks": 249,
+    "rejected": {
+     "shipped:attribute": 1,
+     "p1:attribute": 1,
+     "p2:attribute": 1,
+     "shipped:foreign": 34,
+     "p1:foreign": 34,
+     "p2:foreign": 34,
+     "shipped:element": 34,
+     "p1:element": 34,
+     "p2:element": 34
+    },
+    "findings": {}
+   },
+   "examples": []
+  },
+  "t1": {
+   "valid": 262,
+   "gained": 9,
+   "withTemplate": 10,
+   "withNoscript": 0,
+   "findings": {},
+   "gainedFindings": {
+    "content-enabled-parent-tpl": 2,
+    "template-enabled-end": 1,
+    "content-disabled-parent-tpl": 2,
+    "template-disabled-end": 1,
+    "content-spec-missing-tpl": 2,
+    "content-spec-parent-tpl": 2,
+    "fragment-parent-tpl": 2,
+    "content-enabled-missing-tpl": 1,
+    "content-disabled-missing-tpl": 1,
+    "fragment-missing-tpl": 1
+   },
+   "informative": {
+    "known-p-closure": 13,
+    "known-head-noscript": 6,
+    "depth-template-enabled": 1,
+    "depth-template-disabled": 1
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 2,
+   "why": {
+    "M-24a": 2,
+    "RQP_MARKUP_STRUCTURE": 90,
+    "M-24hi": 1,
+    "C:M-11-content": 12,
+    "C:M-11-end": 1,
+    "M-20": 8,
+    "RQP_MARKUP_RESERVED": 23,
+    "C:M-11-balance": 4,
+    "RQP_MARKUP_LIMIT": 12,
+    "M-23": 7,
+    "M-22.3": 1,
+    "M-24k": 3,
+    "M-24def": 2,
+    "M-09": 4,
+    "M-22.2-noscript": 20,
+    "M-22.2": 13,
+    "RQP_MARKUP_NESTED": 1,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 4,
+    "RQP_MARKUP_BAD_JSON": 4,
+    "S5-shadowrootmode": 2,
+    "M-24g-template": 1,
+    "M-09.1": 1
+   },
+   "patch": {
+    "blocks": 266,
+    "rejected": {
+     "shipped:attribute": 1,
+     "p1:attribute": 1,
+     "p2:attribute": 1,
+     "shipped:foreign": 34,
+     "p1:foreign": 34,
+     "p2:foreign": 34,
+     "shipped:element": 35,
+     "p1:element": 35,
+     "p2:element": 35
+    },
+    "findings": {}
+   },
+   "examples": [
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:content-enabled-parent-tpl",
+     "detail": "<table> at 67: token parent 42, tree 0"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:template-enabled-end",
+     "detail": "template at 42: end tag 101, tree null"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:content-disabled-parent-tpl",
+     "detail": "<table> at 67: token parent 42, tree 0"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:template-disabled-end",
+     "detail": "template at 42: end tag 101, tree null"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:content-spec-missing-tpl",
+     "detail": "<table> at 67 has no element"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:content-spec-parent-tpl",
+     "detail": "<tr> at 74: token parent 67, tree 42"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:fragment-parent-tpl",
+     "detail": "block a: <table> at 67: token parent 42, fragment 0"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-enabled-missing-tpl",
+     "detail": "<form> at 69 has no element"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-enabled-parent-tpl",
+     "detail": "<input> at 75: token parent 69, tree 38"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-disabled-missing-tpl",
+     "detail": "<form> at 69 has no element"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-disabled-parent-tpl",
+     "detail": "<input> at 75: token parent 69, tree 38"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-spec-missing-tpl",
+     "detail": "<form> at 69 has no element"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-spec-parent-tpl",
+     "detail": "<input> at 75: token parent 69, tree 38"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:fragment-missing-tpl",
+     "detail": "block a: <form> at 69"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:fragment-parent-tpl",
+     "detail": "block a: <input> at 75: token parent 69, fragment 38"
+    }
+   ]
+  },
+  "t2": {
+   "valid": 258,
+   "gained": 5,
+   "withTemplate": 6,
+   "withNoscript": 0,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-p-closure": 13,
+    "known-head-noscript": 6
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "M-24a": 2,
+    "RQP_MARKUP_STRUCTURE": 90,
+    "M-24hi": 1,
+    "C:M-11-content": 12,
+    "C:M-11-end": 1,
+    "M-20": 8,
+    "RQP_MARKUP_RESERVED": 23,
+    "C:M-11-balance": 4,
+    "RQP_MARKUP_LIMIT": 12,
+    "M-23": 7,
+    "M-22.3": 1,
+    "M-24k": 3,
+    "M-24def": 2,
+    "M-09": 4,
+    "M-22.2-noscript": 20,
+    "M-22.2": 13,
+    "RQP_MARKUP_NESTED": 1,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 4,
+    "RQP_MARKUP_BAD_JSON": 4,
+    "S5-shadowrootmode": 2,
+    "S5-template-table-part": 6
+   },
+   "patch": {
+    "blocks": 258,
+    "rejected": {
+     "shipped:attribute": 1,
+     "p1:attribute": 1,
+     "p2:attribute": 1,
+     "shipped:foreign": 34,
+     "p1:foreign": 34,
+     "p2:foreign": 34,
+     "shipped:element": 35,
+     "p1:element": 35,
+     "p2:element": 35
+    },
+    "findings": {}
+   },
+   "examples": []
+  },
+  "tu": {
+   "valid": 265,
+   "gained": 12,
+   "withTemplate": 13,
+   "withNoscript": 0,
+   "findings": {},
+   "gainedFindings": {
+    "content-enabled-parent-tpl": 2,
+    "template-enabled-end": 2,
+    "content-disabled-parent-tpl": 2,
+    "template-disabled-end": 2,
+    "content-spec-missing-tpl": 3,
+    "content-spec-parent-tpl": 2,
+    "fragment-parent-tpl": 2,
+    "content-enabled-missing-tpl": 2,
+    "content-disabled-missing-tpl": 2,
+    "fragment-missing-tpl": 2,
+    "parse5-enabled-blocks": 1,
+    "parse5-disabled-blocks": 1,
+    "parse5-spec-blocks": 1,
+    "template-spec-end": 1,
+    "fragment-extra": 1
+   },
+   "informative": {
+    "known-p-closure": 13,
+    "known-head-noscript": 6,
+    "depth-template-enabled": 1,
+    "depth-template-disabled": 1
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 3,
+   "why": {
+    "M-24a": 2,
+    "RQP_MARKUP_STRUCTURE": 90,
+    "M-24hi": 1,
+    "C:M-11-content": 12,
+    "C:M-11-end": 1,
+    "M-20": 8,
+    "RQP_MARKUP_RESERVED": 23,
+    "C:M-11-balance": 4,
+    "RQP_MARKUP_LIMIT": 12,
+    "M-23": 7,
+    "M-22.3": 1,
+    "M-24k": 3,
+    "M-24def": 2,
+    "M-09": 4,
+    "M-22.2-noscript": 20,
+    "M-22.2": 13,
+    "RQP_MARKUP_NESTED": 1,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 4,
+    "RQP_MARKUP_BAD_JSON": 4,
+    "M-24g-template": 1
+   },
+   "patch": {
+    "blocks": 272,
+    "rejected": {
+     "shipped:attribute": 1,
+     "p1:attribute": 1,
+     "p2:attribute": 1,
+     "shipped:foreign": 34,
+     "p1:foreign": 34,
+     "p2:foreign": 34,
+     "shipped:element": 36,
+     "p1:element": 36,
+     "p2:element": 36
+    },
+    "findings": {}
+   },
+   "examples": [
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:content-enabled-parent-tpl",
+     "detail": "<table> at 67: token parent 42, tree 0"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:template-enabled-end",
+     "detail": "template at 42: end tag 101, tree null"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:content-disabled-parent-tpl",
+     "detail": "<table> at 67: token parent 42, tree 0"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:template-disabled-end",
+     "detail": "template at 42: end tag 101, tree null"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:content-spec-missing-tpl",
+     "detail": "<table> at 67 has no element"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:content-spec-parent-tpl",
+     "detail": "<tr> at 74: token parent 67, tree 42"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:fragment-parent-tpl",
+     "detail": "block a: <table> at 67: token parent 42, fragment 0"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-enabled-missing-tpl",
+     "detail": "<form> at 69 has no element"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-enabled-parent-tpl",
+     "detail": "<input> at 75: token parent 69, tree 38"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-disabled-missing-tpl",
+     "detail": "<form> at 69 has no element"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-disabled-parent-tpl",
+     "detail": "<input> at 75: token parent 69, tree 38"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-spec-missing-tpl",
+     "detail": "<form> at 69 has no element"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-spec-parent-tpl",
+     "detail": "<input> at 75: token parent 69, tree 38"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:fragment-missing-tpl",
+     "detail": "block a: <form> at 69"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:fragment-parent-tpl",
+     "detail": "block a: <input> at 75: token parent 69, fragment 38"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-col-H35",
+     "kind": "gained:parse5-enabled-blocks",
+     "detail": "block count: candidate 2, parse5 3"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-col-H35",
+     "kind": "gained:content-enabled-missing-tpl",
+     "detail": "<style> at 53 has no element"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-col-H35",
+     "kind": "gained:template-enabled-end",
+     "detail": "template at 38: end tag 129, tree 60"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-col-H35",
+     "kind": "gained:parse5-disabled-blocks",
+     "detail": "block count: candidate 2, parse5 3"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-col-H35",
+     "kind": "gained:content-disabled-missing-tpl",
+     "detail": "<style> at 53 has no element"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-col-H35",
+     "kind": "gained:template-disabled-end",
+     "detail": "template at 38: end tag 129, tree 60"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-col-H35",
+     "kind": "gained:parse5-spec-blocks",
+     "detail": "block count: candidate 2, parse5 3"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-col-H35",
+     "kind": "gained:content-spec-missing-tpl",
+     "detail": "<style> at 53 has no element"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-col-H35",
+     "kind": "gained:template-spec-end",
+     "detail": "template at 38: end tag 129, tree 60"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-col-H35",
+     "kind": "gained:fragment-extra",
+     "detail": "block a: elements at 95 are no start tag of the content"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-col-H35",
+     "kind": "gained:fragment-missing-tpl",
+     "detail": "block a: <style> at 53"
+    }
+   ]
+  },
+  "n1": {
+   "valid": 260,
+   "gained": 7,
+   "withTemplate": 1,
+   "withNoscript": 7,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-p-closure": 15,
+    "known-head-noscript": 6
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "M-24a": 1,
+    "RQP_MARKUP_STRUCTURE": 89,
+    "M-24hi": 1,
+    "C:M-11-content": 15,
+    "C:M-11-end": 2,
+    "M-20": 8,
+    "RQP_MARKUP_RESERVED": 24,
+    "C:M-11-balance": 5,
+    "RQP_MARKUP_LIMIT": 12,
+    "M-23": 7,
+    "M-22.3": 1,
+    "M-24k": 2,
+    "M-24def": 1,
+    "M-09": 4,
+    "M-22.2-template": 20,
+    "M-22.2": 13,
+    "RQP_MARKUP_NESTED": 1,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 4,
+    "RQP_MARKUP_BAD_JSON": 4,
+    "C:M-24a": 1,
+    "C:M-24def": 2,
+    "C:M-24j": 1
+   },
+   "patch": {
+    "blocks": 262,
+    "rejected": {
+     "shipped:attribute": 1,
+     "p1:attribute": 1,
+     "p2:attribute": 2,
+     "shipped:foreign": 34,
+     "p1:foreign": 34,
+     "p2:foreign": 34,
+     "shipped:element": 34,
+     "p1:element": 34,
+     "p2:element": 35,
+     "p1:noscript": 7
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 6,
+     "shipped:patch-mode-diff": 5,
+     "p2:patch-mode-diff": 3
+    }
+   },
+   "examples": [
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <img> at 34"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-iframe",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <iframe> at 33"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-iframe",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-around",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <div> at 37"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-around",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-around",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-svg-in-C",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    }
+   ]
+  },
+  "n2": {
+   "valid": 259,
+   "gained": 6,
+   "withTemplate": 1,
+   "withNoscript": 6,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-p-closure": 13,
+    "known-head-noscript": 6
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "M-24a": 1,
+    "RQP_MARKUP_STRUCTURE": 89,
+    "M-24hi": 1,
+    "C:M-11-content": 15,
+    "C:M-11-end": 2,
+    "M-20": 8,
+    "RQP_MARKUP_RESERVED": 24,
+    "C:M-11-balance": 5,
+    "RQP_MARKUP_LIMIT": 12,
+    "M-23": 7,
+    "M-22.3": 1,
+    "M-24k": 2,
+    "M-24def": 1,
+    "M-09": 4,
+    "M-22.2-template": 20,
+    "M-22.2": 13,
+    "RQP_MARKUP_NESTED": 1,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 4,
+    "RQP_MARKUP_BAD_JSON": 4,
+    "C:M-24a": 1,
+    "C:S5-noscript-pclose": 1,
+    "C:M-24def": 2,
+    "C:M-24j": 1
+   },
+   "patch": {
+    "blocks": 260,
+    "rejected": {
+     "shipped:attribute": 1,
+     "p1:attribute": 1,
+     "p2:attribute": 2,
+     "shipped:foreign": 34,
+     "p1:foreign": 34,
+     "p2:foreign": 34,
+     "shipped:element": 34,
+     "p1:element": 34,
+     "p2:element": 35,
+     "p1:noscript": 6
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 5,
+     "shipped:patch-mode-diff": 4,
+     "p2:patch-mode-diff": 2
+    }
+   },
+   "examples": [
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <img> at 34"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-iframe",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <iframe> at 33"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-iframe",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-mxss-shape",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <img> at 33"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-mxss-shape",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-svg-in-C",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    }
+   ]
+  },
+  "nu": {
+   "valid": 264,
+   "gained": 11,
+   "withTemplate": 1,
+   "withNoscript": 11,
+   "findings": {},
+   "gainedFindings": {
+    "parse5-disabled-blocks": 1,
+    "content-disabled-parent": 1,
+    "noscript-end-block": 1,
+    "noscript-outside-block": 1
+   },
+   "informative": {
+    "known-p-closure": 17,
+    "known-head-noscript": 6
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 3,
+   "why": {
+    "M-24a": 1,
+    "RQP_MARKUP_STRUCTURE": 89,
+    "M-24hi": 1,
+    "C:M-11-content": 15,
+    "C:M-11-end": 2,
+    "M-20": 8,
+    "RQP_MARKUP_RESERVED": 24,
+    "C:M-11-balance": 5,
+    "RQP_MARKUP_LIMIT": 12,
+    "M-23": 7,
+    "M-22.3": 1,
+    "M-24k": 2,
+    "M-24def": 1,
+    "M-09": 4,
+    "M-22.2-template": 20,
+    "M-22.2": 13,
+    "RQP_MARKUP_NESTED": 1,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 4,
+    "RQP_MARKUP_BAD_JSON": 4
+   },
+   "patch": {
+    "blocks": 270,
+    "rejected": {
+     "shipped:attribute": 1,
+     "p1:attribute": 1,
+     "p2:attribute": 2,
+     "shipped:foreign": 34,
+     "p1:foreign": 34,
+     "p2:foreign": 34,
+     "shipped:element": 34,
+     "p1:element": 34,
+     "p2:element": 35,
+     "p1:noscript": 11
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 10,
+     "shipped:patch-mode-diff": 9,
+     "p2:patch-mode-diff": 7
+    }
+   },
+   "examples": [
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <img> at 34"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-iframe",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <iframe> at 33"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-iframe",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-block-div",
+     "kind": "gained:parse5-disabled-blocks",
+     "detail": "block 0 (\"a\") end: candidate 56, parse5 has no end tag (implied or EOF)"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-block-div",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <div> at 32"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-block-div",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-block-div",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-around",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-a-in-a",
+     "kind": "gained:content-disabled-parent",
+     "detail": "<noscript> at 35: token parent 23, tree 0"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-button",
+     "kind": "gained:noscript-end-block",
+     "detail": "noscript at 31: end tag 59, tree null"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-button",
+     "kind": "gained:noscript-outside-block",
+     "detail": "<button> at 41 is not inside noscript at 31"
+    }
+   ]
+  },
+  "t1n1": {
+   "valid": 271,
+   "gained": 18,
+   "withTemplate": 12,
+   "withNoscript": 9,
+   "findings": {},
+   "gainedFindings": {
+    "content-enabled-parent-tpl": 2,
+    "template-enabled-end": 1,
+    "content-disabled-parent-tpl": 2,
+    "template-disabled-end": 1,
+    "content-spec-missing-tpl": 2,
+    "content-spec-parent-tpl": 2,
+    "fragment-parent-tpl": 2,
+    "content-enabled-missing-tpl": 1,
+    "content-disabled-missing-tpl": 1,
+    "fragment-missing-tpl": 1
+   },
+   "informative": {
+    "known-p-closure": 15,
+    "known-head-noscript": 6,
+    "depth-template-enabled": 1,
+    "depth-template-disabled": 1
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 2,
+   "why": {
+    "M-24a": 2,
+    "RQP_MARKUP_STRUCTURE": 90,
+    "M-24hi": 1,
+    "C:M-11-content": 15,
+    "C:M-11-end": 2,
+    "M-20": 9,
+    "RQP_MARKUP_RESERVED": 24,
+    "C:M-11-balance": 5,
+    "RQP_MARKUP_LIMIT": 12,
+    "M-23": 7,
+    "M-22.3": 1,
+    "M-24k": 3,
+    "M-24def": 2,
+    "M-09": 4,
+    "M-22.2": 13,
+    "RQP_MARKUP_NESTED": 1,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 4,
+    "RQP_MARKUP_BAD_JSON": 4,
+    "S5-shadowrootmode": 2,
+    "M-24g-template": 1,
+    "M-09.1": 1,
+    "C:M-24a": 1,
+    "C:M-24def": 2,
+    "C:M-24j": 1
+   },
+   "patch": {
+    "blocks": 283,
+    "rejected": {
+     "shipped:attribute": 1,
+     "p1:attribute": 1,
+     "p2:attribute": 2,
+     "shipped:foreign": 34,
+     "p1:foreign": 34,
+     "p2:foreign": 34,
+     "shipped:element": 35,
+     "p1:element": 35,
+     "p2:element": 36,
+     "p1:noscript": 9
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 8,
+     "shipped:patch-mode-diff": 7,
+     "p2:patch-mode-diff": 5
+    }
+   },
+   "examples": [
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:content-enabled-parent-tpl",
+     "detail": "<table> at 67: token parent 42, tree 0"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:template-enabled-end",
+     "detail": "template at 42: end tag 101, tree null"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:content-disabled-parent-tpl",
+     "detail": "<table> at 67: token parent 42, tree 0"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:template-disabled-end",
+     "detail": "template at 42: end tag 101, tree null"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:content-spec-missing-tpl",
+     "detail": "<table> at 67 has no element"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:content-spec-parent-tpl",
+     "detail": "<tr> at 74: token parent 67, tree 42"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-table-scope",
+     "kind": "gained:fragment-parent-tpl",
+     "detail": "block a: <table> at 67: token parent 42, fragment 0"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-enabled-missing-tpl",
+     "detail": "<form> at 69 has no element"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-enabled-parent-tpl",
+     "detail": "<input> at 75: token parent 69, tree 38"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-disabled-missing-tpl",
+     "detail": "<form> at 69 has no element"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-disabled-parent-tpl",
+     "detail": "<input> at 75: token parent 69, tree 38"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-spec-missing-tpl",
+     "detail": "<form> at 69 has no element"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:content-spec-parent-tpl",
+     "detail": "<input> at 75: token parent 69, tree 38"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:fragment-missing-tpl",
+     "detail": "block a: <form> at 69"
+    },
+    {
+     "doc": "s5-cases.json:S5-T-form-table-mode",
+     "kind": "gained:fragment-parent-tpl",
+     "detail": "block a: <input> at 75: token parent 69, fragment 38"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <img> at 34"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-iframe",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <iframe> at 33"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-iframe",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-around",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <div> at 37"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-around",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-around",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-svg-in-C",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    }
+   ]
+  },
+  "t2n1": {
+   "valid": 267,
+   "gained": 14,
+   "withTemplate": 8,
+   "withNoscript": 9,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-p-closure": 15,
+    "known-head-noscript": 6
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "M-24a": 2,
+    "RQP_MARKUP_STRUCTURE": 90,
+    "M-24hi": 1,
+    "C:M-11-content": 15,
+    "C:M-11-end": 2,
+    "M-20": 9,
+    "RQP_MARKUP_RESERVED": 24,
+    "C:M-11-balance": 5,
+    "RQP_MARKUP_LIMIT": 12,
+    "M-23": 7,
+    "M-22.3": 1,
+    "M-24k": 3,
+    "M-24def": 2,
+    "M-09": 4,
+    "M-22.2": 13,
+    "RQP_MARKUP_NESTED": 1,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 4,
+    "RQP_MARKUP_BAD_JSON": 4,
+    "S5-shadowrootmode": 2,
+    "S5-template-table-part": 6,
+    "C:M-24a": 1,
+    "C:M-24def": 2,
+    "C:M-24j": 1
+   },
+   "patch": {
+    "blocks": 275,
+    "rejected": {
+     "shipped:attribute": 1,
+     "p1:attribute": 1,
+     "p2:attribute": 2,
+     "shipped:foreign": 34,
+     "p1:foreign": 34,
+     "p2:foreign": 34,
+     "shipped:element": 35,
+     "p1:element": 35,
+     "p2:element": 36,
+     "p1:noscript": 9
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 8,
+     "shipped:patch-mode-diff": 7,
+     "p2:patch-mode-diff": 5
+    }
+   },
+   "examples": [
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <img> at 34"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-iframe",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <iframe> at 33"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-iframe",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-around",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <div> at 37"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-around",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-p-around",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-svg-in-C",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    }
+   ]
+  },
+  "t2n2": {
+   "valid": 266,
+   "gained": 13,
+   "withTemplate": 8,
+   "withNoscript": 8,
+   "findings": {},
+   "gainedFindings": {},
+   "informative": {
+    "known-p-closure": 13,
+    "known-head-noscript": 6
+   },
+   "docsWithFinding": 0,
+   "gainedDocsWithFinding": 0,
+   "why": {
+    "M-24a": 2,
+    "RQP_MARKUP_STRUCTURE": 90,
+    "M-24hi": 1,
+    "C:M-11-content": 15,
+    "C:M-11-end": 2,
+    "M-20": 9,
+    "RQP_MARKUP_RESERVED": 24,
+    "C:M-11-balance": 5,
+    "RQP_MARKUP_LIMIT": 12,
+    "M-23": 7,
+    "M-22.3": 1,
+    "M-24k": 3,
+    "M-24def": 2,
+    "M-09": 4,
+    "M-22.2": 13,
+    "RQP_MARKUP_NESTED": 1,
+    "RQP_MARKUP_FORBIDDEN_ELEMENT": 4,
+    "RQP_MARKUP_BAD_JSON": 4,
+    "S5-shadowrootmode": 2,
+    "S5-template-table-part": 6,
+    "C:M-24a": 1,
+    "C:S5-noscript-pclose": 1,
+    "C:M-24def": 2,
+    "C:M-24j": 1
+   },
+   "patch": {
+    "blocks": 273,
+    "rejected": {
+     "shipped:attribute": 1,
+     "p1:attribute": 1,
+     "p2:attribute": 2,
+     "shipped:foreign": 34,
+     "p1:foreign": 34,
+     "p2:foreign": 34,
+     "shipped:element": 35,
+     "p1:element": 35,
+     "p2:element": 36,
+     "p1:noscript": 8
+    },
+    "findings": {
+     "shipped:patch-unseen-disabled": 7,
+     "shipped:patch-mode-diff": 6,
+     "p2:patch-mode-diff": 4
+    }
+   },
+   "examples": [
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <img> at 34"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-img",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-iframe",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <iframe> at 33"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-iframe",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-mxss-shape",
+     "kind": "patch:shipped:patch-unseen-disabled",
+     "detail": "block a: <img> at 33"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-mxss-shape",
+     "kind": "patch:shipped:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-N-svg-in-C",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    },
+    {
+     "doc": "s5-cases.json:S5-X-noscript-in-template",
+     "kind": "patch:p2:patch-mode-diff",
+     "detail": "block a"
+    }
+   ]
+  }
+ },
+ "monotonic": 0,
+ "examples": []
+}

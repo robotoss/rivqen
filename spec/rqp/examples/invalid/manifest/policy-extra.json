@@ -1,0 +1,19 @@
+{
+  "description": "Unknown policy members are rejected",
+  "expect": {
+    "keyword": "additionalProperties",
+    "instancePath": "/policy"
+  },
+  "instance": {
+    "protocol": "rqp/1",
+    "origin": "https://shop.example.com",
+    "path": "/catalog",
+    "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
+    "policy": {
+      "stale": true
+    },
+    "limits": {
+      "max_patch_bytes": 65536
+    }
+  }
+}

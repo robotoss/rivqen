@@ -1,0 +1,13 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-SVG-TITLE-MARKUP",
+  "description": "svg title in noscript content C is not RCDATA (no state change in a foreign region of C), so the g start tag in it is a tag (M-07 item 3 through M-11 item 8, H-74)",
+  "rules": [
+    "M-04",
+    "M-07",
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

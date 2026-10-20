@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-STRAY-TR",
+  "description": "A stray tr end tag after an implied tr (H-30): the browser closes the cell and moves the block before the table (security review repro)",
+  "rules": [
+    "M-06"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "FX-RQ-P36-POLICY-ONLY",
+  "description": "Only the server policy changed (from none to ttl_seconds 60), the blocks are the same: empty change set, F with a new ETag (H-55)",
+  "rules": ["RQP-08", "RQP-11"],
+  "page": "page-a",
+  "client_page": "page-a",
+  "server_config": {
+    "policy": {
+      "ttl_seconds": 60
+    }
+  },
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-a}}"],
+      ["rq-have", "t={{t1:page-a}}, b={{have:page-a}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  }
+}

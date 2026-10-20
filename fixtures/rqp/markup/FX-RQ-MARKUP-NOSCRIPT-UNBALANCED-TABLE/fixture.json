@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-UNBALANCED-TABLE",
+  "description": "noscript content leaves a table open (H-27)",
+  "rules": [
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

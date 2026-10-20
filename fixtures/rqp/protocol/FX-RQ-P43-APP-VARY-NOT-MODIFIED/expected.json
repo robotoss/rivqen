@@ -1,0 +1,31 @@
+{
+  "id": "FX-RQ-P43-APP-VARY-NOT-MODIFIED",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match","\"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\""],
+      ["rq-have","t=t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:"],
+      ["rq-nonce",":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  },
+  "status": 304,
+  "headers_required": {
+    "cache-control": "no-cache",
+    "etag": "\"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\""
+  },
+  "headers_forbidden": ["last-modified","rq-revision","rq-template-revision"],
+  "headers_optional": {
+    "rq-version": "1"
+  },
+  "vary": {
+    "required": ["accept-encoding"],
+    "should": []
+  },
+  "body": {
+    "kind": "none"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "CT-UTF8",
+  "question": "Q-20",
+  "source": "tools/webview-lab/host/pages/q20.html",
+  "headers": [
+    [
+      "Content-Type",
+      "text/html; charset=utf-8"
+    ]
+  ],
+  "views": [
+    "on"
+  ],
+  "probe": "#m"
+}

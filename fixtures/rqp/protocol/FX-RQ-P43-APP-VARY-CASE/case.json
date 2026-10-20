@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-P43-APP-VARY-CASE",
+  "description": "The application sends two Vary lines, accept-encoding and RQ-Have, rq-nonce; F lists accept-encoding and no Rq-* member: the match of Rq- is ASCII case-insensitive (RQP-08, DL-063)",
+  "rules": ["RQP-08"],
+  "page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"],
+      ["vary", "accept-encoding"],
+      ["vary", "RQ-Have, rq-nonce"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

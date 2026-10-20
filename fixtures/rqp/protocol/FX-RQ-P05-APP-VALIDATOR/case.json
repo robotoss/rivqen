@@ -1,0 +1,26 @@
+{
+  "id": "FX-RQ-P05-APP-VALIDATOR",
+  "description": "If-None-Match has the ETag of the application, not the page revision: no 304 by a validator that RQP replaces (extra case)",
+  "rules": ["RQP-16"],
+  "page": "page-a",
+  "client_page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"],
+      ["etag", "\"app-1\""]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "\"app-1\""],
+      ["rq-have", "t={{t1:page-a}}, b={{have:page-a}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  }
+}

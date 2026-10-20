@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-NOSCRIPT-TEMPLATE",
+  "description": "A template element in the content C of a noscript element of the content: M-11 item 3",
+  "rules": [
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

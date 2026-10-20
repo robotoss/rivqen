@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-NESTING",
+  "description": "A td start tag while a td is open: the implied closure of M-09 ends the cell (H-85a: valid; was STRUCTURE)",
+  "rules": [
+    "M-09"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

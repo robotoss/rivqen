@@ -1,0 +1,17 @@
+{
+  "description": "No template_revision (H-104): a delta for another template fails the binding check (H-107)",
+  "expect": {
+    "keyword": "additionalProperties",
+    "instancePath": ""
+  },
+  "instance": {
+    "binding": "d1.orrx-_-Iflnnjs7DvvuOOdxW3FzbZpU_PTlR0jdWw54",
+    "operations": [
+      {
+        "block_id": "price",
+        "content": "130.00"
+      }
+    ],
+    "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM"
+  }
+}

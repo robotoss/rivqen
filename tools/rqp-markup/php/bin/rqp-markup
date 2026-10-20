@@ -1,0 +1,19 @@
+#!/usr/bin/env php
+<?php
+
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: The Rivqen Authors
+
+declare(strict_types=1);
+
+// RQP markup parser candidate (PHP). Interface: tools/rqp-markup/CONTRACT.md.
+
+// Errors go to stderr, never to stdout (stdout carries only JSON results).
+ini_set('display_errors', 'stderr');
+// Worst case measured for a 5 MiB input is below 200 MiB (README.md, "Limits").
+ini_set('memory_limit', '512M');
+
+require __DIR__ . '/../src/autoload.php';
+
+/** @var list<string> $argv */
+exit(\Rivqen\Tools\RqpMarkup\Cli::run($argv, STDOUT, STDERR));

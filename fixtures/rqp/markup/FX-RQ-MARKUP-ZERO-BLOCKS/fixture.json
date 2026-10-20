@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-ZERO-BLOCKS",
+  "description": "A document without blocks is valid and has an empty block list",
+  "rules": [
+    "M-27"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": []
+  }
+}

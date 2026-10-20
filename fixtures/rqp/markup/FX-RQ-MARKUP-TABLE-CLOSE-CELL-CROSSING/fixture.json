@@ -1,0 +1,20 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-CLOSE-CELL-CROSSING",
+  "description": "Implied closure of a cell over an open div and an open b: the closure is the end tag of the cell and crosses them (H-85a: valid)",
+  "rules": [
+    "M-06",
+    "M-09",
+    "M-19"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "p",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"p\">",
+        "content": "c"
+      }
+    ]
+  }
+}

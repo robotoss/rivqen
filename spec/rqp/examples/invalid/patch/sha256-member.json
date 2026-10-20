@@ -1,0 +1,17 @@
+{
+  "description": "No hash per operation (H-104, replaces H-10): the client computes it, the binding binds it (H-107)",
+  "expect": {
+    "keyword": "additionalProperties",
+    "instancePath": "/operations/0"
+  },
+  "instance": {
+    "binding": "d1.orrx-_-Iflnnjs7DvvuOOdxW3FzbZpU_PTlR0jdWw54",
+    "operations": [
+      {
+        "block_id": "price",
+        "content": "130.00",
+        "sha256": "bB9ScYcQQzKWqPCBW62MTsc9Ff_djve7Denf3YMoCUg"
+      }
+    ]
+  }
+}

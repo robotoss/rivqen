@@ -1,0 +1,17 @@
+{
+  "description": "No base_revision (H-104): the binding has the base (H-107); a delta for another base fails the binding check",
+  "expect": {
+    "keyword": "additionalProperties",
+    "instancePath": ""
+  },
+  "instance": {
+    "binding": "d1.orrx-_-Iflnnjs7DvvuOOdxW3FzbZpU_PTlR0jdWw54",
+    "operations": [
+      {
+        "block_id": "price",
+        "content": "130.00"
+      }
+    ],
+    "base_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-ENCODING-INVALID",
+  "description": "Invalid UTF-8 sequence (C3 28)",
+  "rules": [
+    "M-02"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_ENCODING"
+  }
+}

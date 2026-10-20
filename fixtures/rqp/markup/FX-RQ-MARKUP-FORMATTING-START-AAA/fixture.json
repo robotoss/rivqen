@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-FORMATTING-START-AAA",
+  "description": "An a start tag while an a is open and a nobr start tag while a nobr is in scope, outside blocks: the adoption agency runs with a div as the furthest block, but no block is open, so the later block is not changed",
+  "rules": [
+    "M-06",
+    "M-24"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "b",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"b\">",
+        "content": "w"
+      }
+    ]
+  }
+}

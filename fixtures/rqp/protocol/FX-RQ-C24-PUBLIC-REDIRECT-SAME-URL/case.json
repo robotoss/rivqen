@@ -1,0 +1,32 @@
+{
+  "id": "FX-RQ-C24-PUBLIC-REDIRECT-SAME-URL",
+  "kind": "client",
+  "description": "As FX-RQ-C24-PUBLIC-REDIRECT, but the redirect goes to the same URL (redirected true, final_url equal to url): also a redirect, so the partition of the request (H-67)",
+  "rules": ["RQP-25"],
+  "context": {
+    "final_url": "https://shop.example.com/catalog",
+    "redirected": true,
+    "allowlist": ["https://shop.example.com"],
+    "public_enabled": true,
+    "public_origin": true,
+    "navigation": "first-visit",
+    "snapshot": null,
+    "credentials": false
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "public, max-age=60"]
+    ],
+    "body": {
+      "full": "page-a",
+      "members": {
+        "policy": {
+          "mode": "public"
+        }
+      }
+    }
+  }
+}

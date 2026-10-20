@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-SELECT-CONTENT",
+  "description": "A b element inside select (parsers differ for select content)",
+  "rules": [
+    "M-08"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

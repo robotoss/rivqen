@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-BLOCK",
+  "description": "Block markup inside noscript (text with scripting, a block without)",
+  "rules": [
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

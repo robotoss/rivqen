@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-SVG-ICON",
+  "description": "The icon shape in noscript content C: the end tag of the svg crosses an unclosed path (H-74, H-75: valid)",
+  "rules": [
+    "M-06",
+    "M-11"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

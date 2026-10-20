@@ -1,0 +1,15 @@
+{
+  "description": "binding is required (H-107)",
+  "expect": {
+    "keyword": "required",
+    "instancePath": ""
+  },
+  "instance": {
+    "operations": [
+      {
+        "block_id": "price",
+        "content": "130.00"
+      }
+    ]
+  }
+}

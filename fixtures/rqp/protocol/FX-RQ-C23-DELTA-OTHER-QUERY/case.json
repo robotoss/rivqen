@@ -1,0 +1,26 @@
+{
+  "id": "FX-RQ-C23-DELTA-OTHER-QUERY",
+  "kind": "client",
+  "description": "A consistent delta for the snapshot after a redirect to the same path with another query: PATCH_INVALID, fallback (H-58)",
+  "rules": ["RQP-24"],
+  "context": {
+    "final_url": "https://shop.example.com/catalog?page=2",
+    "allowlist": ["https://shop.example.com"],
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b"
+      }
+    }
+  }
+}

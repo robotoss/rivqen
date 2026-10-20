@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-C21-IMPLIED-WHITESPACE-AFTER",
+  "kind": "client",
+  "description": "Rq-Version 1, page-implied-meta with the manifest after <html> and before the line feed of <meta>: on O the insertion point is the \"<\" of <meta>, MANIFEST_INVALID (H-79a, rule C2)",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-implied-meta",
+      "manifest_after": "<html>"
+    }
+  }
+}

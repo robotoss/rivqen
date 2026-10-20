@@ -1,0 +1,10 @@
+{
+  "characterSet" : "UTF-8",
+  "contentType" : "text/html",
+  "error" : null,
+  "id" : "CONTENT-TEMPLATE-NOSCRIPT-P",
+  "probe" : null,
+  "tree" : "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"T\"\n|   <body>\n|     \"\\n\"\n|     <div>\n|       data-rq-block=\"box\"\n|       <p>\n|         \"x\"\n|         <template>\n|           content\n|             <noscript>\n|               <div>\n|                 \"y\"\n|         \"z\"\n|     \"\\n\\n\"",
+  "view" : "off",
+  "walker" : "ok"
+}

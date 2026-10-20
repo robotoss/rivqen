@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-NESTED",
+  "description": "A block start tag in the content of another block",
+  "rules": [
+    "M-17"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_NESTED"
+  }
+}

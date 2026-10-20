@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P39-NO-HEAD-START-TAG",
+  "description": "The page has no <head> start tag and a </head> end tag; the title start tag comes first and implies the head: F with the manifest immediately before <title> (H-79a; before H-79a: no head start tag of the document, the page was sent without RQP, H-72)",
+  "rules": ["RQP-09"],
+  "page": "page-no-head-start",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

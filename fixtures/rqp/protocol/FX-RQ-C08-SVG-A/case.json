@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C08-SVG-A",
+  "kind": "client",
+  "description": "price content with an a element in an svg region; valid markup since H-78, the patch content rule rejects it (step 9, FOREIGN_ALLOWED)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<svg><a href=\"#x\"><text>t</text></a></svg>"
+          }
+        ]
+      }
+    }
+  }
+}

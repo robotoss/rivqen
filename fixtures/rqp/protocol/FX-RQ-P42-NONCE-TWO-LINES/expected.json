@@ -1,0 +1,34 @@
+{
+  "id": "FX-RQ-P42-NONCE-TWO-LINES",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match","\"r1.QZWQveB3Od0paA9JtInsnGdvGe4b3NIqT4xsP6rdKMU\""],
+      ["rq-have","t=t1.UDAGcPAhlaAytet6ltzfl_jk0ucsCZ3Qw1nrSGA5pwA, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:"],
+      ["rq-nonce",":AAECAwQFBgcICQoLDA0ODw==:"],
+      ["rq-nonce",":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  },
+  "status": 200,
+  "headers_required": {
+    "content-type": "text/html; charset=utf-8",
+    "cache-control": "no-cache",
+    "etag": "\"r1.zmkAXEJQ1oWyDB37krArJho2A9THkC_QRUnIlPolfwk\"",
+    "rq-version": "1"
+  },
+  "headers_forbidden": ["last-modified","rq-revision","rq-template-revision"],
+  "body": {
+    "kind": "full",
+    "insert_at": 29,
+    "manifest": {
+      "protocol": "rqp/1",
+      "origin": "https://shop.example.com",
+      "path": "/catalog",
+      "page_revision": "r1.zmkAXEJQ1oWyDB37krArJho2A9THkC_QRUnIlPolfwk"
+    }
+  }
+}

@@ -1,0 +1,122 @@
+[
+  {
+    "id": "H26-a-div8",
+    "input": "<a><div><div><div><div><div><div><div><div>x</a><span data-rq-block=\"x\">y<a>z</a>w</span>"
+  },
+  {
+    "id": "H26-nobr-div8",
+    "input": "<nobr><div><div><div><div><div><div><div><div>x</nobr><span data-rq-block=\"x\">y<nobr>z</nobr>w</span>"
+  },
+  {
+    "id": "H26-a-div7",
+    "input": "<a><div><div><div><div><div><div><div>x</a><span data-rq-block=\"x\">y<a>z</a>w</span>"
+  },
+  {
+    "id": "H26-b-div",
+    "input": "<b><div>x</b>y</div><p data-rq-block=\"a\">z</p>"
+  },
+  {
+    "id": "H26-svg-a-text",
+    "input": "<svg><a href=\"#\"><text>t</a></svg><p data-rq-block=\"a\">z</p>"
+  },
+  {
+    "id": "H26-control-phrasing",
+    "input": "<a href=\"#\"><span>x</a><b><i>y</b><p><b>z</p>w<span data-rq-block=\"x\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "H26-start-a-aaa",
+    "input": "<a href=\"#\">x<div>y<a href=\"#\">z</a></div></a><p data-rq-block=\"b\">w</p>"
+  },
+  {
+    "id": "H26-start-nobr-aaa",
+    "input": "<nobr>x<div>y<nobr>z</nobr></div></nobr><p data-rq-block=\"b\">w</p>"
+  },
+  {
+    "id": "H26-start-a-div9-aaa",
+    "input": "<a href=\"#\">x<div><div><div><div><div><div><div><div><div><a href=\"#\">z</a></div></div></div></div></div></div></div></div></div></a><p data-rq-block=\"b\">w<b>v</b></p>"
+  },
+  {
+    "id": "Q1-span-div8-a",
+    "input": "<a><span><div><div><div><div><div><div><div><div>x</span></a><span data-rq-block=\"x\">y<a>z</a>w</span>"
+  },
+  {
+    "id": "Q1-span-div8-nobr",
+    "input": "<nobr><span><div><div><div><div><div><div><div><div>x</span></nobr><span data-rq-block=\"x\">y<nobr>z</nobr>w</span>"
+  },
+  {
+    "id": "Q1-li-ul-a",
+    "input": "<a><li><ul><li><ul><li><ul><li><ul></li></li></li></li>x</a><span data-rq-block=\"x\">y<a>z</a>w</span>"
+  },
+  {
+    "id": "Q1-control-b-span-i",
+    "input": "<a href=\"#\"><b><span><i>x</span></b></a><span data-rq-block=\"x\">y<a href=\"#\">z</a>w</span>"
+  },
+  {
+    "id": "H27-button",
+    "input": "<noscript><button></noscript><div data-rq-block=\"a\">x<button>y</button>z</div>"
+  },
+  {
+    "id": "H27-table",
+    "input": "<noscript><table></noscript><div data-rq-block=\"a\">x</div>"
+  },
+  {
+    "id": "H27-balanced",
+    "input": "<noscript><div><a href=\"#\">x</a></div><table><tr><td>a</td></tr></table></noscript><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "H27-head-noscript",
+    "input": "<head><noscript><div>q</div></noscript><title data-rq-block=\"t\">T</title></head><body><div data-rq-block=\"a\">x</div>"
+  },
+  {
+    "id": "H27-p-closed-by-c",
+    "input": "<p><noscript><div>q</div></noscript><span data-rq-block=\"x\">y</span></p>"
+  },
+  {
+    "id": "H28-dotless-i",
+    "input": "<script type=\"application/rıvqen-manifest+json\">{}</script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "H28-long-s",
+    "input": "<script type=\"application/rivqen-manifeſt+json\">{}</script><p data-rq-block=\"a\">x</p>"
+  },
+  {
+    "id": "H30-tbody",
+    "input": "<table><td></tbody><div data-rq-block=\"x\"><table></table>y</div></td></table>"
+  },
+  {
+    "id": "H30-tr",
+    "input": "<table><td></tr><div data-rq-block=\"x\">plain</div></td></table>"
+  },
+  {
+    "id": "H30-control-td-th-caption-colgroup-col",
+    "input": "<table><caption>c</caption></caption><col></colgroup><tr><td>a</td></td></th></col><td><span data-rq-block=\"c\">x</span></td></tr></table>"
+  },
+  {
+    "id": "H31-span-div-300",
+    "input": "<span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><span><div></span><div data-rq-block=\"x\">y</div>"
+  },
+  {
+    "id": "H31-h1-span-h2",
+    "input": "<h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><h1><span><h2>x</h1><p data-rq-block=\"x\">y</p>"
+  },
+  {
+    "id": "H31-li-ul",
+    "input": "<li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><li><ul></li><p data-rq-block=\"x\">y</p>"
+  },
+  {
+    "id": "H31-body-div",
+    "input": "<body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><body><div></body><p data-rq-block=\"x\">y</p>"
+  },
+  {
+    "id": "H31-form-div",
+    "input": "<form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><form><div></form><p data-rq-block=\"x\">y</p>"
+  },
+  {
+    "id": "H31-p-b-text",
+    "input": "<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p><b>x</p>y<p data-rq-block=\"x\">y</p>"
+  },
+  {
+    "id": "H31-draft-counter-gap",
+    "input": "<span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><span><span><span><div></span></span></span><p data-rq-block=\"x\">y</p>"
+  }
+]

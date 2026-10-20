@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-FORBIDDEN-TEMPLATE",
+  "description": "A template element with a shadowrootmode attribute in the content (declarative shadow root): M-22 item 6 (H-94, H-97). Before H-94 every template in the content was invalid; that shape is CONTENT-TEMPLATE now",
+  "rules": [
+    "M-22"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

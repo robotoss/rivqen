@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C10-CLOSE-P",
+  "kind": "client",
+  "description": "price content 1</p><p>2 closes the block early; hashes and binding correct (H-48)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "1</p><p>2"
+          }
+        ]
+      }
+    }
+  }
+}

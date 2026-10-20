@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-TABLE-CLOSE-CONTENT",
+  "description": "A td start tag while a td of the content is open: no implied closure in block content (H-85a: M-09, M-23)",
+  "rules": [
+    "M-09",
+    "M-23"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

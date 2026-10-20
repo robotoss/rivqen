@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-FORBIDDEN-SCRIPT-TYPE-LD-PARAM",
+  "description": "A JSON-LD type with a parameter is not a json type (H-86, M-16)",
+  "rules": [
+    "M-16"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_FORBIDDEN_ELEMENT"
+  }
+}

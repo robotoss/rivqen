@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-GUARD-DD",
+  "description": "A dt start tag in the content without a dl opened in the content",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C24-PUBLIC-EXPLICIT",
+  "kind": "client",
+  "description": "Mode public, a public origin, a request with credentials and Cache-Control public (H-61): the public partition",
+  "rules": ["RQP-25"],
+  "context": {
+    "public_enabled": true,
+    "public_origin": true,
+    "navigation": "first-visit",
+    "snapshot": null,
+    "credentials": true
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "public, max-age=60"]
+    ],
+    "body": {
+      "full": "page-a",
+      "members": {
+        "policy": {
+          "mode": "public"
+        }
+      }
+    }
+  }
+}

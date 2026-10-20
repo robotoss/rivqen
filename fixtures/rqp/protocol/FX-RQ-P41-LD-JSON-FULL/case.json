@@ -1,0 +1,21 @@
+{
+  "id": "FX-RQ-P41-LD-JSON-FULL",
+  "description": "A page with an application/ld+json block: F, the manifest lists the block with the format json (H-86)",
+  "rules": ["RQP-20"],
+  "page": "page-ld-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

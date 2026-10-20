@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-CONTENT-TEMPLATE-NESTED",
+  "description": "Nested template elements with script and style in the content (H-94, H-78: valid markup; a patch with them is rejected by the patch content rule)",
+  "rules": [
+    "M-04",
+    "M-22"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "<template><template>i</template><script>s()</script><style>a{}</style></template>"
+      }
+    ]
+  }
+}

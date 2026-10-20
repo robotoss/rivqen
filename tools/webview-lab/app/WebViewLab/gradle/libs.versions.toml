@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+
+[versions]
+agp = "9.1.1"
+android-compileSdk = "37"
+android-minSdk = "29"
+android-targetSdk = "37"
+androidx-webkit = "1.17.1"
+kotlin = "2.4.20"
+kotlinx-coroutines = "1.11.0"
+
+[libraries]
+kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+# Android lab app (WP-17 S5 T-04): isolated-world JavaScript and coroutines; both Apache-2.0.
+androidx-webkit = { module = "androidx.webkit:webkit", version.ref = "androidx-webkit" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
+
+[plugins]
+androidApplication = { id = "com.android.application", version.ref = "agp" }

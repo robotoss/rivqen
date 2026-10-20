@@ -1,0 +1,18 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-BALANCED",
+  "description": "Balanced noscript content with a link, an image, a table with implied tbody, a paragraph and void elements (H-27: valid)",
+  "rules": [
+    "M-11"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "a",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"a\">",
+        "content": "x"
+      }
+    ]
+  }
+}

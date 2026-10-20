@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-TITLE-TEXT",
+  "description": "Tag-like text in a title element that is not a block",
+  "rules": [
+    "M-04",
+    "M-14"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

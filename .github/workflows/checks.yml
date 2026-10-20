@@ -1,11 +1,15 @@
-# Fast checks for code outside the docs site.
+# Checks for code outside the docs site. Both test jobs run groups of
+# tools/fulltest.sh, the same script as the full local run.
 #
-# - examples/server-demo: unit tests of the RQP reference behavior
-# - tools/mutation: tests of the diff-to-mutation-arguments helper
+# - node: RQP reference, fixtures (gen --check, check), server demo, schemas,
+#   Node.js markup candidate, parse5 cross-check, corpus and study tools,
+#   WebView lab host, mutation helper; python: markup fixture generator
+# - markup: Rust, Java and PHP markup candidates and the differential runner
+#   (the four parsers agree on every markup fixture)
 # - .claude: every rules checklist points to an existing standards page
 #
-# Language toolchains (Rust, Gradle, Swift, PHP) are added by the WPs that
-# create those packages (WP-05, WP-10, WP-11, WP-14, WP-15).
+# SDK toolchains (Swift, Kotlin) are added by the WPs that create those
+# packages (WP-05, WP-10, WP-11, WP-14, WP-15).
 name: Checks
 
 on:
@@ -34,15 +38,14 @@ jobs:
         with:
           node-version: 24
 
-      - name: Server demo tests
-        working-directory: examples/server-demo
+      - name: Install Node.js dependencies
         run: |
-          npm ci
-          npm test
+          for d in tools/rqp-protocol tools/rqp-schema tools/rqp-markup/node tools/rqp-markup/crosscheck tools/webview-lab examples/server-demo; do
+            (cd "$d" && npm ci --ignore-scripts)
+          done
 
-      - name: Mutation helper tests
-        working-directory: tools/mutation
-        run: node --test
+      - name: Node.js and Python groups of the full run
+        run: sh tools/fulltest.sh node python
 
       - name: AI rules point to existing pages
         run: |
@@ -53,3 +56,42 @@ jobs:
             done
           done
           exit $status
+
+  markup:
+    name: Markup parser candidates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle 9.7.1
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: 9.7.1
+
+      - name: Set up PHP 8.5
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          (cd tools/rqp-markup/node && npm ci --ignore-scripts)
+          (cd tools/rqp-markup/crosscheck && npm ci --ignore-scripts)
+          (cd tools/rqp-markup/php && composer install --no-interaction --no-progress --no-scripts)
+
+      - name: Rust, Java, PHP and differential groups of the full run
+        run: sh tools/fulltest.sh rust java php diff

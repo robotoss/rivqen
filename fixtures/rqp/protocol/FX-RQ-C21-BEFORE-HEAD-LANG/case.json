@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-C21-BEFORE-HEAD-LANG",
+  "kind": "client",
+  "description": "Rq-Version 1, page-head-lang with the manifest before <head lang=\"en\">: on O the insertion point is after <head lang=\"en\">, MANIFEST_INVALID (H-79a, rule C2; a walk on F would accept it)",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-head-lang",
+      "manifest_after": "<html>\n"
+    }
+  }
+}

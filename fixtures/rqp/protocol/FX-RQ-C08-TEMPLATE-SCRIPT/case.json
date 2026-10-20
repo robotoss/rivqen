@@ -1,0 +1,40 @@
+{
+  "id": "FX-RQ-C08-TEMPLATE-SCRIPT",
+  "kind": "client",
+  "description": "price content with a script start tag inside a template: the walk reads the contents of the template (H-94); rejected by the patch content rule",
+  "rules": [
+    "RQP-13"
+  ],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      [
+        "content-type",
+        "application/vnd.rivqen.delta+json"
+      ],
+      [
+        "rq-version",
+        "1"
+      ],
+      [
+        "cache-control",
+        "no-store"
+      ]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<template><script>alert(1)</script></template>"
+          }
+        ]
+      }
+    }
+  }
+}

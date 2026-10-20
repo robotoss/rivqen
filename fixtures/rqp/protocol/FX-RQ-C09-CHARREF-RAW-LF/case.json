@@ -1,0 +1,29 @@
+{
+  "id": "FX-RQ-C09-CHARREF-RAW-LF",
+  "kind": "client",
+  "description": "price content <a href=\"java&#x73 LF cript:x\">y</a> (no \";\", LF after 73): the reference read on the raw bytes gives \"s\"; the browser reads javascript: (H-77, the trap of the audit): rejected",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "ops": [
+          {
+            "block_id": "price",
+            "content": "<a href=\"java&#x73\ncript:x\">y</a>"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-FOREIGN-BREAKOUT",
+  "description": "A p start tag inside svg (breaks out of foreign content)",
+  "rules": [
+    "M-07"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

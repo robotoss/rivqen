@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-GUARD-NOBR",
+  "description": "A nobr start tag in the content while a nobr is open",
+  "rules": [
+    "M-24"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "description": "Unknown members are rejected (H-9: no page_id)",
+  "expect": {
+    "keyword": "additionalProperties",
+    "instancePath": ""
+  },
+  "instance": {
+    "protocol": "rqp/1",
+    "origin": "https://shop.example.com",
+    "path": "/catalog",
+    "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8",
+    "policy": {
+      "ttl_seconds": 60
+    },
+    "limits": {
+      "max_patch_bytes": 65536
+    },
+    "page_id": "catalog-main"
+  }
+}

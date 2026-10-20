@@ -46,7 +46,7 @@ TypeScript is used for the web SDK (`sdk/web-core`, `sdk/react`), the Node.js se
 2. **No `any`.** External data enters as `unknown` and is parsed into a typed value at the boundary (a schema validator is chosen in WP-12/WP-13).
 3. **No non-null assertion (`!`)** and no type assertion (`as`) on external data.
 4. **Errors.** Throw `Error` subclasses with a stable `code` and `cause`. Never throw strings. Every promise is awaited or handled (`no-floating-promises`).
-5. **No `innerHTML`, `eval` or `new Function`** with update content. The bridge accepts messages only from the allowed origin ([JS bridge contract](/engineering/platforms/js-bridge)).
+5. **No `innerHTML`, `eval` or `new Function`** with update content. The bridge accepts messages only from the allowed origin ([JS bridge contract](/engineering/platforms/js-bridge)). One exception (human decision H-102): the client patch apply step of [manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply) may set `innerHTML` (or use `insertAdjacentHTML`) of the block element with block content that passed steps 8 and 9. That step MUST NOT use `DOMParser`, `Document.parseHTMLUnsafe`, `Element.setHTMLUnsafe` or `Range.createContextualFragment`.
 6. **Pure core, thin adapters.** The server decision function has no framework imports; Express/Fastify/Next adapters wrap it.
 7. **React:** hooks only, no class components; follow the rules of hooks; server-rendered values are the default, Rivqen updates are optional.
 8. **Small public API.** Export from one `index.ts`; mark internal modules as such.

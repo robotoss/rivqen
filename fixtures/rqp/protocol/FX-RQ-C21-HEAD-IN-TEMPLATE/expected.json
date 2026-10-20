@@ -1,0 +1,45 @@
+{
+  "id": "FX-RQ-C21-HEAD-IN-TEMPLATE",
+  "kind": "client",
+  "context": {
+    "url": "https://shop.example.com/catalog",
+    "final_url": "https://shop.example.com/catalog",
+    "redirected": false,
+    "build": "release",
+    "allow_http": false,
+    "allowlist": ["https://shop.example.com"],
+    "credentials": null,
+    "response_fields_visible": true,
+    "public_enabled": false,
+    "public_origin": false,
+    "navigation": "first-visit",
+    "nonce": "AAECAwQFBgcICQoLDA0ODw",
+    "snapshot": null
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html"]
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"],
+      ["rq-version","1"],
+      ["cache-control","no-cache"]
+    ],
+    "body": "response.body",
+    "body_bytes": 491,
+    "body_sha256": "O7gRxiJbbfCOQzH0Exmq1G_AwJYRA_lqebCcL6JpmOU"
+  },
+  "result": {
+    "outcome": "rejected",
+    "error": "MANIFEST_INVALID",
+    "next": "show",
+    "metric": false,
+    "snapshot": null
+  }
+}

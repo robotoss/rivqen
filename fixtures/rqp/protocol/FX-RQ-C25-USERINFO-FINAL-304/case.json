@@ -1,0 +1,31 @@
+{
+  "id": "FX-RQ-C25-USERINFO-FINAL-304",
+  "kind": "client",
+  "description": "A 304 after a redirect to the same URL with user information: not accepted, normal load (H-68)",
+  "rules": [
+    "RQP-05",
+    "RQP-24"
+  ],
+  "context": {
+    "final_url": "https://u:p@shop.example.com/catalog",
+    "allowlist": [
+      "https://shop.example.com"
+    ],
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 304,
+    "headers": [
+      [
+        "etag",
+        "{{r1:page-a}}"
+      ],
+      [
+        "cache-control",
+        "no-cache"
+      ]
+    ],
+    "body": null
+  }
+}

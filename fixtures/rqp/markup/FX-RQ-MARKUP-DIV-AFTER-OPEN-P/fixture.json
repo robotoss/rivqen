@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-DIV-AFTER-OPEN-P",
+  "description": "A div block after an open p: the p closes before the div",
+  "rules": [
+    "M-19",
+    "M-24"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "box",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"box\">",
+        "content": "x"
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head><script type="application/rivqen-manifest+json">{"protocol":"rqp/1","origin":"https://shop.example.com","path":"/catalog","page_revision":"r1.2pzq3CkZbk4R8roO3xtEA16cehb4Gs2ReNZsS4BFsR8"}</script>
+  <meta charset="utf-8"></meta>
+  <title data-rq-block="title">Shop</title>
+</head>
+<body>
+  <header>Static header</header>
+  <p class="price" data-rq-block="price">120.00</p>
+  <script type="application/json" data-rq-block="cart">{"items":3}</script>
+</body>
+</html>

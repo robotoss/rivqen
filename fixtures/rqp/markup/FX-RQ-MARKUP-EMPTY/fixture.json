@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-MARKUP-EMPTY",
+  "description": "Blocks with empty content",
+  "rules": [
+    "M-20",
+    "M-27"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "empty",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"empty\">",
+        "content": ""
+      },
+      {
+        "id": "empty2",
+        "format": "html",
+        "start_tag": "<span data-rq-block=\"empty2\">",
+        "content": ""
+      }
+    ]
+  }
+}

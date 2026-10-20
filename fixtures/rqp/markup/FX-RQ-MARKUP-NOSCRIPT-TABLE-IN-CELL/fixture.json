@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-TABLE-IN-CELL",
+  "description": "noscript content in a cell with its own table: the table parts are inside a table opened in C (H-38: valid)",
+  "rules": [
+    "M-11",
+    "M-19"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "x",
+        "format": "html",
+        "start_tag": "<div data-rq-block=\"x\">",
+        "content": "a<table></table>b"
+      }
+    ]
+  }
+}

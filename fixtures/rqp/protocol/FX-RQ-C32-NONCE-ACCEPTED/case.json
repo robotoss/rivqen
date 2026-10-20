@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-C32-NONCE-ACCEPTED",
+  "kind": "client",
+  "description": "Control: the request of the context has the nonce F0 to FF (base64url text 8PHy8_T19vf4-fr7_P3-_w; the field Rq-Nonce is the base64 Byte Sequence with + and /) and the server built the delta page-a -> page-b for this request: the binding has the N of this request, so the delta is applied (H-108, H-109)",
+  "rules": ["RQP-13", "RQP-29"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a",
+    "nonce": "8PHy8_T19vf4-fr7_P3-_w"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b"
+      }
+    }
+  }
+}

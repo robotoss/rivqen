@@ -2,7 +2,7 @@
 
 Rivqen errors are typed. Each error has a category, a stable code, and a **fallback hint** that tells the adapter what to do. Errors never contain secrets.
 
-**Status:** <Badge type="info" text="DESIGN" />
+**Status:** <Badge type="info" text="DESIGN" /> RQP codes `MANIFEST_INVALID`, `PATCH_INVALID` and `PATCH_CONTENT_REJECTED`: decided by the human (H-50, [WP-17 S2](/engineering/plan/sprints/WP-17-S2)).
 
 ## 1. Categories
 
@@ -25,9 +25,12 @@ Rivqen errors are typed. Each error has a category, a stable code, and a **fallb
 | Code | Category | Adapter behavior |
 |---|---|---|
 | `PROTOCOL_UNSUPPORTED` | UnsupportedCapability | Try the allowed downgrade, else normal HTTPS |
-| `PATCH_BASE_MISMATCH` | Protocol | Reject the patch; request a full snapshot |
-| `TEMPLATE_MISMATCH` | Protocol | Full reload |
-| `INTEGRITY_ERROR` | Protocol | Reject; full reload |
+| `MANIFEST_INVALID` | Protocol | The RQP page manifest failed a client check ([manifest and patch §1.8](/engineering/protocol/manifest-patch#_1-8-client-checks-of-the-manifest)): no or two manifest elements, size, JSON, schema, URL, or the markup analysis of the original document. Show the document as a normal page; store no snapshot. Hint: `NormalLoad` |
+| `PATCH_INVALID` | Protocol | An RQP delta is malformed or unsolicited: JSON rules, schema (also an unknown operation), operation rules, a final URL with another cache key (H-58), or a delta for a request that did not offer one ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response)). Reject the patch; one fallback load of the full document. Hint: `NormalLoad` |
+| `PATCH_BASE_MISMATCH` | Protocol | Not produced by `rqp/1` since H-104; reserved, not reused. A delta for another base gives `INTEGRITY_ERROR`: the base revision is an input of the envelope member `binding`, and the client puts the page revision of its own snapshot there (H-107; [manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), step 7) |
+| `TEMPLATE_MISMATCH` | Protocol | Not produced by `rqp/1` since H-104; reserved, not reused. A delta for another template gives `INTEGRITY_ERROR` (step 7) |
+| `INTEGRITY_ERROR` | Protocol | Reject; full reload. For an RQP delta: the envelope member `binding` is not the binding that the client computes from the final URL, its snapshot revision, the nonce that its request sent and the next page revision R′ (H-107, H-108; also a delta for another template, another or an earlier base, another URL, another request (another nonce), content that the server did not hash, a changed `policy` or `limits`, and an input of the binding that the client cannot compute), or the patched document does not have R′ ([manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), steps 7 and 8). Log the code, never the `binding` value (it hashes the URL with the query) |
+| `PATCH_CONTENT_REJECTED` | SecurityViolation | The patched content failed the content rules ([manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules)). Show nothing of the patch; one fallback load of the full document from the network; count the metric (rule 3). Hint: `NormalLoad` |
 | `CACHE_CORRUPTED` | CacheCorruption | Delete the entry; fetch over HTTPS |
 | `AUTH_PARTITION_CHANGED` | AuthChanged | Stop the session; clear access to the old snapshot |
 | `TLS_ERROR` | SecurityViolation | **Do not bypass.** Return the error to the UI. Do not show sensitive stale HTML unless policy allows it. |
@@ -39,13 +42,15 @@ Rivqen errors are typed. Each error has a category, a stable code, and a **fallb
 | `TIMEOUT_FIRST_BYTE` / `TIMEOUT_TOTAL` | Timeout | Fallback |
 | `INTERNAL_ERROR` | Internal | A broken invariant or a caught panic. Fallback; report with location and build id. |
 | `LEGACY_MODE_USED` | Notice | Not an error: the deprecated legacy module served this session. One warning per origin per app start. |
-| `SERVER_PASSTHROUGH` | Server | Server SDK error: the original response is sent unchanged. |
+| `SERVER_PASSTHROUGH` | Server | Server SDK error: the original response is sent unchanged, without its `Rq-*` fields (DL-030). |
 
 ## 3. Rules
 
 1. Every error maps to exactly one fallback hint: `None`, `RetryLater`, `NormalLoad`, `ShowCachedIfAllowed`, `Stop`.
 2. Error messages are for developers. They contain a code, a category and safe context (session id, state, byte counts). They never contain URLs with query strings, headers, cookies, tokens or HTML.
 3. A `SecurityViolation` is always reported as a metric, even when telemetry export is off (local counter only).
+4. The adapter behavior of a code has priority over the default of its category. Example: `PATCH_CONTENT_REJECTED` is a `SecurityViolation`, but the rejected content is never shown, so a normal load of the page from the network is safe (H-50).
+5. RQP has no generic `PROTOCOL_ERROR` code. A delta that the client did not ask for is an invalid patch (`PATCH_INVALID`).
 
 ## Related
 

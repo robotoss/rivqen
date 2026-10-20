@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-C21-HEAD-WHITESPACE",
+  "kind": "client",
+  "description": "Rq-Version 1 and a consistent manifest after the head start tag and one line feed: a gap between the head start tag and the manifest, MANIFEST_INVALID (H-72)",
+  "rules": ["RQP-14"],
+  "context": {
+    "navigation": "first-visit",
+    "snapshot": null
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["rq-version", "1"],
+      ["cache-control", "no-cache"]
+    ],
+    "body": {
+      "full": "page-a",
+      "manifest_after": "<head>\n"
+    }
+  }
+}

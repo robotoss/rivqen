@@ -30,6 +30,8 @@ The core applies these rules in order. The first rule that matches decides.
 | 7 | legacy mode and `cache-offline` rule applies | Follow the [legacy rule](/engineering/protocol/legacy-wire#cache-offline). |
 | 8 | Otherwise | Revalidate before showing (conditional request). |
 
+The manifest policy of an RQP page ([manifest and patch §1.4](/engineering/protocol/manifest-patch#_1-4-policy)) never allows what these rules or the app policy deny (H-61). `ttl_seconds` only shortens the freshness lifetime of rule 4. `offline: true` has an effect only inside rule 6 (`stale-if-error`). `"mode": "public"` selects the `public` partition only under the conditions of [cache identity](/engineering/cache/identity) rule 3, also for the result of a delta on a `public` entry (H-65), and only when the app turned the `public` partition on (H-81; off by default). A result that comes through a redirect never goes to `public` (H-67). A `304` (rule 8) does not change the partition of an entry, and a `304` that does not meet the conditions of `public` (RQP-25) does not update the stored freshness of a `public` entry (DL-040).
+
 ## 3. Sensitive content
 
 1. The app can mark routes as **sensitive**. Sensitive routes never show stale content without a visible stale state.
@@ -41,6 +43,7 @@ The core applies these rules in order. The first rule that matches decides.
 | Trigger | Scope |
 |---|---|
 | Logout, account switch, tenant change | Whole partition (keys revoked) |
+| The user or the app clears cookies or site data of a site (H-60) | All snapshots of that site, in every partition; all snapshots when all cookies or all site data are cleared |
 | Language or region change (if part of the variant) | Entries with the old variant |
 | App update with a new cache schema | All entries with old `schema_version` |
 | Server purge signal (RQP) | Listed keys or path prefixes, after authentication |

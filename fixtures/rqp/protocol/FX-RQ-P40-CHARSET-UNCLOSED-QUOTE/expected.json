@@ -1,0 +1,30 @@
+{
+  "id": "FX-RQ-P40-CHARSET-UNCLOSED-QUOTE",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html"]
+    ]
+  },
+  "status": 200,
+  "headers_required": {
+    "content-type": "text/html; charset=utf-8",
+    "cache-control": "no-cache",
+    "etag": "\"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\"",
+    "rq-version": "1"
+  },
+  "headers_forbidden": ["last-modified","rq-revision","rq-template-revision"],
+  "body": {
+    "kind": "full",
+    "insert_at": 29,
+    "manifest": {
+      "protocol": "rqp/1",
+      "origin": "https://shop.example.com",
+      "path": "/catalog",
+      "page_revision": "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8"
+    }
+  }
+}

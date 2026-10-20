@@ -1,0 +1,51 @@
+{
+  "id": "FX-RQ-P13-B-STRING",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match","\"r1.QZWQveB3Od0paA9JtInsnGdvGe4b3NIqT4xsP6rdKMU\""],
+      ["rq-have","t=t1.UDAGcPAhlaAytet6ltzfl_jk0ucsCZ3Qw1nrSGA5pwA, b=\"x\""],
+      ["rq-nonce",":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  },
+  "status": 200,
+  "headers_required": {
+    "content-type": "application/vnd.rivqen.delta+json",
+    "x-content-type-options": "nosniff",
+    "rq-version": "1",
+    "cache-control": "no-store"
+  },
+  "headers_forbidden": ["etag","expires","last-modified","rq-revision","rq-template-revision"],
+  "vary": {
+    "required": [],
+    "should": ["rq-nonce"]
+  },
+  "body": {
+    "kind": "delta",
+    "binding": "d1.jNT_49mKFo8cfDwGao955sUPEpsRs-cPgS7YGlDKnTs",
+    "binding_inputs": {
+      "url": "https://shop.example.com/catalog",
+      "base_revision": "r1.QZWQveB3Od0paA9JtInsnGdvGe4b3NIqT4xsP6rdKMU",
+      "nonce": "AAECAwQFBgcICQoLDA0ODw",
+      "next_revision": "r1.zmkAXEJQ1oWyDB37krArJho2A9THkC_QRUnIlPolfwk"
+    },
+    "blocks": [
+      {
+        "id": "title",
+        "sha256": "0Aqua3-_d6RWbY3zaAXXrpc4lNqfUz7JZRazHgKLces"
+      },
+      {
+        "id": "price",
+        "sha256": "bB9ScYcQQzKWqPCBW62MTsc9Ff_djve7Denf3YMoCUg"
+      },
+      {
+        "id": "cart",
+        "sha256": "zyEL3KkZlLmAgTTFnonr3pdX-DnDM81i9xFoREUEaX4"
+      }
+    ]
+  }
+}

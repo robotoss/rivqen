@@ -1,0 +1,24 @@
+{
+  "id": "FX-RQ-C28-LD-JSON-DELTA",
+  "kind": "client",
+  "description": "A snapshot of page-ld-a and a consistent delta to page-ld-b: the ld+json block is a json block, its content is the raw JSON text; applied (H-86)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-ld-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-ld-a",
+        "to": "page-ld-b"
+      }
+    }
+  }
+}

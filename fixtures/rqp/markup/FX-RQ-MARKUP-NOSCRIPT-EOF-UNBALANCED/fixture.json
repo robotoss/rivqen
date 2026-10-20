@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-EOF-UNBALANCED",
+  "description": "A noscript element without an end tag (E3): C is the rest of the input and leaves a div open (H-27)",
+  "rules": [
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

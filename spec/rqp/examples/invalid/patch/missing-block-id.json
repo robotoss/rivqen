@@ -1,0 +1,15 @@
+{
+  "description": "An operation has a block_id",
+  "expect": {
+    "keyword": "required",
+    "instancePath": "/operations/0"
+  },
+  "instance": {
+    "binding": "d1.orrx-_-Iflnnjs7DvvuOOdxW3FzbZpU_PTlR0jdWw54",
+    "operations": [
+      {
+        "content": "130.00"
+      }
+    ]
+  }
+}

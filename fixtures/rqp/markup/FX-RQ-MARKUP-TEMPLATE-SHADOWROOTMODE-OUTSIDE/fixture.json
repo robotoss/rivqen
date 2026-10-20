@@ -1,0 +1,19 @@
+{
+  "id": "FX-RQ-MARKUP-TEMPLATE-SHADOWROOTMODE-OUTSIDE",
+  "description": "A template element with shadowrootmode outside block content, before a block in the same parent (H-94: M-22 item 6 is a content rule; the host is not a block element; valid)",
+  "rules": [
+    "M-19",
+    "M-22"
+  ],
+  "expect": {
+    "valid": true,
+    "blocks": [
+      {
+        "id": "real",
+        "format": "html",
+        "start_tag": "<p data-rq-block=\"real\">",
+        "content": "r"
+      }
+    ]
+  }
+}

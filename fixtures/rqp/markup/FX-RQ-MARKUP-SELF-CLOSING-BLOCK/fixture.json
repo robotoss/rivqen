@@ -1,0 +1,11 @@
+{
+  "id": "FX-RQ-MARKUP-SELF-CLOSING-BLOCK",
+  "description": "A block start tag with the self-closing flag",
+  "rules": [
+    "M-18"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

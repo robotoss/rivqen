@@ -1,0 +1,12 @@
+{
+  "id": "FX-RQ-MARKUP-NOSCRIPT-MAIN-FORM-OUTSIDE",
+  "description": "A form start tag in noscript content C while a form is open around the noscript element. Item 8 runs M-10 item 2 on C (H-71: invalid)",
+  "rules": [
+    "M-10",
+    "M-11"
+  ],
+  "expect": {
+    "valid": false,
+    "error": "RQP_MARKUP_STRUCTURE"
+  }
+}

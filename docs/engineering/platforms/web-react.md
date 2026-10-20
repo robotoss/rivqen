@@ -29,7 +29,7 @@ Current baselines (Oct 2026): React 19.3, Next.js 16.4, TypeScript 7.0 <Badge ty
 | W-01 | No `eval`, `new Function`, or method dispatch from strings. |
 | W-02 | Validate every message against the schema at runtime (`zod` or `valibot`, chosen by bundle size). |
 | W-03 | Apply updates only to SDK-owned regions or through React state. Never patch DOM that React owns. |
-| W-04 | Native computes the page revision R′ from the patched blocks and checks the delta `binding` against the binding of the final URL, its snapshot revision and R′ ([manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), step 7; H-107). On mismatch, native loads the full document. The page applies an `html` block with `innerHTML` only (H-102, "DOM apply"). |
+| W-04 | Native computes the page revision R′ from the patched blocks and checks the delta `binding` against the binding of the final URL, the nonce that native sent with the request (H-108), its snapshot revision and R′ ([manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), step 7; H-107). On mismatch, native loads the full document. The page applies an `html` block with `innerHTML` only (H-102, "DOM apply"). |
 | W-05 | Work under strict CSP with nonces and Trusted Types. Never require `unsafe-inline` or `unsafe-eval`. |
 | W-06 | One owner per state: React store, declarative data model, or isolated region. |
 | W-07 | The SDK does not depend on WebTransport or WebSocket in a normal browser. |

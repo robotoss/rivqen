@@ -13,6 +13,7 @@ import {
   requestLines,
   requestVersion,
   rqHave,
+  rqNonce,
 } from '../src/fields.js';
 import { parseDictionary, parseItem, parseList } from '../src/sf.js';
 
@@ -51,6 +52,22 @@ test('Rq-Have gives t and b; a wrong type of b leaves t; a wrong t or a parse fa
   assert.equal(rqHave(lines('rq-have', `t=${t}, b=:`)), null);
   assert.equal(rqHave(lines('rq-have', `t=${t}, b=:AAECAwQFBgc=:, t=other`)).t, 'other'); // the last key wins
   assert.equal(rqHave(lines('rq-have', `t=${t}`, 'b=:AA==:')).b.length, 1); // two lines are joined with ", "
+});
+
+test('Rq-Have ignores a member n (H-109)', () => {
+  const t = `t1.${'A'.repeat(43)}`;
+  assert.deepEqual(rqHave(lines('rq-have', `t=${t}, n=:AAECAwQFBgcICQoLDA0ODw==:`)), { t, b: null });
+});
+
+test('Rq-Nonce is exactly one line with a Byte Sequence of 16 bytes; parameters are ignored (H-109)', () => {
+  const ok = ':AAECAwQFBgcICQoLDA0ODw==:';
+  assert.deepEqual([...rqNonce(lines('rq-nonce', ok))], [...Array(16).keys()]);
+  assert.equal(rqNonce(lines('rq-nonce', `${ok};a=1`)).length, 16);
+  assert.equal(rqNonce([]), null);
+  assert.equal(rqNonce(lines('rq-nonce', ok, ok)), null);
+  for (const bad of [':AAECAwQFBgcICQoLDA0O:', ':AAECAwQFBgcICQoLDA0ODxA=:', '"AAECAwQFBgcICQoLDA0ODw=="', '?1', `(${ok})`, ':AAEC', `${ok}, ${ok}`]) {
+    assert.equal(rqNonce(lines('rq-nonce', bad)), null, bad);
+  }
 });
 
 test('Rq-Have longer than 4096 bytes is absent without a parse', () => {

@@ -10,7 +10,6 @@ import { APP, NONCE, TARGET, clientLines, exampleJson, get, header, katBytes, pa
 
 // The members of the second known-answer set (shop-policy.json): none of them is a default.
 const POLICY = { policy: { ttl_seconds: 60, offline: true }, limits: { max_patch_bytes: 65536 } };
-const rqHaveWith = (held, n) => `t=${revisionsOf(held).template_revision}, n=:${n.toString('base64')}:`;
 const run = (request, p = page('130.00'), config = {}) => handle(request, structuredClone(APP), p, config);
 
 test('every request gets the same full document, with Rq-Version and a strong ETag of the page revision', () => {
@@ -118,37 +117,52 @@ test('the delta binding changes when U, B, N or R\' changes, and is not symmetri
 
 test('the binding of a delta depends on the client nonce of the request (H-108)', () => {
   const held = page('120.00');
-  const sent = (n) => JSON.parse(run(get(clientLines(held, { 'rq-have': rqHaveWith(held, n) }))).body).binding;
+  const sent = (n) => JSON.parse(run(get(clientLines(held, { 'rq-nonce': `:${n.toString('base64')}:` }))).body).binding;
   const other = Buffer.from(NONCE);
   other[0] ^= 0x80;
   assert.notEqual(sent(NONCE), sent(other));
   assert.equal(sent(NONCE), sent(Buffer.from(NONCE)));
 });
 
-test('without a valid n in Rq-Have the answer is the full document, never a delta (H-108)', () => {
+test('without exactly one valid Rq-Nonce the answer is the full document, never a delta (H-109)', () => {
   const held = page('120.00');
-  const t = revisionsOf(held).template_revision;
   const b64 = (n) => Buffer.alloc(n, 7).toString('base64');
+  const good = `:${b64(16)}:`;
   const cases = {
-    'n missing': `t=${t}`,
-    'n of 15 bytes': `t=${t}, n=:${b64(15)}:`,
-    'n of 17 bytes': `t=${t}, n=:${b64(17)}:`,
-    'n of 0 bytes': `t=${t}, n=::`,
-    'n is a token of 16 characters': `t=${t}, n=abcdefghijklmnop`,
-    'n is a string of 16 characters': `t=${t}, n="abcdefghijklmnop"`,
-    'n is a string': `t=${t}, n="${b64(16)}"`,
-    'n is a boolean': `t=${t}, n`,
-    'n is an inner list': `t=${t}, n=(:${b64(16)}:)`,
-    'n twice': `t=${t}, n=:${b64(16)}:, n=:${b64(16)}:`,
-    'n twice, the first one wrong': `t=${t}, n=:${b64(15)}:, n=:${b64(16)}:`,
+    'absent': [null],
+    'two field lines': [good, good],
+    'two field lines, the first one wrong': [`:${b64(15)}:`, good],
+    'one line with two items': [`${good}, ${good}`],
+    '15 bytes': [`:${b64(15)}:`],
+    '17 bytes': [`:${b64(17)}:`],
+    '0 bytes': ['::'],
+    'a string of 16 characters': ['"abcdefghijklmnop"'],
+    'a token': ['abcdefghijklmnop'],
+    'a string': [`"${b64(16)}"`],
+    'a boolean': ['?1'],
+    'an integer': ['16'],
+    'an inner list': [`(${good})`],
+    'a parse failure': [':AAAA'],
+    'empty': [''],
   };
-  for (const [name, value] of Object.entries(cases)) {
-    const r = run(get(clientLines(held, { 'rq-have': value })), page('130.00'));
+  for (const [name, values] of Object.entries(cases)) {
+    const lines = [...clientLines(held, { 'rq-nonce': null }), ...values.filter((v) => v !== null).map((v) => ['rq-nonce', v])];
+    const r = run(get(lines), page('130.00'));
     assert.equal(header(r, 'content-type'), 'text/html; charset=utf-8', name);
     assert.equal(r.mode, 'full', name);
   }
-  const ok = run(get(clientLines(held, { 'rq-have': `t=${t}, n=:${b64(16)}:` })), page('130.00'));
-  assert.equal(ok.mode, 'delta'); // control: the same request with one valid n
+  const ok = run(get(clientLines(held, { 'rq-nonce': good })), page('130.00'));
+  assert.equal(ok.mode, 'delta'); // control: one valid line
+  assert.equal(run(get(clientLines(held, { 'rq-nonce': `${good};x=1` })), page('130.00')).mode, 'delta'); // parameters are ignored
+});
+
+test('a member n inside Rq-Have is no nonce: a delta needs the field Rq-Nonce (H-109)', () => {
+  const held = page('120.00');
+  const t = revisionsOf(held).template_revision;
+  const inHave = clientLines(held, { 'rq-have': `t=${t}, n=:${NONCE.toString('base64')}:`, 'rq-nonce': null });
+  assert.equal(run(get(inHave), page('130.00')).mode, 'full');
+  const both = clientLines(held, { 'rq-have': `t=${t}, n=:${Buffer.alloc(15).toString('base64')}:` }); // a bad n in Rq-Have does not matter
+  assert.equal(run(get(both), page('130.00')).mode, 'delta');
 });
 
 test('the cache-key URL drops the fragment and keeps the query', () => {
@@ -168,7 +182,7 @@ test('the delta of the known-answer page equals the example patch (one block, an
   const price = JSON.parse(run(get(clientLines(held)), current).body);
   assert.deepEqual(price.operations, exampleJson('valid/patch/shop-price.json').operations);
   assert.equal(price.binding, deltaBinding(TARGET, revisionsOf(held).page_revision, NONCE, revisionsOf(current).page_revision));
-  const noB = clientLines(held, { 'rq-have': `t=${revisionsOf(held).template_revision}, n=:${NONCE.toString('base64')}:` });
+  const noB = clientLines(held, { 'rq-have': `t=${revisionsOf(held).template_revision}` });
   assert.equal(JSON.parse(run(get(noB), current).body).operations.length, 3); // H-7: every block
   const all = Buffer.from(current.toString('utf8').replace('>Shop<', '><').replace('{"items":3}', '{"items":4}'));
   assert.deepEqual(JSON.parse(run(get(clientLines(held)), all).body).operations, exampleJson('valid/patch/shop-all.json').operations);
@@ -184,7 +198,7 @@ test('a delta needs each of: block-patch, Accept for the delta type, one r1 tag,
     'no If-None-Match': { 'if-none-match': null },
     'two tags': { 'if-none-match': `"${revisionsOf(held).page_revision}", "r1.${'A'.repeat(43)}"` },
     'no Rq-Have': { 'rq-have': null },
-    'no n': { 'rq-have': `t=${revisionsOf(held).template_revision}` },
+    'no Rq-Nonce': { 'rq-nonce': null },
     'other template': { 'rq-have': `t=t1.${'A'.repeat(43)}` },
     'version 2': { 'rq-version': '2' },
   };
@@ -207,7 +221,7 @@ test('a request with Range or a HEAD request gets no delta', () => {
 
 test('a b with the wrong length is absent: the delta has every block', () => {
   const held = page('120.00');
-  const r = run(get(clientLines(held, { 'rq-have': `t=${revisionsOf(held).template_revision}, b=:AAAAAAAAAAA=:, n=:${NONCE.toString('base64')}:` })), page('130.00'));
+  const r = run(get(clientLines(held, { 'rq-have': `t=${revisionsOf(held).template_revision}, b=:AAAAAAAAAAA=:` })), page('130.00'));
   assert.equal(JSON.parse(r.body).operations.length, 3);
 });
 

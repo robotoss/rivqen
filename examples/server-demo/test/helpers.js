@@ -37,14 +37,14 @@ export function page(price = '120.00', extra = '') {
 /** Revisions of a page for a manifest without policy and limits (the candidate result). */
 export const revisionsOf = (bytes) => analyze(bytes);
 
-/** A client nonce of 16 bytes (H-108): 00 01 02 ... 0f. */
+/** A client nonce of 16 bytes (H-108, H-109): 00 01 02 ... 0f. */
 export const NONCE = Buffer.from(Array.from({ length: 16 }, (_, i) => i));
 
-/** Rq-Have value of a client that holds `bytes`, with the client nonce n (H-108). */
-export function rqHave(bytes, nonce = NONCE) {
+/** Rq-Have value of a client that holds `bytes` (t and b; the nonce is the field Rq-Nonce, H-109). */
+export function rqHave(bytes) {
   const r = analyze(bytes);
   const prefixes = Buffer.concat(r.blocks.map((b) => Buffer.from(b.sha256, 'base64url').subarray(0, 8)));
-  return `t=${r.template_revision}, b=:${prefixes.toString('base64')}:, n=:${nonce.toString('base64')}:`;
+  return `t=${r.template_revision}, b=:${prefixes.toString('base64')}:`;
 }
 
 /** Request header lines of an RQP client that holds the page `held`. */
@@ -56,6 +56,7 @@ export function clientLines(held, overrides = {}) {
     accept: 'text/html, application/vnd.rivqen.delta+json',
     'if-none-match': `"${r.page_revision}"`,
     'rq-have': rqHave(held),
+    'rq-nonce': `:${NONCE.toString('base64')}:`,
     ...overrides,
   };
   return Object.entries(fields).filter(([, v]) => v !== null).map(([n, v]) => [n, v]);

@@ -9,7 +9,7 @@
 import { parseDictionary, parseItem, parseList } from './sf.js';
 
 export const MAX_RQ_HAVE_BYTES = 4096; // negotiation section 3.4
-export const NONCE_BYTES = 16; // the client nonce n of Rq-Have (H-108)
+export const NONCE_BYTES = 16; // the length of the client nonce in Rq-Nonce (H-108, H-109)
 export const MAX_RQ_CAPABILITIES_BYTES = 1024; // negotiation section 3.3
 export const DELTA_TYPE = 'application/vnd.rivqen.delta+json';
 
@@ -67,8 +67,7 @@ export function capabilities(headers) {
  * Section 3.4, steps 1 to 3: { t, b } or null when Rq-Have is absent. `t` is the template
  * revision token. `b` is the decoded Buffer, or null when the member is missing or is not
  * a Byte Sequence. The length of `b` is checked by the caller (it needs the block count).
- * `n` is the client nonce of H-108: a Buffer of exactly 16 bytes, or null when the member is
- * missing, is not a Byte Sequence, has another length or occurs twice.
+ * Other members, `n` included (H-109), are ignored.
  */
 export function rqHave(headers) {
   const value = fieldValue(headers, 'rq-have');
@@ -78,13 +77,22 @@ export function rqHave(headers) {
   const t = dict.get('t');
   if (t === undefined || t.kind !== 'item' || t.type !== 'token') return null;
   const b = dict.get('b');
-  const n = dict.get('n');
-  const validN = n !== undefined && n.kind === 'item' && n.type === 'bytes' && n.value.length === NONCE_BYTES && !dict.duplicates.has('n');
   return {
     t: t.value,
     b: b !== undefined && b.kind === 'item' && b.type === 'bytes' ? b.value : null,
-    n: validN ? n.value : null,
   };
+}
+
+/**
+ * H-109: the client nonce of the request. It is the Buffer of the single Rq-Nonce field line when
+ * that line is an SF Item, a Byte Sequence of exactly 16 bytes (parameters are ignored). No line,
+ * two or more lines, a parse failure, another type or another length give null: no delta.
+ */
+export function rqNonce(headers) {
+  const lines = headers.filter(([n]) => n === 'rq-nonce');
+  if (lines.length !== 1) return null;
+  const item = parseItem(lines[0][1]);
+  return item !== null && item.type === 'bytes' && item.value.length === NONCE_BYTES ? item.value : null;
 }
 
 const ETAGC = /^[\x21\x23-\x7e\x80-\xff]*$/;

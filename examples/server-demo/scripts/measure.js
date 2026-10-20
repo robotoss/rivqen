@@ -54,13 +54,13 @@ function snapshotOf(body) {
 
 /**
  * Request fields of an rqp/1 client: If-None-Match with the page revision, Rq-Have with t, b (H-44, H-46)
- * and a fresh 16-byte nonce n from a CSPRNG (H-108). Returns the nonce too, for the binding check.
+ * and Rq-Nonce with a fresh 16-byte nonce from a CSPRNG (H-108, H-109). Returns the nonce too, for the binding check.
  */
 function rqpFields() {
   if (!snapshot) return { fields: RQ, nonce: null };
   const nonce = randomBytes(16);
   const b = Buffer.concat(snapshot.blocks.map((x) => Buffer.from(x.sha256, 'base64url').subarray(0, 8))).toString('base64');
-  const fields = { ...RQ, 'If-None-Match': `"${snapshot.page_revision}"`, 'Rq-Have': `t=${snapshot.template_revision}, b=:${b}:, n=:${nonce.toString('base64')}:` };
+  const fields = { ...RQ, 'If-None-Match': `"${snapshot.page_revision}"`, 'Rq-Have': `t=${snapshot.template_revision}, b=:${b}:`, 'Rq-Nonce': `:${nonce.toString('base64')}:` };
   return { fields, nonce };
 }
 

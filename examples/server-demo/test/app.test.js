@@ -43,7 +43,8 @@ const delta = (page_revision, template) => [
   ['Rq-Capabilities', '(block-patch)'],
   ['Accept', 'text/html, application/vnd.rivqen.delta+json'],
   ['If-None-Match', `"${page_revision}"`],
-  ['Rq-Have', `t=${template}, n=:${NONCE.toString('base64')}:`],
+  ['Rq-Have', `t=${template}`],
+  ['Rq-Nonce', `:${NONCE.toString('base64')}:`],
 ];
 
 /** The original document of a full response: the manifest element removed (H-103: the client computes the rest). */

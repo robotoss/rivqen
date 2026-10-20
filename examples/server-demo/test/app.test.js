@@ -88,13 +88,14 @@ test('first visit, revisit, data change and template change follow rqp/1', async
   assert.equal(patch.headers['cache-control'], 'no-store');
   assert.equal(patch.headers.etag, undefined);
   const envelope = JSON.parse(patch.body);
-  assert.deepEqual(Object.keys(envelope), ['next_revision', 'operations']); // H-104
+  assert.deepEqual(Object.keys(envelope), ['binding', 'operations']); // H-104, H-107
+  assert.match(envelope.binding, /^d1\.[A-Za-z0-9_-]{43}$/)
   assert.deepEqual(envelope.operations.map((o) => o.block_id).sort(), ['cart', 'price', 'stock', 'title']);
   assert.ok(patch.body.length < first.body.length / 10);
 
   // 4. Template change: the full document with a new template revision.
   assert.equal((await call('POST', '/__demo/next-template', ACTION)).status, 200);
-  const changed = await call('GET', '/catalog', delta(envelope.next_revision, original.template_revision));
+  const changed = await call('GET', '/catalog', delta(manifest.page_revision, original.template_revision));
   assert.equal(changed.status, 200);
   assert.match(changed.headers['content-type'], /^text\/html/);
   assert.notEqual(revisionsOf(originalOf(changed.body)).template_revision, original.template_revision);

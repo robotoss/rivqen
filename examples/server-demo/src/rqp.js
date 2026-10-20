@@ -126,10 +126,28 @@ export function changeSet(blocks, b) {
   return changed;
 }
 
-/** Step 7: the delta envelope D (manifest-patch section 2, H-104). One operation per changed block. */
-export function buildDelta(page, analysis, nextRevision, indices) {
+/**
+ * The cache-key URL U of a request (H-107): the WHATWG serialization of the absolute request URL
+ * without the fragment. The demo has no other URL canonical form.
+ */
+export function cacheKeyUrl(target) {
+  const url = new URL(target);
+  url.hash = '';
+  return url.href;
+}
+
+/**
+ * The delta binding value (H-107): "d1." + base64url (no padding) of SHA-256 over the UTF-8 bytes of
+ * "rqp-d1" LF U LF B LF R' LF. U is the cache-key URL, B the base page revision, R' the next one.
+ */
+export function deltaBinding(url, base, nextRevision) {
+  return `d1.${sha256b64u(Buffer.from(`rqp-d1\n${url}\n${base}\n${nextRevision}\n`, 'utf8'))}`;
+}
+
+/** Step 7: the delta envelope D (manifest-patch section 2, H-104, H-107). One operation per changed block. */
+export function buildDelta(page, analysis, binding, indices) {
   return {
-    next_revision: nextRevision,
+    binding,
     operations: indices.map((i) => {
       const b = analysis.blocks[i];
       return { block_id: b.id, content: page.toString('utf8', b.start, b.end) };
@@ -230,7 +248,7 @@ function select(request, status, appHeaders, page, config) {
     return block.format === 'html' && !passesPatchContentRule(page.subarray(block.start, block.end));
   });
   if (failsRule) return sendFull('patch-content-rule');
-  const delta = Buffer.from(JSON.stringify(buildDelta(page, analysis, manifest.page_revision, changed)), 'utf8');
+  const delta = Buffer.from(JSON.stringify(buildDelta(page, analysis, deltaBinding(cacheKeyUrl(request.target), base, manifest.page_revision), changed)), 'utf8');
   const limit = Math.min(serverLimit, members.limits?.max_patch_bytes ?? Infinity);
   if (delta.length > limit) return sendFull('delta-too-large');
   if (delta.length >= full.length) return sendFull('delta-not-smaller');

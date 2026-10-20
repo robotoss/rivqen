@@ -17,6 +17,7 @@ import { gzipSync, brotliCompressSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { analyzePage } from '../src/markup.js';
+import { cacheKeyUrl, deltaBinding, pageRevision } from '../src/rqp.js';
 import { renderCatalog } from '../src/pages.js';
 
 const BASE = process.env.DEMO_URL ?? 'http://127.0.0.1:8787';
@@ -68,7 +69,12 @@ async function visit(name) {
   if (kind === 'delta') {
     // The client applies the delta: new page revision, new hashes (computed from the content) for the changed blocks.
     const d = JSON.parse(rqp.body);
-    snapshot = { ...snapshot, page_revision: d.next_revision, blocks: snapshot.blocks.map((x) => d.operations.find((o) => o.block_id === x.id) ? { ...x, sha256: createHash('sha256').update(d.operations.find((o) => o.block_id === x.id).content).digest('base64url') } : x) };
+    const blocks = snapshot.blocks.map((x) => d.operations.find((o) => o.block_id === x.id) ? { ...x, sha256: createHash('sha256').update(d.operations.find((o) => o.block_id === x.id).content).digest('base64url') } : x);
+    // H-107: the client computes R' from the patched blocks and checks the binding (U, B, R').
+    const next = pageRevision(snapshot.template_revision, blocks, {});
+    const expected = deltaBinding(cacheKeyUrl(`${new URL(process.env.ORIGIN ?? BASE).origin}/catalog`), snapshot.page_revision, next);
+    if (d.binding !== expected) throw new Error(`delta binding mismatch: ${d.binding} != ${expected}`);
+    snapshot = { ...snapshot, page_revision: next, blocks };
   }
   results.push({
     visit: name,

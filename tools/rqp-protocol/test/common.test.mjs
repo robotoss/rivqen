@@ -64,7 +64,7 @@ test('H-108: the nonce text N is canonical base64url without padding of exactly 
   assert.equal(isNonceText(nonceText(Buffer.alloc(16, 0xff))), true);
   // 22 characters; the last one carries 2 bits, so only A, Q, g and w are canonical.
   for (const last of ['A', 'Q', 'g', 'w']) assert.equal(isNonceText(`${'A'.repeat(21)}${last}`), true, last);
-  for (const bad of [`${'A'.repeat(21)}B`, `${N}==`, N.slice(0, -1), `${N}A`, 'AAECAwQFBgcICQoLDA0OD+', 'AAECAwQFBgcICQoLDA0OD/', null, undefined, 7, bytes]) {
+  for (const bad of [`${'A'.repeat(21)}B`, `${N}==`, N.slice(0, -1), `${N}A`, 'AAECAwQFBgcICQoLDA0OD+', 'AAECAwQFBgcICQoLDA0OD/', null, undefined, 7, bytes, [N], { toString: () => N }]) {
     assert.equal(isNonceText(bad), false, String(bad));
   }
   for (const bad of [Buffer.alloc(15), Buffer.alloc(17), new Uint8Array(16), 'AAECAwQFBgcICQoLDA0ODw', null]) {

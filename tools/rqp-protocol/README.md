@@ -122,6 +122,18 @@ Changed lines of WP-17 S5 T-07 (2026-10-19; `noscript` in `PATCH_FORBIDDEN` (ite
 
 Changed lines of WP-17 S6 T-03 (2026-10-20; P1, H-103 and H-104; base `276a1c3`; only the ranges in `src/`: `client`, `common`, `fixtures`, `pages`, `server`; 1 min 8 s per run): before 172/185 (93.0 %; `fixtures.mjs` 109/121, `server.mjs` 51/52, the others 12/12), after 182/185 (98.4 %). The 13 survivors were 10 message texts of case errors, `Buffer.from(…, 'utf8')` → `""` (3) and two conditions: the check that a `size` recipe has one operation with empty content (the next check also threw, with another text) and the filter that judges only `max_patch_bytes` against the server limit. Two tests were added: `writtenMembers` keeps a limit other than `max_patch_bytes`, and each body recipe defect names its member and reason in the case error (`test/gen.test.mjs`). 3 mutants are equivalent: `Buffer.from(text, '')` → `""` is the default encoding `utf8` (`src/fixtures.mjs:180`, `:397`, `:433`).
 
+Changed lines of WP-17 S6 T-07 (2026-10-20; the nonce work of H-108 and H-109 since `02aea79`; only the ranges in `src/`: `client`, `common`, `fixtures`, `server`, `sf`; 1 min 16 s per run): before 159/174 (91.4 %; `client.mjs` 66/74, `common.mjs` 25/27, `fixtures.mjs` 44/47, `server.mjs` 24/26), after 162/174 (93.1 %). Three tests were added for real survivors: `isNonceText` rejects an array or an object whose text is a valid nonce (the regular expression coerces it), `rqNonce` rejects a Token of 16 characters (its length would pass the size check), and `context.nonce` that is not the text of 16 bytes is a case error. The 12 survivors left:
+
+| Mutant | n | Status | Reason |
+|---|---|---|---|
+| `rqpAllowed`: `url === null \|\| url === undefined` | 4 | Equivalent | `URL.canParse(null)` and `URL.canParse(undefined)` are false, so the next test returns false |
+| `expectedBinding`: `error instanceof TypeError` → `true` | 1 | Equivalent | `deltaBinding` throws only a `TypeError`; the rethrow is defense in depth |
+| `verifyDelta`: `expected === null` | 1 | Equivalent | `null !== env.binding` because the schema makes the binding a string |
+| `handleDelta`: `snap !== null` in `offered`, `snap === null` in `verified` | 2 | Equivalent | Each guard covers the other: without a snapshot there is no offer, and `verifyDelta` answers PATCH_INVALID for no offer |
+| `fixtures.mjs:192` self-check of the reference binding | 1 | Equivalent | Fails only when the reference server and the binding function disagree; the conformance tests compare them |
+| `rqNonce`: `lines.length !== 1` | 1 | Equivalent | Several lines join with a comma, which an Item parse rejects |
+| Message text of `nonceText`; `Buffer.from(…, 'utf8')` → `""` (`fixtures.mjs:485`) | 2 | Accepted / Equivalent | Text for the caller; Node.js uses UTF-8 for an empty encoding |
+
 The 182 survivors: 141 equivalent, 41 accepted.
 
 | Group | n | Status | Reason |

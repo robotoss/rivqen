@@ -518,7 +518,7 @@ test('Rq-Nonce (H-109): one field line, an Item whose bare item is a Byte Sequen
   assert.equal(n(':AAECAwQFBgcICQoLDA0OD!==:'), null);
   assert.equal(n(`${sf}\u00e9`), null);
   // Another type: String, Token, Integer, Decimal, Boolean, Date, Display String, an Inner List, a Dictionary.
-  for (const v of [`"${sixteen.toString('base64url')}"`, 'A'.repeat(22), '1', '1.5', '?1', '?0', '@1', '%"x"', `(${sf})`, `n=${sf}`]) {
+  for (const v of [`"${sixteen.toString('base64url')}"`, 'A'.repeat(22), 'A'.repeat(16), '1', '1.5', '?1', '?0', '@1', '%"x"', `(${sf})`, `n=${sf}`]) {
     assert.equal(n(v), null, v);
   }
   // Exactly 16 bytes: 0, 15 and 17 bytes are no nonce.

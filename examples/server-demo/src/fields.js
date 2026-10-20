@@ -9,13 +9,14 @@
 import { parseDictionary, parseItem, parseList } from './sf.js';
 
 export const MAX_RQ_HAVE_BYTES = 4096; // negotiation section 3.4
+export const MAX_RQ_NONCE_LINE_BYTES = 128; // DL-063: a longer Rq-Nonce field line is no nonce
 export const NONCE_BYTES = 16; // the length of the client nonce in Rq-Nonce (H-108, H-109)
 export const MAX_RQ_CAPABILITIES_BYTES = 1024; // negotiation section 3.3
 export const DELTA_TYPE = 'application/vnd.rivqen.delta+json';
 
-/** Lower-case the names of header lines. */
+/** Lower-case the names of header lines and trim leading and trailing OWS (space, TAB) of the values (DL-036 I4). */
 export function normalizeHeaders(headers) {
-  return headers.map(([name, value]) => [name.toLowerCase(), value]);
+  return headers.map(([name, value]) => [name.toLowerCase(), value.replace(/^[ \t]+|[ \t]+$/g, '')]);
 }
 
 /** Header lines of a Node.js request (`rawHeaders`): [lower-case name, value], one line per field line, in order. */
@@ -38,6 +39,26 @@ export function hasField(headers, name) {
 /** Header lines without any Rq-* field. The RQP server step owns these fields (DL-030). */
 export function withoutRqFields(headers) {
   return headers.filter(([n]) => !n.startsWith('rq-'));
+}
+
+/**
+ * DL-063: header lines where every Vary line loses its Rq-* tokens (ASCII case-insensitive).
+ * Other tokens stay in their order. A line without an Rq-* token stays as it is. A line that
+ * has no token left is dropped.
+ */
+export function withoutRqVary(headers) {
+  const out = [];
+  for (const [n, v] of headers) {
+    if (n !== 'vary') {
+      out.push([n, v]);
+      continue;
+    }
+    const tokens = v.split(',').map((t) => t.replace(/^[ \t]+|[ \t]+$/g, ''));
+    const kept = tokens.filter((t) => !/^rq-/i.test(t));
+    if (kept.length === tokens.length) out.push([n, v]);
+    else if (kept.some((t) => t !== '')) out.push([n, kept.filter((t) => t !== '').join(', ')]);
+  }
+  return out;
 }
 
 /** Header lines without the named fields. */
@@ -90,7 +111,7 @@ export function rqHave(headers) {
  */
 export function rqNonce(headers) {
   const lines = headers.filter(([n]) => n === 'rq-nonce');
-  if (lines.length !== 1) return null;
+  if (lines.length !== 1 || Buffer.byteLength(lines[0][1]) > MAX_RQ_NONCE_LINE_BYTES) return null; // checked before the parse
   const item = parseItem(lines[0][1]);
   return item !== null && item.type === 'bytes' && item.value.length === NONCE_BYTES ? item.value : null;
 }

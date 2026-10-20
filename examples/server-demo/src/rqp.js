@@ -26,6 +26,7 @@ import {
   rqNonce,
   without,
   withoutRqFields,
+  withoutRqVary,
 } from './fields.js';
 import { analyzePage, documentHeadStart, passesPatchContentRule } from './markup.js';
 
@@ -178,7 +179,8 @@ const KEEP_ON_304 = new Set(['etag', 'cache-control', 'expires', 'vary', 'date',
 export function handle(request, appResponse, pageBytes, config = {}) {
   const page = Buffer.from(pageBytes.buffer, pageBytes.byteOffset, pageBytes.byteLength);
   // DL-030: the RQP step owns every Rq-* field. No outcome carries an Rq-* field of A.
-  const appHeaders = withoutRqFields(normalizeHeaders(appResponse.headers));
+  // DL-063: and no Rq-* token in its Vary, so F, 304, D and a passthrough response cannot vary on an RQP field.
+  const appHeaders = withoutRqVary(withoutRqFields(normalizeHeaders(appResponse.headers)));
   const passthrough = (reason) => ({ status: appResponse.status, headers: appHeaders, body: page, mode: 'passthrough', reason });
   try {
     return select(request, appResponse.status, appHeaders, page, config) ?? passthrough('invalid-page');
@@ -259,10 +261,12 @@ function select(request, status, appHeaders, page, config) {
   return {
     status: 200,
     headers: [
-      ...without(appHeaders, 'etag', 'last-modified', 'expires', 'content-type', 'cache-control', 'content-length'),
+      ...without(appHeaders, 'etag', 'last-modified', 'expires', 'content-type', 'cache-control', 'content-length', 'x-content-type-options'),
       ['content-type', DELTA_TYPE],
       ['rq-version', '1'],
       ['cache-control', 'no-store'],
+      ['vary', 'Rq-Nonce'], // DL-063: the binding depends on the nonce
+      ['x-content-type-options', 'nosniff'], // DL-063: a stored D must not be sniffed as a page
       ['content-length', String(delta.length)],
     ],
     body: delta,

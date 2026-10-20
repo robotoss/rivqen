@@ -201,3 +201,124 @@ test('the Origin check uses the normalized origin: a trailing slash or an upper-
     }
   }
 });
+
+// ---- DL-063 ----
+const { handle, DELTA_TYPE } = await import('../src/rqp.js');
+const { normalizeHeaders, rqNonce, rqHave: parseRqHave, requestVersion, withoutRqVary } = await import('../src/fields.js');
+const { APP, NONCE, TARGET, clientLines, get, header, page } = await import('./helpers.js');
+
+const held = page('120.00');
+const next = page('130.00');
+const nonceLine = (n = NONCE) => `:${n.toString('base64')}:`;
+
+test('a planted Rq-Nonce value appears in no log line (DL-063, L3)', async () => {
+  const planted = Buffer.from('PLANTED-NONCE-16'); // 16 bytes
+  const forms = [planted.toString('base64'), planted.toString('base64url'), planted.toString('hex'), 'PLANTED-NONCE-16'];
+  const lines = await captured(async () => {
+    await call('GET', '/catalog', [['Rq-Nonce', nonceLine(planted)]]);
+    await call('GET', '/catalog', [
+      ['Rq-Version', '1'],
+      ['Rq-Capabilities', '(block-patch)'],
+      ['Accept', DELTA_TYPE],
+      ['If-None-Match', '"r1.x"'],
+      ['Rq-Have', 't=x'],
+      ['Rq-Nonce', nonceLine(planted)],
+    ]);
+    await call('GET', '/catalog', [['Rq-Nonce', `:${'A'.repeat(200)}${planted.toString('base64')}:`]]);
+    await call('GET', '/nonce-route', [['Rq-Nonce', nonceLine(planted)]]);
+  });
+  assert.ok(lines.length >= 4);
+  const text = JSON.stringify(lines);
+  for (const form of forms) assert.ok(!text.includes(form), 'a nonce form is in the log');
+});
+
+test('an Rq-Nonce field line longer than 128 bytes is no nonce; a line of 128 bytes is parsed as before (DL-063)', () => {
+  assert.equal(rqNonce([['rq-nonce', nonceLine()]])?.equals(NONCE), true);
+  assert.equal(rqNonce([['rq-nonce', `:${'A'.repeat(127)}:`]]), null);
+  const padded = `${nonceLine()};a="${'x'.repeat(128 - 26 - 5)}"`; // a parameter fills the line to 128 bytes
+  assert.equal(Buffer.byteLength(padded), 128);
+  assert.equal(rqNonce([['rq-nonce', padded]])?.equals(NONCE), true);
+  assert.equal(rqNonce([['rq-nonce', `${padded.slice(0, -1)}x"`]]), null); // 129 bytes, still a valid Item
+});
+
+test('a too long Rq-Nonce gives the full document, not a delta', () => {
+  const longer = `${nonceLine()};a="${'x'.repeat(130)}"`;
+  assert.equal(handle(get(clientLines(held, { 'rq-nonce': longer })), APP, next).mode, 'full');
+  assert.equal(handle(get(clientLines(held)), APP, next).mode, 'delta');
+});
+
+test('a delta carries Vary: Rq-Nonce and nosniff, and keeps the other Vary tokens of the application (DL-063)', () => {
+  const app = { ...APP, headers: [...APP.headers, ['Vary', 'Accept-Encoding, RQ-Have'], ['X-Content-Type-Options', 'nosniff']] };
+  const r = handle(get(clientLines(held)), app, next);
+  assert.equal(r.mode, 'delta');
+  const vary = r.headers.filter(([n]) => n === 'vary').map(([, v]) => v);
+  assert.ok(vary.includes('Rq-Nonce'));
+  assert.ok(vary.includes('Accept-Encoding'));
+  assert.ok(!vary.join(',').toLowerCase().includes('rq-have'));
+  assert.deepEqual(r.headers.filter(([n]) => n === 'x-content-type-options'), [['x-content-type-options', 'nosniff']]);
+  const plain = handle(get(clientLines(held)), APP, next);
+  assert.equal(header(plain, 'vary'), 'Rq-Nonce');
+  assert.equal(header(plain, 'x-content-type-options'), 'nosniff');
+});
+
+test('F, 304 and a passthrough response lose the Rq-* tokens of the application Vary and keep the others (DL-063, L2)', () => {
+  const app = (vary) => ({ ...APP, headers: [...APP.headers, ['Vary', vary]] });
+  const full = handle(get([]), app('Accept-Encoding, rq-nonce, RQ-Have ,Cookie'), held);
+  assert.equal(full.mode, 'full');
+  assert.equal(header(full, 'vary'), 'Accept-Encoding, Cookie');
+  const notModified = handle(get([['if-none-match', header(full, 'etag')]]), app('Rq-Nonce, Accept-Encoding'), held);
+  assert.equal(notModified.mode, '304');
+  assert.equal(header(notModified, 'vary'), 'Accept-Encoding');
+  const out = handle({ method: 'POST', target: TARGET, headers: [] }, app('Origin,Rq-Version'), held);
+  assert.equal(out.mode, 'passthrough');
+  assert.equal(header(out, 'vary'), 'Origin');
+  assert.equal(header(handle(get([]), app('Rq-Nonce, rq-have'), held), 'vary'), null, 'the field is dropped when no token is left');
+  assert.equal(header(handle(get([]), app('*'), held), 'vary'), '*');
+});
+
+test('withoutRqVary: only whole tokens that start with "rq-" go; other lines stay as they are', () => {
+  assert.deepEqual(withoutRqVary([['vary', 'Accept,  Rq-X']]), [['vary', 'Accept']]);
+  assert.deepEqual(withoutRqVary([['vary', 'Accept,,Rq-X, ']]), [['vary', 'Accept']]);
+  assert.deepEqual(withoutRqVary([['vary', 'Accept ,  X-Rq-Y,Prq-Z']]), [['vary', 'Accept ,  X-Rq-Y,Prq-Z']]);
+  assert.deepEqual(
+    withoutRqVary([['vary', 'rq-a'], ['vary', 'B'], ['x', 'rq-a']]),
+    [['vary', 'B'], ['x', 'rq-a']],
+  );
+});
+
+test('normalizeHeaders trims leading and trailing space and TAB of the values like OWS (DL-036 I4)', () => {
+  assert.deepEqual(normalizeHeaders([['Rq-Version', '\t 1 \t'], ['X', 'a b\tc']]), [['rq-version', '1'], ['x', 'a b\tc']]);
+  assert.equal(requestVersion(normalizeHeaders([['Rq-Version', '\t1\t']])), 1);
+});
+
+test('64 KB adversarial values of Rq-Version, Rq-Have and Rq-Nonce parse in under 50 ms (DL-063, M1)', () => {
+  const n = 65536;
+  const values = [
+    `:${'='.repeat(n)}A:`,
+    `:${'='.repeat(n)}`,
+    `:${'A'.repeat(n)}${'='.repeat(n)}:`,
+    `:${'A='.repeat(n / 2)}:`,
+    '1'.repeat(n),
+    `-${'0'.repeat(n)}.`,
+    `"${'\\'.repeat(n)}`,
+    `%"${'%'.repeat(n)}`,
+    `${'a'.repeat(n)};${'b=:'.repeat(n / 3)}`,
+    `t=x, b=:${'='.repeat(n)}A:`,
+    `(${'a '.repeat(n / 2)}`,
+    'A'.repeat(n),
+    `${' '.repeat(n)}x`,
+  ];
+  const readers = [
+    ['rq-version', requestVersion],
+    ['rq-have', parseRqHave],
+    ['rq-nonce', rqNonce],
+  ];
+  for (const value of values) {
+    for (const [name, read] of readers) {
+      const start = process.hrtime.bigint();
+      read([[name, value]]);
+      const ms = Number(process.hrtime.bigint() - start) / 1e6;
+      assert.ok(ms < 50, `${name} with a value of ${value.length} chars took ${ms} ms`);
+    }
+  }
+});

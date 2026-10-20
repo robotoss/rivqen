@@ -6,10 +6,10 @@
 // (tools/rqp-protocol/src/server.mjs, negotiation section 4). The study uses
 // these bytes as they are; it never builds its own baseline.
 
-import { havePrefixes } from '../../../src/client.mjs';
-import { DELTA_TYPE, MANIFEST_END, MANIFEST_START, membersOf } from '../../../src/common.mjs';
+import { havePrefixes } from '../baseline/client.mjs';
+import { DELTA_TYPE, MANIFEST_END, MANIFEST_START, membersOf } from '../baseline/common.mjs';
 import { analyze, documentHeadStart } from '../../../src/markup.mjs';
-import { changeSet, deltaEnvelope, handle, manifestOf } from '../../../src/server.mjs';
+import { changeSet, deltaEnvelope, handle, manifestOf } from '../baseline/server.mjs';
 import { StudyError } from './errors.mjs';
 
 export { DELTA_TYPE, MANIFEST_END, MANIFEST_START };

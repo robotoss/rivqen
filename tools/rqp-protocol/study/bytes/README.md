@@ -25,6 +25,7 @@ This study splits the bytes of `rqp/1` into components and measures candidate wi
 
 ## Method
 
+- **Pinned reference.** The study is pinned to the pre-P1 reference (commit `276a1c3`, frozen copies in `baseline/`), not to the shipped reference (DL-047).
 - **Sizes.** Raw bytes, and gzip and Brotli with the Node.js zlib defaults on the body. This is the method of `examples/server-demo/scripts/measure.js`, so the demo numbers are the numbers of `evidence/benchmarks/rqp-bytes-2026-10-19.json` (a test checks this).
 - **Raw breakdown.** Each byte of the manifest element (or of D) is in exactly one row. The rows add up to the total.
 - **Marginal cost.** For gzip and Brotli, the cost of a component is the size of the whole body minus the size of the body without the component. Marginal costs overlap, so they do not add up. Brotli marginal costs of components under about 50 raw bytes are not stable (they can be larger than the raw bytes or negative). Use the gzip column to rank small components.

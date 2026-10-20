@@ -9,8 +9,8 @@
 // Manifest options change F (cold visit). Delta options change D. Request
 // options change the request fields of a revisit.
 
-import { pageRevision, sha256b64u } from '../../../src/common.mjs';
-import { havePrefixes } from '../../../src/client.mjs';
+import { pageRevision, sha256b64u } from '../baseline/common.mjs';
+import { havePrefixes } from '../baseline/client.mjs';
 import { DELTA_SHORT, MANIFEST_SHORT, shortKeys } from './breakdown.mjs';
 import { encode as cbor } from './cbor.mjs';
 import { MANIFEST_END, withManifest } from './rqp.mjs';

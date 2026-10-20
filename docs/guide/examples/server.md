@@ -2,7 +2,7 @@
 
 `examples/server-demo` is a small Node.js server. It shows the Rivqen protocol (RQP) from the server side: block markup, manifest, `304`, block patch and safe fallback.
 
-**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 102 tests pass, and the demo passes all 89 server protocol fixtures (checked 2026-10-19, Node.js 22 or later; WP-17 S4: the patch content rule, the attribute rule of H-77 and H-83, and the implied head of H-79a; WP-17 S5: `noscript` in `PATCH_FORBIDDEN`, H-96). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
+**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 104 tests pass, and the demo passes all 91 server protocol fixtures (checked 2026-10-20, Node.js 22 or later; WP-17 S4: the patch content rule, the attribute rule of H-77 and H-83, and the implied head of H-79a; WP-17 S5: `noscript` in `PATCH_FORBIDDEN`, H-96; WP-17 S6: the short manifest and the short envelope, H-103 and H-104). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
 
 [[toc]]
 
@@ -73,7 +73,17 @@ Where the code is:
 | `src/fields.js`, `src/sf.js` | The request fields and a Structured Field parser |
 | `src/app.js`, `src/server.js` | The HTTP adapter and the start script. The public origin comes from `ORIGIN`, not from the connection |
 
-The demo manifest has `policy` (`mode` `private`, `ttl_seconds` `0`, `offline` `false`) and `limits` (`max_patch_bytes` `262144`). The page revision includes them ([manifest and patch §1.3](/engineering/protocol/manifest-patch#_1-3-hashes-and-revisions), H-55).
+<Badge type="tip" text="FACT" /> The demo manifest has four members and no default member (H-103, [manifest and patch §1.2](/engineering/protocol/manifest-patch#_1-2-fields)). It has no block list and no template revision: the client computes them and checks them through `page_revision`. The demo has no `policy` and no `limits`: its policy is the default, and a `max_patch_bytes` hint of 262 144 is not smaller than the server limit (DL-057, DL-058). A configuration with such members still gives a manifest without them; `membersOf` in `src/rqp.js` drops them.
+
+```json
+{"protocol":"rqp/1","origin":"https://shop.example.com","path":"/catalog","page_revision":"r1.kQSg0GU87wq6jDSiFlsmQmk68argQjG5MSAqEYUUFic"}
+```
+
+The delta has two members (H-104). Example from the data change of section 5 (shortened to two operations):
+
+```json
+{"next_revision":"r1.MsBRD8KQI7P_bbGJFLFAWugmPrg5iEz0MNpNZcVc0-0","operations":[{"block_id":"title","content":"Shop — Catalog (125.00)"},{"block_id":"price","content":"125.00"}]}
+```
 
 ## 5. Try it by hand
 
@@ -84,13 +94,20 @@ curl -s -D headers.txt -o page.html http://127.0.0.1:8787/catalog \
   -H 'Rq-Version: 1' -H 'Rq-Capabilities: (block-patch)'
 ```
 
-2. Read the page revision from the `ETag` and the template revision from the manifest.
+2. Read the page revision from the `ETag`. The manifest has no template revision (H-103), so compute it as a client does: remove the manifest element, then run the markup analysis of the demo on the original document.
 
 ```bash
 ETAG=$(grep -i '^etag:' headers.txt | cut -d' ' -f2 | tr -d '\r')
-TPL=$(grep -o 't1\.[A-Za-z0-9_-]\{43\}' page.html | head -1)
+TPL=$(node -e "
+import('./src/markup.js').then(({ analyzePage }) => {
+  const html = require('fs').readFileSync('page.html', 'utf8')
+    .replace(/<script type=\"application\\/rivqen-manifest\\+json\">[^<]*<\\/script>/, '');
+  console.log(analyzePage(Buffer.from(html)).template_revision);
+});")
 echo "$ETAG $TPL"
 ```
+
+Run the `node` command in `examples/server-demo`, with `page.html` in the same directory (or give its path).
 
 3. Send the revision back. Make sure that the status is `304`.
 
@@ -115,15 +132,15 @@ curl -si http://127.0.0.1:8787/catalog \
 
 6. Make sure that the response has `Content-Type: application/vnd.rivqen.delta+json`, `Cache-Control: no-store` and no `ETag`.
 
-Recorded output (2026-10-12, Node.js 22 or later, Rq-Have without `b`; the revisions are values of this run and change when the demo page changes):
+Recorded output (2026-10-20, Node.js 22 or later, Rq-Have without `b`; the revisions are values of this run and change when the demo page changes):
 
 | Step | Output that matters |
 |---|---|
-| 1 | `HTTP/1.1 200 OK`, `content-type: text/html; charset=utf-8`, `cache-control: no-cache`, `etag: "r1.zrEnLcp3_yhVSEpGReXsUAp7Gt4VGuNqnik_W4O5xRo"`, `rq-version: 1`, `content-length: 20250`, no `Vary` |
+| 1 | `HTTP/1.1 200 OK`, `content-type: text/html; charset=utf-8`, `cache-control: no-cache`, `etag: "r1.kQSg0GU87wq6jDSiFlsmQmk68argQjG5MSAqEYUUFic"`, `rq-version: 1`, `content-length: 19731`, no `Vary`. The manifest is 165 bytes (origin `http://127.0.0.1:8787`) |
 | 2 | The `ETag` above and `t1.dMGS3KdBw6hmMK_VrD06B55NQwoItge4Ig1Wwh-bigM` |
 | 3 | `HTTP/1.1 304 Not Modified` |
 | 4 | `{"data":1,"template":0}` |
-| 5, 6 | `HTTP/1.1 200 OK`, `content-type: application/vnd.rivqen.delta+json`, `rq-version: 1`, `cache-control: no-store`, `content-length: 836`, no `etag`. The body starts with `{"type":"rivqen.patch","protocol":"rqp/1","base_revision":"r1.zrEn…"` and has four operations |
+| 5, 6 | `HTTP/1.1 200 OK`, `content-type: application/vnd.rivqen.delta+json`, `rq-version: 1`, `cache-control: no-store`, `content-length: 293`, no `etag`. The body starts with `{"next_revision":"r1.MsBR…","operations":[{"block_id":"title"` and has four operations |
 
 Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so the delta has an operation for every block (all-blocks fallback, H-7). A real client sends `b`, and the delta has only the changed blocks. If you omit any of the fields of step 5, the server sends the full document.
 
@@ -141,7 +158,7 @@ npm test
 - the insertion point of the manifest (after the head start tag, H-72, or before the start tag that implies the head, H-79a) and the patch content rule: `PATCH_FORBIDDEN`, `FOREIGN_ALLOWED`, event handlers, `javascript:`, `vbscript:` and `data:` URLs except raster images in `img`, `source` and `video` (H-83), and character references at the scheme decision byte (H-77);
 - differential tests against the reference of `tools/rqp-protocol` (tests only): 20 000 random blocks for the patch content rule and 20 000 random documents for the insertion point;
 - the HTTP adapter on a loopback socket: first visit, revisit, data change, template change, the `Host` check (`421`);
-- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 89 server fixtures pass (`FX-RQ-P*`), also the eight `FX-RQ-P35` cases (level SHOULD).
+- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 91 server fixtures pass (`FX-RQ-P*`), also the SHOULD cases (the eight `FX-RQ-P35` cases and `FX-RQ-P36-LIMITS-SERVER-LIMIT`).
 
 To run the fixtures alone, run this command in `examples/server-demo`:
 
@@ -155,10 +172,10 @@ node ../../tools/rqp-protocol/check.mjs --server src/rqp.js
 2. Run the measurement in another terminal.
 
 ```bash
-npm run measure -- --out ../../evidence/benchmarks/rqp-bytes.json
+npm run measure -- --out ../../evidence/benchmarks/rqp-bytes-2026-10-20.json
 ```
 
-The script makes four visits (cold, unchanged, data changed, template changed) with three strategies: plain, HTTP ETag and RQP. The RQP client of the script sends `If-None-Match` and `Rq-Have` with the digest prefixes `b`, and applies each delta to its block list. The script sends the `Host` of `ORIGIN` (or of `DEMO_URL`). To add the upstream legacy server, set `LEGACY_URL` and `LEGACY_PAGES` (see `tools/upstream-lab`).
+The script makes four visits (cold, unchanged, data changed, template changed) with three strategies: plain, HTTP ETag and RQP. The RQP client of the script sends `If-None-Match` and `Rq-Have` with the digest prefixes `b`, and applies each delta to its block list. After a full document it removes the manifest element and runs the markup analysis, as a client does (H-103). Run on 2026-10-20 (gzip bytes: cold 2,357, unchanged 0, data changed 221, template changed 2,377; raw delta 293): `evidence/benchmarks/rqp-bytes-2026-10-20.json`. The script sends the `Host` of `ORIGIN` (or of `DEMO_URL`). To add the upstream legacy server, set `LEGACY_URL` and `LEGACY_PAGES` (see `tools/upstream-lab`).
 
 The latest results are on the [Performance](/guide/performance#measured-bytes) page.
 

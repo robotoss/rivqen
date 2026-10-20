@@ -14,6 +14,7 @@
 // plus gzip and brotli sizes computed locally with Node zlib (level defaults).
 
 import { gzipSync, brotliCompressSync } from 'node:zlib';
+import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { analyzePage } from '../src/markup.js';
 import { renderCatalog } from '../src/pages.js';
@@ -38,10 +39,16 @@ const results = [];
 let snapshot = null; // what an rqp/1 client holds: { page_revision, template_revision, blocks }
 let etag = null;
 
-/** The manifest of a full document (the client reads it with the markup analysis; the demo reads it with a pattern). */
-function manifestOf(body) {
+/**
+ * What an rqp/1 client holds after a full document (H-103): the manifest has only the page
+ * revision, so the client removes the manifest element, runs the markup analysis on the original
+ * document and checks the page revision. The demo does the same with its own analysis.
+ */
+function snapshotOf(body) {
   const m = /<script type="application\/rivqen-manifest\+json">([^<]*)<\/script>/.exec(body);
-  return m ? JSON.parse(m[1]) : null;
+  if (!m) return null;
+  const analysis = analyzePage(Buffer.from(body.replace(m[0], ''), 'utf8'));
+  return analysis.valid && analysis.page_revision === JSON.parse(m[1]).page_revision ? analysis : null;
 }
 
 /** Request fields of an rqp/1 client: If-None-Match with the page revision, Rq-Have with t and b (H-44, H-46). */
@@ -57,11 +64,11 @@ async function visit(name) {
   const rqp = await get(rqpFields());
   etag = plain.headers.get('etag');
   const kind = rqp.status === 304 ? '304' : (rqp.headers.get('content-type') ?? '').includes('delta') ? 'delta' : 'full';
-  if (kind === 'full') snapshot = manifestOf(rqp.body);
+  if (kind === 'full') snapshot = snapshotOf(rqp.body);
   if (kind === 'delta') {
-    // The client applies the delta: new page revision, new hashes for the changed blocks.
+    // The client applies the delta: new page revision, new hashes (computed from the content) for the changed blocks.
     const d = JSON.parse(rqp.body);
-    snapshot = { ...snapshot, page_revision: d.next_revision, blocks: snapshot.blocks.map((x) => d.operations.find((o) => o.block_id === x.id) ? { ...x, sha256: d.operations.find((o) => o.block_id === x.id).sha256 } : x) };
+    snapshot = { ...snapshot, page_revision: d.next_revision, blocks: snapshot.blocks.map((x) => d.operations.find((o) => o.block_id === x.id) ? { ...x, sha256: createHash('sha256').update(d.operations.find((o) => o.block_id === x.id).content).digest('base64url') } : x) };
   }
   results.push({
     visit: name,

@@ -62,15 +62,28 @@ export function pageRevision(templateRevision, blocks, members = {}) {
   return `r1.${sha256b64u(preimage)}`;
 }
 
-/** Only the manifest members policy and limits of a configuration object. */
-function membersOf(config) {
+const POLICY_DEFAULTS = { mode: 'private', ttl_seconds: 0, offline: false };
+
+/**
+ * The manifest members policy and limits of a configuration object, without default members
+ * (H-103, DL-057, DL-058): a member with the default value is dropped, an object without members is
+ * dropped, and a max_patch_bytes hint that is not smaller than the server limit is dropped.
+ */
+export function membersOf(config, serverLimit = MAX_PATCH_BYTES) {
   const members = {};
-  if (config.policy !== undefined) members.policy = config.policy;
-  if (config.limits !== undefined) members.limits = config.limits;
+  if (config.policy !== undefined) {
+    const policy = {};
+    for (const [name, value] of Object.entries(config.policy)) {
+      if (value !== POLICY_DEFAULTS[name]) policy[name] = value;
+    }
+    if (Object.keys(policy).length > 0) members.policy = policy;
+  }
+  const hint = config.limits?.max_patch_bytes;
+  if (hint !== undefined && hint < serverLimit) members.limits = { max_patch_bytes: hint };
   return members;
 }
 
-/** The page manifest (manifest-patch section 1.2). It has no content and no secrets. */
+/** The page manifest (manifest-patch section 1.1, H-103): no block list, no template revision. */
 export function buildManifest(analysis, target, members) {
   const url = new URL(target);
   const blocks = analysis.blocks.map(({ id, format, sha256 }) => ({ id, format, sha256 }));
@@ -78,9 +91,7 @@ export function buildManifest(analysis, target, members) {
     protocol: 'rqp/1',
     origin: url.origin,
     path: url.pathname,
-    template_revision: analysis.template_revision,
     page_revision: pageRevision(analysis.template_revision, blocks, members),
-    blocks,
     ...members,
   };
 }
@@ -115,23 +126,13 @@ export function changeSet(blocks, b) {
   return changed;
 }
 
-/** Step 7: the delta envelope D (manifest-patch section 2). One replace_block per changed block. */
-export function buildDelta(page, analysis, baseRevision, nextRevision, indices) {
+/** Step 7: the delta envelope D (manifest-patch section 2, H-104). One operation per changed block. */
+export function buildDelta(page, analysis, nextRevision, indices) {
   return {
-    type: 'rivqen.patch',
-    protocol: 'rqp/1',
-    base_revision: baseRevision,
     next_revision: nextRevision,
-    template_revision: analysis.template_revision,
     operations: indices.map((i) => {
       const b = analysis.blocks[i];
-      return {
-        op: 'replace_block',
-        block_id: b.id,
-        format: b.format,
-        content: page.toString('utf8', b.start, b.end),
-        sha256: b.sha256,
-      };
+      return { block_id: b.id, content: page.toString('utf8', b.start, b.end) };
     }),
   };
 }
@@ -183,7 +184,8 @@ function select(request, status, appHeaders, page, config) {
 
   // Step 3: the full document F, the same for every request.
   const reqHeaders = normalizeHeaders(request.headers);
-  const members = membersOf(config);
+  const serverLimit = config.maxPatchBytes ?? MAX_PATCH_BYTES;
+  const members = membersOf(config, serverLimit);
   const manifest = buildManifest(analysis, request.target, members);
   const full = insertManifest(page, insertAt, manifest);
   if (full === null) return null;
@@ -228,8 +230,8 @@ function select(request, status, appHeaders, page, config) {
     return block.format === 'html' && !passesPatchContentRule(page.subarray(block.start, block.end));
   });
   if (failsRule) return sendFull('patch-content-rule');
-  const delta = Buffer.from(JSON.stringify(buildDelta(page, analysis, base, manifest.page_revision, changed)), 'utf8');
-  const limit = Math.min(config.maxPatchBytes ?? MAX_PATCH_BYTES, members.limits?.max_patch_bytes ?? Infinity);
+  const delta = Buffer.from(JSON.stringify(buildDelta(page, analysis, manifest.page_revision, changed)), 'utf8');
+  const limit = Math.min(serverLimit, members.limits?.max_patch_bytes ?? Infinity);
   if (delta.length > limit) return sendFull('delta-too-large');
   if (delta.length >= full.length) return sendFull('delta-not-smaller');
   return {

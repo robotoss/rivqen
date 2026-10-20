@@ -46,7 +46,7 @@ This is a security problem. Do not open a public issue. Follow the [security pol
 
 | Code | Meaning | What to do |
 |---|---|---|
-| `PATCH_BASE_MISMATCH` | An update did not match the page version | Nothing. Rivqen reloads the page. Report if frequent. |
+| `INTEGRITY_ERROR` | An update did not match the page version | Nothing. Rivqen reloads the page. Report if frequent. |
 | `CACHE_CORRUPTED` | A cache entry failed its check | Nothing. Rivqen deletes it. Report if frequent. |
 | `TLS_ERROR` | Certificate problem | Fix the server certificate. Rivqen never bypasses it. |
 | `MEMORY_BUDGET_EXCEEDED` | Memory limit reached | Reduce the page size or raise the budget. |

@@ -122,7 +122,7 @@ Every error that reaches the host is delivered as one structured event:
 ```json
 {
   "event": "rivqen.error",
-  "code": "PATCH_BASE_MISMATCH",
+  "code": "INTEGRITY_ERROR",
   "category": "Protocol",
   "fallback": "NormalLoad",
   "session_id": "s-7f3a…",

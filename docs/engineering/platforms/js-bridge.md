@@ -45,8 +45,8 @@ The native side **never** trusts an `origin` field inside a message. It uses the
 | Type | Direction | Payload | Notes |
 |---|---|---|---|
 | `rivqen.hello` | page → native | `sdk_version`, `capabilities` | First message. Native answers with session info. |
-| `rivqen.session` | native → page | `navigation_id`, `page_revision`, `template_revision`, `mode` | |
-| `rivqen.update` | native → page | `base_revision`, `next_revision`, `blocks[]` | Validated patch or legacy diff |
+| `rivqen.session` | native → page | `navigation_id`, `page_revision`, `mode` | |
+| `rivqen.update` | native → page | `next_revision`, `blocks[]` | Native has already checked `next_revision` (manifest and patch §2.4, step 7). The page sets the content of an `html` block with `innerHTML` (§2.4 "DOM apply", H-102). Validated patch or legacy diff |
 | `rivqen.ack` | page → native | `request_id`, `status` (`applied`, `rejected`, `reload`) | Native commits or rolls back |
 | `rivqen.reload` | page → native | `reason` | Page asks for a full snapshot (for example hydration mismatch) |
 | `rivqen.metric` | page → native | Closed set of timing marks | Optional |

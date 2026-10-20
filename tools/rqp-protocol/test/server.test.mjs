@@ -554,3 +554,7 @@ test('the delta carries the exact content of a block with quotes, escapes, contr
   const op = JSON.parse(r.body.toString('utf8')).operations[0];
   assert.deepEqual(op, { block_id: 'x', content });
 });
+
+test('writtenMembers: only max_patch_bytes is judged against the server limit; another limit keeps its value', () => {
+  assert.deepEqual(writtenMembers({ limits: { other_limit: 1048576, max_patch_bytes: 262144 } }, 262144), { limits: { other_limit: 1048576 } });
+});

@@ -428,6 +428,24 @@ test('formatJson: an empty object and an array of scalars with null stay on one 
   assert.equal(formatJson([null, 1, 'x']), '[null,1,"x"]');
 });
 
+test('body recipe defects name the member and the reason in the case error', () => {
+  const full = (body) => withCase('FX-RQ-C05-TYPE-DOTLESS-I', (c) => ({ ...c, response: { ...c.response, body } }));
+  const delta = (body) => withCase('FX-RQ-C18-FALLBACK-DELTA', (c) => ({ ...c, response: { ...c.response, body } }));
+  const base = { from: 'page-a', to: 'page-b' };
+  const cases = [
+    [full({ full: 'page-a', old_manifest: false }), /old_manifest must be true when present/],
+    [full({ full: 'page-a', extra: 1 }), /unknown member body\.extra/],
+    [delta({ delta: { ...base, extra: 1 } }), /unknown member body\.delta\.extra/],
+    [delta({ delta: { ...base, old_envelope: false } }), /body\.delta\.old_envelope must be true when present/],
+    [delta({ delta: { ...base, duplicate_member: 1 } }), /body\.delta\.duplicate_member must be true when present/],
+    [delta({ delta: { from: 'page-a', ops: 'price' } }), /body\.delta\.ops must be a list/],
+    [delta({ delta: { from: 'page-a', ops: [{ block_id: 'price', content: '', extra: 1 }] } }), /unknown member body\.delta\.ops\[\]\.extra/],
+    [delta({ delta: { from: 'page-a', to: 'page-no-head-body-first' } }), /page-no-head-body-first does not have the blocks of page-a/],
+    [delta({ delta: { from: 'page-a', ops: [{ block_id: 'price', content: 'x' }], size: 1000 } }), /size needs exactly one operation with empty content/],
+  ];
+  for (const [attempt, pattern] of cases) assert.throws(attempt, (e) => isCaseError(e) && pattern.test(e.message), String(pattern));
+});
+
 test('the usage error exits 2', () => {
   assert.throws(() => execFileSync(process.execPath, [GEN, '--write'], { stdio: 'pipe' }), (e) => e.status === 2);
 });

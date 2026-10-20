@@ -17,6 +17,8 @@ import {
   MANIFEST_START,
   POLICY_DEFAULTS,
   UnsupportedInput,
+  canonicalUrl,
+  deltaBinding,
   digestPrefix,
   membersOf,
   pageRevision,
@@ -177,14 +179,17 @@ export function changeSet(blocks, b) {
 }
 
 /**
- * Step 7: the delta envelope (manifest-patch section 2; H-104): next_revision
- * and one operation (block id and content) for each block in the change set,
- * in document order. No base or template revision, no type, no format and no
- * hash: the client computes the block hashes and checks next_revision.
+ * Step 7: the delta envelope (manifest-patch section 2; H-104, H-107): the
+ * binding value and one operation (block id and content) for each block in
+ * the change set, in document order. No base or template revision, no type,
+ * no format and no hash: the client computes the block hashes and the next
+ * page revision, and checks the binding. `binding` is deltaBinding(U, B, R'):
+ * U the canonical URL of this request, B the base revision of If-None-Match
+ * (section 3.5), R' the page revision of the current page.
  */
-export function deltaEnvelope(page, analysis, manifest, indices) {
+export function deltaEnvelope(page, analysis, binding, indices) {
   return {
-    next_revision: manifest.page_revision,
+    binding,
     operations: indices.map((i) => {
       const b = analysis.blocks[i];
       return { block_id: b.id, content: page.toString('utf8', b.start, b.end) };
@@ -320,7 +325,10 @@ export function handle(request, app, pageBytes, config = {}) {
     const b = analysis.blocks[i];
     if (b.format === 'html' && patchContentFailure(page.subarray(b.start, b.end)) !== null) return sendFull('patch-content-rule');
   }
-  const envelope = deltaEnvelope(page, analysis, manifest, indices);
+  // H-107: U is the canonical URL of the request that this server answers (the
+  // final request of the client), B the base of step 5, R' the current page revision.
+  const binding = deltaBinding(canonicalUrl(request.target), base, manifest.page_revision);
+  const envelope = deltaEnvelope(page, analysis, binding, indices);
   const delta = Buffer.from(JSON.stringify(envelope), 'utf8');
   if (delta.length > maxPatchBytes) return sendFull('delta-too-large');
   if (delta.length >= full.length) return sendFull('delta-not-smaller');

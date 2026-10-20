@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-C10-CLOSE-P",
   "kind": "client",
-  "description": "price content 1</p><p>2 closes the block early; hashes and next_revision correct (H-48)",
+  "description": "price content 1</p><p>2 closes the block early; hashes and binding correct (H-48)",
   "rules": ["RQP-13"],
   "context": {
     "navigation": "delta",

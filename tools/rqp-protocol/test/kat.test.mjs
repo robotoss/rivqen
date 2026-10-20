@@ -8,11 +8,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { pageRevision, policyLimitsText } from '../src/common.mjs';
+import { canonicalUrl, deltaBinding, deltaBindingPreimage, pageRevision, policyLimitsText } from '../src/common.mjs';
 import { handle } from '../src/server.mjs';
 import { clientStep } from '../src/client.mjs';
 import { substitute } from '../src/fixtures.mjs';
-import { APP, KAT_DIR, clientContext, deltaRequest, firstVisit, page, readJson, revisions } from './helpers.mjs';
+import { APP, KAT_DIR, TARGET, clientContext, deltaRequest, firstVisit, page, readJson, revisions } from './helpers.mjs';
 
 const kat = readJson(join(KAT_DIR, 'kat.json'));
 const manifest = readJson(join(KAT_DIR, kat.manifest));
@@ -30,9 +30,24 @@ test('page-a is the KAT page and gives the KAT revisions and the computed values
   assert.equal(a.page_revision, manifest.page_revision);
 });
 
-test('page-b gives the next_revision of the KAT price patch', () => {
+test('page-a and page-b give B and R\' of the binding of the KAT price patch (H-107)', () => {
   const patch = readJson(join(KAT_DIR, kat.patches[0]));
-  assert.equal(revisions('page-b').page_revision, patch.next_revision);
+  const entry = kat.bindings.find((e) => e.patch === kat.patches[0]);
+  assert.deepEqual([entry.base_revision, entry.next_revision], [revisions('page-a').page_revision, revisions('page-b').page_revision]);
+  assert.equal(entry.url, TARGET);
+  assert.equal(deltaBindingPreimage(entry.url, entry.base_revision, entry.next_revision), entry.preimage);
+  assert.equal(deltaBinding(entry.url, entry.base_revision, entry.next_revision), patch.binding);
+  assert.equal(entry.binding, patch.binding);
+});
+
+test('the KAT binding with a query: U of the reference is the canonical URL of url_input (H-107)', () => {
+  const q = kat.binding_with_query;
+  assert.equal(canonicalUrl(q.url_input), q.url);
+  assert.equal(deltaBindingPreimage(q.url, q.base_revision, q.next_revision), q.preimage);
+  assert.equal(deltaBinding(q.url, q.base_revision, q.next_revision), q.binding);
+  // The reference server writes this binding for the target url_input (a fragment never reaches a server, but U drops it anyway).
+  const r = handle({ ...deltaRequest('page-a'), target: q.url_input }, APP, page('page-b'));
+  assert.equal(JSON.parse(r.body.toString('utf8')).binding, q.binding);
 });
 
 test('the placeholders give the KAT If-None-Match and Rq-Have values', () => {
@@ -83,7 +98,9 @@ test('the reference client accepts the KAT full documents and applies the KAT pa
     const snapshot = { ...computed, ...m, document: page('page-a') };
     const patched = clientStep({ ...ctx, navigation: 'delta', snapshot }, { status: 200, headers: json, body: readFileSync(join(KAT_DIR, patchFile)) });
     assert.equal(patched.outcome, 'patched', String(patched.error));
-    assert.equal(patched.snapshot.page_revision, readJson(join(KAT_DIR, patchFile)).next_revision);
+    // After acceptance the page revision of the new snapshot is R' of the binding (H-107).
+    const entry = [...kat.bindings, ...set2.bindings].find((e) => e.patch === patchFile);
+    assert.equal(patched.snapshot.page_revision, entry.next_revision);
   }
 });
 

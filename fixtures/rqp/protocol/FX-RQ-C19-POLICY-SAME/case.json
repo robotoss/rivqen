@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-C19-POLICY-SAME",
   "kind": "client",
-  "description": "Snapshot policy ttl_seconds 60; the delta next_revision has the same policy line: applied (H-55, extra case)",
+  "description": "Snapshot policy ttl_seconds 60; the delta binding has the same policy line in B and R': applied (H-55, extra case)",
   "rules": ["RQP-13"],
   "context": {
     "navigation": "delta",

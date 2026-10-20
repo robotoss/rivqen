@@ -1,11 +1,11 @@
 {
-  "description": "No base_revision (H-104): a delta for another base fails the next_revision check",
+  "description": "No base_revision (H-104): the binding has the base (H-107); a delta for another base fails the binding check",
   "expect": {
     "keyword": "additionalProperties",
     "instancePath": ""
   },
   "instance": {
-    "next_revision": "r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI",
+    "binding": "d1.SGYLGtFc4PsLoFIzWsurTmxLupiief5xgV7ZCtXDcpc",
     "operations": [
       {
         "block_id": "price",

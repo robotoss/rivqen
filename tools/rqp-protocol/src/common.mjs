@@ -27,8 +27,8 @@ export const MANIFEST_END = '</script>';
 /**
  * Client error codes of manifest-patch section 5 (H-50). Since H-104 an rqp/1
  * delta never gives TEMPLATE_MISMATCH or PATCH_BASE_MISMATCH: a delta for
- * another template or another base fails the next_revision check of step 7
- * (INTEGRITY_ERROR), so the reference has no step that produces them.
+ * another template or another base fails the binding check of step 7
+ * (INTEGRITY_ERROR, H-107), so the reference has no step that produces them.
  */
 export const Code = Object.freeze({
   MANIFEST_INVALID: 'MANIFEST_INVALID',
@@ -100,6 +100,43 @@ export function pageRevision(templateRevision, blocks, members = {}) {
   if (s !== '') p += `PL\t${s}\n`;
   for (const b of blocks) p += `${b.id}\t${b.format}\t${b.sha256}\n`;
   return `r1.${sha256b64u(p)}`;
+}
+
+const REVISION = /^r1\.[A-Za-z0-9_-]{43}$/;
+
+/**
+ * The URL U of the delta binding (manifest-patch section 2.2, H-107; H-58):
+ * the WHATWG URL serialization of `url` without its fragment. The server
+ * passes the URL of the request that it answers, the client the final URL of
+ * the response (after redirects). The steps of cache identity section 2 that
+ * the WHATWG serializer does not do (percent-encoding normalization, ignored
+ * query parameters) are not applied: the server cannot know the client
+ * configuration of ignored parameters. The serialization never has a line
+ * feed: the parser removes tab and newline and percent-encodes the other C0
+ * controls. Throws a TypeError for a string that is not a URL.
+ */
+export function canonicalUrl(url) {
+  const u = new URL(url);
+  u.hash = '';
+  return u.href;
+}
+
+/**
+ * The preimage of the delta binding (manifest-patch section 2.2, H-107):
+ * "rqp-d1" LF U LF B LF R' LF. `url` is U (canonicalUrl), `base` the base page
+ * revision B, `next` the next page revision R'. Throws a TypeError when U has
+ * a line feed or B or R' is not a page revision: one preimage has one parse.
+ */
+export function deltaBindingPreimage(url, base, next) {
+  if (typeof url !== 'string' || url.includes('\n')) throw new TypeError('the binding URL is not a canonical URL');
+  if (typeof base !== 'string' || !REVISION.test(base)) throw new TypeError('the binding base is not a page revision');
+  if (typeof next !== 'string' || !REVISION.test(next)) throw new TypeError('the binding next revision is not a page revision');
+  return `rqp-d1\n${url}\n${base}\n${next}\n`;
+}
+
+/** The delta binding value (H-107): "d1." + B64U(SHA-256(UTF-8 of the preimage)). */
+export function deltaBinding(url, base, next) {
+  return `d1.${sha256b64u(deltaBindingPreimage(url, base, next))}`;
 }
 
 /**

@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-C10-TITLE-END",
   "kind": "client",
-  "description": "title content </title>; hashes and next_revision correct (H-48)",
+  "description": "title content </title>; hashes and binding correct (H-48)",
   "rules": ["RQP-13"],
   "context": {
     "navigation": "delta",

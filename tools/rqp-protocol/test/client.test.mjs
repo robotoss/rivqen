@@ -8,7 +8,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { LIMITS, pageRevision, sha256b64u } from '../src/common.mjs';
+import { LIMITS, deltaBinding, pageRevision, sha256b64u } from '../src/common.mjs';
 import {
   cacheDirectives,
   checkFull,
@@ -40,18 +40,20 @@ const DELTA = [['content-type', 'application/vnd.rivqen.delta+json']];
 const HTML = [['content-type', 'text/html; charset=utf-8'], ['rq-version', '1']];
 
 /**
- * A consistent envelope (H-104) from the snapshot of page-a: ops =
- * [[blockId, content]]; `members` are the policy and limits of the snapshot
- * (H-55); `change` replaces or adds members.
+ * A consistent envelope (H-104, H-107) that a server built from page-a for
+ * TARGET: ops = [[blockId, content]]. Options: `members` are the policy and
+ * limits of the snapshot (H-55); `next` replaces R' (default: page-a with the
+ * contents of ops), `base` replaces B (default: the page revision of page-a
+ * with `members`), `url` replaces U. `extra` adds or replaces members.
  */
-function envelope(ops, change = {}, members = {}) {
+function envelope(ops, { members = {}, next, base, url = TARGET } = {}, extra = {}) {
   const a = revisions('page-a');
   const hashes = new Map(ops.map(([id, c]) => [id, sha256b64u(Buffer.from(c, 'utf8'))]));
-  const next = a.blocks.map((b) => ({ ...b, sha256: hashes.get(b.id) ?? b.sha256 }));
+  const blocks = a.blocks.map((b) => ({ ...b, sha256: hashes.get(b.id) ?? b.sha256 }));
   return {
-    next_revision: pageRevision(a.template_revision, next, members),
+    binding: deltaBinding(url, base ?? pageRevision(a.template_revision, a.blocks, members), next ?? pageRevision(a.template_revision, blocks, members)),
     operations: ops.map(([id, content]) => ({ block_id: id, content })),
-    ...change,
+    ...extra,
   };
 }
 
@@ -101,7 +103,7 @@ test('PATCH_INVALID: JSON rules, schema and operation rules', () => {
   const ok = envelope([['price', '130.00']]);
   const text = JSON.stringify(ok);
   assert.equal(code(ok), null);
-  assert.equal(code(text.replace('{', `{"next_revision":"${revisions('page-a').page_revision}",`)), 'PATCH_INVALID'); // duplicate member
+  assert.equal(code(text.replace('{', `{"binding":"${ok.binding}",`)), 'PATCH_INVALID'); // duplicate member, also with the same value
   assert.equal(code(text.slice(0, -1)), 'PATCH_INVALID'); // syntax
   assert.equal(code({ ...ok, page_id: 'x' }), 'PATCH_INVALID'); // schema: unknown member
   assert.equal(code({ ...ok, operations: [] }), 'PATCH_INVALID'); // schema: minItems
@@ -116,6 +118,10 @@ test('PATCH_INVALID: JSON rules, schema and operation rules', () => {
   for (const extra of [{ type: 'rivqen.patch' }, { protocol: 'rqp/1' }, { base_revision: a.page_revision }, { template_revision: a.template_revision }]) {
     assert.equal(code({ ...ok, ...extra }), 'PATCH_INVALID', Object.keys(extra)[0]);
   }
+  // H-107: the envelope of H-104 (next_revision in place of the binding), also next to a correct binding.
+  const { binding, ...rest } = ok;
+  assert.equal(code({ next_revision: revisions('page-b').page_revision, ...rest }), 'PATCH_INVALID');
+  assert.equal(code({ binding, next_revision: revisions('page-b').page_revision, ...rest }), 'PATCH_INVALID');
   for (const extra of [{ op: 'replace_block' }, { format: 'html' }, { sha256 }]) {
     assert.equal(code({ ...ok, operations: [{ ...ok.operations[0], ...extra }] }), 'PATCH_INVALID', Object.keys(extra)[0]);
   }
@@ -124,49 +130,99 @@ test('PATCH_INVALID: JSON rules, schema and operation rules', () => {
 test('INTEGRITY_ERROR at step 7 for a delta built for another template (H-104; before: TEMPLATE_MISMATCH)', () => {
   const t2 = revisions('page-t2');
   const next = t2.blocks.map((b) => (b.id === 'price' ? { ...b, sha256: sha256b64u('130.00') } : b));
-  const env = envelope([['price', '130.00']], { next_revision: pageRevision(t2.template_revision, next) });
+  const env = envelope([['price', '130.00']], { base: t2.page_revision, next: pageRevision(t2.template_revision, next) });
   assert.equal(code(env), 'INTEGRITY_ERROR');
 });
 
-test('INTEGRITY_ERROR at step 7 for a delta built for another base (H-104; before: PATCH_BASE_MISMATCH)', () => {
-  // The server thought the client had page-b with another title: it sent only the price.
-  const b = revisions('page-b');
-  const serverNext = b.blocks.map((x) => (x.id === 'title' ? { ...x, sha256: sha256b64u('Shop 2') } : x));
-  const env = envelope([['price', '130.00']], { next_revision: pageRevision(b.template_revision, serverNext) });
+test('INTEGRITY_ERROR at step 7 for a delta built for another base (H-104, H-107; before: PATCH_BASE_MISMATCH)', () => {
+  // The server thought the client had page-title-2 (title Shop 2): it sent only the price.
+  const t = revisions('page-title-2');
+  const serverNext = t.blocks.map((x) => (x.id === 'price' ? { ...x, sha256: sha256b64u('130.00') } : x));
+  const env = envelope([['price', '130.00']], { base: t.page_revision, next: pageRevision(t.template_revision, serverNext) });
   assert.equal(code(env), 'INTEGRITY_ERROR');
-  // The same operations for the base of the client: applied. The base is not in the envelope.
+  // The same operations for the base of the client: applied.
   assert.equal(code(envelope([['price', '130.00']])), null);
 });
 
-test('INTEGRITY_ERROR at step 7 for content that next_revision does not bind (H-104; before: step 4)', () => {
-  const env = envelope([['price', '131.00']], { next_revision: revisions('page-b').page_revision });
+test('INTEGRITY_ERROR at step 7 for content that the binding does not bind (H-104; before: step 4)', () => {
+  const env = envelope([['price', '131.00']], { next: revisions('page-b').page_revision });
   assert.equal(code(env), 'INTEGRITY_ERROR');
 });
 
-test('a replayed delta passes step 7 only when its result is a page revision of the server (H-104)', () => {
-  // The delta page-a -> page-b on a snapshot of page-b: the result is page-b again.
-  const snapB = snapshotOf(page('page-b'), {}, TARGET);
-  assert.equal(code(envelope([['price', '130.00']]), snapB), null);
-  // A delta for page-a -> page-b with an operation for the title on a snapshot of page-b: another result.
-  const env = envelope([['title', 'Shop']], { next_revision: revisions('page-b').page_revision });
-  assert.equal(code(env, snapB), null);
-  assert.equal(code(env), 'INTEGRITY_ERROR');
+test('H-107: a delta applies only to its base: a stale replay on its own target and a rollback are INTEGRITY_ERROR', () => {
+  // D(page-a -> page-b) on a snapshot of page-b: before H-107 a no-op that passed (stale pinning).
+  const d = envelope([['price', '130.00']]);
+  assert.equal(code(d, snapshotOf(page('page-b'), {}, TARGET)), 'INTEGRITY_ERROR');
+  // Versions v1 = page-title-2 (title Shop 2), v2 = page-a (title Shop), v3 = page-a with the title Shop 3.
+  // D(v1 -> v2) on a snapshot of v3: before H-107 the result was v2, a page revision of the
+  // server, so it passed (rollback v3 -> v2).
+  const v1 = revisions('page-title-2');
+  const back = envelope([['title', 'Shop']], { base: v1.page_revision, next: revisions('page-a').page_revision });
+  const v3 = Buffer.from(page('page-a').toString('utf8').replace('>Shop<', '>Shop 3<'), 'utf8');
+  assert.notEqual(snapshotOf(v3).page_revision, revisions('page-a').page_revision);
+  assert.equal(code(back, snapshotOf(v3, {}, TARGET)), 'INTEGRITY_ERROR');
+  // The same delta on its base: applied.
+  assert.equal(code(back, snapshotOf(page('page-title-2'), {}, TARGET)), null);
 });
 
-test('INTEGRITY_ERROR: next_revision does not match the blocks (step 7), also after an omitted block', () => {
-  const omitted = envelope([['title', 'Shop']], { next_revision: revisions('page-b').page_revision });
+test('H-107: an all-blocks delta applies only to its base and its URL', () => {
+  // Every block of page-b, as a server sends for a request without the member b (H-7).
+  const ops = revisions('page-b').blocks.map((b) => [b.id, page('page-b').toString('utf8', b.start, b.end)]);
+  // Built for page-title-2 (another client): every block is replaced, so R' is r1(page-b) on any snapshot of the template.
+  const other = envelope(ops, { base: revisions('page-title-2').page_revision });
+  assert.equal(code(other), 'INTEGRITY_ERROR');
+  // Built for page-a at another URL with the same template.
+  const otherUrl = envelope(ops, { url: 'https://shop.example.com/catalog/2' });
+  assert.equal(code(otherUrl), 'INTEGRITY_ERROR');
+  // Built for page-a at this URL: applied, the result is page-b.
+  const ok = verify(envelope(ops));
+  assert.equal(ok.snapshot.page_revision, revisions('page-b').page_revision);
+});
+
+test('H-107: U is the canonical final URL with its query; a binding without the query or with a fragment form does not match', () => {
+  const withQuery = 'https://shop.example.com/catalog?page=2';
+  const snapQ = snapshotOf(page('page-a'), {}, withQuery);
+  assert.equal(code(envelope([['price', '130.00']], { url: withQuery }), snapQ), null);
+  // A server that binds origin and path only (the manifest members) fails on a URL with a query.
+  assert.equal(code(envelope([['price', '130.00']], { url: TARGET }), snapQ), 'INTEGRITY_ERROR');
+  // The serializer gives one form: host case, the default port and the fragment do not change U.
+  const snapUpper = snapshotOf(page('page-a'), {}, 'https://SHOP.example.com:443/catalog#x');
+  assert.equal(snapUpper.url, TARGET);
+  assert.equal(code(envelope([['price', '130.00']]), snapUpper), null);
+});
+
+test('H-107: verifyDelta binds the URL that it gets; without a URL the binding cannot match (fail closed)', () => {
+  const body = Buffer.from(JSON.stringify(envelope([['price', '130.00']])));
+  assert.equal(verifyDelta(snapA(), body, true, LIMITS.maxPatchBytes, TARGET).code, undefined);
+  assert.equal(verifyDelta(snapA(), body, true, LIMITS.maxPatchBytes, 'https://shop.example.com/other').code, 'INTEGRITY_ERROR');
+  assert.equal(verifyDelta(snapshotOf(page('page-a')), body, true).code, 'INTEGRITY_ERROR');
+  assert.equal(verifyDelta(snapA(), body, true, LIMITS.maxPatchBytes, null).code, 'INTEGRITY_ERROR');
+});
+
+test('H-107: handleDelta binds the final URL of the response', () => {
+  // A redirect to the same cache key (host case): U is the canonical final URL, the same as the key.
+  const body = Buffer.from(JSON.stringify(envelope([['price', '130.00']])));
+  const r = handleResponse(ctx({ final_url: 'https://SHOP.example.com/catalog', redirected: true }), { status: 200, headers: DELTA, body });
+  assert.equal(r.outcome, 'patched');
+});
+
+test('INTEGRITY_ERROR: the binding does not match the blocks (step 7), also after an omitted block', () => {
+  const omitted = envelope([['title', 'Shop']], { next: revisions('page-b').page_revision });
   assert.equal(code(omitted), 'INTEGRITY_ERROR');
 });
 
-test('INTEGRITY_ERROR: next_revision with another policy line than the snapshot (H-55)', () => {
-  const snap = snapshotOf(page('page-a'), { policy: { ttl_seconds: 60 } });
+test('INTEGRITY_ERROR: a binding with another policy line than the snapshot (H-55)', () => {
+  const members = { policy: { ttl_seconds: 60 } };
+  const snap = snapshotOf(page('page-a'), members, TARGET);
   const a = revisions('page-a');
   const content = '130.00';
   const hash = sha256b64u(content);
   const blocks = a.blocks.map((b) => (b.id === 'price' ? { ...b, sha256: hash } : b));
-  const env = (ttl) => envelope([['price', content]], { next_revision: pageRevision(a.template_revision, blocks, { policy: { ttl_seconds: ttl } }) });
+  const env = (ttl) => envelope([['price', content]], { members, next: pageRevision(a.template_revision, blocks, { policy: { ttl_seconds: ttl } }) });
   assert.equal(code(env(61), snap), 'INTEGRITY_ERROR');
   assert.equal(code(env(60), snap), null);
+  // B with the policy line of the server (61) and R' of the snapshot line: the base differs.
+  assert.equal(code(envelope([['price', content]], { members, base: pageRevision(a.template_revision, a.blocks, { policy: { ttl_seconds: 61 } }) }), snap), 'INTEGRITY_ERROR');
 });
 
 test('PATCH_CONTENT_REJECTED: markup analysis of the patched document (step 8)', () => {
@@ -213,11 +269,11 @@ test('PATCH_TOO_LARGE: a patched document over maxDocumentBytes', () => {
   // Snapshot of a document just under the limit; the patch adds enough bytes to pass it.
   const filler = 'a'.repeat(LIMITS.maxDocumentBytes - 200);
   const doc = Buffer.from(`<!DOCTYPE html><html><head><title>t</title></head><body><p>${filler}</p><div data-rq-block="x">1</div></body></html>`);
-  const snap = snapshotOf(doc);
+  const snap = snapshotOf(doc, {}, TARGET);
   const content = 'b'.repeat(300);
   const a = snap.analysis;
   const blocks = [{ ...a.blocks[0], sha256: sha256b64u(content) }];
-  const env = { next_revision: pageRevision(a.template_revision, blocks), operations: [{ block_id: 'x', content }] };
+  const env = { binding: deltaBinding(TARGET, snap.page_revision, pageRevision(a.template_revision, blocks)), operations: [{ block_id: 'x', content }] };
   assert.equal(verifyDelta(snap, Buffer.from(JSON.stringify(env)), true).code, 'PATCH_TOO_LARGE');
 });
 
@@ -581,7 +637,8 @@ function publicDelta(extraHeaders = []) {
   const content = '130.00';
   const hash = sha256b64u(Buffer.from(content, 'utf8'));
   const next = a.blocks.map((b) => (b.id === 'price' ? { ...b, sha256: hash } : b));
-  const env = { next_revision: pageRevision(a.template_revision, next, PUBLIC), operations: [{ block_id: 'price', content }] };
+  const binding = deltaBinding(TARGET, pageRevision(a.template_revision, a.blocks, PUBLIC), pageRevision(a.template_revision, next, PUBLIC));
+  const env = { binding, operations: [{ block_id: 'price', content }] };
   return { status: 200, headers: [...DELTA, ['cache-control', 'no-store'], ...extraHeaders], body: Buffer.from(JSON.stringify(env)) };
 }
 const onPublic = (fields, extraHeaders) => {
@@ -927,8 +984,8 @@ test('manifest elements: only a script start tag with exactly the 32 bytes of th
   assert.equal(r.outcome, 'stored');
 });
 
-test('diff-engine order: a wrong next_revision (step 7) is found before the markup analysis of the patched document (step 8)', () => {
-  const env = envelope([['price', '<span data-rq-block="y">a</span>']], { next_revision: revisions('page-b').page_revision });
+test('diff-engine order: a wrong binding (step 7) is found before the markup analysis of the patched document (step 8)', () => {
+  const env = envelope([['price', '<span data-rq-block="y">a</span>']], { next: revisions('page-b').page_revision });
   assert.equal(code(env), 'INTEGRITY_ERROR');
   assert.equal(code(envelope([['price', '<span data-rq-block="y">a</span>']])), 'PATCH_CONTENT_REJECTED');
 });
@@ -938,10 +995,11 @@ test('a patched document of exactly maxDocumentBytes is applied', () => {
   const head = '<!DOCTYPE html><html><head><title>t</title></head><body><p>';
   const tail = '</p><div data-rq-block="x">1</div></body></html>';
   const filler = 'a'.repeat(LIMITS.maxDocumentBytes - head.length - tail.length - content.length + 1);
-  const snap = snapshotOf(Buffer.from(head + filler + tail));
+  const snap = snapshotOf(Buffer.from(head + filler + tail), {}, TARGET);
   const a = snap.analysis;
   const sha = sha256b64u(content);
-  const env = { next_revision: pageRevision(a.template_revision, [{ ...a.blocks[0], sha256: sha }]), operations: [{ block_id: 'x', content }] };
+  const next = pageRevision(a.template_revision, [{ ...a.blocks[0], sha256: sha }]);
+  const env = { binding: deltaBinding(TARGET, snap.page_revision, next), operations: [{ block_id: 'x', content }] };
   const r = verifyDelta(snap, Buffer.from(JSON.stringify(env)), true);
   assert.equal(r.code, undefined);
   assert.equal(r.snapshot.document.length, LIMITS.maxDocumentBytes);
@@ -960,4 +1018,59 @@ test('harness interface: the request fields of a context, and a context snapshot
   assert.deepEqual(clientRequest(context), deltaRequest('page-a').headers);
   assert.deepEqual(clientRequest({ ...context, snapshot: null, navigation: 'first-visit' }), firstVisit().headers);
   assert.throws(() => clientStep({ ...context, snapshot: { ...plain, page_revision: revisions('page-b').page_revision } }, { status: 304, headers: [], body: null }), /does not match/);
+});
+
+// S6 security review F1 (probes 1 to 3): a delta of the reference server that a cache
+// replays to another snapshot. Each was applied before H-107; each is INTEGRITY_ERROR now.
+const probePage = (title, price, cart) => Buffer.from(
+  `<!DOCTYPE html>\n<html>\n<head>\n<title data-rq-block="title">${title}</title>\n</head>\n<body>\n` +
+  `<p data-rq-block="price">${price}</p>\n<div data-rq-block="cart">${cart}</div>\n<p>${'static '.repeat(80)}</p>\n</body>\n</html>\n`, 'utf8');
+/** The harness context of a snapshot of `doc` at `url` (the members `members`). */
+function probeContext(doc, url, members = {}, fields = {}) {
+  const s = snapshotOf(doc, members, url);
+  return {
+    url, final_url: url, redirected: false, build: 'release', allow_http: false, allowlist: [new URL(url).origin],
+    credentials: null, response_fields_visible: true, public_enabled: false, public_origin: false, navigation: 'delta',
+    snapshot: { document: doc, template_revision: s.analysis.template_revision, page_revision: s.page_revision, blocks: [], ...members },
+    ...fields,
+  };
+}
+/** The delta of the reference server for a client with `base` at `url`, to the page `current`. */
+function probeDelta(base, current, url, members = {}) {
+  const d = handle({ method: 'GET', target: url, headers: clientRequest(probeContext(base, url, members)) }, APP, current, members);
+  assert.equal(d.kind, 'delta');
+  return { status: d.status, headers: d.headers, body: d.body };
+}
+
+test('S6 security review F1: rollback, stale pinning, cross-user and cross-URL deltas give INTEGRITY_ERROR (H-107)', () => {
+  const url = 'https://a.example/p';
+  const v1 = probePage('Shop', '10', 'e');
+  const v2 = probePage('Shop', '12', 'e');
+  const d12 = probeDelta(v1, v2, url);
+  const cases = [
+    ['rollback v3 -> v2', probeContext(probePage('Shop', '15', 'e'), url)],
+    ['stale replay at v2', probeContext(v2, url)],
+  ];
+  for (const [label, context] of cases) {
+    const r = clientStep(context, d12);
+    assert.deepEqual([r.outcome, r.error, r.next], ['rejected', 'INTEGRITY_ERROR', 'fallback-load'], label);
+  }
+  assert.equal(clientStep(probeContext(v1, url), d12).outcome, 'patched');
+  // Cross-URL: an all-blocks change on /p/1 replayed to /p/2 (same template).
+  const cross = probeDelta(probePage('Phone', '100', 'a'), probePage('Phone X', '110', 'b'), 'https://a.example/p/1');
+  assert.equal(clientStep(probeContext(probePage('Laptop', '900', 'c'), 'https://a.example/p/2'), cross).error, 'INTEGRITY_ERROR');
+  // Cross-user: Bob's delta (title and cart) on Carol's snapshot of the same URL.
+  const bob = probeDelta(probePage('Hi Bob', '5', 'bob-cart-1'), probePage('Hi Bob!', '5', 'bob-cart-2'), 'https://a.example/account');
+  assert.equal(clientStep(probeContext(probePage('Hi Carol', '5', 'carol-cart'), 'https://a.example/account'), bob).error, 'INTEGRITY_ERROR');
+});
+
+test('S6 security review F1 (probe 3): a logged-in delta replayed to the public snapshot of an anonymous client gives INTEGRITY_ERROR (H-107)', () => {
+  const url = 'https://a.example/home';
+  const cfg = { policy: { mode: 'public' } };
+  const pub = { public_enabled: true, public_origin: true, credentials: false };
+  const d = probeDelta(probePage('Welcome', '5', 'bob-cart-1'), probePage('Hi Bob', '5', 'bob-cart-2'), url, cfg);
+  const anonymous = probeContext(probePage('Welcome', '5', 'empty'), url, cfg, pub);
+  anonymous.snapshot.partition = 'public';
+  const r = clientStep(anonymous, d);
+  assert.deepEqual([r.outcome, r.error, r.snapshot], ['rejected', 'INTEGRITY_ERROR', null]);
 });

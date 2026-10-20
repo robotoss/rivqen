@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-C08-SCRIPT",
   "kind": "client",
-  "description": "price content with a script element; hashes and next_revision correct (M-22)",
+  "description": "price content with a script element; hashes and binding correct (M-22)",
   "rules": ["RQP-13"],
   "context": {
     "navigation": "delta",

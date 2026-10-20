@@ -1,11 +1,11 @@
 {
-  "description": "No template_revision (H-104): a delta for another template fails the next_revision check",
+  "description": "No template_revision (H-104): a delta for another template fails the binding check (H-107)",
   "expect": {
     "keyword": "additionalProperties",
     "instancePath": ""
   },
   "instance": {
-    "next_revision": "r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI",
+    "binding": "d1.SGYLGtFc4PsLoFIzWsurTmxLupiief5xgV7ZCtXDcpc",
     "operations": [
       {
         "block_id": "price",

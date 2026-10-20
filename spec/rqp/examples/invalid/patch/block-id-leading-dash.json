@@ -5,7 +5,7 @@
     "instancePath": "/operations/0/block_id"
   },
   "instance": {
-    "next_revision": "r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI",
+    "binding": "d1.SGYLGtFc4PsLoFIzWsurTmxLupiief5xgV7ZCtXDcpc",
     "operations": [
       {
         "block_id": "-price",

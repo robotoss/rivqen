@@ -6,7 +6,9 @@
 // with the client verification of section 2.4, and with the Node.js markup candidate.
 // Since H-103 the manifest has no template revision and no block list: the client
 // computes them (kat.json member `computed`) and checks them through page_revision.
-// Since H-104 the envelope is next_revision and the operations (block_id, content).
+// Since H-104 and H-107 the envelope is the binding and the operations (block_id,
+// content): the client computes the next page revision R' and checks the binding of the
+// URL, its base revision and R' (section 2.4, step 7).
 
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -14,7 +16,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { EXAMPLES, ROOT, contentHash, pageRevision, readJson, sha256b64u, templateRevision } from './helpers.mjs';
+import { EXAMPLES, ROOT, bindingUrl, contentHash, deltaBinding, pageRevision, readJson, sha256b64u, templateRevision } from './helpers.mjs';
 
 const KAT = join(EXAMPLES, 'kat');
 const CLI = join(ROOT, 'tools', 'rqp-markup', 'node', 'src', 'cli.mjs');
@@ -24,6 +26,8 @@ const manifest = readJson(join(KAT, kat.manifest));
 const patches = kat.patches.map((p) => ({ name: p, env: readJson(join(KAT, p)) }));
 /** The values that the client computes with its markup analysis (H-103). */
 const computed = kat.computed;
+/** U of the binding (H-107): the URL of the KAT manifest (no query). */
+const URL_U = `${manifest.origin}${manifest.path}`;
 
 function analyze(bytes) {
   const dir = mkdtempSync(join(tmpdir(), 'rqp-kat-'));
@@ -52,13 +56,14 @@ function template(bytes, blocks) {
 }
 
 /**
- * Client verification of manifest-patch.md section 2.4, steps 3 to 7 (operation rules
- * and next_revision; H-104): returns the new block list, or the code of the first failed
- * check. The client computes the hash of each content; the template revision is the one
- * of its snapshot (`current` and `t`). `snap` is the snapshot manifest: its policy and
- * limits give the policy line of the preimage (H-55).
+ * Client verification of manifest-patch.md section 2.4, steps 3 to 7 (operation rules,
+ * the next page revision R' and the binding; H-104, H-107): returns the new block list, or
+ * the code of the first failed check. The client computes the hash of each content; the
+ * template revision is the one of its snapshot (`current` and `t`). `snap` is the snapshot
+ * manifest: its policy and limits give the policy line of the preimage (H-55). B of the
+ * binding is the page revision of the snapshot (its blocks and policy line); `url` is U.
  */
-function applyToBlocks(current, env, snap = manifest, t = computed.template_revision) {
+function applyToBlocks(current, env, snap = manifest, t = computed.template_revision, url = URL_U) {
   const next = current.map((b) => ({ ...b }));
   let last = -1;
   for (const op of env.operations) {
@@ -67,24 +72,27 @@ function applyToBlocks(current, env, snap = manifest, t = computed.template_revi
     last = i;
     next[i].sha256 = contentHash(op.content);
   }
-  if (pageRevision(t, next, snap) !== env.next_revision) return 'INTEGRITY_ERROR';
+  if (deltaBinding(url, pageRevision(t, current, snap), pageRevision(t, next, snap)) !== env.binding) return 'INTEGRITY_ERROR';
   return next;
 }
 
 /**
  * Client check of section 2.4, step 8 (H-48): the markup analysis of the patched document.
  * Returns null when the patched document is valid, has the same template revision and the
- * same blocks (id, format, order), and its page revision is next_revision; else the code.
- * The analysis has no manifest input, so the page revision is computed again with the
- * policy line of the snapshot manifest `snap` (H-55).
+ * same blocks (id, format, order), and its page revision is R' (step 6: the blocks of the
+ * snapshot with the hashes of the contents); else the code. The analysis has no manifest
+ * input, so the page revision is computed again with the policy line of the snapshot
+ * manifest `snap` (H-55).
  */
 function checkPatchedDocument(bytes, blocks, env, snap = manifest) {
+  const hashes = new Map(env.operations.map((op) => [op.block_id, contentHash(op.content)]));
+  const next = computed.blocks.map((b) => ({ ...b, sha256: hashes.get(b.id) ?? b.sha256 }));
   const after = analyze(splice(bytes, blocks, env));
   if (!after.valid) return 'PATCH_CONTENT_REJECTED';
   if (after.template_revision !== computed.template_revision) return 'PATCH_CONTENT_REJECTED';
   const shape = (list) => list.map(({ id, format }) => `${id}\t${format}`).join('\n');
   if (shape(after.blocks) !== shape(blocks)) return 'PATCH_CONTENT_REJECTED';
-  if (pageRevision(after.template_revision, after.blocks, snap) !== env.next_revision) return 'INTEGRITY_ERROR';
+  if (pageRevision(after.template_revision, after.blocks, snap) !== pageRevision(computed.template_revision, next, snap)) return 'INTEGRITY_ERROR';
   return null;
 }
 
@@ -99,11 +107,11 @@ function checkManifest(original, m) {
   return pageRevision(r.template_revision, r.blocks, m) === m.page_revision ? null : 'MANIFEST_INVALID';
 }
 
-/** The patch for the KAT page that sets one block, with a consistent next_revision. */
+/** The patch for the KAT page that sets one block, with a consistent binding (H-107). */
 function patchOne(id, content) {
   const blocks = computed.blocks.map((b) => (b.id === id ? { ...b, sha256: contentHash(content) } : b));
   return {
-    next_revision: pageRevision(computed.template_revision, blocks, manifest),
+    binding: deltaBinding(URL_U, manifest.page_revision, pageRevision(computed.template_revision, blocks, manifest)),
     operations: [{ block_id: id, content }],
   };
 }
@@ -152,41 +160,90 @@ test('the exact page_revision preimage of the KAT document', () => {
 });
 
 for (const { name, env } of patches) {
-  test(`${name}: the envelope has only next_revision and the operations of block_id and content (H-104)`, () => {
-    assert.deepEqual(Object.keys(env), ['next_revision', 'operations']);
+  test(`${name}: the envelope has only the binding and the operations of block_id and content (H-104, H-107)`, () => {
+    assert.deepEqual(Object.keys(env), ['binding', 'operations']);
     for (const op of env.operations) assert.deepEqual(Object.keys(op), ['block_id', 'content']);
   });
 
-  test(`${name}: the client recomputes next_revision from its blocks and the operations`, () => {
+  test(`${name}: the client computes R' from its blocks and the operations, and the binding matches`, () => {
     const next = applyToBlocks(computed.blocks, env);
     assert.ok(Array.isArray(next), String(next));
   });
 
-  test(`${name}: the patched document passes the markup analysis and has next_revision (H-48)`, () => {
+  test(`${name}: the patched document passes the markup analysis and has the page revision R' (H-48)`, () => {
     assert.equal(checkPatchedDocument(page, base.blocks, env), null);
   });
 }
 
-test('a server that omits a changed block (digest prefix collision) fails the next_revision check', () => {
+test('kat.json bindings: each entry has the URL, the base and next revisions, the preimage and the binding of its patch (H-107)', () => {
+  const entries = [...kat.bindings, ...kat.with_policy_limits.bindings];
+  assert.deepEqual(entries.map((e) => e.patch), [...kat.patches, ...kat.with_policy_limits.patches]);
+  for (const e of entries) {
+    assert.equal(e.url, URL_U);
+    assert.equal(e.preimage, `rqp-d1\n${e.url}\n${e.base_revision}\n${e.next_revision}\n`);
+    assert.equal('d1.' + sha256b64u(Buffer.from(e.preimage, 'utf8')), e.binding);
+    assert.equal(readJson(join(KAT, e.patch)).binding, e.binding);
+  }
+  assert.equal(kat.bindings[0].base_revision, manifest.page_revision);
+});
+
+test('the exact binding preimage of the KAT price patch, written out by hand (H-107)', () => {
+  const p =
+    'rqp-d1\n' +
+    'https://shop.example.com/catalog\n' +
+    'r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\n' +
+    'r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI\n';
+  // The bytes: 6 + 1 + 32 + 1 + 46 + 1 + 46 + 1, all ASCII, each line ends with 0A.
+  assert.equal(Buffer.byteLength(p, 'utf8'), 134);
+  assert.equal('d1.' + sha256b64u(Buffer.from(p, 'utf8')), 'd1.SGYLGtFc4PsLoFIzWsurTmxLupiief5xgV7ZCtXDcpc');
+  assert.equal(patches[0].env.binding, 'd1.SGYLGtFc4PsLoFIzWsurTmxLupiief5xgV7ZCtXDcpc');
+});
+
+test('U has the query and no fragment; host case and the default port are normalized by the URL serializer (H-107)', () => {
+  const q = kat.binding_with_query;
+  assert.equal(bindingUrl(q.url_input), q.url);
+  assert.equal(q.url, 'https://shop.example.com/catalog?sort=price&page=2');
+  assert.equal(deltaBinding(q.url, q.base_revision, q.next_revision), q.binding);
+  assert.equal(q.binding, 'd1.3suck1gLHbFVWy0goIS-Q6G8z3wdhw5_BqlUJ7yv93U');
+  // The same base and next revision without the query: another binding. A client that leaves out the query fails.
+  assert.notEqual(q.binding, patches[0].env.binding);
+  assert.equal(applyToBlocks(computed.blocks, patches[0].env, manifest, computed.template_revision, q.url), 'INTEGRITY_ERROR');
+});
+
+test('a server that omits a changed block (digest prefix collision) fails the binding check', () => {
   const env = structuredClone(patches.find((p) => p.env.operations.length > 1).env);
   env.operations = env.operations.filter((op) => op.block_id !== 'cart');
   assert.equal(applyToBlocks(computed.blocks, env), 'INTEGRITY_ERROR');
 });
 
-test('a content that next_revision does not bind fails with INTEGRITY_ERROR at step 7 (H-104)', () => {
+test('a content that the binding does not bind fails with INTEGRITY_ERROR at step 7 (H-104, H-107)', () => {
   const env = structuredClone(patches[0].env);
   env.operations[0].content = '131.00';
   assert.equal(applyToBlocks(computed.blocks, env), 'INTEGRITY_ERROR');
 });
 
-test('a client whose unchanged block differs from the server copy (another base) fails the next_revision check (H-104)', () => {
+test('a client whose unchanged block differs from the server copy (another base) fails the binding check (H-104, H-107)', () => {
   const stale = computed.blocks.map((b) => (b.id === 'title' ? { ...b, sha256: contentHash('Shop!') } : b));
   assert.equal(applyToBlocks(stale, patches[0].env), 'INTEGRITY_ERROR');
 });
 
-test('a client with another template revision fails the next_revision check (H-104)', () => {
+test('a client with another template revision fails the binding check (H-104, H-107)', () => {
   const other = templateRevision(Buffer.from('another template'));
   assert.equal(applyToBlocks(computed.blocks, patches[0].env, manifest, other), 'INTEGRITY_ERROR');
+});
+
+test('H-107: the all-blocks patch applies only on its base and its URL', () => {
+  // shop-all replaces every block, so before H-107 its R' fitted every snapshot of the template.
+  const all = patches.find((p) => p.env.operations.length === computed.blocks.length).env;
+  assert.ok(Array.isArray(applyToBlocks(computed.blocks, all)));
+  // Another base: a snapshot with other contents (another user, an earlier or later version).
+  const other = computed.blocks.map((b) => (b.id === 'price' ? { ...b, sha256: contentHash('99.00') } : b));
+  assert.equal(applyToBlocks(other, all), 'INTEGRITY_ERROR');
+  // Its own target (a stale replay): the snapshot already has the result.
+  const target = applyToBlocks(computed.blocks, all);
+  assert.equal(applyToBlocks(target, all), 'INTEGRITY_ERROR');
+  // Another URL with the same template and the same base.
+  assert.equal(applyToBlocks(computed.blocks, all, manifest, computed.template_revision, 'https://shop.example.com/catalog/2'), 'INTEGRITY_ERROR');
 });
 
 test('operations out of document order, for an unknown block or two for one block are rejected', () => {
@@ -204,7 +261,7 @@ test('an operation with empty content of an html block passes all client checks'
   assert.equal(checkPatchedDocument(page, base.blocks, env), null);
 });
 
-// Patches below have correct hashes and a correct next_revision. Only the markup analysis
+// Patches below have correct hashes and a correct binding. Only the markup analysis
 // of the patched document (H-48) finds the defect.
 const rejected = {
   'empty content of a json block (M-25)': ['cart', ''],
@@ -316,18 +373,19 @@ test('a manifest with policy and limits removed keeps a stale page revision and 
 });
 
 for (const { name, env } of patchesPl) {
-  test(`${name}: next_revision includes the policy line of the snapshot (H-55)`, () => {
-    assert.equal(env.next_revision, pl.page_revision_b);
+  test(`${name}: R' and B of the binding include the policy line of the snapshot (H-55, H-107)`, () => {
+    const entry = pl.bindings.find((e) => e.patch === name);
+    assert.deepEqual([entry.base_revision, entry.next_revision], [manifestPl.page_revision, pl.page_revision_b]);
+    assert.equal(env.binding, deltaBinding(URL_U, manifestPl.page_revision, pl.page_revision_b));
     assert.ok(Array.isArray(applyToBlocks(computed.blocks, env, manifestPl)));
     assert.equal(checkPatchedDocument(page, base.blocks, env, manifestPl), null);
   });
 
-  test(`${name}: a client whose snapshot has other policy or limits fails the next_revision check (H-55)`, () => {
+  test(`${name}: a client whose snapshot has other policy or limits fails the binding check (H-55)`, () => {
     // The server changed its policy after the client stored the page: one fallback load, never a stale policy.
     const other = { ...manifestPl, policy: { ...manifestPl.policy, ttl_seconds: 61 } };
     assert.equal(applyToBlocks(computed.blocks, env, other), 'INTEGRITY_ERROR');
     assert.equal(applyToBlocks(computed.blocks, env, manifest), 'INTEGRITY_ERROR');
-    assert.equal(checkPatchedDocument(page, base.blocks, env, manifest), 'INTEGRITY_ERROR');
   });
 }
 

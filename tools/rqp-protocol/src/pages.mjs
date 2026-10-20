@@ -113,6 +113,8 @@ export const EXPECTED = Object.freeze({
   'page-t2': { blocks: ['title', 'price', 'cart'] },
   // H-104: page-a with the title content "Shop 2" (the same template): the base of a delta for another client.
   'page-title-2': { blocks: ['title', 'price', 'cart'] },
+  // H-107: page-a with the price 140.00 (the same template): a later version v3 after page-b (v2).
+  'page-price-3': { blocks: ['title', 'price', 'cart'] },
   'page-zero': { blocks: [] },
   'page-big-a': { blocks: ['title', 'price', 'cart'] },
   'page-big-b': { blocks: ['title', 'price', 'cart'] },

@@ -109,3 +109,24 @@ export function pageRevisionPreimage(templateRev, blocks, m = {}) {
 export function pageRevision(templateRev, blocks, m = {}) {
   return 'r1.' + sha256b64u(Buffer.from(pageRevisionPreimage(templateRev, blocks, m), 'utf8'));
 }
+
+/**
+ * The preimage of the delta binding (manifest-patch.md section 2.2, H-107) as a string:
+ * "rqp-d1" LF U LF B LF R' LF. U is the canonical URL (WHATWG serialization without the
+ * fragment), B the base page revision, R' the next page revision.
+ */
+export function deltaBindingPreimage(url, base, next) {
+  return 'rqp-d1\n' + url + '\n' + base + '\n' + next + '\n';
+}
+
+/** The delta binding value of rqp/1 (H-107): "d1." + B64U(SHA-256(UTF-8 of the preimage)). */
+export function deltaBinding(url, base, next) {
+  return 'd1.' + sha256b64u(Buffer.from(deltaBindingPreimage(url, base, next), 'utf8'));
+}
+
+/** The URL U of the binding: the WHATWG URL serialization without the fragment (H-107, H-58). */
+export function bindingUrl(url) {
+  const u = new URL(url);
+  u.hash = '';
+  return u.href;
+}

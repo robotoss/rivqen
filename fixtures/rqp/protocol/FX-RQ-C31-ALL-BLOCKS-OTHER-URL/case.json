@@ -1,0 +1,26 @@
+{
+  "id": "FX-RQ-C31-ALL-BLOCKS-OTHER-URL",
+  "kind": "client",
+  "description": "An all-blocks delta (a request without b, H-7) from page-a to page-b that the server built for another URL with the same template (https://shop.example.com/catalog/2), on the snapshot of page-a at https://shop.example.com/catalog. The base and the result fit, so the check of H-104 accepted it (cross-URL content, S6 security review F1). The binding has U = https://shop.example.com/catalog/2: INTEGRITY_ERROR at step 7 (H-107)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b",
+        "all_blocks": true,
+        "binding_url": "https://shop.example.com/catalog/2"
+      }
+    }
+  }
+}

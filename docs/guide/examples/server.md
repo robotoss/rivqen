@@ -79,10 +79,10 @@ Where the code is:
 {"protocol":"rqp/1","origin":"https://shop.example.com","path":"/catalog","page_revision":"r1.kQSg0GU87wq6jDSiFlsmQmk68argQjG5MSAqEYUUFic"}
 ```
 
-The delta has two members (H-104). Example from the data change of section 5 (shortened to two operations):
+The delta has two members (H-104, H-107): `binding` and the operations. `binding` is a SHA-256 value over the URL of the request, the page revision that `If-None-Match` names (the base) and the page revision of the new page ([manifest and patch §2.2](/engineering/protocol/manifest-patch#_2-2-fields)). The client computes the same three values and compares; a delta for another URL or another base page is rejected. Example from the data change of section 5 (U = `http://127.0.0.1:8787/catalog`, base `r1.kQSg0GU8…`, new page `r1.MsBRD8KQ…`; shortened to two operations):
 
 ```json
-{"next_revision":"r1.MsBRD8KQI7P_bbGJFLFAWugmPrg5iEz0MNpNZcVc0-0","operations":[{"block_id":"title","content":"Shop — Catalog (125.00)"},{"block_id":"price","content":"125.00"}]}
+{"binding":"d1.hrnKM4loPBpIbwydw96aySAw4xNKVioKyIh_QqXzqJc","operations":[{"block_id":"title","content":"Shop — Catalog (125.00)"},{"block_id":"price","content":"125.00"}]}
 ```
 
 ## 5. Try it by hand
@@ -132,7 +132,7 @@ curl -si http://127.0.0.1:8787/catalog \
 
 6. Make sure that the response has `Content-Type: application/vnd.rivqen.delta+json`, `Cache-Control: no-store` and no `ETag`.
 
-Recorded output (2026-10-20, Node.js 22 or later, Rq-Have without `b`; the revisions are values of this run and change when the demo page changes):
+Recorded output (2026-10-20, Node.js 22 or later, Rq-Have without `b`; the revisions are values of this run and change when the demo page changes). The H-107 values of steps 5 and 6 come from the reference server step (`tools/rqp-protocol`) for the same pages and request; the demo sends the same bytes after task T-04b of [WP-17 S6](/engineering/plan/sprints/WP-17-S6):
 
 | Step | Output that matters |
 |---|---|
@@ -140,7 +140,7 @@ Recorded output (2026-10-20, Node.js 22 or later, Rq-Have without `b`; the revis
 | 2 | The `ETag` above and `t1.dMGS3KdBw6hmMK_VrD06B55NQwoItge4Ig1Wwh-bigM` |
 | 3 | `HTTP/1.1 304 Not Modified` |
 | 4 | `{"data":1,"template":0}` |
-| 5, 6 | `HTTP/1.1 200 OK`, `content-type: application/vnd.rivqen.delta+json`, `rq-version: 1`, `cache-control: no-store`, `content-length: 293`, no `etag`. The body starts with `{"next_revision":"r1.MsBR…","operations":[{"block_id":"title"` and has four operations |
+| 5, 6 | `HTTP/1.1 200 OK`, `content-type: application/vnd.rivqen.delta+json`, `rq-version: 1`, `cache-control: no-store`, `content-length: 287`, no `etag`. The body starts with `{"binding":"d1.hrnK…","operations":[{"block_id":"title"` and has four operations (H-107; before H-107: `content-length: 293`, `{"next_revision":"r1.MsBR…"`) |
 
 Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so the delta has an operation for every block (all-blocks fallback, H-7). A real client sends `b`, and the delta has only the changed blocks. If you omit any of the fields of step 5, the server sends the full document.
 

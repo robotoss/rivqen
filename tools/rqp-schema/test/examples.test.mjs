@@ -98,7 +98,8 @@ test('H-103, H-104: every member of the documents before H-103 and H-104 is an u
     assert.deepEqual(errorsOf('manifest', { ...m, ...extra }).map((e) => [e.keyword, e.instancePath]), [['additionalProperties', '']], Object.keys(extra)[0]);
   }
   const p = price();
-  for (const extra of [{ type: 'rivqen.patch' }, { protocol: 'rqp/1' }, { base_revision: m.page_revision }, { template_revision: t }]) {
+  // H-107: also next_revision, the member of H-104 that the binding replaces.
+  for (const extra of [{ type: 'rivqen.patch' }, { protocol: 'rqp/1' }, { base_revision: m.page_revision }, { template_revision: t }, { next_revision: m.page_revision }]) {
     assert.deepEqual(errorsOf('patch', { ...p, ...extra }).map((e) => [e.keyword, e.instancePath]), [['additionalProperties', '']], Object.keys(extra)[0]);
   }
   for (const extra of [{ op: 'replace_block' }, { format: 'html' }, { sha256: contentHash('130.00') }]) {
@@ -107,21 +108,35 @@ test('H-103, H-104: every member of the documents before H-103 and H-104 is an u
   }
 });
 
-test('each of the 16 canonical last characters of a revision passes and the 48 others fail', () => {
+test('each of the 16 canonical last characters of a revision and of a binding passes and the 48 others fail', () => {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
   for (let i = 0; i < 64; i += 1) {
-    const value = 'r1.' + 'A'.repeat(42) + alphabet[i];
-    const m = { ...shop(), page_revision: value };
-    const p = { ...price(), next_revision: value };
+    const m = { ...shop(), page_revision: 'r1.' + 'A'.repeat(42) + alphabet[i] };
+    const p = { ...price(), binding: 'd1.' + 'A'.repeat(42) + alphabet[i] };
     assert.equal(errorsOf('manifest', m) === null, i % 4 === 0, `manifest, last character ${alphabet[i]}`);
     assert.equal(errorsOf('patch', p) === null, i % 4 === 0, `patch, last character ${alphabet[i]}`);
   }
 });
 
+test('H-107: the binding has the prefix d1. and 43 characters; a page revision, another prefix or length fails', () => {
+  const p = price();
+  const tail = p.binding.slice(3);
+  assert.equal(errorsOf('patch', p), null);
+  for (const value of [`r1.${tail}`, `t1.${tail}`, `d2.${tail}`, `D1.${tail}`, `d1${tail}`, `d1.${tail}=`, `d1.${tail.slice(1)}`, `d1.${tail}A`, `d1.${tail.replace(/^./, '+')}`]) {
+    assert.deepEqual(errorsOf('patch', { ...p, binding: value }).map((e) => [e.keyword, e.instancePath]), [['pattern', '/binding']], value);
+  }
+  // The envelope of H-104 (next_revision in place of the binding) fails twice: required binding and an unknown member.
+  const { binding, ...rest } = p;
+  const h104 = errorsOf('patch', { next_revision: shop().page_revision, ...rest }).map((e) => [e.keyword, e.instancePath]);
+  assert.deepEqual(h104.sort(), [['additionalProperties', ''], ['required', '']]);
+  assert.equal(typeof binding, 'string');
+});
+
 test('the JSON Schema does not see duplicate member names: the client parser must reject them', () => {
   // JSON.parse keeps the last value; the schema then validates a different object than other parsers see.
   const p = price();
-  const text = JSON.stringify(p).replace('"next_revision"', `"next_revision":"${shop().page_revision}","next_revision"`);
+  const other = 'd1.' + 'A'.repeat(43);
+  const text = JSON.stringify(p).replace('"binding"', `"binding":"${other}","binding"`);
   assert.equal(errorsOf('patch', JSON.parse(text)), null);
-  assert.equal(JSON.parse(text).next_revision, p.next_revision);
+  assert.equal(JSON.parse(text).binding, p.binding);
 });

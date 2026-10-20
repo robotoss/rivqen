@@ -37,6 +37,8 @@ import {
   asciiLower,
   DELTA_TYPE,
   LIMITS,
+  canonicalUrl,
+  deltaBinding,
   digestPrefix,
   membersOf,
   pageRevision,
@@ -86,7 +88,8 @@ export function snapshotOf(document, members = {}, url = null, partition = Parti
 }
 
 /**
- * The URL part of the cache key (H-58): scheme, host, port, path and query as
+ * canonicalUrl (common.mjs) is the URL part of the cache key (H-58) and the
+ * URL U of the delta binding (H-107): scheme, host, port, path and query as
  * the WHATWG URL parser serializes them, without the fragment. The other steps
  * of cache identity section 2 (percent-encoding, ignored parameters) are not
  * modelled. The reference keeps the user information in the string; this is
@@ -94,11 +97,7 @@ export function snapshotOf(document, members = {}, url = null, partition = Parti
  * every path (F, 304, delta), so an SDK may also remove it from its keys
  * (cache identity section 2).
  */
-export function canonicalUrl(url) {
-  const u = new URL(url);
-  u.hash = '';
-  return u.href;
-}
+export { canonicalUrl };
 
 /** Block content up to this size is listed in a result; sha256 binds every block. */
 export const CONTENT_LISTED_BYTES = 4096;
@@ -468,9 +467,12 @@ export function splice(document, blocks, replacements) {
  * Verify a delta against a snapshot. Returns { code } for the first failed
  * check, or { snapshot } with the new snapshot. `offered` is diff-engine step 2.
  * `maxPatchBytes` is the client resource limit (initial value 256 KiB; the
- * fixtures use the initial value).
+ * fixtures use the initial value). `url` is the final URL of the delta
+ * response, the U of the binding (H-107); the default is the cache key URL of
+ * the snapshot, which handleDelta has checked to be the same (step 1, H-58).
+ * Without a URL there is no binding to check: INTEGRITY_ERROR (fail closed).
  */
-export function verifyDelta(snap, body, offered, maxPatchBytes = LIMITS.maxPatchBytes) {
+export function verifyDelta(snap, body, offered, maxPatchBytes = LIMITS.maxPatchBytes, url = snap.url) {
   if (!offered) return { code: Code.PATCH_INVALID };
   const limit = Math.min(maxPatchBytes, snap.members.limits?.max_patch_bytes ?? Infinity);
   if (body.length > limit) return { code: Code.PATCH_TOO_LARGE };
@@ -480,7 +482,8 @@ export function verifyDelta(snap, body, offered, maxPatchBytes = LIMITS.maxPatch
   const env = json.value;
   const { analysis, document, members } = snap;
   // Steps 1 and 2 are removed (H-104): the envelope has no template_revision and
-  // no base_revision. A delta for another template or another base fails step 7.
+  // no base_revision. A delta for another template, another base or another URL
+  // fails step 7 (the binding, H-107).
   const indices = operationIndices(analysis.blocks, env.operations);
   if (indices === null) return { code: Code.PATCH_INVALID };
   const replacements = new Map();
@@ -489,17 +492,22 @@ export function verifyDelta(snap, body, offered, maxPatchBytes = LIMITS.maxPatch
     if (bytes.length > LIMITS.maxBlockBytes) return { code: Code.PATCH_TOO_LARGE };
     replacements.set(indices[k], bytes);
   }
-  // Steps 4 to 7 (H-44, H-104): the client computes the hash of each new content
-  // and keeps the full snapshot hash for each block without an operation; with
-  // the template revision and the policy line of the snapshot (H-55) the page
-  // revision R' must be next_revision. This is the only integrity check of the
-  // envelope.
+  // Steps 4 to 7 (H-44, H-104, H-107): the client computes the hash of each new
+  // content and keeps the full snapshot hash for each block without an
+  // operation; with the template revision and the policy line of the snapshot
+  // (H-55) they give the next page revision R'. The binding of U (the final
+  // URL), B (the page revision of the snapshot, the value of If-None-Match) and
+  // R' must be the binding of the envelope. This is the only integrity check of
+  // the envelope.
   const next = analysis.blocks.map((b, i) => ({
     id: b.id,
     format: b.format,
     sha256: replacements.has(i) ? sha256b64u(replacements.get(i)) : b.sha256,
   }));
-  if (pageRevision(analysis.template_revision, next, members) !== env.next_revision) return { code: Code.INTEGRITY_ERROR };
+  const nextRevision = pageRevision(analysis.template_revision, next, members);
+  if (typeof url !== 'string' || deltaBinding(canonicalUrl(url), snap.page_revision, nextRevision) !== env.binding) {
+    return { code: Code.INTEGRITY_ERROR };
+  }
   // Step 8 (H-48).
   const patched = splice(document, analysis.blocks, replacements);
   if (patched.length > LIMITS.maxDocumentBytes) return { code: Code.PATCH_TOO_LARGE };
@@ -512,7 +520,8 @@ export function verifyDelta(snap, body, offered, maxPatchBytes = LIMITS.maxPatch
     after.blocks.every((b, i) => b.id === analysis.blocks[i].id && b.format === analysis.blocks[i].format);
   if (!sameShape) return { code: Code.PATCH_CONTENT_REJECTED };
   const patchedSnapshot = snapshot(patched, after, members, { url: snap.url, partition: snap.partition });
-  if (patchedSnapshot.page_revision !== env.next_revision) return { code: Code.INTEGRITY_ERROR };
+  // The page revision of the patched document is R' (step 8); the new snapshot has it.
+  if (patchedSnapshot.page_revision !== nextRevision) return { code: Code.INTEGRITY_ERROR };
   // Step 9 (H-48, H-78, MUST): the patch content rule on each patched html
   // block. Since H-78 the analysis of step 8 accepts script, style, iframe … in
   // a block, so this check is the only gate for them. json content is data.
@@ -533,7 +542,10 @@ function handleDelta(ctx, headers, body) {
   // H-81: a public snapshot with the app setting off is no snapshot, so no delta was offered.
   const snap = usableSnapshot(ctx);
   const offered = sameKey && ctx.navigation === 'delta' && snap !== null;
-  const verified = snap === null ? { code: Code.PATCH_INVALID } : verifyDelta(snap, body, offered);
+  // H-107: U of the binding is the final URL of the response (the URL of the
+  // request that the server answered). Step 1 has made sure it has the cache key
+  // of the snapshot.
+  const verified = snap === null ? { code: Code.PATCH_INVALID } : verifyDelta(snap, body, offered, LIMITS.maxPatchBytes, finalUrlOf(ctx));
   if (verified.code !== undefined) {
     return result('rejected', {
       error: verified.code,

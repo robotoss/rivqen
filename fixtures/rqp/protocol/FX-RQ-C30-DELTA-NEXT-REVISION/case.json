@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-C30-DELTA-NEXT-REVISION",
+  "kind": "client",
+  "description": "A delta of the envelope form of H-104 (next_revision and the operations, without the binding), otherwise consistent: the binding is required and next_revision is an unknown member (H-107)",
+  "rules": ["RQP-13", "RQP-28"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b",
+        "next_revision_envelope": true
+      }
+    }
+  }
+}

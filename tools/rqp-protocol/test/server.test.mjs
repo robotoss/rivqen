@@ -567,6 +567,8 @@ test('withoutRqVary (DL-063, L2): Rq-* members of Vary go (ASCII case-insensitiv
   ]);
   assert.deepEqual(withoutRqVary([['vary', ' , ']]), [['vary', ' , ']]); // no member at all: unchanged
   assert.deepEqual(withoutRqVary([]), []);
+  // The kept members are joined with a comma and a space.
+  assert.deepEqual(withoutRqVary([['vary', 'Accept-Encoding,Cookie,Rq-Nonce']]), [['vary', 'Accept-Encoding, Cookie']]);
 });
 
 test('DL-063 (L1, L2): Vary of A loses its Rq-* members in every outcome; D lists Rq-Nonce and has X-Content-Type-Options: nosniff', () => {

@@ -78,7 +78,7 @@ test('Item: the characters of String and Display String (RFC 9651 sections 4.2.5
 });
 
 test('Item: Byte Sequence characters and padding (RFC 9651 section 4.2.7)', () => {
-  for (const f of [':ab$d:', ':YQ===:', ':ab-c:']) assert.equal(parseItem(f), null, f);
+  for (const f of [':ab$d:', ':YQ===:', ':ab-c:', ':ab{d:', ':ab~d:', ':ab\u00e9d:']) assert.equal(parseItem(f), null, f);
 });
 
 test('parameters and separators: SP after ";", a bare key is true, OWS around ","', () => {

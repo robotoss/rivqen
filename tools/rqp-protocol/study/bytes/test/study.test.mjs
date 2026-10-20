@@ -7,7 +7,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { pageRevision } from '../../../src/common.mjs';
+import { pageRevision } from '../baseline/common.mjs';
 import { manifestRaw } from '../src/breakdown.mjs';
 import { headerBlocks } from '../src/hpack.mjs';
 import { DELTA_OPTIONS, MANIFEST_OPTIONS, withoutDefaultMembers } from '../src/options.mjs';

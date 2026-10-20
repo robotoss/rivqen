@@ -10,7 +10,7 @@ import { manifestMarginal, manifestRaw, deltaMarginal, deltaRaw } from './breakd
 import { headerBlocks, headerObject, http1Bytes } from './hpack.mjs';
 import { DELTA_OPTIONS, MANIFEST_OPTIONS, REQUEST_OPTIONS } from './options.mjs';
 import { DEMO_CONFIG, DEMO_TARGET, GRID_TARGET, demoPage, gridPage, stripMarkup, toLegacy } from './pages.mjs';
-import { handle } from '../../../src/server.mjs';
+import { handle } from '../baseline/server.mjs';
 import { DELTA_TYPE, exchange } from './rqp.mjs';
 import { environment, minus, sizes } from './sizes.mjs';
 

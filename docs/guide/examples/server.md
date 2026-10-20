@@ -142,7 +142,7 @@ Recorded output (2026-10-20, Node.js 22 or later, Rq-Have without `b`; the revis
 | 2 | The `ETag` above and `t1.dMGS3KdBw6hmMK_VrD06B55NQwoItge4Ig1Wwh-bigM` |
 | 3 | `HTTP/1.1 304 Not Modified` |
 | 4 | `{"data":1,"template":0}` |
-| 5, 6 | `HTTP/1.1 200 OK`, `content-type: application/vnd.rivqen.delta+json`, `rq-version: 1`, `cache-control: no-store`, `content-length: 287`, no `etag`. The body starts with `{"binding":"d1.hrnK…","operations":[{"block_id":"title"` and has four operations (H-107; before H-107: `content-length: 293`, `{"next_revision":"r1.MsBR…"`) |
+| 5, 6 | `HTTP/1.1 200 OK`, `content-type: application/vnd.rivqen.delta+json`, `rq-version: 1`, `cache-control: no-store`, `vary: Rq-Nonce`, `x-content-type-options: nosniff` (both added by DL-063 after this run), `content-length: 287`, no `etag`. The body starts with `{"binding":"d1.hrnK…","operations":[{"block_id":"title"` and has four operations (H-107; before H-107: `content-length: 293`, `{"next_revision":"r1.MsBR…"`) |
 
 Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so the delta has an operation for every block (all-blocks fallback, H-7). A real client sends `b`, and the delta has only the changed blocks. `Rq-Nonce` is a fresh random 16-byte nonce for each request (H-108, H-109); the binding of the delta depends on it. If you omit any of the fields of step 5, or `Rq-Nonce` is not exactly one Byte Sequence of 16 bytes, the server sends the full document.
 

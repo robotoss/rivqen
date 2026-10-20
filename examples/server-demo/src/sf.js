@@ -77,10 +77,8 @@ class Parser {
 
   dictionary() {
     const map = new Map();
-    map.duplicates = new Set(); // keys that occur more than once: the last value wins (RFC 9651), the caller may reject them
     while (!this.done()) {
       const key = this.key();
-      if (map.has(key)) map.duplicates.add(key);
       if (this.peek() === '=') {
         this.i++;
         map.set(key, this.itemOrInner());

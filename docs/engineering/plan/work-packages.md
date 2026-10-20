@@ -27,7 +27,7 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | [WP-14](#wp-13) | Java server SDK | P4 | Backend engineer | WP-02 | M | Planned |
 | [WP-15](#wp-13) | PHP server SDK | P4 | Backend engineer | WP-02 | M | Planned |
 | [WP-16](#wp-16) | Transport extensions (realtime, dictionary compression) | P8 | Protocol designer | WP-10, WP-11 | L | Planned |
-| [WP-17](#wp-17) | Rivqen protocol (RQP) specification | P1 | Protocol designer | WP-00 | L | **In progress** ([S1](/engineering/plan/sprints/WP-17-S1), [S2](/engineering/plan/sprints/WP-17-S2), [S3](/engineering/plan/sprints/WP-17-S3) and [S4](/engineering/plan/sprints/WP-17-S4) and [S5](/engineering/plan/sprints/WP-17-S5) closed; [S6](/engineering/plan/sprints/WP-17-S6) running: RQP byte overhead, H-101) |
+| [WP-17](#wp-17) | Rivqen protocol (RQP) specification | P1 | Protocol designer | WP-00 | L | **Done — MR pending** ([S1](/engineering/plan/sprints/WP-17-S1)…[S6](/engineering/plan/sprints/WP-17-S6) closed; the human opens the MR, H-89) |
 | [WP-18](#wp-18) | Security engineering | P0–P7 | Security engineer | — (continuous) | L | Planned |
 | [WP-19](#wp-19) | Test infrastructure, benchmarks, observability | P1–P7 | Performance engineer | WP-02 | L | Planned |
 | [WP-20](#wp-20) | CI/CD and supply chain | P1–P7 | Integrator | WP-05 | M | Planned |

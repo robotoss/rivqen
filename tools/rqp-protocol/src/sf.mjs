@@ -3,7 +3,7 @@
 
 // Parser for Structured Field Values (RFC 9651 section 4.2): Item, List and
 // Dictionary, with all bare item types. RQP uses it for Rq-Version (Item),
-// Rq-Capabilities (List) and Rq-Have (Dictionary).
+// Rq-Capabilities (List), Rq-Have (Dictionary) and Rq-Nonce (Item, H-109).
 //
 // The functions return null on a parse failure ("the entire field is ignored",
 // RFC 9651 section 2.2) and never throw for a string input. Work is linear in
@@ -85,19 +85,12 @@ export function parseList(value) {
   });
 }
 
-/**
- * Parse a Dictionary into a Map key -> member. A later key overwrites an
- * earlier one (section 4.2.2). `counts`, when given, is a Map that gets the
- * number of times each key appears in the field value (a caller that needs a
- * stricter rule for a repeated key, H-108). On a parse failure its content is
- * not defined.
- */
-export function parseDictionary(value, counts = null) {
+/** Parse a Dictionary into a Map key -> member. A later key overwrites an earlier one (section 4.2.2). */
+export function parseDictionary(value) {
   return parseField(value, (input) => {
     const dict = new Map();
     while (!input.empty) {
       const key = parseKey(input);
-      if (counts !== null) counts.set(key, (counts.get(key) ?? 0) + 1);
       let member;
       if (input.peek() === '=') {
         input.take();

@@ -30,7 +30,7 @@ function copyFixture(name) {
 
 test('gen.mjs --check: every committed page and expected file is current', () => {
   const out = execFileSync(process.execPath, [GEN, '--check'], { encoding: 'utf8' });
-  assert.match(out, /253 fixtures are current/);
+  assert.match(out, /257 fixtures are current/);
 });
 
 test('every catalog case P-01 to P-41 and C-01 to C-31 has at least one fixture', () => {
@@ -454,11 +454,13 @@ test('server delta expected: binding_inputs are U, B, N and R\' of the binding, 
   assert.equal(other.nonce, '8PHy8_T19vf4-fr7_P3-_w');
 });
 
-test('H-108: context.nonce is DEFAULT_NONCE by default and is written in expected.json; the request sends it in n; another form is a defective case', () => {
+test('H-108, H-109: context.nonce is DEFAULT_NONCE by default and is written in expected.json; the request sends it in Rq-Nonce; another form is a defective case', () => {
   const run = (nonce) => withCase('FX-RQ-C31-ALL-BLOCKS-ACCEPTED', (c) => ({ ...c, context: { ...c.context, ...(nonce === undefined ? {} : { nonce }) } }))().files['expected.json'];
   const def = run(undefined);
   assert.equal(def.context.nonce, DEFAULT_NONCE);
-  assert.ok(def.request.headers.find(([n]) => n === 'rq-have')[1].endsWith(', n=:AAECAwQFBgcICQoLDA0ODw==:'));
+  assert.deepEqual(def.request.headers.filter(([n]) => n === 'rq-nonce'), [['rq-nonce', ':AAECAwQFBgcICQoLDA0ODw==:']]);
+  assert.ok(!def.request.headers.find(([n]) => n === 'rq-have')[1].includes('n='));
+  assert.deepEqual(run('EBESExQVFhcYGRobHB0eHw').request.headers.filter(([n]) => n === 'rq-nonce'), [['rq-nonce', ':EBESExQVFhcYGRobHB0eHw==:']]);
   const other = run('EBESExQVFhcYGRobHB0eHw');
   assert.equal(other.context.nonce, 'EBESExQVFhcYGRobHB0eHw');
   // The delta recipe takes the nonce of the context by default, so the delta of this request is applied.

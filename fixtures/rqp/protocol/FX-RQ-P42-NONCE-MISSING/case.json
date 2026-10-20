@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-P42-NONCE-MISSING",
-  "description": "A delta request without the Rq-Have member n: no client nonce, so F, never a delta (H-108)",
+  "description": "A delta request without the field Rq-Nonce: no client nonce, so F, never a delta (H-108, H-109)",
   "rules": ["RQP-29"],
   "page": "page-big-b",
   "client_page": "page-big-a",

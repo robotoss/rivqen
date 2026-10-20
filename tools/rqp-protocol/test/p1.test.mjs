@@ -119,12 +119,12 @@ const ctx = (fields = {}) => ({
 const first = { method: 'GET', target: TARGET, headers: [['rq-version', '1'], ['rq-capabilities', '(block-patch)'], ['accept', 'text/html']] };
 /**
  * The delta request of a client with `snap` to `target`; without `b` when
- * `withPrefixes` is false (all blocks, H-7); `nonce` is the text N of its nonce (H-108).
+ * `withPrefixes` is false (all blocks, H-7); `nonce` is the text N of its nonce,
+ * sent in the field Rq-Nonce (H-108, H-109).
  */
 function revisit(snap, target = TARGET, withPrefixes = true, nonce = NONCE) {
   const a = snap.analysis;
-  const n = `n=:${Buffer.from(nonce, 'base64url').toString('base64')}:`;
-  const have = withPrefixes ? `t=${a.template_revision}, b=:${havePrefixes(a.blocks)}:, ${n}` : `t=${a.template_revision}, ${n}`;
+  const have = withPrefixes ? `t=${a.template_revision}, b=:${havePrefixes(a.blocks)}:` : `t=${a.template_revision}`;
   return {
     method: 'GET',
     target,
@@ -134,6 +134,7 @@ function revisit(snap, target = TARGET, withPrefixes = true, nonce = NONCE) {
       ['accept', 'text/html, application/vnd.rivqen.delta+json'],
       ['if-none-match', `"${snap.page_revision}"`],
       ['rq-have', have],
+      ['rq-nonce', `:${Buffer.from(nonce, 'base64url').toString('base64')}:`],
     ],
   };
 }

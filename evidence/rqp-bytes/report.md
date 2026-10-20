@@ -312,3 +312,24 @@ FACT. Checked on 2026-10-20 (task T-06a) with the reference of T-06a: the review
 **What stays.** DESIGN. The binding with N is true only under three assumptions: an honest server (it can bind any content to any request), TLS (U, B and N travel in the request, so a party that reads the request and writes the response can build any delta; the binding is not a MAC), and a nonce from a CSPRNG that the client never uses again (a repeated or predictable nonce brings the replays back). It gives no freshness and does not protect F (manifest-patch §2.2, "Replay").
 
 **Option for the human, not decided.** RESEARCH. The warm-connection cost comes from the nonce inside `Rq-Have`. A separate field (for example `Rq-Nonce`) would let HPACK index `t` and `b` on a warm connection and cost a few more bytes on a new connection (a field name). H-108 put the nonce in `Rq-Have`; this is a protocol decision of the human.
+
+**Decided: H-109 (2026-10-20).** The human chose the separate field: `Rq-Nonce`, an SF Item whose bare item is a Byte Sequence of exactly 16 bytes (parameters ignored), one field line, sent with every delta request; `Rq-Have` keeps only `t` and `b`, and a member `n` in it is an unknown member that the server ignores. N, the preimage and every binding value stay as in H-108 (`docs/engineering/protocol/negotiation.md` §3.9). Added on 2026-10-20 by task WP-17 S6 T-08a.
+
+FACT. Request header bytes of one revisit, measured on 2026-10-20 (task T-08a) with the method of §3.5: the byte study request (`:method`, `:path`, `:authority`, `accept`, `accept-encoding`, `user-agent`) with the RQP fields of the reference client (`tools/rqp-protocol/src/client.mjs` `clientRequest`) for a snapshot of the demo page (step 0) and of the synthetic page with 64 small blocks; HPACK header block bytes that Node.js 26.8.2 (nghttp2 1.70.0) writes, counted by `study/bytes/src/hpack.mjs` (unchanged); 200 random nonces for each form; "new" is the first request on a new connection, "warm" the second and the third of three revisits on one connection (each with a new nonce). The H-108 form is the H-109 request with `, n=` and the `Rq-Nonce` value appended to `Rq-Have`; the H-107 form has no nonce.
+
+| Request | H-107 | H-108 | H-109 |
+|---|---:|---:|---:|
+| Demo, `Rq-Have` value | 98 | 128 | 98 |
+| Demo, HTTP/1.1 (all fields) | 367 | 397 | 405 |
+| Demo, HPACK new (median; range) | 276 | 301 (299–302) | 306 (305–309) |
+| Demo, HPACK warm, 2nd and 3rd (median; range) | 60 | 164 (162–166) | 83 (82–86) |
+| 64 blocks, `Rq-Have` value | 738 | 768 | 738 |
+| 64 blocks, HTTP/1.1 (all fields) | 1,007 | 1,037 | 1,045 |
+| 64 blocks, HPACK new (median; range) | 790 | 814 (813–816) | 820 (819–822) |
+| 64 blocks, HPACK warm, 2nd and 3rd (median; range) | 58 | 677 (676–679) | 82 (80–83) |
+
+FACT. The H-108 values agree with the H-108 numbers above (the demo revisit 301 median on a new connection, 164 warm). The H-107 demo value is 1 byte more than in §3.5 (275): §3.5 used the page revision of the demo before P1, and HPACK Huffman lengths depend on the characters of the revision and of the prefixes (the study pages with 4 blocks, whose fields have the same lengths, give 277 in `study/bytes/results/bytes.json`). A repeat revisit on a warm connection costs the H-107 value plus 23 (demo) or 24 (64 blocks) bytes: the nonce value is new on every request, and HPACK reuses only the name `rq-nonce` from its dynamic table. Against H-108 the separate field costs 8 bytes more in HTTP/1.1 form and 5 or 6 bytes more on a new connection (the field name), and saves 81 bytes (demo) and 595 bytes (64 blocks) on each warm revisit. The first revisit on a connection costs the same as on a new connection.
+
+FACT. Sending `Rq-Nonce` as a never-indexed literal (RFC 7541 §6.2.3; Node.js `http2.sensitiveHeaders`) costs more: 90 or 91 bytes (demo) and 88 or 89 bytes (64 blocks) on a warm connection, because the name is then sent as a literal every time (100 runs, same method). The default encoding of the HTTP/2 stack is the better choice; the specification does not ask for another one.
+
+Scripts of the measurement: kept by the task, not in the repository (they import `study/bytes/src/hpack.mjs` and `study/bytes/src/pages.mjs` unchanged).

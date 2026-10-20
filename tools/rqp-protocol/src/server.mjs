@@ -65,36 +65,42 @@ export function capabilities(headers) {
 }
 
 /**
- * Section 3.4: { t, b, n } of Rq-Have, where t is the template revision token,
- * b the decoded bytes or null (absent), and n the decoded client nonce (H-108)
- * or null (absent: missing, not a Byte Sequence, or not exactly 16 bytes).
- * Returns null when Rq-Have is absent. The check of b against the block count
- * is done by the caller (steps 5 and 6 of section 3.4 need the current page).
- * A key that appears two times has the later value (RFC 9651 section 4.2.2),
- * except n: a field value with n more than one time has no n (H-108, fail
- * closed; also when every copy is valid).
+ * Section 3.4: { t, b } of Rq-Have, where t is the template revision token and
+ * b the decoded bytes or null (absent). Returns null when Rq-Have is absent.
+ * The check of b against the block count is done by the caller (steps 5 and 6
+ * of section 3.4 need the current page). A key that appears two times has the
+ * later value (RFC 9651 section 4.2.2). Every other member is ignored (step 7,
+ * RQP-06), also a member n: since H-109 the client nonce is the field
+ * Rq-Nonce (rqNonce), and n in Rq-Have is an unknown member.
  */
 export function rqHave(headers) {
   const v = combined(headers, 'rq-have');
   if (v === null || byteLength(v) > LIMITS.maxRqHaveBytes) return null;
-  const counts = new Map();
-  const dict = parseDictionary(v, counts);
+  const dict = parseDictionary(v);
   if (dict === null) return null;
   const t = dict.get('t');
   if (t === undefined || t.inner || t.item.type !== 'token') return null;
-  const n = counts.get('n') === 1 ? nonceOf(dict.get('n')) : null;
-  return { t: t.item.value, b: byteSequence(dict.get('b')), n };
+  const b = dict.get('b');
+  const bytes = b !== undefined && !b.inner && b.item.type === 'bytes' ? b.item.value : null;
+  return { t: t.item.value, b: bytes };
 }
 
-/** The bytes of a Dictionary member that is a Byte Sequence (parameters ignored), else null. */
-function byteSequence(member) {
-  return member !== undefined && !member.inner && member.item.type === 'bytes' ? member.item.value : null;
-}
-
-/** Section 3.4, step 7 (H-108): the member n when it is a Byte Sequence of exactly 16 bytes, else null. */
-function nonceOf(member) {
-  const bytes = byteSequence(member);
-  return bytes !== null && bytes.length === NONCE_BYTES ? bytes : null;
+/**
+ * Section 3.9 (H-109): the client nonce of the request, the 16 bytes of the
+ * field Rq-Nonce, or null (no nonce). The field must have exactly one field
+ * line (two lines, also with equal values, are no nonce: fail closed), its
+ * value must parse as an Item (RFC 9651 section 4.2) whose bare item is a Byte
+ * Sequence of exactly 16 bytes; parameters are ignored. A Byte Sequence
+ * without padding or with non-zero pad bits is accepted (section 4.2.7), and
+ * the caller uses only the decoded bytes. The parse is linear in the length
+ * of the field line, which the HTTP stack bounds, as for Rq-Version.
+ */
+export function rqNonce(headers) {
+  const lines = headers.filter(([n]) => n === 'rq-nonce');
+  if (lines.length !== 1) return null;
+  const parsed = parseItem(combined(lines, 'rq-nonce'));
+  if (parsed === null || parsed.item.type !== 'bytes') return null;
+  return parsed.item.value.length === NONCE_BYTES ? parsed.item.value : null;
 }
 
 /** Section 3.5: the base revision B, or null. */
@@ -202,7 +208,7 @@ export function changeSet(blocks, b) {
  * no format and no hash: the client computes the block hashes and the next
  * page revision, and checks the binding. `binding` is deltaBinding(U, B, N, R'):
  * U the canonical URL of this request, B the base revision of If-None-Match
- * (section 3.5), N the client nonce of this request (Rq-Have member n, H-108),
+ * (section 3.5), N the client nonce of this request (Rq-Nonce, H-108, H-109),
  * R' the page revision of the current page.
  */
 export function deltaEnvelope(page, analysis, binding, indices) {
@@ -328,8 +334,10 @@ export function handle(request, app, pageBytes, config = {}) {
     have !== null &&
     have.t === analysis.template_revision;
   if (!eligible) return sendFull('not-eligible');
-  // H-108: a delta only for a request with a valid client nonce n; else F.
-  if (have.n === null) return sendFull('no-nonce');
+  // H-108, H-109: a delta only for a request with exactly one valid Rq-Nonce
+  // (step 5.7); else F. A member n of Rq-Have is ignored (an unknown member).
+  const nonce = rqNonce(reqHeaders);
+  if (nonce === null) return sendFull('no-nonce');
 
   // Step 6. Section 3.4, steps 5 and 6: a b of the wrong length is absent.
   const n = analysis.blocks.length;
@@ -345,10 +353,10 @@ export function handle(request, app, pageBytes, config = {}) {
     const b = analysis.blocks[i];
     if (b.format === 'html' && patchContentFailure(page.subarray(b.start, b.end)) !== null) return sendFull('patch-content-rule');
   }
-  // H-107, H-108: U is the canonical URL of the request that this server answers
-  // (the final request of the client), B the base of step 5, N the nonce of this
-  // request (Rq-Have member n), R' the current page revision.
-  const binding = deltaBinding(canonicalUrl(request.target), base, nonceText(have.n), manifest.page_revision);
+  // H-107, H-108, H-109: U is the canonical URL of the request that this server
+  // answers (the final request of the client), B the base of step 5, N the nonce
+  // of this request (the field Rq-Nonce), R' the current page revision.
+  const binding = deltaBinding(canonicalUrl(request.target), base, nonceText(nonce), manifest.page_revision);
   const envelope = deltaEnvelope(page, analysis, binding, indices);
   const delta = Buffer.from(JSON.stringify(envelope), 'utf8');
   if (delta.length > maxPatchBytes) return sendFull('delta-too-large');

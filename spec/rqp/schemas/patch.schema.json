@@ -36,7 +36,7 @@
       "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
     },
     "binding": {
-      "description": "Delta binding value (H-107, H-108): d1. and B64U(SHA-256(\"rqp-d1\" LF U LF B LF N LF R' LF)), canonical base64url (manifest-patch section 1.3, rule 2). N is the client nonce of the request (Rq-Have member n).",
+      "description": "Delta binding value (H-107, H-108): d1. and B64U(SHA-256(\"rqp-d1\" LF U LF B LF N LF R' LF)), canonical base64url (manifest-patch section 1.3, rule 2). N is the client nonce of the request (the field Rq-Nonce, H-109).",
       "type": "string",
       "pattern": "^d1\\.[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
     }

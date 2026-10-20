@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { canonicalUrl, deltaBinding, deltaBindingPreimage, pageRevision, policyLimitsText } from '../src/common.mjs';
 import { handle } from '../src/server.mjs';
-import { clientStep } from '../src/client.mjs';
+import { clientStep, requestHeaders, snapshotOf } from '../src/client.mjs';
 import { substitute } from '../src/fixtures.mjs';
 import { APP, KAT_DIR, TARGET, clientContext, deltaRequest, firstVisit, page, readJson, revisions } from './helpers.mjs';
 
@@ -51,9 +51,13 @@ test('the KAT binding with a query: U of the reference is the canonical URL of u
   assert.equal(JSON.parse(r.body.toString('utf8')).binding, q.binding);
 });
 
-test('the placeholders give the KAT If-None-Match and Rq-Have values', () => {
+test('the placeholders give the KAT If-None-Match and Rq-Have values; the KAT Rq-Nonce value is the request field of the client (H-109)', () => {
   assert.equal(substitute('T', '{{r1:page-a}}'), `"${manifest.page_revision}"`);
-  assert.equal(substitute('T', `t={{t1:page-a}}, b={{have:page-a}}, n=${kat.nonce.sf}`), kat.rq_have);
+  assert.equal(substitute('T', 't={{t1:page-a}}, b={{have:page-a}}'), kat.rq_have);
+  const ctx = clientContext({ navigation: 'delta', snapshot: snapshotOf(page('page-a'), {}, TARGET), nonce: kat.nonce.n });
+  const sent = new Map(requestHeaders(ctx));
+  assert.equal(sent.get('rq-have'), kat.rq_have);
+  assert.equal(sent.get('rq-nonce'), kat.nonce.sf);
 });
 
 test('the r1 placeholder with client members has the policy line (H-55)', () => {

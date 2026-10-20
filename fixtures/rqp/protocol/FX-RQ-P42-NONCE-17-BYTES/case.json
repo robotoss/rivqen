@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-P42-NONCE-17-BYTES",
-  "description": "Rq-Have member n with 17 bytes: n is absent, so F (H-108)",
+  "description": "Rq-Nonce with a Byte Sequence of 17 bytes: no nonce, so F (H-108, H-109)",
   "rules": ["RQP-29"],
   "page": "page-big-b",
   "client_page": "page-big-a",
@@ -18,7 +18,8 @@
       ["rq-capabilities", "(block-patch)"],
       ["accept", "text/html, application/vnd.rivqen.delta+json"],
       ["if-none-match", "{{r1:page-big-a}}"],
-      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}, n=:AAECAwQFBgcICQoLDA0ODxA=:"]
+      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODxA=:"]
     ]
   }
 }

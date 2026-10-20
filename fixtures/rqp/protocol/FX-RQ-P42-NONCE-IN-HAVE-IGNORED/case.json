@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-P42-NONCE-IN-HAVE-IGNORED",
+  "description": "An Rq-Have member n (bytes F0 to FF) and Rq-Nonce (bytes 00 to 0F): the member is ignored; the binding has N of Rq-Nonce, AAECAwQFBgcICQoLDA0ODw (H-109)",
+  "rules": ["RQP-06", "RQP-29"],
+  "page": "page-big-b",
+  "client_page": "page-big-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-big-a}}"],
+      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}, n=:8PHy8/T19vf4+fr7/P3+/w==:"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  }
+}

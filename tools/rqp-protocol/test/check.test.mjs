@@ -15,6 +15,7 @@ import { compareClient, compareServer, runClient, runServer } from '../check.mjs
 import * as client from '../src/client.mjs';
 import * as server from '../src/server.mjs';
 import { DEFAULT_NONCE, FIXTURES_DIR, fixtureNames, readJsonFile } from '../src/fixtures.mjs';
+import { parseDictionary, parseItem, parseList } from '../src/sf.mjs';
 import { page } from './helpers.mjs';
 
 const CHECK = fileURLToPath(new URL('../check.mjs', import.meta.url));
@@ -241,6 +242,55 @@ test('H-108: the client fixtures catch a client that does not use the nonce of t
       assert.ok(names.includes(name), `${String(nonce)}: ${name}`);
     }
   }
+});
+
+test('H-109: the server fixtures catch a server that relaxes one Rq-Nonce rule or still reads the nonce of H-108', async () => {
+  // Each model server changes the Rq-Nonce lines of the request as a server with that defect reads them.
+  const failing = async (change) => {
+    const mod = { handle: (request, ...rest) => server.handle({ ...request, headers: change(request.headers) }, ...rest) };
+    return (await runServer(mod)).filter((r) => r.failures.length > 0).map((r) => r.name);
+  };
+  const nonceLines = (h) => h.filter(([n]) => n === 'rq-nonce').map(([, v]) => v);
+  const others = (h) => h.filter(([n]) => n !== 'rq-nonce');
+  const sf = (bytes) => `:${bytes.toString('base64')}:`;
+  // Takes the first of several field lines.
+  assert.deepEqual(await failing((h) => [...others(h), ...nonceLines(h).slice(0, 1).map((v) => ['rq-nonce', v])]), ['FX-RQ-P42-NONCE-TWO-LINES']);
+  // Parses the combined value as a List and takes its first member.
+  const firstOfList = (h) => {
+    const lines = nonceLines(h);
+    if (lines.length === 0) return h;
+    const list = parseList(lines.join(', '));
+    return list === null || list.length === 0 || list[0].inner ? others(h) : [...others(h), ['rq-nonce', `${lines.join(', ').split(',')[0].split(';')[0].trim()}`]];
+  };
+  assert.deepEqual(await failing(firstOfList), ['FX-RQ-P42-NONCE-PARSE-FAILURE', 'FX-RQ-P42-NONCE-TWO-LINES']);
+  // Accepts any length (it would use 16 bytes of it).
+  const anyLength = (h) => others(h).concat(nonceLines(h).map((v) => {
+    const item = parseItem(v);
+    if (item === null || item.item.type !== 'bytes' || item.item.value.length === 0) return ['rq-nonce', v];
+    return ['rq-nonce', sf(Buffer.concat([item.item.value, Buffer.alloc(16)]).subarray(0, 16))];
+  }));
+  assert.deepEqual(await failing(anyLength), ['FX-RQ-P42-NONCE-15-BYTES', 'FX-RQ-P42-NONCE-17-BYTES']);
+  // Accepts the base64url text of a String, or a Boolean as some nonce.
+  const anyType = (type) => (h) => others(h).concat(nonceLines(h).map((v) => {
+    const item = parseItem(v);
+    if (item === null || item.item.type !== type) return ['rq-nonce', v];
+    return ['rq-nonce', sf(type === 'string' ? Buffer.from(item.item.value, 'base64url') : Buffer.alloc(16))];
+  }));
+  assert.deepEqual(await failing(anyType('string')), ['FX-RQ-P42-NONCE-STRING']);
+  assert.deepEqual(await failing(anyType('boolean')), ['FX-RQ-P42-NONCE-BOOLEAN']);
+  // Rejects a field with parameters.
+  assert.deepEqual(await failing((h) => others(h).concat(nonceLines(h).filter((v) => !v.includes(';')).map((v) => ['rq-nonce', v]))), ['FX-RQ-P42-NONCE-PARAMETER']);
+  // A server of H-108: the nonce is the Rq-Have member n; Rq-Nonce is not read.
+  const h108 = (h) => {
+    const have = parseDictionary(h.filter(([n]) => n === 'rq-have').map(([, v]) => v).join(', '));
+    const n = have?.get('n');
+    const ok = n !== undefined && !n.inner && n.item.type === 'bytes' && n.item.value.length === 16;
+    return ok ? [...others(h), ['rq-nonce', sf(n.item.value)]] : others(h);
+  };
+  const names = await failing(h108);
+  const deltaCases = fixtureNames(FIXTURES_DIR).filter((n) => n.startsWith('FX-RQ-P') && readJsonFile(join(FIXTURES_DIR, n, 'expected.json')).body?.kind === 'delta');
+  assert.ok(deltaCases.length >= 15 && deltaCases.includes('FX-RQ-P42-NONCE-IN-HAVE-IGNORED'));
+  assert.deepEqual(names, [...deltaCases, 'FX-RQ-P42-NONCE-IN-HAVE'].sort());
 });
 
 test('a missing response.body fails that client fixture only', async () => {

@@ -33,7 +33,7 @@
 // whether the native SDK saw all header fields of the response (H-64);
 // partition is the partition of the snapshot, "request" or "public" (H-65);
 // nonce is the text N (base64url without padding) of the 16-byte client nonce
-// that the client sends in Rq-Have member n and puts into the binding (H-108):
+// that the client sends in the field Rq-Nonce and puts into the binding (H-108, H-109):
 // a client under test uses this value in place of its CSPRNG (a test seam only).
 //
 // Comparison rules: docs/engineering/protocol/fixtures.md section 4.1
@@ -169,7 +169,8 @@ function sameSnapshot(expected, got) {
   return isDeepStrictEqual(trimmed, expected);
 }
 
-const RQP_REQUEST_FIELDS = ['rq-version', 'rq-capabilities', 'if-none-match', 'rq-have'];
+// H-109: rq-nonce is compared exactly too: one field line, the Byte Sequence with padding (RFC 9651 section 4.1.8).
+const RQP_REQUEST_FIELDS = ['rq-version', 'rq-capabilities', 'if-none-match', 'rq-have', 'rq-nonce'];
 
 /** Compare a client result (and its request fields) with expected.json. Returns a list of failures. */
 export function compareClient(expected, result, request) {

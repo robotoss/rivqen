@@ -13,11 +13,11 @@ import { fileURLToPath } from 'node:url';
 const CHECK = fileURLToPath(new URL('../../../tools/rqp-protocol/check.mjs', import.meta.url));
 const SERVER = fileURLToPath(new URL('../src/rqp.js', import.meta.url));
 
-test('the demo passes all 91 server fixtures, also the SHOULD fixtures', () => {
+test('the demo passes all 92 server fixtures, also the SHOULD fixtures', () => {
   const run = spawnSync(process.execPath, [CHECK, '--server', SERVER], { encoding: 'utf8' });
   const out = `${run.stdout}${run.stderr}`;
   assert.equal(run.status, 0, out);
   assert.doesNotMatch(out, /^FAIL /m);
   assert.doesNotMatch(out, /SHOULD\] /);
-  assert.match(out, /rqp-protocol check: 91 passed, 0 failed, 0 SHOULD failed/);
+  assert.match(out, /rqp-protocol check: 92 passed, 0 failed, 0 SHOULD failed/);
 });

@@ -2,7 +2,7 @@
 
 `examples/server-demo` is a small Node.js server. It shows the Rivqen protocol (RQP) from the server side: block markup, manifest, `304`, block patch and safe fallback.
 
-**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 104 tests pass, and the demo passes all 91 server protocol fixtures (checked 2026-10-20, Node.js 22 or later; WP-17 S4: the patch content rule, the attribute rule of H-77 and H-83, and the implied head of H-79a; WP-17 S5: `noscript` in `PATCH_FORBIDDEN`, H-96; WP-17 S6: the short manifest and the short envelope, H-103 and H-104). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
+**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 108 tests pass, and the demo passes all 92 server protocol fixtures (checked 2026-10-20, Node.js 22 or later; WP-17 S4: the patch content rule, the attribute rule of H-77 and H-83, and the implied head of H-79a; WP-17 S5: `noscript` in `PATCH_FORBIDDEN`, H-96; WP-17 S6: the short manifest and the short envelope, H-103 and H-104; the delta binding, H-107). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
 
 [[toc]]
 
@@ -158,7 +158,7 @@ npm test
 - the insertion point of the manifest (after the head start tag, H-72, or before the start tag that implies the head, H-79a) and the patch content rule: `PATCH_FORBIDDEN`, `FOREIGN_ALLOWED`, event handlers, `javascript:`, `vbscript:` and `data:` URLs except raster images in `img`, `source` and `video` (H-83), and character references at the scheme decision byte (H-77);
 - differential tests against the reference of `tools/rqp-protocol` (tests only): 20 000 random blocks for the patch content rule and 20 000 random documents for the insertion point;
 - the HTTP adapter on a loopback socket: first visit, revisit, data change, template change, the `Host` check (`421`);
-- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 91 server fixtures pass (`FX-RQ-P*`), also the SHOULD cases (the eight `FX-RQ-P35` cases and `FX-RQ-P36-LIMITS-SERVER-LIMIT`).
+- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 92 server fixtures pass (`FX-RQ-P*`), also the SHOULD cases (the eight `FX-RQ-P35` cases and `FX-RQ-P36-LIMITS-SERVER-LIMIT`).
 
 To run the fixtures alone, run this command in `examples/server-demo`:
 

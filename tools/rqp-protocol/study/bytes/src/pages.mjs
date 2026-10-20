@@ -17,7 +17,15 @@ import { analyze } from '../../../src/markup.mjs';
 import { demoState, renderCatalog } from '../../../../../examples/server-demo/src/pages.js';
 import { StudyError } from './errors.mjs';
 
-export { CONFIG as DEMO_CONFIG } from '../../../../../examples/server-demo/src/app.js';
+/**
+ * FROZEN: the demo configuration of the 2026-10-19 run (examples/server-demo/src/app.js at
+ * commit 276a1c3, before H-103 removed the default members from the demo). Do not update it:
+ * the study measures the pre-P1 wire format (DL-047).
+ */
+export const DEMO_CONFIG = Object.freeze({
+  policy: Object.freeze({ mode: 'private', ttl_seconds: 0, offline: false }),
+  limits: Object.freeze({ max_patch_bytes: 262144 }),
+});
 
 /** The target of the 2026-10-19 run: the demo server default origin (examples/server-demo/src/server.js). */
 export const DEMO_TARGET = 'http://127.0.0.1:8787/catalog';

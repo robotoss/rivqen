@@ -6,10 +6,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { buildDelta, buildManifest, cacheKeyUrl, changeSet, deltaBinding, handle, membersOf, pageRevision, policyLineText } from '../src/rqp.js';
-import { APP, TARGET, clientLines, exampleJson, get, header, katBytes, page, revisionsOf } from './helpers.js';
+import { APP, NONCE, TARGET, clientLines, exampleJson, get, header, katBytes, page, revisionsOf } from './helpers.js';
 
 // The members of the second known-answer set (shop-policy.json): none of them is a default.
 const POLICY = { policy: { ttl_seconds: 60, offline: true }, limits: { max_patch_bytes: 65536 } };
+const rqHaveWith = (held, n) => `t=${revisionsOf(held).template_revision}, n=:${n.toString('base64')}:`;
 const run = (request, p = page('130.00'), config = {}) => handle(request, structuredClone(APP), p, config);
 
 test('every request gets the same full document, with Rq-Version and a strong ETag of the page revision', () => {
@@ -87,7 +88,7 @@ test('a changed block gives a delta with only that block, no-store and no ETag',
   const delta = JSON.parse(r.body);
   assert.deepEqual(Object.keys(delta), ['binding', 'operations']); // H-104, H-107: no other member
   assert.deepEqual(delta.operations, [{ block_id: 'price', content: '130.00' }]);
-  assert.equal(delta.binding, deltaBinding(TARGET, revisionsOf(held).page_revision, revisionsOf(page('130.00')).page_revision));
+  assert.equal(delta.binding, deltaBinding(TARGET, revisionsOf(held).page_revision, NONCE, revisionsOf(page('130.00')).page_revision));
 });
 
 // Known answer, computed from the H-107 formula with node:crypto, independent of the code under test.
@@ -95,20 +96,59 @@ const KAT = {
   u: 'https://shop.example.com/catalog',
   b: `r1.${'A'.repeat(43)}`,
   r: `r1.${'B'.repeat(43)}`,
-  binding: 'd1.' + createHash('sha256').update(`rqp-d1\nhttps://shop.example.com/catalog\nr1.${'A'.repeat(43)}\nr1.${'B'.repeat(43)}\n`).digest('base64url'),
+  n: NONCE, // bytes 00 01 02 ... 0f, base64url AAECAwQFBgcICQoLDA0ODw
+  binding: 'd1.' + createHash('sha256').update(`rqp-d1\nhttps://shop.example.com/catalog\nr1.${'A'.repeat(43)}\nAAECAwQFBgcICQoLDA0ODw\nr1.${'B'.repeat(43)}\n`).digest('base64url'),
 };
 
 test('the delta binding equals the known answer of the formula', () => {
-  assert.equal(KAT.binding, 'd1.ZCuIRH13HX1swcuchq1uQ_0RVUsKkSIn_E0d26IjGf0');
-  assert.equal(deltaBinding(KAT.u, KAT.b, KAT.r), KAT.binding);
+  assert.equal(KAT.binding, 'd1.pmoMq7gZIOLQtGGv-msgtXlFU1LEBJ76AVbovg71qQk'); // computed by hand with node:crypto
+  assert.equal(deltaBinding(KAT.u, KAT.b, KAT.n, KAT.r), KAT.binding);
 });
 
-test('the delta binding changes when U, B or R\' changes, and is not symmetric in B and R\'', () => {
-  const v = deltaBinding(KAT.u, KAT.b, KAT.r);
-  assert.notEqual(deltaBinding('https://shop.example.com/other', KAT.b, KAT.r), v);
-  assert.notEqual(deltaBinding(KAT.u, `r1.${'C'.repeat(43)}`, KAT.r), v);
-  assert.notEqual(deltaBinding(KAT.u, KAT.b, `r1.${'C'.repeat(43)}`), v);
-  assert.notEqual(deltaBinding(KAT.u, KAT.r, KAT.b), v);
+test('the delta binding changes when U, B, N or R\' changes, and is not symmetric in B and R\'', () => {
+  const v = deltaBinding(KAT.u, KAT.b, KAT.n, KAT.r);
+  const other = Buffer.from(KAT.n);
+  other[15] ^= 1;
+  assert.notEqual(deltaBinding('https://shop.example.com/other', KAT.b, KAT.n, KAT.r), v);
+  assert.notEqual(deltaBinding(KAT.u, `r1.${'C'.repeat(43)}`, KAT.n, KAT.r), v);
+  assert.notEqual(deltaBinding(KAT.u, KAT.b, other, KAT.r), v);
+  assert.notEqual(deltaBinding(KAT.u, KAT.b, KAT.n, `r1.${'C'.repeat(43)}`), v);
+  assert.notEqual(deltaBinding(KAT.u, KAT.r, KAT.n, KAT.b), v);
+});
+
+test('the binding of a delta depends on the client nonce of the request (H-108)', () => {
+  const held = page('120.00');
+  const sent = (n) => JSON.parse(run(get(clientLines(held, { 'rq-have': rqHaveWith(held, n) }))).body).binding;
+  const other = Buffer.from(NONCE);
+  other[0] ^= 0x80;
+  assert.notEqual(sent(NONCE), sent(other));
+  assert.equal(sent(NONCE), sent(Buffer.from(NONCE)));
+});
+
+test('without a valid n in Rq-Have the answer is the full document, never a delta (H-108)', () => {
+  const held = page('120.00');
+  const t = revisionsOf(held).template_revision;
+  const b64 = (n) => Buffer.alloc(n, 7).toString('base64');
+  const cases = {
+    'n missing': `t=${t}`,
+    'n of 15 bytes': `t=${t}, n=:${b64(15)}:`,
+    'n of 17 bytes': `t=${t}, n=:${b64(17)}:`,
+    'n of 0 bytes': `t=${t}, n=::`,
+    'n is a token of 16 characters': `t=${t}, n=abcdefghijklmnop`,
+    'n is a string of 16 characters': `t=${t}, n="abcdefghijklmnop"`,
+    'n is a string': `t=${t}, n="${b64(16)}"`,
+    'n is a boolean': `t=${t}, n`,
+    'n is an inner list': `t=${t}, n=(:${b64(16)}:)`,
+    'n twice': `t=${t}, n=:${b64(16)}:, n=:${b64(16)}:`,
+    'n twice, the first one wrong': `t=${t}, n=:${b64(15)}:, n=:${b64(16)}:`,
+  };
+  for (const [name, value] of Object.entries(cases)) {
+    const r = run(get(clientLines(held, { 'rq-have': value })), page('130.00'));
+    assert.equal(header(r, 'content-type'), 'text/html; charset=utf-8', name);
+    assert.equal(r.mode, 'full', name);
+  }
+  const ok = run(get(clientLines(held, { 'rq-have': `t=${t}, n=:${b64(16)}:` })), page('130.00'));
+  assert.equal(ok.mode, 'delta'); // control: the same request with one valid n
 });
 
 test('the cache-key URL drops the fragment and keeps the query', () => {
@@ -127,8 +167,8 @@ test('the delta of the known-answer page equals the example patch (one block, an
   // The operations equal the example; the binding is checked against the formula (the example file follows the reference lane).
   const price = JSON.parse(run(get(clientLines(held)), current).body);
   assert.deepEqual(price.operations, exampleJson('valid/patch/shop-price.json').operations);
-  assert.equal(price.binding, deltaBinding(TARGET, revisionsOf(held).page_revision, revisionsOf(current).page_revision));
-  const noB = clientLines(held, { 'rq-have': `t=${revisionsOf(held).template_revision}` });
+  assert.equal(price.binding, deltaBinding(TARGET, revisionsOf(held).page_revision, NONCE, revisionsOf(current).page_revision));
+  const noB = clientLines(held, { 'rq-have': `t=${revisionsOf(held).template_revision}, n=:${NONCE.toString('base64')}:` });
   assert.equal(JSON.parse(run(get(noB), current).body).operations.length, 3); // H-7: every block
   const all = Buffer.from(current.toString('utf8').replace('>Shop<', '><').replace('{"items":3}', '{"items":4}'));
   assert.deepEqual(JSON.parse(run(get(clientLines(held)), all).body).operations, exampleJson('valid/patch/shop-all.json').operations);
@@ -144,6 +184,7 @@ test('a delta needs each of: block-patch, Accept for the delta type, one r1 tag,
     'no If-None-Match': { 'if-none-match': null },
     'two tags': { 'if-none-match': `"${revisionsOf(held).page_revision}", "r1.${'A'.repeat(43)}"` },
     'no Rq-Have': { 'rq-have': null },
+    'no n': { 'rq-have': `t=${revisionsOf(held).template_revision}` },
     'other template': { 'rq-have': `t=t1.${'A'.repeat(43)}` },
     'version 2': { 'rq-version': '2' },
   };
@@ -166,7 +207,7 @@ test('a request with Range or a HEAD request gets no delta', () => {
 
 test('a b with the wrong length is absent: the delta has every block', () => {
   const held = page('120.00');
-  const r = run(get(clientLines(held, { 'rq-have': `t=${revisionsOf(held).template_revision}, b=:AAAAAAAAAAA=:` })), page('130.00'));
+  const r = run(get(clientLines(held, { 'rq-have': `t=${revisionsOf(held).template_revision}, b=:AAAAAAAAAAA=:, n=:${NONCE.toString('base64')}:` })), page('130.00'));
   assert.equal(JSON.parse(r.body).operations.length, 3);
 });
 
@@ -311,7 +352,7 @@ test('property: the delta of random price changes leads to the revision of the c
     });
     const patched = pageRevision(cur.template_revision, merged, {});
     assert.equal(patched, cur.page_revision);
-    assert.equal(delta.binding, deltaBinding(TARGET, revisionsOf(held).page_revision, patched));
+    assert.equal(delta.binding, deltaBinding(TARGET, revisionsOf(held).page_revision, NONCE, patched));
   }
 });
 

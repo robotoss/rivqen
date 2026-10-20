@@ -101,6 +101,19 @@ xychart-beta
 
 <Badge type="tip" text="FACT" /> **After H-108 (request header bytes).** The human decision H-108 (S6 security re-review B1) adds a client nonce to every delta request: the `Rq-Have` member `n`, 16 random bytes ([negotiation §3.4](/engineering/protocol/negotiation#_3-4-rq-have)). The bodies (F, D, `304`) do not change: the binding keeps its length. The request costs 30 more bytes in HTTP/1.1 form (`, n=:` + 24 base64 characters + `:`). As an HPACK header block on a new HTTP/2 connection (the method of `evidence/rqp-bytes/report.md` §3.5: Node.js 26.8.2, a local proxy counts the header block bytes) the revisit request of the demo page grows from 276 bytes by 23 to 27 bytes (median 25, mean 24.8, 200 random nonces); with 64 blocks the same (median 24). On a warm connection the cost is larger: the value of `Rq-Have` is new for every request, so HPACK cannot reuse it from its table. Two more revisits of the demo page on one connection send 164 bytes each in place of 60 (measured 2026-10-20, T-06a). Body bytes, the numbers in this section, do not change.
 
+<Badge type="tip" text="FACT" /> **After H-109 (request header bytes).** The human decision H-109 moves the nonce out of `Rq-Have` into its own request field `Rq-Nonce` ([negotiation §3.9](/engineering/protocol/negotiation#_3-9-rq-nonce)). The bodies and the binding do not change. `Rq-Have` is again the same for every request from one snapshot, so on a warm HTTP/2 connection only the nonce is new. Request header bytes of a revisit (all request fields of the byte study request, `evidence/rqp-bytes/report.md` §3.5 and §10; HPACK: median of 200 random nonces, Node.js 26.8.2, nghttp2 1.70.0; "warm" is the second and the third revisit on one connection; measured 2026-10-20, T-08a):
+
+| Request | No nonce (H-107) | `n` (H-108) | `Rq-Nonce` (H-109) |
+|---|---:|---:|---:|
+| Demo, HTTP/1.1 | 367 | 397 | 405 |
+| Demo, HPACK new | 276 | 301 | 306 |
+| Demo, HPACK warm | 60 | 164 | 83 |
+| 64 blocks, HTTP/1.1 | 1,007 | 1,037 | 1,045 |
+| 64 blocks, HPACK new | 790 | 814 | 820 |
+| 64 blocks, HPACK warm | 58 | 677 | 82 |
+
+The nonce costs 38 bytes in HTTP/1.1 form (8 more than the member `n`: the field name), 30 bytes on a new HTTP/2 connection (5 or 6 more than `n`), and 23 or 24 bytes on a warm connection, where `n` cost 104 bytes (demo) and 619 bytes (64 blocks). Body bytes, the numbers in this section, do not change.
+
 ### What the numbers say
 
 1. On a data change, the RQP delta is **81 % smaller** than the full document F with gzip (526 vs 2,718 bytes) and 71 % smaller with Brotli (467 vs 1,625 bytes). After H-103 and H-104 it is 91 % smaller with gzip (221 vs 2,363 bytes, F of the new page) and 87 % smaller with Brotli (171 vs 1,300 bytes).

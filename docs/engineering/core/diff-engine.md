@@ -36,7 +36,7 @@ A patch passes only if **all** checks pass. The checks run in this order. The fi
 | # | Check | Code |
 |---|---|---|
 | 1 | The response belongs to the current navigation: same generation and request ([INV-12](/engineering/architecture/invariants)); the final response URL (after redirects) has the cache key of the snapshot: scheme, host, port, path, query ([cache identity](/engineering/cache/identity)); the partition is check 3 (H-58). A release build sends RQP fields only to `https`, so this check also rejects a delta from a final URL that is not `https` | Stale: no-op. Other URL: `PATCH_INVALID` |
-| 2 | The request offered a delta: it had a snapshot, `block-patch`, the delta media type in `Accept` and a nonce in `Rq-Have` (H-108). Else the delta is unsolicited (also on the fallback load) | `PATCH_INVALID` |
+| 2 | The request offered a delta: it had a snapshot, `block-patch`, the delta media type in `Accept` and a nonce in `Rq-Nonce` (H-108, H-109). Else the delta is unsolicited (also on the fallback load) | `PATCH_INVALID` |
 | 3 | The partition did not change between the request and the response | `AUTH_PARTITION_CHANGED` |
 | 4 | Envelope bytes ≤ `min(maxPatchBytes, limits.max_patch_bytes)`, counted while the body is read (after content decoding) | `PATCH_TOO_LARGE` |
 | 5 | JSON rules: UTF-8, no duplicate member names, no lone surrogate escape, integer form, depth ≤ `maxJsonDepth` | `PATCH_INVALID` |

@@ -50,7 +50,7 @@ flowchart TD
 |---|---|---|
 | `CacheEntry` | `key`, `meta`, `snapshot_ref` | One logical page in one partition. |
 | `EntryMeta` | `created_at`, `last_validated_at`, `expires_at`, `validators`, `policy`, `size`, `schema_version` | Stored in the metadata database. |
-| `Validators` | `etag`, `template_tag`, `last_modified`, `rqp_page_revision`, `rqp_template_revision` | legacy and RQP fields are separate. The RQP revisions come from the manifest, not from the `ETag` header. |
+| `Validators` | `etag`, `template_tag`, `last_modified`, `rqp_page_revision`, `rqp_template_revision` | legacy and RQP fields are separate. `rqp_page_revision` comes from the manifest, not from the `ETag` header. `rqp_template_revision` is the value that the client computes (H-103). |
 | `Snapshot` | `template`, `data`, `rendered_html?`, `integrity` | Immutable once committed. |
 | `TemplateBody` | bytes + `template_revision` | Template with placeholders. |
 | `DataBlocks` | ordered map `block_id → BlockValue` | Order is significant for re-rendering. |
@@ -72,11 +72,11 @@ flowchart TD
 | Type | Fields | Notes |
 |---|---|---|
 | `Capabilities` | set of tokens | Sent by the client in `Rq-Capabilities` as one Inner List of Tokens (H-53); `rqp/1` defines `block-patch`. The server does not announce capabilities ([negotiation §3.3](/engineering/protocol/negotiation#_3-3-rq-capabilities)). |
-| `PageManifest` | `protocol`, `origin`, `path`, `template_revision`, `page_revision`, `blocks[]`, `policy`, `limits` | See [RQP manifest and patch](/engineering/protocol/manifest-patch). |
-| `RqHave` | `template_revision`, `digest_prefixes` (8 bytes per block, document order) | Request field `Rq-Have` (H-44), at most 4096 bytes. Built from the snapshot. |
-| `BlockDescriptor` | `id`, `format` (`html`/`json`), `sha256` | SHA-256 (base64url) over the exact content bytes; no normalization (H-2, H-11). |
-| `PatchEnvelope` | `type`, `protocol`, `base_revision`, `next_revision`, `template_revision`, `operations[]` | Validated before apply ([diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation)). No `page_id` and no `sequence` over HTTP (H-9). |
-| `PatchOp` | `replace_block` (`block_id`, `format`, `content`, `sha256`) | The only operation of `rqp/1` (H-47). The client rejects content with script or event handlers ([manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules)). |
+| `PageManifest` | `protocol`, `origin`, `path`, `page_revision`; optional `policy`, `limits` | No block list and no template revision (H-103): the client computes them. See [RQP manifest and patch](/engineering/protocol/manifest-patch). |
+| `RqHave` | template revision (member `t`), `digest_prefixes` (member `b`; 8 bytes per block, document order) | Request field `Rq-Have` (H-44, H-106), at most 4096 bytes. Built from the snapshot. |
+| `BlockDescriptor` | `id`, `format` (`html`/`json`), `sha256` | Computed by the client, not sent in the manifest (H-103). SHA-256 (base64url) over the exact content bytes; no normalization (H-2, H-11). |
+| `PatchEnvelope` | `next_revision`, `operations[]` | No `type`, `protocol`, base or template revision (H-104). The client checks the result through `next_revision`. Validated before apply ([diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation)). No `page_id` and no `sequence` over HTTP (H-9). |
+| `PatchOp` | `block_id`, `content` | The only operation of `rqp/1`: replace the content of a block (H-47). No `op`, `format` or `sha256` (H-104); the client computes the hash. The client rejects content with script or event handlers ([manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules)). |
 
 ## 5. Events and actions
 

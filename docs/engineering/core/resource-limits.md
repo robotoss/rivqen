@@ -15,7 +15,7 @@ Every input to the core is bounded. Limits protect the app from memory exhaustio
 | `maxBlocks` | 256 | Data blocks per page | Protocol error |
 | `maxBlockKeyBytes` | 128 (legacy mode); 64 in RQP ([markup](/engineering/protocol/markup) M-15) | Block key length | Protocol error |
 | `maxBlockBytes` | 1 MiB | One data block | Protocol error |
-| `maxManifestBytes` | 64 KiB (H-50) | Text of the RQP page manifest ([manifest and patch](/engineering/protocol/manifest-patch)); worst case of a valid manifest is about 37 KiB | `MANIFEST_INVALID` → normal load |
+| `maxManifestBytes` | 64 KiB (H-50) | Text of the RQP page manifest ([manifest and patch](/engineering/protocol/manifest-patch)); a compact manifest is at most about 4,819 bytes (FACT, WP-17 S6 T-02a; H-103); the limit stays 64 KiB because JSON white space is allowed | `MANIFEST_INVALID` → normal load |
 | `maxOpenElements` | 256 | Depth counter D of the RQP markup analysis ([markup](/engineering/protocol/markup) M-26, H-25, H-31); it also bounds the token stack (size ≤ D) and the WHATWG stack (≤ D + 2) | `RQP_MARKUP_LIMIT` → normal HTML without RQP |
 | `maxPatchBytes` | 256 KiB | One RQP patch envelope. The server sends the full document when a delta is larger ([negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server), step 7) | Client: `PATCH_TOO_LARGE`. Server: full document |
 | `maxRqHaveBytes` | 4096 bytes, fixed by `rqp/1` | Request field `Rq-Have`, all field lines combined (H-44) | Client: never sends more. Server: field is absent, not parsed |

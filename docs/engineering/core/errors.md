@@ -27,8 +27,8 @@ Rivqen errors are typed. Each error has a category, a stable code, and a **fallb
 | `PROTOCOL_UNSUPPORTED` | UnsupportedCapability | Try the allowed downgrade, else normal HTTPS |
 | `MANIFEST_INVALID` | Protocol | The RQP page manifest failed a client check ([manifest and patch §1.8](/engineering/protocol/manifest-patch#_1-8-client-checks-of-the-manifest)): no or two manifest elements, size, JSON, schema, URL, or the markup analysis of the original document. Show the document as a normal page; store no snapshot. Hint: `NormalLoad` |
 | `PATCH_INVALID` | Protocol | An RQP delta is malformed or unsolicited: JSON rules, schema (also an unknown operation), operation rules, a final URL with another cache key (H-58), or a delta for a request that did not offer one ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response)). Reject the patch; one fallback load of the full document. Hint: `NormalLoad` |
-| `PATCH_BASE_MISMATCH` | Protocol | Reject the patch; request a full snapshot |
-| `TEMPLATE_MISMATCH` | Protocol | Full reload |
+| `PATCH_BASE_MISMATCH` | Protocol | Not produced by `rqp/1` since H-104; reserved, not reused. A delta for another base gives `INTEGRITY_ERROR` ([manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), step 7) |
+| `TEMPLATE_MISMATCH` | Protocol | Not produced by `rqp/1` since H-104; reserved, not reused. A delta for another template gives `INTEGRITY_ERROR` (step 7) |
 | `INTEGRITY_ERROR` | Protocol | Reject; full reload |
 | `PATCH_CONTENT_REJECTED` | SecurityViolation | The patched content failed the content rules ([manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules)). Show nothing of the patch; one fallback load of the full document from the network; count the metric (rule 3). Hint: `NormalLoad` |
 | `CACHE_CORRUPTED` | CacheCorruption | Delete the entry; fetch over HTTPS |

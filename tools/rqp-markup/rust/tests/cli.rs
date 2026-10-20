@@ -82,7 +82,7 @@ fn single_mode_prints_one_result_line() {
     fs::write(&file, b"<p data-rq-block=\"price\">120.00</p>").unwrap();
     let output = run(&[path_str(&file)]);
     assert_eq!(output.status.code(), Some(0));
-    assert!(output.stderr.is_empty());
+    assert_eq!(output.stderr, b"");
     assert!(output.stdout.ends_with(b"}\n"));
     let results = lines(&output);
     assert_eq!(results.len(), 1);
@@ -108,7 +108,7 @@ fn invalid_documents_exit_0_and_print_no_content() {
     .unwrap();
     let output = run(&[path_str(&file)]);
     assert_eq!(output.status.code(), Some(0));
-    assert!(output.stderr.is_empty());
+    assert_eq!(output.stderr, b"");
     let result = &lines(&output)[0];
     assert_eq!(result["valid"], false);
     assert_eq!(result["error"], "RQP_MARKUP_DUPLICATE");
@@ -124,7 +124,7 @@ fn io_errors_exit_2() {
     let missing = dir.join("missing.html");
     let output = run(&[path_str(&missing)]);
     assert_eq!(output.status.code(), Some(2));
-    assert!(output.stdout.is_empty());
+    assert_eq!(output.stdout, b"");
     assert!(String::from_utf8_lossy(&output.stderr).contains("cannot open"));
 
     let output = run(&["--batch", path_str(&missing)]);
@@ -151,7 +151,7 @@ fn non_utf8_arguments_are_paths() {
     ] {
         let output = bin().args(&args).output().unwrap();
         assert_eq!(output.status.code(), Some(2), "{args:?}");
-        assert!(output.stdout.is_empty());
+        assert_eq!(output.stdout, b"");
         assert!(String::from_utf8_lossy(&output.stderr).contains("cannot"));
     }
     // A flag that is not UTF-8 is a usage error.
@@ -207,7 +207,7 @@ fn inputs_that_are_not_regular_files_do_not_block() {
     }
     let output = run_on_fifo(&[&fifo], &fifo);
     assert_eq!(output.status.code(), Some(2));
-    assert!(output.stdout.is_empty());
+    assert_eq!(output.stdout, b"");
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("not a regular file"), "{stderr}");
 
@@ -310,7 +310,7 @@ fn batch_mode_sorts_by_name_and_skips_directories_without_input() {
 
     let output = run(&["--batch", path_str(&dir)]);
     assert_eq!(output.status.code(), Some(0));
-    assert!(output.stderr.is_empty());
+    assert_eq!(output.stderr, b"");
     let results = lines(&output);
     let fixtures: Vec<&str> = results
         .iter()

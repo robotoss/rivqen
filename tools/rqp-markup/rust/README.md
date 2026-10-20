@@ -9,7 +9,7 @@ The Rust candidate of WP-17 S1 (tasks T-03, T-08, T-09, T-11, T-13 and T-16) S3 
 
 Run these commands in `tools/rqp-markup/rust`:
 
-1. Install Rust stable 1.85 or later.
+1. Install `rustup`. The toolchain is pinned in `tools/rqp-markup/rust-toolchain.toml` (Rust 1.99.0 with clippy and rustfmt); `rustup toolchain install` in this directory installs it. The minimum version for a build is 1.85 (`rust-version`).
 2. Run `cargo build --release`.
 3. The command is `target/release/rqp-markup`.
 

@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { MANIFEST_END, UnsupportedInput, canonicalUrl, deltaBinding, isNonceText, membersOf, nonceText, pageRevision, sha256b64u } from './common.mjs';
 import { deltaBase, handle, manifestOf, rqNonce, writtenMembers } from './server.mjs';
 import { Partition, handleResponse, hasUserinfo, havePrefixes, requestHeaders, snapshotOf, validAllowlistEntry } from './client.mjs';
-import { combined, normalizeHeaders } from './http.mjs';
+import { combined, normalizeHeaders, varyMembers } from './http.mjs';
 import { analyze, documentHeadStart } from './markup.mjs';
 import { UnknownPage, pageBytes } from './pages.mjs';
 
@@ -127,10 +127,25 @@ export function serverRequest(c) {
 function requiredHeaders(headers) {
   const out = {};
   for (const [name] of headers) {
-    if (name === 'content-length' || name === 'date' || Object.hasOwn(out, name)) continue;
+    if (name === 'content-length' || name === 'date' || name === 'vary' || Object.hasOwn(out, name)) continue;
     out[name] = combined(headers, name);
   }
   return out;
+}
+
+/**
+ * The member vary of expected.json (DL-063): the Vary members of the reference
+ * response as lower-case field names. `required`: the members that every
+ * conforming response lists (the members of A that are not Rq-*; MUST);
+ * `should`: Rq-Nonce on D (L1, a SHOULD). The checker compares sets, so the
+ * order and the case of the members and the number of field lines are free.
+ * Written only when one list is not empty.
+ */
+function expectedVary(kind, headers) {
+  const members = [...new Set(varyMembers(headers))];
+  const should = kind === 'delta' ? members.filter((m) => m === 'rq-nonce') : [];
+  const required = members.filter((m) => !should.includes(m));
+  return required.length + should.length === 0 ? {} : { vary: { required, should } };
 }
 
 function forbiddenHeaders(kind, status, appHeaders, responseHeaders) {
@@ -212,6 +227,7 @@ export function expectServer(c) {
         headers_required: requiredHeaders(r.headers),
         headers_forbidden: forbiddenHeaders(r.kind, r.status, app.headers, r.headers),
         ...optionalHeaders(r.status),
+        ...expectedVary(r.kind, r.headers),
         body,
       },
     },

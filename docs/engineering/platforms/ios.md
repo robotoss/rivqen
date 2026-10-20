@@ -77,6 +77,7 @@ for await event in session.events { handle(event) }
 | Networking | `URLSession` with the app's configuration; system TLS |
 | Cookies | Sync with `WKHTTPCookieStore` of the session's `WKWebsiteDataStore` |
 | Secrets | Keychain, `ThisDeviceOnly` |
+| Request nonce (RQP-29, DL-063) | <Badge type="info" text="DESIGN" /> The 16 bytes of `Rq-Nonce` for each network attempt come from `SecRandomCopyBytes(kSecRandomDefault, 16, &bytes)`. The SDK uses them only when the result is `errSecSuccess`; else it sends no nonce: no `Rq-Nonce`, no `Rq-Have`, no delta media type ([negotiation §3.9](/engineering/protocol/negotiation#_3-9-rq-nonce)). A release build has no other source: a test input of the nonce exists only in a debug or test build. <Badge type="tip" text="FACT" /> Apple documentation: "Generates an array of cryptographically secure random bytes"; the return value is "`errSecSuccess` or some other value on failure"; "Always test the returned status" ([SecRandomCopyBytes](https://developer.apple.com/documentation/security/secrandomcopybytes(_:_:_:)), checked 2026-10-20) |
 | Privacy | `PrivacyInfo.xcprivacy` for the APIs the SDK uses |
 | Distribution | Swift Package + XCFramework (device and simulator slices) |
 

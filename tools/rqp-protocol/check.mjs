@@ -37,8 +37,11 @@
 // a client under test uses this value in place of its CSPRNG (a test seam only).
 //
 // Comparison rules: docs/engineering/protocol/fixtures.md section 4.1
-// ("Comparison of F") and section 5; README.md of the fixtures; and RQP-08
-// (no Rq-* field and no Accept in Vary of F and of a 304).
+// ("Comparison of F") and section 5; README.md of the fixtures; and RQP-08,
+// RQP-09 and DL-063 for Vary (compared as a set of field names, ASCII
+// case-insensitive): no Rq-* member in any outcome except Rq-Nonce on a delta
+// (a SHOULD there), no Accept on F and on a 304, and every member of
+// expected.vary.required present.
 // Exit codes: 0 every fixture passes, 1 a fixture fails, 2 a usage error.
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -47,7 +50,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { MANIFEST_END, MANIFEST_START, sha256b64u } from './src/common.mjs';
 import { FIXTURES_DIR, fixtureNames, readJsonFile } from './src/fixtures.mjs';
-import { acceptsMediaType, combined, has, normalizeHeaders } from './src/http.mjs';
+import { acceptsMediaType, combined, has, normalizeHeaders, varyMembers } from './src/http.mjs';
 import { parseStrict } from './src/json-strict.mjs';
 import { pageBytes } from './src/pages.mjs';
 import { loadSchema, validate } from './src/schema.mjs';
@@ -128,14 +131,18 @@ export function compareServer(expected, page, response) {
     else if (lines.length === 1 && combined(lines, name) !== value) fail(`header ${name}: ${JSON.stringify(combined(lines, name))}, expected ${JSON.stringify(value)} or absent`);
   }
   const kind = expected.body.kind;
-  if (kind === 'full' || expected.status === 304 || (kind === 'none' && expected.status === 200)) {
-    const vary = combined(headers, 'vary');
-    if (vary !== null) {
-      for (const member of vary.split(',').map((v) => v.trim().toLowerCase())) {
-        if (member.startsWith('rq-') || member === 'accept') fail(`header vary: lists ${member} (RQP-08)`);
-      }
-    }
+  // RQP-08, RQP-09, DL-063 (L1, L2): Vary in every outcome. F, the HEAD of F
+  // and a 304 list no Rq-* field and no Accept; a passthrough and D list no
+  // Rq-* field, except Rq-Nonce on D (expected.vary.should, checked in
+  // compareServerShould). The members of A that are not Rq-* stay.
+  const members = varyMembers(headers);
+  const want = expected.vary ?? { required: [], should: [] };
+  const fullLike = kind === 'full' || expected.status === 304 || (kind === 'none' && expected.status === 200);
+  for (const member of members) {
+    if (member.startsWith('rq-') && !want.should.includes(member)) fail(`header vary: lists ${member} (RQP-08)`);
+    else if (fullLike && member === 'accept') fail(`header vary: lists ${member} (RQP-08)`);
   }
+  for (const member of want.required) if (!members.includes(member)) fail(`header vary: does not list ${member}`);
   const length = combined(headers, 'content-length');
   if (length !== null && body !== null && kind !== 'none' && Number(length) !== body.length) {
     fail(`header content-length ${length}, body has ${body.length} bytes`);
@@ -152,6 +159,16 @@ export function compareServer(expected, page, response) {
     compareDelta(expected.body, body, fail);
   }
   return failures;
+}
+
+/**
+ * The SHOULD rules of one field of a server response (DL-063, L1: D SHOULD
+ * list Rq-Nonce in Vary): a list of failures that a conforming server may
+ * have, counted apart from the MUST failures of compareServer.
+ */
+export function compareServerShould(expected, response) {
+  const members = varyMembers(normalizeHeaders(response.headers));
+  return (expected.vary?.should ?? []).filter((m) => !members.includes(m)).map((m) => `header vary: does not list ${m}`);
 }
 
 /** Remove block content that expected.json does not list (content over 4 KiB). */
@@ -205,13 +222,15 @@ export async function runServer(mod, { dir = FIXTURES_DIR, only = '' } = {}) {
     const expected = readJsonFile(join(dir, name, 'expected.json'));
     const page = pageBytes(c.page);
     let failures;
+    let should = [];
     try {
       const response = await mod.handle(expected.request, structuredClone(c.app), Uint8Array.from(page), expected.server_config ?? {});
       failures = compareServer(expected, page, response);
+      should = compareServerShould(expected, response);
     } catch (error) {
       failures = [`the server threw ${error instanceof Error ? error.name : typeof error}`];
     }
-    out.push({ name, failures, level: expected.level ?? 'must' });
+    out.push({ name, failures, should, level: expected.level ?? 'must' });
   }
   return out;
 }
@@ -300,16 +319,19 @@ async function main(argv) {
     process.stderr.write(`rqp-protocol check: ${error.message}\n`);
     return 2;
   }
-  // A fixture with level "should" checks a SHOULD rule. Its failure is counted
-  // and labelled apart from the failures of MUST rules.
+  // A fixture with level "should" checks a SHOULD rule, and a fixture can have
+  // a SHOULD rule for one field (`should`, DL-063). Such failures are counted
+  // and labelled apart from the failures of MUST rules: a fixture with a MUST
+  // failure counts as failed, else one with a SHOULD failure as SHOULD failed.
   let failed = 0;
   let shouldFailed = 0;
-  for (const { name, failures, level } of results) {
-    if (failures.length === 0) continue;
-    const should = level === 'should';
-    if (should) shouldFailed++;
-    else failed++;
-    for (const f of failures) process.stdout.write(`FAIL${should ? ' [SHOULD]' : ''} ${name}: ${f}\n`);
+  for (const { name, failures, should = [], level } of results) {
+    const mustList = level === 'should' ? [] : failures;
+    const shouldList = level === 'should' ? [...failures, ...should] : should;
+    if (mustList.length > 0) failed++;
+    else if (shouldList.length > 0) shouldFailed++;
+    for (const f of mustList) process.stdout.write(`FAIL ${name}: ${f}\n`);
+    for (const f of shouldList) process.stdout.write(`FAIL [SHOULD] ${name}: ${f}\n`);
   }
   const passed = results.length - failed - shouldFailed;
   process.stdout.write(`rqp-protocol check: ${passed} passed, ${failed} failed, ${shouldFailed} SHOULD failed\n`);

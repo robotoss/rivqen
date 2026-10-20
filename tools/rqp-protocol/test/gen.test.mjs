@@ -30,13 +30,13 @@ function copyFixture(name) {
 
 test('gen.mjs --check: every committed page and expected file is current', () => {
   const out = execFileSync(process.execPath, [GEN, '--check'], { encoding: 'utf8' });
-  assert.match(out, /257 fixtures are current/);
+  assert.match(out, /265 fixtures are current/);
 });
 
-test('every catalog case P-01 to P-41 and C-01 to C-31 has at least one fixture', () => {
+test('every catalog case P-01 to P-43 and C-01 to C-32 has at least one fixture', () => {
   const names = fixtureNames();
-  for (let i = 1; i <= 41; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-P${String(i).padStart(2, '0')}-`)), `P-${i}`);
-  for (let i = 1; i <= 31; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-C${String(i).padStart(2, '0')}-`)), `C-${i}`);
+  for (let i = 1; i <= 43; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-P${String(i).padStart(2, '0')}-`)), `P-${i}`);
+  for (let i = 1; i <= 32; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-C${String(i).padStart(2, '0')}-`)), `C-${i}`);
 });
 
 test('H-107: in each rejected C-31 case only B or U of the binding differs; R\' alone (the check of H-104) fits the snapshot', () => {
@@ -164,6 +164,22 @@ test('context.snapshot.partition (H-65): request (default) or public; public nee
   assert.throws(() => withSnapshot({ ...c.context.snapshot, partition: 'shared' }), (e) => e instanceof CaseError && /partition shared/.test(e.message));
   assert.throws(() => withSnapshot({ page: 'page-a', partition: 'public' }), (e) => e instanceof CaseError && /needs the member policy with mode public/.test(e.message));
   assert.throws(() => withSnapshot({ ...c.context.snapshot, members: { policy: { mode: 'private' } } }), (e) => e instanceof CaseError && /mode public/.test(e.message));
+});
+
+test('DL-063: vary is never a required header; the member vary has the members of A (required) and Rq-Nonce of D (should), and is written only when not empty', () => {
+  const exp = (name) => expectFixture(FIXTURES_DIR, name).files['expected.json'];
+  for (const name of fixtureNames().filter((n) => n.startsWith('FX-RQ-P'))) assert.equal(Object.hasOwn(exp(name).headers_required, 'vary'), false, name);
+  assert.deepEqual(exp('FX-RQ-P09-DELTA').vary, { required: [], should: ['rq-nonce'] });
+  assert.deepEqual(exp('FX-RQ-P43-APP-VARY-DELTA').vary, { required: ['accept-encoding'], should: ['rq-nonce'] });
+  assert.deepEqual(exp('FX-RQ-P43-APP-VARY-CASE').vary, { required: ['accept-encoding'], should: [] });
+  assert.equal(Object.hasOwn(exp('FX-RQ-P01-FIRST-VISIT'), 'vary'), false);
+  // Every delta of the server cases has the SHOULD member and nosniff (L1).
+  for (const name of fixtureNames().filter((n) => n.startsWith('FX-RQ-P'))) {
+    const e = exp(name);
+    if (e.body.kind !== 'delta') continue;
+    assert.deepEqual(e.vary.should, ['rq-nonce'], name);
+    assert.equal(e.headers_required['x-content-type-options'], 'nosniff', name);
+  }
 });
 
 test('headers_optional is written for a 304 only', () => {

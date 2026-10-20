@@ -5,8 +5,42 @@
 // values, entity-tags (RFC 9110 section 8.8.3), Accept (section 12.5.1) and the
 // media type of Content-Type. Header lines are [name, value] pairs; names are
 // compared ASCII case-insensitively.
+//
+// Work is linear in the field value. White space is removed with index scans
+// (trimChars), not with a regular expression: a pattern such as
+// /^[ \t]+|[ \t]+$/g is quadratic for a long run of white space inside a value,
+// because the second alternative is tried at each position of the run (64 KB:
+// 1.4 s per call; found with the M1 fix of the S6 final security review,
+// DL-063).
 
 import { asciiLower } from './common.mjs';
+
+const isOws = (c) => c === 0x20 || c === 0x09; // SP, HTAB (RFC 9110 section 5.6.3)
+const isHttpWs = (c) => c === 0x20 || c === 0x09 || c === 0x0a || c === 0x0d; // WHATWG MIME Sniffing: HTTP whitespace
+const isAsciiWs = (c) => isHttpWs(c) || c === 0x0c; // WHATWG Infra: ASCII whitespace
+
+/**
+ * `s` without the leading (when `start`) and trailing (when `end`) characters
+ * for which `isWs(charCode)` is true. Linear: two index scans, no regular
+ * expression.
+ */
+export function trimChars(s, isWs, { start = true, end = true } = {}) {
+  let i = 0;
+  let j = s.length;
+  if (start) while (i < j && isWs(s.charCodeAt(i))) i++;
+  if (end) while (j > i && isWs(s.charCodeAt(j - 1))) j--;
+  return i === 0 && j === s.length ? s : s.slice(i, j);
+}
+
+/** `s` without leading and trailing OWS (SP and HTAB). Linear. */
+export function trimOws(s) {
+  return trimChars(s, isOws);
+}
+
+/** `s` without trailing OWS (SP and HTAB). Linear. */
+export function trimOwsEnd(s) {
+  return trimChars(s, isOws, { start: false });
+}
 
 /** Header lines in a canonical form: [lower-case name, value] pairs, order kept. */
 export function normalizeHeaders(headers) {
@@ -29,7 +63,7 @@ export function normalizeHeaders(headers) {
  */
 export function combined(headers, name) {
   const lower = asciiLower(name);
-  const values = headers.filter(([n]) => n === lower).map(([, v]) => v.replace(/^[ \t]+|[ \t]+$/g, ''));
+  const values = headers.filter(([n]) => n === lower).map(([, v]) => trimOws(v));
   return values.length === 0 ? null : values.join(', ');
 }
 
@@ -44,10 +78,25 @@ export function without(headers, ...names) {
   return headers.filter(([n]) => !drop.has(n));
 }
 
+/**
+ * The members of the Vary field lines of `headers` (normalized lines): field
+ * names (or "*") in ASCII lower case, without white space and without empty
+ * list elements, in order. Vary has no quoted strings (RFC 9110 section
+ * 12.5.5), so a split on "," is exact.
+ */
+export function varyMembers(headers) {
+  const vary = combined(headers, 'vary');
+  if (vary === null) return [];
+  return vary
+    .split(',')
+    .map((m) => asciiLower(trimOws(m)))
+    .filter((m) => m !== '');
+}
+
 /** Lower-case "type/subtype" of a Content-Type value, or null. */
 export function mediaType(value) {
   if (value === null) return null;
-  const essence = value.split(';')[0].replace(/^[ \t]+|[ \t]+$/g, '');
+  const essence = trimOws(value.split(';')[0]);
   return essence === '' ? null : asciiLower(essence);
 }
 
@@ -58,7 +107,7 @@ const ETAGC = /[\x21\x23-\x7e\x80-\xff]/;
  * { tags: [{ weak, opaque }] } (opaque with its quotes), or null for a syntax error.
  */
 export function parseEntityTags(value) {
-  const v = value.replace(/^[ \t]+|[ \t]+$/g, '');
+  const v = trimOws(value);
   if (v === '*') return { star: true, tags: [] };
   const tags = [];
   let i = 0;
@@ -111,7 +160,7 @@ export function splitList(value) {
     }
   }
   parts.push(cur);
-  return parts.map((p) => p.replace(/^[ \t]+|[ \t]+$/g, '')).filter((p) => p !== '');
+  return parts.map(trimOws).filter((p) => p !== '');
 }
 
 /**
@@ -127,7 +176,7 @@ export const UTF8_LABELS = Object.freeze(['unicode-1-1-utf-8', 'unicode11utf8', 
  * 0D, 20) is a UTF-8 label by ASCII case-insensitive match.
  */
 export function isUtf8Label(label) {
-  return UTF8_LABELS.includes(asciiLower(label.replace(/^[\t\n\f\r ]+|[\t\n\f\r ]+$/g, '')));
+  return UTF8_LABELS.includes(asciiLower(trimChars(label, isAsciiWs)));
 }
 
 const HTTP_WS = new Set(['\t', '\n', '\r', ' ']);
@@ -170,7 +219,7 @@ export function charsetParameter(mime) {
     } else {
       const valueStart = i;
       while (i < mime.length && mime[i] !== ';') i++;
-      value = mime.slice(valueStart, i).replace(/[\t\n\r ]+$/, '');
+      value = trimChars(mime.slice(valueStart, i), isHttpWs, { start: false });
       if (value === '') continue;
     }
     if (name === 'charset' && QUOTED_STRING_TOKEN.test(value)) return value;
@@ -216,7 +265,7 @@ export function acceptsMediaType(acceptValue, type) {
   const want = asciiLower(type);
   for (const range of splitList(acceptValue)) {
     const [essence, ...params] = range.split(';');
-    if (asciiLower(essence.replace(/[ \t]+$/, '')) !== want) continue;
+    if (asciiLower(trimOwsEnd(essence)) !== want) continue;
     let q = 1;
     for (const p of params) {
       const eq = p.indexOf('=');

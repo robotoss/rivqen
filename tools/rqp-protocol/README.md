@@ -120,6 +120,8 @@ Changed lines of WP-17 S4 T-08 (2026-10-19; the patch content rule, the attribut
 
 Changed lines of WP-17 S5 T-07 (2026-10-19; `noscript` in `PATCH_FORBIDDEN` (item 1.1 of the patch content rule) and the `page-b-noscript` entry of `EXPECTED`; base `a56b45d`; 7 s): 17 of 17 mutants killed (100 %; `markup.mjs` 12, `pages.mjs` 5). No test was added and no mutant is equivalent.
 
+Changed lines of WP-17 S6 T-03 (2026-10-20; P1, H-103 and H-104; base `276a1c3`; only the ranges in `src/`: `client`, `common`, `fixtures`, `pages`, `server`; 1 min 8 s per run): before 172/185 (93.0 %; `fixtures.mjs` 109/121, `server.mjs` 51/52, the others 12/12), after 182/185 (98.4 %). The 13 survivors were 10 message texts of case errors, `Buffer.from(…, 'utf8')` → `""` (3) and two conditions: the check that a `size` recipe has one operation with empty content (the next check also threw, with another text) and the filter that judges only `max_patch_bytes` against the server limit. Two tests were added: `writtenMembers` keeps a limit other than `max_patch_bytes`, and each body recipe defect names its member and reason in the case error (`test/gen.test.mjs`). 3 mutants are equivalent: `Buffer.from(text, '')` → `""` is the default encoding `utf8` (`src/fixtures.mjs:180`, `:397`, `:433`).
+
 The 182 survivors: 141 equivalent, 41 accepted.
 
 | Group | n | Status | Reason |

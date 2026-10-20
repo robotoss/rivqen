@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { buildDelta, buildManifest, changeSet, handle, membersOf, pageRevision, policyLineText } from '../src/rqp.js';
+import { buildDelta, buildManifest, cacheKeyUrl, changeSet, deltaBinding, handle, membersOf, pageRevision, policyLineText } from '../src/rqp.js';
 import { APP, TARGET, clientLines, exampleJson, get, header, katBytes, page, revisionsOf } from './helpers.js';
 
 // The members of the second known-answer set (shop-policy.json): none of them is a default.
@@ -85,19 +85,53 @@ test('a changed block gives a delta with only that block, no-store and no ETag',
   assert.equal(header(r, 'cache-control'), 'no-store');
   assert.equal(header(r, 'etag'), null);
   const delta = JSON.parse(r.body);
-  assert.deepEqual(Object.keys(delta), ['next_revision', 'operations']); // H-104: no other member
+  assert.deepEqual(Object.keys(delta), ['binding', 'operations']); // H-104, H-107: no other member
   assert.deepEqual(delta.operations, [{ block_id: 'price', content: '130.00' }]);
-  assert.equal(delta.next_revision, revisionsOf(page('130.00')).page_revision);
+  assert.equal(delta.binding, deltaBinding(TARGET, revisionsOf(held).page_revision, revisionsOf(page('130.00')).page_revision));
+});
+
+// Known answer, computed from the H-107 formula with node:crypto, independent of the code under test.
+const KAT = {
+  u: 'https://shop.example.com/catalog',
+  b: `r1.${'A'.repeat(43)}`,
+  r: `r1.${'B'.repeat(43)}`,
+  binding: 'd1.' + createHash('sha256').update(`rqp-d1\nhttps://shop.example.com/catalog\nr1.${'A'.repeat(43)}\nr1.${'B'.repeat(43)}\n`).digest('base64url'),
+};
+
+test('the delta binding equals the known answer of the formula', () => {
+  assert.equal(KAT.binding, 'd1.ZCuIRH13HX1swcuchq1uQ_0RVUsKkSIn_E0d26IjGf0');
+  assert.equal(deltaBinding(KAT.u, KAT.b, KAT.r), KAT.binding);
+});
+
+test('the delta binding changes when U, B or R\' changes, and is not symmetric in B and R\'', () => {
+  const v = deltaBinding(KAT.u, KAT.b, KAT.r);
+  assert.notEqual(deltaBinding('https://shop.example.com/other', KAT.b, KAT.r), v);
+  assert.notEqual(deltaBinding(KAT.u, `r1.${'C'.repeat(43)}`, KAT.r), v);
+  assert.notEqual(deltaBinding(KAT.u, KAT.b, `r1.${'C'.repeat(43)}`), v);
+  assert.notEqual(deltaBinding(KAT.u, KAT.r, KAT.b), v);
+});
+
+test('the cache-key URL drops the fragment and keeps the query', () => {
+  assert.equal(cacheKeyUrl('https://Shop.example.com:443/catalog?a=1#top'), 'https://shop.example.com/catalog?a=1');
+});
+
+test('the binding of a delta depends on the request URL', () => {
+  const held = page('120.00');
+  const other = { ...get(clientLines(held)), target: 'https://shop.example.com/catalog?x=1' };
+  assert.notEqual(JSON.parse(run(other).body).binding, JSON.parse(run(get(clientLines(held))).body).binding);
 });
 
 test('the delta of the known-answer page equals the example patch (one block, and all blocks without b)', () => {
   const held = katBytes('page.html');
   const current = Buffer.from(held.toString('utf8').replace('120.00', '130.00'));
-  assert.deepEqual(JSON.parse(run(get(clientLines(held)), current).body), exampleJson('valid/patch/shop-price.json'));
+  // The operations equal the example; the binding is checked against the formula (the example file follows the reference lane).
+  const price = JSON.parse(run(get(clientLines(held)), current).body);
+  assert.deepEqual(price.operations, exampleJson('valid/patch/shop-price.json').operations);
+  assert.equal(price.binding, deltaBinding(TARGET, revisionsOf(held).page_revision, revisionsOf(current).page_revision));
   const noB = clientLines(held, { 'rq-have': `t=${revisionsOf(held).template_revision}` });
   assert.equal(JSON.parse(run(get(noB), current).body).operations.length, 3); // H-7: every block
   const all = Buffer.from(current.toString('utf8').replace('>Shop<', '><').replace('{"items":3}', '{"items":4}'));
-  assert.deepEqual(JSON.parse(run(get(clientLines(held)), all).body), exampleJson('valid/patch/shop-all.json'));
+  assert.deepEqual(JSON.parse(run(get(clientLines(held)), all).body).operations, exampleJson('valid/patch/shop-all.json').operations);
 });
 
 test('a delta needs each of: block-patch, Accept for the delta type, one r1 tag, a matching template', () => {
@@ -275,8 +309,9 @@ test('property: the delta of random price changes leads to the revision of the c
       const op = delta.operations.find((o) => o.block_id === b.id);
       return op === undefined ? b : { id: b.id, format: b.format, sha256: createHash('sha256').update(op.content).digest('base64url') };
     });
-    assert.equal(pageRevision(cur.template_revision, merged, {}), delta.next_revision);
-    assert.equal(delta.next_revision, cur.page_revision);
+    const patched = pageRevision(cur.template_revision, merged, {});
+    assert.equal(patched, cur.page_revision);
+    assert.equal(delta.binding, deltaBinding(TARGET, revisionsOf(held).page_revision, patched));
   }
 });
 
@@ -286,8 +321,8 @@ test('changeSet and buildDelta: one operation per changed block, in the given or
   const prefixes = Buffer.concat(held.blocks.map((b) => Buffer.from(b.sha256, 'base64url').subarray(0, 8)));
   assert.deepEqual(changeSet(cur.blocks, prefixes), [1]);
   assert.deepEqual(changeSet(cur.blocks, null), [0, 1, 2]);
-  const delta = buildDelta(page('2'), cur, 'r1.b', [1, 2]);
-  assert.equal(delta.next_revision, 'r1.b');
+  const delta = buildDelta(page('2'), cur, 'd1.b', [1, 2]);
+  assert.equal(delta.binding, 'd1.b');
   assert.deepEqual(delta.operations.map((o) => o.block_id), ['price', 'cart']);
 });
 

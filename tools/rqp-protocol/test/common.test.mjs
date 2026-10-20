@@ -7,7 +7,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { NONCE_BYTES, UnsupportedInput, canonicalUrl, deltaBinding, deltaBindingPreimage, isNonceText, membersOf, nonceText, pageRevision, policyLimitsText, sha256b64u } from '../src/common.mjs';
+import { ContractError, NONCE_BYTES, UnsupportedInput, canonicalUrl, deltaBinding, deltaBindingPreimage, isNonceText, membersOf, nonceText, pageRevision, policyLimitsText, sha256b64u } from '../src/common.mjs';
 import { UnknownPage, pageBytes } from '../src/pages.mjs';
 import { handle } from '../src/server.mjs';
 import { APP, firstVisit, page } from './helpers.mjs';
@@ -86,7 +86,9 @@ test('H-107, H-108: an input that would make the preimage ambiguous stops the re
     ['https://a.example/', R_A, null, R_B],
     ['https://a.example/', R_A, R_B],
   ];
-  for (const args of bad) assert.throws(() => deltaBindingPreimage(...args), TypeError, JSON.stringify(args));
+  for (const args of bad) {
+    assert.throws(() => deltaBindingPreimage(...args), (e) => e instanceof ContractError && e instanceof TypeError && e.code === 'RQP_REFERENCE_CONTRACT', JSON.stringify(args));
+  }
 });
 
 test('H-107, H-108: each defective input of the preimage is named, and a revision has no prefix', () => {

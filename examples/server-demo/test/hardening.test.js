@@ -322,3 +322,37 @@ test('64 KB adversarial values of Rq-Version, Rq-Have and Rq-Nonce parse in unde
     }
   }
 });
+
+test('64 KB of white space inside header values: the OWS trim and handle() stay linear (final WP-17 security review L1)', () => {
+  const n = 65536;
+  const inner = (ws) => `a${ws.repeat(n)}b`;
+  for (const ws of [' ', '\t', ' \t']) {
+    const value = inner(ws);
+    let start = process.hrtime.bigint();
+    normalizeHeaders([['X-Long', value]]);
+    withoutRqVary([['vary', `Accept${ws.repeat(n)}x, Rq-Have`]]);
+    let ms = Number(process.hrtime.bigint() - start) / 1e6;
+    assert.ok(ms < 50, `the trim of ${value.length} chars took ${ms} ms`);
+    const request = get(normalizeHeaders([...clientLines(held), ...['rq-version', 'rq-have', 'rq-nonce', 'accept', 'if-none-match', 'x-other'].map((name) => [name, value])]));
+    const app = {
+      ...APP,
+      headers: [['content-type', `text/html${ws.repeat(n)}; charset=utf-8`], ['vary', `Accept${ws.repeat(n)}x, Rq-Have`], ['cache-control', 'no-cache']],
+    };
+    start = process.hrtime.bigint();
+    handle(request, app, held);
+    ms = Number(process.hrtime.bigint() - start) / 1e6;
+    assert.ok(ms < 50, `handle() with ${value.length}-char values took ${ms} ms`);
+  }
+});
+
+test('a 256 KB srcset with long comma runs passes the patch content check in under 50 ms (final WP-17 performance review F2)', async () => {
+  const { passesPatchContentRule } = await import('../src/markup.js');
+  const n = 262144;
+  for (const srcset of [`a${','.repeat(n)}b`, `a${','.repeat(n)}`, `${'a,'.repeat(n / 2)}b`]) {
+    const block = Buffer.from(`<img srcset="${srcset}">`);
+    const start = process.hrtime.bigint();
+    passesPatchContentRule(block);
+    const ms = Number(process.hrtime.bigint() - start) / 1e6;
+    assert.ok(ms < 50, `a srcset of ${srcset.length} chars took ${ms} ms`);
+  }
+});

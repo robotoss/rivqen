@@ -12,7 +12,7 @@
 | Upstream server traces (Node.js, PHP, Java) | ✅ Available — see [server traces](/engineering/protocol/legacy-traces) |
 | Rivqen protocol (RQP) specification | ✅ Done, MR pending — markup, negotiation, manifest and patch normative ([RQP markup](/engineering/protocol/markup), [negotiation](/engineering/protocol/negotiation), [manifest and patch](/engineering/protocol/manifest-patch)); 265 protocol fixtures (112 server, 153 client) and 362 markup fixtures; S1–S6 closed; MR pending |
 | Server demo (RQP reference behavior) | ✅ Runs — see [Examples: Server](/guide/examples/server) |
-| Golden fixtures | 🔄 RQP markup: 247 fixtures (`fixtures/rqp/markup/`); RQP protocol: 174 fixtures (`fixtures/rqp/protocol/`); legacy fixtures planned |
+| Golden fixtures | 🔄 RQP markup: 362 fixtures (`fixtures/rqp/markup/`); RQP protocol: 265 fixtures (112 server, 153 client; `fixtures/rqp/protocol/`); legacy fixtures planned |
 | Rust core | ⏳ Planned (P3) |
 | Android and iOS SDKs | ⏳ Planned (P5) |
 | Web and React SDK | ⏳ Planned (P6) |

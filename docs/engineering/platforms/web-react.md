@@ -58,7 +58,7 @@ flowchart TD
 | Mode | Markup |
 |---|---|
 | legacy | `<!--sonicdiff-name-->…<!--sonicdiff-name-end-->` emitted by `@rivqen/ssr`, never written by hand |
-| RQP | `<div data-rq-block="name">…</div>` + manifest script with hashes |
+| RQP | `<div data-rq-block="name">…</div>` + manifest script (page revision; the client computes the block digests) |
 
 ## Related
 

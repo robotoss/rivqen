@@ -70,7 +70,7 @@ A case can have `"level": "should"` (today the eight `FX-RQ-P35-*` cases, H-56, 
 
 StrykerJS 10.0.0 with the command runner (`stryker.config.json`, policy: `docs/engineering/quality/mutation.md`). Each mutant runs `node --test "test/*.test.mjs"`. The run fails below 80 %.
 
-`inPlace` is on: the sources reach `fixtures/`, `spec/` and the Node.js candidate by relative paths, and a sandbox copy breaks these paths. Stryker writes the mutants into `src/`, adds `// @ts-nocheck` to the files in `test/`, and puts the original files back at the end.
+`inPlace` is on: the sources reach `fixtures/`, `spec/` and the Node.js candidate by relative paths, and a sandbox copy breaks these paths. Stryker writes the mutants into `src/`, adds `// @ts-nocheck` to the files in `test/`, and puts the original files back at the end. A run that stops before its end (a crash, a kill) can leave mutants there: after every run, run `git diff --exit-code -- src test` in this directory, and restore the files with `git checkout -- src test` when it reports a change.
 
 1. Run only one mutation tool at a time on the machine.
 2. Go to `tools/rqp-protocol`.

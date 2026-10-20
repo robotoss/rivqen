@@ -1,31 +1,16 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# WebViewLab apps
 
-* [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
-* [/shared](./shared/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./shared/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./shared/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
-    folder is the appropriate location.
+The two apps of the WebView lab. The full procedure, the contract and the results are in [`tools/webview-lab/README.md`](../../README.md) and [`tools/webview-lab/CONTRACT.md`](../../CONTRACT.md).
 
-### Running the apps
+| Directory | App | Build |
+|---|---|---|
+| [`iosApp`](./iosApp) | Pure Swift app with `WKWebView`; logic in the local Swift package `iosApp/LabCore` | `tools/webview-lab/ios-run.sh` (Xcode) |
+| [`androidApp`](./androidApp) | Plain `Activity` with `android.webkit.WebView` | `tools/webview-lab/android-run.sh` (`./gradlew :androidApp:assembleDebug`) |
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
+Tests:
 
-- Android app: `./gradlew :androidApp:assembleDebug`
-- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
-
-### Running tests
-
-Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
-
-- Android tests: `./gradlew :shared:testAndroidHostTest`
-- iOS tests: `./gradlew :shared:iosSimulatorArm64Test`
-
----
-
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+- iOS logic: `swift test` in `iosApp/LabCore`.
+- Android: `./gradlew :androidApp:lintDebug`; the app self-test runs in `android-run.sh`.

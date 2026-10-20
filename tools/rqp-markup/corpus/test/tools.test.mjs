@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseList, discoverLink, charsetOf, runPolite } from "../fetch.mjs";
+import { parseList, discoverLink, charsetOf, runPolite, outsideRepo } from "../fetch.mjs";
 import { botWall, platformOf } from "../layout.mjs";
 import { classStats, greedy, pct, subStats } from "../summary.mjs";
 import { redactUrl } from "../run.mjs";
@@ -154,4 +154,14 @@ test("redactUrl: a slug with an embedded admin edit path keeps four words", () =
   );
   assert.equal(redactUrl("https://news.example/a/one-two-three-four-five"), "https://news.example/a/one-two-three-four-five");
   assert.equal(redactUrl("not a url"), "not a url");
+});
+
+test("outsideRepo: page data never goes inside the repository", () => {
+  const repo = path.resolve("/r/repo");
+  for (const out of ["/r/repo", "/r/repo/", "/r/repo/data", "/r/repo/..data/x", "/r/repo/a/../b"]) {
+    assert.throws(() => outsideRepo(out, repo), /inside the repository/, out);
+  }
+  assert.equal(outsideRepo("/r/data", repo), path.resolve("/r/data"));
+  assert.equal(outsideRepo("/r/repo-data", repo), path.resolve("/r/repo-data"));
+  assert.equal(outsideRepo("/tmp/corpus", repo), path.resolve("/tmp/corpus"));
 });

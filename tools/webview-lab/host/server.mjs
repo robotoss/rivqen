@@ -13,6 +13,7 @@ import { CASES_DIR, LabError, REPO_ROOT, isValidId, parseCase } from "./lab.mjs"
 
 export const DEFAULT_PORT = 18090;
 const MAX_REQUEST_HEAD = 16 * 1024;
+const IDLE_TIMEOUT_MS = 10_000; // an idle connection is closed after this time
 const CASE_PATH = /^\/c\/([A-Z0-9-]{1,64})$/;
 
 /** @param {number} status @param {string} reason @param {[string, string][]} headers @param {Uint8Array} body */
@@ -70,15 +71,21 @@ export async function answer(target, { casesDir, repoRoot }) {
 
 /**
  * Start the server on 127.0.0.1.
- * @param {{ port?: number, casesDir?: string, repoRoot?: string }} [opts]
+ * @param {{ port?: number, casesDir?: string, repoRoot?: string, idleTimeoutMs?: number }} [opts]
  * @returns {Promise<{ port: number, close: () => Promise<void> }>}
  */
-export function startServer({ port = DEFAULT_PORT, casesDir = CASES_DIR, repoRoot = REPO_ROOT } = {}) {
+export function startServer({
+  port = DEFAULT_PORT,
+  casesDir = CASES_DIR,
+  repoRoot = REPO_ROOT,
+  idleTimeoutMs = IDLE_TIMEOUT_MS,
+} = {}) {
   const server = createServer((socket) => {
     let buf = Buffer.alloc(0);
     let done = false;
     // A socket error (a reset by the peer) ends this connection only.
     socket.on("error", () => socket.destroy());
+    socket.setTimeout(idleTimeoutMs, () => socket.destroy());
     socket.on("data", (chunk) => {
       if (done) return;
       buf = Buffer.concat([buf, chunk]);

@@ -340,7 +340,7 @@ These are diffs of `docs/engineering/protocol/markup.md`, and for R1 also of §4
 +An `svg` or `math` start tag in the content starts a foreign region (M-05 item 4). M-07 applies in it, and the region ends in the content (M-23). (Human decision R1.)
  
 -Comments, bogus comments, character references and all other elements are allowed. Attributes are not checked: …
-+Comments, bogus comments, character references and all other elements are allowed. Attributes are not checked: … The client attribute rule reads the start tags of a foreign region too ([manifest and patch §4.2](/engineering/protocol/manifest-patch#_4-2-attribute-rule)).
++Comments, bogus comments, character references and all other elements are allowed. Attributes are not checked: … The client attribute rule reads the start tags of a foreign region too ([manifest and patch §4.2](https://robotoss.github.io/rivqen/engineering/protocol/manifest-patch#_4-2-attribute-rule)).
 ```
 
 ```diff

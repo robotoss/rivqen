@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: The Rivqen Authors
 
-// parse5 8.0.1 checks of the manifest insertion point (H-72, H-79a; a copy of the S4 study
+// parse5 8.0.1 checks of the manifest insertion point (H-72, H-79a; derived from the S4 study
 // `../study/s4/src/head-views.mjs`).
 // For an original document O and an insertion point `at`, the full document F has
 // the manifest element at `at`. In one scripting view the check reports:

@@ -81,7 +81,7 @@ The tests check `serialize.js` in Node with a fake DOM (`host/test/fake-dom.mjs`
 
 ## iOS app
 
-The iOS app is `app/WebViewLab/iosApp`. It is a pure Swift app (SwiftUI and `WKWebView`). It does not use the shared Kotlin module, so the iOS build does not run Gradle. The pure logic (launch arguments, case files, request policy, result format) is the local Swift package `iosApp/LabCore`, with tests that run on the host.
+The iOS app is `app/WebViewLab/iosApp`. It is a pure Swift app (SwiftUI and `WKWebView`). The iOS build does not run Gradle. The pure logic (launch arguments, case files, request policy, result format) is the local Swift package `iosApp/LabCore`, with tests that run on the host.
 
 ### Requirements
 
@@ -149,7 +149,7 @@ node tools/webview-lab/host/build-cases.mjs --check
 
 ## Android
 
-The Android app is `app/WebViewLab/androidApp` (package `dev.rivqen.webviewlab`). It is a plain `Activity` with `android.webkit.WebView`. It does not use the shared Compose UI. The script `android-run.sh` does the full run: server, emulator, build, input, self-test, run, results, `run.json` and compare.
+The Android app is `app/WebViewLab/androidApp` (package `dev.rivqen.webviewlab`). It is a plain `Activity` with `android.webkit.WebView`. The script `android-run.sh` does the full run: server, emulator, build, input, self-test, run, results, `run.json` and compare.
 
 ### Requirements
 

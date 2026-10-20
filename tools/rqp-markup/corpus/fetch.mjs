@@ -325,10 +325,23 @@ function intArg(name, v, min, max) {
   return n;
 }
 
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+
+/** Page bytes are copyrighted data: refuse an output directory inside the repository (final WP-17 security review I2). */
+export function outsideRepo(out, repoRoot = REPO_ROOT) {
+  const resolved = path.resolve(out);
+  const rel = path.relative(path.resolve(repoRoot), resolved);
+  const outside = rel === ".." || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel);
+  if (!outside) {
+    throw new CorpusError(`${resolved} is inside the repository: use a directory outside it`);
+  }
+  return resolved;
+}
+
 async function main(argv) {
   const opts = parseArgs(argv);
   const rows = parseList(readFileSync(opts.list, "utf8"));
-  const out = path.resolve(opts.out);
+  const out = outsideRepo(opts.out);
   const rawDir = path.join(out, "raw");
   if (existsSync(rawDir) && readdirSync(rawDir).length > 0) {
     throw new CorpusError(`${rawDir} is not empty: use a new directory`);

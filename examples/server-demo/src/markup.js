@@ -249,7 +249,11 @@ function srcsetCandidates(value) {
     run.lastIndex = i;
     const raw = run.exec(value)[0];
     i += raw.length;
-    const url = raw.replace(/,+$/, '');
+    // An index scan, not raw.replace(/,+$/, ''): that pattern is quadratic for a long run of commas
+    // (final WP-17 performance review F2). The run starts with a byte that is not a comma.
+    let end = raw.length;
+    while (raw[end - 1] === ',') end--;
+    const url = raw.slice(0, end);
     urls.push(url);
     if (url.length < raw.length) continue;
     let depth = false;

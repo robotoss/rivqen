@@ -14,9 +14,21 @@ export const NONCE_BYTES = 16; // the length of the client nonce in Rq-Nonce (H-
 export const MAX_RQ_CAPABILITIES_BYTES = 1024; // negotiation section 3.3
 export const DELTA_TYPE = 'application/vnd.rivqen.delta+json';
 
+/**
+ * `text` without leading and trailing OWS (space, TAB). Two index scans: a regular expression such as
+ * /^[ \t]+|[ \t]+$/g is quadratic for a long run of white space inside a value (final WP-17 security review L1).
+ */
+export function trimOws(text) {
+  let i = 0;
+  let j = text.length;
+  while (i < j && (text[i] === ' ' || text[i] === '\t')) i++;
+  while (j > i && (text[j - 1] === ' ' || text[j - 1] === '\t')) j--;
+  return text.slice(i, j);
+}
+
 /** Lower-case the names of header lines and trim leading and trailing OWS (space, TAB) of the values (DL-036 I4). */
 export function normalizeHeaders(headers) {
-  return headers.map(([name, value]) => [name.toLowerCase(), value.replace(/^[ \t]+|[ \t]+$/g, '')]);
+  return headers.map(([name, value]) => [name.toLowerCase(), trimOws(value)]);
 }
 
 /** Header lines of a Node.js request (`rawHeaders`): [lower-case name, value], one line per field line, in order. */
@@ -53,7 +65,7 @@ export function withoutRqVary(headers) {
       out.push([n, v]);
       continue;
     }
-    const tokens = v.split(',').map((t) => t.replace(/^[ \t]+|[ \t]+$/g, ''));
+    const tokens = v.split(',').map(trimOws);
     const kept = tokens.filter((t) => !/^rq-/i.test(t));
     if (kept.length === tokens.length) out.push([n, v]);
     else if (kept.some((t) => t !== '')) out.push([n, kept.filter((t) => t !== '').join(', ')]);
@@ -209,7 +221,7 @@ export function acceptsDelta(headers) {
 /** The media type of a Content-Type value, in lower case without parameters, or null. */
 export function mediaType(value) {
   if (value === null) return null;
-  return value.split(';')[0].replace(/^[ \t]+|[ \t]+$/g, '').toLowerCase();
+  return trimOws(value.split(';')[0]).toLowerCase();
 }
 
 /** Labels that the WHATWG Encoding Standard maps to the UTF-8 encoding (lower case). */
@@ -283,7 +295,7 @@ function mediaTypes(line) {
     } else current += c;
   }
   types.push(current);
-  return types.map((t) => t.replace(/^[ \t]+|[ \t]+$/g, '')).filter((t) => t !== '');
+  return types.map(trimOws).filter((t) => t !== '');
 }
 
 /** True when a charset value is a label of the UTF-8 encoding (H-62, item 3). */

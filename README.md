@@ -20,7 +20,7 @@
 ---
 
 > [!WARNING]
-> **Status: pre-alpha, documentation phase.** This repository contains the design and development documentation. No SDK is published yet. Code samples in the docs show the **planned** API.
+> **Status: pre-alpha, documentation phase.** This repository contains the design and development documentation, the RQP protocol specification `rqp/1` with its fixtures and tools, and a server demo. No SDK is published yet. Code samples in the docs show the **planned** API.
 
 ## What is Rivqen?
 
@@ -41,6 +41,10 @@ Rivqen makes HTML pages inside mobile apps open faster and use less traffic:
 | `docs/engineering/` | Layer 2 — for people who build Rivqen (architecture, core, protocol, platforms, servers, security, quality, delivery, plan) |
 | `docs/research/` | Upstream audit, standards, platform baselines, literature |
 | `docs/legal/` | Licensing, third-party policy, clean-room provenance, brand |
+| `spec/rqp/`, `fixtures/rqp/` | JSON Schemas and golden fixtures of the RQP protocol `rqp/1` |
+| `tools/rqp-markup/` | Four markup parser candidates (Rust, Node.js, Java, PHP), the differential runner, the parse5 cross-check and the corpus tool |
+| `tools/rqp-protocol/`, `tools/rqp-schema/` | RQP reference implementation, fixture generator and checker; schema tests |
+| `tools/webview-lab/` | Lab that compares real iOS and Android WebViews with parse5 |
 | `examples/server-demo/` | Runnable RQP reference server (Node.js) with tests and byte measurements |
 | `tools/upstream-lab/`, `evidence/` | Lab that traces the upstream servers; captured traces and measurements |
 | `tools/mutation/` | Helper that turns a git diff into mutation-testing arguments |

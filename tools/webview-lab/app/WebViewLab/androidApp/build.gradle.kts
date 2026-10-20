@@ -4,7 +4,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // The Android app of the WebView lab (tools/webview-lab/CONTRACT.md, WP-17 S5 T-04).
-// A plain Activity with android.webkit.WebView. It does not use the shared Compose UI.
+// A plain Activity with android.webkit.WebView.
 plugins {
     alias(libs.plugins.androidApplication)
 }

@@ -17,7 +17,7 @@ The lab answers open questions Q-19 (what a WebView does with the `noscript` sha
 | `host/server.mjs` | Host lane | HTTP/1.1 server on `127.0.0.1` (section 3) |
 | `host/serialize.js` | Host lane | The DOM walker that both apps inject (section 4); plain ES2019, no module syntax, no dependency |
 | `host/compare.mjs` | Host lane | Compares `results/<platform>/` with parse5 (section 5) and writes `results/<platform>/summary.md` |
-| `app/WebViewLab/` | Human creates (H-93); iOS lane and Android lane | The Kotlin Multiplatform project (package `dev.rivqen.webviewlab`): `iosApp` (WKWebView), `androidApp` (`android.webkit.WebView`), `shared` (Compose Multiplatform). No JUnit 4 (EPL-1.0) |
+| `app/WebViewLab/` | Human creates (H-93); iOS lane and Android lane | The project from the Kotlin Multiplatform template (package `dev.rivqen.webviewlab`): `iosApp` (WKWebView), `androidApp` (`android.webkit.WebView`). The unused template module `shared` was removed (DL-064). No JUnit 4 (EPL-1.0) |
 | `results/ios/`, `results/android/` | iOS lane, Android lane | One result per case and view (section 4), plus `run.json` |
 
 ## 2. Cases

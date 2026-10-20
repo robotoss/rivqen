@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+
 # Dependencies
 node_modules/
 
@@ -29,3 +32,19 @@ tools/rqp-markup/php/vendor/
 
 # Python bytecode
 __pycache__/
+
+# Test and mutation output (Stryker, cargo-mutants, coverage)
+.stryker-tmp/
+reports/
+mutants.out/
+mutants.out.old/
+coverage/
+
+# Swift Package Manager (WebView lab LabCore)
+.build/
+.swiftpm/
+
+# Local secrets
+.env
+.env.*
+!.env.example

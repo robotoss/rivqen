@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: The Rivqen Authors
 
 // parse5 is not a dependency of the lab. The lab takes the copy that tools/rqp-markup/crosscheck
-// installs (`npm ci` there), resolved by path. WEBVIEW_LAB_PARSE5 can name another parse5 package directory.
+// installs (`npm ci --ignore-scripts` there), resolved by path. WEBVIEW_LAB_PARSE5 can name another parse5 package directory.
 
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
@@ -25,7 +25,7 @@ export async function loadParse5() {
   const dir = parse5Dir();
   const entry = join(dir, "dist", "index.js");
   if (!existsSync(entry)) {
-    throw new LabError("PARSE5_MISSING", `parse5 not found at ${dir}. Run "npm ci" in tools/rqp-markup/crosscheck.`);
+    throw new LabError("PARSE5_MISSING", `parse5 not found at ${dir}. Run "npm ci --ignore-scripts" in tools/rqp-markup/crosscheck.`);
   }
   const pkg = JSON.parse(await readFile(join(dir, "package.json"), "utf8"));
   if (pkg.version !== PARSE5_VERSION) {

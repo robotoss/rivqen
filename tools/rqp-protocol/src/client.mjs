@@ -49,6 +49,7 @@ import {
   nonceText,
   pageRevision,
   sha256b64u,
+  ContractError,
 } from './common.mjs';
 import {
   Charset,
@@ -89,8 +90,8 @@ function snapshot(document, analysis, members, key = { url: null, partition: Par
  */
 export function snapshotOf(document, members = {}, url = null, partition = Partition.REQUEST) {
   const analysis = analyze(document);
-  if (!analysis.valid) throw new Error('a snapshot needs a document that is valid for RQP');
-  if (partition !== Partition.REQUEST && partition !== Partition.PUBLIC) throw new Error(`unknown partition ${partition}`);
+  if (!analysis.valid) throw new ContractError('a snapshot needs a document that is valid for RQP');
+  if (partition !== Partition.REQUEST && partition !== Partition.PUBLIC) throw new ContractError(`unknown partition ${partition}`);
   return snapshot(document, analysis, members, { url: url === null ? null : canonicalUrl(url), partition });
 }
 
@@ -641,7 +642,7 @@ function internal(context) {
   if (context.snapshot === null) return { ...context, nonce, snapshot: null };
   const s = context.snapshot;
   const snap = snapshotOf(Buffer.from(s.document), membersOf(s), context.url, s.partition ?? Partition.REQUEST);
-  if (snap.page_revision !== s.page_revision) throw new Error('the context snapshot does not match its document');
+  if (snap.page_revision !== s.page_revision) throw new ContractError('the context snapshot does not match its document');
   return { ...context, nonce, snapshot: snap };
 }
 

@@ -15,7 +15,7 @@ The template engine (`rivqen-template`) splits HTML into a template and data blo
 | `etag_v1(html)` | HTML bytes | Lowercase hex SHA-1 |
 | `template_tag_v1(template)` | Template bytes | Lowercase hex SHA-1 |
 | `diff_v1(local, server)` | Two data maps | Changed keys (canonical: new keys included) |
-| `split_rqp(html)` | HTML with `data-rq-block` markup (HTML tokenizer, see [RQP markup](/engineering/protocol/markup)) | Template, blocks, manifest hashes |
+| `split_rqp(html)` | HTML with `data-rq-block` markup (HTML tokenizer, see [RQP markup](/engineering/protocol/markup)) | Template, blocks, block digests (computed by the client, H-103) |
 
 ## 2. Implementation approach
 

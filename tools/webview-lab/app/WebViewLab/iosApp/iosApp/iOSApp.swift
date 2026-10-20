@@ -3,8 +3,8 @@
 
 import SwiftUI
 
-/// The iOS WebView lab (tools/webview-lab/CONTRACT.md). A pure Swift app: it does not use the
-/// shared Kotlin module. `ios-run.sh` builds, installs and launches it with `-labServer`.
+/// The iOS WebView lab (tools/webview-lab/CONTRACT.md). A pure Swift app.
+/// `ios-run.sh` builds, installs and launches it with `-labServer`.
 @main
 struct WebViewLabApp: App {
   @State private var model = LabModel()

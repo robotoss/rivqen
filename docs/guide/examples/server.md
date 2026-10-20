@@ -2,7 +2,7 @@
 
 `examples/server-demo` is a small Node.js server. It shows the Rivqen protocol (RQP) from the server side: block markup, manifest, `304`, block patch and safe fallback.
 
-**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 115 tests pass, and the demo passes all 104 server protocol fixtures (checked 2026-10-20 after H-109 of [WP-17 S6](/engineering/plan/sprints/WP-17-S6), Node.js 22 or later; WP-17 S4: the patch content rule, the attribute rule of H-77 and H-83, and the implied head of H-79a; WP-17 S5: `noscript` in `PATCH_FORBIDDEN`, H-96; WP-17 S6: the short manifest and the short envelope, H-103 and H-104; the delta binding, H-107; the client nonce, H-108; the field `Rq-Nonce`, H-109). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
+**Status:** <Badge type="tip" text="FACT" /> The demo follows `rqp/1` ([WP-17 S2](/engineering/plan/sprints/WP-17-S2), tasks T-04 and T-08): rqp/1 revisions, the `Rq-Have` field and a stateless server. The 123 tests pass, and the demo passes all 112 server protocol fixtures (checked 2026-10-20 after H-109 of [WP-17 S6](/engineering/plan/sprints/WP-17-S6), Node.js 22 or later; WP-17 S4: the patch content rule, the attribute rule of H-77 and H-83, and the implied head of H-79a; WP-17 S5: `noscript` in `PATCH_FORBIDDEN`, H-96; WP-17 S6: the short manifest and the short envelope, H-103 and H-104; the delta binding, H-107; the client nonce, H-108; the field `Rq-Nonce`, H-109). The commands in section 5 were run once against the demo (section 5, "Recorded output"). The demo is reference behavior for WP-17, not the final server SDK.
 
 [[toc]]
 
@@ -138,7 +138,7 @@ Recorded output (2026-10-20, Node.js 22 or later, Rq-Have without `b`; the revis
 
 | Step | Output that matters |
 |---|---|
-| 1 | `HTTP/1.1 200 OK`, `content-type: text/html; charset=utf-8`, `cache-control: no-cache`, `etag: "r1.kQSg0GU87wq6jDSiFlsmQmk68argQjG5MSAqEYUUFic"`, `rq-version: 1`, `content-length: 19731`, no `Vary`. The manifest is 165 bytes (origin `http://127.0.0.1:8787`) |
+| 1 | `HTTP/1.1 200 OK`, `content-type: text/html; charset=utf-8`, `cache-control: no-cache`, `etag: "r1.kQSg0GU87wq6jDSiFlsmQmk68argQjG5MSAqEYUUFic"`, `rq-version: 1`, `content-length: 19731`, no `Vary`. The manifest is 193 bytes (origin `http://127.0.0.1:8787`; 19,731 − 19,538 page bytes) |
 | 2 | The `ETag` above and `t1.dMGS3KdBw6hmMK_VrD06B55NQwoItge4Ig1Wwh-bigM` |
 | 3 | `HTTP/1.1 304 Not Modified` |
 | 4 | `{"data":1,"template":0}` |
@@ -152,7 +152,7 @@ Step 5 sends `Rq-Have` without the member `b` (the block digest prefixes), so th
 npm test
 ```
 
-<Badge type="tip" text="FACT" /> The 101 tests check, by behavior:
+<Badge type="tip" text="FACT" /> The 123 tests check, by behavior:
 
 - the response selection: full document, `304`, delta, the size rules, the patch content rule (H-56, H-78), invalid pages, the charset rule, a weak `ETag` with a content coding, no state between requests;
 - the known answers of `spec/rqp/examples/kat`: the full documents, both page revisions and the example patches;
@@ -160,7 +160,7 @@ npm test
 - the insertion point of the manifest (after the head start tag, H-72, or before the start tag that implies the head, H-79a) and the patch content rule: `PATCH_FORBIDDEN`, `FOREIGN_ALLOWED`, event handlers, `javascript:`, `vbscript:` and `data:` URLs except raster images in `img`, `source` and `video` (H-83), and character references at the scheme decision byte (H-77);
 - differential tests against the reference of `tools/rqp-protocol` (tests only): 20 000 random blocks for the patch content rule and 20 000 random documents for the insertion point;
 - the HTTP adapter on a loopback socket: first visit, revisit, data change, template change, the `Host` check (`421`);
-- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 104 server fixtures pass (`FX-RQ-P*`, checked 2026-10-20 after H-109), also the SHOULD cases (the eight `FX-RQ-P35` cases and `FX-RQ-P36-LIMITS-SERVER-LIMIT`).
+- the protocol fixtures: the test runs `node tools/rqp-protocol/check.mjs --server src/rqp.js`. All 112 server fixtures pass (`FX-RQ-P*`, checked 2026-10-20 after H-109), also the SHOULD cases (the eight `FX-RQ-P35` cases and `FX-RQ-P36-LIMITS-SERVER-LIMIT`).
 
 To run the fixtures alone, run this command in `examples/server-demo`:
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: The Rivqen Authors
 
-// Seeded generator of document prefixes for the head sweep (a copy of the generator of the
+// Seeded generator of document prefixes for the head sweep (derived from the generator of the
 // S4 study `../study/s4/src/head-gen.mjs`, H-79, so the same seed gives the same documents): tokens
 // before a head start tag (white space, comments, DOCTYPE tokens, html start tags,
 // ignored end tags, and some tokens that end item 1 of the head rule), a stop token

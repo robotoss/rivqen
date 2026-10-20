@@ -51,13 +51,26 @@ export class UnsupportedInput extends Error {
   }
 }
 
+/**
+ * A call that breaks the contract of a reference function (a wrong argument
+ * type or a value that the caller must check first). It is a defect of the
+ * caller, never a result for protocol input.
+ */
+export class ContractError extends TypeError {
+  constructor(message) {
+    super(message);
+    this.name = 'ContractError';
+    this.code = 'RQP_REFERENCE_CONTRACT';
+  }
+}
+
 /** base64url without padding of SHA-256 over bytes or a UTF-8 string. */
 export function sha256b64u(data) {
   return createHash('sha256').update(data).digest('base64url');
 }
 
 function decimal(n) {
-  if (!Number.isSafeInteger(n) || n < 0) throw new TypeError('not a non-negative integer');
+  if (!Number.isSafeInteger(n) || n < 0) throw new ContractError('not a non-negative integer');
   return String(n);
 }
 
@@ -73,12 +86,12 @@ export function policyLimitsText(members) {
     const p = members.policy;
     items.push('policy');
     if (Object.hasOwn(p, 'mode')) {
-      if (p.mode !== 'private' && p.mode !== 'public') throw new TypeError('mode is not private or public');
+      if (p.mode !== 'private' && p.mode !== 'public') throw new ContractError('mode is not private or public');
       items.push(`mode=${p.mode}`);
     }
     if (Object.hasOwn(p, 'ttl_seconds')) items.push(`ttl_seconds=${decimal(p.ttl_seconds)}`);
     if (Object.hasOwn(p, 'offline')) {
-      if (typeof p.offline !== 'boolean') throw new TypeError('offline is not a boolean');
+      if (typeof p.offline !== 'boolean') throw new ContractError('offline is not a boolean');
       items.push(`offline=${p.offline}`);
     }
   }
@@ -144,7 +157,7 @@ export function isNonceText(text) {
  * TypeError for a value that is not a Buffer of 16 bytes.
  */
 export function nonceText(bytes) {
-  if (!Buffer.isBuffer(bytes) || bytes.length !== NONCE_BYTES) throw new TypeError('the nonce is not 16 bytes');
+  if (!Buffer.isBuffer(bytes) || bytes.length !== NONCE_BYTES) throw new ContractError('the nonce is not 16 bytes');
   return bytes.toString('base64url');
 }
 
@@ -157,10 +170,10 @@ export function nonceText(bytes) {
  * has one parse.
  */
 export function deltaBindingPreimage(url, base, nonce, next) {
-  if (typeof url !== 'string' || url.includes('\n')) throw new TypeError('the binding URL is not a canonical URL');
-  if (typeof base !== 'string' || !REVISION.test(base)) throw new TypeError('the binding base is not a page revision');
-  if (!isNonceText(nonce)) throw new TypeError('the binding nonce is not the text of 16 bytes');
-  if (typeof next !== 'string' || !REVISION.test(next)) throw new TypeError('the binding next revision is not a page revision');
+  if (typeof url !== 'string' || url.includes('\n')) throw new ContractError('the binding URL is not a canonical URL');
+  if (typeof base !== 'string' || !REVISION.test(base)) throw new ContractError('the binding base is not a page revision');
+  if (!isNonceText(nonce)) throw new ContractError('the binding nonce is not the text of 16 bytes');
+  if (typeof next !== 'string' || !REVISION.test(next)) throw new ContractError('the binding next revision is not a page revision');
   return `rqp-d1\n${url}\n${base}\n${nonce}\n${next}\n`;
 }
 

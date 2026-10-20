@@ -136,3 +136,20 @@ test("the real BOM page is served with its byte order mark", async () => {
     await real.close();
   }
 });
+
+test("a connection that sends no complete request head is closed after the idle timeout", async () => {
+  const idle = await startServer({ port: 0, casesDir: CASES_DIR, repoRoot: REPO_ROOT, idleTimeoutMs: 100 });
+  let s;
+  try {
+    const closed = await new Promise((resolve, reject) => {
+      s = connect(idle.port, "127.0.0.1", () => s.write("GET /c/X HTTP/1.1\r\n"));
+      s.on("close", () => resolve(true));
+      s.on("error", reject);
+      setTimeout(() => resolve(false), 2000).unref();
+    });
+    assert.equal(closed, true, "the server kept the idle connection open");
+  } finally {
+    s?.destroy();
+    await idle.close();
+  }
+});

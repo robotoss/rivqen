@@ -46,6 +46,9 @@ Rivqen is an independent, clean-room re-implementation of the ideas of Tencent V
 | Server demo tests | `cd examples/server-demo && npm test` |
 | Server demo bytes | `cd examples/server-demo && npm start` then `npm run measure` |
 | Upstream lab | `UPSTREAM=<VasSonic checkout> sh tools/upstream-lab/start.sh` |
+| Markup parsers agree on all fixtures | `node tools/rqp-markup/diff.mjs` |
+| Protocol fixtures current and passing | `node tools/rqp-protocol/gen.mjs --check` then `node tools/rqp-protocol/check.mjs` |
+| Protocol reference tests | `cd tools/rqp-protocol && npm test` |
 
 Per-language checks and mutation commands: `docs/engineering/standards/` and `docs/engineering/quality/mutation.md`.
 

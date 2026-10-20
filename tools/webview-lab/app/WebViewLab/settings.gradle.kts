@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: The Rivqen Authors
+
 rootProject.name = "WebViewLab"
 
 pluginManagement {
@@ -28,4 +31,3 @@ dependencyResolutionManagement {
 }
 
 include(":androidApp")
-include(":shared")

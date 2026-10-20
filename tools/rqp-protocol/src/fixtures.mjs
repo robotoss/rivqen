@@ -10,7 +10,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MANIFEST_END, UnsupportedInput, canonicalUrl, deltaBinding, isNonceText, membersOf, nonceText, pageRevision, sha256b64u } from './common.mjs';
-import { deltaBase, handle, manifestOf, rqHave, writtenMembers } from './server.mjs';
+import { deltaBase, handle, manifestOf, rqNonce, writtenMembers } from './server.mjs';
 import { Partition, handleResponse, hasUserinfo, havePrefixes, requestHeaders, snapshotOf, validAllowlistEntry } from './client.mjs';
 import { combined, normalizeHeaders } from './http.mjs';
 import { analyze, documentHeadStart } from './markup.mjs';
@@ -179,14 +179,14 @@ export function expectServer(c) {
     // H-104, H-107: the envelope is the binding and the operations. `sha256` is
     // the hash of the current content of each changed block; the checker
     // compares it with the hash of the content that the server sent.
-    // binding_inputs are U, B, N (H-108) and R' of the binding, for the diagnosis of a
+    // binding_inputs are U, B, N (H-108, the field Rq-Nonce of H-109) and R' of the binding, for the diagnosis of a
     // server under test; the checker compares only the binding.
     const env = JSON.parse(r.body.toString('utf8'));
     const a = analyze(page);
     const inputs = {
       url: canonicalUrl(request.target),
       base_revision: deltaBase(normalizeHeaders(request.headers)),
-      nonce: nonceText(rqHave(normalizeHeaders(request.headers)).n),
+      nonce: nonceText(rqNonce(normalizeHeaders(request.headers))),
       next_revision: pageRevision(a.template_revision, a.blocks, writtenMembers(config)),
     };
     if (deltaBinding(inputs.url, inputs.base_revision, inputs.nonce, inputs.next_revision) !== env.binding) {

@@ -17,6 +17,7 @@ import {
   deltaPartition,
   expectedBinding,
   handleResponse,
+  havePrefixes,
   hasUserinfo,
   notModifiedAccepted,
   inAllowlist,
@@ -235,15 +236,26 @@ test('B6: clientStep with a final URL that does not parse falls back without an 
   assert.equal(rqpAllowed(ctx(), null), false);
 });
 
-test('H-108: the request has the nonce of its context in Rq-Have member n; without a valid nonce no delta is offered', () => {
-  const sent = new Map(requestHeaders(ctx()));
-  assert.match(sent.get('rq-have'), /, n=:AAECAwQFBgcICQoLDA0ODw==:$/);
+test('H-108, H-109: the request has the nonce of its context in one Rq-Nonce line; Rq-Have has only t and b; without a valid nonce no delta is offered', () => {
+  const h = requestHeaders(ctx());
+  const sent = new Map(h);
+  assert.equal(sent.get('rq-nonce'), ':AAECAwQFBgcICQoLDA0ODw==:');
+  assert.equal(h.filter(([name]) => name === 'rq-nonce').length, 1);
+  assert.equal(sent.get('rq-have'), `t=${snapA().analysis.template_revision}, b=:${havePrefixes(snapA().analysis.blocks)}:`);
+  // The order of the delta request fields: Rq-Nonce follows Rq-Have.
+  assert.deepEqual(h.map(([name]) => name), ['rq-version', 'rq-capabilities', 'accept', 'if-none-match', 'rq-have', 'rq-nonce']);
   const other = Buffer.alloc(16, 0xfb);
-  assert.ok(new Map(requestHeaders(ctx({ nonce: other.toString('base64url') }))).get('rq-have').endsWith(`, n=:${other.toString('base64')}:`));
+  const otherSent = new Map(requestHeaders(ctx({ nonce: other.toString('base64url') })));
+  assert.equal(otherSent.get('rq-nonce'), `:${other.toString('base64')}:`);
+  // Rq-Have is the same for every request from one snapshot (H-109: HPACK can index it).
+  assert.equal(otherSent.get('rq-have'), sent.get('rq-have'));
+  // No Rq-Nonce without a snapshot, and none on a fallback load.
+  assert.equal(new Map(requestHeaders(ctx({ snapshot: null }))).has('rq-nonce'), false);
+  assert.equal(new Map(requestHeaders(ctx({ navigation: 'fallback' }))).has('rq-nonce'), false);
   for (const nonce of [null, undefined, 'x', `${NONCE}==`]) {
     const c = ctx({ nonce });
     const h = requestHeaders(c);
-    // No Rq-Have and no delta media type; If-None-Match stays, so a 304 still keeps the snapshot.
+    // No Rq-Have, no Rq-Nonce and no delta media type; If-None-Match stays, so a 304 still keeps the snapshot.
     assert.deepEqual(h, [['rq-version', '1'], ['rq-capabilities', '(block-patch)'], ['accept', 'text/html'], ['if-none-match', `"${snapA().page_revision}"`]], String(nonce));
     assert.equal(handleResponse(c, { status: 304, headers: [], body: null }).outcome, 'not-modified');
     const d = handleResponse(c, { status: 200, headers: DELTA, body: Buffer.from(JSON.stringify(envelope([['price', '130.00']]))) });
@@ -256,10 +268,10 @@ test('H-108: the harness interface makes a new nonce for a context without one, 
   const plain = { document: page('page-a'), template_revision: s.analysis.template_revision, page_revision: s.page_revision, blocks: [] };
   const context = { ...ctx(), snapshot: plain };
   delete context.nonce;
-  const have = () => new Map(clientRequest(context)).get('rq-have');
-  const n = (v) => /n=:([^:]+):$/.exec(v)[1];
-  assert.notEqual(n(have()), n(have()));
-  assert.equal(Buffer.from(n(have()), 'base64').length, 16);
+  const sent = () => new Map(clientRequest(context)).get('rq-nonce');
+  const n = (v) => /^:([^:]+):$/.exec(v)[1];
+  assert.notEqual(n(sent()), n(sent()));
+  assert.equal(Buffer.from(n(sent()), 'base64').length, 16);
   assert.notEqual(newNonce(), newNonce());
   assert.match(newNonce(), /^[A-Za-z0-9_-]{21}[AQgw]$/);
   assert.equal(requestNonce({ nonce: NONCE }), NONCE);

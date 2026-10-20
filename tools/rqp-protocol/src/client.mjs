@@ -17,7 +17,8 @@
 // the app turned the public partition on (H-81), and the partition of the
 // context snapshot (request or public; H-65; a public context snapshot with
 // the setting off is not used, usableSnapshot), and the client nonce of the
-// request (H-108; the request keeps it for the delta check). A URL is the
+// request (H-108, H-109: the field Rq-Nonce; the request keeps it for the
+// delta check). A URL is the
 // WHATWG parse of its string (DL-040 L-3: an SDK takes the URL object of its
 // network stack).
 //
@@ -244,9 +245,12 @@ export function requestNonce(ctx) {
  * Section 6.2: the RQP request fields. navigation is "first-visit", "delta" or
  * "fallback" (section 6.3, item 5). Header lines that are not RQP fields are
  * not shown. Validators come only from a usable snapshot (H-81). A delta
- * request has the nonce N of the context in the Rq-Have member n (H-108); a
- * context without a valid nonce offers no delta (no Rq-Have, no delta media
- * type) and keeps If-None-Match, so a 304 stays possible (fail closed).
+ * request has the nonce N of the context in the field Rq-Nonce, one field
+ * line with a Byte Sequence of 16 bytes (H-108, H-109); Rq-Have has only t
+ * and b, so its value is the same for every request from one snapshot. A
+ * context without a valid nonce offers no delta (no Rq-Have, no Rq-Nonce, no
+ * delta media type) and keeps If-None-Match, so a 304 stays possible (fail
+ * closed).
  */
 export function requestHeaders(ctx) {
   if (!rqpAllowed(ctx)) return [['accept', 'text/html']];
@@ -259,12 +263,12 @@ export function requestHeaders(ctx) {
   const { analysis, page_revision: pageRev } = snap;
   const nonce = requestNonce(ctx);
   if (nonce === null) return [...base, ['accept', 'text/html'], ['if-none-match', `"${pageRev}"`]];
-  const n = Buffer.from(nonce, 'base64url').toString('base64');
   return [
     ...base,
     ['accept', `text/html, ${DELTA_TYPE}`],
     ['if-none-match', `"${pageRev}"`],
-    ['rq-have', `t=${analysis.template_revision}, b=:${havePrefixes(analysis.blocks)}:, n=:${n}:`],
+    ['rq-have', `t=${analysis.template_revision}, b=:${havePrefixes(analysis.blocks)}:`],
+    ['rq-nonce', `:${Buffer.from(nonce, 'base64url').toString('base64')}:`],
   ];
 }
 
@@ -593,7 +597,7 @@ function handleDelta(ctx, headers, body) {
   const sameKey = rqpAllowed(ctx, finalUrlOf(ctx)) && canonicalUrl(finalUrlOf(ctx)) === canonicalUrl(ctx.url);
   // Step 2: the request offered a delta. Steps 1 and 2 have the same code (PATCH_INVALID).
   // H-81: a public snapshot with the app setting off is no snapshot, so no delta was offered.
-  // H-108: a request without a valid nonce sent no Rq-Have (requestHeaders), so no delta was offered.
+  // H-108, H-109: a request without a valid nonce sent no Rq-Have and no Rq-Nonce (requestHeaders), so no delta was offered.
   const snap = usableSnapshot(ctx);
   const nonce = requestNonce(ctx);
   const offered = sameKey && ctx.navigation === 'delta' && snap !== null && nonce !== null;

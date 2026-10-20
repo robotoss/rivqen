@@ -18,7 +18,8 @@
       ["rq-capabilities", "(block-patch)"],
       ["accept", "text/html, application/vnd.rivqen.delta+json"],
       ["if-none-match", "\"abc\""],
-      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}, n=:AAECAwQFBgcICQoLDA0ODw==:"]
+      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"]
     ]
   }
 }

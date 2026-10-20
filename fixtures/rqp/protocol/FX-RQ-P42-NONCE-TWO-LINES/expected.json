@@ -1,5 +1,5 @@
 {
-  "id": "FX-RQ-P42-NONCE-DUPLICATE",
+  "id": "FX-RQ-P42-NONCE-TWO-LINES",
   "request": {
     "method": "GET",
     "target": "https://shop.example.com/catalog",
@@ -8,7 +8,9 @@
       ["rq-capabilities","(block-patch)"],
       ["accept","text/html, application/vnd.rivqen.delta+json"],
       ["if-none-match","\"r1.QZWQveB3Od0paA9JtInsnGdvGe4b3NIqT4xsP6rdKMU\""],
-      ["rq-have","t=t1.UDAGcPAhlaAytet6ltzfl_jk0ucsCZ3Qw1nrSGA5pwA, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:, n=:AAECAwQFBgcICQoLDA0ODw==:, n=:8PHy8/T19vf4+fr7/P3+/w==:"]
+      ["rq-have","t=t1.UDAGcPAhlaAytet6ltzfl_jk0ucsCZ3Qw1nrSGA5pwA, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5:"],
+      ["rq-nonce",":AAECAwQFBgcICQoLDA0ODw==:"],
+      ["rq-nonce",":AAECAwQFBgcICQoLDA0ODw==:"]
     ]
   },
   "status": 200,

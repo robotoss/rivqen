@@ -1,6 +1,6 @@
 {
-  "id": "FX-RQ-P42-NONCE-DUPLICATE",
-  "description": "Rq-Have with the member n two times, both valid 16-byte values: a field with n more than one time has no n (fail closed; not the last-wins rule of t, FX-RQ-P34-HAVE-DUPLICATE-KEY), so F (H-108)",
+  "id": "FX-RQ-P42-NONCE-PARSE-FAILURE",
+  "description": "Rq-Nonce with two Byte Sequences in one line (a List, not an Item): the parse fails, so no nonce and F (H-109)",
   "rules": ["RQP-29"],
   "page": "page-big-b",
   "client_page": "page-big-a",
@@ -18,7 +18,8 @@
       ["rq-capabilities", "(block-patch)"],
       ["accept", "text/html, application/vnd.rivqen.delta+json"],
       ["if-none-match", "{{r1:page-big-a}}"],
-      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}, n=:AAECAwQFBgcICQoLDA0ODw==:, n=:8PHy8/T19vf4+fr7/P3+/w==:"]
+      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:, :AAECAwQFBgcICQoLDA0ODw==:"]
     ]
   }
 }

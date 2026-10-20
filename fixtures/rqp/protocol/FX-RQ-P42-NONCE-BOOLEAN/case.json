@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-P42-NONCE-BOOLEAN",
-  "description": "Rq-Have member n without a value (the Boolean true): n is absent, so F (H-108)",
+  "description": "Rq-Nonce as the Boolean true (?1), not a Byte Sequence: no nonce, so F (H-108, H-109)",
   "rules": ["RQP-29"],
   "page": "page-big-b",
   "client_page": "page-big-a",
@@ -18,7 +18,8 @@
       ["rq-capabilities", "(block-patch)"],
       ["accept", "text/html, application/vnd.rivqen.delta+json"],
       ["if-none-match", "{{r1:page-big-a}}"],
-      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}, n"]
+      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}"],
+      ["rq-nonce", "?1"]
     ]
   }
 }

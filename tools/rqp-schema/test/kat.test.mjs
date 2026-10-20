@@ -204,7 +204,7 @@ test('the exact binding preimage of the KAT price patch, written out by hand (H-
   assert.equal(patches[0].env.binding, 'd1.orrx-_-Iflnnjs7DvvuOOdxW3FzbZpU_PTlR0jdWw54');
 });
 
-test('the KAT nonce: N is base64url without padding of the 16 bytes 00 to 0F; Rq-Have member n is the base64 Byte Sequence (H-108)', () => {
+test('the KAT nonce: N is base64url without padding of the 16 bytes 00 to 0F; the Rq-Nonce field value is the base64 Byte Sequence (H-108, H-109)', () => {
   const bytes = Buffer.from(kat.nonce.bytes_hex, 'hex');
   assert.equal(bytes.length, 16);
   assert.deepEqual([...bytes], [...Array(16).keys()]);
@@ -320,10 +320,10 @@ test('a manifest with the page revision of another document is rejected (H-48, H
   assert.equal(checkManifest(page, wrong), 'MANIFEST_INVALID');
 });
 
-test('the Rq-Have example is t, the 8-byte digest prefixes of the computed blocks and the nonce n (H-44, H-103, H-108)', () => {
+test('the Rq-Have example is t and the 8-byte digest prefixes of the computed blocks, without the nonce (H-44, H-103, H-109)', () => {
   const b = Buffer.concat(computed.blocks.map((x) => Buffer.from(x.sha256, 'base64url').subarray(0, 8)));
   assert.equal(b.length, 8 * computed.blocks.length);
-  assert.equal(kat.rq_have, `t=${computed.template_revision}, b=:${b.toString('base64')}:, n=${kat.nonce.sf}`);
+  assert.equal(kat.rq_have, `t=${computed.template_revision}, b=:${b.toString('base64')}:`);
 });
 
 const TYPE = '<script type="application/rivqen-manifest+json">';

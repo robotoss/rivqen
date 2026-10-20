@@ -138,8 +138,8 @@ export function isNonceText(text) {
 
 /**
  * The text N of nonce bytes (H-108): base64url without padding. The server
- * decodes the Byte Sequence of the Rq-Have member n and writes it in this
- * form, so a padded and an unpadded member give the same N. Throws a
+ * decodes the Byte Sequence of the field Rq-Nonce (H-109) and writes it in this
+ * form, so a padded and an unpadded Byte Sequence give the same N. Throws a
  * TypeError for a value that is not a Buffer of 16 bytes.
  */
 export function nonceText(bytes) {

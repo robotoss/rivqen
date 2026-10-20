@@ -50,7 +50,8 @@
       ["rq-capabilities","(block-patch)"],
       ["accept","text/html, application/vnd.rivqen.delta+json"],
       ["if-none-match","\"r1.-pK9sf8cvW9M26YTeTsLQbRDlej7Ltr9bWMX4noBRP8\""],
-      ["rq-have","t=t1.yU3ppFP_1Ht_p_DrKGDO5JgtcEQDBFSNNrTi37K4Fns, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5RphtQ5buSUg=:, n=:AAECAwQFBgcICQoLDA0ODw==:"]
+      ["rq-have","t=t1.yU3ppFP_1Ht_p_DrKGDO5JgtcEQDBFSNNrTi37K4Fns, b=:0Aqua3+/d6ReDehqKiXfLM8hC9ypGZS5RphtQ5buSUg=:"],
+      ["rq-nonce",":AAECAwQFBgcICQoLDA0ODw==:"]
     ]
   },
   "response": {

@@ -41,7 +41,11 @@
       ],
       [
         "rq-have",
-        "t={{t1:page-a}}, b={{have:page-a}}, n=:AAECAwQFBgcICQoLDA0ODw==:"
+        "t={{t1:page-a}}, b={{have:page-a}}"
+      ],
+      [
+        "rq-nonce",
+        ":AAECAwQFBgcICQoLDA0ODw==:"
       ]
     ]
   }

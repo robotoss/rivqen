@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-P42-NONCE-PARAMETER",
+  "description": "Rq-Nonce with a parameter: parameters are ignored, so a delta whose binding has N = AAECAwQFBgcICQoLDA0ODw (H-109)",
+  "rules": ["RQP-29"],
+  "page": "page-big-b",
+  "client_page": "page-big-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-big-a}}"],
+      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:;x=1"]
+    ]
+  }
+}

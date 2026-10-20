@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-P42-NONCE-MISSING-NOT-MODIFIED",
-  "description": "The client has the current page and sends no n: 304 as FX-RQ-P05-NOT-MODIFIED; the nonce is a condition of a delta only (H-108)",
+  "description": "The client has the current page and sends no Rq-Nonce: 304 as FX-RQ-P05-NOT-MODIFIED; the nonce is a condition of a delta only (H-108, H-109)",
   "rules": ["RQP-03", "RQP-29"],
   "page": "page-a",
   "client_page": "page-a",

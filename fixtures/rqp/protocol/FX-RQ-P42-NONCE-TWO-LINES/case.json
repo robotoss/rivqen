@@ -1,0 +1,26 @@
+{
+  "id": "FX-RQ-P42-NONCE-TWO-LINES",
+  "description": "Rq-Nonce in two field lines with the same valid value: a field with more than one line is no nonce (fail closed; also when every line is valid), so F (H-109)",
+  "rules": ["RQP-29"],
+  "page": "page-big-b",
+  "client_page": "page-big-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-big-a}}"],
+      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"]
+    ]
+  }
+}

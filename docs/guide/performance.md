@@ -75,17 +75,19 @@ xychart-beta
 
 | Visit | Legacy raw | Legacy gzip | Legacy Brotli | RQP raw | RQP gzip | RQP Brotli |
 |---|---:|---:|---:|---:|---:|---:|
-| 1. Cold | 19,641 | 2,244 | 1,248 | 20,250 | 2,707 | 1,686 |
+| 1. Cold | 19,593 | 2,232 | 1,252 | 20,250 | 2,707 | 1,686 |
 | 2. Revisit, unchanged (`304`) | 0 | 0 | 0 | 0 | 0 | 0 |
-| 3. Data changed | 512 | 294 | 253 | 836 | 526 | 467 |
+| 3. Data changed | 497 | 316 | 260 | 836 | 526 | 467 |
 
-<Badge type="tip" text="FACT" /> Legacy is smaller than RQP in this run. Cold: 17 % smaller with gzip (2,244 vs 2,707) and 26 % with Brotli. Data changed: 44 % smaller with gzip (294 vs 526) and 46 % with Brotli (253 vs 467). Unchanged: equal. Possible reasons <Badge type="info" text="DESIGN" />: the RQP document carries a manifest, and each RQP operation carries a block hash and revision fields; the legacy answer carries the changed data only. The raw cold sizes differ by 609 bytes, but this is not only the manifest, because the two pages use different block markers. This run does not isolate each cause, and it does not measure the cost of the RQP safety checks against their benefit.
+<Badge type="tip" text="FACT" /> Correction (2026-10-20, WP-17 S6 byte study, `evidence/rqp-bytes/report.md` §3.1 F-1): the first legacy run put markers around the `<title>`. The legacy server applies its title rule first, so the marker rule then overwrote the title entry, and the data change of that run (512 / 294 / 253) was a broken update that a legacy client discards. The table has the like-for-like values of the byte study lab run (the same page, the title as the implicit legacy title block). `measure.js` no longer marks the title.
+
+<Badge type="tip" text="FACT" /> Legacy is smaller than RQP in this run. Cold: 18 % smaller with gzip (2,232 vs 2,707) and 26 % with Brotli. Data changed: 40 % smaller with gzip (316 vs 526) and 44 % with Brotli (260 vs 467). The byte study splits these differences: the cold difference is the manifest (485 bytes gzip), the data change difference is mostly the per-operation hashes and the revisions (`evidence/rqp-bytes/report.md`). Unchanged: equal. Possible reasons <Badge type="info" text="DESIGN" />: the RQP document carries a manifest, and each RQP operation carries a block hash and revision fields; the legacy answer carries the changed data only. The raw cold sizes differ by 609 bytes, but this is not only the manifest, because the two pages use different block markers. This run does not isolate each cause, and it does not measure the cost of the RQP safety checks against their benefit.
 
 ### What the numbers say
 
 1. On a data change, the RQP delta is **81 % smaller** than the full document F with gzip (526 vs 2,718 bytes) and 71 % smaller with Brotli (467 vs 1,625 bytes).
 2. On an unchanged revisit, RQP and plain HTTP ETag are equal: both send `304`. The gain there is time (cache first), not bytes.
-3. On the first visit and on a template change, RQP and the "plain" strategy send the same bytes. The demo "plain" strategy sends the full document F with the manifest, so the run does not measure the cost of the manifest against a page without it. The legacy column gives an upper bound of this cost for the cold visit (463 bytes gzip, 438 bytes Brotli, with other differences included).
+3. On the first visit and on a template change, RQP and the "plain" strategy send the same bytes. The demo "plain" strategy sends the full document F with the manifest, so the run does not measure the cost of the manifest against a page without it. The legacy column gives an upper bound of this cost for the cold visit (475 bytes gzip, 434 bytes Brotli, with other differences included; the manifest alone: 485 bytes gzip).
 4. The upstream legacy server sends fewer bytes than RQP on the cold visit and on a data change (see the legacy column). RQP does not claim a byte advantage over legacy.
 
 ::: info Bytes are not time

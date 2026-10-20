@@ -81,7 +81,10 @@ await visit('4. template changed');
 // Optional legacy comparison through an upstream legacy server (see tools/upstream-lab).
 if (process.env.LEGACY_URL && process.env.LEGACY_PAGES) {
   const { writeFileSync: w } = await import('node:fs');
+  // The first title element is the implicit legacy title block: it gets no markers, only the
+  // data-rq-block attribute goes (markers around it break the legacy title rule; S6 byte study F-1).
   const toLegacy = (html) => html
+    .replace(/<title data-rq-block="title">/, '<title>')
     .replace(/<script type="application\/json" data-rq-block="(\w+)">([\s\S]*?)<\/script>/g, '<!--sonicdiff-$1--><script type="application/json">$2</script><!--sonicdiff-$1-end-->')
     .replace(/<(\w+)([^>]*?) data-rq-block="(\w+)"([^>]*)>([\s\S]*?)<\/\1>/g, '<!--sonicdiff-$3--><$1$2$4>$5</$1><!--sonicdiff-$3-end-->');
   // Reproduce states 1 (before data change) and 2 (after) with the same template.

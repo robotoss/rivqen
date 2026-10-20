@@ -1045,7 +1045,7 @@ mod tests {
     #[test]
     fn less_than_that_is_text() {
         assert_eq!(tokens("a < b <<p> <1 <"), ["<p>7..10"]);
-        assert!(tokens("</").is_empty());
+        assert_eq!(tokens("</"), Vec::<String>::new());
         assert_eq!(tokens("</><p>"), ["<p>3..6"], "`</>` is dropped");
     }
 

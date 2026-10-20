@@ -15,8 +15,8 @@
 )]
 
 use rqp_markup::{
-    Document, ErrorCode, Format, MAX_BLOCK_BYTES, MAX_INPUT_BYTES, MAX_OPEN_ELEMENTS, MarkupError,
-    analyze,
+    Block, Document, ErrorCode, Format, MAX_BLOCK_BYTES, MAX_INPUT_BYTES, MAX_OPEN_ELEMENTS,
+    MarkupError, analyze,
 };
 
 const HEAD: &str = "<!DOCTYPE html>\n<html><head><title>T</title></head><body>\n";
@@ -77,7 +77,7 @@ fn assert_invalid(body: &str, code: ErrorCode, rule: &str) {
 #[test]
 fn m01_input_size_limit_is_checked_first() {
     let mut input = vec![b'a'; MAX_INPUT_BYTES];
-    assert!(analyze(&input).unwrap().blocks.is_empty());
+    assert_eq!(analyze(&input).unwrap().blocks, Vec::<Block>::new());
     input.push(b'a');
     assert_eq!(error_of(&input), (ErrorCode::Limit, "M-01"));
     // Before M-02: a large input with invalid UTF-8 reports the limit.
@@ -191,9 +191,15 @@ fn m04_raw_text_states() {
         [html("r", "r")]
     );
     // PLAINTEXT never ends.
-    assert!(blocks("<plaintext></plaintext><p data-rq-block=\"f\">x</p>").is_empty());
+    assert_eq!(
+        blocks("<plaintext></plaintext><p data-rq-block=\"f\">x</p>"),
+        Vec::<(String, Format, String)>::new()
+    );
     // A raw text element that is never closed hides the rest.
-    assert!(blocks_of(b"<style><p data-rq-block=\"f\">x</p>").is_empty());
+    assert_eq!(
+        blocks_of(b"<style><p data-rq-block=\"f\">x</p>"),
+        Vec::<(String, Format, String)>::new()
+    );
 }
 
 #[test]
@@ -2379,7 +2385,7 @@ fn m27_result_offsets_hashes_and_revisions() {
     assert_eq!(two.blocks[0].id, "b");
     assert!(two.blocks[0].end < two.blocks[1].start);
     // A document without blocks is valid.
-    assert!(analyze(b"").unwrap().blocks.is_empty());
+    assert_eq!(analyze(b"").unwrap().blocks, Vec::<Block>::new());
 }
 
 /// The readings of README section "How the rules are read". The rules

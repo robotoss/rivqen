@@ -43,10 +43,20 @@ test('the baseline gives the demo bytes of evidence/benchmarks/rqp-bytes-2026-10
   const evidence = JSON.parse(readFileSync(new URL('../../../../../evidence/benchmarks/rqp-bytes-2026-10-19.json', import.meta.url), 'utf8'));
   const cold = evidence.results.find((r) => r.visit === '1. cold').rqp;
   const data = evidence.results.find((r) => r.visit === '3. data changed').rqp;
-  const pick = ({ raw, gzip, br }) => ({ raw, gzip, br });
-  assert.deepEqual(sizes(ex.cold.body), pick(cold));
+  // The raw bytes must be equal. The compressed sizes depend on the zlib and Brotli
+  // builds: Node.js 26 on macOS arm64 (the evidence) and Node.js 24 on Linux x64 (CI)
+  // give a gzip size that differs by 1 byte for the same raw bytes. So a compressed
+  // size may differ by at most 1 % (minimum 2 bytes).
+  const near = (actual, expected, label) => {
+    assert.equal(actual.raw, expected.raw, `${label} raw`);
+    for (const enc of ['gzip', 'br']) {
+      const limit = Math.max(2, Math.ceil(expected[enc] * 0.01));
+      assert.ok(Math.abs(actual[enc] - expected[enc]) <= limit, `${label} ${enc}: ${actual[enc]} vs ${expected[enc]}`);
+    }
+  };
+  near(sizes(ex.cold.body), cold, 'cold');
   assert.equal(ex.changed.kind, data.kind);
-  assert.deepEqual(sizes(ex.changed.body), pick(data));
+  near(sizes(ex.changed.body), data, 'data change');
 });
 
 test('the raw manifest rows add up to F minus the page in every scenario', () => {

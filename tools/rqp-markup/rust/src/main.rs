@@ -228,7 +228,7 @@ mod tests {
         sink.result(b"<p data-rq-block=\"A\">x</p>", None, "in.html")
             .unwrap();
         assert!(!sink.defect);
-        assert!(sink.err.is_empty());
+        assert_eq!(sink.err, b"");
         let out = String::from_utf8(sink.out).unwrap();
         let lines: Vec<&str> = out.lines().collect();
         assert_eq!(lines.len(), 2);
@@ -268,6 +268,6 @@ mod tests {
         };
         sink.report(&Err(rule), None, "in.html").unwrap();
         assert!(!sink.defect);
-        assert!(sink.err.is_empty());
+        assert_eq!(sink.err, b"");
     }
 }

@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+#
+# The Rust toolchain of the markup parser candidate and the rule probe
+# (docs/engineering/standards/rust.md, section 2). A new Rust release can add
+# clippy lints; change this version on purpose, not through CI.
+[toolchain]
+channel = "1.99.0"
+profile = "minimal"
+components = ["clippy", "rustfmt"]

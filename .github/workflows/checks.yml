@@ -87,6 +87,10 @@ jobs:
           tools: composer
           coverage: none
 
+      - name: Install the pinned Rust toolchain
+        working-directory: tools/rqp-markup
+        run: rustup toolchain install
+
       - name: Install dependencies
         run: |
           (cd tools/rqp-markup/node && npm ci --ignore-scripts)

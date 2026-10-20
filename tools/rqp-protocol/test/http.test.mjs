@@ -75,6 +75,8 @@ test('comma lists: a quoted string keeps its commas and escapes; empty elements 
 test('charset parameter: HTTP white space after ";", parameters only after the first ";"', () => {
   for (const ws of ['\t', '\n', '\r', ' ']) assert.equal(charsetParameter(`text/html;${ws}charset=utf-8`), 'utf-8', JSON.stringify(ws));
   assert.equal(charsetParameter('charset=utf-8'), null);
+  assert.equal(charsetParameter('text/html; charset= utf-8'), ' utf-8'); // white space after "=" is part of the value
+  assert.equal(charsetParameter('text/html; charset=utf-8 \t'), 'utf-8'); // trailing white space goes
   assert.equal(charsetParameter('xcharset=utf-8'), null);
   assert.equal(charsetParameter(';charset=utf-8'), 'utf-8');
   // After a quoted value, the rest up to the next ";" is ignored.

@@ -134,6 +134,15 @@ Changed lines of WP-17 S6 T-07 (2026-10-20; the nonce work of H-108 and H-109 si
 | `rqNonce`: `lines.length !== 1` | 1 | Equivalent | Several lines join with a comma, which an Item parse rejects |
 | Message text of `nonceText`; `Buffer.from(…, 'utf8')` → `""` (`fixtures.mjs:485`) | 2 | Accepted / Equivalent | Text for the caller; Node.js uses UTF-8 for an empty encoding |
 
+Changed lines of WP-17 S6 T-10 (2026-10-20; DL-063 since `d900216`; only the ranges in `src/`: `client`, `common`, `fixtures`, `http`, `server`, `sf`; 2 min 41 s per run, no timeout): before 251/260 (96.5 %), after 254/260 (97.7 %). Three tests were added for real survivors: `withoutRqVary` joins the kept members with a comma and a space, a Byte Sequence rejects the characters above `z` (`{`, `~`, a non-ASCII letter), and an unquoted `charset` value keeps its leading white space. The 6 survivors left are equivalent:
+
+| Mutant | n | Status | Reason |
+|---|---|---|---|
+| `trimChars`: `i <= j`, `true &&` in the start scan | 2 | Equivalent | `charCodeAt` past the end is `NaN`, which no `isWs` accepts |
+| `trimChars`: `true &&`, `j >= i` in the end scan | 2 | Equivalent | The extra step reads `NaN` or a white space that the start scan already passed; `slice(i, j)` of an empty range is `''` |
+| `trimChars`: `i === 0 && j === s.length ? s : …` → `false` | 1 | Equivalent | `slice(0, length)` is the same string |
+| `expectedVary`: `kind === 'delta'` → `true` | 1 | Equivalent | `withoutRqVary` removes every Rq-* member from every outcome (L2), so no other kind lists `rq-nonce` |
+
 The 182 survivors: 141 equivalent, 41 accepted.
 
 | Group | n | Status | Reason |

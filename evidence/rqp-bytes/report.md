@@ -289,3 +289,26 @@ FACT. Checked on 2026-10-20 (task T-04a) with the reference of `HEAD` `87ab26b` 
 **What stays.** DESIGN. The binding does not give freshness, and it cannot find a delta that a cache returns to another request with the same base and the same URL (for example two users whose base page is the same). `no-store` stays the defense for that case (manifest-patch §2.2, "Replay").
 
 **Lesson for the cost classes of §6.** DESIGN. A field that the client cannot compute from its own state is not "diagnostic" only because the result check passes: the check must also cover the inputs of the operation (the base and the URL), not only its output.
+
+## 10. The client nonce (S6 security re-review B1 and B2, H-108)
+
+Added on 2026-10-20 by task WP-17 S6 T-06a. Sections 0 to 9 stay as they were written; this section corrects §9 ("What stays") and the rollback row of its table.
+
+**What §9 missed.** FACT. The S6 security re-review (B1 medium, B2 low) reproduced two cases that H-107 accepts, with the reference of `HEAD` `a49ae09` (probe 5 of the review, cases 1 and 2): a rollback A → B → A (the page went v1 → v2 → v3 with the bytes of v1; the client holds v3, which has the page revision of v1, and a cache returns D(v1 → v2)), and a `public` partition replay (a user with credentials gets a personal delta from the `public` snapshot of a page; a cache returns it to a user without credentials with the same `public` snapshot; a user can choose B, because the page revision of a `public` page is the same for every user, and H-65 keeps the result `public` for the user without credentials). In both cases U and B are equal, so the binding of H-107 matches. The rollback row of §9 is true only for a snapshot whose page revision differs from the base of the delta.
+
+| Case | H-107 (`binding` of U, B, R′) | H-108 (`binding` of U, B, N, R′) |
+|---|---|---|
+| Rollback D(v1 → v2) on v3 ≠ v1 | `INTEGRITY_ERROR` | `INTEGRITY_ERROR` |
+| Rollback A → B → A: D(v1 → v2) on v3 = v1 | Applied: the client goes back to v2 | `INTEGRITY_ERROR` (`FX-RQ-C32-NONCE-ROLLBACK-A-B-A`) |
+| A later request of the same client from the same snapshot | Applied | `INTEGRITY_ERROR` (`FX-RQ-C32-NONCE-OTHER-BIT`) |
+| `public` replay: the personal D of user 1 on the same `public` snapshot of user 2 | Applied, the result stays `public` | `INTEGRITY_ERROR` (`FX-RQ-C32-NONCE-PUBLIC-REPLAY`) |
+
+FACT. Checked on 2026-10-20 (task T-06a) with the reference of T-06a: the review probe 5 gives `INTEGRITY_ERROR` for cases 1 and 2 (the probe does not keep the nonce of a request, so every delta of that probe is rejected); the reference tests repeat both cases with a kept nonce, where the request that got the delta applies it and the other request does not; the seeded property test `tools/rqp-protocol/test/p1.test.mjs` (300 random pages) checks that a delta with the exact U, B and R′ but another nonce, also after A → B → A, gives `INTEGRITY_ERROR`.
+
+**The change.** Human decision H-108: every delta request carries `Rq-Have` member `n`, 16 bytes from a CSPRNG, new for every request; the preimage is `rqp-d1` LF U LF B LF N LF R′ LF, with N the base64url text without padding of the 16 bytes (22 characters); a server sends a delta only for a request with exactly one valid `n`, else F (`docs/engineering/protocol/manifest-patch.md` §2.2, `negotiation.md` §3.4).
+
+**Cost.** FACT. Bodies: 0 bytes (the binding keeps its length). Request: 30 bytes more in HTTP/1.1 form. HPACK header block on a new HTTP/2 connection (method of §3.5, Node.js 26.8.2, 200 random nonces each): the demo revisit request 276 → +23 to +27 bytes (median 25, mean 24.8); with 64 blocks (`Rq-Have` 768 bytes with `n`) +23 to +26 (median 24). On a warm connection the whole `Rq-Have` value is new for each request, so HPACK cannot index it: the second and third revisit of the demo page on one connection send 164 bytes each, before 60. Scripts of the measurement: kept by the task, not in the repository (they import `study/bytes/src/hpack.mjs` unchanged).
+
+**What stays.** DESIGN. The binding with N is true only under three assumptions: an honest server (it can bind any content to any request), TLS (U, B and N travel in the request, so a party that reads the request and writes the response can build any delta; the binding is not a MAC), and a nonce from a CSPRNG that the client never uses again (a repeated or predictable nonce brings the replays back). It gives no freshness and does not protect F (manifest-patch §2.2, "Replay").
+
+**Option for the human, not decided.** RESEARCH. The warm-connection cost comes from the nonce inside `Rq-Have`. A separate field (for example `Rq-Nonce`) would let HPACK index `t` and `b` on a warm connection and cost a few more bytes on a new connection (a field name). H-108 put the nonce in `Rq-Have`; this is a protocol decision of the human.

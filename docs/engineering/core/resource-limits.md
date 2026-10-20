@@ -20,6 +20,7 @@ Every input to the core is bounded. Limits protect the app from memory exhaustio
 | `maxPatchBytes` | 256 KiB | One RQP patch envelope. The server sends the full document when a delta is larger ([negotiation §4](/engineering/protocol/negotiation#_4-response-selection-server), step 7) | Client: `PATCH_TOO_LARGE`. Server: full document |
 | `maxRqHaveBytes` | 4096 bytes, fixed by `rqp/1` | Request field `Rq-Have`, all field lines combined (H-44) | Client: never sends more. Server: field is absent, not parsed |
 | `maxRqCapabilitiesBytes` | 1024 bytes, fixed by `rqp/1` | Request field `Rq-Capabilities`, all field lines combined | Server: field is absent, not parsed |
+| `maxRqNonceBytes` | 128 bytes, fixed by `rqp/1` | Request field `Rq-Nonce`, the field value without leading and trailing white space (DL-063) | Server: no nonce, not parsed (the full document F) |
 | `maxJsonDepth` | 16 | legacy data JSON, RQP envelopes | Protocol error |
 | `maxHeaderBytes` | 16 KiB per header, 64 KiB total | Response headers parsed by the core | Protocol error |
 | `maxActiveSessions` | 8 per engine | Concurrent sessions | Oldest background session is cancelled |

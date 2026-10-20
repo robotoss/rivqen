@@ -329,6 +329,14 @@ test('server cases: request.target is used, and Date is never a required header'
   assert.equal(Object.hasOwn(e.headers_required, 'date'), false);
 });
 
+test('defective delta recipes are named: flags together, ops with all_blocks', () => {
+  const recipe = (delta) => (c) => ({ ...c, response: { ...c.response, body: { delta } } });
+  const named = (delta, pattern) =>
+    assert.throws(withCase('FX-RQ-C01-OTHER-BASE', recipe(delta)), (e) => isCaseError(e) && pattern.test(e.message), JSON.stringify(delta));
+  named({ from: 'page-a', to: 'page-a', old_envelope: true, next_revision_envelope: true }, /old_envelope and next_revision_envelope together/);
+  named({ from: 'page-a', ops: [{ block_id: 'price', content: 'x' }], all_blocks: true }, /ops and all_blocks together/);
+});
+
 test('defective client cases: members, context values, header lines and body recipes', () => {
   const defects = [
     ['FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, extra: 1 })],

@@ -206,6 +206,13 @@ test('H-107: handleDelta binds the final URL of the response', () => {
   assert.equal(r.outcome, 'patched');
 });
 
+test('H-107: a delta response without a usable snapshot is PATCH_INVALID and falls back', () => {
+  const body = Buffer.from(JSON.stringify(envelope([['price', '130.00']])));
+  const r = handleResponse(ctx({ snapshot: null }), { status: 200, headers: DELTA, body });
+  assert.equal(r.outcome, 'rejected');
+  assert.equal(r.error, 'PATCH_INVALID');
+});
+
 test('INTEGRITY_ERROR: the binding does not match the blocks (step 7), also after an omitted block', () => {
   const omitted = envelope([['title', 'Shop']], { next: revisions('page-b').page_revision });
   assert.equal(code(omitted), 'INTEGRITY_ERROR');

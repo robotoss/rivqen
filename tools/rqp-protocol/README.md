@@ -144,6 +144,17 @@ The 182 survivors: 141 equivalent, 41 accepted.
 | Fixture loader: a check followed by a check with the same `CaseError` (`typeof obj`, `every` → `some` before H-69, `recipe.delta` before `onlyKeys`) | 3 | Accepted | The case still stops with a `CaseError`; only the message differs |
 | `expectFixture` converts every error to a `CaseError` | 1 | Accepted | No case input gives another error except a context snapshot of a page that is not valid for RQP, which stops `gen.mjs` with a plain `Error` (it fails closed) |
 
+Changed lines of WP-17 S6 T-05 (2026-10-20; H-107, the delta binding; base `87ab26b`; only the ranges in `src/`: `client`, `common`, `fixtures`, `pages`, `server`): before 110/128 (85.9 %; `common.mjs` 27/34, `fixtures.mjs` 63/71, `client.mjs` 15/18), after 117/128 (91.4 %); 11 survivors, all equivalent, so 117/117 of the mutants with a possible effect. Tests added: the message of each defective input of `deltaBindingPreimage` and the unanchored revision (`test/common.test.mjs`), the `PATCH_INVALID` result of a delta without a snapshot (`test/client.test.mjs`), the messages of two delta recipe defects (`test/gen.test.mjs`).
+
+| Group | n | Status | Reason |
+|---|---|---|---|
+| `patchedSnapshot.page_revision !== nextRevision` in `verifyDelta` (condition, result object) | 2 | Equivalent | The page revision of the patched document is computed from the same blocks and members as R′ and the binding check has passed, so the test cannot be true (as the `sameShape` group above) |
+| `typeof base !== 'string'` and `typeof next !== 'string'` in `deltaBindingPreimage` | 2 | Equivalent | `REVISION.test` converts a non-string to text that is never a revision, so the same `TypeError` with the same message follows |
+| `snap === null` in `handleDelta` | 1 | Equivalent | `verifyDelta` gets `offered = false` for a null snapshot and gives `PATCH_INVALID` before it reads the snapshot |
+| The self-check of the binding in `expectServer` (condition, block, message) | 3 | Equivalent | The reference server and `expectServer` use the same `deltaBinding`; no case input makes them differ. The check finds a future change of only one side |
+| `from.blocks[i]?.sha256` | 1 | Equivalent | `to` has the same block ids as `from`, checked before, so `from.blocks[i]` exists |
+| `'utf8'` → `''` in `Buffer.from` | 2 | Equivalent | Node.js uses UTF-8 for an empty encoding |
+
 ## Procedure: check a server under test
 
 1. Write an ES module that exports `handle(request, appResponse, pageBytes, config)`.

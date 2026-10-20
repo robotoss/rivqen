@@ -9,8 +9,8 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MANIFEST_END, UnsupportedInput, membersOf, pageRevision, sha256b64u } from './common.mjs';
-import { handle, manifestOf, writtenMembers } from './server.mjs';
+import { MANIFEST_END, UnsupportedInput, canonicalUrl, deltaBinding, membersOf, pageRevision, sha256b64u } from './common.mjs';
+import { deltaBase, handle, manifestOf, writtenMembers } from './server.mjs';
 import { Partition, handleResponse, hasUserinfo, havePrefixes, requestHeaders, snapshotOf, validAllowlistEntry } from './client.mjs';
 import { combined, normalizeHeaders } from './http.mjs';
 import { analyze, documentHeadStart } from './markup.mjs';
@@ -170,13 +170,25 @@ export function expectServer(c) {
     // H-103: the manifest has the members of the configuration that are not the default.
     body = { kind: 'full', insert_at: documentHeadStart(page), manifest: manifestOf(a, request.target, writtenMembers(config)) };
   } else if (r.kind === 'delta') {
-    // H-104: the envelope is next_revision and the operations. `sha256` is the
-    // hash of the current content of each changed block; the checker compares
-    // it with the hash of the content that the server sent.
+    // H-104, H-107: the envelope is the binding and the operations. `sha256` is
+    // the hash of the current content of each changed block; the checker
+    // compares it with the hash of the content that the server sent.
+    // binding_inputs are U, B and R' of the binding, for the diagnosis of a
+    // server under test; the checker compares only the binding.
     const env = JSON.parse(r.body.toString('utf8'));
+    const a = analyze(page);
+    const inputs = {
+      url: canonicalUrl(request.target),
+      base_revision: deltaBase(normalizeHeaders(request.headers)),
+      next_revision: pageRevision(a.template_revision, a.blocks, writtenMembers(config)),
+    };
+    if (deltaBinding(inputs.url, inputs.base_revision, inputs.next_revision) !== env.binding) {
+      throw new CaseError(c.id, 'the binding of the reference server is not the binding of its inputs');
+    }
     body = {
       kind: 'delta',
-      next_revision: env.next_revision,
+      binding: env.binding,
+      binding_inputs: inputs,
       blocks: env.operations.map((op) => ({ id: op.block_id, sha256: sha256b64u(Buffer.from(op.content, 'utf8')) })),
     };
   } else {
@@ -346,23 +358,41 @@ function fullRecipe(id, recipe, ctx) {
 }
 
 /**
- * Body recipe {"delta": {...}}: a delta envelope (H-104) from the page `from`,
- * or one with one defect. Without `ops` the operations are the blocks of `to`
- * that differ from `from`. next_revision is computed from the blocks of
- * `from` with the contents of the operations and the template revision of
- * `from`, or is the page revision of the page `next_revision`. `old_envelope`
- * writes the envelope of rqp/1 before H-104 (type, protocol, base_revision,
- * template_revision; op, format and sha256 in each operation);
+ * Body recipe {"delta": {...}}: a delta envelope (H-104, H-107) that a server
+ * built from the page `from`, or one with one defect. Without `ops` the
+ * operations are the blocks of `to` that differ from `from`; with
+ * `all_blocks` they are all blocks of `to` (a request without `b`, H-7). The
+ * binding (H-107) has U = the canonical URL of `binding_url` (default: the
+ * final URL of the context), B = the page revision of `from` (with the members
+ * of the snapshot when `from` is the snapshot page), and R' = the page
+ * revision of the blocks of `from` with the contents of the operations and the
+ * template revision of `from`, or the page revision of the page
+ * `next_revision`. `old_envelope` writes the envelope of rqp/1 before H-104
+ * (type, protocol, base_revision, next_revision, template_revision; op,
+ * format and sha256 in each operation); `next_revision_envelope` writes the
+ * envelope of H-104 (next_revision = R' in place of the binding);
  * `operation_sha256` adds only the hash of each operation (H-10, replaced by
- * H-104); `duplicate_member` writes next_revision a second time, first, with the
- * page revision of `from` (the value a first-wins parser would read).
+ * H-104); `duplicate_member` writes the binding a second time, first, with the
+ * binding of an empty change (R' = B; the value a first-wins parser would read).
  */
 function deltaRecipe(id, recipe, ctx) {
   const d = recipe.delta;
   onlyKeys(id, recipe, ['delta'], 'body');
-  onlyKeys(id, d, ['from', 'to', 'ops', 'next_revision', 'next_members', 'size', 'duplicate_member', 'old_envelope', 'operation_sha256'], 'body.delta');
-  for (const flag of ['duplicate_member', 'old_envelope', 'operation_sha256']) {
+  onlyKeys(
+    id,
+    d,
+    ['from', 'to', 'ops', 'all_blocks', 'binding_url', 'next_revision', 'next_members', 'size', 'duplicate_member', 'old_envelope', 'next_revision_envelope', 'operation_sha256'],
+    'body.delta',
+  );
+  for (const flag of ['all_blocks', 'duplicate_member', 'old_envelope', 'next_revision_envelope', 'operation_sha256']) {
     if (d[flag] !== undefined && d[flag] !== true) throw new CaseError(id, `body.delta.${flag} must be true when present`);
+  }
+  if (d.old_envelope === true && d.next_revision_envelope === true) throw new CaseError(id, 'old_envelope and next_revision_envelope together');
+  let bindingUrl;
+  try {
+    bindingUrl = canonicalUrl(d.binding_url ?? ctx.final_url);
+  } catch {
+    throw new CaseError(id, `body.delta.binding_url ${d.binding_url} is not a URL`);
   }
   const from = analysisOf(id, d.from);
   // The policy and limits of the snapshot manifest (H-55): next_revision uses
@@ -378,6 +408,7 @@ function deltaRecipe(id, recipe, ctx) {
   };
   let ops;
   if (d.ops !== undefined) {
+    if (d.all_blocks !== undefined) throw new CaseError(id, 'body.delta.ops and all_blocks together');
     if (!Array.isArray(d.ops)) throw new CaseError(id, 'body.delta.ops must be a list');
     ops = d.ops.map((op) => {
       onlyKeys(id, op, ['block_id', 'content'], 'body.delta.ops[]');
@@ -391,7 +422,7 @@ function deltaRecipe(id, recipe, ctx) {
       throw new CaseError(id, `${d.to} does not have the blocks of ${d.from}`);
     }
     ops = to.blocks
-      .filter((b, i) => b.sha256 !== from.blocks[i]?.sha256)
+      .filter((b, i) => d.all_blocks === true || b.sha256 !== from.blocks[i]?.sha256)
       .map((b) => ({ block_id: b.id, content: toPage.toString('utf8', b.start, b.end) }));
   }
   const hashOf = (content) => sha256b64u(Buffer.from(content, 'utf8'));
@@ -402,12 +433,13 @@ function deltaRecipe(id, recipe, ctx) {
     const contentHash = new Map(ops.map((op) => [op.block_id, hashOf(op.content)]));
     const next = from.blocks.map((b) => ({ id: b.id, format: b.format, sha256: contentHash.get(b.id) ?? b.sha256 }));
     const nextRevision = d.next_revision === undefined ? pageRevision(from.template_revision, next, nextMembers) : analysisOf(id, d.next_revision).page_revision;
+    const baseRevision = pageRevision(from.template_revision, from.blocks, baseMembers);
     let env;
     if (d.old_envelope === true) {
       env = {
         type: 'rivqen.patch',
         protocol: 'rqp/1',
-        base_revision: pageRevision(from.template_revision, from.blocks, baseMembers),
+        base_revision: baseRevision,
         next_revision: nextRevision,
         template_revision: from.template_revision,
         operations: ops.map((op) => ({
@@ -420,7 +452,9 @@ function deltaRecipe(id, recipe, ctx) {
       };
     } else {
       env = {
-        next_revision: nextRevision,
+        ...(d.next_revision_envelope === true
+          ? { next_revision: nextRevision }
+          : { binding: deltaBinding(bindingUrl, baseRevision, nextRevision) }),
         operations: ops.map((op) => ({
           block_id: op.block_id,
           content: op.content,
@@ -429,8 +463,9 @@ function deltaRecipe(id, recipe, ctx) {
       };
     }
     const text = JSON.stringify(env);
-    const first = pageRevision(from.template_revision, from.blocks, baseMembers);
-    return Buffer.from(d.duplicate_member === true ? withDuplicateMember(text, 'next_revision', first) : text, 'utf8');
+    if (d.duplicate_member !== true) return Buffer.from(text, 'utf8');
+    if (env.binding === undefined) throw new CaseError(id, 'duplicate_member needs the envelope with the binding');
+    return Buffer.from(withDuplicateMember(text, 'binding', deltaBinding(bindingUrl, baseRevision, baseRevision)), 'utf8');
   };
   if (d.size === undefined) return build();
   // Fill the content of the only operation with "x" up to the exact envelope size.

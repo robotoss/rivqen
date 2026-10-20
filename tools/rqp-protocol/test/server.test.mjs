@@ -6,7 +6,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { UnsupportedInput } from '../src/common.mjs';
+import { UnsupportedInput, deltaBinding } from '../src/common.mjs';
 import { capabilities, changeSet, deltaBase, handle, notModified, requestVersion, rqHave, writtenMembers } from '../src/server.mjs';
 import { acceptsMediaType, parseEntityTags } from '../src/http.mjs';
 import { analyze as analyzeBytes, documentHeadStart } from '../src/markup.mjs';
@@ -316,11 +316,26 @@ test('step 7: the delta has the delta fields, no ETag, Last-Modified or Expires,
   assert.equal(header(r, 'cache-control'), 'no-store');
   assert.equal(header(r, 'content-length'), String(r.body.length));
   const env = JSON.parse(r.body.toString('utf8'));
-  // H-104: exactly next_revision and the operations; each operation exactly block_id and content.
-  assert.deepEqual(Object.keys(env), ['next_revision', 'operations']);
-  assert.equal(env.next_revision, revisions('page-big-b').page_revision);
+  // H-104, H-107: exactly the binding and the operations; each operation exactly block_id and content.
+  assert.deepEqual(Object.keys(env), ['binding', 'operations']);
+  assert.equal(env.binding, deltaBinding(TARGET, revisions('page-big-a').page_revision, revisions('page-big-b').page_revision));
   const changed = revisions('page-big-b').blocks[1];
   assert.deepEqual(env.operations, [{ block_id: changed.id, content: page('page-big-b').toString('utf8', changed.start, changed.end) }]);
+});
+
+test('step 7, H-107: the binding has U of the request target, B of If-None-Match (also weak) and R\' of the current page', () => {
+  const binding = (request) => JSON.parse(handle(request, APP, page('page-big-b')).body.toString('utf8')).binding;
+  const a = revisions('page-big-a').page_revision;
+  const b = revisions('page-big-b').page_revision;
+  // A weak base gives the same B: the r1. value between the quotes.
+  assert.equal(binding(deltaRequest('page-big-a', { 'if-none-match': `W/"${a}"` })), deltaBinding(TARGET, a, b));
+  // U is the WHATWG serialization of the target with its query and without the fragment.
+  const target = 'https://SHOP.example.com:443/catalog?page=2#top';
+  assert.equal(binding({ ...deltaRequest('page-big-a'), target }), deltaBinding('https://shop.example.com/catalog?page=2', a, b));
+  assert.notEqual(binding({ ...deltaRequest('page-big-a'), target }), binding(deltaRequest('page-big-a')));
+  // Another base (a client with another snapshot that sends the same prefixes) gives another binding.
+  const other = revisions('page-a').page_revision;
+  assert.equal(binding(deltaRequest('page-big-a', { 'if-none-match': `"${other}"` })), deltaBinding(TARGET, other, b));
 });
 
 test('step 7: a delta larger than maxPatchBytes gives F; at the limit it is sent', () => {

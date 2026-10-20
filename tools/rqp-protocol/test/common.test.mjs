@@ -7,7 +7,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { UnsupportedInput, membersOf, pageRevision, policyLimitsText } from '../src/common.mjs';
+import { UnsupportedInput, canonicalUrl, deltaBinding, deltaBindingPreimage, membersOf, pageRevision, policyLimitsText, sha256b64u } from '../src/common.mjs';
 import { UnknownPage, pageBytes } from '../src/pages.mjs';
 import { handle } from '../src/server.mjs';
 import { APP, firstVisit, page } from './helpers.mjs';
@@ -31,6 +31,46 @@ test('policy line: a value outside the schema stops the reference with a TypeErr
     { limits: { max_patch_bytes: 2 ** 53 } },
   ];
   for (const members of bad) assert.throws(() => pageRevision('t1.x', [], members), TypeError, JSON.stringify(members));
+});
+
+const R_A = 'r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8';
+const R_B = 'r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI';
+
+test('H-107: the binding preimage is "rqp-d1" LF U LF B LF R\' LF and the binding is d1. and its SHA-256', () => {
+  const p = deltaBindingPreimage('https://shop.example.com/catalog', R_A, R_B);
+  assert.equal(p, `rqp-d1\nhttps://shop.example.com/catalog\n${R_A}\n${R_B}\n`);
+  assert.equal(deltaBinding('https://shop.example.com/catalog', R_A, R_B), `d1.${sha256b64u(p)}`);
+  // The KAT value (spec/rqp/examples/kat/kat.json, member bindings).
+  assert.equal(deltaBinding('https://shop.example.com/catalog', R_A, R_B), 'd1.SGYLGtFc4PsLoFIzWsurTmxLupiief5xgV7ZCtXDcpc');
+  // Each input changes the value; B and R' are not interchangeable.
+  const values = new Set([
+    deltaBinding('https://shop.example.com/catalog', R_A, R_B),
+    deltaBinding('https://shop.example.com/catalog?x', R_A, R_B),
+    deltaBinding('https://shop.example.com/catalog', R_B, R_A),
+    deltaBinding('https://shop.example.com/catalog', R_A, R_A),
+  ]);
+  assert.equal(values.size, 4);
+});
+
+test('H-107: an input that would make the preimage ambiguous stops the reference with a TypeError', () => {
+  const bad = [
+    ['https://a.example/\nr1.x', R_A, R_B],
+    [null, R_A, R_B],
+    ['https://a.example/', 't1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8', R_B],
+    ['https://a.example/', R_A, `${R_B}\n`],
+    ['https://a.example/', R_A, R_B.slice(0, -1)],
+    ['https://a.example/', undefined, R_B],
+    ['https://a.example/', R_A, 7],
+  ];
+  for (const args of bad) assert.throws(() => deltaBindingPreimage(...args), TypeError, JSON.stringify(args));
+});
+
+test('H-107: U is the WHATWG serialization without the fragment; it has no line feed', () => {
+  assert.equal(canonicalUrl('https://SHOP.example.com:443/catalog?b=1&a=2#top'), 'https://shop.example.com/catalog?b=1&a=2');
+  assert.equal(canonicalUrl('https://shop.example.com/a\nb?c\td'), 'https://shop.example.com/ab?cd');
+  assert.equal(canonicalUrl('https://shop.example.com/%7e?q=%7E'), 'https://shop.example.com/%7e?q=%7E'); // no percent normalization
+  assert.equal(canonicalUrl('https://shop.example.com'), 'https://shop.example.com/');
+  assert.throws(() => canonicalUrl('not a url'), TypeError);
 });
 
 test('membersOf: only policy and limits, also for null and undefined', () => {

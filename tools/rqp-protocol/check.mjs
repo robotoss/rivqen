@@ -75,10 +75,12 @@ function compareFull(expected, page, body, fail) {
 }
 
 /**
- * Compare the body of a delta D (README.md: next_revision and the ordered
- * changed blocks; H-104). The envelope must pass the patch schema, so it has
- * no member of the envelope before H-104. The content of each operation must
- * be the current content of its block: its SHA-256 is the expected hash.
+ * Compare the body of a delta D (README.md: the binding and the ordered
+ * changed blocks; H-104, H-107). The envelope must pass the patch schema, so
+ * it has no member of an earlier envelope form (also no next_revision). The
+ * binding is compared exactly; on a difference the failure names the inputs
+ * U, B and R' of the expected binding. The content of each operation must be
+ * the current content of its block: its SHA-256 is the expected hash.
  */
 function compareDelta(expected, body, fail) {
   const json = parseStrict(body);
@@ -86,7 +88,10 @@ function compareDelta(expected, body, fail) {
   const errors = validate(PATCH_SCHEMA, json.value);
   if (errors.length > 0) return fail(`body: the delta fails the schema (${errors[0].keyword} at "${errors[0].instancePath}")`);
   const env = json.value;
-  if (env.next_revision !== expected.next_revision) fail(`body: next_revision ${env.next_revision}, expected ${expected.next_revision}`);
+  if (env.binding !== expected.binding) {
+    const i = expected.binding_inputs;
+    fail(`body: binding ${env.binding}, expected ${expected.binding} (U ${i.url}, B ${i.base_revision}, R' ${i.next_revision})`);
+  }
   const got = env.operations.map((op) => op.block_id);
   const want = expected.blocks.map((b) => b.id);
   if (got.join(',') !== want.join(',')) return fail(`body: changed blocks [${got}], expected [${want}]`);

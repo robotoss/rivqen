@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-C17-DELTA-DUPLICATE-MEMBER",
   "kind": "client",
-  "description": "A delta with the member next_revision two times: first r1(page-a), then the correct r1(page-b)",
+  "description": "A delta with the member binding two times: first the binding of an empty change (R' = B), then the correct binding (H-107; before H-107 next_revision)",
   "rules": ["RQP-13"],
   "context": {
     "navigation": "delta",

@@ -89,14 +89,19 @@ test('detects a delta with a wrong revision, a wrong content or a schema defect'
   const send = (e) => compareServer(expected, p, { ...reference, headers: reference.headers.filter(([n]) => n !== 'content-length'), body: Buffer.from(typeof e === 'string' ? e : JSON.stringify(e)) });
   assert.deepEqual(send(env), []);
   const other = load('FX-RQ-P05-NOT-MODIFIED').expected.headers_required.etag.slice(1, -1);
-  assert.ok(send({ ...env, next_revision: other }).some((f) => f.startsWith('body: next_revision')));
+  // H-107: another binding fails, and the failure names the inputs U, B and R' of the expected one.
+  const wrong = send({ ...env, binding: load('FX-RQ-P09-DELTA-QUERY').expected.body.binding });
+  assert.ok(wrong.some((f) => f.startsWith('body: binding d1.') && f.includes(`(U https://shop.example.com/catalog, B ${expected.body.binding_inputs.base_revision}, R' `)), wrong.join('; '));
+  // The envelope of H-104 (next_revision in place of the binding) fails the schema.
+  const { binding: _binding, ...rest } = env;
+  assert.ok(send({ next_revision: other, ...rest }).some((f) => f.includes('fails the schema')));
   const op = env.operations[0];
   assert.ok(send({ ...env, operations: [{ ...op, content: 'x' }] }).some((f) => f.includes('is not the current content of the block')));
   assert.ok(send({ ...env, page_id: 'x' }).some((f) => f.includes('fails the schema')));
   // H-104: the members of the envelope before H-104 fail the schema.
   assert.ok(send({ ...env, base_revision: other }).some((f) => f.includes('fails the schema (additionalProperties at "")')));
   assert.ok(send({ ...env, operations: [{ ...op, sha256: 'x' }] }).some((f) => f.includes('fails the schema (additionalProperties at "/operations/0")')));
-  assert.ok(send(JSON.stringify(env).replace('{', `{"next_revision":"${other}",`)).some((f) => f.includes('duplicate')));
+  assert.ok(send(JSON.stringify(env).replace('{', `{"binding":"${env.binding}",`)).some((f) => f.includes('duplicate')));
 });
 
 test('compares F by the bytes around the manifest, the position and the manifest value', () => {
@@ -111,7 +116,7 @@ test('compares F by the bytes around the manifest, the position and the manifest
   assert.ok(ok(text.replace('Static header', 'Static_header')).some((f) => f.includes('after the manifest element')));
   assert.ok(ok(text.replace('<!DOCTYPE', '<!doctype')).some((f) => f.includes('before the manifest element')));
   assert.ok(ok(text.replace('<title', '<TITLE')).some((f) => f.includes('after the manifest element')));
-  const otherRevision = load('FX-RQ-P09-DELTA').expected.body.next_revision;
+  const otherRevision = load('FX-RQ-P09-DELTA').expected.body.binding_inputs.next_revision;
   assert.ok(ok(text.replace(m.page_revision, otherRevision)).some((f) => f.includes('manifest value')));
   const moved = text.replace(/<script type="application\/rivqen-manifest\+json">.*?<\/script>/, '').replace('</body>', `<script type="application/rivqen-manifest+json">${JSON.stringify(m)}</script></body>`);
   assert.ok(ok(moved).some((f) => f.includes('at the insertion point')));
@@ -239,7 +244,7 @@ test('a server module that throws fails its fixtures, and the command exits 1', 
   assert.throws(() => execFileSync(process.execPath, [CHECK, '--server', fileURLToPath(new URL('./fixtures/broken-server.mjs', import.meta.url)), '--only', 'FX-RQ-P01'], { stdio: 'pipe' }), (e) => e.status === 1);
   assert.throws(() => execFileSync(process.execPath, [CHECK, '--bad'], { stdio: 'pipe' }), (e) => e.status === 2);
   const out = execFileSync(process.execPath, [CHECK, '--only', 'FX-RQ-P09'], { encoding: 'utf8' });
-  assert.match(out, /2 passed, 0 failed, 0 SHOULD failed/);
+  assert.match(out, /3 passed, 0 failed, 0 SHOULD failed/); // P09-DELTA, -DELTA-QUERY, -DELTA-WEAK-BASE
 });
 
 test('a failed SHOULD fixture is labelled and counted apart from a failed MUST fixture', () => {

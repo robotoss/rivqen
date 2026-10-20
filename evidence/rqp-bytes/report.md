@@ -12,7 +12,7 @@ Evidence for WP-17 S6, task T-01 (sprint record `docs/engineering/plan/sprints/W
 1. FACT. Like for like (the same demo page; legacy markers in place of `data-rq-block`; the title as the implicit legacy title block): cold visit RQP 2,707 gzip, legacy 2,232 (+475); data change RQP 526, legacy 316 (+210). The earlier legacy value for the data change (294) is the value of a broken legacy update (§3.1, F-1).
 2. FACT. The cold-visit difference is the manifest: +485 gzip. The RQP block markup is 10 gzip smaller than the legacy markers. Most of the manifest cost is the block list (225 gzip), of which the digests are 178. With 64 small blocks the digests are 2,360 of 3,651 gzip.
 3. FACT. On the data change, the per-operation hashes cost 42 to 50 gzip each: 159 gzip of the demo delta, 2,292 of 3,053 gzip with 64 changed small blocks. The three revisions in the envelope cost about 41 to 47 gzip each.
-4. DESIGN. The client already computes every block digest and the template revision (H-44, H-48). The page revision binds them (H-55 preimage), and `next_revision` binds every operation hash. So these fields add no integrity under SHA-256 collision resistance; removing them loses only diagnostic precision.
+4. DESIGN. The client already computes every block digest and the template revision (H-44, H-48). The page revision binds them (H-55 preimage), and `next_revision` binds every operation hash. So these fields add no integrity under SHA-256 collision resistance; removing them loses only diagnostic precision. **Corrected in §9:** this holds for the block digests, the operation hashes and the template revision, not for `base_revision` (D2).
 5. FACT. Proposal P1 (§6) removes the redundant fields and keeps the page revision, `next_revision`, `origin` and `path`, with `policy` and `limits` only when not default. Demo: cold 2,357 gzip (legacy 2,232); change 220 gzip (legacy 316); whole visit with HPACK headers: cold 2,591 vs 2,484, change 572 vs 642. With 64 small blocks P1 is at or below legacy in both visits.
 6. FACT. Binary forms gain little after compression: the `t1.`/`r1.` prefixes cost 4 to 6 gzip; CBOR is 8 to 24 gzip better than the equal JSON; content outside JSON is within about 20 gzip of the JSON array form; random digest bytes cost about the same in base64url and in binary after gzip.
 
@@ -211,7 +211,7 @@ Delta, all blocks changed (FACT):
 - **M6, M7, M10, M9** (small): M7 is not recommended (algorithm agility of the prefixes, §1.3 rule 4; the `Rq-Have` `t` value is an SF Token that must start with a letter, RFC 9651 §3.3.4); M10 changes a markup token (M-13, H-28); M9 is moot after M3.
 - **M8, D8** (truncate to 128 bits): not recommended: H-2; collision work 2^64 for a party that controls content of two versions gives two pages with one revision (RESEARCH: feasible for a strong attacker).
 - **D1** (no operation hash; step 4 computes it, step 5 uses it): integrity stays with `next_revision`; the error becomes `INTEGRITY_ERROR` at step 7 instead of step 4; only localization is lost. Reverses H-10.
-- **D2, D3** (no `base_revision`, no `template_revision` in D): steps 1 and 2 (`TEMPLATE_MISMATCH`, `PATCH_BASE_MISMATCH`) merge into `INTEGRITY_ERROR` at step 7; step 8 still checks T; the error catalog changes (H-50). DESIGN for D2: a delta kept by a cache against `no-store` can be replayed to more snapshots; the result is still a genuine earlier server page (step 7); with `base_revision` the same replay works on its base snapshot; neither field gives freshness (TLS and `no-store` do).
+- **D2, D3** (no `base_revision`, no `template_revision` in D): steps 1 and 2 (`TEMPLATE_MISMATCH`, `PATCH_BASE_MISMATCH`) merge into `INTEGRITY_ERROR` at step 7; step 8 still checks T; the error catalog changes (H-50). DESIGN for D2: a delta kept by a cache against `no-store` can be replayed to more snapshots; the result is still a genuine earlier server page (step 7); with `base_revision` the same replay works on its base snapshot; neither field gives freshness (TLS and `no-store` do). **Wrong; corrected in §9** (S6 security review F1, H-107).
 - **D4, D5** (no `type`/`protocol`, no `op`/`format`): the media type, the "offered" check and step 7 reject other JSON; `format` must equal the snapshot format (§2.3 rule 4); `op` is the only value (H-47). Cost: self-description and extensibility.
 - **D7, DC3, DC4, DC5/6** (shape and encoding): D7 ≤ 16 gzip; DC3 40 gzip over DC1 (positional; no duplicate-member risk); DC4 equal to DC3 within about 20 gzip, needs a new framing parser and a UTF-8 check outside JSON (against H-11), not recommended; CBOR 8 to 26 gzip better than JSON, a new codec in 5 languages, not recommended for `rqp/1`.
 - **Request fields**: Q1 (32-bit prefixes in `Rq-Have b`): 16 HPACK bytes on the demo, 274 with 64 blocks; a party that controls content can force a prefix collision with about 2^32 work, effect one extra full load (H-44), which the same party can force anyway (H-56); low value. Q2 (no `b`): response grows to every block (64 small, 1 change: 332 → 3,071 gzip); not recommended. Q3 (64-bit `t`): 24 HPACK bytes; not worth it.
@@ -227,7 +227,7 @@ DESIGN. Cost classes: none; diagnostic (integrity unchanged, error precision los
 | 1 | D1 no operation hash | 159 | 42–2,292 | Diagnostic | H-10 |
 | 2 | M3 minimal manifest | 278 | 249–3,324 | Diagnostic | H-44 text, §1.3 rule 3 |
 | 3 | M1 no default members | 65 | 0 | None | H-55 (unchanged) |
-| 4 | D3 + D2 | 88 | 81–102 | Diagnostic (2 codes merge) | H-46, H-50 |
+| 4 | D3 + D2 | 88 | 81–102 | Diagnostic (2 codes merge). For D2 wrong: medium, an attack opens (§9) | H-46, H-50 |
 | 5 | D5 + D4 | 60 | 46–91 | Low | H-47 |
 | 6 | Short names M5 + D6 | 114 | 60–120 | Low | — |
 | 7 | M4 URL in the revision | 37 over M3 | 34–51 | Medium | H-58, H-8 |
@@ -268,3 +268,24 @@ NOT FOUND: other compression settings (gzip level, Brotli quality); zstd; QPACK;
 - Q-D `Rq-Have` prefix length: (1) keep 64 bits (recommended); (2) 32 bits.
 
 Architect items: fix F-1 in `measure.js` and in the performance page legacy column; change the demo `CONFIG` if M1 is accepted.
+
+## 9. Correction: D2 and the base binding (S6 security review F1, H-107)
+
+Added on 2026-10-20 by task WP-17 S6 T-04a. The sections above stay as the study wrote them; this section corrects them.
+
+**What was wrong.** DESIGN. §0 item 4, §5 (D2) and the rank 4 row of §6 rated D2 (no `base_revision` in the delta) as "diagnostic": only the error code changes. That is wrong. `next_revision` binds only the result of a delta, not its base. Without `base_revision` a delta applies to every snapshot that is equal to its target outside the operations, and a delta with every block (a request without `b`, H-7) applies to every snapshot of the template. FACT. The S6 security review (F1, medium) reproduced four cases with the reference of H-104, through a cache that ignores `no-store` (threat T-05):
+
+| Case | Before H-104 (with `base_revision`) | H-104 (`next_revision` only) | H-107 (`binding`) |
+|---|---|---|---|
+| Rollback: D(v1 → v2) on a snapshot of v3 | `PATCH_BASE_MISMATCH` | Applied: the client goes back to v2 | `INTEGRITY_ERROR` |
+| Stale pinning: D(v1 → v2) on a snapshot of v2 | `PATCH_BASE_MISMATCH` | Applied as a no-op: the client stays on v2 | `INTEGRITY_ERROR` |
+| Cross-user: the D of user A on the snapshot of user B (same URL, the operations cover every block that differs) | `PATCH_BASE_MISMATCH` | Applied: the content of A | `INTEGRITY_ERROR` |
+| Cross-URL: an all-blocks D of `/p/1` on a snapshot of `/p/2` (same template) | `PATCH_BASE_MISMATCH` when the base pages differ; applied when both URLs had the same base page (no URL in any check) | Applied: the content of `/p/1` | `INTEGRITY_ERROR` (U differs; B too when the base pages differ) |
+
+FACT. Checked on 2026-10-20 (task T-04a) with the reference of `HEAD` `87ab26b` (H-104) and the reference of T-04a (H-107) on the same requests: the four fixtures `FX-RQ-C31-ROLLBACK`, `-STALE-OWN-TARGET`, `-ALL-BLOCKS-OTHER-BASE`, `-ALL-BLOCKS-OTHER-URL` and the five probe scenarios of the review were applied by H-104 and give `INTEGRITY_ERROR` with H-107. The seeded property test `tools/rqp-protocol/test/p1.test.mjs` (H-107 case, 300 random pages) checks that in each such case the page revision R′ alone fits (so H-104 accepted it) and the binding does not.
+
+**What restores it.** Human decision H-107: the envelope member `binding` = `d1.` + B64U(SHA-256(`rqp-d1` LF U LF B LF R′ LF)), where U is the canonical URL of the request, B the base page revision of `If-None-Match` and R′ the next page revision. The client computes all three (`docs/engineering/protocol/manifest-patch.md` §2.2, §2.4 step 7). The binding replaces `next_revision`, so it costs **0 bytes**: the value has the same length, and the member name is 6 bytes shorter. FACT. Demo page, demo URL, reference server, data step 0 → 1: before 293 / 221 / 171, after 287 / 215 / 205 (raw / gzip / Brotli); over the 25 data steps of the demo raw is always −6, the gzip median 215 (before 219), the Brotli median 169 (before 171) with a range of 164 to 205 (before 166 to 203). The page revision preimage, the `ETag` and `Rq-Have` do not change, so H-105 (no URL in the revision preimage) stays.
+
+**What stays.** DESIGN. The binding does not give freshness, and it cannot find a delta that a cache returns to another request with the same base and the same URL (for example two users whose base page is the same). `no-store` stays the defense for that case (manifest-patch §2.2, "Replay").
+
+**Lesson for the cost classes of §6.** DESIGN. A field that the client cannot compute from its own state is not "diagnostic" only because the result check passes: the check must also cover the inputs of the operation (the base and the URL), not only its output.

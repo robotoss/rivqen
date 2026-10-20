@@ -14,7 +14,7 @@ import { after, test } from 'node:test';
 import { checkPages, run } from '../gen.mjs';
 import { CaseError, FIXTURES_DIR, expectFixture, fixtureNames, formatJson, readJsonFile, substitute } from '../src/fixtures.mjs';
 import { GENERATED, pageBytes } from '../src/pages.mjs';
-import { pageRevision } from '../src/common.mjs';
+import { deltaBinding, pageRevision, sha256b64u } from '../src/common.mjs';
 import { analyze } from '../src/markup.mjs';
 
 const GEN = fileURLToPath(new URL('../gen.mjs', import.meta.url));
@@ -30,13 +30,28 @@ function copyFixture(name) {
 
 test('gen.mjs --check: every committed page and expected file is current', () => {
   const out = execFileSync(process.execPath, [GEN, '--check'], { encoding: 'utf8' });
-  assert.match(out, /232 fixtures are current/);
+  assert.match(out, /241 fixtures are current/);
 });
 
-test('every catalog case P-01 to P-41 and C-01 to C-30 has at least one fixture', () => {
+test('every catalog case P-01 to P-41 and C-01 to C-31 has at least one fixture', () => {
   const names = fixtureNames();
   for (let i = 1; i <= 41; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-P${String(i).padStart(2, '0')}-`)), `P-${i}`);
-  for (let i = 1; i <= 30; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-C${String(i).padStart(2, '0')}-`)), `C-${i}`);
+  for (let i = 1; i <= 31; i++) assert.ok(names.some((n) => n.startsWith(`FX-RQ-C${String(i).padStart(2, '0')}-`)), `C-${i}`);
+});
+
+test('H-107: in each rejected C-31 case only B or U of the binding differs; R\' alone (the check of H-104) fits the snapshot', () => {
+  for (const name of ['FX-RQ-C31-ROLLBACK', 'FX-RQ-C31-STALE-OWN-TARGET', 'FX-RQ-C31-ALL-BLOCKS-OTHER-BASE', 'FX-RQ-C31-ALL-BLOCKS-OTHER-URL']) {
+    const e = expectFixture(FIXTURES_DIR, name).files;
+    const expected = e['expected.json'];
+    assert.deepEqual([expected.result.outcome, expected.result.error], ['rejected', 'INTEGRITY_ERROR'], name);
+    const env = JSON.parse(e['response.body'].toString('utf8'));
+    const snap = analyze(pageBytes(expected.context.snapshot.page));
+    const hashes = new Map(env.operations.map((op) => [op.block_id, sha256b64u(Buffer.from(op.content, 'utf8'))]));
+    const next = pageRevision(snap.template_revision, snap.blocks.map((b) => ({ ...b, sha256: hashes.get(b.id) ?? b.sha256 })));
+    assert.equal(next, analyze(pageBytes('page-b')).page_revision, name);
+    // The binding of the snapshot (U of the context, B of the snapshot) with this R' is not the binding of the envelope.
+    assert.notEqual(deltaBinding(expected.context.url, snap.page_revision, next), env.binding, name);
+  }
 });
 
 test('context.allowlist (DL-039/DL-040): default the origin of url, required for a cross-origin final_url; another shape is a defective case', () => {
@@ -358,8 +373,9 @@ test('client cases: no body member is a null body; manifest_after may match at o
   assert.equal(body.indexOf('<script type="application/rivqen-manifest+json">'), doctype.length);
 });
 
-test('delta recipe: next_revision uses the members of the context snapshot only for a delta from the snapshot page', () => {
+test('delta recipe: B and R\' of the binding use the members of the context snapshot only for a delta from the snapshot page', () => {
   const members = { limits: { max_patch_bytes: 100000 } };
+  const T = 'https://shop.example.com/catalog';
   const env = (from, extra = {}) => {
     const files = withCase('FX-RQ-C01-OTHER-BASE', (c) => ({
       ...c,
@@ -368,32 +384,57 @@ test('delta recipe: next_revision uses the members of the context snapshot only 
     }))().files;
     return JSON.parse(files['response.body'].toString('utf8'));
   };
-  const b = analyze(pageBytes('page-b'));
-  assert.equal(env('page-a').next_revision, pageRevision(b.template_revision, b.blocks, members));
-  assert.equal(env('page-b').next_revision, analyze(pageBytes('page-a')).page_revision);
-  // H-104: the envelope has exactly next_revision and operations of block_id and content.
-  assert.deepEqual(env('page-a'), { next_revision: pageRevision(b.template_revision, b.blocks, members), operations: [{ block_id: 'price', content: '130.00' }] });
-  // old_envelope: the form before H-104, with the base revision of the snapshot members.
   const a = analyze(pageBytes('page-a'));
+  const b = analyze(pageBytes('page-b'));
+  const aRev = pageRevision(a.template_revision, a.blocks, members);
+  const bRev = pageRevision(b.template_revision, b.blocks, members);
+  assert.equal(env('page-a').binding, deltaBinding(T, aRev, bRev));
+  assert.equal(env('page-b').binding, deltaBinding(T, b.page_revision, a.page_revision));
+  // H-104, H-107: the envelope has exactly the binding and operations of block_id and content.
+  assert.deepEqual(env('page-a'), { binding: deltaBinding(T, aRev, bRev), operations: [{ block_id: 'price', content: '130.00' }] });
+  // binding_url replaces U; all_blocks writes every block of `to`.
+  assert.equal(env('page-a', { binding_url: 'https://shop.example.com/x#f' }).binding, deltaBinding('https://shop.example.com/x', aRev, bRev));
+  assert.deepEqual(env('page-a', { all_blocks: true }).operations.map((op) => op.block_id), ['title', 'price', 'cart']);
+  // next_revision_envelope: the form of H-104 (next_revision = R' in place of the binding).
+  assert.deepEqual(env('page-a', { next_revision_envelope: true }), { next_revision: bRev, operations: [{ block_id: 'price', content: '130.00' }] });
+  // old_envelope: the form before H-104, with the base revision of the snapshot members.
   const old = env('page-a', { old_envelope: true });
   assert.deepEqual(Object.keys(old), ['type', 'protocol', 'base_revision', 'next_revision', 'template_revision', 'operations']);
-  assert.equal(old.base_revision, pageRevision(a.template_revision, a.blocks, members));
+  assert.equal(old.base_revision, aRev);
+  assert.equal(old.next_revision, bRev);
   assert.deepEqual(old.operations[0], { op: 'replace_block', block_id: 'price', format: 'html', content: '130.00', sha256: b.blocks[1].sha256 });
   assert.deepEqual(env('page-a', { operation_sha256: true }).operations, [{ block_id: 'price', content: '130.00', sha256: b.blocks[1].sha256 }]);
+  // Defective options.
+  assert.throws(() => env('page-a', { binding_url: 'not a url' }), (e) => isCaseError(e) && /binding_url/.test(e.message));
+  assert.throws(() => env('page-a', { old_envelope: true, next_revision_envelope: true }), isCaseError);
+  assert.throws(() => env('page-a', { ops: [{ block_id: 'price', content: '1' }], all_blocks: true }), isCaseError);
+  assert.throws(() => env('page-a', { next_revision_envelope: true, duplicate_member: true }), (e) => isCaseError(e) && /duplicate_member/.test(e.message));
 });
 
 test('delta and full recipes: the duplicate member is written first, with another value', () => {
   const files = (body) => withCase('FX-RQ-C01-OTHER-BASE', (c) => ({ ...c, response: { ...c.response, body } }))().files['response.body'].toString('utf8');
   const a = analyze(pageBytes('page-a'));
-  assert.ok(files({ delta: { from: 'page-a', to: 'page-b', duplicate_member: true } }).startsWith(`{"next_revision":"${a.page_revision}","next_revision":"${analyze(pageBytes('page-b')).page_revision}",`));
+  const T = 'https://shop.example.com/catalog';
+  const first = deltaBinding(T, a.page_revision, a.page_revision);
+  const second = deltaBinding(T, a.page_revision, analyze(pageBytes('page-b')).page_revision);
+  assert.ok(files({ delta: { from: 'page-a', to: 'page-b', duplicate_member: true } }).startsWith(`{"binding":"${first}","binding":"${second}",`));
   assert.ok(files({ full: 'page-a', duplicate_member: true }).includes('{"protocol":"rqp/1","protocol":"rqp/1",'));
   // old_manifest: the manifest before H-103 (template_revision and the block list).
   const full = files({ full: 'page-a', old_manifest: true });
   assert.ok(full.includes(`"template_revision":"${a.template_revision}","page_revision":"${a.page_revision}","blocks":[{"id":"title"`));
-  for (const flag of ['duplicate_member', 'old_envelope', 'operation_sha256']) {
+  for (const flag of ['all_blocks', 'duplicate_member', 'old_envelope', 'next_revision_envelope', 'operation_sha256']) {
     assert.throws(() => files({ delta: { from: 'page-a', to: 'page-b', [flag]: 1 } }), isCaseError, flag);
   }
   assert.throws(() => files({ full: 'page-a', old_manifest: 'yes' }), isCaseError);
+});
+
+test('server delta expected: binding_inputs are U, B and R\' of the binding, for the diagnosis', () => {
+  const e = expectFixture(FIXTURES_DIR, 'FX-RQ-P09-DELTA-QUERY').files['expected.json'];
+  const i = e.body.binding_inputs;
+  assert.equal(i.url, 'https://shop.example.com/catalog?sort=price&page=2');
+  assert.equal(i.base_revision, analyze(pageBytes('page-big-a')).page_revision);
+  assert.equal(i.next_revision, analyze(pageBytes('page-big-b')).page_revision);
+  assert.equal(e.body.binding, deltaBinding(i.url, i.base_revision, i.next_revision));
 });
 
 test('delta recipe "size": exactly one operation with empty content and no sha256, and a reachable size', () => {

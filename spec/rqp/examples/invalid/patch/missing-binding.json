@@ -1,5 +1,5 @@
 {
-  "description": "next_revision is required",
+  "description": "binding is required (H-107)",
   "expect": {
     "keyword": "required",
     "instancePath": ""

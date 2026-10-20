@@ -1,6 +1,6 @@
 {
   "id": "FX-RQ-P36-POLICY-DELTA",
-  "description": "The client and the server have the same policy and limits; a block changed: delta whose next_revision has the policy line (H-55, extra case)",
+  "description": "The client and the server have the same policy and limits; a block changed: delta whose binding has the policy line in B and R' (H-55, H-107, extra case)",
   "rules": ["RQP-11"],
   "page": "page-big-b",
   "client_page": "page-big-a",

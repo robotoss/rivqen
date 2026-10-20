@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: The Rivqen Authors
 //
-// Seeded property tests of the wire form of H-103 and H-104 (WP-17 S6): the
-// manifest without block list and template revision, the envelope with only
-// next_revision and the operations. For random pages, random changes and
+// Seeded property tests of the wire form of H-103, H-104 and H-107 (WP-17 S6):
+// the manifest without block list and template revision, the envelope with
+// only the binding and the operations. For random pages, random changes and
 // random server configurations:
 //
 // 1. Round trip of F: the client accepts the F of the server, and its computed
@@ -15,10 +15,15 @@
 //    a snapshot with another block gives INTEGRITY_ERROR (manifest-patch
 //    section 2.4).
 // 4. writtenMembers is idempotent and F depends only on the written members.
+// 5. H-107 (S6 security review F1): a delta is accepted only on its exact base
+//    and its URL. A rollback (D(v1 -> v2) on v3), another base, another URL
+//    and a stale replay on the own target (D(v1 -> v2) on v2) give
+//    INTEGRITY_ERROR, also when the operations cover every block that
+//    differs, so that the page revision R' alone (the check of H-104) passes.
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { POLICY_DEFAULTS, pageRevision } from '../src/common.mjs';
+import { POLICY_DEFAULTS, deltaBinding, pageRevision, sha256b64u } from '../src/common.mjs';
 import { handleResponse, havePrefixes, snapshotOf, verifyDelta } from '../src/client.mjs';
 import { analyze } from '../src/markup.mjs';
 import { handle, writtenMembers } from '../src/server.mjs';
@@ -107,17 +112,19 @@ const ctx = (fields = {}) => ({
 });
 
 const first = { method: 'GET', target: TARGET, headers: [['rq-version', '1'], ['rq-capabilities', '(block-patch)'], ['accept', 'text/html']] };
-function revisit(snap) {
+/** The delta request of a client with `snap` to `target`; without `b` when `withPrefixes` is false (all blocks, H-7). */
+function revisit(snap, target = TARGET, withPrefixes = true) {
   const a = snap.analysis;
+  const have = withPrefixes ? `t=${a.template_revision}, b=:${havePrefixes(a.blocks)}:` : `t=${a.template_revision}`;
   return {
     method: 'GET',
-    target: TARGET,
+    target,
     headers: [
       ['rq-version', '1'],
       ['rq-capabilities', '(block-patch)'],
       ['accept', 'text/html, application/vnd.rivqen.delta+json'],
       ['if-none-match', `"${snap.page_revision}"`],
-      ['rq-have', `t=${a.template_revision}, b=:${havePrefixes(a.blocks)}:`],
+      ['rq-have', have],
     ],
   };
 }
@@ -171,8 +178,9 @@ test('property: a delta of the server gives the current page byte for byte; a ch
     const bAnalysis = analyze(b);
     assert.equal(ok.snapshot.page_revision, pageRevision(bAnalysis.template_revision, bAnalysis.blocks, members));
     const env = JSON.parse(d.body.toString('utf8'));
-    assert.deepEqual(Object.keys(env), ['next_revision', 'operations']);
-    // A changed content: the hash that the client computes is not the one that next_revision binds.
+    assert.deepEqual(Object.keys(env), ['binding', 'operations']);
+    assert.equal(env.binding, deltaBinding(TARGET, snap.page_revision, ok.snapshot.page_revision));
+    // A changed content: the hash that the client computes is not the one that the binding binds.
     const k = Math.floor(rand() * env.operations.length);
     const tampered = { ...env, operations: env.operations.map((op, i) => (i === k ? { ...op, content: `${op.content}q` } : op)) };
     assert.equal(verifyDelta(snap, Buffer.from(JSON.stringify(tampered)), true).code, 'INTEGRITY_ERROR');
@@ -207,4 +215,74 @@ test('property: writtenMembers is idempotent, drops only default values, and F d
     const bytes = render(randomPage(rand));
     assert.deepEqual(handle(first, APP, bytes, config).body, handle(first, APP, bytes, w).body);
   }
+});
+
+/** URLs of one origin: with and without a query, another path, a percent-encoded query. */
+const URLS = [TARGET, `${TARGET}?page=2`, 'https://shop.example.com/catalog/2', 'https://shop.example.com/p?q=a%20b&x=1'];
+
+/** The page with a new content for each block in `ids`; each new content differs from the old one. */
+function withNew(rand, page, ids) {
+  const contents = new Map(page.contents);
+  for (const b of page.blocks) {
+    if (!ids.includes(b.id)) continue;
+    // Neither generator of the old contents writes these forms, so the content changes.
+    contents.set(b.id, b.kind === 'json' ? JSON.stringify({ v: Math.floor(rand() * 1e9), w: 'r' }) : `${htmlContent(rand)}<u>r</u>`);
+  }
+  return { ...page, contents };
+}
+
+/** R' of a snapshot and an envelope: the only check of step 7 before H-107 (H-104). */
+function resultRevision(snap, env, members) {
+  const hashes = new Map(env.operations.map((op) => [op.block_id, sha256b64u(Buffer.from(op.content, 'utf8'))]));
+  const a = snap.analysis;
+  return pageRevision(a.template_revision, a.blocks.map((b) => ({ ...b, sha256: hashes.get(b.id) ?? b.sha256 })), members);
+}
+
+test('property: H-107: a delta is accepted only on its exact base and URL; a rollback, another base, another URL and a stale replay give INTEGRITY_ERROR', () => {
+  const rand = prng(107);
+  const counts = { stale: 0, rollback: 0, base: 0, url: 0, all: 0 };
+  for (let run = 0; run < RUNS; run++) {
+    const v1 = randomPage(rand);
+    if (v1.blocks.length === 0) continue;
+    const v2 = changed(rand, v1);
+    const config = randomConfig(rand);
+    const members = writtenMembers(config);
+    const url = pick(rand, URLS);
+    // Half of the requests have no b: the delta has every block (H-7), the strongest case before H-107.
+    const withPrefixes = rand() < 0.5;
+    const snap1 = snapshotOf(render(v1), members, url);
+    const d = handle(revisit(snap1, url, withPrefixes), APP, render(v2), config);
+    if (d.kind !== 'delta') continue;
+    if (!withPrefixes) counts.all++;
+    const env = JSON.parse(d.body.toString('utf8'));
+    const covered = env.operations.map((op) => op.block_id);
+    const ok = verifyDelta(snap1, d.body, true);
+    assert.equal(ok.code, undefined, String(ok.code));
+    const r2 = ok.snapshot.page_revision;
+    assert.equal(env.binding, deltaBinding(url, snap1.page_revision, r2));
+    // Each snapshot below differs from the base only in blocks that the operations cover, so R'
+    // alone is the page revision of the server (the delta was accepted before H-107). Only B or U differs.
+    const rejected = (snap, label) => {
+      assert.equal(resultRevision(snap, env, members), r2, `${label}: R' alone passes`);
+      assert.equal(verifyDelta(snap, d.body, true).code, 'INTEGRITY_ERROR', label);
+    };
+    const snap2 = snapshotOf(render(v2), members, url);
+    if (snap2.page_revision !== snap1.page_revision) {
+      rejected(snap2, 'stale replay on the own target');
+      counts.stale++;
+    }
+    const snap3 = snapshotOf(render(withNew(rand, v2, covered)), members, url);
+    if (snap3.page_revision !== snap1.page_revision) {
+      rejected(snap3, 'rollback v3 -> v2');
+      counts.rollback++;
+    }
+    const snapB = snapshotOf(render(withNew(rand, v1, covered)), members, url);
+    if (snapB.page_revision !== snap1.page_revision) {
+      rejected(snapB, 'another base (another user)');
+      counts.base++;
+    }
+    rejected(snapshotOf(render(v1), members, pick(rand, URLS.filter((u) => u !== url))), 'another URL');
+    counts.url++;
+  }
+  for (const [k, n] of Object.entries(counts)) assert.ok(n > RUNS / 10, `only ${n} ${k} cases`);
 });

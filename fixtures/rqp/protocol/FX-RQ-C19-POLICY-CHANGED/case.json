@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-C19-POLICY-CHANGED",
   "kind": "client",
-  "description": "Snapshot policy ttl_seconds 60; the delta next_revision was computed with ttl_seconds 61 (H-55)",
+  "description": "Snapshot policy ttl_seconds 60; the R' of the delta binding was computed with ttl_seconds 61 (H-55, H-107)",
   "rules": ["RQP-13"],
   "context": {
     "navigation": "delta",

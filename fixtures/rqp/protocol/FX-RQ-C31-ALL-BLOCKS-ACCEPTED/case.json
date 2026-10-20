@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-C31-ALL-BLOCKS-ACCEPTED",
+  "kind": "client",
+  "description": "Control: an all-blocks delta (a request without b, H-7) from page-a to page-b for the URL of the snapshot of page-a: its base and its URL, so the binding matches and the delta is applied (H-107)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b",
+        "all_blocks": true
+      }
+    }
+  }
+}

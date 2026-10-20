@@ -56,7 +56,7 @@
     ],
     "body": "response.body",
     "body_bytes": 262144,
-    "body_sha256": "Gr0fcuMYIMCZd9UWOAUwntsIb6p2PvvUx-Gz1XqNVtg"
+    "body_sha256": "N9uA0T_fgQ60ZtmyRjuUZUlqJDYwvcyhPemQeFJ8Lm4"
   },
   "result": {
     "outcome": "patched",
@@ -67,7 +67,7 @@
       "url": "https://shop.example.com/catalog",
       "partition": "request",
       "template_revision": "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM",
-      "page_revision": "r1.4Qk3eAMr8pD3vwJgG7K7kyN3iq_7RBD4-uH9CtQT6gk",
+      "page_revision": "r1.LTMBQTTvVsxpE4u4BEy7WKqXKXHbwE-6SLR-0tfBuOk",
       "blocks": [
         {
           "id": "title",
@@ -78,7 +78,7 @@
         {
           "id": "price",
           "format": "html",
-          "sha256": "JYxsQ9LlY_1xY0sGarjMT2ZTNKHx_UwaHuAU-0twrXk"
+          "sha256": "SojT7w4hcgzt7INf-eb3SyC9v91FTxhlHcunM4-0sl8"
         },
         {
           "id": "cart",
@@ -87,7 +87,7 @@
           "content": "{\"items\":3}"
         }
       ],
-      "document_sha256": "OzL3_m0yIcvPPUbdGSBWrZFbFYvwguYmJkZD8OOVLVI"
+      "document_sha256": "nxgE4BgZkyU0BxJfyVO-yKcdJHF6pZPqVN80mKo7EHU"
     }
   }
 }

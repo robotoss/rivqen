@@ -1,0 +1,26 @@
+{
+  "id": "FX-RQ-C31-QUERY-NOT-BOUND",
+  "kind": "client",
+  "description": "The snapshot of page-a at https://shop.example.com/catalog?page=2 and a delta to page-b whose binding has U without the query (https://shop.example.com/catalog, the origin and path of the manifest), as a server that leaves out the query: INTEGRITY_ERROR at step 7 (H-107)",
+  "rules": ["RQP-13"],
+  "context": {
+    "url": "https://shop.example.com/catalog?page=2",
+    "navigation": "delta",
+    "snapshot": "page-a"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b",
+        "binding_url": "https://shop.example.com/catalog"
+      }
+    }
+  }
+}

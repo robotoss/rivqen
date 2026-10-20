@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-C10-JSON-EMPTY",
   "kind": "client",
-  "description": "empty cart content is not JSON; hashes and next_revision correct (H-48)",
+  "description": "empty cart content is not JSON; hashes and binding correct (H-48)",
   "rules": ["RQP-13"],
   "context": {
     "navigation": "delta",

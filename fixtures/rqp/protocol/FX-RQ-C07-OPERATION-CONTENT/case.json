@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-C07-OPERATION-CONTENT",
   "kind": "client",
-  "description": "The operation content is \"131.00\", but next_revision is r1(page-b), which binds \"130.00\" (H-104: INTEGRITY_ERROR at step 7, before H-104 at step 4 by the operation hash)",
+  "description": "The operation content is \"131.00\", but the binding has R' = r1(page-b), which binds \"130.00\" (H-104, H-107: INTEGRITY_ERROR at step 7, before H-104 at step 4 by the operation hash)",
   "rules": ["RQP-13","RQP-28"],
   "context": {
     "navigation": "delta",

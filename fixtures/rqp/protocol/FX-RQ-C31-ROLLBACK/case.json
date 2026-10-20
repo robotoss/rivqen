@@ -1,0 +1,24 @@
+{
+  "id": "FX-RQ-C31-ROLLBACK",
+  "kind": "client",
+  "description": "Rollback v3 -> v2: the delta page-a -> page-b (v1 -> v2, price 130.00) on a snapshot of page-price-3 (v3, price 140.00), for example from a cache that ignores no-store. The result would be page-b, a page revision of the server, so the check of H-104 accepted it (S6 security review F1). The binding has B = r1(page-a), not the page revision of the snapshot: INTEGRITY_ERROR at step 7 (H-107)",
+  "rules": ["RQP-13"],
+  "context": {
+    "navigation": "delta",
+    "snapshot": "page-price-3"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      ["content-type", "application/vnd.rivqen.delta+json"],
+      ["rq-version", "1"],
+      ["cache-control", "no-store"]
+    ],
+    "body": {
+      "delta": {
+        "from": "page-a",
+        "to": "page-b"
+      }
+    }
+  }
+}

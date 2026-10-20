@@ -20,7 +20,12 @@
   "headers_forbidden": ["etag","expires","last-modified","rq-revision","rq-template-revision"],
   "body": {
     "kind": "delta",
-    "next_revision": "r1.TM2rJN121CLxPep3eO8ml8Ey8zU14iU9ljx2w5S9qx0",
+    "binding": "d1.WrtxGWJ4JEl5eRORzMCm02t77SAnOjchltDOkvrjvvc",
+    "binding_inputs": {
+      "url": "https://shop.example.com/catalog",
+      "base_revision": "r1.-pK9sf8cvW9M26YTeTsLQbRDlej7Ltr9bWMX4noBRP8",
+      "next_revision": "r1.TM2rJN121CLxPep3eO8ml8Ey8zU14iU9ljx2w5S9qx0"
+    },
     "blocks": [
       {
         "id": "price",

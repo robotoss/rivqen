@@ -1,0 +1,16 @@
+{
+  "description": "A binding is canonical base64url: the last character has two zero low bits (manifest-patch section 1.3, rule 2)",
+  "expect": {
+    "keyword": "pattern",
+    "instancePath": "/binding"
+  },
+  "instance": {
+    "binding": "d1.SGYLGtFc4PsLoFIzWsurTmxLupiief5xgV7ZCtXDcpd",
+    "operations": [
+      {
+        "block_id": "price",
+        "content": "130.00"
+      }
+    ]
+  }
+}

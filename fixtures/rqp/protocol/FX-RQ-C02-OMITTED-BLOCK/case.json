@@ -1,7 +1,7 @@
 {
   "id": "FX-RQ-C02-OMITTED-BLOCK",
   "kind": "client",
-  "description": "One operation for title (unchanged content) and next_revision r1(page-b): the server omitted price, as after a prefix collision (H-44)",
+  "description": "One operation for title (unchanged content) and a binding with R' = r1(page-b): the server omitted price, as after a prefix collision (H-44)",
   "rules": ["RQP-13"],
   "context": {
     "navigation": "delta",

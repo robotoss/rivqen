@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-EMPTY-NAME-DATA--NODE",
+  "description": "legacy-node: empty block name; cache-control",
+  "profile": "legacy-node",
+  "replaces": "FX-LEG-EMPTY-NAME-DATA",
+  "divergences": ["D-05","D-09"],
+  "sources": ["upstream:sonic-nodejs/common/diff.js:12-122","upstream:sonic-nodejs/middleware/compress.js:18-83"],
+  "trace": "evidence/traces/server/node/S13-emptyname-data.http"
+}

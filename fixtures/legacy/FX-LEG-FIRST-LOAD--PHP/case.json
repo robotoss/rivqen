@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-FIRST-LOAD--PHP",
+  "description": "legacy-php: cache-control",
+  "profile": "legacy-php",
+  "replaces": "FX-LEG-FIRST-LOAD",
+  "divergences": ["D-09"],
+  "sources": ["upstream:sonic-php/sdk/sonic.php:50-145"],
+  "trace": "evidence/traces/server/php/S02-first-load.http"
+}

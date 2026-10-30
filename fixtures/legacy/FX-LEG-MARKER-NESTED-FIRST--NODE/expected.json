@@ -1,0 +1,33 @@
+{
+  "id": "FX-LEG-MARKER-NESTED-FIRST--NODE",
+  "profile": "legacy-node",
+  "level": "must",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["Accept-Encoding","gzip"],
+      ["accept-diff","true"]
+    ]
+  },
+  "status": 200,
+  "fields": {
+    "etag": ["29f85b405ef34d1be234b87023e35b34554b621c"],
+    "template-tag": ["091908fd77ee9eead277a667f48310990632d285"],
+    "template-change": ["true"],
+    "cache-offline": ["true"],
+    "cache-control": [],
+    "content-type": ["text/html; charset=utf-8"],
+    "sonic-etag-key": []
+  },
+  "body": {
+    "kind": "page"
+  },
+  "split": {
+    "applied": true,
+    "template_sha1": "091908fd77ee9eead277a667f48310990632d285",
+    "keys": ["{title}","{outer}"],
+    "rebuild_sha1": "29f85b405ef34d1be234b87023e35b34554b621c"
+  },
+  "trace": "evidence/traces/server/node/S18-nested-first.http"
+}

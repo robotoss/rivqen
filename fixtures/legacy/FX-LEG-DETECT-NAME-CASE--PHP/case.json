@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-DETECT-NAME-CASE--PHP",
+  "description": "legacy-php: legacy request detection",
+  "profile": "legacy-php",
+  "replaces": "FX-LEG-DETECT-NAME-CASE",
+  "divergences": ["D-01"],
+  "sources": ["upstream:sonic-php/sdk/sonic.php:50-145"],
+  "trace": "evidence/traces/server/php/S10-header-capitalized.http"
+}

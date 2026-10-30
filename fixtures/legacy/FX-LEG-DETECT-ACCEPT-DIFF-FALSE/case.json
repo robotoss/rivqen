@@ -1,0 +1,34 @@
+{
+  "id": "FX-LEG-DETECT-ACCEPT-DIFF-FALSE",
+  "description": "accept-diff false: not a legacy request",
+  "profile": "legacy-canonical",
+  "rules": ["C-02"],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": ["docs:engineering/protocol/legacy-wire#canonical-server","upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:69-77","upstream:sonic-nodejs/middleware/compress.js:26-28","upstream:sonic-php/sdk/sonic.php:59"],
+  "evidence": "trace",
+  "traces": {
+    "legacy-java": "evidence/traces/server/java/S08-accept-diff-false.http",
+    "legacy-node": "evidence/traces/server/node/S08-accept-diff-false.http",
+    "legacy-php": "evidence/traces/server/php/S08-accept-diff-false.http"
+  },
+  "page": "b",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["Accept-Encoding","gzip"],
+      ["accept-diff","false"],
+      ["If-None-Match","{{etag:a}}"],
+      ["template-tag","{{tag:a}}"]
+    ]
+  }
+}

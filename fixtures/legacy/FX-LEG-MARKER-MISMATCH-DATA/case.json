@@ -1,0 +1,34 @@
+{
+  "id": "FX-LEG-MARKER-MISMATCH-DATA",
+  "description": "Data request for the end marker name is not checked",
+  "profile": "legacy-canonical",
+  "rules": ["C-08","C-11","C-07"],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": ["docs:engineering/protocol/legacy-wire#canonical-server","docs:engineering/protocol/legacy-markers#_4-canonical-legacy-grammar-for-rivqen"],
+  "evidence": "trace",
+  "traces": {
+    "legacy-java": "evidence/traces/server/java/S19-mismatch-data.http",
+    "legacy-node": "evidence/traces/server/node/S19-mismatch-data.http",
+    "legacy-php": "evidence/traces/server/php/S19-mismatch-data.http"
+  },
+  "page": "mismatch",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["Accept-Encoding","gzip"],
+      ["accept-diff","true"],
+      ["If-None-Match","0000000000000000000000000000000000000000"],
+      ["template-tag","{{tag:mismatch}}"]
+    ]
+  }
+}

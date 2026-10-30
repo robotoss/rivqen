@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-TEMPLATE-CHANGE--JAVA",
+  "description": "legacy-java: cache-control",
+  "profile": "legacy-java",
+  "replaces": "FX-LEG-TEMPLATE-CHANGE",
+  "divergences": ["D-09"],
+  "sources": ["upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149"],
+  "trace": "evidence/traces/server/java/S07-template-change.http"
+}

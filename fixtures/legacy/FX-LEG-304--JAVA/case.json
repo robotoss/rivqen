@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-304--JAVA",
+  "description": "legacy-java: cache-control; cache-offline on 304",
+  "profile": "legacy-java",
+  "replaces": "FX-LEG-304",
+  "divergences": ["D-09","D-12"],
+  "sources": ["upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149"],
+  "trace": "evidence/traces/server/java/S03-304.http"
+}

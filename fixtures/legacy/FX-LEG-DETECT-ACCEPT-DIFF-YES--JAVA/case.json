@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-DETECT-ACCEPT-DIFF-YES--JAVA",
+  "description": "legacy-java: legacy request detection; JSON escaping of the data body",
+  "profile": "legacy-java",
+  "replaces": "FX-LEG-DETECT-ACCEPT-DIFF-YES",
+  "divergences": ["D-01","D-08"],
+  "sources": ["upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149"],
+  "trace": "evidence/traces/server/java/S09-accept-diff-yes.http"
+}

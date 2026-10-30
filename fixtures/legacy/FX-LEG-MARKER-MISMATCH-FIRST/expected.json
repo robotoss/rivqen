@@ -1,0 +1,33 @@
+{
+  "id": "FX-LEG-MARKER-MISMATCH-FIRST",
+  "profile": "legacy-canonical",
+  "level": "must",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["Accept-Encoding","gzip"],
+      ["accept-diff","true"]
+    ]
+  },
+  "status": 200,
+  "fields": {
+    "etag": ["aafeac2963624985f8873b7868ad934ca069f460"],
+    "template-tag": ["0ba8b8bbfb74d870558693053fc2976d1ce571dc"],
+    "template-change": ["true"],
+    "cache-offline": ["true"],
+    "cache-control": ["no-cache, private"],
+    "content-type": ["text/html; charset=utf-8"],
+    "sonic-etag-key": []
+  },
+  "body": {
+    "kind": "page"
+  },
+  "split": {
+    "applied": true,
+    "template_sha1": "0ba8b8bbfb74d870558693053fc2976d1ce571dc",
+    "keys": ["{title}","{aaa}"],
+    "rebuild_sha1": "aafeac2963624985f8873b7868ad934ca069f460"
+  },
+  "profiles_same": []
+}

@@ -1,0 +1,34 @@
+{
+  "id": "FX-LEG-DETECT-NAME-CASE",
+  "description": "Field names in capitals: the names compare case-insensitively",
+  "profile": "legacy-canonical",
+  "rules": ["C-02"],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": ["docs:engineering/protocol/legacy-wire#canonical-server","upstream:sonic-php/sdk/sonic.php:59"],
+  "evidence": "trace",
+  "traces": {
+    "legacy-java": "evidence/traces/server/java/S10-header-capitalized.http",
+    "legacy-node": "evidence/traces/server/node/S10-header-capitalized.http",
+    "legacy-php": "evidence/traces/server/php/S10-header-capitalized.http"
+  },
+  "page": "b",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["Accept-Encoding","gzip"],
+      ["Accept-Diff","true"],
+      ["If-None-Match","{{etag:a}}"],
+      ["Template-Tag","{{tag:a}}"]
+    ]
+  }
+}

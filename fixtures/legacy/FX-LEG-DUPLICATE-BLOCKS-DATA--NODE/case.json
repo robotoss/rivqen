@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-DUPLICATE-BLOCKS-DATA--NODE",
+  "description": "legacy-node: the last value of a repeated block name wins and the template keeps both placeholders (legacy-markers section 3, DL-075)",
+  "profile": "legacy-node",
+  "replaces": "FX-LEG-DUPLICATE-BLOCKS-DATA",
+  "divergences": [],
+  "sources": ["upstream:sonic-nodejs/common/diff.js:12-122","upstream:sonic-nodejs/middleware/compress.js:18-83"],
+  "trace": "evidence/traces/server/node/S14-dup-data.http"
+}

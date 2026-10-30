@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-304-UPPERCASE--NODE",
+  "description": "legacy-node: 304 comparison; cache-control",
+  "profile": "legacy-node",
+  "replaces": "FX-LEG-304-UPPERCASE",
+  "divergences": ["D-03","D-09"],
+  "sources": ["upstream:sonic-nodejs/common/diff.js:12-122","upstream:sonic-nodejs/middleware/compress.js:18-83"],
+  "trace": "evidence/traces/server/node/S04-304-uppercase-etag.http"
+}

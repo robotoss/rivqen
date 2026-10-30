@@ -6,7 +6,7 @@ This page describes the **legacy mode** (compatibility with the VasSonic legacy 
 
 The upstream project has five implementations of legacy protocol (Java, Node.js and PHP servers; Android and iOS clients). They do not behave identically. This page lists every known divergence, the Rivqen decision, and the parity matrix that defines "compatible".
 
-**Status:** <Badge type="tip" text="FACT" /> divergences from code at `59936bef`. Decisions are <Badge type="info" text="DESIGN" /> pending ADR-005.
+**Status:** <Badge type="tip" text="FACT" /> divergences from code at `59936bef`. The decisions are <Badge type="info" text="DESIGN" />. ADR-005 is accepted (human, 2026-10-09): the "Rivqen canonical" column and the profiles `legacy-java`, `legacy-node`, `legacy-php`.
 
 [[toc]]
 
@@ -29,6 +29,38 @@ The upstream project has five implementations of legacy protocol (Java, Node.js 
 | D-13 | Several `<title>` elements | Value from first match (case-insensitive), replacement case-sensitive → wrong element replaced | First title only | All titles replaced, first value stored | Not applicable in RQP; legacy module: Node.js behavior |
 
 All server rows are confirmed by captured traces ([server trace report](/engineering/protocol/legacy-traces)). Evidence: Java `upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149`; Node.js `upstream:sonic-nodejs/common/diff.js:12-122`, `upstream:sonic-nodejs/middleware/compress.js:18-83`; PHP `upstream:sonic-php/sdk/sonic.php:50-145`.
+
+### 1.1 Fixtures of each divergence
+
+<Badge type="tip" text="FACT" /> Source: the `divergences` member of the profile `case.json` files in `fixtures/legacy/`. A profile fixture is `FX-LEG-<NAME>--JAVA`, `--NODE` or `--PHP`. Below, `J`, `N` and `P` name the profiles that have a fixture. The fixture IDs omit the prefix `FX-LEG-`.
+
+| # | Fixtures (profiles) |
+|---|---|
+| D-01 | `DETECT-ACCEPT-DIFF-FALSE` (J, N), `DETECT-ACCEPT-DIFF-YES` (J, N), `DETECT-NAME-CASE` (P) |
+| D-02 | `NON-SONIC-CLIENT` (J) |
+| D-03 | `304-QUOTED` (J, N, P), `304-UPPERCASE` (N, P) |
+| D-04 | No fixture of its own (see the notes below) |
+| D-05 | `EMPTY-NAME-DATA` (J, N, P), `EMPTY-NAME-FIRST` (J, N, P) |
+| D-06 | `NO-MARKERS-DATA` (N), `NO-MARKERS-FIRST` (N), `MARKER-SPACES-DATA` (N), `MARKER-SPACES-FIRST` (N) |
+| D-07 | Not observable on the wire (see the notes below) |
+| D-08 | 17 fixtures, J and P; see the list below |
+| D-09 | 26 fixtures, J, N and P; see the list below |
+| D-10 | `COMPRESSED-IDENTITY` (N) |
+| D-11 | Not observable on the wire (see the notes below) |
+| D-12 | `304` (J), `304-QUOTED` (J), `304-UPPERCASE` (J) |
+| D-13 | `TITLE-SEVERAL-DATA` (J, P), `TITLE-SEVERAL-FIRST` (J, P) |
+
+D-08 (data bodies). `304-QUOTED` (J, P), `304-UPPERCASE` (P), `COMPRESSED-IDENTITY` (J, P), `DATA-CHANGE` (J, P), `DETECT-ACCEPT-DIFF-FALSE` (J), `DETECT-ACCEPT-DIFF-YES` (J), `DETECT-NAME-CASE` (J), `DUPLICATE-BLOCKS-DATA`, `EMPTY-NAME-DATA`, `MARKER-MISMATCH-DATA`, `MARKER-NESTED-DATA`, `MARKER-SPACES-DATA`, `MARKER-UPPERCASE-DATA`, `NO-MARKERS-DATA`, `TITLE-ATTRIBUTE-DATA`, `TITLE-SEVERAL-DATA`, `UNICODE-DATA` (all J, P).
+
+D-09 (`Cache-Control`). `304`, `304-QUOTED`, `304-UPPERCASE`, `DATA-CHANGE`, `FIRST-LOAD`, `TEMPLATE-CHANGE`, `EMPTY-NAME-<DATA|FIRST>`, `MARKER-<MISMATCH|NESTED|SPACES|UPPERCASE>-<DATA|FIRST>`, `NO-MARKERS-<DATA|FIRST>`, `TITLE-ATTRIBUTE-<DATA|FIRST>`, `TITLE-SEVERAL-<DATA|FIRST>`, `UNICODE-<DATA|FIRST>` (all J, N, P); `COMPRESSED-IDENTITY` (J, P); `DETECT-NAME-CASE` (J, N).
+
+Notes:
+
+1. <Badge type="tip" text="FACT" /> D-04 has no fixture of its own. It shows in the same observation as D-13: the title fixtures (`TITLE-ATTRIBUTE-*`, `TITLE-SEVERAL-*`).
+2. <Badge type="tip" text="FACT" /> D-07 and D-11 are not observable on the wire. They show as `profiles_same` or as equal `fields` in the `expected.json` files.
+3. <Badge type="tip" text="FACT" /> D-08: the runner compares data bodies as JSON values, so the key order and the escaping do not fail a case.
+4. <Badge type="tip" text="FACT" /> The four D-13 profile fixtures of Java and PHP (`TITLE-SEVERAL-DATA` and `TITLE-SEVERAL-FIRST`) carry `not_reproduced: "U-11"`. They expect the canonical title rule and keep the other behaviors of the profile (DL-069). The Node.js fixtures of these two IDs list D-09 only.
+5. <Badge type="tip" text="FACT" /> The client divergences (section 2) have no fixture. The client part of the fixtures is added before P3 (H-110).
 
 ## 2. Client divergences
 

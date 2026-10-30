@@ -9,6 +9,8 @@ import { fileURLToPath } from 'node:url';
 import {
   createHarness,
   controlGate,
+  isControlHost,
+  isJsonContentType,
   isLoopback,
   listen,
   loadHandle,
@@ -35,7 +37,7 @@ async function start(handle, options = {}) {
 /** Send raw text, read until close. Returns { status, lines: [[name, value]], body: Buffer, head }. */
 function raw(port, text) {
   return new Promise((resolve, reject) => {
-    const sock = net.connect(port, '127.0.0.1', () => sock.write(text));
+    const sock = net.connect(port, '127.0.0.1', () => sock.write(text.replace('Host: %HOST%', `Host: 127.0.0.1:${port}`)));
     const chunks = [];
     sock.on('data', (c) => chunks.push(c));
     sock.on('error', () => {}); // the server may close early (413); the close event ends the read
@@ -55,7 +57,7 @@ function raw(port, text) {
 const req = (method, path, body, extra = '') => {
   const b = body === undefined ? '' : body;
   const len = body === undefined ? '' : `Content-Length: ${Buffer.byteLength(b)}\r\n`;
-  return `${method} ${path} HTTP/1.1\r\nHost: x\r\n${extra}${len}Connection: close\r\n\r\n${b}`;
+  return `${method} ${path} HTTP/1.1\r\nHost: %HOST%\r\n${extra}${len}Connection: close\r\n\r\n${b}`;
 };
 
 const CASE = {
@@ -66,7 +68,9 @@ const CASE = {
   app: { status: 200, headers: [['content-type', 'text/html']] },
   server_config: {},
 };
-const postCase = (port, c) => raw(port, req('POST', '/__rivqen/conformance/case', typeof c === 'string' ? c : JSON.stringify(c)));
+const JSON_TYPE = 'Content-Type: application/json\r\n';
+const postCase = (port, c, extra = JSON_TYPE) =>
+  raw(port, req('POST', '/__rivqen/conformance/case', typeof c === 'string' ? c : JSON.stringify(c), extra));
 const json = (r) => JSON.parse(r.body.toString('utf8'));
 const echo = (request, app, page, config) => ({
   status: 200,
@@ -159,7 +163,7 @@ describe('control endpoint', () => {
     const { port } = await start(echo);
     // The server answers before it has read the whole body, so a late write error of the client is expected.
     const status = await new Promise((resolve) => {
-      const rq = http.request({ port, host: '127.0.0.1', method: 'POST', path: '/__rivqen/conformance/case' }, (res) => {
+      const rq = http.request({ port, host: '127.0.0.1', method: 'POST', path: '/__rivqen/conformance/case', headers: { 'Content-Type': 'application/json' } }, (res) => {
         res.resume();
         resolve(res.statusCode);
       });
@@ -297,5 +301,106 @@ describe('command line', () => {
   test('loadHandle_rejects_missing_module', async () => {
     await assert.rejects(loadHandle('/nonexistent/x.mjs'), { code: 'BAD_MODULE' });
     await assert.rejects(loadHandle(fileURLToPath(import.meta.url)), { code: 'BAD_MODULE' });
+  });
+});
+
+describe('control endpoint: browser and rebinding defence (DL-078, L1)', () => {
+  const hostReq = (method, path, host, body, extra = '') =>
+    `${method} ${path} HTTP/1.1\r\nHost: ${host}\r\n${extra}${body === undefined ? '' : `Content-Length: ${Buffer.byteLength(body)}\r\n`}Connection: close\r\n\r\n${body ?? ''}`;
+
+  test('control_403_on_foreign_host', async () => {
+    const { port } = await start(echo);
+    for (const host of ['evil.example', `evil.example:${port}`, '127.0.0.1', `127.0.0.1.evil.example:${port}`]) {
+      assert.equal((await raw(port, hostReq('GET', '/__rivqen/conformance/info', host))).status, 403, host);
+      assert.equal((await raw(port, hostReq('POST', '/__rivqen/conformance/case', host, JSON.stringify(CASE), JSON_TYPE))).status, 403, host);
+    }
+    assert.equal((await raw(port, 'GET /__rivqen/conformance/info HTTP/1.0\r\n\r\n')).status, 403, 'no Host');
+    assert.equal((await raw(port, 'GET /page HTTP/1.1\r\nHost: evil.example\r\nConnection: close\r\n\r\n')).status, 503, 'a case request is not a control request');
+  });
+
+  test('control_403_on_rebinding_host_with_right_port', async () => {
+    const { port } = await start(echo);
+    assert.equal((await raw(port, hostReq('GET', '/__rivqen/conformance/info', `rebind.example:${port}`))).status, 403);
+    assert.equal((await raw(port, hostReq('GET', '/__rivqen/conformance/info', `127.0.0.1:${port + 1}`))).status, 403);
+    for (const host of [`127.0.0.1:${port}`, `localhost:${port}`, `LocalHost:${port}`, `[::1]:${port}`]) {
+      assert.equal((await raw(port, hostReq('GET', '/__rivqen/conformance/info', host))).status, 200, host);
+    }
+    assert.equal(isControlHost(undefined, 1), false);
+    assert.equal(isControlHost('[::1]:7', 7), true);
+  });
+
+  test('control_415_without_json_content_type', async () => {
+    const { port } = await start(echo);
+    for (const extra of ['', 'Content-Type: text/plain\r\n', 'Content-Type: application/jsonx\r\n', 'Content-Type: application/json-seq\r\n', 'Content-Type: x/application/json\r\n']) {
+      const r = await postCase(port, CASE, extra);
+      assert.equal(r.status, 415, extra);
+      assert.deepEqual(json(r), { error: 'UNSUPPORTED_MEDIA_TYPE' });
+    }
+    assert.equal((await raw(port, req('GET', '/page'))).status, 503, 'no case was stored');
+  });
+
+  test('control_accepts_json_with_charset', async () => {
+    const { port } = await start(echo);
+    for (const extra of ['Content-Type: application/json; charset=utf-8\r\n', 'Content-Type: APPLICATION/Json\r\n', 'Content-Type: application/json ;charset=x\r\n']) {
+      assert.equal((await postCase(port, CASE, extra)).status, 204, extra);
+    }
+    assert.equal(isJsonContentType(undefined), false);
+    assert.equal(isJsonContentType('application/json'), true);
+  });
+});
+
+describe('harness never crashes (DL-078, L2)', () => {
+  test('harness_survives_sync_throw_in_serve', async () => {
+    const cases = [
+      () => {
+        throw new Error('sync');
+      },
+      async () => {
+        throw new Error('rejected');
+      },
+      () => null,
+      () => undefined,
+      () => ({ status: 99, headers: [] }),
+      () => ({ status: 200, headers: [['bad name', 'x']], body: null }),
+      () => ({ status: 200, headers: [['x', 'a\r\nb: c']], body: null }),
+    ];
+    let current = 0;
+    const { port } = await start((...args) => cases[current](...args));
+    await postCase(port, CASE);
+    for (current = 0; current < cases.length; current++) {
+      const r = await raw(port, req('GET', '/p'));
+      assert.equal(r.status, 500, `case ${current}`);
+      assert.deepEqual(json(r), { error: 'HANDLE_FAILED' });
+    }
+    current = 0;
+    cases[0] = () => ({ status: 200, headers: [], body: Buffer.from('ok') });
+    assert.equal((await raw(port, req('GET', '/p'))).status, 200, 'still serving');
+  });
+
+  test('bad_header_value_in_case_400', async () => {
+    const { port } = await start(echo);
+    for (const value of ['a\r\nb: c', 'a\nb', 'a\rb', 'a\u0000b', 'a\u007fb', 'aĀb']) {
+      const r = await postCase(port, { ...CASE, app: { status: 200, headers: [['x', value]] } });
+      assert.equal(r.status, 400, JSON.stringify(value));
+      assert.deepEqual(json(r), { error: 'BAD_CASE' });
+    }
+    assert.equal((await postCase(port, { ...CASE, app: { status: 200, headers: [['x', 'tab\there é']] } })).status, 204);
+  });
+
+  test('bad_header_name_in_case_400', async () => {
+    const { port } = await start(echo);
+    for (const name of ['', 'a b', 'a:b', 'a\r\nb', 'a\u0000', 'naïve', 'a/b', '(a)']) {
+      const r = await postCase(port, { ...CASE, app: { status: 200, headers: [[name, 'v']] } });
+      assert.equal(r.status, 400, JSON.stringify(name));
+    }
+    assert.equal((await postCase(port, { ...CASE, app: { status: 200, headers: [["X-Tok!#$%&'*+-.^_`|~9", 'v']] } })).status, 204);
+  });
+
+  test('handle_result_bad_headers_500', async () => {
+    const bad = [{ status: 200 }, { status: 200, headers: 'x' }, { status: 200, headers: [['a']] }, { status: 200, headers: [['a', 1]] }, { status: 200, headers: [['a', 'b', 'c']] }];
+    let current = 0;
+    const { port } = await start(() => bad[current]);
+    await postCase(port, CASE);
+    for (current = 0; current < bad.length; current++) assert.equal((await raw(port, req('GET', '/p'))).status, 500, JSON.stringify(bad[current]));
   });
 });

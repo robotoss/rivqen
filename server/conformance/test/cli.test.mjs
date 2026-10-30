@@ -10,7 +10,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, test } from 'node:test';
-import { formatLine } from '../src/report.mjs';
+import { escapeText } from '../src/escape.mjs';
+import { capProblems, formatLine, toJson } from '../src/report.mjs';
 import { parseArgs, parseTarget, splitTarget } from '../src/runner.mjs';
 import { LEGACY_DIR, legacyResponder, runMain, startFake } from './helpers.mjs';
 
@@ -218,5 +219,69 @@ describe('report', () => {
     assert.equal(formatLine({ id: 'A', level: 'should', status: 'fail', problems: ['x'] }), 'FAIL [SHOULD] A: x');
     assert.equal(formatLine({ id: 'A', level: 'must', status: 'skip', problems: ['why'] }), 'SKIP A: why');
     assert.equal(formatLine({ id: 'A', level: 'must', status: 'fail', problems: ['a\u001b[2Jb\u009bc\u00ffd'] }), 'FAIL A: a\\u001b[2Jb\\u009bc\u00ffd');
+  });
+});
+
+describe('runner requests and bounds (DL-078)', () => {
+  test('runner_sends_host_and_json_content_type', async () => {
+    fake = await startFake({ respond: legacyResponder() });
+    const r = await runMain(['--target', fake.target, '--suite', 'legacy', '--fixtures', LEGACY_DIR, '--only', 'FX-LEG-T-FIRST']);
+    assert.equal(r.code, 0);
+    const authority = fake.target.slice('http://'.length);
+    const requests = fake.state.raw.map((_, i) => fake.rawRequest(i));
+    const info = requests.find((q) => q.startsWith('GET /__rivqen/conformance/info '));
+    const post = requests.find((q) => q.startsWith('POST /__rivqen/conformance/case '));
+    assert.ok(info.includes(`\r\nHost: ${authority}\r\n`), info);
+    assert.ok(post.includes(`\r\nHost: ${authority}\r\n`), post);
+    assert.ok(post.includes('\r\nContent-Type: application/json\r\n'), post);
+  });
+
+  test('problems_capped_at_50_with_more_line', async () => {
+    const change = (response, kase) => {
+      if (kase.case_id !== 'FX-LEG-T-DATA') return response;
+      const body = JSON.parse(response.body.toString('utf8'));
+      for (let i = 0; i < 120; i++) body.data[`extra${i}`] = 'x';
+      return { ...response, body: Buffer.from(JSON.stringify(body)) };
+    };
+    fake = await startFake({ respond: legacyResponder({ change }) });
+    const dir = `${mkdtempSync(join(tmpdir(), 'rivqen-cap-'))}/`;
+    temps.push(dir);
+    const r = await runMain(['--target', fake.target, '--suite', 'legacy', '--fixtures', LEGACY_DIR, '--only', 'FX-LEG-T-DATA', '--json', `${dir}r.json`]);
+    assert.equal(r.code, 1);
+    const problems = JSON.parse(readFileSync(`${dir}r.json`, 'utf8')).results[0].problems;
+    assert.equal(problems.length, 51);
+    assert.equal(problems[50], '… 70 more');
+    assert.ok(r.lines[0].endsWith('; … 70 more'), r.lines[0]);
+    assert.equal(capProblems(['a', 'b']).length, 2);
+    const list = (n) => Array.from({ length: n }, (_, i) => String(i));
+    assert.equal(capProblems(list(50)).length, 50);
+    assert.deepEqual(capProblems(list(51)).slice(49), ['49', '… 1 more']);
+  });
+
+  test('stderr_messages_escaped', async () => {
+    const r = await runMain(['--target', 'http://127.0.0.1:1', '--suite', 'rqp', '--x‮\u001b[2J', 'v']);
+    assert.equal(r.code, 2);
+    assert.ok(r.err.includes('unknown option --x\\u202e\\u001b[2J'), r.err);
+    assert.ok(!/[‮\u001b]/.test(r.err));
+    const missing = await runMain(['--target', 'http://127.0.0.1:1', '--suite', 'rqp', '--fixtures', '/no/⁦dir\u0085']);
+    assert.equal(missing.code, 2);
+    assert.ok(missing.err.includes('/no/\\u2066dir\\u0085'), missing.err);
+    const bin = spawnSync(process.execPath, [BIN, '--target', 'http://127.0.0.1:1', '--suite', 'rqp', '--y‮', 'v'], { encoding: 'utf8' });
+    assert.equal(bin.status, 2);
+    assert.ok(!/[‮]/.test(bin.stderr));
+  });
+
+  test('bidi_and_line_separators_escaped', () => {
+    const all = ['\u0000', '\u001f', '\u007f', '\u0080', '\u009f', ' ', ' ', '‪', '‫', '‬', '‭', '‮', '⁦', '⁧', '⁨', '⁩'];
+    for (const c of all) {
+      const line = formatLine({ id: `I${c}`, level: 'must', status: 'fail', problems: [`a${c}b`] });
+      assert.ok(!line.includes(c), JSON.stringify(c));
+      const hex = c.charCodeAt(0).toString(16).padStart(4, '0');
+      assert.equal(line, `FAIL I\\u${hex}: a\\u${hex}b`);
+    }
+    for (const c of [' ', '‧', ' ', '⁥', '⁪', 'é']) assert.equal(escapeText(c), c, 'neighbours stay');
+    assert.equal(escapeText(escapeText('‮')), '\\u202e', 'idempotent');
+    const results = [{ id: 'A', level: 'must', status: 'fail', problems: ['‮'] }];
+    assert.equal(toJson({ target: { origin: 'o' }, suite: 'rqp' }, results, {}).results[0].problems[0], '‮', 'the JSON report keeps raw strings');
   });
 });

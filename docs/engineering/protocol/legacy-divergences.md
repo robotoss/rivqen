@@ -94,6 +94,7 @@ These behaviors are documented facts from the code. Rivqen replaces them with sa
 | U-09 | `Etag` value unquoted (not a valid HTTP entity-tag) | Intermediaries can mishandle it | Rivqen server emits the legacy value unquoted for compatibility, plus an RFC 9110 `ETag` only in RQP | `SonicFilter.java:103` |
 | U-11 | Java and PHP corrupt pages with more than one `<title>` element (trace S16) | The page title is copied into another element (for example an SVG title) on rebuild | No implicit title rule in RQP; Node.js rule in the legacy module | `SonicFilter.java:110-112`; `sonic.php:99-104` |
 | U-10 | iOS integration with `UIWebView` and global `NSURLProtocol` | `UIWebView` is no longer accepted in the App Store; `NSURLProtocol` does not intercept `WKWebView` through public API | WKWebView with public APIs (ADR-003) | `sonic-iOS/SonicSample/SonicSample/SonicWebViewController.m:71`; `AppDelegate.m:35` |
+| U-12 | All three servers send the full document and the data response for the same URL with the same `Etag`, without `Vary`, and keep CDN cache fields of the application | A shared cache that obeys `CDN-Cache-Control` or `Surrogate-Control` stores a data response (JSON) and gives it to every user as the page | `Vary: template-tag`; no CDN cache fields on legacy responses ([legacy wire](/engineering/protocol/legacy-wire#canonical-server) C-13, C-15; H-111); every profile | Traces S06, S07: no `Vary` |
 
 ## 4. Parity matrix {#parity-matrix}
 

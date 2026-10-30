@@ -27,7 +27,7 @@ Exit codes: `0` no MUST case failed; `1` at least one MUST case failed; `2` usag
 
 ## 2. Control endpoint (server side)
 
-Only a **test harness** has it: a small program that wraps the server code under test. It is never part of an SDK package, it is off unless the harness starts with an explicit flag (`--conformance` or `RIVQEN_CONFORMANCE=1`), and it answers only connections from `127.0.0.1` or `::1` (else `403`). Without the flag the paths below are unknown (`404`).
+Only a **test harness** has it: a small program that wraps the server code under test. It is never part of an SDK package, it is off unless the harness starts with an explicit flag (`--conformance` or `RIVQEN_CONFORMANCE=1`), and it answers only connections from `127.0.0.1` or `::1` (else `403`). Without the flag the paths below are unknown (`404`). A control request must have a `Host` of `127.0.0.1:<port>`, `localhost:<port>` or `[::1]:<port>` (else `403`, against DNS rebinding), and a `POST` must have `Content-Type: application/json` (else `415`, so that a cross-origin page cannot send it without a preflight) (DL-078).
 
 ### `GET /__rivqen/conformance/info`
 

@@ -56,6 +56,13 @@ group_node() {
   step webview-lab 'cd tools/webview-lab && npm test'
   step webview-lab-cases 'node tools/webview-lab/host/build-cases.mjs --check'
   step mutation-helper 'node --test "tools/mutation/test/*.test.mjs"'
+  step legacy-fixtures 'cd tools/legacy-fixtures && npm test'
+  step legacy-gen 'node tools/legacy-fixtures/gen.mjs --check'
+  step conformance 'cd server/conformance && npm test'
+  step conformance-rqp-http 'node server/conformance/e2e/run.mjs --module tools/rqp-protocol/src/server.mjs --suite rqp'
+  step conformance-demo-http 'node server/conformance/e2e/run.mjs --module examples/server-demo/src/rqp.js --suite rqp'
+  step conformance-legacy-http 'for p in legacy-canonical legacy-java legacy-node legacy-php; do node server/conformance/e2e/run.mjs --module tools/legacy-fixtures/src/server.mjs --suite legacy --profile "$p" || exit 1; done'
+  step conformance-fails-http 'for m in broken app-only; do node server/conformance/e2e/run.mjs --module "tools/rqp-protocol/test/fixtures/$m-server.mjs" --suite rqp --expect fail || exit 1; done'
 }
 
 group_python() {

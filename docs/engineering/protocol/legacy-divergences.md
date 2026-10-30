@@ -24,7 +24,7 @@ The upstream project has five implementations of legacy protocol (Java, Node.js 
 | D-08 | JSON key order and escaping | `HashMap` order; Gson HTML-escapes `<`, `>` as `<`… | Insertion order; no HTML escaping | Insertion order; escapes `/` as `\/` and non-ASCII as `\uXXXX` | Semantic JSON equality in tests; Rivqen emits UTF-8, no HTML escaping |
 | D-09 | `Cache-Control` on legacy responses | `no-cache` | none | `no-cache` | `no-cache` + `private` |
 | D-10 | Compression | Not handled | Gzip/deflate in middleware; legacy processing **skipped** if the client accepts only `identity` | Left to the web server | Independent of `Accept-Encoding` |
-| D-11 | Content type of data responses | Unchanged (`text/html`) | Unchanged (`text/html`) | Unchanged | `text/html` in strict profile; `application/json` in Rivqen profile (clients accept both) |
+| D-11 | Content type of data responses | Unchanged (`text/html`) | Unchanged (`text/html`) | Unchanged | Unchanged (`text/html`): iOS hands the rebuilt page to the web view with these fields (DL-072) |
 | D-12 | `Cache-Offline` on `304` | Two fields: `true` **and** `store` | `store` | `store` (replaces earlier `true`) | One field: `store` |
 | D-13 | Several `<title>` elements | Value from first match (case-insensitive), replacement case-sensitive → wrong element replaced | First title only | All titles replaced, first value stored | Not applicable in RQP; legacy module: Node.js behavior |
 

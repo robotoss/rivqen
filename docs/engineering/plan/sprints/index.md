@@ -14,6 +14,7 @@ Each sprint has one record. The record is the shared memory of the work: the pla
 | [WP-17-S4](/engineering/plan/sprints/WP-17-S4) | WP-17 | Relax the over-tight rules from the WP-17 audit (H-77…H-86) | Closed |
 | [WP-17-S5](/engineering/plan/sprints/WP-17-S5) | WP-17 | `template` and `noscript` in blocks, legacy bytes, WebView checks (H-90) | Closed |
 | [WP-17-S6](/engineering/plan/sprints/WP-17-S6) | WP-17 | RQP byte overhead (H-101) | Closed |
+| [WP-02-S1](/engineering/plan/sprints/WP-02-S1) | WP-02 | Legacy golden suite and HTTP conformance runner | Planned |
 
 ## How to add a record
 

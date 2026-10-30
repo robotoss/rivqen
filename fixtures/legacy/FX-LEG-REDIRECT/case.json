@@ -1,0 +1,51 @@
+{
+  "id": "FX-LEG-REDIRECT",
+  "description": "A 302 response is passed through unchanged.",
+  "profile": "legacy-canonical",
+  "rules": [
+    "C-01"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-wire#canonical-server"
+  ],
+  "evidence": "code-reading",
+  "page": "a",
+  "app": {
+    "status": 302,
+    "headers": [
+      [
+        "content-type",
+        "text/html; charset=utf-8"
+      ],
+      [
+        "location",
+        "https://shop.example.com/login"
+      ]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "accept-diff",
+        "true"
+      ],
+      [
+        "if-none-match",
+        "{{etag:a}}"
+      ],
+      [
+        "template-tag",
+        "{{tag:a}}"
+      ]
+    ]
+  }
+}

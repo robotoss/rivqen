@@ -1,0 +1,47 @@
+{
+  "id": "FX-LEG-PASS-HEAD",
+  "description": "A HEAD request is passed through unchanged, with no body.",
+  "profile": "legacy-canonical",
+  "rules": [
+    "C-01"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-wire#canonical-server"
+  ],
+  "evidence": "code-reading",
+  "page": "b",
+  "app": {
+    "status": 200,
+    "headers": [
+      [
+        "content-type",
+        "text/html; charset=utf-8"
+      ]
+    ]
+  },
+  "request": {
+    "method": "HEAD",
+    "headers": [
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "accept-diff",
+        "true"
+      ],
+      [
+        "if-none-match",
+        "{{etag:a}}"
+      ],
+      [
+        "template-tag",
+        "{{tag:a}}"
+      ]
+    ]
+  }
+}

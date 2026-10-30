@@ -1,0 +1,47 @@
+{
+  "id": "FX-LEG-CHARSET-OTHER",
+  "description": "A response with a non-UTF-8 charset is passed through unchanged.",
+  "profile": "legacy-canonical",
+  "rules": [
+    "C-03"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-wire#canonical-server"
+  ],
+  "evidence": "code-reading",
+  "page": "b",
+  "app": {
+    "status": 200,
+    "headers": [
+      [
+        "content-type",
+        "text/html; charset=iso-8859-1"
+      ]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "accept-diff",
+        "true"
+      ],
+      [
+        "if-none-match",
+        "{{etag:a}}"
+      ],
+      [
+        "template-tag",
+        "{{tag:a}}"
+      ]
+    ]
+  }
+}

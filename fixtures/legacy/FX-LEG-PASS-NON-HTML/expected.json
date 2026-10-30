@@ -20,7 +20,10 @@
     "cache-offline": [],
     "cache-control": [],
     "content-type": ["application/json"],
-    "sonic-etag-key": []
+    "sonic-etag-key": [],
+    "vary": [],
+    "cdn-cache-control": [],
+    "surrogate-control": []
   },
   "body": {
     "kind": "page"

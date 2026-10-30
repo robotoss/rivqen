@@ -169,7 +169,12 @@ export function resolvedRequest(c, profile, pagesDir) {
   };
 }
 
-const FIXED_FIELDS = ['etag', 'template-tag', 'template-change', 'cache-offline', 'cache-control', 'content-type', 'sonic-etag-key'];
+// Always listed in `fields` (`[]` = absent), so the runner checks them on every fixture:
+// vary (C-15) and the CDN cache fields (C-13, H-111) as well as the legacy fields.
+const FIXED_FIELDS = [
+  'etag', 'template-tag', 'template-change', 'cache-offline', 'cache-control', 'content-type', 'sonic-etag-key',
+  'vary', 'cdn-cache-control', 'surrogate-control',
+];
 
 function fieldsOf(headers) {
   const fields = Object.create(null);

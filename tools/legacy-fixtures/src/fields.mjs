@@ -11,9 +11,19 @@ import { asciiLower } from '../../rqp-protocol/src/common.mjs';
 
 export { asciiLower };
 
-/** Trim spaces and tabs at both ends (not other white space). */
+const isOws = (code) => code === 0x20 || code === 0x09;
+
+/**
+ * Trim spaces and tabs at both ends (not other white space). A loop, not the
+ * expression /[ \t]+$/: a backtracking engine takes quadratic time on a long run of
+ * spaces inside a value (C-16 class, DL-077).
+ */
 export function trimOws(text) {
-  return text.replace(/^[ \t]+|[ \t]+$/g, '');
+  let start = 0;
+  let end = text.length;
+  while (start < end && isOws(text.charCodeAt(start))) start++;
+  while (end > start && isOws(text.charCodeAt(end - 1))) end--;
+  return text.slice(start, end);
 }
 
 /** Keep only the entries that are [string, string]; anything else is dropped. */
@@ -67,6 +77,14 @@ export function parseContentType(value) {
     if (!params.has(key)) params.set(key, val);
   }
   return { type, params };
+}
+
+/** True when one of the `name` lines lists `member` (comma-separated, trimmed, ASCII case-insensitive). */
+export function listsMember(fields, name, member) {
+  for (const value of valuesOf(fields, name)) {
+    for (const item of value.split(',')) if (asciiLower(trimOws(item)) === member) return true;
+  }
+  return false;
 }
 
 /** True when one of the cache-control lines has this directive (ASCII case-insensitive). */

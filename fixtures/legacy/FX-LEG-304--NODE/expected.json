@@ -20,7 +20,10 @@
     "cache-offline": ["store"],
     "cache-control": [],
     "content-type": ["text/html; charset=utf-8"],
-    "sonic-etag-key": []
+    "sonic-etag-key": [],
+    "vary": ["template-tag"],
+    "cdn-cache-control": [],
+    "surrogate-control": []
   },
   "body": {
     "kind": "none"

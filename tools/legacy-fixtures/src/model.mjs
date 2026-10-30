@@ -2,18 +2,21 @@
 // SPDX-FileCopyrightText: The Rivqen Authors
 
 // Model of the legacy server side: legacy-canonical (docs/engineering/protocol/legacy-wire.md
-// section 10, rules C-01 to C-14) and the three upstream profiles legacy-java,
+// section 10, rules C-01 to C-16) and the three upstream profiles legacy-java,
 // legacy-node and legacy-php (docs/engineering/protocol/legacy-divergences.md D-01 to D-13).
 // The profile results equal the stored upstream traces (gen.mjs checks it).
 //
 // The model is pure: no I/O, no clock, no shared state between calls (U-01 is not
 // reproduced). It never throws for a request, an application response or page bytes
 // of any shape; malformed input gives pass-through. An unknown profile name is a
-// configuration error and throws ModelError. No profile reproduces U-01 or U-11 (DL-069).
+// configuration error and throws ModelError. No profile reproduces U-01, U-11 or U-12
+// (DL-069, H-111): every legacy response of every profile drops the CDN cache fields of
+// the application (C-13) and gets `vary: template-tag` (C-15). Every step is linear in
+// the input size (C-16).
 
 import { createHash } from 'node:crypto';
 import { isUtf8 } from 'node:buffer';
-import { asciiLower, first, hasDirective, normalizeFields, parseContentType, single, trimOws, valuesOf, without } from './fields.mjs';
+import { asciiLower, first, hasDirective, listsMember, normalizeFields, parseContentType, single, trimOws, valuesOf, without } from './fields.mjs';
 import { rebuild, split } from './split.mjs';
 
 export { rebuild, split };
@@ -34,7 +37,12 @@ export function sha1hex(data) {
   return createHash('sha1').update(data).digest('hex');
 }
 
-const FIELDS_OF_THE_MODEL = new Set(['etag', 'template-tag', 'template-change', 'cache-offline', 'sonic-etag-key', 'content-length']);
+// C-13: application field lines that a legacy response never keeps. The CDN cache
+// fields go too (H-111): a shared cache that obeys them could store a data response.
+const FIELDS_OF_THE_MODEL = new Set([
+  'etag', 'template-tag', 'template-change', 'cache-offline', 'sonic-etag-key', 'content-length',
+  'cdn-cache-control', 'surrogate-control',
+]);
 const OFFLINE_VALUES = new Set(['true', 'false', 'store', 'http']);
 
 /** The application response with only well-formed members. */
@@ -82,6 +90,15 @@ function bareEtag(value) {
   if (v.startsWith('W/')) v = v.slice(2);
   if (v.length >= 2 && v.startsWith('"') && v.endsWith('"')) v = v.slice(1, -1);
   return v;
+}
+
+/**
+ * C-15: the vary line that a legacy response adds after the vary lines of A; none
+ * when a vary line of A already lists template-tag or *.
+ */
+function varyOf(app) {
+  if (listsMember(app.headers, 'vary', 'template-tag') || listsMember(app.headers, 'vary', '*')) return [];
+  return [['vary', 'template-tag']];
 }
 
 function acceptsGzipOrDeflate(fields) {
@@ -204,7 +221,7 @@ export function analyze(profile, request, app, pageBytes) {
   const decision = plan(profile, req, a, page);
   if (decision.kind === 'pass') return { response: pass, page, kind: 'pass' };
   const removed = new Set([...FIELDS_OF_THE_MODEL, ...decision.adds.map(([n]) => n)]);
-  const headers = [...without(a.headers, removed), ...decision.adds];
+  const headers = [...without(a.headers, removed), ...decision.adds, ...varyOf(a)];
   if (decision.kind === 'not-modified') return { response: { status: 304, headers, body: null }, page, kind: decision.kind };
   const body = decision.kind === 'data' ? dataBody(profile, page) : Buffer.from(bytes);
   return { response: { status: 200, headers, body }, page, kind: decision.kind };

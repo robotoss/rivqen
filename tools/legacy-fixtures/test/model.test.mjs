@@ -359,3 +359,101 @@ test('etag_is_the_sha1_of_the_body_bytes', () => {
   assert.equal(sha1hex(page('a')), etagOf('a'));
   assert.equal(sha1hex('abc'), 'a9993e364706816aba3e25717850c26c9cd0d89d');
 });
+
+// --- C-13 CDN cache fields and C-15 Vary (H-111, U-12): every profile ---
+
+const withApp = (...lines) => ({ status: 200, headers: [...APP.headers, ...lines] });
+const DATA_REQUEST = () => legacy(['template-tag', tagOf(CANONICAL, 'a')]);
+const NOT_MODIFIED_REQUEST = () => legacy(['if-none-match', etagOf('a')]);
+
+test('vary_template_tag_added', () => {
+  for (const request of [legacy(), DATA_REQUEST(), NOT_MODIFIED_REQUEST()]) {
+    const r = run(CANONICAL, request, 'a');
+    assert.deepEqual(fieldValues(r, 'vary'), ['template-tag']);
+    assert.deepEqual(r.headers.at(-1), ['vary', 'template-tag'], 'the vary line comes after the other legacy lines');
+  }
+  assert.equal(run(CANONICAL, legacy(), 'a').status, 200);
+  assert.equal(run(CANONICAL, NOT_MODIFIED_REQUEST(), 'a').status, 304);
+});
+
+test('vary_kept_and_appended', () => {
+  const app = withApp(['Vary', 'Accept-Language'], ['x-app', '1'], ['vary', 'Cookie, Accept']);
+  const r = run(CANONICAL, DATA_REQUEST(), 'a', app);
+  assert.deepEqual(r.headers.filter(([n]) => n.toLowerCase() === 'vary'), [['Vary', 'Accept-Language'], ['vary', 'Cookie, Accept'], ['vary', 'template-tag']]);
+  assert.deepEqual(fieldValues(r, 'x-app'), ['1']);
+  // a member that only contains the name does not count
+  assert.deepEqual(fieldValues(run(CANONICAL, legacy(), 'a', withApp(['vary', 'x-template-tag, template-tags'])), 'vary'), ['x-template-tag, template-tags', 'template-tag']);
+});
+
+test('vary_star_not_added', () => {
+  for (const value of ['*', ' * ', 'Accept, *', '*,']) {
+    const r = run(CANONICAL, DATA_REQUEST(), 'a', withApp(['vary', value]));
+    assert.deepEqual(fieldValues(r, 'vary'), [value], JSON.stringify(value));
+  }
+});
+
+test('vary_already_listed_not_added', () => {
+  for (const lines of [[['vary', 'template-tag']], [['Vary', 'Accept, Template-Tag']], [['vary', 'Accept'], ['VARY', '\tTEMPLATE-TAG ']]]) {
+    const r = run(CANONICAL, legacy(), 'a', withApp(...lines));
+    assert.deepEqual(fieldValues(r, 'vary'), lines.map(([, v]) => v), JSON.stringify(lines));
+  }
+});
+
+test('cdn_fields_dropped', () => {
+  const app = withApp(['CDN-Cache-Control', 'max-age=600'], ['surrogate-control', 'max-age=600'], ['Surrogate-Control', 'no-store'], ['x-app', '1']);
+  for (const request of [legacy(), DATA_REQUEST(), NOT_MODIFIED_REQUEST()]) {
+    const r = run(CANONICAL, request, 'a', app);
+    assert.deepEqual(fieldValues(r, 'cdn-cache-control'), []);
+    assert.deepEqual(fieldValues(r, 'surrogate-control'), []);
+    assert.deepEqual(fieldValues(r, 'x-app'), ['1']);
+  }
+});
+
+test('pass_through_keeps_vary_and_cdn_fields', () => {
+  const lines = [['vary', 'Accept-Language'], ['cdn-cache-control', 'max-age=600'], ['surrogate-control', 'max-age=600']];
+  const cases = [
+    [CANONICAL, { method: 'GET', headers: [] }, withApp(...lines)], // not a legacy request (C-02)
+    [CANONICAL, { method: 'POST', headers: legacy().headers }, withApp(...lines)], // C-01
+    [CANONICAL, legacy(), { status: 404, headers: [...APP.headers, ...lines] }], // C-01
+    [NODE, legacy(['accept-encoding', 'identity']), withApp(...lines)], // D-10
+    [PHP, { method: 'GET', headers: [['Accept-Diff', 'true']] }, withApp(...lines)], // D-02
+  ];
+  for (const [profile, request, app] of cases) assertPassThrough(run(profile, request, 'a', app), app, page('a'));
+  // a failed split is pass-through too (DL-075)
+  const app = withApp(...lines);
+  assertPassThrough(run(CANONICAL, legacy(), 'dup', app), app, page('dup'));
+});
+
+test('profiles_add_vary', () => {
+  const app = withApp(['vary', 'Accept-Language'], ['cdn-cache-control', 'max-age=600'], ['surrogate-control', 'max-age=600']);
+  const gzip = ['accept-encoding', 'gzip'];
+  for (const profile of PROFILES) {
+    const requests = {
+      full: legacy(gzip),
+      data: legacy(gzip, ['template-tag', tagOf(profile, 'a')]),
+      'not modified': legacy(gzip, ['if-none-match', etagOf('a')]),
+    };
+    for (const [what, request] of Object.entries(requests)) {
+      const r = run(profile, request, 'a', app);
+      assert.notEqual(fieldValues(r, 'cache-offline').length, 0, `${profile} ${what}: a legacy response`);
+      assert.deepEqual(fieldValues(r, 'vary'), ['Accept-Language', 'template-tag'], `${profile} ${what}`);
+      assert.deepEqual(fieldValues(r, 'cdn-cache-control'), [], `${profile} ${what}`);
+      assert.deepEqual(fieldValues(r, 'surrogate-control'), [], `${profile} ${what}`);
+    }
+  }
+  // legacy-java also selects by template-tag without accept-diff (D-01): that response varies too
+  const java = run(JAVA, { method: 'GET', headers: [['template-tag', tagOf(JAVA, 'a')]] }, 'a', app);
+  assert.deepEqual(fieldValues(java, 'template-change'), ['false']);
+  assert.deepEqual(fieldValues(java, 'vary'), ['Accept-Language', 'template-tag']);
+  assert.deepEqual(fieldValues(java, 'surrogate-control'), []);
+});
+
+test('field_values_with_long_inner_white_space_are_trimmed_in_linear_time', () => {
+  // the old expression /[ \t]+$/ took 2.7 s on 64 KiB of inner spaces
+  const value = `a${' \t'.repeat(128 * 1024)}a`;
+  const request = { method: 'GET', headers: [['accept-diff', value], ['template-tag', value], ['if-none-match', value]] };
+  const start = performance.now();
+  for (const profile of PROFILES) respond(profile, request, withApp(['vary', value], ['cache-control', value]), page('a'));
+  const ms = performance.now() - start;
+  assert.ok(ms < 100, `${ms.toFixed(1)} ms`);
+});

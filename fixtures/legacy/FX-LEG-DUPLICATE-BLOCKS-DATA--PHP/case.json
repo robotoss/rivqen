@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-DUPLICATE-BLOCKS-DATA--PHP",
+  "description": "legacy-php: the last value of a repeated block name wins and the template keeps both placeholders (legacy-markers section 3, DL-075)",
+  "profile": "legacy-php",
+  "replaces": "FX-LEG-DUPLICATE-BLOCKS-DATA",
+  "divergences": ["D-08"],
+  "sources": ["upstream:sonic-php/sdk/sonic.php:50-145"],
+  "trace": "evidence/traces/server/php/S14-dup-data.http"
+}

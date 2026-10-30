@@ -1,0 +1,34 @@
+{
+  "id": "FX-LEG-DATA-CHANGE",
+  "description": "Same template, data changed: data-only response",
+  "profile": "legacy-canonical",
+  "rules": ["C-06","C-07","C-08","C-11","C-13"],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": ["docs:engineering/protocol/legacy-wire#canonical-server","upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:105-144","upstream:sonic-nodejs/common/diff.js:40-60","upstream:sonic-php/sdk/sonic.php:99-126"],
+  "evidence": "trace",
+  "traces": {
+    "legacy-java": "evidence/traces/server/java/S06-data-change.http",
+    "legacy-node": "evidence/traces/server/node/S06-data-change.http",
+    "legacy-php": "evidence/traces/server/php/S06-data-change.http"
+  },
+  "page": "b",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["Accept-Encoding","gzip"],
+      ["accept-diff","true"],
+      ["If-None-Match","{{etag:a}}"],
+      ["template-tag","{{tag:a}}"]
+    ]
+  }
+}

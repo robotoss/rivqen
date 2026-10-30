@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-EMPTY-NAME-FIRST--PHP",
+  "description": "legacy-php: empty block name; cache-control",
+  "profile": "legacy-php",
+  "replaces": "FX-LEG-EMPTY-NAME-FIRST",
+  "divergences": ["D-05","D-09"],
+  "sources": ["upstream:sonic-php/sdk/sonic.php:50-145"],
+  "trace": "evidence/traces/server/php/S13-emptyname-first.http"
+}

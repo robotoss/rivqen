@@ -1,0 +1,42 @@
+{
+  "id": "FX-LEG-DUPLICATE-BLOCKS-DATA--PHP",
+  "profile": "legacy-php",
+  "level": "must",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["Accept-Encoding","gzip"],
+      ["accept-diff","true"],
+      ["If-None-Match","0000000000000000000000000000000000000000"],
+      ["template-tag","1f6bedb753922036a15a293f7c60fe22176b68d7"]
+    ]
+  },
+  "status": 200,
+  "fields": {
+    "etag": ["fb7e2e2be40bc84bf33555feb86f9c4960b938d8"],
+    "template-tag": ["1f6bedb753922036a15a293f7c60fe22176b68d7"],
+    "template-change": ["false"],
+    "cache-offline": ["true"],
+    "cache-control": ["no-cache"],
+    "content-type": ["text/html; charset=utf-8"],
+    "sonic-etag-key": []
+  },
+  "body": {
+    "kind": "data",
+    "data": {
+      "{title}": "<title>Shop</title>",
+      "{x}": "<!--sonicdiff-x--><p>second</p><!--sonicdiff-x-end-->"
+    },
+    "template_tag": "1f6bedb753922036a15a293f7c60fe22176b68d7",
+    "html_sha1": "fb7e2e2be40bc84bf33555feb86f9c4960b938d8",
+    "diff": ""
+  },
+  "split": {
+    "applied": true,
+    "template_sha1": "1f6bedb753922036a15a293f7c60fe22176b68d7",
+    "keys": ["{title}","{x}"],
+    "rebuild_sha1": "a59cecbe2d54c11c1113d19bbc7ff1bd71ffe066"
+  },
+  "trace": "evidence/traces/server/php/S14-dup-data.http"
+}

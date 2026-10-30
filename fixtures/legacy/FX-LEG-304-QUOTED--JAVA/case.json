@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-304-QUOTED--JAVA",
+  "description": "legacy-java: 304 comparison; JSON escaping of the data body; cache-control; cache-offline on 304",
+  "profile": "legacy-java",
+  "replaces": "FX-LEG-304-QUOTED",
+  "divergences": ["D-03","D-08","D-09","D-12"],
+  "sources": ["upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149"],
+  "trace": "evidence/traces/server/java/S05-304-quoted-etag.http"
+}

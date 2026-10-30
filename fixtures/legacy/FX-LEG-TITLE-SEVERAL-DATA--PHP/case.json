@@ -1,0 +1,10 @@
+{
+  "id": "FX-LEG-TITLE-SEVERAL-DATA--PHP",
+  "description": "legacy-php: JSON escaping of the data body; cache-control; several title elements (the page-corrupting title replacement U-11 is not reproduced, DL-069)",
+  "profile": "legacy-php",
+  "replaces": "FX-LEG-TITLE-SEVERAL-DATA",
+  "divergences": ["D-08","D-09","D-13"],
+  "sources": ["upstream:sonic-php/sdk/sonic.php:50-145"],
+  "trace": "evidence/traces/server/php/S16-titles-data.http",
+  "not_reproduced": "U-11"
+}

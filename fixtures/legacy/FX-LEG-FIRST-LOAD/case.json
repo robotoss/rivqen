@@ -1,0 +1,32 @@
+{
+  "id": "FX-LEG-FIRST-LOAD",
+  "description": "First load without validators: full page with legacy fields",
+  "profile": "legacy-canonical",
+  "rules": ["C-04","C-08","C-09","C-10","C-12","C-13"],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": ["docs:engineering/protocol/legacy-wire#canonical-server","upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149","upstream:sonic-nodejs/common/diff.js:12-122","upstream:sonic-php/sdk/sonic.php:50-145"],
+  "evidence": "trace",
+  "traces": {
+    "legacy-java": "evidence/traces/server/java/S02-first-load.http",
+    "legacy-node": "evidence/traces/server/node/S02-first-load.http",
+    "legacy-php": "evidence/traces/server/php/S02-first-load.http"
+  },
+  "page": "a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["Accept-Encoding","gzip"],
+      ["accept-diff","true"]
+    ]
+  }
+}

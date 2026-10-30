@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-EMPTY-NAME-DATA--JAVA",
+  "description": "legacy-java: empty block name; JSON escaping of the data body; cache-control",
+  "profile": "legacy-java",
+  "replaces": "FX-LEG-EMPTY-NAME-DATA",
+  "divergences": ["D-05","D-08","D-09"],
+  "sources": ["upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149"],
+  "trace": "evidence/traces/server/java/S13-emptyname-data.http"
+}

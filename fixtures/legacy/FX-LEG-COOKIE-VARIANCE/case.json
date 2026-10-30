@@ -1,0 +1,60 @@
+{
+  "id": "FX-LEG-COOKIE-VARIANCE",
+  "description": "A request with cookies gets the data response; the application Set-Cookie and Vary lines are kept.",
+  "profile": "legacy-canonical",
+  "rules": [
+    "C-13"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-wire#canonical-server",
+    "upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSessionConnection.java:370-372"
+  ],
+  "evidence": "code-reading",
+  "page": "b",
+  "app": {
+    "status": 200,
+    "headers": [
+      [
+        "content-type",
+        "text/html; charset=utf-8"
+      ],
+      [
+        "set-cookie",
+        "session=s2; Path=/; Secure; HttpOnly"
+      ],
+      [
+        "vary",
+        "Cookie"
+      ]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "accept-diff",
+        "true"
+      ],
+      [
+        "if-none-match",
+        "{{etag:a}}"
+      ],
+      [
+        "template-tag",
+        "{{tag:a}}"
+      ],
+      [
+        "cookie",
+        "session=s1"
+      ]
+    ]
+  }
+}

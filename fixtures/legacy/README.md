@@ -162,7 +162,7 @@ Request shorthand: `AE` = `accept-encoding: gzip`, `AD` = `accept-diff: true`, `
 
 Profile fixtures `--JAVA`, `--NODE`, `--PHP` exist exactly where check 4 requires them (lane T-01 writes them). The D-13 profile fixtures of `legacy-java` and `legacy-php` (`FX-LEG-TITLE-SEVERAL-*`) have `not_reproduced: "U-11"` and expect the canonical title rule C-06 with the other behaviors of the profile (DL-069).
 
-### Canonical fixtures from the rules (23; lane T-02)
+### Canonical fixtures from the rules (24; lane T-02 and the architect)
 
 Default page `b`, default request `AE`, `AD`, `INM({{etag:a}})`, `TT({{tag:a}})` (a data change), default `app`. `evidence: code-reading`; `sources` = the legacy wire §10 row (`docs:engineering/protocol/legacy-wire#canonical-server`) plus the upstream references of the section that the row cites.
 
@@ -190,6 +190,7 @@ Default page `b`, default request `AE`, `AD`, `INM({{etag:a}})`, `TT({{tag:a}})`
 | `FX-LEG-MARKER-UNCLOSED` | page `unclosed` (new: page `b` without the `price` end marker), `TT({{tag:unclosed}})` | C-07 | data response; the `price` block runs to the `stock` end marker (the end name is not checked), so there is no `{stock}` key |
 | `FX-LEG-NAME-TOO-LONG` | page `longname` (new: page `b` with the block name `price` replaced by 129 `p` characters and a second block with 128 `q` characters), `TT({{tag:longname}})` | C-07 | 129: no key; 128: a key |
 | `FX-LEG-TEMPLATE-TAG-UPPERCASE` | `TT({{TAG:a}})` | C-11 | full response |
+| `FX-LEG-COOKIE-VARIANCE` | `cookie: session=s1` after the default lines; app adds `set-cookie: session=s2; Path=/; Secure; HttpOnly` and `vary: Cookie` | C-13 | data response; `set-cookie` and `vary` kept |
 | `FX-LEG-TITLE-NEWLINE` | page `titlenl` (new: page `b` with the title `<title>Shop\nNew</title>`, an LF byte), `TT({{tag:titlenl}})` | C-06 | data response, `{title}` = `""` |
 
 ## Rules

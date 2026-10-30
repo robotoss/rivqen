@@ -46,7 +46,7 @@ fixtures/legacy/
 
 ## 3. Legacy protocol catalog
 
-<Badge type="tip" text="FACT" /> On 2026-10-30 the directory `fixtures/legacy/` has 143 fixtures: 54 canonical fixtures (31 from stored traces, 23 from the rules) and 89 profile fixtures. All 93 stored upstream traces are checked by the generator. Each `expected.json` is current (`gen.mjs --check`). The full lists with the requests are in `fixtures/legacy/README.md`.
+<Badge type="tip" text="FACT" /> On 2026-10-30 the directory `fixtures/legacy/` has 144 fixtures: 55 canonical fixtures (31 from stored traces, 24 from the rules) and 89 profile fixtures. All 93 stored upstream traces are checked by the generator. Each `expected.json` is current (`gen.mjs --check`). The full lists with the requests are in `fixtures/legacy/README.md`.
 
 The catalog below is the planned minimum. The State column names the fixtures that implement each row. `<X>` stands for the page variants `-FIRST` (first load) and `-DATA` (data response).
 
@@ -69,7 +69,7 @@ The catalog below is the planned minimum. The State column names the fixtures th
 | `FX-LEG-CONCURRENT` | Two sessions for the same URL | Client part, before P3 (H-110) |
 | `FX-LEG-AUTH-CHANGE` | Partition change during a session | Client part, before P3 (H-110) |
 | `FX-LEG-REDIRECT` | 301/302 on the main document | Done: `FX-LEG-REDIRECT` (a `302`) |
-| `FX-LEG-COOKIE-VARIANCE` | Different cookies, same URL | No fixture in the first sprint (no fixture with this name in `fixtures/legacy/`) |
+| `FX-LEG-COOKIE-VARIANCE` | Different cookies, same URL | Server part: `FX-LEG-COOKIE-VARIANCE` (the application `Set-Cookie` and `Vary` lines are kept, C-13); the client part comes before P3 (H-110) |
 | `FX-LEG-NON-SONIC-CLIENT` | Browser without legacy headers gets unchanged HTML | Done: `FX-LEG-NON-SONIC-CLIENT` |
 
 Other fixtures of the first sprint, outside the minimum list:

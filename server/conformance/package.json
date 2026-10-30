@@ -1,0 +1,17 @@
+{
+  "name": "rivqen-conformance",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Conformance runner: tests an RQP or legacy server by URL over HTTP",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "rivqen-conformance": "bin/rivqen-conformance.mjs"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\" \"harness/test/*.test.mjs\""
+  }
+}

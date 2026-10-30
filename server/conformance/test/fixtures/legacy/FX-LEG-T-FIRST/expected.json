@@ -1,0 +1,41 @@
+{
+  "id": "FX-LEG-T-FIRST",
+  "profile": "legacy-canonical",
+  "level": "must",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog?sort=price&page=2",
+    "headers": [
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "accept-diff",
+        "true"
+      ]
+    ]
+  },
+  "status": 200,
+  "fields": {
+    "etag": [
+      "2fc372ce5727a3d8f44677ea2627b49cff1b7ac1"
+    ],
+    "template-change": [
+      "true"
+    ],
+    "cache-offline": [
+      "true"
+    ],
+    "cache-control": [
+      "no-cache, private"
+    ]
+  },
+  "body": {
+    "kind": "page"
+  },
+  "profiles_same": [
+    "legacy-node",
+    "legacy-php"
+  ]
+}

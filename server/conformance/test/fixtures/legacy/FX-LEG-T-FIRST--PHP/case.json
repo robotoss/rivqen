@@ -1,0 +1,13 @@
+{
+  "id": "FX-LEG-T-FIRST--PHP",
+  "description": "Test: legacy-php first load",
+  "profile": "legacy-php",
+  "replaces": "FX-LEG-T-FIRST",
+  "divergences": [
+    "D-01"
+  ],
+  "sources": [
+    "docs:engineering/protocol/legacy-divergences#d-01"
+  ],
+  "trace": "evidence/traces/server/php/S02-first-load.http"
+}

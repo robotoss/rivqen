@@ -1,0 +1,44 @@
+{
+  "id": "FX-LEG-T-304",
+  "profile": "legacy-canonical",
+  "level": "must",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "accept-diff",
+        "true"
+      ],
+      [
+        "if-none-match",
+        "2fc372ce5727a3d8f44677ea2627b49cff1b7ac1"
+      ],
+      [
+        "template-tag",
+        "78967fc71ae3823f61912b81cdd089d7128d6da4"
+      ]
+    ]
+  },
+  "status": 304,
+  "fields": {
+    "etag": [
+      "2fc372ce5727a3d8f44677ea2627b49cff1b7ac1"
+    ],
+    "cache-offline": [
+      "store"
+    ],
+    "sonic-etag-key": []
+  },
+  "body": {
+    "kind": "none"
+  },
+  "profiles_same": [
+    "legacy-java",
+    "legacy-php"
+  ]
+}

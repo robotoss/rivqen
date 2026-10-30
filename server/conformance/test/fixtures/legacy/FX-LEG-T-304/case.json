@@ -1,0 +1,38 @@
+{
+  "id": "FX-LEG-T-304",
+  "description": "Test: not modified",
+  "profile": "legacy-canonical",
+  "rules": [
+    "C-01"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-wire#canonical-server"
+  ],
+  "evidence": "code-reading",
+  "page": "a",
+  "request": {
+    "method": "GET",
+    "headers": [
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "accept-diff",
+        "true"
+      ],
+      [
+        "if-none-match",
+        "2fc372ce5727a3d8f44677ea2627b49cff1b7ac1"
+      ],
+      [
+        "template-tag",
+        "78967fc71ae3823f61912b81cdd089d7128d6da4"
+      ]
+    ]
+  }
+}

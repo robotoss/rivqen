@@ -6,17 +6,24 @@
 // status: "pass" | "fail" | "skip", problems: [text] }. The problems hold
 // only fixture values and response values; the runner sends no secret.
 
-// C0 and C1 control characters: a problem text can hold response bytes
-// (latin1), and a terminal must not act on them.
-const CONTROL = /[\u0000-\u001f\u007f-\u009f]/g;
-const escape = (s) => s.replace(CONTROL, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+import { escapeText } from './escape.mjs';
 
-/** The text line of one result. */
+/** At most this many problems are kept per case (DL-078, L3). */
+export const MAX_PROBLEMS = 50;
+
+/** The first MAX_PROBLEMS problems and one `… N more` line when there are more. */
+export function capProblems(problems) {
+  if (problems.length <= MAX_PROBLEMS) return problems;
+  return [...problems.slice(0, MAX_PROBLEMS), `… ${problems.length - MAX_PROBLEMS} more`];
+}
+
+/** The text line of one result, escaped for a terminal. */
 export function formatLine({ id, level, status, problems }) {
-  const text = escape(problems.join('; '));
-  if (status === 'pass') return `PASS ${id}`;
-  if (status === 'skip') return `SKIP ${id}: ${text}`;
-  return `FAIL ${level === 'should' ? '[SHOULD] ' : ''}${id}: ${text}`;
+  const text = escapeText(problems.join('; '));
+  const name = escapeText(id);
+  if (status === 'pass') return `PASS ${name}`;
+  if (status === 'skip') return `SKIP ${name}: ${text}`;
+  return `FAIL ${level === 'should' ? '[SHOULD] ' : ''}${name}: ${text}`;
 }
 
 export function summarize(results) {

@@ -15,7 +15,8 @@ import { resolve } from 'node:path';
 import { compareLegacy, compareRqp } from './compare.mjs';
 import { DEFAULT_DIRS, DEFAULT_PROFILE, PROFILES, SUITES, legacyCases, rqpCases } from './fixtures.mjs';
 import { DEFAULT_TIMEOUT_MS, HttpCode, HttpError, exchange } from './raw-http.mjs';
-import { formatLine, formatSummary, summarize, toJson } from './report.mjs';
+import { escapeText } from './escape.mjs';
+import { capProblems, formatLine, formatSummary, summarize, toJson } from './report.mjs';
 
 export const INFO_PATH = '/__rivqen/conformance/info';
 export const CASE_PATH = '/__rivqen/conformance/case';
@@ -170,10 +171,10 @@ async function runCase(opts, kase) {
 function resultOf(kase, { must, should }) {
   if (kase.level === 'should') {
     const all = [...must, ...should];
-    return { id: kase.id, level: 'should', status: all.length > 0 ? 'fail' : 'pass', problems: all };
+    return { id: kase.id, level: 'should', status: all.length > 0 ? 'fail' : 'pass', problems: capProblems(all) };
   }
-  if (must.length > 0) return { id: kase.id, level: 'must', status: 'fail', problems: [...must, ...should.map((s) => `[SHOULD] ${s}`)] };
-  if (should.length > 0) return { id: kase.id, level: 'should', status: 'fail', problems: should };
+  if (must.length > 0) return { id: kase.id, level: 'must', status: 'fail', problems: capProblems([...must, ...should.map((s) => `[SHOULD] ${s}`)]) };
+  if (should.length > 0) return { id: kase.id, level: 'should', status: 'fail', problems: capProblems(should) };
   return { id: kase.id, level: 'must', status: 'pass', problems: [] };
 }
 
@@ -211,22 +212,22 @@ export async function main(argv, { stdout = process.stdout, stderr = process.std
     opts = parseArgs(argv);
   } catch (error) {
     if (!(error instanceof RunnerError)) throw error;
-    stderr.write(`rivqen-conformance: ${error.message}\n${USAGE}\n`);
+    stderr.write(`rivqen-conformance: ${escapeText(error.message)}\n${USAGE}\n`);
     return 2;
   }
   let report;
   try {
-    report = await run(opts, (line) => stdout.write(`${line}\n`));
+    report = await run(opts, (line) => stdout.write(`${escapeText(line)}\n`));
   } catch (error) {
     if (!(error instanceof RunnerError)) throw error;
-    stderr.write(`rivqen-conformance: ${error.message}\n`);
+    stderr.write(`rivqen-conformance: ${escapeText(error.message)}\n`);
     return 2;
   }
   if (opts.json !== null) {
     try {
       writeFileSync(opts.json, `${JSON.stringify(report, null, 2)}\n`);
     } catch (error) {
-      stderr.write(`rivqen-conformance: cannot write ${opts.json} (${error.code ?? error.name})\n`);
+      stderr.write(`rivqen-conformance: cannot write ${escapeText(opts.json)} (${escapeText(error.code ?? error.name)})\n`);
       return 2;
     }
   }

@@ -284,6 +284,14 @@ describe('limits', () => {
     assert.throws(() => parse('HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\nFFFFFFFFFFFFFFFFFFFF\r\n', { limits }), rejectsWith(HttpCode.TOO_LARGE));
   });
 
+  test('chunk_count_limit', () => {
+    assert.equal(LIMITS.chunks, 1048576);
+    const limits = { fields: 1024, body: 1024, chunks: 3 };
+    const head = 'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n';
+    assert.equal(parse(`${head}1\r\na\r\n1\r\nb\r\n1\r\nc\r\n0\r\n\r\n`, { limits }).body.length, 3);
+    assert.throws(() => parse(`${head}1\r\na\r\n1\r\nb\r\n1\r\nc\r\n1\r\nd\r\n0\r\n\r\n`, { limits }), rejectsWith(HttpCode.TOO_LARGE, /more than 3 chunks/));
+  });
+
   test('a chunk-size line and a trailer section are bounded', () => {
     const limits = { fields: 64, body: 1024 };
     assert.throws(() => parse(`HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n1;${'e'.repeat(100)}`, { limits }), rejectsWith(HttpCode.TOO_LARGE, /chunk-size line/));

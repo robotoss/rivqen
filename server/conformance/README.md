@@ -73,7 +73,8 @@ SKIP FX-LEG-OFFLINE-TRUE: no expected.json
 - Several problems of one case are on one line, separated by `; `. On a MUST failure, the SHOULD problems of the same case follow with the prefix `[SHOULD] `.
 - `FAIL [SHOULD]`: the case has `level: "should"`, or only a SHOULD rule failed (RQP `Vary: Rq-Nonce` on a delta, DL-063). It does not change the exit code.
 - `SKIP`: a canonical legacy fixture without `expected.json` (not generated yet).
-- C0 and C1 control characters in a text line are written as `\uXXXX`.
+- Every text on stdout or stderr is escaped: C0 and C1 controls, U+2028, U+2029, U+202A to U+202E and U+2066 to U+2069 are written as `\uXXXX`. The JSON report keeps the raw strings.
+- At most 50 problems are kept per case. When there are more, the first 50 stay and one more line `… N more` is added (text and JSON).
 
 JSON (`--json`): `{ "target", "suite", "profile", "results": [{ "id", "level", "status", "problems" }], "summary": { "passed", "failed", "should_failed", "skipped" } }`. `profile` is `null` for `rqp`. `level` is `"should"` for a SHOULD result as above; `summary.failed` counts the results with `status: "fail"` and `level: "must"`.
 
@@ -104,7 +105,7 @@ The response is untrusted. A defect is a failed case with the reason, never a cr
 | Decoded `gzip` body (legacy) | 64 MiB |
 | One chunk-size line; the trailer section | 64 KiB each |
 | One HTTP exchange | `--timeout-ms` (whole exchange, not idle time) |
-| Rejected as malformed | No CRLF line ends, obsolete line folding, a field name that is not a token, a control character in a value or the reason phrase, `Transfer-Encoding` together with `Content-Length`, a transfer coding other than `chunked`, a bad or inconsistent `Content-Length`, a bad chunk, an interim `1xx` response |
+| Rejected as malformed | No CRLF line ends, obsolete line folding, a field name that is not a token, more than 1,048,576 chunks in one body, a control character in a value or the reason phrase, `Transfer-Encoding` together with `Content-Length`, a transfer coding other than `chunked`, a bad or inconsistent `Content-Length`, a bad chunk, an interim `1xx` response |
 
 ## Procedure: run the tests
 

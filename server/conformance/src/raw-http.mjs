@@ -11,14 +11,14 @@
 //
 // The response is untrusted. Limits: the field section (status line, field
 // lines and the empty line) at most `fields` bytes (default 64 KiB), the body
-// after framing at most `body` bytes (default 64 MiB), one chunk-size line or
+// after framing at most `body` bytes (default 64 MiB), the number of chunks at most `chunks` (default 1,048,576), one chunk-size line or
 // trailer section at most `fields` bytes, and one deadline for the whole
 // exchange. Every defect of the response is an HttpError; nothing else is
 // thrown for any byte input.
 
 import { connect } from 'node:net';
 
-export const LIMITS = Object.freeze({ fields: 64 * 1024, body: 64 * 1024 * 1024 });
+export const LIMITS = Object.freeze({ fields: 64 * 1024, body: 64 * 1024 * 1024, chunks: 1024 * 1024 });
 export const DEFAULT_TIMEOUT_MS = 10000;
 
 /** Error codes of HttpError. */
@@ -160,6 +160,7 @@ export class ResponseParser {
     this.bodyLength = 0;
     this.remaining = 0;
     this.trailerBytes = 0;
+    this.chunkCount = 0;
     this.extra = 0;
   }
 
@@ -282,6 +283,8 @@ export class ResponseParser {
       this.state = 'trailers';
       return true;
     }
+    this.chunkCount += 1;
+    if (this.chunkCount > this.limits.chunks) throw new HttpError(HttpCode.TOO_LARGE, `the body has more than ${this.limits.chunks} chunks`);
     this.remaining = size;
     this.state = 'chunk-data';
     return true;

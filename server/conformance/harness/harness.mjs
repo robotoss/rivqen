@@ -9,6 +9,7 @@ import http from 'node:http';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
+import { escapeText } from '../src/escape.mjs';
 
 export const CONTROL_PREFIX = '/__rivqen/conformance/';
 export const INFO_PATH = `${CONTROL_PREFIX}info`;
@@ -40,6 +41,20 @@ export function controlGate(conformance, remoteAddress) {
   return 0;
 }
 
+/** Pure check of the Host of a control request: loopback name with the port of the harness (DL-078, L1). */
+export function isControlHost(host, port) {
+  if (typeof host !== 'string') return false;
+  const h = host.replace(/[A-Z]/g, (c) => c.toLowerCase());
+  return h === `127.0.0.1:${port}` || h === `localhost:${port}` || h === `[::1]:${port}`;
+}
+
+/** Pure check of a Content-Type value: media type application/json (ASCII case-insensitive), parameters allowed. */
+export function isJsonContentType(value) {
+  if (typeof value !== 'string') return false;
+  const type = value.split(';')[0].replace(/^[ \t]+|[ \t]+$/g, '');
+  return type.replace(/[A-Z]/g, (c) => c.toLowerCase()) === 'application/json';
+}
+
 export function profilesOf(suite) {
   return suite === 'legacy' ? [...LEGACY_PROFILES] : [];
 }
@@ -47,6 +62,10 @@ export function profilesOf(suite) {
 const isObject = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);
 const isPairList = (v) =>
   Array.isArray(v) && v.every((p) => Array.isArray(p) && p.length === 2 && typeof p[0] === 'string' && typeof p[1] === 'string');
+// RFC 9110 section 5.6.2 token; section 5.5 field value: HTAB, SP, VCHAR, obs-text.
+const TOKEN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+const FIELD_VALUE = /^[\t\x20-\x7e\x80-\xff]*$/;
+const isWirePairList = (v) => isPairList(v) && v.every(([name, value]) => TOKEN.test(name) && FIELD_VALUE.test(value));
 
 function decodeBase64(text) {
   if (typeof text !== 'string' || text.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(text)) return null;
@@ -71,7 +90,7 @@ export function parseCase(text, suite) {
   const page = decodeBase64(json.page_base64);
   if (page === null) return { error: 'BAD_CASE' };
   const app = json.app;
-  if (!isObject(app) || !Number.isInteger(app.status) || app.status < 100 || app.status > 599 || !isPairList(app.headers)) {
+  if (!isObject(app) || !Number.isInteger(app.status) || app.status < 100 || app.status > 599 || !isWirePairList(app.headers)) {
     return { error: 'BAD_CASE' };
   }
   const serverConfig = json.server_config === undefined ? {} : json.server_config;
@@ -138,12 +157,14 @@ export function createHarness({ handle, suite, origin = DEFAULT_ORIGIN, conforma
       sendJson(res, refused, { error: refused === 404 ? 'NOT_FOUND' : 'FORBIDDEN' });
       return;
     }
+    if (!isControlHost(req.headers.host, req.socket.localPort)) return sendJson(res, 403, { error: 'FORBIDDEN' });
     if (path === INFO_PATH) {
       if (req.method !== 'GET') return sendJson(res, 405, { error: 'METHOD_NOT_ALLOWED' });
       return sendJson(res, 200, { contract: 1, suites: [suite], profiles: profilesOf(suite) });
     }
     if (path === CASE_PATH) {
       if (req.method !== 'POST') return sendJson(res, 405, { error: 'METHOD_NOT_ALLOWED' });
+      if (!isJsonContentType(req.headers['content-type'])) return sendJson(res, 415, { error: 'UNSUPPORTED_MEDIA_TYPE' });
       const body = await readBody(req, MAX_CASE_BYTES);
       if (body.tooLarge) {
         return sendJson(res, 413, { error: 'TOO_LARGE' });
@@ -159,39 +180,43 @@ export function createHarness({ handle, suite, origin = DEFAULT_ORIGIN, conforma
     return sendJson(res, 404, { error: 'NOT_FOUND' });
   }
 
-  function serveCase(req, res) {
+  async function serveCase(req, res) {
     if (stored === null) return sendJson(res, 503, { error: 'NO_CASE' });
     const c = stored;
-    const request = { method: req.method, target: base + req.url, headers: pairsOfRaw(req.rawHeaders) };
-    const config = c.suite === 'legacy' ? { ...c.serverConfig, profile: c.profile } : c.serverConfig;
-    let result;
     try {
-      result = handle(request, c.app, c.page, config);
+      const request = { method: req.method, target: base + req.url, headers: pairsOfRaw(req.rawHeaders) };
+      const config = c.suite === 'legacy' ? { ...c.serverConfig, profile: c.profile } : c.serverConfig;
+      const result = await handle(request, c.app, c.page, config);
+      if (!isObject(result) || !isPairList(result.headers)) {
+        process.stderr.write(`handle result is not valid for ${escapeText(c.caseId)}: BAD_RESULT\n`);
+        return sendJson(res, 500, { error: 'HANDLE_FAILED' });
+      }
+      const lines = [];
+      let hasLength = false;
+      for (const [name, value] of result.headers) {
+        if (name.toLowerCase() === 'content-length') hasLength = true;
+        lines.push(name, value);
+      }
+      const body = result.body ?? null;
+      const noBody = req.method === 'HEAD' || result.status === 304 || body === null;
+      if (!hasLength && !noBody) lines.push('Content-Length', String(body.length));
+      res.sendDate = false;
+      res.writeHead(result.status, lines);
+      if (noBody) res.end();
+      else res.end(body);
     } catch (cause) {
       // Only the case id and an error code go to the log; page bytes never do.
-      process.stderr.write(`handle failed for ${c.caseId}: ${cause?.code ?? cause?.name ?? 'Error'}\n`);
-      return sendJson(res, 500, { error: 'HANDLE_FAILED' });
+      process.stderr.write(`handle failed for ${escapeText(c.caseId)}: ${escapeText(cause?.code ?? cause?.name ?? 'Error')}\n`);
+      if (!res.headersSent) sendJson(res, 500, { error: 'HANDLE_FAILED' });
+      else res.destroy();
     }
-    const lines = [];
-    let hasLength = false;
-    for (const [name, value] of result.headers) {
-      if (name.toLowerCase() === 'content-length') hasLength = true;
-      lines.push(name, value);
-    }
-    const body = result.body ?? null;
-    const noBody = req.method === 'HEAD' || result.status === 304 || body === null;
-    if (!hasLength && !noBody) lines.push('Content-Length', String(body.length));
-    res.sendDate = false;
-    res.writeHead(result.status, lines);
-    if (noBody) res.end();
-    else res.end(body);
   }
 
   return http.createServer((req, res) => {
     const path = (req.url ?? '').split('?')[0];
-    const run = path.startsWith(CONTROL_PREFIX) ? control(req, res, path) : Promise.resolve(serveCase(req, res));
+    const run = path.startsWith(CONTROL_PREFIX) ? control(req, res, path) : serveCase(req, res);
     run.catch((cause) => {
-      process.stderr.write(`harness error: ${cause?.code ?? 'Error'}\n`);
+      process.stderr.write(`harness error: ${escapeText(cause?.code ?? 'Error')}\n`);
       if (!res.headersSent) sendJson(res, 500, { error: 'HARNESS_FAILED' });
       else res.destroy();
     });
@@ -260,7 +285,7 @@ export async function main(argv, env, out) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   main(process.argv.slice(2), process.env, process.stdout).catch((err) => {
-    process.stderr.write(`harness: ${err.code ?? 'ERROR'}: ${err.message}\n`);
+    process.stderr.write(`harness: ${escapeText(err.code ?? 'ERROR')}: ${escapeText(err.message)}\n`);
     process.exit(2);
   });
 }

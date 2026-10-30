@@ -1,0 +1,42 @@
+{
+  "id": "FX-LEG-NAME-TOO-LONG",
+  "profile": "legacy-canonical",
+  "level": "must",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["accept-encoding","gzip"],
+      ["accept-diff","true"],
+      ["if-none-match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+      ["template-tag","697515d27d88d8f80e1a4f1984849b3ef65ded53"]
+    ]
+  },
+  "status": 200,
+  "fields": {
+    "etag": ["04cc06e3a442edf9aa08e496ee30193b0372ae85"],
+    "template-tag": ["697515d27d88d8f80e1a4f1984849b3ef65ded53"],
+    "template-change": ["false"],
+    "cache-offline": ["true"],
+    "cache-control": ["no-cache, private"],
+    "content-type": ["text/html; charset=utf-8"],
+    "sonic-etag-key": []
+  },
+  "body": {
+    "kind": "data",
+    "data": {
+      "{title}": "<title>Shop</title>",
+      "{qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq}": "<!--sonicdiff-qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq--><p>In stock: 5</p><!--sonicdiff-qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq-end-->"
+    },
+    "template_tag": "697515d27d88d8f80e1a4f1984849b3ef65ded53",
+    "html_sha1": "04cc06e3a442edf9aa08e496ee30193b0372ae85",
+    "diff": ""
+  },
+  "split": {
+    "applied": true,
+    "template_sha1": "697515d27d88d8f80e1a4f1984849b3ef65ded53",
+    "keys": ["{title}","{qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq}"],
+    "rebuild_sha1": "04cc06e3a442edf9aa08e496ee30193b0372ae85"
+  },
+  "profiles_same": []
+}

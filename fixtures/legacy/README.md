@@ -158,7 +158,7 @@ Request shorthand: `AE` = `accept-encoding: gzip`, `AD` = `accept-diff: true`, `
 | `FX-LEG-<X>-FIRST` | `S<nn>-<page>-first.http` | see below | `AE`, `AD` |
 | `FX-LEG-<X>-DATA` | `S<nn>-<page>-data.http` | see below | `AE`, `AD`, `INM(0000000000000000000000000000000000000000)`, `TT({{tag:<page>}})` |
 
-`<X>` and page: `NO-MARKERS` (S12, `nomark`), `EMPTY-NAME` (S13, `emptyname`), `DUPLICATE-BLOCKS` (S14, `dup`), `TITLE-ATTRIBUTE` (S15, `titleattr`), `TITLE-SEVERAL` (S16, `titles`), `MARKER-SPACES` (S17, `spaces`), `MARKER-NESTED` (S18, `nested`), `MARKER-MISMATCH` (S19, `mismatch`), `MARKER-UPPERCASE` (S20, `uppercase`), `UNICODE` (S21, `unicode`). Each request must give the same field lines as its trace request after placeholder resolution under the trace's profile; the header name spelling and order of the trace are kept.
+`<X>` and page: `NO-MARKERS` (S12, `nomark`), `EMPTY-NAME` (S13, `emptyname`), `DUPLICATE-BLOCKS` (S14, `dup`), `TITLE-ATTRIBUTE` (S15, `titleattr`), `TITLE-SEVERAL` (S16, `titles`), `MARKER-SPACES` (S17, `spaces`), `MARKER-NESTED` (S18, `nested`), `MARKER-MISMATCH` (S19, `mismatch`), `MARKER-UPPERCASE` (S20, `uppercase`), `UNICODE` (S21, `unicode`). Each request must give the same field lines as its trace request after placeholder resolution under the trace's profile; the header name spelling and order of the trace are kept. So these fixtures keep the spelling of the trace (`Accept-Encoding`, `If-None-Match`, `Accept-Diff`); the lower-case names of the examples above are not a rule.
 
 Profile fixtures `--JAVA`, `--NODE`, `--PHP` exist exactly where check 4 requires them (lane T-01 writes them). The D-13 profile fixtures of `legacy-java` and `legacy-php` (`FX-LEG-TITLE-SEVERAL-*`) have `not_reproduced: "U-11"` and expect the canonical title rule C-06 with the other behaviors of the profile (DL-069).
 
@@ -187,7 +187,7 @@ Default page `b`, default request `AE`, `AD`, `INM({{etag:a}})`, `TT({{tag:a}})`
 | `FX-LEG-PASS-NON-HTML` | app `content-type: application/json` | C-01 | pass-through |
 | `FX-LEG-CHARSET-OTHER` | app `content-type: text/html; charset=iso-8859-1` | C-03 | pass-through |
 | `FX-LEG-INVALID-UTF8` | page `badutf8` (new: page `b` with the byte `FF` in the static footer text) | C-03 | pass-through |
-| `FX-LEG-MARKER-UNCLOSED` | page `unclosed` (new: page `b` without the `price` end marker), `TT({{tag:unclosed}})` | C-07 | data response; `price` stays in the template |
+| `FX-LEG-MARKER-UNCLOSED` | page `unclosed` (new: page `b` without the `price` end marker), `TT({{tag:unclosed}})` | C-07 | data response; the `price` block runs to the `stock` end marker (the end name is not checked), so there is no `{stock}` key |
 | `FX-LEG-NAME-TOO-LONG` | page `longname` (new: page `b` with the block name `price` replaced by 129 `p` characters and a second block with 128 `q` characters), `TT({{tag:longname}})` | C-07 | 129: no key; 128: a key |
 | `FX-LEG-TEMPLATE-TAG-UPPERCASE` | `TT({{TAG:a}})` | C-11 | full response |
 | `FX-LEG-TITLE-NEWLINE` | page `titlenl` (new: page `b` with the title `<title>Shop\nNew</title>`, an LF byte), `TT({{tag:titlenl}})` | C-06 | data response, `{title}` = `""` |

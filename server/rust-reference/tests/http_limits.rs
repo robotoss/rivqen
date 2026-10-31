@@ -16,6 +16,8 @@
 
 use std::io::{Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -301,4 +303,50 @@ fn http_limits_http_10_request_is_answered() {
     let reply = exchange(port, req.as_bytes());
     assert_eq!(reply.status, 200);
     assert_eq!(reply.field("Content-Type"), Some("application/json"));
+}
+
+#[test]
+fn http_limits_a_slow_reader_releases_the_server_after_the_write_deadline() {
+    let port = start(Timeouts {
+        write: Duration::from_millis(500),
+        ..Timeouts::default()
+    });
+    // A case with a page of 4.5 MiB: more than the socket buffers hold.
+    let groups = 3 * 512 * 1024;
+    let json = format!(
+        r#"{{"suite":"rqp","case_id":"x","page_base64":"{}","app":{{"status":200,"headers":[]}}}}"#,
+        "YWFh".repeat(groups)
+    );
+    let post = format!(
+        "POST /__rivqen/conformance/case HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{json}",
+        json.len()
+    );
+    assert_eq!(exchange(port, post.as_bytes()).status, 204);
+    // Client A reads 4 KiB every 50 ms: the server makes progress, slowly.
+    let mut slow = TcpStream::connect(("127.0.0.1", port)).unwrap();
+    slow.write_all(b"GET /catalog HTTP/1.1\r\nHost: shop.example.com\r\n\r\n")
+        .unwrap();
+    let stop = Arc::new(AtomicBool::new(false));
+    let stop_reader = Arc::clone(&stop);
+    let reader = thread::spawn(move || {
+        let mut buf = [0u8; 4096];
+        let mut total = 0usize;
+        while !stop_reader.load(Ordering::Relaxed) {
+            match slow.read(&mut buf) {
+                Ok(0) | Err(_) => break,
+                Ok(n) => total += n,
+            }
+            thread::sleep(Duration::from_millis(50));
+        }
+        total
+    });
+    // Client B gets its answer soon after the write deadline of A. Without one
+    // deadline over all writes, A would hold the server for about a minute.
+    let started = Instant::now();
+    assert_eq!(exchange(port, &info_request(port, "")).status, 200);
+    let waited = started.elapsed();
+    stop.store(true, Ordering::Relaxed);
+    let got = reader.join().unwrap();
+    assert!(waited < Duration::from_secs(8), "{waited:?}");
+    assert!(got < groups * 3, "A got the whole page: {got}");
 }

@@ -29,7 +29,8 @@ use crate::http::writer::write_response;
 pub struct Timeouts {
     /// The whole request (head and body) must arrive within this time; then `408`.
     pub read: Duration,
-    /// A write of the answer that does not progress for this time fails.
+    /// The whole answer must be written within this time; then the connection
+    /// is closed.
     pub write: Duration,
     /// After an early answer: the longest time to discard client bytes.
     pub linger: Duration,
@@ -102,6 +103,32 @@ impl Read for Deadline<'_> {
     }
 }
 
+/// A writer with one deadline over all writes: a client that reads slowly cannot
+/// hold the only connection longer than [`Timeouts::write`].
+struct DeadlineWriter<'a> {
+    stream: &'a TcpStream,
+    until: Option<Instant>,
+}
+
+impl Write for DeadlineWriter<'_> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        if let Some(until) = self.until {
+            let left = until.saturating_duration_since(Instant::now());
+            if left.is_zero() {
+                return Err(io::ErrorKind::TimedOut.into());
+            }
+            self.stream.set_write_timeout(Some(left))?;
+        }
+        let mut stream = self.stream;
+        stream.write(buf)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        let mut stream = self.stream;
+        stream.flush()
+    }
+}
+
 /// The JSON error code of a status of the HTTP layer.
 fn http_error_code(status: u16) -> &'static str {
     match status {
@@ -163,10 +190,6 @@ fn serve_connection(stream: &TcpStream, peer: IpAddr, server: &mut Server, timeo
             return;
         }
     };
-    if let Err(e) = stream.set_write_timeout(Some(timeouts.write)) {
-        log(format_args!("cannot set the write timeout: {:?}", e.kind()));
-        return;
-    }
     let conn = Conn { peer, local_port };
     let mut input = BufReader::with_capacity(
         8 * 1024,
@@ -236,7 +259,10 @@ fn answer(
     start: Instant,
     timeouts: &Timeouts,
 ) {
-    let mut out = stream;
+    let mut out = DeadlineWriter {
+        stream,
+        until: Instant::now().checked_add(timeouts.write),
+    };
     let written = write_response(&mut out, &outcome.response, head_request);
     let note = match &written {
         Ok(()) => outcome.note,

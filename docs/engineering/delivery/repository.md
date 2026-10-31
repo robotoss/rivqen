@@ -2,7 +2,7 @@
 
 Rivqen is a monorepo. One repository keeps the core, the SDKs, the servers, the fixtures and the documentation in sync. This page shows the layout: what exists and what is planned.
 
-**Status:** <Badge type="info" text="DESIGN" /> Today `docs/`, the root files, `.claude/`, `examples/server-demo/`, `fixtures/` (`rqp/`, `legacy/`, `malformed/`), `server/conformance/`, `tools/` and `evidence/` exist. Each directory is created by the work package listed next to it.
+**Status:** <Badge type="info" text="DESIGN" /> Today `docs/`, the root files, `.claude/`, `examples/server-demo/`, `fixtures/` (`rqp/`, `legacy/`, `malformed/`), `server/conformance/`, `server/rust-reference/` (WP-03), `tools/` and `evidence/` exist. Each directory is created by the work package listed next to it.
 
 ## 1. Tree
 
@@ -34,7 +34,7 @@ rivqen/
 │   ├── web-core/                 # TypeScript                      (WP-12)
 │   └── react/                    # React adapter                   (WP-12)
 ├── server/
-│   ├── rust-reference/           # oracle server                   (WP-03)
+│   ├── rust-reference/           # oracle server, own workspace    (WP-03)
 │   ├── node/                     #                                 (WP-13)
 │   ├── java/                     #                                 (WP-14)
 │   ├── php/                      #                                 (WP-15)

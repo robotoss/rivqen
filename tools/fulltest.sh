@@ -13,7 +13,8 @@
 #           tools/rqp-schema, tools/rqp-markup/node, tools/rqp-markup/crosscheck,
 #           tools/webview-lab and examples/server-demo
 #   python  Python 3
-#   rust    cargo with rustfmt and clippy
+#   rust    cargo with rustfmt and clippy; Node.js 22 or later (the runner against the
+#           reference server, DL-090)
 #   java    JDK 21 and `gradle` on PATH (optional: ORG_GRADLE_PROJECT_rqpMavenMirror)
 #   php     PHP 8.3 or later; `composer install` in tools/rqp-markup/php
 #   diff    all four markup candidates (rust, java, php, node groups)
@@ -75,6 +76,10 @@ group_python() {
 
 group_rust() {
   step rust 'cd tools/rqp-markup/rust && cargo fmt --check && cargo clippy --all-targets -q -- -D warnings && RUST_TEST_THREADS=4 cargo test -q'
+  step rule-probe 'cd tools/rqp-markup/corpus/rule-probe && cargo build -q'
+  step rust-reference 'cd server/rust-reference && cargo fmt --check && cargo clippy --all-targets -q -- -D warnings && RUST_TEST_THREADS=4 cargo test -q && cargo test -q --release --test legacy_rules legacy_linear_time -- --ignored && cargo build -q --release'
+  # The runner by URL against the release binary (gate G1; DL-090).
+  step rust-reference-http 'b=server/rust-reference/target/release/rivqen-reference; e() { node server/conformance/e2e/run.mjs --command "$b" --arg --conformance --arg --port --arg 0 "$@"; }; e --suite rqp && for p in legacy-canonical legacy-java legacy-node legacy-php; do e --suite legacy --profile "$p" || exit 1; done && e --suite legacy -- --fixtures fixtures/malformed/legacy'
 }
 
 group_java() {

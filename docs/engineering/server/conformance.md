@@ -9,7 +9,7 @@ Conformance means that a server SDK gives the same answer as the reference for e
 | Component | Role |
 |---|---|
 | `fixtures/` | The truth (see [Golden fixtures](/engineering/protocol/fixtures)) |
-| `server/rust-reference` | Oracle: must pass 100 % of fixtures (<Badge type="info" text="DESIGN" />: WP-03) |
+| `server/rust-reference` | Oracle (WP-03): <Badge type="tip" text="FACT" /> by URL through `run.mjs --command`, the release binary passes RQP 112/112, `legacy-canonical` 59/59, `legacy-java`, `legacy-node` and `legacy-php` 39/39 each, and the malformed suite 22/22 (`tools/fulltest.sh rust`). Independent of the JavaScript models (DL-087); command line and limits in `server/rust-reference/README.md` |
 | `server/conformance` | Runner: sends requests, compares responses |
 | `server/conformance/harness` | Test harness: wraps a server module and has the control endpoint |
 | `server/conformance/e2e/run.mjs` | Driver: starts the harness, runs the runner, stops the harness |

@@ -1,0 +1,36 @@
+{
+  "id": "FX-LEG-TITLE-ATTRIBUTE-FIRST--NODE",
+  "profile": "legacy-node",
+  "level": "must",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["Accept-Encoding","gzip"],
+      ["accept-diff","true"]
+    ]
+  },
+  "status": 200,
+  "fields": {
+    "etag": ["e69a5a005441836fb419c6cce29007f5310c7f04"],
+    "template-tag": ["c2c61b5c6b733e5bcbf902f14acf9ebe96386431"],
+    "template-change": ["true"],
+    "cache-offline": ["true"],
+    "cache-control": [],
+    "content-type": ["text/html; charset=utf-8"],
+    "sonic-etag-key": [],
+    "vary": ["template-tag"],
+    "cdn-cache-control": [],
+    "surrogate-control": []
+  },
+  "body": {
+    "kind": "page"
+  },
+  "split": {
+    "applied": true,
+    "template_sha1": "c2c61b5c6b733e5bcbf902f14acf9ebe96386431",
+    "keys": ["{title}","{p}"],
+    "rebuild_sha1": "e69a5a005441836fb419c6cce29007f5310c7f04"
+  },
+  "trace": "evidence/traces/server/node/S15-titleattr-first.http"
+}

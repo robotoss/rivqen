@@ -138,6 +138,26 @@ Rules from the code:
 2. Android computes the diff as: every server key whose value differs from the local value (new keys included) (`SonicUtils.java:271-299`). iOS includes only keys that **already exist** locally (`sonic-iOS/Sonic/Util/SonicUtil.m:210-227`).
 3. With `cache-offline: store`, iOS reports code `304` and no diff (`SonicSession.m:662-668`).
 
+### 5.3 iOS integration (Q-03)
+
+<Badge type="tip" text="FACT" /> Source: code reading at `59936bef` in WP-02 S1 (H-110). No old device was needed. Q-03 is closed. The iOS client does not use a `WKWebView`. Its sample uses a `UIWebView` and a global network hook.
+
+| Step | What upstream does | Evidence |
+|---|---|---|
+| Hook | The sample app registers one global `NSURLProtocol` subclass at start-up | `upstream:sonic-iOS/SonicSample/SonicSample/AppDelegate.m:35` |
+| Web view | The sample page controller loads the page in a `UIWebView` | `upstream:sonic-iOS/SonicSample/SonicSample/SonicWebViewController.m:71` |
+| Which requests | The protocol accepts only a request that is marked for a live session. All other requests pass | `upstream:sonic-iOS/Sonic/Network/SonicURLProtocol.m:32-45` |
+| Delivery | The protocol gives the cached or rebuilt HTML to the web view through the callbacks of its protocol client | `upstream:sonic-iOS/Sonic/Network/SonicURLProtocol.m:84-138` |
+| Cached page | The session builds a synthetic `200` response for a cached page | `upstream:sonic-iOS/Sonic/Session/SonicSession.m:615-629` |
+| First load | The protocol passes the live network events of the request on | `upstream:sonic-iOS/Sonic/Session/SonicSession.m:569-602` |
+| Diff to the page | The sample adds an export object named `sonic` to the JavaScript context of the private `UIWebView` internals | `upstream:sonic-iOS/SonicSample/SonicSample/SonicWebViewController.m:105-114` |
+| Callback | The page gets the diff through the global function `getDiffDataCallback` | `upstream:sonic-iOS/SonicSample/SonicSample/SonicJSContext.m:25-38` |
+| Result | The session builds the result (codes and changed blocks, section 5.2) | `upstream:sonic-iOS/Sonic/Session/SonicSession.m:636-680` |
+
+::: danger Not used by Rivqen
+`UIWebView` is no longer accepted in the App Store. A global `NSURLProtocol` does not see the requests of a `WKWebView` through public API. The JavaScript context of a `UIWebView` is a private structure. Rivqen uses a `WKWebView` with public APIs only (U-10, [ADR-003](/engineering/architecture/adr/#adr-003)). <Badge type="info" text="DESIGN" />
+:::
+
 ## 6. Local server mode (VasSonic 2.0)
 
 If the server does not speak the legacy protocol and `SUPPORT_LOCAL_SERVER` is on (default **off**, `SonicSessionConfig.java:78`), the client computes `etag` and `template-tag` itself from the full response and simulates the server decision (`SonicServer.java:129-187`; `upstream:assets/Sonic2.0.md`).

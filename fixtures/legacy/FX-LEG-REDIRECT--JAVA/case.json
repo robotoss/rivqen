@@ -1,0 +1,10 @@
+{
+  "id": "FX-LEG-REDIRECT--JAVA",
+  "description": "legacy-java: the 302 is passed through; the trace has a 304 without the redirect (U-13 is not reproduced, DL-082)",
+  "profile": "legacy-java",
+  "replaces": "FX-LEG-REDIRECT",
+  "divergences": [],
+  "sources": ["upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149","docs:engineering/protocol/legacy-divergences#_3-upstream-behaviors-that-rivqen-will-not-reproduce"],
+  "trace": "evidence/traces/server/java/S24-redirect-302.http",
+  "not_reproduced": "U-13"
+}

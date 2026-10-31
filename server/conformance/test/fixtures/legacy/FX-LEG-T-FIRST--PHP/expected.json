@@ -1,0 +1,32 @@
+{
+  "id": "FX-LEG-T-FIRST--PHP",
+  "profile": "legacy-php",
+  "level": "must",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog?sort=price&page=2",
+    "headers": [
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "accept-diff",
+        "true"
+      ]
+    ]
+  },
+  "status": 200,
+  "fields": {
+    "etag": [
+      "2fc372ce5727a3d8f44677ea2627b49cff1b7ac1"
+    ],
+    "cache-control": [
+      "no-cache"
+    ]
+  },
+  "body": {
+    "kind": "page"
+  },
+  "trace": "evidence/traces/server/php/S02-first-load.http"
+}

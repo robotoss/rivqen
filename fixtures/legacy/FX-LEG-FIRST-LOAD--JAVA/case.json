@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-FIRST-LOAD--JAVA",
+  "description": "legacy-java: cache-control",
+  "profile": "legacy-java",
+  "replaces": "FX-LEG-FIRST-LOAD",
+  "divergences": ["D-09"],
+  "sources": ["upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149"],
+  "trace": "evidence/traces/server/java/S02-first-load.http"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-MARKER-SPACES-DATA--NODE",
+  "description": "legacy-node: page without markers; cache-control",
+  "profile": "legacy-node",
+  "replaces": "FX-LEG-MARKER-SPACES-DATA",
+  "divergences": ["D-06","D-09"],
+  "sources": ["upstream:sonic-nodejs/common/diff.js:12-122","upstream:sonic-nodejs/middleware/compress.js:18-83"],
+  "trace": "evidence/traces/server/node/S17-spaces-data.http"
+}

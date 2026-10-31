@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-EMPTY-NAME-FIRST--JAVA",
+  "description": "legacy-java: empty block name; cache-control",
+  "profile": "legacy-java",
+  "replaces": "FX-LEG-EMPTY-NAME-FIRST",
+  "divergences": ["D-05","D-09"],
+  "sources": ["upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149"],
+  "trace": "evidence/traces/server/java/S13-emptyname-first.http"
+}

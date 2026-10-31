@@ -1,0 +1,64 @@
+{
+  "id": "FX-LEG-T-DATA",
+  "profile": "legacy-canonical",
+  "level": "must",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "Accept-Diff",
+        "true"
+      ],
+      [
+        "if-none-match",
+        "2fc372ce5727a3d8f44677ea2627b49cff1b7ac1"
+      ],
+      [
+        "if-none-match",
+        "2fc372ce5727a3d8f44677ea2627b49cff1b7ac1"
+      ],
+      [
+        "template-tag",
+        "78967fc71ae3823f61912b81cdd089d7128d6da4"
+      ]
+    ]
+  },
+  "status": 200,
+  "fields": {
+    "etag": [
+      "9cb588f2d40aabe4dca75ec5f7f775cf197fbed9"
+    ],
+    "template-tag": [
+      "78967fc71ae3823f61912b81cdd089d7128d6da4"
+    ],
+    "template-change": [
+      "false"
+    ],
+    "cache-offline": [
+      "true"
+    ],
+    "cache-control": [
+      "no-cache, private"
+    ],
+    "content-type": [
+      "text/html; charset=utf-8"
+    ],
+    "sonic-etag-key": []
+  },
+  "body": {
+    "kind": "data",
+    "data": {
+      "{title}": "<title>Shop</title>",
+      "{price}": "12.00"
+    },
+    "template_tag": "78967fc71ae3823f61912b81cdd089d7128d6da4",
+    "html_sha1": "9cb588f2d40aabe4dca75ec5f7f775cf197fbed9",
+    "diff": ""
+  },
+  "profiles_same": []
+}

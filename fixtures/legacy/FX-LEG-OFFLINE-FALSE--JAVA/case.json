@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-OFFLINE-FALSE--JAVA",
+  "description": "legacy-java: JSON escaping of the data body; cache-control; its own cache-offline true, then the application line",
+  "profile": "legacy-java",
+  "replaces": "FX-LEG-OFFLINE-FALSE",
+  "divergences": ["D-08","D-09","D-14"],
+  "sources": ["upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149","docs:engineering/protocol/legacy-divergences#_1-server-divergences"],
+  "trace": "evidence/traces/server/java/S22-offline-false.http"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-EMPTY-NAME-DATA--PHP",
+  "description": "legacy-php: empty block name; JSON escaping of the data body; cache-control",
+  "profile": "legacy-php",
+  "replaces": "FX-LEG-EMPTY-NAME-DATA",
+  "divergences": ["D-05","D-08","D-09"],
+  "sources": ["upstream:sonic-php/sdk/sonic.php:50-145"],
+  "trace": "evidence/traces/server/php/S13-emptyname-data.http"
+}

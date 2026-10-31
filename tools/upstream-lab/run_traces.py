@@ -2,7 +2,13 @@
 behavior documented in docs/engineering/protocol/v1-*.md.
 
 Run with: python3 -I run_traces.py <pages_dir> <out_dir>
+
+S01-S21 use the /p/<page> route of the lab servers. S22-S29 give the server a case through the
+control endpoint (POST /__rivqen/conformance/case, server/conformance/CONTRACT.md section 2) and
+record what the upstream code does with an application status or field line. For S22-S29 the
+results record the observed behavior; there is no pass/fail model for them.
 """
+import base64
 import gzip
 import hashlib
 import http.client
@@ -53,9 +59,13 @@ def model(impl, html):
     return tpl, data, has_markers
 
 
-def request(port, path, headers):
+def request(port, path, headers, method="GET", host=None):
     c = http.client.HTTPConnection("127.0.0.1", port, timeout=20)
-    c.putrequest("GET", path, skip_accept_encoding=True)
+    if host is None:
+        c.putrequest(method, path, skip_accept_encoding=True)
+    else:  # case requests: the fixture host, as the conformance runner sends it (first line)
+        c.putrequest(method, path, skip_accept_encoding=True, skip_host=True)
+        c.putheader("Host", host)
     for k, v in headers:
         c.putheader(k, v)
     c.endheaders()
@@ -77,11 +87,11 @@ def h(hdrs, name):
     return ", ".join(vals) if vals else None
 
 
-def save(server, sid, path, req, status, hdrs, body, enc):
+def save(server, sid, path, req, status, hdrs, body, enc, method="GET"):
     d = os.path.join(OUT, server)
     os.makedirs(d, exist_ok=True)
     with open(os.path.join(d, f"{sid}.http"), "wb") as f:
-        f.write(f"GET {path} HTTP/1.1\n".encode())
+        f.write(f"{method} {path} HTTP/1.1\n".encode())
         for k, v in req:
             f.write(f"{k}: {v}\n".encode())
         f.write(b"\n--- response ---\n")
@@ -98,6 +108,23 @@ checks = []
 
 def check(server, sid, name, ok, detail=""):
     checks.append({"server": server, "scenario": sid, "check": name, "ok": bool(ok), "detail": detail})
+
+
+FIXTURE_HOST = "shop.example.com"
+CONTROL_CASE = "/__rivqen/conformance/case"
+
+
+def post_case(port, case_id, profile, page, app):
+    """POST a case to the control endpoint of a lab server. Returns the HTTP status (204 = stored)."""
+    body = json.dumps({"suite": "legacy", "case_id": case_id, "profile": profile,
+                       "page_base64": base64.b64encode(page).decode("ascii"), "app": app,
+                       "server_config": {}}).encode()
+    c = http.client.HTTPConnection("127.0.0.1", port, timeout=20)  # Host: 127.0.0.1:<published port>
+    c.request("POST", CONTROL_CASE, body, {"Content-Type": "application/json"})
+    r = c.getresponse()
+    r.read()
+    c.close()
+    return r.status
 
 
 for server, port in SERVERS.items():
@@ -199,12 +226,53 @@ for server, port in SERVERS.items():
                   json.dumps(j.get("data"), ensure_ascii=False)[:300])
             res[f"{sid}-{page}-data"]["raw_json_text"] = body2.decode()[:400]
 
+    # S22-S29: the application sets a status or field lines; the case goes in through the control endpoint.
+    # Defaults of the catalog rows: page b, a data-change request (the tag of page a under this server).
+    DATA_REQ = [AE, AD, ("If-None-Match", etag_a), ("template-tag", tag_a)]
+    CT = ("content-type", "text/html; charset=utf-8")
+    for sid, page, method, app_status, app_headers, req in [
+        ("S22-offline-false", "b", "GET", 200, [CT, ("cache-offline", "false")], DATA_REQ),
+        ("S23-offline-http", "b", "GET", 200, [CT, ("cache-offline", "http")], DATA_REQ),
+        ("S24-redirect-302", "a", "GET", 302, [CT, ("location", "https://shop.example.com/login")], DATA_REQ),
+        ("S25-not-found-404", "b", "GET", 404, [CT], DATA_REQ),
+        ("S26-post", "b", "POST", 200, [CT], DATA_REQ + [("Content-Length", "0")]),
+        ("S27-head", "b", "HEAD", 200, [CT], DATA_REQ),
+        ("S28-vary-app", "b", "GET", 200, [CT, ("vary", "Accept-Language")], DATA_REQ),
+        ("S29-cdn-fields", "b", "GET", 200, [CT, ("cdn-cache-control", "max-age=600"), ("surrogate-control", "max-age=600")], DATA_REQ),
+    ]:
+        app = {"status": app_status, "headers": [list(x) for x in app_headers]}
+        try:
+            cst = post_case(port, f"TRACE-{sid}", f"legacy-{server}", page_bytes[page], app)
+        except Exception as e:  # noqa: BLE001
+            cst = f"{type(e).__name__}: {e}"
+        check(server, sid, "control endpoint accepted the case (204)", cst == 204, str(cst))
+        if cst != 204:
+            continue
+        path = "/catalog"
+        try:
+            st, hd, body, enc = request(port, path, req, method=method, host=FIXTURE_HOST)
+        except Exception as e:  # noqa: BLE001 - record the failure and go on with the next scenario
+            check(server, sid, "case request answered", False, f"{type(e).__name__}: {e}")
+            continue
+        save(server, sid, path, [("Host", FIXTURE_HOST)] + list(req), st, hd, body, enc, method=method)
+        obs = {"page": page, "method": method, "app": app, "request": req, "status": st, "headers": hd,
+               "encoding": enc, "body_len": len(body), "body_sha1": sha1(body),
+               "body_is_page": body == page_bytes[page], "body_is_json": body[:1] == b"{"}
+        res[sid] = obs
+        seen = {x: h(hd, x) for x in ("etag", "template-tag", "template-change", "cache-offline", "cache-control",
+                                        "vary", "cdn-cache-control", "surrogate-control", "location", "set-cookie")}
+        checks.append({"server": server, "scenario": sid, "check": "observed", "ok": True, "kind": "observation",
+                       "detail": json.dumps({"status": st, "body_len": len(body), "body_is_page": obs["body_is_page"],
+                                             "body_is_json": obs["body_is_json"], "fields": seen}, ensure_ascii=False)})
+
     results[server] = res
 
 os.makedirs(OUT, exist_ok=True)
 with open(os.path.join(OUT, "results.json"), "w") as f:
     json.dump({"results": results, "checks": checks}, f, ensure_ascii=False, indent=2, default=str)
-fails = [c for c in checks if not c["ok"]]
-print(f"checks: {len(checks)}, passed: {len(checks) - len(fails)}, failed: {len(fails)}")
+model_checks = [c for c in checks if c.get("kind") != "observation"]
+fails = [c for c in model_checks if not c["ok"]]
+print(f"checks: {len(model_checks)}, passed: {len(model_checks) - len(fails)}, failed: {len(fails)}")
+print(f"observed scenarios (S22-S29, no model): {len(checks) - len(model_checks)}")
 for c in fails:
     print(f"FAIL [{c['server']}] {c['scenario']} {c['check']} :: {c['detail']}")

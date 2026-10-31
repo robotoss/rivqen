@@ -1,0 +1,13 @@
+{
+  "id": "FX-LEG-T-DATA--JAVA",
+  "description": "Test: legacy-java cache-control",
+  "profile": "legacy-java",
+  "replaces": "FX-LEG-T-DATA",
+  "divergences": [
+    "D-08"
+  ],
+  "sources": [
+    "docs:engineering/protocol/legacy-divergences#d-08"
+  ],
+  "trace": "evidence/traces/server/java/S06-data-change.http"
+}

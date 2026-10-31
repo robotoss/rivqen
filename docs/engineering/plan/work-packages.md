@@ -11,8 +11,8 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | WP | Name | Phase | Owner role | Depends on | Size | State |
 |---|---|---|---|---|---|---|
 | [WP-00](#wp-00) | Documentation and governance | P0 | Integrator | — | M | **Done** |
-| [WP-01](#wp-01) | Upstream evidence | P0–P1 | Source archaeologist | WP-00 | L | **P0 part done**; client traces in P1 |
-| [WP-02](#wp-02) | Golden fixtures and conformance runner | P1 | Protocol designer | WP-01 | L | Planned |
+| [WP-01](#wp-01) | Upstream evidence | P0–P1 | Source archaeologist | WP-00 | L | **P0 part done**; client part (traces, Q-02, D-20…D-27) before P3, not in G1 (H-110) |
+| [WP-02](#wp-02) | Golden fixtures and conformance runner | P1 | Protocol designer | WP-01 | L | **Done — MR pending** ([S1](/engineering/plan/sprints/WP-02-S1), [S2](/engineering/plan/sprints/WP-02-S2) closed) |
 | [WP-03](#wp-03) | Rust reference server (oracle) | P1 | Backend engineer | WP-02 | M | Planned |
 | [WP-04](#wp-04) | Platform feasibility spikes | P2 | Android + iOS engineers | WP-01 | L | Planned |
 | [WP-05](#wp-05) | Core workspace, data model, errors, testkit | P3 | Rust core engineer | WP-02 | M | Planned |
@@ -27,7 +27,7 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | [WP-14](#wp-13) | Java server SDK | P4 | Backend engineer | WP-02 | M | Planned |
 | [WP-15](#wp-13) | PHP server SDK | P4 | Backend engineer | WP-02 | M | Planned |
 | [WP-16](#wp-16) | Transport extensions (realtime, dictionary compression) | P8 | Protocol designer | WP-10, WP-11 | L | Planned |
-| [WP-17](#wp-17) | Rivqen protocol (RQP) specification | P1 | Protocol designer | WP-00 | L | **Done — MR pending** ([S1](/engineering/plan/sprints/WP-17-S1)…[S6](/engineering/plan/sprints/WP-17-S6) closed; the human opens the MR, H-89) |
+| [WP-17](#wp-17) | Rivqen protocol (RQP) specification | P1 | Protocol designer | WP-00 | L | **Done (merged 2026-10-20, #3)** ([S1](/engineering/plan/sprints/WP-17-S1)…[S6](/engineering/plan/sprints/WP-17-S6) closed) |
 | [WP-18](#wp-18) | Security engineering | P0–P7 | Security engineer | — (continuous) | L | Planned |
 | [WP-19](#wp-19) | Test infrastructure, benchmarks, observability | P1–P7 | Performance engineer | WP-02 | L | Planned |
 | [WP-20](#wp-20) | CI/CD and supply chain | P1–P7 | Integrator | WP-05 | M | Planned |

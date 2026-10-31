@@ -10,10 +10,23 @@ This lab runs the **unmodified** upstream Tencent VasSonic server code in isolat
 |---|---|
 | `pages/` | Rivqen test pages (one per scenario: data change, template change, empty names, duplicates, titles, nesting, Unicode, …) |
 | `node/app.js` | Koa app that serves a page through the upstream `compress.js` middleware (which calls `sonic_differ`) |
-| `php/index.php` | Router that serves a page through the upstream `sonic.php` |
-| `java/PageServlet.java`, `java/web.xml` | Servlet + filter mapping for the upstream `SonicFilter` jar |
+| `node/control.cjs`, `node/control.test.cjs` | Pure parts of the control endpoint (case parsing, `Host` and `Content-Type` checks) and their unit tests |
+| `php/index.php` | Router that serves a page through the upstream `sonic.php`, with the control endpoint |
+| `java/PageServlet.java`, `java/ControlFilter.java`, `java/web.xml` | Servlet, control filter (listed before the upstream filter) and filter mapping for the upstream `SonicFilter` jar |
 | `start.sh` | Starts the three servers on `127.0.0.1:18081-18083` |
 | `run_traces.py` | Sends the scenarios, saves raw traces, checks them against the documented model |
+| `conformance.sh` | Runs the conformance runner against the three servers and writes `evidence/conformance/upstream-lab-<date>.json` |
+
+## Routes of a lab server
+
+| Route | Use |
+|---|---|
+| `/p/<page>` | A stored page of `pages/` through the upstream code (traces S01–S21) |
+| `GET /__rivqen/conformance/info` | `{"contract":1,"suites":["legacy"],"profiles":["legacy-node"]}` (`legacy-php`, `legacy-java` for the others) |
+| `POST /__rivqen/conformance/case` | Stores one case: `204`; `400` `BAD_CASE`; `415` (no `application/json`); `413` (over 8 MiB); `422` `UNSUPPORTED` (another suite or profile). A new case replaces the old one |
+| any other path | The stored case: the harness sets the application status and field lines, writes the page bytes, and the upstream code acts on it (`503` before the first case) |
+
+The control endpoint is test code ([CONTRACT.md](../../server/conformance/CONTRACT.md) §2). It is off unless `RIVQEN_CONFORMANCE=1` (`start.sh` sets it). Inside a container the peer is the bridge address, so the lab checks `Host` (`127.0.0.1:<published port>`, `localhost:…`, `[::1]:…`; `start.sh` passes the port as `LAB_HOST_PORT`) and `Content-Type`, not the peer address (DL-081). The ports are published on `127.0.0.1` of the host only. Limit: the Node.js harness writes a repeated application field name as one group at the place of its first line, so interleaved repeats (`a`, `b`, `a`) change order.
 
 ## Run
 
@@ -36,8 +49,38 @@ This lab runs the **unmodified** upstream Tencent VasSonic server code in isolat
    python3 -I tools/upstream-lab/run_traces.py tools/upstream-lab/pages evidence/traces/server
    ```
 
-4. Stop the servers: `docker rm -f lab-node lab-php lab-java`.
+4. Run the conformance runner against the three servers (profiles `legacy-node`, `legacy-php`, `legacy-java`):
+
+   ```bash
+   sh tools/upstream-lab/conformance.sh
+   ```
+
+   It writes `evidence/conformance/upstream-lab-<date>.json` (the `--json` report of each profile and its exit code). The exit code of the script is the largest runner exit code. `DATE=<yyyy-mm-dd>` and `OUT_DIR=<dir>` override the defaults.
+
+5. Stop the servers: `docker rm -f lab-node lab-php lab-java`.
+
+`run_traces.py` also runs the scenarios S22–S29 through the control endpoint: application `cache-offline: false` (S22) and `http` (S23), status `302` (S24), `404` (S25), `POST` (S26), `HEAD` (S27), application `Vary` (S28), application `CDN-Cache-Control` and `Surrogate-Control` (S29). The request is the data-change request of the catalog (page `b`, the tag of page `a`), except S24 (page `a`). The traces are saved as `S22-…` to `S29-…` next to the old ones. In `results.json` these scenarios are `observation` entries: they record the observed status and fields, with no pass/fail model.
+
+## Tests without Docker
+
+```bash
+node --test tools/upstream-lab/node/control.test.cjs   # case parsing and checks (Node.js harness)
+node --check tools/upstream-lab/node/app.js
+php -l tools/upstream-lab/php/index.php
+python3 -I -m py_compile tools/upstream-lab/run_traces.py
+```
+
+The upstream code runs only in the containers, so the live behavior is checked by `start.sh`, `run_traces.py` and `conformance.sh`.
 
 ## Last result
 
-2026-10-09: 115 checks, 113 passed, 2 expected failures (Java). See the [server trace report](../../docs/engineering/protocol/legacy-traces.md).
+2026-10-31: 139 checks, 137 passed, 2 expected failures (Java, D-02 and D-12); S01–S21 reproduced the traces of 2026-10-09; S22–S29 recorded as observations. Conformance run by URL: `evidence/conformance/upstream-lab-2026-10-31.md`. See the [server trace report](../../docs/engineering/protocol/legacy-traces.md) §9.
+
+2026-10-09: 115 checks, 113 passed, 2 expected failures (Java).
+
+## Limits of the lab (security review of WP-02 S2, DL-083)
+
+- The control endpoint checks only `Host` and `Content-Type` (DL-081). A browser page cannot use it, but any local process, or another container on the default Docker bridge, can post a case. Run the lab only on a single-user development machine, and only for the length of a run.
+- The PHP built-in server reads the whole request body before `index.php` runs, so the 8 MiB case limit does not bound its memory.
+- The harnesses pass application status codes 100–599 and every field line, including `Content-Length`, `Transfer-Encoding` and `Connection`; do not put 1xx statuses or framing fields into case data. Koa answers `500` for a status code it does not know (for example 299). The Node.js harness groups repeated application field lines at the position of the first one.
+- `gson-2.8.2.jar` is checked against a pinned SHA-256 in `start.sh`. The npm packages and the container images are not pinned yet (follow-up for WP-20).

@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-VARY-APP--JAVA",
+  "description": "legacy-java: JSON escaping of the data body; cache-control (vary: template-tag is added, U-12 is not reproduced)",
+  "profile": "legacy-java",
+  "replaces": "FX-LEG-VARY-APP",
+  "divergences": ["D-08","D-09"],
+  "sources": ["upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149"],
+  "trace": "evidence/traces/server/java/S28-vary-app.http"
+}

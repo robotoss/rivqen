@@ -1,0 +1,31 @@
+{
+  "id": "FX-LEG-T-FIRST",
+  "description": "Test: first load",
+  "profile": "legacy-canonical",
+  "rules": [
+    "C-01"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-wire#canonical-server"
+  ],
+  "evidence": "code-reading",
+  "page": "a",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog?sort=price&page=2",
+    "headers": [
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "accept-diff",
+        "true"
+      ]
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-COMPRESSED-IDENTITY--PHP",
+  "description": "legacy-php: JSON escaping of the data body; cache-control",
+  "profile": "legacy-php",
+  "replaces": "FX-LEG-COMPRESSED-IDENTITY",
+  "divergences": ["D-08","D-09"],
+  "sources": ["upstream:sonic-php/sdk/sonic.php:50-145"],
+  "trace": "evidence/traces/server/php/S11-identity-encoding.http"
+}

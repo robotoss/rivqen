@@ -11,7 +11,7 @@ A gate is a go/no-go decision at the end of a phase. Work cannot pass a gate unt
 | Gate | After | Conditions |
 |---|---|---|
 | **G0** ✅ passed | P0 | Upstream pinned at a fixed SHA; license inventory done; behavioral audit covers headers, markers, hashing, `cache-offline`, result codes, FSM, cache; divergences listed |
-| **G1** | P1 | RQP and legacy golden suites exist **before** SDK code; reference server passes both; each legacy divergence has a profile and fixture |
+| **G1** | P1 | RQP and legacy golden suites exist **before** SDK code; reference server passes both; each server legacy divergence (D-01…D-13) has a profile and fixture; the client divergences follow before G3 (H-110) |
 | **G2** | P2 | Android and iOS feasibility proven with public APIs; incompatibilities documented publicly (ADRs) |
 | **G3** | P3 | Core passes unit, property, fuzz and golden tests; `unsafe` reviewed; resource limits enforced |
 | **G4-S / G4-M / G4-W** | P4 / P5 / P6 | Servers, mobile SDKs and web SDK pass the same conformance set and their E2E suites |

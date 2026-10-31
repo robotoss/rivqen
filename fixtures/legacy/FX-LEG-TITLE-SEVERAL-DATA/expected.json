@@ -1,0 +1,45 @@
+{
+  "id": "FX-LEG-TITLE-SEVERAL-DATA",
+  "profile": "legacy-canonical",
+  "level": "must",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["Accept-Encoding","gzip"],
+      ["accept-diff","true"],
+      ["If-None-Match","0000000000000000000000000000000000000000"],
+      ["template-tag","15d30184ec1fc0f39dbb196e47311709a86e0b5d"]
+    ]
+  },
+  "status": 200,
+  "fields": {
+    "etag": ["429e1afc55f9b2241b0b03450b8779c88c85ff85"],
+    "template-tag": ["15d30184ec1fc0f39dbb196e47311709a86e0b5d"],
+    "template-change": ["false"],
+    "cache-offline": ["true"],
+    "cache-control": ["no-cache, private"],
+    "content-type": ["text/html; charset=utf-8"],
+    "sonic-etag-key": [],
+    "vary": ["template-tag"],
+    "cdn-cache-control": [],
+    "surrogate-control": []
+  },
+  "body": {
+    "kind": "data",
+    "data": {
+      "{title}": "<TITLE>Upper</TITLE>",
+      "{p}": "<!--sonicdiff-p--><p>1</p><!--sonicdiff-p-end-->"
+    },
+    "template_tag": "15d30184ec1fc0f39dbb196e47311709a86e0b5d",
+    "html_sha1": "429e1afc55f9b2241b0b03450b8779c88c85ff85",
+    "diff": ""
+  },
+  "split": {
+    "applied": true,
+    "template_sha1": "15d30184ec1fc0f39dbb196e47311709a86e0b5d",
+    "keys": ["{title}","{p}"],
+    "rebuild_sha1": "429e1afc55f9b2241b0b03450b8779c88c85ff85"
+  },
+  "profiles_same": []
+}

@@ -1,0 +1,30 @@
+{
+  "id": "FX-LEG-T-PENDING",
+  "description": "Test: no expected.json yet",
+  "profile": "legacy-canonical",
+  "rules": [
+    "C-01"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-wire#canonical-server"
+  ],
+  "evidence": "code-reading",
+  "page": "b",
+  "request": {
+    "method": "GET",
+    "headers": [
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "accept-diff",
+        "true"
+      ]
+    ]
+  }
+}

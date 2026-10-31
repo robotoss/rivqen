@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-CDN-FIELDS--PHP",
+  "description": "legacy-php: JSON escaping of the data body; cache-control (the CDN fields are dropped, U-12 is not reproduced)",
+  "profile": "legacy-php",
+  "replaces": "FX-LEG-CDN-FIELDS",
+  "divergences": ["D-08","D-09"],
+  "sources": ["upstream:sonic-php/sdk/sonic.php:50-145"],
+  "trace": "evidence/traces/server/php/S29-cdn-fields.http"
+}

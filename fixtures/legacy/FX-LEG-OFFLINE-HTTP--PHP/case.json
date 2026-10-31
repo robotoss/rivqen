@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-OFFLINE-HTTP--PHP",
+  "description": "legacy-php: JSON escaping of the data body; cache-control; its own cache-offline true only (the application value is lost)",
+  "profile": "legacy-php",
+  "replaces": "FX-LEG-OFFLINE-HTTP",
+  "divergences": ["D-08","D-09","D-14"],
+  "sources": ["upstream:sonic-php/sdk/sonic.php:50-145","docs:engineering/protocol/legacy-divergences#_1-server-divergences"],
+  "trace": "evidence/traces/server/php/S23-offline-http.http"
+}

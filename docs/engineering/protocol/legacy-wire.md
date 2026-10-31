@@ -175,6 +175,33 @@ Rivqen rules:
 
 Upstream Java violates this: it adds `Etag`, `template-tag` and `template-change` to every text response (`SonicFilter.java:103-144`). PHP and Node.js do not. See [Divergences](/engineering/protocol/legacy-divergences).
 
-## 10. Verification
+## 10. Canonical server algorithm {#canonical-server}
 
-Fixtures `FX-LEG-*` in [Golden fixtures](/engineering/protocol/fixtures) cover every section of this page.
+<Badge type="info" text="DESIGN" /> This section is the exact behavior of a server in the `legacy-canonical` profile (ADR-005). It joins the canonical rules of this page, of the [markers grammar](/engineering/protocol/legacy-markers#_4-canonical-legacy-grammar-for-rivqen) §4 and of the canonical column of [Divergences](/engineering/protocol/legacy-divergences), and closes their gaps (WP-02 kickoff: DL-070, DL-072 to DL-075). The `fixtures/legacy` generator and every server SDK implement it. "Pass-through" means: the application response goes out unchanged (status, every field line, body), with no legacy field added.
+
+Input: the request (method, field lines), the application response A (status, field lines, body bytes) and the configuration. A field name compares ASCII case-insensitively; a field value is trimmed of spaces and tabs at both ends.
+
+| Rule | Behavior |
+|---|---|
+| C-01 Scope | Only a `GET` request with A status `200` and exactly one A `content-type` field line with the media type `text/html` (ASCII case-insensitive; parameters ignored) can get legacy processing. Any other request or response (`HEAD`, `POST`, 3xx, 404, other media types): pass-through (DL-074) |
+| C-02 Legacy request | The request has exactly one `accept-diff` field line and its value is exactly `true`. Otherwise: pass-through (§3, §9, D-01, D-02) |
+| C-03 Text | The `charset` parameter of A, if present, is `utf-8` (ASCII case-insensitive, also as a quoted string), and the body is valid UTF-8. Otherwise: pass-through (DL-074; replaces the "decode other charsets" row of the markers grammar §4) |
+| C-04 `etag` | The lowercase hex SHA-1 of the body bytes of A, without quotes (§4) |
+| C-05 Not modified | The request has exactly one `If-None-Match` field line; its value without one leading `W/` and without one pair of enclosing `"` equals C-04 (ASCII case-insensitive, D-03). Then: status `304`, no body, `cache-offline: store`, `cache-control` of C-09; no `etag`, `template-tag` or `template-change` field (all three upstream servers send none; trace S03) |
+| C-06 Title | In the body text, find the first match of `<title([^\n]*?)</title>` (ASCII case-insensitive). Replace it with `{title}`. The data value `{title}` is the whole match, or the empty string when there is no match (the key is always present; markers §2, D-04, Node.js rule) |
+| C-07 Blocks | In the result of C-06, find the matches of `<!--sonicdiff-?(\w*)-->([\s\S]+?)<!--sonicdiff-?(\w*)-end-->` from left to right, without overlap (ASCII case-insensitive; `\w` = `[A-Za-z0-9_]`; the lazy match ends at the first end marker; the end name is not checked). For each match: if the name (group 1) is empty or longer than 128 characters, the match stays in the template and has no data key (D-05); else it is replaced with `{name}` and the data value `{name}` is the whole match. If a name occurs twice (case-sensitive), or a block is named `title` (its key would be `{title}`), the split fails: pass-through (DL-075, DL-076). The split runs before C-05: a page whose split fails gets pass-through also when `If-None-Match` matches |
+| C-08 Template | The template is the text after C-07; `template-tag` is the lowercase hex SHA-1 of its UTF-8 bytes. The data map has `{title}` first, then the blocks in document order |
+| C-09 `cache-control` | `no-cache, private`, which replaces the field lines of A; but if a field line of A has the directive `no-store`, the field lines of A stay (D-09) |
+| C-10 `cache-offline` | One field line. Default: `true` on `200`, `store` on `304`. On `200`, an A value `true`, `false`, `store` or `http` (exactly, lowercase) replaces the default; any other A value is ignored (DL-070) |
+| C-11 Data response | When the request has exactly one `template-tag` field line and its value equals C-08 exactly: status `200`, body = the UTF-8 JSON object with the members `data` (C-08), `template-tag`, `html-sha1` (= C-04) and `diff` (`""`), without HTML escaping; `template-change: false` |
+| C-12 Full response | Otherwise: status `200`, the body of A unchanged, `template-change: true` |
+| C-13 Fields | C-05, C-11 and C-12 keep the field lines of A except `etag`, `template-tag`, `template-change`, `cache-offline`, `sonic-etag-key`, `cache-control` (C-09), `cdn-cache-control`, `surrogate-control` (H-111) and `content-length`, then add `etag` (not on `304`), `template-tag` (not on `304`), `template-change` (not on `304`), `cache-offline`, `cache-control` and C-15. `content-type` stays the value of A (DL-072). `Content-Length` is the length of the sent body |
+| C-14 Content coding | The server does not use the request `Accept-Encoding` to decide (D-10). A legacy response has no content coding or `gzip` (DL-073) |
+| C-15 `Vary` | C-05, C-11 and C-12 keep the `vary` field lines of A and add one field line `vary: template-tag` after them, unless a `vary` line of A already lists `template-tag` or `*` (ASCII case-insensitive members). The same URL gives the full document or the data response by the `template-tag` request field, so a cache must not give one for the other (H-111, U-12) |
+| C-16 Linear time | A server MUST compute C-06 and C-07 in time linear in the body length. The regular expressions above define the result; a backtracking regular expression engine can take quadratic time on many unclosed `<title` or `<!--sonicdiff` openers, so an implementation scans forward: C-06 tries each `<title` opener against the next `</title>` and the next LF after it; C-07 stops when no end marker follows an opener (DL-077) |
+
+Request fields `sonic-sdk-version`, `Cookie`, `User-Agent` and `Accept-Encoding` do not change the result.
+
+## 11. Verification
+
+Fixtures `FX-LEG-*` in [Golden fixtures](/engineering/protocol/fixtures) cover every section of this page; every rule C-01 to C-16 has at least one fixture (`fixtures/legacy/README.md`).

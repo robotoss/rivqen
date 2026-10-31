@@ -91,10 +91,10 @@ Rivqen implements one **canonical** profile and keeps the other behaviors as nam
 | Empty name | Reject the block: treat the page as unmarked for that block (the block stays in the template) | Avoids `{}`, `{null}` and `{auto0}` disagreements |
 | Mismatched end name | Accept (upstream compatibility), emit a diagnostic warning | All implementations accept it |
 | Title | First `<title…>…</title>` case-insensitive, replaced **once**, before block extraction | Node.js behavior; the simplest unambiguous rule |
-| Duplicate names | Reject the page as malformed for legacy split; send full HTML | Last-wins hides data |
+| Duplicate names | Reject the page as malformed for legacy split: the application response goes out unchanged, without legacy fields (C-07, DL-075) | Last-wins hides data |
 | Nested markers | Not supported; the lazy match ends at the first end marker | Upstream behavior |
 | Markers inside `<script>`, `<style>`, `<textarea>`, comments | Matched textually (no HTML parsing) | Upstream behavior; documented risk |
-| Encoding | UTF-8 only; other charsets are decoded to UTF-8 before hashing | Upstream Java/Node assume UTF-8 |
+| Encoding | UTF-8 only; a page with another charset label or invalid UTF-8 gets no legacy processing ([legacy wire](/engineering/protocol/legacy-wire#canonical-server) C-03, DL-074) | Upstream Java/Node assume UTF-8; decoding other charsets in four server languages would add divergences |
 | Line endings | Bytes as rendered; no normalization | Hash stability |
 
 Profiles: `legacy-canonical` (default), `legacy-java`, `legacy-php`, `legacy-node`. See [Divergences](/engineering/protocol/legacy-divergences).

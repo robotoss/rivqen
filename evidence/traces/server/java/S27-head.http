@@ -1,0 +1,19 @@
+HEAD /catalog HTTP/1.1
+Host: shop.example.com
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 3e3184cbd12e5294959effe6f2d9985f50f4ea5d
+template-tag: 3c771bf015df2c410a41a6012804f645b3acc1bc
+
+--- response ---
+HTTP 200
+Cache-Control: no-cache
+Cache-Offline: true
+Etag: 
+template-tag: 
+template-change: true
+Content-Type: text/html;charset=utf-8
+Content-Length: 0
+Date: Sat, 31 Oct 2026 08:06:10 GMT
+
+[body decoded from content-encoding=identity]

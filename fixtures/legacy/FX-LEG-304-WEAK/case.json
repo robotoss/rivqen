@@ -1,0 +1,47 @@
+{
+  "id": "FX-LEG-304-WEAK",
+  "description": "A weak If-None-Match validator with the current SHA-1 gets 304.",
+  "profile": "legacy-canonical",
+  "rules": [
+    "C-05"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-wire#canonical-server"
+  ],
+  "evidence": "code-reading",
+  "page": "a",
+  "app": {
+    "status": 200,
+    "headers": [
+      [
+        "content-type",
+        "text/html; charset=utf-8"
+      ]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "accept-diff",
+        "true"
+      ],
+      [
+        "if-none-match",
+        "W/\"{{etag:a}}\""
+      ],
+      [
+        "template-tag",
+        "{{tag:a}}"
+      ]
+    ]
+  }
+}

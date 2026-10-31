@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-304-QUOTED--PHP",
+  "description": "legacy-php: 304 comparison; JSON escaping of the data body; cache-control",
+  "profile": "legacy-php",
+  "replaces": "FX-LEG-304-QUOTED",
+  "divergences": ["D-03","D-08","D-09"],
+  "sources": ["upstream:sonic-php/sdk/sonic.php:50-145"],
+  "trace": "evidence/traces/server/php/S05-304-quoted-etag.http"
+}

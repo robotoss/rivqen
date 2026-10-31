@@ -1,0 +1,34 @@
+{
+  "id": "FX-LEG-304-QUOTED",
+  "description": "The etag in quotes still matches (canonical: one pair of quotes is removed)",
+  "profile": "legacy-canonical",
+  "rules": ["C-05"],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": ["docs:engineering/protocol/legacy-wire#canonical-server"],
+  "evidence": "trace",
+  "traces": {
+    "legacy-java": "evidence/traces/server/java/S05-304-quoted-etag.http",
+    "legacy-node": "evidence/traces/server/node/S05-304-quoted-etag.http",
+    "legacy-php": "evidence/traces/server/php/S05-304-quoted-etag.http"
+  },
+  "page": "a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type","text/html; charset=utf-8"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["Accept-Encoding","gzip"],
+      ["accept-diff","true"],
+      ["If-None-Match","\"{{etag:a}}\""],
+      ["template-tag","{{tag:a}}"]
+    ]
+  }
+}

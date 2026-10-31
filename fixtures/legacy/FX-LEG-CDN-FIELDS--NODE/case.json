@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-CDN-FIELDS--NODE",
+  "description": "legacy-node: cache-control (the CDN fields are dropped, U-12 is not reproduced)",
+  "profile": "legacy-node",
+  "replaces": "FX-LEG-CDN-FIELDS",
+  "divergences": ["D-09"],
+  "sources": ["upstream:sonic-nodejs/common/diff.js:12-122","upstream:sonic-nodejs/middleware/compress.js:18-83"],
+  "trace": "evidence/traces/server/node/S29-cdn-fields.http"
+}

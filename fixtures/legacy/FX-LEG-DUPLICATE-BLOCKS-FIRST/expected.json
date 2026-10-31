@@ -1,0 +1,36 @@
+{
+  "id": "FX-LEG-DUPLICATE-BLOCKS-FIRST",
+  "profile": "legacy-canonical",
+  "level": "must",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["Accept-Encoding","gzip"],
+      ["accept-diff","true"]
+    ]
+  },
+  "status": 200,
+  "fields": {
+    "etag": [],
+    "template-tag": [],
+    "template-change": [],
+    "cache-offline": [],
+    "cache-control": [],
+    "content-type": ["text/html; charset=utf-8"],
+    "sonic-etag-key": [],
+    "vary": [],
+    "cdn-cache-control": [],
+    "surrogate-control": []
+  },
+  "body": {
+    "kind": "page"
+  },
+  "split": {
+    "applied": false,
+    "template_sha1": null,
+    "keys": [],
+    "rebuild_sha1": null
+  },
+  "profiles_same": []
+}

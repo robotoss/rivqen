@@ -1,0 +1,38 @@
+{
+  "id": "FX-LEG-DETECT-ACCEPT-DIFF-YES",
+  "profile": "legacy-canonical",
+  "level": "must",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["Accept-Encoding","gzip"],
+      ["accept-diff","yes"],
+      ["If-None-Match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+      ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"]
+    ]
+  },
+  "status": 200,
+  "fields": {
+    "etag": [],
+    "template-tag": [],
+    "template-change": [],
+    "cache-offline": [],
+    "cache-control": [],
+    "content-type": ["text/html; charset=utf-8"],
+    "sonic-etag-key": [],
+    "vary": [],
+    "cdn-cache-control": [],
+    "surrogate-control": []
+  },
+  "body": {
+    "kind": "page"
+  },
+  "split": {
+    "applied": true,
+    "template_sha1": "3c771bf015df2c410a41a6012804f645b3acc1bc",
+    "keys": ["{title}","{price}","{stock}"],
+    "rebuild_sha1": "4c33dabea7ea65c6255b9e6a6539976674886a2c"
+  },
+  "profiles_same": ["legacy-php"]
+}

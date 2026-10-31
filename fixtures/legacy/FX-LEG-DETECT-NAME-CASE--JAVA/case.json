@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-DETECT-NAME-CASE--JAVA",
+  "description": "legacy-java: JSON escaping of the data body; cache-control",
+  "profile": "legacy-java",
+  "replaces": "FX-LEG-DETECT-NAME-CASE",
+  "divergences": ["D-08","D-09"],
+  "sources": ["upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149"],
+  "trace": "evidence/traces/server/java/S10-header-capitalized.http"
+}

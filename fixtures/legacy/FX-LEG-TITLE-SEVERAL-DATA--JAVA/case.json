@@ -1,0 +1,10 @@
+{
+  "id": "FX-LEG-TITLE-SEVERAL-DATA--JAVA",
+  "description": "legacy-java: JSON escaping of the data body; cache-control; several title elements (the page-corrupting title replacement U-11 is not reproduced, DL-069)",
+  "profile": "legacy-java",
+  "replaces": "FX-LEG-TITLE-SEVERAL-DATA",
+  "divergences": ["D-08","D-09","D-13"],
+  "sources": ["upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149"],
+  "trace": "evidence/traces/server/java/S16-titles-data.http",
+  "not_reproduced": "U-11"
+}

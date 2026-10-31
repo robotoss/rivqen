@@ -350,3 +350,114 @@ fn http_limits_a_slow_reader_releases_the_server_after_the_write_deadline() {
     assert!(waited < Duration::from_secs(8), "{waited:?}");
     assert!(got < groups * 3, "A got the whole page: {got}");
 }
+
+/// Send a head that announces a large body, then keep sending body bytes in a
+/// thread while the main thread reads the answer.
+fn early_answer_while_sending(port: u16, head: &str) -> Reply {
+    let mut stream = TcpStream::connect(("127.0.0.1", port)).unwrap();
+    stream
+        .set_read_timeout(Some(Duration::from_secs(20)))
+        .unwrap();
+    stream.write_all(head.as_bytes()).unwrap();
+    let mut sender = stream.try_clone().unwrap();
+    let writer = thread::spawn(move || {
+        let chunk = vec![b'x'; 64 * 1024];
+        for _ in 0..64 {
+            if sender.write_all(&chunk).is_err() {
+                return;
+            }
+        }
+        sender.shutdown(Shutdown::Write).ok();
+    });
+    let reply = read_reply(&mut stream);
+    writer.join().unwrap();
+    reply
+}
+
+#[test]
+fn http_limits_an_early_answer_reaches_a_client_that_still_sends() {
+    let port = start_default();
+    // 413 of the HTTP layer: the body is not read, the client still sends it.
+    let reply = early_answer_while_sending(
+        port,
+        "POST /catalog HTTP/1.1\r\nHost: shop.example.com\r\nContent-Length: 9000000\r\n\r\n",
+    );
+    assert_eq!(reply.status, 413);
+    assert_eq!(reply.body, br#"{"error":"TOO_LARGE"}"#);
+    // 403 of the control endpoint for a POST with a body.
+    let reply = early_answer_while_sending(
+        port,
+        "POST /__rivqen/conformance/case HTTP/1.1\r\nHost: evil.example\r\nContent-Type: application/json\r\nContent-Length: 4194304\r\n\r\n",
+    );
+    assert_eq!(reply.status, 403);
+    assert_eq!(reply.body, br#"{"error":"FORBIDDEN"}"#);
+}
+
+#[test]
+fn http_limits_discard_after_an_early_answer_stops_at_16_mib() {
+    // A long linger: only the byte limit can end the discard.
+    let port = start(Timeouts {
+        linger: Duration::from_secs(60),
+        ..Timeouts::default()
+    });
+    let mut stream = TcpStream::connect(("127.0.0.1", port)).unwrap();
+    stream
+        .write_all(b"POST /catalog HTTP/1.1\r\nHost: a\r\nContent-Length: 99999999\r\n\r\n")
+        .unwrap();
+    let started = Instant::now();
+    let chunk = vec![b'x'; 64 * 1024];
+    let mut sent = 0usize;
+    while sent < 256 * 1024 * 1024 && stream.write_all(&chunk).is_ok() {
+        sent += chunk.len();
+    }
+    // The server discards 16 MiB, then closes: the writes fail.
+    assert!(sent >= 16 * 1024 * 1024, "sent {sent}");
+    assert!(sent < 64 * 1024 * 1024, "sent {sent}");
+    assert!(started.elapsed() < Duration::from_secs(30));
+}
+
+#[test]
+fn http_limits_a_client_that_keeps_its_socket_open_does_not_hold_the_server() {
+    let port = start(Timeouts {
+        linger: Duration::from_secs(30),
+        ..Timeouts::default()
+    });
+    let mut open = Vec::new();
+    for target in [INFO_PATH, "/__rivqen/conformance/other"] {
+        // A reads its answer up to the end of the stream of the server, then
+        // keeps its socket open.
+        let mut a = TcpStream::connect(("127.0.0.1", port)).unwrap();
+        a.set_read_timeout(Some(Duration::from_secs(20))).unwrap();
+        let req = format!("GET {target} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\n\r\n");
+        a.write_all(req.as_bytes()).unwrap();
+        let reply = read_reply(&mut a);
+        assert!(reply.status == 200 || reply.status == 404, "{reply:?}");
+        open.push(a);
+        // B is answered at once: no discard after an answer that read the
+        // whole request.
+        let started = Instant::now();
+        assert_eq!(exchange(port, &info_request(port, "")).status, 200);
+        assert!(
+            started.elapsed() < Duration::from_secs(10),
+            "{target}: {:?}",
+            started.elapsed()
+        );
+    }
+}
+
+#[test]
+fn http_limits_head_answer_has_length_but_no_body() {
+    let port = start_default();
+    let mut stream = TcpStream::connect(("127.0.0.1", port)).unwrap();
+    stream
+        .set_read_timeout(Some(Duration::from_secs(20)))
+        .unwrap();
+    let req = format!("HEAD {INFO_PATH} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\n\r\n");
+    stream.write_all(req.as_bytes()).unwrap();
+    let mut raw = Vec::new();
+    stream.read_to_end(&mut raw).unwrap();
+    let reply = parse_reply(&raw);
+    assert_eq!(reply.status, 405);
+    assert_eq!(reply.field("Content-Length"), Some("30"));
+    assert_eq!(reply.body, b"");
+}

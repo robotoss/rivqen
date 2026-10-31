@@ -13,7 +13,7 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | [WP-00](#wp-00) | Documentation and governance | P0 | Integrator | — | M | **Done** |
 | [WP-01](#wp-01) | Upstream evidence | P0–P1 | Source archaeologist | WP-00 | L | **P0 part done**; client part (traces, Q-02, D-20…D-27) before P3, not in G1 (H-110) |
 | [WP-02](#wp-02) | Golden fixtures and conformance runner | P1 | Protocol designer | WP-01 | L | **Done (merged 2026-10-31, #5)** ([S1](/engineering/plan/sprints/WP-02-S1), [S2](/engineering/plan/sprints/WP-02-S2) closed) |
-| [WP-03](#wp-03) | Rust reference server (oracle) | P1 | Backend engineer | WP-02 | M | Planned |
+| [WP-03](#wp-03) | Rust reference server (oracle) | P1 | Backend engineer | WP-02 | M | **In progress** ([S1](/engineering/plan/sprints/WP-03-S1)) |
 | [WP-04](#wp-04) | Platform feasibility spikes | P2 | Android + iOS engineers | WP-01 | L | Planned |
 | [WP-05](#wp-05) | Core workspace, data model, errors, testkit | P3 | Rust core engineer | WP-02 | M | Planned |
 | [WP-06](#wp-06) | Template engine | P3 | Rust core engineer | WP-05 | M | Planned |
@@ -95,8 +95,9 @@ flowchart TD
 | Field | Content |
 |---|---|
 | Goal | An oracle server that passes all fixtures and serves the conformance lab. |
-| Deliverables | `server/rust-reference` binary and container image. |
-| Acceptance | 100 % of legacy fixtures pass; all divergence profiles selectable by configuration. |
+| Deliverables | `server/rust-reference` binary (own HTTP/1.1 reader on `std`, H-113; conformance mode and a static site mode, H-114) and container image (`scratch`, static musl binary, pinned by digest, H-115). |
+| Acceptance | 100 % of legacy fixtures pass; all divergence profiles selectable by configuration; for G1 also all RQP `P` cases and the malformed suite, by URL through `server/conformance`. |
+| Status | **In progress.** [S1](/engineering/plan/sprints/WP-03-S1): both suites over HTTP (gate G1); S2: image and site mode. |
 
 ### WP-04 — Platform feasibility spikes {#wp-04}
 
@@ -114,6 +115,7 @@ flowchart TD
 | Goal | The base of the Rust core. |
 | Deliverables | Cargo workspace; `rivqen-core` facade skeleton; data model types; error types; `rivqen-testkit` with fixture loader, fake clock and fake transport; `rivqen-proto` crate (RQP types, manifest, patch and header parsing, checked against `fixtures/rqp/protocol`; moved from WP-17); CI for Rust. |
 | Acceptance | `cargo test` runs fixtures as data; `#![forbid(unsafe_code)]` in all crates except `rivqen-ffi`. |
+| Note | The root workspace excludes `server/rust-reference` and `tools/rqp-markup/rust`: both keep their own workspace (DL-084). |
 
 ### WP-06 — Template engine {#wp-06}
 

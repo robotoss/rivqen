@@ -1,0 +1,48 @@
+{
+  "id": "FX-LEG-MAL-TITLE-UNCLOSED",
+  "description": "<title> without </title>: {title} is the empty string.",
+  "profile": "legacy-canonical",
+  "rules": [
+    "C-06"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-wire#canonical-server"
+  ],
+  "evidence": "code-reading",
+  "page": "title-unclosed",
+  "app": {
+    "status": 200,
+    "headers": [
+      [
+        "content-type",
+        "text/html; charset=utf-8"
+      ]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "accept-diff",
+        "true"
+      ],
+      [
+        "if-none-match",
+        "0000000000000000000000000000000000000000"
+      ],
+      [
+        "template-tag",
+        "{{tag:title-unclosed}}"
+      ]
+    ]
+  }
+}

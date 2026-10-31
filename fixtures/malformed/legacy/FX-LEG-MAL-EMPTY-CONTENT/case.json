@@ -1,0 +1,48 @@
+{
+  "id": "FX-LEG-MAL-EMPTY-CONTENT",
+  "description": "An empty block before the price block: the lazy content needs one character, so the match runs to the price end marker.",
+  "profile": "legacy-canonical",
+  "rules": [
+    "C-07"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-wire#canonical-server"
+  ],
+  "evidence": "code-reading",
+  "page": "empty-content",
+  "app": {
+    "status": 200,
+    "headers": [
+      [
+        "content-type",
+        "text/html; charset=utf-8"
+      ]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "accept-diff",
+        "true"
+      ],
+      [
+        "if-none-match",
+        "0000000000000000000000000000000000000000"
+      ],
+      [
+        "template-tag",
+        "{{tag:empty-content}}"
+      ]
+    ]
+  }
+}

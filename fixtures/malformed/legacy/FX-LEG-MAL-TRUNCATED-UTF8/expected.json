@@ -1,0 +1,38 @@
+{
+  "id": "FX-LEG-MAL-TRUNCATED-UTF8",
+  "profile": "legacy-canonical",
+  "level": "must",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["accept-encoding","gzip"],
+      ["accept-diff","true"],
+      ["if-none-match","0000000000000000000000000000000000000000"],
+      ["template-tag",""]
+    ]
+  },
+  "status": 200,
+  "fields": {
+    "etag": [],
+    "template-tag": [],
+    "template-change": [],
+    "cache-offline": [],
+    "cache-control": [],
+    "content-type": ["text/html; charset=utf-8"],
+    "sonic-etag-key": [],
+    "vary": [],
+    "cdn-cache-control": [],
+    "surrogate-control": []
+  },
+  "body": {
+    "kind": "page"
+  },
+  "split": {
+    "applied": false,
+    "template_sha1": null,
+    "keys": [],
+    "rebuild_sha1": null
+  },
+  "profiles_same": []
+}

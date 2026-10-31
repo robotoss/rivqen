@@ -120,6 +120,13 @@ RQP_MARKUP_FIXTURES="$(git rev-parse --show-toplevel)/fixtures/rqp/markup" \
 
 Each job needs about 450 MB of disk space for its copy of the package and its build.
 
+Result of T-04 (WP-03 S1, DL-085; cargo-mutants 27.1.0, `--in-diff` of the `.rs` lines that T-04 changed against `b50703e`, paths relative to this directory, `-j 1 --timeout 60`; 22 min): 112 mutants, 18 unviable, 82 caught, 7 timeouts (the mutant loops; the timeout kills it), 5 missed. Kill rate 89/94 = 94.7 %; 89/89 = 100 % without the 5 equivalent mutants. No test was added. The 5 missed mutants:
+
+| Mutant | Why it is equivalent |
+|---|---|
+| Delete the `/` arm, delete the `>` arm, or make the white space guard false in the after-quoted state of `TagWalk::walk_until` (3 mutants) | The default arm reconsumes the byte in the before-attribute-name state, which handles `/`, `>` and white space with the same result (no attribute is pending after a quoted value) |
+| `\|\|` → `&&` twice in the order check of `Scanner::advance` (2 mutants) | A fail-closed guard for a future defect: the tokenizer gives tokens in order, not empty and inside the input, so no input reaches it |
+
 Result of T-12 (WP-17 S5, DL-056; cargo-mutants 27.1.0, `--in-diff` of the lines that S5 T-10 changed in `src/` against `fb29271`, paths relative to this directory, `-j 1 --timeout 60`; 36 s): 8 mutants, 1 unviable, 7 caught, 0 missed. Kill rate 7/7 = 100 %. No test was added and no mutant is equivalent.
 
 Result of T-07 (WP-17 S5; cargo-mutants 27.1.0, `--in-diff` of the changed lines of `src/` against `a56b45d`, `-j 1 --timeout 60`; 42 s): 10 mutants, 1 unviable, 9 caught, 0 missed. Kill rate 9/9 = 100 %. No test was added and no mutant is equivalent. The name sets in `names.rs` are data, so cargo-mutants makes no mutant for the two removed names; the unit test in `names.rs` and the fixtures check them.

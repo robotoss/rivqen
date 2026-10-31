@@ -34,6 +34,59 @@ To compare the candidate with the golden fixtures, run this from the repository 
 node tools/rqp-markup/diff.mjs --only rust
 ```
 
+## Token API (`scan`)
+
+FACT: WP-03 S1 T-04 (DL-085) adds the public module `rqp_markup::scan`. It gives the tokens of the tokenizer of `analyze` to the reference server (`server/rust-reference`), for two server rules that are not markup rules: the walk "Document head" of `docs/engineering/protocol/manifest-patch.md` §1.7 (H-72, H-79a), and the patch content rule of §4 item 1 with the attribute rule of §4.2. The module does not apply these rules. The change is additive: the output of `analyze` and of the command does not change (see "Checks of T-04" below). The rustdoc of `src/scan.rs` is the full reference.
+
+### API
+
+| Item | Meaning |
+|---|---|
+| `scan(input: &[u8]) -> Scanner` | The tokens and gaps of `input`, from offset 0, in the data state, with an empty token stack (HTML context) |
+| `Scanner` | `Iterator<Item = Result<Token, MarkupError>>`, fused. An `Err` is only an internal defect (`is_internal()`); the scan then ends. Fail closed |
+| `Token::Gap(Span)` | Bytes between two tokens: character data, raw text (RCDATA, RAWTEXT, script data, PLAINTEXT), a `<` that is text, the bytes `</>`, and a tag that the end of the input cuts. Never empty |
+| `Token::StartTag(Tag)`, `Token::EndTag(Tag)` | A tag, from `<` to the byte after `>` |
+| `Token::Comment(Span)` | A comment, a bogus comment or a processing instruction |
+| `Token::Doctype(Span)` | A DOCTYPE token |
+| `Token::Cdata { span, well_formed }` | The exact `<![CDATA[` up to the first `>`: a bogus comment in HTML context, a CDATA section in a foreign region; `well_formed` is M-12 |
+| `Token::span()` | The span of any token or gap |
+| `Tag::name()`, `name_span()` | The raw name; compare it ASCII case-insensitively |
+| `Tag::self_closing()` | The tag ends with `/>` |
+| `Tag::in_foreign_region()` | The token stack before the tag has a region root (M-05 item 4). The region root itself is in HTML context |
+| `Tag::attributes()` | `Iterator<Item = Result<Attribute, MarkupError>>`: every attribute in source order, also each duplicate that M-03 drops |
+| `Attribute::name()`, `name_span()` | The raw attribute name |
+| `Attribute::value()`, `value_span()` | The raw value (no character reference decoding). `value()` is empty and `value_span()` is `None` when there is no value |
+| `Span { start, end }` | A byte range `[start, end)` of the input |
+
+`Token` is `#[non_exhaustive]`. `scan` does not check M-01 or M-02: call `analyze` first.
+
+### How the server uses it
+
+1. Run `analyze` on the page. When it fails, the page has no RQP, and the scan is not needed.
+2. Scan the **whole document** once. The same pass serves both rules.
+3. **Document head.** Read the tokens from the first one. A byte order mark at offset 0 is in the first gap (`EF BB BF`); §1.7 counts it as white space. A `</>` is in a gap, so a gap with `</>` is not white space. A tag that the end of the input cuts is in a gap too. The end of the iterator is the end of the input. In HTML context, `Token::Cdata` is a bogus comment (a comment for §1.7).
+4. **Patch content.** For each changed `html` block, use the start tags with `block.start <= tag.span().start` and `tag.span().end <= block.end`. Blocks are in order, so one pass over the tokens is enough. Read `in_foreign_region()` for §4 item 1.2 and for the HTML-context condition of §4.2 item 4.2. Read `attributes()` for §4.2.
+5. Do not scan the content bytes alone. A scan starts in the data state, so it reads the RCDATA of a `title` block as markup (`api_block_content_is_read_in_the_document`).
+
+DESIGN: why the whole document and no start state: §4 reads the content "as the markup analysis of section 4.1 tokenizes them". In a valid document every block start tag is in HTML context (M-16), the content of a `title` block is RCDATA and the content of a `json` block is script data, and M-23 lets no end tag of the content pop an element outside the block. So the tokens of the whole document inside the content span are the tokens of §4, with the right state, and no start offset or initial context is needed.
+
+### One tokenizer
+
+- The tokens come from `Tokenizer::next_token`, the one of `analyze`. The scan applies M-04 as `analyze` does: after a start tag in HTML context, `raw_kind` of the name sets the raw text state, also with the self-closing flag; in a foreign region nothing changes the state.
+- The attribute states are one walk (`TagWalk` in `tokenizer.rs`). `analyze` runs it through each tag in one call and keeps only `data-rq-block`, `type`, `for`, `shadowrootmode` and `shadowroot`. `Tag::attributes()` runs the same walk again from the end of the tag name and pauses at each attribute. A tag that `analyze` reads is read in the same way by the API.
+- The scan keeps the M-05 token stack of `markup.md` §2.3 for the foreign region. `analyze` also closes table parts by M-09; this pops only HTML elements outside block content, so it never changes a foreign region of a valid document. The unit tests of `scan.rs` compare the tokens and the foreign region of the scan with those of the pass of `analyze`: all tokens for a valid document, and every token up to the one where `analyze` stops for an invalid one.
+
+### Resource limits
+
+- Time: linear in the input size. Each element is pushed and popped at most once; `attributes()` reads one tag (linear in the tag length) for each call.
+- Memory: the token stack holds at most one entry per start tag, and the name table one entry per distinct tag name; both are linear in the input size. `attributes()` holds no memory that grows with the input. The scan has no depth limit of its own: M-26 limits only `analyze`, and a valid document can have a deeper M-05 stack than the stack of `analyze` (M-09 closures).
+- No input panics (property tests on arbitrary bytes; checked indexing and arithmetic).
+
+### Checks of T-04
+
+- `analyze` output: the old command (built from `b50703e`) and the new command give byte-identical batch output on 121 357 inputs: the 362 fixture results of `fixtures/rqp/markup`, the 490 `.html` files of the repository, 60 000 generated markup documents (24 625 valid), 60 000 generated block documents (27 114 valid with blocks) and 5 inputs of about 5 MiB. `node tools/rqp-markup/diff.mjs`: 1448/1448 OK.
+- Cost of `analyze` (minimum of 25 runs of the command, inputs of about 5 MiB): no change for text; up to 13 % (about 1.3 ms) for a single tag with 2.6 million attributes; 0 % to 7 % for pages that have only tags. The walk is the reason; it collects nothing for `analyze`.
+
 ## Test
 
 Run these commands in `tools/rqp-markup/rust`:
@@ -49,6 +102,8 @@ cargo test
 | `src/*.rs` (`mod tests`) | Tokenizer states and spans, name sets, JSON grammar, hashes; spans outside the input fail closed (`lib.rs`, `rules.rs`); the name set `FORBIDDEN_CONTENT` without the patch-safety elements; the report of an internal defect (`main.rs`) |
 | `tests/rules.rs` | One or more tests for each rule M-01…M-27 and each error code; each invalid case checks the code and the rule. Separate tests for M-24 items j and k, for M-08 with a foreign `select`, and for the edge cases E1…E8. The security review: one test for each of M-06 items 2, 3 and 4, M-11 item 5 and M-13 item 3, each with the review repros and valid neighbors. Round 2: one test for each of M-09 conditions 1 and 2 (`m09_1_*`, `m09_2_*`), M-10 item 2 (`m10_2_*`) and M-11 item 6 (`m11_6_*`), each with the review repros and valid neighbors; M-09 condition 2 is checked before the implied parts of M-26. M-26 depth counter D (`m26_depth_*`, `m26_d_*`): D = 256 is valid and 257 is `RQP_MARKUP_LIMIT` in HTML context, in a foreign region, for a block element and in block content; elements that M-05 does not push do not count; exact pops give units back; crossings, dirty elements, `html` and `body` keep their units; implied table parts count once per F; the place of the check; `noscript` content. WP-17 S3 tests: `m22_5_*` and `m23_*` (regions in block content, with the reason checked), `m26_pushes_*`, `m26_region_root_*`, `m26_depth_counts_noscript_*`, `m11_7_*`, `m11_8_*` and `m11_9_*` (the pass over `noscript` content, with the restore of D and of the dirty mark). Two tests run near-limit inputs that take minutes when the work grows with the input history (`large_adversarial_inputs_finish`, `large_nested_inputs_closed_by_end_tags_finish`). WP-17 S4 tests: `m22_patch_safety_elements_are_allowed_in_the_content`, `m22_allowed_tokens` (the names that stay forbidden; item 3 for `script`, `style`, `iframe`; item 4 for `</embed>`, `</link>` and the other void names), `m04_raw_text_in_the_content` (script data with the escaped and double-escaped states, `</SCRIPT >`, `</script foo>`, `</scripty>`, RAWTEXT, M-20 at the end of the input, the pop by the appropriate end tag), `m04_raw_text_in_the_content_is_linear`, `m22_5_foreign_regions_in_html_block_content` (no name list), `m13_2_character_references_in_script_types` (letters, the boundary values of the numeric references, leading zeros, no `;`, the cap, `&#;` and `&#x;`, in the main pass and in `noscript` content) and `application/ld+json` in `m16_block_element` (M-16, M-25). T-10b: `m09_closure_*` (cell, row and group closure, the table is never closed, the row group or row must be the current node, M-06 item 1 and the special-crossed mark through the closure, the order before condition 1, no closure in block content and in `noscript` content, D for exact pops and crossings) |
 | `tests/fixtures.rs` | Every fixture of `fixtures/rqp/markup/` against its `expected.json` |
+| `tests/api.rs` | The token API (`api_*`): the tokens and gaps cover the input once, in order (also proptest on arbitrary bytes and on a markup soup); gaps with `</>`, text `<`, a cut tag and a byte order mark; comments, DOCTYPE, CDATA; names, spans and the self-closing flag; every raw attribute with duplicates, raw values, missing values; the M-04 state changes (RCDATA, RAWTEXT, script data, PLAINTEXT, self-closing, none in a foreign region); the foreign region (root, end, self-closing roots, nested `svg` in `math`, case); block content read in the document; the tokens of the head walk; inputs of about 5 MiB (2.6 million attributes, 1.7 million open elements); the first `data-rq-block` attribute of the API is the block id of `analyze` (proptest) |
+| `src/scan.rs` (`mod tests`) | The scan and the pass of `analyze` read the same tokens with the same foreign region (fixed cases, proptest on a soup, on balanced documents with regions and raw text, and on arbitrary bytes); a guard test checks that the balanced generator reaches valid documents with a region and a raw text after it |
 | `tests/cli.rs` | Command line: modes, exit codes, batch order, skipped directories, size limit, no content on stderr, arguments that are not UTF-8, inputs that are not regular files (a FIFO and a symbolic link to it give exit code 2 without a wait; in batch mode a FIFO, a symbolic link to a FIFO and a directory named `input.html` give exit code 2; Unix only, skipped when `mkfifo` is not available) |
 | `tests/props.rs` | proptest: no panic on arbitrary bytes and text; for valid results the offsets ascend and stay in the input, content hash = SHA-256 of `input[start..end]`, tags around the content; a markup "soup" generator reaches valid documents with blocks; well-nested documents with 240 to 271 elements (HTML context, foreign region, block content, with tokens that are not pushed) are valid when the token stack has at most 256 elements, else `RQP_MARKUP_LIMIT` (M-26); 120 to 279 shapes with known costs of D (exact pops, implied parts, crossings, dirty elements, `body`, `html`) give the result of a small model of M-26; balanced `noscript` content of any depth is valid and is `RQP_MARKUP_STRUCTURE` (M-11) without one of its end tags; well-nested `form`, `div`, `b` and `span` elements are valid exactly when no `form` is inside a `form` (M-10 item 2); well-nested `noscript` content in a cell is valid exactly when every `td`, `tr` or `caption` has a `table` of the content open (M-11 item 6); elements that the tree builder foster-parents in a table are valid when they are closed before the next table part, `col` or `table`, else `RQP_MARKUP_STRUCTURE` (M-09 condition 2). A guard test checks that the M-10 and M-11 generators reach both results; a table with every end tag and the same table without the end tags of the cells and rows that a sibling follows are both valid with the same blocks (`omitting_cell_and_row_end_tags_keeps_the_result`, H-85a) |
 
@@ -140,6 +195,7 @@ The tokenizer follows the WHATWG state descriptions (HTML Living Standard §13.2
 | `rules.rs` | One pass: token stack (M-05) with the state per entry (dirty mark, special-crossed mark, implied parts), the depth counter D (M-26), the count of HTML `form` elements on the stack (M-10 item 2), document rules (M-06…M-13), block rules (M-14…M-26), the pass of M-11 item 8 over the content C of a `noscript` element (the same rules on the same state, with the checks of M-11 items 1 to 3 and 5 to 7 in `noscript_start_rules` and `noscript_end_rules`) |
 | `json.rs` | RFC 8259 JSON text check (M-25), depth ≤ 64, without recursion |
 | `lib.rs` | `analyze()` (M-01, M-02, the pass, M-27 hashes and revisions), `result_json()` |
+| `scan.rs` | The public token API: the tokens and gaps of the tokenizer with M-04, the M-05 token stack for the foreign region, the raw attributes through the attribute walk of `tokenizer.rs` |
 | `main.rs` | Command line (`CONTRACT.md` section 2) |
 
 ### Invariants

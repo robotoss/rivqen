@@ -74,4 +74,6 @@ The upstream code runs only in the containers, so the live behavior is checked b
 
 ## Last result
 
-2026-10-09: 115 checks, 113 passed, 2 expected failures (Java). See the [server trace report](../../docs/engineering/protocol/legacy-traces.md).
+2026-10-31: 139 checks, 137 passed, 2 expected failures (Java, D-02 and D-12); S01–S21 reproduced the traces of 2026-10-09; S22–S29 recorded as observations. Conformance run by URL: `evidence/conformance/upstream-lab-2026-10-31.md`. See the [server trace report](../../docs/engineering/protocol/legacy-traces.md) §9.
+
+2026-10-09: 115 checks, 113 passed, 2 expected failures (Java).

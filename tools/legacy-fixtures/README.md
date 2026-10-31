@@ -14,9 +14,12 @@ The model implements one server: `legacy-canonical` (rules C-01 to C-16 of `docs
 | Unit and property tests | `cd tools/legacy-fixtures && npm test` |
 | Write every `expected.json` | `node tools/legacy-fixtures/gen.mjs` |
 | Check (writes nothing; exit 1 on a problem) | `node tools/legacy-fixtures/gen.mjs --check` |
+| Another fixture directory (`fixtures/malformed/legacy`) | `node tools/legacy-fixtures/gen.mjs [--check] --dir fixtures/malformed/legacy` |
 | Mutation | The architect runs Stryker (`stryker.config.json` here, tool from `tools/rqp-protocol`), one tool at a time |
 
-Exit codes of `gen.mjs`: `0` all files current (or written), `1` a stale, missing or unknown file or a failed check, `2` usage error.
+`--dir <path>` takes a directory in the same format with its own `pages/` directory. Checks 1, 3 and 4, the check of the `rules` names (check 5, first part) and the page checks run as for `fixtures/legacy`. The catalog size, the rule coverage, the use of every stored trace and the byte copies of the lab pages apply only to `fixtures/legacy`, also when it is named with `--dir`.
+
+Exit codes of `gen.mjs`: `0` all files current (or written), `1` a stale, missing or unknown file or a failed check, `2` usage error (also a `--dir` that is not a directory).
 
 ## Files
 

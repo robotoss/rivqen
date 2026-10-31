@@ -6,6 +6,10 @@
 //
 //   node tools/legacy-fixtures/gen.mjs           write expected.json of every fixture
 //   node tools/legacy-fixtures/gen.mjs --check   change nothing; exit 1 when a check fails
+//   ... --dir <path>                             another fixture directory in the same format
+//                                                (fixtures/malformed/legacy): its own pages/ directory;
+//                                                no catalog size, no rule coverage, no stored traces,
+//                                                no lab page copies
 //
 // Checks (README "Generator checks"):
 //   1. every expected.json equals the regenerated one; no unknown or missing file
@@ -70,6 +74,7 @@ export function storedTraces(root) {
   return out;
 }
 
+// `labPages` null: the pages need not be copies of the upstream lab pages.
 function checkPages(pagesDir, labPages, problems) {
   if (!existsSync(pagesDir)) {
     problems.push('pages: directory missing');
@@ -80,8 +85,8 @@ function checkPages(pagesDir, labPages, problems) {
       problems.push(`pages/${name}: unknown file`);
       continue;
     }
-    const lab = join(labPages, name);
-    if (existsSync(lab) && !readFileSync(lab).equals(readFileSync(join(pagesDir, name)))) {
+    const lab = labPages === null ? null : join(labPages, name);
+    if (lab !== null && existsSync(lab) && !readFileSync(lab).equals(readFileSync(join(pagesDir, name)))) {
       problems.push(`pages/${name}: not a byte copy of tools/upstream-lab/pages/${name}`);
     }
   }
@@ -89,7 +94,8 @@ function checkPages(pagesDir, labPages, problems) {
 
 /**
  * Run the generator on a fixture directory. Returns { problems, notes, count }
- * (count: fixtures processed).
+ * (count: fixtures processed). `coverage` false: the rules of a case must exist, but no
+ * rule needs a case (a directory that is not the catalog, such as fixtures/malformed/legacy).
  */
 export function run({
   check,
@@ -101,6 +107,7 @@ export function run({
   traces = storedTraces(root),
   catalogSize = CATALOG_SIZE,
   catalog = dir === FIXTURES_DIR,
+  coverage = true,
   log = () => {},
 }) {
   const problems = [];
@@ -209,13 +216,13 @@ export function run({
 
   for (const path of traces) if (!used.has(path)) problems.push(`${path}: stored trace is not used by any fixture`);
 
-  checkRules(canonical, wirePage, catalogSize, catalog, problems, notes);
+  checkRules(canonical, wirePage, { catalogSize, catalog, coverage }, problems, notes);
   return { problems, notes, count };
 }
 
 // `catalog`: the repository catalog (fixtures/legacy). It must keep at least catalogSize
 // canonical fixtures, so that removing fixtures cannot switch the rule coverage off.
-function checkRules(canonical, wirePage, catalogSize, catalog, problems, notes) {
+function checkRules(canonical, wirePage, { catalogSize, catalog, coverage }, problems, notes) {
   const known = new Set([...readFileSync(wirePage, 'utf8').matchAll(/^\| (C-\d\d) /gm)].map((m) => m[1]));
   if (known.size === 0) problems.push(`${wirePage}: no rule C-nn found`);
   const covered = new Set();
@@ -225,6 +232,7 @@ function checkRules(canonical, wirePage, catalogSize, catalog, problems, notes) 
       else problems.push(`${c.id}: rule ${rule} is not in legacy wire section 10`);
     }
   }
+  if (!coverage) return;
   const missing = [...known].filter((r) => !covered.has(r));
   if (catalog && canonical.length < catalogSize) {
     problems.push(`the catalog has ${canonical.length} canonical fixtures, fewer than ${catalogSize} (CATALOG_SIZE)`);
@@ -236,19 +244,52 @@ function checkRules(canonical, wirePage, catalogSize, catalog, problems, notes) 
   }
 }
 
+const USAGE = 'usage: node gen.mjs [--check] [--dir <path>]\n';
+
+/** Parse the arguments. Returns { check, dir } (dir null: the default) or null on a usage error. */
+function parseArgs(argv) {
+  let check = false;
+  let dir = null;
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--check' && !check) {
+      check = true;
+    } else if (argv[i] === '--dir' && dir === null && i + 1 < argv.length && argv[i + 1] !== '') {
+      dir = argv[++i];
+    } else {
+      return null;
+    }
+  }
+  return { check, dir };
+}
+
 /** The command line. Returns the exit code. `io` is for tests: { stdout, stderr, ...options of run }. */
 export function main(argv, io = {}) {
   const { stdout = process.stdout, stderr = process.stderr, ...options } = io;
-  if (argv.length > 1 || (argv.length === 1 && argv[0] !== '--check')) {
-    stderr.write('usage: node gen.mjs [--check]\n');
+  const args = parseArgs(argv);
+  if (args === null) {
+    stderr.write(USAGE);
     return 2;
   }
-  const check = argv[0] === '--check';
-  const { problems, notes, count } = run({ check, ...options });
+  let extra = {};
+  if (args.dir !== null) {
+    const dir = resolve(args.dir);
+    if (!existsSync(dir) || !statSync(dir).isDirectory()) {
+      stderr.write(`legacy-fixtures gen: ${args.dir}: not a directory\n`);
+      return 2;
+    }
+    extra = { dir };
+    // Another directory than the catalog: it has its own pages and no stored traces.
+    if (dir !== FIXTURES_DIR) extra = { dir, catalog: false, coverage: false, labPages: null, traces: [] };
+  }
+  const { check } = args;
+  const { problems, notes, count } = run({ check, ...extra, ...options });
   for (const n of notes) stderr.write(`legacy-fixtures gen: note: ${n}\n`);
   for (const p of problems) stderr.write(`legacy-fixtures gen: ${p}\n`);
   if (problems.length > 0) {
-    if (check) stderr.write('legacy-fixtures gen: run "node tools/legacy-fixtures/gen.mjs" and review the diff\n');
+    if (check) {
+      const dirOption = args.dir === null ? '' : ` --dir ${args.dir}`;
+      stderr.write(`legacy-fixtures gen: run "node tools/legacy-fixtures/gen.mjs${dirOption}" and review the diff\n`);
+    }
     return 1;
   }
   stdout.write(`legacy-fixtures gen: ${count} fixtures ${check ? 'are current' : 'written'}\n`);

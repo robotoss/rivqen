@@ -312,9 +312,21 @@ test('every_trace_backed_canonical_fixture_names_the_same_trace_scenario_for_the
 test('gen_usage_error_exits_2', () => {
   const out = spawnSync(process.execPath, [GEN, '--bogus'], { encoding: 'utf8' });
   assert.equal(out.status, 2);
-  assert.match(out.stderr, /usage: node gen.mjs \[--check\]/);
+  assert.match(out.stderr, /usage: node gen.mjs \[--check\] \[--dir <path>\]/);
   const two = spawnSync(process.execPath, [GEN, '--check', '--check'], { encoding: 'utf8' });
   assert.equal(two.status, 2);
+});
+
+test('gen_dir_usage_errors_exit_2', () => {
+  const { dir } = setup();
+  for (const argv of [['--dir'], ['--dir', ''], ['--dir', dir, '--dir', dir], ['--dir', dir, '--bogus'], ['--check', '--dir']]) {
+    const out = spawnSync(process.execPath, [GEN, ...argv], { encoding: 'utf8' });
+    assert.equal(out.status, 2, argv.join(' '));
+    assert.match(out.stderr, /^usage: node gen.mjs \[--check\] \[--dir <path>\]\n$/);
+  }
+  const missing = spawnSync(process.execPath, [GEN, '--dir', join(dir, 'nope')], { encoding: 'utf8' });
+  assert.equal(missing.status, 2);
+  assert.match(missing.stderr, /nope: not a directory\n$/);
 });
 
 test('gen_check_exits_1_on_a_stale_file_and_0_when_current', () => {
@@ -341,4 +353,62 @@ test('gen_check_exits_1_on_a_stale_file_and_0_when_current', () => {
   assert.equal(main([], write.io), 0);
   assert.match(write.out.stdout, /fixtures written/);
   assert.equal(main(['--check'], capture().io), 0);
+});
+
+test('gen_accepts_a_second_fixture_directory', () => {
+  // A directory in the format of fixtures/legacy with its own pages: not the catalog, so it needs no
+  // stored trace, no copy of a lab page and no catalog size.
+  const { dir } = setup();
+  writeFileSync(join(dir, 'pages', 'a.html'), 'not the lab page a');
+  write(dir, 'FX-LEG-MAL-S', canonicalCase('FX-LEG-MAL-S', PLAIN_REQUEST, null));
+  const capture = () => spawnSync(process.execPath, [GEN, '--dir', dir], { encoding: 'utf8' });
+  const written = capture();
+  assert.equal(written.status, 0, written.stderr);
+  assert.equal(written.stdout, 'legacy-fixtures gen: 1 fixtures written\n');
+  assert.equal(written.stderr, '');
+  const expected = JSON.parse(readFileSync(join(dir, 'FX-LEG-MAL-S', 'expected.json'), 'utf8'));
+  assert.equal(expected.id, 'FX-LEG-MAL-S');
+  assert.equal(expected.request.headers.length, 1);
+
+  const current = spawnSync(process.execPath, [GEN, '--check', '--dir', dir], { encoding: 'utf8' });
+  assert.equal(current.status, 0, current.stderr);
+  assert.equal(current.stdout, 'legacy-fixtures gen: 1 fixtures are current\n');
+
+  const file = join(dir, 'FX-LEG-MAL-S', 'expected.json');
+  writeFileSync(file, readFileSync(file, 'utf8').replace('"status": 200', '"status": 201'));
+  const stale = spawnSync(process.execPath, [GEN, '--check', '--dir', dir], { encoding: 'utf8' });
+  assert.equal(stale.status, 1);
+  assert.match(stale.stderr, /FX-LEG-MAL-S\/expected.json: stale/);
+  assert.ok(stale.stderr.includes(`run "node tools/legacy-fixtures/gen.mjs --dir ${dir}" and review the diff`), stale.stderr);
+  assert.equal(readFileSync(file, 'utf8').includes('"status": 201'), true, '--check writes nothing');
+});
+
+test('malformed_dir_has_no_rule_coverage_check', () => {
+  const { root, dir } = setup();
+  write(dir, 'FX-LEG-MAL-S', canonicalCase('FX-LEG-MAL-S', PLAIN_REQUEST, null));
+  const wire = join(root, 'wire.md');
+  writeFileSync(wire, ['C-01', 'C-02', 'C-17'].map((r) => `| ${r} Name | text |`).join('\n'));
+  const capture = () => {
+    const out = { stdout: '', stderr: '' };
+    return { out, io: { wirePage: wire, stdout: { write: (t) => (out.stdout += t) }, stderr: { write: (t) => (out.stderr += t) } } };
+  };
+  // another directory: C-01 and C-17 stay uncovered and nothing is said about it
+  assert.equal(main(['--dir', dir], capture().io), 0);
+  const second = capture();
+  assert.equal(main(['--check', '--dir', dir], second.io), 0);
+  assert.equal(second.out.stderr, '');
+  // without --dir, the old behavior: a directory below the catalog size gets a note about the rules
+  const plain = capture();
+  assert.equal(main(['--check'], { ...plain.io, dir, traces: [] }), 0);
+  assert.match(plain.out.stderr, /note: rule coverage is checked at 59 canonical fixtures \(now 1\); not covered yet: C-01, C-17/);
+  // a rule that does not exist is still an error in this directory
+  write(dir, 'FX-LEG-MAL-S', canonicalCase('FX-LEG-MAL-S', PLAIN_REQUEST, null, { rules: ['C-02', 'C-99'] }));
+  const unknown = capture();
+  assert.equal(main(['--check', '--dir', dir], unknown.io), 1);
+  assert.match(unknown.out.stderr, /FX-LEG-MAL-S: rule C-99 is not in legacy wire section 10/);
+  assert.doesNotMatch(unknown.out.stderr, /not covered/);
+  // the catalog directory itself, named with --dir, keeps the coverage check
+  const catalog = capture();
+  assert.equal(main(['--check', '--dir', join(REPO_ROOT, 'fixtures/legacy')], catalog.io), 1);
+  assert.match(catalog.out.stderr, /rule C-17 is not covered by any fixture/);
 });

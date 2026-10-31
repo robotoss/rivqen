@@ -1,0 +1,50 @@
+{
+  "id": "FX-LEG-MAL-OPENERS-1MIB",
+  "description": "A page of about 1 MiB with alternating unclosed title and block openers in the footer text and no LF: linear-time split, data response.",
+  "profile": "legacy-canonical",
+  "rules": [
+    "C-06",
+    "C-07",
+    "C-16"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-wire#canonical-server"
+  ],
+  "evidence": "code-reading",
+  "page": "openers-1mib",
+  "app": {
+    "status": 200,
+    "headers": [
+      [
+        "content-type",
+        "text/html; charset=utf-8"
+      ]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "accept-diff",
+        "true"
+      ],
+      [
+        "if-none-match",
+        "0000000000000000000000000000000000000000"
+      ],
+      [
+        "template-tag",
+        "{{tag:openers-1mib}}"
+      ]
+    ]
+  }
+}

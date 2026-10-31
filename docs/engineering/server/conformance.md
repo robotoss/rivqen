@@ -2,7 +2,7 @@
 
 Conformance means that a server SDK gives the same answer as the reference for every fixture. It is the gate for every server release.
 
-**Status:** <Badge type="tip" text="FACT" /> The runner, the harness and the end-to-end driver exist (WP-02 S1). <Badge type="info" text="DESIGN" /> The rest of this page (pass criteria, SDK gates) is the target for the server SDKs.
+**Status:** <Badge type="tip" text="FACT" /> The runner, the harness, the end-to-end driver (WP-02 S1), the malformed suite and the lab run against the three upstream servers (WP-02 S2) exist. <Badge type="info" text="DESIGN" /> The rest of this page (pass criteria, SDK gates) is the target for the server SDKs.
 
 ## 1. Components
 
@@ -13,6 +13,8 @@ Conformance means that a server SDK gives the same answer as the reference for e
 | `server/conformance` | Runner: sends requests, compares responses |
 | `server/conformance/harness` | Test harness: wraps a server module and has the control endpoint |
 | `server/conformance/e2e/run.mjs` | Driver: starts the harness, runs the runner, stops the harness |
+| `tools/upstream-lab/conformance.sh` | Runs the runner against the three upstream lab servers (section 2.8) |
+| `evidence/conformance/` | Reports of the lab runs |
 | Server under test | Node.js, Java or PHP example app with the SDK |
 
 ## 2. How to run
@@ -90,6 +92,8 @@ SKIP FX-LEG-OFFLINE-TRUE: no expected.json
 
 Contract: `server/conformance/CONTRACT.md`.
 
+<Badge type="tip" text="FACT" /> Lab harness exception (DL-081): a harness in a container of `tools/upstream-lab` sees the bridge address as the peer, because its port is published on `127.0.0.1` of the host only. It checks `Host` (`127.0.0.1:<port>`, `localhost:<port>` or `[::1]:<port>`) and `Content-Type: application/json`, not the peer address. A server under test must accept a request field section of at least 8 KiB (CONTRACT.md section 3). Every fixture request stays under it.
+
 ### 2.7 Runner behavior
 
 <Badge type="tip" text="FACT" /> The runner has these rules. They are stricter than the contract in places (sprint decisions D1 to D8 of the runner lane).
@@ -106,6 +110,23 @@ Contract: `server/conformance/CONTRACT.md`.
 | RQP pages | Read from `<fixtures>/pages/` |
 
 The runner joins no repeated field and decodes no content coding by itself, except `gzip` in the legacy suite. A bad response is a failed case with a reason, never a crash. Limits and failure modes: `server/conformance/README.md`.
+
+### 2.8 Lab run against the upstream servers
+
+<Badge type="tip" text="FACT" /> `tools/upstream-lab/conformance.sh` runs the runner against the three upstream servers by URL. The servers run the unmodified upstream code in Docker containers on `127.0.0.1:18081` (Node.js), `18082` (PHP) and `18083` (Java).
+
+1. Start the three servers (`tools/upstream-lab/start.sh`, see `tools/upstream-lab/README.md`).
+2. Run the script.
+
+   ```bash
+   sh tools/upstream-lab/conformance.sh
+   ```
+
+3. Read `evidence/conformance/upstream-lab-<date>.json`. It has the `--json` report and the exit code of each profile (`legacy-node`, `legacy-php`, `legacy-java`).
+4. Read the exit code of the script. It is the largest runner exit code. A MUST failure of the runner is a finding, not an error of the script.
+5. Stop the servers: `docker rm -f lab-node lab-php lab-java`.
+
+Set `DATE=<yyyy-mm-dd>` or `OUT_DIR=<dir>` to change the file name or the directory.
 
 ## 3. Profiles
 
@@ -129,11 +150,35 @@ A profile run checks only behavior that a stored upstream trace confirms. A prof
 | RQP reference (`tools/rqp-protocol`) | `rqp` | 112/112 |
 | Server demo (`examples/server-demo/src/rqp.js`) | `rqp` | 112/112 |
 | Legacy model | `legacy-canonical` | 59/59 |
-| Legacy model | `legacy-java` | 31/31 |
-| Legacy model | `legacy-node` | 31/31 |
-| Legacy model | `legacy-php` | 31/31 |
+| Legacy model | `legacy-java` | 39/39 (31/31 on 2026-10-30) |
+| Legacy model | `legacy-node` | 39/39 (31/31 on 2026-10-30) |
+| Legacy model | `legacy-php` | 39/39 (31/31 on 2026-10-30) |
+| Legacy model, malformed suite (`fixtures/malformed/legacy`) | `legacy-canonical` | 22/22 |
 
 The broken servers of `tools/rqp-protocol/test/fixtures/` fail the `rqp` suite, as expected.
+
+<Badge type="tip" text="FACT" /> The legacy rows of 2026-10-31 are runs of the driver (section 2.1) on 2026-10-31 (WP-02 S2). The profile counts grew from 31 to 39 because the eight fixtures of the traces S22 to S29 are now profile-checked.
+
+### 4.1 Live run against the upstream servers, 2026-10-31
+
+<Badge type="tip" text="FACT" /> The runner tested the three upstream servers by URL with the profile fixtures of `fixtures/legacy`. Evidence: `evidence/conformance/upstream-lab-2026-10-31.md` and `.json`. The profile fixtures expect the safe behavior (DL-069, DL-082), so a live server fails where it shows an unsafe behavior that the profiles do not reproduce.
+
+| Profile | Passed | Failed |
+|---|---|---|
+| `legacy-node` | 3 | 36 |
+| `legacy-php` | 4 | 35 |
+| `legacy-java` | 0 | 39 |
+
+Every failure is U-12, U-11 or U-13; the Tomcat spelling shows in 31 of the Java failures. No other difference was found.
+
+| Class | Node.js | PHP | Java |
+|---|---|---|---|
+| U-12: no `Vary: template-tag`; CDN fields kept | 33 | 29 | 33 |
+| U-11 (`not_reproduced`): several titles | 0 | 2 | 2 |
+| U-13 (`not_reproduced`): legacy processing outside C-01 | 3 | 4 | 4 |
+| Tomcat writes `text/html;charset=utf-8` | — | — | 31 |
+
+The Java count of the Tomcat spelling overlaps the U-12 count: 31 of the 33 U-12 failures also show the spelling. The spelling is the same media type as `text/html; charset=utf-8` (RFC 9110 section 8.3.1). The servlet container writes it, not the upstream filter. The generator compares `content-type` as a media type. The runner compares field values byte for byte, so it reports the spelling as a failure.
 
 ## 5. Pass criteria
 

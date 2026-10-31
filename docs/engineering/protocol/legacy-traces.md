@@ -6,7 +6,7 @@ This page reports the **captured behavior** of the three upstream VasSonic serve
 This is evidence for the optional legacy module (deprecated from 1.0, removed in 1.5).
 :::
 
-**Status:** <Badge type="tip" text="FACT" /> Captured on 2026-10-09 from upstream code at `59936bef`, run unmodified in isolated containers.
+**Status:** <Badge type="tip" text="FACT" /> Captured on 2026-10-09 (sections 1 to 8) and on 2026-10-31 (section 9) from upstream code at `59936bef`, run unmodified in isolated containers.
 
 [[toc]]
 
@@ -104,8 +104,56 @@ SHA-1 of the full HTML as unquoted lowercase hex; SHA-1 of the template as `temp
 
 ## 7. Reproduce
 
-See `tools/upstream-lab/README.md`. The lab needs Docker, the upstream repository at the pinned commit, and about 1 GB of images.
+<Badge type="tip" text="FACT" /> See `tools/upstream-lab/README.md`. The lab needs Docker, the upstream repository at the pinned commit, and about 1 GB of images.
 
 ## 8. Still open
 
 Client-side behavior (Android Quick/Standard timing, result codes in the page) needs traces from the upstream Android sample on an old emulator image (WP-01). The iOS client cannot run on current iOS versions (`UIWebView`).
+
+## 9. Live run of 2026-10-31
+
+<Badge type="tip" text="FACT" /> WP-02 S2 ran the lab again with the same upstream commit `59936bef` (unmodified, in Docker containers; H-112). Two things were new: the control endpoint in the three lab harnesses, and the scenarios S22 to S29.
+
+### 9.1 Setup
+
+1. The lab harness of each server has the control endpoint of `server/conformance/CONTRACT.md` section 2. It is off unless `RIVQEN_CONFORMANCE=1`. The ports are published on `127.0.0.1` of the host only.
+2. `POST /__rivqen/conformance/case` stores one case: the page bytes, the application status and the application field lines. Every other path then answers with that case through the upstream code.
+3. Inside a container the peer address is the bridge address. So the lab harness checks `Host` and `Content-Type`, not the peer (DL-081).
+4. `run_traces.py` sends S22 to S29 as case requests. The first field line of each request is `Host: shop.example.com`, and the path is `/catalog`.
+
+### 9.2 Result
+
+| Item | Result |
+|---|---|
+| S01 to S21 | <Badge type="tip" text="FACT" /> All 93 stored traces reproduced: 137 of 139 model checks passed. The 2 failures are the known Java behaviors D-02 and D-12 |
+| S22 to S29 | <Badge type="tip" text="FACT" /> 24 new traces stored (8 per server) in `evidence/traces/server/<server>/` |
+| Stored traces | <Badge type="tip" text="FACT" /> 117 (39 per server). The golden fixtures use all of them |
+| Runner by URL | <Badge type="tip" text="FACT" /> Every failure is one of U-12, U-11, U-13 (not reproduced) or the Tomcat spelling of `Content-Type` (see [conformance](/engineering/server/conformance#_4-results)) |
+
+Evidence file: `evidence/conformance/upstream-lab-2026-10-31.md` (report: `upstream-lab-2026-10-31.json`).
+
+### 9.3 Scenarios S22 to S29
+
+<Badge type="tip" text="FACT" /> Request: the data-change request (page `b`, the tag of page `a`), except S24 (page `a`, a matching `If-None-Match`). `CC` = `Cache-Control`, `CO` = `Cache-Offline`.
+
+| # | Application sets | Java | Node.js | PHP |
+|---|---|---|---|---|
+| S22 | `cache-offline: false` | `200` data; `CO: true`, then `cache-offline: false` | `200` data; `CO: true` only | `200` data; `CO: true` only |
+| S23 | `cache-offline: http` | `200` data; `CO: true`, then `cache-offline: http` | `200` data; `CO: true` only | `200` data; `CO: true` only |
+| S24 | status `302`, `location` | `304`; `location` kept; `CO: true`, `CO: store`; no `Content-Type` | `304`; `location` kept; `CO: store`; no `Content-Type` | `304`; `location` kept; `CO: store`; `Content-Type` kept |
+| S25 | status `404` | `404` with a data body and legacy fields | `404` with a data body and legacy fields | `404` with a data body and legacy fields |
+| S26 | method `POST` | `200` data body and legacy fields | `200` data body and legacy fields | `200` data body and legacy fields |
+| S27 | method `HEAD` | `200`, no body; empty `Etag` and `template-tag`; `template-change: true` | `200`, no body; no legacy field | `200`, no body; legacy fields with the page values; `template-change: false` |
+| S28 | `vary: Accept-Language` | kept; no `template-tag` added | kept; no `template-tag` added | kept; no `template-tag` added |
+| S29 | `cdn-cache-control`, `surrogate-control` | both kept | both kept | both kept |
+
+Java and PHP send `CC: no-cache` on the legacy responses of S22 to S29. Node.js sends no `Cache-Control` (D-09).
+
+### 9.4 Findings
+
+| # | Finding | Where documented |
+|---|---|---|
+| T-06 | An application `cache-offline` value: Java adds it as a second field after its own `true`; Node.js and PHP lose it | D-14 in [legacy divergences](/engineering/protocol/legacy-divergences) |
+| T-07 | `Content-Type` on a `304`: Node.js and Java send none; PHP keeps it | D-15 |
+| T-08 | All three servers apply legacy processing outside a `200` to a `GET`: a `302` becomes a `304`, a `404` page and a `POST` response become data responses; `HEAD` differs per server | U-13; no profile reproduces it (DL-082) |
+| T-09 | S28 and S29 confirm U-12: no `Vary: template-tag`, and the CDN fields stay | U-12 |

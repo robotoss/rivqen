@@ -1,0 +1,18 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 4c67c818593bf45edfb7b9dd01b8798eef6a92467c7ce3f5bed44173db105769 # shrinks to d = Map { entries: [("a", Item(Item { bare_item: Decimal(Decimal { thousandths: -1 }), params: Map { entries: [] } }))] }
+cc 8c35783c8da9f02384073d8357086a533f7994cb7f30fce4fafdc13e8641f528 # shrinks to i = Item { bare_item: Integer(0), params: Map { entries: [("a", Decimal(Decimal { thousandths: -1 }))] } }
+cc 8ae9e0c26964431b272e180f7aa2254f748bc3980e0b0b2265e0371483163b20 # shrinks to i = Item { bare_item: Integer(0), params: Map { entries: [("a", DisplayString(""))] } }
+cc 91ce9656d0bd82a321d1b55a649a33048ed59069ffac46e280e053b015a98f93 # shrinks to i = Item { bare_item: Integer(0), params: Map { entries: [("a", String(""))] } }
+cc 5a504bb3eb4d97ffa7f3c98fbc80a273cb683c0a7c44117bc9b6c615c6ede420 # shrinks to i = Item { bare_item: Token("a"), params: Map { entries: [] } }
+cc 7ab5a7ba32eace74cce168ab0eef125c0cd84ff1d59cddb5da3945d8edd73794 # shrinks to i = Item { bare_item: Date(0), params: Map { entries: [] } }
+cc 38e66c852ea2583b4e65abc1bf781d3201af985fad7ea56b1fc2278f27e3c82c # shrinks to d = Map { entries: [("a", InnerList(InnerList { items: [Item { bare_item: Integer(0), params: Map { entries: [("a", Decimal(Decimal { thousandths: 0 }))] } }], params: Map { entries: [] } }))] }
+cc 30784b969069504ba6ed693aba0873e7d211416ba5cf821231330b8a673b8bee # shrinks to i = Item { bare_item: Decimal(Decimal { thousandths: 0 }), params: Map { entries: [] } }
+cc a2552605085394548e6a67072a928257103b5ae17a0b78337a5b32ab9e35e069 # shrinks to i = Item { bare_item: Integer(0), params: Map { entries: [("a", String("\\"))] } }
+cc 1110be1996ed40da5c6931f8ba155cf58ad121782eb9ed9907566cd37df969ed # shrinks to i = Item { bare_item: Integer(0), params: Map { entries: [("a", DisplayString("¡"))] } }
+cc 49d3a11813319ae63a3c1c02b1eb85c7856860e958b5170e85233a566ca08815 # shrinks to i = Item { bare_item: Integer(0), params: Map { entries: [("a", ByteSequence([0, 0, 0, 3, 224]))] } }
+cc 1692c14df9d1a477c8dd38faeb39ba56c6ed450c6f9a6d588ba82cb55b6ae544 # shrinks to i = Item { bare_item: Integer(0), params: Map { entries: [("a", ByteSequence([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))] } }

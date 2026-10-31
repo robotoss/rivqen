@@ -1,0 +1,10 @@
+{
+  "id": "FX-LEG-PASS-HEAD--JAVA",
+  "description": "legacy-java: the HEAD response is passed through; the trace has legacy fields with an empty etag and template-tag (U-13 is not reproduced, DL-082)",
+  "profile": "legacy-java",
+  "replaces": "FX-LEG-PASS-HEAD",
+  "divergences": [],
+  "sources": ["upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149","docs:engineering/protocol/legacy-divergences#_3-upstream-behaviors-that-rivqen-will-not-reproduce"],
+  "trace": "evidence/traces/server/java/S27-head.http",
+  "not_reproduced": "U-13"
+}

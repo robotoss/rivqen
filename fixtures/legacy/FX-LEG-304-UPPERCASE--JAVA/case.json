@@ -1,9 +1,9 @@
 {
   "id": "FX-LEG-304-UPPERCASE--JAVA",
-  "description": "legacy-java: cache-control; cache-offline on 304",
+  "description": "legacy-java: cache-control; cache-offline on 304; no content-type on 304",
   "profile": "legacy-java",
   "replaces": "FX-LEG-304-UPPERCASE",
-  "divergences": ["D-09","D-12"],
+  "divergences": ["D-09","D-12","D-15"],
   "sources": ["upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149"],
   "trace": "evidence/traces/server/java/S04-304-uppercase-etag.http"
 }

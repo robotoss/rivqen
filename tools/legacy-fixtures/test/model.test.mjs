@@ -468,3 +468,83 @@ test('canonical_304_drops_the_legacy_fields_of_the_application', () => {
     assert.deepEqual(fieldValues(r, 'x-app'), ['1'], profile);
   }
 });
+
+// --- live upstream run of 2026-10-31 (traces S22-S29, DL-082) ---
+
+const withOfflineApp = (...values) => ({ status: 200, headers: [...APP.headers, ...values.map((v) => ['Cache-Offline', v])] });
+
+test('java_sends_its_own_cache_offline_true_then_the_application_lines', () => {
+  // D-14, traces java/S22 and S23: "Cache-Offline: true", then the application line
+  for (const v of ['false', 'http', 'TRUE', 'other']) {
+    assert.deepEqual(fieldValues(run(JAVA, legacy(), 'a', withOfflineApp(v)), 'cache-offline'), ['true', v], v);
+    const data = run(JAVA, legacy(['template-tag', tagOf(JAVA, 'a')]), 'a', withOfflineApp(v));
+    assert.deepEqual(fieldValues(data, 'template-change'), ['false'], v);
+    assert.deepEqual(fieldValues(data, 'cache-offline'), ['true', v], v);
+  }
+  assert.deepEqual(fieldValues(run(JAVA, legacy(), 'a', withOfflineApp('false', 'store')), 'cache-offline'), ['true', 'false', 'store']);
+  assert.deepEqual(fieldValues(run(JAVA, legacy(), 'a', APP), 'cache-offline'), ['true']);
+  // a 304: its own true, the application line, then store (the order of traces S03 and S24)
+  assert.deepEqual(fieldValues(run(JAVA, legacy(['If-None-Match', etagOf('a')]), 'a', withOfflineApp('false')), 'cache-offline'), ['true', 'false', 'store']);
+  // without accept-diff true Java adds no line and keeps the application line (D-02)
+  const plain = run(JAVA, { method: 'GET', headers: [['template-tag', tagOf(JAVA, 'a')]] }, 'a', withOfflineApp('http'));
+  assert.deepEqual(fieldValues(plain, 'template-change'), ['false']);
+  assert.deepEqual(fieldValues(plain, 'cache-offline'), ['http']);
+});
+
+test('node_and_php_lose_the_application_cache_offline_value', () => {
+  // D-14, traces node and php S22, S23: their own true only
+  const gzip = ['Accept-Encoding', 'gzip'];
+  for (const profile of [NODE, PHP]) {
+    for (const v of ['false', 'http', 'store', 'true', 'TRUE']) {
+      assert.deepEqual(fieldValues(run(profile, legacy(gzip), 'a', withOfflineApp(v)), 'cache-offline'), ['true'], `${profile} ${v}`);
+      const data = run(profile, legacy(gzip, ['template-tag', tagOf(profile, 'a')]), 'a', withOfflineApp(v));
+      assert.deepEqual(fieldValues(data, 'template-change'), ['false'], profile);
+      assert.deepEqual(fieldValues(data, 'cache-offline'), ['true'], `${profile} ${v}`);
+    }
+    assert.deepEqual(fieldValues(run(profile, legacy(gzip, ['If-None-Match', etagOf('a')]), 'a', withOfflineApp('false')), 'cache-offline'), ['store'], profile);
+  }
+  // the canonical rule C-10 is unchanged: the application value, one line
+  assert.deepEqual(fieldValues(run(CANONICAL, legacy(), 'a', withOfflineApp('false')), 'cache-offline'), ['false']);
+});
+
+test('java_and_node_send_no_content_type_on_304_php_keeps_it', () => {
+  // D-15, traces S03 and S24: only PHP keeps the application content-type on a 304
+  const request = legacy(['Accept-Encoding', 'gzip'], ['If-None-Match', etagOf('a')]);
+  const app = { status: 200, headers: [['Content-Type', 'text/html; charset=utf-8'], ['x-app', '1']] };
+  for (const [profile, want] of [[JAVA, []], [NODE, []], [PHP, ['text/html; charset=utf-8']], [CANONICAL, ['text/html; charset=utf-8']]]) {
+    const r = run(profile, request, 'a', app);
+    assert.equal(r.status, 304, profile);
+    assert.deepEqual(fieldValues(r, 'content-type'), want, profile);
+    assert.deepEqual(fieldValues(r, 'x-app'), ['1'], profile);
+  }
+  // a 200 keeps it in every profile (C-13, D-11)
+  for (const profile of PROFILES) {
+    assert.deepEqual(fieldValues(run(profile, legacy(['Accept-Encoding', 'gzip']), 'a', app), 'content-type'), ['text/html; charset=utf-8'], profile);
+  }
+});
+
+test('no_profile_gives_legacy_processing_outside_the_c01_scope', () => {
+  // U-13 is not reproduced (DL-082): whatever the request fields, a response that is not a
+  // 200 to a GET goes out unchanged in every profile (traces S24-S27 show that the upstream
+  // servers do otherwise). Seeded generator: the run is deterministic.
+  let seed = 0x13579bdf;
+  const next = (n) => {
+    seed = (Math.imul(seed, 1103515245) + 12345) >>> 0;
+    return (seed >>> 8) % n;
+  };
+  const methods = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'get'];
+  const lines = [['accept-diff', 'true'], ['Accept-Encoding', 'gzip'], ['If-None-Match', etagOf('a')], ['template-tag', tagOf(CANONICAL, 'a')], ['If-None-Match', etagOf('b')]];
+  let checked = 0;
+  for (let i = 0; i < 2000; i++) {
+    const method = methods[next(methods.length)];
+    const status = method === 'GET' ? 100 + next(500) : [200, 302, 404][next(3)];
+    if (method === 'GET' && status === 200) continue;
+    const request = { method, headers: lines.filter(() => next(3) !== 0) };
+    const app = { status, headers: [...APP.headers, ...(next(2) === 0 ? [['location', 'https://shop.example.com/login']] : [])] };
+    for (const profile of PROFILES) {
+      assertPassThrough(respond(profile, request, app, page('a')), app, method === 'HEAD' ? null : page('a'));
+    }
+    checked++;
+  }
+  assert.ok(checked > 1900, `${checked}`);
+});

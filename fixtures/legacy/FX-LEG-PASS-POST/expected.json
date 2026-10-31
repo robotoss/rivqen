@@ -6,10 +6,11 @@
     "method": "POST",
     "target": "https://shop.example.com/catalog",
     "headers": [
-      ["accept-encoding","gzip"],
+      ["Accept-Encoding","gzip"],
       ["accept-diff","true"],
-      ["if-none-match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
-      ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"]
+      ["If-None-Match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+      ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+      ["Content-Length","0"]
     ]
   },
   "status": 200,

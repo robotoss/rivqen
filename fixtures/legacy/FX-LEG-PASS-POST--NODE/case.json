@@ -1,0 +1,10 @@
+{
+  "id": "FX-LEG-PASS-POST--NODE",
+  "description": "legacy-node: the POST response is passed through; the trace has a data response (U-13 is not reproduced, DL-082)",
+  "profile": "legacy-node",
+  "replaces": "FX-LEG-PASS-POST",
+  "divergences": [],
+  "sources": ["upstream:sonic-nodejs/common/diff.js:12-122","upstream:sonic-nodejs/middleware/compress.js:18-83","docs:engineering/protocol/legacy-divergences#_3-upstream-behaviors-that-rivqen-will-not-reproduce"],
+  "trace": "evidence/traces/server/node/S26-post.http",
+  "not_reproduced": "U-13"
+}

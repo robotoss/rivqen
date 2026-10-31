@@ -190,6 +190,70 @@ test('not_reproduced_fixture_needs_a_different_template_tag_in_the_trace', () =>
   assert.ok(problems.some((p) => p.includes('does not show the documented difference')), problems.join('\n'));
 });
 
+/**
+ * Write the traces of a case request (Host first line, path /catalog) for each server.
+ * `response(profile)` gives the response that the "upstream" server sends.
+ */
+function writeCaseTraces(root, stem, method, request, response) {
+  const traces = {};
+  for (const [server, profile] of Object.entries(PROFILE_OF)) {
+    const path = `traces/${server}-${stem}.http`;
+    writeFileSync(join(root, path), traceText('/catalog', request, response(profile), 'identity', { method, host: 'shop.example.com' }));
+    traces[profile] = path;
+  }
+  return traces;
+}
+
+test('u13_profile_fixtures_expect_the_pass_through_and_their_traces_show_legacy_processing', () => {
+  const { root, dir } = setup();
+  const request = [...LEGACY_REQUEST, ['If-None-Match', respond('legacy-canonical', { method: 'GET', headers: LEGACY_REQUEST }, APP, page('a')).headers.find(([n]) => n === 'etag')[1]]];
+  const app = { status: 302, headers: [...APP.headers, ['location', 'https://shop.example.com/login']] };
+  // the upstream servers answer the 302 like a 200: a 304 (trace S24)
+  const upstream = (profile) => respond(profile, { method: 'GET', headers: request }, APP, page('a'));
+  const traces = writeCaseTraces(root, 'redirect', 'GET', request, upstream);
+  write(dir, 'FX-LEG-R', canonicalCase('FX-LEG-R', request, traces, { app }));
+  // without profile fixtures: OVERRIDE_MISSING for every profile
+  assert.deepEqual(run(options(root, dir, { check: false })).problems.map((p) => p.slice(0, 37)), [
+    'FX-LEG-R: OVERRIDE_MISSING for legacy',
+    'FX-LEG-R: OVERRIDE_MISSING for legacy',
+    'FX-LEG-R: OVERRIDE_MISSING for legacy',
+  ]);
+  const profileCase = (s) => ({ id: `FX-LEG-R--${s}`, description: 'x', profile: PROFILE_OF[s.toLowerCase()], replaces: 'FX-LEG-R', divergences: [], sources: ['upstream:x:1'], trace: traces[PROFILE_OF[s.toLowerCase()]], not_reproduced: 'U-13' });
+  for (const s of ['JAVA', 'NODE', 'PHP']) write(dir, `FX-LEG-R--${s}`, profileCase(s));
+  // the profile fixtures equal the canonical pass-through: no OVERRIDE_NOT_NEEDED
+  assert.deepEqual(run(options(root, dir, { check: false })).problems, []);
+  const expected = JSON.parse(readFileSync(join(dir, 'FX-LEG-R--NODE', 'expected.json'), 'utf8'));
+  assert.equal(expected.status, 302);
+  assert.deepEqual(expected.fields.location, ['https://shop.example.com/login']);
+  assert.deepEqual(expected.fields['cache-offline'], []);
+  // the U-13 marker still needs a request equal to the trace request
+  write(dir, 'FX-LEG-R', canonicalCase('FX-LEG-R', request.map(([n, v]) => [n.toLowerCase(), v]), traces, { app }));
+  assert.ok(run(options(root, dir, { check: false })).problems.includes('FX-LEG-R--JAVA: the request differs from the request of traces/java-redirect.http'));
+  // a trace that is the pass-through shows no difference: the marker is not allowed
+  const passed = writeCaseTraces(root, 'passed', 'GET', request, (profile) => respond(profile, { method: 'GET', headers: request }, app, page('a')));
+  write(dir, 'FX-LEG-R', canonicalCase('FX-LEG-R', request, passed, { app }));
+  write(dir, 'FX-LEG-R--JAVA', { ...profileCase('JAVA'), trace: passed['legacy-java'] });
+  for (const s of ['NODE', 'PHP']) rmSync(join(dir, `FX-LEG-R--${s}`), { recursive: true });
+  const { problems } = run(options(root, dir, { check: false }));
+  assert.deepEqual(problems, ['FX-LEG-R--JAVA: U-13: the trace does not show the documented difference (no 304, data body or legacy field) (traces/java-passed.http)']);
+});
+
+test('a_case_request_trace_must_have_the_method_and_the_target_of_the_fixture', () => {
+  const { root, dir } = setup();
+  const head = writeCaseTraces(root, 'head', 'HEAD', LEGACY_REQUEST, (profile) => respond(profile, { method: 'HEAD', headers: LEGACY_REQUEST }, APP, page('a')));
+  write(dir, 'FX-LEG-H', canonicalCase('FX-LEG-H', LEGACY_REQUEST, head, { request: { method: 'HEAD', headers: LEGACY_REQUEST } }));
+  assert.deepEqual(run(options(root, dir, { check: false })).problems, []);
+  assert.deepEqual(JSON.parse(readFileSync(join(dir, 'FX-LEG-H', 'expected.json'), 'utf8')).profiles_same, ['legacy-java', 'legacy-node', 'legacy-php']);
+  // a PUT trace for a POST fixture: the same pass-through response, but the method differs
+  const put = writeCaseTraces(root, 'put', 'PUT', LEGACY_REQUEST, (profile) => respond(profile, { method: 'PUT', headers: LEGACY_REQUEST }, APP, page('a')));
+  write(dir, 'FX-LEG-H', canonicalCase('FX-LEG-H', LEGACY_REQUEST, put, { request: { method: 'POST', headers: LEGACY_REQUEST } }));
+  assert.deepEqual(run(options(root, dir, { check: false })).problems, ['java', 'node', 'php'].map((s) => `FX-LEG-H: the request under legacy-${s} differs from the request of traces/${s}-put.http`));
+  // another target path: the request differs
+  write(dir, 'FX-LEG-H', canonicalCase('FX-LEG-H', LEGACY_REQUEST, head, { request: { method: 'HEAD', target: 'https://shop.example.com/other', headers: LEGACY_REQUEST } }));
+  const { problems } = run(options(root, dir, { check: false }));
+  assert.deepEqual(problems, ['java', 'node', 'php'].map((s) => `FX-LEG-H: the request under legacy-${s} differs from the request of traces/${s}-head.http`));
+});
+
 test('stored_trace_that_no_fixture_uses_is_an_error', () => {
   const { root, dir } = setup();
   write(dir, 'FX-LEG-S', canonicalCase('FX-LEG-S', PLAIN_REQUEST, null));
@@ -290,7 +354,7 @@ test('the_committed_fixtures_are_current_and_every_stored_trace_is_used', () => 
   assert.equal(out.status, 0, out.stderr);
   assert.match(out.stdout, /^legacy-fixtures gen: \d+ fixtures are current\n$/);
   const traces = storedTraces(REPO_ROOT);
-  assert.equal(traces.length, 93);
+  assert.equal(traces.length, 117);
   const result = run({ check: true });
   assert.deepEqual(result.problems, []);
   assert.ok(result.count >= 31);

@@ -11,6 +11,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { analyze, rebuild, sha1hex, split } from './model.mjs';
 import { asciiLower } from './fields.mjs';
+import { NOT_REPRODUCIBLE } from './trace.mjs';
 
 export const REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 export const FIXTURES_DIR = join(REPO_ROOT, 'fixtures/legacy');
@@ -127,8 +128,9 @@ function profileCase(id, c, profile) {
     throw new CaseError(id, 'divergences must be a list of D-nn');
   }
   if (typeof c.trace !== 'string') throw new CaseError(id, 'trace must be a string');
-  if (Object.hasOwn(c, 'not_reproduced') && !(typeof c.not_reproduced === 'string' && /^U-\d\d$/.test(c.not_reproduced))) {
-    throw new CaseError(id, 'not_reproduced must be a U-nn');
+  // Only a U-item with a check of its documented difference (src/trace.mjs compareNotReproduced).
+  if (Object.hasOwn(c, 'not_reproduced') && !NOT_REPRODUCIBLE.includes(c.not_reproduced)) {
+    throw new CaseError(id, `not_reproduced must be one of ${NOT_REPRODUCIBLE.join(', ')}`);
   }
   return { ...c, kind: 'profile' };
 }

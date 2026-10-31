@@ -3,16 +3,16 @@
 
 // Model of the legacy server side: legacy-canonical (docs/engineering/protocol/legacy-wire.md
 // section 10, rules C-01 to C-16) and the three upstream profiles legacy-java,
-// legacy-node and legacy-php (docs/engineering/protocol/legacy-divergences.md D-01 to D-13).
+// legacy-node and legacy-php (docs/engineering/protocol/legacy-divergences.md D-01 to D-15).
 // The profile results equal the stored upstream traces (gen.mjs checks it).
 //
 // The model is pure: no I/O, no clock, no shared state between calls (U-01 is not
 // reproduced). It never throws for a request, an application response or page bytes
 // of any shape; malformed input gives pass-through. An unknown profile name is a
-// configuration error and throws ModelError. No profile reproduces U-01, U-11 or U-12
-// (DL-069, H-111): every legacy response of every profile drops the CDN cache fields of
-// the application (C-13) and gets `vary: template-tag` (C-15). Every step is linear in
-// the input size (C-16).
+// configuration error and throws ModelError. No profile reproduces U-01, U-11, U-12 or
+// U-13 (DL-069, H-111, DL-082): every legacy response of every profile drops the CDN
+// cache fields of the application (C-13) and gets `vary: template-tag` (C-15), and every
+// profile keeps the scope of C-01 and C-03. Every step is linear in the input size (C-16).
 
 import { createHash } from 'node:crypto';
 import { isUtf8 } from 'node:buffer';
@@ -78,11 +78,23 @@ function eligibleText(method, app, bytes) {
   return bytes.toString('utf8');
 }
 
-/** C-10: the cache-offline value of a 200 response. */
+/** C-10: the cache-offline value of a 200 response (legacy-canonical). */
 function offlineOf(app) {
   const values = valuesOf(app.headers, 'cache-offline');
   return values.length === 1 && OFFLINE_VALUES.has(values[0]) ? values[0] : 'true';
 }
+
+/**
+ * D-14 (traces S22, S23): legacy-java sends its own `true` and then keeps every
+ * application cache-offline line as it is; legacy-node and legacy-php send their own
+ * `true` only (the application value is lost).
+ */
+function javaOffline(app) {
+  return [['cache-offline', 'true'], ...app.headers.filter(([n]) => asciiLower(n) === 'cache-offline')];
+}
+
+/** D-15 (traces S03, S24): the profiles that send no content-type on a 304. */
+const NO_CONTENT_TYPE_ON_304 = new Set(['legacy-java', 'legacy-node']);
 
 /** C-05: the If-None-Match value without one leading W/ and one pair of quotes. */
 function bareEtag(value) {
@@ -149,9 +161,10 @@ function plan(profile, request, app, ctx) {
     const cache = legacy && !noStore ? [['cache-control', 'no-cache']] : [];
     const inm = first(fields, 'if-none-match');
     if (legacy && inm !== null && asciiLower(inm) === etag) {
-      return { kind: 'not-modified', adds: [...cache, ['cache-offline', 'true'], ['cache-offline', 'store']] };
+      return { kind: 'not-modified', adds: [...cache, ...javaOffline(app), ['cache-offline', 'store']] };
     }
-    return dataOrFull(first(fields, 'template-tag'), [...(legacy ? [['cache-offline', offlineOf(app)]] : []), ...cache]);
+    // Without accept-diff true, Java adds no cache-offline line and keeps those of the application (D-02, D-14).
+    return dataOrFull(first(fields, 'template-tag'), [...cache, ...(legacy ? javaOffline(app) : app.headers.filter(([n]) => asciiLower(n) === 'cache-offline'))]);
   }
 
   if (profile === 'legacy-node') {
@@ -159,14 +172,14 @@ function plan(profile, request, app, ctx) {
     if (mode === null || mode === '' || !acceptsGzipOrDeflate(fields)) return { kind: 'pass' };
     if (first(fields, 'if-none-match') === etag) return { kind: 'not-modified', adds: [['cache-offline', 'store']] };
     const given = blocks === 0 ? null : first(fields, 'template-tag');
-    return dataOrFull(given, [['cache-offline', offlineOf(app)]]);
+    return dataOrFull(given, [['cache-offline', 'true']]);
   }
 
   // legacy-php
   if (firstExactName(fields, 'accept-diff') !== 'true') return { kind: 'pass' };
   const cache = noStore ? [] : [['cache-control', 'no-cache']];
   if (first(fields, 'if-none-match') === etag) return { kind: 'not-modified', adds: [['cache-offline', 'store'], ...cache] };
-  return dataOrFull(first(fields, 'template-tag'), [['cache-offline', offlineOf(app)], ...cache]);
+  return dataOrFull(first(fields, 'template-tag'), [['cache-offline', 'true'], ...cache]);
 }
 
 function jsonText(profile, value) {
@@ -221,6 +234,7 @@ export function analyze(profile, request, app, pageBytes) {
   const decision = plan(profile, req, a, page);
   if (decision.kind === 'pass') return { response: pass, page, kind: 'pass' };
   const removed = new Set([...FIELDS_OF_THE_MODEL, ...decision.adds.map(([n]) => n)]);
+  if (decision.kind === 'not-modified' && NO_CONTENT_TYPE_ON_304.has(profile)) removed.add('content-type');
   const headers = [...without(a.headers, removed), ...decision.adds, ...varyOf(a)];
   if (decision.kind === 'not-modified') return { response: { status: 304, headers, body: null }, page, kind: decision.kind };
   const body = decision.kind === 'data' ? dataBody(profile, page) : Buffer.from(bytes);

@@ -1,0 +1,39 @@
+{
+  "id": "FX-LEG-PASS-POST--JAVA",
+  "profile": "legacy-java",
+  "level": "must",
+  "request": {
+    "method": "POST",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["Accept-Encoding","gzip"],
+      ["accept-diff","true"],
+      ["If-None-Match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+      ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+      ["Content-Length","0"]
+    ]
+  },
+  "status": 200,
+  "fields": {
+    "etag": [],
+    "template-tag": [],
+    "template-change": [],
+    "cache-offline": [],
+    "cache-control": [],
+    "content-type": ["text/html; charset=utf-8"],
+    "sonic-etag-key": [],
+    "vary": [],
+    "cdn-cache-control": [],
+    "surrogate-control": []
+  },
+  "body": {
+    "kind": "page"
+  },
+  "split": {
+    "applied": false,
+    "template_sha1": null,
+    "keys": [],
+    "rebuild_sha1": null
+  },
+  "trace": "evidence/traces/server/java/S26-post.http"
+}

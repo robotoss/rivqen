@@ -26,7 +26,7 @@ import { CaseError, FIXTURES_DIR, PROFILE_SUFFIX, REPO_ROOT, UPSTREAM_PROFILES, 
 import { TraceError, compareToTrace, parseTrace } from './src/trace.mjs';
 
 /** Number of canonical fixtures of the complete catalog (fixtures/legacy/README.md). */
-export const CATALOG_SIZE = 54;
+export const CATALOG_SIZE = 59;
 
 const GENERATED = 'expected.json';
 const TRACE_SERVERS = ['java', 'node', 'php'];
@@ -208,11 +208,13 @@ export function run({
 
   for (const path of traces) if (!used.has(path)) problems.push(`${path}: stored trace is not used by any fixture`);
 
-  checkRules(canonical, wirePage, catalogSize, problems, notes);
+  checkRules(canonical, wirePage, catalogSize, dir === FIXTURES_DIR, problems, notes);
   return { problems, notes, count };
 }
 
-function checkRules(canonical, wirePage, catalogSize, problems, notes) {
+// `catalog`: the repository catalog (fixtures/legacy). It must keep at least catalogSize
+// canonical fixtures, so that removing fixtures cannot switch the rule coverage off.
+function checkRules(canonical, wirePage, catalogSize, catalog, problems, notes) {
   const known = new Set([...readFileSync(wirePage, 'utf8').matchAll(/^\| (C-\d\d) /gm)].map((m) => m[1]));
   if (known.size === 0) problems.push(`${wirePage}: no rule C-nn found`);
   const covered = new Set();
@@ -223,7 +225,10 @@ function checkRules(canonical, wirePage, catalogSize, problems, notes) {
     }
   }
   const missing = [...known].filter((r) => !covered.has(r));
-  if (canonical.length >= catalogSize) {
+  if (catalog && canonical.length < catalogSize) {
+    problems.push(`the catalog has ${canonical.length} canonical fixtures, fewer than ${catalogSize} (CATALOG_SIZE)`);
+  }
+  if (catalog || canonical.length >= catalogSize) {
     for (const rule of missing) problems.push(`rule ${rule} is not covered by any fixture`);
   } else if (missing.length > 0) {
     notes.push(`rule coverage is checked at ${catalogSize} canonical fixtures (now ${canonical.length}); not covered yet: ${missing.join(', ')}`);

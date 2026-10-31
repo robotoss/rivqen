@@ -10,6 +10,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { escapeText } from '../src/escape.mjs';
+import { trimOws } from '../../../tools/rqp-protocol/src/http.mjs';
 
 export const CONTROL_PREFIX = '/__rivqen/conformance/';
 export const INFO_PATH = `${CONTROL_PREFIX}info`;
@@ -51,7 +52,7 @@ export function isControlHost(host, port) {
 /** Pure check of a Content-Type value: media type application/json (ASCII case-insensitive), parameters allowed. */
 export function isJsonContentType(value) {
   if (typeof value !== 'string') return false;
-  const type = value.split(';')[0].replace(/^[ \t]+|[ \t]+$/g, '');
+  const type = trimOws(value.split(';')[0]); // linear, not a quadratic expression (DL-063)
   return type.replace(/[A-Z]/g, (c) => c.toLowerCase()) === 'application/json';
 }
 

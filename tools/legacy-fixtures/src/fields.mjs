@@ -8,23 +8,10 @@
 // None of these functions throws for any input: a malformed list is read as empty.
 
 import { asciiLower } from '../../rqp-protocol/src/common.mjs';
+// Linear trim of spaces and tabs (no backtracking expression: C-16 class, DL-063, DL-077).
+import { trimOws } from '../../rqp-protocol/src/http.mjs';
 
-export { asciiLower };
-
-const isOws = (code) => code === 0x20 || code === 0x09;
-
-/**
- * Trim spaces and tabs at both ends (not other white space). A loop, not the
- * expression /[ \t]+$/: a backtracking engine takes quadratic time on a long run of
- * spaces inside a value (C-16 class, DL-077).
- */
-export function trimOws(text) {
-  let start = 0;
-  let end = text.length;
-  while (start < end && isOws(text.charCodeAt(start))) start++;
-  while (end > start && isOws(text.charCodeAt(end - 1))) end--;
-  return text.slice(start, end);
-}
+export { asciiLower, trimOws };
 
 /** Keep only the entries that are [string, string]; anything else is dropped. */
 export function normalizeFields(list) {

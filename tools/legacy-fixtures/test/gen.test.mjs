@@ -216,12 +216,12 @@ test('rules_must_exist_and_are_covered_at_the_full_catalog', () => {
   const partial = run(options(root, dir, { check: false }));
   assert.deepEqual(partial.problems, []);
   assert.equal(partial.notes.length, 1);
-  assert.match(partial.notes[0], /checked at 54 canonical fixtures \(now 1\); not covered yet: C-01, C-03, C-04/);
+  assert.match(partial.notes[0], /checked at 59 canonical fixtures \(now 1\); not covered yet: C-01, C-03, C-04/);
   const full = run(options(root, dir, { check: false, catalogSize: 1 }));
   assert.equal(full.problems.length, 15); // C-01 to C-16 without C-02
   assert.equal(full.problems[0], 'rule C-01 is not covered by any fixture');
   assert.equal(full.notes.length, 0);
-  assert.equal(CATALOG_SIZE, 54);
+  assert.equal(CATALOG_SIZE, 59);
 });
 
 test('a_wire_page_without_rules_is_an_error', () => {

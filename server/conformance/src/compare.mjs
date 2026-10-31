@@ -24,6 +24,13 @@ import { isDeepStrictEqual } from 'node:util';
 import { compareServer, compareServerShould } from '../../../tools/rqp-protocol/check.mjs';
 import { parseStrict } from '../../../tools/rqp-protocol/src/json-strict.mjs';
 import { LIMITS } from './raw-http.mjs';
+import { MAX_PROBLEMS } from './report.mjs';
+
+// Past the report cap (MAX_PROBLEMS) a problem is counted with one shared string, not built:
+// the report keeps the first ones and one `… N more` line, so a hostile body cannot make
+// millions of problem strings (DL-078, L3).
+const OMITTED = 'problem not listed';
+const add = (problems, make) => problems.push(problems.length >= MAX_PROBLEMS ? OMITTED : make());
 
 const valuesOf = (fields, name) => {
   const lower = name.toLowerCase();
@@ -83,7 +90,7 @@ function compareData(want, body) {
   const got = json.value;
   if (got === null || typeof got !== 'object' || Array.isArray(got)) return ['body: not a JSON object'];
   const problems = [];
-  for (const name of Object.keys(got)) if (!Object.hasOwn(DATA_MEMBERS, name)) problems.push(`body: unknown member ${brief(name)}`);
+  for (const name of Object.keys(got)) if (!Object.hasOwn(DATA_MEMBERS, name)) add(problems, () => `body: unknown member ${brief(name)}`);
   for (const [name, key] of Object.entries(DATA_MEMBERS)) {
     if (!Object.hasOwn(got, name)) problems.push(`body: member ${name} is absent`);
     else if (name === 'data' && isPlain(got.data) && isPlain(want.data)) problems.push(...compareDataMap(want.data, got.data));
@@ -98,10 +105,10 @@ const isPlain = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 function compareDataMap(want, got) {
   const problems = [];
   for (const key of Object.keys(want)) {
-    if (!Object.hasOwn(got, key)) problems.push(`body: data ${brief(key)} is absent`);
-    else if (!isDeepStrictEqual(got[key], want[key])) problems.push(`body: data ${brief(key)}: expected ${brief(want[key])}, got ${brief(got[key])}`);
+    if (!Object.hasOwn(got, key)) add(problems, () => `body: data ${brief(key)} is absent`);
+    else if (!isDeepStrictEqual(got[key], want[key])) add(problems, () => `body: data ${brief(key)}: expected ${brief(want[key])}, got ${brief(got[key])}`);
   }
-  for (const key of Object.keys(got)) if (!Object.hasOwn(want, key)) problems.push(`body: data ${brief(key)} is not expected`);
+  for (const key of Object.keys(got)) if (!Object.hasOwn(want, key)) add(problems, () => `body: data ${brief(key)} is not expected`);
   return problems;
 }
 

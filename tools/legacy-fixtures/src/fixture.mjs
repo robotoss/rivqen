@@ -28,8 +28,8 @@ const PAGE_ID = /^[a-z0-9_-]+$/;
 
 /** A defect in a case.json file. */
 export class CaseError extends Error {
-  constructor(id, message) {
-    super(`${id}: ${message}`);
+  constructor(id, message, options) {
+    super(`${id}: ${message}`, options);
     this.name = 'CaseError';
     this.code = 'LEGACY_FIXTURE_CASE';
   }
@@ -137,8 +137,9 @@ function profileCase(id, c, profile) {
 export function pageFile(id, pagesDir, page) {
   try {
     return readFileSync(join(pagesDir, `${page}.html`));
-  } catch {
-    throw new CaseError(id, `page ${page} is missing`);
+  } catch (error) {
+    const why = error.code === 'ENOENT' ? 'is missing' : `cannot be read (${error.code ?? error.name})`;
+    throw new CaseError(id, `page ${page} ${why}`, { cause: error });
   }
 }
 

@@ -677,56 +677,64 @@ fn openers_page(size: usize) -> String {
     s
 }
 
-/// Linear time, with a bound that a quadratic scan cannot meet even in a
-/// debug build (256 KiB of openers: about 1.3e10 steps if quadratic).
-#[test]
-fn legacy_c16_openers_are_linear() {
-    let page = openers_page(256 * 1024);
-    let a = app_with(&page, &[]);
-    let start = Instant::now();
-    let r = legacy::respond(Profile::Canonical, &data_request(&[]), &a);
-    assert!(
-        start.elapsed() < Duration::from_secs(5),
-        "{:?}",
-        start.elapsed()
-    );
-    assert_eq!(r.status, 200);
-    let s = legacy::split(Profile::Canonical, &page).unwrap();
-    assert_eq!(s.data.len(), 3);
-    for p in Profile::ALL {
-        let start = Instant::now();
-        assert_eq!(legacy::respond(p, &data_request(&[]), &a).status, 200);
-        assert!(start.elapsed() < Duration::from_secs(5));
-    }
+/// The adversarial pages of C-16, each about 256 KiB: unclosed openers after
+/// a valid title (`FX-LEG-UNCLOSED-OPENERS`), `<title` openers whose one
+/// `</title>` comes after an LF (each opener fails; a scan that searches the
+/// close or the LF again per opener is quadratic), openers with an LF each,
+/// openers without any close, block openers without an end marker, and a
+/// marker with a 256 KiB name.
+fn adversarial_pages() -> Vec<String> {
+    const SIZE: usize = 256 * 1024;
+    vec![
+        openers_page(SIZE),
+        format!("{}\n</title>", "<title".repeat(SIZE / 6)),
+        format!("{}</title>", "<title\n".repeat(SIZE / 7)),
+        "<title".repeat(SIZE / 6),
+        "<!--sonicdiff-a-->x".repeat(SIZE / 19),
+        "<!--sonicdiff-a-->".repeat(SIZE / 18),
+        format!("<!--sonicdiff-{}", "a".repeat(SIZE)),
+    ]
 }
 
-/// C-16 acceptance: 256 KiB of `<title` and `<!--sonicdiff-a-->x` openers in
-/// less than 200 ms in a release build. Run:
-/// `cargo test --release legacy_linear_time -- --ignored`.
-#[test]
-#[ignore = "timing test: cargo test --release legacy_linear_time -- --ignored"]
-fn legacy_linear_time() {
-    let limit = if cfg!(debug_assertions) {
-        Duration::from_secs(5)
-    } else {
-        Duration::from_millis(200)
-    };
-    for page in [
-        openers_page(256 * 1024),
-        "<title".repeat(256 * 1024 / 6),
-        "<!--sonicdiff-a-->x".repeat(256 * 1024 / 19),
-        "<!--sonicdiff-a-->".repeat(256 * 1024 / 18),
-        format!("<!--sonicdiff-{}", "a".repeat(256 * 1024)),
-    ] {
+/// Every adversarial page in every profile within `limit`.
+fn assert_linear(limit: Duration) {
+    for page in adversarial_pages() {
         let a = app_with(&page, &[]);
         for p in Profile::ALL {
             let start = Instant::now();
             let r = legacy::respond(p, &data_request(&[]), &a);
             let took = start.elapsed();
-            assert!(took < limit, "{}: {took:?}", p.name());
+            assert!(
+                took < limit,
+                "{} ({} bytes): {took:?}",
+                p.name(),
+                page.len()
+            );
             assert_eq!(r.status, 200);
         }
     }
+}
+
+/// Linear time, with a bound that a quadratic scan cannot meet even in a
+/// debug build (256 KiB of openers: about 1e10 steps if quadratic).
+#[test]
+fn legacy_c16_openers_are_linear() {
+    let s = legacy::split(Profile::Canonical, &openers_page(256 * 1024)).unwrap();
+    assert_eq!(s.data.len(), 3);
+    assert_linear(Duration::from_secs(5));
+}
+
+/// C-16 acceptance: 256 KiB of `<title` and `<!--sonicdiff-a-->x` openers
+/// (and the other adversarial pages) in less than 200 ms in a release build.
+/// Run: `cargo test --release legacy_linear_time -- --ignored`.
+#[test]
+#[ignore = "timing test: cargo test --release legacy_linear_time -- --ignored"]
+fn legacy_linear_time() {
+    assert_linear(if cfg!(debug_assertions) {
+        Duration::from_secs(5)
+    } else {
+        Duration::from_millis(200)
+    });
 }
 
 // ---------------------------------------------------------------- P-01

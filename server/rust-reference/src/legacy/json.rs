@@ -66,8 +66,8 @@ mod tests {
     #[test]
     fn escapes_only_what_json_needs() {
         let mut s = String::new();
-        push_string(&mut s, "a\"\\\n\r\t\u{8}\u{c}\u{0}\u{1f}</é>&='/");
-        assert_eq!(s, "\"a\\\"\\\\\\n\\r\\t\\b\\f\\u0000\\u001f</é>&='/\"");
+        push_string(&mut s, "a \"\\\n\r\t\u{8}\u{c}\u{0}\u{1f}</é>&='/");
+        assert_eq!(s, "\"a \\\"\\\\\\n\\r\\t\\b\\f\\u0000\\u001f</é>&='/\"");
     }
 
     #[test]

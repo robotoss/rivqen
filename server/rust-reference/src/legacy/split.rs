@@ -125,7 +125,9 @@ impl DataMap {
 pub(crate) fn find_title(h: &[u8]) -> Option<(usize, usize)> {
     let mut from = 0usize;
     let mut close: Option<usize> = None;
-    let mut lf = Lookahead::Unknown;
+    // The next LF at or after the last search start. When there is none, the
+    // opener matches (a `</title>` follows), so `None` is never read again.
+    let mut lf: Option<usize> = None;
     loop {
         let open = find_ci(h, from, TITLE_OPEN)?;
         let after = open.saturating_add(TITLE_OPEN.len());
@@ -136,31 +138,17 @@ pub(crate) fn find_title(h: &[u8]) -> Option<(usize, usize)> {
         };
         close = Some(c);
         let next_lf = match lf {
-            Lookahead::At(l) if l >= after => Some(l),
-            Lookahead::Never => None,
-            _ => {
-                let l = find_byte(h, after, b'\n');
-                lf = l.map_or(Lookahead::Never, Lookahead::At);
-                l
-            }
+            Some(l) if l >= after => Some(l),
+            _ => find_byte(h, after, b'\n'),
         };
+        lf = next_lf;
+        // `h[c]` is `<`, so the LF is either before the close or after it.
         if next_lf.is_none_or(|l| l > c) {
             return Some((open, c.saturating_add(TITLE_CLOSE.len())));
         }
         // `<title` cannot overlap itself: the next opener starts after this one.
         from = after;
     }
-}
-
-/// A cached forward search for one byte.
-#[derive(Clone, Copy)]
-enum Lookahead {
-    /// Not searched yet.
-    Unknown,
-    /// Found at this position.
-    At(usize),
-    /// Not present at or after the last search start.
-    Never,
 }
 
 /// One match of the block expression of C-07.

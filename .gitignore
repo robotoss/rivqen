@@ -30,6 +30,9 @@ tools/rqp-markup/java/.gradle/
 tools/rqp-markup/java/target/
 tools/rqp-markup/php/vendor/
 
+# Build output of the reference server
+server/rust-reference/target/
+
 # Python bytecode
 __pycache__/
 

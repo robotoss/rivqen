@@ -202,6 +202,35 @@ Input: the request (method, field lines), the application response A (status, fi
 
 Request fields `sonic-sdk-version`, `Cookie`, `User-Agent` and `Accept-Encoding` do not change the result.
 
+**Inputs that C-03, C-05, C-09 and C-10 leave open (DL-088).** <Badge type="info" text="DESIGN" /> No fixture tests them; each choice fails closed or keeps the C-10 default.
+
+1. C-03: the charset is the value of the first parameter whose name is `charset` (ASCII case-insensitive, trimmed). A parameter without `=` is skipped. One pair of enclosing `"` is removed; a backslash has no escape meaning, so `"utf\-8"` is not `utf-8` (pass-through).
+2. C-05: the prefix `W/` is case-sensitive; `w/"…"` keeps its `w/` and does not match.
+3. C-09: a directive counts by its name before any `=` (ASCII case-insensitive, trimmed), so `no-store=1` counts as `no-store`.
+4. C-10: two or more `cache-offline` field lines of A give the default `true`, also when one of them is valid.
+
+### 10.1 Upstream profiles {#profiles}
+
+<Badge type="info" text="DESIGN" /> This table is the exact behavior of the profiles `legacy-java`, `legacy-node` and `legacy-php` (ADR-005). It states the server divergences D-01…D-15 of [Divergences](/engineering/protocol/legacy-divergences) and the decisions DL-069, DL-076, DL-082, DL-088 and H-111 as rules; every row is confirmed by the profile fixtures and the stored traces, except where the row says "no fixture". The reference server (WP-03) and the legacy model of `tools/legacy-fixtures` implement it.
+
+**Rules that every profile keeps from `legacy-canonical`:** C-01 (scope), C-03 (text), C-04 (`etag`), C-06 (title; U-11 is not reproduced, DL-069), C-08 (template and `template-tag`, over the split of the profile), C-11 and C-12 (the bodies; `template-change`), C-13 (the removed fields, also the CDN cache fields; H-111), C-14, C-15 (`vary: template-tag`; U-12) and C-16. A pass-through (U-13 is not reproduced, DL-082) is the C-01 pass-through. Where a row says "first line", the value is the trimmed value of the first field line with that name (ASCII case-insensitive name) and other lines of that name are ignored.
+
+| Rule | `legacy-java` | `legacy-node` | `legacy-php` |
+|---|---|---|---|
+| P-01 Legacy request (D-01, D-10) | The first `accept-diff` line is `true` | The first `accept-diff` line is not empty, and an `accept-encoding` line (any of them) lists the coding `gzip` or `deflate` (items split at `,`; the coding before any `;`, trimmed, ASCII case-insensitive) | The first field line whose name is exactly `accept-diff` (byte for byte) has the trimmed value `true`; other names compare ASCII case-insensitively |
+| P-02 Request that is not a legacy request (D-02, D-14) | The split still runs. The response is C-11 or C-12 by P-04 with `etag`, `template-tag`, `template-change` and C-15; the `cache-offline` lines of A stay as they are; no own `cache-offline`; `cache-control` of A unchanged; never a `304` | Pass-through | Pass-through |
+| P-03 `304` test (legacy request only; D-03) | The first `If-None-Match` line, ASCII-lowercased, equals C-04; no `W/` or quote is removed | The first `If-None-Match` line equals C-04 exactly | As `legacy-node` |
+| P-04 Data or full (C-11, C-12; D-06) | Data response when the first `template-tag` line equals C-08 exactly; else full | As `legacy-java`, but full when the split extracted no block | As `legacy-java` |
+| P-05 `cache-control` of a legacy response, `200` and `304` (D-09) | `no-cache`, which replaces the lines of A; if a line of A has the directive `no-store` (C-09 rules), the lines of A stay | The lines of A stay | As `legacy-java` |
+| P-06 `cache-offline` on `200` (D-14) | One line `true`, then every `cache-offline` line of A, unchanged and in order | One line `true`; the lines of A are dropped | As `legacy-node` |
+| P-07 `cache-offline` on `304` (D-12) | `true`, then every `cache-offline` line of A, then `store` | One line `store` | One line `store` |
+| P-08 `content-type` on `304` (D-15) | Removed | Removed | Kept from A |
+| P-09 Block names (D-05) | An empty name gives the key `{}`. No length limit (no fixture) | An empty name gives the key `{autoK}`: K counts the blocks with an empty name, from 0, in document order. No length limit (no fixture) | As `legacy-java` |
+| P-10 Repeated keys (markers §3; DL-088) | The split never fails. Each match is replaced by its key, so the template keeps every placeholder; the data map keeps the later value at the position of the first. A block named `title` is such a repeat of `{title}` (no fixture) | As `legacy-java` | As `legacy-java` |
+| P-11 Data body (D-08) | The JSON value of C-11. Any serialization with that value; the upstream server escapes `<`, `>`, `&`, `=`, `'` | As `legacy-java`; no escaping upstream | As `legacy-java`; the upstream server escapes `/` and every non-ASCII character |
+
+<Badge type="tip" text="FACT" /> The runner compares a data body as a JSON value (D-08), the values of each listed field name in order, and no order between different names and no name spelling ([golden fixtures README](https://github.com/robotoss/rivqen/blob/main/fixtures/legacy/README.md), `fields`). So the response field order and the name spelling (`Etag`, D-07) are not part of the profiles. Each upstream profile runs 39 cases: its profile fixtures and the canonical fixtures that list it in `profiles_same`.
+
 ## 11. Verification
 
 Fixtures `FX-LEG-*` in [Golden fixtures](/engineering/protocol/fixtures) cover every section of this page; every rule C-01 to C-16 has at least one fixture (`fixtures/legacy/README.md`).

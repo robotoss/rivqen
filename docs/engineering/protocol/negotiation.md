@@ -243,6 +243,16 @@ Inputs: the request; the application response A (status, header fields, page byt
 
 <Badge type="tip" text="FACT" /> WHATWG Encoding Standard §4.2 "Names and labels" (checked on 2026-10-17; the standard was last updated on 21 May 2026): these six labels are the labels of the encoding UTF-8, and "get an encoding" removes leading and trailing ASCII white space and compares labels ASCII case-insensitively. WHATWG HTML, "the encoding sniffing algorithm": BOM sniffing comes first (step 1, confidence certain), then a character encoding that the transport layer specifies (step 4, certain), and only after that the `<meta>` prescan and other detection. <Badge type="info" text="DESIGN" /> The server and the client read P as UTF-8 (markup M-02). A browser that decodes the document with another encoding (for example `ISO-2022-JP`, whose escape sequences change how the next bytes decode, or an auto-detected legacy encoding) can see other characters in place of bytes such as `">` or `<head>`. Then its block boundaries and its manifest position are not the ones that RQP computed (security review S2 round 2, L3). With the UTF-8 charset in F, step 4 of the browser algorithm gives UTF-8 before any `<meta>` prescan or detection. The replaced field does not change the ETag or the `304`: the page revision covers the bytes of F, and the field is the same for every request to the page (H-51). When the client, not the WebView, fetches F or shows a snapshot, it gives the bytes to the WebView as UTF-8 itself (section 6.3, "Delivery to the WebView"; H-66).
 
+**Inputs that the steps leave open (DL-089).** <Badge type="info" text="DESIGN" /> No fixture tests them. Each choice gives the normal page and adds no field:
+
+1. A request with `If-Match`, `If-Unmodified-Since` or `If-Range` gets A without its `Rq-*` fields (as step 1). The application evaluated these conditions for its own representation, not for F.
+2. `If-Modified-Since` without `If-None-Match` is ignored: F has no `Last-Modified` (DL-032), so there is no date to compare.
+3. An `If-None-Match` of another syntax (not `*` and not a list of entity-tags) makes the condition of step 4 true (no `304`) and gives no base (§3.5).
+4. A media range of `Accept` with a `q` parameter that is not a valid qvalue (RFC 9110 §12.4.2) does not accept the delta media type (§3.6).
+5. An A with a `Content-Encoding` other than `identity` gets A without its `Rq-*` fields (as step 1): the markup analysis needs the bytes without a content coding.
+6. When the origin or the path of the manifest is longer than its limit ([manifest and patch §1.6](/engineering/protocol/manifest-patch#_1-6-origin-and-path)), the server sends A without its `Rq-*` fields (as step 2).
+7. A Byte Sequence is read by RFC 9651 §4.2.7: the padding is absent or complete (RFC 4648 §4), and non-zero pad bits are accepted; any other `=` (an incomplete padding such as `AA=`, or a `=` before the end) fails the parse.
+
 Sizes in step 7 are the bytes before any content coding. The comparison of digest prefixes in step 6 does not need a constant-time function: the values are not secret.
 
 | Outcome | Step | Status | Body |

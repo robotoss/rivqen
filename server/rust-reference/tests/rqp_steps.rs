@@ -729,7 +729,11 @@ fn rqp_step7_large_adversarial_blocks_are_linear() {
     ];
     let mut page = String::from("<!DOCTYPE html><html><head></head><body>");
     for (i, b) in blocks.iter().enumerate() {
-        page.push_str(&format!("<div data-rq-block=\"b{i}\">{b}</div>"));
+        page.push_str("<div data-rq-block=\"b");
+        page.push_str(&i.to_string());
+        page.push_str("\">");
+        page.push_str(b);
+        page.push_str("</div>");
     }
     page.push_str("</body></html>");
     let doc = rqp_markup::analyze(page.as_bytes()).unwrap();

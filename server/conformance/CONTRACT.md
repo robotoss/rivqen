@@ -27,7 +27,7 @@ Exit codes: `0` no MUST case failed; `1` at least one MUST case failed; `2` usag
 
 ## 2. Control endpoint (server side)
 
-Only a **test harness** has it: a small program that wraps the server code under test. It is never part of an SDK package, it is off unless the harness starts with an explicit flag (`--conformance` or `RIVQEN_CONFORMANCE=1`), and it answers only connections from `127.0.0.1` or `::1` (else `403`). Without the flag the paths below are unknown (`404`). A control request must have a `Host` of `127.0.0.1:<port>`, `localhost:<port>` or `[::1]:<port>` (else `403`, against DNS rebinding), and a `POST` must have `Content-Type: application/json` (else `415`, so that a cross-origin page cannot send it without a preflight) (DL-078). **Lab harness exception (DL-081):** a harness in a container of `tools/upstream-lab` sees the bridge address as the peer, because its port is published on `127.0.0.1` of the host only; it checks `Host` and `Content-Type`, not the peer address.
+Only a **test harness** has it: a small program that wraps the server code under test. It is never part of an SDK package, it is off unless the harness starts with an explicit flag (`--conformance` or `RIVQEN_CONFORMANCE=1`; the reference server takes only `--conformance`, DL-093), and it answers only connections from `127.0.0.1` or `::1` (else `403`). Without the flag the paths below are unknown (`404`). A control request must have a `Host` of `127.0.0.1:<port>`, `localhost:<port>` or `[::1]:<port>` (else `403`, against DNS rebinding), and a `POST` must have `Content-Type: application/json` (else `415`, so that a cross-origin page cannot send it without a preflight) (DL-078). **Lab harness exception (DL-081):** a harness in a container of `tools/upstream-lab` sees the bridge address as the peer, because its port is published on `127.0.0.1` of the host only; it checks `Host` and `Content-Type`, not the peer address.
 
 ### `GET /__rivqen/conformance/info`
 
@@ -58,7 +58,7 @@ Request body (`application/json`, at most 8 MiB):
 | `profile` | Legacy only |
 | `page_base64` | The exact application body bytes (`pages/<page>.html` of the case) |
 | `app` | Status and field lines of the application response, in order (from `case.json`) |
-| `server_config` | RQP: `server_config` of `expected.json` (or `{}`); legacy: `{}` |
+| `server_config` | RQP: `server_config` of `expected.json` (or `{}`); legacy: `{}`. The reference server (`server/rust-reference`) reads `policy` (`mode`, `ttl_seconds`, `offline`), `limits` (`max_patch_bytes`) and `maxPatchBytes` (the server limit, an integer from 1 to 5242880; default 262144); any other member or a wrong type is `BAD_CASE` (DL-093) |
 
 Answers: `204` (stored; the next requests get this case), `400` with `{"error": "BAD_CASE"}` (invalid JSON or member), `413` (body larger than 8 MiB), `415` (not `application/json`), `422` with `{"error": "UNSUPPORTED"}` (suite or profile not supported). Any control path: `403` (refused peer or `Host`), `404` (no flag, or an unknown control path), `405` (wrong method). A case request before the first case: `503` (`NO_CASE`); an error of the server code: `500`. The harness keeps one case at a time; a new `POST` replaces it.
 

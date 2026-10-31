@@ -77,3 +77,10 @@ The upstream code runs only in the containers, so the live behavior is checked b
 2026-10-31: 139 checks, 137 passed, 2 expected failures (Java, D-02 and D-12); S01–S21 reproduced the traces of 2026-10-09; S22–S29 recorded as observations. Conformance run by URL: `evidence/conformance/upstream-lab-2026-10-31.md`. See the [server trace report](../../docs/engineering/protocol/legacy-traces.md) §9.
 
 2026-10-09: 115 checks, 113 passed, 2 expected failures (Java).
+
+## Limits of the lab (security review of WP-02 S2, DL-083)
+
+- The control endpoint checks only `Host` and `Content-Type` (DL-081). A browser page cannot use it, but any local process, or another container on the default Docker bridge, can post a case. Run the lab only on a single-user development machine, and only for the length of a run.
+- The PHP built-in server reads the whole request body before `index.php` runs, so the 8 MiB case limit does not bound its memory.
+- The harnesses pass application status codes 100–599 and every field line, including `Content-Length`, `Transfer-Encoding` and `Connection`; do not put 1xx statuses or framing fields into case data. Koa answers `500` for a status code it does not know (for example 299). The Node.js harness groups repeated application field lines at the position of the first one.
+- `gson-2.8.2.jar` is checked against a pinned SHA-256 in `start.sh`. The npm packages and the container images are not pinned yet (follow-up for WP-20).

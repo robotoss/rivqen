@@ -23,7 +23,7 @@
 // Exit codes: 0 all current (or written), 1 a stale, missing or extra file or a failed
 // check, 2 a usage error.
 
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
@@ -281,7 +281,8 @@ export function main(argv, io = {}) {
     }
     extra = { dir };
     // Another directory than the catalog: it has its own pages and no stored traces.
-    if (dir !== FIXTURES_DIR) extra = { dir, catalog: false, coverage: false, labPages: null, traces: [] };
+    // realpath: a symlinked spelling of fixtures/legacy is still the catalog with all its checks.
+    if (realpathSync(dir) !== realpathSync(FIXTURES_DIR)) extra = { dir, catalog: false, coverage: false, labPages: null, traces: [] };
   }
   const { check } = args;
   const { problems, notes, count } = run({ check, ...extra, ...options });

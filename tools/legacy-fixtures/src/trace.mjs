@@ -59,7 +59,7 @@ export function parseTrace(bytes) {
   if (split < 0) throw new TraceError('missing "--- response ---"');
   const requestLines = bytes.subarray(0, split).toString('utf8').split('\n');
   const requestLine = REQUEST_LINE.exec(requestLines[0]);
-  if (requestLine === null) throw new TraceError(`bad request line: ${JSON.stringify(requestLines[0])}`);
+  if (requestLine === null) throw new TraceError(`bad request line: ${JSON.stringify(requestLines[0].slice(0, 80))}`);
   const responseStart = split + RESPONSE_MARK.length;
   const bodyMark = bytes.indexOf(BODY_MARK, responseStart);
   if (bodyMark < 0) throw new TraceError('missing the body marker line');

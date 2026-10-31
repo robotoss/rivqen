@@ -16,6 +16,9 @@ cp "$LAB/node/app.js" "$LAB/node/control.cjs" "$WORK/node/"
 # Java: upstream binary jar + Gson version from its POM + the page servlet.
 cp "$UPSTREAM/sonic-java/lib/VasSonic-1.1.jar" "$WORK/java/WEB-INF/lib/"
 curl -sSfL -o "$WORK/java/WEB-INF/lib/gson-2.8.2.jar" https://repo1.maven.org/maven2/com/google/code/gson/gson/2.8.2/gson-2.8.2.jar
+# Pinned (DL-083): SHA-256 of the jar whose SHA-1 equals the published gson-2.8.2.jar.sha1 of Maven Central
+# (3edcfe49d2c6053a70a2a47e4e1c2f94998a49cf, checked 2026-10-31).
+echo "b7134929f7cc7c04021ec1cc27ef63ab907e410cf0588e397b8851181eb91092  $WORK/java/WEB-INF/lib/gson-2.8.2.jar" | shasum -a 256 -c -
 cp "$LAB/java/web.xml" "$WORK/java/WEB-INF/web.xml"
 docker run --rm -v "$LAB/java:/src:ro" -v "$WORK/java:/w" tomcat:9-jdk11 \
   javac -cp /usr/local/tomcat/lib/servlet-api.jar:/w/WEB-INF/lib/gson-2.8.2.jar -d /w/WEB-INF/classes \

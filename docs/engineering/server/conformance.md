@@ -128,7 +128,7 @@ A profile run checks only behavior that a stored upstream trace confirms. A prof
 |---|---|---|
 | RQP reference (`tools/rqp-protocol`) | `rqp` | 112/112 |
 | Server demo (`examples/server-demo/src/rqp.js`) | `rqp` | 112/112 |
-| Legacy model | `legacy-canonical` | 55/55 |
+| Legacy model | `legacy-canonical` | 59/59 |
 | Legacy model | `legacy-java` | 31/31 |
 | Legacy model | `legacy-node` | 31/31 |
 | Legacy model | `legacy-php` | 31/31 |

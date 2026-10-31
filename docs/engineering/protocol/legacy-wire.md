@@ -204,4 +204,4 @@ Request fields `sonic-sdk-version`, `Cookie`, `User-Agent` and `Accept-Encoding`
 
 ## 11. Verification
 
-Fixtures `FX-LEG-*` in [Golden fixtures](/engineering/protocol/fixtures) cover every section of this page; every rule C-01 to C-14 has at least one fixture (`fixtures/legacy/README.md`).
+Fixtures `FX-LEG-*` in [Golden fixtures](/engineering/protocol/fixtures) cover every section of this page; every rule C-01 to C-16 has at least one fixture (`fixtures/legacy/README.md`).

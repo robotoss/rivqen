@@ -46,7 +46,7 @@ fixtures/legacy/
 
 ## 3. Legacy protocol catalog
 
-<Badge type="tip" text="FACT" /> On 2026-10-30 the directory `fixtures/legacy/` has 144 fixtures: 55 canonical fixtures (31 from stored traces, 24 from the rules) and 89 profile fixtures. All 93 stored upstream traces are checked by the generator. Each `expected.json` is current (`gen.mjs --check`). The full lists with the requests are in `fixtures/legacy/README.md`.
+<Badge type="tip" text="FACT" /> On 2026-10-30 the directory `fixtures/legacy/` has 148 fixtures: 59 canonical fixtures (31 from stored traces, 28 from the rules) and 89 profile fixtures. All 93 stored upstream traces are checked by the generator. Each `expected.json` is current (`gen.mjs --check`). The full lists with the requests are in `fixtures/legacy/README.md`.
 
 The catalog below is the planned minimum. The State column names the fixtures that implement each row. `<X>` stands for the page variants `-FIRST` (first load) and `-DATA` (data response).
 

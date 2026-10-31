@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
-Golden fixtures for the server side of the legacy (VasSonic-compatible) protocol: one request to the server under test and the exact expected response. Every server (the Rust reference server of WP-03, the Node.js, Java and PHP SDKs) runs them with `server/conformance`. Catalog: `docs/engineering/protocol/fixtures.md` §3. Behavior: `docs/engineering/protocol/legacy-wire.md` §10 (rules C-01 to C-14). Profiles: ADR-005. Format fixed by the architect for WP-02 S1 (DL-067, DL-068). The client part of each fixture (`cache-before`, expected actions) is added before P3 (H-110).
+Golden fixtures for the server side of the legacy (VasSonic-compatible) protocol: one request to the server under test and the exact expected response. Every server (the Rust reference server of WP-03, the Node.js, Java and PHP SDKs) runs them with `server/conformance`. Catalog: `docs/engineering/protocol/fixtures.md` §3. Behavior: `docs/engineering/protocol/legacy-wire.md` §10 (rules C-01 to C-16). Profiles: ADR-005. Format fixed by the architect for WP-02 S1 (DL-067, DL-068). The client part of each fixture (`cache-before`, expected actions) is added before P3 (H-110).
 
 Upstream: `Tencent/VasSonic` at `59936beff656d4b5718ff6444d6c5e001a2c5231`. Clean-room: no upstream code, comments, test code or sample HTML in this directory. The pages are Rivqen test pages.
 
@@ -53,7 +53,7 @@ fixtures/legacy/
 |---|---|
 | `id` | The directory name |
 | `profile` | `legacy-canonical` |
-| `rules` | Rules of legacy wire §10 (`C-01`…`C-14`) that the case checks |
+| `rules` | Rules of legacy wire §10 (`C-01`…`C-16`) that the case checks |
 | `upstream` | Always the pinned repository and SHA above |
 | `sources` | At least one `upstream:<path>:<line>` or `docs:<page>#<anchor>` reference |
 | `evidence` | `trace` (the scenario was captured from the upstream servers) or `code-reading` |
@@ -110,7 +110,10 @@ Generated.
     "cache-offline": ["true"],
     "cache-control": ["no-cache, private"],
     "content-type": ["text/html; charset=utf-8"],
-    "sonic-etag-key": []
+    "sonic-etag-key": [],
+    "cdn-cache-control": [],
+    "surrogate-control": [],
+    "vary": ["template-tag"]
   },
   "body": { "kind": "data", "data": { "{title}": "<title>Shop</title>", "{price}": "…" }, "template_tag": "3c77…", "html_sha1": "4c33…", "diff": "" },
   "split": { "applied": true, "template_sha1": "3c77…", "keys": ["{title}", "{price}", "{stock}"], "rebuild_sha1": "4c33…" },
@@ -131,7 +134,7 @@ The runner with `--profile legacy-canonical` runs every canonical fixture. With 
 ## Generator checks (`gen.mjs --check`)
 
 1. Every `expected.json` equals the regenerated one byte for byte; no unknown or missing files.
-2. Every trace-backed profile response (status, the fields `etag`, `template-tag`, `template-change`, `cache-offline`, `cache-control`, `sonic-etag-key`, and the decoded body: exact for `page`, as JSON values for `data`) equals the stored trace, except a fixture with `not_reproduced`.
+2. Every trace-backed profile response (status, the fields `etag`, `template-tag`, `template-change`, `cache-offline`, `cache-control`, `sonic-etag-key`, and the decoded body: exact for `page`, as JSON values for `data`) equals the stored trace, except a fixture with `not_reproduced`. `vary`, `cdn-cache-control` and `surrogate-control` are not compared with the traces: every profile follows C-13 and C-15 (U-12, H-111).
 3. `OVERRIDE_NOT_NEEDED`: a profile fixture whose expected response equals the canonical one.
 4. `OVERRIDE_MISSING`: a trace-backed canonical fixture whose trace for a profile differs from the canonical expected response, with no profile fixture.
 5. Every `rules` item exists in legacy wire §10; every C-rule is covered by at least one fixture.
@@ -162,7 +165,7 @@ Request shorthand: `AE` = `accept-encoding: gzip`, `AD` = `accept-diff: true`, `
 
 Profile fixtures `--JAVA`, `--NODE`, `--PHP` exist exactly where check 4 requires them (lane T-01 writes them). The D-13 profile fixtures of `legacy-java` and `legacy-php` (`FX-LEG-TITLE-SEVERAL-*`) have `not_reproduced: "U-11"` and expect the canonical title rule C-06 with the other behaviors of the profile (DL-069).
 
-### Canonical fixtures from the rules (24; lane T-02 and the architect)
+### Canonical fixtures from the rules (28; lanes T-02, T-07 and the architect)
 
 Default page `b`, default request `AE`, `AD`, `INM({{etag:a}})`, `TT({{tag:a}})` (a data change), default `app`. `evidence: code-reading`; `sources` = the legacy wire §10 row (`docs:engineering/protocol/legacy-wire#canonical-server`) plus the upstream references of the section that the row cites.
 
@@ -191,6 +194,10 @@ Default page `b`, default request `AE`, `AD`, `INM({{etag:a}})`, `TT({{tag:a}})`
 | `FX-LEG-NAME-TOO-LONG` | page `longname` (new: page `b` with the block name `price` replaced by 129 `p` characters and a second block with 128 `q` characters), `TT({{tag:longname}})` | C-07 | 129: no key; 128: a key |
 | `FX-LEG-TEMPLATE-TAG-UPPERCASE` | `TT({{TAG:a}})` | C-11 | full response |
 | `FX-LEG-COOKIE-VARIANCE` | `cookie: session=s1` after the default lines; app adds `set-cookie: session=s2; Path=/; Secure; HttpOnly` and `vary: Cookie` | C-13 | data response; `set-cookie` and `vary` kept |
+| `FX-LEG-VARY-APP` | app adds `vary: Accept-Language` | C-15 | `vary`: `Accept-Language`, then `template-tag` |
+| `FX-LEG-VARY-STAR` | app adds `vary: *` | C-15 | `vary: *` only, no line added |
+| `FX-LEG-CDN-FIELDS` | app adds `cdn-cache-control: max-age=600` and `surrogate-control: max-age=600` | C-13, C-15 | both absent; `vary: template-tag` |
+| `FX-LEG-UNCLOSED-OPENERS` | page `openers` (new: page `b` with 2000 `<title` and 2000 `<!--sonicdiff-a-->x` in the static footer text, no LF), `TT({{tag:openers}})` | C-06, C-07, C-16 | data response; keys `{title}`, `{price}`, `{stock}`; the openers stay in the template |
 | `FX-LEG-TITLE-NEWLINE` | page `titlenl` (new: page `b` with the title `<title>Shop\nNew</title>`, an LF byte), `TT({{tag:titlenl}})` | C-06 | data response, `{title}` = `""` |
 
 ## Rules

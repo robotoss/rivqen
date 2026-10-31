@@ -60,7 +60,7 @@ Request body (`application/json`, at most 8 MiB):
 | `app` | Status and field lines of the application response, in order (from `case.json`) |
 | `server_config` | RQP: `server_config` of `expected.json` (or `{}`); legacy: `{}` |
 
-Answers: `204` (stored; the next requests get this case), `400` with `{"error": "BAD_CASE"}` (invalid JSON or member), `422` with `{"error": "UNSUPPORTED"}` (suite or profile not supported). The harness keeps one case at a time; a new `POST` replaces it.
+Answers: `204` (stored; the next requests get this case), `400` with `{"error": "BAD_CASE"}` (invalid JSON or member), `413` (body larger than 8 MiB), `415` (not `application/json`), `422` with `{"error": "UNSUPPORTED"}` (suite or profile not supported). Any control path: `403` (refused peer or `Host`), `404` (no flag, or an unknown control path), `405` (wrong method). A case request before the first case: `503` (`NO_CASE`); an error of the server code: `500`. The harness keeps one case at a time; a new `POST` replaces it.
 
 ### Case requests
 

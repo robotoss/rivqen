@@ -110,7 +110,7 @@ The response is untrusted. A defect is a failed case with the reason, never a cr
 ## Procedure: run the tests
 
 1. Go to `server/conformance`.
-2. Run `node --test "test/*.test.mjs"`.
+2. Run `npm test` (the runner tests in `test/` and the harness tests in `harness/test/`).
 
 The tests use local servers on `127.0.0.1`, port 0: `test/helpers.mjs` has a fake server with the control endpoint (enough for these tests; it is not the harness). `test/fixtures/legacy/` has mini fixtures in the format of `fixtures/legacy/README.md`, written for the tests (not golden fixtures). The RQP tests use the real `fixtures/rqp/protocol` and the reference server step of `tools/rqp-protocol` behind the fake server.
 

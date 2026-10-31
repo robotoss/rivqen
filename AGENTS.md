@@ -49,6 +49,10 @@ Rivqen is an independent, clean-room re-implementation of the ideas of Tencent V
 | Markup parsers agree on all fixtures | `node tools/rqp-markup/diff.mjs` |
 | Protocol fixtures current and passing | `node tools/rqp-protocol/gen.mjs --check` then `node tools/rqp-protocol/check.mjs` |
 | Protocol reference tests | `cd tools/rqp-protocol && npm test` |
+| Full repository run (as CI) | `sh tools/fulltest.sh [group ...]` |
+| Legacy fixtures current | `node tools/legacy-fixtures/gen.mjs --check` (malformed: add `--dir fixtures/malformed/legacy`) |
+| Conformance over HTTP (harness + runner) | `node server/conformance/e2e/run.mjs --module <handle module> --suite rqp\|legacy [--profile <name>]` |
+| Conformance against the live upstream lab | `sh tools/upstream-lab/conformance.sh` (after `start.sh`) |
 
 Per-language checks and mutation commands: `docs/engineering/standards/` and `docs/engineering/quality/mutation.md`.
 

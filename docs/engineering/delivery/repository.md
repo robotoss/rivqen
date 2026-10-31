@@ -1,8 +1,8 @@
 # Repository layout
 
-Rivqen is a monorepo. One repository keeps the core, the SDKs, the servers, the fixtures and the documentation in sync. This page shows the planned layout.
+Rivqen is a monorepo. One repository keeps the core, the SDKs, the servers, the fixtures and the documentation in sync. This page shows the layout: what exists and what is planned.
 
-**Status:** <Badge type="info" text="DESIGN" /> Today `docs/`, the root files, `.claude/`, `examples/server-demo/`, `tools/` and `evidence/` exist. Each directory is created by the work package listed next to it.
+**Status:** <Badge type="info" text="DESIGN" /> Today `docs/`, the root files, `.claude/`, `examples/server-demo/`, `fixtures/` (`rqp/`, `legacy/`, `malformed/`), `server/conformance/`, `tools/` and `evidence/` exist. Each directory is created by the work package listed next to it.
 
 ## 1. Tree
 

@@ -48,14 +48,14 @@ fixtures/legacy/
 
 <Badge type="tip" text="FACT" /> On 2026-10-31 the directory `fixtures/legacy/` has 171 fixtures: 59 canonical fixtures (39 from stored traces, 20 from the rules) and 112 profile fixtures. All 117 stored upstream traces (39 for each server: S01 to S21, and S22 to S29 from the live run of 2026-10-31) are checked by the generator. Each `expected.json` is current (`gen.mjs --check`). The full lists with the requests are in `fixtures/legacy/README.md`.
 
-The catalog below is the planned minimum. The State column names the fixtures that implement each row. `<X>` stands for the page variants `-FIRST` (first load) and `-DATA` (data response).
+The catalog below is the minimum set of the plan; every row except the client-only ones is now implemented. The State column names the fixtures that implement each row. `<X>` stands for the page variants `-FIRST` (first load) and `-DATA` (data response).
 
 | ID | Scenario | State |
 |---|---|---|
 | `FX-LEG-FIRST-LOAD` | No cache; full HTML; template and data stored | Done: `FX-LEG-FIRST-LOAD` |
 | `FX-LEG-304` | Cache present; `etag` matches; `304` | Done: `FX-LEG-304`, `-304-UPPERCASE`, `-304-QUOTED`, `-304-WEAK`, `-304-TWO-LINES` |
 | `FX-LEG-DATA-CHANGE` | Same template, data changed; data-only response | Done: `FX-LEG-DATA-CHANGE` |
-| `FX-LEG-TEMPLATE-CHANGE` | Template changed; full HTML; `template-change: true` | Done: `FX-LEG-TEMPLATE-CHANGE`, `-TEMPLATE-TAG-UPPERCASE` |
+| `FX-LEG-TEMPLATE-CHANGE` | Template changed; full HTML; `template-change: true` | Done: `FX-LEG-TEMPLATE-CHANGE`, `FX-LEG-TEMPLATE-TAG-UPPERCASE` |
 | `FX-LEG-OFFLINE-TRUE` | `cache-offline: true` | Done: `FX-LEG-OFFLINE-TRUE` |
 | `FX-LEG-OFFLINE-FALSE` | `cache-offline: false` | Done, from trace S22: `FX-LEG-OFFLINE-FALSE` |
 | `FX-LEG-OFFLINE-STORE` | `cache-offline: store` | Done: `FX-LEG-OFFLINE-STORE` |

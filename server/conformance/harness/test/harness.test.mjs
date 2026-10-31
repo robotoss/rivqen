@@ -404,3 +404,43 @@ describe('harness never crashes (DL-078, L2)', () => {
     for (current = 0; current < bad.length; current++) assert.equal((await raw(port, req('GET', '/p'))).status, 500, JSON.stringify(bad[current]));
   });
 });
+
+describe('control endpoint edges', () => {
+  test('ipv4_mapped_loopback_is_loopback', () => {
+    // A dual-stack socket reports an IPv4 client as ::ffff:127.0.0.1.
+    assert.equal(isLoopback('::ffff:127.0.0.1'), true);
+    assert.equal(isLoopback('::ffff:127.0.0.2'), false);
+    assert.equal(isLoopback('::ffff:10.0.0.1'), false);
+  });
+
+  test('app_status_bounds_100_to_599', async () => {
+    const { port } = await start(echo);
+    for (const status of [99, 600, 1000]) {
+      const r = await postCase(port, { ...CASE, app: { status, headers: [] } });
+      assert.equal(r.status, 400, String(status));
+    }
+    for (const status of [100, 599]) assert.equal((await postCase(port, { ...CASE, app: { status, headers: [] } })).status, 204, String(status));
+  });
+
+  test('control_paths_405_on_the_wrong_method', async () => {
+    const { port } = await start(echo);
+    const info = await raw(port, req('POST', '/__rivqen/conformance/info', '{}', JSON_TYPE));
+    assert.equal(info.status, 405);
+    assert.deepEqual(json(info), { error: 'METHOD_NOT_ALLOWED' });
+    const kase = await raw(port, req('GET', '/__rivqen/conformance/case'));
+    assert.equal(kase.status, 405);
+    assert.deepEqual(json(kase), { error: 'METHOD_NOT_ALLOWED' });
+    const unknown = await raw(port, req('GET', '/__rivqen/conformance/other'));
+    assert.equal(unknown.status, 404);
+    assert.deepEqual(json(unknown), { error: 'NOT_FOUND' });
+  });
+
+  test('refusals_name_their_reason', async () => {
+    const off = createHarness({ handle: echo, suite: 'legacy', conformance: false });
+    await listen(off, 0, { write: () => {} });
+    servers.push(off);
+    const r = await raw(off.address().port, req('GET', '/__rivqen/conformance/info'));
+    assert.equal(r.status, 404);
+    assert.deepEqual(json(r), { error: 'NOT_FOUND' });
+  });
+});

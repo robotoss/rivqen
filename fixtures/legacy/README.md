@@ -90,7 +90,7 @@ A placeholder can be part of a value, for example `"\"{{etag:a}}\""` or `"W/\"{{
 }
 ```
 
-A profile fixture takes `page`, `app` and `request` of the replaced fixture; the placeholders are resolved under its own profile. Optional `not_reproduced` (for example `"U-11"`): the profile does not reproduce this unsafe upstream behavior (DL-069); the generator then checks only that the trace shows the documented difference, not that it equals the expected response.
+A profile fixture takes `page`, `app` and `request` of the replaced fixture; the placeholders are resolved under its own profile. Optional `not_reproduced`: the profile does not reproduce this unsafe upstream behavior (DL-069, DL-082). It takes only `"U-11"` or `"U-13"`, and each has its own check: the generator checks that the trace shows the documented difference, not that it equals the expected response (see `tools/legacy-fixtures/README.md`). The profile fixtures of S24 to S27 (`REDIRECT`, `PASS-NOT-FOUND`, `PASS-POST`, `PASS-HEAD`) have `not_reproduced: "U-13"` and expect the C-01 pass-through.
 
 ## `expected.json`
 
@@ -134,14 +134,14 @@ The runner with `--profile legacy-canonical` runs every canonical fixture. With 
 ## Generator checks (`gen.mjs --check`)
 
 1. Every `expected.json` equals the regenerated one byte for byte; no unknown or missing files.
-2. Every trace-backed profile response (status, the fields `etag`, `template-tag`, `template-change`, `cache-offline`, `cache-control`, `sonic-etag-key`, and the decoded body: exact for `page`, as JSON values for `data`) equals the stored trace, except a fixture with `not_reproduced`. `vary`, `cdn-cache-control` and `surrogate-control` are not compared with the traces: every profile follows C-13 and C-15 (U-12, H-111).
-3. `OVERRIDE_NOT_NEEDED`: a profile fixture whose expected response equals the canonical one.
+2. Every trace-backed profile response (status, the fields `etag`, `template-tag`, `template-change`, `cache-offline`, `cache-control`, `content-type`, `sonic-etag-key`, and the decoded body: exact for `page`, as JSON values for `data`) equals the stored trace, except a fixture with `not_reproduced`, which gets the check of its item. `content-type` is compared on every response (also a `304`) as a media type, not byte for byte. The request equals the trace request: by method and field lines, and for a trace with a `Host` first line (S22 to S29) also by authority and path. `vary`, `cdn-cache-control` and `surrogate-control` are not compared with the traces: every profile follows C-13 and C-15 (U-12, H-111).
+3. `OVERRIDE_NOT_NEEDED`: a profile fixture whose expected response equals the canonical one. A fixture with `not_reproduced` is skipped: a U-13 fixture expects the canonical pass-through, and check 2 proves that its trace differs.
 4. `OVERRIDE_MISSING`: a trace-backed canonical fixture whose trace for a profile differs from the canonical expected response, with no profile fixture.
 5. Every `rules` item exists in legacy wire §10; every C-rule is covered by at least one fixture.
 
 ## Catalog
 
-### Canonical fixtures from the stored traces (31; lane T-01)
+### Canonical fixtures from the stored traces (39; lanes T-01 and S2 T-03)
 
 Request shorthand: `AE` = `accept-encoding: gzip`, `AD` = `accept-diff: true`, `INM(x)` = `if-none-match: x`, `TT(x)` = `template-tag: x`. The traces are `evidence/traces/server/<java|node|php>/<file>`.
 
@@ -161,11 +161,24 @@ Request shorthand: `AE` = `accept-encoding: gzip`, `AD` = `accept-diff: true`, `
 | `FX-LEG-<X>-FIRST` | `S<nn>-<page>-first.http` | see below | `AE`, `AD` |
 | `FX-LEG-<X>-DATA` | `S<nn>-<page>-data.http` | see below | `AE`, `AD`, `INM(0000000000000000000000000000000000000000)`, `TT({{tag:<page>}})` |
 
+Eight more rows come from the live run of 2026-10-31 (traces S22 to S29, WP-02 S2). Their traces go through the lab control endpoint: the first field line of the trace is `Host: shop.example.com` and the path is `/catalog`. The request is the data-change request (`AE`, `AD`, `INM({{etag:a}})`, `TT({{tag:a}})` in the spelling of the traces: `Accept-Encoding`, `If-None-Match`, lower-case `accept-diff` and `template-tag`) with the explicit target `https://shop.example.com/catalog`. The application `content-type` is `text/html;charset=utf-8`.
+
+| ID | Trace file | Page | Change from the data-change request |
+|---|---|---|---|
+| `FX-LEG-OFFLINE-FALSE` | `S22-offline-false.http` | `b` | app adds `cache-offline: false` (C-10) |
+| `FX-LEG-OFFLINE-HTTP` | `S23-offline-http.http` | `b` | app adds `cache-offline: http` (C-10) |
+| `FX-LEG-REDIRECT` | `S24-redirect-302.http` | `a` | app status `302` with `location: https://shop.example.com/login` (C-01) |
+| `FX-LEG-PASS-NOT-FOUND` | `S25-not-found-404.http` | `b` | app status `404` (C-01) |
+| `FX-LEG-PASS-POST` | `S26-post.http` | `b` | method `POST`, plus `Content-Length: 0` (C-01) |
+| `FX-LEG-PASS-HEAD` | `S27-head.http` | `b` | method `HEAD` (C-01) |
+| `FX-LEG-VARY-APP` | `S28-vary-app.http` | `b` | app adds `vary: Accept-Language` (C-15) |
+| `FX-LEG-CDN-FIELDS` | `S29-cdn-fields.http` | `b` | app adds `cdn-cache-control: max-age=600` and `surrogate-control: max-age=600` (C-13, C-15) |
+
 `<X>` and page: `NO-MARKERS` (S12, `nomark`), `EMPTY-NAME` (S13, `emptyname`), `DUPLICATE-BLOCKS` (S14, `dup`), `TITLE-ATTRIBUTE` (S15, `titleattr`), `TITLE-SEVERAL` (S16, `titles`), `MARKER-SPACES` (S17, `spaces`), `MARKER-NESTED` (S18, `nested`), `MARKER-MISMATCH` (S19, `mismatch`), `MARKER-UPPERCASE` (S20, `uppercase`), `UNICODE` (S21, `unicode`). Each request must give the same field lines as its trace request after placeholder resolution under the trace's profile; the header name spelling and order of the trace are kept. So these fixtures keep the spelling of the trace (`Accept-Encoding`, `If-None-Match`, `Accept-Diff`); the lower-case names of the examples above are not a rule.
 
-Profile fixtures `--JAVA`, `--NODE`, `--PHP` exist exactly where check 4 requires them (lane T-01 writes them). The D-13 profile fixtures of `legacy-java` and `legacy-php` (`FX-LEG-TITLE-SEVERAL-*`) have `not_reproduced: "U-11"` and expect the canonical title rule C-06 with the other behaviors of the profile (DL-069).
+Profile fixtures `--JAVA`, `--NODE`, `--PHP` exist exactly where check 4 requires them (lane T-01 writes them). The D-13 profile fixtures of `legacy-java` and `legacy-php` (`FX-LEG-TITLE-SEVERAL-*`) have `not_reproduced: "U-11"` and expect the canonical title rule C-06 with the other behaviors of the profile (DL-069). The profile fixtures of S24 to S27 have `not_reproduced: "U-13"` (DL-082): `REDIRECT`, `PASS-NOT-FOUND` and `PASS-POST` for `--JAVA`, `--NODE` and `--PHP`; `PASS-HEAD` for `--JAVA` and `--PHP` only. `FX-LEG-PASS-HEAD--NODE` does not exist: Node.js passes a `HEAD` through, so `legacy-node` is in `profiles_same` of the canonical fixture. The profile fixtures of S22 and S23 carry D-14, and those of `304` and `304-UPPERCASE` carry D-15 (`legacy-divergences.md` section 1.1).
 
-### Canonical fixtures from the rules (28; lanes T-02, T-07 and the architect)
+### Canonical fixtures from the rules (20; lanes T-02, T-07 and the architect)
 
 Default page `b`, default request `AE`, `AD`, `INM({{etag:a}})`, `TT({{tag:a}})` (a data change), default `app`. `evidence: code-reading`; `sources` = the legacy wire §10 row (`docs:engineering/protocol/legacy-wire#canonical-server`) plus the upstream references of the section that the row cites.
 
@@ -175,18 +188,12 @@ Default page `b`, default request `AE`, `AD`, `INM({{etag:a}})`, `TT({{tag:a}})`
 | `FX-LEG-304-TWO-LINES` | page `a`, two lines `INM({{etag:a}})` | C-05 | `200` data response |
 | `FX-LEG-DETECT-TWO-LINES` | two lines `AD` | C-02 | pass-through |
 | `FX-LEG-OFFLINE-TRUE` | app adds `cache-offline: true` | C-10 | one `cache-offline: true` |
-| `FX-LEG-OFFLINE-FALSE` | app adds `cache-offline: false` | C-10 | one `cache-offline: false` |
 | `FX-LEG-OFFLINE-STORE` | app adds `cache-offline: store` | C-10 | one `cache-offline: store` |
-| `FX-LEG-OFFLINE-HTTP` | app adds `cache-offline: http` | C-10 | one `cache-offline: http` |
 | `FX-LEG-OFFLINE-INVALID` | app adds `cache-offline: TRUE` | C-10 | one `cache-offline: true` |
 | `FX-LEG-OFFLINE-304` | page `a`, app adds `cache-offline: false`, `INM({{etag:a}})` | C-05, C-10 | `304`, `cache-offline: store` |
 | `FX-LEG-NO-STORE` | app adds `cache-control: no-store` | C-09 | `cache-control: no-store` kept |
 | `FX-LEG-CACHE-CONTROL-REPLACED` | app adds `cache-control: max-age=60` | C-09 | `cache-control: no-cache, private` |
 | `FX-LEG-APP-FIELDS` | app adds `etag: "app-1"`, `template-tag: x`, `sonic-etag-key: k`, `x-app: 1` | C-13 | legacy values; `x-app: 1` kept; no `sonic-etag-key` |
-| `FX-LEG-REDIRECT` | app status `302`, `location: https://shop.example.com/login`, page `a` | C-01 | pass-through |
-| `FX-LEG-PASS-NOT-FOUND` | app status `404` | C-01 | pass-through |
-| `FX-LEG-PASS-POST` | method `POST` | C-01 | pass-through |
-| `FX-LEG-PASS-HEAD` | method `HEAD` | C-01 | pass-through (no body) |
 | `FX-LEG-PASS-NON-HTML` | app `content-type: application/json` | C-01 | pass-through |
 | `FX-LEG-CHARSET-OTHER` | app `content-type: text/html; charset=iso-8859-1` | C-03 | pass-through |
 | `FX-LEG-INVALID-UTF8` | page `badutf8` (new: page `b` with the byte `FF` in the static footer text) | C-03 | pass-through |
@@ -194,9 +201,7 @@ Default page `b`, default request `AE`, `AD`, `INM({{etag:a}})`, `TT({{tag:a}})`
 | `FX-LEG-NAME-TOO-LONG` | page `longname` (new: page `b` with the block name `price` replaced by 129 `p` characters and a second block with 128 `q` characters), `TT({{tag:longname}})` | C-07 | 129: no key; 128: a key |
 | `FX-LEG-TEMPLATE-TAG-UPPERCASE` | `TT({{TAG:a}})` | C-11 | full response |
 | `FX-LEG-COOKIE-VARIANCE` | `cookie: session=s1` after the default lines; app adds `set-cookie: session=s2; Path=/; Secure; HttpOnly` and `vary: Cookie` | C-13 | data response; `set-cookie` and `vary` kept |
-| `FX-LEG-VARY-APP` | app adds `vary: Accept-Language` | C-15 | `vary`: `Accept-Language`, then `template-tag` |
 | `FX-LEG-VARY-STAR` | app adds `vary: *` | C-15 | `vary: *` only, no line added |
-| `FX-LEG-CDN-FIELDS` | app adds `cdn-cache-control: max-age=600` and `surrogate-control: max-age=600` | C-13, C-15 | both absent; `vary: template-tag` |
 | `FX-LEG-UNCLOSED-OPENERS` | page `openers` (new: page `b` with 2000 `<title` and 2000 `<!--sonicdiff-a-->x` in the static footer text, no LF), `TT({{tag:openers}})` | C-06, C-07, C-16 | data response; keys `{title}`, `{price}`, `{stock}`; the openers stay in the template |
 | `FX-LEG-TITLE-NEWLINE` | page `titlenl` (new: page `b` with the title `<title>Shop\nNew</title>`, an LF byte), `TT({{tag:titlenl}})` | C-06 | data response, `{title}` = `""` |
 

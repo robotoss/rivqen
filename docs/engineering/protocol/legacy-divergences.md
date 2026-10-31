@@ -45,16 +45,18 @@ All server rows are confirmed by captured traces ([server trace report](/enginee
 | D-05 | `EMPTY-NAME-DATA` (J, N, P), `EMPTY-NAME-FIRST` (J, N, P) |
 | D-06 | `NO-MARKERS-DATA` (N), `NO-MARKERS-FIRST` (N), `MARKER-SPACES-DATA` (N), `MARKER-SPACES-FIRST` (N) |
 | D-07 | Not observable on the wire (see the notes below) |
-| D-08 | 17 fixtures, J and P; see the list below |
-| D-09 | 26 fixtures, J, N and P; see the list below |
+| D-08 | 21 fixtures, J and P; see the list below |
+| D-09 | 30 fixtures, J, N and P; see the list below |
 | D-10 | `COMPRESSED-IDENTITY` (N) |
 | D-11 | Not observable on the wire (see the notes below) |
 | D-12 | `304` (J), `304-QUOTED` (J), `304-UPPERCASE` (J) |
 | D-13 | `TITLE-SEVERAL-DATA` (J, P), `TITLE-SEVERAL-FIRST` (J, P) |
+| D-14 | `OFFLINE-FALSE` (J, N, P), `OFFLINE-HTTP` (J, N, P) |
+| D-15 | `304` (J, N), `304-UPPERCASE` (J) |
 
-D-08 (data bodies). `304-QUOTED` (J, P), `304-UPPERCASE` (P), `COMPRESSED-IDENTITY` (J, P), `DATA-CHANGE` (J, P), `DETECT-ACCEPT-DIFF-FALSE` (J), `DETECT-ACCEPT-DIFF-YES` (J), `DETECT-NAME-CASE` (J), `DUPLICATE-BLOCKS-DATA`, `EMPTY-NAME-DATA`, `MARKER-MISMATCH-DATA`, `MARKER-NESTED-DATA`, `MARKER-SPACES-DATA`, `MARKER-UPPERCASE-DATA`, `NO-MARKERS-DATA`, `TITLE-ATTRIBUTE-DATA`, `TITLE-SEVERAL-DATA`, `UNICODE-DATA` (all J, P).
+D-08 (data bodies). `304-QUOTED` (J, P), `304-UPPERCASE` (P), `COMPRESSED-IDENTITY` (J, P), `DATA-CHANGE` (J, P), `DETECT-ACCEPT-DIFF-FALSE` (J), `DETECT-ACCEPT-DIFF-YES` (J), `DETECT-NAME-CASE` (J), `OFFLINE-FALSE` (J, P), `OFFLINE-HTTP` (J, P), `VARY-APP` (J, P), `CDN-FIELDS` (J, P), `DUPLICATE-BLOCKS-DATA`, `EMPTY-NAME-DATA`, `MARKER-MISMATCH-DATA`, `MARKER-NESTED-DATA`, `MARKER-SPACES-DATA`, `MARKER-UPPERCASE-DATA`, `NO-MARKERS-DATA`, `TITLE-ATTRIBUTE-DATA`, `TITLE-SEVERAL-DATA`, `UNICODE-DATA` (all J, P).
 
-D-09 (`Cache-Control`). `304`, `304-QUOTED`, `304-UPPERCASE`, `DATA-CHANGE`, `FIRST-LOAD`, `TEMPLATE-CHANGE`, `EMPTY-NAME-<DATA|FIRST>`, `MARKER-<MISMATCH|NESTED|SPACES|UPPERCASE>-<DATA|FIRST>`, `NO-MARKERS-<DATA|FIRST>`, `TITLE-ATTRIBUTE-<DATA|FIRST>`, `TITLE-SEVERAL-<DATA|FIRST>`, `UNICODE-<DATA|FIRST>` (all J, N, P); `COMPRESSED-IDENTITY` (J, P); `DETECT-NAME-CASE` (J, N).
+D-09 (`Cache-Control`). `304`, `304-QUOTED`, `304-UPPERCASE`, `DATA-CHANGE`, `FIRST-LOAD`, `TEMPLATE-CHANGE`, `OFFLINE-FALSE`, `OFFLINE-HTTP`, `VARY-APP`, `CDN-FIELDS`, `EMPTY-NAME-<DATA|FIRST>`, `MARKER-<MISMATCH|NESTED|SPACES|UPPERCASE>-<DATA|FIRST>`, `NO-MARKERS-<DATA|FIRST>`, `TITLE-ATTRIBUTE-<DATA|FIRST>`, `TITLE-SEVERAL-<DATA|FIRST>`, `UNICODE-<DATA|FIRST>` (all J, N, P); `COMPRESSED-IDENTITY` (J, P); `DETECT-NAME-CASE` (J, N).
 
 Notes:
 
@@ -62,7 +64,9 @@ Notes:
 2. <Badge type="tip" text="FACT" /> D-07 and D-11 are not observable on the wire. They show as `profiles_same` or as equal `fields` in the `expected.json` files.
 3. <Badge type="tip" text="FACT" /> D-08: the runner compares data bodies as JSON values, so the key order and the escaping do not fail a case.
 4. <Badge type="tip" text="FACT" /> The four D-13 profile fixtures of Java and PHP (`TITLE-SEVERAL-DATA` and `TITLE-SEVERAL-FIRST`) carry `not_reproduced: "U-11"`. They expect the canonical title rule and keep the other behaviors of the profile (DL-069). The Node.js fixtures of these two IDs list D-09 only.
-5. <Badge type="tip" text="FACT" /> The client divergences (section 2) have no fixture. The client part of the fixtures is added before P3 (H-110).
+5. <Badge type="tip" text="FACT" /> The U-13 fixtures `REDIRECT`, `PASS-NOT-FOUND` and `PASS-POST` (J, N, P) and `PASS-HEAD` (J, P) carry `not_reproduced: "U-13"`. They expect the C-01 pass-through (DL-082). `PASS-HEAD` has no Node.js fixture: Node.js passes a `HEAD` through, so `legacy-node` is in `profiles_same` of the canonical fixture.
+6. <Badge type="tip" text="FACT" /> D-14 and D-15 come from the live run of 2026-10-31 (traces S22, S23 and S24; [server trace report](/engineering/protocol/legacy-traces#_9-live-run-of-2026-10-31)). D-15 also shows in the older traces S03 and S04.
+7. <Badge type="tip" text="FACT" /> The client divergences (section 2) have no fixture. The client part of the fixtures is added before P3 (H-110).
 
 ## 2. Client divergences
 

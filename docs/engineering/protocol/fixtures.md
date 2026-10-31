@@ -46,7 +46,7 @@ fixtures/legacy/
 
 ## 3. Legacy protocol catalog
 
-<Badge type="tip" text="FACT" /> On 2026-10-30 the directory `fixtures/legacy/` has 148 fixtures: 59 canonical fixtures (31 from stored traces, 28 from the rules) and 89 profile fixtures. All 93 stored upstream traces are checked by the generator. Each `expected.json` is current (`gen.mjs --check`). The full lists with the requests are in `fixtures/legacy/README.md`.
+<Badge type="tip" text="FACT" /> On 2026-10-31 the directory `fixtures/legacy/` has 171 fixtures: 59 canonical fixtures (39 from stored traces, 20 from the rules) and 112 profile fixtures. All 117 stored upstream traces (39 for each server: S01 to S21, and S22 to S29 from the live run of 2026-10-31) are checked by the generator. Each `expected.json` is current (`gen.mjs --check`). The full lists with the requests are in `fixtures/legacy/README.md`.
 
 The catalog below is the planned minimum. The State column names the fixtures that implement each row. `<X>` stands for the page variants `-FIRST` (first load) and `-DATA` (data response).
 
@@ -57,9 +57,9 @@ The catalog below is the planned minimum. The State column names the fixtures th
 | `FX-LEG-DATA-CHANGE` | Same template, data changed; data-only response | Done: `FX-LEG-DATA-CHANGE` |
 | `FX-LEG-TEMPLATE-CHANGE` | Template changed; full HTML; `template-change: true` | Done: `FX-LEG-TEMPLATE-CHANGE`, `-TEMPLATE-TAG-UPPERCASE` |
 | `FX-LEG-OFFLINE-TRUE` | `cache-offline: true` | Done: `FX-LEG-OFFLINE-TRUE` |
-| `FX-LEG-OFFLINE-FALSE` | `cache-offline: false` | Done: `FX-LEG-OFFLINE-FALSE` |
+| `FX-LEG-OFFLINE-FALSE` | `cache-offline: false` | Done, from trace S22: `FX-LEG-OFFLINE-FALSE` |
 | `FX-LEG-OFFLINE-STORE` | `cache-offline: store` | Done: `FX-LEG-OFFLINE-STORE` |
-| `FX-LEG-OFFLINE-HTTP` | `cache-offline: http` (disable acceleration for a period) | Done: `FX-LEG-OFFLINE-HTTP`; also `-OFFLINE-INVALID`, `-OFFLINE-304` |
+| `FX-LEG-OFFLINE-HTTP` | `cache-offline: http` (disable acceleration for a period) | Done, from trace S23: `FX-LEG-OFFLINE-HTTP`; also `-OFFLINE-INVALID`, `-OFFLINE-304` |
 | `FX-LEG-MALFORMED-MARKERS` | Unclosed, mismatched or broken markers | Done, renamed: `FX-LEG-EMPTY-NAME-<X>`, `FX-LEG-MARKER-<MISMATCH\|NESTED\|SPACES\|UPPERCASE>-<X>`, `FX-LEG-MARKER-UNCLOSED`, `FX-LEG-NAME-TOO-LONG`, `FX-LEG-NO-MARKERS-<X>` |
 | `FX-LEG-DUPLICATE-BLOCKS` | Same block name twice | Done: `FX-LEG-DUPLICATE-BLOCKS-<X>` |
 | `FX-LEG-TITLE` | Special handling of the `<title>` element (see [markers grammar](/engineering/protocol/legacy-markers)) | Done, renamed: `FX-LEG-TITLE-ATTRIBUTE-<X>`, `FX-LEG-TITLE-SEVERAL-<X>`, `FX-LEG-TITLE-NEWLINE` |
@@ -68,7 +68,7 @@ The catalog below is the planned minimum. The State column names the fixtures th
 | `FX-LEG-INTERRUPTED` | Stream cut in the middle | Client part, before P3 (H-110) |
 | `FX-LEG-CONCURRENT` | Two sessions for the same URL | Client part, before P3 (H-110) |
 | `FX-LEG-AUTH-CHANGE` | Partition change during a session | Client part, before P3 (H-110) |
-| `FX-LEG-REDIRECT` | 301/302 on the main document | Done: `FX-LEG-REDIRECT` (a `302`) |
+| `FX-LEG-REDIRECT` | 301/302 on the main document | Done, from trace S24: `FX-LEG-REDIRECT` (a `302`) |
 | `FX-LEG-COOKIE-VARIANCE` | Different cookies, same URL | Server part: `FX-LEG-COOKIE-VARIANCE` (the application `Set-Cookie` and `Vary` lines are kept, C-13); the client part comes before P3 (H-110) |
 | `FX-LEG-NON-SONIC-CLIENT` | Browser without legacy headers gets unchanged HTML | Done: `FX-LEG-NON-SONIC-CLIENT` |
 
@@ -77,12 +77,55 @@ Other fixtures of the first sprint, outside the minimum list:
 | Group | IDs |
 |---|---|
 | Request detection | `FX-LEG-DETECT-ACCEPT-DIFF-FALSE`, `-DETECT-ACCEPT-DIFF-YES`, `-DETECT-NAME-CASE`, `-DETECT-TWO-LINES` |
-| Pass-through (C-01, C-03) | `FX-LEG-PASS-HEAD`, `-PASS-NON-HTML`, `-PASS-NOT-FOUND`, `-PASS-POST`, `-CHARSET-OTHER`, `-INVALID-UTF8` |
-| Application fields (C-09, C-13) | `FX-LEG-NO-STORE`, `-CACHE-CONTROL-REPLACED`, `-APP-FIELDS` |
+| Pass-through (C-01, C-03) | `FX-LEG-PASS-HEAD` (S27), `-PASS-NON-HTML`, `-PASS-NOT-FOUND` (S25), `-PASS-POST` (S26), `-CHARSET-OTHER`, `-INVALID-UTF8` |
+| Application fields (C-09, C-13, C-15) | `FX-LEG-NO-STORE`, `-CACHE-CONTROL-REPLACED`, `-APP-FIELDS`, `-VARY-APP` (S28), `-CDN-FIELDS` (S29) |
 
-<Badge type="info" text="DESIGN" /> The exact expected outputs follow the upstream audit and the stored server traces (WP-01). Fixtures of the rules (`evidence: code-reading`) follow [legacy wire](/engineering/protocol/legacy-wire) section 10.
+<Badge type="info" text="DESIGN" /> The exact expected outputs follow the upstream audit and the stored server traces (WP-01). Fixtures of the rules (`evidence: code-reading`) follow [legacy wire](/engineering/protocol/legacy-wire) section 10. Since the live run of 2026-10-31 the rows `OFFLINE-FALSE`, `OFFLINE-HTTP`, `REDIRECT`, `PASS-NOT-FOUND`, `PASS-POST`, `PASS-HEAD`, `VARY-APP` and `CDN-FIELDS` rest on stored traces (S22 to S29), not on code reading (DL-082).
 
-The map from each server divergence D-01 to D-13 to its fixtures is in [legacy divergences](/engineering/protocol/legacy-divergences).
+<Badge type="tip" text="FACT" /> The profile fixtures of S24 to S27 carry `not_reproduced: "U-13"` and expect the C-01 pass-through. `FX-LEG-PASS-HEAD--NODE` does not exist (Node.js passes a `HEAD` through).
+
+The map from each server divergence D-01 to D-15 to its fixtures is in [legacy divergences](/engineering/protocol/legacy-divergences).
+
+### 3.1 Malformed fixtures
+
+<Badge type="tip" text="FACT" /> `fixtures/malformed/` has negative cases and fuzz seeds for the server side of the legacy protocol (WP-02 S2, DL-080). The RQP negative cases stay in `fixtures/rqp`. Every case must get pass-through or a defined legacy response by the rules C-01 to C-16. No case may crash a server or exceed the runner timeout. Full list: `fixtures/malformed/README.md`.
+
+```text
+fixtures/malformed/
+├── legacy/
+│   ├── pages/<page-id>.html
+│   └── FX-LEG-MAL-<NAME>/{case.json,expected.json}
+└── seeds/
+    ├── pages/<name>.html
+    └── fields/<name>.txt
+```
+
+The 22 cases use the format of `fixtures/legacy` (profile `legacy-canonical`, `evidence: code-reading`). `gen.mjs --dir` writes their `expected.json`.
+
+| Group | Cases | Rules |
+|---|---|---|
+| Markers and page bytes (10) | `OPENERS-1MIB`, `NESTED-1000`, `HUGE-NAME`, `EMPTY-CONTENT`, `END-NAME-UPPER`, `BLOCK-NAMED-TITLE`, `MARKER-IN-SCRIPT`, `PLACEHOLDER-TEXT`, `NUL-BYTES`, `BOM` | C-03, C-04, C-06 to C-08, C-16 |
+| Title (3) | `TITLE-UNCLOSED`, `CLOSE-BEFORE-OPEN`, `TITLE-CR` | C-06 |
+| Invalid UTF-8 (3) | `SURROGATE`, `OVERLONG`, `TRUNCATED-UTF8` | C-03 |
+| Request and application fields (6) | `CONTENT-TYPE-TWO`, `ACCEPT-DIFF-SPACES`, `ACCEPT-DIFF-UPPER`, `INM-LIST`, `INM-6KIB`, `TEMPLATE-TAG-100` | C-01, C-02, C-05, C-11 |
+
+The seeds are raw files for the fuzz targets of WP-05 and WP-18: 33 pages and 21 request field values. They have no expected result. Seeds with NUL, CR or non-ASCII bytes cannot be sent by the runner.
+
+To run the cases:
+
+1. Check that the files are current.
+
+   ```bash
+   node tools/legacy-fixtures/gen.mjs --check --dir fixtures/malformed/legacy
+   ```
+
+2. Run the runner against the legacy model.
+
+   ```bash
+   node server/conformance/e2e/run.mjs --module tools/legacy-fixtures/src/server.mjs --suite legacy -- --fixtures fixtures/malformed/legacy
+   ```
+
+<Badge type="tip" text="FACT" /> Result on 2026-10-31: 22 of 22 cases pass. The rule coverage and the catalog size of the generator apply only to `fixtures/legacy`. `tools/fulltest.sh` runs both steps (`malformed-gen`, `malformed-http`).
 
 ## 4. Rivqen protocol catalog
 

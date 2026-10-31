@@ -39,20 +39,27 @@ rivqen/
 │   ├── java/                     #                                 (WP-14)
 │   ├── php/                      #                                 (WP-15)
 │   └── conformance/              # runner for all servers          (WP-02)
+│       ├── src/  bin/            #   runner and command line
+│       ├── harness/              #   test harness, control endpoint
+│       └── e2e/                  #   driver: harness + runner
 ├── fixtures/
 │   ├── legacy/                   # golden fixtures, legacy mode    (WP-02)
 │   ├── rqp/                      # golden fixtures, Rivqen protocol (WP-17)
-│   └── malformed/                # negative and fuzz seeds         (WP-02)
+│   └── malformed/                # negative cases and fuzz seeds   (WP-02)
+│       ├── legacy/               #   22 cases FX-LEG-MAL-*, own pages/
+│       └── seeds/                #   raw pages and field values
 ├── examples/
 │   ├── android-demo/  ios-demo/  react-ssr-demo/  server-demo/    (WP-22)
 ├── tests/
 │   ├── e2e/  chaos/  security/  benchmarks/                       (WP-19)
 ├── evidence/
 │   ├── source-manifest.lock      # pinned upstream SHA + file hashes (WP-01)
-│   └── traces/                   # captured upstream behavior        (WP-01)
+│   ├── traces/                   # captured upstream behavior        (WP-01)
+│   └── conformance/              # reports of live lab runs          (WP-02)
 ├── docs/                         # this site                         (WP-00)
 ├── tools/
 │   ├── upstream-lab/             # traces of upstream servers        (WP-01)
+│   ├── legacy-fixtures/          # model and generator, legacy       (WP-02)
 │   └── mutation/                 # diff → mutation tool arguments    (WP-24)
 ├── scripts/
 └── .github/workflows/
@@ -65,6 +72,18 @@ rivqen/
 3. Generated bindings (UniFFI) are generated in CI. They are committed only if the release process needs it (decided in WP-09).
 4. Fixtures are data. They change only through a `spec` commit with protocol-owner review.
 5. `evidence/` holds references, hashes and captured traces from upstream. It never holds copied upstream source code.
+
+### 2.1 Test data and tools of WP-02
+
+<Badge type="tip" text="FACT" /> These directories exist (WP-02 S1 and S2):
+
+| Path | Content |
+|---|---|
+| `fixtures/malformed/` | `legacy/`: 22 negative cases `FX-LEG-MAL-*` in the format of `fixtures/legacy`, with their own `pages/`. `seeds/`: 33 raw pages and 21 request field values for fuzz targets |
+| `server/conformance/` | `src/` and `bin/`: the runner. `harness/`: the test harness with the control endpoint. `e2e/`: the driver that starts the harness and the runner |
+| `tools/legacy-fixtures/` | Model of the legacy servers, `gen.mjs` (writes and checks `expected.json`, also with `--dir`) |
+| `tools/upstream-lab/` | Lab harnesses for the three upstream servers, `run_traces.py`, `conformance.sh` |
+| `evidence/conformance/` | Reports of the runner against the live upstream servers (`upstream-lab-<date>.json` and a classified summary `.md`) |
 
 ## 3. Naming
 

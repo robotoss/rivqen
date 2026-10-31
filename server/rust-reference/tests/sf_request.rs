@@ -727,6 +727,13 @@ fn req_accept_elements_are_independent() {
     assert!(!accepts(&[
         "text/html;x=\", application/vnd.rivqen.delta+json\""
     ]));
+    // An escaped quote (quoted-pair) does not end the quoted string.
+    assert!(!accepts(&[
+        "text/html;x=\"a\\\", application/vnd.rivqen.delta+json\""
+    ]));
+    assert!(accepts(&[
+        "text/html;x=\"a\\\\\", application/vnd.rivqen.delta+json"
+    ]));
 }
 
 #[test]

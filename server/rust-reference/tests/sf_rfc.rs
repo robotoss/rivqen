@@ -386,6 +386,7 @@ fn sf_dictionary_key_characters() {
     assert_eq!(d.get("z"), Some(&m_item(BareItem::Integer(2))));
     assert_eq!(d.get("y"), None);
     assert_eq!(d.len(), 2);
+    assert!(!d.is_empty());
 }
 
 // --- §4.2.3.2 Parameters --------------------------------------------------

@@ -1,0 +1,10 @@
+{
+  "id": "FX-LEG-PASS-NOT-FOUND--JAVA",
+  "description": "legacy-java: the 404 page is passed through; the trace has a data response with status 404 (U-13 is not reproduced, DL-082)",
+  "profile": "legacy-java",
+  "replaces": "FX-LEG-PASS-NOT-FOUND",
+  "divergences": [],
+  "sources": ["upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149","docs:engineering/protocol/legacy-divergences#_3-upstream-behaviors-that-rivqen-will-not-reproduce"],
+  "trace": "evidence/traces/server/java/S25-not-found-404.http",
+  "not_reproduced": "U-13"
+}

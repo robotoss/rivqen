@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { after, test } from 'node:test';
 import { CaseError, DEFAULT_APP, UPSTREAM, expectedOf, loadCase, profileOfName, resolve, resolvedRequest, tagOf } from '../src/fixture.mjs';
 import { sha1hex } from '../src/model.mjs';
-import { bodyKindOf, compareToTrace, parseTrace, TraceError } from '../src/trace.mjs';
+import { NOT_REPRODUCIBLE, bodyKindOf, compareNotReproduced, compareToTrace, mediaTypeKey, parseTrace, sameRequest, TraceError } from '../src/trace.mjs';
 import { first, hasDirective, normalizeFields, parseContentType, single, trimOws, valuesOf, without } from '../src/fields.mjs';
 import { APP, CANONICAL, etagOf, legacy, page, pagesDir, tagOf as modelTag, traceText } from './helpers.mjs';
 
@@ -127,9 +127,11 @@ test('profile_case_is_checked', () => {
   bad((c) => { c.divergences = 'D-01'; }, /divergences/);
   bad((c) => { c.trace = 1; }, /trace must be a string/);
   bad((c) => { c.not_reproduced = 'x'; }, /not_reproduced/);
+  // only a U-item whose documented difference has a check
+  bad((c) => { c.not_reproduced = 'U-12'; }, /not_reproduced must be one of U-11, U-13/);
   bad((c) => { delete c.trace; }, /missing member case.trace/);
   bad((c) => { c.rules = ['C-01']; }, /unknown member case.rules/);
-  assert.equal(loadCase(caseDir(name, { ...profile(), not_reproduced: 'U-11' }), name).not_reproduced, 'U-11');
+  for (const item of NOT_REPRODUCIBLE) assert.equal(loadCase(caseDir(name, { ...profile(), not_reproduced: item }), name).not_reproduced, item);
   assert.equal(profileOfName('FX-LEG-A--PHP'), 'legacy-php');
   assert.equal(profileOfName('FX-LEG-A'), null);
   assert.equal(profileOfName('FX-LEG-A--XYZ'), null);
@@ -198,6 +200,8 @@ test('trace_errors_are_trace_errors', () => {
     ['missing the body marker line', text.replace('\n[body decoded', '\n[x')],
     ['the body marker line has no end', text.slice(0, text.indexOf(']') + 1)],
     ['bad status line', text.replace('HTTP 200', 'HTTP 2000')],
+    ['bad request line', text.replace('GET /p HTTP/1.1', 'GET /p')],
+    ['bad request line', text.replace('GET /p HTTP/1.1', 'GET  HTTP/1.1')],
     ['not a field line', text.replace('c: d', 'cd')],
     ['request: not a field line', text.replace('a: b', ': b')],
   ];
@@ -221,7 +225,7 @@ test('trace_comparison_reports_status_fields_and_body', () => {
   const c = { ...valid(), kind: 'canonical', level: 'must', app: DEFAULT_APP, request: { method: 'GET', target: 't', headers: request.headers }, page: 'b' };
   const expected = expectedOf(c, CANONICAL, page('b'), dirs);
   const trace = (response) => parseTrace(traceText('/p', [['a', 'b']], response));
-  const good = { status: 200, headers: [['Cache-Control', 'no-cache, private'], ['Cache-Offline', 'true'], ['Etag', etagOf('b')], ['template-tag', modelTag(CANONICAL, 'a')], ['template-change', 'false']], body: Buffer.from(JSON.stringify({ 'html-sha1': etagOf('b'), diff: '', 'template-tag': modelTag(CANONICAL, 'a'), data: expected.body.data })) };
+  const good = { status: 200, headers: [['Cache-Control', 'no-cache, private'], ['Cache-Offline', 'true'], ['Etag', etagOf('b')], ['template-tag', modelTag(CANONICAL, 'a')], ['template-change', 'false'], ['Content-Type', 'text/html; charset=utf-8']], body: Buffer.from(JSON.stringify({ 'html-sha1': etagOf('b'), diff: '', 'template-tag': modelTag(CANONICAL, 'a'), data: expected.body.data })) };
   assert.deepEqual(compareToTrace(expected, trace(good), page('b')), []);
   assert.deepEqual(compareToTrace(expected, trace({ ...good, status: 201 }), page('b')), ['status: expected 200, trace 201']);
   const noOffline = compareToTrace(expected, trace({ ...good, headers: good.headers.filter(([n]) => n !== 'Cache-Offline') }), page('b'));
@@ -237,24 +241,124 @@ test('trace_comparison_reports_status_fields_and_body', () => {
   assert.deepEqual(compareToTrace(expected, trace({ ...good, body: Buffer.from(JSON.stringify(changed)) }), page('b')), ['body: data differs']);
   // a page body is compared byte for byte
   const full = expectedOf({ ...c, request: { method: 'GET', target: 't', headers: [['accept-diff', 'true']] } }, CANONICAL, page('b'), dirs);
-  const fullTrace = (body) => trace({ status: 200, headers: [['Cache-Control', 'no-cache, private'], ['Cache-Offline', 'true'], ['Etag', etagOf('b')], ['template-tag', modelTag(CANONICAL, 'b')], ['template-change', 'true']], body });
+  const fullTrace = (body) => trace({ status: 200, headers: [['Cache-Control', 'no-cache, private'], ['Cache-Offline', 'true'], ['Etag', etagOf('b')], ['template-tag', modelTag(CANONICAL, 'b')], ['template-change', 'true'], ['content-type', 'text/html; charset=utf-8']], body });
   assert.deepEqual(compareToTrace(full, fullTrace(page('b')), page('b')), []);
   assert.deepEqual(compareToTrace(full, fullTrace(page('a')), page('b')), ['body: page bytes differ']);
   // the none kind: an empty body
   const nm = expectedOf({ ...c, request: { method: 'GET', target: 't', headers: [['accept-diff', 'true'], ['if-none-match', etagOf('b')]] } }, CANONICAL, page('b'), dirs);
   assert.equal(nm.body.kind, 'none');
-  assert.deepEqual(compareToTrace(nm, trace({ status: 304, headers: [['Cache-Control', 'no-cache, private'], ['Cache-Offline', 'store']], body: null }), page('b')), []);
-  assert.deepEqual(compareToTrace(nm, trace({ status: 304, headers: [['Cache-Control', 'no-cache, private'], ['Cache-Offline', 'store']], body: Buffer.from('x') }), page('b')), ['body: expected none, trace page']);
+  const nmFields = [['Cache-Control', 'no-cache, private'], ['Cache-Offline', 'store'], ['Content-Type', 'text/html; charset=utf-8']];
+  assert.deepEqual(compareToTrace(nm, trace({ status: 304, headers: nmFields, body: null }), page('b')), []);
+  assert.deepEqual(compareToTrace(nm, trace({ status: 304, headers: nmFields, body: Buffer.from('x') }), page('b')), ['body: expected none, trace page']);
 });
 
 test('reduced_trace_comparison_skips_the_named_field_and_the_body_content', () => {
   const c = { ...valid(), kind: 'canonical', level: 'must', app: DEFAULT_APP, request: { method: 'GET', target: 't', headers: [['accept-diff', 'true']] }, page: 'b' };
   const expected = expectedOf(c, CANONICAL, page('b'), dirs);
-  const trace = (tag, body) => parseTrace(traceText('/p', [['a', 'b']], { status: 200, headers: [['Cache-Control', 'no-cache, private'], ['Cache-Offline', 'true'], ['Etag', etagOf('b')], ['template-tag', tag], ['template-change', 'true']], body }));
+  const trace = (tag, body) => parseTrace(traceText('/p', [['a', 'b']], { status: 200, headers: [['Cache-Control', 'no-cache, private'], ['Cache-Offline', 'true'], ['Etag', etagOf('b')], ['template-tag', tag], ['template-change', 'true'], ['Content-Type', 'text/html; charset=utf-8']], body }));
   const skip = new Set(['template-tag']);
   assert.deepEqual(compareToTrace(expected, trace('f'.repeat(40), page('a')), page('b'), skip), []);
   assert.deepEqual(compareToTrace(expected, trace(modelTag(CANONICAL, 'b'), page('b')), page('b'), skip), ['template-tag: the trace does not show the documented difference']);
   assert.deepEqual(compareToTrace(expected, trace('f'.repeat(40), Buffer.alloc(0)), page('b'), skip), ['body: expected page, trace none']);
+});
+
+test('trace_of_a_case_request_has_method_path_and_host_from_its_first_lines', () => {
+  // the layout of S22 and later: the request line and a Host first field line
+  const response = { status: 200, headers: [['content-type', 'text/html']], body: null };
+  const t = parseTrace(traceText('/catalog', [['Accept-Encoding', 'gzip'], ['Content-Length', '0']], response, 'identity', { method: 'POST', host: 'shop.example.com' }));
+  assert.equal(t.request.method, 'POST');
+  assert.equal(t.request.path, '/catalog');
+  assert.equal(t.request.host, 'shop.example.com');
+  assert.deepEqual(t.request.headers, [['Accept-Encoding', 'gzip'], ['Content-Length', '0']]);
+  // the older layout (lab route /p/<page>): no Host line
+  const old = parseTrace(traceText('/p/a', [['Accept-Encoding', 'gzip']], response));
+  assert.equal(old.request.method, 'GET');
+  assert.equal(old.request.path, '/p/a');
+  assert.equal(old.request.host, null);
+  // a Host line that is not the first line stays a request field line
+  const later = parseTrace(traceText('/p/a', [['a', 'b'], ['host', 'x']], response));
+  assert.equal(later.request.host, null);
+  assert.deepEqual(later.request.headers, [['a', 'b'], ['host', 'x']]);
+});
+
+test('same_request_compares_the_method_the_field_lines_and_the_target_of_a_case_request', () => {
+  const headers = [['Accept-Encoding', 'gzip'], ['accept-diff', 'true']];
+  const response = { status: 200, headers: [], body: null };
+  const request = { method: 'HEAD', target: 'https://shop.example.com/catalog', headers };
+  const caseTrace = (path, method = 'HEAD', host = 'shop.example.com', lines = headers) => parseTrace(traceText(path, lines, response, 'identity', { method, host }));
+  assert.equal(sameRequest(request, caseTrace('/catalog')), true);
+  assert.equal(sameRequest(request, caseTrace('/catalog', 'GET')), false);
+  assert.equal(sameRequest(request, caseTrace('/other')), false);
+  assert.equal(sameRequest(request, caseTrace('/catalog', 'HEAD', 'other.example.com')), false);
+  assert.equal(sameRequest(request, caseTrace('/catalog', 'HEAD', 'shop.example.com', [['accept-encoding', 'gzip'], ['accept-diff', 'true']])), false);
+  assert.equal(sameRequest({ ...request, target: 'not a url' }, caseTrace('/catalog')), false);
+  assert.equal(sameRequest({ ...request, target: 'https://shop.example.com' }, caseTrace('/')), true);
+  assert.equal(sameRequest({ ...request, target: 'https://shop.example.com?q=1' }, caseTrace('/?q=1')), true);
+  // an older trace (no Host line): its lab path is not the fixture target
+  const old = parseTrace(traceText('/p/a', headers, response, 'identity', { method: 'HEAD' }));
+  assert.equal(sameRequest(request, old), true);
+  assert.equal(sameRequest({ ...request, method: 'GET' }, old), false);
+});
+
+test('content_type_is_compared_as_a_media_type_on_every_response', () => {
+  const c = { ...valid(), kind: 'canonical', level: 'must', app: DEFAULT_APP, request: { method: 'GET', target: 't', headers: [['accept-diff', 'true'], ['if-none-match', etagOf('b')]] }, page: 'b' };
+  const nm = expectedOf(c, CANONICAL, page('b'), dirs);
+  assert.equal(nm.status, 304);
+  const trace = (...types) => parseTrace(traceText('/p', [['a', 'b']], { status: 304, headers: [['Cache-Control', 'no-cache, private'], ['Cache-Offline', 'store'], ...types.map((t) => ['Content-Type', t])], body: null }));
+  // D-15: a 304 without content-type differs from the canonical 304
+  assert.deepEqual(compareToTrace(nm, trace(), page('b')), ['content-type: expected ["text/html; charset=utf-8"], trace []']);
+  assert.equal(compareToTrace(nm, trace('text/html; charset=utf-8', 'text/html; charset=utf-8'), page('b')).length, 1);
+  // other spellings of the same media type are equal (Tomcat, the PHP default)
+  for (const same of ['text/html;charset=utf-8', 'text/html; charset=UTF-8', 'TEXT/HTML ; Charset = "utf-8"']) {
+    assert.deepEqual(compareToTrace(nm, trace(same), page('b')), [], same);
+  }
+  for (const other of ['text/plain; charset=utf-8', 'text/html', 'text/html; charset=iso-8859-1', 'text/html; charset=utf-8; a=b']) {
+    assert.equal(compareToTrace(nm, trace(other), page('b')).length, 1, other);
+  }
+  assert.equal(mediaTypeKey('Text/HTML; Q="A"; flag'), 'text/html;q=A;flag');
+  // linear in the value length
+  const long = `text/html${'; \t'.repeat(64 * 1024)}x=${' '.repeat(64 * 1024)}y`;
+  const start = performance.now();
+  mediaTypeKey(long);
+  const ms = performance.now() - start;
+  assert.ok(ms < 100, `${ms.toFixed(1)} ms`);
+});
+
+test('u13_check_needs_a_pass_through_outside_the_c01_scope_and_a_trace_with_legacy_processing', () => {
+  const lines = [['accept-diff', 'true'], ['If-None-Match', etagOf('a')], ['template-tag', modelTag(CANONICAL, 'a')]];
+  const base = { ...valid(), kind: 'canonical', level: 'must', request: { method: 'GET', target: 't', headers: lines }, page: 'a' };
+  const redirect = expectedOf({ ...base, app: { status: 302, headers: [...DEFAULT_APP.headers, ['location', 'https://shop.example.com/login']] } }, CANONICAL, page('a'), dirs);
+  const head = expectedOf({ ...base, app: DEFAULT_APP, request: { ...base.request, method: 'HEAD' } }, CANONICAL, page('a'), dirs);
+  const inScope = expectedOf({ ...base, app: DEFAULT_APP }, CANONICAL, page('a'), dirs);
+  const trace = (status, headers, body = null) => parseTrace(traceText('/p', [['a', 'b']], { status, headers: [...DEFAULT_APP.headers, ...headers], body }));
+  const dataBody = Buffer.from(JSON.stringify({ data: {}, 'html-sha1': etagOf('a'), 'template-tag': 'x', diff: '' }));
+  // S24: a 304 for a 302
+  assert.deepEqual(compareNotReproduced('U-13', redirect, trace(304, []), page('a'), 302), []);
+  // S25, S26: a data body; S27: legacy fields on a HEAD (an empty etag still counts)
+  assert.deepEqual(compareNotReproduced('U-13', redirect, trace(302, [], dataBody), page('a'), 302), []);
+  assert.deepEqual(compareNotReproduced('U-13', head, trace(200, [['Etag', ''], ['template-change', 'true']]), page('a'), 200), []);
+  assert.deepEqual(compareNotReproduced('U-13', head, trace(200, [['Cache-Offline', 'true']]), page('a'), 200), []);
+  // the trace must show the difference
+  const none = 'U-13: the trace does not show the documented difference (no 304, data body or legacy field)';
+  assert.deepEqual(compareNotReproduced('U-13', redirect, trace(302, [['location', 'x']], page('a')), page('a'), 302), [none]);
+  assert.deepEqual(compareNotReproduced('U-13', head, trace(200, [['cache-control', 'no-cache']]), page('a'), 200), [none]);
+  // the fixture must be outside the C-01 scope, and its expected response must be pass-through
+  assert.deepEqual(compareNotReproduced('U-13', inScope, trace(304, []), page('a'), 200), [
+    'U-13: the request and the application response are in the C-01 scope (GET, status 200)',
+    'U-13: the expected response has legacy processing',
+    none, // the expected response is a 304 too
+  ]);
+  const processed = { ...redirect, fields: { ...redirect.fields, 'template-change': ['true'] } };
+  assert.deepEqual(compareNotReproduced('U-13', processed, trace(304, []), page('a'), 302), ['U-13: the expected response has legacy processing']);
+  assert.deepEqual(compareNotReproduced('U-13', { ...redirect, body: { kind: 'data' } }, trace(304, []), page('a'), 302), ['U-13: the expected response has legacy processing']);
+  // the scope comes from the method and the application status, not the response status:
+  // a HEAD with an application 200 is outside it; a GET with an application 200 is inside it
+  assert.ok(compareNotReproduced('U-13', head, trace(304, []), page('a'), 200).length === 0);
+  assert.ok(compareNotReproduced('U-13', { ...redirect, request: { ...redirect.request, method: 'GET' } }, trace(304, []), page('a'), 200)
+    .includes('U-13: the request and the application response are in the C-01 scope (GET, status 200)'));
+  // U-11 keeps its check; an unknown item has none
+  assert.deepEqual(compareNotReproduced('U-11', redirect, trace(302, []), page('a')), compareToTrace(redirect, trace(302, []), page('a'), new Set(['template-tag'])));
+  assert.deepEqual(compareNotReproduced('U-12', redirect, trace(304, []), page('a')), ['not_reproduced "U-12" has no check']);
 });
 
 // --- field helpers ---

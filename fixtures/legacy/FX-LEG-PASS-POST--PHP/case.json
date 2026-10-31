@@ -1,0 +1,10 @@
+{
+  "id": "FX-LEG-PASS-POST--PHP",
+  "description": "legacy-php: the POST response is passed through; the trace has a data response (U-13 is not reproduced, DL-082)",
+  "profile": "legacy-php",
+  "replaces": "FX-LEG-PASS-POST",
+  "divergences": [],
+  "sources": ["upstream:sonic-php/sdk/sonic.php:50-145","docs:engineering/protocol/legacy-divergences#_3-upstream-behaviors-that-rivqen-will-not-reproduce"],
+  "trace": "evidence/traces/server/php/S26-post.http",
+  "not_reproduced": "U-13"
+}

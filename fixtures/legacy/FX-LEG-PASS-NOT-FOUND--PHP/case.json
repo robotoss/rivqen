@@ -1,0 +1,10 @@
+{
+  "id": "FX-LEG-PASS-NOT-FOUND--PHP",
+  "description": "legacy-php: the 404 page is passed through; the trace has a data response with status 404 (U-13 is not reproduced, DL-082)",
+  "profile": "legacy-php",
+  "replaces": "FX-LEG-PASS-NOT-FOUND",
+  "divergences": [],
+  "sources": ["upstream:sonic-php/sdk/sonic.php:50-145","docs:engineering/protocol/legacy-divergences#_3-upstream-behaviors-that-rivqen-will-not-reproduce"],
+  "trace": "evidence/traces/server/php/S25-not-found-404.http",
+  "not_reproduced": "U-13"
+}

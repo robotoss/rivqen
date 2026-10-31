@@ -1,0 +1,10 @@
+{
+  "id": "FX-LEG-REDIRECT--PHP",
+  "description": "legacy-php: the 302 is passed through; the trace has a 304 without the redirect (U-13 is not reproduced, DL-082)",
+  "profile": "legacy-php",
+  "replaces": "FX-LEG-REDIRECT",
+  "divergences": [],
+  "sources": ["upstream:sonic-php/sdk/sonic.php:50-145","docs:engineering/protocol/legacy-divergences#_3-upstream-behaviors-that-rivqen-will-not-reproduce"],
+  "trace": "evidence/traces/server/php/S24-redirect-302.http",
+  "not_reproduced": "U-13"
+}

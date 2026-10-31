@@ -13,8 +13,10 @@
 //
 // Checks (README "Generator checks"):
 //   1. every expected.json equals the regenerated one; no unknown or missing file
-//   2. every trace-backed profile response equals its stored trace; every stored trace is used
-//   3. OVERRIDE_NOT_NEEDED: a profile fixture equal to the canonical response
+//   2. every trace-backed profile response equals its stored trace (a fixture with
+//      not_reproduced: the trace shows the documented difference); the request equals the
+//      trace request; every stored trace is used
+//   3. OVERRIDE_NOT_NEEDED: a profile fixture without not_reproduced equal to the canonical response
 //   4. OVERRIDE_MISSING: a trace differs from the canonical response and has no profile fixture
 //   5. every rule of a fixture exists in legacy wire section 10; every rule is covered once
 //      the catalog is complete
@@ -27,7 +29,7 @@ import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { fileBytes } from '../rqp-protocol/src/fixtures.mjs';
 import { CaseError, FIXTURES_DIR, PROFILE_SUFFIX, REPO_ROOT, UPSTREAM_PROFILES, expectedOf, loadCase, pageFile, resolvedRequest } from './src/fixture.mjs';
-import { TraceError, compareToTrace, parseTrace } from './src/trace.mjs';
+import { TraceError, compareNotReproduced, compareToTrace, parseTrace, sameRequest } from './src/trace.mjs';
 
 /** Number of canonical fixtures of the complete catalog (fixtures/legacy/README.md). */
 export const CATALOG_SIZE = 59;
@@ -53,10 +55,6 @@ function readTrace(root, path, id, problems) {
     }
     throw error;
   }
-}
-
-function sameRequest(requestHeaders, trace) {
-  return isDeepStrictEqual(requestHeaders, trace.request.headers);
 }
 
 function responseOf(expected) {
@@ -156,7 +154,7 @@ export function run({
       const diffs = compareToTrace(expected, trace, bytes);
       if (diffs.length === 0) {
         expected.profiles_same.push(profile);
-        if (!sameRequest(resolvedRequest(c, profile, pagesDir).headers, trace)) {
+        if (!sameRequest(resolvedRequest(c, profile, pagesDir), trace)) {
           problems.push(`${c.id}: the request under ${profile} differs from the request of ${path}`);
         }
       } else if (!cases.has(`${c.id}--${PROFILE_SUFFIX[profile]}`)) {
@@ -187,14 +185,18 @@ export function run({
     used.add(p.trace);
     const trace = readTrace(root, p.trace, p.id, problems);
     if (trace !== null) {
-      const diffs = compareToTrace(expected, trace, bytes, p.not_reproduced === undefined ? new Set() : new Set(['template-tag']));
+      const diffs = p.not_reproduced === undefined ? compareToTrace(expected, trace, bytes) : compareNotReproduced(p.not_reproduced, expected, trace, bytes, base.app.status);
       for (const d of diffs) problems.push(`${p.id}: ${d} (${p.trace})`);
-      if (p.not_reproduced === undefined && !sameRequest(expected.request.headers, trace)) {
+      // U-11: the profile resolves {{tag:<page>}} with the safe title rule, so the request
+      // cannot equal the request that the upstream server got.
+      if (p.not_reproduced !== 'U-11' && !sameRequest(expected.request, trace)) {
         problems.push(`${p.id}: the request differs from the request of ${p.trace}`);
       }
     }
+    // A fixture with not_reproduced exists because its trace differs from the canonical
+    // response (check 2 proves it); it can expect the canonical response (U-13: C-01 scope).
     const canon = expectedOfName.get(p.replaces);
-    if (canon !== undefined && isDeepStrictEqual(responseOf(expected), responseOf(canon))) {
+    if (p.not_reproduced === undefined && canon !== undefined && isDeepStrictEqual(responseOf(expected), responseOf(canon))) {
       problems.push(`${p.id}: OVERRIDE_NOT_NEEDED: the expected response equals ${p.replaces}`);
     }
     expected.trace = p.trace;

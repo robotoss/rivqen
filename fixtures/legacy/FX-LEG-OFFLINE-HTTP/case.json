@@ -1,51 +1,35 @@
 {
   "id": "FX-LEG-OFFLINE-HTTP",
-  "description": "Application cache-offline http is kept as one line.",
+  "description": "Application cache-offline http is kept as one line (C-10; no upstream server keeps it alone, D-14)",
   "profile": "legacy-canonical",
-  "rules": [
-    "C-10"
-  ],
+  "rules": ["C-10"],
   "upstream": {
     "repo": "Tencent/VasSonic",
     "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
   },
-  "sources": [
-    "docs:engineering/protocol/legacy-wire#canonical-server"
-  ],
-  "evidence": "code-reading",
+  "sources": ["docs:engineering/protocol/legacy-wire#canonical-server","docs:engineering/protocol/legacy-divergences#_1-server-divergences","upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149","upstream:sonic-nodejs/common/diff.js:12-122","upstream:sonic-nodejs/middleware/compress.js:18-83","upstream:sonic-php/sdk/sonic.php:50-145"],
+  "evidence": "trace",
+  "traces": {
+    "legacy-java": "evidence/traces/server/java/S23-offline-http.http",
+    "legacy-node": "evidence/traces/server/node/S23-offline-http.http",
+    "legacy-php": "evidence/traces/server/php/S23-offline-http.http"
+  },
   "page": "b",
   "app": {
     "status": 200,
     "headers": [
-      [
-        "content-type",
-        "text/html; charset=utf-8"
-      ],
-      [
-        "cache-offline",
-        "http"
-      ]
+      ["content-type","text/html; charset=utf-8"],
+      ["cache-offline","http"]
     ]
   },
   "request": {
     "method": "GET",
+    "target": "https://shop.example.com/catalog",
     "headers": [
-      [
-        "accept-encoding",
-        "gzip"
-      ],
-      [
-        "accept-diff",
-        "true"
-      ],
-      [
-        "if-none-match",
-        "{{etag:a}}"
-      ],
-      [
-        "template-tag",
-        "{{tag:a}}"
-      ]
+      ["Accept-Encoding","gzip"],
+      ["accept-diff","true"],
+      ["If-None-Match","{{etag:a}}"],
+      ["template-tag","{{tag:a}}"]
     ]
   }
 }

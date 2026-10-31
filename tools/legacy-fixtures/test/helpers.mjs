@@ -46,9 +46,14 @@ export function run(profile, request, pageId = 'a', app = APP) {
   return respond(profile, request, app, page(pageId));
 }
 
-/** The text of a trace file for a request and a response (the layout of evidence/traces/server). */
-export function traceText(path, requestHeaders, response, encoding = 'identity') {
-  const head = [`GET ${path} HTTP/1.1`, ...requestHeaders.map(([n, v]) => `${n}: ${v}`)].join('\n');
+/**
+ * The text of a trace file for a request and a response (the layout of evidence/traces/server).
+ * `method` is the method of the request line; with `host`, the request has a `Host` first line
+ * (the layout of a case request sent through the lab control endpoint).
+ */
+export function traceText(path, requestHeaders, response, encoding = 'identity', { method = 'GET', host = null } = {}) {
+  const lines = host === null ? requestHeaders : [['Host', host], ...requestHeaders];
+  const head = [`${method} ${path} HTTP/1.1`, ...lines.map(([n, v]) => `${n}: ${v}`)].join('\n');
   const status = [`HTTP ${response.status}`, ...response.headers.map(([n, v]) => `${n}: ${v}`)].join('\n');
   return Buffer.concat([
     Buffer.from(`${head}\n\n--- response ---\n${status}\n\n[body decoded from content-encoding=${encoding}]\n`),

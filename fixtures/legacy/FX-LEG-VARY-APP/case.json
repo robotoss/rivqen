@@ -1,51 +1,35 @@
 {
   "id": "FX-LEG-VARY-APP",
-  "description": "The data response keeps the application Vary line and adds vary: template-tag after it.",
+  "description": "The data response keeps the application Vary line and adds vary: template-tag after it (C-15; upstream adds none, U-12)",
   "profile": "legacy-canonical",
-  "rules": [
-    "C-15"
-  ],
+  "rules": ["C-15"],
   "upstream": {
     "repo": "Tencent/VasSonic",
     "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
   },
-  "sources": [
-    "docs:engineering/protocol/legacy-wire#canonical-server"
-  ],
-  "evidence": "code-reading",
+  "sources": ["docs:engineering/protocol/legacy-wire#canonical-server","docs:engineering/protocol/legacy-divergences#_3-upstream-behaviors-that-rivqen-will-not-reproduce","upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149","upstream:sonic-nodejs/common/diff.js:12-122","upstream:sonic-nodejs/middleware/compress.js:18-83","upstream:sonic-php/sdk/sonic.php:50-145"],
+  "evidence": "trace",
+  "traces": {
+    "legacy-java": "evidence/traces/server/java/S28-vary-app.http",
+    "legacy-node": "evidence/traces/server/node/S28-vary-app.http",
+    "legacy-php": "evidence/traces/server/php/S28-vary-app.http"
+  },
   "page": "b",
   "app": {
     "status": 200,
     "headers": [
-      [
-        "content-type",
-        "text/html; charset=utf-8"
-      ],
-      [
-        "vary",
-        "Accept-Language"
-      ]
+      ["content-type","text/html; charset=utf-8"],
+      ["vary","Accept-Language"]
     ]
   },
   "request": {
     "method": "GET",
+    "target": "https://shop.example.com/catalog",
     "headers": [
-      [
-        "accept-encoding",
-        "gzip"
-      ],
-      [
-        "accept-diff",
-        "true"
-      ],
-      [
-        "if-none-match",
-        "{{etag:a}}"
-      ],
-      [
-        "template-tag",
-        "{{tag:a}}"
-      ]
+      ["Accept-Encoding","gzip"],
+      ["accept-diff","true"],
+      ["If-None-Match","{{etag:a}}"],
+      ["template-tag","{{tag:a}}"]
     ]
   }
 }

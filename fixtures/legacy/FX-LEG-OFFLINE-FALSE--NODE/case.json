@@ -1,0 +1,9 @@
+{
+  "id": "FX-LEG-OFFLINE-FALSE--NODE",
+  "description": "legacy-node: cache-control; its own cache-offline true only (the application value is lost)",
+  "profile": "legacy-node",
+  "replaces": "FX-LEG-OFFLINE-FALSE",
+  "divergences": ["D-09","D-14"],
+  "sources": ["upstream:sonic-nodejs/common/diff.js:12-122","upstream:sonic-nodejs/middleware/compress.js:18-83","docs:engineering/protocol/legacy-divergences#_1-server-divergences"],
+  "trace": "evidence/traces/server/node/S22-offline-false.http"
+}

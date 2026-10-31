@@ -69,7 +69,7 @@ Every other request goes to the server code under test with the stored case: the
 ## 3. Runner behavior
 
 1. Read `GET /info`. Stop with exit code 2 if the suite or profile is not listed.
-2. For each selected case, in directory order, one at a time: `POST /case`, then send the request of `expected.json`: method; the path and query of `request.target`; the field lines in order, exactly as written (repeated lines stay separate lines); plus `Host` (the authority of `request.target`) as the first line and `Connection: close`. No other line is added (no `Accept-Encoding`, no `User-Agent`).
+2. For each selected case, in directory order, one at a time: `POST /case`, then send the request of `expected.json`: method; the path and query of `request.target`; the field lines in order, exactly as written (repeated lines stay separate lines); plus `Host` (the authority of `request.target`) as the first line and `Connection: close`. No other line is added (no `Accept-Encoding`, no `User-Agent`). A server under test must accept a request field section of at least 8 KiB (the common server default, for example Tomcat); every fixture request stays under it. A server may refuse a larger one with `431`.
 3. Read the raw response: status, field lines in order with their spelling, and the body bytes. The runner does not join repeated fields and does not decode a content coding by itself.
 4. Compare:
    - **RQP:** `compareServer` and `compareServerShould` of `tools/rqp-protocol/check.mjs` (fixtures.md §5). A `Content-Encoding` other than identity is a failure (the fixtures use no content coding).

@@ -47,7 +47,7 @@ Default page: `b` (a byte copy of `fixtures/legacy/pages/b.html` in `pages/`). D
 | `FX-LEG-MAL-ACCEPT-DIFF-SPACES` | `accept-diff:` value `   true   ` | C-02 | legacy (values are trimmed) |
 | `FX-LEG-MAL-ACCEPT-DIFF-UPPER` | `accept-diff: TRUE` | C-02 | pass-through |
 | `FX-LEG-MAL-INM-LIST` | `if-none-match: "x", "{{etag:b}}"` | C-05 | no `304` |
-| `FX-LEG-MAL-INM-60KIB` | `if-none-match` of 60 KiB of `a` | C-05 | no `304`; data response |
+| `FX-LEG-MAL-INM-6KIB` | `if-none-match` of 6 KiB of `a` (the field section stays under the 8 KiB that a server under test must accept, CONTRACT.md §3) | C-05 | no `304`; data response |
 | `FX-LEG-MAL-TEMPLATE-TAG-100` | 100 `template-tag` lines with the right value | C-11 | full response (not exactly one line) |
 
 ## Seeds

@@ -54,6 +54,65 @@ Default page: `b` (a byte copy of `fixtures/legacy/pages/b.html` in `pages/`). D
 
 The pages of the cases, plus at least 10 more raw pages and 10 request field values. Each seed file has one row in a table in this section (name, what it stresses). Seeds have no expected result; a fuzz target asserts only "no crash, bounded time and memory, result equal to the regular expressions of C-06 and C-07".
 
+| Seed | Stresses |
+|---|---|
+| `pages/b.html` | baseline page |
+| `pages/openers-1mib.html` | about 1 MiB of alternating unclosed `<title` and `<!--sonicdiff-a-->x` (C-16) |
+| `pages/nested-1000.html` | 1000 start markers, one end marker |
+| `pages/huge-name.html` | a 60 KiB block name |
+| `pages/empty-content.html` | an empty block before the price block |
+| `pages/end-name-upper.html` | an uppercase end marker |
+| `pages/block-named-title.html` | a block named `title` |
+| `pages/marker-in-script.html` | blocks inside a script and a comment |
+| `pages/placeholder-text.html` | a literal `{price}` in the text |
+| `pages/title-unclosed.html` | a title without its end tag |
+| `pages/close-before-open.html` | `</title>` before `<title>` |
+| `pages/title-cr.html` | a CR inside the title |
+| `pages/nul-bytes.html` | NUL bytes in the text |
+| `pages/surrogate.html` | the bytes `ED A0 80` |
+| `pages/overlong.html` | the bytes `C0 AF` |
+| `pages/truncated-utf8.html` | a trailing `E2` |
+| `pages/bom.html` | a UTF-8 BOM at offset 0 |
+| `pages/empty.html` | a page of zero bytes |
+| `pages/title-nested-openers.html` | `<title><title><title>x</title>…` |
+| `pages/title-mixed-case-and-gt.html` | `<TiTlE>`, `</tItLe>`, `<title</title>`, `<title >` |
+| `pages/title-line-ends.html` | CRLF, LF and CR inside titles |
+| `pages/title-lf-between-opener-and-closer.html` | an LF stops a title match |
+| `pages/marker-end-before-start.html` | an end marker before its start marker |
+| `pages/marker-dash-forms.html` | the dash forms of `sonicdiff`: no name, `--`, no dash, underscore name |
+| `pages/marker-name-nonword.html` | names with a space, a dot, non-ASCII (`\w` is ASCII only) |
+| `pages/marker-names-crossed.html` | start markers `a`, `b` closed in crossed order |
+| `pages/marker-cut-at-end.html` | markers cut before `-->` |
+| `pages/markers-end-only-5000.html` | 5000 end markers and no start marker (linear time) |
+| `pages/comments-open-only.html` | 8000 `<!--` openers |
+| `pages/control-bytes.html` | the bytes 0x00 to 0x1F and a title |
+| `pages/latin1-high-bytes.html` | the bytes 0x80 to 0xFF (invalid UTF-8) |
+| `pages/utf16le-bom.html` | UTF-16LE text with a BOM (invalid UTF-8) |
+| `pages/astral-chars.html` | 4-byte UTF-8 in the title, block names and content |
+| `fields/inm-weak-nested.txt` | `W/"W/"abc""` |
+| `fields/inm-weak-prefix-only.txt` | `W/` only |
+| `fields/inm-star.txt` | `*` |
+| `fields/inm-mixed-case-hex.txt` | 40 hex characters in mixed case |
+| `fields/inm-nul.txt` | two tags joined by a NUL byte |
+| `fields/inm-64kib-weak-quotes.txt` | 64 KiB of `W/"` repeats |
+| `fields/inm-comma-list.txt` | quoted, weak and star list members |
+| `fields/accept-diff-tabs.txt` | tabs around `true` |
+| `fields/accept-diff-cr.txt` | a trailing CR |
+| `fields/accept-diff-nul.txt` | a trailing NUL |
+| `fields/accept-diff-fullwidth.txt` | a full-width `true` in UTF-8 |
+| `fields/accept-diff-empty.txt` | an empty value |
+| `fields/template-tag-upper.txt` | 40 uppercase hex characters |
+| `fields/template-tag-trailing-space.txt` | a trailing space |
+| `fields/template-tag-short.txt` | a truncated tag |
+| `fields/content-type-quoted-charset.txt` | `charset="UTF-8"` |
+| `fields/content-type-charset-junk.txt` | `charset=utf-8x` |
+| `fields/content-type-media-case-space.txt` | `TEXT/HTML ;charset=UTF-8` |
+| `fields/cache-control-no-store-case.txt` | `max-age=1, NO-STORE` |
+| `fields/vary-star-list.txt` | `Accept, *` |
+| `fields/cache-offline-case.txt` | `True` |
+
+Seeds with NUL, CR or non-ASCII bytes cannot be sent by the runner (DL-080); they are for the fuzz targets only.
+
 ## Rules
 
 1. Files are exact bytes (`.gitattributes`: `fixtures/** -text`).

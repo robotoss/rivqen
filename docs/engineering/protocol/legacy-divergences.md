@@ -27,6 +27,8 @@ The upstream project has five implementations of legacy protocol (Java, Node.js 
 | D-11 | Content type of data responses | Unchanged (`text/html`) | Unchanged (`text/html`) | Unchanged | Unchanged (`text/html`): iOS hands the rebuilt page to the web view with these fields (DL-072) |
 | D-12 | `Cache-Offline` on `304` | Two fields: `true` **and** `store` | `store` | `store` (replaces earlier `true`) | One field: `store` |
 | D-13 | Several `<title>` elements | Value from first match (case-insensitive), replacement case-sensitive → wrong element replaced | First title only | All titles replaced, first value stored | Not applicable in RQP; legacy module: Node.js behavior |
+| D-14 | `cache-offline` set by the application | A second field after its own `true` | Its own `true` only (the application value is lost) | Its own `true` only | The application value, one field (C-10, DL-070) |
+| D-15 | `Content-Type` on `304` | None | None | Kept | Kept from the application (C-13) |
 
 All server rows are confirmed by captured traces ([server trace report](/engineering/protocol/legacy-traces)). Evidence: Java `upstream:sonic-java/src/main/java/com/github/tencent/SonicFilter.java:60-149`; Node.js `upstream:sonic-nodejs/common/diff.js:12-122`, `upstream:sonic-nodejs/middleware/compress.js:18-83`; PHP `upstream:sonic-php/sdk/sonic.php:50-145`.
 
@@ -95,6 +97,7 @@ These behaviors are documented facts from the code. Rivqen replaces them with sa
 | U-11 | Java and PHP corrupt pages with more than one `<title>` element (trace S16) | The page title is copied into another element (for example an SVG title) on rebuild | No implicit title rule in RQP; Node.js rule in the legacy module | `SonicFilter.java:110-112`; `sonic.php:99-104` |
 | U-10 | iOS integration with `UIWebView` and global `NSURLProtocol` | `UIWebView` is no longer accepted in the App Store; `NSURLProtocol` does not intercept `WKWebView` through public API | WKWebView with public APIs (ADR-003) | `sonic-iOS/SonicSample/SonicSample/SonicWebViewController.m:71`; `AppDelegate.m:35` |
 | U-12 | All three servers send the full document and the data response for the same URL with the same `Etag`, without `Vary`, and keep CDN cache fields of the application | A shared cache that obeys `CDN-Cache-Control` or `Surrogate-Control` stores a data response (JSON) and gives it to every user as the page | `Vary: template-tag`; no CDN cache fields on legacy responses ([legacy wire](/engineering/protocol/legacy-wire#canonical-server) C-13, C-15; H-111); every profile | Traces S06, S07: no `Vary` |
+| U-13 | All three servers apply legacy processing to responses that are not a `200` to a `GET`: a `302` with a matching `If-None-Match` becomes a `304` (the redirect is lost), a `404` page becomes a data response, a `POST` response gets the legacy fields; `HEAD` differs per server (traces S24–S27, 2026-10-31) | A legacy client follows no redirect and caches or patches an error page as the page | Legacy processing only for `GET` with status `200` and `text/html` ([legacy wire](/engineering/protocol/legacy-wire#canonical-server) C-01, DL-074); every profile (DL-082) | Traces S24–S27 |
 
 ## 4. Parity matrix {#parity-matrix}
 

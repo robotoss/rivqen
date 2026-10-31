@@ -225,8 +225,16 @@ const NAMES: [&str; 11] = [
     "X-Other",
 ];
 
+/// 512 cases by default; `PROPTEST_CASES` raises it (the long run of sprint close).
+fn cases() -> u32 {
+    std::env::var("PROPTEST_CASES")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(512)
+}
+
 proptest! {
-    #![proptest_config(ProptestConfig { cases: 512, ..ProptestConfig::default() })]
+    #![proptest_config(ProptestConfig { cases: cases(), ..ProptestConfig::default() })]
 
     #[test]
     fn sf_prop_item_round_trip(i in item()) {

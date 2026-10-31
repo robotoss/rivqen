@@ -11,6 +11,12 @@
 //! Validity is decided on tokens only (DL-008). The crate has its own
 //! tokenizer for the WHATWG states that the rules need (DL-012).
 //!
+//! [`scan`] gives the tokens of that tokenizer, with every raw attribute and
+//! the foreign region, for the server rules of `manifest-patch.md` (the walk
+//! "Document head" of section 1.7, and the patch content rules of section 4
+//! item 1 and section 4.2). It is additive (DL-085): `analyze` reads the
+//! same tokens and its result does not depend on it.
+//!
 //! Resource limits: the input size is checked first (M-01); the depth counter D
 //! of M-26 is at most [`MAX_OPEN_ELEMENTS`], and it bounds the token stack;
 //! memory is linear in the input size; the work is linear in the input size.
@@ -20,6 +26,7 @@
 mod json;
 mod names;
 mod rules;
+pub mod scan;
 mod tokenizer;
 
 use base64::Engine as _;
@@ -189,7 +196,7 @@ pub fn analyze(input: &[u8]) -> Result<Document, MarkupError> {
     }
     // The tokenizer does not see a byte order mark; offsets keep it.
     let start = if input.starts_with(BOM) { BOM.len() } else { 0 };
-    let found = rules::run(input, start)?;
+    let found = rules::run(input, start, |_, _| {})?;
     document(input, &found)
 }
 

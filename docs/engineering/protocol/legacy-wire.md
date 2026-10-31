@@ -208,6 +208,10 @@ Request fields `sonic-sdk-version`, `Cookie`, `User-Agent` and `Accept-Encoding`
 2. C-05: the prefix `W/` is case-sensitive; `w/"…"` keeps its `w/` and does not match.
 3. C-09: a directive counts by its name before any `=` (ASCII case-insensitive, trimmed), so `no-store=1` counts as `no-store`.
 4. C-10: two or more `cache-offline` field lines of A give the default `true`, also when one of them is valid.
+5. Lists and parameters are split at every `,` and every `;`; a quoted string is not parsed, so a `,` or `;` inside quotes also splits (C-01, C-03, C-09, C-15, P-01). Example: `private="a, no-store"` counts as `no-store`, so the lines of A stay (C-09); that fails closed.
+6. C-05: after the trim, one leading `W/` is removed, then one pair of enclosing `"` (only when the rest has at least two characters); the result is not trimmed again. So `W/<hex>` without quotes matches, and `" <hex>"` does not.
+7. Every value that a rule compares exactly is trimmed first (§10, input line): the `cache-offline` value of C-10 (` http ` counts as `http`) and the `template-tag` value of C-11.
+8. C-13 also drops `transfer-encoding` and `connection` of A: the server writes its own framing.
 
 ### 10.1 Upstream profiles {#profiles}
 

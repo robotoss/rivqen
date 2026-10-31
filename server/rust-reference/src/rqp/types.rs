@@ -29,7 +29,7 @@ pub enum IfNoneMatch {
 /// `Rq-Have` after negotiation §3.4 server steps 1, 2, 3 and 5 (the steps that do
 /// not need the page). Steps 4 and 6 need the current template revision and the
 /// number of blocks; lane T-06 applies them.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Have {
     /// The Token `t` (parameters ignored).
     pub template: String,
@@ -41,7 +41,7 @@ pub struct Have {
 /// The RQP request fields that the response selection reads (negotiation §3).
 // Each flag is an independent fact of one field; no state machine hides here.
 #[allow(clippy::struct_excessive_bools)]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct RqpRequest {
     /// `Rq-Version` is the Integer `1` (§3.2).
     pub version_1: bool,
@@ -61,4 +61,57 @@ pub struct RqpRequest {
     pub has_range: bool,
     /// The request has `If-Match`, `If-Unmodified-Since` or `If-Range` (DL-089 item 1).
     pub other_precondition: bool,
+}
+
+// Debug without the nonce and the digests: they must not reach a log (RQP-17).
+impl core::fmt::Debug for Have {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Have")
+            .field("template", &self.template)
+            .field("digests_len", &self.digests.as_ref().map(Vec::len))
+            .finish()
+    }
+}
+
+impl core::fmt::Debug for RqpRequest {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("RqpRequest")
+            .field("version_1", &self.version_1)
+            .field("capabilities", &self.capabilities)
+            .field("accepts_delta", &self.accepts_delta)
+            .field("if_none_match", &self.if_none_match)
+            .field("base", &self.base)
+            .field("have", &self.have)
+            .field("nonce", &self.nonce.map(|_| "<16 bytes>"))
+            .field("has_range", &self.has_range)
+            .field("other_precondition", &self.other_precondition)
+            .finish()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn debug_hides_nonce_and_digests() {
+        let r = RqpRequest {
+            version_1: true,
+            capabilities: vec!["block-patch".into()],
+            accepts_delta: true,
+            if_none_match: IfNoneMatch::Absent,
+            base: None,
+            have: Some(Have {
+                template: "t1.x".into(),
+                digests: Some(vec![0xAB; 8]),
+            }),
+            nonce: Some([0xCD; 16]),
+            has_range: false,
+            other_precondition: false,
+        };
+        let text = format!("{r:?}");
+        assert!(text.contains("digests_len: Some(8)"), "{text}");
+        assert!(text.contains("<16 bytes>"), "{text}");
+        assert!(!text.contains("171") && !text.contains("205"), "{text}");
+    }
 }

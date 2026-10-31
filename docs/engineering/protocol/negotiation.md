@@ -252,6 +252,12 @@ Inputs: the request; the application response A (status, header fields, page byt
 5. An A with a `Content-Encoding` other than `identity` gets A without its `Rq-*` fields (as step 1): the markup analysis needs the bytes without a content coding.
 6. When the origin or the path of the manifest is longer than its limit ([manifest and patch §1.6](/engineering/protocol/manifest-patch#_1-6-origin-and-path)), the server sends A without its `Rq-*` fields (as step 2).
 7. A Byte Sequence is read by RFC 9651 §4.2.7: the padding is absent or complete (RFC 4648 §4), and non-zero pad bits are accepted; any other `=` (an incomplete padding such as `AA=`, or a `=` before the end) fails the parse.
+8. An empty field line takes part in the join of the field lines (DL-029): for `Rq-Version`, `Rq-Capabilities` and `Rq-Have` it gives a trailing `, `, the parse fails and the field is absent. `Accept` and `If-None-Match` ignore empty list elements (RFC 9110 §5.6.1).
+9. `Accept` (§3.6): one media range that accepts the delta media type is enough, also when another one has `q=0`. A range with two or more `q` parameters, a quoted `q`, or a parameter syntax error accepts nothing; `Q` is the same as `q` (RFC 9110 §12.4.2).
+10. `If-None-Match` (§3.5): an empty value, only commas, `*` together with a tag, `*` on two lines, a lowercase `w/` and `W/ "x"` are another syntax (item 3). The base needs exactly one entity-tag and no empty list element: `"r1.X", ` gives the tag for the `304` test but no base.
+11. `Rq-Version` (§3.2): the RFC 9651 Integer parse decides, so `01` and `1;x` are `1`; two lines `1` and `1` are a List, not an Item, so the version is not `1`.
+12. `Rq-Have` (§3.4): a `b` whose Byte Sequence does not decode fails the Dictionary parse, so `Rq-Have` is absent (step 2); a bare key `b` (Boolean) is a `b` that is absent; a bare key `t` makes `Rq-Have` absent.
+13. A `Range`, `If-Match`, `If-Unmodified-Since` or `If-Range` field line counts when it is present, also with an empty value.
 
 Sizes in step 7 are the bytes before any content coding. The comparison of digest prefixes in step 6 does not need a constant-time function: the values are not secret.
 

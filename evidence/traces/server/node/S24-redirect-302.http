@@ -1,0 +1,17 @@
+GET /catalog HTTP/1.1
+Host: shop.example.com
+Accept-Encoding: gzip
+accept-diff: true
+If-None-Match: 3e3184cbd12e5294959effe6f2d9985f50f4ea5d
+template-tag: 3c771bf015df2c410a41a6012804f645b3acc1bc
+
+--- response ---
+HTTP 304
+location: https://shop.example.com/login
+Content-Encoding: gzip
+Cache-Offline: store
+Date: Sat, 31 Oct 2026 08:06:10 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+[body decoded from content-encoding=gzip]

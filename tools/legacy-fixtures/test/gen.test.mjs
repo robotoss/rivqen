@@ -224,6 +224,16 @@ test('rules_must_exist_and_are_covered_at_the_full_catalog', () => {
   assert.equal(CATALOG_SIZE, 59);
 });
 
+test('the_repository_catalog_cannot_shrink_below_catalog_size', () => {
+  // A smaller catalog would switch the rule coverage off; for the repository catalog it is an error.
+  const { root, dir } = setup();
+  write(dir, 'FX-LEG-S', canonicalCase('FX-LEG-S', PLAIN_REQUEST, null));
+  const r = run(options(root, dir, { check: false, catalog: true }));
+  assert.equal(r.problems[0], 'the catalog has 1 canonical fixtures, fewer than 59 (CATALOG_SIZE)');
+  assert.equal(r.problems[1], 'rule C-01 is not covered by any fixture');
+  assert.equal(r.notes.length, 0);
+});
+
 test('a_wire_page_without_rules_is_an_error', () => {
   const { root, dir } = setup();
   const empty = join(root, 'empty.md');

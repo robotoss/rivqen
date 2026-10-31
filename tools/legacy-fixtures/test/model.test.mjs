@@ -457,3 +457,14 @@ test('field_values_with_long_inner_white_space_are_trimmed_in_linear_time', () =
   const ms = performance.now() - start;
   assert.ok(ms < 100, `${ms.toFixed(1)} ms`);
 });
+
+test('canonical_304_drops_the_legacy_fields_of_the_application', () => {
+  // C-13: a 304 keeps no etag, template-tag or template-change line of A (it adds none either).
+  const app = { status: 200, headers: [...APP.headers, ['ETag', '"app-1"'], ['Template-Tag', 'x'], ['template-change', 'true'], ['x-app', '1']] };
+  for (const profile of PROFILES) {
+    const r = respond(profile, legacy(['accept-encoding', 'gzip'], ['If-None-Match', etagOf('a')]), app, page('a'));
+    assert.equal(r.status, 304, profile);
+    for (const name of ['etag', 'template-tag', 'template-change']) assert.deepEqual(fieldValues(r, name), [], `${profile} ${name}`);
+    assert.deepEqual(fieldValues(r, 'x-app'), ['1'], profile);
+  }
+});

@@ -262,3 +262,16 @@ test('split_of_the_openers_page_keeps_the_unclosed_openers_in_the_template', () 
   assert.ok(parts.template.includes('<title'.repeat(2000) + '<!--sonicdiff-a-->x'.repeat(2000)));
   assert.equal(rebuild(parts.template, parts.data), text);
 });
+
+test('block_names_use_every_ascii_letter_and_digit', () => {
+  // \w is [A-Za-z0-9_]: the first and last letter of both cases, digits and the underscore.
+  for (const name of ['AZ', 'az', 'Z9_', 'a0']) {
+    const parts = split('legacy-canonical', `<p>${block(name, 'x')}</p>`);
+    assert.equal(parts.ok, true, name);
+    assert.deepEqual([...parts.data.keys()], ['{title}', `{${name}}`], name);
+  }
+  for (const bad of ['[', '@', '`', '{']) {
+    const parts = split('legacy-canonical', `<p>${block(`a${bad}`, 'x')}</p>`);
+    assert.deepEqual([...parts.data.keys()], ['{title}'], bad);
+  }
+});

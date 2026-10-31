@@ -100,6 +100,7 @@ export function run({
   labPages = join(root, 'tools/upstream-lab/pages'),
   traces = storedTraces(root),
   catalogSize = CATALOG_SIZE,
+  catalog = dir === FIXTURES_DIR,
   log = () => {},
 }) {
   const problems = [];
@@ -208,7 +209,7 @@ export function run({
 
   for (const path of traces) if (!used.has(path)) problems.push(`${path}: stored trace is not used by any fixture`);
 
-  checkRules(canonical, wirePage, catalogSize, dir === FIXTURES_DIR, problems, notes);
+  checkRules(canonical, wirePage, catalogSize, catalog, problems, notes);
   return { problems, notes, count };
 }
 

@@ -140,7 +140,12 @@ test('expected_of_a_data_case_has_split_and_body_members', () => {
   const e = expectedOf(c, CANONICAL, page('b'), dirs);
   assert.deepEqual(Object.keys(e), ['id', 'profile', 'level', 'request', 'status', 'fields', 'body', 'split']);
   assert.equal(e.request.headers[1][1], modelTag(CANONICAL, 'a'));
-  assert.deepEqual(Object.keys(e.fields), ['etag', 'template-tag', 'template-change', 'cache-offline', 'cache-control', 'content-type', 'sonic-etag-key']);
+  assert.deepEqual(Object.keys(e.fields), [
+    'etag', 'template-tag', 'template-change', 'cache-offline', 'cache-control', 'content-type', 'sonic-etag-key',
+    'vary', 'cdn-cache-control', 'surrogate-control',
+  ]);
+  assert.deepEqual(e.fields.vary, ['template-tag']);
+  assert.deepEqual(e.fields['cdn-cache-control'], []);
   assert.equal(e.body.kind, 'data');
   assert.equal(e.body.html_sha1, etagOf('b'));
   assert.deepEqual(e.split, { applied: true, template_sha1: modelTag(CANONICAL, 'a'), keys: ['{title}', '{price}', '{stock}'], rebuild_sha1: etagOf('b') });
@@ -256,6 +261,8 @@ test('reduced_trace_comparison_skips_the_named_field_and_the_body_content', () =
 
 test('field_helpers', () => {
   assert.equal(trimOws(' \t x y \t'), 'x y');
+  assert.equal(trimOws(' \t \t'), '');
+  assert.equal(trimOws('x\r'), 'x\r');
   assert.equal(trimOws(' x'), ' x');
   assert.deepEqual(normalizeFields([['a', 'b'], ['a'], null, ['a', 1], 'x', [1, 'b']]), [['a', 'b']]);
   assert.deepEqual(normalizeFields('x'), []);

@@ -1,0 +1,46 @@
+{
+  "id": "FX-LEG-UNCLOSED-OPENERS",
+  "profile": "legacy-canonical",
+  "level": "must",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["accept-encoding","gzip"],
+      ["accept-diff","true"],
+      ["if-none-match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+      ["template-tag","a9aa3d55409f63d2ee00224512f7e5ea8205bc58"]
+    ]
+  },
+  "status": 200,
+  "fields": {
+    "etag": ["639fd9314165883499da7a38eb5262cf7c18daff"],
+    "template-tag": ["a9aa3d55409f63d2ee00224512f7e5ea8205bc58"],
+    "template-change": ["false"],
+    "cache-offline": ["true"],
+    "cache-control": ["no-cache, private"],
+    "content-type": ["text/html; charset=utf-8"],
+    "sonic-etag-key": [],
+    "vary": ["template-tag"],
+    "cdn-cache-control": [],
+    "surrogate-control": []
+  },
+  "body": {
+    "kind": "data",
+    "data": {
+      "{title}": "<title>Shop</title>",
+      "{price}": "<!--sonicdiff-price--><p class=\"price\">130.00</p><!--sonicdiff-price-end-->",
+      "{stock}": "<!--sonicdiff-stock--><p>In stock: 5</p><!--sonicdiff-stock-end-->"
+    },
+    "template_tag": "a9aa3d55409f63d2ee00224512f7e5ea8205bc58",
+    "html_sha1": "639fd9314165883499da7a38eb5262cf7c18daff",
+    "diff": ""
+  },
+  "split": {
+    "applied": true,
+    "template_sha1": "a9aa3d55409f63d2ee00224512f7e5ea8205bc58",
+    "keys": ["{title}","{price}","{stock}"],
+    "rebuild_sha1": "639fd9314165883499da7a38eb5262cf7c18daff"
+  },
+  "profiles_same": []
+}

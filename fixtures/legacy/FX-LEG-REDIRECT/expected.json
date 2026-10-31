@@ -21,6 +21,9 @@
     "cache-control": [],
     "content-type": ["text/html; charset=utf-8"],
     "sonic-etag-key": [],
+    "vary": [],
+    "cdn-cache-control": [],
+    "surrogate-control": [],
     "location": ["https://shop.example.com/login"]
   },
   "body": {

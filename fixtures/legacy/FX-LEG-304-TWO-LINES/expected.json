@@ -21,7 +21,10 @@
     "cache-offline": ["true"],
     "cache-control": ["no-cache, private"],
     "content-type": ["text/html; charset=utf-8"],
-    "sonic-etag-key": []
+    "sonic-etag-key": [],
+    "vary": ["template-tag"],
+    "cdn-cache-control": [],
+    "surrogate-control": []
   },
   "body": {
     "kind": "data",

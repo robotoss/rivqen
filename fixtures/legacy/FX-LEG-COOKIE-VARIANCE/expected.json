@@ -22,8 +22,10 @@
     "cache-control": ["no-cache, private"],
     "content-type": ["text/html; charset=utf-8"],
     "sonic-etag-key": [],
-    "set-cookie": ["session=s2; Path=/; Secure; HttpOnly"],
-    "vary": ["Cookie"]
+    "vary": ["Cookie","template-tag"],
+    "cdn-cache-control": [],
+    "surrogate-control": [],
+    "set-cookie": ["session=s2; Path=/; Secure; HttpOnly"]
   },
   "body": {
     "kind": "data",

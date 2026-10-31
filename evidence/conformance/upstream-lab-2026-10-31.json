@@ -1,0 +1,1076 @@
+{
+  "date": "2026-10-31",
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "runner": "server/conformance/bin/rivqen-conformance.mjs",
+  "profiles": {
+    "legacy-node": {
+      "exit_code": 1,
+      "report": {
+        "target": "http://127.0.0.1:18081",
+        "suite": "legacy",
+        "profile": "legacy-node",
+        "results": [
+          {
+            "id": "FX-LEG-304--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-304-QUOTED--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-304-UPPERCASE--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-CDN-FIELDS--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []",
+              "field cdn-cache-control: expected [], got [\"max-age=600\"]",
+              "field surrogate-control: expected [], got [\"max-age=600\"]"
+            ]
+          },
+          {
+            "id": "FX-LEG-COMPRESSED-IDENTITY--NODE",
+            "level": "must",
+            "status": "pass",
+            "problems": []
+          },
+          {
+            "id": "FX-LEG-DATA-CHANGE--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-DETECT-ACCEPT-DIFF-FALSE--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-DETECT-ACCEPT-DIFF-YES--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-DETECT-NAME-CASE--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-DUPLICATE-BLOCKS-DATA--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-DUPLICATE-BLOCKS-FIRST--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-EMPTY-NAME-DATA--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-EMPTY-NAME-FIRST--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-FIRST-LOAD--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-MISMATCH-DATA--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-MISMATCH-FIRST--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-NESTED-DATA--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-NESTED-FIRST--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-SPACES-DATA--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-SPACES-FIRST--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-UPPERCASE-DATA--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-UPPERCASE-FIRST--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-NO-MARKERS-DATA--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-NO-MARKERS-FIRST--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-NON-SONIC-CLIENT",
+            "level": "must",
+            "status": "pass",
+            "problems": []
+          },
+          {
+            "id": "FX-LEG-OFFLINE-FALSE--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-OFFLINE-HTTP--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-PASS-HEAD",
+            "level": "must",
+            "status": "pass",
+            "problems": []
+          },
+          {
+            "id": "FX-LEG-PASS-NOT-FOUND--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field etag: expected [], got [\"4c33dabea7ea65c6255b9e6a6539976674886a2c\"]",
+              "field template-tag: expected [], got [\"3c771bf015df2c410a41a6012804f645b3acc1bc\"]",
+              "field template-change: expected [], got [\"false\"]",
+              "field cache-offline: expected [], got [\"true\"]",
+              "body: not the application body (334 bytes, expected 296; first difference at byte 0)"
+            ]
+          },
+          {
+            "id": "FX-LEG-PASS-POST--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field etag: expected [], got [\"4c33dabea7ea65c6255b9e6a6539976674886a2c\"]",
+              "field template-tag: expected [], got [\"3c771bf015df2c410a41a6012804f645b3acc1bc\"]",
+              "field template-change: expected [], got [\"false\"]",
+              "field cache-offline: expected [], got [\"true\"]",
+              "body: not the application body (334 bytes, expected 296; first difference at byte 0)"
+            ]
+          },
+          {
+            "id": "FX-LEG-REDIRECT--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "status 304, expected 302",
+              "field cache-offline: expected [], got [\"store\"]",
+              "field content-type: expected [\"text/html; charset=utf-8\"], got []",
+              "body: none, expected page"
+            ]
+          },
+          {
+            "id": "FX-LEG-TEMPLATE-CHANGE--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-TITLE-ATTRIBUTE-DATA--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-TITLE-ATTRIBUTE-FIRST--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-TITLE-SEVERAL-DATA--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-TITLE-SEVERAL-FIRST--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-UNICODE-DATA--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-UNICODE-FIRST--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-VARY-APP--NODE",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"Accept-Language\",\"template-tag\"], got [\"Accept-Language\"]"
+            ]
+          }
+        ],
+        "summary": {
+          "passed": 3,
+          "failed": 36,
+          "should_failed": 0,
+          "skipped": 0
+        }
+      }
+    },
+    "legacy-php": {
+      "exit_code": 1,
+      "report": {
+        "target": "http://127.0.0.1:18082",
+        "suite": "legacy",
+        "profile": "legacy-php",
+        "results": [
+          {
+            "id": "FX-LEG-304--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-304-QUOTED--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-304-UPPERCASE--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-CDN-FIELDS--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []",
+              "field cdn-cache-control: expected [], got [\"max-age=600\"]",
+              "field surrogate-control: expected [], got [\"max-age=600\"]"
+            ]
+          },
+          {
+            "id": "FX-LEG-COMPRESSED-IDENTITY--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-DATA-CHANGE--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-DETECT-ACCEPT-DIFF-FALSE",
+            "level": "must",
+            "status": "pass",
+            "problems": []
+          },
+          {
+            "id": "FX-LEG-DETECT-ACCEPT-DIFF-YES",
+            "level": "must",
+            "status": "pass",
+            "problems": []
+          },
+          {
+            "id": "FX-LEG-DETECT-NAME-CASE--PHP",
+            "level": "must",
+            "status": "pass",
+            "problems": []
+          },
+          {
+            "id": "FX-LEG-DUPLICATE-BLOCKS-DATA--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-DUPLICATE-BLOCKS-FIRST--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-EMPTY-NAME-DATA--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-EMPTY-NAME-FIRST--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-FIRST-LOAD--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-MISMATCH-DATA--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-MISMATCH-FIRST--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-NESTED-DATA--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-NESTED-FIRST--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-SPACES-DATA--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-SPACES-FIRST--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-UPPERCASE-DATA--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-UPPERCASE-FIRST--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-NO-MARKERS-DATA--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-NO-MARKERS-FIRST--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-NON-SONIC-CLIENT",
+            "level": "must",
+            "status": "pass",
+            "problems": []
+          },
+          {
+            "id": "FX-LEG-OFFLINE-FALSE--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-OFFLINE-HTTP--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-PASS-HEAD--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field etag: expected [], got [\"4c33dabea7ea65c6255b9e6a6539976674886a2c\"]",
+              "field template-tag: expected [], got [\"3c771bf015df2c410a41a6012804f645b3acc1bc\"]",
+              "field template-change: expected [], got [\"false\"]",
+              "field cache-offline: expected [], got [\"true\"]",
+              "field cache-control: expected [], got [\"no-cache\"]"
+            ]
+          },
+          {
+            "id": "FX-LEG-PASS-NOT-FOUND--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field etag: expected [], got [\"4c33dabea7ea65c6255b9e6a6539976674886a2c\"]",
+              "field template-tag: expected [], got [\"3c771bf015df2c410a41a6012804f645b3acc1bc\"]",
+              "field template-change: expected [], got [\"false\"]",
+              "field cache-offline: expected [], got [\"true\"]",
+              "field cache-control: expected [], got [\"no-cache\"]",
+              "body: not the application body (337 bytes, expected 296; first difference at byte 0)"
+            ]
+          },
+          {
+            "id": "FX-LEG-PASS-POST--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field etag: expected [], got [\"4c33dabea7ea65c6255b9e6a6539976674886a2c\"]",
+              "field template-tag: expected [], got [\"3c771bf015df2c410a41a6012804f645b3acc1bc\"]",
+              "field template-change: expected [], got [\"false\"]",
+              "field cache-offline: expected [], got [\"true\"]",
+              "field cache-control: expected [], got [\"no-cache\"]",
+              "body: not the application body (337 bytes, expected 296; first difference at byte 0)"
+            ]
+          },
+          {
+            "id": "FX-LEG-REDIRECT--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "status 304, expected 302",
+              "field cache-offline: expected [], got [\"store\"]",
+              "field cache-control: expected [], got [\"no-cache\"]",
+              "body: none, expected page"
+            ]
+          },
+          {
+            "id": "FX-LEG-TEMPLATE-CHANGE--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-TITLE-ATTRIBUTE-DATA--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-TITLE-ATTRIBUTE-FIRST--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-TITLE-SEVERAL-DATA--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field template-tag: expected [\"15d30184ec1fc0f39dbb196e47311709a86e0b5d\"], got [\"3f311c1e042b7209e870e9767836668bb4173dd6\"]",
+              "field template-change: expected [\"false\"], got [\"true\"]",
+              "field vary: expected [\"template-tag\"], got []",
+              "body: not a valid JSON text (syntax)"
+            ]
+          },
+          {
+            "id": "FX-LEG-TITLE-SEVERAL-FIRST--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field template-tag: expected [\"15d30184ec1fc0f39dbb196e47311709a86e0b5d\"], got [\"3f311c1e042b7209e870e9767836668bb4173dd6\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-UNICODE-DATA--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-UNICODE-FIRST--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-VARY-APP--PHP",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"Accept-Language\",\"template-tag\"], got [\"Accept-Language\"]"
+            ]
+          }
+        ],
+        "summary": {
+          "passed": 4,
+          "failed": 35,
+          "should_failed": 0,
+          "skipped": 0
+        }
+      }
+    },
+    "legacy-java": {
+      "exit_code": 1,
+      "report": {
+        "target": "http://127.0.0.1:18083",
+        "suite": "legacy",
+        "profile": "legacy-java",
+        "results": [
+          {
+            "id": "FX-LEG-304--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-304-QUOTED--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-304-UPPERCASE--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-CDN-FIELDS--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []",
+              "field cdn-cache-control: expected [], got [\"max-age=600\"]",
+              "field surrogate-control: expected [], got [\"max-age=600\"]"
+            ]
+          },
+          {
+            "id": "FX-LEG-COMPRESSED-IDENTITY--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-DATA-CHANGE--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-DETECT-ACCEPT-DIFF-FALSE--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-DETECT-ACCEPT-DIFF-YES--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-DETECT-NAME-CASE--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-DUPLICATE-BLOCKS-DATA--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-DUPLICATE-BLOCKS-FIRST--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-EMPTY-NAME-DATA--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-EMPTY-NAME-FIRST--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-FIRST-LOAD--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-MISMATCH-DATA--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-MISMATCH-FIRST--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-NESTED-DATA--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-NESTED-FIRST--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-SPACES-DATA--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-SPACES-FIRST--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-UPPERCASE-DATA--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-MARKER-UPPERCASE-FIRST--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-NO-MARKERS-DATA--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-NO-MARKERS-FIRST--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-NON-SONIC-CLIENT--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-OFFLINE-FALSE--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-OFFLINE-HTTP--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-PASS-HEAD--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field etag: expected [], got [\"\"]",
+              "field template-tag: expected [], got [\"\"]",
+              "field template-change: expected [], got [\"true\"]",
+              "field cache-offline: expected [], got [\"true\"]",
+              "field cache-control: expected [], got [\"no-cache\"]",
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]"
+            ]
+          },
+          {
+            "id": "FX-LEG-PASS-NOT-FOUND--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field etag: expected [], got [\"4c33dabea7ea65c6255b9e6a6539976674886a2c\"]",
+              "field template-tag: expected [], got [\"3c771bf015df2c410a41a6012804f645b3acc1bc\"]",
+              "field template-change: expected [], got [\"false\"]",
+              "field cache-offline: expected [], got [\"true\"]",
+              "field cache-control: expected [], got [\"no-cache\"]",
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "body: not the application body (439 bytes, expected 296; first difference at byte 0)"
+            ]
+          },
+          {
+            "id": "FX-LEG-PASS-POST--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field etag: expected [], got [\"4c33dabea7ea65c6255b9e6a6539976674886a2c\"]",
+              "field template-tag: expected [], got [\"3c771bf015df2c410a41a6012804f645b3acc1bc\"]",
+              "field template-change: expected [], got [\"false\"]",
+              "field cache-offline: expected [], got [\"true\"]",
+              "field cache-control: expected [], got [\"no-cache\"]",
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "body: not the application body (439 bytes, expected 296; first difference at byte 0)"
+            ]
+          },
+          {
+            "id": "FX-LEG-REDIRECT--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "status 304, expected 302",
+              "field cache-offline: expected [], got [\"true\",\"store\"]",
+              "field cache-control: expected [], got [\"no-cache\"]",
+              "field content-type: expected [\"text/html; charset=utf-8\"], got []",
+              "body: none, expected page"
+            ]
+          },
+          {
+            "id": "FX-LEG-TEMPLATE-CHANGE--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-TITLE-ATTRIBUTE-DATA--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-TITLE-ATTRIBUTE-FIRST--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-TITLE-SEVERAL-DATA--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field template-tag: expected [\"15d30184ec1fc0f39dbb196e47311709a86e0b5d\"], got [\"adb5e40dd0a955603f0eb184d6555bdf4c99f068\"]",
+              "field template-change: expected [\"false\"], got [\"true\"]",
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []",
+              "body: not a valid JSON text (syntax)"
+            ]
+          },
+          {
+            "id": "FX-LEG-TITLE-SEVERAL-FIRST--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field template-tag: expected [\"15d30184ec1fc0f39dbb196e47311709a86e0b5d\"], got [\"adb5e40dd0a955603f0eb184d6555bdf4c99f068\"]",
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-UNICODE-DATA--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-UNICODE-FIRST--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"template-tag\"], got []"
+            ]
+          },
+          {
+            "id": "FX-LEG-VARY-APP--JAVA",
+            "level": "must",
+            "status": "fail",
+            "problems": [
+              "field content-type: expected [\"text/html; charset=utf-8\"], got [\"text/html;charset=utf-8\"]",
+              "field vary: expected [\"Accept-Language\",\"template-tag\"], got [\"Accept-Language\"]"
+            ]
+          }
+        ],
+        "summary": {
+          "passed": 0,
+          "failed": 39,
+          "should_failed": 0,
+          "skipped": 0
+        }
+      }
+    }
+  }
+}

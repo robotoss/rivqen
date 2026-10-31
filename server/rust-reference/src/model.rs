@@ -63,7 +63,8 @@ pub struct AppResponse {
 /// The body of a response.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Body {
-    /// No body: `304`, the `HEAD` responses.
+    /// No body: a `1xx`, `204` or `304` status, and every response to `HEAD`
+    /// (RFC 9110 §6.4.1).
     None,
     /// These bytes.
     Bytes(Vec<u8>),
@@ -125,9 +126,16 @@ impl Profile {
     }
 }
 
+/// True when a response with this status to this method has no body
+/// (RFC 9110 §6.4.1: `HEAD`, `1xx`, `204`, `304`).
+#[must_use]
+pub fn has_no_body(method: &str, status: u16) -> bool {
+    method == "HEAD" || (100..200).contains(&status) || status == 204 || status == 304
+}
+
 /// The application response unchanged: the pass-through of both protocols.
 ///
-/// For a `HEAD` request the body is [`Body::None`].
+/// The body is [`Body::None`] when [`has_no_body`] is true.
 #[must_use]
 pub fn pass_through(request: &Request, app: &AppResponse) -> Response {
     Response {
@@ -140,7 +148,7 @@ pub fn pass_through(request: &Request, app: &AppResponse) -> Response {
             })
             .cloned()
             .collect(),
-        body: if request.method == "HEAD" {
+        body: if has_no_body(&request.method, app.status) {
             Body::None
         } else {
             Body::Bytes(app.body.clone())
@@ -199,5 +207,34 @@ mod tests {
             ..get
         };
         assert_eq!(pass_through(&head, &app).body, Body::None);
+    }
+
+    #[test]
+    fn pass_through_has_no_body_for_1xx_204_304() {
+        let get = Request {
+            method: "GET".into(),
+            url: "https://shop.example.com/catalog".into(),
+            fields: vec![],
+        };
+        for (status, none) in [
+            (100, true),
+            (199, true),
+            (200, false),
+            (204, true),
+            (205, false),
+            (304, true),
+            (404, false),
+        ] {
+            let app = AppResponse {
+                status,
+                fields: vec![],
+                body: b"x".to_vec(),
+            };
+            assert_eq!(
+                pass_through(&get, &app).body == Body::None,
+                none,
+                "status {status}"
+            );
+        }
     }
 }

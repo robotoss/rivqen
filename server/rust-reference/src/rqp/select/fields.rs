@@ -302,6 +302,11 @@ mod tests {
         assert_eq!(ct("text/html; charset=iso-8859-1"), ContentType::NotUtf8);
         assert_eq!(ct("text/html; charset=\"\""), ContentType::NotUtf8);
         assert_eq!(ct("text/html; charset=utf-16"), ContentType::NotUtf8);
+        // A quoted string ends at its quote: the comma after it is outside.
+        assert_eq!(ct("text/html; x=\"a\", text/plain"), ContentType::NotUtf8);
+        // The bytes after a quoted value up to `;` are discarded, also a
+        // `charset=` in them.
+        assert_eq!(ct("text/html; x=\"a\"Xcharset=latin1"), ContentType::Utf8);
         // Two media types: the list does not parse as one (step 1), or the
         // comma is outside a quoted string (item 1). Both pass A through.
         assert_eq!(ct("text/html, text/html"), ContentType::NotHtml);

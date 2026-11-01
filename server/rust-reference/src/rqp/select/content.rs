@@ -423,6 +423,12 @@ mod tests {
             ("img", "srcset", "/a.png 1x&comma;javascript:x"),
             ("a", "title", "\u{1} VbScRiPt:x"),
             ("text", "y", "&#x6a;"),
+            // Item 2: a space is skipped before the decision byte; references
+            // to `:`, a digit and an upper-case letter reject.
+            ("a", "href", " &#106;avascript:x"),
+            ("a", "href", "java&#58;x"),
+            ("a", "href", "&#49;x"),
+            ("a", "href", "&#74;avascript:x"),
         ] {
             assert!(rejects(element, name, value), "{element} {name}={value:?}");
         }
@@ -448,6 +454,9 @@ mod tests {
             ("img", "srcset", "/a.png (x,y) 1x, /b.png"),
             ("img", "srcset", ",,/a.png,,"),
             ("a", "href", ""),
+            // Item 4.3: descriptors are not URLs, also in parentheses with a comma.
+            ("img", "srcset", "/a.png javascript:x"),
+            ("img", "srcset", "/a.png (x,javascript:x) 1x"),
         ] {
             assert!(!rejects(element, name, value), "{element} {name}={value:?}");
         }

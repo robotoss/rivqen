@@ -79,7 +79,9 @@ group_rust() {
   step rule-probe 'cd tools/rqp-markup/corpus/rule-probe && cargo build -q'
   step rust-reference 'cd server/rust-reference && cargo fmt --check && cargo clippy --all-targets -q -- -D warnings && RUST_TEST_THREADS=4 cargo test -q && cargo test -q --release --test legacy_rules legacy_linear_time -- --ignored && cargo build -q --release'
   # The runner by URL against the release binary (gate G1; DL-090).
-  step rust-reference-http 'b=server/rust-reference/target/release/rivqen-reference; e() { node server/conformance/e2e/run.mjs --command "$b" --arg --conformance --arg --port --arg 0 "$@"; }; e --suite rqp && for p in legacy-canonical legacy-java legacy-node legacy-php; do e --suite legacy --profile "$p" || exit 1; done && e --suite legacy -- --fixtures fixtures/malformed/legacy'
+  # The first start of a freshly linked binary is slow on macOS (a system check of the
+  # new file), so start it once with --help before the runs.
+  step rust-reference-http 'b=server/rust-reference/target/release/rivqen-reference; "$b" --help >/dev/null && e() { node server/conformance/e2e/run.mjs --command "$b" --arg --conformance --arg --port --arg 0 "$@"; }; e --suite rqp && for p in legacy-canonical legacy-java legacy-node legacy-php; do e --suite legacy --profile "$p" || exit 1; done && e --suite legacy -- --fixtures fixtures/malformed/legacy'
 }
 
 group_java() {

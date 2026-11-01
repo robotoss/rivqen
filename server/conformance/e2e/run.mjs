@@ -76,7 +76,9 @@ function startHarness(opts) {
       child.kill();
       reject(new HarnessError(message));
     };
-    const timer = setTimeout(() => fail('harness did not print "listening <port>" in 10 s'), 10_000);
+    // 30 s: macOS checks a freshly linked binary on its first start, which can take
+    // more than 10 s on a loaded machine.
+    const timer = setTimeout(() => fail('harness did not print "listening <port>" in 30 s'), 30_000);
     child.once('exit', (code) => {
       clearTimeout(timer);
       reject(new HarnessError(`harness exited early with code ${code}`));

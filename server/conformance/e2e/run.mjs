@@ -72,7 +72,11 @@ function startHarness(opts) {
   const child = spawn(program, args, { stdio: ['ignore', 'pipe', 'inherit'] });
   return new Promise((resolvePort, reject) => {
     const lines = createInterface({ input: child.stdout });
-    const timer = setTimeout(() => reject(new HarnessError('harness did not print "listening <port>" in 10 s')), 10_000);
+    const fail = (message) => {
+      child.kill();
+      reject(new HarnessError(message));
+    };
+    const timer = setTimeout(() => fail('harness did not print "listening <port>" in 10 s'), 10_000);
     child.once('exit', (code) => {
       clearTimeout(timer);
       reject(new HarnessError(`harness exited early with code ${code}`));
@@ -85,7 +89,7 @@ function startHarness(opts) {
       clearTimeout(timer);
       const m = /^listening (\d+)$/.exec(line);
       if (m) resolvePort({ child, port: Number(m[1]) });
-      else reject(new HarnessError(`unexpected first harness line: ${line}`));
+      else fail(`unexpected first harness line: ${line}`);
     });
   });
 }

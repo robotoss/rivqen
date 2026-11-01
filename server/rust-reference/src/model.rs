@@ -8,7 +8,10 @@
 //! these types: no I/O, no clock, no shared state between calls.
 
 /// One field line, in the order of the message.
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// `Debug` prints the name and the length of the value only: a value can be a
+/// cookie, a credential or a nonce (RQP-17, SEC-08).
+#[derive(Clone, PartialEq, Eq)]
 pub struct Field {
     /// The name as received or as it is sent: its case is kept (D-01: the
     /// `legacy-php` profile compares the request name byte for byte).
@@ -17,6 +20,25 @@ pub struct Field {
     /// tabs (RFC 9110 §5.5). From a control case: as given. An engine trims
     /// spaces and tabs again when its rules say "trimmed".
     pub value: String,
+}
+
+impl core::fmt::Debug for Field {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Field")
+            .field("name", &self.name)
+            .field("value_len", &self.value.len())
+            .finish()
+    }
+}
+
+impl core::fmt::Debug for AppResponse {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("AppResponse")
+            .field("status", &self.status)
+            .field("fields", &self.fields)
+            .field("body_len", &self.body.len())
+            .finish()
+    }
 }
 
 impl Field {
@@ -50,7 +72,9 @@ pub struct Request {
 }
 
 /// The response of the application before the protocol step ("A").
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// `Debug` prints the length of the body, not the body.
+#[derive(Clone, PartialEq, Eq)]
 pub struct AppResponse {
     /// Status code.
     pub status: u16,
@@ -159,6 +183,29 @@ pub fn pass_through(request: &Request, app: &AppResponse) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn debug_hides_values_and_bodies() {
+        let app = AppResponse {
+            status: 200,
+            fields: vec![Field::new("Set-Cookie", "session=SECRET-MARK")],
+            body: b"BODY-MARK".to_vec(),
+        };
+        let request = Request {
+            method: "GET".into(),
+            url: "https://shop.example.com/catalog".into(),
+            fields: vec![Field::new("Cookie", "session=SECRET-MARK")],
+        };
+        let text = format!("{app:?} {request:?}");
+        assert!(
+            !text.contains("SECRET-MARK") && !text.contains("BODY-MARK"),
+            "{text}"
+        );
+        assert!(
+            text.contains("value_len: 19") && text.contains("body_len: 9"),
+            "{text}"
+        );
+    }
 
     #[test]
     fn profile_names_round_trip() {

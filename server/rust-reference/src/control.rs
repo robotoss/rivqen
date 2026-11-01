@@ -326,12 +326,17 @@ impl Server {
             fields: head.fields.clone(),
         };
         let result = guard(|| match &case.engine {
-            Engine::Legacy(profile) => crate::legacy::respond(*profile, &request, &case.app),
-            Engine::Rqp(config) => crate::rqp::respond(config, &request, &case.app),
+            Engine::Legacy(profile) => {
+                (crate::legacy::respond(*profile, &request, &case.app), None)
+            }
+            Engine::Rqp(config) => {
+                let (response, outcome) = crate::rqp::select::select(config, &request, &case.app);
+                (response, passthrough_note(outcome))
+            }
         });
         match result {
-            Ok(response) => match check_response(&response) {
-                Ok(()) => Outcome::plain(response),
+            Ok((response, note)) => match check_response(&response) {
+                Ok(()) => Outcome { response, note },
                 Err(reason) => Outcome::noted(error_response(500, "HANDLE_FAILED"), reason),
             },
             Err(()) => Outcome::noted(error_response(500, "HANDLE_FAILED"), "the engine panicked"),
@@ -419,6 +424,17 @@ fn app_fields(app: &Map<String, Value>) -> Option<Vec<Field>> {
         fields.push(Field::new(name, value));
     }
     Some(fields)
+}
+
+/// The log note of an RQP answer that hides an internal defect of the server
+/// (errors-logging ERR-01, ERR-02): a fixed text, never an input value.
+fn passthrough_note(outcome: crate::rqp::select::Outcome) -> Option<&'static str> {
+    use crate::rqp::select::{Full, Outcome as Rqp};
+    match outcome {
+        Rqp::Internal => Some("SERVER_PASSTHROUGH: internal defect, A sent"),
+        Rqp::Full(Full::Defect) => Some("SERVER_PASSTHROUGH: internal defect, F sent"),
+        _ => None,
+    }
 }
 
 #[cfg(test)]
@@ -992,5 +1008,21 @@ mod tests {
             r.fields,
             vec![Field::new("Content-Type", "application/json")]
         );
+    }
+}
+
+#[cfg(test)]
+mod passthrough_tests {
+    use super::passthrough_note;
+    use crate::rqp::select::{Full, Invalid, Outcome};
+
+    #[test]
+    fn only_internal_defects_get_a_note() {
+        assert!(passthrough_note(Outcome::Internal).is_some());
+        assert!(passthrough_note(Outcome::Full(Full::Defect)).is_some());
+        assert_eq!(passthrough_note(Outcome::Full(Full::PatchContent)), None);
+        assert_eq!(passthrough_note(Outcome::Invalid(Invalid::Markup)), None);
+        assert_eq!(passthrough_note(Outcome::Delta), None);
+        assert_eq!(passthrough_note(Outcome::NotModified), None);
     }
 }

@@ -35,8 +35,9 @@ pub mod head;
 pub mod manifest;
 pub mod url;
 
+use base64::Engine as _;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use rqp_markup::{Document, analyze};
-use sha2::{Digest, Sha256};
 
 use self::fields::ContentType;
 use self::manifest::{BlockLine, MANIFEST_END, MANIFEST_START, Out};
@@ -353,7 +354,11 @@ fn delta(
         let is_changed = match digests {
             None => true,
             Some(d) => {
-                let digest = Sha256::digest(content);
+                // The digest of analyze (base64url of SHA-256 of the content): no
+                // second hash of the block bytes.
+                let digest = URL_SAFE_NO_PAD
+                    .decode(&block.sha256)
+                    .map_err(|_| Full::Defect)?;
                 let at = i.checked_mul(8).ok_or(Full::Defect)?;
                 d.get(at..at.saturating_add(8)) != digest.get(..8)
             }
@@ -371,8 +376,10 @@ fn delta(
         .filter(|(b, _)| b.format == rqp_markup::Format::Html)
         .map(|(b, _)| (b.start, b.end))
         .collect();
-    if !content::blocks_pass(page.body, &spans).unwrap_or(false) {
-        return Err(Full::PatchContent);
+    match content::blocks_pass(page.body, &spans) {
+        Ok(true) => {}
+        Ok(false) => return Err(Full::PatchContent),
+        Err(_) => return Err(Full::Defect),
     }
     let binding = manifest::binding(&page.target.canonical(), base, nonce, &page.revision);
     let operations: Vec<(&str, &[u8])> = changed.iter().map(|(b, c)| (b.id.as_str(), *c)).collect();

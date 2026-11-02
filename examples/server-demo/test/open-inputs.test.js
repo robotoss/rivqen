@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MAX_ORIGIN_CHARS, MAX_PATH_CHARS, hasManifestUrl, handle } from '../src/rqp.js';
-import { deltaBase, hasContentCoding, noneMatchFails, parseIfNoneMatch, rqHave, rqNonce } from '../src/fields.js';
+import { acceptsDelta, deltaBase, hasContentCoding, noneMatchFails, parseIfNoneMatch, rqHave, rqNonce } from '../src/fields.js';
 import { parseItem } from '../src/sf.js';
 import { APP, NONCE, clientLines, get, header, page, revisionsOf } from './helpers.js';
 
@@ -138,4 +138,26 @@ test('open input 15: the Vary members of A stay on F and on 304, also Accept; a 
   assert.equal(notModified.status, 304);
   for (const r of [f, notModified]) assert.deepEqual(r.headers.filter(([n]) => n === 'vary'), expected);
   assert.equal(header(f, 'vary'), 'Accept, Cookie, Accept-Encoding,  Accept');
+});
+
+test('open inputs 4 and 9: the parameter grammar of a media range (RFC 9110 sections 5.6.6 and 12.4.2)', () => {
+  const accept = (v) => acceptsDelta([['accept', v]]);
+  for (const ok of [`${DELTA}; q=0.5`, `${DELTA};\tq=0.5`, `${DELTA};  level=1 \t; q=1`, `${DELTA};q=0.123`, `${DELTA};q=1.000`, `${DELTA};q=1.00`, `${DELTA};q=1`, `${DELTA};a="x\\"y"`, `${DELTA};a=b!#$%&'*+-.^_\`|~`]) {
+    assert.equal(accept(ok), true, ok);
+  }
+  const no = [
+    `${DELTA};level=`, // an empty value
+    `${DELTA};level=1 x`, // text after a value
+    `${DELTA};level=1\tx`,
+    `${DELTA};a b=1`, // a name that is not a token
+    `${DELTA};a@=1`,
+    `${DELTA};level=a@b`, // a value that is not a token
+    `${DELTA};=1`,
+    `${DELTA};level;q=1`, // a name without "="
+    `${DELTA};a="x\\`, // an escape at the end
+    `${DELTA};q=0.1234`,
+    `${DELTA};q=1.1`,
+    `${DELTA};q=00.5`,
+  ];
+  for (const v of no) assert.equal(accept(v), false, v);
 });

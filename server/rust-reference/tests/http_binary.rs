@@ -32,7 +32,10 @@ fn cli_rejects_a_start_without_conformance() {
     let (code, stdout, stderr) = exit_of(&[]);
     assert_eq!(code, Some(2));
     assert_eq!(stdout, "");
-    assert!(stderr.contains("--conformance is required"), "{stderr}");
+    assert!(
+        stderr.contains("--conformance or --site <dir> is required"),
+        "{stderr}"
+    );
     assert!(
         stderr.contains("usage: rivqen-reference --conformance"),
         "{stderr}"

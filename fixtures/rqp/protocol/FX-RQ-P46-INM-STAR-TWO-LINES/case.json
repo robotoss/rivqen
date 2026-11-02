@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-P46-INM-STAR-TWO-LINES",
+  "description": "* on two If-None-Match lines is the list '*, *', which is another syntax: no 304, F (open input 10)",
+  "rules": ["RQP-16"],
+  "page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"],
+      ["if-none-match", "*"],
+      ["if-none-match", "*"]
+    ]
+  }
+}

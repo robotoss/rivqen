@@ -17,6 +17,7 @@ import {
   deltaBase,
   fullContentType,
   fieldValue,
+  hasContentCoding,
   hasField,
   mediaType,
   noneMatchFails,
@@ -158,6 +159,23 @@ export function buildDelta(page, analysis, binding, indices) {
   };
 }
 
+const APPLICATION_PRECONDITIONS = ['if-match', 'if-unmodified-since', 'if-range'];
+export const MAX_ORIGIN_CHARS = 512; // manifest-patch section 1.6
+export const MAX_PATH_CHARS = 4096; // manifest-patch section 1.6
+
+/**
+ * Open inputs 6 and 14: true when the request URL parses (WHATWG URL Standard), has the scheme http or
+ * https, and its serialized origin and path are within the limits of the manifest.
+ */
+export function hasManifestUrl(target) {
+  try {
+    const url = new URL(target);
+    return (url.protocol === 'http:' || url.protocol === 'https:') && url.origin.length <= MAX_ORIGIN_CHARS && url.pathname.length <= MAX_PATH_CHARS;
+  } catch {
+    return false;
+  }
+}
+
 const KEEP_ON_304 = new Set(['etag', 'cache-control', 'expires', 'vary', 'date', 'content-location']);
 
 /**
@@ -191,9 +209,15 @@ export function handle(request, appResponse, pageBytes, config = {}) {
 
 /** Steps 1 to 9. Returns null when the page is invalid for RQP (step 2). */
 function select(request, status, appHeaders, page, config) {
-  // Step 1: scope.
+  // Step 1: scope. Open inputs 1, 5 and 13: not for a request with If-Match, If-Unmodified-Since or If-Range
+  // (the application evaluated them for its own representation), not for an A with a content coding.
+  const reqHeaders = normalizeHeaders(request.headers);
   const inScope =
-    (request.method === 'GET' || request.method === 'HEAD') && status === 200 && mediaType(fieldValue(appHeaders, 'content-type')) === 'text/html';
+    (request.method === 'GET' || request.method === 'HEAD') &&
+    status === 200 &&
+    !APPLICATION_PRECONDITIONS.some((name) => hasField(reqHeaders, name)) &&
+    !hasContentCoding(appHeaders) &&
+    mediaType(fieldValue(appHeaders, 'content-type')) === 'text/html';
   if (!inScope) return { status, headers: appHeaders, body: page, mode: 'passthrough', reason: 'out-of-scope' };
 
   // Step 2: validity. H-62: the page is UTF-8; a charset parameter of another encoding makes it invalid.
@@ -204,8 +228,10 @@ function select(request, status, appHeaders, page, config) {
   const insertAt = documentHeadStart(page);
   if (insertAt < 0) return null;
 
+  // Open inputs 6 and 14: no manifest for a URL that is not http or https, or whose origin or path is over its limit.
+  if (!hasManifestUrl(request.target)) return null;
+
   // Step 3: the full document F, the same for every request.
-  const reqHeaders = normalizeHeaders(request.headers);
   const serverLimit = config.maxPatchBytes ?? MAX_PATCH_BYTES;
   const members = membersOf(config, serverLimit);
   const manifest = buildManifest(analysis, request.target, members);

@@ -57,7 +57,11 @@ test('entity-tag lists: empty elements, OWS around commas, the weak flag, and th
       { weak: false, opaque: '"b"' },
       { weak: true, opaque: '"c"' },
     ],
+    emptyElement: true,
   });
+  // Open input 10: only a list without an empty element has no emptyElement flag.
+  assert.equal(parseEntityTags('"a", "b"').emptyElement, false);
+  for (const f of ['"a", ', ', "a"', '"a",, "b"', '"a" ,']) assert.equal(parseEntityTags(f).emptyElement, true, f);
   assert.deepEqual(parseEntityTags('*'), { star: true, tags: [] });
   assert.deepEqual(parseEntityTags('  "x"  ').tags, [{ weak: false, opaque: '"x"' }]);
   // No opening DQUOTE, a space or a control character in the tag.
@@ -96,10 +100,10 @@ test('UTF-8 byte order mark: exactly EF BB BF at offset 0', () => {
 });
 
 test('Accept: the q value grammar of RFC 9110 section 12.4.2; parameters other than q are ignored', () => {
-  for (const ok of [`${DELTA};q=1`, `${DELTA};q=1.00`, `${DELTA} ;q=0.5`, `${DELTA};q=0.5 ;level=1`, `${DELTA};level=1`, `${DELTA};charset=utf-8`, `${DELTA} \t;q=0.5`, `${DELTA};qq`]) {
+  for (const ok of [`${DELTA};q=1`, `${DELTA};q=1.00`, `${DELTA} ;q=0.5`, `${DELTA};q=0.5 ;level=1`, `${DELTA};level=1`, `${DELTA};charset=utf-8`, `${DELTA} \t;q=0.5`, `${DELTA};`, `${DELTA};;level=1`, `${DELTA};level="x;y"`, `${DELTA};Level=1`, `${DELTA};q=0, ${DELTA}`, `${DELTA};Q=0.5`, `${DELTA};q=0.5;charset="a\\"b"`]) {
     assert.equal(acceptsMediaType(ok, DELTA), true, ok);
   }
-  for (const no of [`${DELTA};q=20`, `${DELTA};q=0.5x`, `${DELTA}; q=0`, 'application/ vnd.rivqen.delta+json']) {
+  for (const no of [`${DELTA};q=20`, `${DELTA};q=0.5x`, `${DELTA}; q=0`, `${DELTA};qq`, `${DELTA};q`, `${DELTA};=1`, `${DELTA};q=`, `${DELTA};q =1`, `${DELTA};q= 1`, `${DELTA};q=1;q=1`, `${DELTA};Q=1;q=0.5`, `${DELTA};q="1"`, `${DELTA};q=1.0001`, `${DELTA};q=-1`, `${DELTA};level="x`, `${DELTA};level="x"y`, `${DELTA};a b=1`, `${DELTA};q=0, ${DELTA};q=0`, 'application/ vnd.rivqen.delta+json']) {
     assert.equal(acceptsMediaType(no, DELTA), false, no);
   }
 });

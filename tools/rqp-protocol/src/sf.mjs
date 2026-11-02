@@ -242,9 +242,11 @@ function parseToken(input) {
   return { type: 'token', value: out };
 }
 
-// Section 4.2.7. Missing padding is accepted; "=" only at the end, at most two.
-// One pass over the characters (DL-063, M1): after the first "=" only "=" may
-// follow, and the third "=" fails. No regular expression.
+// Section 4.2.7. The padding is absent or complete (RFC 4648 section 4; negotiation
+// section 4, open input 7): "=" only at the end, at most two, and with a padding the
+// length of the data and the padding together is a multiple of 4. So "AA=" fails.
+// Non-zero pad bits are accepted. One pass over the characters (DL-063, M1): after
+// the first "=" only "=" may follow, and the third "=" fails. No regular expression.
 function parseByteSequence(input) {
   input.take(); // ":"
   const start = input.i;
@@ -262,6 +264,7 @@ function parseByteSequence(input) {
   }
   const dataLength = end - start - pad;
   if (dataLength % 4 === 1) fail();
+  if (pad > 0 && (dataLength + pad) % 4 !== 0) fail();
   input.i = end + 1;
   return { type: 'bytes', value: Buffer.from(input.s.slice(start, start + dataLength), 'base64') };
 }

@@ -39,6 +39,13 @@ test('Byte Sequence: missing padding is accepted', () => {
   assert.deepEqual(item(':AQI=:'), { type: 'bytes', value: Buffer.from([1, 2]) });
 });
 
+test('Byte Sequence (open input 7): an incomplete padding fails the parse, an absent or a complete padding does not', () => {
+  for (const f of [':AA=:', ':AAA==:', ':AQ=:', ':AAAA=:', ':AAAAAA=:', ':=:', ':==:']) assert.equal(parseItem(f), null, f);
+  for (const f of [':AA==:', ':AAA=:', ':AQI:', ':AQ:', ':AAAA:']) assert.notEqual(parseItem(f), null, f);
+  // Non-zero pad bits are accepted (RFC 9651 section 4.2.7): "AB==" has pad bits 000001.
+  assert.deepEqual(item(':AB==:'), { type: 'bytes', value: Buffer.from([0]) });
+});
+
 test('List and Dictionary: members, parameters, white space and trailing commas', () => {
   const list = parseList('(a b);x=1, c , ("s" 2)');
   assert.equal(list.length, 3);
@@ -245,10 +252,11 @@ function byteSequenceBeforeDl063(b64) {
   for (const c of b64) if (!/[A-Za-z0-9+/=]/.test(c)) return null;
   const data = b64.replace(/=+$/, '');
   if (data.includes('=') || b64.length - data.length > 2 || data.length % 4 === 1) return null;
+  if (b64.length !== data.length && b64.length % 4 !== 0) return null; // open input 7: the padding is absent or complete
   return Buffer.from(data, 'base64');
 }
 
-test('property (DL-063): the linear Byte Sequence parse accepts exactly the values of the parse before DL-063, with the same bytes', () => {
+test('property (DL-063): the linear Byte Sequence parse accepts exactly the values of the regular-expression parse (and a complete padding), with the same bytes', () => {
   const rnd = prng(0xb64);
   const alphabet = 'AQgw+/=$-_a9';
   let accepted = 0;
@@ -268,14 +276,12 @@ test('property (DL-063): the linear Byte Sequence parse accepts exactly the valu
   assert.ok(accepted > 500, `only ${accepted} accepted values`);
 });
 
-test('Byte Sequence (DL-063): at most two "=" and only at the end; "=" alone is the empty sequence', () => {
+test('Byte Sequence (DL-063): at most two "=" and only at the end; the padding is complete', () => {
   assert.deepEqual(item('::'), { type: 'bytes', value: Buffer.alloc(0) });
-  assert.deepEqual(item(':=:'), { type: 'bytes', value: Buffer.alloc(0) });
-  assert.deepEqual(item(':==:'), { type: 'bytes', value: Buffer.alloc(0) });
-  assert.deepEqual(item(':AQID=:'), { type: 'bytes', value: Buffer.from([1, 2, 3]) });
+  assert.deepEqual(item(':AQI=:'), { type: 'bytes', value: Buffer.from([1, 2]) });
   assert.deepEqual(item(':AQ==:'), { type: 'bytes', value: Buffer.from([1]) });
   assert.deepEqual(item(':+/+/:'), { type: 'bytes', value: Buffer.from([0xfb, 0xff, 0xbf]) });
-  for (const f of [':===:', ':AQ===:', ':A=Q=:', ':=A:', ':A:', ':AAAAA:', ':AAAAA==:', ':A==:', ':AQ=$:', ':AQ-_:', ':AQ.=:']) {
+  for (const f of [':===:', ':AQ===:', ':A=Q=:', ':=A:', ':A:', ':AAAAA:', ':AAAAA==:', ':A==:', ':AQID=:', ':=:', ':==:', ':AQ=$:', ':AQ-_:', ':AQ.=:']) {
     assert.equal(parseItem(f), null, f);
   }
   // The parse ends at the first ":" after the start; the rest is parameters or a failure.

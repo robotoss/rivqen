@@ -1,0 +1,46 @@
+# Image of the reference server (WP-03 S2, H-115, DL-095): build the image and run the
+# conformance runner against the container by URL. Runs only when the server, the markup crate,
+# the fixtures or the runner change.
+name: Reference image
+
+on:
+  push:
+    paths:
+      - "server/rust-reference/**"
+      - "tools/rqp-markup/rust/**"
+      - "fixtures/**"
+      - "server/conformance/**"
+      - "tools/reference-image/**"
+      - ".github/workflows/reference-image.yml"
+  pull_request:
+    paths:
+      - "server/rust-reference/**"
+      - "tools/rqp-markup/rust/**"
+      - "fixtures/**"
+      - "server/conformance/**"
+      - "tools/reference-image/**"
+      - ".github/workflows/reference-image.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reference-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  image:
+    name: Build and test the image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Build the image, run the runner against the container
+        run: sh tools/reference-image/run.sh

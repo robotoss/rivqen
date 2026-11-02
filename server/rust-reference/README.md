@@ -19,7 +19,7 @@ rivqen-reference --conformance [--listen <ip>] [--port <n>] [--origin <url>] [--
 | `--listen <ip>` | Default `127.0.0.1`. An address that is not loopback needs `--lab-peer` |
 | `--port <n>` | Default `8080`; `0` = any free port. The first stdout line is `listening <port>` |
 | `--origin <url>` | Default `https://shop.example.com`: `http://` or `https://` and `host[:port]`, nothing else. A case request gets the URL `<origin><request target>` |
-| `--lab-peer` | Accept control requests from a peer that is not loopback (a container whose port is published on `127.0.0.1` of the host only; DL-081). `Host` and `Content-Type` are still checked. Publish the same port number on both sides (`-p 127.0.0.1:N:N`), because the `Host` check uses the local port |
+| `--lab-peer` | Accept control requests also from a private peer: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` (also IPv4-mapped), `fc00::/7`, `fe80::/10`; any other peer `403` (DL-081, DL-097). At start one stderr warning line. `Host` and `Content-Type` are still checked. Publish the same port number on both sides (`-p 127.0.0.1:N:N`), because the `Host` check uses the local port |
 
 Exit codes: `0` `--help`; `1` cannot listen or write stdout; `2` usage error.
 
@@ -39,13 +39,17 @@ Builder `rust:1.99.0-alpine3.22` pinned by digest, a static binary (`crt-static`
 |---|---|---|
 | Request head (request line and field lines) | 64 KiB, 256 field lines | `431` (`414` in the request line) |
 | Body | 8 MiB, not read when larger | `413` |
+| Case body (`POST /case`) | 65 536 structural tokens, depth 16, 1 024 `app.headers` lines, only the top-level members of CONTRACT.md §2; checked before the JSON parse | `400 BAD_CASE` |
 | `Transfer-Encoding` | Not supported | `501` |
 | HTTP version | `1.0` and `1.1` | `505` |
 | Request target | Origin-form only | `400` |
-| Time to read a request, time to write an answer | 10 s each | `408` / connection closed |
-| Connections | One at a time, one request per connection, `Connection: close` | — |
+| First byte of the head | 5 s | Connection closed, no answer |
+| Rest of the head after its first byte | 5 s | `408` |
+| Whole request (head and body) | 10 s | `408` |
+| Answer | 10 s | Connection closed |
+| Connections | A queue of 64 (a full queue blocks `accept`); 1 worker in the conformance mode; one request per connection, `Connection: close` | — |
 
-Logs (stderr): `<method> <path without query> <status> <ms>ms`, never a field value, a body or a query string.
+Logs (stderr): `<method> <path> <status> <ms>ms (<note>)`. The method only when it is a standard method, else `-`; the path only for `/__rivqen/conformance/info` and `/case`, else `-` (L5). Connection lines (accept failure, an I/O error kind, an idle close, a panic) at most once per second for each kind, with `(n similar lines suppressed)`. Never a field value, a body or a query string.
 
 ## Rules
 

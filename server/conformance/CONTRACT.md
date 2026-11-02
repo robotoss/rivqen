@@ -55,6 +55,7 @@ Request body (`application/json`, at most 8 MiB):
 | Member | Rule |
 |---|---|
 | `suite` | `rqp` or `legacy` |
+| `case_id` | The fixture id (a string; for the report only) |
 | `profile` | Legacy only |
 | `page_base64` | The exact application body bytes (`pages/<page>.html` of the case) |
 | `app` | Status and field lines of the application response, in order (from `case.json`) |

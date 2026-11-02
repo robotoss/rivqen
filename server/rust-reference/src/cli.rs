@@ -19,7 +19,8 @@ pub const USAGE: &str = "usage: rivqen-reference --conformance [--listen <ip>] [
   --listen <ip>  listen address (default 127.0.0.1); not loopback needs --lab-peer
   --port <n>     port 0 to 65535 (default 8080; 0 = any free port)
   --origin <url> origin of the case request URL (default https://shop.example.com)
-  --lab-peer     do not check the peer address (container with a port published on 127.0.0.1 only)
+  --lab-peer     accept control requests also from private peers (10/8, 172.16/12, 192.168/16,
+                 fc00::/7, fe80::/10): a container with its port published on 127.0.0.1 only
 The first stdout line is `listening <port>`.";
 
 /// The default port.

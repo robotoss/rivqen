@@ -4,8 +4,9 @@
 //! `rivqen-reference`: the Rivqen reference server (WP-03).
 //!
 //! Exit codes: `2` usage error (the usage text goes to stderr); `1` the server
-//! cannot start (listen, stdout); `0` `--help`. The server itself runs until it is
-//! stopped. The first stdout line is `listening <port>`.
+//! cannot start (listen, stdout, workers); `0` `--help`. The server itself runs
+//! until it is stopped. The first stdout line is `listening <port>`. With
+//! `--lab-peer` the first stderr line is [`LAB_PEER_WARNING`].
 
 mod cli;
 
@@ -14,7 +15,7 @@ use std::net::TcpListener;
 use std::process::ExitCode;
 
 use rivqen_reference::control::{Server, Settings};
-use rivqen_reference::http::server::{Timeouts, log, serve};
+use rivqen_reference::http::server::{ServeOptions, log, serve};
 
 fn main() -> ExitCode {
     let mut args = Vec::new();
@@ -63,6 +64,9 @@ fn run(options: &cli::Options) -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
+    if options.lab_peer {
+        log(format_args!("{LAB_PEER_WARNING}"));
+    }
     let port = match listener.local_addr() {
         Ok(addr) => addr.port(),
         Err(e) => {
@@ -82,10 +86,20 @@ fn run(options: &cli::Options) -> ExitCode {
         return ExitCode::FAILURE;
     }
     drop(out);
-    let mut server = Server::new(Settings {
+    let server = Server::new(Settings {
         conformance: true,
         lab_peer: options.lab_peer,
         origin: options.origin.clone(),
     });
-    serve(&listener, &mut server, &Timeouts::default())
+    // The conformance mode runs one worker: the runner sends one case at a time,
+    // and the connections are answered in accept order (DL-097).
+    let error = serve(&listener, &server, &ServeOptions::default());
+    log(format_args!(
+        "rivqen-reference: the workers cannot run: {:?}",
+        error.kind()
+    ));
+    ExitCode::FAILURE
 }
+
+/// The warning line of `--lab-peer` (DL-097): one line on stderr at start.
+pub const LAB_PEER_WARNING: &str = "rivqen-reference: warning: --lab-peer is on: control requests are accepted from loopback and private peers (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7, fe80::/10); publish the port on 127.0.0.1 only";

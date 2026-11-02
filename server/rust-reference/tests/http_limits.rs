@@ -22,18 +22,23 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use rivqen_reference::control::{DEFAULT_ORIGIN, INFO_PATH, Server, Settings};
-use rivqen_reference::http::server::{Timeouts, serve};
+use rivqen_reference::http::server::{ServeOptions, Timeouts, serve};
 
 fn start(timeouts: Timeouts) -> u16 {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let port = listener.local_addr().unwrap().port();
     thread::spawn(move || {
-        let mut server = Server::new(Settings {
+        let server = Server::new(Settings {
             conformance: true,
             lab_peer: false,
             origin: DEFAULT_ORIGIN.to_owned(),
         });
-        serve(&listener, &mut server, &timeouts)
+        // One worker, as the conformance mode of the binary.
+        let options = ServeOptions {
+            timeouts,
+            workers: 1,
+        };
+        serve(&listener, &server, &options)
     });
     port
 }

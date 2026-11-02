@@ -22,18 +22,18 @@ use std::thread;
 use std::time::Duration;
 
 use rivqen_reference::control::{CASE_PATH, DEFAULT_ORIGIN, INFO_PATH, Server, Settings};
-use rivqen_reference::http::server::{Timeouts, serve};
+use rivqen_reference::http::server::{ServeOptions, serve};
 
 fn start() -> u16 {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let port = listener.local_addr().unwrap().port();
     thread::spawn(move || {
-        let mut server = Server::new(Settings {
+        let server = Server::new(Settings {
             conformance: true,
             lab_peer: false,
             origin: DEFAULT_ORIGIN.to_owned(),
         });
-        serve(&listener, &mut server, &Timeouts::default())
+        serve(&listener, &server, &ServeOptions::default())
     });
     port
 }

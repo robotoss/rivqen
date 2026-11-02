@@ -5,7 +5,7 @@
 
 The reference server of WP-03: an independent implementation of the server side of RQP `rqp/1` and of the legacy profiles of ADR-005 (`legacy-canonical`, `legacy-java`, `legacy-node`, `legacy-php`). The conformance runner tests it by URL. Docs: `docs/engineering/server/conformance.md`; plan: `docs/engineering/plan/sprints/WP-03-S1.md`.
 
-**State:** WP-03 S1. By URL through the runner the release binary passes the RQP suite (112/112), the legacy suite in all four profiles (59, 39, 39, 39) and the malformed suite (22/22). The image (H-115) and the site mode (H-114) come in S2.
+**State:** WP-03 S1. By URL through the runner the release binary passes the RQP suite (141/141), the legacy suite in all four profiles (59, 39, 39, 39) and the malformed suite (22/22). The image (H-115) and the site mode (H-114) come in S2.
 
 ## Command line
 

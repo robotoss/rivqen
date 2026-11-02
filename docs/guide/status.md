@@ -13,7 +13,7 @@
 | Rivqen protocol (RQP) specification | ✅ Done (merged 2026-10-20, #3) — markup, negotiation, manifest and patch normative ([RQP markup](/engineering/protocol/markup), [negotiation](/engineering/protocol/negotiation), [manifest and patch](/engineering/protocol/manifest-patch)); 265 protocol fixtures (112 server, 153 client) and 362 markup fixtures; S1–S6 closed |
 | Server demo (RQP reference behavior) | ✅ Runs — see [Examples: Server](/guide/examples/server) |
 | Conformance runner (tests a server by URL) | ✅ Available — see [Server conformance](/engineering/server/conformance); RQP and legacy suites |
-| Golden fixtures | ✅ RQP markup: 362 fixtures (`fixtures/rqp/markup/`); RQP protocol: 265 fixtures (112 server, 153 client; `fixtures/rqp/protocol/`); legacy: 171 fixtures (59 canonical, 112 for the upstream profiles; `fixtures/legacy/`); malformed: 22 cases and 54 seeds (`fixtures/malformed/`) |
+| Golden fixtures | ✅ RQP markup: 362 fixtures (`fixtures/rqp/markup/`); RQP protocol: 294 fixtures (141 server, 153 client; `fixtures/rqp/protocol/`); legacy: 171 fixtures (59 canonical, 112 for the upstream profiles; `fixtures/legacy/`); malformed: 22 cases and 54 seeds (`fixtures/malformed/`) |
 | Rust core | ⏳ Planned (P3) |
 | Android and iOS SDKs | ⏳ Planned (P5) |
 | Web and React SDK | ⏳ Planned (P6) |

@@ -160,7 +160,11 @@ fn compare(case: &Case) -> (Vec<String>, Vec<String>) {
     let should = names(&e["vary"]["should"]);
     let full_like = kind == "full" || status == 304 || (kind == "none" && status == 200);
     for m in &members {
-        if (m.starts_with("rq-") && !should.contains(m)) || (full_like && m == "accept") {
+        // `accept` on F or 304 only when the application set it, so the case lists it
+        // in `vary.required` (negotiation §4 open input 15; check.mjs).
+        if (m.starts_with("rq-") && !should.contains(m))
+            || (full_like && m == "accept" && !required.contains(m))
+        {
             fail.push(format!("header vary: lists {m}"));
         }
     }
@@ -418,7 +422,7 @@ fn report(
 #[test]
 fn rqp_fixtures_must() {
     let ids = server_cases();
-    assert_eq!(ids.len(), 112, "the RQP suite has 112 server cases");
+    assert_eq!(ids.len(), 141, "the RQP suite has 141 server cases");
     let cases: Vec<Case> = ids.iter().map(|id| run(id)).collect();
     let failures = report(&cases, |(must, _)| must);
     assert!(

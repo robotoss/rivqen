@@ -9,7 +9,7 @@ Conformance means that a server SDK gives the same answer as the reference for e
 | Component | Role |
 |---|---|
 | `fixtures/` | The truth (see [Golden fixtures](/engineering/protocol/fixtures)) |
-| `server/rust-reference` | Oracle (WP-03): <Badge type="tip" text="FACT" /> by URL through `run.mjs --command`, the release binary passes RQP 112/112, `legacy-canonical` 59/59, `legacy-java`, `legacy-node` and `legacy-php` 39/39 each, and the malformed suite 22/22 (`tools/fulltest.sh rust`). Independent of the JavaScript models (DL-087); command line and limits in `server/rust-reference/README.md` |
+| `server/rust-reference` | Oracle (WP-03): <Badge type="tip" text="FACT" /> by URL through `run.mjs --command`, the release binary passes RQP 141/141 (112 in S1, 29 cases for the open inputs of negotiation §4 added in S2), `legacy-canonical` 59/59, `legacy-java`, `legacy-node` and `legacy-php` 39/39 each, and the malformed suite 22/22 (`tools/fulltest.sh rust`). Independent of the JavaScript models (DL-087); command line and limits in `server/rust-reference/README.md` |
 | `server/conformance` | Runner: sends requests, compares responses |
 | `server/conformance/harness` | Test harness: wraps a server module and has the control endpoint |
 | `server/conformance/e2e/run.mjs` | Driver: starts the harness, runs the runner, stops the harness |
@@ -147,8 +147,8 @@ A profile run checks only behavior that a stored upstream trace confirms. A prof
 
 | Module | Suite and profile | Result |
 |---|---|---|
-| RQP reference (`tools/rqp-protocol`) | `rqp` | 112/112 |
-| Server demo (`examples/server-demo/src/rqp.js`) | `rqp` | 112/112 |
+| RQP reference (`tools/rqp-protocol`) | `rqp` | 141/141 (2026-11-02) |
+| Server demo (`examples/server-demo/src/rqp.js`) | `rqp` | 141/141 (2026-11-02) |
 | Legacy model | `legacy-canonical` | 59/59 |
 | Legacy model | `legacy-java` | 39/39 (31/31 on 2026-10-30) |
 | Legacy model | `legacy-node` | 39/39 (31/31 on 2026-10-30) |

@@ -130,7 +130,7 @@ The prefix is taken from the digest bytes, not from the base64url text. The mani
 
 When `b` is absent and the template matches, the server uses the all-blocks fallback (H-7; section 4, step 6). Steps 5 and 6 are the "other handling" that RFC 9651 §2.2 allows: a bad `b` does not remove `t`.
 
-<Badge type="info" text="DESIGN" /> A Byte Sequence uses standard base64 with padding (RFC 9651 §3.3.5). RFC 9651 §4.2.7 tells parsers to accept missing padding and non-zero pad bits. The server uses the decoded bytes only, so such variants give the same result.
+<Badge type="info" text="DESIGN" /> A Byte Sequence uses standard base64 with padding (RFC 9651 §3.3.5). RFC 9651 §4.2.7 tells parsers to accept missing padding and non-zero pad bits. The server uses the decoded bytes only, so such variants give the same result. An incomplete padding (`AA=`) fails the parse (§4, open input 7; `FX-RQ-P51-HAVE-B-BAD-PADDING`, `FX-RQ-P53-NONCE-BAD-PADDING`).
 
 ### 3.5 `If-None-Match`
 
@@ -249,7 +249,7 @@ Inputs: the request; the application response A (status, header fields, page byt
 2. `If-Modified-Since` without `If-None-Match` is ignored: F has no `Last-Modified` (DL-032), so there is no date to compare.
 3. An `If-None-Match` of another syntax (not `*` and not a list of entity-tags) makes the condition of step 4 true (no `304`) and gives no base (§3.5).
 4. A media range of `Accept` with a `q` parameter that is not a valid qvalue (RFC 9110 §12.4.2) does not accept the delta media type (§3.6).
-5. An A with a `Content-Encoding` other than `identity` gets A without its `Rq-*` fields (as step 1): the markup analysis needs the bytes without a content coding.
+5. An A with a `Content-Encoding` other than `identity` gets A without its `Rq-*` fields (as step 1): the markup analysis needs the bytes without a content coding. No fixture has such an A: the runner fails every response with a content coding (CONTRACT.md §3), so the implementations test it in their own suites; `FX-RQ-P49-CONTENT-ENCODING-IDENTITY` pins the `identity` boundary.
 6. When the origin or the path of the manifest is longer than its limit ([manifest and patch §1.6](/engineering/protocol/manifest-patch#_1-6-origin-and-path)), the server sends A without its `Rq-*` fields (as step 2).
 7. A Byte Sequence is read by RFC 9651 §4.2.7: the padding is absent or complete (RFC 4648 §4), and non-zero pad bits are accepted; any other `=` (an incomplete padding such as `AA=`, or a `=` before the end) fails the parse.
 8. An empty field line takes part in the join of the field lines (DL-029): for `Rq-Version`, `Rq-Capabilities` and `Rq-Have` it gives a trailing `, `, the parse fails and the field is absent. `Accept` and `If-None-Match` ignore empty list elements (RFC 9110 §5.6.1).

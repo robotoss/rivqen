@@ -941,8 +941,8 @@ fn req_fixture_requests_parse() {
             assert_eq!(d.len() % 8, 0, "{id}");
         }
     }
-    assert_eq!(cases, 112);
-    assert_eq!(deltas, 21);
+    assert_eq!(cases, 141);
+    assert_eq!(deltas, 24);
     assert!(not_modified > 0);
 }
 

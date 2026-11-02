@@ -23,6 +23,16 @@ rivqen-reference --conformance [--listen <ip>] [--port <n>] [--origin <url>] [--
 
 Exit codes: `0` `--help`; `1` cannot listen or write stdout; `2` usage error.
 
+## Container image
+
+Build from the repository root (the server depends by path on `tools/rqp-markup/rust`):
+
+```bash
+docker build -f server/rust-reference/Dockerfile -t rivqen-reference:local .
+```
+
+Builder `rust:1.99.0-alpine3.22` pinned by digest, a static binary (`crt-static`); runtime `FROM scratch` (no digest exists, DL-095), user `65532:65532`, `EXPOSE 18080`, default command `--conformance --listen 0.0.0.0 --port 18080 --lab-peer`; about 1.1 MB. Publish the same port number on both sides (`-p 127.0.0.1:18080:18080`): the `Host` check uses the local port. `sh tools/reference-image/run.sh` builds the image, runs it read-only without capabilities, and runs the runner (RQP, the four legacy profiles, malformed); `IMAGE=<ref>` tests another tag. The build context allow list is `server/rust-reference/Dockerfile.dockerignore`. CI: `.github/workflows/reference-image.yml`.
+
 ## Limits
 
 | Item | Limit | Answer |

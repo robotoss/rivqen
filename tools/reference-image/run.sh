@@ -30,7 +30,10 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT TERM
 
-docker run -d --name "$NAME" -p "127.0.0.1:$PORT:$PORT" "$IMAGE" \
+# No writable root file system, no capabilities, no privilege change: the server
+# needs none of them.
+docker run -d --name "$NAME" -p "127.0.0.1:$PORT:$PORT" \
+  --read-only --cap-drop ALL --security-opt no-new-privileges "$IMAGE" \
   --conformance --listen 0.0.0.0 --port "$PORT" --lab-peer >/dev/null
 
 # Wait until the control endpoint answers (no fixed sleep between runs, only between polls).

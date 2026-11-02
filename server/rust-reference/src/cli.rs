@@ -7,7 +7,7 @@
 //! ```text
 //! rivqen-reference --conformance [--listen <ip>] [--port <n>] [--origin <url>] [--lab-peer]
 //! rivqen-reference --site <dir> --protocol rqp|legacy [--profile <name>] [--config <file>]
-//!                  [--listen <ip>] [--port <n>] [--origin <url>] [--workers <n>]
+//!                  --origin <url> [--listen <ip>] [--port <n>] [--workers <n>]
 //! ```
 //!
 //! The parse reads no file: the site directory and the configuration file are
@@ -22,7 +22,7 @@ use rivqen_reference::model::Profile;
 /// The usage text.
 pub const USAGE: &str = "usage: rivqen-reference --conformance [--listen <ip>] [--port <n>] [--origin <url>] [--lab-peer]
        rivqen-reference --site <dir> --protocol rqp|legacy [--profile <name>] [--config <file>]
-                        [--listen <ip>] [--port <n>] [--origin <url>] [--workers <n>]
+                        --origin <url> [--listen <ip>] [--port <n>] [--workers <n>]
   --conformance  serve the conformance mode of server/conformance/CONTRACT.md
   --site <dir>   serve the regular files of <dir> with one protocol (excludes --conformance, --lab-peer)
   --protocol     rqp or legacy (required with --site)
@@ -31,7 +31,8 @@ pub const USAGE: &str = "usage: rivqen-reference --conformance [--listen <ip>] [
   --workers <n>  site mode: 1 to 64 worker threads (default 8)
   --listen <ip>  listen address (default 127.0.0.1); conformance: not loopback needs --lab-peer
   --port <n>     port 0 to 65535 (default 8080; 0 = any free port)
-  --origin <url> origin of the request URL that the engines see (default https://shop.example.com)
+  --origin <url> origin of the request URL that the engines see; required with --site
+                 (conformance default https://shop.example.com)
   --lab-peer     accept control requests also from private peers (10/8, 172.16/12, 192.168/16,
                  fc00::/7, fe80::/10): a container with its port published on 127.0.0.1 only
 The first stdout line is `listening <port>`.";
@@ -217,6 +218,11 @@ fn site_mode(raw: &mut Raw, dir: String) -> Result<Mode, CliError> {
         (Some(_), Some(_), _) => return Err(usage("--protocol rqp refuses --profile")),
         (Some(_), None, config) => Protocol::Rqp { config },
     };
+    // A client checks the manifest origin against the page URL: a default
+    // origin would give every page an invalid manifest (DL-096 addendum).
+    if raw.origin.is_none() {
+        return Err(usage("--site needs --origin <url>"));
+    }
     Ok(Mode::Site {
         dir,
         protocol,
@@ -495,13 +501,18 @@ mod tests {
 
     #[test]
     fn cli_site_rqp_and_legacy() {
-        let o = parse(&["--site", "pages", "--protocol", "rqp"]).unwrap();
+        let o = parse(&[
+            "--site",
+            "pages",
+            "--protocol",
+            "rqp",
+            "--origin",
+            "https://app.example/",
+        ])
+        .unwrap();
         assert_eq!(o.mode, site(Protocol::Rqp { config: None }, 8));
         assert_eq!(o.listen, IpAddr::V4(Ipv4Addr::LOCALHOST));
-        assert_eq!(
-            (o.port, o.origin.as_str()),
-            (8080, "https://shop.example.com")
-        );
+        assert_eq!((o.port, o.origin.as_str()), (8080, "https://app.example"));
         let o = parse(&[
             "--site",
             "pages",
@@ -541,10 +552,35 @@ mod tests {
                 "pages",
                 "--workers",
                 "1",
+                "--origin",
+                "http://a",
             ])
             .unwrap();
             assert_eq!(o.mode, site(Protocol::Legacy(profile), 1));
         }
+    }
+
+    #[test]
+    fn cli_site_needs_origin() {
+        for args in [
+            &["--site", "pages", "--protocol", "rqp"][..],
+            &["--site", "pages", "--protocol", "rqp", "--workers", "2"],
+            &[
+                "--site",
+                "pages",
+                "--protocol",
+                "legacy",
+                "--profile",
+                "legacy-php",
+            ],
+        ] {
+            assert_eq!(usage_of(args), "--site needs --origin <url>", "{args:?}");
+        }
+        // The conformance mode keeps its default origin.
+        assert_eq!(
+            parse(&["--conformance"]).unwrap().origin,
+            "https://shop.example.com"
+        );
     }
 
     #[test]
@@ -626,7 +662,17 @@ mod tests {
             );
         }
         for (w, n) in [("1", 1), ("08", 8), ("64", 64)] {
-            let o = parse(&["--site", "pages", "--protocol", "rqp", "--workers", w]).unwrap();
+            let o = parse(&[
+                "--site",
+                "pages",
+                "--protocol",
+                "rqp",
+                "--workers",
+                w,
+                "--origin",
+                "http://a",
+            ])
+            .unwrap();
             assert_eq!(o.mode, site(Protocol::Rqp { config: None }, n));
         }
     }

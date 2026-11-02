@@ -5,9 +5,10 @@
 //!
 //! The server loop ([`crate::http::server`]) reads a request head, asks the
 //! [`Handler`] what to do ([`Handler::route`]), reads the body when the handler
-//! asks for it, and writes the [`Outcome`] of [`Handler::respond`]. A handler does
-//! no I/O. The workers share one handler, so a handler keeps its state behind a
-//! lock ([`Sync`]).
+//! asks for it, and writes the [`Outcome`] of [`Handler::respond`]. The
+//! conformance handler does no I/O; the site handler reads one file per request.
+//! The workers share one handler, so a handler keeps its state behind a lock
+//! ([`Sync`]).
 //!
 //! The conformance mode ([`crate::control::Server`]) is one handler; the site mode
 //! is another.

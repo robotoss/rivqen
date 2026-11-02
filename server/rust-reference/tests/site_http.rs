@@ -186,7 +186,14 @@ const NONCE: &str = ":AAECAwQFBgcICQoLDA0ODw==:";
 fn site_rqp_full_then_delta() {
     let t = Temp::new("rqp");
     fs::write(t.0.join("catalog.html"), kat_page()).unwrap();
-    let server = Server::start(&["--site", t.path(), "--protocol", "rqp"]);
+    let server = Server::start(&[
+        "--site",
+        t.path(),
+        "--protocol",
+        "rqp",
+        "--origin",
+        "https://shop.example.com",
+    ]);
     let first = [
         ("Rq-Version", "1"),
         ("Rq-Capabilities", "(block-patch)"),
@@ -272,6 +279,8 @@ fn site_legacy_flow() {
         "legacy",
         "--profile",
         "legacy-canonical",
+        "--origin",
+        "https://shop.example.com",
     ]);
     let tag = sha1_hex(LEGACY_TEMPLATE.as_bytes());
     let etag = sha1_hex(LEGACY_PAGE.as_bytes());
@@ -321,7 +330,14 @@ fn site_log_path_only_for_files() {
     fs::write(t.0.join("a.html"), "<p>a</p>").unwrap();
     let big = fs::File::create(t.0.join("big.html")).unwrap();
     big.set_len(5 * 1024 * 1024 + 1).unwrap();
-    let server = Server::start(&["--site", t.path(), "--protocol", "rqp"]);
+    let server = Server::start(&[
+        "--site",
+        t.path(),
+        "--protocol",
+        "rqp",
+        "--origin",
+        "http://a",
+    ]);
     assert_eq!(server.get("GET", "/a.html?token=secret-q", &[]).status, 200);
     assert_eq!(server.get("GET", "/missing-secret-a.html", &[]).status, 404);
     assert_eq!(server.get("GET", "/../secret-b", &[]).status, 404);
@@ -374,6 +390,10 @@ fn cli_site_excludes_conformance_and_lab_peer() {
     assert_eq!(code, Some(2));
     let (code, _) = exit_of(&["--conformance", "--workers", "4"]);
     assert_eq!(code, Some(2));
+    // No silent default origin in the site mode (DL-096 addendum).
+    let (code, stderr) = exit_of(&["--site", t.path(), "--protocol", "rqp", "--port", "0"]);
+    assert_eq!(code, Some(2));
+    assert!(stderr.contains("--site needs --origin <url>"), "{stderr}");
 }
 
 #[test]
@@ -382,7 +402,16 @@ fn cli_site_directory_must_exist() {
     fs::write(t.0.join("file.html"), "x").unwrap();
     for dir in [t.0.join("missing"), t.0.join("file.html")] {
         let d = dir.to_str().unwrap();
-        let (code, stderr) = exit_of(&["--site", d, "--protocol", "rqp", "--port", "0"]);
+        let (code, stderr) = exit_of(&[
+            "--site",
+            d,
+            "--protocol",
+            "rqp",
+            "--port",
+            "0",
+            "--origin",
+            "http://a",
+        ]);
         assert_eq!(code, Some(1), "{stderr}");
         assert!(
             stderr.contains("the --site directory cannot be used"),
@@ -418,6 +447,8 @@ fn cli_site_config_file_rules() {
             s,
             "--protocol",
             "rqp",
+            "--origin",
+            "http://a",
             "--config",
             c.to_str().unwrap(),
             "--port",
@@ -433,6 +464,8 @@ fn cli_site_config_file_rules() {
         s,
         "--protocol",
         "rqp",
+        "--origin",
+        "http://a",
         "--config",
         missing.to_str().unwrap(),
     ]);
@@ -487,7 +520,16 @@ fn cli_site_workers_serve_beside_an_idle_socket() {
     fs::write(t.0.join("t.txt"), "x").unwrap();
     // With one worker an idle socket holds the server for the 5 s first-byte
     // deadline; with two the next client is answered at once.
-    let server = Server::start(&["--site", t.path(), "--protocol", "rqp", "--workers", "2"]);
+    let server = Server::start(&[
+        "--site",
+        t.path(),
+        "--protocol",
+        "rqp",
+        "--workers",
+        "2",
+        "--origin",
+        "http://a",
+    ]);
     let _idle = TcpStream::connect(("127.0.0.1", server.port)).unwrap();
     thread::sleep(Duration::from_millis(100));
     let started = Instant::now();
@@ -498,7 +540,14 @@ fn cli_site_workers_serve_beside_an_idle_socket() {
         started.elapsed()
     );
     // The default is 8 workers.
-    let server = Server::start(&["--site", t.path(), "--protocol", "rqp"]);
+    let server = Server::start(&[
+        "--site",
+        t.path(),
+        "--protocol",
+        "rqp",
+        "--origin",
+        "http://a",
+    ]);
     let idle: Vec<TcpStream> = (0..7)
         .map(|_| TcpStream::connect(("127.0.0.1", server.port)).unwrap())
         .collect();

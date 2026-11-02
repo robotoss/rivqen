@@ -7,7 +7,11 @@
 //
 // Usage:
 //   node server/conformance/e2e/run.mjs (--module <path> | --command <program> [--arg <value>]...)
-//        --suite rqp|legacy [--profile <name>] [--expect fail] [-- <extra runner options>]
+//        --suite rqp|legacy [--profile <name>] [--expect fail] [--start-timeout-ms <n>]
+//        [-- <extra runner options>]
+//
+// --start-timeout-ms: how long to wait for the `listening <port>` line (default 30000;
+// macOS checks a freshly linked binary on its first start, which can be slow).
 //
 // --command: start <program> with the --arg values as its arguments (no shell). The
 // program must print `listening <port>` as its first stdout line and serve on
@@ -40,7 +44,7 @@ class HarnessError extends Error {
 }
 
 function parse(argv) {
-  const opts = { module: '', command: '', args: [], suite: '', profile: '', expect: 'pass', extra: [] };
+  const opts = { module: '', command: '', args: [], suite: '', profile: '', expect: 'pass', startTimeoutMs: 30_000, extra: [] };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
     if (a === '--') {
@@ -55,6 +59,11 @@ function parse(argv) {
     else if (a === '--suite') opts.suite = v;
     else if (a === '--profile') opts.profile = v;
     else if (a === '--expect') opts.expect = v;
+    else if (a === '--start-timeout-ms') {
+      const n = Number(v);
+      if (!Number.isInteger(n) || n < 1 || n > 600_000) throw new UsageError('--start-timeout-ms must be 1..600000');
+      opts.startTimeoutMs = n;
+    }
     else throw new UsageError(`unknown option ${a}`);
     i += 1;
   }
@@ -76,9 +85,7 @@ function startHarness(opts) {
       child.kill();
       reject(new HarnessError(message));
     };
-    // 30 s: macOS checks a freshly linked binary on its first start, which can take
-    // more than 10 s on a loaded machine.
-    const timer = setTimeout(() => fail('harness did not print "listening <port>" in 30 s'), 30_000);
+    const timer = setTimeout(() => fail(`harness did not print "listening <port>" in ${opts.startTimeoutMs} ms`), opts.startTimeoutMs);
     child.once('exit', (code) => {
       clearTimeout(timer);
       reject(new HarnessError(`harness exited early with code ${code}`));

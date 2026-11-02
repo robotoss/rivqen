@@ -45,3 +45,16 @@ test('a program that cannot start is a harness error', () => {
   assert.equal(r.status, 2);
   assert.match(r.stderr, /cannot start/);
 });
+
+test('--start-timeout-ms is checked and used', () => {
+  const bad = drive(['--module', reference, '--suite', 'rqp', '--start-timeout-ms', '0']);
+  assert.equal(bad.status, 2);
+  assert.match(bad.stderr, /--start-timeout-ms must be/);
+  // A program that never prints the line: the driver gives up after the limit.
+  const slow = drive([
+    '--command', process.execPath, '--arg', '-e', '--arg', 'setTimeout(() => {}, 5000)',
+    '--suite', 'rqp', '--start-timeout-ms', '200',
+  ]);
+  assert.equal(slow.status, 2);
+  assert.match(slow.stderr, /in 200 ms/);
+});

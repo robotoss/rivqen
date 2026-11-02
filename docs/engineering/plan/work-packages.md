@@ -13,7 +13,7 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | [WP-00](#wp-00) | Documentation and governance | P0 | Integrator | — | M | **Done** |
 | [WP-01](#wp-01) | Upstream evidence | P0–P1 | Source archaeologist | WP-00 | L | **P0 part done**; client part (traces, Q-02, D-20…D-27) before P3, not in G1 (H-110) |
 | [WP-02](#wp-02) | Golden fixtures and conformance runner | P1 | Protocol designer | WP-01 | L | **Done (merged 2026-10-31, #5)** ([S1](/engineering/plan/sprints/WP-02-S1), [S2](/engineering/plan/sprints/WP-02-S2) closed) |
-| [WP-03](#wp-03) | Rust reference server (oracle) | P1 | Backend engineer | WP-02 | M | **In progress** ([S1](/engineering/plan/sprints/WP-03-S1)) |
+| [WP-03](#wp-03) | Rust reference server (oracle) | P1 | Backend engineer | WP-02 | M | **In progress** ([S1](/engineering/plan/sprints/WP-03-S1) closed: G1 conditions met; S2: image, site mode) |
 | [WP-04](#wp-04) | Platform feasibility spikes | P2 | Android + iOS engineers | WP-01 | L | Planned |
 | [WP-05](#wp-05) | Core workspace, data model, errors, testkit | P3 | Rust core engineer | WP-02 | M | Planned |
 | [WP-06](#wp-06) | Template engine | P3 | Rust core engineer | WP-05 | M | Planned |
@@ -97,7 +97,7 @@ flowchart TD
 | Goal | An oracle server that passes all fixtures and serves the conformance lab. |
 | Deliverables | `server/rust-reference` binary (own HTTP/1.1 reader on `std`, H-113; conformance mode and a static site mode, H-114) and container image (`scratch`, static musl binary, pinned by digest, H-115). |
 | Acceptance | 100 % of legacy fixtures pass; all divergence profiles selectable by configuration; for G1 also all RQP `P` cases and the malformed suite, by URL through `server/conformance`. |
-| Status | **In progress.** [S1](/engineering/plan/sprints/WP-03-S1): both suites over HTTP (gate G1); S2: image and site mode. |
+| Status | **In progress.** [S1](/engineering/plan/sprints/WP-03-S1) closed (2026-11-02): the reference server passes RQP 112/112, the four legacy profiles and the malformed suite by URL (gate G1 conditions met; the decision is the human's). S2: image (H-115), site mode (H-114), the S1 review findings (DL-094). |
 
 ### WP-04 — Platform feasibility spikes {#wp-04}
 

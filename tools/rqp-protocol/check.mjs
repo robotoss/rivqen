@@ -40,8 +40,9 @@
 // ("Comparison of F") and section 5; README.md of the fixtures; and RQP-08,
 // RQP-09 and DL-063 for Vary (compared as a set of field names, ASCII
 // case-insensitive): no Rq-* member in any outcome except Rq-Nonce on a delta
-// (a SHOULD there), no Accept on F and on a 304, and every member of
-// expected.vary.required present.
+// (a SHOULD there), no Accept on F and on a 304 unless the application set it
+// (expected.vary.required lists it; negotiation section 4, open input 15), and
+// every member of expected.vary.required present.
 // Exit codes: 0 every fixture passes, 1 a fixture fails, 2 a usage error.
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -140,7 +141,7 @@ export function compareServer(expected, page, response) {
   const fullLike = kind === 'full' || expected.status === 304 || (kind === 'none' && expected.status === 200);
   for (const member of members) {
     if (member.startsWith('rq-') && !want.should.includes(member)) fail(`header vary: lists ${member} (RQP-08)`);
-    else if (fullLike && member === 'accept') fail(`header vary: lists ${member} (RQP-08)`);
+    else if (fullLike && member === 'accept' && !want.required.includes('accept')) fail(`header vary: lists ${member} (RQP-08)`);
   }
   for (const member of want.required) if (!members.includes(member)) fail(`header vary: does not list ${member}`);
   const length = combined(headers, 'content-length');

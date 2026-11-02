@@ -98,7 +98,7 @@ test('If-None-Match: empty list elements are allowed, also first and last (RFC 9
   assert.deepEqual(tags(' , ,"a" ,, \t,"b",'), ['a', 'b']);
   assert.equal(parseIfNoneMatch(','), null);
   assert.equal(parseIfNoneMatch(''), null);
-  assert.equal(deltaBase(lines('if-none-match', `, "${R1}",`)), R1);
+  assert.equal(deltaBase(lines('if-none-match', `, "${R1}",`)), null); // open input 10: an empty element gives no base
   assert.equal(noneMatchFails(lines('if-none-match', `,,"${R1}"`), `"${R1}"`), true);
 });
 
@@ -109,9 +109,19 @@ test('Accept lists the delta type only as itself and with a weight above 0', () 
   assert.equal(accept('application/vnd.rivqen.delta+json;q=0'), false);
   assert.equal(accept('application/vnd.rivqen.delta+json;q=0.000'), false);
   assert.equal(accept('application/vnd.rivqen.delta+json;q=2'), false);
-  assert.equal(accept('application/vnd.rivqen.delta+json;q=0;q=1'), true); // the last q wins
-  assert.equal(accept('application/vnd.rivqen.delta+json;q=1;q=0'), false);
+  assert.equal(accept('application/vnd.rivqen.delta+json;q=0;q=1'), false); // open input 9: two q parameters accept nothing
+  assert.equal(accept('application/vnd.rivqen.delta+json;q=1;Q=1'), false);
   assert.equal(accept('application/vnd.rivqen.delta+json;q=1;q=2'), false);
+  assert.equal(accept('application/vnd.rivqen.delta+json;Q=0.5'), true);
+  assert.equal(accept('application/vnd.rivqen.delta+json;q=0, application/vnd.rivqen.delta+json'), true); // one accepting range is enough
+  assert.equal(accept('application/vnd.rivqen.delta+json;q="1"'), false);
+  assert.equal(accept('application/vnd.rivqen.delta+json;q=1.0001'), false);
+  assert.equal(accept('application/vnd.rivqen.delta+json;level'), false); // a parameter without "="
+  assert.equal(accept('application/vnd.rivqen.delta+json;q = 1'), false);
+  assert.equal(accept('application/vnd.rivqen.delta+json;a="b'), false);
+  assert.equal(accept('application/vnd.rivqen.delta+json;a="b\\"c;d";q=1'), true);
+  assert.equal(accept('application/vnd.rivqen.delta+json ;;level=1;'), true);
+  assert.equal(accept(', ,application/vnd.rivqen.delta+json,'), true);
   for (const no of ['*/*', 'application/*', 'text/html', 'application/vnd.rivqen.delta+json2', '']) assert.equal(accept(no), false, no);
   assert.equal(acceptsDelta([]), false);
 });

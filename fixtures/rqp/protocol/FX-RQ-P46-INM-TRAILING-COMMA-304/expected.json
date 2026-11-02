@@ -1,0 +1,25 @@
+{
+  "id": "FX-RQ-P46-INM-TRAILING-COMMA-304",
+  "request": {
+    "method": "GET",
+    "target": "https://shop.example.com/catalog",
+    "headers": [
+      ["rq-version","1"],
+      ["rq-capabilities","(block-patch)"],
+      ["accept","text/html"],
+      ["if-none-match","\"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\","]
+    ]
+  },
+  "status": 304,
+  "headers_required": {
+    "cache-control": "no-cache",
+    "etag": "\"r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8\""
+  },
+  "headers_forbidden": ["last-modified","rq-revision","rq-template-revision"],
+  "headers_optional": {
+    "rq-version": "1"
+  },
+  "body": {
+    "kind": "none"
+  }
+}

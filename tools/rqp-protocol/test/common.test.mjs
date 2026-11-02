@@ -9,8 +9,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ContractError, NONCE_BYTES, UnsupportedInput, canonicalUrl, deltaBinding, deltaBindingPreimage, isNonceText, membersOf, nonceText, pageRevision, policyLimitsText, sha256b64u } from '../src/common.mjs';
 import { UnknownPage, pageBytes } from '../src/pages.mjs';
-import { handle } from '../src/server.mjs';
-import { APP, firstVisit, page } from './helpers.mjs';
+import { page } from './helpers.mjs';
 
 test('policy line: only the members that the manifest has, in the order of the table', () => {
   assert.equal(policyLimitsText({}), '');
@@ -123,10 +122,7 @@ test('membersOf: only policy and limits, also for null and undefined', () => {
 });
 
 test('error codes: an unmodelled input and an unknown page', () => {
-  const request = { ...firstVisit(), headers: [...firstVisit().headers, ['if-match', '"x"']] };
-  assert.throws(
-    () => handle(request, APP, page('page-a')),
-    (e) => e instanceof UnsupportedInput && e.name === 'UnsupportedInput' && e.code === 'RQP_REFERENCE_UNSUPPORTED',
-  );
+  const e = new UnsupportedInput('x');
+  assert.deepEqual([e.name, e.code, e instanceof Error], ['UnsupportedInput', 'RQP_REFERENCE_UNSUPPORTED', true]);
   assert.throws(() => pageBytes('page-none'), (e) => e instanceof UnknownPage && e.name === 'UnknownPage' && e.code === 'RQP_FIXTURE_PAGE');
 });

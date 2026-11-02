@@ -219,8 +219,11 @@ class Parser {
     const text = this.s.slice(this.i + 1, end);
     this.i = end + 1;
     if (!BASE64.test(text)) this.fail('bad base64');
-    // RFC 9651 4.2.7: padding may be missing and pad bits may be non-zero.
-    if (text.replace(/=+$/, '').length % 4 === 1) this.fail('bad base64 length');
+    // RFC 9651 4.2.7: pad bits may be non-zero. The padding is absent or complete (RFC 4648 section 4;
+    // negotiation section 4, open input 7): "AA=" fails. BASE64 allows at most two "=" at the end.
+    const data = text.replace(/=+$/, '');
+    if (data.length % 4 === 1) this.fail('bad base64 length');
+    if (data.length !== text.length && text.length % 4 !== 0) this.fail('incomplete base64 padding');
     return Buffer.from(text, 'base64');
   }
 

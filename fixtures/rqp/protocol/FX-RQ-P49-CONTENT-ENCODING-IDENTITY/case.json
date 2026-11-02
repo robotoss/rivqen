@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-P49-CONTENT-ENCODING-IDENTITY",
+  "description": "A with Content-Encoding: Identity has no content coding (ASCII case-insensitive): F, and the field of A stays (open inputs 5 and 17)",
+  "rules": ["RQP-20"],
+  "page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"],
+      ["content-encoding", "Identity"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

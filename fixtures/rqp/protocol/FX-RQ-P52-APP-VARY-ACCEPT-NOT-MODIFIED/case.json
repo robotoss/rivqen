@@ -1,0 +1,24 @@
+{
+  "id": "FX-RQ-P52-APP-VARY-ACCEPT-NOT-MODIFIED",
+  "description": "The application sends Vary: Accept; the 304 keeps it (open input 15)",
+  "rules": ["RQP-03", "RQP-08"],
+  "page": "page-a",
+  "client_page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"],
+      ["vary", "Accept"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"],
+      ["if-none-match", "{{r1:page-a}}"]
+    ]
+  }
+}

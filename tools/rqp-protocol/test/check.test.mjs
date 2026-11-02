@@ -158,6 +158,23 @@ test('DL-063 (L2): the Vary members of A that are not Rq-* must stay; the compar
   assert.deepEqual(compareServer(expected, p, withHeaders(noVary, (h) => [...h, ['vary', 'Accept-Encoding, Rq-Nonce']])), ['header vary: lists rq-nonce (RQP-08)']);
 });
 
+test('open input 15: a Vary member that the application set (Accept) is allowed on F and on a 304; an Accept that the server adds still fails', () => {
+  for (const name of ['FX-RQ-P52-APP-VARY-ACCEPT-FULL', 'FX-RQ-P52-APP-VARY-ACCEPT-NOT-MODIFIED']) {
+    const { expected, reference, page: p } = load(name);
+    assert.deepEqual(expected.vary, { required: ['accept'], should: [] }, name);
+    assert.deepEqual(compareServer(expected, p, reference), [], name);
+    // The member of the application is required: a server that drops it fails.
+    const dropped = withHeaders(reference, (h) => h.filter(([n]) => n !== 'vary'));
+    assert.deepEqual(compareServer(expected, p, dropped), ['header vary: does not list accept'], name);
+  }
+  // A case whose application has no Vary: an Accept that the server adds fails, as before.
+  for (const name of ['FX-RQ-P01-FIRST-VISIT', 'FX-RQ-P43-APP-VARY-NOT-MODIFIED']) {
+    const { expected, reference, page: p } = load(name);
+    const added = withHeaders(reference, (h) => [...h, ['vary', 'Accept']]);
+    assert.deepEqual(compareServer(expected, p, added), ['header vary: lists accept (RQP-08)'], name);
+  }
+});
+
 test('DL-063 (L1): D without X-Content-Type-Options: nosniff fails (MUST); D without Vary: Rq-Nonce fails a SHOULD only', () => {
   const { expected, reference, page: p } = load('FX-RQ-P43-APP-VARY-DELTA');
   assert.deepEqual(expected.vary, { required: ['accept-encoding'], should: ['rq-nonce'] });

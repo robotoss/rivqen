@@ -1,0 +1,23 @@
+{
+  "id": "FX-RQ-P46-INM-W-SPACE",
+  "description": "If-None-Match with a space between W/ and the quoted tag is another syntax: the condition of step 4 is true, so no 304; the answer is F (open inputs 3 and 10)",
+  "rules": ["RQP-16"],
+  "page": "page-a",
+  "client_page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"],
+      ["if-none-match", "W/ {{r1:page-a}}"]
+    ]
+  }
+}

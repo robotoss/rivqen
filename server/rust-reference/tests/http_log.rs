@@ -106,18 +106,20 @@ fn log_limiter_keeps_at_most_64_kinds() {
     })
     .collect();
     assert!(kinds.len() > MAX_LOG_KINDS);
-    // Each kind at its own time: the first 64 fill the table.
-    for (n, kind) in kinds.iter().enumerate() {
+    // Each kind at its own time: the first 64 fill the table, the 65th replaces
+    // the oldest (kinds[0]).
+    for (n, kind) in kinds.iter().take(MAX_LOG_KINDS + 1).enumerate() {
         let at = t0 + ms(u64::try_from(n).unwrap());
         assert!(limiter.line(*kind, at, format_args!("x")).is_some());
     }
-    // The 65th kind replaced the oldest (kinds[0]): kinds[0] is new again and
-    // is written; kinds[1..] still in the table are suppressed.
+    // Inside the window: kinds[0] is no longer known, so it is written again;
+    // kinds[1] and the 65th kind are known and suppressed.
     let late = t0 + ms(100);
-    assert!(limiter.line(kinds[0], late, format_args!("x")).is_some());
+    assert!(limiter.line(kinds[1], late, format_args!("x")).is_none());
     assert!(
         limiter
-            .line(kinds[MAX_LOG_KINDS - 1], late, format_args!("x"))
+            .line(kinds[MAX_LOG_KINDS], late, format_args!("x"))
             .is_none()
     );
+    assert!(limiter.line(kinds[0], late, format_args!("x")).is_some());
 }

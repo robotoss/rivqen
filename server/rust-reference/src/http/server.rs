@@ -25,9 +25,10 @@
 //! RFC 9110 §9 or `PATCH`, else `-`), the path that the handler allows
 //! ([`LogPath`], else `-`), the status, the duration and a fixed note. Never a
 //! field value, a body or a query string. Lines about the connections (accept
-//! failure, I/O error, idle connection, panic) go through a [`LogLimiter`]: at
-//! most one line of a kind per [`LOG_WINDOW`], with the count of the suppressed
-//! lines (ERR-09).
+//! failure, I/O error, idle connection, panic) and the request lines of `4xx`
+//! answers (one kind per status; security review S2 L-6) go through a
+//! [`LogLimiter`]: at most one line of a kind per [`LOG_WINDOW`], with the count
+//! of the suppressed lines (ERR-09). Every other request line is written.
 
 use std::fmt;
 use std::io::{self, BufReader, Read, Write};
@@ -141,6 +142,9 @@ pub enum LogEvent {
     Panicked,
     /// A connection has no local address.
     NoLocalAddress,
+    /// The request line of an answer with this `4xx` status (security review S2
+    /// L-6): a flood of refused requests writes one line per second per status.
+    Refused(u16),
 }
 
 /// The kind of a rate-limited log line: the event and, for an I/O error, its
@@ -445,12 +449,23 @@ const UNSEEN: Seen<'static> = Seen {
     path: "-",
 };
 
-fn log_request(seen: &Seen<'_>, status: u16, start: Instant, note: Option<&str>) {
+/// The request line. A `4xx` line goes through `limiter`, one kind per status
+/// (L-6); every other line is written.
+fn log_request(
+    limiter: &LogLimiter,
+    seen: &Seen<'_>,
+    status: u16,
+    start: Instant,
+    note: Option<&str>,
+) {
     let (method, path) = (seen.method, seen.path);
     let ms = start.elapsed().as_millis();
-    match note {
-        Some(note) => log(format_args!("{method} {path} {status} {ms}ms ({note})")),
-        None => log(format_args!("{method} {path} {status} {ms}ms")),
+    let note = note.map(|n| format!(" ({n})")).unwrap_or_default();
+    let line = format_args!("{method} {path} {status} {ms}ms{note}");
+    if (400..500).contains(&status) {
+        limiter.log(LogKind::of(LogEvent::Refused(status)), line);
+    } else {
+        log(line);
     }
 }
 
@@ -508,7 +523,7 @@ fn serve_connection<H: Handler>(
             }
             if let Some(outcome) = read_failure(error) {
                 answer(
-                    stream, &mut input, &UNSEEN, &outcome, false, true, start, timeouts,
+                    stream, &mut input, &UNSEEN, &outcome, false, true, start, timeouts, limiter,
                 );
             }
             return;
@@ -524,7 +539,7 @@ fn serve_connection<H: Handler>(
             Err(error) => {
                 let Some(outcome) = read_failure(error) else {
                     let seen = Seen { method, path: "-" };
-                    log_request(&seen, 0, start, Some("the body read failed"));
+                    log_request(limiter, &seen, 0, start, Some("the body read failed"));
                     return;
                 };
                 (outcome, true)
@@ -544,6 +559,7 @@ fn serve_connection<H: Handler>(
         early,
         start,
         timeouts,
+        limiter,
     );
 }
 
@@ -557,6 +573,7 @@ fn answer(
     early: bool,
     start: Instant,
     timeouts: &Timeouts,
+    limiter: &LogLimiter,
 ) {
     let mut out = DeadlineWriter {
         stream,
@@ -567,7 +584,7 @@ fn answer(
         Ok(()) => outcome.note,
         Err(_) => Some("the answer could not be written"),
     };
-    log_request(seen, outcome.response.status, start, note);
+    log_request(limiter, seen, outcome.response.status, start, note);
     if stream.shutdown(Shutdown::Write).is_err() {
         // The peer closed first: the answer is written or lost; nothing to do.
         return;

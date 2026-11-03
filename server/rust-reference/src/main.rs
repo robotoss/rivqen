@@ -13,17 +13,13 @@ mod cli;
 #[cfg(unix)]
 mod site;
 
-#[cfg(unix)]
 use std::fs::File;
-#[cfg(unix)]
-use std::io::Read;
-use std::io::{self, Write};
+use std::io::{self, Read, Write};
 use std::net::TcpListener;
-#[cfg(unix)]
 use std::path::Path;
 use std::process::ExitCode;
 
-use rivqen_reference::control::{Server, Settings};
+use rivqen_reference::control::{ControlToken, Server, Settings};
 use rivqen_reference::http::handler::Handler;
 use rivqen_reference::http::server::{ServeOptions, Timeouts, log, serve};
 #[cfg(unix)]
@@ -35,6 +31,27 @@ pub const LAB_PEER_WARNING: &str = "rivqen-reference: warning: --lab-peer is on:
 /// The largest `--config` file.
 #[cfg(unix)]
 pub const MAX_CONFIG_BYTES: u64 = 64 * 1024;
+
+/// The largest `--control-token-file` (H-117).
+pub const MAX_TOKEN_FILE_BYTES: u64 = 1024;
+
+/// Read the `--control-token-file`: at most [`MAX_TOKEN_FILE_BYTES`], UTF-8, the
+/// content without surrounding white space (and a byte order mark), matching
+/// the token pattern. The errors are fixed texts: never the content or the path.
+fn read_token(path: &Path) -> Result<ControlToken, &'static str> {
+    let file = File::open(path).map_err(|_| "the --control-token-file cannot be read")?;
+    let mut bytes = Vec::new();
+    file.take(MAX_TOKEN_FILE_BYTES.saturating_add(1))
+        .read_to_end(&mut bytes)
+        .map_err(|_| "the --control-token-file cannot be read")?;
+    if u64::try_from(bytes.len()).map_or(true, |n| n > MAX_TOKEN_FILE_BYTES) {
+        return Err("the --control-token-file is larger than 1 KiB");
+    }
+    let bad = "the --control-token-file does not hold a token of 16 to 256 base64url characters";
+    let text = std::str::from_utf8(&bytes).map_err(|_| bad)?;
+    let trimmed = text.trim_matches(|c: char| c.is_whitespace() || c == '\u{feff}');
+    ControlToken::new(trimmed).ok_or(bad)
+}
 
 fn main() -> ExitCode {
     let mut args = Vec::new();
@@ -78,12 +95,21 @@ fn run(options: &cli::Options) -> ExitCode {
         None => log(format_args!("panic at an unknown location")),
     }));
     match &options.mode {
-        cli::Mode::Conformance { lab_peer } => {
-            let server = Server::new(Settings {
+        cli::Mode::Conformance {
+            lab_peer,
+            token_file,
+        } => {
+            let mut server = Server::new(Settings {
                 conformance: true,
                 lab_peer: *lab_peer,
                 origin: options.origin.clone(),
             });
+            if let Some(file) = token_file {
+                match read_token(Path::new(file)) {
+                    Ok(token) => server = server.with_control_token(token),
+                    Err(text) => return start_error(text),
+                }
+            }
             // The conformance mode runs one worker: the runner sends one case at
             // a time, and the connections are answered in accept order (DL-097).
             let warning = lab_peer.then_some(LAB_PEER_WARNING);

@@ -7,8 +7,9 @@
 //! it; every other request goes to the engine of the stored case
 //! ([`crate::legacy::respond`] or [`crate::rqp::respond`]) with the application
 //! response of the case. The checks run in the order of CONTRACT.md §2: the flag
-//! (`404`), the peer (`403`), `Host` (`403`), the path (`404`), the method
-//! (`405`), `Content-Type` (`415`), the size (`413`), the case (`400`, `422`).
+//! (`404`), the peer (`403`), `Host` (`403`), the control token when one is set
+//! (`403`, H-117), the path (`404`), the method (`405`), `Content-Type` (`415`),
+//! the size (`413`), the case (`400`, `422`). Case requests need no token.
 //!
 //! The functions here do no I/O: [`Server`] is the [`Handler`] of the
 //! conformance mode. The server loop ([`crate::http::server`]) reads the head,
@@ -195,22 +196,96 @@ fn known_path(head: &RequestHead) -> LogPath {
     }
 }
 
-/// The server state: the settings and the stored case behind one lock.
+/// The field of the control token (CONTRACT.md §2; H-117).
+pub const TOKEN_FIELD: &str = "Rivqen-Conformance-Token";
+/// The fewest characters of a control token.
+pub const MIN_TOKEN_CHARS: usize = 16;
+/// The most characters of a control token.
+pub const MAX_TOKEN_CHARS: usize = 256;
+
+/// A control token: `^[A-Za-z0-9_-]{16,256}$` (H-117). Only its SHA-256 digest
+/// is kept, so the token itself is never in memory after [`ControlToken::new`]
+/// and never in a `Debug` output.
+#[derive(Clone)]
+pub struct ControlToken {
+    digest: [u8; 32],
+}
+
+impl std::fmt::Debug for ControlToken {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("ControlToken(<redacted>)")
+    }
+}
+
+/// The SHA-256 digest of `bytes`.
+fn sha256(bytes: &[u8]) -> [u8; 32] {
+    use sha2::{Digest, Sha256};
+    Sha256::digest(bytes).into()
+}
+
+/// Equal digests, in a time that does not depend on where they differ: every
+/// byte is compared, no early exit.
+#[must_use]
+pub fn constant_time_eq(a: &[u8; 32], b: &[u8; 32]) -> bool {
+    let difference = a.iter().zip(b).fold(0u8, |acc, (x, y)| acc | (x ^ y));
+    std::hint::black_box(difference) == 0
+}
+
+/// `^[A-Za-z0-9_-]{16,256}$`.
+#[must_use]
+pub fn is_token_text(text: &str) -> bool {
+    (MIN_TOKEN_CHARS..=MAX_TOKEN_CHARS).contains(&text.len())
+        && text
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+}
+
+impl ControlToken {
+    /// The token of `text`, or `None` when `text` does not match the pattern.
+    #[must_use]
+    pub fn new(text: &str) -> Option<Self> {
+        is_token_text(text).then(|| Self {
+            digest: sha256(text.as_bytes()),
+        })
+    }
+
+    /// `value` is the token: the digests are compared in constant time, so the
+    /// time depends neither on the first different byte nor on the length.
+    #[must_use]
+    pub fn matches(&self, value: &str) -> bool {
+        constant_time_eq(&self.digest, &sha256(value.as_bytes()))
+    }
+}
+
+/// The server state: the settings, the control token and the stored case
+/// behind one lock.
 #[derive(Debug)]
 pub struct Server {
     settings: Settings,
+    /// With a token, every control request needs it (H-117).
+    token: Option<ControlToken>,
     /// Replaced in one step under the lock; a case request clones the [`Arc`]
     /// and runs the engine without the lock.
     case: Mutex<Option<Arc<Case>>>,
 }
 
 impl Server {
-    /// A server without a case.
+    /// A server without a case and without a control token.
     #[must_use]
     pub fn new(settings: Settings) -> Self {
         Self {
             settings,
+            token: None,
             case: Mutex::new(None),
+        }
+    }
+
+    /// The same server; every control request needs `token` (H-117).
+    #[must_use]
+    pub fn with_control_token(self, token: ControlToken) -> Self {
+        Self {
+            token: Some(token),
+            ..self
         }
     }
 
@@ -265,6 +340,11 @@ impl Server {
                 "FORBIDDEN",
                 "the Host is not a loopback name with the port",
             );
+        }
+        if let Some(token) = &self.token {
+            if !single(head, TOKEN_FIELD).is_some_and(|value| token.matches(value)) {
+                return refuse(403, "FORBIDDEN", "the control token is missing or wrong");
+            }
         }
         let (route, method) = match path {
             INFO_PATH => (Route::Info, "GET"),
@@ -887,6 +967,161 @@ mod tests {
             Handler::route(&server, &local(), &control("GET", INFO_PATH, &[], 0)),
             Next::ReadBody(Route::Info)
         );
+    }
+
+    const TOKEN: &str = "abcDEF0123456789_-xyz";
+
+    fn with_token() -> Server {
+        Server::new(settings()).with_control_token(ControlToken::new(TOKEN).unwrap())
+    }
+
+    fn refused(next: &Next) -> Option<(u16, &'static str)> {
+        match next {
+            Next::Respond(o) => Some((o.response.status, o.note.unwrap_or_default())),
+            Next::ReadBody(_) => None,
+        }
+    }
+
+    const NO_TOKEN: Option<(u16, &str)> = Some((403, "the control token is missing or wrong"));
+
+    #[test]
+    fn control_token_missing_two_lines_or_wrong_is_403() {
+        let server = with_token();
+        let wrong = format!("{TOKEN}x");
+        let short = &TOKEN[..TOKEN.len() - 1];
+        let upper = TOKEN.to_uppercase();
+        for extra in [
+            vec![],
+            vec![(TOKEN_FIELD, TOKEN), (TOKEN_FIELD, TOKEN)],
+            vec![(TOKEN_FIELD, wrong.as_str())],
+            vec![(TOKEN_FIELD, short)],
+            vec![(TOKEN_FIELD, upper.as_str())],
+            vec![(TOKEN_FIELD, "")],
+            vec![("Rivqen-Conformance-Tokens", TOKEN)],
+        ] {
+            for path in [INFO_PATH, CASE_PATH] {
+                let n = server.route(&local(), &control("GET", path, &extra, 0));
+                assert_eq!(refused(&n), NO_TOKEN, "{extra:?} {path}");
+            }
+            let o = server.handle(&local(), &control("GET", INFO_PATH, &extra, 0), b"");
+            assert_eq!(json_error(&o), "FORBIDDEN");
+            assert_eq!(o.log_path, LogPath::Fixed(INFO_PATH));
+        }
+    }
+
+    #[test]
+    fn control_token_right_passes_to_the_next_checks() {
+        let server = with_token();
+        let token = [(TOKEN_FIELD, TOKEN)];
+        assert_eq!(
+            server.route(&local(), &control("GET", INFO_PATH, &token, 0)),
+            Next::ReadBody(Route::Info)
+        );
+        // The field name is case-insensitive.
+        let lower = [("rivqen-conformance-token", TOKEN)];
+        assert_eq!(
+            server.route(&local(), &control("GET", INFO_PATH, &lower, 0)),
+            Next::ReadBody(Route::Info)
+        );
+        // The checks after the token: path 404, method 405, Content-Type 415.
+        let n = server.route(
+            &local(),
+            &control("GET", "/__rivqen/conformance/x", &token, 0),
+        );
+        assert_eq!(refused(&n), Some((404, "an unknown control path")));
+        let n = server.route(&local(), &control("GET", CASE_PATH, &token, 0));
+        assert_eq!(refused(&n), Some((405, "a wrong method")));
+        let n = server.route(&local(), &control("POST", CASE_PATH, &token, 2));
+        assert_eq!(
+            refused(&n),
+            Some((415, "the Content-Type is not application/json"))
+        );
+        let body = legacy_case("legacy-java");
+        let mut h = post_case(&body);
+        h.fields.push(Field::new(TOKEN_FIELD, TOKEN));
+        assert_eq!(
+            server.handle(&local(), &h, body.as_bytes()).response.status,
+            204
+        );
+    }
+
+    #[test]
+    fn control_token_order_of_the_checks() {
+        let server = with_token();
+        // The token comes after the peer and the Host, and before the path.
+        let remote = Conn {
+            peer: "192.0.2.7".parse().unwrap(),
+            local_port: PORT,
+        };
+        let n = server.route(&remote, &control("GET", INFO_PATH, &[], 0));
+        assert_eq!(
+            refused(&n),
+            Some((403, "the peer is not an allowed address"))
+        );
+        let n = server.route(&local(), &head("GET", INFO_PATH, &[("Host", "evil:1")], 0));
+        assert_eq!(
+            refused(&n),
+            Some((403, "the Host is not a loopback name with the port"))
+        );
+        let n = server.route(&local(), &control("GET", "/__rivqen/conformance/x", &[], 0));
+        assert_eq!(refused(&n), NO_TOKEN);
+        // A case request needs no token.
+        let catalog = head("GET", "/catalog", &[("Host", "shop.example.com")], 0);
+        assert_eq!(
+            server.route(&local(), &catalog),
+            Next::ReadBody(Route::CaseRequest)
+        );
+        // Without the flag every path is 404, before the token.
+        let off = Server::new(Settings {
+            conformance: false,
+            ..settings()
+        })
+        .with_control_token(ControlToken::new(TOKEN).unwrap());
+        let n = off.route(&local(), &control("GET", INFO_PATH, &[], 0));
+        assert_eq!(refused(&n), Some((404, "the conformance mode is off")));
+    }
+
+    #[test]
+    fn control_token_pattern_digest_and_debug() {
+        for (text, ok) in [
+            ("a".repeat(15), false),
+            ("a".repeat(16), true),
+            ("a".repeat(256), true),
+            ("a".repeat(257), false),
+            ("aaaaaaaaaaaaaaa=".to_owned(), false),
+            ("aaaaaaaaaaaaaaa.".to_owned(), false),
+            ("aaaaaaaaaaaaaaa ".to_owned(), false),
+            ("aaaaaaaaaaaaaa\u{e9}".to_owned(), false),
+            ("AZaz09_-AZaz09_-".to_owned(), true),
+        ] {
+            assert_eq!(is_token_text(&text), ok, "{text}");
+            assert_eq!(ControlToken::new(&text).is_some(), ok, "{text}");
+        }
+        let t = ControlToken::new(TOKEN).unwrap();
+        assert!(t.matches(TOKEN));
+        assert!(!t.matches(""));
+        assert!(!t.matches(&format!("{TOKEN} ")));
+        // Debug never shows the token, also inside the server.
+        assert_eq!(format!("{t:?}"), "ControlToken(<redacted>)");
+        let s = format!("{:?}", with_token());
+        assert!(!s.contains(TOKEN), "{s}");
+        assert!(s.contains("ControlToken(<redacted>)"), "{s}");
+    }
+
+    #[test]
+    fn control_token_constant_time_helper() {
+        let a = [7u8; 32];
+        assert!(constant_time_eq(&a, &a));
+        // A difference at any position, also the first and the last.
+        for i in [0, 1, 15, 30, 31] {
+            let mut b = a;
+            b[i] ^= 0x80;
+            assert!(!constant_time_eq(&a, &b), "{i}");
+            b[i] ^= 0x81;
+            assert!(!constant_time_eq(&a, &b), "{i}");
+        }
+        assert!(!constant_time_eq(&[0; 32], &[0xff; 32]));
+        assert_eq!(sha256(b"abc")[..4], [0xba, 0x78, 0x16, 0xbf]);
     }
 
     #[test]

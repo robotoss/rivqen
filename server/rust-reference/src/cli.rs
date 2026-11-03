@@ -5,7 +5,7 @@
 //! DL-096).
 //!
 //! ```text
-//! rivqen-reference --conformance [--listen <ip>] [--port <n>] [--origin <url>] [--lab-peer]
+//! rivqen-reference --conformance [--listen <ip>] [--port <n>] [--origin <url>] [--lab-peer --control-token-file <file>]
 //! rivqen-reference --site <dir> --protocol rqp|legacy [--profile <name>] [--config <file>]
 //!                  --origin <url> [--listen <ip>] [--port <n>] [--workers <n>]
 //! ```
@@ -20,7 +20,7 @@ use rivqen_reference::control::DEFAULT_ORIGIN;
 use rivqen_reference::model::Profile;
 
 /// The usage text.
-pub const USAGE: &str = "usage: rivqen-reference --conformance [--listen <ip>] [--port <n>] [--origin <url>] [--lab-peer]
+pub const USAGE: &str = "usage: rivqen-reference --conformance [--listen <ip>] [--port <n>] [--origin <url>] [--lab-peer --control-token-file <file>]
        rivqen-reference --site <dir> --protocol rqp|legacy [--profile <name>] [--config <file>]
                         --origin <url> [--listen <ip>] [--port <n>] [--workers <n>]
   --conformance  serve the conformance mode of server/conformance/CONTRACT.md
@@ -34,7 +34,10 @@ pub const USAGE: &str = "usage: rivqen-reference --conformance [--listen <ip>] [
   --origin <url> origin of the request URL that the engines see; required with --site
                  (conformance default https://shop.example.com)
   --lab-peer     accept control requests also from private peers (10/8, 172.16/12, 192.168/16,
-                 fc00::/7, fe80::/10): a container with its port published on 127.0.0.1 only
+                 fc00::/7, fe80::/10): a container with its port published on 127.0.0.1 only;
+                 needs --control-token-file
+  --control-token-file <file>  conformance: every control request needs this token (16 to 256
+                 base64url characters) in Rivqen-Conformance-Token; required with --lab-peer
 The first stdout line is `listening <port>`.";
 
 /// The default port.
@@ -65,6 +68,8 @@ pub enum Mode {
     Conformance {
         /// `--lab-peer`.
         lab_peer: bool,
+        /// `--control-token-file`, as given.
+        token_file: Option<String>,
     },
     /// `--site <dir>`.
     Site {
@@ -112,6 +117,7 @@ struct Raw {
     profile: Option<Profile>,
     config: Option<String>,
     workers: Option<usize>,
+    token_file: Option<String>,
 }
 
 /// Read the arguments (without the program name).
@@ -190,6 +196,13 @@ pub fn parse<S: AsRef<str>>(args: &[S]) -> Result<Options, CliError> {
                     parse_workers(v).ok_or(usage("--workers needs a number 1 to 64"))?,
                 )?;
             }
+            "--control-token-file" => {
+                let v = value("--control-token-file needs a value")?;
+                if v.is_empty() {
+                    return Err(usage("--control-token-file needs a file"));
+                }
+                set(&mut raw.token_file, v.to_owned())?;
+            }
             _ => return Err(usage("unknown option")),
         }
     }
@@ -213,6 +226,9 @@ fn site_mode(raw: &mut Raw, dir: String) -> Result<Mode, CliError> {
     }
     if raw.conformance || raw.lab_peer {
         return Err(usage("--site excludes --conformance and --lab-peer"));
+    }
+    if raw.token_file.is_some() {
+        return Err(usage("--control-token-file is for --conformance only"));
     }
     let protocol = match (raw.protocol, raw.profile, raw.config.take()) {
         (None, _, _) => return Err(usage("--site needs --protocol rqp or legacy")),
@@ -256,8 +272,13 @@ fn conformance_mode(raw: &Raw) -> Result<Mode, CliError> {
             "--conformance with a listen address that is not loopback needs --lab-peer (DL-086)",
         ));
     }
+    // A peer of a private network must also know the per-run token (H-117).
+    if raw.lab_peer && raw.token_file.is_none() {
+        return Err(usage("--lab-peer needs --control-token-file <file>"));
+    }
     Ok(Mode::Conformance {
         lab_peer: raw.lab_peer,
+        token_file: raw.token_file.clone(),
     })
 }
 
@@ -334,8 +355,11 @@ mod tests {
         }
     }
 
-    fn conformance(lab_peer: bool) -> Mode {
-        Mode::Conformance { lab_peer }
+    fn conformance(lab_peer: bool, token_file: Option<&str>) -> Mode {
+        Mode::Conformance {
+            lab_peer,
+            token_file: token_file.map(str::to_owned),
+        }
     }
 
     #[test]
@@ -346,7 +370,7 @@ mod tests {
                 listen: IpAddr::V4(Ipv4Addr::LOCALHOST),
                 port: 8080,
                 origin: "https://shop.example.com".to_owned(),
-                mode: conformance(false),
+                mode: conformance(false, None),
             })
         );
     }
@@ -361,13 +385,15 @@ mod tests {
             "--origin",
             "http://127.0.0.1:9000//",
             "--lab-peer",
+            "--control-token-file",
+            "t.txt",
             "--conformance",
         ])
         .unwrap();
         assert_eq!(o.port, 0);
         assert_eq!(o.listen, "::1".parse::<IpAddr>().unwrap());
         assert_eq!(o.origin, "http://127.0.0.1:9000");
-        assert_eq!(o.mode, conformance(true));
+        assert_eq!(o.mode, conformance(true, Some("t.txt")));
         assert_eq!(
             parse(&["--conformance", "--port", "65535"]).unwrap().port,
             65535
@@ -404,7 +430,17 @@ mod tests {
                 usage_of(&["--conformance", "--listen", ip]),
                 "--conformance with a listen address that is not loopback needs --lab-peer (DL-086)"
             );
-            assert!(parse(&["--conformance", "--listen", ip, "--lab-peer"]).is_ok());
+            assert!(
+                parse(&[
+                    "--conformance",
+                    "--listen",
+                    ip,
+                    "--lab-peer",
+                    "--control-token-file",
+                    "t"
+                ])
+                .is_ok()
+            );
         }
         assert!(parse(&["--conformance", "--listen", "127.0.0.1"]).is_ok());
         assert!(parse(&["--conformance", "--listen", "::1"]).is_ok());
@@ -694,6 +730,56 @@ mod tests {
             assert_eq!(usage_of(&args), UNIX_ONLY);
         }
         assert_eq!(UNIX_ONLY, "the site mode needs a Unix file system");
+    }
+
+    #[test]
+    fn control_token_cli_rules() {
+        // Required with --lab-peer.
+        for args in [
+            &["--conformance", "--lab-peer"][..],
+            &["--conformance", "--listen", "0.0.0.0", "--lab-peer"],
+        ] {
+            assert_eq!(
+                usage_of(args),
+                "--lab-peer needs --control-token-file <file>",
+                "{args:?}"
+            );
+        }
+        // Allowed without --lab-peer too.
+        let o = parse(&["--conformance", "--control-token-file", "/run/t"]).unwrap();
+        assert_eq!(o.mode, conformance(false, Some("/run/t")));
+        // Not with --site.
+        assert_eq!(
+            usage_of(&[
+                "--site",
+                "d",
+                "--protocol",
+                "rqp",
+                "--origin",
+                "http://a",
+                "--control-token-file",
+                "t"
+            ]),
+            "--control-token-file is for --conformance only"
+        );
+        assert_eq!(
+            usage_of(&["--conformance", "--control-token-file"]),
+            "--control-token-file needs a value"
+        );
+        assert_eq!(
+            usage_of(&["--conformance", "--control-token-file", ""]),
+            "--control-token-file needs a file"
+        );
+        assert_eq!(
+            usage_of(&[
+                "--conformance",
+                "--control-token-file",
+                "a",
+                "--control-token-file",
+                "a"
+            ]),
+            "an option is repeated"
+        );
     }
 
     #[test]

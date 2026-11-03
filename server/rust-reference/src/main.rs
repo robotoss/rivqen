@@ -10,23 +10,30 @@
 //! [`LAB_PEER_WARNING`].
 
 mod cli;
+#[cfg(unix)]
 mod site;
 
+#[cfg(unix)]
 use std::fs::File;
-use std::io::{self, Read, Write};
+#[cfg(unix)]
+use std::io::Read;
+use std::io::{self, Write};
 use std::net::TcpListener;
+#[cfg(unix)]
 use std::path::Path;
 use std::process::ExitCode;
 
 use rivqen_reference::control::{Server, Settings};
 use rivqen_reference::http::handler::Handler;
 use rivqen_reference::http::server::{ServeOptions, Timeouts, log, serve};
+#[cfg(unix)]
 use rivqen_reference::rqp::config::RqpConfig;
 
 /// The warning line of `--lab-peer` (DL-097): one line on stderr at start.
 pub const LAB_PEER_WARNING: &str = "rivqen-reference: warning: --lab-peer is on: control requests are accepted from loopback and private peers (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7, fe80::/10); publish the port on 127.0.0.1 only";
 
 /// The largest `--config` file.
+#[cfg(unix)]
 pub const MAX_CONFIG_BYTES: u64 = 64 * 1024;
 
 fn main() -> ExitCode {
@@ -86,32 +93,48 @@ fn run(options: &cli::Options) -> ExitCode {
             dir,
             protocol,
             workers,
-        } => {
-            let engine = match protocol {
-                cli::Protocol::Legacy(profile) => site::Engine::Legacy(*profile),
-                cli::Protocol::Rqp { config: None } => site::Engine::Rqp(RqpConfig::default()),
-                cli::Protocol::Rqp { config: Some(file) } => match read_config(Path::new(file)) {
-                    Ok(config) => site::Engine::Rqp(config),
-                    Err(text) => return start_error(text),
-                },
-            };
-            let site = match site::Site::new(Path::new(dir), engine, options.origin.clone()) {
-                Ok(site) => site,
-                Err(e) => {
-                    log(format_args!(
-                        "rivqen-reference: the --site directory cannot be used: {:?}",
-                        e.kind()
-                    ));
-                    return ExitCode::FAILURE;
-                }
-            };
-            listen_and_serve(options, &site, *workers, None)
-        }
+        } => run_site(options, dir, protocol, *workers),
     }
+}
+
+/// The site mode (Unix only, I-2).
+#[cfg(unix)]
+fn run_site(
+    options: &cli::Options,
+    dir: &str,
+    protocol: &cli::Protocol,
+    workers: usize,
+) -> ExitCode {
+    let engine = match protocol {
+        cli::Protocol::Legacy(profile) => site::Engine::Legacy(*profile),
+        cli::Protocol::Rqp { config: None } => site::Engine::Rqp(RqpConfig::default()),
+        cli::Protocol::Rqp { config: Some(file) } => match read_config(Path::new(file)) {
+            Ok(config) => site::Engine::Rqp(config),
+            Err(text) => return start_error(text),
+        },
+    };
+    let site = match site::Site::new(Path::new(dir), engine, options.origin.clone()) {
+        Ok(site) => site,
+        Err(e) => {
+            log(format_args!(
+                "rivqen-reference: the --site directory cannot be used: {:?}",
+                e.kind()
+            ));
+            return ExitCode::FAILURE;
+        }
+    };
+    listen_and_serve(options, &site, workers, None)
+}
+
+/// The command line refuses `--site` on a target that is not Unix (I-2).
+#[cfg(not(unix))]
+fn run_site(_: &cli::Options, _: &str, _: &cli::Protocol, _: usize) -> ExitCode {
+    usage_error(cli::UNIX_ONLY)
 }
 
 /// Read the `--config` file: a JSON object of at most [`MAX_CONFIG_BYTES`] for
 /// [`RqpConfig::from_json`].
+#[cfg(unix)]
 fn read_config(path: &Path) -> Result<RqpConfig, &'static str> {
     let file = File::open(path).map_err(|_| "the --config file cannot be read")?;
     let mut bytes = Vec::new();

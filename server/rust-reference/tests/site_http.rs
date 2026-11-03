@@ -101,11 +101,12 @@ impl Server {
         stderr
     }
 
+    /// One request; `Host: 127.0.0.1:<port>` unless `fields` has a `Host`.
     fn get(&self, method: &str, target: &str, fields: &[(&str, &str)]) -> Reply {
-        let mut req = format!(
-            "{method} {target} HTTP/1.1\r\nHost: 127.0.0.1:{}\r\n",
-            self.port
-        );
+        let mut req = format!("{method} {target} HTTP/1.1\r\n");
+        if !fields.iter().any(|(n, _)| n.eq_ignore_ascii_case("host")) {
+            req.push_str(&format!("Host: 127.0.0.1:{}\r\n", self.port));
+        }
         for (n, v) in fields {
             req.push_str(&format!("{n}: {v}\r\n"));
         }
@@ -339,27 +340,42 @@ fn site_log_path_only_for_files() {
         "http://a",
     ]);
     assert_eq!(server.get("GET", "/a.html?token=secret-q", &[]).status, 200);
+    assert_eq!(server.get("GET", "/a.html", &[]).status, 200);
     assert_eq!(server.get("GET", "/missing-secret-a.html", &[]).status, 404);
+    // Two more 404 lines inside the window of the first: suppressed (L-6).
     assert_eq!(server.get("GET", "/../secret-b", &[]).status, 404);
     assert_eq!(server.get("GET", "/secret-c.md", &[]).status, 404);
     assert_eq!(server.get("POST", "/a.html", &[]).status, 405);
     assert_eq!(server.get("HEAD", "/a.html", &[]).status, 200);
+    // Another Host: 421 (L-4), the path hidden.
+    let r = server.get("GET", "/a.html", &[("Host", "evil.example")]);
+    assert_eq!(r.status, 421);
+    assert_eq!(r.body, b"Misdirected Request\n");
+    // After the window: the next 404 line says how many were suppressed.
+    thread::sleep(Duration::from_millis(1100));
     assert_eq!(server.get("GET", "/big.html", &[]).status, 404);
     let stderr = server.stop();
     let lines: Vec<&str> = stderr.lines().collect();
     assert_eq!(lines.len(), 7, "{stderr}");
+    // Every 200 line is written.
     assert!(lines[0].starts_with("GET /a.html 200 "), "{stderr}");
-    assert!(lines[1].starts_with("GET - 404 "), "{stderr}");
+    assert!(lines[1].starts_with("GET /a.html 200 "), "{stderr}");
     assert!(lines[2].starts_with("GET - 404 "), "{stderr}");
-    assert!(lines[3].starts_with("GET - 404 "), "{stderr}");
-    assert!(lines[4].starts_with("POST - 405 "), "{stderr}");
-    assert!(lines[5].starts_with("HEAD /a.html 200 "), "{stderr}");
+    assert!(
+        lines[2].ends_with("(the path maps to no file name)")
+            || lines[2].ends_with("(no regular file at the path)"),
+        "{stderr}"
+    );
+    assert!(lines[3].starts_with("POST - 405 "), "{stderr}");
+    assert!(lines[4].starts_with("HEAD /a.html 200 "), "{stderr}");
+    assert!(lines[5].starts_with("GET - 421 "), "{stderr}");
     assert!(lines[6].starts_with("GET /big.html 404 "), "{stderr}");
     assert!(
-        lines[6].ends_with("(the file is larger than its limit)"),
+        lines[6].ends_with("(the file is larger than its limit) (2 similar lines suppressed)"),
         "{stderr}"
     );
     assert!(!stderr.contains("secret"), "{stderr}");
+    assert!(!stderr.contains("evil"), "{stderr}");
     assert!(!stderr.contains("warning"), "{stderr}");
 }
 

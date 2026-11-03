@@ -24,12 +24,15 @@ use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
 
 use rivqen_reference::http::handler::{Conn, Handler, LogPath, Next, Outcome};
 use rivqen_reference::http::reader::{RequestHead, Version};
 use rivqen_reference::model::{Body, Field, Profile};
 use rivqen_reference::rqp::config::RqpConfig;
-use site::{Engine, MAX_FILE_BYTES, MAX_HTML_BYTES, Site, map_path};
+use site::{Engine, MAX_FILE_BYTES, MAX_HTML_BYTES, Site, map_path, open_nonblocking};
 
 /// A directory that is removed at the end of the test.
 struct Temp(PathBuf);
@@ -110,6 +113,14 @@ fn rqp_site(dir: &Path) -> Site {
     .unwrap()
 }
 
+/// A loopback connection on port 8080 (the `Host` of `head` names it).
+fn local() -> Conn {
+    Conn {
+        peer: "127.0.0.1".parse().unwrap(),
+        local_port: 8080,
+    }
+}
+
 fn head(method: &str, target: &str) -> RequestHead {
     RequestHead {
         method: method.to_owned(),
@@ -121,7 +132,7 @@ fn head(method: &str, target: &str) -> RequestHead {
 }
 
 fn get(site: &Site, target: &str) -> Outcome {
-    site.answer(&head("GET", target))
+    site.answer(&local(), &head("GET", target))
 }
 
 fn body(o: &Outcome) -> &[u8] {
@@ -156,10 +167,10 @@ fn site_mapping_item1_methods_get_and_head() {
     let site = rqp_site(&dir);
     let o = get(&site, "/t.txt");
     assert_eq!((o.response.status, body(&o)), (200, &b"txt"[..]));
-    let o = site.answer(&head("HEAD", "/t.txt"));
+    let o = site.answer(&local(), &head("HEAD", "/t.txt"));
     assert_eq!(o.response.status, 200);
     for method in ["POST", "PUT", "DELETE", "OPTIONS", "PATCH", "get", "head"] {
-        let o = site.answer(&head(method, "/t.txt"));
+        let o = site.answer(&local(), &head(method, "/t.txt"));
         assert_eq!(o.response.status, 405, "{method}");
         assert_eq!(field(&o, "allow"), ["GET, HEAD"]);
         assert_eq!(body(&o), b"Method Not Allowed\n");
@@ -444,7 +455,7 @@ fn site_mapping_item7_application_response_and_engine() {
     .unwrap();
     let mut h = head("GET", "/a.html");
     h.fields.push(Field::new("accept-diff", "true"));
-    let o = legacy.answer(&h);
+    let o = legacy.answer(&local(), &h);
     assert_eq!(o.response.status, 200);
     assert_eq!(field(&o, "template-change"), ["true"]);
     assert_eq!(body(&o), b"<p>a</p>");
@@ -466,9 +477,12 @@ fn site_mapping_item8_error_bodies_have_no_input_values() {
     // The site mode has no control endpoint (DL-086): its paths are 404.
     for target in ["/__rivqen/conformance/info", "/__rivqen/conformance/case"] {
         assert_404(&get(&site, target), target);
-        assert_eq!(site.answer(&head("POST", target)).response.status, 405);
+        assert_eq!(
+            site.answer(&local(), &head("POST", target)).response.status,
+            405
+        );
     }
-    let o = site.answer(&head("SECRETMETHOD", "/secret-token-4.html"));
+    let o = site.answer(&local(), &head("SECRETMETHOD", "/secret-token-4.html"));
     assert_eq!(body(&o), b"Method Not Allowed\n");
     assert!(!o.response.fields.iter().any(|f| f.value.contains("SECRET")));
 }
@@ -489,7 +503,126 @@ fn site_mapping_item9_log_path_only_for_a_file_of_the_site() {
         assert_eq!(get(&site, target).log_path, LogPath::Hidden, "{target}");
     }
     assert_eq!(
-        site.answer(&head("POST", "/a.html")).log_path,
+        site.answer(&local(), &head("POST", "/a.html")).log_path,
         LogPath::Hidden
     );
+}
+
+fn with_host(method: &str, target: &str, hosts: &[&str]) -> RequestHead {
+    let mut h = head(method, target);
+    h.fields = hosts.iter().map(|v| Field::new("Host", v)).collect();
+    h
+}
+
+#[test]
+fn site_host_origin_authority_and_loopback_names_are_answered() {
+    let (_t, dir) = layout("h1");
+    let site = rqp_site(&dir);
+    for host in [
+        "shop.example.com",
+        "SHOP.Example.COM",
+        "127.0.0.1:8080",
+        "localhost:8080",
+        "LOCALHOST:8080",
+        "[::1]:8080",
+    ] {
+        let o = site.answer(&local(), &with_host("GET", "/t.txt", &[host]));
+        assert_eq!(o.response.status, 200, "{host}");
+    }
+    // The authority as given, with its port.
+    let site = Site::new(
+        &dir,
+        Engine::Rqp(RqpConfig::default()),
+        "http://127.0.0.1:9000".to_owned(),
+    )
+    .unwrap();
+    for host in ["127.0.0.1:9000", "127.0.0.1:8080"] {
+        let o = site.answer(&local(), &with_host("GET", "/t.txt", &[host]));
+        assert_eq!(o.response.status, 200, "{host}");
+    }
+}
+
+#[test]
+fn site_host_other_hosts_get_421() {
+    let (_t, dir) = layout("h2");
+    let site = rqp_site(&dir);
+    for hosts in [
+        &["evil.example"][..],
+        &["shop.example.com:443"],
+        &["shop.example.com."],
+        &["127.0.0.1:9999"],
+        &["127.0.0.1"],
+        &["localhost"],
+        &[""],
+        &[],
+        &["shop.example.com", "shop.example.com"],
+        &["127.0.0.1:8080", "evil.example"],
+    ] {
+        // Before the method and the path: also a POST and an unmapped path.
+        for (method, target) in [("GET", "/t.txt"), ("POST", "/t.txt"), ("GET", "/../x")] {
+            let o = site.answer(&local(), &with_host(method, target, hosts));
+            assert_eq!(o.response.status, 421, "{hosts:?} {method} {target}");
+            assert_eq!(body(&o), b"Misdirected Request\n");
+            assert_eq!(field(&o, "content-type"), ["text/plain; charset=utf-8"]);
+            assert_eq!(o.log_path, LogPath::Hidden);
+            assert_eq!(
+                o.note,
+                Some("the Host is not the origin or a loopback name with the port")
+            );
+        }
+    }
+    // The loopback names need the local port of the connection.
+    let other_port = Conn {
+        peer: "127.0.0.1".parse().unwrap(),
+        local_port: 9999,
+    };
+    let o = site.answer(
+        &other_port,
+        &with_host("GET", "/t.txt", &["127.0.0.1:8080"]),
+    );
+    assert_eq!(o.response.status, 421);
+    // An origin without an authority answers only a loopback Host.
+    let bare = Site::new(&dir, Engine::Rqp(RqpConfig::default()), String::new()).unwrap();
+    for (host, status) in [
+        ("", 421),
+        ("shop.example.com", 421),
+        ("127.0.0.1:8080", 200),
+    ] {
+        let o = bare.answer(&local(), &with_host("GET", "/t.txt", &[host]));
+        assert_eq!(o.response.status, status, "{host}");
+    }
+}
+
+#[test]
+fn site_mapping_a_fifo_is_refused_and_the_open_does_not_block() {
+    let (_t, dir) = layout("fifo");
+    let fifo = dir.join("pipe.txt");
+    let made = Command::new("mkfifo").arg(&fifo).status().unwrap();
+    assert!(made.success(), "mkfifo");
+    let site = rqp_site(&dir);
+    // The walk refuses it: not a regular file.
+    let o = get(&site, "/pipe.txt");
+    assert_404(&o, "/pipe.txt");
+    assert_eq!(o.note, Some("no regular file at the path"));
+    // The open of the read does not wait for a writer (O_NONBLOCK, L-2), so a
+    // FIFO swapped in after the walk cannot hold a worker; the handle is then
+    // refused as no regular file.
+    let (tx, rx) = mpsc::channel();
+    let path = fifo.clone();
+    thread::spawn(move || {
+        let opened = open_nonblocking(&path).map(|f| f.metadata().unwrap().is_file());
+        tx.send(opened.map_err(|e| e.kind())).ok();
+    });
+    let opened = rx
+        .recv_timeout(Duration::from_secs(5))
+        .expect("the open of a FIFO blocked");
+    assert_eq!(opened, Ok(false));
+    // A regular file reads as without the flag.
+    let mut text = String::new();
+    std::io::Read::read_to_string(
+        &mut open_nonblocking(&dir.join("t.txt")).unwrap(),
+        &mut text,
+    )
+    .unwrap();
+    assert_eq!(text, "txt");
 }

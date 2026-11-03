@@ -21,17 +21,32 @@
 //! 5. A fixed table of extensions ([`media_type`]).
 //! 6. At most [`MAX_HTML_BYTES`] for `.html`, [`MAX_FILE_BYTES`] for the others.
 //!
+//! Before the mapping, the `Host` of the request must be one field line equal
+//! (ASCII case-insensitive) to the authority of `--origin` or to a loopback
+//! name with the local port; else `421` (security review S2 L-4, DL-098).
+//!
 //! The file is read on every request (no cache). The site never reads a request
 //! body: [`Site`] answers from the head ([`Handler::Route`] is [`Infallible`]).
 //!
-//! This module belongs to the binary (`main.rs`), as `cli.rs` does; it uses the
-//! library by its crate name, so a test can include the same file.
+//! Between the walk and the read (security review S2 L-1, L-2; DL-098): the file
+//! is opened with `O_NONBLOCK`, so a FIFO swapped in after the walk cannot block
+//! a worker; the handle must be a regular file with the device and inode of the
+//! walked file; on Linux the path of the handle (`/proc/self/fd/<fd>`) must be
+//! the walked path. Residual race on other Unix systems: a directory component
+//! swapped for a link between the walk and the open is not seen; it needs write
+//! access to the site directory.
+//!
+//! This module belongs to the binary (`main.rs`), as `cli.rs` does, and only
+//! on Unix (I-2); it uses the library by its crate name, so a test can include
+//! the same file.
 
 use std::convert::Infallible;
-use std::fs::{self, File, Metadata};
+use std::fs::{self, File, Metadata, OpenOptions};
 use std::io::{self, Read};
+use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
 use std::path::{Path, PathBuf};
 
+use rivqen_reference::control::is_control_host;
 use rivqen_reference::http::handler::{Conn, Handler, LogPath, Next, Outcome, guard};
 use rivqen_reference::http::reader::RequestHead;
 use rivqen_reference::http::writer::check_response;
@@ -152,16 +167,74 @@ pub enum Miss {
     Unreadable,
 }
 
-/// The same file: on Unix the device and the inode.
-#[cfg(unix)]
+/// `O_NONBLOCK` of the target (L-2). FACT: Linux `0o4000` (2048) on these
+/// architectures (libc 0.2.191 `src/unix/linux_like/linux/{gnu,musl}/…`, from the
+/// kernel `asm-generic/fcntl.h`; mips and sparc differ); macOS `0x0004` (SDK
+/// `sys/fcntl.h`). Any other target: NOT FOUND, so the build fails.
+#[cfg(all(
+    target_os = "linux",
+    any(
+        target_arch = "x86",
+        target_arch = "x86_64",
+        target_arch = "arm",
+        target_arch = "aarch64",
+        target_arch = "riscv64",
+        target_arch = "powerpc64",
+        target_arch = "s390x",
+        target_arch = "loongarch64"
+    )
+))]
+const O_NONBLOCK: i32 = 0o4000;
+#[cfg(target_os = "macos")]
+const O_NONBLOCK: i32 = 0x0004;
+#[cfg(not(any(
+    target_os = "macos",
+    all(
+        target_os = "linux",
+        any(
+            target_arch = "x86",
+            target_arch = "x86_64",
+            target_arch = "arm",
+            target_arch = "aarch64",
+            target_arch = "riscv64",
+            target_arch = "powerpc64",
+            target_arch = "s390x",
+            target_arch = "loongarch64"
+        )
+    )
+)))]
+compile_error!("the O_NONBLOCK value of this target is not verified (WP-03 S2 L-2): NOT FOUND");
+
+/// Open `path` for reading without blocking: a FIFO does not wait for a writer
+/// (L-2). A regular file reads as without the flag.
+///
+/// # Errors
+/// The I/O error of the open.
+pub fn open_nonblocking(path: &Path) -> io::Result<File> {
+    OpenOptions::new()
+        .read(true)
+        .custom_flags(O_NONBLOCK)
+        .open(path)
+}
+
+/// The same file: the device and the inode.
 fn same_file(a: &Metadata, b: &Metadata) -> bool {
-    use std::os::unix::fs::MetadataExt;
     a.dev() == b.dev() && a.ino() == b.ino()
 }
 
-#[cfg(not(unix))]
-fn same_file(a: &Metadata, b: &Metadata) -> bool {
-    a.len() == b.len() && a.file_type() == b.file_type()
+/// The handle is at the walked path (L-1): on Linux the path of the handle in
+/// `/proc/self/fd`; an error fails closed.
+#[cfg(target_os = "linux")]
+fn opened_at(file: &File, path: &Path) -> bool {
+    use std::os::fd::AsRawFd;
+    fs::read_link(format!("/proc/self/fd/{}", file.as_raw_fd())).is_ok_and(|p| p == path)
+}
+
+/// Other Unix systems have no such check without a new dependency: the device
+/// and inode check covers the last component only (residual race, module doc).
+#[cfg(not(target_os = "linux"))]
+fn opened_at(_file: &File, _path: &Path) -> bool {
+    true
 }
 
 /// The site: the canonical directory, the engine and the origin of the
@@ -171,6 +244,9 @@ pub struct Site {
     root: PathBuf,
     engine: Engine,
     origin: String,
+    /// The authority of `origin` (`host[:port]` as given); `None` when the
+    /// origin has none, so only a loopback `Host` is answered.
+    authority: Option<String>,
 }
 
 impl Site {
@@ -184,11 +260,30 @@ impl Site {
         if !fs::metadata(&root)?.is_dir() {
             return Err(io::ErrorKind::NotADirectory.into());
         }
+        let authority = origin
+            .split_once("://")
+            .map(|(_, authority)| authority.to_owned())
+            .filter(|authority| !authority.is_empty());
         Ok(Self {
             root,
             engine,
             origin,
+            authority,
         })
+    }
+
+    /// `Host` is one field line, equal (ASCII case-insensitive) to the authority
+    /// of the origin or to a loopback name with the local port (L-4).
+    #[must_use]
+    pub fn host_allowed(&self, conn: &Conn, head: &RequestHead) -> bool {
+        let mut hosts = head.values("host");
+        let (Some(host), None) = (hosts.next(), hosts.next()) else {
+            return false;
+        };
+        self.authority
+            .as_deref()
+            .is_some_and(|a| host.eq_ignore_ascii_case(a))
+            || is_control_host(host, conn.local_port)
     }
 
     /// The path of the file of `mapped` under the rules of item 4, and its
@@ -235,10 +330,12 @@ impl Site {
         if meta.len() > mapped.limit {
             return Err(Miss::TooLarge);
         }
-        let file = File::open(&path).map_err(|_| Miss::NotFound)?;
+        // O_NONBLOCK: a FIFO swapped in after the walk does not block (L-2).
+        let file = open_nonblocking(&path).map_err(|_| Miss::NotFound)?;
         let opened = file.metadata().map_err(|_| Miss::Unreadable)?;
-        // The file that was opened is the file that was checked.
-        if !opened.is_file() || !same_file(&meta, &opened) {
+        // The file that was opened is the file that was checked, at the walked
+        // path (L-1). These checks fail only in a race with a local writer.
+        if !opened.is_file() || !same_file(&meta, &opened) || !opened_at(&file, &path) {
             return Err(Miss::NotFound);
         }
         let capacity = usize::try_from(opened.len().min(mapped.limit)).unwrap_or(0);
@@ -255,7 +352,13 @@ impl Site {
 
     /// The answer to a request head.
     #[must_use]
-    pub fn answer(&self, head: &RequestHead) -> Outcome {
+    pub fn answer(&self, conn: &Conn, head: &RequestHead) -> Outcome {
+        if !self.host_allowed(conn, head) {
+            return Outcome::noted(
+                text(421, "Misdirected Request\n"),
+                "the Host is not the origin or a loopback name with the port",
+            );
+        }
         if head.method != "GET" && head.method != "HEAD" {
             let mut response = text(405, "Method Not Allowed\n");
             response.fields.push(Field::new("Allow", ALLOW));
@@ -349,8 +452,8 @@ fn passthrough_note(outcome: RqpOutcome) -> Option<&'static str> {
 impl Handler for Site {
     type Route = Infallible;
 
-    fn route(&self, _conn: &Conn, head: &RequestHead) -> Next<Infallible> {
-        Next::Respond(self.answer(head))
+    fn route(&self, conn: &Conn, head: &RequestHead) -> Next<Infallible> {
+        Next::Respond(self.answer(conn, head))
     }
 
     fn respond(&self, route: Infallible, _: &Conn, _: &RequestHead, _: &[u8]) -> Outcome {

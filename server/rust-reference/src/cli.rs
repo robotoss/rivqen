@@ -43,6 +43,8 @@ pub const DEFAULT_PORT: u16 = 8080;
 pub const DEFAULT_WORKERS: usize = 8;
 /// The most workers of the site mode.
 pub const MAX_WORKERS: usize = 64;
+/// The usage error of `--site` on a target that is not Unix (I-2).
+pub const UNIX_ONLY: &str = "the site mode needs a Unix file system";
 
 /// The protocol of the site mode.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -205,6 +207,10 @@ pub fn parse<S: AsRef<str>>(args: &[S]) -> Result<Options, CliError> {
 
 fn site_mode(raw: &mut Raw, dir: String) -> Result<Mode, CliError> {
     let usage = CliError::Usage;
+    // The path checks of the site need Unix (links, device and inode; I-2).
+    if cfg!(not(unix)) {
+        return Err(usage(UNIX_ONLY));
+    }
     if raw.conformance || raw.lab_peer {
         return Err(usage("--site excludes --conformance and --lab-peer"));
     }
@@ -675,6 +681,19 @@ mod tests {
             .unwrap();
             assert_eq!(o.mode, site(Protocol::Rqp { config: None }, n));
         }
+    }
+
+    /// On a target that is not Unix the site mode is a usage error (I-2); on
+    /// Unix the same command line is valid.
+    #[test]
+    fn cli_site_needs_unix() {
+        let args = ["--site", "d", "--protocol", "rqp", "--origin", "http://a"];
+        if cfg!(unix) {
+            assert!(parse(&args).is_ok());
+        } else {
+            assert_eq!(usage_of(&args), UNIX_ONLY);
+        }
+        assert_eq!(UNIX_ONLY, "the site mode needs a Unix file system");
     }
 
     #[test]

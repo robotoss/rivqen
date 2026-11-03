@@ -25,6 +25,7 @@ use std::path::PathBuf;
 
 use proptest::prelude::*;
 use proptest::test_runner::{Config, TestRunner};
+use rivqen_reference::http::handler::Conn;
 use rivqen_reference::http::reader::{RequestHead, Version};
 use rivqen_reference::model::{Body, Field};
 use rivqen_reference::rqp::config::RqpConfig;
@@ -95,19 +96,27 @@ fn run<S: Strategy>(
     }
 }
 
+/// A loopback connection on port 8080 (the `Host` of `head` names it).
+fn local() -> Conn {
+    Conn {
+        peer: "127.0.0.1".parse().unwrap(),
+        local_port: 8080,
+    }
+}
+
 fn head(target: &str) -> RequestHead {
     RequestHead {
         method: "GET".to_owned(),
         target: target.to_owned(),
         version: Version::Http11,
-        fields: vec![Field::new("Host", "a")],
+        fields: vec![Field::new("Host", "127.0.0.1:8080")],
         content_length: 0,
     }
 }
 
 fn check(f: &Fixture, target: &str) -> Result<(), TestCaseError> {
     let (dir, site) = (&f.dir, &f.site);
-    let o = site.answer(&head(target));
+    let o = site.answer(&local(), &head(target));
     if let Body::Bytes(b) = &o.response.body {
         prop_assert!(
             !b.windows(SECRET.len()).any(|w| w == SECRET),
@@ -191,7 +200,7 @@ fn site_any_string_is_safe() {
 #[test]
 fn site_props_fixture_serves_inside_and_refuses_outside() {
     let f = fixture("fixed");
-    let get = |t: &str| f.site.answer(&head(t)).response.status;
+    let get = |t: &str| f.site.answer(&local(), &head(t)).response.status;
     assert_eq!(get("/a.html"), 200);
     assert_eq!(get("/sub/a.txt"), 200);
     for t in [

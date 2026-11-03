@@ -23,6 +23,19 @@ rivqen-reference --conformance [--listen <ip>] [--port <n>] [--origin <url>] [--
 
 Exit codes: `0` `--help`; `1` cannot listen or write stdout; `2` usage error.
 
+## Site mode
+
+```text
+rivqen-reference --site <dir> --protocol rqp|legacy --origin <url> [--profile <name>] [--config <file>]
+                 [--listen <ip>] [--port <n>] [--workers <n>]
+```
+
+Serves the regular files of `<dir>` as the application response and applies the engine of `--protocol` (H-114, DL-096). `legacy` needs `--profile`; `rqp` takes `--config` (a `server_config` JSON file of at most 64 KiB, CONTRACT.md §2). `--origin` is required: the client checks the manifest origin against the page URL. `--workers` 1 to 64, default 8. Any listen address; there is no control endpoint (its paths are `404`). `--site` excludes `--conformance` and `--lab-peer`.
+
+Mapping: `GET` and `HEAD` only (else `405`); the path must match `^(/[A-Za-z0-9_-][A-Za-z0-9._-]*)*/?$` (no `..`, no hidden file, no percent-encoding); a path that ends with `/` maps to `index.html`; every component must be a real directory or a regular file inside `<dir>` (symbolic links are refused); a fixed table of extensions (`.html`, `.css`, `.js`, `.json`, `.svg`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.ico`, `.txt`); at most 5 MiB for `.html` and 8 MiB for other files. Everything else is `404` with a fixed text body. The file is read on every request; A has `Cache-Control: no-cache`. The log shows the path only for a file of the site.
+
+Exit codes: `2` for a command-line rule; `1` when `<dir>` or the `--config` file cannot be used (one fixed line). Memory: each worker holds at most one file and the engine output (about 3 times the file), so 8 workers use about 200 MiB in the worst case and 64 workers about 1.5 GiB.
+
 ## Container image
 
 Build from the repository root (the server depends by path on `tools/rqp-markup/rust`):

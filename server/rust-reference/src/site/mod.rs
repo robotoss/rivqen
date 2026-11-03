@@ -357,3 +357,25 @@ impl Handler for Site {
         match route {}
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::passthrough_note;
+    use rivqen_reference::rqp::select::{Full, Invalid, Outcome};
+
+    #[test]
+    fn site_only_internal_defects_get_a_note() {
+        assert_eq!(
+            passthrough_note(Outcome::Internal),
+            Some("SERVER_PASSTHROUGH: internal defect, A sent")
+        );
+        assert_eq!(
+            passthrough_note(Outcome::Full(Full::Defect)),
+            Some("SERVER_PASSTHROUGH: internal defect, F sent")
+        );
+        assert_eq!(passthrough_note(Outcome::Full(Full::PatchContent)), None);
+        assert_eq!(passthrough_note(Outcome::Invalid(Invalid::Markup)), None);
+        assert_eq!(passthrough_note(Outcome::Delta), None);
+        assert_eq!(passthrough_note(Outcome::NotModified), None);
+    }
+}

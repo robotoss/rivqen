@@ -153,6 +153,50 @@ fn http_workers_survive_a_handler_panic() {
     }
 }
 
+/// Uses about `frames` × 64 KiB of stack (on purpose: the test measures the
+/// stack of a worker).
+#[inline(never)]
+#[allow(clippy::large_stack_arrays)]
+fn use_stack(frames: usize) -> usize {
+    let buf = std::hint::black_box([1u8; 64 * 1024]);
+    if frames == 0 {
+        usize::from(buf[0])
+    } else {
+        use_stack(frames - 1) + usize::from(buf[frames % buf.len()])
+    }
+}
+
+/// Answers `200` after it used 1.5 MiB of stack or more (24 frames of at least
+/// 64 KiB; a debug frame can hold more than one copy of the array).
+struct DeepStack;
+
+impl Handler for DeepStack {
+    type Route = ();
+
+    fn route(&self, _conn: &Conn, _head: &RequestHead) -> Next<()> {
+        Next::ReadBody(())
+    }
+
+    fn respond(&self, (): (), _conn: &Conn, _head: &RequestHead, _body: &[u8]) -> Outcome {
+        let n = use_stack(24);
+        Outcome::plain(Response {
+            status: 200,
+            fields: Vec::new(),
+            body: Body::Bytes(n.to_string().into_bytes()),
+        })
+    }
+}
+
+#[test]
+fn http_workers_have_an_8_mib_stack() {
+    // The S1 loop ran on the main thread (8 MiB); a worker has the same stack,
+    // so a deep handler does not overflow (an overflow aborts the process).
+    let port = start(DeepStack, 1, Timeouts::default());
+    let raw = exchange(port, GET);
+    assert_eq!(status(&raw), 200);
+    assert!(raw.ends_with(b"25"));
+}
+
 #[test]
 fn http_workers_a_value_outside_1_to_64_is_clamped() {
     for workers in [0, 1000] {

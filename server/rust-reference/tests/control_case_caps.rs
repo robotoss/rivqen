@@ -194,6 +194,11 @@ fn control_case_caps_app_headers() {
     v["case_id"] = json!("headers");
     v["app"]["other"] = json!({ "headers": vec![0; 2000] });
     assert!(parse_case(v.to_string().as_bytes()).is_ok());
+    // An array under another member of app is not app.headers.
+    let mut v = legacy_case();
+    v["app"]["other"] = json!(vec![0; 2000]);
+    assert_eq!(prescan_case(v.to_string().as_bytes()), Ok(()));
+    assert!(parse_case(v.to_string().as_bytes()).is_ok());
 }
 
 #[test]

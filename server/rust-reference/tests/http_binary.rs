@@ -133,6 +133,28 @@ fn control_lab_peer_writes_one_warning_line_at_start() {
 }
 
 #[test]
+fn cli_idle_connection_writes_one_log_line() {
+    // The default first-byte deadline is 5 s.
+    let (child, port) = spawn(&["--conformance", "--port", "0"]);
+    let mut idle = TcpStream::connect(("127.0.0.1", port)).unwrap();
+    idle.set_read_timeout(Some(Duration::from_secs(20)))
+        .unwrap();
+    let mut raw = Vec::new();
+    idle.read_to_end(&mut raw).unwrap();
+    assert_eq!(raw, b"", "closed without an answer");
+    // The line is written before the connection is closed.
+    let stderr = stop(child);
+    assert_eq!(stderr.lines().count(), 1, "{stderr}");
+    assert!(stderr.starts_with("- - - "), "{stderr}");
+    assert!(
+        stderr
+            .trim_end()
+            .ends_with("ms (no request byte in time; closed)"),
+        "{stderr}"
+    );
+}
+
+#[test]
 fn cli_without_lab_peer_writes_no_warning() {
     let (child, port) = spawn(&["--conformance", "--port", "0"]);
     // A case request with a path that must not reach the log.

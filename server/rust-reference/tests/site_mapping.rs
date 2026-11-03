@@ -86,6 +86,9 @@ fn layout(tag: &str) -> (Temp, PathBuf) {
         ("site/favicon.ico", b"ico"),
         ("site/t.txt", b"txt"),
         ("site/a..b.txt", b"dots inside"),
+        ("site/_u.txt", b"underscore first"),
+        ("site/-d.txt", b"dash first"),
+        ("site/9.txt", b"digit first"),
         ("outside/secret.html", b"SECRET-OUTSIDE"),
     ] {
         t.file(rel, body);
@@ -215,6 +218,9 @@ fn site_mapping_item2_path_pattern() {
         ("/a.html?x=../../outside", &b"<p>a</p>"[..]),
         ("/a..b.txt", b"dots inside"),
         ("/sub/page.html", b"<p>page</p>"),
+        ("/_u.txt", b"underscore first"),
+        ("/-d.txt", b"dash first"),
+        ("/9.txt", b"digit first"),
     ] {
         let o = get(&site, target);
         assert_eq!(o.response.status, 200, "{target}");
@@ -268,6 +274,17 @@ fn site_mapping_item4_symbolic_links_and_files_outside_are_refused() {
         assert_404(&o, target);
         assert_eq!(o.note, Some("no regular file at the path"), "{target}");
     }
+    // On a case-insensitive volume (the macOS default), a name that differs from
+    // the file name only in case reaches the file, but its canonical path has the
+    // name of the file: that fails closed. A case-sensitive volume has no such
+    // file at all.
+    fs::write(dir.join("case.txt"), b"case").unwrap();
+    let o = get(&site, "/CASE.txt");
+    assert_404(&o, "/CASE.txt");
+    if dir.join("CASE.txt").exists() {
+        assert_eq!(o.note, Some("no regular file at the path"));
+    }
+    assert_eq!(body(&get(&site, "/case.txt")), b"case");
     // A FIFO is not a regular file (and the answer does not wait on it).
     let fifo = dir.join("fifo.txt");
     if Command::new("mkfifo")

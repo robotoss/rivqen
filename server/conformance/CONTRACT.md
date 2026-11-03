@@ -22,12 +22,15 @@ node server/conformance/bin/rivqen-conformance.mjs --target http://127.0.0.1:808
 | `--only <prefix>` | Run only the cases whose id starts with the prefix |
 | `--json <file>` | Also write the report as JSON (section 4) |
 | `--timeout-ms <n>` | Per HTTP exchange; default 10000 |
+| `--control-token-file <file>` | Optional. The per-run control token (section 2, H-117): the trimmed file content, 16 to 256 base64url characters. The runner sends it in every control request, never in a case request, and never prints it |
 
 Exit codes: `0` no MUST case failed; `1` at least one MUST case failed; `2` usage error, the target cannot be reached, `GET /__rivqen/conformance/info` fails, or the server does not support the requested suite or profile.
 
 ## 2. Control endpoint (server side)
 
 Only a **test harness** has it: a small program that wraps the server code under test. It is never part of an SDK package, it is off unless the harness starts with an explicit flag (`--conformance` or `RIVQEN_CONFORMANCE=1`; the reference server takes only `--conformance`, DL-093), and it answers only connections from `127.0.0.1` or `::1` (else `403`). Without the flag the paths below are unknown (`404`). A control request must have a `Host` of `127.0.0.1:<port>`, `localhost:<port>` or `[::1]:<port>` (else `403`, against DNS rebinding), and a `POST` must have `Content-Type: application/json` (else `415`, so that a cross-origin page cannot send it without a preflight) (DL-078). **Lab harness exception (DL-081):** a harness in a container of `tools/upstream-lab` sees the bridge address as the peer, because its port is published on `127.0.0.1` of the host only; it checks `Host` and `Content-Type`, not the peer address. The reference server with `--lab-peer` accepts a loopback peer or a peer in `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `fc00::/7` or `fe80::/10` (also IPv4-mapped), and no other peer (DL-097). Publish the same port number on the host and in the container: the `Host` check uses the local port (DL-093).
+
+**Control token (H-117).** A server MAY require a per-run token; the reference server requires it with `--lab-peer` (`--control-token-file <file>`). Then every control request must have exactly one field line `Rivqen-Conformance-Token` whose value equals the token (compared in constant time), else `403`. Order of the checks: flag (`404`), peer (`403`), `Host` (`403`), token (`403`), path (`404`), method (`405`), `Content-Type` (`415`). Case requests carry no token. Neither side writes the token to a log or an answer. The person who starts the server and the runner writes the token to a file that only they can read (`tools/reference-image/run.sh` makes a new one for each run).
 
 ### `GET /__rivqen/conformance/info`
 

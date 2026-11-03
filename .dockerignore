@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+#
+# Fallback for a builder that does not read server/rust-reference/Dockerfile.dockerignore
+# (a builder without BuildKit): the same allow list. The build context of the reference
+# image is the repository root (DL-095).
+*
+!server/rust-reference/
+!tools/rqp-markup/rust/
+**/target
+**/.git
+**/node_modules
+**/.env*
+**/*.pem
+**/*.key
+**/mutants.out*
+**/.stryker-tmp
+**/reports

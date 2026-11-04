@@ -17,10 +17,13 @@ const bool = (v) => typeof v === 'boolean';
 const hex64 = (v) => str(v) && /^[0-9a-f]{64}$/.test(v);
 const pairs = (v) => Array.isArray(v) && v.every((p) => Array.isArray(p) && p.length === 2 && str(p[0]) && str(p[1]));
 const strings = (v) => Array.isArray(v) && v.every(str);
-const files = (v) =>
-  Array.isArray(v) &&
-  v.every((f) => isObject(f) && str(f.name) && isInt(f.size) && f.size >= 0 && hex64(f.sha256)) &&
-  v.every((f, i) => i === 0 || v[i - 1].name < f.name);
+const KNOWN_FILE_KEYS = ['name', 'size', 'sha256', 'text'];
+const oneFile = (f) =>
+  isObject(f) && str(f.name) && isInt(f.size) && f.size >= 0 && hex64(f.sha256) &&
+  Object.keys(f).every((k) => KNOWN_FILE_KEYS.includes(k)) &&
+  (f.name.endsWith('.header') ? str(f.text) : !('text' in f)); // a *.header file also has its text (CONTRACT section 5)
+const files = (v) => Array.isArray(v) && v.every(oneFile) && v.every((f, i) => i === 0 || v[i - 1].name < f.name);
+const scalar = (v) => str(v) || isInt(v);
 const ex = (v) => isInt(v) && v >= 1;
 
 /** Event name -> { src: allowed sources, need: member checks, opt: optional member checks }. */
@@ -53,9 +56,17 @@ export const SCHEMA = {
   'proxy.drop_field': { src: ['proxy'], need: { exchange: intOrNull, name: str } },
   'proxy.hold': { src: ['proxy'], need: { exchange: ex, point: str }, opt: { bytes: isInt } },
   'proxy.release': { src: ['proxy'], need: { exchange: intOrNull, point: str } },
-  'run.end': { src: ['conductor'], need: { ok: bool, error: strOrNull } },
+  'client.clear_history': { src: ['harness'], need: {} },
+  'runtime.notify_error': { src: ['harness'], need: { url: str, code: scalar } },
+  'runtime.toast': { src: ['harness'], need: { text: str, duration: scalar } },
+  'webview.intercept_request': { src: ['harness'], need: { url: str } },
+  'webview.page_started': { src: ['harness'], need: { url: str } },
+  'webview.page_finished': { src: ['harness'], need: { url: str } },
+  'harness.error': { src: ['harness'], need: { error: str } },
+  // The conductor writes run.end; the harness sends it with ok false only when it aborts.
+  'run.end': { src: ['conductor', 'harness'], need: { ok: bool, error: strOrNull } },
 };
-const COMMON = ['ev', 'seq', 'src', 't', 'thread'];
+const COMMON = ['ev', 'seq', 'src', 't', 'thread', 'hseq', 'session'];
 const HOSTS_OK = /^(10\.0\.2\.2|127\.0\.0\.1|localhost|([a-z0-9-]+\.)*example\.(com|org|net))$/i;
 
 /** Problems of one event object (without its position). */
@@ -70,7 +81,10 @@ export function eventProblems(e) {
   if (!spec) return [...out, `unknown event ${e.ev}`];
   if (!spec.src.includes(e.src)) out.push(`${e.ev} must come from ${spec.src.join(' or ')}`);
   if (e.src === 'harness' && (!str(e.thread) || e.thread === '')) out.push('harness event without thread');
+  if (e.src === 'harness' && !(isInt(e.hseq) && e.hseq >= 1)) out.push('harness event without hseq');
   if (e.src !== 'harness' && e.thread !== undefined) out.push('thread only on harness events');
+  if (e.src !== 'harness' && e.hseq !== undefined) out.push('hseq only on harness events');
+  if (e.session !== undefined && !(e.src === 'harness' && isInt(e.session) && e.session >= 1)) out.push('session must be a positive integer on a harness event');
   const known = new Set([...COMMON, ...Object.keys(spec.need), ...Object.keys(spec.opt ?? {}), ...Object.keys(spec.alternative ?? {})]);
   if (spec.alternative && Object.entries(spec.alternative).every(([k, test]) => test(e[k]))) {
     const extra = Object.keys(e).filter((k) => !COMMON.includes(k) && !(k in spec.alternative));
@@ -98,7 +112,7 @@ export function foreignHosts(text) {
 export function checkRunText(text) {
   const errors = [];
   const events = [];
-  if (text === '') return { events, errors: ['empty event log'] };
+  if (text === '') return { events, errors: ['empty event log'], warnings: [] };
   if (!text.endsWith('\n')) errors.push('the last line has no LF');
   const lines = text.split('\n');
   lines.pop();
@@ -120,11 +134,15 @@ export function checkRunText(text) {
   if (t.some((v, i) => i > 0 && v < t[i - 1])) errors.push('t goes back');
   if (events.length > 0 && events[0].ev !== 'run.start') errors.push('the first event is not run.start');
   const last = events[events.length - 1];
-  if (events.length > 0 && last.ev !== 'run.end') errors.push('the last event is not run.end');
+  if (events.length > 0 && !(last.ev === 'run.end' && last.src === 'conductor')) errors.push('the last event is not run.end of the conductor');
   else if (last && last.ok !== true) errors.push(`the run did not succeed: ${last.error}`);
-  if (events.filter((e) => e.ev === 'run.start').length > 1 || events.filter((e) => e.ev === 'run.end').length > 1) {
+  if (events.filter((e) => e.ev === 'run.start').length > 1 || events.filter((e) => e.ev === 'run.end' && e.src === 'conductor').length > 1) {
     errors.push('more than one run.start or run.end');
   }
+  if (events.some((e) => e.ev === 'run.end' && e.src === 'harness')) errors.push('the harness aborted the run');
+  const hseqs = events.filter((e) => e.src === 'harness' && isInt(e.hseq)).map((e) => e.hseq).sort((a, b) => a - b);
+  if (hseqs.some((v, i) => v !== i + 1)) errors.push('hseq of the harness events is not 1..n without gaps or repeats');
+  const warnings = events.filter((e) => e.ev === 'harness.error').map((e) => `harness.error at seq ${e.seq}: ${e.error}`);
   const heads = new Set();
   const ends = new Set();
   const reqs = new Set();
@@ -136,7 +154,7 @@ export function checkRunText(text) {
   for (const n of reqs) if (!heads.has(n) || !ends.has(n)) errors.push(`exchange ${n} has no response_head or response_end`);
   for (const n of [...heads, ...ends]) if (!reqs.has(n)) errors.push(`exchange ${n} has no request`);
   for (const h of foreignHosts(text)) errors.push(`foreign host in the log: ${h}`);
-  return { events, errors };
+  return { events, errors, warnings };
 }
 
 const RUN_JSON_KEYS = ['date', 'tools', 'emulator_image', 'upstream_sha', 'scenarios', 'summary'];
@@ -210,10 +228,11 @@ export async function listDir(dir) {
  * Check the evidence tree at `root` (the directory with android/ and run.json).
  * @param {string} root
  * @param {{ catalog?: object[] }} [options]  scenarios.json content: also checks modes and run counts
- * @returns {Promise<{ errors: string[], unstable: { scenario: string, mode: string, difference: object }[], runs: number }>}
+ * @returns {Promise<{ errors: string[], warnings: string[], unstable: { scenario: string, mode: string, difference: object }[], runs: number }>}
  */
 export async function checkTree(root, { catalog } = {}) {
   const errors = [];
+  const warnings = [];
   let runs = 0;
   let runJson = null;
   try {
@@ -244,6 +263,7 @@ export async function checkTree(root, { catalog } = {}) {
         const res = checkRunText(text);
         runs += 1;
         for (const e of res.errors) errors.push(`${where}/${name}: ${e}`);
+        for (const w of res.warnings) warnings.push(`${where}/${name}: ${w}`);
         const wanted = new Set(res.events.filter((e) => e.ev === 'proxy.request').map((e) => e.exchange));
         for (const n of wanted) if (!names.includes(`run-${k}-x${n}.http`)) errors.push(`${where}/${name}: missing run-${k}-x${n}.http`);
         for (const n of names) {
@@ -312,7 +332,7 @@ export async function checkTree(root, { catalog } = {}) {
     const known = new Set(catalog.map((s) => s.id));
     for (const id of observed.keys()) if (!known.has(id)) errors.push(`${id}: not in scenarios.json`);
   }
-  return { errors, unstable, runs };
+  return { errors, warnings, unstable, runs };
 }
 
 /** Problems of a functions.jsonl text against the case list (CONTRACT section 7). */

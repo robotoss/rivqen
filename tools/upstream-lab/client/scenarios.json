@@ -1346,18 +1346,6 @@
           "page": "a"
         }
       },
-      "first_load"
-    ],
-    "case": {
-      "page": "b"
-    },
-    "config": {
-      "account": "rq-test-account",
-      "account_related": true,
-      "reload_in_bad_network": false,
-      "webview": true
-    },
-    "steps": [
       {
         "do": "create_session"
       },
@@ -1365,10 +1353,31 @@
         "do": "bind_client"
       },
       {
-        "do": "client_ready"
+        "do": "wait",
+        "for": "proxy.response_end"
       },
       {
-        "do": "request_resource"
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "case": {
+      "page": "b"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
       },
       {
         "do": "wait",
@@ -1385,6 +1394,7 @@
         "do": "destroy"
       }
     ],
-    "repeat": 1
+    "repeat": 1,
+    "webview": true
   }
 ]

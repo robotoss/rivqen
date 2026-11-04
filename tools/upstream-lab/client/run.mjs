@@ -9,7 +9,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
-import { clearArgs, startArgs, stopArgs } from './src/adb.mjs';
+import { clearArgs, parseInstrumentResult, startArgs, stopArgs } from './src/adb.mjs';
 import { LabError } from './src/errors.mjs';
 import { parseArgs, refreshRunJson, runAll, selectRuns, USAGE } from './src/runner.mjs';
 import { catalogProblems } from './src/steps.mjs';
@@ -60,10 +60,13 @@ async function main() {
       }
     },
     startHarness: async ({ runId, onFatal }) => {
-      const child = spawn(adb, startArgs(cfg, runId), { stdio: 'ignore' });
+      const child = spawn(adb, startArgs(cfg, runId), { stdio: ['ignore', 'pipe', 'ignore'] });
+      let output = '';
+      child.stdout.on('data', (chunk) => { if (output.length < 1_000_000) output += chunk.toString('utf8'); });
       child.on('error', (cause) => onFatal(new LabError('ADB', 'cannot start the harness', { cause })));
       child.on('exit', (code) => {
         if (code !== 0 && code !== null) onFatal(new LabError('ADB', `the harness start command exited with ${code}`));
+        else if (parseInstrumentResult(output) === false) onFatal(new LabError('ADB', 'the instrumentation reported rivqen.ok=false'));
       });
       return { stop: async () => { child.kill(); } };
     },

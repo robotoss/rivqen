@@ -21,7 +21,8 @@ async function setup(pollMs = 200) {
 }
 const RUN = '?run=CS-01-quick-r1';
 const post = (url, body, type = 'application/json') => fetch(url, { method: 'POST', headers: { 'content-type': type }, body: typeof body === 'string' ? body : JSON.stringify(body) });
-const harnessEvent = (ev, extra = {}) => ({ ev, thread: 'main', ...extra });
+let hseq = 0;
+const harnessEvent = (ev, extra = {}) => ({ ev, thread: 'main', hseq: ++hseq, ...extra });
 
 test('control_scenario_returns_the_run', async () => {
   const c = await setup();
@@ -118,12 +119,27 @@ test('control_event_rejects_bad_events', async () => {
       ['proxy name', harnessEvent('proxy.request')],
       ['run name', harnessEvent('run.end')],
       ['step.start', harnessEvent('step.start')],
+      ['no hseq', { ev: 'session.created', thread: 'main' }],
+      ['hseq zero', { ev: 'session.created', thread: 'main', hseq: 0 }],
+      ['run.end ok', harnessEvent('run.end', { ok: true, error: null })],
     ];
     for (const [name, body] of bad) {
       const res = await post(c.url('/run/event'), body);
       assert.equal(res.status, 400, name);
     }
     assert.equal(c.log.events.length, 0);
+  } finally {
+    await c.stop();
+  }
+});
+
+test('control_harness_abort_is_logged_and_fails_the_run', async () => {
+  const c = await setup();
+  try {
+    const outcome = assert.rejects(c.channel.dispatch({ seq: 1, do: 'create_session' }, 1000), (e) => e.code === 'HARNESS_FAILED' && e.message.includes('crash'));
+    assert.equal((await post(c.url('/run/event'), harnessEvent('run.end', { ok: false, error: 'crash' }))).status, 204);
+    await outcome;
+    assert.deepEqual([c.log.events[0].ev, c.log.events[0].src, c.log.events[0].ok], ['run.end', 'harness', false]);
   } finally {
     await c.stop();
   }

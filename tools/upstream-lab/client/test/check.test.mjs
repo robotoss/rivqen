@@ -8,7 +8,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { canonicalLine } from '../src/canon.mjs';
 import { checkRunText, checkTree, eventProblems, foreignHosts, functionsProblems, metaProblems, runJsonProblems } from '../src/check.mjs';
-import { firstDifference, normalizeEvent, normalizeRun } from '../src/determinism.mjs';
+import { firstDifference, normalizeEvent, normalizeHeaderText, normalizeRun } from '../src/determinism.mjs';
 import { buildRunJson } from '../src/runjson.mjs';
 
 const SHA = 'a'.repeat(64);
@@ -29,7 +29,8 @@ function runEvents({ date = 'Thu, 05 Nov 2026 10:00:00 GMT', worker = 'worker-1'
     ...extra,
     ['conductor', 'run.end', { ok, error: ok ? null : 'x' }],
   ];
-  return raw.map(([src, ev, members], i) => ({ ...members, ev, seq: i + 1, src, t: t0 + i }));
+  let hseq = 0;
+  return raw.map(([src, ev, members], i) => ({ ...members, ...(src === 'harness' ? { hseq: ++hseq } : {}), ev, seq: i + 1, src, t: t0 + i }));
 }
 const toText = (events) => events.map((e) => `${canonicalLine(e)}\n`).join('');
 
@@ -86,7 +87,7 @@ test('check_schema_rejects_bad_events', () => {
 
 test('check_schema_covers_the_members_of_each_event_of_the_contract', () => {
   const base = { seq: 1, t: 0 };
-  const h = { ...base, src: 'harness', thread: 'main' };
+  const h = { ...base, src: 'harness', thread: 'main', hseq: 1 };
   const ok = [
     { ...h, ev: 'client.load_url', url: 'http://10.0.2.2:18090/catalog', extras: ['a'] },
     { ...h, ev: 'client.load_data', base_url: 'u', mime: 'text/html', encoding: 'utf-8', history_url: 'u', headers: [['a', 'b']], body_len: 1, body_sha256: SHA },
@@ -102,6 +103,17 @@ test('check_schema_covers_the_members_of_each_event_of_the_contract', () => {
     { ...base, src: 'proxy', ev: 'proxy.hold', exchange: 1, point: 'body', bytes: 3 },
     { ...base, src: 'proxy', ev: 'proxy.release', exchange: null, point: 'head' },
     { ...base, src: 'conductor', ev: 'step.done', step: { do: 'x' }, error: 'boom' },
+    { ...h, ev: 'client.clear_history' },
+    { ...h, ev: 'runtime.notify_error', url: 'u', code: 404 },
+    { ...h, ev: 'runtime.notify_error', url: 'u', code: 'E_NET' },
+    { ...h, ev: 'runtime.toast', text: 'hi', duration: 1 },
+    { ...h, ev: 'webview.intercept_request', url: 'u' },
+    { ...h, ev: 'webview.page_started', url: 'u' },
+    { ...h, ev: 'webview.page_finished', url: 'u' },
+    { ...h, ev: 'harness.error', error: 'x' },
+    { ...h, ev: 'run.end', ok: false, error: 'abort' },
+    { ...h, ev: 'session.result', src_code: 1, final_code: 1, session: 2 },
+    { ...h, ev: 'cache.snapshot', files: [{ name: 'a.header', size: 1, sha256: SHA, text: 'ETag: e\n' }, { name: 'a.html', size: 1, sha256: SHA }], db: null },
   ];
   for (const e of ok) assert.deepEqual(eventProblems(e), [], `${e.ev} ${JSON.stringify(e)}`);
   const bad = [
@@ -113,6 +125,16 @@ test('check_schema_covers_the_members_of_each_event_of_the_contract', () => {
     { ...h, ev: 'cache.snapshot', files: [], db: {} },
     { ...base, src: 'proxy', ev: 'proxy.request', exchange: 0, method: 'GET', target: '/', fields: [] },
     { ...base, src: 'conductor', ev: 'run.end', ok: 'yes', error: null },
+    { ...h, hseq: undefined, ev: 'client.clear_history' },
+    { ...h, hseq: 0, ev: 'client.clear_history' },
+    { ...base, src: 'proxy', ev: 'proxy.cut', exchange: 1, bytes: 5, hseq: 1 },
+    { ...h, ev: 'client.clear_history', session: 0 },
+    { ...base, src: 'proxy', ev: 'proxy.cut', exchange: 1, bytes: 5, session: 1 },
+    { ...h, ev: 'runtime.toast', text: 'hi', duration: {} },
+    { ...h, ev: 'runtime.notify_error', url: 'u' },
+    { ...h, ev: 'cache.snapshot', files: [{ name: 'a.header', size: 1, sha256: SHA }], db: null },
+    { ...h, ev: 'cache.snapshot', files: [{ name: 'a.html', size: 1, sha256: SHA, text: 'x' }], db: null },
+    { ...h, ev: 'cache.snapshot', files: [{ name: 'a.html', size: 1, sha256: SHA, extra: 1 }], db: null },
   ];
   for (const e of bad) assert.notDeepEqual(eventProblems(e), [], JSON.stringify(e));
 });
@@ -124,7 +146,7 @@ test('check_sequence_rejects_gaps_a_bad_start_a_bad_end_and_time_going_back', ()
   const gap = run.map((e, i) => (i === 3 ? { ...e, seq: 9 } : e));
   assert.ok(problems(gap).some((p) => p.includes('seq 9, expected 4')));
   assert.ok(problems(run.slice(1).map((e, i) => ({ ...e, seq: i + 1 }))).includes('the first event is not run.start'));
-  assert.ok(problems(run.slice(0, -1)).includes('the last event is not run.end'));
+  assert.ok(problems(run.slice(0, -1)).includes('the last event is not run.end of the conductor'));
   assert.ok(problems(runEvents({ ok: false })).some((p) => p.startsWith('the run did not succeed: x')));
   const back = run.map((e, i) => ({ ...e, t: 100 - i }));
   assert.ok(problems(back).includes('t goes back'));
@@ -133,6 +155,24 @@ test('check_sequence_rejects_gaps_a_bad_start_a_bad_end_and_time_going_back', ()
   assert.ok(checkRunText('not json\n').errors.includes('line 1: not JSON'));
   const twice = [...run.slice(0, -1), { ...run[0], seq: run.length }, run.at(-1)].map((e, i) => ({ ...e, seq: i + 1 }));
   assert.ok(problems(twice).includes('more than one run.start or run.end'));
+});
+
+test('check_sequence_rejects_hseq_gaps_and_a_harness_abort_and_warns_about_harness_errors', () => {
+  const run = runEvents();
+  const renumber = (events) => events.map((e, i) => ({ ...e, seq: i + 1 }));
+  const gap = run.map((e) => (e.hseq === 3 ? { ...e, hseq: 9 } : e));
+  assert.ok(checkRunText(toText(gap)).errors.includes('hseq of the harness events is not 1..n without gaps or repeats'));
+  const repeat = run.map((e) => (e.hseq === 3 ? { ...e, hseq: 2 } : e));
+  assert.ok(checkRunText(toText(repeat)).errors.includes('hseq of the harness events is not 1..n without gaps or repeats'));
+  const late = run.map((e) => (e.hseq === 1 ? { ...e, hseq: 4 } : e.hseq === 4 ? { ...e, hseq: 1 } : e));
+  assert.deepEqual(checkRunText(toText(late)).errors, []); // seq order and hseq order may differ (threads)
+  const abort = renumber([...run.slice(0, -1), { ev: 'run.end', src: 'harness', thread: 'main', hseq: 5, ok: false, error: 'crash', t: run.at(-1).t }, run.at(-1)]);
+  assert.ok(checkRunText(toText(abort)).errors.includes('the harness aborted the run'));
+  const warned = renumber([...run.slice(0, -1), { ev: 'harness.error', src: 'harness', thread: 'main', hseq: 5, error: 'oops', t: run.at(-1).t }, run.at(-1)]);
+  const res = checkRunText(toText(warned));
+  assert.deepEqual(res.errors, []);
+  assert.deepEqual(res.warnings, ['harness.error at seq 10: oops']);
+  assert.ok(checkRunText(toText(run.slice(0, -1).concat({ ...run.at(-1), src: 'harness', thread: 'main', hseq: 5, ok: false }))).errors.includes('the last event is not run.end of the conductor'));
 });
 
 test('check_sequence_rejects_keys_that_are_not_sorted', () => {
@@ -173,7 +213,7 @@ test('check_determinism_reports_runs_that_differ', async () => {
   const stable = { date: '2026-11-05', tools: { node: 'v22' }, emulator_image: 'x', upstream_sha: '59936bef', scenarios: [{ id: 'CS-01', modes: { quick: { runs: 3 } } }], summary: { stable: [{ scenario: 'CS-01', mode: 'quick' }], unstable: [] } };
   const errors = await errorsOf([a, a, toText(other)], { runJson: stable });
   assert.deepEqual(errors, [
-    'CS-01/quick: runs differ (run 3 at line 6) and run.json gives no reason',
+    'CS-01/quick: runs differ (run 3 at line 9) and run.json gives no reason',
     'CS-01/quick: run.json says stable, the runs differ',
   ]);
 });
@@ -286,12 +326,58 @@ test('check_functions_jsonl_needs_one_known_result_per_case', () => {
   assert.ok(functionsProblems(dup, 'ios', cases).some((p) => p.includes('duplicate case FN-1')));
 });
 
-test('determinism_normalizes_t_thread_and_date_values_only', () => {
-  const e = { ev: 'proxy.response_head', seq: 3, src: 'proxy', t: 99, thread: 'worker-2', fields: [['Date', 'x'], ['ETag', 'e'], ['date', 'y']], extra: { headers: [['DATE', 'z']] } };
-  assert.deepEqual(normalizeEvent(e), { ev: 'proxy.response_head', seq: 3, src: 'proxy', fields: [['Date', ''], ['ETag', 'e'], ['date', '']], extra: { headers: [['DATE', '']] } });
+test('determinism_normalizes_t_seq_worker_threads_and_the_android_time_fields', () => {
+  const e = {
+    ev: 'proxy.response_head', seq: 3, src: 'proxy', t: 99, thread: 'worker-2', hseq: 4,
+    fields: [['Date', 'x'], ['ETag', 'e'], ['date', 'y'], ['X-Android-Sent-Millis', '1'], ['x-android-received-millis', '2']],
+    extra: { headers: [['DATE', 'z']] },
+  };
+  assert.deepEqual(normalizeEvent(e), {
+    ev: 'proxy.response_head', src: 'proxy',
+    fields: [['Date', ''], ['ETag', 'e'], ['date', ''], ['X-Android-Sent-Millis', ''], ['x-android-received-millis', '']],
+    extra: { headers: [['DATE', '']] },
+  });
   assert.equal(normalizeEvent({ ...e, thread: 'main' }).thread, 'main');
   assert.deepEqual(normalizeEvent({ ev: 'a', args: ['date', 5], other: [['dates', 'keep']] }), { ev: 'a', args: ['date', 5], other: [['dates', 'keep']] });
-  assert.deepEqual(normalizeRun([{ ev: 'a', t: 1, z: 1, b: 2 }]), ['{"b":2,"ev":"a","z":1}']);
+  assert.deepEqual(normalizeRun([{ ev: 'a', src: 'conductor', t: 1, z: 1, b: 2 }]), ['{"b":2,"ev":"a","src":"conductor","z":1}']);
+});
+
+test('determinism_removes_local_refresh_time_from_the_page_message', () => {
+  const message = (json) => normalizeEvent({ ev: 'session.message', json }).json;
+  assert.equal(message('{"code":200,"local_refresh_time":1234,"srcCode":200}'), '{"code":200,"srcCode":200}');
+  assert.equal(message('{"code":200,"srcCode":200}'), '{"code":200,"srcCode":200}');
+  assert.equal(message('not json'), 'not json');
+  assert.equal(message('[1]'), '[1]');
+  assert.equal(normalizeEvent({ ev: 'session.message', json: 5 }).json, 5);
+});
+
+test('determinism_compares_header_files_by_their_normalized_text', () => {
+  const snap = (text, size, sha256) => normalizeEvent({ ev: 'cache.snapshot', files: [{ name: 'a.html', size: 5, sha256: SHA }, { name: 'a.header', size, sha256, text }], db: null });
+  const one = snap('Date: Thu\nETag: e1\nX-Android-Sent-Millis: 1\n', 40, 'b'.repeat(64));
+  const two = snap('Date: Fri\nETag: e1\nX-Android-Sent-Millis: 2\n', 41, 'c'.repeat(64));
+  assert.deepEqual(one, two);
+  assert.deepEqual(one.files[1], { name: 'a.header', text: 'Date:\nETag: e1\nX-Android-Sent-Millis:\n' });
+  assert.deepEqual(one.files[0], { name: 'a.html', size: 5, sha256: SHA });
+  assert.notDeepEqual(one, snap('Date: Fri\nETag: e2\n', 41, 'c'.repeat(64)));
+  assert.equal(normalizeHeaderText('A: b\nno colon\n:x\nx-android-received-millis : 5'), 'A: b\nno colon\n:x\nx-android-received-millis :');
+  assert.deepEqual(normalizeEvent({ ev: 'cache.snapshot', files: [{ name: 'x.header', size: 1, sha256: SHA }], db: null }).files, [{ name: 'x.header', size: 1, sha256: SHA }]);
+});
+
+test('determinism_ignores_the_interleaving_of_sources_inside_a_step_window', () => {
+  const ev = (src, ev, extra = {}) => ({ ev, src, t: 0, seq: 0, ...extra });
+  const start = ev('conductor', 'step.start', { step: { do: 'request_resource', seq: 1 } });
+  const h1 = ev('harness', 'runtime.cookie_get', { thread: 'main', hseq: 1, url: 'u', value: null });
+  const h2 = ev('harness', 'client.load_url', { thread: 'main', hseq: 2, url: 'u', extras: [] });
+  const p1 = ev('proxy', 'proxy.request', { exchange: 1, method: 'GET', target: '/', fields: [] });
+  const p2 = ev('proxy', 'proxy.request', { exchange: 2, method: 'GET', target: '/', fields: [] });
+  const a = normalizeRun([start, h1, p1, h2, p2]);
+  assert.deepEqual(normalizeRun([start, p1, h2, p2, h1].map((e, i) => ({ ...e, seq: i }))), a); // sources interleave differently, hseq and exchange order are the same
+  assert.deepEqual(normalizeRun([start, h2, h1, p1, p2]), a); // the harness emitted h1 first: hseq decides
+  assert.notDeepEqual(normalizeRun([start, h1, h2, p2, p1]), normalizeRun([start, h1, h2, p1, p2]).slice().reverse());
+  assert.deepEqual(normalizeRun([start, h1, p2, p1, h2]), a); // proxy events by exchange
+  // an event in another window is a difference
+  const next = ev('conductor', 'step.start', { step: { do: 'destroy', seq: 2 } });
+  assert.notDeepEqual(normalizeRun([start, h1, h2, p1, p2, next]), normalizeRun([start, h1, h2, p1, next, p2]));
 });
 
 test('determinism_first_difference_names_the_run_and_the_line', () => {
@@ -312,7 +398,7 @@ test('run_json_is_rebuilt_from_the_tree_and_keeps_recorded_reasons', async () =>
     assert.equal(first.emulator_image, 'unknown');
     assert.deepEqual(first.scenarios, [{ id: 'CS-01', modes: { quick: { runs: 2 } } }]);
     assert.deepEqual(first.summary.stable, []);
-    assert.deepEqual(first.summary.unstable, [{ scenario: 'CS-01', mode: 'quick', reason: 'runs differ: run 2 at line 6' }]);
+    assert.deepEqual(first.summary.unstable, [{ scenario: 'CS-01', mode: 'quick', reason: 'runs differ: run 2 at line 9' }]);
     const previous = { emulator_image: 'api28', summary: { unstable: [{ scenario: 'CS-01', mode: 'quick', reason: 'recorded by hand' }] } };
     const second = await buildRunJson({ root: t.root, previous, meta });
     assert.equal(second.summary.unstable[0].reason, 'recorded by hand');

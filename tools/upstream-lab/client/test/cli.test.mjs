@@ -33,8 +33,8 @@ test('run_cli_dry_run_prints_the_adb_commands_and_runs_nothing', async () => {
   const res = await node([script('run.mjs'), '--scenario', 'CS-05', '--dry-run', '--package', 'a.b']);
   assert.equal(res.code, 0);
   assert.match(res.stdout, /^6 runs into /);
-  assert.match(res.stdout, /adb shell pm clear a\.b/);
-  assert.match(res.stdout, /adb shell am start -W -n a\.b\/\.MainActivity --es run CS-05-quick-r1 --es control http:\/\/10\.0\.2\.2:18091/);
+  assert.match(res.stdout, /adb -s emulator-5600 shell pm clear a\.b/);
+  assert.match(res.stdout, /adb -s emulator-5600 shell am instrument -w -e run CS-05-quick-r1 -e control http:\/\/10\.0\.2\.2:18091 a\.b\/org\.rivqen\.lab\.harness\.LabInstrumentation/);
 });
 
 test('run_cli_exits_2_with_the_usage_on_bad_arguments', async () => {

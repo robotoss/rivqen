@@ -6,7 +6,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { CONTROL_URL, clearArgs, startArgs, stopArgs } from '../src/adb.mjs';
+import { CONTROL_URL, clearArgs, parseInstrumentResult, startArgs, stopArgs } from '../src/adb.mjs';
 import { buildCaseBody, postCase } from '../src/lab.mjs';
 import { FIRST_LOAD, catalogProblems, expandSetup, scenarioProblems, stepProblem } from '../src/steps.mjs';
 
@@ -26,6 +26,11 @@ test('scenarios_json_is_valid_and_has_the_catalog_of_the_sprint_record', () => {
     assert.equal(s.repeat, s.id === 'CS-19' ? 1 : 3, s.id);
     assert.ok(existsSync(path.join(here, '..', '..', 'pages', `${s.case.page}.html`)), `${s.id} page`);
   }
+});
+
+test('scenarios_json_runs_a_real_web_view_only_in_cs_19', () => {
+  assert.deepEqual(scenarios.filter((s) => s.webview).map((s) => s.id), ['CS-19']);
+  assert.ok(scenarios.every((s) => s.config.webview === undefined));
 });
 
 test('scenarios_json_uses_synthetic_accounts_and_no_real_hosts', () => {
@@ -127,6 +132,16 @@ test('scenario_problems_reports_each_kind_of_error', () => {
   assert.ok(bad({ case: { page: 'a', other: 1 } }).length > 0);
   assert.ok(bad({ case: null }).length > 0);
   assert.deepEqual(scenarioProblems(null), ['scenario must be an object']);
+  assert.deepEqual(bad({ url: 'http://10.0.2.2:18090/other' }), []);
+  assert.ok(bad({ url: 'http://example.com/' }).length > 0);
+  assert.ok(bad({ url: 5 }).length > 0);
+  assert.ok(bad({ webview: 'yes' }).length > 0);
+  const wv = (patch) => scenarioProblems({ ...ok, webview: true, setup: [], steps: [{ do: 'create_session' }], ...patch });
+  assert.deepEqual(wv({}), []);
+  assert.ok(wv({ steps: [{ do: 'request_resource' }] }).some((p) => p.includes('refuses request_resource')));
+  assert.ok(wv({ steps: [{ do: 'page_finished' }] }).some((p) => p.includes('refuses page_finished')));
+  assert.ok(wv({ setup: ['first_load'] }).some((p) => p.includes('first_load')));
+  assert.ok(wv({ setup: [{ do: 'request_resource' }] }).length > 0);
   assert.ok(catalogProblems([ok, ok]).some((p) => p.includes('duplicate')));
   assert.deepEqual(catalogProblems({}), ['scenario file must be an array']);
 });
@@ -135,13 +150,15 @@ test('step_problem_checks_the_members_of_each_step', () => {
   const good = [
     { do: 'hold', point: 'head' }, { do: 'hold', point: 'body', bytes: 0 }, { do: 'cut', bytes: 10 }, { do: 'drop_field', name: 'etag' },
     { do: 'wait', for: 'proxy.hold', timeout_ms: 5 }, { do: 'settle', ms: 60000 }, { do: 'set_network', valid: false }, { do: 'set_account', value: '' },
-    { do: 'set_cookie', value: 'a=b' }, { do: 'release' },
+    { do: 'set_cookie', value: 'a=b' }, { do: 'release' }, { do: 'create_session', session: 2 }, { do: 'request_resource', wait_ms: 0, session: 1 },
   ];
   for (const s of good) assert.equal(stepProblem(s), null, JSON.stringify(s));
   const bad = [
     null, [], { do: 'hold', point: 'tail' }, { do: 'hold', point: 'body' }, { do: 'hold', point: 'head', bytes: 1 }, { do: 'cut', bytes: -1 }, { do: 'cut', bytes: 1.5 },
     { do: 'drop_field', name: '' }, { do: 'wait' }, { do: 'wait', for: 'x', timeout_ms: 0 }, { do: 'settle', ms: 60001 }, { do: 'set_network', valid: 'no' },
     { do: 'set_account' }, { do: 'release', extra: 1 }, { do: 'toString' }, { do: 'create_session', x: 1 },
+    { do: 'create_session', session: 0 }, { do: 'create_session', session: 1.5 }, { do: 'request_resource', wait_ms: -1 }, { do: 'request_resource', wait_ms: 60001 },
+    { do: 'destroy', wait_ms: 5 },
   ];
   for (const s of bad) assert.notEqual(stepProblem(s), null, JSON.stringify(s));
 });
@@ -156,15 +173,24 @@ test('expand_setup_turns_first_load_into_its_steps', () => {
 });
 
 test('adb_commands_are_built_from_the_configuration', () => {
-  assert.deepEqual(clearArgs({}), ['shell', 'pm', 'clear', 'org.rivqen.lab.harness']);
+  assert.deepEqual(clearArgs({}), ['-s', 'emulator-5600', 'shell', 'pm', 'clear', 'org.rivqen.lab.harness']);
   assert.deepEqual(stopArgs({ package: 'a.b', serial: 'emulator-5554' }), ['-s', 'emulator-5554', 'shell', 'am', 'force-stop', 'a.b']);
   assert.deepEqual(startArgs({}, 'CS-05-quick-r1'), [
-    'shell', 'am', 'start', '-W', '-n', 'org.rivqen.lab.harness/.MainActivity', '--es', 'run', 'CS-05-quick-r1', '--es', 'control', CONTROL_URL,
+    '-s', 'emulator-5600', 'shell', 'am', 'instrument', '-w', '-e', 'run', 'CS-05-quick-r1', '-e', 'control', CONTROL_URL,
+    'org.rivqen.lab.harness/org.rivqen.lab.harness.LabInstrumentation',
   ]);
   assert.deepEqual(
-    startArgs({ package: 'p.q', startCommand: 'shell am instrument -w -e run {run} -e control {control} {package}/{component}', component: 'x.Runner' }, 'r1'),
-    ['shell', 'am', 'instrument', '-w', '-e', 'run', 'r1', '-e', 'control', 'http://10.0.2.2:18091', 'p.q/x.Runner'],
+    startArgs({ package: 'p.q', serial: 's1', startCommand: 'shell am start -n {package}/{component} --es run {run} --es control {control}', component: '.Main' }, 'r1'),
+    ['-s', 's1', 'shell', 'am', 'start', '-n', 'p.q/.Main', '--es', 'run', 'r1', '--es', 'control', 'http://10.0.2.2:18091'],
   );
+});
+
+test('adb_instrument_result_is_the_last_rivqen_ok_line', () => {
+  assert.equal(parseInstrumentResult('INSTRUMENTATION_RESULT: rivqen.ok=true\nINSTRUMENTATION_CODE: -1'), true);
+  assert.equal(parseInstrumentResult('rivqen.ok=true\nrivqen.ok=false'), false);
+  assert.equal(parseInstrumentResult('rivqen.ok=false\nrivqen.ok=true'), true);
+  assert.equal(parseInstrumentResult('rivqen.ok=maybe rivqen.ok=truex'), null);
+  assert.equal(parseInstrumentResult(''), null);
 });
 
 test('adb_refuses_values_that_the_remote_shell_could_interpret', () => {

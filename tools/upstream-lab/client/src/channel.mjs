@@ -69,7 +69,7 @@ export class HarnessChannel {
 
   /** The harness process failed (for example it could not start). Pending and later steps fail. */
   fail(cause) {
-    this.#failure = new LabError('HARNESS_FAILED', 'harness failed', { cause });
+    this.#failure = new LabError('HARNESS_FAILED', `harness failed: ${cause?.message ?? 'unknown'}`, { cause });
     const cur = this.#current;
     this.#clear();
     cur?.reject(this.#failure);

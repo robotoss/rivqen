@@ -6,9 +6,10 @@
 import { LabError } from './errors.mjs';
 
 export const DEFAULT_PACKAGE = 'org.rivqen.lab.harness';
-// Assumption (not fixed by CONTRACT section 4): the harness is started with an activity.
-export const DEFAULT_START = 'shell am start -W -n {package}/{component} --es run {run} --es control {control}';
-export const DEFAULT_COMPONENT = '.MainActivity';
+// The harness is an instrumentation (architect, WP-01 S1): its result line is `rivqen.ok=true|false`.
+export const DEFAULT_START = 'shell am instrument -w -e run {run} -e control {control} {package}/{component}';
+export const DEFAULT_COMPONENT = 'org.rivqen.lab.harness.LabInstrumentation';
+export const DEFAULT_SERIAL = 'emulator-5600';
 export const CONTROL_URL = 'http://10.0.2.2:18091';
 
 const SAFE = /^[A-Za-z0-9._/-]+$/;
@@ -18,8 +19,8 @@ function checked(name, value) {
   return value;
 }
 
-/** @param {{ serial?: string }} cfg */
-const prefix = (cfg) => (cfg.serial ? ['-s', checked('serial', cfg.serial)] : []);
+/** @param {{ serial?: string }} cfg  the device; default the lab emulator */
+const prefix = (cfg) => ['-s', checked('serial', cfg.serial ?? DEFAULT_SERIAL)];
 
 /** `pm clear` of the harness package (state reset before each run). */
 export function clearArgs(cfg) {
@@ -44,4 +45,13 @@ export function startArgs(cfg, runId) {
   };
   const words = (cfg.startCommand ?? DEFAULT_START).split(/\s+/).filter(Boolean);
   return [...prefix(cfg), ...words.map((w) => w.replace(/\{(package|component|run|control)\}/g, (_, k) => values[k]))];
+}
+
+/**
+ * The verdict in the output of `am instrument`: true or false from the line `rivqen.ok=true|false`
+ * (the last such line), or null when there is none.
+ */
+export function parseInstrumentResult(output) {
+  const found = [...output.matchAll(/rivqen\.ok=(true|false)\b/g)];
+  return found.length === 0 ? null : found.at(-1)[1] === 'true';
 }

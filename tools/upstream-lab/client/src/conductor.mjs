@@ -80,7 +80,7 @@ export async function executeRun(options) {
     if (s.do === 'create_session') epoch = started.seq;
     try {
       if (isHarnessStep(s)) {
-        await channel.dispatch(s, o.stepMs); // the harness logs its own step.done
+        await channel.dispatch(s, o.stepMs + (s.do === 'request_resource' ? (s.wait_ms ?? 1000) : 0)); // the harness logs its own step.done
       } else {
         await conductorStep(s);
         log.emit('conductor', 'step.done', { step: s });

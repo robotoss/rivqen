@@ -25,7 +25,7 @@ async function main() {
   const catalog = JSON.parse(await readFile(path.join(here, 'scenarios.json'), 'utf8'));
   const cases = JSON.parse(await readFile(path.join(here, 'functions.json'), 'utf8'));
   const problems = catalogProblems(catalog);
-  const { errors, unstable, runs } = await checkTree(root, { catalog });
+  const { errors, warnings, unstable, runs } = await checkTree(root, { catalog });
   errors.push(...problems.map((p) => `scenarios.json: ${p}`));
   for (const platform of ['android', 'ios']) {
     let text = null;
@@ -38,6 +38,7 @@ async function main() {
     if (text !== null) errors.push(...functionsProblems(text, platform, cases).map((p) => `${platform}/functions.jsonl: ${p}`));
   }
   for (const u of unstable) say(`unstable (recorded in run.json): ${u.scenario}/${u.mode}`);
+  for (const w of warnings) say(`WARNING ${w}`);
   for (const e of errors) say(`ERROR ${e}`);
   say(`${runs} runs checked, ${errors.length} errors`);
   return errors.length === 0 ? 0 : 1;

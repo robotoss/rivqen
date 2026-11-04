@@ -59,8 +59,9 @@ function fakeHarness({ failOn = null } = {}) {
   return async ({ runId, controlPort, proxyPort }) => {
     const base = `http://127.0.0.1:${controlPort}`;
     const pending = [];
+    let hseq = 0;
     const event = (ev, members = {}, thread = 'main') =>
-      fetch(`${base}/run/event`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ev, thread, ...members }) });
+      fetch(`${base}/run/event`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ev, thread, hseq: ++hseq, ...members }) });
     const loop = (async () => {
       const scenario = await (await fetch(`${base}/run/scenario?run=${runId}`)).json();
       assert.equal(scenario.run, runId);
@@ -115,10 +116,10 @@ test('runner_fake_harness', async () => {
     ]);
     // adb: the app is reset before and stopped after each run
     assert.deepEqual(adbCalls, [
-      ['shell', 'pm', 'clear', 'org.rivqen.lab.harness'],
-      ['shell', 'am', 'force-stop', 'org.rivqen.lab.harness'],
-      ['shell', 'pm', 'clear', 'org.rivqen.lab.harness'],
-      ['shell', 'am', 'force-stop', 'org.rivqen.lab.harness'],
+      ['-s', 'emulator-5600', 'shell', 'pm', 'clear', 'org.rivqen.lab.harness'],
+      ['-s', 'emulator-5600', 'shell', 'am', 'force-stop', 'org.rivqen.lab.harness'],
+      ['-s', 'emulator-5600', 'shell', 'pm', 'clear', 'org.rivqen.lab.harness'],
+      ['-s', 'emulator-5600', 'shell', 'am', 'force-stop', 'org.rivqen.lab.harness'],
     ]);
     // the lab got the setup case, then the scenario case, for each run
     assert.deepEqual(lab.cases.map((c) => [c.case_id, c.profile, c.suite]).slice(0, 2), [
@@ -311,5 +312,34 @@ test('runner_run_json_takes_the_meta_files_of_the_function_runners', async () =>
     await assert.rejects(refreshRunJson({ outDir: out, upstreamSha: '59936bef' }), (e) => e.code === 'BAD_JSON');
   } finally {
     await rm(out, { recursive: true, force: true });
+  }
+});
+
+test('runner_request_resource_may_take_wait_ms_longer_than_the_step_timeout', async () => {
+  const lab = await fakeLab();
+  const slow = (delayMs) => async ({ runId, controlPort }) => {
+    const base = `http://127.0.0.1:${controlPort}`;
+    let hseq = 0;
+    const loop = (async () => {
+      for (;;) {
+        const res = await fetch(`${base}/run/next?run=${runId}`);
+        if (res.status === 204) continue;
+        const step = await res.json();
+        if (step.do === 'end') return;
+        await new Promise((resolve) => setTimeout(resolve, step.do === 'request_resource' ? delayMs : 0));
+        await fetch(`${base}/run/event`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ev: 'step.done', thread: 'main', hseq: ++hseq, step }) });
+      }
+    })();
+    return { stop: async () => { await loop.catch(() => {}); } };
+  };
+  const scenario = { ...SCENARIO, setup: [], steps: [{ do: 'request_resource', wait_ms: 400 }] };
+  const common = { scenario, mode: 'quick', repeat: 1, upstreamSha: '59936bef', proxyPort: 0, controlPort: 0, originPorts: { 'lab-node': lab.port }, sleep: noSleep, endMs: 2000 };
+  try {
+    assert.equal((await executeRun({ ...common, startHarness: slow(150), stepMs: 60 })).ok, true);
+    const withoutWait = { ...scenario, steps: [{ do: 'request_resource', wait_ms: 0 }] };
+    const res = await executeRun({ ...common, scenario: withoutWait, startHarness: slow(150), stepMs: 60 });
+    assert.match(res.error, /^STEP_TIMEOUT/);
+  } finally {
+    await lab.close();
   }
 });

@@ -89,7 +89,13 @@ export class Control {
     }
     if (!/^application\/json\s*(;|$)/i.test(req.headers['content-type'] ?? '')) return json(res, 415, { error: 'CONTENT_TYPE' });
     if (Number(req.headers['content-length']) > MAX_EVENT_BYTES) {
+      // Read and drop the body (no buffer), so that the client gets the answer instead of a reset.
       res.setHeader('connection', 'close');
+      await new Promise((resolve) => {
+        req.on('end', resolve);
+        req.on('error', resolve);
+        req.resume();
+      });
       return json(res, 413, { error: 'BODY' });
     }
     let body;

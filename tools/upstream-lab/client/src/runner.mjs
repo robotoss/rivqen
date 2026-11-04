@@ -11,7 +11,7 @@ import { buildRunJson } from './runjson.mjs';
 
 export const USAGE = `usage: node run.mjs (--scenario <CS-id> | --all | --run-json) [--mode quick|standard] [--repeat <k>] [--out <dir>]
   [--package <name>] [--component <name>] [--start-command "<adb args with {package} {component} {run} {control}>"]
-  [--serial <adb serial>] [--adb <path>] [--upstream-sha <sha>] [--emulator-image <text>]
+  [--serial <adb serial, default emulator-5600>] [--adb <path>] [--upstream-sha <sha>] [--emulator-image <text>]
   [--step-timeout <ms>] [--scenarios <file>] [--dry-run]`;
 
 const VALUE_FLAGS = {

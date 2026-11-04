@@ -1,0 +1,21 @@
+{
+  "note": "Members of the unmodified upstream SDK that the Rivqen class com.tencent.sonic.sdk.RivqenLabAccess uses through package access (CONTRACT section 7). No reflection; no change of visibility. Copy this list into run.json.",
+  "upstream": "59936beff656d4b5718ff6444d6c5e001a2c5231",
+  "class": "com.tencent.sonic.sdk.RivqenLabAccess",
+  "members": [
+    { "member": "SonicSessionCallback", "kind": "package-private interface, implemented", "use": "session callbacks of every run (session.callback)" },
+    { "member": "SonicSession.addSessionStateChangedCallback(Callback)", "kind": "protected method, called", "use": "state changes of every run (session.callback onSessionStateChange)" },
+    { "member": "SonicUtils.separateTemplateAndData(String, String, StringBuilder, StringBuilder)", "kind": "package-private static method, called", "use": "fn split" },
+    { "member": "SonicUtils.getDiffData(JSONObject, JSONObject)", "kind": "package-private static method, called", "use": "fn diff" },
+    { "member": "SonicUtils.getCharset(String)", "kind": "package-private static method, called", "use": "fn charset" },
+    { "member": "SonicServer.connect()", "kind": "protected method, called", "use": "fn etag (over a fixed-answer connection; no network)" },
+    { "member": "SonicSession.setResult(int, int, boolean)", "kind": "protected method, called", "use": "fn message" },
+    { "member": "SonicSession.server", "kind": "protected field, written", "use": "fn message (a server over a fixed-answer connection)" },
+    { "member": "SonicSession.pendingDiffData", "kind": "protected field, written", "use": "fn message (the diff of the case)" },
+    { "member": "SonicSession.diffDataCallback", "kind": "protected field, written", "use": "fn message (captures the message)" }
+  ],
+  "unsupported": [
+    { "fn": "is_legacy_response", "reason": "private method SonicServer.isSonicResponse (SonicServer.java:189)" },
+    { "fn": "template_change", "reason": "inline code of SonicSession.handleFlow_Connection (SonicSession.java:772-776)" }
+  ]
+}

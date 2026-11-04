@@ -1,0 +1,77 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: The Rivqen Authors
+//
+// The harness app. The upstream SDK sources are a second Java source directory that is read in
+// place from the read-only clone in UPSTREAM: no copy, no change (H-118). The build stops when
+// UPSTREAM is not the pinned commit or when the SDK sources differ from it.
+
+plugins {
+    id 'com.android.application'
+}
+
+def pinnedUpstream = '59936beff656d4b5718ff6444d6c5e001a2c5231'
+def sdkSourcePath = 'sonic-android/sdk/src/main/java'
+def upstream = providers.environmentVariable('UPSTREAM').orNull
+if (upstream == null || upstream.isEmpty()) {
+    throw new GradleException('UPSTREAM is not set: point it to the read-only VasSonic clone at ' + pinnedUpstream)
+}
+def upstreamSdk = new File(upstream, sdkSourcePath)
+if (!upstreamSdk.isDirectory()) {
+    throw new GradleException('UPSTREAM has no ' + sdkSourcePath + ': ' + upstream)
+}
+def upstreamHead = providers.exec {
+    commandLine 'git', '-C', upstream, 'rev-parse', 'HEAD'
+}.standardOutput.asText.get().trim()
+if (upstreamHead != pinnedUpstream) {
+    throw new GradleException('UPSTREAM is at ' + upstreamHead + ', not at the pinned commit ' + pinnedUpstream)
+}
+def upstreamChanges = providers.exec {
+    commandLine 'git', '-C', upstream, 'status', '--porcelain', '--untracked-files=all', '--', sdkSourcePath
+}.standardOutput.asText.get().trim()
+if (!upstreamChanges.isEmpty()) {
+    throw new GradleException('UPSTREAM SDK sources differ from the pinned commit:\n' + upstreamChanges)
+}
+
+android {
+    namespace = 'org.rivqen.lab.harness'
+    compileSdk = 36
+    buildToolsVersion = '36.0.0'
+
+    defaultConfig {
+        applicationId = 'org.rivqen.lab.harness'
+        // The lab emulator is API 28 (DL-102); the app targets the same level.
+        minSdk = 28
+        targetSdk = 28
+        versionCode = 1
+        versionName = '0.1-lab'
+        buildConfigField 'String', 'UPSTREAM_SHA', '"' + pinnedUpstream + '"'
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    compileOptions {
+        // The upstream SDK is Java 8 code (2019); the harness uses the same level.
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs += [upstreamSdk.absolutePath]
+        }
+    }
+}
+
+dependencies {
+    // The only library (H-118), lab only, Apache-2.0: android.support.annotation.NonNull and Nullable
+    // that the upstream sources import.
+    implementation 'com.android.support:support-annotations:28.0.0'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    // JDK 21 warns that release 8 is obsolete; the level is intended.
+    options.compilerArgs += ['-Xlint:-options']
+}

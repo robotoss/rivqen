@@ -51,3 +51,10 @@ coverage/
 .env
 .env.*
 !.env.example
+
+# Client lab (WP-01): build output and local SDK settings of the lab harnesses
+tools/upstream-lab/android/build/
+tools/upstream-lab/android/app/build/
+tools/upstream-lab/android/.gradle/
+tools/upstream-lab/android/local.properties
+tools/upstream-lab/ios/build/

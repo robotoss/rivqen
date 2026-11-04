@@ -18,6 +18,14 @@ echo "== disk before"; df -h / "$(dirname "$LAB_HOME")"
 if [ -x "$LAB_ADB" ]; then
   sh "$HERE/emulator.sh" stop || true
 fi
+# The emulator keeps a crash-report folder in /tmp/android-<user>/emu-crash-<version>.db (system
+# volume; it does not follow TMPDIR). Delete the folder of the lab emulator version only when the
+# main SDK has another version, so that the folder of another emulator stays.
+lab_ver="$(sed -n 's/^Pkg.Revision=//p' "$LAB_SDK/emulator/source.properties" 2>/dev/null || true)"
+main_ver="$(sed -n 's/^Pkg.Revision=//p' "$MAIN_SDK/emulator/source.properties" 2>/dev/null || true)"
+if [ -n "$lab_ver" ] && [ "$lab_ver" != "$main_ver" ]; then
+  rm -rf "/tmp/android-$(id -un)/emu-crash-$lab_ver.db"
+fi
 if [ -d "$GRADLE_USER_HOME/wrapper/dists" ]; then
   (cd "$HERE" && ./gradlew --stop >/dev/null 2>&1) || true
 fi

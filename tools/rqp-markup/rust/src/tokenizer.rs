@@ -26,10 +26,12 @@ use std::cell::Cell;
 use crate::names::RawKind;
 
 /// A byte range `[start, end)` of the input.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct Span {
-    pub(crate) start: usize,
-    pub(crate) end: usize,
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct Span {
+    /// Offset of the first byte.
+    pub start: usize,
+    /// Offset after the last byte (equal to `start` for an empty span).
+    pub end: usize,
 }
 
 /// A start tag or an end tag.
@@ -381,189 +383,67 @@ impl<'a> Tokenizer<'a> {
     /// first byte of the name; the tag name state starts at `resume` (the
     /// raw text end tags have read their name already). Returns `None` on
     /// EOF in a tag: the tag is not emitted.
-    #[allow(clippy::too_many_lines)]
+    ///
+    /// The states are those of [`TagWalk`]; this function keeps only the
+    /// attributes that the rules use.
     fn tag(&mut self, lt: usize, name_start: usize, resume: usize) -> Option<Tag> {
-        #[derive(Clone, Copy)]
-        enum S {
-            Name,
-            BeforeAttrName,
-            AttrName,
-            AfterAttrName,
-            BeforeValue,
-            Quoted(u8),
-            Unquoted,
-            AfterQuoted,
-            SelfClosing,
-        }
-        let mut state = S::Name;
-        let mut i = resume;
-        let mut name_end = resume;
-        let mut attr_start = resume;
-        let mut value_start = resume;
-        let mut attr = Attr::Other;
+        let mut walk = TagWalk::new(self.input, resume);
         let mut block_attr: Option<Span> = None;
         let mut type_attr: Option<Span> = None;
         let mut has_for = false;
         let mut has_shadow_root_attr = false;
-        let mut self_closing = false;
-
-        loop {
-            let Some(c) = self.at(i) else {
+        // The walk never pauses: it reads the whole tag in one loop.
+        let step = walk.walk_until(|attr| {
+            let name = self.slice(attr.name.start, attr.name.end);
+            has_for |= name.eq_ignore_ascii_case(b"for");
+            has_shadow_root_attr |= name.eq_ignore_ascii_case(b"shadowrootmode")
+                || name.eq_ignore_ascii_case(b"shadowroot");
+            // An attribute without a value has an empty value at the end of
+            // its name.
+            let value = attr.value.unwrap_or(Span {
+                start: attr.name.end,
+                end: attr.name.end,
+            });
+            // The first attribute with a name wins (M-03).
+            if block_attr.is_none() && name.eq_ignore_ascii_case(b"data-rq-block") {
+                block_attr = Some(value);
+            } else if type_attr.is_none() && name.eq_ignore_ascii_case(b"type") {
+                type_attr = Some(value);
+            }
+            false
+        });
+        match step {
+            TagStep::End {
+                name_end,
+                gt,
+                self_closing,
+            } => {
+                let end = next(gt);
+                self.pos = end;
+                Some(Tag {
+                    span: Span { start: lt, end },
+                    name: Span {
+                        start: name_start,
+                        end: name_end,
+                    },
+                    self_closing,
+                    block_attr,
+                    type_attr,
+                    has_for,
+                    has_shadow_root_attr,
+                })
+            }
+            TagStep::Eof => {
                 self.pos = self.len();
-                return None;
-            };
-            match state {
-                S::Name => match c {
-                    b'/' => {
-                        name_end = i;
-                        state = S::SelfClosing;
-                        i = next(i);
-                    }
-                    b'>' => {
-                        name_end = i;
-                        break;
-                    }
-                    _ if is_ws(c) => {
-                        name_end = i;
-                        state = S::BeforeAttrName;
-                        i = next(i);
-                    }
-                    _ => i = next(i),
-                },
-                S::BeforeAttrName => match c {
-                    b'/' | b'>' => state = S::AfterAttrName,
-                    _ if is_ws(c) => i = next(i),
-                    // `=` here starts an attribute whose name begins with `=`.
-                    b'=' => {
-                        attr_start = i;
-                        state = S::AttrName;
-                        i = next(i);
-                    }
-                    _ => {
-                        attr_start = i;
-                        state = S::AttrName;
-                    }
-                },
-                S::AttrName => {
-                    if c == b'/' || c == b'>' || c == b'=' || is_ws(c) {
-                        // Leaving the attribute name state: the first
-                        // attribute with a name wins (M-03).
-                        let name = self.slice(attr_start, i);
-                        has_for |= name.eq_ignore_ascii_case(b"for");
-                        has_shadow_root_attr |= name.eq_ignore_ascii_case(b"shadowrootmode")
-                            || name.eq_ignore_ascii_case(b"shadowroot");
-                        attr = if block_attr.is_none()
-                            && name.eq_ignore_ascii_case(b"data-rq-block")
-                        {
-                            block_attr = Some(Span { start: i, end: i });
-                            Attr::Block
-                        } else if type_attr.is_none() && name.eq_ignore_ascii_case(b"type") {
-                            type_attr = Some(Span { start: i, end: i });
-                            Attr::Type
-                        } else {
-                            Attr::Other
-                        };
-                        if c == b'=' {
-                            state = S::BeforeValue;
-                            i = next(i);
-                        } else {
-                            state = S::AfterAttrName;
-                        }
-                    } else {
-                        i = next(i);
-                    }
-                }
-                S::AfterAttrName => match c {
-                    b'/' => {
-                        state = S::SelfClosing;
-                        i = next(i);
-                    }
-                    b'=' => {
-                        state = S::BeforeValue;
-                        i = next(i);
-                    }
-                    b'>' => break,
-                    _ if is_ws(c) => i = next(i),
-                    _ => {
-                        attr_start = i;
-                        state = S::AttrName;
-                    }
-                },
-                S::BeforeValue => match c {
-                    b'"' | b'\'' => {
-                        value_start = next(i);
-                        state = S::Quoted(c);
-                        i = next(i);
-                    }
-                    // Missing value: the value is empty and the tag ends.
-                    b'>' => break,
-                    _ if is_ws(c) => i = next(i),
-                    _ => {
-                        value_start = i;
-                        state = S::Unquoted;
-                    }
-                },
-                S::Quoted(quote) => {
-                    if c == quote {
-                        let value = Span {
-                            start: value_start,
-                            end: i,
-                        };
-                        set_value(attr, value, &mut block_attr, &mut type_attr);
-                        state = S::AfterQuoted;
-                    }
-                    i = next(i);
-                }
-                S::Unquoted => {
-                    if c == b'>' || is_ws(c) {
-                        let value = Span {
-                            start: value_start,
-                            end: i,
-                        };
-                        set_value(attr, value, &mut block_attr, &mut type_attr);
-                        if c == b'>' {
-                            break;
-                        }
-                        state = S::BeforeAttrName;
-                    }
-                    i = next(i);
-                }
-                S::AfterQuoted => match c {
-                    b'/' => {
-                        state = S::SelfClosing;
-                        i = next(i);
-                    }
-                    b'>' => break,
-                    _ if is_ws(c) => {
-                        state = S::BeforeAttrName;
-                        i = next(i);
-                    }
-                    _ => state = S::BeforeAttrName,
-                },
-                S::SelfClosing => {
-                    if c == b'>' {
-                        self_closing = true;
-                        break;
-                    }
-                    state = S::BeforeAttrName;
-                }
+                None
+            }
+            // The walk pauses only when the closure asks for it.
+            TagStep::Attr(_) => {
+                self.defect.set(true);
+                self.pos = self.len();
+                None
             }
         }
-        // `i` is the offset of the `>` that ends the tag.
-        let end = next(i);
-        self.pos = end;
-        Some(Tag {
-            span: Span { start: lt, end },
-            name: Span {
-                start: name_start,
-                end: name_end,
-            },
-            self_closing,
-            block_attr,
-            type_attr,
-            has_for,
-            has_shadow_root_attr,
-        })
     }
 
     /// Scans ASCII letters from `from`. Returns the offset after them and
@@ -794,23 +674,317 @@ impl<'a> Tokenizer<'a> {
     }
 }
 
-/// The attribute whose value the tag state machine reads.
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Attr {
-    /// The first `data-rq-block` attribute.
-    Block,
-    /// The first `type` attribute.
-    Type,
-    /// Any other attribute, or a later duplicate.
-    Other,
+/// One raw attribute of a tag, as the attribute states read it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct RawAttr {
+    /// The raw name (not normalized).
+    pub(crate) name: Span,
+    /// The raw value: the bytes between the quotes, or the bytes of an
+    /// unquoted value. `None` when the attribute has no value.
+    pub(crate) value: Option<Span>,
 }
 
-/// Stores the raw value of the attribute that is read now.
-fn set_value(attr: Attr, value: Span, block: &mut Option<Span>, ty: &mut Option<Span>) {
-    match attr {
-        Attr::Block => *block = Some(value),
-        Attr::Type => *ty = Some(value),
-        Attr::Other => {}
+/// One step of a [`TagWalk`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum TagStep {
+    /// An attribute is complete: its value is read, or it has none.
+    /// Attributes come in source order, every duplicate too.
+    Attr(RawAttr),
+    /// The `>` at `gt` ends the tag.
+    End {
+        /// Offset after the last byte of the tag name.
+        name_end: usize,
+        /// Offset of the `>` that ends the tag.
+        gt: usize,
+        /// The tag ends with `/>` (self-closing start tag state).
+        self_closing: bool,
+    },
+    /// The input ends in the tag: the tag is not emitted.
+    Eof,
+}
+
+#[derive(Clone, Copy, Debug)]
+enum TagState {
+    Name,
+    BeforeAttrName,
+    AttrName,
+    AfterAttrName,
+    BeforeValue,
+    Quoted(u8),
+    Unquoted,
+    AfterQuoted,
+    SelfClosing,
+}
+
+/// The tag name, attribute and self-closing start tag states of the WHATWG
+/// tokenizer (HTML §13.2.5.8 and §13.2.5.32 to §13.2.5.40), as a walk that
+/// stops at each complete attribute. The tokenizer uses it for every tag,
+/// and [`crate::scan`] uses it again to list the attributes of one tag, so
+/// the two never read a tag in two ways.
+///
+/// Each step moves forward, or changes to a state that moves forward on the
+/// same byte, and it returns at the latest at the `>` or at the end of the
+/// input. So the work is linear in the tag length, and the walk holds no
+/// memory that grows with the input.
+#[derive(Clone, Debug)]
+pub(crate) struct TagWalk<'a> {
+    input: &'a [u8],
+    i: usize,
+    state: TagState,
+    name_end: usize,
+    attr_start: usize,
+    value_start: usize,
+    /// The name of the attribute that has left the attribute name state and
+    /// is not returned yet (a value can still follow).
+    pending: Option<Span>,
+}
+
+impl<'a> TagWalk<'a> {
+    /// A walk in the tag name state at `resume`.
+    pub(crate) fn new(input: &'a [u8], resume: usize) -> Self {
+        Self {
+            input,
+            i: resume,
+            state: TagState::Name,
+            name_end: resume,
+            attr_start: resume,
+            value_start: resume,
+            pending: None,
+        }
+    }
+
+    /// The next complete attribute, the end of the tag, or the end of the
+    /// input. Call it again only after [`TagStep::Attr`].
+    pub(crate) fn step(&mut self) -> TagStep {
+        self.walk_until(|_| true)
+    }
+
+    /// Walks to the end of the tag (or of the input) and gives each complete
+    /// attribute to `pause`. When `pause` returns true, the walk stops after
+    /// that attribute and returns it as [`TagStep::Attr`]; a later call goes
+    /// on from there.
+    ///
+    /// The offset and the state are locals in the loop (written back once
+    /// per call), so a walk that never pauses costs per byte what one loop
+    /// costs.
+    #[allow(clippy::too_many_lines)]
+    pub(crate) fn walk_until(&mut self, mut pause: impl FnMut(RawAttr) -> bool) -> TagStep {
+        let input = self.input;
+        let mut i = self.i;
+        let mut state = self.state;
+        let mut name_end = self.name_end;
+        let mut attr_start = self.attr_start;
+        let mut value_start = self.value_start;
+        let mut pending = self.pending;
+        let step = loop {
+            let Some(&c) = input.get(i) else {
+                i = input.len();
+                break TagStep::Eof;
+            };
+            match state {
+                TagState::Name => match c {
+                    b'/' => {
+                        name_end = i;
+                        state = TagState::SelfClosing;
+                        i = next(i);
+                    }
+                    b'>' => {
+                        name_end = i;
+                        let gt = i;
+                        i = next(gt);
+                        break TagStep::End {
+                            name_end,
+                            gt,
+                            self_closing: false,
+                        };
+                    }
+                    _ if is_ws(c) => {
+                        name_end = i;
+                        state = TagState::BeforeAttrName;
+                        i = next(i);
+                    }
+                    _ => i = next(i),
+                },
+                TagState::BeforeAttrName => match c {
+                    b'/' | b'>' => state = TagState::AfterAttrName,
+                    _ if is_ws(c) => i = next(i),
+                    // `=` here starts an attribute whose name begins with `=`.
+                    b'=' => {
+                        attr_start = i;
+                        state = TagState::AttrName;
+                        i = next(i);
+                    }
+                    _ => {
+                        attr_start = i;
+                        state = TagState::AttrName;
+                    }
+                },
+                TagState::AttrName => {
+                    if c == b'/' || c == b'>' || c == b'=' || is_ws(c) {
+                        // Leaving the attribute name state: the name is
+                        // complete, and a value can follow.
+                        pending = Some(Span {
+                            start: attr_start,
+                            end: i,
+                        });
+                        if c == b'=' {
+                            state = TagState::BeforeValue;
+                            i = next(i);
+                        } else {
+                            state = TagState::AfterAttrName;
+                        }
+                    } else {
+                        i = next(i);
+                    }
+                }
+                TagState::AfterAttrName => match c {
+                    b'=' => {
+                        state = TagState::BeforeValue;
+                        i = next(i);
+                    }
+                    _ if is_ws(c) => i = next(i),
+                    // Any other byte: the pending attribute has no value.
+                    // Return it first; the next step reads this byte again.
+                    _ if pending.is_some() => {
+                        if let Some(attr) = pending
+                            .take()
+                            .map(|name| RawAttr { name, value: None })
+                            .filter(|&attr| pause(attr))
+                        {
+                            break TagStep::Attr(attr);
+                        }
+                    }
+                    b'/' => {
+                        state = TagState::SelfClosing;
+                        i = next(i);
+                    }
+                    b'>' => {
+                        let gt = i;
+                        i = next(gt);
+                        break TagStep::End {
+                            name_end,
+                            gt,
+                            self_closing: false,
+                        };
+                    }
+                    _ => {
+                        attr_start = i;
+                        state = TagState::AttrName;
+                    }
+                },
+                TagState::BeforeValue => match c {
+                    b'"' | b'\'' => {
+                        value_start = next(i);
+                        state = TagState::Quoted(c);
+                        i = next(i);
+                    }
+                    // Missing value: the attribute has no value. The next
+                    // step reads this `>` again and ends the tag.
+                    b'>' => {
+                        state = TagState::AfterAttrName;
+                        if let Some(attr) = pending
+                            .take()
+                            .map(|name| RawAttr { name, value: None })
+                            .filter(|&attr| pause(attr))
+                        {
+                            break TagStep::Attr(attr);
+                        }
+                    }
+                    _ if is_ws(c) => i = next(i),
+                    _ => {
+                        value_start = i;
+                        state = TagState::Unquoted;
+                    }
+                },
+                TagState::Quoted(quote) => {
+                    let value_end = i;
+                    i = next(i);
+                    if c == quote {
+                        state = TagState::AfterQuoted;
+                        let value = Span {
+                            start: value_start,
+                            end: value_end,
+                        };
+                        if let Some(attr) = pending
+                            .take()
+                            .map(|name| RawAttr {
+                                name,
+                                value: Some(value),
+                            })
+                            .filter(|&attr| pause(attr))
+                        {
+                            break TagStep::Attr(attr);
+                        }
+                    }
+                }
+                TagState::Unquoted => {
+                    if c == b'>' || is_ws(c) {
+                        let value = Span {
+                            start: value_start,
+                            end: i,
+                        };
+                        if c == b'>' {
+                            // The next step ends the tag at this `>`.
+                            state = TagState::AfterAttrName;
+                        } else {
+                            state = TagState::BeforeAttrName;
+                            i = next(i);
+                        }
+                        if let Some(attr) = pending
+                            .take()
+                            .map(|name| RawAttr {
+                                name,
+                                value: Some(value),
+                            })
+                            .filter(|&attr| pause(attr))
+                        {
+                            break TagStep::Attr(attr);
+                        }
+                    } else {
+                        i = next(i);
+                    }
+                }
+                TagState::AfterQuoted => match c {
+                    b'/' => {
+                        state = TagState::SelfClosing;
+                        i = next(i);
+                    }
+                    b'>' => {
+                        let gt = i;
+                        i = next(gt);
+                        break TagStep::End {
+                            name_end,
+                            gt,
+                            self_closing: false,
+                        };
+                    }
+                    _ if is_ws(c) => {
+                        state = TagState::BeforeAttrName;
+                        i = next(i);
+                    }
+                    _ => state = TagState::BeforeAttrName,
+                },
+                TagState::SelfClosing => {
+                    if c == b'>' {
+                        let gt = i;
+                        i = next(gt);
+                        break TagStep::End {
+                            name_end,
+                            gt,
+                            self_closing: true,
+                        };
+                    }
+                    state = TagState::BeforeAttrName;
+                }
+            }
+        };
+        self.i = i;
+        self.state = state;
+        self.name_end = name_end;
+        self.attr_start = attr_start;
+        self.value_start = value_start;
+        self.pending = pending;
+        step
     }
 }
 

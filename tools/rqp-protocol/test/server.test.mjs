@@ -6,8 +6,8 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { UnsupportedInput, deltaBinding, nonceText } from '../src/common.mjs';
-import { capabilities, changeSet, deltaBase, handle, notModified, requestVersion, rqHave, rqNonce, withoutRqVary, writtenMembers } from '../src/server.mjs';
+import { LIMITS, deltaBinding, nonceText } from '../src/common.mjs';
+import { capabilities, changeSet, deltaBase, handle, hasContentCoding, manifestUrl, notModified, requestVersion, rqHave, rqNonce, withoutRqVary, writtenMembers } from '../src/server.mjs';
 import { acceptsMediaType, parseEntityTags } from '../src/http.mjs';
 import { analyze as analyzeBytes, documentHeadStart } from '../src/markup.mjs';
 import { APP, NONCE, NONCE_SF, TARGET, blockPage, deltaRequest, firstVisit, page, revisions } from './helpers.mjs';
@@ -442,14 +442,6 @@ test('step 3: a server configuration whose manifest text would contain "<" passe
   assert.deepEqual(r.body, page('page-a'));
 });
 
-test('the reference server does not model content codings and other preconditions', () => {
-  assert.throws(() => handle(firstVisit(), { status: 200, headers: [...APP.headers, ['content-encoding', 'br']] }, page('page-a')), UnsupportedInput);
-  for (const name of ['if-match', 'if-unmodified-since', 'if-range']) {
-    assert.throws(() => handle({ ...firstVisit(), headers: [[name, '*']] }, APP, page('page-a')), UnsupportedInput, name);
-  }
-  assert.throws(() => handle({ ...firstVisit(), headers: [['if-modified-since', 'x']] }, APP, page('page-a')), UnsupportedInput);
-});
-
 // Section 3: field rules.
 test('Rq-Version: only the Integer 1, parameters ignored', () => {
   const v = (value) => requestVersion([['rq-version', value]]);
@@ -714,4 +706,140 @@ test('the delta carries the exact content of a block with quotes, escapes, contr
 
 test('writtenMembers: only max_patch_bytes is judged against the server limit; another limit keeps its value', () => {
   assert.deepEqual(writtenMembers({ limits: { other_limit: 1048576, max_patch_bytes: 262144 } }, 262144), { limits: { other_limit: 1048576 } });
+});
+
+// Negotiation section 4, "Inputs that the steps leave open" (DL-089, DL-092, DL-093).
+const APP_WITH_RQ = { status: 200, headers: [...APP.headers, ['rq-version', '9'], ['x-app', '1']] };
+
+test('open inputs 1 and 13: If-Match, If-Unmodified-Since and If-Range give A without Rq-* fields, also with an empty value', () => {
+  for (const name of ['if-match', 'if-unmodified-since', 'if-range']) {
+    for (const value of ['"x"', '*', '']) {
+      for (const request of [firstVisit(), deltaRequest('page-big-a')]) {
+        const r = handle({ ...request, headers: [...request.headers, [name, value]] }, APP_WITH_RQ, page('page-big-b'));
+        assert.deepEqual([r.kind, r.reason, r.status], ['app', 'out-of-scope', 200], `${name}: ${value}`);
+        assert.deepEqual(r.headers, [...APP.headers, ['x-app', '1']]);
+        assert.deepEqual(r.body, page('page-big-b'));
+      }
+    }
+  }
+});
+
+test('open input 2: If-Modified-Since without If-None-Match is ignored', () => {
+  const r = handle({ ...firstVisit(), headers: [...firstVisit().headers, ['if-modified-since', 'Sun, 18 Oct 2026 10:00:00 GMT']] }, APP, page('page-a'));
+  assert.deepEqual([r.kind, r.status, r.reason], ['full', 200, 'not-eligible']);
+  const d = handle(deltaRequest('page-big-a', { 'if-none-match': null, 'if-modified-since': 'x' }), APP, page('page-big-b'));
+  assert.deepEqual([d.kind, d.status], ['full', 200]);
+});
+
+test('open inputs 5 and 17: a content coding of A other than identity gives A without Rq-* fields', () => {
+  for (const coding of ['gzip', 'br', 'identity, gzip', 'GZIP', 'x-identity', 'identity;q=1']) {
+    const app = { status: 200, headers: [...APP_WITH_RQ.headers, ['content-encoding', coding]] };
+    const r = handle(deltaRequest('page-big-a'), app, page('page-big-b'));
+    assert.deepEqual([r.kind, r.reason], ['app', 'out-of-scope'], coding);
+    assert.deepEqual(r.headers, [...APP.headers, ['x-app', '1'], ['content-encoding', coding]]);
+  }
+  const twoLines = { status: 200, headers: [...APP.headers, ['content-encoding', 'identity'], ['content-encoding', 'gzip']] };
+  assert.equal(handle(firstVisit(), twoLines, page('page-a')).kind, 'app');
+});
+
+test('open input 17: identity (any case), empty list members and an empty value are no content coding', () => {
+  for (const coding of ['identity', 'Identity', 'IDENTITY', ' identity ', 'identity, ', ', identity', '', ',']) {
+    const app = { status: 200, headers: [...APP.headers, ['content-encoding', coding]] };
+    assert.equal(handle(firstVisit(), app, page('page-a')).kind, 'full', JSON.stringify(coding));
+    assert.equal(hasContentCoding([['content-encoding', coding]]), false, JSON.stringify(coding));
+  }
+  assert.equal(hasContentCoding([]), false);
+  assert.equal(hasContentCoding([['content-encoding', 'identity'], ['content-encoding', 'gzip']]), true);
+});
+
+test('open inputs 6 and 14: a path over 4096 characters or an origin over 512 characters gives A; the limits themselves give F', () => {
+  const at = (target) => handle({ ...firstVisit(), target }, APP_WITH_RQ, page('page-a'));
+  assert.equal(at(`https://shop.example.com/${'a'.repeat(4095)}`).kind, 'full');
+  const over = at(`https://shop.example.com/${'a'.repeat(4096)}`);
+  assert.deepEqual([over.kind, over.reason], ['app', 'manifest-url']);
+  assert.deepEqual(over.headers, [...APP.headers, ['x-app', '1']]);
+  assert.equal(at(`https://${'h'.repeat(512 - 'https://'.length)}/x`).kind, 'full');
+  assert.equal(at(`https://${'h'.repeat(513 - 'https://'.length)}/x`).kind, 'app');
+  // The path is the serialized path: a non-ASCII character counts for 6 characters (two bytes, %XX each).
+  assert.equal(at(`https://shop.example.com/aaa${'é'.repeat(682)}`).kind, 'full'); // 1 + 3 + 682 * 6 = 4096 characters
+  assert.equal(at(`https://shop.example.com/aaaa${'é'.repeat(682)}`).kind, 'app'); // 4097 characters
+  assert.equal(LIMITS.maxPathChars, 4096);
+  assert.equal(LIMITS.maxOriginChars, 512);
+});
+
+test('open input 14: a target that is not an http or https URL gives A and never throws', () => {
+  for (const target of ['not a url', '', undefined, null, 'ftp://shop.example.com/', 'file:///x', 'https://', 'https://[::1', 'http://a b/']) {
+    const r = handle({ ...firstVisit(), target }, APP, page('page-a'));
+    assert.deepEqual([r.kind, r.reason], ['app', 'manifest-url'], String(target));
+  }
+  assert.equal(manifestUrl('https://shop.example.com/catalog?q=1#f').pathname, '/catalog');
+  assert.equal(manifestUrl('http://localhost:8080/').origin, 'http://localhost:8080');
+  assert.equal(manifestUrl('mailto:a@b'), null);
+});
+
+test('open input 10: an empty list element gives the tag for the 304 test and no delta base', () => {
+  const r1 = revisions('page-big-b').page_revision;
+  const base = revisions('page-big-a').page_revision;
+  for (const v of [`"${base}", `, `, "${base}"`, `"${base}",`, `,"${base}"`]) {
+    assert.equal(deltaBase([['if-none-match', v]]), null, v);
+    const r = handle(deltaRequest('page-big-a', { 'if-none-match': v }), APP, page('page-big-b'));
+    assert.deepEqual([r.kind, r.reason], ['full', 'not-eligible'], v);
+  }
+  assert.equal(handle(deltaRequest('page-big-a', { 'if-none-match': `"${r1}", ` }), APP, page('page-big-b')).status, 304);
+  assert.equal(deltaBase([['if-none-match', `"${base}"`]]), base);
+  assert.equal(deltaBase([['if-none-match', `  "${base}"  `]]), base);
+});
+
+test('open inputs 3 and 10: an If-None-Match of another syntax gives no 304 and no base', () => {
+  const base = revisions('page-big-a').page_revision;
+  const cur = revisions('page-big-b').page_revision;
+  for (const v of ['', ',', ', ,', `*, "${cur}"`, `"${cur}", *`, `w/"${cur}"`, `W/ "${cur}"`, `${cur}`, `"${cur}`, `"${cur}" "${base}"`]) {
+    assert.equal(notModified([['if-none-match', v]], `"${cur}"`), false, JSON.stringify(v));
+    assert.equal(deltaBase([['if-none-match', v]]), null, JSON.stringify(v));
+    const r = handle(deltaRequest('page-big-a', { 'if-none-match': v }), APP, page('page-big-b'));
+    assert.deepEqual([r.status, r.kind], [200, 'full'], JSON.stringify(v));
+  }
+  assert.equal(notModified([['if-none-match', '*'], ['if-none-match', '*']], '"r1.X"'), false); // "*, *"
+});
+
+test('open input 9: one accepting range is enough; two q parameters, a quoted q and a syntax error accept nothing', () => {
+  const t = 'application/vnd.rivqen.delta+json';
+  const kind = (accept) => handle(deltaRequest('page-big-a', { accept }), APP, page('page-big-b')).kind;
+  assert.equal(kind(`${t};q=0, ${t}`), 'delta');
+  assert.equal(kind(`${t};q=0, text/html, ${t};q=0.1`), 'delta');
+  assert.equal(kind(`${t};Q=1`), 'delta');
+  for (const accept of [`${t};q=1;q=1`, `${t};q="1"`, `${t};q=0.5;Q=1`, `${t};q`, `${t};q = 1`, `${t};a="b`, `${t};q=1.5`, `${t};q=`]) {
+    assert.equal(kind(accept), 'full', accept);
+  }
+});
+
+test('open inputs 4 and 8: an Accept q that is not a qvalue does not accept; empty list elements are ignored', () => {
+  const t = 'application/vnd.rivqen.delta+json';
+  assert.equal(acceptsMediaType(`${t};q=1.0001`, t), false);
+  assert.equal(acceptsMediaType(`${t};q=.5`, t), false);
+  assert.equal(acceptsMediaType(`, ,${t},`, t), true);
+  assert.equal(acceptsMediaType(`${t}, `, t), true);
+});
+
+test('open inputs 7, 11 and 12: Rq-Version, Rq-Have and Rq-Nonce follow the RFC 9651 parse', () => {
+  assert.equal(requestVersion([['rq-version', '01']]), 1);
+  assert.equal(requestVersion([['rq-version', '1;x']]), 1);
+  assert.equal(requestVersion([['rq-version', '1'], ['rq-version', '1']]), null);
+  assert.equal(requestVersion([['rq-version', '1'], ['rq-version', '']]), null); // "1, " fails
+  assert.equal(capabilities([['rq-capabilities', '(block-patch)'], ['rq-capabilities', '']]).size, 0);
+  assert.equal(rqHave([['rq-have', 't=t1.x, b=:AA=:']]), null); // an incomplete padding fails the Dictionary parse
+  assert.equal(rqHave([['rq-have', 't=t1.x, b=:AAAAAAAAAAA=:']]).b.length, 8);
+  assert.deepEqual(rqHave([['rq-have', 't=t1.x, b']]), { t: 't1.x', b: null });
+  assert.equal(rqHave([['rq-have', 't, b=::']]), null);
+  assert.equal(rqNonce([['rq-nonce', ':AAECAwQFBgcICQoLDA0ODw=:']]), null); // wrong padding: fails
+  assert.equal(rqNonce([['rq-nonce', ':AAECAwQFBgcICQoLDA0ODw:']]).length, 16);
+  assert.equal(rqNonce([['rq-nonce', NONCE_SF]]).length, 16);
+});
+
+test('open input 15: the Vary members of A stay, also Accept; a line with an Rq-* member is written again', () => {
+  const app = { status: 200, headers: [...APP.headers, ['vary', 'Accept, Rq-Nonce, , Cookie'], ['vary', 'Accept-Encoding,  Accept']] };
+  for (const request of [firstVisit(), deltaRequest('page-a')]) {
+    const r = handle(request, app, page('page-a'));
+    assert.deepEqual(r.headers.filter(([n]) => n === 'vary'), [['vary', 'Accept, Cookie'], ['vary', 'Accept-Encoding,  Accept']]);
+  }
 });

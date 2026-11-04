@@ -33,6 +33,8 @@ This page lists candidate dependencies for the Rust core with their license and 
 | `lol_html` | 3.0.1 | BSD-3-Clause | Streaming HTML rewriter | Candidate for RQP regions only |
 | `html5ever` | 0.40.1 | MIT OR Apache-2.0 | HTML parser | Not needed for legacy (textual grammar) |
 
+Reference server (`server/rust-reference`, WP-03): <Badge type="tip" text="FACT" /> human decision H-113 (2026-10-31): own HTTP/1.1 reader on `std`, no async runtime, and only `sha1` 0.11.0, `sha2` 0.11.0, `base64` 0.23.1, `serde_json` 1.0.151 plus the path dependency `tools/rqp-markup/rust` (DL-085); about 20 crates in all, every license MIT, Apache-2.0, BSD-3-Clause, Unicode-3.0 or `Unlicense OR MIT`. hyper and axum were measured and not taken: they lowercase request field names, and the `legacy-php` profile compares them byte for byte (D-01).
+
 Dev and test only:
 
 | Crate | Version | License | Role |

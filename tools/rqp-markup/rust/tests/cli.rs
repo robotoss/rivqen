@@ -184,10 +184,24 @@ fn run_on_fifo(args: &[&Path], fifo: &Path) -> Output {
     let (done, wait) = mpsc::channel();
     let waiter = std::thread::spawn(move || done.send(child.wait_with_output().unwrap()));
     let Ok(output) = wait.recv_timeout(Duration::from_secs(60)) else {
-        // The command waits in the open of the FIFO; a writer ends that.
-        drop(fs::OpenOptions::new().write(true).open(fifo).unwrap());
+        // The command waits in the open of the FIFO; a writer ends that. Open the
+        // writer without blocking: when the command has already ended (a slow start
+        // on a loaded machine), no reader exists and a blocking open would wait
+        // forever (ENXIO instead).
+        use std::os::unix::fs::OpenOptionsExt;
+        #[cfg(target_os = "linux")]
+        const O_NONBLOCK: i32 = 0o4000;
+        #[cfg(not(target_os = "linux"))]
+        const O_NONBLOCK: i32 = 0x0004;
+        let writer = fs::OpenOptions::new()
+            .write(true)
+            .custom_flags(O_NONBLOCK)
+            .open(fifo);
+        drop(writer);
         waiter.join().unwrap().unwrap();
-        panic!("the command waited for a writer of the FIFO");
+        panic!(
+            "the command did not end in 60 s (it waited for a writer of the FIFO, or started too slowly)"
+        );
     };
     waiter.join().unwrap().unwrap();
     output

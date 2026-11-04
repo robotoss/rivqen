@@ -323,25 +323,43 @@ test('64 KB adversarial values of Rq-Version, Rq-Have and Rq-Nonce parse in unde
   }
 });
 
+/**
+ * The least of three timings of `work` in ms. One slow run (a loaded machine, a pause of the garbage
+ * collector) does not count; a quadratic implementation is slow in every run.
+ */
+function bestOfThree(work) {
+  let best = Infinity;
+  for (let k = 0; k < 3; k++) {
+    const start = process.hrtime.bigint();
+    work();
+    best = Math.min(best, Number(process.hrtime.bigint() - start) / 1e6);
+  }
+  return best;
+}
+
+// The bound is 500 ms. A linear trim of 64 KB takes about 1 ms, so the bound is 500 times the normal time
+// and holds on a loaded machine. The quadratic pattern /^[ \t]+|[ \t]+$/g that this test guards against
+// takes 2 s (spaces) to 9 s (space and tab) for one value on a fast machine and more under load (checked
+// on 2026-11-02 with Node.js 26), and handle() trims 13 values, so it fails the bound in every run.
+const WHITE_SPACE_BOUND_MS = 500;
+
 test('64 KB of white space inside header values: the OWS trim and handle() stay linear (final WP-17 security review L1)', () => {
   const n = 65536;
   const inner = (ws) => `a${ws.repeat(n)}b`;
   for (const ws of [' ', '\t', ' \t']) {
     const value = inner(ws);
-    let start = process.hrtime.bigint();
-    normalizeHeaders([['X-Long', value]]);
-    withoutRqVary([['vary', `Accept${ws.repeat(n)}x, Rq-Have`]]);
-    let ms = Number(process.hrtime.bigint() - start) / 1e6;
-    assert.ok(ms < 50, `the trim of ${value.length} chars took ${ms} ms`);
+    let ms = bestOfThree(() => {
+      normalizeHeaders([['X-Long', value]]);
+      withoutRqVary([['vary', `Accept${ws.repeat(n)}x, Rq-Have`]]);
+    });
+    assert.ok(ms < WHITE_SPACE_BOUND_MS, `the trim of ${value.length} chars took ${ms} ms`);
     const request = get(normalizeHeaders([...clientLines(held), ...['rq-version', 'rq-have', 'rq-nonce', 'accept', 'if-none-match', 'x-other'].map((name) => [name, value])]));
     const app = {
       ...APP,
       headers: [['content-type', `text/html${ws.repeat(n)}; charset=utf-8`], ['vary', `Accept${ws.repeat(n)}x, Rq-Have`], ['cache-control', 'no-cache']],
     };
-    start = process.hrtime.bigint();
-    handle(request, app, held);
-    ms = Number(process.hrtime.bigint() - start) / 1e6;
-    assert.ok(ms < 50, `handle() with ${value.length}-char values took ${ms} ms`);
+    ms = bestOfThree(() => handle(request, app, held));
+    assert.ok(ms < WHITE_SPACE_BOUND_MS, `handle() with ${value.length}-char values took ${ms} ms`);
   }
 });
 

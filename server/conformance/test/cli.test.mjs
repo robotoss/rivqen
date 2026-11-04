@@ -127,7 +127,7 @@ describe('exit code 2', () => {
       const r = await runMain(args);
       assert.equal(r.code, 2, args.join(' '));
       assert.ok(r.err.includes(message), `${args.join(' ')}: ${r.err}`);
-      assert.ok(r.err.endsWith('usage: rivqen-conformance --target <http://host:port> --suite rqp|legacy [--profile <name>] [--fixtures <dir>] [--only <prefix>] [--json <file>] [--timeout-ms <n>]\n'));
+      assert.ok(r.err.endsWith('usage: rivqen-conformance --target <http://host:port> --suite rqp|legacy [--profile <name>] [--fixtures <dir>] [--only <prefix>] [--json <file>] [--timeout-ms <n>] [--control-token-file <file>]\n'));
     }
   });
 

@@ -1,0 +1,14 @@
+{
+  "testRunner": "command",
+  "commandRunner": { "command": "node --test \"test/*.test.js\"" },
+  "coverageAnalysis": "off",
+  "inPlace": true,
+  "mutate": ["src/**/*.js"],
+  "reporters": ["clear-text", "progress"],
+  "thresholds": { "high": 90, "low": 80, "break": 80 },
+  "concurrency": 4,
+  "tempDirName": ".stryker-tmp",
+  "cleanTempDir": "always",
+  "timeoutMS": 20000,
+  "timeoutFactor": 1.5
+}

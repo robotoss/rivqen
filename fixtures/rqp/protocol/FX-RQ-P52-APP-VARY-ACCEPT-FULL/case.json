@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-P52-APP-VARY-ACCEPT-FULL",
+  "description": "The application sends Vary: Accept; F keeps it (a member of A other than Rq-* stays; H-45 forbids only a Vary that the RQP step adds; open input 15)",
+  "rules": ["RQP-08"],
+  "page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"],
+      ["vary", "Accept"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"]
+    ]
+  }
+}

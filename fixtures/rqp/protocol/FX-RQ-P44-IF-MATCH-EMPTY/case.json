@@ -1,0 +1,26 @@
+{
+  "id": "FX-RQ-P44-IF-MATCH-EMPTY",
+  "description": "A delta request with If-Match with an empty value (the field line counts when it is present): the application evaluated the condition for its own representation, so A without its Rq-* fields, never F or D (negotiation section 4, open inputs 1 and 13)",
+  "rules": ["RQP-09", "RQP-16"],
+  "page": "page-big-b",
+  "client_page": "page-big-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html, application/vnd.rivqen.delta+json"],
+      ["if-none-match", "{{r1:page-big-a}}"],
+      ["rq-have", "t={{t1:page-big-a}}, b={{have:page-big-a}}"],
+      ["rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"],
+      ["if-match", ""]
+    ]
+  }
+}

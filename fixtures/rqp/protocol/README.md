@@ -55,11 +55,51 @@ Client cases (`kind: "client"`): `context` (snapshot page, members and partition
 
 ## `expected.json`
 
-Generated. Server cases: optional `level` (`"must"` or `"should"`, copied from `case.json`), `request` (`method`, `target`, final header lines), optional `server_config`, `status`, `headers_required` (name → exact value), `headers_optional` (a `304` only: when the field is present, it is exactly one line with that value; today `rq-version: 1`, DL-036), optional `vary` (`{"required": [...], "should": [...]}`, lower-case field names, DL-063: `required` are the `Vary` members of the application that are not `Rq-*`, which every outcome keeps; `should` is `["rq-nonce"]` on D, a SHOULD rule; the checker compares sets and fails any other `Rq-*` member; `vary` is never in `headers_required`), `headers_forbidden` (names: every `Rq-*` field of the application that the response does not have, DL-030, but `rq-version` is allowed on a `304`; `last-modified` for every outcome other than passthrough, DL-032), `body`: `{"kind": "full", "insert_at", "manifest"}` (the page with the manifest inserted; the manifest is compared as a JSON value, fixtures.md §5; since H-103 it has only `protocol`, `origin`, `path`, `page_revision` and the members of the server configuration that are not the default), `{"kind": "delta", "binding", "binding_inputs": {"url", "base_revision", "nonce", "next_revision"}, "blocks": [{"id", "sha256"}]}` (H-104, H-107, H-108: `binding` is compared exactly; `binding_inputs` are U, B, N and R′ of the expected binding, N being the base64url text of the decoded `Rq-Nonce` of the request, for the diagnosis only; the changed blocks in order; `sha256` is the hash of the current content of the block, which the checker compares with the hash of the `content` that the server sent), `{"kind": "app"}` (the application body unchanged) or `{"kind": "none"}`.
+Generated. Server cases: optional `level` (`"must"` or `"should"`, copied from `case.json`), `request` (`method`, `target`, final header lines), optional `server_config`, `status`, `headers_required` (name → exact value), `headers_optional` (a `304` only: when the field is present, it is exactly one line with that value; today `rq-version: 1`, DL-036), optional `vary` (`{"required": [...], "should": [...]}`, lower-case field names, DL-063: `required` are the `Vary` members of the application that are not `Rq-*`, which every outcome keeps; `should` is `["rq-nonce"]` on D, a SHOULD rule; the checker compares sets and fails any other `Rq-*` member, and fails an `Accept` on F or on a `304` unless `required` lists it (the application set it, open input 15); `vary` is never in `headers_required`), `headers_forbidden` (names: every `Rq-*` field of the application that the response does not have, DL-030, but `rq-version` is allowed on a `304`; `last-modified` for every outcome other than passthrough, DL-032), `body`: `{"kind": "full", "insert_at", "manifest"}` (the page with the manifest inserted; the manifest is compared as a JSON value, fixtures.md §5; since H-103 it has only `protocol`, `origin`, `path`, `page_revision` and the members of the server configuration that are not the default), `{"kind": "delta", "binding", "binding_inputs": {"url", "base_revision", "nonce", "next_revision"}, "blocks": [{"id", "sha256"}]}` (H-104, H-107, H-108: `binding` is compared exactly; `binding_inputs` are U, B, N and R′ of the expected binding, N being the base64url text of the decoded `Rq-Nonce` of the request, for the diagnosis only; the changed blocks in order; `sha256` is the hash of the current content of the block, which the checker compares with the hash of the `content` that the server sent), `{"kind": "app"}` (the application body unchanged) or `{"kind": "none"}`.
 
 Client cases: `context` (with every member above, the default values written out, also `redirected`; a context snapshot has its `partition`), `request`, `response` (with `body`, `body_bytes`, `body_sha256`), `result` (`outcome`, `error`, `next`, `metric`, `snapshot`). A snapshot has `url` (the canonical final URL) and `partition` (`request` or `public`); a client under test must return both.
 
 Harness: `tools/rqp-protocol/check.mjs` runs a server module `handle(request, appResponse, pageBytes, config)` or a client module over the fixtures. It prints `FAIL [SHOULD]` lines for failed SHOULD cases and a summary `N passed, M failed, K SHOULD failed` (see `tools/rqp-protocol/README.md`). The public origin is `https://shop.example.com`; there is no content coding.
+
+## Cases for the open inputs of negotiation §4
+
+<!-- Added in WP-03 S2 T-05. Items: "Inputs that the steps leave open" in docs/engineering/protocol/negotiation.md §4 (DL-089, DL-092, DL-093). -->
+
+Each case pins one behavior for every implementation. The cases `P44`, `P46-INM-TRAILING-COMMA-NO-BASE`, `P47`, `P48`, `P51` and `P53` send the delta request `R(page-big-a)` on `page-big-b` with the one change that the row says. The other cases send a first-visit request (or `If-None-Match` of the current page) on `page-a`. `Item` is the number in the list of negotiation §4.
+
+| ID | Item | Request change | Expected |
+|---|---|---|---|
+| `FX-RQ-P44-IF-MATCH` | 1 | `If-Match: "app-1"` | A, no `Rq-*` fields |
+| `FX-RQ-P44-IF-MATCH-EMPTY` | 1, 13 | `If-Match` with an empty value | A, no `Rq-*` fields |
+| `FX-RQ-P44-IF-UNMODIFIED-SINCE` | 1 | `If-Unmodified-Since` with a date | A, no `Rq-*` fields |
+| `FX-RQ-P44-IF-RANGE` | 1 | `If-Range: "app-1"` | A, no `Rq-*` fields |
+| `FX-RQ-P45-IF-MODIFIED-SINCE-ALONE` | 2 | First visit with `If-Modified-Since`, no `If-None-Match` | F (the field is ignored) |
+| `FX-RQ-P46-INM-LOWERCASE-W` | 3, 10 | `If-None-Match: w/"r1.…"` of the current page | F, no `304` |
+| `FX-RQ-P46-INM-W-SPACE` | 3, 10 | `W/ "r1.…"` | F, no `304` |
+| `FX-RQ-P46-INM-STAR-AND-TAG` | 3, 10 | `*, "r1.…"` | F, no `304` |
+| `FX-RQ-P46-INM-STAR-TWO-LINES` | 10 | `*` on two lines | F, no `304` |
+| `FX-RQ-P46-INM-EMPTY` | 3, 10 | an empty value | F, no `304` |
+| `FX-RQ-P46-INM-COMMAS-ONLY` | 3, 10 | `,,` | F, no `304` |
+| `FX-RQ-P46-INM-TRAILING-COMMA-304` | 10 | `"r1.…",` of the current page | `304` (the tag matches) |
+| `FX-RQ-P46-INM-TRAILING-COMMA-NO-BASE` | 10 | delta request, `If-None-Match: "r1.…",` of the held page | F (no base, no delta) |
+| `FX-RQ-P47-ACCEPT-Q-OVER-ONE` | 4 | delta range with `q=1.5` | F |
+| `FX-RQ-P47-ACCEPT-Q-FOUR-DECIMALS` | 4 | delta range with `q=0.0001` | F |
+| `FX-RQ-P48-ACCEPT-ONE-RANGE-ENOUGH` | 9 | `…delta+json;q=0, …delta+json` | D |
+| `FX-RQ-P48-ACCEPT-Q-UPPERCASE` | 9 | `…delta+json;Q=0.5` | D |
+| `FX-RQ-P48-ACCEPT-TWO-Q` | 9 | `;q=1;q=0.5` | F |
+| `FX-RQ-P48-ACCEPT-Q-QUOTED` | 9 | `;q="1"` | F |
+| `FX-RQ-P48-ACCEPT-PARAMETER-SYNTAX` | 9 | `;level` (a parameter without `=`) | F |
+| `FX-RQ-P49-CONTENT-ENCODING-IDENTITY` | 5, 17 | A has `Content-Encoding: Identity` | F; the field of A stays |
+| `FX-RQ-P50-PATH-AT-LIMIT` | 6 | target path of 4096 characters | F with that path in the manifest |
+| `FX-RQ-P50-PATH-OVER-LIMIT` | 6 | target path of 4097 characters | A, no `Rq-*` fields |
+| `FX-RQ-P51-HAVE-B-BAD-PADDING` | 7, 12 | `Rq-Have` `b=:AAAAAAAAAA=:` (incomplete padding) | F (`Rq-Have` is absent) |
+| `FX-RQ-P51-HAVE-B-BARE` | 12 | `Rq-Have` `t=…, b` (a Boolean `b`) | D with every block (`b` is absent) |
+| `FX-RQ-P51-HAVE-T-BARE` | 12 | `Rq-Have` `t, b=:…:` (a Boolean `t`) | F (`Rq-Have` is absent) |
+| `FX-RQ-P52-APP-VARY-ACCEPT-FULL` | 15 | A has `Vary: Accept`; first visit | F with `Accept` in `Vary` |
+| `FX-RQ-P52-APP-VARY-ACCEPT-NOT-MODIFIED` | 15 | A has `Vary: Accept`; `If-None-Match` of the current page | `304` with `Accept` in `Vary` |
+| `FX-RQ-P53-NONCE-BAD-PADDING` | 7 | `Rq-Nonce: :AAECAwQFBgcICQoLDA0ODw=:` | F (no nonce) |
+
+Not in the set: item 5 with a content coding other than `identity` (the runner fails every response with such a coding, so no server can pass the case; the JavaScript tests check it), item 14 (server-specific), item 18 (a MAY).
 
 ## Rules
 

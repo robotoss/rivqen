@@ -10,7 +10,7 @@
 // fails, the server does not list the suite or the profile, or no case is
 // selected.
 
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { compareLegacy, compareRqp } from './compare.mjs';
 import { DEFAULT_DIRS, DEFAULT_PROFILE, PROFILES, SUITES, legacyCases, rqpCases } from './fixtures.mjs';
@@ -19,6 +19,10 @@ import { escapeText } from './escape.mjs';
 import { capProblems, formatLine, formatSummary, summarize, toJson } from './report.mjs';
 
 export const INFO_PATH = '/__rivqen/conformance/info';
+/** Field of the per-run control token (CONTRACT.md §2; H-117). */
+export const CONTROL_TOKEN_FIELD = 'Rivqen-Conformance-Token';
+/** A control token: base64url, 16 to 256 characters (H-117). */
+export const CONTROL_TOKEN_PATTERN = /^[A-Za-z0-9_-]{16,256}$/;
 export const CASE_PATH = '/__rivqen/conformance/case';
 const MAX_TIMEOUT_MS = 600000;
 /** The body limit of POST /case (CONTRACT.md section 2). */
@@ -33,7 +37,7 @@ export class RunnerError extends Error {
   }
 }
 
-export const USAGE = 'usage: rivqen-conformance --target <http://host:port> --suite rqp|legacy [--profile <name>] [--fixtures <dir>] [--only <prefix>] [--json <file>] [--timeout-ms <n>]';
+export const USAGE = 'usage: rivqen-conformance --target <http://host:port> --suite rqp|legacy [--profile <name>] [--fixtures <dir>] [--only <prefix>] [--json <file>] [--timeout-ms <n>] [--control-token-file <file>]';
 
 /** The `--target` origin: { origin, host, port, authority }. Only `http://`, no path, query, fragment or user information. */
 export function parseTarget(text) {
@@ -52,7 +56,7 @@ export function parseTarget(text) {
 
 /** Parse the command line. Throws RunnerError. */
 export function parseArgs(argv) {
-  const opts = { target: null, suite: null, profile: null, fixtures: null, only: '', json: null, timeoutMs: DEFAULT_TIMEOUT_MS };
+  const opts = { target: null, suite: null, profile: null, fixtures: null, only: '', json: null, timeoutMs: DEFAULT_TIMEOUT_MS, tokenFile: null, token: null };
   const seen = new Set();
   for (let i = 0; i < argv.length; i += 2) {
     const option = argv[i];
@@ -66,6 +70,7 @@ export function parseArgs(argv) {
     else if (option === '--fixtures') opts.fixtures = resolve(value);
     else if (option === '--only') opts.only = value;
     else if (option === '--json') opts.json = resolve(value);
+    else if (option === '--control-token-file') opts.tokenFile = resolve(value);
     else if (option === '--timeout-ms') {
       if (!/^[1-9][0-9]*$/.test(value) || Number(value) > MAX_TIMEOUT_MS) throw new RunnerError(`--timeout-ms must be an integer from 1 to ${MAX_TIMEOUT_MS}`);
       opts.timeoutMs = Number(value);
@@ -103,11 +108,30 @@ function send(opts, method, path, authority, fields, body) {
   });
 }
 
+/** The control token of --control-token-file (trimmed), or null. Throws RunnerError; never prints the token. */
+export function readToken(file) {
+  if (file === null) return null;
+  let text;
+  try {
+    text = readFileSync(file, 'utf8');
+  } catch (error) {
+    throw new RunnerError(`cannot read the control token file (${error.code ?? error.name})`, { cause: error });
+  }
+  const token = text.trim();
+  if (!CONTROL_TOKEN_PATTERN.test(token)) throw new RunnerError('the control token must be 16 to 256 base64url characters');
+  return token;
+}
+
+/** The field lines that every control request carries. */
+function controlFields(opts) {
+  return opts.token === null ? [] : [[CONTROL_TOKEN_FIELD, opts.token]];
+}
+
 /** GET /info: the suites and profiles of the server. Throws RunnerError. */
 async function readInfo(opts) {
   let response;
   try {
-    response = await send(opts, 'GET', INFO_PATH, opts.target.authority, []);
+    response = await send(opts, 'GET', INFO_PATH, opts.target.authority, controlFields(opts));
   } catch (error) {
     if (error instanceof HttpError && error.code === HttpCode.CONNECT) throw new RunnerError(`the target cannot be reached: ${error.message}`, { cause: error });
     throw new RunnerError(`GET ${INFO_PATH} failed: ${error.message}`, { cause: error });
@@ -142,6 +166,7 @@ async function postCase(opts, kase) {
   const fields = [
     ['Content-Type', 'application/json'],
     ['Content-Length', String(body.length)],
+    ...controlFields(opts),
   ];
   const response = await send(opts, 'POST', CASE_PATH, opts.target.authority, fields, body);
   if (response.status === 204) return undefined;
@@ -189,6 +214,7 @@ export async function run(opts, out) {
   } catch (error) {
     throw new RunnerError(`cannot read the fixture directory ${opts.fixtures} (${error.code ?? error.name})`, { cause: error });
   }
+  opts.token = readToken(opts.tokenFile);
   await readInfo(opts);
   if (cases.length === 0) throw new RunnerError('no case is selected');
   const results = [];

@@ -139,7 +139,14 @@ export function parseIfNoneMatch(value) {
   if (text === '*') return { star: true, tags: [] };
   const tags = [];
   let i = 0;
-  while (text[i] === ',' || text[i] === ' ' || text[i] === '\t') i++; // empty list elements are allowed
+  let commas = 0;
+  const skipSeparators = () => {
+    while (text[i] === ',' || text[i] === ' ' || text[i] === '\t') {
+      if (text[i] === ',') commas++;
+      i++;
+    }
+  };
+  skipSeparators(); // empty list elements are allowed
   while (i < text.length) {
     const weak = text.startsWith('W/', i);
     if (weak) i += 2;
@@ -153,9 +160,10 @@ export function parseIfNoneMatch(value) {
     while (text[i] === ' ' || text[i] === '\t') i++;
     if (i >= text.length) break;
     if (text[i] !== ',') return null;
-    while (text[i] === ',' || text[i] === ' ' || text[i] === '\t') i++; // empty list elements are allowed
+    skipSeparators(); // empty list elements are allowed
   }
-  return tags.length === 0 ? null : { star: false, tags };
+  // Open input 10: the list has an empty element when it has more commas than the tags need.
+  return tags.length === 0 ? null : { star: false, tags, emptyElement: commas !== tags.length - 1 };
 }
 
 /** Step 4: true when the If-None-Match condition is false for the ETag `etag` (weak comparison). */
@@ -171,12 +179,15 @@ export function noneMatchFails(headers, etag) {
 
 const BASE_REVISION = /^r1\.[A-Za-z0-9_-]{43}$/;
 
-/** Section 3.5: the delta base B, or null. Only one entity-tag of the form "r1.…" gives a base. */
+/**
+ * Section 3.5: the delta base B, or null. Only one entity-tag of the form "r1.…" and no empty list
+ * element give a base (open input 10).
+ */
 export function deltaBase(headers) {
   const value = fieldValue(headers, 'if-none-match');
   if (value === null) return null;
   const parsed = parseIfNoneMatch(value);
-  if (parsed === null || parsed.star || parsed.tags.length !== 1) return null;
+  if (parsed === null || parsed.star || parsed.tags.length !== 1 || parsed.emptyElement) return null;
   return BASE_REVISION.test(parsed.tags[0].opaque) ? parsed.tags[0].opaque : null;
 }
 
@@ -204,18 +215,99 @@ function splitList(value) {
   return parts;
 }
 
-/** Section 3.6: true when Accept lists the delta media type itself, with a weight above 0. */
+const PARAM_TOKEN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+const QVALUE = /^(0(\.[0-9]{0,3})?|1(\.0{0,3})?)$/;
+
+/**
+ * The parameters of one media range as [{ name, value, quoted }], or null for a syntax error
+ * (RFC 9110 section 5.6.6): `rest` starts at the first ";". A parameter is name "=" value with a
+ * token name and a token or a quoted-string value, with no white space around "="; empty
+ * parameters (";;" and a trailing ";") and OWS around ";" are allowed.
+ */
+/** RFC 9110 section 5.6.4 qdtext: HTAB, SP, 0x21, 0x23-0x5B, 0x5D-0x7E, obs-text. */
+function isQdtext(c) {
+  const n = c.charCodeAt(0);
+  return n === 0x09 || n === 0x20 || n === 0x21 || (n >= 0x23 && n <= 0x5b) || (n >= 0x5d && n <= 0x7e) || n >= 0x80;
+}
+
+/** RFC 9110 section 5.6.4 quoted-pair: a backslash and HTAB, SP, VCHAR or obs-text. */
+function isQuotedPairChar(c) {
+  const n = c.charCodeAt(0);
+  return n === 0x09 || (n >= 0x20 && n <= 0x7e) || n >= 0x80;
+}
+
+function mediaRangeParameters(rest) {
+  const params = [];
+  let i = 0;
+  while (i < rest.length) {
+    i++; // past ";"
+    while (rest[i] === ' ' || rest[i] === '\t') i++;
+    if (i >= rest.length) break;
+    if (rest[i] === ';') continue;
+    const eq = rest.indexOf('=', i);
+    if (eq < 0) return null;
+    const name = rest.slice(i, eq);
+    if (!PARAM_TOKEN.test(name)) return null;
+    i = eq + 1;
+    let value;
+    const quoted = rest[i] === '"';
+    if (quoted) {
+      value = '';
+      i++;
+      let closed = false;
+      while (i < rest.length && !closed) {
+        const c = rest[i++];
+        if (c === '"') closed = true;
+        else if (c === '\\') {
+          if (i >= rest.length || !isQuotedPairChar(rest[i])) return null;
+          value += rest[i++];
+        } else if (isQdtext(c)) value += c;
+        else return null;
+      }
+      if (!closed) return null;
+    } else {
+      const start = i;
+      while (i < rest.length && rest[i] !== ';' && rest[i] !== ' ' && rest[i] !== '\t') i++;
+      value = rest.slice(start, i);
+      if (!PARAM_TOKEN.test(value)) return null;
+    }
+    params.push({ name, value, quoted });
+    while (rest[i] === ' ' || rest[i] === '\t') i++;
+    if (i < rest.length && rest[i] !== ';') return null;
+  }
+  return params;
+}
+
+/**
+ * Section 3.6: true when one media range of Accept is the delta media type itself with a weight above 0.
+ * Open inputs 4 and 9: one accepting range is enough, also when another has q=0. A range accepts nothing
+ * when its parameters have a syntax error, when it has two or more q parameters (the name is
+ * case-insensitive), or when q is quoted or is not a qvalue.
+ */
 export function acceptsDelta(headers) {
   const value = fieldValue(headers, 'accept');
   if (value === null) return false;
   return splitList(value).some((range) => {
-    const [media, ...params] = range.split(';').map((s) => s.trim());
+    const semicolon = range.indexOf(';');
+    const media = (semicolon < 0 ? range : range.slice(0, semicolon)).trim();
     if (media.toLowerCase() !== DELTA_TYPE) return false;
-    const q = params.findLast((param) => /^q\s*=/i.test(param)); // the last q parameter wins
-    if (q === undefined) return true;
-    const weight = q.replace(/^q\s*=\s*/i, '');
-    return /^(0(\.[0-9]{0,3})?|1(\.0{0,3})?)$/.test(weight) && Number(weight) > 0;
+    const params = semicolon < 0 ? [] : mediaRangeParameters(range.slice(semicolon));
+    if (params === null) return false;
+    const weights = params.filter((param) => param.name.toLowerCase() === 'q');
+    if (weights.length === 0) return true;
+    if (weights.length > 1 || weights[0].quoted) return false;
+    return QVALUE.test(weights[0].value) && Number(weights[0].value) > 0;
   });
+}
+
+/**
+ * Open inputs 5 and 17: true when a Content-Encoding member of A is not "identity" (ASCII
+ * case-insensitive). Empty list members are ignored.
+ */
+export function hasContentCoding(headers) {
+  const value = fieldValue(headers, 'content-encoding');
+  if (value === null) return false;
+  return value.split(',').map(trimOws).some((coding) => coding !== '' && coding.replace(/[A-Z]/g, (c) => c.toLowerCase()) !== 'identity');
 }
 
 /** The media type of a Content-Type value, in lower case without parameters, or null. */

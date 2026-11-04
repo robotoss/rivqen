@@ -163,7 +163,8 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'Java', link: '/engineering/server/java' },
       { text: 'PHP', link: '/engineering/server/php' },
       { text: 'CDN and proxies', link: '/engineering/server/cdn' },
-      { text: 'Conformance', link: '/engineering/server/conformance' }
+      { text: 'Conformance', link: '/engineering/server/conformance' },
+      { text: 'Reference server', link: '/engineering/server/reference' }
     ]
   },
   {
@@ -243,6 +244,8 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'WP-17 S6', link: '/engineering/plan/sprints/WP-17-S6' },
       { text: 'WP-02 S1', link: '/engineering/plan/sprints/WP-02-S1' },
       { text: 'WP-02 S2', link: '/engineering/plan/sprints/WP-02-S2' },
+      { text: 'WP-03 S1', link: '/engineering/plan/sprints/WP-03-S1' },
+      { text: 'WP-03 S2', link: '/engineering/plan/sprints/WP-03-S2' },
       { text: 'Sprint record template', link: '/engineering/plan/sprints/template' }
     ]
   }

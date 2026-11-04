@@ -5,10 +5,9 @@
 // written as one readable function per step. It is the source of the expected
 // responses of the server fixtures (FX-RQ-P*), not a server SDK.
 //
-// Inputs that the algorithm text does not cover in rqp/1 fixtures (content
-// codings, If-Match, If-Unmodified-Since, If-Range, If-Modified-Since without
-// If-None-Match) throw UnsupportedInput, so no fixture can depend on them by
-// accident.
+// Inputs that the steps leave open follow negotiation section 4, "Inputs that
+// the steps leave open" (DL-089, DL-092, DL-093): each one gives the normal page
+// or the application response A without its Rq-* fields, and none throws.
 
 import {
   DELTA_TYPE,
@@ -17,7 +16,6 @@ import {
   MANIFEST_START,
   NONCE_BYTES,
   POLICY_DEFAULTS,
-  UnsupportedInput,
   asciiLower,
   canonicalUrl,
   deltaBinding,
@@ -114,7 +112,8 @@ export function deltaBase(headers) {
   const v = combined(headers, 'if-none-match');
   if (v === null) return null;
   const parsed = parseEntityTags(v);
-  if (parsed === null || parsed.star || parsed.tags.length !== 1) return null;
+  // Open input 10: exactly one entity-tag and no empty list element.
+  if (parsed === null || parsed.star || parsed.tags.length !== 1 || parsed.emptyElement) return null;
   const m = BASE_TAG.exec(parsed.tags[0].opaque);
   return m === null ? null : m[1];
 }
@@ -130,11 +129,51 @@ export function notModified(headers, etag) {
   return parsed.tags.some((tag) => tag.opaque === opaque); // weak comparison
 }
 
-/** Step 1: RQP applies only to GET and HEAD, status 200 and text/html. */
-function inScope(request, app, appHeaders) {
+/**
+ * Open input 5 and 17: true when a Content-Encoding member of A is not
+ * `identity` (ASCII case-insensitive; empty list members are ignored).
+ */
+export function hasContentCoding(appHeaders) {
+  const v = combined(appHeaders, 'content-encoding');
+  if (v === null) return false;
+  return v
+    .split(',')
+    .map(trimOws)
+    .some((coding) => coding !== '' && asciiLower(coding) !== 'identity');
+}
+
+/** Open inputs 1 and 13: the request fields whose condition the application evaluated for its own representation. */
+const APPLICATION_PRECONDITIONS = ['if-match', 'if-unmodified-since', 'if-range'];
+
+/**
+ * Step 1: RQP applies only to GET and HEAD, status 200 and text/html. Open
+ * inputs 1 and 5: not for a request that has If-Match, If-Unmodified-Since or
+ * If-Range (also with an empty value), and not for an A with a content coding.
+ */
+function inScope(request, app, appHeaders, reqHeaders) {
   if (request.method !== 'GET' && request.method !== 'HEAD') return false;
   if (app.status !== 200) return false;
+  if (APPLICATION_PRECONDITIONS.some((name) => has(reqHeaders, name))) return false;
+  if (hasContentCoding(appHeaders)) return false;
   return mediaType(combined(appHeaders, 'content-type')) === 'text/html';
+}
+
+/**
+ * Open inputs 6 and 14: the URL of the request as the WHATWG URL Standard
+ * parses it, or null when RQP has no manifest for it: the target is not a URL,
+ * the scheme is not http or https, or the origin or the path is longer than
+ * its limit (manifest-patch section 1.6). The server then sends A.
+ */
+export function manifestUrl(target) {
+  let url;
+  try {
+    url = new URL(target);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+  if (url.origin.length > LIMITS.maxOriginChars || url.pathname.length > LIMITS.maxPathChars) return null;
+  return url;
 }
 
 /**
@@ -281,12 +320,6 @@ export function fullContentType(appHeaders) {
   return appHeaders.map(([n, v]) => [n, n === 'content-type' ? FULL_CONTENT_TYPE : v]);
 }
 
-function unsupported(headers) {
-  for (const name of ['if-match', 'if-unmodified-since', 'if-range', 'content-encoding']) {
-    if (has(headers, name)) throw new UnsupportedInput(`the reference server does not model ${name}`);
-  }
-}
-
 /**
  * Negotiation section 4. Returns { status, headers, body, kind, reason } where
  * body is a Buffer or null and kind is "app", "full", "delta" or "none".
@@ -308,15 +341,11 @@ export function handle(request, app, pageBytes, config = {}) {
   // DL-063 (L2): and no Rq-* member of the Vary of A (RQP-08, RQP-09).
   const appHeaders = withoutRqVary(withoutRqFields(normalizeHeaders(app.headers)));
   const page = Buffer.from(pageBytes.buffer, pageBytes.byteOffset, pageBytes.byteLength);
-  unsupported(appHeaders);
   const passthrough = (reason) => ({ status: app.status, headers: appHeaders, body: page, kind: 'app', reason });
 
   // Step 1.
-  if (!inScope(request, app, appHeaders)) return passthrough('out-of-scope');
-  unsupported(reqHeaders);
-  if (has(reqHeaders, 'if-modified-since') && !has(reqHeaders, 'if-none-match')) {
-    throw new UnsupportedInput('the reference server does not model If-Modified-Since alone');
-  }
+  // Open input 2: If-Modified-Since without If-None-Match is ignored (F has no Last-Modified, DL-032).
+  if (!inScope(request, app, appHeaders, reqHeaders)) return passthrough('out-of-scope');
 
   // Step 2. H-62 (3): UTF-8 only. A charset that is not a UTF-8 label makes the page invalid for RQP.
   const typed = fullContentType(appHeaders);
@@ -325,6 +354,7 @@ export function handle(request, app, pageBytes, config = {}) {
   if (!analysis.valid) return passthrough('invalid-page');
   const insertAt = documentHeadStart(page);
   if (insertAt < 0) return passthrough('no-head-start');
+  if (manifestUrl(request.target) === null) return passthrough('manifest-url');
 
   // Step 3.
   const manifest = manifestOf(analysis, request.target, members);

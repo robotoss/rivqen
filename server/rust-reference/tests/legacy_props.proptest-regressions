@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 73d93f75233d6b07c42eec4844608ec062d0931c0cc50bd5c3692667bf09663e # shrinks to page = [60, 116, 105, 116, 108, 101, 62, 240, 159, 152, 128, 60, 47, 116, 105, 116, 108, 101, 62, 60, 33, 45, 45, 115, 111, 110, 105, 99, 100, 105, 102, 102, 45, 240, 159, 152, 128, 45, 45, 62, 240, 159, 152, 128, 60, 33, 45, 45, 115, 111, 110, 105, 99, 100, 105, 102, 102, 45, 240, 159, 152, 128, 45, 101, 110, 100, 45, 45, 62, 60, 33, 45, 45, 115, 111, 110, 105, 99, 100, 105, 102, 102, 45, 97, 45, 45, 62, 240, 159, 152, 128, 60, 33, 45, 45, 115, 111, 110, 105, 99, 100, 105, 102, 102, 45, 97, 45, 101, 110, 100, 45, 45, 62], req_fields = [], app_fields = [], html = false, method = "POST", status = 304
+cc 415fbf7115c8fa7c1fad9982829d67cb6f6746efb7518ee938560bca5e4b4f17 # shrinks to page = [60, 116, 105, 116, 108, 101, 62, 240, 159, 152, 128, 60, 47, 116, 105, 116, 108, 101, 62, 60, 33, 45, 45, 115, 111, 110, 105, 99, 100, 105, 102, 102, 45, 240, 159, 152, 128, 45, 45, 62, 240, 159, 152, 128, 60, 33, 45, 45, 115, 111, 110, 105, 99, 100, 105, 102, 102, 45, 240, 159, 152, 128, 45, 101, 110, 100, 45, 45, 62, 60, 33, 45, 45, 115, 111, 110, 105, 99, 100, 105, 102, 102, 45, 97, 45, 45, 62, 240, 159, 152, 128, 60, 33, 45, 45, 115, 111, 110, 105, 99, 100, 105, 102, 102, 45, 97, 45, 101, 110, 100, 45, 45, 62], req_fields = [], app_fields = [Field { name: "transfer-encoding", value: "true\r" }], html = true, method = "GET", status = 200

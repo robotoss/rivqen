@@ -245,7 +245,16 @@ struct Pass<'a> {
 
 /// Runs the pass over `input` (already checked by M-01 and M-02). The
 /// tokenizer starts at `start` (after a byte order mark).
-pub(crate) fn run(input: &[u8], start: usize) -> Result<Vec<RawBlock>, MarkupError> {
+///
+/// `observe` gets each token of the main pass before the rules read it, with
+/// `true` when the token is in a foreign region (M-05 item 4). The tests of
+/// [`crate::scan`] use it to compare the scan with this pass; `analyze`
+/// gives a closure that does nothing.
+pub(crate) fn run(
+    input: &[u8],
+    start: usize,
+    mut observe: impl FnMut(&Token, bool),
+) -> Result<Vec<RawBlock>, MarkupError> {
     let mut pass = Pass {
         input,
         names: NameTable::new(),
@@ -267,6 +276,7 @@ pub(crate) fn run(input: &[u8], start: usize) -> Result<Vec<RawBlock>, MarkupErr
         if tokens.defect() {
             return Err(MarkupError::internal());
         }
+        observe(&token, pass.foreign_root.is_some());
         match token {
             Token::StartTag(tag) => {
                 if let Some((kind, end_name)) = pass.start_tag(input, &tag)? {

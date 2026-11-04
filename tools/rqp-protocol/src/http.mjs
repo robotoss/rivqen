@@ -104,15 +104,23 @@ const ETAGC = /[\x21\x23-\x7e\x80-\xff]/;
 
 /**
  * Parse If-None-Match: "*" or a list of entity-tags. Returns { star: true },
- * { tags: [{ weak, opaque }] } (opaque with its quotes), or null for a syntax error.
+ * { tags: [{ weak, opaque }], emptyElement } (opaque with its quotes), or null
+ * for a syntax error. `emptyElement` is true when the list has an empty
+ * element (a leading, a trailing or a doubled comma, RFC 9110 section 5.6.1):
+ * the tags still count for the 304 test, but they give no delta base
+ * (negotiation section 4, open input 10).
  */
 export function parseEntityTags(value) {
   const v = trimOws(value);
   if (v === '*') return { star: true, tags: [] };
   const tags = [];
   let i = 0;
+  let commas = 0;
   const skip = () => {
-    while (i < v.length && (v[i] === ' ' || v[i] === '\t' || v[i] === ',')) i++;
+    while (i < v.length && (v[i] === ' ' || v[i] === '\t' || v[i] === ',')) {
+      if (v[i] === ',') commas++;
+      i++;
+    }
   };
   skip();
   while (i < v.length) {
@@ -135,7 +143,7 @@ export function parseEntityTags(value) {
     if (i < v.length && v[i] !== ',') return null;
     skip();
   }
-  return tags.length === 0 ? null : { star: false, tags };
+  return tags.length === 0 ? null : { star: false, tags, emptyElement: commas !== tags.length - 1 };
 }
 
 /** Split a field value on commas outside quoted strings. */
@@ -254,28 +262,87 @@ export function startsWithUtf8Bom(bytes) {
 }
 
 const QVALUE = /^(0(\.[0-9]{0,3})?|1(\.0{0,3})?)$/;
+const TCHAR = /[!#$%&'*+\-.^_`|~0-9A-Za-z]/;
+const QDTEXT = /[\t\x20\x21\x23-\x5b\x5d-\x7e\x80-\xff]/;
+
+/**
+ * The parameters of one media range (RFC 9110 section 5.6.6, "parameters =
+ * *( OWS ";" OWS [ parameter ] )"), from the text that starts at the first
+ * ";". Returns a list of { name, value, quoted } or null for a syntax error:
+ * a parameter without "=", an empty or non-token name, an empty value, a
+ * quoted string that does not end, or text after a value that is not OWS and
+ * ";". No white space is allowed around "=". Linear: one index scan.
+ */
+function mediaRangeParameters(text) {
+  const out = [];
+  let i = 0;
+  while (i < text.length) {
+    i++; // past ";"
+    while (i < text.length && isOws(text.charCodeAt(i))) i++;
+    if (i >= text.length) break;
+    if (text[i] === ';') continue; // an empty parameter
+    const nameStart = i;
+    while (i < text.length && TCHAR.test(text[i])) i++;
+    if (i === nameStart || text[i] !== '=') return null;
+    const name = text.slice(nameStart, i);
+    i++; // past "="
+    let value = '';
+    const quoted = text[i] === '"';
+    if (quoted) {
+      i++;
+      let closed = false;
+      while (i < text.length) {
+        const c = text[i++];
+        if (c === '"') {
+          closed = true;
+          break;
+        }
+        if (c === '\\') {
+          if (i >= text.length || !/[\t\x20-\x7e\x80-\xff]/.test(text[i])) return null;
+          value += text[i++];
+        } else if (QDTEXT.test(c)) {
+          value += c;
+        } else {
+          return null;
+        }
+      }
+      if (!closed) return null;
+    } else {
+      const valueStart = i;
+      while (i < text.length && TCHAR.test(text[i])) i++;
+      if (i === valueStart) return null;
+      value = text.slice(valueStart, i);
+    }
+    out.push({ name, value, quoted });
+    while (i < text.length && isOws(text.charCodeAt(i))) i++;
+    if (i < text.length && text[i] !== ';') return null;
+  }
+  return out;
+}
 
 /**
  * Negotiation section 3.6: Accept has a media range application/vnd.rivqen.delta+json
- * (ASCII case-insensitive, no wildcard) with no q parameter or q > 0.
- * A malformed q value does not accept.
+ * (ASCII case-insensitive, no wildcard) with no q parameter or q > 0. One such
+ * range is enough, also when another one has q=0 (open input 9). A range accepts
+ * nothing when its parameters have a syntax error, when it has two or more q
+ * parameters (the name "Q" is the same as "q"), or when q is quoted or is not
+ * a qvalue (RFC 9110 section 12.4.2; open input 4). Empty list elements are
+ * ignored (section 5.6.1).
  */
 export function acceptsMediaType(acceptValue, type) {
   if (acceptValue === null) return false;
   const want = asciiLower(type);
   for (const range of splitList(acceptValue)) {
-    const [essence, ...params] = range.split(';');
+    const semi = range.indexOf(';');
+    const essence = semi < 0 ? range : range.slice(0, semi);
     if (asciiLower(trimOwsEnd(essence)) !== want) continue;
-    let q = 1;
-    for (const p of params) {
-      const eq = p.indexOf('=');
-      if (eq < 0) continue;
-      const name = asciiLower(p.slice(0, eq).trim());
-      if (name !== 'q') continue;
-      const raw = p.slice(eq + 1).trim();
-      q = QVALUE.test(raw) ? Number.parseFloat(raw) : 0;
-    }
-    if (q > 0) return true;
+    const params = semi < 0 ? [] : mediaRangeParameters(range.slice(semi));
+    if (params === null) continue;
+    const weights = params.filter((p) => asciiLower(p.name) === 'q');
+    if (weights.length > 1) continue;
+    if (weights.length === 0) return true;
+    const [{ value, quoted }] = weights;
+    if (!quoted && QVALUE.test(value) && Number.parseFloat(value) > 0) return true;
   }
   return false;
 }

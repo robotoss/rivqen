@@ -1,0 +1,22 @@
+{
+  "id": "FX-RQ-P45-IF-MODIFIED-SINCE-ALONE",
+  "description": "If-Modified-Since without If-None-Match is ignored: F has no Last-Modified (DL-032), so there is no date to compare; the answer is F (open input 2)",
+  "rules": ["RQP-16"],
+  "page": "page-a",
+  "app": {
+    "status": 200,
+    "headers": [
+      ["content-type", "text/html; charset=utf-8"],
+      ["cache-control", "no-cache"]
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "headers": [
+      ["rq-version", "1"],
+      ["rq-capabilities", "(block-patch)"],
+      ["accept", "text/html"],
+      ["if-modified-since", "Sun, 18 Oct 2026 10:00:00 GMT"]
+    ]
+  }
+}

@@ -11,7 +11,7 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | WP | Name | Phase | Owner role | Depends on | Size | State |
 |---|---|---|---|---|---|---|
 | [WP-00](#wp-00) | Documentation and governance | P0 | Integrator | — | M | **Done** |
-| [WP-01](#wp-01) | Upstream evidence | P0–P1 | Source archaeologist | WP-00 | L | **P0 part done**; client part (traces, Q-02, D-20…D-27) before P3, not in G1 (H-110) |
+| [WP-01](#wp-01) | Upstream evidence | P0–P1 | Source archaeologist | WP-00 | L | **In progress** — P0 part done; client part (traces, Q-02, D-20…D-27) before P3, not in G1 (H-110): [S1](/engineering/plan/sprints/WP-01-S1) planned |
 | [WP-02](#wp-02) | Golden fixtures and conformance runner | P1 | Protocol designer | WP-01 | L | **Done (merged 2026-10-31, #5)** ([S1](/engineering/plan/sprints/WP-02-S1), [S2](/engineering/plan/sprints/WP-02-S2) closed) |
 | [WP-03](#wp-03) | Rust reference server (oracle) | P1 | Backend engineer | WP-02 | M | **Done (merged 2026-11-04, #6)** ([S1](/engineering/plan/sprints/WP-03-S1), [S2](/engineering/plan/sprints/WP-03-S2) closed; gate G1 passed) |
 | [WP-04](#wp-04) | Platform feasibility spikes | P2 | Android + iOS engineers | WP-01 | L | Planned |

@@ -224,6 +224,18 @@ const QVALUE = /^(0(\.[0-9]{0,3})?|1(\.0{0,3})?)$/;
  * token name and a token or a quoted-string value, with no white space around "="; empty
  * parameters (";;" and a trailing ";") and OWS around ";" are allowed.
  */
+/** RFC 9110 section 5.6.4 qdtext: HTAB, SP, 0x21, 0x23-0x5B, 0x5D-0x7E, obs-text. */
+function isQdtext(c) {
+  const n = c.charCodeAt(0);
+  return n === 0x09 || n === 0x20 || n === 0x21 || (n >= 0x23 && n <= 0x5b) || (n >= 0x5d && n <= 0x7e) || n >= 0x80;
+}
+
+/** RFC 9110 section 5.6.4 quoted-pair: a backslash and HTAB, SP, VCHAR or obs-text. */
+function isQuotedPairChar(c) {
+  const n = c.charCodeAt(0);
+  return n === 0x09 || (n >= 0x20 && n <= 0x7e) || n >= 0x80;
+}
+
 function mediaRangeParameters(rest) {
   const params = [];
   let i = 0;
@@ -247,9 +259,10 @@ function mediaRangeParameters(rest) {
         const c = rest[i++];
         if (c === '"') closed = true;
         else if (c === '\\') {
-          if (i >= rest.length) return null;
+          if (i >= rest.length || !isQuotedPairChar(rest[i])) return null;
           value += rest[i++];
-        } else value += c;
+        } else if (isQdtext(c)) value += c;
+        else return null;
       }
       if (!closed) return null;
     } else {

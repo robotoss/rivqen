@@ -218,6 +218,37 @@ pub fn open_nonblocking(path: &Path) -> io::Result<File> {
 }
 
 /// The same file: the device and the inode.
+/// True when two authorities are the same after one explicit default port is
+/// removed from each (`a.example` and `a.example:443` for `https`), compared ASCII
+/// case-insensitively (RFC 9110 §4.2.3).
+fn same_authority(host: &str, authority: &str, default_port: &str) -> bool {
+    let strip = |text: &str| -> String {
+        let lower = text.to_ascii_lowercase();
+        match lower.rsplit_once(':') {
+            Some((name, port)) if port == default_port && !name.is_empty() => name.to_owned(),
+            _ => lower,
+        }
+    };
+    strip(host) == strip(authority)
+}
+
+#[cfg(test)]
+mod authority_tests {
+    use super::same_authority;
+
+    #[test]
+    fn site_host_default_port_is_the_same_authority() {
+        assert!(same_authority("a.example", "a.example:443", "443"));
+        assert!(same_authority("A.Example:443", "a.example", "443"));
+        assert!(same_authority("a.example:8443", "a.example:8443", "443"));
+        assert!(!same_authority("a.example:8443", "a.example", "443"));
+        assert!(!same_authority("a.example:80", "a.example", "443"));
+        assert!(same_authority("a.example:80", "a.example", "80"));
+        assert!(!same_authority("b.example", "a.example", "443"));
+        assert!(!same_authority(":443", "", "443"));
+    }
+}
+
 fn same_file(a: &Metadata, b: &Metadata) -> bool {
     a.dev() == b.dev() && a.ino() == b.ino()
 }
@@ -282,7 +313,7 @@ impl Site {
         };
         self.authority
             .as_deref()
-            .is_some_and(|a| host.eq_ignore_ascii_case(a))
+            .is_some_and(|a| same_authority(host, a, self.default_port()))
             || is_control_host(host, conn.local_port)
     }
 
@@ -291,6 +322,15 @@ impl Site {
     ///
     /// # Errors
     /// [`Miss::NotFound`].
+    /// The default port of the scheme of `--origin` (RFC 9110 §4.2).
+    fn default_port(&self) -> &'static str {
+        if self.origin.starts_with("https://") {
+            "443"
+        } else {
+            "80"
+        }
+    }
+
     pub fn resolve(&self, mapped: &Mapped<'_>) -> Result<(PathBuf, Metadata), Miss> {
         let mut path = self.root.clone();
         let mut last: Option<Metadata> = None;

@@ -142,7 +142,7 @@ test('open input 15: the Vary members of A stay on F and on 304, also Accept; a 
 
 test('open inputs 4 and 9: the parameter grammar of a media range (RFC 9110 sections 5.6.6 and 12.4.2)', () => {
   const accept = (v) => acceptsDelta([['accept', v]]);
-  for (const ok of [`${DELTA}; q=0.5`, `${DELTA};\tq=0.5`, `${DELTA};  level=1 \t; q=1`, `${DELTA};q=0.123`, `${DELTA};q=1.000`, `${DELTA};q=1.00`, `${DELTA};q=1`, `${DELTA};a="x\\"y"`, `${DELTA};a=b!#$%&'*+-.^_\`|~`]) {
+  for (const ok of [`${DELTA}; q=0.5`, `${DELTA};\tq=0.5`, `${DELTA};  level=1 \t; q=1`, `${DELTA};q=0.123`, `${DELTA};q=1.000`, `${DELTA};q=1.00`, `${DELTA};q=1`, `${DELTA};a="x\\"y"`, `${DELTA};a=b!#$%&'*+-.^_\`|~`, `${DELTA};a="tab\there é"`]) {
     assert.equal(accept(ok), true, ok);
   }
   const no = [
@@ -158,6 +158,9 @@ test('open inputs 4 and 9: the parameter grammar of a media range (RFC 9110 sect
     `${DELTA};q=0.1234`,
     `${DELTA};q=1.1`,
     `${DELTA};q=00.5`,
+    `${DELTA};a="x\u0001"`, // a control character in a quoted string (qdtext)
+    `${DELTA};a="x\u007f"`,
+    `${DELTA};a="x\\\u0001"`, // a quoted-pair of a control character
   ];
   for (const v of no) assert.equal(accept(v), false, v);
 });

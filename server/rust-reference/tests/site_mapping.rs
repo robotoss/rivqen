@@ -543,12 +543,23 @@ fn site_host_origin_authority_and_loopback_names_are_answered() {
 }
 
 #[test]
+fn site_host_default_port_names_the_origin() {
+    let (_t, dir) = layout("h3");
+    let site = rqp_site(&dir);
+    for host in ["shop.example.com:443", "SHOP.example.com:443"] {
+        let o = site.answer(&local(), &with_host("GET", "/t.txt", &[host]));
+        assert_eq!(o.response.status, 200, "{host}");
+    }
+}
+
+#[test]
 fn site_host_other_hosts_get_421() {
     let (_t, dir) = layout("h2");
     let site = rqp_site(&dir);
     for hosts in [
         &["evil.example"][..],
-        &["shop.example.com:443"],
+        &["shop.example.com:80"],
+        &["shop.example.com:8443"],
         &["shop.example.com."],
         &["127.0.0.1:9999"],
         &["127.0.0.1"],

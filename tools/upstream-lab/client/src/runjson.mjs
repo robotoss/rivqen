@@ -4,7 +4,7 @@
 // run.json (CONTRACT section 8): rebuilt from the stored runs, so that it always matches the tree.
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { listDir } from './check.mjs';
+import { PLATFORMS, listDir, readOptionalJson } from './check.mjs';
 import { firstDifference, normalizeRun } from './determinism.mjs';
 
 const MODES = ['quick', 'standard'];
@@ -40,12 +40,18 @@ export async function buildRunJson({ root, previous = null, meta }) {
     }
     scenarios.push({ id: sd.name, modes });
   }
+  const functions = {};
+  for (const platform of PLATFORMS) {
+    const fromRunner = await readOptionalJson(path.join(root, platform, 'functions.jsonl.meta.json'));
+    if (fromRunner !== undefined) functions[platform] = fromRunner;
+  }
   return {
     date: meta.date,
     tools: meta.tools,
     emulator_image: meta.emulatorImage ?? previous?.emulator_image ?? 'unknown',
     upstream_sha: meta.upstreamSha,
     scenarios,
+    ...(Object.keys(functions).length > 0 ? { functions } : {}),
     summary: { stable, unstable },
   };
 }

@@ -5,6 +5,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { canonicalLine } from './canon.mjs';
+import { LabError } from './errors.mjs';
 import { firstDifference, normalizeRun } from './determinism.mjs';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -152,6 +153,11 @@ export function runJsonProblems(j) {
   if ('scenarios' in j && !(Array.isArray(j.scenarios) && j.scenarios.every((s) => isObject(s) && str(s.id) && isObject(s.modes)))) {
     out.push('run.json: scenarios must be a list of { id, modes }');
   }
+  if ('functions' in j) {
+    const f = j.functions;
+    if (!isObject(f) || !Object.keys(f).every((k) => PLATFORMS.includes(k))) out.push('run.json: functions must map android or ios to a meta object');
+    else for (const [k, v] of Object.entries(f)) for (const p of metaProblems(v, k)) out.push(`run.json: functions.${k}: ${p}`);
+  }
   if ('summary' in j) {
     const s = j.summary;
     const ok = isObject(s) && Array.isArray(s.stable) && Array.isArray(s.unstable) &&
@@ -159,6 +165,35 @@ export function runJsonProblems(j) {
       s.unstable.every((x) => isObject(x) && str(x.scenario) && str(x.mode) && str(x.reason) && x.reason !== '');
     if (!ok) out.push('run.json: summary needs stable [{scenario, mode}] and unstable [{scenario, mode, reason}]');
   }
+  return out;
+}
+
+/** Parsed JSON of a file, or undefined when the file does not exist. Fails with RUN_JSON on invalid JSON. */
+export async function readOptionalJson(file) {
+  let text;
+  try {
+    text = await readFile(file, 'utf8');
+  } catch (cause) {
+    if (cause.code === 'ENOENT') return undefined;
+    throw cause;
+  }
+  try {
+    return JSON.parse(text);
+  } catch (cause) {
+    throw new LabError('BAD_JSON', `${path.basename(file)} is not valid JSON`, { cause });
+  }
+}
+
+export const PLATFORMS = ['android', 'ios'];
+
+/** Problems of the meta file that a function runner writes next to functions.jsonl (CONTRACT section 7). */
+export function metaProblems(meta, platform) {
+  if (!isObject(meta)) return ['meta file is not an object'];
+  const out = [];
+  if ('platform' in meta && meta.platform !== platform) out.push(`platform must be ${platform}`);
+  if ('non_public_calls' in meta && !strings(meta.non_public_calls)) out.push('non_public_calls must be a list of strings');
+  for (const k of ['macos_version', 'sdk_version', 'upstream_sha', 'compiler']) if (k in meta && !str(meta[k])) out.push(`${k} must be a string`);
+  if ('cases' in meta && !(isInt(meta.cases) && meta.cases >= 0)) out.push('cases must be a non-negative integer');
   return out;
 }
 
@@ -249,6 +284,22 @@ export async function checkTree(root, { catalog } = {}) {
     for (const id of observed.keys()) if (!listed.has(id)) errors.push(`${id}: not listed in run.json scenarios`);
     for (const id of listed) if (!observed.has(id)) errors.push(`${id}: listed in run.json but has no runs`);
   }
+  for (const platform of PLATFORMS) {
+    const file = path.join(root, platform, 'functions.jsonl.meta.json');
+    let meta;
+    try {
+      meta = await readOptionalJson(file);
+    } catch (cause) {
+      if (!(cause instanceof LabError)) throw cause;
+      errors.push(`${platform}/functions.jsonl.meta.json: not valid JSON`);
+      continue;
+    }
+    if (meta === undefined) continue;
+    for (const p of metaProblems(meta, platform)) errors.push(`${platform}/functions.jsonl.meta.json: ${p}`);
+    if (runJson && canonicalLine(runJson.functions?.[platform] ?? null) !== canonicalLine(meta)) {
+      errors.push(`run.json: functions.${platform} does not match ${platform}/functions.jsonl.meta.json`);
+    }
+  }
   if (catalog) {
     for (const s of catalog) {
       const modes = observed.get(s.id);
@@ -286,6 +337,7 @@ export function functionsProblems(text, platform, cases) {
     seen.add(v.id);
     const forms = ['result', 'error', 'unsupported'].filter((k) => k in v);
     if (forms.length !== 1) out.push(`line ${i + 1}: exactly one of result, error, unsupported`);
+    if ('unsupported' in v && !(str(v.unsupported) && v.unsupported !== '')) out.push(`line ${i + 1}: unsupported needs a reason`);
   });
   for (const id of ids) if (!seen.has(id)) out.push(`case ${id} has no result`);
   return out;

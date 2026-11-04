@@ -40,7 +40,7 @@ test('run_cli_dry_run_prints_the_adb_commands_and_runs_nothing', async () => {
 test('run_cli_exits_2_with_the_usage_on_bad_arguments', async () => {
   const res = await node([script('run.mjs'), '--mode', 'quick']);
   assert.equal(res.code, 2);
-  assert.match(res.stderr, /USAGE: give exactly one of --scenario and --all/);
+  assert.match(res.stderr, /USAGE: give exactly one of --scenario, --all and --run-json/);
   assert.match(res.stderr, /usage: node run\.mjs/);
   assert.equal((await node([script('run.mjs'), '--scenario', 'CS-99', '--dry-run'])).code, 2);
 });

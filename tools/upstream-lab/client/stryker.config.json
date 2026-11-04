@@ -26,6 +26,6 @@
   "concurrency": 4,
   "tempDirName": ".stryker-tmp",
   "cleanTempDir": "always",
-  "timeoutMS": 60000,
+  "timeoutMS": 20000,
   "timeoutFactor": 1.5
 }

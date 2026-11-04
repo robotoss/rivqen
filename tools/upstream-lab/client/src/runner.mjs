@@ -9,7 +9,7 @@ import { executeRun } from './conductor.mjs';
 import { LabError } from './errors.mjs';
 import { buildRunJson } from './runjson.mjs';
 
-export const USAGE = `usage: node run.mjs (--scenario <CS-id> | --all) [--mode quick|standard] [--repeat <k>] [--out <dir>]
+export const USAGE = `usage: node run.mjs (--scenario <CS-id> | --all | --run-json) [--mode quick|standard] [--repeat <k>] [--out <dir>]
   [--package <name>] [--component <name>] [--start-command "<adb args with {package} {component} {run} {control}>"]
   [--serial <adb serial>] [--adb <path>] [--upstream-sha <sha>] [--emulator-image <text>]
   [--step-timeout <ms>] [--scenarios <file>] [--dry-run]`;
@@ -22,10 +22,11 @@ const VALUE_FLAGS = {
 
 /** Parse the command line. Throws LabError USAGE. */
 export function parseArgs(argv) {
-  const opts = { all: false, dryRun: false };
+  const opts = { all: false, dryRun: false, runJsonOnly: false };
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
     if (flag === '--all') opts.all = true;
+    else if (flag === '--run-json') opts.runJsonOnly = true;
     else if (flag === '--dry-run') opts.dryRun = true;
     else if (Object.hasOwn(VALUE_FLAGS, flag)) {
       const value = argv[++i];
@@ -33,7 +34,8 @@ export function parseArgs(argv) {
       opts[VALUE_FLAGS[flag]] = value;
     } else throw new LabError('USAGE', `unknown argument ${flag}`);
   }
-  if (opts.all === (opts.scenario !== undefined)) throw new LabError('USAGE', 'give exactly one of --scenario and --all');
+  const modes = [opts.all, opts.scenario !== undefined, opts.runJsonOnly === true].filter(Boolean).length;
+  if (modes !== 1) throw new LabError('USAGE', 'give exactly one of --scenario, --all and --run-json');
   if (opts.mode !== undefined && !['quick', 'standard'].includes(opts.mode)) throw new LabError('USAGE', '--mode must be quick or standard');
   for (const key of ['repeat', 'stepTimeout']) {
     if (opts[key] === undefined) continue;
@@ -92,6 +94,15 @@ export async function runAll({ runs, outDir, cfg, deps, upstreamSha, emulatorIma
     results.push({ scenario: scenario.id, mode, k, ok: result.ok, error: result.error });
     report(`${scenario.id} ${mode} run ${k}: ${result.ok ? 'ok' : `FAILED ${result.error}`}`);
   }
+  await refreshRunJson({ outDir, deps, upstreamSha, emulatorImage, now });
+  return results;
+}
+
+/**
+ * Rebuild run.json from the stored tree: runs, stability, and the meta files of the function runners.
+ * An existing run.json keeps its emulator image and the reasons of unstable entries.
+ */
+export async function refreshRunJson({ outDir, deps = {}, upstreamSha, emulatorImage, now = () => new Date() }) {
   let previous = null;
   try {
     previous = JSON.parse(await readFile(path.join(outDir, 'run.json'), 'utf8'));
@@ -108,6 +119,7 @@ export async function runAll({ runs, outDir, cfg, deps, upstreamSha, emulatorIma
       emulatorImage,
     },
   });
+  await mkdir(outDir, { recursive: true });
   await writeFile(path.join(outDir, 'run.json'), `${JSON.stringify(runJson, null, 2)}\n`);
-  return results;
+  return runJson;
 }

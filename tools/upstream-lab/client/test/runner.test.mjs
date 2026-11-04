@@ -9,7 +9,7 @@ import test from 'node:test';
 import { checkTree } from '../src/check.mjs';
 import { executeRun } from '../src/conductor.mjs';
 import { LabError } from '../src/errors.mjs';
-import { parseArgs, runAll, selectRuns, storeRun } from '../src/runner.mjs';
+import { parseArgs, refreshRunJson, runAll, selectRuns, storeRun } from '../src/runner.mjs';
 import { startUpstream } from './helpers.mjs';
 
 const SCENARIO = {
@@ -269,13 +269,14 @@ test('runner_store_replaces_the_files_of_the_same_run_only', async () => {
 
 test('runner_parse_args_accepts_the_documented_options', () => {
   const o = parseArgs(['--scenario', 'CS-05', '--mode', 'quick', '--repeat', '3', '--out', '/tmp/x', '--package', 'a.b', '--serial', 'emulator-5554', '--step-timeout', '9000', '--dry-run']);
-  assert.deepEqual(o, { all: false, dryRun: true, scenario: 'CS-05', mode: 'quick', repeat: 3, out: '/tmp/x', package: 'a.b', serial: 'emulator-5554', stepTimeout: 9000 });
+  assert.deepEqual(o, { all: false, dryRun: true, runJsonOnly: false, scenario: 'CS-05', mode: 'quick', repeat: 3, out: '/tmp/x', package: 'a.b', serial: 'emulator-5554', stepTimeout: 9000 });
   assert.equal(parseArgs(['--all']).all, true);
+  assert.equal(parseArgs(['--run-json', '--out', '/tmp/x']).runJsonOnly, true);
 });
 
 test('runner_parse_args_rejects_bad_use', () => {
   const bad = [
-    [], ['--all', '--scenario', 'CS-01'], ['--scenario'], ['--scenario', '--all'], ['--scenario', 'CS-01', '--mode', 'fast'],
+    [], ['--all', '--scenario', 'CS-01'], ['--run-json', '--all'], ['--run-json', '--scenario', 'CS-01'], ['--scenario'], ['--scenario', '--all'], ['--scenario', 'CS-01', '--mode', 'fast'],
     ['--scenario', 'CS-01', '--repeat', '0'], ['--scenario', 'CS-01', '--repeat', 'x'], ['--scenario', 'CS-01', '--repeat', '101'],
     ['--scenario', 'CS-01', '--step-timeout', '-1'], ['--scenario', 'CS-01', '--nope'],
   ];
@@ -288,4 +289,27 @@ test('runner_select_runs_expands_mode_and_repeat', () => {
   assert.deepEqual(selectRuns(list, { scenario: 'CS-90', mode: 'standard', repeat: 1 }).map((r) => `${r.mode}/${r.k}`), ['standard/1']);
   assert.throws(() => selectRuns(list, { scenario: 'CS-77' }), /no scenario/);
   assert.throws(() => selectRuns(list, { scenario: 'CS-91', mode: 'quick' }), /does not run in mode quick/);
+});
+
+test('runner_run_json_takes_the_meta_files_of_the_function_runners', async () => {
+  const out = await mkdtemp(path.join(os.tmpdir(), 'lab-client-'));
+  try {
+    const iosMeta = { platform: 'ios', macos_version: '26.1.0', macos_build: 'Version 26.1 (Build X)', sdk_version: '27.0', compiler: 'clang', upstream_sha: '59936bef', cases: 2, limit: 'Foundation of today', non_public_calls: ['SonicServer -encodingFromHeaders'] };
+    await mkdir(path.join(out, 'ios'), { recursive: true });
+    await writeFile(path.join(out, 'ios', 'functions.jsonl.meta.json'), JSON.stringify(iosMeta));
+    const first = await refreshRunJson({ outDir: out, upstreamSha: '59936bef', now: () => new Date('2026-11-05T00:00:00Z') });
+    assert.deepEqual(first.functions, { ios: iosMeta });
+    assert.equal(first.date, '2026-11-05');
+    assert.deepEqual(JSON.parse(await readFile(path.join(out, 'run.json'), 'utf8')).functions.ios.non_public_calls, ['SonicServer -encodingFromHeaders']);
+    await rm(path.join(out, 'ios', 'functions.jsonl.meta.json'));
+    assert.equal('functions' in (await refreshRunJson({ outDir: out, upstreamSha: '59936bef' })), false);
+    await writeFile(path.join(out, 'run.json'), '{');
+    await assert.rejects(refreshRunJson({ outDir: out, upstreamSha: '59936bef' }), (e) => e.code === 'RUN_JSON');
+    await writeFile(path.join(out, 'run.json'), '{}');
+    await mkdir(path.join(out, 'android'), { recursive: true });
+    await writeFile(path.join(out, 'android', 'functions.jsonl.meta.json'), '{');
+    await assert.rejects(refreshRunJson({ outDir: out, upstreamSha: '59936bef' }), (e) => e.code === 'BAD_JSON');
+  } finally {
+    await rm(out, { recursive: true, force: true });
+  }
 });

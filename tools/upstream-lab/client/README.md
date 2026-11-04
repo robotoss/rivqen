@@ -29,6 +29,7 @@ Start the lab servers (`sh tools/upstream-lab/start.sh`), boot the emulator, ins
 ```bash
 node tools/upstream-lab/client/run.mjs --scenario CS-05 --mode quick --repeat 3 --out evidence/traces/client
 node tools/upstream-lab/client/run.mjs --all
+node tools/upstream-lab/client/run.mjs --run-json --out evidence/traces/client   # rebuild run.json from the stored tree
 node tools/upstream-lab/client/run.mjs --scenario CS-05 --dry-run   # prints the adb commands, runs nothing
 ```
 
@@ -51,7 +52,7 @@ Timeouts: a harness step 60 s (`--step-timeout`), a `wait` step 30 s, the end of
 
 ## Stored evidence
 
-Files follow CONTRACT sections 5 and 8: `android/<scenario>/<mode>/run-<k>.jsonl`, `run-<k>-x<n>.http`, and `run.json`. `run.json` is rebuilt from the tree after every runner call. Its `summary.unstable` entries keep a reason that a person wrote; a new one gets `runs differ: run N at line L`.
+Files follow CONTRACT sections 5 and 8: `android/<scenario>/<mode>/run-<k>.jsonl`, `run-<k>-x<n>.http`, and `run.json`. `run.json` is rebuilt from the tree after every runner call (or with `--run-json`). It copies the meta file of each function runner, `<platform>/functions.jsonl.meta.json` (iOS: macOS version and build, SDK version, compiler, upstream SHA, case count, `limit`, `non_public_calls`), into a `functions` member (`functions.ios`, `functions.android`) when the file exists. Its `summary.unstable` entries keep a reason that a person wrote; a new one gets `runs differ: run N at line L`.
 
 ```json
 {
@@ -71,7 +72,7 @@ node tools/upstream-lab/client/check.mjs [<evidence dir>] [--require-functions]
 node --test tools/upstream-lab/client/test
 ```
 
-`check.mjs` exits 0 (valid), 1 (findings) or 2 (bad use). It checks, for every run: JSON Lines with sorted keys and LF; the schema of each event of CONTRACT section 5 (unknown events and members fail); `seq` from 1 without gaps, `t` not going back, `run.start` first and `run.end` last with `ok: true`; one `.http` file per `proxy.request` and no other; no `http(s)` host other than `10.0.2.2`, `127.0.0.1`, `localhost` and `example.com|org|net`. Then, per scenario and mode, the determinism rule of CONTRACT section 6: runs that differ are an error unless `run.json` lists them as unstable with a reason, and runs that are equal are an error if `run.json` lists them as unstable. It also compares the tree with `run.json` and with `scenarios.json` (modes, number of runs). `functions.jsonl` of each platform is checked against `functions.json` (`--require-functions` makes a missing file an error).
+`check.mjs` exits 0 (valid), 1 (findings) or 2 (bad use). It checks, for every run: JSON Lines with sorted keys and LF; the schema of each event of CONTRACT section 5 (unknown events and members fail); `seq` from 1 without gaps, `t` not going back, `run.start` first and `run.end` last with `ok: true`; one `.http` file per `proxy.request` and no other; no `http(s)` host other than `10.0.2.2`, `127.0.0.1`, `localhost` and `example.com|org|net`. Then, per scenario and mode, the determinism rule of CONTRACT section 6: runs that differ are an error unless `run.json` lists them as unstable with a reason, and runs that are equal are an error if `run.json` lists them as unstable. `functions.jsonl` lines may be `unsupported` (with a reason) and may carry extra members such as `ns_string_encoding`. A meta file must match `run.json` `functions.<platform>` exactly. It also compares the tree with `run.json` and with `scenarios.json` (modes, number of runs). `functions.jsonl` of each platform is checked against `functions.json` (`--require-functions` makes a missing file an error).
 
 ## Behavior that CONTRACT leaves open (assumptions)
 

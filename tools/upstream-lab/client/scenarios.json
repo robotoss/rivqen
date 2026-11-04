@@ -534,7 +534,7 @@
     "origin": "lab-node",
     "rows": [
       "Q17",
-      "S13"
+      "S14"
     ],
     "setup": [
       {
@@ -792,7 +792,10 @@
       "standard"
     ],
     "origin": "lab-node",
-    "rows": [],
+    "rows": [
+      "Q22",
+      "S17"
+    ],
     "setup": [],
     "case": {
       "page": "a"
@@ -859,7 +862,10 @@
       "standard"
     ],
     "origin": "lab-node",
-    "rows": [],
+    "rows": [
+      "Q20",
+      "S2"
+    ],
     "setup": [],
     "case": {
       "page": "a"
@@ -916,7 +922,8 @@
     ],
     "origin": "lab-node",
     "rows": [
-      "Q18"
+      "Q18",
+      "S15"
     ],
     "setup": [
       {

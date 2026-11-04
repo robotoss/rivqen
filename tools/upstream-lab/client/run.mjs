@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { clearArgs, startArgs, stopArgs } from './src/adb.mjs';
 import { LabError } from './src/errors.mjs';
-import { parseArgs, runAll, selectRuns, USAGE } from './src/runner.mjs';
+import { parseArgs, refreshRunJson, runAll, selectRuns, USAGE } from './src/runner.mjs';
 import { catalogProblems } from './src/steps.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -20,6 +20,12 @@ const exec = promisify(execFile);
 
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
+  if (opts.runJsonOnly) {
+    const dir = path.resolve(opts.out ?? path.join(here, '..', '..', '..', 'evidence', 'traces', 'client'));
+    await refreshRunJson({ outDir: dir, upstreamSha: opts.upstreamSha ?? '59936bef', emulatorImage: opts.emulatorImage });
+    out(`run.json rebuilt in ${dir}`);
+    return 0;
+  }
   const scenariosPath = opts.scenarios ?? path.join(here, 'scenarios.json');
   const scenarios = JSON.parse(await readFile(scenariosPath, 'utf8'));
   const problems = catalogProblems(scenarios);

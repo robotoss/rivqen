@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { canonicalLine } from '../src/canon.mjs';
-import { checkRunText, checkTree, eventProblems, foreignHosts, functionsProblems, runJsonProblems } from '../src/check.mjs';
+import { checkRunText, checkTree, eventProblems, foreignHosts, functionsProblems, metaProblems, runJsonProblems } from '../src/check.mjs';
 import { firstDifference, normalizeEvent, normalizeRun } from '../src/determinism.mjs';
 import { buildRunJson } from '../src/runjson.mjs';
 
@@ -321,4 +321,59 @@ test('run_json_is_rebuilt_from_the_tree_and_keeps_recorded_reasons', async () =>
   } finally {
     await t.done();
   }
+});
+
+const IOS_META = { platform: 'ios', macos_version: '26.1.0', sdk_version: '27.0', compiler: 'clang', upstream_sha: '59936bef', cases: 3, limit: 'x', non_public_calls: ['SonicServer -encodingFromHeaders'] };
+
+test('check_functions_jsonl_accepts_unsupported_results_and_extra_members', () => {
+  const cases = [{ id: 'FN-1' }, { id: 'FN-2' }, { id: 'FN-3' }];
+  const line = (o) => `${JSON.stringify(o)}\n`;
+  const text = line({ id: 'FN-1', fn: 'charset', platform: 'ios', result: { value: 'utf-8', ns_string_encoding: 4 } }) +
+    line({ id: 'FN-2', fn: 'charset', platform: 'ios', result: { value: 'gbk' }, ns_string_encoding: 2147484425 }) +
+    line({ id: 'FN-3', fn: 'message', platform: 'ios', unsupported: 'private session state' });
+  assert.deepEqual(functionsProblems(text, 'ios', cases), []);
+  assert.ok(functionsProblems(line({ id: 'FN-1', fn: 'message', platform: 'ios', unsupported: '' }), 'ios', cases).some((p) => p.includes('unsupported needs a reason')));
+  assert.ok(functionsProblems(line({ id: 'FN-1', fn: 'message', platform: 'ios', unsupported: true }), 'ios', cases).some((p) => p.includes('unsupported needs a reason')));
+});
+
+test('check_meta_files_are_validated', () => {
+  assert.deepEqual(metaProblems(IOS_META, 'ios'), []);
+  assert.deepEqual(metaProblems({}, 'android'), []);
+  assert.deepEqual(metaProblems([], 'ios'), ['meta file is not an object']);
+  assert.deepEqual(metaProblems({ platform: 'android' }, 'ios'), ['platform must be ios']);
+  assert.deepEqual(metaProblems({ non_public_calls: 'x' }, 'ios'), ['non_public_calls must be a list of strings']);
+  assert.deepEqual(metaProblems({ non_public_calls: [1] }, 'ios'), ['non_public_calls must be a list of strings']);
+  assert.deepEqual(metaProblems({ cases: -1 }, 'ios'), ['cases must be a non-negative integer']);
+  assert.deepEqual(metaProblems({ cases: 1.5 }, 'ios'), ['cases must be a non-negative integer']);
+  for (const k of ['macos_version', 'sdk_version', 'upstream_sha', 'compiler']) assert.deepEqual(metaProblems({ [k]: 1 }, 'ios'), [`${k} must be a string`]);
+});
+
+test('check_run_json_must_carry_the_meta_files_of_the_function_runners', async () => {
+  const a = toText(runEvents());
+  const t = await tree([a]);
+  try {
+    await mkdir(path.join(t.root, 'ios'));
+    await writeFile(path.join(t.root, 'ios', 'functions.jsonl.meta.json'), JSON.stringify(IOS_META));
+    assert.deepEqual((await checkTree(t.root)).errors, ['run.json: functions.ios does not match ios/functions.jsonl.meta.json']);
+    const j = await buildRunJson({ root: t.root, meta: { date: '2026-11-05', tools: { node: 'v22' }, upstreamSha: '59936bef', emulatorImage: 'x' } });
+    assert.deepEqual(j.functions, { ios: IOS_META });
+    await writeFile(path.join(t.root, 'run.json'), JSON.stringify(j));
+    assert.deepEqual((await checkTree(t.root)).errors, []);
+    await writeFile(path.join(t.root, 'run.json'), JSON.stringify({ ...j, functions: { ios: { ...IOS_META, sdk_version: '1' } } }));
+    assert.deepEqual((await checkTree(t.root)).errors, ['run.json: functions.ios does not match ios/functions.jsonl.meta.json']);
+    await writeFile(path.join(t.root, 'ios', 'functions.jsonl.meta.json'), '{');
+    assert.ok((await checkTree(t.root)).errors.includes('ios/functions.jsonl.meta.json: not valid JSON'));
+    await writeFile(path.join(t.root, 'ios', 'functions.jsonl.meta.json'), JSON.stringify({ ...IOS_META, platform: 'android' }));
+    assert.ok((await checkTree(t.root)).errors.includes('ios/functions.jsonl.meta.json: platform must be ios'));
+  } finally {
+    await t.done();
+  }
+});
+
+test('check_run_json_functions_member_is_validated', () => {
+  const base = { date: '2026-11-05', tools: {}, emulator_image: 'x', upstream_sha: '59936bef', scenarios: [], summary: { stable: [], unstable: [] } };
+  assert.deepEqual(runJsonProblems({ ...base, functions: { ios: IOS_META, android: {} } }), []);
+  assert.ok(runJsonProblems({ ...base, functions: [] }).some((p) => p.includes('functions must map')));
+  assert.ok(runJsonProblems({ ...base, functions: { web: {} } }).some((p) => p.includes('functions must map')));
+  assert.ok(runJsonProblems({ ...base, functions: { ios: { non_public_calls: 3 } } }).includes('run.json: functions.ios: non_public_calls must be a list of strings'));
 });

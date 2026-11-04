@@ -43,12 +43,33 @@ test('scenarios_json_has_a_hold_before_each_release', () => {
 });
 
 test('functions_json_covers_the_divergences_of_the_brief', () => {
-  const need = ['D-20', 'D-21', 'D-22', 'D-23', 'D-24', 'D-25', 'D-26', 'D-28', 'D-29', 'D-30', 'D-31', 'D-32', 'D-33', 'D-34', 'D-35', 'D-39', 'D-44'];
+  const need = ['D-20', 'D-21', 'D-22', 'D-23', 'D-24', 'D-25', 'D-26', 'D-28', 'D-29', 'D-30', 'D-31', 'D-32', 'D-33', 'D-34', 'D-35', 'D-39', 'D-44', 'D-48'];
   const have = new Set(functions.flatMap((c) => c.divergences));
   assert.deepEqual(need.filter((d) => !have.has(d)), []);
   const ids = functions.map((c) => c.id);
   assert.equal(new Set(ids).size, ids.length);
   for (const c of functions) assert.ok(['session_id', 'split', 'diff', 'message', 'is_legacy_response', 'template_change', 'etag', 'charset'].includes(c.fn), c.id);
+});
+
+test('functions_json_has_the_cases_for_the_review_of_the_pages', () => {
+  const inputs = (fn) => functions.filter((c) => c.fn === fn).map((c) => c.input);
+  const etags = inputs('etag').map((i) => i.value);
+  for (const v of ['W/"x"', 'w/"x"', 'W/x', 'w/x', 'W/"abc"', 'w/"abc"', 'abc']) assert.ok(etags.includes(v), `etag ${v}`);
+  assert.ok(inputs('charset').some((i) => /charset=[^;]+; \w+=/.test(i.content_type)), 'charset followed by "; " and a parameter');
+  const htmls = inputs('split').map((i) => i.html);
+  assert.ok(htmls.some((h) => h.includes('<!--sonicdiff-->A<!--sonicdiff-end-->')), 'unnamed marker');
+  assert.ok(htmls.some((h) => h.includes('<!--SONICDIFF-->A<!--SONICDIFF-END-->')), 'unnamed uppercase marker');
+  assert.ok(inputs('message').some((i) => i.src_code === 1000 && i.final_code === 1000 && i.fields.some(([n, v]) => n === 'cache-offline' && v === 'store')), 'store with final 1000');
+  assert.ok(inputs('diff').some((i) => i.local && Object.keys(i.server).every((k) => i.local[k] === i.server[k])), 'empty diff');
+});
+
+test('scenarios_json_names_the_final_row_ids_of_the_pages', () => {
+  const rows = Object.fromEntries(scenarios.map((s) => [s.id, s.rows]));
+  assert.deepEqual(rows['CS-09'], ['Q17', 'S14']);
+  assert.deepEqual(rows['CS-13a'], ['Q22', 'S17']);
+  assert.deepEqual(rows['CS-13b'], ['Q20', 'S2']);
+  assert.deepEqual(rows['CS-14'], ['Q18', 'S15']);
+  assert.deepEqual(rows['CS-11'], ['Q15', 'S13']);
 });
 
 test('functions_json_inputs_have_the_members_of_the_contract', () => {

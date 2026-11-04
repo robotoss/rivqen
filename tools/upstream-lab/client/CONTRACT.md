@@ -69,6 +69,10 @@ All listeners bind `127.0.0.1` only.
 | `config` | Session and SDK settings the harness applies. Account values are synthetic (`rq-test-account`, `rq-test-account-2`) |
 | `steps` | The scripted order (DL-100); vocabulary in section 3 |
 | `repeat` | Number of runs per mode; at least 3 for a timing row |
+| `url` | Optional page URL; must start with `http://10.0.2.2:18090/`; default `http://10.0.2.2:18090/catalog` |
+| `webview` | Optional, default `false`. `true`: a real WebView drives the session (smoke run, DL-100); the harness then refuses `request_resource` and `page_finished` |
+
+The `config` keys that the harness accepts are listed in `tools/upstream-lab/android/README.md`; an unknown key is an error.
 
 ## 3. Step vocabulary
 
@@ -95,7 +99,9 @@ All listeners bind `127.0.0.1` only.
 | `settle` | Conductor | Wait `ms` milliseconds |
 | `snapshot_cache` | Harness | Log the cache directory (`cache.snapshot`) |
 
-A step runs only after the step before it is acknowledged. Harness steps are acknowledged when the harness reports `step.done`.
+Optional members of a harness step: `session` (1-based index of the session the step acts on; default the last created) and, for `request_resource`, `wait_ms` (default 1000).
+
+A step runs only after the step before it is acknowledged. Harness steps are acknowledged when the harness reports `step.done`. `request_resource` is acknowledged when the call returns or after `wait_ms`, whichever is first (a Quick session can block the call until the network answers; the conductor must be able to send `release` meanwhile). The stream is read to the end on a worker thread after that.
 
 ## 4. Control channel (port 18091)
 
@@ -117,11 +123,11 @@ One JSON Lines file per run: `evidence/traces/client/android/<scenario>/<mode>/r
 {"ev":"client.load_data","seq":7,"src":"harness","t":412,"thread":"main","base_url":"http://10.0.2.2:18090/catalog","mime":"text/html","encoding":"utf-8","history_url":"http://10.0.2.2:18090/catalog","headers":[["content-type","text/html; charset=utf-8"]],"body_len":1342,"body_sha256":"…"}
 ```
 
-Common members: `ev` (name), `seq` (conductor sequence number), `src` (`harness`, `proxy`, `conductor`), `t` (milliseconds since the run start, conductor clock), `thread` (harness only: `main` or a worker name).
+Common members: `ev` (name), `seq` (conductor sequence number), `src` (`harness`, `proxy`, `conductor`), `t` (milliseconds since the run start, conductor clock), `thread` (harness only: `main` or a worker name), `hseq` (harness only: the order in which the harness emitted the event), `session` (on `session.*` and `client.*` events: the 1-based session index).
 
 | Event | Members |
 |---|---|
-| `run.start` | `scenario`, `mode`, `repeat`, `origin`, `upstream_sha` |
+| `run.start` | `scenario`, `mode`, `repeat`, `origin`, `upstream_sha` (`src`: `conductor`) |
 | `step.start`, `step.done` | `step` (the step object), `error` (on failure) |
 | `session.created` | `session_id` (the upstream id; synthetic account only) or `null` |
 | `client.load_url` | `url`, `extras` (keys only) |
@@ -131,12 +137,17 @@ Common members: `ev` (name), `seq` (conductor sequence number), `src` (`harness`
 | `session.message` | `json` (the page message string exactly as the SDK built it) |
 | `session.callback` | `name` (session callback method name), `args` (codes or URL only) |
 | `runtime.cookie_get`, `runtime.cookie_set` | `url`, `value` (synthetic values only) |
-| `cache.snapshot` | `files`: `[{"name","size","sha256"}]`, sorted by name; `db`: `null` (the harness does not read the SDK database) |
+| `cache.snapshot` | `files`: `[{"name","size","sha256"}]`, sorted by name; a `*.header` file also has `text` (its content: synthetic header lines of the lab); `db`: `null` (the harness does not read the SDK database) |
 | `proxy.request` | `exchange`, `method`, `target`, `fields` |
 | `proxy.response_head` | `exchange`, `status`, `fields` |
 | `proxy.response_end` | `exchange`, `body_len`, `body_sha256`, `complete` |
 | `proxy.cut`, `proxy.drop_field`, `proxy.hold`, `proxy.release` | `exchange`, the step members |
-| `run.end` | `ok`, `error` |
+| `client.clear_history` | — |
+| `runtime.notify_error` | `url`, `code` |
+| `runtime.toast` | `text`, `duration` |
+| `webview.intercept_request`, `webview.page_started`, `webview.page_finished` | `url` (WebView runs only) |
+| `harness.error` | `error` |
+| `run.end` | `ok`, `error` (`src`: `conductor`; the harness sends `run.end` with `ok: false` only when it aborts) |
 
 Each proxy exchange is also stored as `run-<k>-x<exchange>.http` in the format of `evidence/traces/server/` (request, `--- response ---`, decoded body). A `drop_field` or `cut` exchange stores the upstream response and adds a `--- delivered ---` section.
 
@@ -144,7 +155,11 @@ Never log: real hosts, real accounts, real cookies, tokens, device identifiers. 
 
 ## 6. Determinism
 
-A run is stable when its event log, after removing `t`, `thread` of worker threads and the `Date` field values, equals the other runs of the same scenario and mode. `check.mjs` (conductor lane) reports every scenario and mode whose runs differ. A timing row is FACT only when its 3 runs are stable.
+A run is stable when its normalized event log equals the other runs of the same scenario and mode.
+
+Normalization: remove `t`, `seq` and the `thread` of worker threads; blank the values of the fields `Date`, `X-Android-Sent-Millis` and `X-Android-Received-Millis` (the Android HTTP stack adds the last two); remove `local_refresh_time` from the JSON of `session.message`; for a `*.header` cache file compare its `text` with the same fields blanked instead of its `sha256` and `size`.
+
+Comparison: split the log into step windows (from one `step.start` to the next). Inside a window compare the harness events in `hseq` order and the proxy events in `exchange` order, each source on its own. The interleaving of the sources inside a window is not compared: it races (for example `runtime.cookie_get` and `proxy.request`). `check.mjs` (conductor lane) reports every scenario and mode whose runs differ. A timing row is FACT only when its 3 runs are stable.
 
 ## 7. Function cases
 
@@ -165,7 +180,9 @@ Pure functions run without a session: Android in the harness (instrumentation mo
 | `etag` | `value` | `value` (normalized string) |
 | `charset` | `content_type` | `value` |
 
-Output: one JSON Lines file per platform, `evidence/traces/client/<android|ios>/functions.jsonl`, one object per case: `{ "id", "fn", "platform", "result" }` or `{ "id", "fn", "platform", "error" }`, `"unsupported": "<reason>"` when the platform has no callable function for `fn`. A runner never changes upstream files or visibility to reach a function (no reflection that changes access). A harness class in the same package may call a package-private member; the runner lists such calls in `run.json`. A function that is not reachable this way is `unsupported` and stays code reading.
+Output: one JSON Lines file per platform, `evidence/traces/client/<android|ios>/functions.jsonl`, one object per case: `{ "id", "fn", "platform", "result" }` or `{ "id", "fn", "platform", "error" }`, `"unsupported": "<reason>"` when the platform has no callable function for `fn`. A runner never changes upstream files or visibility to reach a function (no reflection that changes access), and never writes a field of an upstream object. A harness class in the same package may call a package-private or protected member; the runner lists such calls in `run.json`. A function that needs session state set by hand (for example the page message) is `unsupported`: the page message is observed only in session runs (`session.message`).
+
+Android transport: `tools/upstream-lab/android/functions.sh` copies the case file into the app and the result file out. `fields` is an object or a list of `[name, value]` pairs. A function that is not reachable this way is `unsupported` and stays code reading.
 
 ## 8. Evidence layout
 

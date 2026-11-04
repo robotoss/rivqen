@@ -24,25 +24,33 @@ if [ -z "${IMAGE:-}" ]; then
   docker build -f "$ROOT/server/rust-reference/Dockerfile" -t "$IMAGE" "$ROOT"
 fi
 
+# A new control token for each run (H-117): a file that only this run reads.
+TOKDIR="$(mktemp -d)"
 cleanup() {
   docker rm -f "$NAME" >/dev/null 2>&1 || true
+  rm -rf "$TOKDIR"
 }
 trap cleanup EXIT
 trap 'exit 130' INT TERM
+node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("base64url"))' > "$TOKDIR/token"
+# The server runs as user 65532 in the container, so the file must be readable for it.
+chmod 0644 "$TOKDIR/token"
 
 # No writable root file system, no capabilities, no privilege change: the server
 # needs none of them.
 docker run -d --name "$NAME" -p "127.0.0.1:$PORT:$PORT" \
-  --read-only --cap-drop ALL --security-opt no-new-privileges "$IMAGE" \
-  --conformance --listen 0.0.0.0 --port "$PORT" --lab-peer >/dev/null
+  --read-only --cap-drop ALL --security-opt no-new-privileges \
+  -v "$TOKDIR/token:/run/rivqen/token:ro" "$IMAGE" \
+  --conformance --listen 0.0.0.0 --port "$PORT" --lab-peer --control-token-file /run/rivqen/token >/dev/null
 
 # Wait until the control endpoint answers (no fixed sleep between runs, only between polls).
 i=0
 until node -e '
-const port = process.argv[1];
-fetch("http://127.0.0.1:" + port + "/__rivqen/conformance/info", { headers: { Host: "127.0.0.1:" + port }, signal: AbortSignal.timeout(2000) })
+const [port, file] = process.argv.slice(1);
+const token = require("node:fs").readFileSync(file, "utf8");
+fetch("http://127.0.0.1:" + port + "/__rivqen/conformance/info", { headers: { Host: "127.0.0.1:" + port, "Rivqen-Conformance-Token": token }, signal: AbortSignal.timeout(2000) })
   .then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1));
-' "$PORT"; do
+' "$PORT" "$TOKDIR/token"; do
   i=$((i + 1))
   if [ "$i" -ge "$START_TIMEOUT" ]; then
     echo "server did not become ready in ${START_TIMEOUT}s" >&2
@@ -57,12 +65,23 @@ fetch("http://127.0.0.1:" + port + "/__rivqen/conformance/info", { headers: { Ho
   sleep 1
 done
 
+# Without the token the control endpoint must refuse (H-117).
+if ! node -e '
+const port = process.argv[1];
+fetch("http://127.0.0.1:" + port + "/__rivqen/conformance/info", { headers: { Host: "127.0.0.1:" + port }, signal: AbortSignal.timeout(2000) })
+  .then((r) => process.exit(r.status === 403 ? 0 : 1), () => process.exit(1));
+' "$PORT"; then
+  echo "the control endpoint answered without the token" >&2
+  exit 1
+fi
+echo "== control endpoint without the token: 403"
+
 TARGET="http://127.0.0.1:$PORT"
 worst=0
 run() {
   echo "== $*"
   code=0
-  (cd "$ROOT" && node "$RUNNER" --target "$TARGET" "$@") || code=$?
+  (cd "$ROOT" && node "$RUNNER" --target "$TARGET" --control-token-file "$TOKDIR/token" "$@") || code=$?
   if [ "$code" -gt "$worst" ]; then worst="$code"; fi
 }
 run --suite rqp

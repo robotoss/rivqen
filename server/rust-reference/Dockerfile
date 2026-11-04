@@ -27,4 +27,8 @@ COPY --from=build /rivqen-reference /rivqen-reference
 USER 65532:65532
 EXPOSE 18080
 ENTRYPOINT ["/rivqen-reference"]
-CMD ["--conformance", "--listen", "0.0.0.0", "--port", "18080", "--lab-peer"]
+# --lab-peer needs a per-run control token (H-117): mount a token file at
+# /run/rivqen/token (read-only), for example
+#   docker run -p 127.0.0.1:18080:18080 -v "$PWD/token:/run/rivqen/token:ro" rivqen-reference:local
+# Without the file the server exits 1 at start (fail closed).
+CMD ["--conformance", "--listen", "0.0.0.0", "--port", "18080", "--lab-peer", "--control-token-file", "/run/rivqen/token"]

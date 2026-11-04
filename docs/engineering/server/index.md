@@ -58,7 +58,7 @@ sequenceDiagram
 | Node.js / TypeScript | `@rivqen/server` | Fetch API, Express, Fastify, Next.js | [Node.js](/engineering/server/node) |
 | Java | `dev.rivqen:rivqen-server` | Jakarta Servlet filter, Spring Boot starter; Netty/Vert.x later | [Java](/engineering/server/java) |
 | PHP | `rivqen/rivqen-server` | PSR-15 middleware (PSR-7/PSR-17) | [PHP](/engineering/server/php) |
-| Rust | `server/rust-reference` | Standalone server and conformance oracle | [Conformance](/engineering/server/conformance) |
+| Rust | `server/rust-reference` | Conformance oracle and test server (conformance and site modes, container image) | [Reference server](/engineering/server/reference) |
 
 ## Related
 

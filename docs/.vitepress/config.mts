@@ -163,7 +163,8 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'Java', link: '/engineering/server/java' },
       { text: 'PHP', link: '/engineering/server/php' },
       { text: 'CDN and proxies', link: '/engineering/server/cdn' },
-      { text: 'Conformance', link: '/engineering/server/conformance' }
+      { text: 'Conformance', link: '/engineering/server/conformance' },
+      { text: 'Reference server', link: '/engineering/server/reference' }
     ]
   },
   {

@@ -153,12 +153,13 @@ With `"webview": true` the harness starts `WebViewActivity`. The bound client se
 
 ### Events
 
-The harness sends the events of CONTRACT §5 with `ev`, `src: "harness"` and `thread` (`main` or the worker name); the conductor adds `seq` and `t`. Additional members and events (shared-file request to the architect):
+The harness sends the events of CONTRACT §5 with `ev`, `src: "harness"` and `thread` (`main` or the worker name); the conductor adds `seq` and `t`. These members and events are in CONTRACT §5 (wp/WP-01 `48e4936`) beyond the first version of the contract:
 
 | Event or member | Content |
 |---|---|
 | `hseq` member of every harness event | Harness order (1, 2, …), set when the event is queued. `seq` of the conductor is the receive order, and a harness event arrives later than a proxy event of the same moment |
-| `session` member of `session.created`, `session.callback`, `session.result`, `session.message` | 1-based index of the session (more than one session per run) |
+| `session` member of `session.*` and `client.*` events | 1-based index of the session (more than one session per run); `null` on `session.created` of a refused session. `client.intercept` takes it from the `requestResource` call of the client on the same thread |
+| `text` member of a `*.header` entry of `cache.snapshot` | The content of the header file (UTF-8, max 64 KiB), so that CONTRACT §6 can blank its time fields. The SDK writes one `name : value` line per field (lower-case name, space, colon, space), with CRLF line ends |
 | `session.callback` `onSessionStateChange` | `args`: old and new state (0 none, 1 running, 2 ready, 3 destroy) |
 | `runtime.notify_error` | `url`, `code`: the error report of the SDK (`SonicRuntime.notifyError`) |
 | `runtime.toast` | `text`, `duration` (`SonicRuntime.showToast`) |
@@ -185,7 +186,7 @@ These are Rivqen choices where the SDK leaves the host free. Each one is fixed f
 
 ### Package access
 
-`com.tencent.sonic.sdk.RivqenLabAccess` is Rivqen code in the SDK package. It uses these members; no reflection and no change of visibility (CONTRACT §7). The same list is in `package-access.json`.
+`com.tencent.sonic.sdk.RivqenLabAccess` is Rivqen code in the SDK package. It uses these members; no reflection, no change of visibility and no write to a field of an upstream object (CONTRACT §7). The same list is in `package-access.json`.
 
 | Member | Kind | Use |
 |---|---|---|
@@ -195,8 +196,6 @@ These are Rivqen choices where the SDK leaves the host free. Each one is fixed f
 | `SonicUtils.getDiffData(JSONObject, JSONObject)` | package-private static method | fn `diff` |
 | `SonicUtils.getCharset` | package-private static method | fn `charset` |
 | `SonicServer.connect()` | protected method | fn `etag` |
-| `SonicSession.setResult` | protected method | fn `message` |
-| `SonicSession.server`, `.pendingDiffData`, `.diffDataCallback` | protected fields, written | fn `message` |
 
 ### Function cases (CONTRACT §7)
 
@@ -205,7 +204,7 @@ These are Rivqen choices where the SDK leaves the host free. Each one is fixed f
 | `session_id` | `SonicRuntime.makeSessionId(url, account_related)` (public) | `account` `null` → the runtime returns `null` |
 | `split` | `SonicUtils.separateTemplateAndData` | `data` keeps the key order of the SDK; `false` from the SDK is a case error |
 | `diff` | `SonicUtils.getDiffData(local, server)` | `local: null` → `null` (the two-argument function; the file-reading variant is not used) |
-| `message` | `SonicSession.setResult(src, final, true)` on a session that never starts | `fields`: object or `[name, value]` pairs. A diff without `local_refresh_time` gets the current time, as the SDK data update flow does |
+| `message` | — | `unsupported`: it needs hand-set session state (architect decision: a runner never writes a field of an upstream object). The page message is observed in session runs (`session.message`) |
 | `etag` | `SonicServer.connect()` over a fixed answer (status 200, field `eTag` = `value`) | The weak ETag rule of `connect()` |
 | `charset` | `SonicUtils.getCharset(content_type)` | |
 | `is_legacy_response` | — | `unsupported`: private `SonicServer.isSonicResponse` |
@@ -216,9 +215,9 @@ The fixed-answer connection is given through the public `SonicSessionConfig.Buil
 ## Limits
 
 - **Session start inside `createSession`.** With `auto_start` on (the SDK default), the session starts inside `createSession`. The callback `onSonicSessionStart` and the state change 0 → 1 occur before the harness can register, so they are not in the log.
-- **Time values from the Android HTTP stack.** The response headers that the SDK passes on (`client.load_data`, `client.intercept`) and stores (`<id>.header` file) contain `X-Android-Sent-Millis` and `X-Android-Received-Millis`. Their values and the SHA-256 of the `.header` file change from run to run. The determinism rule of CONTRACT §6 does not remove them yet (shared-file request).
-- **Order of harness and proxy events.** Harness events reach the conductor over HTTP; proxy events are recorded in the conductor at once. Between two steps, the conductor order (`seq`) of a harness event and a proxy event can change from run to run (observed: `runtime.cookie_get` before or after `proxy.request`). In two Quick runs the harness events (by `hseq`), the proxy events and the conductor events were each equal after the normalization of CONTRACT §6 plus the `X-Android-*-Millis` values; only the interleaving differed. CONTRACT §6 compares the merged order (shared-file request).
-- **Page message age.** In `message` and in a data update, `local_refresh_time` is the age of the diff in milliseconds; the SDK leaves out `0`. Two runs of the same case can give `0` (left out) or `1`.
+- **Time values from the Android HTTP stack.** The response headers that the SDK passes on (`client.load_data`, `client.intercept`) and stores (`<id>.header` file) contain `X-Android-Sent-Millis` and `X-Android-Received-Millis`. Their values and the SHA-256 of the `.header` file change from run to run. CONTRACT §6 blanks these fields and compares the `text` of a `.header` file instead of its hash.
+- **Order of harness and proxy events.** Harness events reach the conductor over HTTP; proxy events are recorded in the conductor at once. Between two steps, the conductor order (`seq`) of a harness event and a proxy event can change from run to run (observed: `runtime.cookie_get` before or after `proxy.request`). In two Quick runs the harness events (by `hseq`), the proxy events and the conductor events were each equal after the normalization of CONTRACT §6 plus the `X-Android-*-Millis` values; only the interleaving differed. CONTRACT §6 compares each source on its own inside a step window.
+- **Page message age.** In a data update message, `local_refresh_time` is the age of the diff in milliseconds; the SDK leaves out `0`, so two runs can differ. CONTRACT §6 removes it before the comparison.
 - **Emulator crash folder.** The emulator writes a crash-report folder `/tmp/android-<user>/emu-crash-<version>.db` (a few KiB) on the system volume; it does not follow `TMPDIR`. `clean.sh` deletes the folder of the lab emulator version when the main SDK has another version.
 - **Device log.** One SDK path writes a stack trace to `System.err` (`SonicSession.setResult` on a JSON error); it is not under the `RivqenLab` tag.
 - **API 28 only.** The WebView is the AOSP WebView 66 of the image. Results of a later WebView can differ.
@@ -228,7 +227,7 @@ The fixed-answer connection is given through the public `SonicSessionConfig.Buil
 
 The lab code has no unit tests and no mutation run (sprint record: not applicable). It is checked by `build.sh`, by the smoke runs below, and by the determinism rule of the stored runs (CONTRACT §6).
 
-Smoke runs (2026-11-05, fake conductor, page `a`, first load):
+Smoke runs (2026-11-05, fake conductor, page `a`, first load; the Quick scripted run and the functions run again after the contract update of `48e4936`):
 
 | Run | Result |
 |---|---|
@@ -236,4 +235,4 @@ Smoke runs (2026-11-05, fake conductor, page `a`, first load):
 | Standard, scripted | `client.load_url` at `client_ready`; stream 296 bytes; same message and codes |
 | Quick, WebView | WebView loads the data; its main-frame intercept has a `data:` URL → `null`; page finished |
 | Standard, WebView | WebView loads the URL; the intercept returns the SDK stream (296 bytes, complete); page finished |
-| Functions (13 sample cases, run twice) | 11 results, 2 `unsupported`; equal except `local_refresh_time` of one message case |
+| Functions (13 sample cases, run twice) | 9 results, 4 `unsupported` (2 × `message`, `is_legacy_response`, `template_change`); both runs byte-equal |

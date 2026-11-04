@@ -146,7 +146,7 @@ final class LabRuntime extends SonicRuntime {
      */
     @Override
     public Object createWebResourceResponse(String mimeType, String encoding, InputStream data, Map<String, String> headers) {
-        RecordingStream stream = new RecordingStream(data, events);
+        RecordingStream stream = new RecordingStream(data, events, RecordingClient.requestingSession());
         WebResourceResponse response = new WebResourceResponse(mimeType, encoding, stream);
         if (headers != null) {
             response.setResponseHeaders(headers);

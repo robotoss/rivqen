@@ -36,6 +36,7 @@ final class ScenarioRun {
     private static final long INTERCEPT_ACK_MAX_MS = 30_000;
     private static final long BRIDGE_TIMEOUT_MS = 5_000;
     private static final long READERS_AT_END_MS = 10_000;
+    private static final long MAX_HEADER_TEXT = 64 * 1024;
 
     private final Context context;
     private final ControlChannel control;
@@ -193,7 +194,7 @@ final class ScenarioRun {
             }
         }, MAIN_TIMEOUT_MS);
         if (created == null) {
-            events.emit("session.created", "session_id", null);
+            events.emit("session.created", "session", null, "session_id", null);
             return null;
         }
         sessions.add(created);
@@ -209,7 +210,7 @@ final class ScenarioRun {
         if (b.client != null) {
             return "client already bound";
         }
-        RecordingClient client = new RecordingClient(events, webView == null ? null : webView.webView());
+        RecordingClient client = new RecordingClient(events, b.index, webView == null ? null : webView.webView());
         Boolean ok = Threads.onMain(() -> b.session.bindClient(client), MAIN_TIMEOUT_MS);
         if (!Boolean.TRUE.equals(ok)) {
             return "bindClient returned false";
@@ -269,7 +270,7 @@ final class ScenarioRun {
                 return;
             }
             returned.countDown();
-            readToEnd(response);
+            readToEnd(b.index, response);
         }, "rq-intercept-" + (++workers));
         t.setDaemon(true);
         readers.add(t);
@@ -280,9 +281,9 @@ final class ScenarioRun {
         return null;
     }
 
-    private void readToEnd(Object response) {
+    private void readToEnd(int session, Object response) {
         if (response == null) {
-            events.emit("client.intercept", "null", true);
+            events.emit("client.intercept", "session", session, "null", true);
             return;
         }
         if (!(response instanceof WebResourceResponse)) {
@@ -345,7 +346,7 @@ final class ScenarioRun {
         return null;
     }
 
-    private void snapshotCache() throws IOException {
+    private void snapshotCache() throws IOException, org.json.JSONException {
         File dir = runtime.getSonicCacheDir();
         List<String> names = new ArrayList<>();
         collect(dir, "", names);
@@ -353,7 +354,13 @@ final class ScenarioRun {
         JSONArray files = new JSONArray();
         for (String name : names) {
             File f = new File(dir, name);
-            files.put(Json.object("name", name, "size", f.length(), "sha256", sha256(f)));
+            JSONObject entry = Json.object("name", name, "size", f.length(), "sha256", sha256(f));
+            if (name.endsWith(".header")) {
+                // CONTRACT sections 5 and 6: the header file text (synthetic lab fields), so that the
+                // determinism check can blank the time fields of the Android HTTP stack.
+                entry.put("text", headerText(f));
+            }
+            files.put(entry);
         }
         events.emit("cache.snapshot", "files", files, "db", null);
     }
@@ -372,6 +379,25 @@ final class ScenarioRun {
             } else {
                 out.add(prefix + c.getName());
             }
+        }
+    }
+
+    /** Header file content as UTF-8, at most {@link #MAX_HEADER_TEXT} bytes. */
+    private static String headerText(File f) throws IOException {
+        if (f.length() > MAX_HEADER_TEXT) {
+            throw new IOException(f.getName() + " over " + MAX_HEADER_TEXT + " bytes");
+        }
+        byte[] data = new byte[(int) f.length()];
+        try (InputStream in = new FileInputStream(f)) {
+            int off = 0;
+            while (off < data.length) {
+                int n = in.read(data, off, data.length - off);
+                if (n == -1) {
+                    break;
+                }
+                off += n;
+            }
+            return new String(data, 0, off, java.nio.charset.StandardCharsets.UTF_8);
         }
     }
 

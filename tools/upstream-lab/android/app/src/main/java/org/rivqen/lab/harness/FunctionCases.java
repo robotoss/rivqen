@@ -97,6 +97,11 @@ final class FunctionCases {
             case "template_change":
                 return "inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/"
                         + "com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function";
+            case "message":
+                // CONTRACT section 7: a runner never writes a field of an upstream object.
+                return "needs hand-set session state (SonicSession.setResult reads the server, the pending diff "
+                        + "and the page callback of a running session); the page message is observed only in "
+                        + "session runs (session.message)";
             default:
                 return null;
         }
@@ -120,8 +125,6 @@ final class FunctionCases {
                 JSONObject local = in.isNull("local") ? null : in.getJSONObject("local");
                 return Json.object("diff", RivqenLabAccess.diff(local, in.getJSONObject("server")));
             }
-            case "message":
-                return message(in);
             case "etag": {
                 Map<String, List<String>> fields = new LinkedHashMap<>();
                 if (!in.isNull("value")) {
@@ -141,28 +144,6 @@ final class FunctionCases {
         }
     }
 
-    /**
-     * The page message of {@code SonicSession.setResult}. A diff gets {@code local_refresh_time} =
-     * now when it has none, as the data update flow of the SDK adds it; the SDK then reports the
-     * age in milliseconds (0 is left out), so that member can differ between runs.
-     */
-    private JSONObject message(JSONObject in) throws Exception {
-        String pending = null;
-        if (in.has("diff") && !in.isNull("diff")) {
-            JSONObject diff = new JSONObject(in.getJSONObject("diff").toString());
-            if (!diff.has("local_refresh_time")) {
-                diff.put("local_refresh_time", System.currentTimeMillis());
-            }
-            pending = diff.toString();
-        }
-        SonicSession s = probeSession(fields(in.opt("fields")));
-        try {
-            return Json.object("json", RivqenLabAccess.message(s, in.getInt("src_code"), in.getInt("final_code"), pending));
-        } finally {
-            s.destroy();
-        }
-    }
-
     /** A session that never starts, with a fixed-answer connection; one URL per probe. */
     private SonicSession probeSession(Map<String, List<String>> fields) {
         SonicSessionConfig config = new SonicSessionConfig.Builder()
@@ -175,42 +156,6 @@ final class FunctionCases {
             throw new IllegalStateException("createSession returned null");
         }
         return s;
-    }
-
-    /** {@code fields}: an object (string or string array values) or an array of [name, value] pairs. */
-    private static Map<String, List<String>> fields(Object value) throws JSONException {
-        Map<String, List<String>> out = new LinkedHashMap<>();
-        if (value instanceof JSONObject) {
-            JSONObject o = (JSONObject) value;
-            for (Iterator<String> it = o.keys(); it.hasNext(); ) {
-                String k = it.next();
-                Object v = o.get(k);
-                List<String> values = new ArrayList<>();
-                if (v instanceof JSONArray) {
-                    for (int i = 0; i < ((JSONArray) v).length(); i++) {
-                        values.add(((JSONArray) v).getString(i));
-                    }
-                } else {
-                    values.add(String.valueOf(v));
-                }
-                out.put(k, values);
-            }
-        } else if (value instanceof JSONArray) {
-            JSONArray a = (JSONArray) value;
-            for (int i = 0; i < a.length(); i++) {
-                JSONArray pair = a.getJSONArray(i);
-                String k = pair.getString(0);
-                List<String> values = out.get(k);
-                if (values == null) {
-                    values = new ArrayList<>();
-                    out.put(k, values);
-                }
-                values.add(pair.getString(1));
-            }
-        } else if (value != null && value != JSONObject.NULL) {
-            throw new IllegalArgumentException("fields must be an object or an array of pairs");
-        }
-        return out;
     }
 
     /** Top-level members in name order; nested objects keep the order the SDK returned. */

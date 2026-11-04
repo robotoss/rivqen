@@ -30,9 +30,13 @@ final class RecordingStream extends FilterInputStream {
         }
     }
 
-    RecordingStream(InputStream in, Events events) {
+    private final int session;
+
+    /** @param session 1-based session index of the requesting client (0 when unknown). */
+    RecordingStream(InputStream in, Events events, int session) {
         super(in);
         this.events = events;
+        this.session = session;
     }
 
     /** Members of the response object that the runtime created around this stream. */
@@ -106,7 +110,7 @@ final class RecordingStream extends FilterInputStream {
         if (!recorded.compareAndSet(false, true)) {
             return;
         }
-        JSONObject e = Json.object("body_len", length, "body_sha256", Json.hex(digest.digest()),
+        JSONObject e = Json.object("session", session == 0 ? null : session, "body_len", length, "body_sha256", Json.hex(digest.digest()),
                 "complete", complete, "error", error == null ? null : error.getClass().getName());
         try {
             for (java.util.Iterator<String> it = head.keys(); it.hasNext(); ) {

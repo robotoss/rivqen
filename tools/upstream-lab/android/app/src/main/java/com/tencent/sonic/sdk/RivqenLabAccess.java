@@ -11,7 +11,8 @@ import org.rivqen.lab.harness.SessionListener;
 /**
  * Rivqen lab code, not upstream code. It is in the SDK package only to call package-private and
  * protected members of the unmodified SDK (CONTRACT section 7; no reflection, no change of
- * visibility). Every member it uses is listed in tools/upstream-lab/android/package-access.json.
+ * visibility, no write to a field of an upstream object). Every member it uses is listed in
+ * tools/upstream-lab/android/package-access.json.
  */
 public final class RivqenLabAccess {
 
@@ -59,27 +60,6 @@ public final class RivqenLabAccess {
             throw new IllegalStateException("connect returned " + code);
         }
         return server.getResponseHeaderField(server.getCustomHeadFieldEtagKey());
-    }
-
-    /**
-     * Builds the page message with {@code SonicSession.setResult} (protected). It sets the protected
-     * fields {@code server}, {@code pendingDiffData} and {@code diffDataCallback} first, as a session
-     * flow would. Returns the message, or {@code null} when the SDK does not call back.
-     */
-    public static String message(SonicSession session, int srcCode, int finalCode, String pendingDiff) {
-        final String[] out = new String[1];
-        session.server = new SonicServer(session, new Intent());
-        if (pendingDiff != null) {
-            session.pendingDiffData = pendingDiff;
-        }
-        session.diffDataCallback = new SonicDiffDataCallback() {
-            @Override
-            public void callback(String resultData) {
-                out[0] = resultData;
-            }
-        };
-        session.setResult(srcCode, finalCode, true);
-        return out[0];
     }
 
     private static final class Adapter implements SonicSessionCallback, SonicSession.Callback {

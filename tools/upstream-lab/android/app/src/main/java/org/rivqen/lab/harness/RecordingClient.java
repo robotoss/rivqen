@@ -27,11 +27,40 @@ final class RecordingClient extends SonicSessionClient {
     private final Events events;
     private final WebView webView;
     private final Handler main = new Handler(Looper.getMainLooper());
+    private final int session;
 
-    /** @param webView the WebView of a WebView run, or {@code null} for a scripted run. */
-    RecordingClient(Events events, WebView webView) {
+    /** Session index of the client whose {@code requestResource} runs on this thread, or 0. */
+    private static final ThreadLocal<Integer> REQUESTING = new ThreadLocal<>();
+
+    /**
+     * @param session the 1-based session index (CONTRACT section 5: {@code session} on client events)
+     * @param webView the WebView of a WebView run, or {@code null} for a scripted run.
+     */
+    RecordingClient(Events events, int session, WebView webView) {
         this.events = events;
+        this.session = session;
         this.webView = webView;
+    }
+
+    int session() {
+        return session;
+    }
+
+    /** Session index of the {@code requestResource} call on the current thread, or 0. */
+    static int requestingSession() {
+        Integer s = REQUESTING.get();
+        return s == null ? 0 : s;
+    }
+
+    /** The SDK call as is; the runtime reads the session index while the SDK builds the response. */
+    @Override
+    public Object requestResource(String url) {
+        REQUESTING.set(session);
+        try {
+            return super.requestResource(url);
+        } finally {
+            REQUESTING.remove();
+        }
     }
 
     @Override
@@ -44,7 +73,7 @@ final class RecordingClient extends SonicSessionClient {
                 keys.put(k);
             }
         }
-        events.emit("client.load_url", "url", url, "extras", keys);
+        events.emit("client.load_url", "session", session, "url", url, "extras", keys);
         if (webView != null) {
             onMain(() -> webView.loadUrl(url));
         }
@@ -63,7 +92,7 @@ final class RecordingClient extends SonicSessionClient {
 
     @Override
     public void clearHistory() {
-        events.emit("client.clear_history");
+        events.emit("client.clear_history", "session", session);
         if (webView != null) {
             onMain(webView::clearHistory);
         }
@@ -73,7 +102,7 @@ final class RecordingClient extends SonicSessionClient {
                             HashMap<String, String> headers, boolean withHeaders) {
         String body = data == null ? "" : data;
         events.emit("client.load_data", Json.object(
-                "base_url", baseUrl, "mime", mimeType, "encoding", encoding, "history_url", historyUrl,
+                "session", session, "base_url", baseUrl, "mime", mimeType, "encoding", encoding, "history_url", historyUrl,
                 // null: the variant without headers was called.
                 "headers", withHeaders ? Json.headerPairs(headers) : null,
                 "body_len", body.getBytes(StandardCharsets.UTF_8).length,

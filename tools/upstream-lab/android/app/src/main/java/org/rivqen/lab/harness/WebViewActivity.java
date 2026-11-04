@@ -67,7 +67,7 @@ public final class WebViewActivity extends Activity {
             events.emit("webview.intercept_request", "url", url, "method", request.getMethod());
             Object response = c.requestResource(url);
             if (response == null) {
-                events.emit("client.intercept", "null", true);
+                events.emit("client.intercept", "session", c.session(), "null", true);
                 return null;
             }
             if (!(response instanceof WebResourceResponse)) {

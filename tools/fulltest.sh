@@ -67,6 +67,7 @@ group_node() {
   step malformed-gen 'node tools/legacy-fixtures/gen.mjs --check --dir fixtures/malformed/legacy'
   step malformed-http 'node server/conformance/e2e/run.mjs --module tools/legacy-fixtures/src/server.mjs --suite legacy -- --fixtures fixtures/malformed/legacy'
   step upstream-lab-unit 'node --check tools/upstream-lab/node/app.js && node --test tools/upstream-lab/node/control.test.cjs'
+  step upstream-lab-client 'node --test "tools/upstream-lab/client/test/*.test.mjs"'
 }
 
 group_python() {

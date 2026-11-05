@@ -86,35 +86,35 @@ Session identity, markers and the page message (D-20…D-27):
 | D-23 | Block name source | Opening marker | Closing marker | Opening marker |
 | D-24 | Client-side title rule | First literal `<title>` element, if a block exists | None | Same as server canonical rule |
 | D-25 | Diff of new keys | Included, unless the value is empty | Ignored | Included |
-| D-26 | Page message types | Numbers for codes and age; `isReload` the string `"false"` (trace) | Strings only; `isReload` always `"false"` | Numbers and booleans; shim can emit strings for iOS-era pages |
+| D-26 | Page message types | Numbers for codes and age; `isReload` the string `"false"` (trace) | Strings only; `isReload` always `"false"` | Android form: integer codes and age, `isReload` the string `"true"`/`"false"`; shim can emit the iOS form (DL-106) |
 | D-27 | Web view integration | No WebView code in the SDK: the app's client loads data or a URL and passes intercepted requests in | `UIWebView` + global `NSURLProtocol` | Public APIs only (see platform pages) |
 
 Headers, cache and update rules (D-28 and later):
 
 | # | Topic | Android | iOS | Rivqen canonical |
 |---|---|---|---|---|
-| D-28 | Legacy response test | No single test in the flow; any one of 3 fields only turns off the local-server mode | All 4 fields required | Open (T-06) |
-| D-29 | `template-change` value | `false` or `0`, exact: data update | `boolValue` false: data update | Open (T-06) |
-| D-30 | `cache-offline` value case | `http`, `false`: any case; `true`, `store`: exact | Exact | Open (T-06) |
-| D-31 | Weak etag | `w/`, any case: all lowercase, every `w/` and `"` removed | `W/` exact: prefix and outer quotes removed, case kept | Open (T-06) |
-| D-32 | `sonic-etag-key` | Named field found in any case | Named field found only if lowercase | Open (T-06) |
-| D-33 | Repeated response fields | Joined with `,` | Joined by the platform | Open (T-06) |
-| D-34 | Empty diff | Nothing sent | Full server data sent | Open (T-06) |
-| D-35 | Stored data after an update | Full server data | Old keys only; new keys dropped | Open (T-06) |
-| D-36 | Diff age limit | 30 s | None | Open (T-06) |
-| D-37 | Callback spacing on reload | At least 2 s | None | Open (T-06) |
-| D-39 | Local-server decision | Non-legacy `200` only | Also `304`; data update probably fails | Open (T-06) |
-| D-41 | Cache-control rules (flag on) | Substring match | Exact match, first load only | Open (T-06) |
-| D-42 | Cache storage | 4 files per id, SQLite | Directory per id, SQLite, plist data | Open (T-06) |
-| D-44 | Charset | Default: platform charset | Default: UTF-8; faulty cut | Open (T-06) |
-| D-45 | `200` with the request etag | Handled as `304` | Handled as an update | Open (T-06) |
-| D-46 | `cache-offline: false`, cached page | Cache removed, no update | Update delivered, then cache removed | Open (T-06) |
-| D-47 | `cache-offline: http`, cached page | No update; cache kept | Update delivered, then cache removed | Open (T-06) |
-| D-48 | `store` and `code` | Final `304` only on update paths | `code` `"304"` for every result | Open (T-06) |
-| D-49 | `html-sha1` of a rebuilt page | Checked before use | Not checked; next read drops it | Open (T-06) |
-| D-50 | First load fails | WebView loads the URL itself | Failure passed to the web view | Open (T-06) |
-| D-51 | Headers of a `304` | Stored headers kept | Stored headers replaced | Open (T-06) |
-| D-52 | Headers of the cached page | Stored all; some removed for the WebView | Some removed before storage | Open (T-06) |
+| D-28 | Legacy response test | No single test in the flow; any one of 3 fields only turns off the local-server mode | All 4 fields required | All four fields, not empty, on a `200`; else normal load, no cache (DL-105) |
+| D-29 | `template-change` value | `false` or `0`, exact: data update | `boolValue` false: data update | Only `false` or `0` is a data update (DL-105) |
+| D-30 | `cache-offline` value case | `http`, `false`: any case; `true`, `store`: exact | Exact | ASCII case-insensitive; another value counts as `false` (DL-105) |
+| D-31 | Weak etag | `w/`, any case: all lowercase, every `w/` and `"` removed | `W/` exact: prefix and outer quotes removed, case kept | One leading `W/` and outer quotes removed; exact compare (DL-105) |
+| D-32 | `sonic-etag-key` | Named field found in any case | Named field found only if lowercase | Case-insensitive names (DL-105) |
+| D-33 | Repeated response fields | Joined with `,` | Joined by the platform | Different values on two lines: not a legacy response (DL-105) |
+| D-34 | Empty diff | Nothing sent | Full server data sent | No message; final `304` (DL-106) |
+| D-35 | Stored data after an update | Full server data | Old keys only; new keys dropped | Full server data; only changed blocks to the page (DL-106) |
+| D-36 | Diff age limit | 30 s | None | 30 s (DL-106) |
+| D-37 | Callback spacing on reload | At least 2 s | None | None (DL-106) |
+| D-39 | Local-server decision | Non-legacy `200` only | Also `304`; data update probably fails | Android rule, opt-in (DL-109) |
+| D-41 | Cache-control rules (flag on) | Substring match | Exact match, first load only | RFC 9111; `no-store` wins (DL-108) |
+| D-42 | Cache storage | 4 files per id, SQLite | Directory per id, SQLite, plist data | Not reproduced: Rivqen cache (DL-108) |
+| D-44 | Charset | Default: platform charset | Default: UTF-8; faulty cut | RFC 9110 parameter; default UTF-8 (DL-105) |
+| D-45 | `200` with the request etag | Handled as `304` | Handled as an update | Handled as `304` (DL-105) |
+| D-46 | `cache-offline: false`, cached page | Cache removed, no update | Update delivered, then cache removed | Update delivered, then cache removed (DL-107) |
+| D-47 | `cache-offline: http`, cached page | No update; cache kept | Update delivered, then cache removed | Cache removed, 6 h off, normal load (DL-107) |
+| D-48 | `store` and `code` | Final `304` only on update paths | `code` `"304"` for every result | Android rule (DL-106) |
+| D-49 | `html-sha1` of a rebuilt page | Checked before use | Not checked; next read drops it | Checked; mismatch: normal load, cache removed (DL-108) |
+| D-50 | First load fails | WebView loads the URL itself | Failure passed to the web view | Normal load (DL-107) |
+| D-51 | Headers of a `304` | Stored headers kept | Stored headers replaced | Stored headers updated (RFC 9111 §4.3.4) (DL-108) |
+| D-52 | Headers of the cached page | Stored all; some removed for the WebView | Some removed before storage | `Set-Cookie`, hop-by-hop, cache fields never stored (DL-108) |
 
 Checked and **not** divergences (numbers kept so that the kickoff list stays traceable):
 

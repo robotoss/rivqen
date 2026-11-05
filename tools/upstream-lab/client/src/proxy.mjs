@@ -278,6 +278,8 @@ export class Proxy {
     if (body.length > pos) await write(body.subarray(pos));
     await new Promise((resolve) => res.end(resolve));
     rec.delivered.body = body;
+    // CONTRACT section 5: only a drop_field or cut exchange gets a `--- delivered ---` section.
+    if (faults.drop.length === 0) rec.delivered = null;
     this.#end(rec, state, body, true);
   }
 

@@ -93,6 +93,8 @@ test('check_schema_covers_the_members_of_each_event_of_the_contract', () => {
     { ...h, ev: 'client.load_data', base_url: 'u', mime: 'text/html', encoding: 'utf-8', history_url: 'u', headers: [['a', 'b']], body_len: 1, body_sha256: SHA },
     { ...h, ev: 'client.intercept', null: true },
     { ...h, ev: 'client.intercept', status: 200, reason: 'OK', mime: 'm', encoding: 'e', headers: [], body_len: 0, body_sha256: SHA, complete: false, error: 'IOException' },
+    // API 28: the WebResourceResponse of the runtime has status 0 and reason null (android/README.md)
+    { ...h, ev: 'client.intercept', status: 0, reason: null, mime: 'm', encoding: 'e', headers: [], body_len: 0, body_sha256: SHA, complete: true, error: null },
     { ...h, ev: 'session.result', src_code: 1000, final_code: 304 },
     { ...h, ev: 'session.message', json: '{}' },
     { ...h, ev: 'session.callback', name: 'onSessionHitCache', args: [] },
@@ -119,6 +121,7 @@ test('check_schema_covers_the_members_of_each_event_of_the_contract', () => {
   const bad = [
     { ...h, ev: 'client.intercept', null: true, status: 200 },
     { ...h, ev: 'client.intercept', null: false },
+    { ...h, ev: 'client.intercept', status: 0, reason: 0, mime: 'm', encoding: 'e', headers: [], body_len: 0, body_sha256: SHA, complete: true },
     { ...h, ev: 'client.load_data', base_url: 'u', mime: 'm', encoding: 'e', history_url: 'u', headers: [['a']], body_len: 1, body_sha256: SHA },
     { ...h, ev: 'client.load_data', base_url: 'u', mime: 'm', encoding: 'e', history_url: 'u', headers: [], body_len: 1, body_sha256: 'xyz' },
     { ...h, ev: 'cache.snapshot', files: [{ name: 'b', size: 1, sha256: SHA }, { name: 'a', size: 1, sha256: SHA }], db: null },

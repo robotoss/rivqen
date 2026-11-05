@@ -177,6 +177,25 @@ test('proxy_drop_field_removes_the_field_and_keeps_both_forms', async () => {
   });
 });
 
+test('proxy_http_file_has_no_delivered_section_without_a_byte_fault', async () => {
+  // CONTRACT section 5: only a drop_field or cut exchange adds `--- delivered ---`; a plain or held
+  // exchange stores the request and the upstream response only (hop-by-hop fields are not a fault).
+  await withProxy(answer, async ({ proxy, log, files }) => {
+    await send({ port: proxy.port });
+    proxy.arm({ do: 'hold', point: 'body', bytes: 3 });
+    const held = send({ port: proxy.port });
+    await until(() => events(log, 'proxy.hold').length === 1);
+    proxy.release();
+    assert.deepEqual((await held).body, BODY);
+    await until(() => files.size === 2);
+    for (const n of [1, 2]) {
+      const text = files.get(n).toString();
+      assert.ok(text.endsWith('\n0123456789abcdefghij'), `exchange ${n} ends with the upstream body`);
+      assert.doesNotMatch(text, /--- delivered ---/);
+    }
+  });
+});
+
 test('proxy_faults_apply_to_one_exchange_only', async () => {
   await withProxy(answer, async ({ proxy }) => {
     proxy.arm({ do: 'drop_field', name: 'etag' });

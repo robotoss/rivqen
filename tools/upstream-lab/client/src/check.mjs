@@ -39,7 +39,7 @@ export const SCHEMA = {
   },
   'client.intercept': {
     src: ['harness'],
-    need: { status: isInt, reason: str, mime: str, encoding: str, headers: pairs, body_len: isInt, body_sha256: hex64, complete: bool },
+    need: { status: isInt, reason: strOrNull, mime: str, encoding: str, headers: pairs, body_len: isInt, body_sha256: hex64, complete: bool },
     opt: { error: strOrNull },
     alternative: { null: (v) => v === true }, // a null stream: { "null": true } and no other member
   },

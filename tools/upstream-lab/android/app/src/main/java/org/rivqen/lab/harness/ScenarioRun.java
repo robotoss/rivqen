@@ -102,14 +102,19 @@ final class ScenarioRun {
             if (++steps > Lab.MAX_STEPS) {
                 return "over " + Lab.MAX_STEPS + " steps";
             }
-            events.emit("step.start", "step", step);
+            // The conductor writes step.start (CONTRACT section 5); the harness acknowledges with step.done.
             String error;
             try {
                 error = step(what, step);
             } catch (Exception e) {
                 error = Lab.describe(e);
             }
-            events.emit("step.done", "step", step, "error", error);
+            // error is a member only on failure (CONTRACT section 5).
+            if (error == null) {
+                events.emit("step.done", "step", step);
+            } else {
+                events.emit("step.done", "step", step, "error", error);
+            }
             if (!events.flush(30_000)) {
                 return events.failure() != null ? events.failure() : "events not delivered in 30 s";
             }
@@ -194,7 +199,8 @@ final class ScenarioRun {
             }
         }, MAIN_TIMEOUT_MS);
         if (created == null) {
-            events.emit("session.created", "session", null, "session_id", null);
+            // A refused session has no index: no session member (CONTRACT section 5: a 1-based index).
+            events.emit("session.created", "session_id", null);
             return null;
         }
         sessions.add(created);

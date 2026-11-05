@@ -5,7 +5,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { PLATFORMS, listDir, readOptionalJson } from './check.mjs';
-import { firstDifference, normalizeRun } from './determinism.mjs';
+import { firstDifference, normalizeRun, outcomeRun } from './determinism.mjs';
 
 const MODES = ['quick', 'standard'];
 
@@ -25,9 +25,12 @@ export async function buildRunJson({ root, previous = null, meta }) {
       const names = (await listDir(path.join(root, 'android', sd.name, mode))).map((d) => d.name).filter((n) => /^run-\d+\.jsonl$/.test(n)).sort();
       if (names.length === 0) continue;
       const runs = [];
+      const outcomes = [];
       for (const n of names) {
         const text = await readFile(path.join(root, 'android', sd.name, mode, n), 'utf8');
-        runs.push(normalizeRun(text.split('\n').filter((l) => l !== '').map((l) => JSON.parse(l))));
+        const events = text.split('\n').filter((l) => l !== '').map((l) => JSON.parse(l));
+        runs.push(normalizeRun(events));
+        outcomes.push(outcomeRun(events));
       }
       modes[mode] = { runs: names.length };
       const diff = firstDifference(runs);
@@ -35,7 +38,8 @@ export async function buildRunJson({ root, previous = null, meta }) {
       if (!diff) stable.push({ scenario: sd.name, mode });
       else {
         const reason = oldReasons.get(key) ?? `runs differ: run ${diff.run + 1} at line ${diff.index + 1}`;
-        unstable.push({ scenario: sd.name, mode, reason });
+        // outcome: the projection of determinism.mjs (what the client did), see outcomeRun
+        unstable.push({ scenario: sd.name, mode, reason, outcome: firstDifference(outcomes) ? 'unstable' : 'stable' });
       }
     }
     scenarios.push({ id: sd.name, modes });

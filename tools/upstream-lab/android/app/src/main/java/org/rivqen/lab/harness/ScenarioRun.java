@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 final class ScenarioRun {
 
     private static final long MAIN_TIMEOUT_MS = 10_000;
+    private static final long ENGINE_TIMEOUT_MS = 5_000;
     /** Default and largest time the step {@code request_resource} waits for the call to return. */
     private static final long INTERCEPT_ACK_MS = 1_000;
     private static final long INTERCEPT_ACK_MAX_MS = 30_000;
@@ -78,6 +79,16 @@ final class ScenarioRun {
         }
         runtime = new LabRuntime(context, events, config.account, config.cookie, config.networkValid);
         Threads.onMain(() -> SonicEngine.createInstance(runtime, config.engineConfig()), MAIN_TIMEOUT_MS);
+        // A new database is upgraded by a task on the runtime thread; until it ends the engine
+        // refuses every session ("sonic service is unavailable"). An app creates the engine long
+        // before its first page; the lab waits for the same state (observed in WP-01 S1 T-05).
+        long available = System.currentTimeMillis() + ENGINE_TIMEOUT_MS;
+        while (!SonicEngine.getInstance().isSonicAvailable()) {
+            if (System.currentTimeMillis() > available) {
+                return "engine not available in " + ENGINE_TIMEOUT_MS + " ms";
+            }
+            Thread.sleep(20);
+        }
         if (scenario.optBoolean("webview", false)) {
             webView = launcher.launch();
         }
@@ -335,6 +346,10 @@ final class ScenarioRun {
         });
         w.await(BRIDGE_TIMEOUT_MS, "bridge call");
         b.diffCallbacks.add(callback);
+        // The SDK answers the bridge call through a message on the main thread. Wait until the main
+        // queue has handled it, so that a page message that the call gives comes before step.done
+        // (the same step window in every run) instead of racing the next step.
+        Threads.onMain(() -> null, MAIN_TIMEOUT_MS);
         return null;
     }
 

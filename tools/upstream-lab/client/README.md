@@ -97,6 +97,18 @@ These are the smallest choices that make the contract executable. T-06 decides w
 | CS-19 | `webview: true` (scenario member). Its steps and setup have no `request_resource`, `page_finished` or `first_load` macro (the harness refuses them in a web view run), which `scenarioProblems` checks |
 | `D-30` and `D-39` cases | There is no function for the case of `cache-offline` or for the local-server decision in CONTRACT section 7. D-30 is observed through `message` (`cache-offline` in `fields`), D-39 through `etag`, `template_change` and `diff` |
 
+## Catalog changes of the runs (T-05)
+
+The first real runs (2026-11-05) showed that some scenarios could not observe their rows. T-05 changed them; the architect reviews the changes (sprint record WP-01 S1).
+
+| Scenario | Change | Reason |
+|---|---|---|
+| All with `request_resource` | `get_diff` after each `request_resource`; CS-01…CS-14 also `get_diff` before `snapshot_cache` | Without a bridge call no `session.message` is recorded. The first call shows "notify" (the callback is set before the result), the second shows the result that `getDiffData` gives later |
+| CS-08, CS-10 | Origin `lab-java`, rows none | The upstream Node.js and PHP servers replace the application `cache-offline` with `true` (server trace S23). The Java server sends its `true` and the application value as two fields; the client joins them (`true,http`, `true,store`). No upstream server sends `http` or `store` alone, so Q16, S4, Q9 and S8 are not reachable without a field-rewrite fault step (proposal in the T-05 report) |
+| CS-09 | `drop_field` `cache-offline`, page `b` | Same reason. An absent field takes the same branch as `false` (F7) |
+| CS-11 | Page `b` | With page `a` and the cached tag, the upstream middleware answers `304` before the application status |
+| CS-19 | `client_ready` after `bind_client` (setup and steps) | The harness does not call `clientReady` in a WebView run; without it nothing loads |
+
 ## Mutation testing
 
 Stryker 10.0.0 (command runner, as `tools/legacy-fixtures`) on `src/`. Run it in this directory, after `npm install`, one run at a time:

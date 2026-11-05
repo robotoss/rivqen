@@ -18,6 +18,9 @@ import android.webkit.WebViewClient;
  */
 public final class WebViewActivity extends Activity {
 
+    /** User agent of the WebView of a WebView run (synthetic). */
+    static final String WEBVIEW_USER_AGENT = "RivqenLab/1 (Android harness; WebView)";
+
     private WebView view;
     private volatile Events events = Events.NONE;
     private volatile RecordingClient client;
@@ -29,6 +32,9 @@ public final class WebViewActivity extends Activity {
         view.getSettings().setJavaScriptEnabled(true);
         view.getSettings().setAllowFileAccess(false);
         view.getSettings().setAllowContentAccess(false);
+        // Fixed synthetic user agent: the default one names the build of the device image, which
+        // must not go into the stored evidence (CONTRACT section 5: no device identifiers).
+        view.getSettings().setUserAgentString(WEBVIEW_USER_AGENT);
         view.setWebViewClient(new Client());
         setContentView(view);
     }

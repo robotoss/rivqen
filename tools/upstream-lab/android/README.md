@@ -18,7 +18,7 @@ A Rivqen harness app runs the **unmodified** upstream Android SDK (VasSonic `599
 | `emulator.sh` | `start` (cold boot, no window), `stop`, `status` of the lab emulator |
 | `install.sh` | Installs the APK on the lab emulator |
 | `run.sh` | One scenario run (`pm clear`, then `am instrument` with the run id and the control URL) |
-| `functions.sh` | The function cases of CONTRACT §7 (mode `functions`) |
+| `functions.sh` | The function cases of CONTRACT §7 (mode `functions`); writes `<out>.meta.json` with `tools/functions-meta.cjs` |
 | `package-access.json` | The package-private and protected SDK members the harness uses (copy into `run.json`) |
 | `tools/fake-conductor.mjs` | Smoke-test stand-in for the conductor: control channel and one static first-load answer |
 | `tools/sample-functions.json` | Smoke cases for `functions.sh` (the real cases: `client/functions.json`) |
@@ -135,7 +135,7 @@ The harness executes a step only after the conductor gives it, and reports `step
 | `client_ready` | main | `SonicSessionClient.clientReady()` | After the call |
 | `request_resource` | `rq-intercept-<n>` | `SonicSessionClient.requestResource(url)`, then it reads the stream to the end | When the call returns, or after `wait_ms` (default 1000, max 30000) if the call still waits. `client.intercept` comes at the end of the stream |
 | `page_finished` | main | `SonicSessionClient.pageFinish(url)` | After the call |
-| `get_diff` | `rq-bridge-<n>` | `SonicSessionClient.getDiffData(callback)` | After the call; `session.message` when the SDK calls back |
+| `get_diff` | `rq-bridge-<n>` | `SonicSessionClient.getDiffData(callback)` | After the call **and** after the main thread has handled the queue up to that moment (the SDK answers through a main-thread message), so a message that the call gives is in the `get_diff` step window (T-05 fix) |
 | `refresh` | main | `SonicSession.refresh()` | After the call |
 | `destroy` | main | `session.result` (codes), then `SonicSession.destroy()` | After the call |
 | `set_account`, `set_cookie`, `set_network` | control | Change the value that the runtime returns | At once |
@@ -183,6 +183,9 @@ These are Rivqen choices where the SDK leaves the host free. Each one is fixed f
 | `postTaskToThread` | One worker thread `rq-sdk-worker` (`HandlerThread`) |
 | `postTaskToSessionThread` | The SDK default pool. During `create_session` the flow task waits (max 5 s) until the harness callbacks are registered |
 | `log` | SDK lines of level INFO and higher go to the device log under the tag `RivqenLab` |
+| `getSonicResourceCacheDir` | `files/SonicResource/` in app storage. The SDK default is a directory on external storage; without the storage permission each session reported `notifyError` `-1003` at a time that varied from run to run (T-05 trial, 2026-11-05) |
+| Engine start | After `SonicEngine.createInstance` the harness waits (max 5 s) until `isSonicAvailable()` is true. A new database is upgraded by a task on the runtime thread, and until it ends `createSession` returns `null` ("sonic service is unavailable"; observed once in 40 trial runs) |
+| WebView user agent | `RivqenLab/1 (Android harness; WebView)`. The default names the build of the device image |
 
 ### Package access
 

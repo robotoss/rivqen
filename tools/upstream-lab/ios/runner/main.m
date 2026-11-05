@@ -154,6 +154,31 @@ static NSDictionary *rqObject(NSDictionary *in, NSString *key, RQError **err) {
   return v;
 }
 
+// Response fields (CONTRACT section 7): an object, or a list of [name, value] pairs. The response
+// object of Foundation takes one value per name, so a name that repeats exactly is an error.
+static NSDictionary *rqFields(NSDictionary *in, RQError **err) {
+  id v = in[@"fields"];
+  if ([v isKindOfClass:[NSDictionary class]]) return v;
+  if (![v isKindOfClass:[NSArray class]]) {
+    *err = [RQError with:@"input.fields must be an object or a list of [name, value] pairs"];
+    return nil;
+  }
+  NSMutableDictionary *out = [NSMutableDictionary dictionary];
+  for (id pair in (NSArray *)v) {
+    if (![pair isKindOfClass:[NSArray class]] || [pair count] != 2 || ![pair[0] isKindOfClass:[NSString class]] ||
+        ![pair[1] isKindOfClass:[NSString class]]) {
+      *err = [RQError with:@"input.fields: each pair must be [name, value] strings"];
+      return nil;
+    }
+    if (out[pair[0]] != nil) {
+      *err = [RQError with:[NSString stringWithFormat:@"input.fields: the name %@ repeats; NSHTTPURLResponse takes one value per name", pair[0]]];
+      return nil;
+    }
+    out[pair[0]] = pair[1];
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // Server response helper: the response goes through the public connection delegate
 // entry point of the SDK server, as a network response would. The SDK lowercases
@@ -222,7 +247,7 @@ static NSDictionary *fnDiff(NSDictionary *in, RQError **err) {
 }
 
 static NSDictionary *fnIsLegacy(NSDictionary *in, RQError **err) {
-  NSDictionary *fields = rqObject(in, @"fields", err);
+  NSDictionary *fields = rqFields(in, err);
   if (!fields) return nil;
   SonicServer *server = rqServerWithFields(fields, err);
   if (!server) return nil;
@@ -304,7 +329,13 @@ static NSDictionary *rqRunCase(NSDictionary *c, NSMutableSet<NSString *> *used) 
   @try {
     result = f(in, &err);
   } @catch (NSException *ex) {
-    err = [RQError with:[NSString stringWithFormat:@"%@: %@", ex.name, ex.reason]];
+    // The reason can name an object address, which changes from run to run: mask it.
+    NSString *raw = ex.reason ?: @"";
+    NSString *reason = [raw stringByReplacingOccurrencesOfString:@"0x[0-9a-fA-F]+"
+                                                      withString:@"0x(address)"
+                                                         options:NSRegularExpressionSearch
+                                                           range:NSMakeRange(0, raw.length)];
+    err = [RQError with:[NSString stringWithFormat:@"%@: %@", ex.name, reason]];
   }
   if (result) {
     rec[@"result"] = result;

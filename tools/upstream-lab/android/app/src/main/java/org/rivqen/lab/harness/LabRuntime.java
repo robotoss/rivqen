@@ -49,6 +49,21 @@ final class LabRuntime extends SonicRuntime {
         this.worker = new Handler(thread.getLooper());
     }
 
+    /**
+     * The resource cache of the {@code sonic-link} preload, in app storage. The SDK default is a
+     * directory on external storage; without the storage permission (API 28, this harness) each
+     * session reports {@code notifyError} -1003 (make dir) at a time that varies from run to run
+     * (observed in WP-01 S1 T-05). A host app chooses this directory; the lab uses app storage.
+     */
+    @Override
+    public java.io.File getSonicResourceCacheDir() {
+        java.io.File dir = new java.io.File(getContext().getFilesDir(), "SonicResource");
+        if (!dir.isDirectory() && !dir.mkdirs()) {
+            events.emit("harness.error", "error", "resource cache directory not made");
+        }
+        return dir;
+    }
+
     void setAccount(String value) {
         account = value;
     }

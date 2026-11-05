@@ -42,8 +42,14 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "settle",
         "ms": 2500
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"
@@ -93,6 +99,9 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "wait",
         "for": "proxy.hold"
       },
@@ -110,6 +119,9 @@
       {
         "do": "settle",
         "ms": 2500
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"
@@ -170,8 +182,14 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "settle",
         "ms": 2500
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"
@@ -228,6 +246,9 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "wait",
         "for": "proxy.hold"
       },
@@ -245,6 +266,9 @@
       {
         "do": "settle",
         "ms": 2500
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"
@@ -305,8 +329,14 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "settle",
         "ms": 2500
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"
@@ -363,6 +393,9 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "wait",
         "for": "proxy.hold"
       },
@@ -380,6 +413,9 @@
       {
         "do": "settle",
         "ms": 2500
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"
@@ -440,8 +476,14 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "settle",
         "ms": 2500
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"
@@ -454,16 +496,13 @@
   },
   {
     "id": "CS-08",
-    "title": "Server answers cache-offline http",
+    "title": "Application sets cache-offline http; the Java server sends it as a second field after its own true",
     "modes": [
       "quick",
       "standard"
     ],
-    "origin": "lab-node",
-    "rows": [
-      "Q16",
-      "S4"
-    ],
+    "origin": "lab-java",
+    "rows": [],
     "setup": [
       {
         "case": {
@@ -512,8 +551,14 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "settle",
         "ms": 2500
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"
@@ -526,7 +571,7 @@
   },
   {
     "id": "CS-09",
-    "title": "Server answers cache-offline false",
+    "title": "Data update without cache-offline: the proxy drops the field (F7: absent, empty or false)",
     "modes": [
       "quick",
       "standard"
@@ -545,17 +590,7 @@
       "first_load"
     ],
     "case": {
-      "page": "b",
-      "headers": [
-        [
-          "content-type",
-          "text/html; charset=utf-8"
-        ],
-        [
-          "cache-offline",
-          "false"
-        ]
-      ]
+      "page": "b"
     },
     "config": {
       "account": "rq-test-account",
@@ -563,6 +598,10 @@
       "reload_in_bad_network": false
     },
     "steps": [
+      {
+        "do": "drop_field",
+        "name": "cache-offline"
+      },
       {
         "do": "create_session"
       },
@@ -584,8 +623,14 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "settle",
         "ms": 2500
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"
@@ -598,16 +643,13 @@
   },
   {
     "id": "CS-10",
-    "title": "Data update with cache-offline store",
+    "title": "Application sets cache-offline store on a data update; the Java server sends it as a second field after its own true",
     "modes": [
       "quick",
       "standard"
     ],
-    "origin": "lab-node",
-    "rows": [
-      "Q9",
-      "S8"
-    ],
+    "origin": "lab-java",
+    "rows": [],
     "setup": [
       {
         "case": {
@@ -656,8 +698,14 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "settle",
         "ms": 2500
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"
@@ -689,7 +737,7 @@
       "first_load"
     ],
     "case": {
-      "page": "a",
+      "page": "b",
       "status": 500
     },
     "config": {
@@ -719,8 +767,14 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "settle",
         "ms": 2500
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"
@@ -769,8 +823,14 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "settle",
         "ms": 3000
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"
@@ -827,6 +887,9 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "wait",
         "for": "proxy.hold"
       },
@@ -844,6 +907,9 @@
       {
         "do": "settle",
         "ms": 2500
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"
@@ -901,8 +967,14 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "settle",
         "ms": 2500
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"
@@ -967,8 +1039,14 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "settle",
         "ms": 2500
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"
@@ -1013,6 +1091,9 @@
       },
       {
         "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "wait",
@@ -1096,6 +1177,9 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "settle",
         "ms": 2500
       },
@@ -1120,6 +1204,9 @@
       },
       {
         "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "wait",
@@ -1199,6 +1286,9 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "wait",
         "for": "proxy.response_end"
       },
@@ -1227,6 +1317,9 @@
       },
       {
         "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "wait",
@@ -1282,6 +1375,9 @@
         "do": "request_resource"
       },
       {
+        "do": "get_diff"
+      },
+      {
         "do": "wait",
         "for": "proxy.hold"
       },
@@ -1313,6 +1409,9 @@
       },
       {
         "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "settle",
@@ -1353,6 +1452,9 @@
         "do": "bind_client"
       },
       {
+        "do": "client_ready"
+      },
+      {
         "do": "wait",
         "for": "proxy.response_end"
       },
@@ -1380,12 +1482,18 @@
         "do": "bind_client"
       },
       {
+        "do": "client_ready"
+      },
+      {
         "do": "wait",
         "for": "proxy.response_end"
       },
       {
         "do": "settle",
         "ms": 3000
+      },
+      {
+        "do": "get_diff"
       },
       {
         "do": "snapshot_cache"

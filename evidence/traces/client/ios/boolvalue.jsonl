@@ -1,0 +1,25 @@
+{"bool_value":true,"id":"FN-TCHANGE-01","value":"true"}
+{"bool_value":false,"id":"FN-TCHANGE-02","value":"false"}
+{"bool_value":false,"id":"FN-TCHANGE-03","value":"0"}
+{"bool_value":true,"id":"FN-TCHANGE-04","value":"1"}
+{"bool_value":true,"id":"FN-TCHANGE-05","value":"2"}
+{"bool_value":true,"id":"FN-TCHANGE-06","value":"-1"}
+{"bool_value":true,"id":"FN-TCHANGE-07","value":"TRUE"}
+{"bool_value":false,"id":"FN-TCHANGE-08","value":"FALSE"}
+{"bool_value":false,"id":"FN-TCHANGE-09","value":"False"}
+{"bool_value":true,"id":"FN-TCHANGE-10","value":"True"}
+{"bool_value":true,"id":"FN-TCHANGE-11","value":"yes"}
+{"bool_value":false,"id":"FN-TCHANGE-12","value":"no"}
+{"bool_value":true,"id":"FN-TCHANGE-13","value":"y"}
+{"bool_value":false,"id":"FN-TCHANGE-14","value":"n"}
+{"bool_value":true,"id":"FN-TCHANGE-15","value":"t"}
+{"bool_value":false,"id":"FN-TCHANGE-16","value":"f"}
+{"bool_value":false,"id":"FN-TCHANGE-17","value":""}
+{"bool_value":false,"id":"FN-TCHANGE-18","value":" "}
+{"bool_value":false,"id":"FN-TCHANGE-19","value":" false"}
+{"bool_value":false,"id":"FN-TCHANGE-20","value":"false "}
+{"bool_value":true,"id":"FN-TCHANGE-21","value":" true"}
+{"bool_value":false,"id":"FN-TCHANGE-22","value":"00"}
+{"bool_value":false,"id":"FN-TCHANGE-23","value":"0.0"}
+{"bool_value":false,"id":"FN-TCHANGE-24","value":"null"}
+{"bool_value":false,"id":"FN-TCHANGE-25","value":"abc"}

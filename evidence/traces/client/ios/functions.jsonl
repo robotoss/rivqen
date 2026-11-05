@@ -1,0 +1,214 @@
+{"fn":"session_id","id":"FN-ID-01","platform":"ios","result":{"id":"f101db9d73624c8dfd9618f410de6922"}}
+{"fn":"session_id","id":"FN-ID-02","platform":"ios","result":{"id":"3ed8b16c16d457b9fa54e6af2caa5814"}}
+{"fn":"session_id","id":"FN-ID-03","platform":"ios","result":{"id":"167a689e38efc0aad7e58218bcc17559"}}
+{"fn":"session_id","id":"FN-ID-04","platform":"ios","result":{"id":"53f40ef34731e10939d39fef3888cf09"}}
+{"fn":"session_id","id":"FN-ID-05","platform":"ios","result":{"id":"f101db9d73624c8dfd9618f410de6922"}}
+{"fn":"session_id","id":"FN-ID-06","platform":"ios","result":{"id":"f101db9d73624c8dfd9618f410de6922"}}
+{"fn":"session_id","id":"FN-ID-07","platform":"ios","result":{"id":"f101db9d73624c8dfd9618f410de6922"}}
+{"fn":"session_id","id":"FN-ID-08","platform":"ios","result":{"id":"2b576ad1f52e237c55d035be6351c065"}}
+{"fn":"session_id","id":"FN-ID-09","platform":"ios","result":{"id":"2b576ad1f52e237c55d035be6351c065"}}
+{"fn":"session_id","id":"FN-ID-10","platform":"ios","result":{"id":"2b576ad1f52e237c55d035be6351c065"}}
+{"fn":"session_id","id":"FN-ID-11","platform":"ios","result":{"id":"815c65797f163b4806185a8ced25bfa6"}}
+{"fn":"session_id","id":"FN-ID-12","platform":"ios","result":{"id":"815c65797f163b4806185a8ced25bfa6"}}
+{"fn":"session_id","id":"FN-ID-13","platform":"ios","result":{"id":"bfe20f4f587749d241fd01dce0cb0d9d"}}
+{"fn":"session_id","id":"FN-ID-14","platform":"ios","result":{"id":"3ed8b16c16d457b9fa54e6af2caa5814"}}
+{"fn":"session_id","id":"FN-ID-ORD-01","platform":"ios","result":{"id":"85c98f5af0e863911a64bafec4bf761e"}}
+{"fn":"session_id","id":"FN-ID-ORD-02","platform":"ios","result":{"id":"32350b2ec5a556e045a7dd3dc3857124"}}
+{"fn":"session_id","id":"FN-ID-ORD-03","platform":"ios","result":{"id":"38754de2d05caff8f24b73e2eac6f2d8"}}
+{"fn":"session_id","id":"FN-ID-ORD-04","platform":"ios","result":{"id":"ed79a008d13dbc2d060b2600808609c1"}}
+{"fn":"session_id","id":"FN-ID-ORD-05","platform":"ios","result":{"id":"ab39a2e8cd0c5a989777c7041056d323"}}
+{"fn":"session_id","id":"FN-ID-ORD-06","platform":"ios","result":{"id":"f7580f2c38486715279c178f9320b244"}}
+{"fn":"session_id","id":"FN-ID-ORD-07","platform":"ios","result":{"id":"48913af54e577b175177059e8f0a4503"}}
+{"fn":"session_id","id":"FN-ID-ORD-08","platform":"ios","result":{"id":"8b24e477052e2667dd7e2e627fb3224a"}}
+{"fn":"session_id","id":"FN-ID-ORD-09","platform":"ios","result":{"id":"48913af54e577b175177059e8f0a4503"}}
+{"fn":"session_id","id":"FN-ID-ORD-10","platform":"ios","result":{"id":"6f153965e19c3aa41957f627c2d4c4d8"}}
+{"fn":"session_id","id":"FN-ID-ORD-11","platform":"ios","result":{"id":"6a839c582a5149a3db96f6c176cc8f4f"}}
+{"fn":"session_id","id":"FN-ID-ORD-12","platform":"ios","result":{"id":"3ed8b16c16d457b9fa54e6af2caa5814"}}
+{"fn":"session_id","id":"FN-ID-ORD-13","platform":"ios","result":{"id":"5f67b84ef310dd4fc206eea859585a20"}}
+{"fn":"session_id","id":"FN-ID-ORD-14","platform":"ios","result":{"id":"815c65797f163b4806185a8ced25bfa6"}}
+{"fn":"split","id":"FN-SPLIT-01","platform":"ios","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"},"template":"<html><head><title>T</title></head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-02","platform":"ios","result":{"data":{"{<!--SONICDIFF-a-->A<!--SONICDIFF-a}":"<!--SONICDIFF-a-->A<!--SONICDIFF-a-end-->"},"template":"<html><head><title>T</title></head><body>{<!--SONICDIFF-a-->A<!--SONICDIFF-a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-03","platform":"ios","result":{"data":{"{<!--SonicDiff-a-->A<!--SonicDiff-a}":"<!--SonicDiff-a-->A<!--SonicDiff-a-end-->"},"template":"<html><head><title>T</title></head><body>{<!--SonicDiff-a-->A<!--SonicDiff-a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-04","platform":"ios","result":{"data":{"{a-->A<!--SONICDIFF-a-END-->}":"<!--sonicdiff-a-->A<!--SONICDIFF-a-END-->"},"template":"<html><head><title>T</title></head><body>{a-->A<!--SONICDIFF-a-END-->}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-05","platform":"ios","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->","{b}":"<!--sonicdiff-b-->B<!--sonicdiff-b-end-->"},"template":"<html><head><title>T</title></head><body>{a}{b}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-06","platform":"ios","result":{"data":{"{end-->}":"<!--sonicdiff-->A<!--sonicdiff-end-->"},"template":"<html><head><title>T</title></head><body>{end-->}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-07","platform":"ios","result":{"data":{},"template":"<html><head><title>T</title></head><body><!--sonicdiff-a--><!--sonicdiff-a-end--></body></html>"}}
+{"fn":"split","id":"FN-SPLIT-08","platform":"ios","result":{"data":{"{a}":"<!--sonicdiff-a-->A\nB\n<!--sonicdiff-a-end-->"},"template":"<html><head><title>T</title></head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-09","platform":"ios","result":{"data":{"{a}":"<!--sonicdiff-a-->B<!--sonicdiff-a-end-->"},"template":"<html><head><title>T</title></head><body><!--sonicdiff-a-->A<!--sonicdiff-a-end-->{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-10","platform":"ios","result":{"data":{"{b}":"<!--sonicdiff-a--><!--sonicdiff-b-->B<!--sonicdiff-b-end-->"},"template":"<html><head><title>T</title></head><body>{b}<!--sonicdiff-a-end--></body></html>"}}
+{"fn":"split","id":"FN-SPLIT-11","platform":"ios","result":{"data":{},"template":"<html><head><title>T</title></head><body>plain body</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-12","platform":"ios","result":{"data":null,"template":null}}
+{"fn":"split","id":"FN-SPLIT-NAME-01","platform":"ios","result":{"data":{"{b}":"<!--sonicdiff-a-->A<!--sonicdiff-b-end-->"},"template":"<html><head><title>T</title></head><body>{b}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-NAME-02","platform":"ios","result":{"data":{"{end-->}":"<!--sonicdiff-a-->A<!--sonicdiff-end-->"},"template":"<html><head><title>T</title></head><body>{end-->}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-NAME-03","platform":"ios","result":{"data":{"{b}":"<!--sonicdiff-->A<!--sonicdiff-b-end-->"},"template":"<html><head><title>T</title></head><body>{b}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-NAME-04","platform":"ios","result":{"data":{"{a}":"<!--sonicdiff-b-->B<!--sonicdiff-a-end-->"},"template":"<html><head><title>T</title></head><body><!--sonicdiff-a-->A<!--sonicdiff-a-end-->{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-NAME-05","platform":"ios","result":{"data":{},"template":"<html><head><title>T</title></head><body><!--sonicdiff-a b-->A<!--sonicdiff-a b-end--></body></html>"}}
+{"fn":"split","id":"FN-SPLIT-NAME-06","platform":"ios","result":{"data":{"{a_1}":"<!--sonicdiff-a_1-->A<!--sonicdiff-a_1-end-->"},"template":"<html><head><title>T</title></head><body>{a_1}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-NAME-07","platform":"ios","result":{"data":{},"template":"<html><head><title>T</title></head><body><!--sonicdiff--a-->A<!--sonicdiff--a-end--></body></html>"}}
+{"fn":"split","id":"FN-SPLIT-NAME-08","platform":"ios","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->","{end-->}":"<!--sonicdiff-->B<!--sonicdiff-end-->"},"template":"<html><head><title>T</title></head><body>{a}{end-->}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-01","platform":"ios","result":{"data":{},"template":"<html><head><title>Shop</title></head><body>x</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-02","platform":"ios","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"},"template":"<html><head><title>Shop</title></head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-03","platform":"ios","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"},"template":"<html><head><TITLE>Shop</TITLE></head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-04","platform":"ios","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"},"template":"<html><head><title lang=\"en\">Shop</title></head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-05","platform":"ios","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"},"template":"<html><head><title>One</title><title>Two</title></head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-06","platform":"ios","result":{"data":{"{a}":"<!--sonicdiff-a--><title>In block</title><!--sonicdiff-a-end-->"},"template":"<html><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-07","platform":"ios","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"},"template":"<html><head><title></title></head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-08","platform":"ios","result":{"data":{},"template":"<html><head><title>Open"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-09","platform":"ios","result":{"data":{},"template":"<html><head><title>Shop</title></head><body>no markers</body></html>"}}
+{"fn":"diff","id":"FN-DIFF-01","platform":"ios","result":{"diff":{"{a}":"y"}}}
+{"fn":"diff","id":"FN-DIFF-02","platform":"ios","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-03","platform":"ios","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-04","platform":"ios","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-05","platform":"ios","result":{"diff":{"{a}":"y"}}}
+{"fn":"diff","id":"FN-DIFF-06","platform":"ios","result":{"diff":{}}}
+{"error":"NSInvalidArgumentException: -[__NSCFNumber isEqualToString:]: unrecognized selector sent to instance 0x(address)","fn":"diff","id":"FN-DIFF-07","platform":"ios"}
+{"error":"NSInvalidArgumentException: -[__NSCFNumber isEqualToString:]: unrecognized selector sent to instance 0x(address)","fn":"diff","id":"FN-DIFF-08","platform":"ios"}
+{"fn":"diff","id":"FN-DIFF-09","platform":"ios","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-10","platform":"ios","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-11","platform":"ios","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-12","platform":"ios","result":{"diff":{"{a}":""}}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-01","platform":"ios","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-02","platform":"ios","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-03","platform":"ios","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-04","platform":"ios","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-NEW-01","platform":"ios","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-NEW-02","platform":"ios","result":{"diff":{"{a}":"y"}}}
+{"fn":"diff","id":"FN-DIFF-NEW-03","platform":"ios","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-NEW-04","platform":"ios","result":{"diff":{}}}
+{"fn":"message","id":"FN-MSG-01","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-02","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-03","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-04","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-05","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-06","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-07","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-08","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-09","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-10","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-11","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-OFFLINE-01","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-OFFLINE-02","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-OFFLINE-03","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-OFFLINE-04","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-OFFLINE-05","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-OFFLINE-06","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-OFFLINE-07","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"is_legacy_response","id":"FN-LEGACY-01","platform":"ios","result":{"value":true}}
+{"fn":"is_legacy_response","id":"FN-LEGACY-02","platform":"ios","result":{"value":false}}
+{"fn":"is_legacy_response","id":"FN-LEGACY-03","platform":"ios","result":{"value":false}}
+{"fn":"is_legacy_response","id":"FN-LEGACY-04","platform":"ios","result":{"value":false}}
+{"fn":"is_legacy_response","id":"FN-LEGACY-05","platform":"ios","result":{"value":false}}
+{"fn":"is_legacy_response","id":"FN-LEGACY-06","platform":"ios","result":{"value":false}}
+{"fn":"is_legacy_response","id":"FN-LEGACY-07","platform":"ios","result":{"value":false}}
+{"fn":"is_legacy_response","id":"FN-LEGACY-08","platform":"ios","result":{"value":false}}
+{"fn":"is_legacy_response","id":"FN-LEGACY-09","platform":"ios","result":{"value":false}}
+{"fn":"is_legacy_response","id":"FN-LEGACY-10","platform":"ios","result":{"value":false}}
+{"fn":"is_legacy_response","id":"FN-LEGACY-CASE-01","platform":"ios","result":{"value":true}}
+{"fn":"is_legacy_response","id":"FN-LEGACY-CASE-02","platform":"ios","result":{"value":false}}
+{"fn":"is_legacy_response","id":"FN-LEGACY-CASE-03","platform":"ios","result":{"value":false}}
+{"fn":"is_legacy_response","id":"FN-LEGACY-CASE-04","platform":"ios","result":{"value":false}}
+{"fn":"is_legacy_response","id":"FN-LEGACY-CASE-05","platform":"ios","result":{"value":true}}
+{"fn":"template_change","id":"FN-TCHANGE-01","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-02","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-03","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-04","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-05","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-06","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-07","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-08","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-09","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-10","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-11","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-12","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-13","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-14","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-15","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-16","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-17","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-18","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-19","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-20","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-21","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-22","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-23","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-24","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"template_change","id":"FN-TCHANGE-25","platform":"ios","unsupported":"The template-change test is a private method of the session class that reads the private server property of a session. No public entry point. Stays code reading."}
+{"fn":"etag","id":"FN-ETAG-01","platform":"ios","result":{"value":"abc"}}
+{"fn":"etag","id":"FN-ETAG-02","platform":"ios","result":{"value":"\"abc\""}}
+{"fn":"etag","id":"FN-ETAG-03","platform":"ios","result":{"value":"abc"}}
+{"fn":"etag","id":"FN-ETAG-04","platform":"ios","result":{"value":"w/\"abc\""}}
+{"fn":"etag","id":"FN-ETAG-05","platform":"ios","result":{"value":"abc"}}
+{"fn":"etag","id":"FN-ETAG-06","platform":"ios","result":{"value":"\"ABC\""}}
+{"fn":"etag","id":"FN-ETAG-07","platform":"ios","result":{"value":"AbC"}}
+{"fn":"etag","id":"FN-ETAG-08","platform":"ios","result":{"value":"'abc'"}}
+{"fn":"etag","id":"FN-ETAG-09","platform":"ios","result":{"value":"\"\""}}
+{"fn":"etag","id":"FN-ETAG-10","platform":"ios","result":{"value":"\""}}
+{"fn":"etag","id":"FN-ETAG-11","platform":"ios","result":{"value":"W/"}}
+{"fn":"etag","id":"FN-ETAG-12","platform":"ios","result":{"value":"\"\""}}
+{"fn":"etag","id":"FN-ETAG-13","platform":"ios","result":{"value":" \"abc\" "}}
+{"fn":"etag","id":"FN-ETAG-14","platform":"ios","result":{"value":"\"W/abc\""}}
+{"fn":"etag","id":"FN-ETAG-15","platform":"ios","result":{"value":"a\"b"}}
+{"fn":"etag","id":"FN-ETAG-16","platform":"ios","result":{"value":"\"a\"b\""}}
+{"fn":"etag","id":"FN-ETAG-17","platform":"ios","result":{"value":"abc\""}}
+{"fn":"etag","id":"FN-ETAG-18","platform":"ios","result":{"value":"\"abc"}}
+{"fn":"etag","id":"FN-ETAG-19","platform":"ios","result":{"value":""}}
+{"fn":"etag","id":"FN-ETAG-KEY-01","platform":"ios","result":{"value":"e1"}}
+{"fn":"etag","id":"FN-ETAG-KEY-02","platform":"ios","result":{"value":"E1"}}
+{"fn":"etag","id":"FN-ETAG-KEY-03","platform":"ios","result":{"value":"\"e1\""}}
+{"fn":"etag","id":"FN-ETAG-KEY-04","platform":"ios","result":{"value":"e1"}}
+{"fn":"etag","id":"FN-ETAG-KEY-05","platform":"ios","result":{"value":"3e3184cbd12e5294959effe6f2d9985f50f4ea5d"}}
+{"fn":"etag","id":"FN-ETAG-KEY-06","platform":"ios","result":{"value":"3E3184CBD12E5294959EFFE6F2D9985F50F4EA5D"}}
+{"fn":"charset","id":"FN-CHARSET-01","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-02","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-03","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-04","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-05","platform":"ios","result":{"ns_string_encoding":2147485233,"value":"GBK"}}
+{"fn":"charset","id":"FN-CHARSET-06","platform":"ios","result":{"ns_string_encoding":2147485233,"value":"GBK"}}
+{"fn":"charset","id":"FN-CHARSET-07","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-08","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-09","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-10","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-11","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-12","platform":"ios","result":{"ns_string_encoding":5,"value":"iso-8859-1"}}
+{"fn":"charset","id":"FN-CHARSET-13","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-14","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-15","platform":"ios","result":{"ns_string_encoding":2147485233,"value":"GBK"}}
+{"fn":"charset","id":"FN-CHARSET-16","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-17","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-01","platform":"ios","result":{"value":"\"x\""}}
+{"fn":"etag","id":"FN-ETAG-WEAK-02","platform":"ios","result":{"value":"w/\"x\""}}
+{"fn":"etag","id":"FN-ETAG-WEAK-03","platform":"ios","result":{"value":"W/x"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-04","platform":"ios","result":{"value":"w/x"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-05","platform":"ios","result":{"value":"W/\""}}
+{"fn":"etag","id":"FN-ETAG-WEAK-06","platform":"ios","result":{"value":"W/a"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-07","platform":"ios","result":{"value":"ab"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-08","platform":"ios","result":{"value":"w/\"AB\""}}
+{"fn":"etag","id":"FN-ETAG-WEAK-09","platform":"ios","result":{"value":"\"x"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-10","platform":"ios","result":{"value":"w/x\""}}
+{"fn":"etag","id":"FN-ETAG-WEAK-11","platform":"ios","result":{"value":" \"x\""}}
+{"fn":"etag","id":"FN-ETAG-WEAK-12","platform":"ios","result":{"value":"'x'"}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-IOS-01","platform":"ios","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-IOS-02","platform":"ios","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-IOS-03","platform":"ios","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-IOS-04","platform":"ios","result":{"diff":{}}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-01","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-02","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-03","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-04","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-05","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-06","platform":"ios","result":{"ns_string_encoding":5,"value":"iso-8859-1"}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-07","platform":"ios","result":{"ns_string_encoding":4,"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-08","platform":"ios","result":{"ns_string_encoding":2147484707,"value":"cp950"}}
+{"fn":"split","id":"FN-SPLIT-UNNAMED-01","platform":"ios","result":{"data":{"{end-->}":"<!--sonicdiff-->A<!--sonicdiff-end-->"},"template":"<html><head><title>T</title></head><body>{end-->}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-UNNAMED-02","platform":"ios","result":{"data":{"{<!--SONICDIFF-->A<!--SONICDIFF-END-->}":"<!--SONICDIFF-->A<!--SONICDIFF-END-->"},"template":"<html><head><title>T</title></head><body>{<!--SONICDIFF-->A<!--SONICDIFF-END-->}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-UNNAMED-03","platform":"ios","result":{"data":{"{<!--SONICDIFF-a-->A<!--SONICDIFF-a-END-->}":"<!--SONICDIFF-a-->A<!--SONICDIFF-a-END-->"},"template":"<html><head><title>T</title></head><body>{<!--SONICDIFF-a-->A<!--SONICDIFF-a-END-->}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-UNNAMED-04","platform":"ios","result":{"data":{"{end-->}":"<!--sonicdiff-->B<!--sonicdiff-end-->"},"template":"<html><head><title>T</title></head><body><!--sonicdiff-->A<!--sonicdiff-end-->{end-->}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-UNNAMED-05","platform":"ios","result":{"data":{"{end-->}":"<!--sonicdiff-a-->A<!--sonicdiff-end-->"},"template":"<html><head><title>T</title></head><body>{end-->}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-UNNAMED-06","platform":"ios","result":{"data":{"{a}":"<!--SonicDiff-A-->A<!--sonicdiff-a-end-->"},"template":"<html><head><title>T</title></head><body>{a}</body></html>"}}
+{"fn":"message","id":"FN-MSG-STORE-01","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-STORE-02","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-STORE-03","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-STORE-04","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-STORE-05","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-STORE-06","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}
+{"fn":"message","id":"FN-MSG-STORE-07","platform":"ios","unsupported":"The page message is built by a method of the session class from private session state (status codes, server object, read-only diff data) that has no public setter. A session needs the engine and the web view delegate. Stays code reading."}

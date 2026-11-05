@@ -360,6 +360,11 @@ test('determinism_compares_header_files_by_their_normalized_text', () => {
   assert.deepEqual(one.files[0], { name: 'a.html', size: 5, sha256: SHA });
   assert.notDeepEqual(one, snap('Date: Fri\nETag: e2\n', 41, 'c'.repeat(64)));
   assert.equal(normalizeHeaderText('A: b\nno colon\n:x\nx-android-received-millis : 5'), 'A: b\nno colon\n:x\nx-android-received-millis :');
+  // the format of the Android harness: lower-case name, space-colon-space, CRLF
+  const crlf = 'date : Fri, 09 Oct 2026 10:31:36 GMT\r\netag : e1\r\nX-Android-Sent-Millis : 1\r\nx-android-received-millis : 2\r\ncontent-type : text/html\r\n';
+  assert.equal(normalizeHeaderText(crlf), 'date :\r\netag : e1\r\nX-Android-Sent-Millis :\r\nx-android-received-millis :\r\ncontent-type : text/html\r\n');
+  assert.equal(normalizeHeaderText('DATE : a\r\n'), 'DATE :\r\n');
+  assert.equal(normalizeHeaderText('dated : a\r\nmy-date : b'), 'dated : a\r\nmy-date : b');
   assert.deepEqual(normalizeEvent({ ev: 'cache.snapshot', files: [{ name: 'x.header', size: 1, sha256: SHA }], db: null }).files, [{ name: 'x.header', size: 1, sha256: SHA }]);
 });
 

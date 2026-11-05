@@ -20,15 +20,12 @@ function scrub(value) {
   return value;
 }
 
-/** Blank the value of the lines `Name: value` of a header file text for the blanked fields. */
+/**
+ * Blank the value of the blanked fields in the text of a header file. The harness writes one field per
+ * line as `name : value` (lower-case name, CRLF line end); other spacing and LF line ends work too.
+ */
 export function normalizeHeaderText(text) {
-  return text
-    .split('\n')
-    .map((line) => {
-      const at = line.indexOf(':');
-      return at > 0 && BLANKED.has(line.slice(0, at).trim().toLowerCase()) ? `${line.slice(0, at)}:` : line;
-    })
-    .join('\n');
+  return text.replace(/^([^:\r\n]+?)(\s*:)[^\r\n]*/gm, (line, name, colon) => (BLANKED.has(name.trim().toLowerCase()) ? `${name}${colon}` : line));
 }
 
 function normalizeMessage(json) {

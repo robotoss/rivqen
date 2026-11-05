@@ -122,7 +122,8 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'Legacy: markers grammar', link: '/engineering/protocol/legacy-markers' },
       { text: 'Legacy: client behavior', link: '/engineering/protocol/legacy-client' },
       { text: 'Legacy: divergences', link: '/engineering/protocol/legacy-divergences' },
-      { text: 'Legacy: server traces', link: '/engineering/protocol/legacy-traces' }
+      { text: 'Legacy: server traces', link: '/engineering/protocol/legacy-traces' },
+      { text: 'Legacy: client traces', link: '/engineering/protocol/legacy-client-traces' }
     ]
   },
   {

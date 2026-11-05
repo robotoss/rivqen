@@ -64,7 +64,7 @@ All listeners bind `127.0.0.1` only.
 | `modes` | Subset of `quick`, `standard`. One run per mode and repeat |
 | `origin` | `lab-node`, `lab-php`, `lab-java` |
 | `rows` | Row IDs of the Q-02 tables in `docs/engineering/protocol/legacy-client.md` that the scenario observes (`Q1`…, `S1`…) |
-| `setup` | Steps that run first with an empty app state (`pm clear` before each run). `"first_load"` is a macro: a full first load with `client_ready`, `request_resource`, the end of the body, 2500 ms settle and `destroy` |
+| `setup` | Steps that run first with an empty app state (`pm clear` before each run). `"first_load"` is a macro: a full first load with `client_ready`, `request_resource`, the end of the body, 2500 ms settle and `destroy`. Its order is free (`client_ready` can come before the end of the body), so a setup load can take the Q1 or the Q2 path; the scenario steps after it are scripted |
 | `case` | The application response that the conductor posts to the control endpoint of `origin` before `steps` (`page`, optional `status`, `headers` as in `fixtures/legacy/*/case.json` `app`) |
 | `config` | Session and SDK settings the harness applies. Account values are synthetic (`rq-test-account`, `rq-test-account-2`) |
 | `steps` | The scripted order (DL-100); vocabulary in section 3 |
@@ -128,15 +128,15 @@ Common members: `ev` (name), `seq` (conductor sequence number), `src` (`harness`
 | Event | Members |
 |---|---|
 | `run.start` | `scenario`, `mode`, `repeat`, `origin`, `upstream_sha` (`src`: `conductor`) |
-| `step.start`, `step.done` | `step` (the step object), `error` (on failure) |
-| `session.created` | `session_id` (the upstream id; synthetic account only) or `null` |
+| `step.start`, `step.done` | `step` (the step object), `error` (only on failure). The conductor writes `step.start` for every step; the harness writes `step.done` for its own steps |
+| `session.created` | `session_id` (the upstream id; synthetic account only) or `null` (then no `session` member) |
 | `client.load_url` | `url`, `extras` (keys only) |
 | `client.load_data` | `base_url`, `mime`, `encoding`, `history_url`, `headers`, `body_len`, `body_sha256` |
-| `client.intercept` | `status`, `reason`, `mime`, `encoding`, `headers`, `body_len`, `body_sha256`, `complete` (`true` when the stream ended without error), `error` (exception class name) or `null` stream (`"null": true`) |
+| `client.intercept` | `status`, `reason` (can be `null` on API 28), `mime`, `encoding`, `headers`, `body_len`, `body_sha256`, `complete` (`true` when the stream ended without error), `error` (exception class name) or `null` stream (`"null": true`) |
 | `session.result` | `src_code`, `final_code` (from the session callback) |
 | `session.message` | `json` (the page message string exactly as the SDK built it) |
 | `session.callback` | `name` (session callback method name), `args` (codes or URL only) |
-| `runtime.cookie_get`, `runtime.cookie_set` | `url`, `value` (synthetic values only) |
+| `runtime.cookie_get`, `runtime.cookie_set` | `url`, `value` (synthetic values only; for `cookie_set` a string, `null` or a list of strings) |
 | `cache.snapshot` | `files`: `[{"name","size","sha256"}]`, sorted by name; a `*.header` file also has `text` (its content: synthetic header lines of the lab); `db`: `null` (the harness does not read the SDK database) |
 | `proxy.request` | `exchange`, `method`, `target`, `fields` |
 | `proxy.response_head` | `exchange`, `status`, `fields` |
@@ -145,7 +145,7 @@ Common members: `ev` (name), `seq` (conductor sequence number), `src` (`harness`
 | `client.clear_history` | — |
 | `runtime.notify_error` | `url`, `code` |
 | `runtime.toast` | `text`, `duration` |
-| `webview.intercept_request`, `webview.page_started`, `webview.page_finished` | `url` (WebView runs only) |
+| `webview.intercept_request`, `webview.page_started`, `webview.page_finished` | `url`; `method` on `intercept_request` (WebView runs only) |
 | `harness.error` | `error` |
 | `run.end` | `ok`, `error` (`src`: `conductor`; the harness sends `run.end` with `ok: false` only when it aborts) |
 
@@ -160,6 +160,10 @@ A run is stable when its normalized event log equals the other runs of the same 
 Normalization: remove `t`, `seq` and the `thread` of worker threads; blank the values of the fields `Date`, `X-Android-Sent-Millis` and `X-Android-Received-Millis` (the Android HTTP stack adds the last two); remove `local_refresh_time` from the JSON of `session.message`; for a `*.header` cache file compare its `text` with the same fields blanked instead of its `sha256` and `size`.
 
 Comparison: split the log into step windows (from one `step.start` to the next). Inside a window compare the harness events in `hseq` order and the proxy events in `exchange` order, each source on its own. The interleaving of the sources inside a window is not compared: it races (for example `runtime.cookie_get` and `proxy.request`). `check.mjs` (conductor lane) reports every scenario and mode whose runs differ. A timing row is FACT only when its 3 runs are stable.
+
+Normalization also removes `repeat` from `run.start`.
+
+**Outcome projection** (DL-104). The SDK emits events on its own threads while the script goes on, so the strict comparison above flags runs whose client behavior is the same. The outcome projection compares what the client did: split the log into phases (a phase ends at the step that follows a `settle`); inside a phase compare the conductor events in order, the harness events of the `main` thread in `hseq` order, the other harness events as a sorted multiset, and the proxy events in `exchange` order. A timing row is FACT when its runs are stable in the outcome projection. `run.json` lists every scenario and mode that is not stable under the strict rule, with the reason of the first difference and `outcome: stable` or `unstable`.
 
 ## 7. Function cases
 
@@ -192,6 +196,7 @@ evidence/traces/client/
 │   ├── functions.jsonl
 │   └── CS-<NN>/<quick|standard>/run-<k>.jsonl, run-<k>-x<n>.http
 ├── ios/
-│   └── functions.jsonl
+│   ├── functions.jsonl
+│   └── boolvalue.jsonl   # Foundation probe of NSString boolValue (no upstream code; D-29)
 └── run.json            # date, tool versions, emulator image, upstream SHA, scenario list, stable/unstable summary
 ```

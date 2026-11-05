@@ -66,6 +66,10 @@ test('check_hosts_must_be_whole_names', () => {
   assert.deepEqual(foreignHosts('http://xlocalhost/'), ['xlocalhost']);
   assert.deepEqual(foreignHosts('http://10.0.2.22/'), ['10.0.2.22']);
   assert.deepEqual(foreignHosts('http://example.io/'), ['example.io']);
+  assert.deepEqual(foreignHosts('GET /p HTTP/1.1\nHost: 10.0.2.2:18090\nhost: shop.example.com\n'), []);
+  assert.deepEqual(foreignHosts('GET /p HTTP/1.1\nHost: shop.real-site.test:443\n'), ['shop.real-site.test']);
+  assert.deepEqual(foreignHosts('GET /p HTTP/1.1\nHost:a.real.test\nhost : b.real.test\n'), ['a.real.test', 'b.real.test']);
+  assert.deepEqual(foreignHosts('{"fields":[["Host","10.0.2.2:18090"],["host","cdn.real.test"]]}'), ['cdn.real.test']);
   assert.deepEqual(foreignHosts('HTTPS://EXAMPLE.COM/'), []);
 });
 

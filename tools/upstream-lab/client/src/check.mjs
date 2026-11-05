@@ -105,7 +105,13 @@ export function eventProblems(e) {
 /** Hosts of http(s) URLs in a text that are not lab or example.* hosts. */
 export function foreignHosts(text) {
   const found = new Set();
-  for (const m of text.matchAll(/https?:\/\/([^/\s:?#"'<>\\]+)/gi)) if (!HOSTS_OK.test(m[1])) found.add(m[1]);
+  const add = (host) => {
+    if (!HOSTS_OK.test(host)) found.add(host);
+  };
+  for (const m of text.matchAll(/https?:\/\/([^/\s:?#"'<>\\]+)/gi)) add(m[1]);
+  // Host field lines of a .http file and ["Host", "<authority>"] pairs of an event (code review, WP-01 S1).
+  for (const m of text.matchAll(/^host[ \t]*:[ \t]*([^\s:/]+)/gim)) add(m[1]);
+  for (const m of text.matchAll(/\["host","([^":/"]+)/gi)) add(m[1]);
   return [...found];
 }
 

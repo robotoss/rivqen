@@ -215,6 +215,19 @@ test('proxy_server_down_refuses_and_server_up_accepts_again', async () => {
   });
 });
 
+test('proxy_armed_hold_does_not_survive_server_down', async () => {
+  await withProxy(answer, async ({ proxy, log }) => {
+    const port = proxy.port;
+    proxy.arm({ do: 'hold', point: 'head' });
+    await proxy.stop();
+    await proxy.start();
+    assert.equal((await send({ port })).status, 200);
+    assert.equal(events(log, 'proxy.hold').length, 0);
+    proxy.arm({ do: 'hold', point: 'head' }); // a new hold can be armed again
+    proxy.release();
+  });
+});
+
 test('proxy_stop_aborts_a_held_exchange', async () => {
   await withProxy(answer, async ({ proxy, log, records }) => {
     proxy.arm({ do: 'hold', point: 'head' });

@@ -158,6 +158,8 @@ export class Proxy {
     for (const hold of this.#holds) hold.abort(new LabError('ABORTED', 'proxy stopped'));
     this.#holds.clear();
     this.#heldRef = null;
+    // An armed fault belongs to the stopped listener: a later exchange after server_up starts clean.
+    this.#pending = noFaults();
     await new Promise((resolve) => {
       server.close(() => resolve());
       server.closeAllConnections();

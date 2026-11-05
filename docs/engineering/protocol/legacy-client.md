@@ -6,7 +6,7 @@ This page describes the **legacy mode** (compatibility with the VasSonic legacy 
 
 This page specifies the observable behavior of a legacy protocol client: session identity, the session flow, Quick and Standard modes, result codes, and how the page receives data updates.
 
-**Status:** <Badge type="tip" text="FACT" /> from the upstream Android and iOS clients at `59936bef`, code reading (WP-02 S1; checked again row by row in WP-01 S1 T-01). <Badge type="warning" text="RESEARCH" /> A row that depends on the order of independent events (client ready, the intercepted request, the network head, the end of the body) is RESEARCH until a client trace with a controlled order confirms it (WP-01 S1 T-05). A trace overrides code reading.
+**Status:** <Badge type="tip" text="FACT" /> from the upstream Android and iOS clients at `59936bef`, code reading (WP-02 S1; checked again row by row in WP-01 S1 T-01). <Badge type="warning" text="RESEARCH" /> A row that depends on the order of independent events (client ready, the intercepted request, the network head, the end of the body) stays RESEARCH until a client trace with a controlled order confirms it. <Badge type="tip" text="FACT" /> The Android traces and the function runs of WP-01 S1 T-05 confirm the rows marked with a scenario ID ([client trace report](/engineering/protocol/legacy-client-traces)). A trace overrides code reading.
 
 Paths below are relative to `upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/` unless they start with `sonic-iOS/`. Short names in the tables:
 
@@ -41,8 +41,8 @@ Upstream derives a **session id** from the URL. The id names the cache files.
 Details:
 
 1. <Badge type="tip" text="FACT" /> Android: an account of `null` gives the prefix `null_`, an empty account gives `_` (string concatenation at `SonicRuntime.java:106`). iOS ignores an empty account when it is set, so a set account cannot be cleared to empty (`sonic-iOS/Sonic/Engine/SonicEngine.m:85-98`).
-2. <Badge type="tip" text="FACT" /> Android hashes the bytes of the platform default charset (`SU:697-707`). <Badge type="warning" text="RESEARCH" /> The Android default charset is UTF-8; the T-04/T-05 function runs confirm it.
-3. <Badge type="warning" text="RESEARCH" /> Neither SDK changes the case of the host. Whether `Uri.getAuthority` (Android) or `NSURL.host` (iOS) does is platform behavior; the function runs settle it.
+2. <Badge type="tip" text="FACT" /> Android hashes the bytes of the platform default charset (`SU:697-707`). <Badge type="tip" text="FACT" /> On the API 28 image the default charset is UTF-8 (function cases FN-ID-13, FN-CHARSET-07).
+3. <Badge type="tip" text="FACT" /> Neither SDK changes the case of the host, and neither platform parser does: `Uri.getAuthority` (API 28) and `NSURL.host` (Foundation of macOS 26.6) keep it, so `Shop.Example.COM` and `shop.example.com` give two session ids (FN-ID-01, FN-ID-03). The `NSURL` of old iOS is NOT FOUND.
 4. The exact rules of each platform and their edge cases are in [divergences](/engineering/protocol/legacy-divergences#_2-client-divergences) D-20 and D-21.
 
 ::: danger Consequences that Rivqen must not copy silently
@@ -160,7 +160,7 @@ flowchart TD
 3. During a `refresh()` the callback is delayed so that two callbacks are at least 2 s apart (`SS:1163-1183`).
 4. After a send, the stored diff is cleared (`SS:1162`).
 
-<Badge type="warning" text="RESEARCH" /> When the callback runs (the later of the result and `getDiffData`) depends on the order of the events.
+<Badge type="tip" text="FACT" /> Observed: when `getDiffData` came first, a "notify" result reached the callback at once (CS-02, CS-04, CS-13a); when the result came first, the page got it at the next `getDiffData` (CS-01, CS-05). A second `getDiffData` after a data-update message gives the page `{}`: the first send cleared the diff, and the next one fails to parse it (`SS:1112`, `:1148`; CS-04).
 
 ### 2.5 Stream cut (`FX-LEG-INTERRUPTED`)
 
@@ -171,7 +171,7 @@ flowchart TD
 | Close after an error | The stream reports "not complete"; the session writes no cache | `STR:112-155`, `SV:458-469`, `SS:969-1009` |
 | Clean end of stream | Counts as complete; the page is cached if F12 allows it | `STR:177-186`, `SS:984-994` |
 
-<Badge type="warning" text="RESEARCH" /> Whether the platform HTTP stack reports a short body as an error or as a clean end is NOT FOUND in the SDK; T-05 records it.
+<Badge type="tip" text="FACT" /> On API 28 a cut chunked body is an error: the WebView gets the bytes so far (139 decoded bytes of 128 wire bytes) and then `java.io.EOFException`; no cache is written (CS-13a). A cut before the intercept gives `null` (CS-13b).
 
 ### 2.6 Destroy during a session
 
@@ -184,7 +184,7 @@ flowchart TD
 5. The flow checks destroy once, after the connection (`SS:698-702`).
 6. The 1.5 s delayed save of a first load or template change does not block destroy and stops if the session is destroyed (`SS:1011-1024`). So a page closed within 1.5 s loses that cache write. The stream-close save blocks destroy (`SS:980-994`). The data-update save runs on the session thread and ends (`QSS:742-762`, `STD:493-515`).
 
-<Badge type="warning" text="RESEARCH" /> A stream set after destroy is dropped by the intercept without a close (possible leak); T-05 scenario CS-18 checks the timing.
+<Badge type="tip" text="FACT" /> CS-18: after `destroy()` during the body the intercept gets `null`, and a destroy 0.5 s after the end leaves no cache (item 6). <Badge type="warning" text="RESEARCH" /> Whether the dropped stream is closed is not visible in the trace.
 
 ### 2.7 Second session for one id (`FX-LEG-CONCURRENT`)
 
@@ -249,28 +249,28 @@ How to read the tables:
 
 | ID | Cache | Server | Order | Status |
 |---|---|---|---|---|
-| Q1 | none | first load | Body complete before the preload `loadUrl` runs | <Badge type="warning" text="RESEARCH" /> |
-| Q2 | none | first load | Preload `loadUrl` and intercept first | <Badge type="warning" text="RESEARCH" /> |
-| Q3 | none | first load, empty body | Before any intercept | <Badge type="warning" text="RESEARCH" /> |
-| Q4 | none | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> |
+| Q1 | none | first load | Body complete before the preload `loadUrl` runs | <Badge type="tip" text="FACT" /> CS-01 |
+| Q2 | none | first load | Preload `loadUrl` and intercept first | <Badge type="tip" text="FACT" /> CS-02 |
+| Q3 | none | first load, empty body | Before any intercept | <Badge type="warning" text="RESEARCH" /> not reached (no empty page) |
+| Q4 | none | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> CS-12 |
 | Q5 | none | `cache-offline: http` | — | <Badge type="tip" text="FACT" /> |
 | Q6 | none | first load, `cache-offline` not `true` or `store` | As Q1 or Q2 | <Badge type="tip" text="FACT" /> |
-| Q7 | yes | `304`, or `200` with the request etag | — | <Badge type="tip" text="FACT" /> |
-| Q8 | yes | data update | Cache given as data first; diff not empty | <Badge type="warning" text="RESEARCH" /> |
-| Q9 | yes | data update with `store`, or diff failed | Cache given as data first | <Badge type="warning" text="RESEARCH" /> |
-| Q10 | yes | data update | Network first | <Badge type="warning" text="RESEARCH" /> |
-| Q11 | yes | data update, rebuild fails | Network first | <Badge type="warning" text="RESEARCH" /> |
-| Q12 | yes | template change, not `store` | Cache given as data first | <Badge type="warning" text="RESEARCH" /> |
-| Q13 | yes | template change with `store` | Cache given as data first | <Badge type="warning" text="RESEARCH" /> |
-| Q14 | yes | template change | Network first | <Badge type="warning" text="RESEARCH" /> |
-| Q15 | yes | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> |
+| Q7 | yes | `304`, or `200` with the request etag | — | <Badge type="tip" text="FACT" /> CS-03 |
+| Q8 | yes | data update | Cache given as data first; diff not empty | <Badge type="tip" text="FACT" /> CS-04 |
+| Q9 | yes | data update with `store`, or diff failed | Cache given as data first | <Badge type="warning" text="RESEARCH" /> not reached (no `store` alone) |
+| Q10 | yes | data update | Network first | <Badge type="tip" text="FACT" /> CS-05 |
+| Q11 | yes | data update, rebuild fails | Network first | <Badge type="warning" text="RESEARCH" /> not in the catalog |
+| Q12 | yes | template change, not `store` | Cache given as data first | <Badge type="tip" text="FACT" /> CS-06 |
+| Q13 | yes | template change with `store` | Cache given as data first | <Badge type="warning" text="RESEARCH" /> not reached (no `store` alone) |
+| Q14 | yes | template change | Network first | <Badge type="tip" text="FACT" /> CS-07 |
+| Q15 | yes | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> CS-11 |
 | Q16 | yes | `cache-offline: http` | — | <Badge type="tip" text="FACT" /> |
-| Q17 | yes | `cache-offline` absent, empty or `false` | — | <Badge type="tip" text="FACT" /> |
-| Q18 | yes | etag or `template-change` missing | — | <Badge type="tip" text="FACT" /> |
+| Q17 | yes | `cache-offline` absent, empty or `false` | — | <Badge type="tip" text="FACT" /> CS-09 |
+| Q18 | yes | etag or `template-change` missing | — | <Badge type="tip" text="FACT" /> CS-14 |
 | Q19 | any | template change during `refresh()` | — | <Badge type="tip" text="FACT" /> |
-| Q20 | none | first load, read error | Before any intercept | <Badge type="tip" text="FACT" /> |
+| Q20 | none | first load, read error | Before any intercept | <Badge type="tip" text="FACT" /> CS-13b |
 | Q21 | any | no request (F3) | — | <Badge type="tip" text="FACT" /> |
-| Q22 | none | first load, read error | During the bridge stream | <Badge type="warning" text="RESEARCH" /> |
+| Q22 | none | first load, read error | During the bridge stream | <Badge type="tip" text="FACT" /> CS-13a |
 
 **Part B — result**
 
@@ -301,11 +301,11 @@ How to read the tables:
 
 Notes:
 
-1. <Badge type="warning" text="RESEARCH" /> Q1 happens when the client is not ready yet (the first-load message replaces the held preload), or when the preload message is still in the queue (it is removed). The session posts the 1.5 s save only if, at that moment, the main thread has not yet handled the first-load message (`QSS:638`). If it has, no save follows: a page given as data is never intercepted, so no stream closes. **Probable upstream defect:** a Quick first load can miss its cache write.
-2. <Badge type="warning" text="RESEARCH" /> A first-load message "without data" while no intercept happened arises only with an empty `200` body (the read ends at once, `SV:394-400`). If the preload `loadUrl` has not run yet, it is removed or replaced and **nothing loads**. If it ran, the intercept later gets an empty stream. **Probable upstream defect.**
+1. <Badge type="warning" text="RESEARCH" /> Trace (CS-01): with the body complete before `clientReady`, the message waits in the slot and the 1.5 s save runs (3 of 3 runs), so the defect does not occur in that order. The window that remains is `clientReady` between `QSS:628` and `:638` on the session thread; a script cannot place it. Code reading: Q1 happens when the client is not ready yet (the first-load message replaces the held preload), or when the preload message is still in the queue (it is removed). The session posts the 1.5 s save only if, at that moment, the main thread has not yet handled the first-load message (`QSS:638`). If it has, no save follows: a page given as data is never intercepted, so no stream closes. **Probable upstream defect:** a Quick first load can miss its cache write.
+2. <Badge type="warning" text="RESEARCH" /> Not reached in T-05: the upstream servers always send the page body, and no lab page is empty. Code reading: a first-load message "without data" while no intercept happened arises only with an empty `200` body (the read ends at once, `SV:394-400`). If the preload `loadUrl` has not run yet, it is removed or replaced and **nothing loads**. If it ran, the intercept later gets an empty stream. **Probable upstream defect.**
 3. With `RELOAD_IN_BAD_NETWORK` on (default **off**, `CFG:61`), the error removes the preload message and the session calls `loadUrl` once (`QSS:493-499`, `:207-214`). With a cache, this normal load replaces the cached page.
-4. <Badge type="warning" text="RESEARCH" /> The branch is chosen on the session thread (`QSS:697`), but the preload runs on the main thread. If the preload runs between the check and the message, the update arrives with the page but no diff: the page reports 200 / 304 and keeps the old cache on screen. **Probable upstream defect: the data update is lost.** The write: if the diff failed or the rebuilt page is empty, the cache is removed instead (`QSS:736-740`). The local data file becomes the full server data (`QSS:755`).
-5. <Badge type="warning" text="RESEARCH" /> In the template change, the session reads the new body until the app reports page finish for the cached page (`QSS:538`). The template-change handler also drops the page callback, so the page must call `getDiffData` again (`QSS:380-381`).
+4. <Badge type="warning" text="RESEARCH" /> Trace: cache first (CS-04) delivers the diff; network first (CS-05) loads the rebuilt page. The loss needs the preload between `QSS:697` and `:723`, which a script cannot place. After a first load the diff holds **every** block: the first-load data file has the form `{"data": …}` (`SV:436-446`), which the diff does not read as a block map (`SU:251-299`; CS-04). Code reading: the branch is chosen on the session thread (`QSS:697`), but the preload runs on the main thread. If the preload runs between the check and the message, the update arrives with the page but no diff: the page reports 200 / 304 and keeps the old cache on screen. **Probable upstream defect: the data update is lost.** The write: if the diff failed or the rebuilt page is empty, the cache is removed instead (`QSS:736-740`). The local data file becomes the full server data (`QSS:755`).
+5. <Badge type="tip" text="FACT" /> The handler drops the page callback: in CS-06 no message came at the result, and the next `getDiffData` gave 2000 / 2000. <Badge type="warning" text="RESEARCH" /> The read until page finish is not in the catalog. Code reading: in the template change, the session reads the new body until the app reports page finish for the cached page (`QSS:538`). The template-change handler also drops the page callback, so the page must call `getDiffData` again (`QSS:380-381`).
 
 ### 3.2 Standard mode outcomes
 
@@ -315,23 +315,23 @@ Notes:
 
 | ID | Cache | Server | Order | Status |
 |---|---|---|---|---|
-| S1 | none | first load | Intercept first, or body complete first | <Badge type="warning" text="RESEARCH" /> |
-| S2 | none | first load, read error | Before any intercept | <Badge type="tip" text="FACT" /> |
-| S3 | none | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> |
+| S1 | none | first load | Intercept first, or body complete first | <Badge type="tip" text="FACT" /> CS-01, CS-02 |
+| S2 | none | first load, read error | Before any intercept | <Badge type="tip" text="FACT" /> CS-13b |
+| S3 | none | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> CS-12 |
 | S4 | none or yes | `cache-offline: http` | — | <Badge type="tip" text="FACT" /> |
-| S5 | yes | `304`, or `200` with the request etag | — | <Badge type="tip" text="FACT" /> |
-| S6 | yes | data update, `true` or `false` | Intercept first | <Badge type="warning" text="RESEARCH" /> |
-| S7 | yes | data update, `true` or `false` | Network first | <Badge type="warning" text="RESEARCH" /> |
-| S8 | yes | data update, `store` or another value | — | <Badge type="tip" text="FACT" /> |
-| S9 | yes | template change, `true` or `false` | Intercept first | <Badge type="warning" text="RESEARCH" /> |
-| S10 | yes | template change, `store` or another value | Intercept first | <Badge type="warning" text="RESEARCH" /> |
-| S11 | yes | template change | Network first | <Badge type="warning" text="RESEARCH" /> |
-| S12 | yes | template change, empty body | Network first | <Badge type="warning" text="RESEARCH" /> |
-| S13 | yes | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> |
-| S14 | yes | `cache-offline` absent, empty or `false` | — | <Badge type="tip" text="FACT" /> |
-| S15 | yes | etag or `template-change` missing | — | <Badge type="tip" text="FACT" /> |
-| S16 | any | template change during `refresh()` | — | <Badge type="warning" text="RESEARCH" /> |
-| S17 | none | first load, read error | During the bridge stream | <Badge type="warning" text="RESEARCH" /> |
+| S5 | yes | `304`, or `200` with the request etag | — | <Badge type="tip" text="FACT" /> CS-03 |
+| S6 | yes | data update, `true` or `false` | Intercept first | <Badge type="tip" text="FACT" /> CS-04 |
+| S7 | yes | data update, `true` or `false` | Network first | <Badge type="tip" text="FACT" /> CS-05 |
+| S8 | yes | data update, `store` or another value | — | <Badge type="tip" text="FACT" /> CS-08, CS-10 (another value) |
+| S9 | yes | template change, `true` or `false` | Intercept first | <Badge type="tip" text="FACT" /> CS-06 |
+| S10 | yes | template change, `store` or another value | Intercept first | <Badge type="warning" text="RESEARCH" /> not reached (no `store` alone) |
+| S11 | yes | template change | Network first | <Badge type="tip" text="FACT" /> CS-07 |
+| S12 | yes | template change, empty body | Network first | <Badge type="warning" text="RESEARCH" /> not reached (no empty page) |
+| S13 | yes | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> CS-11 |
+| S14 | yes | `cache-offline` absent, empty or `false` | — | <Badge type="tip" text="FACT" /> CS-09 |
+| S15 | yes | etag or `template-change` missing | — | <Badge type="tip" text="FACT" /> CS-14 |
+| S16 | any | template change during `refresh()` | — | <Badge type="warning" text="RESEARCH" /> not in the catalog |
+| S17 | none | first load, read error | During the bridge stream | <Badge type="tip" text="FACT" /> CS-13a |
 | S18 | any | no request (F3) | — | <Badge type="tip" text="FACT" /> |
 
 **Part B — result**
@@ -359,9 +359,9 @@ Notes:
 
 Notes:
 
-1. <Badge type="warning" text="RESEARCH" /> "Body first" (1000 / 304) means only that the body was read before the intercept; the page still loads through `loadUrl` and the intercept. With a complete body the session posts the 1.5 s save, and the stream close posts a second save (`STD:382-387`, `SS:984-994`).
-2. <Badge type="tip" text="FACT" /> S6 and S8: if F12 does not allow the write (for example `cache-offline: TRUE`, or `Cache-Control: no-store` with `SUPPORT_CACHE_CONTROL`), Standard removes the cache and then writes the files and metadata anyway, because it does not return (`STD:487-515`). Quick returns (`QSS:736-740`).
-3. <Badge type="warning" text="RESEARCH" /> The intercept check (`STD:470`) is outside the stream lock. If the intercept takes the cached stream just after the check, the rebuilt stream is never read and the page reports 200 / 304 while the old cache shows. **Probable upstream defect.**
+1. <Badge type="tip" text="FACT" /> Trace: body first gives 1000 / 304 and two saves (CS-01); intercept first gives 1000 / 1000 and one save, at the close (CS-02). "Body first" (1000 / 304) means only that the body was read before the intercept; the page still loads through `loadUrl` and the intercept. With a complete body the session posts the 1.5 s save, and the stream close posts a second save (`STD:382-387`, `SS:984-994`).
+2. <Badge type="tip" text="FACT" /> S6 and S8: if F12 does not allow the write (for example `cache-offline: TRUE`, or `Cache-Control: no-store` with `SUPPORT_CACHE_CONTROL`), Standard removes the cache and then writes the files and metadata anyway, because it does not return (`STD:487-515`). Quick returns (`QSS:736-740`). Trace (CS-08, CS-10, value `true,http` or `true,store`): Standard writes the page, data and header files but no template file; Quick leaves no cache.
+3. <Badge type="warning" text="RESEARCH" /> Trace (CS-05): the intercept got the rebuilt page. The defect needs an intercept between `STD:470` and `:472`, which a script cannot place. Code reading: the intercept check (`STD:470`) is outside the stream lock. If the intercept takes the cached stream just after the check, the rebuilt stream is never read and the page reports 200 / 304 while the old cache shows. **Probable upstream defect.**
 4. <Badge type="warning" text="RESEARCH" /> `refresh()` resets the intercept flag, so the handler reports 2000 / 304 and makes no load call. Whether the app reloads the page itself is outside the SDK.
 
 ### 3.3 Differences between the modes
@@ -429,7 +429,7 @@ Rules from the code:
 2. <Badge type="tip" text="FACT" /> Android diff: every server key whose value, as a string, differs from the local value; a missing local value counts as `""`, so a new key with an empty value is not in the diff (`SU:251-299`). iOS diff: only keys that **already exist** locally; if that diff is empty, iOS sends the **full** server data (`sonic-iOS/Sonic/Util/SonicUtil.m:210-228`, `sonic-iOS/Sonic/Cache/SonicCache.m:363-370`).
 3. <Badge type="tip" text="FACT" /> `cache-offline: store` gives no diff on **both** platforms: Android Quick reports 200 / 304 (`QSS:701-704`, `:319-322`), Android Standard sends no message (`STD:442`), iOS sets `code` to `"304"` (`SonicSession.m:662-668`).
 4. <Badge type="tip" text="FACT" /> iOS `isReload` is always `"false"`: the flag behind it is never set in the SDK (`SonicSession.m:48`, `:687`).
-5. <Badge type="warning" text="RESEARCH" /> Android `isReload` is an `AtomicBoolean` put into an org.json object (`SS:1145`); org.json probably writes it as the string `"true"` or `"false"`. A header that is absent probably removes its `extra` key (org.json `put` with `null`). The T-05 function runs settle both. iOS pretty-print whitespace and key order: NOT FOUND in the SDK (Apple library behavior).
+5. <Badge type="tip" text="FACT" /> Android (API 28, session traces): `isReload` is the string `"false"`; a header that is absent has no `extra` key (the `304` messages have only `cache-offline` and `isReload`); org.json writes `/` as `\/` in `result`; the keys keep insertion order (`local_refresh_time`, `result`, `code`, `srcCode`, `extra`). iOS pretty-print whitespace and key order: NOT FOUND (no iOS message run, H-119).
 
 ### 5.3 iOS integration (Q-03)
 

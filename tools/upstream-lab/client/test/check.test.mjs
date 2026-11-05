@@ -8,7 +8,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { canonicalLine } from '../src/canon.mjs';
 import { checkRunText, checkTree, eventProblems, foreignHosts, functionsProblems, metaProblems, runJsonProblems } from '../src/check.mjs';
-import { firstDifference, normalizeEvent, normalizeHeaderText, normalizeRun } from '../src/determinism.mjs';
+import { firstDifference, normalizeEvent, normalizeHeaderText, normalizeRun, outcomeRun, settlePhases } from '../src/determinism.mjs';
 import { buildRunJson } from '../src/runjson.mjs';
 
 const SHA = 'a'.repeat(64);
@@ -93,11 +93,15 @@ test('check_schema_covers_the_members_of_each_event_of_the_contract', () => {
     { ...h, ev: 'client.load_data', base_url: 'u', mime: 'text/html', encoding: 'utf-8', history_url: 'u', headers: [['a', 'b']], body_len: 1, body_sha256: SHA },
     { ...h, ev: 'client.intercept', null: true },
     { ...h, ev: 'client.intercept', status: 200, reason: 'OK', mime: 'm', encoding: 'e', headers: [], body_len: 0, body_sha256: SHA, complete: false, error: 'IOException' },
+    // API 28: the WebResourceResponse of the runtime has status 0 and reason null (android/README.md)
+    { ...h, ev: 'client.intercept', status: 0, reason: null, mime: 'm', encoding: 'e', headers: [], body_len: 0, body_sha256: SHA, complete: true, error: null },
     { ...h, ev: 'session.result', src_code: 1000, final_code: 304 },
     { ...h, ev: 'session.message', json: '{}' },
     { ...h, ev: 'session.callback', name: 'onSessionHitCache', args: [] },
     { ...h, ev: 'runtime.cookie_get', url: 'u', value: null },
     { ...h, ev: 'runtime.cookie_set', url: 'u', value: 'a=b' },
+    { ...h, ev: 'runtime.cookie_set', url: 'u', value: ['a=b; Path=/', 'c=d'] }, // the list that the SDK passes on
+    { ...h, ev: 'webview.intercept_request', url: 'u', method: 'GET' },
     { ...base, src: 'proxy', ev: 'proxy.cut', exchange: 1, bytes: 5 },
     { ...base, src: 'proxy', ev: 'proxy.drop_field', exchange: 1, name: 'etag' },
     { ...base, src: 'proxy', ev: 'proxy.hold', exchange: 1, point: 'body', bytes: 3 },
@@ -119,6 +123,9 @@ test('check_schema_covers_the_members_of_each_event_of_the_contract', () => {
   const bad = [
     { ...h, ev: 'client.intercept', null: true, status: 200 },
     { ...h, ev: 'client.intercept', null: false },
+    { ...h, ev: 'runtime.cookie_set', url: 'u', value: ['a=b', 1] },
+    { ...h, ev: 'webview.intercept_request', url: 'u', method: 1 },
+    { ...h, ev: 'client.intercept', status: 0, reason: 0, mime: 'm', encoding: 'e', headers: [], body_len: 0, body_sha256: SHA, complete: true },
     { ...h, ev: 'client.load_data', base_url: 'u', mime: 'm', encoding: 'e', history_url: 'u', headers: [['a']], body_len: 1, body_sha256: SHA },
     { ...h, ev: 'client.load_data', base_url: 'u', mime: 'm', encoding: 'e', history_url: 'u', headers: [], body_len: 1, body_sha256: 'xyz' },
     { ...h, ev: 'cache.snapshot', files: [{ name: 'b', size: 1, sha256: SHA }, { name: 'a', size: 1, sha256: SHA }], db: null },
@@ -239,6 +246,65 @@ test('check_determinism_accepts_unstable_runs_with_a_reason_in_run_json', async 
   }
 });
 
+test('check_determinism_compares_the_recorded_outcome_with_the_projection', async () => {
+  const a = toText(runEvents());
+  const other = toText(runEvents().map((e) => (e.ev === 'proxy.response_head' ? { ...e, status: 304 } : e)));
+  const t = await tree([a, a, other]);
+  try {
+    const file = path.join(t.root, 'run.json');
+    const j = JSON.parse(await (await import('node:fs/promises')).readFile(file, 'utf8'));
+    assert.equal(j.summary.unstable[0].outcome, 'unstable');
+    assert.deepEqual((await checkTree(t.root)).unstable.map((u) => u.outcome), ['unstable']);
+    j.summary.unstable[0].outcome = 'stable';
+    await writeFile(file, JSON.stringify(j));
+    assert.deepEqual((await checkTree(t.root)).errors, ['CS-01/quick: run.json says outcome stable, the outcome projection is unstable']);
+    j.summary.unstable[0].outcome = 'maybe';
+    assert.ok(runJsonProblems(j).some((p) => p.includes('outcome?: stable|unstable')));
+    delete j.summary.unstable[0].outcome;
+    await writeFile(file, JSON.stringify(j));
+    assert.deepEqual((await checkTree(t.root)).errors, []);
+  } finally {
+    await t.done();
+  }
+});
+
+/** runEvents with the worker event (client.intercept) after cache.snapshot: a harness thread race only. */
+function workerLate() {
+  const events = runEvents();
+  const i = events.findIndex((e) => e.ev === 'client.intercept');
+  const [worker] = events.splice(i, 1);
+  events.splice(events.findIndex((e) => e.ev === 'cache.snapshot') + 1, 0, worker);
+  let hseq = 0;
+  return events.map((e, n) => ({ ...e, seq: n + 1, t: n, ...(e.src === 'harness' ? { hseq: ++hseq } : {}) }));
+}
+
+test('check_records_an_outcome_stable_mode_when_only_threads_race', async () => {
+  const a = toText(runEvents());
+  const t = await tree([a, a, toText(workerLate())]);
+  try {
+    const file = path.join(t.root, 'run.json');
+    const j = JSON.parse(await (await import('node:fs/promises')).readFile(file, 'utf8'));
+    assert.deepEqual(j.summary.unstable.map((u) => [u.scenario, u.mode, u.outcome]), [['CS-01', 'quick', 'stable']]);
+    const res = await checkTree(t.root);
+    assert.deepEqual(res.errors, []);
+    assert.deepEqual(res.unstable.map((u) => u.outcome), ['stable']);
+  } finally {
+    await t.done();
+  }
+});
+
+test('check_survives_a_run_json_without_summary_or_with_bad_unstable_entries', async () => {
+  const a = toText(runEvents());
+  const other = toText(runEvents().map((e) => (e.ev === 'proxy.response_head' ? { ...e, status: 304 } : e)));
+  const base = { date: '2026-11-05', tools: { node: 'v22' }, emulator_image: 'x', upstream_sha: '59936bef', scenarios: [{ id: 'CS-01', modes: { quick: { runs: 2 } } }] };
+  const noSummary = await errorsOf([a, other], { runJson: base });
+  assert.ok(noSummary.includes('run.json: missing summary'));
+  assert.ok(noSummary.includes('CS-01/quick: runs differ (run 2 at line 9) and run.json gives no reason'));
+  const bad = await errorsOf([a, other], { runJson: { ...base, summary: { stable: [], unstable: [null, { scenario: 'CS-01', mode: 'quick', reason: 'r', outcome: 'unstable' }] } } });
+  assert.ok(bad.some((e) => e.startsWith('run.json: summary needs')));
+  assert.ok(!bad.some((e) => e.includes('gives no reason')));
+});
+
 test('check_determinism_rejects_a_reason_for_stable_runs', async () => {
   const a = toText(runEvents());
   const t = await tree([a, a, a]);
@@ -342,6 +408,92 @@ test('determinism_normalizes_t_seq_worker_threads_and_the_android_time_fields', 
   assert.deepEqual(normalizeRun([{ ev: 'a', src: 'conductor', t: 1, z: 1, b: 2 }]), ['{"b":2,"ev":"a","src":"conductor","z":1}']);
 });
 
+test('determinism_ignores_the_run_number_of_run_start_only', () => {
+  // The conductor writes repeat = k of run-<k>.jsonl, so three runs of one mode differ there by construction.
+  const runK = (k) => runEvents().map((e) => (e.ev === 'run.start' ? { ...e, repeat: k } : e));
+  assert.equal(firstDifference([1, 2, 3].map((k) => normalizeRun(runK(k)))), null);
+  assert.equal(normalizeEvent({ ev: 'run.start', repeat: 2, scenario: 'CS-01' }).repeat, undefined);
+  assert.equal(normalizeEvent({ ev: 'step.start', repeat: 2 }).repeat, 2); // only run.start
+  const otherMode = runK(1).map((e) => (e.ev === 'run.start' ? { ...e, mode: 'standard' } : e));
+  assert.notEqual(firstDifference([normalizeRun(runK(1)), normalizeRun(otherMode)]), null);
+});
+
+/** A run with a settle step: create_session, a callback of an SDK thread, settle, client_ready. */
+function settleRun({ callbackAfterDone = false, callbackAfterSettle = false, mainSwap = false, workerOrder = ['a', 'b'] } = {}) {
+  const raw = [
+    ['conductor', 'run.start', { scenario: 'CS-01', mode: 'quick', repeat: 1, origin: 'lab-node', upstream_sha: '59936bef' }],
+    ['conductor', 'step.start', { step: { do: 'create_session', seq: 1 } }],
+    ['harness', 'session.created', { thread: 'main', session_id: 'abc', session: 1 }],
+  ];
+  const callback = ['harness', 'session.callback', { thread: 'sdk-session', name: 'onSessionFirstLoad', args: [], session: 1 }];
+  if (!callbackAfterDone) raw.push(callback);
+  raw.push(['harness', 'step.done', { thread: 'instr', step: { do: 'create_session', seq: 1 } }]);
+  raw.push(['conductor', 'step.start', { step: { do: 'bind_client', seq: 2 } }]);
+  if (callbackAfterDone && !callbackAfterSettle) raw.push(callback);
+  raw.push(['harness', 'step.done', { thread: 'instr', step: { do: 'bind_client', seq: 2 } }]);
+  raw.push(['conductor', 'step.start', { step: { do: 'settle', ms: 300, seq: 3 } }]);
+  for (const n of workerOrder) raw.push(['harness', 'session.callback', { thread: `w-${n}`, name: `on_${n}`, args: [], session: 1 }]);
+  raw.push(['conductor', 'step.done', { step: { do: 'settle', ms: 300, seq: 3 } }]);
+  raw.push(['conductor', 'step.start', { step: { do: 'client_ready', seq: 4 } }]);
+  if (callbackAfterSettle) raw.push(callback);
+  const loads = [['harness', 'client.load_url', { thread: 'main', url: 'http://10.0.2.2:18090/catalog', extras: [], session: 1 }],
+    ['harness', 'client.clear_history', { thread: 'main', session: 1 }]];
+  raw.push(...(mainSwap ? loads.reverse() : loads));
+  raw.push(['harness', 'step.done', { thread: 'instr', step: { do: 'client_ready', seq: 4 } }]);
+  raw.push(['conductor', 'run.end', { ok: true, error: null }]);
+  let hseq = 0;
+  return raw.map(([src, ev, members], i) => ({ ...members, ...(src === 'harness' ? { hseq: ++hseq } : {}), ev, seq: i + 1, src, t: i }));
+}
+
+test('outcome_projection_ignores_window_and_thread_races_of_sdk_events', () => {
+  const base = settleRun();
+  const moved = settleRun({ callbackAfterDone: true }); // the SDK callback falls into the next step window
+  const swapped = settleRun({ workerOrder: ['b', 'a'] }); // two SDK threads interleave the other way
+  assert.notEqual(firstDifference([normalizeRun(base), normalizeRun(moved)]), null); // the strict rule sees a difference
+  assert.equal(firstDifference([outcomeRun(base), outcomeRun(moved), outcomeRun(swapped)]), null);
+});
+
+test('outcome_projection_keeps_main_thread_order_values_and_settle_phases', () => {
+  const base = outcomeRun(settleRun());
+  assert.notEqual(firstDifference([base, outcomeRun(settleRun({ mainSwap: true }))]), null); // main-thread order is behavior
+  assert.notEqual(firstDifference([base, outcomeRun(settleRun({ callbackAfterDone: true, callbackAfterSettle: true }))]), null); // across a settle
+  const changed = settleRun().map((e) => (e.ev === 'session.created' ? { ...e, session_id: 'xyz' } : e));
+  assert.notEqual(firstDifference([base, outcomeRun(changed)]), null);
+  const events = settleRun();
+  const phases = settlePhases(events);
+  assert.deepEqual(phases.map((p) => p.filter((e) => e.ev === 'step.start').map((e) => e.step.do)), [['create_session', 'bind_client', 'settle'], ['client_ready']]);
+  // every event is in exactly one phase; the events during the settle stay in its phase
+  assert.deepEqual(phases.flat(), events);
+  assert.deepEqual(phases[0].filter((e) => e.thread?.startsWith('w-')).map((e) => e.name), ['on_a', 'on_b']);
+  assert.equal(base.filter((l) => l === '--- phase').length, 2);
+});
+
+test('outcome_phase_ends_only_with_the_step_after_a_settle', () => {
+  const step = (doing, seq) => ({ ev: 'step.start', src: 'conductor', step: { do: doing, seq } });
+  const run = [step('settle', 1), { ev: 'step.done', src: 'conductor', step: { do: 'settle', seq: 1 } }, step('client_ready', 2), step('request_resource', 3), step('get_diff', 4)];
+  assert.deepEqual(settlePhases(run).map((p) => p.length), [2, 3]);
+});
+
+test('outcome_projection_compares_conductor_events_and_proxy_events_per_exchange', () => {
+  const ev = (src, name, extra) => ({ ...extra, ev: name, src });
+  const run = (order) => order.map((e, i) => ({ ...e, seq: i + 1, t: i }));
+  const req = (n) => ev('proxy', 'proxy.request', { exchange: n, method: 'GET', target: '/catalog', fields: [] });
+  const end = (n) => ev('proxy', 'proxy.response_end', { exchange: n, body_len: 1, body_sha256: SHA, complete: true });
+  const start = ev('conductor', 'step.start', { step: { do: 'create_session', seq: 1 } });
+  // two exchanges that overlap in another order: equal
+  assert.equal(firstDifference([outcomeRun(run([start, req(1), end(1), req(2), end(2)])), outcomeRun(run([start, req(1), req(2), end(1), end(2)]))]), null);
+  // a conductor event that differs: not equal
+  const failed = ev('conductor', 'step.done', { step: { do: 'create_session', seq: 1 }, error: 'x' });
+  const done = ev('conductor', 'step.done', { step: { do: 'create_session', seq: 1 } });
+  assert.notEqual(firstDifference([outcomeRun(run([start, done])), outcomeRun(run([start, failed]))]), null);
+  // main-thread events in hseq order, not in arrival order
+  const main = (name, hseq) => ev('harness', name, { thread: 'main', hseq, url: 'u', extras: [] });
+  assert.equal(firstDifference([
+    outcomeRun(run([start, main('client.load_url', 1), main('webview.page_started', 2)])),
+    outcomeRun(run([start, main('webview.page_started', 2), main('client.load_url', 1)])),
+  ]), null);
+});
+
 test('determinism_removes_local_refresh_time_from_the_page_message', () => {
   const message = (json) => normalizeEvent({ ev: 'session.message', json }).json;
   assert.equal(message('{"code":200,"local_refresh_time":1234,"srcCode":200}'), '{"code":200,"srcCode":200}');
@@ -403,7 +555,7 @@ test('run_json_is_rebuilt_from_the_tree_and_keeps_recorded_reasons', async () =>
     assert.equal(first.emulator_image, 'unknown');
     assert.deepEqual(first.scenarios, [{ id: 'CS-01', modes: { quick: { runs: 2 } } }]);
     assert.deepEqual(first.summary.stable, []);
-    assert.deepEqual(first.summary.unstable, [{ scenario: 'CS-01', mode: 'quick', reason: 'runs differ: run 2 at line 9' }]);
+    assert.deepEqual(first.summary.unstable, [{ scenario: 'CS-01', mode: 'quick', reason: 'runs differ: run 2 at line 9', outcome: 'unstable' }]);
     const previous = { emulator_image: 'api28', summary: { unstable: [{ scenario: 'CS-01', mode: 'quick', reason: 'recorded by hand' }] } };
     const second = await buildRunJson({ root: t.root, previous, meta });
     assert.equal(second.summary.unstable[0].reason, 'recorded by hand');

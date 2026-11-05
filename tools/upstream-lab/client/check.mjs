@@ -37,7 +37,7 @@ async function main() {
     }
     if (text !== null) errors.push(...functionsProblems(text, platform, cases).map((p) => `${platform}/functions.jsonl: ${p}`));
   }
-  for (const u of unstable) say(`unstable (recorded in run.json): ${u.scenario}/${u.mode}`);
+  for (const u of unstable) say(`unstable (recorded in run.json): ${u.scenario}/${u.mode}; outcome projection ${u.outcome}`);
   for (const w of warnings) say(`WARNING ${w}`);
   for (const e of errors) say(`ERROR ${e}`);
   say(`${runs} runs checked, ${errors.length} errors`);

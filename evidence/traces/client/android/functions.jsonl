@@ -1,0 +1,214 @@
+{"fn":"session_id","id":"FN-ID-01","platform":"android","result":{"id":"rq-test-account_7f408b22a43a75c4019c09a9816a533c"}}
+{"fn":"session_id","id":"FN-ID-02","platform":"android","result":{"id":"rq-test-account_b2785581e96e31fae36804a168228fd4"}}
+{"fn":"session_id","id":"FN-ID-03","platform":"android","result":{"id":"rq-test-account_c8ff380d976611e72b9f1f5b6eb99c01"}}
+{"fn":"session_id","id":"FN-ID-04","platform":"android","result":{"id":"rq-test-account_7f408b22a43a75c4019c09a9816a533c"}}
+{"fn":"session_id","id":"FN-ID-05","platform":"android","result":{"id":"rq-test-account_c91fdd7c1ebebc6528c8be42b6270e51"}}
+{"fn":"session_id","id":"FN-ID-06","platform":"android","result":{"id":"rq-test-account_7f408b22a43a75c4019c09a9816a533c"}}
+{"fn":"session_id","id":"FN-ID-07","platform":"android","result":{"id":"rq-test-account_7f408b22a43a75c4019c09a9816a533c"}}
+{"fn":"session_id","id":"FN-ID-08","platform":"android","result":{"id":"_e31134172806f61c1232431c328327d4"}}
+{"fn":"session_id","id":"FN-ID-09","platform":"android","result":{"id":"null_e31134172806f61c1232431c328327d4"}}
+{"fn":"session_id","id":"FN-ID-10","platform":"android","result":{"id":"e31134172806f61c1232431c328327d4"}}
+{"fn":"session_id","id":"FN-ID-11","platform":"android","result":{"id":"rq-test-account_84ead266284be395f2a70acbca29936a"}}
+{"fn":"session_id","id":"FN-ID-12","platform":"android","result":{"id":"rq-test-account_84ead266284be395f2a70acbca29936a"}}
+{"fn":"session_id","id":"FN-ID-13","platform":"android","result":{"id":"rq-test-account_a06080da207263dacc8a9691077e6238"}}
+{"fn":"session_id","id":"FN-ID-14","platform":"android","result":{"id":"rq-test-account_e31134172806f61c1232431c328327d4"}}
+{"fn":"session_id","id":"FN-ID-ORD-01","platform":"android","result":{"id":"rq-test-account_6d0a9d073424b1b70d709bd854ba55b4"}}
+{"fn":"session_id","id":"FN-ID-ORD-02","platform":"android","result":{"id":"rq-test-account_6d0a9d073424b1b70d709bd854ba55b4"}}
+{"fn":"session_id","id":"FN-ID-ORD-03","platform":"android","result":{"id":"rq-test-account_e31134172806f61c1232431c328327d4"}}
+{"fn":"session_id","id":"FN-ID-ORD-04","platform":"android","result":{"id":"rq-test-account_06a3a5f1e24e0ac9784914305de22a2d"}}
+{"fn":"session_id","id":"FN-ID-ORD-05","platform":"android","result":{"id":"rq-test-account_7fada1d540121fcdc842704ec4f8cfbe"}}
+{"fn":"session_id","id":"FN-ID-ORD-06","platform":"android","result":{"id":"rq-test-account_2ace149d372b1e1f88ef8c74796d7dee"}}
+{"fn":"session_id","id":"FN-ID-ORD-07","platform":"android","result":{"id":"rq-test-account_6bbaa91719dc067ec5f04f53fb7abe19"}}
+{"fn":"session_id","id":"FN-ID-ORD-08","platform":"android","result":{"id":"rq-test-account_5a67b8ac8444f845a33658f011b4ef4f"}}
+{"fn":"session_id","id":"FN-ID-ORD-09","platform":"android","result":{"id":"rq-test-account_6bbaa91719dc067ec5f04f53fb7abe19"}}
+{"fn":"session_id","id":"FN-ID-ORD-10","platform":"android","result":{"id":"rq-test-account_e535a2e1b3b2544eb3858e71fd243788"}}
+{"fn":"session_id","id":"FN-ID-ORD-11","platform":"android","result":{"id":"rq-test-account_a32be52a6ad6116797949d7f91c3afb5"}}
+{"fn":"session_id","id":"FN-ID-ORD-12","platform":"android","result":{"id":"rq-test-account_e31134172806f61c1232431c328327d4"}}
+{"fn":"session_id","id":"FN-ID-ORD-13","platform":"android","result":{"id":"rq-test-account_0564ba43a37927954c9d23697b945859"}}
+{"fn":"session_id","id":"FN-ID-ORD-14","platform":"android","result":{"id":"rq-test-account_84ead266284be395f2a70acbca29936a"}}
+{"fn":"split","id":"FN-SPLIT-01","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->","{title}":"<title>T</title>"},"template":"<html><head>{title}</head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-02","platform":"android","result":{"data":{},"template":""}}
+{"fn":"split","id":"FN-SPLIT-03","platform":"android","result":{"data":{},"template":""}}
+{"fn":"split","id":"FN-SPLIT-04","platform":"android","result":{"data":{},"template":""}}
+{"fn":"split","id":"FN-SPLIT-05","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->","{b}":"<!--sonicdiff-b-->B<!--sonicdiff-b-end-->","{title}":"<title>T</title>"},"template":"<html><head>{title}</head><body>{a}{b}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-06","platform":"android","result":{"data":{"{null}":"<!--sonicdiff-->A<!--sonicdiff-end-->","{title}":"<title>T</title>"},"template":"<html><head>{title}</head><body>{null}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-07","platform":"android","result":{"data":{},"template":""}}
+{"fn":"split","id":"FN-SPLIT-08","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a-->A\nB\n<!--sonicdiff-a-end-->","{title}":"<title>T</title>"},"template":"<html><head>{title}</head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-09","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a-->B<!--sonicdiff-a-end-->","{title}":"<title>T</title>"},"template":"<html><head>{title}</head><body>{a}{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-10","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a--><!--sonicdiff-b-->B<!--sonicdiff-b-end-->","{title}":"<title>T</title>"},"template":"<html><head>{title}</head><body>{a}<!--sonicdiff-a-end--></body></html>"}}
+{"fn":"split","id":"FN-SPLIT-11","platform":"android","result":{"data":{},"template":""}}
+{"fn":"split","id":"FN-SPLIT-12","platform":"android","result":{"data":{},"template":""}}
+{"fn":"split","id":"FN-SPLIT-NAME-01","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-b-end-->","{title}":"<title>T</title>"},"template":"<html><head>{title}</head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-NAME-02","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-end-->","{title}":"<title>T</title>"},"template":"<html><head>{title}</head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-NAME-03","platform":"android","result":{"data":{"{null}":"<!--sonicdiff-->A<!--sonicdiff-b-end-->","{title}":"<title>T</title>"},"template":"<html><head>{title}</head><body>{null}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-NAME-04","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->","{b}":"<!--sonicdiff-b-->B<!--sonicdiff-a-end-->","{title}":"<title>T</title>"},"template":"<html><head>{title}</head><body>{a}{b}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-NAME-05","platform":"android","result":{"data":{},"template":""}}
+{"fn":"split","id":"FN-SPLIT-NAME-06","platform":"android","result":{"data":{"{a_1}":"<!--sonicdiff-a_1-->A<!--sonicdiff-a_1-end-->","{title}":"<title>T</title>"},"template":"<html><head>{title}</head><body>{a_1}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-NAME-07","platform":"android","result":{"data":{},"template":""}}
+{"fn":"split","id":"FN-SPLIT-NAME-08","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->","{null}":"<!--sonicdiff-->B<!--sonicdiff-end-->","{title}":"<title>T</title>"},"template":"<html><head>{title}</head><body>{a}{null}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-01","platform":"android","result":{"data":{},"template":""}}
+{"fn":"split","id":"FN-SPLIT-TITLE-02","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->","{title}":"<title>Shop</title>"},"template":"<html><head>{title}</head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-03","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"},"template":"<html><head><TITLE>Shop</TITLE></head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-04","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"},"template":"<html><head><title lang=\"en\">Shop</title></head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-05","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->","{title}":"<title>One</title>"},"template":"<html><head>{title}<title>Two</title></head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-06","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a--><title>In block</title><!--sonicdiff-a-end-->"},"template":"<html><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-07","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-a-end-->","{title}":"<title></title>"},"template":"<html><head>{title}</head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-TITLE-08","platform":"android","result":{"data":{},"template":""}}
+{"fn":"split","id":"FN-SPLIT-TITLE-09","platform":"android","result":{"data":{},"template":""}}
+{"fn":"diff","id":"FN-DIFF-01","platform":"android","result":{"diff":{"{a}":"y"}}}
+{"fn":"diff","id":"FN-DIFF-02","platform":"android","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-03","platform":"android","result":{"diff":{"{b}":"new"}}}
+{"fn":"diff","id":"FN-DIFF-04","platform":"android","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-05","platform":"android","result":{"diff":{"{a}":"y","{b}":"new"}}}
+{"fn":"diff","id":"FN-DIFF-06","platform":"android","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-07","platform":"android","result":{"diff":{"{a}":"1"}}}
+{"fn":"diff","id":"FN-DIFF-08","platform":"android","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-09","platform":"android","result":{"diff":{"{a}":"x"}}}
+{"fn":"diff","id":"FN-DIFF-10","platform":"android","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-11","platform":"android","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-12","platform":"android","result":{"diff":{"{a}":""}}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-01","platform":"android","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-02","platform":"android","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-03","platform":"android","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-04","platform":"android","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-NEW-01","platform":"android","result":{"diff":{"{b}":"new"}}}
+{"fn":"diff","id":"FN-DIFF-NEW-02","platform":"android","result":{"diff":{"{a}":"y","{b}":"new"}}}
+{"fn":"diff","id":"FN-DIFF-NEW-03","platform":"android","result":{"diff":null}}
+{"fn":"diff","id":"FN-DIFF-NEW-04","platform":"android","result":{"diff":{"{b}":"new"}}}
+{"fn":"message","id":"FN-MSG-01","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-02","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-03","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-04","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-05","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-06","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-07","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-08","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-09","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-10","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-11","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-OFFLINE-01","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-OFFLINE-02","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-OFFLINE-03","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-OFFLINE-04","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-OFFLINE-05","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-OFFLINE-06","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-OFFLINE-07","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"is_legacy_response","id":"FN-LEGACY-01","platform":"android","unsupported":"private method SonicServer.isSonicResponse (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicServer.java:189); not callable without reflection"}
+{"fn":"is_legacy_response","id":"FN-LEGACY-02","platform":"android","unsupported":"private method SonicServer.isSonicResponse (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicServer.java:189); not callable without reflection"}
+{"fn":"is_legacy_response","id":"FN-LEGACY-03","platform":"android","unsupported":"private method SonicServer.isSonicResponse (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicServer.java:189); not callable without reflection"}
+{"fn":"is_legacy_response","id":"FN-LEGACY-04","platform":"android","unsupported":"private method SonicServer.isSonicResponse (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicServer.java:189); not callable without reflection"}
+{"fn":"is_legacy_response","id":"FN-LEGACY-05","platform":"android","unsupported":"private method SonicServer.isSonicResponse (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicServer.java:189); not callable without reflection"}
+{"fn":"is_legacy_response","id":"FN-LEGACY-06","platform":"android","unsupported":"private method SonicServer.isSonicResponse (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicServer.java:189); not callable without reflection"}
+{"fn":"is_legacy_response","id":"FN-LEGACY-07","platform":"android","unsupported":"private method SonicServer.isSonicResponse (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicServer.java:189); not callable without reflection"}
+{"fn":"is_legacy_response","id":"FN-LEGACY-08","platform":"android","unsupported":"private method SonicServer.isSonicResponse (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicServer.java:189); not callable without reflection"}
+{"fn":"is_legacy_response","id":"FN-LEGACY-09","platform":"android","unsupported":"private method SonicServer.isSonicResponse (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicServer.java:189); not callable without reflection"}
+{"fn":"is_legacy_response","id":"FN-LEGACY-10","platform":"android","unsupported":"private method SonicServer.isSonicResponse (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicServer.java:189); not callable without reflection"}
+{"fn":"is_legacy_response","id":"FN-LEGACY-CASE-01","platform":"android","unsupported":"private method SonicServer.isSonicResponse (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicServer.java:189); not callable without reflection"}
+{"fn":"is_legacy_response","id":"FN-LEGACY-CASE-02","platform":"android","unsupported":"private method SonicServer.isSonicResponse (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicServer.java:189); not callable without reflection"}
+{"fn":"is_legacy_response","id":"FN-LEGACY-CASE-03","platform":"android","unsupported":"private method SonicServer.isSonicResponse (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicServer.java:189); not callable without reflection"}
+{"fn":"is_legacy_response","id":"FN-LEGACY-CASE-04","platform":"android","unsupported":"private method SonicServer.isSonicResponse (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicServer.java:189); not callable without reflection"}
+{"fn":"is_legacy_response","id":"FN-LEGACY-CASE-05","platform":"android","unsupported":"private method SonicServer.isSonicResponse (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicServer.java:189); not callable without reflection"}
+{"fn":"template_change","id":"FN-TCHANGE-01","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-02","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-03","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-04","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-05","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-06","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-07","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-08","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-09","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-10","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-11","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-12","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-13","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-14","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-15","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-16","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-17","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-18","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-19","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-20","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-21","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-22","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-23","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-24","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"template_change","id":"FN-TCHANGE-25","platform":"android","unsupported":"inline code of SonicSession.handleFlow_Connection (upstream:sonic-android/sdk/src/main/java/com/tencent/sonic/sdk/SonicSession.java:772-776); no callable function"}
+{"fn":"etag","id":"FN-ETAG-01","platform":"android","result":{"value":"abc"}}
+{"fn":"etag","id":"FN-ETAG-02","platform":"android","result":{"value":"\"abc\""}}
+{"fn":"etag","id":"FN-ETAG-03","platform":"android","result":{"value":"abc"}}
+{"fn":"etag","id":"FN-ETAG-04","platform":"android","result":{"value":"abc"}}
+{"fn":"etag","id":"FN-ETAG-05","platform":"android","result":{"value":"abc"}}
+{"fn":"etag","id":"FN-ETAG-06","platform":"android","result":{"value":"\"ABC\""}}
+{"fn":"etag","id":"FN-ETAG-07","platform":"android","result":{"value":"abc"}}
+{"fn":"etag","id":"FN-ETAG-08","platform":"android","result":{"value":"'abc'"}}
+{"fn":"etag","id":"FN-ETAG-09","platform":"android","result":{"value":"\"\""}}
+{"fn":"etag","id":"FN-ETAG-10","platform":"android","result":{"value":"\""}}
+{"fn":"etag","id":"FN-ETAG-11","platform":"android","result":{"value":""}}
+{"fn":"etag","id":"FN-ETAG-12","platform":"android","result":{"value":""}}
+{"fn":"etag","id":"FN-ETAG-13","platform":"android","result":{"value":" \"abc\" "}}
+{"fn":"etag","id":"FN-ETAG-14","platform":"android","result":{"value":"\"W/abc\""}}
+{"fn":"etag","id":"FN-ETAG-15","platform":"android","result":{"value":"ab"}}
+{"fn":"etag","id":"FN-ETAG-16","platform":"android","result":{"value":"\"a\"b\""}}
+{"fn":"etag","id":"FN-ETAG-17","platform":"android","result":{"value":"abc\""}}
+{"fn":"etag","id":"FN-ETAG-18","platform":"android","result":{"value":"\"abc"}}
+{"fn":"etag","id":"FN-ETAG-19","platform":"android","result":{"value":""}}
+{"fn":"etag","id":"FN-ETAG-KEY-01","platform":"android","result":{"value":"e1"}}
+{"fn":"etag","id":"FN-ETAG-KEY-02","platform":"android","result":{"value":"E1"}}
+{"fn":"etag","id":"FN-ETAG-KEY-03","platform":"android","result":{"value":"\"e1\""}}
+{"fn":"etag","id":"FN-ETAG-KEY-04","platform":"android","result":{"value":"e1"}}
+{"fn":"etag","id":"FN-ETAG-KEY-05","platform":"android","result":{"value":"3e3184cbd12e5294959effe6f2d9985f50f4ea5d"}}
+{"fn":"etag","id":"FN-ETAG-KEY-06","platform":"android","result":{"value":"3E3184CBD12E5294959EFFE6F2D9985F50F4EA5D"}}
+{"fn":"charset","id":"FN-CHARSET-01","platform":"android","result":{"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-02","platform":"android","result":{"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-03","platform":"android","result":{"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-04","platform":"android","result":{"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-05","platform":"android","result":{"value":"gbk"}}
+{"fn":"charset","id":"FN-CHARSET-06","platform":"android","result":{"value":"gbk"}}
+{"fn":"charset","id":"FN-CHARSET-07","platform":"android","result":{"value":"UTF-8"}}
+{"fn":"charset","id":"FN-CHARSET-08","platform":"android","result":{"value":"UTF-8"}}
+{"fn":"charset","id":"FN-CHARSET-09","platform":"android","result":{"value":"\"utf-8\""}}
+{"fn":"charset","id":"FN-CHARSET-10","platform":"android","result":{"value":"'utf-8'"}}
+{"fn":"charset","id":"FN-CHARSET-11","platform":"android","result":{"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-12","platform":"android","result":{"value":"iso-8859-1"}}
+{"fn":"charset","id":"FN-CHARSET-13","platform":"android","result":{"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-14","platform":"android","result":{"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-15","platform":"android","result":{"value":"gbk"}}
+{"fn":"charset","id":"FN-CHARSET-16","platform":"android","result":{"value":"nosuch"}}
+{"fn":"charset","id":"FN-CHARSET-17","platform":"android","result":{"value":"UTF-8"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-01","platform":"android","result":{"value":"x"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-02","platform":"android","result":{"value":"x"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-03","platform":"android","result":{"value":"x"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-04","platform":"android","result":{"value":"x"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-05","platform":"android","result":{"value":""}}
+{"fn":"etag","id":"FN-ETAG-WEAK-06","platform":"android","result":{"value":"a"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-07","platform":"android","result":{"value":"ab"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-08","platform":"android","result":{"value":"ab"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-09","platform":"android","result":{"value":"x"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-10","platform":"android","result":{"value":"x"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-11","platform":"android","result":{"value":" x"}}
+{"fn":"etag","id":"FN-ETAG-WEAK-12","platform":"android","result":{"value":"'x'"}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-IOS-01","platform":"android","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-IOS-02","platform":"android","result":{"diff":{"{c}":"only new"}}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-IOS-03","platform":"android","result":{"diff":{}}}
+{"fn":"diff","id":"FN-DIFF-EMPTY-IOS-04","platform":"android","result":{"diff":{"{a}":"x"}}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-01","platform":"android","result":{"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-02","platform":"android","result":{"value":"gbk"}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-03","platform":"android","result":{"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-04","platform":"android","result":{"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-05","platform":"android","result":{"value":"gbk"}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-06","platform":"android","result":{"value":"iso-8859-1"}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-07","platform":"android","result":{"value":"utf-8"}}
+{"fn":"charset","id":"FN-CHARSET-PARAM-08","platform":"android","result":{"value":"big5"}}
+{"fn":"split","id":"FN-SPLIT-UNNAMED-01","platform":"android","result":{"data":{"{null}":"<!--sonicdiff-->A<!--sonicdiff-end-->","{title}":"<title>T</title>"},"template":"<html><head>{title}</head><body>{null}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-UNNAMED-02","platform":"android","result":{"data":{},"template":""}}
+{"fn":"split","id":"FN-SPLIT-UNNAMED-03","platform":"android","result":{"data":{},"template":""}}
+{"fn":"split","id":"FN-SPLIT-UNNAMED-04","platform":"android","result":{"data":{"{null}":"<!--sonicdiff-->B<!--sonicdiff-end-->","{title}":"<title>T</title>"},"template":"<html><head>{title}</head><body>{null}{null}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-UNNAMED-05","platform":"android","result":{"data":{"{a}":"<!--sonicdiff-a-->A<!--sonicdiff-end-->","{title}":"<title>T</title>"},"template":"<html><head>{title}</head><body>{a}</body></html>"}}
+{"fn":"split","id":"FN-SPLIT-UNNAMED-06","platform":"android","result":{"data":{},"template":""}}
+{"fn":"message","id":"FN-MSG-STORE-01","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-STORE-02","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-STORE-03","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-STORE-04","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-STORE-05","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-STORE-06","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}
+{"fn":"message","id":"FN-MSG-STORE-07","platform":"android","unsupported":"needs hand-set session state (SonicSession.setResult reads the server, the pending diff and the page callback of a running session); the page message is observed only in session runs (session.message)"}

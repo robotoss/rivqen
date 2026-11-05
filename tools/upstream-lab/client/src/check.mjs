@@ -6,7 +6,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { canonicalLine } from './canon.mjs';
 import { LabError } from './errors.mjs';
-import { firstDifference, normalizeRun } from './determinism.mjs';
+import { firstDifference, normalizeRun, outcomeRun } from './determinism.mjs';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const isInt = Number.isInteger;
@@ -39,7 +39,7 @@ export const SCHEMA = {
   },
   'client.intercept': {
     src: ['harness'],
-    need: { status: isInt, reason: str, mime: str, encoding: str, headers: pairs, body_len: isInt, body_sha256: hex64, complete: bool },
+    need: { status: isInt, reason: strOrNull, mime: str, encoding: str, headers: pairs, body_len: isInt, body_sha256: hex64, complete: bool },
     opt: { error: strOrNull },
     alternative: { null: (v) => v === true }, // a null stream: { "null": true } and no other member
   },
@@ -47,7 +47,8 @@ export const SCHEMA = {
   'session.message': { src: ['harness'], need: { json: str } },
   'session.callback': { src: ['harness'], need: { name: str, args: Array.isArray } },
   'runtime.cookie_get': { src: ['harness'], need: { url: str, value: strOrNull } },
-  'runtime.cookie_set': { src: ['harness'], need: { url: str, value: strOrNull } },
+  // setCookie gets the list of Set-Cookie values of the response (SonicRuntime.setCookie(url, List))
+  'runtime.cookie_set': { src: ['harness'], need: { url: str, value: (v) => strOrNull(v) || strings(v) } },
   'cache.snapshot': { src: ['harness'], need: { files, db: (v) => v === null } },
   'proxy.request': { src: ['proxy'], need: { exchange: ex, method: str, target: str, fields: pairs } },
   'proxy.response_head': { src: ['proxy'], need: { exchange: ex, status: isInt, fields: pairs } },
@@ -59,7 +60,7 @@ export const SCHEMA = {
   'client.clear_history': { src: ['harness'], need: {} },
   'runtime.notify_error': { src: ['harness'], need: { url: str, code: scalar } },
   'runtime.toast': { src: ['harness'], need: { text: str, duration: scalar } },
-  'webview.intercept_request': { src: ['harness'], need: { url: str } },
+  'webview.intercept_request': { src: ['harness'], need: { url: str }, opt: { method: str } },
   'webview.page_started': { src: ['harness'], need: { url: str } },
   'webview.page_finished': { src: ['harness'], need: { url: str } },
   'harness.error': { src: ['harness'], need: { error: str } },
@@ -180,8 +181,9 @@ export function runJsonProblems(j) {
     const s = j.summary;
     const ok = isObject(s) && Array.isArray(s.stable) && Array.isArray(s.unstable) &&
       s.stable.every((x) => isObject(x) && str(x.scenario) && str(x.mode)) &&
-      s.unstable.every((x) => isObject(x) && str(x.scenario) && str(x.mode) && str(x.reason) && x.reason !== '');
-    if (!ok) out.push('run.json: summary needs stable [{scenario, mode}] and unstable [{scenario, mode, reason}]');
+      s.unstable.every((x) => isObject(x) && str(x.scenario) && str(x.mode) && str(x.reason) && x.reason !== '' &&
+        (!('outcome' in x) || x.outcome === 'stable' || x.outcome === 'unstable'));
+    if (!ok) out.push('run.json: summary needs stable [{scenario, mode}] and unstable [{scenario, mode, reason, outcome?: stable|unstable}]');
   }
   return out;
 }
@@ -228,7 +230,7 @@ export async function listDir(dir) {
  * Check the evidence tree at `root` (the directory with android/ and run.json).
  * @param {string} root
  * @param {{ catalog?: object[] }} [options]  scenarios.json content: also checks modes and run counts
- * @returns {Promise<{ errors: string[], warnings: string[], unstable: { scenario: string, mode: string, difference: object }[], runs: number }>}
+ * @returns {Promise<{ errors: string[], warnings: string[], unstable: { scenario: string, mode: string, difference: object, outcome: 'stable'|'unstable' }[], runs: number }>}
  */
 export async function checkTree(root, { catalog } = {}) {
   const errors = [];
@@ -257,6 +259,7 @@ export async function checkTree(root, { catalog } = {}) {
       const jsonl = names.filter((n) => /^run-\d+\.jsonl$/.test(n));
       for (const n of names) if (!/^run-\d+\.jsonl$/.test(n) && !/^run-\d+-x\d+\.http$/.test(n)) errors.push(`${where}/${n}: unexpected file`);
       const normalized = [];
+      const outcomes = [];
       for (const name of jsonl) {
         const k = Number(name.match(/^run-(\d+)/)[1]);
         const text = await readFile(path.join(root, 'android', where, name), 'utf8');
@@ -276,23 +279,28 @@ export async function checkTree(root, { catalog } = {}) {
           }
         }
         normalized.push(normalizeRun(res.events));
+        outcomes.push(outcomeRun(res.events));
       }
-      modes.set(md.name, normalized);
+      modes.set(md.name, { normalized, outcomes });
     }
   }
 
   const unstable = [];
-  const reasons = new Map((runJson?.summary?.unstable ?? []).filter(isObject).map((u) => [`${u.scenario}/${u.mode}`, u.reason]));
+  const listedUnstable = (runJson?.summary?.unstable ?? []).filter(isObject);
+  const reasons = new Map(listedUnstable.map((u) => [`${u.scenario}/${u.mode}`, u.reason]));
+  const listedOutcome = new Map(listedUnstable.filter((u) => 'outcome' in u).map((u) => [`${u.scenario}/${u.mode}`, u.outcome]));
   const stableListed = new Set((runJson?.summary?.stable ?? []).filter(isObject).map((u) => `${u.scenario}/${u.mode}`));
   for (const [scenario, modes] of observed) {
-    for (const [mode, normalized] of modes) {
+    for (const [mode, { normalized, outcomes }] of modes) {
       if (normalized.length === 0) continue;
       const difference = firstDifference(normalized);
       const key = `${scenario}/${mode}`;
       if (difference) {
-        unstable.push({ scenario, mode, difference });
+        const outcome = firstDifference(outcomes) ? 'unstable' : 'stable';
+        unstable.push({ scenario, mode, difference, outcome });
         if (!reasons.has(key)) errors.push(`${key}: runs differ (run ${difference.run + 1} at line ${difference.index + 1}) and run.json gives no reason`);
         if (stableListed.has(key)) errors.push(`${key}: run.json says stable, the runs differ`);
+        if (listedOutcome.has(key) && listedOutcome.get(key) !== outcome) errors.push(`${key}: run.json says outcome ${listedOutcome.get(key)}, the outcome projection is ${outcome}`);
       } else {
         if (reasons.has(key)) errors.push(`${key}: run.json says unstable, the runs are equal`);
         if (runJson && !stableListed.has(key)) errors.push(`${key}: not listed in run.json summary`);
@@ -325,7 +333,7 @@ export async function checkTree(root, { catalog } = {}) {
       const modes = observed.get(s.id);
       if (!modes) continue;
       for (const mode of s.modes) {
-        if ((modes.get(mode)?.length ?? 0) < s.repeat) errors.push(`${s.id}/${mode}: fewer than ${s.repeat} runs`);
+        if ((modes.get(mode)?.normalized.length ?? 0) < s.repeat) errors.push(`${s.id}/${mode}: fewer than ${s.repeat} runs`);
       }
       for (const mode of modes.keys()) if (!s.modes.includes(mode)) errors.push(`${s.id}/${mode}: mode is not in scenarios.json`);
     }

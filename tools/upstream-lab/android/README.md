@@ -18,7 +18,7 @@ A Rivqen harness app runs the **unmodified** upstream Android SDK (VasSonic `599
 | `emulator.sh` | `start` (cold boot, no window), `stop`, `status` of the lab emulator |
 | `install.sh` | Installs the APK on the lab emulator |
 | `run.sh` | One scenario run (`pm clear`, then `am instrument` with the run id and the control URL) |
-| `functions.sh` | The function cases of CONTRACT §7 (mode `functions`) |
+| `functions.sh` | The function cases of CONTRACT §7 (mode `functions`); writes `<out>.meta.json` with `tools/functions-meta.cjs` |
 | `package-access.json` | The package-private and protected SDK members the harness uses (copy into `run.json`) |
 | `tools/fake-conductor.mjs` | Smoke-test stand-in for the conductor: control channel and one static first-load answer |
 | `tools/sample-functions.json` | Smoke cases for `functions.sh` (the real cases: `client/functions.json`) |
@@ -126,7 +126,7 @@ Use these commands to start one run. `<adb>` is `$LAB_HOME/sdk/platform-tools/ad
 
 ### Steps (CONTRACT §3)
 
-The harness executes a step only after the conductor gives it, and reports `step.start` and `step.done` (`error` is `null` or a reason).
+The harness executes a step only after the conductor gives it, and reports `step.done` (with `error` only when the step failed). The conductor writes `step.start` (CONTRACT §5; fixed in WP-01 S1 T-05: the conductor refuses a `step.start` from the harness).
 
 | Step | Thread | Call | `step.done` |
 |---|---|---|---|
@@ -135,7 +135,7 @@ The harness executes a step only after the conductor gives it, and reports `step
 | `client_ready` | main | `SonicSessionClient.clientReady()` | After the call |
 | `request_resource` | `rq-intercept-<n>` | `SonicSessionClient.requestResource(url)`, then it reads the stream to the end | When the call returns, or after `wait_ms` (default 1000, max 30000) if the call still waits. `client.intercept` comes at the end of the stream |
 | `page_finished` | main | `SonicSessionClient.pageFinish(url)` | After the call |
-| `get_diff` | `rq-bridge-<n>` | `SonicSessionClient.getDiffData(callback)` | After the call; `session.message` when the SDK calls back |
+| `get_diff` | `rq-bridge-<n>` | `SonicSessionClient.getDiffData(callback)` | After the call **and** after the main thread has handled the queue up to that moment (the SDK answers through a main-thread message), so a message that the call gives is in the `get_diff` step window (T-05 fix) |
 | `refresh` | main | `SonicSession.refresh()` | After the call |
 | `destroy` | main | `session.result` (codes), then `SonicSession.destroy()` | After the call |
 | `set_account`, `set_cookie`, `set_network` | control | Change the value that the runtime returns | At once |
@@ -158,7 +158,7 @@ The harness sends the events of CONTRACT §5 with `ev`, `src: "harness"` and `th
 | Event or member | Content |
 |---|---|
 | `hseq` member of every harness event | Harness order (1, 2, …), set when the event is queued. `seq` of the conductor is the receive order, and a harness event arrives later than a proxy event of the same moment |
-| `session` member of `session.*` and `client.*` events | 1-based index of the session (more than one session per run); `null` on `session.created` of a refused session. `client.intercept` takes it from the `requestResource` call of the client on the same thread |
+| `session` member of `session.*` and `client.*` events | 1-based index of the session (more than one session per run); no `session` member on `session.created` of a refused session (CONTRACT §5: the member is a 1-based index). `client.intercept` takes it from the `requestResource` call of the client on the same thread |
 | `text` member of a `*.header` entry of `cache.snapshot` | The content of the header file (UTF-8, max 64 KiB), so that CONTRACT §6 can blank its time fields. The SDK writes one `name : value` line per field (lower-case name, space, colon, space), with CRLF line ends |
 | `session.callback` `onSessionStateChange` | `args`: old and new state (0 none, 1 running, 2 ready, 3 destroy) |
 | `runtime.notify_error` | `url`, `code`: the error report of the SDK (`SonicRuntime.notifyError`) |
@@ -183,6 +183,9 @@ These are Rivqen choices where the SDK leaves the host free. Each one is fixed f
 | `postTaskToThread` | One worker thread `rq-sdk-worker` (`HandlerThread`) |
 | `postTaskToSessionThread` | The SDK default pool. During `create_session` the flow task waits (max 5 s) until the harness callbacks are registered |
 | `log` | SDK lines of level INFO and higher go to the device log under the tag `RivqenLab` |
+| `getSonicResourceCacheDir` | `files/SonicResource/` in app storage. The SDK default is a directory on external storage; without the storage permission each session reported `notifyError` `-1003` at a time that varied from run to run (T-05 trial, 2026-11-05) |
+| Engine start | After `SonicEngine.createInstance` the harness waits (max 5 s) until `isSonicAvailable()` is true. A new database is upgraded by a task on the runtime thread, and until it ends `createSession` returns `null` ("sonic service is unavailable"; observed once in 40 trial runs) |
+| WebView user agent | `RivqenLab/1 (Android harness; WebView)`. The default names the build of the device image |
 
 ### Package access
 

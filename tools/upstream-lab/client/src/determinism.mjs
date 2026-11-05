@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: The Rivqen Authors
 
 // The determinism rule (CONTRACT section 6). Normalization: remove `t`, `seq` and the `thread` of
-// worker threads; blank the values of Date, X-Android-Sent-Millis and X-Android-Received-Millis;
+// worker threads and the run number `repeat` of run.start; blank the values of Date, X-Android-Sent-Millis and X-Android-Received-Millis;
 // remove `local_refresh_time` from the JSON of `session.message`; compare a `*.header` cache file by
 // its normalized `text`. Comparison: per step window, the harness events in `hseq` order and the
 // proxy events in `exchange` order, each source on its own; the interleaving is not compared.
@@ -53,6 +53,8 @@ export function normalizeEvent(event) {
   delete copy.seq;
   delete copy.hseq;
   if (copy.thread !== 'main') delete copy.thread;
+  // `repeat` of run.start is the run number k (the file run-<k>.jsonl); it differs by construction.
+  if (copy.ev === 'run.start') delete copy.repeat;
   if (copy.ev === 'session.message' && typeof copy.json === 'string') copy.json = normalizeMessage(copy.json);
   if (copy.ev === 'cache.snapshot' && Array.isArray(copy.files)) copy.files = copy.files.map(normalizeSnapshotFile);
   return copy;
@@ -81,6 +83,45 @@ export function orderWindow(window) {
 /** The normalized lines of a run (array of canonical JSON strings). */
 export function normalizeRun(events) {
   return stepWindows(events).flatMap(orderWindow).map((e) => canonicalLine(normalizeEvent(e)));
+}
+
+/**
+ * Outcome projection (an addition of WP-01 S1 T-05; a proposal for CONTRACT section 6). The strict
+ * rule above compares the harness events of a step window in `hseq` order. The SDK emits events on
+ * its own threads (session thread, file thread, intercept readers) while the script goes on, so an
+ * event can fall into the next step window, and two harness threads can interleave, without any
+ * change of what the client did. The projection compares what the client did:
+ *
+ * - phases instead of step windows: a phase ends with the step after a `settle` (the script waits
+ *   there for the SDK to finish), so asynchronous events stay inside one phase;
+ * - inside a phase: the conductor events in order, the main-thread harness events in `hseq` order
+ *   (one thread, so their order is behavior), the other harness events as a sorted multiset, the
+ *   proxy events in `exchange` order.
+ */
+export function settlePhases(events) {
+  const phases = [[]];
+  let settling = false;
+  for (const e of events) {
+    if (e.ev === 'step.start' && settling) {
+      phases.push([]);
+      settling = false;
+    }
+    phases.at(-1).push(e);
+    if (e.ev === 'step.start' && e.src === 'conductor' && e.step?.do === 'settle') settling = true;
+  }
+  return phases;
+}
+
+/** The normalized lines of a run in the outcome projection. */
+export function outcomeRun(events) {
+  return settlePhases(events).flatMap((phase) => {
+    const line = (e) => canonicalLine(normalizeEvent(e));
+    const conductor = phase.filter((e) => e.src !== 'harness' && e.src !== 'proxy').map(line);
+    const main = phase.filter((e) => e.src === 'harness' && e.thread === 'main').sort(byKey((e) => (Number.isInteger(e.hseq) ? e.hseq : Infinity))).map(line);
+    const others = phase.filter((e) => e.src === 'harness' && e.thread !== 'main').map(line).sort();
+    const proxy = phase.filter((e) => e.src === 'proxy').sort(byKey((e) => (Number.isInteger(e.exchange) ? e.exchange : Infinity))).map(line);
+    return ['--- phase', ...conductor, ...main, ...others, ...proxy];
+  });
 }
 
 /**

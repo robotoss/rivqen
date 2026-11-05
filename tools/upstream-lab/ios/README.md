@@ -33,7 +33,7 @@ sh tools/upstream-lab/ios/run.sh [cases.json [out.jsonl]]
 | `session_id` | `sonicSessionID(url)` | Public C function. The account is not an argument on iOS: it is the engine property set by `-[SonicEngine setCurrentUserAccount:]`. The runner sets it only when `account_related` is `true` and `account` is not empty. The engine ignores an empty account and keeps the last one. So the runner runs all cases without account first, then the cases with account |
 | `split` | `+[SonicUtil splitTemplateAndDataFromHtmlData:]` | Empty `html`: the SDK returns an empty dictionary, and the result has `template: null`, `data: null` |
 | `diff` | `+[SonicUtil mergeDynamicData:withOriginData:]` | `local: null` is passed as `nil`. A value that is not a string makes the SDK send a message to a wrong class; the runner catches the exception and writes `error` |
-| `is_legacy_response` | `-[SonicServer isSonicResponse]` | The fields go through the public delegate entry `connection:didReceiveResponse:`, as a network response does. The SDK lowercases the names there |
+| `is_legacy_response` | `-[SonicServer isSonicResponse]` | The fields go through the public delegate entry `connection:didReceiveResponse:`, as a network response does. The SDK lowercases the names there. `fields` is an object or a list of `[name, value]` pairs (CONTRACT §7; pairs added in T-05); a name that repeats exactly is an `error`, because `NSHTTPURLResponse` takes one value per name |
 | `etag` | `-[SonicServer responseHeaderForKey:]` after the same entry | Gives the weak-tag normalized value, or `null` when absent |
 | `charset` | `-[SonicServer encodingFromHeaders]` | The method is defined in `SonicServer.m` but not declared in the header. The runner declares it in a category (a declaration only). `value` is the IANA name of the encoding; `ns_string_encoding` (extra member) is the number. A missing charset gives UTF-8 |
 | `message` | none | `unsupported`: the page message is built by a session method from private session state (status codes, server object, read-only diff data) with no public setter. Stays code reading |
@@ -49,6 +49,14 @@ Calls that are not in the public header are listed in `functions.jsonl.meta.json
 ## Output
 
 One line per case, in input order. Keys sorted, UTF-8, LF. Shape: `{"fn","id","platform":"ios","result"}`, or `error`, or `unsupported` with a reason. Metadata (`*.meta.json`): macOS version and build, SDK version, compiler, upstream SHA, case count, `non_public_calls`, `limit`.
+
+## Foundation probe
+
+`probe/run.sh` builds `probe/boolvalue.m` (Foundation only, no upstream code) and writes `-[NSString boolValue]` of each `template_change` case value. The iOS SDK reads `template-change` with that call (D-29), but the SDK method is private, so `template_change` stays `unsupported` in the runner. Evidence copy: `evidence/traces/client/ios/boolvalue.jsonl` (T-05).
+
+## Error text
+
+An exception reason can name an object address (`0x…`), which changes from run to run. The runner writes it as `0x(address)`, so two runs are byte-equal (T-05 fix).
 
 ## Limits
 

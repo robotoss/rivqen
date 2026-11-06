@@ -319,7 +319,7 @@ final class ScenarioRun {
             while ((n = in.read(buf)) != -1) {
                 total += n;
                 if (total > Lab.MAX_INTERCEPT_BODY && in instanceof RecordingStream) {
-                    ((RecordingStream) in).record(false, new RecordingStream.LimitExceeded());
+                    ((RecordingStream) in).fail(new RecordingStream.LimitExceeded());
                     return;
                 }
             }

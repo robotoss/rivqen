@@ -18,7 +18,7 @@ Each sprint has one record. The record is the shared memory of the work: the pla
 | [WP-02-S2](/engineering/plan/sprints/WP-02-S2) | WP-02 | Malformed suite and the live upstream check | Closed |
 | [WP-03-S1](/engineering/plan/sprints/WP-03-S1) | WP-03 | Rust reference server passes the RQP, legacy and malformed suites by URL (gate G1) | Closed |
 | [WP-03-S2](/engineering/plan/sprints/WP-03-S2) | WP-03 | Container image, site mode, hardening; JavaScript reference and fixtures for the open inputs | Closed |
-| [WP-01-S1](/engineering/plan/sprints/WP-01-S1) | WP-01 | Legacy client evidence: Q-02, client divergences, Android traces in Quick and Standard mode, iOS function runs | Closed |
+| [WP-01-S1](/engineering/plan/sprints/WP-01-S1) | WP-01 | Legacy client evidence: Q-02, client divergences, Android traces in Quick and Standard mode, iOS function runs | Closed (merged #7) |
 
 ## How to add a record
 

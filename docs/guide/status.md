@@ -10,7 +10,7 @@
 | Development plan with work packages | ✅ Available |
 | Upstream VasSonic behavioral audit (summary) | ✅ Available — see [Research](/research/upstream-vassonic) |
 | Upstream server traces (Node.js, PHP, Java) | ✅ Available — see [server traces](/engineering/protocol/legacy-traces) |
-| Upstream client traces (Android Quick and Standard, Android and iOS functions) | ✅ Available — see [client traces](/engineering/protocol/legacy-client-traces); WP-01 S1: 119 Android session runs, 214 function cases per platform; the client part of the fixtures follows in WP-01 S2 |
+| Upstream client traces (Android Quick and Standard, Android and iOS functions) | ✅ Available — see [client traces](/engineering/protocol/legacy-client-traces); WP-01 S1 (merged 2026-11-06, #7): 119 Android session runs, 214 function cases per platform; the client part of the fixtures follows in WP-01 S2 |
 | Rivqen protocol (RQP) specification | ✅ Done (merged 2026-10-20, #3) — markup, negotiation, manifest and patch normative ([RQP markup](/engineering/protocol/markup), [negotiation](/engineering/protocol/negotiation), [manifest and patch](/engineering/protocol/manifest-patch)); 265 protocol fixtures (112 server, 153 client) and 362 markup fixtures; S1–S6 closed |
 | Server demo (RQP reference behavior) | ✅ Runs — see [Examples: Server](/guide/examples/server) |
 | Conformance runner (tests a server by URL) | ✅ Available — see [Server conformance](/engineering/server/conformance); RQP and legacy suites |

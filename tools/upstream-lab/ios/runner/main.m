@@ -14,6 +14,8 @@
 #import "SonicSession.h"
 #import "SonicUtil.h"
 
+#import "json.h"
+
 // Stand-in for the UIKit name that the upstream cache file imports (see shim/UIKit/UIKit.h).
 NSString *const UIApplicationDidReceiveMemoryWarningNotification = @"UIApplicationDidReceiveMemoryWarningNotification";
 
@@ -23,103 +25,7 @@ NSString *const UIApplicationDidReceiveMemoryWarningNotification = @"UIApplicati
 - (NSStringEncoding)encodingFromHeaders;
 @end
 
-// ---------------------------------------------------------------------------
-// JSON output. Own writer: sorted keys, UTF-8, and an ordered object type for
-// results whose key order is the order the SDK returned.
-// ---------------------------------------------------------------------------
-
-@interface RQOrdered : NSObject
-@property(nonatomic, copy) NSArray<NSString *> *keys;
-@property(nonatomic, copy) NSDictionary<NSString *, id> *values;
-@end
-@implementation RQOrdered
-@end
-
-static void rqWriteString(NSMutableString *out, NSString *s) {
-  [out appendString:@"\""];
-  for (NSUInteger i = 0; i < s.length; i++) {
-    unichar c = [s characterAtIndex:i];
-    switch (c) {
-      case '"': [out appendString:@"\\\""]; break;
-      case '\\': [out appendString:@"\\\\"]; break;
-      case '\n': [out appendString:@"\\n"]; break;
-      case '\r': [out appendString:@"\\r"]; break;
-      case '\t': [out appendString:@"\\t"]; break;
-      case '\b': [out appendString:@"\\b"]; break;
-      case '\f': [out appendString:@"\\f"]; break;
-      default:
-        if (c < 0x20) {
-          [out appendFormat:@"\\u%04x", c];
-        } else {
-          [out appendFormat:@"%C", c];
-        }
-    }
-  }
-  [out appendString:@"\""];
-}
-
-static void rqWrite(NSMutableString *out, id v);
-
-static void rqWriteObject(NSMutableString *out, NSArray<NSString *> *keys, NSDictionary *d) {
-  [out appendString:@"{"];
-  BOOL first = YES;
-  for (NSString *k in keys) {
-    if (!first) [out appendString:@","];
-    first = NO;
-    rqWriteString(out, k);
-    [out appendString:@":"];
-    rqWrite(out, d[k]);
-  }
-  [out appendString:@"}"];
-}
-
-static void rqWrite(NSMutableString *out, id v) {
-  if (v == nil || [v isKindOfClass:[NSNull class]]) {
-    [out appendString:@"null"];
-  } else if ([v isKindOfClass:[NSString class]]) {
-    rqWriteString(out, v);
-  } else if ([v isKindOfClass:[NSNumber class]]) {
-    NSNumber *n = v;
-    if (CFGetTypeID((__bridge CFTypeRef)n) == CFBooleanGetTypeID()) {
-      [out appendString:n.boolValue ? @"true" : @"false"];
-    } else if (CFNumberIsFloatType((__bridge CFNumberRef)n)) {
-      [out appendFormat:@"%.17g", n.doubleValue];
-    } else {
-      [out appendFormat:@"%lld", n.longLongValue];
-    }
-  } else if ([v isKindOfClass:[NSArray class]]) {
-    [out appendString:@"["];
-    BOOL first = YES;
-    for (id e in (NSArray *)v) {
-      if (!first) [out appendString:@","];
-      first = NO;
-      rqWrite(out, e);
-    }
-    [out appendString:@"]"];
-  } else if ([v isKindOfClass:[RQOrdered class]]) {
-    RQOrdered *o = v;
-    rqWriteObject(out, o.keys, o.values);
-  } else if ([v isKindOfClass:[NSDictionary class]]) {
-    NSDictionary *d = v;
-    rqWriteObject(out, [d.allKeys sortedArrayUsingSelector:@selector(compare:)], d);
-  } else {
-    rqWriteString(out, [v description]);
-  }
-}
-
-static NSString *rqLine(id v) {
-  NSMutableString *s = [NSMutableString string];
-  rqWrite(s, v);
-  return s;
-}
-
-// The order the SDK dictionary reports its keys in (not a defined order, see README).
-static RQOrdered *rqKeepOrder(NSDictionary *d) {
-  RQOrdered *o = [RQOrdered new];
-  o.keys = d.allKeys;
-  o.values = d;
-  return o;
-}
+// JSON output: runner/json.m (Foundation only; built and checked without UPSTREAM by check.sh).
 
 // ---------------------------------------------------------------------------
 // Input access with typed errors.
@@ -337,7 +243,13 @@ static NSDictionary *rqRunCase(NSDictionary *c, NSMutableSet<NSString *> *used) 
                                                            range:NSMakeRange(0, raw.length)];
     err = [RQError with:[NSString stringWithFormat:@"%@: %@", ex.name, reason]];
   }
-  if (result) {
+  NSString *token = nil;
+  NSString *where = result ? rqNonFinite(result, @"/result", &token) : nil;
+  if (where) {
+    // JSON has no number for nan or inf. The case is an error, so a reader cannot take a
+    // replacement value for the value of the SDK (CONTRACT section 7: result or error).
+    rec[@"error"] = [NSString stringWithFormat:@"the result has a number that is not finite (%@) at %@", token, where];
+  } else if (result) {
     rec[@"result"] = result;
   } else {
     rec[@"error"] = err.message ?: @"no result";

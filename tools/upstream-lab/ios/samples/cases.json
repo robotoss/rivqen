@@ -9,6 +9,7 @@
   { "id": "S-DF-01", "fn": "diff", "input": { "local": { "{a}": "1", "{b}": "2" }, "server": { "{a}": "1", "{b}": "3", "{c}": "9" } } },
   { "id": "S-DF-02", "fn": "diff", "input": { "local": null, "server": { "{a}": "1" } } },
   { "id": "S-DF-03", "fn": "diff", "input": { "local": { "{a}": 1 }, "server": { "{a}": "1" } } },
+  { "id": "S-NF-01", "fn": "diff", "input": { "local": null, "server": { "{a}": -1e400 } } },
   { "id": "S-LG-01", "fn": "is_legacy_response", "input": { "fields": { "ETag": "e1", "Template-Tag": "t1", "Template-Change": "false", "Cache-Offline": "true" } } },
   { "id": "S-LG-02", "fn": "is_legacy_response", "input": { "fields": { "ETag": "e1", "Cache-Offline": "true" } } },
   { "id": "S-TC-01", "fn": "template_change", "input": { "value": "true" } },

@@ -12,12 +12,14 @@ A Rivqen command-line program for macOS. It calls the pure functions of the **un
 ```sh
 UPSTREAM=/path/to/VasSonic sh tools/upstream-lab/ios/build.sh
 sh tools/upstream-lab/ios/run.sh [cases.json [out.jsonl]]
+sh tools/upstream-lab/ios/check.sh
 ```
 
 | Step | Behavior |
 |---|---|
-| `build.sh` | Fails unless `UPSTREAM` is at `59936beff656d4b5718ff6444d6c5e001a2c5231` and `sonic-iOS/Sonic` has no local change. Compiles all 14 upstream `.m` files, then the runner (ARC, `-Wall -Wextra -Werror`), and links `build/rivqen-ios-fn`. Upstream warnings are suppressed (`-w`); the runner has none |
+| `build.sh` | Fails unless `UPSTREAM` is at `59936beff656d4b5718ff6444d6c5e001a2c5231` and `sonic-iOS/Sonic` has no local change. Compiles all 14 upstream `.m` files, then the runner `runner/main.m` and its JSON writer `runner/json.m` (ARC, `-Wall -Wextra -Werror`), and links `build/rivqen-ios-fn`. Upstream warnings are suppressed (`-w`); the runner has none |
 | `run.sh` | Reads a case file (default `../client/functions.json`) and writes `build/functions.jsonl` and `build/functions.jsonl.meta.json`. Sets `HOME` and `CFFIXED_USER_HOME` to `build/home`, so the cache directory that the SDK makes stays in `build/` |
+| `check.sh` | Builds `runner/json.m` with `check/json_check.m` (Foundation only, the runner flags) and runs it. Needs no `UPSTREAM`. Output in `build/check` |
 | Network | None. The runner reads only the case file |
 
 `samples/cases.json` is a small input file for checks. The evidence copy is `evidence/traces/client/ios/functions.jsonl` (written by the conductor lane, CONTRACT section 8).
@@ -48,7 +50,9 @@ Calls that are not in the public header are listed in `functions.jsonl.meta.json
 
 ## Output
 
-One line per case, in input order. Keys sorted, UTF-8, LF. Shape: `{"fn","id","platform":"ios","result"}`, or `error`, or `unsupported` with a reason. Metadata (`*.meta.json`): macOS version and build, SDK version, compiler, upstream SHA, case count, `non_public_calls`, `limit`.
+One line per case, in input order. Keys sorted, UTF-8, LF. Shape: `{"fn","id","platform":"ios","result"}`, or `error`, or `unsupported` with a reason.
+
+Numbers: a finite double is written with `%.17g` (round trip); an integer as an integer. JSON has no form for a number that is not finite (NaN, infinity). When a result holds one, the case is an `error` with the JSON Pointer of the value, for example `the result has a number that is not finite (-inf) at /result/diff/{a}`, and has no `result` (S2 fix of the S1 review finding: `%.17g` wrote a bare `-inf`, and the line was not JSON). The writer itself writes such a number as the string `"nan"`, `"inf"` or `"-inf"`, so a line is valid JSON also on a path that the runner does not check (no such path exists now). <Badge type="tip" text="FACT" /> Foundation on the development Mac (macOS 26.6.2, SDK 27.2, 2026-11-06) reads `-1e400` in a case file as minus infinity and refuses `1e400` and `NaN` (the whole file then does not parse). Sample case `S-NF-01` (`diff` with the server value `-1e400`) reaches this rule if the SDK passes the value through; if the SDK throws for a value that is not a string, the case is an `error` as `S-DF-03`. Which of the two occurs is NOT FOUND until the next run with `UPSTREAM` (WP-01 S2, T-05). Metadata (`*.meta.json`): macOS version and build, SDK version, compiler, upstream SHA, case count, `non_public_calls`, `limit`.
 
 ## Foundation probe
 
@@ -66,4 +70,6 @@ An exception reason can name an object address (`0x…`), which changes from run
 
 ## Mutation check
 
-Not applicable: this is lab code. No mutation tool is set up for Objective-C in this repository. The checks are the build (`-Werror` for the runner), the sample run and the byte-equal rerun.
+Not applicable: this is lab code. No mutation tool is set up for Objective-C in this repository. The checks are the build (`-Werror` for the runner), `check.sh`, the sample run and the byte-equal rerun.
+
+`check.sh` (S2) checks the writer: a number that is not finite is a JSON string and the line parses; finite numbers keep their `%.17g` text (`0.10000000000000001`, `-0`, `1.7976931348623157e+308`); the finder gives the JSON Pointer (RFC 6901 escapes `~0`, `~1`; list index; ordered object; the first value in write order); Foundation reads `-1e400` as minus infinity. Eight hand-made faults of `json.m` (among them the S1 rule: `%.17g` for every double) each fail the check.

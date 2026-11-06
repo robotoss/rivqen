@@ -30,10 +30,10 @@ export function normalizeHeaderText(text) {
 
 const REMOVED_KEY = 'local_refresh_time';
 
-/** End index (exclusive) of the JSON string that starts at `i` (a quote). */
+/** End index (exclusive) of the JSON string that starts at `i` (a quote); the text is valid JSON, so the string ends. */
 function stringEnd(text, i) {
   let j = i + 1;
-  while (j < text.length && text[j] !== '"') j += text[j] === '\\' ? 2 : 1;
+  while (text[j] !== '"') j += text[j] === '\\' ? 2 : 1;
   return j + 1;
 }
 
@@ -44,8 +44,7 @@ function stringEnd(text, i) {
  */
 function normalizeMessage(json) {
   try {
-    const parsed = JSON.parse(json);
-    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed) || !Object.hasOwn(parsed, REMOVED_KEY)) return json;
+    if (!Object.hasOwn(Object(JSON.parse(json)), REMOVED_KEY)) return json;
   } catch {
     return json; // not JSON: compared as it is
   }

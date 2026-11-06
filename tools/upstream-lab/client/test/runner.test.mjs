@@ -66,12 +66,12 @@ function fakeHarness({ failOn = null } = {}) {
       const scenario = await (await fetch(`${base}/run/scenario?run=${runId}`)).json();
       assert.equal(scenario.run, runId);
       for (;;) {
+        // Let the request of the last step report its result first; a held request must not block the next step.
+        await Promise.race([Promise.allSettled(pending), new Promise((resolve) => setTimeout(resolve, 150))]);
         const res = await fetch(`${base}/run/next?run=${runId}`);
         if (res.status === 204) continue;
         const step = await res.json();
         if (step.do === 'end') {
-          // A held request may stay open until the conductor stops the proxy: do not wait for it for long.
-          await Promise.race([Promise.allSettled(pending), new Promise((resolve) => setTimeout(resolve, 150))]);
           return;
         }
         if (step.do === 'create_session') await event('session.created', { session_id: 'sid' });
@@ -252,6 +252,32 @@ test('runner_wait_sees_only_events_after_the_latest_create_session', async () =>
       proxyPort: 0, controlPort: 0, originPorts: { 'lab-node': lab.port }, sleep: noSleep, stepMs: 5000, endMs: 5000,
     });
     assert.match(result.error, /^WAIT_TIMEOUT/);
+  } finally {
+    await lab.close();
+  }
+});
+
+test('runner_set_field_step_changes_the_delivered_response', async () => {
+  const lab = await fakeLab();
+  const scenario = {
+    ...SCENARIO,
+    setup: [],
+    steps: [
+      { do: 'set_field', name: 'ETag', value: 'forced' },
+      { do: 'create_session' },
+      { do: 'bind_client' },
+      { do: 'wait', for: 'proxy.response_end' },
+      { do: 'destroy' },
+    ],
+  };
+  try {
+    const result = await executeRun({
+      scenario, mode: 'quick', repeat: 1, upstreamSha: '59936bef', startHarness: fakeHarness(),
+      proxyPort: 0, controlPort: 0, originPorts: { 'lab-node': lab.port }, sleep: noSleep, stepMs: 5000, endMs: 5000,
+    });
+    assert.equal(result.error, null);
+    assert.deepEqual(result.log.events.filter((e) => e.ev === 'proxy.set_field').map((e) => [e.name, e.value]), [['ETag', 'forced']]);
+    assert.match(result.exchanges.get(1).toString(), /--- delivered ---[^]*ETag: forced/);
   } finally {
     await lab.close();
   }

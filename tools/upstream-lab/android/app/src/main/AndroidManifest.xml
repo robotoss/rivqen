@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- SPDX-FileCopyrightText: The Rivqen Authors -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="false"
+        android:label="Rivqen lab harness"
+        android:networkSecurityConfig="@xml/network_security_config">
+
+        <!-- Hosts the WebView of a WebView run. Not exported: only the instrumentation starts it. -->
+        <activity
+            android:name=".WebViewActivity"
+            android:exported="false" />
+    </application>
+
+    <!-- Self-instrumentation: one run per `am instrument` (CONTRACT section 4). -->
+    <instrumentation
+        android:name=".LabInstrumentation"
+        android:label="Rivqen lab harness"
+        android:targetPackage="org.rivqen.lab.harness" />
+</manifest>

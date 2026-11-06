@@ -1,0 +1,23 @@
+[
+  { "id": "S-ID-01", "fn": "session_id", "input": { "url": "http://Shop.example.com:8080/p?x=1", "account": "rq-test-account", "account_related": false } },
+  { "id": "S-ID-02", "fn": "session_id", "input": { "url": "http://Shop.example.com:8080/p?sonic_a=1&sonic_a=2", "account": "rq-test-account", "account_related": true } },
+  { "id": "S-ID-03", "fn": "session_id", "input": { "url": "http://shop.example.com/p?sonic_remain_params=k;q&k=1&q=2&z=3", "account": "rq-test-account-2", "account_related": true } },
+  { "id": "S-ID-04", "fn": "session_id", "input": { "url": "http://shop.example.com/p", "account": "", "account_related": true } },
+  { "id": "S-SP-01", "fn": "split", "input": { "html": "<html><!--sonicdiff-title--><h1>A</h1><!--sonicdiff-title-end--><p>x</p><!--sonicdiff-list--><li>1</li><!--sonicdiff-list-end--></html>" } },
+  { "id": "S-SP-02", "fn": "split", "input": { "html": "<html>no markers</html>" } },
+  { "id": "S-SP-03", "fn": "split", "input": { "html": "" } },
+  { "id": "S-DF-01", "fn": "diff", "input": { "local": { "{a}": "1", "{b}": "2" }, "server": { "{a}": "1", "{b}": "3", "{c}": "9" } } },
+  { "id": "S-DF-02", "fn": "diff", "input": { "local": null, "server": { "{a}": "1" } } },
+  { "id": "S-DF-03", "fn": "diff", "input": { "local": { "{a}": 1 }, "server": { "{a}": "1" } } },
+  { "id": "S-LG-01", "fn": "is_legacy_response", "input": { "fields": { "ETag": "e1", "Template-Tag": "t1", "Template-Change": "false", "Cache-Offline": "true" } } },
+  { "id": "S-LG-02", "fn": "is_legacy_response", "input": { "fields": { "ETag": "e1", "Cache-Offline": "true" } } },
+  { "id": "S-TC-01", "fn": "template_change", "input": { "value": "true" } },
+  { "id": "S-ET-01", "fn": "etag", "input": { "value": "W/\"66f0-m2UmCBEh\"" } },
+  { "id": "S-ET-02", "fn": "etag", "input": { "value": "W/\"x\"" } },
+  { "id": "S-ET-03", "fn": "etag", "input": { "value": "abc" } },
+  { "id": "S-CS-01", "fn": "charset", "input": { "content_type": "text/html; charset=utf-8" } },
+  { "id": "S-CS-02", "fn": "charset", "input": { "content_type": "text/html; charset=gbk" } },
+  { "id": "S-CS-03", "fn": "charset", "input": { "content_type": "text/html" } },
+  { "id": "S-MS-01", "fn": "message", "input": { "src_code": 1000, "final_code": 2000, "diff": {}, "fields": {} } },
+  { "id": "S-XX-01", "fn": "nope", "input": {} }
+]

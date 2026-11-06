@@ -1,0 +1,516 @@
+{
+  "date": "2026-11-05",
+  "tools": {
+    "node": "v26.8.2",
+    "adb": "Android Debug Bridge version 1.0.41 (platform-tools 37.0.1-15733141)",
+    "emulator": "37.2.13.0 (build_id 16740729)",
+    "conductor": "1",
+    "jdk": "Zulu 21.0.11",
+    "gradle": "9.8.2",
+    "agp": "9.5.0",
+    "docker": "29.9.2",
+    "clang": "Apple clang 21.0.0 (iOS runner: see functions.ios.compiler)",
+    "webview": "com.android.webview 66.0.3359.158"
+  },
+  "emulator_image": "system-images;android-28;default;arm64-v8a (Android 9, API 28, AVD rivqen-api28, cold boot, no snapshots)",
+  "upstream_sha": "59936bef",
+  "scenarios": [
+    {
+      "id": "CS-01",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-02",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-03",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-04",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-05",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-06",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-07",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-08",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-09",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-10",
+      "modes": {
+        "quick": {
+          "runs": 6
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-11",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-12",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-13a",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-13b",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-14",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-15",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-16",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-17",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-18",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-19",
+      "modes": {
+        "quick": {
+          "runs": 1
+        },
+        "standard": {
+          "runs": 1
+        }
+      }
+    }
+  ],
+  "functions": {
+    "android": {
+      "platform": "android",
+      "runner": "harness instrumentation, mode functions",
+      "api_level": "28",
+      "android_release": "9",
+      "abi": "arm64-v8a",
+      "emulator_image": "system-images;android-28;default;arm64-v8a",
+      "webview": "66.0.3359.158",
+      "upstream_sha": "59936beff656d4b5718ff6444d6c5e001a2c5231",
+      "cases": 214,
+      "non_public_calls": [
+        "SonicSessionCallback (package-private interface, implemented; session callbacks of every run (session.callback))",
+        "SonicSession.addSessionStateChangedCallback(Callback) (protected method, called; state changes of every run (session.callback onSessionStateChange))",
+        "SonicUtils.separateTemplateAndData(String, String, StringBuilder, StringBuilder) (package-private static method, called; fn split)",
+        "SonicUtils.getDiffData(JSONObject, JSONObject) (package-private static method, called; fn diff)",
+        "SonicUtils.getCharset(String) (package-private static method, called; fn charset)",
+        "SonicServer.connect() (protected method, called; fn etag (over a fixed-answer connection given through the public connection interceptor; no network))"
+      ],
+      "limit": "Results are evidence for this Android build only (API 28 emulator image). org.json, android.net.Uri and the default charset of other builds can differ."
+    },
+    "ios": {
+      "cases": 214,
+      "compiler": "Apple clang version 21.0.0 (clang-2100.3.34.2)",
+      "limit": "Foundation on current macOS can differ from the iOS of the SDK era (NSURL parsing, NSDictionary order, NSString boolValue). Results are evidence for this Foundation only.",
+      "macos_build": "Version 26.6.2 (Build 25G83)",
+      "macos_version": "26.6.2",
+      "non_public_calls": [
+        "SonicServer connection:didReceiveResponse: (SonicConnectionDelegate; public protocol)",
+        "SonicSession +sonicSessionQueue (public)",
+        "SonicServer -encodingFromHeaders (defined in SonicServer.m, not declared in its header; declared by the runner)",
+        "SonicEngine -setCurrentUserAccount: and sonicSessionID() (public; the account setter makes a cache directory under CFFIXED_USER_HOME)"
+      ],
+      "platform": "ios",
+      "runner": "macOS command-line runner (Foundation)",
+      "sdk_version": "27.0",
+      "upstream_sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+    }
+  },
+  "summary": {
+    "stable": [
+      {
+        "scenario": "CS-04",
+        "mode": "standard"
+      },
+      {
+        "scenario": "CS-06",
+        "mode": "standard"
+      },
+      {
+        "scenario": "CS-12",
+        "mode": "quick"
+      },
+      {
+        "scenario": "CS-12",
+        "mode": "standard"
+      },
+      {
+        "scenario": "CS-18",
+        "mode": "quick"
+      },
+      {
+        "scenario": "CS-19",
+        "mode": "quick"
+      },
+      {
+        "scenario": "CS-19",
+        "mode": "standard"
+      }
+    ],
+    "unstable": [
+      {
+        "scenario": "CS-01",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 3 differs from run 1 at normalized line 7: step.start bind_client / proxy.response_head change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-01",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 7: step.start bind_client / proxy.response_head change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-02",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 3 differs from run 1 at normalized line 35: client.intercept / onSessionStateChange callback change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-02",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 8: proxy.request / step.start bind_client change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-03",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 7: proxy.response_head / step.start bind_client change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-03",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 3 differs from run 1 at normalized line 51: step.done request_resource / client.intercept change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-04",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 7: step.start bind_client / proxy.response_head change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-05",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 41: step.done bind_client / onSessionStateChange callback change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-05",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 4: onSessionLoadLocalCache callback / session.created change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-06",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 7: proxy.response_head / step.start bind_client change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-07",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 9: step.done bind_client / onSessionFirstLoad callback change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-07",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 9: onSessionFirstLoad callback / step.done bind_client change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-08",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 9: step.done bind_client / onSessionFirstLoad callback change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-08",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 9: onSessionFirstLoad callback / step.done bind_client change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-09",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 9: step.done bind_client / onSessionFirstLoad callback change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-09",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 7: step.start bind_client / proxy.response_head change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-10",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 5 differs from run 1 at normalized line 7: proxy.response_head / step.start bind_client change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 6 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-10",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 7: step.start bind_client / proxy.response_head change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-11",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 7: proxy.response_head / step.start bind_client change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-11",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 10: step.done bind_client / onSessionStateChange callback change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-13a",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 36: session.message / onSessionFirstLoad callback change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-13a",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 36: onSessionFirstLoad callback / session.message change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-13b",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 6: onSessionLoadLocalCache callback / session.created change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-13b",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 3 differs from run 1 at normalized line 9: proxy.response_head / step.start bind_client change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-14",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 18: client.intercept / step.done request_resource change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-14",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 7: proxy.response_head / step.start bind_client change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-15",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 38: client.intercept / onSessionStateChange callback change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-15",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 9: proxy.hold / step.start bind_client change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-16",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 74: onSessionLoadLocalCache callback / session.created change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-16",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 86: step.done request_resource / client.intercept change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-17",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 3 differs from run 1 at normalized line 7: proxy.response_head / step.start bind_client change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-17",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 7: proxy.response_head / step.start bind_client change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-18",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 33: client.intercept / onSessionStateChange callback change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      }
+    ]
+  },
+  "measurements": {
+    "scenario_runs": 119,
+    "scenario_run_time": "607 s for the 116 runs of run.mjs --all (about 5.2 s per run); the 6 runs of CS-10 quick after it were not timed",
+    "evidence_bytes": "1731383 bytes in 331 files",
+    "determinism": "38 scenario modes with 3 or more runs: strict CONTRACT section 6: 5 of 38 stable; outcome projection (determinism.mjs outcomeRun): 38 of 38 stable. CS-19 quick and standard have 1 run each: listed as stable, not checked"
+  }
+}

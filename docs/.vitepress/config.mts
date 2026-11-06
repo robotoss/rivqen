@@ -122,7 +122,8 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'Legacy: markers grammar', link: '/engineering/protocol/legacy-markers' },
       { text: 'Legacy: client behavior', link: '/engineering/protocol/legacy-client' },
       { text: 'Legacy: divergences', link: '/engineering/protocol/legacy-divergences' },
-      { text: 'Legacy: server traces', link: '/engineering/protocol/legacy-traces' }
+      { text: 'Legacy: server traces', link: '/engineering/protocol/legacy-traces' },
+      { text: 'Legacy: client traces', link: '/engineering/protocol/legacy-client-traces' }
     ]
   },
   {
@@ -246,6 +247,7 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'WP-02 S2', link: '/engineering/plan/sprints/WP-02-S2' },
       { text: 'WP-03 S1', link: '/engineering/plan/sprints/WP-03-S1' },
       { text: 'WP-03 S2', link: '/engineering/plan/sprints/WP-03-S2' },
+      { text: 'WP-01 S1', link: '/engineering/plan/sprints/WP-01-S1' },
       { text: 'Sprint record template', link: '/engineering/plan/sprints/template' }
     ]
   }

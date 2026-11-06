@@ -55,7 +55,22 @@ Where the same person must work in both tracks (small team), they follow the rul
 | Evidence documents | [Protocol pages](/engineering/protocol/) and [Upstream audit](/research/upstream-vassonic) |
 | Similarity scan results | Release audit (WP-21) |
 
-## 5. If upstream material is ever needed
+## 5. Upstream lab
+
+<Badge type="tip" text="FACT" /> The evidence track runs upstream code only in the upstream lab (`tools/upstream-lab/`). The lab holds Rivqen code only: harnesses, test pages, a recording proxy, runners. Upstream code comes from a separate read-only checkout at the pinned SHA and is never copied into the repository.
+
+| Rule | Server lab (WP-01 P0, WP-02) | Client lab (WP-01 S1; H-118, H-119) |
+|---|---|---|
+| Upstream input | The servers of `sonic-java` (binary jar), `sonic-nodejs` (npm package), `sonic-php`, mounted read-only into containers | The Android SDK sources (`sonic-android/sdk/src/main/java`) compiled in place as a source set; the iOS SDK sources (`sonic-iOS/Sonic`) compiled in place for macOS |
+| Changes to upstream | None | None: build flags only (`-fno-objc-arc -fobjc-weak` on iOS). The builds check the pinned SHA and the file hashes of `evidence/source-manifest.lock` and stop on any change |
+| Rivqen glue | Harness per server, control endpoint | Android: a runtime and a session client written from the [legacy client](/engineering/protocol/legacy-client) page; one Rivqen class in the SDK package (`com.tencent.sonic.sdk.RivqenLabAccess`) calls package-private or protected members, listed in `tools/upstream-lab/android/package-access.json`; it writes no upstream field. iOS: a runner that calls SDK functions, a stand-in header for one UIKit name, and a category declaration of one method that the SDK defines but does not declare (listed as non-public calls in the run metadata) |
+| Not read | The upstream sample apps | `sonic-android/sample/`, `sonic-android/sdk/src/androidTest/`, `sonic-iOS/SonicSample/` (CR-04) |
+| Lab-only dependencies (not shipped) | Container images, the npm dependencies of the upstream demo, Gson 2.8.2 (pinned) | Android Gradle Plugin 9.5.0 and Gradle 9.8.2 (pinned, verification metadata), `com.android.support:support-annotations:28.0.0` (Apache-2.0) |
+| Output | Traces in `evidence/traces/server/` | Traces and function results in `evidence/traces/client/` |
+
+After each lab run the checkout, the containers, the images and the lab SDK root are deleted.
+
+## 6. If upstream material is ever needed
 
 If the maintainers decide to include upstream material (for example a test asset), they must:
 

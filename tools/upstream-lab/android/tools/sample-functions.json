@@ -1,0 +1,15 @@
+[
+  { "id": "SMOKE-FN-01", "fn": "session_id", "input": { "url": "http://Shop.example.com:8080/p?sonic_a=1&id=2", "account": "rq-test-account", "account_related": true } },
+  { "id": "SMOKE-FN-02", "fn": "session_id", "input": { "url": "https://shop.example.com/p", "account": null, "account_related": false } },
+  { "id": "SMOKE-FN-03", "fn": "split", "input": { "html": "<html><head><title>T</title></head><body><!--sonicdiff-b-->B<!--sonicdiff-b-end--><!--sonicdiff-a-->A<!--sonicdiff-a-end--></body></html>" } },
+  { "id": "SMOKE-FN-04", "fn": "diff", "input": { "local": { "{b}": "1", "{a}": "2" }, "server": { "{b}": "1", "{a}": "3", "{c}": "", "{d}": "4" } } },
+  { "id": "SMOKE-FN-05", "fn": "diff", "input": { "local": null, "server": { "{a}": "3" } } },
+  { "id": "SMOKE-FN-06", "fn": "message", "input": { "src_code": 1000, "final_code": 304, "diff": null, "fields": { "eTag": "e1", "template-tag": "t1", "cache-offline": "true" } } },
+  { "id": "SMOKE-FN-07", "fn": "message", "input": { "src_code": 200, "final_code": 200, "diff": { "{a}": "3" }, "fields": [["eTag", "e2"], ["template-tag", "t1"], ["cache-offline", "true"]] } },
+  { "id": "SMOKE-FN-08", "fn": "etag", "input": { "value": "W/\"AbC\"" } },
+  { "id": "SMOKE-FN-09", "fn": "etag", "input": { "value": "\"AbC\"" } },
+  { "id": "SMOKE-FN-10", "fn": "charset", "input": { "content_type": "text/html; Charset = GBK ; x=1" } },
+  { "id": "SMOKE-FN-11", "fn": "charset", "input": { "content_type": null } },
+  { "id": "SMOKE-FN-12", "fn": "is_legacy_response", "input": { "fields": [["cache-offline", "true"]] } },
+  { "id": "SMOKE-FN-13", "fn": "template_change", "input": { "value": "0" } }
+]

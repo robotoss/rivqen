@@ -65,11 +65,11 @@ The catalog below is the minimum set of the plan; every row except the client-on
 | `FX-LEG-TITLE` | Special handling of the `<title>` element (see [markers grammar](/engineering/protocol/legacy-markers)) | Done, renamed: `FX-LEG-TITLE-ATTRIBUTE-<X>`, `FX-LEG-TITLE-SEVERAL-<X>`, `FX-LEG-TITLE-NEWLINE` |
 | `FX-LEG-UNICODE` | Non-ASCII content and block names | Done: `FX-LEG-UNICODE-<X>` |
 | `FX-LEG-COMPRESSED` | gzip / br response | Done, renamed: `FX-LEG-COMPRESSED-IDENTITY` (client sends `accept-encoding: identity`) |
-| `FX-LEG-INTERRUPTED` | Stream cut in the middle | Client part, before P3 (H-110) |
-| `FX-LEG-CONCURRENT` | Two sessions for the same URL | Client part, before P3 (H-110) |
-| `FX-LEG-AUTH-CHANGE` | Partition change during a session | Client part, before P3 (H-110) |
+| `FX-LEG-INTERRUPTED` | Stream cut in the middle | Client part, before P3 (H-110): evidence in [client traces](/engineering/protocol/legacy-client-traces) (CS-13a, CS-13b); fixture in WP-01 S2 |
+| `FX-LEG-CONCURRENT` | Two sessions for the same URL | Client part, before P3 (H-110): evidence in [client traces](/engineering/protocol/legacy-client-traces) (CS-15); fixture in WP-01 S2 |
+| `FX-LEG-AUTH-CHANGE` | Partition change during a session | Client part, before P3 (H-110): evidence in [client traces](/engineering/protocol/legacy-client-traces) (CS-16); fixture in WP-01 S2 |
 | `FX-LEG-REDIRECT` | 301/302 on the main document | Done, from trace S24: `FX-LEG-REDIRECT` (a `302`) |
-| `FX-LEG-COOKIE-VARIANCE` | Different cookies, same URL | Server part: `FX-LEG-COOKIE-VARIANCE` (the application `Set-Cookie` and `Vary` lines are kept, C-13); the client part comes before P3 (H-110) |
+| `FX-LEG-COOKIE-VARIANCE` | Different cookies, same URL | Server part: `FX-LEG-COOKIE-VARIANCE` (the application `Set-Cookie` and `Vary` lines are kept, C-13); client evidence CS-17 in [client traces](/engineering/protocol/legacy-client-traces); the client part comes before P3 (H-110) |
 | `FX-LEG-NON-SONIC-CLIENT` | Browser without legacy headers gets unchanged HTML | Done: `FX-LEG-NON-SONIC-CLIENT` |
 
 Other fixtures of the first sprint, outside the minimum list:

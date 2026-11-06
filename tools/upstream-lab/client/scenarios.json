@@ -1,0 +1,1508 @@
+[
+  {
+    "id": "CS-01",
+    "title": "First load; the body is complete before the web view is ready",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [
+      "Q1",
+      "S1"
+    ],
+    "setup": [],
+    "case": {
+      "page": "a"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-02",
+    "title": "First load; the web view is ready and asks for the page before the response head",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [
+      "Q2",
+      "S1"
+    ],
+    "setup": [],
+    "case": {
+      "page": "a"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "hold",
+        "point": "head"
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.hold"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "release"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-03",
+    "title": "Cache hit; the server answers 304",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [
+      "Q7",
+      "S5"
+    ],
+    "setup": [
+      {
+        "case": {
+          "page": "a"
+        }
+      },
+      "first_load"
+    ],
+    "case": {
+      "page": "a"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-04",
+    "title": "Data update; the cached page is loaded first",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [
+      "Q8",
+      "S6"
+    ],
+    "setup": [
+      {
+        "case": {
+          "page": "a"
+        }
+      },
+      "first_load"
+    ],
+    "case": {
+      "page": "b"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "hold",
+        "point": "head"
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.hold"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "release"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-05",
+    "title": "Data update; the network answer is complete before the cached page is loaded",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [
+      "Q10",
+      "S7"
+    ],
+    "setup": [
+      {
+        "case": {
+          "page": "a"
+        }
+      },
+      "first_load"
+    ],
+    "case": {
+      "page": "b"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-06",
+    "title": "Template change; the cached page is loaded first",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [
+      "Q12",
+      "S9"
+    ],
+    "setup": [
+      {
+        "case": {
+          "page": "a"
+        }
+      },
+      "first_load"
+    ],
+    "case": {
+      "page": "c"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "hold",
+        "point": "head"
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.hold"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "release"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-07",
+    "title": "Template change; the network answer is complete before the cached page is loaded",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [
+      "Q14",
+      "S11"
+    ],
+    "setup": [
+      {
+        "case": {
+          "page": "a"
+        }
+      },
+      "first_load"
+    ],
+    "case": {
+      "page": "c"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-08",
+    "title": "Application sets cache-offline http; the Java server sends it as a second field after its own true",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-java",
+    "rows": [],
+    "setup": [
+      {
+        "case": {
+          "page": "a"
+        }
+      },
+      "first_load"
+    ],
+    "case": {
+      "page": "b",
+      "headers": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "cache-offline",
+          "http"
+        ]
+      ]
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-09",
+    "title": "Data update without cache-offline: the proxy drops the field (F7: absent, empty or false)",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [
+      "Q17",
+      "S14"
+    ],
+    "setup": [
+      {
+        "case": {
+          "page": "a"
+        }
+      },
+      "first_load"
+    ],
+    "case": {
+      "page": "b"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "drop_field",
+        "name": "cache-offline"
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-10",
+    "title": "Application sets cache-offline store on a data update; the Java server sends it as a second field after its own true",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-java",
+    "rows": [],
+    "setup": [
+      {
+        "case": {
+          "page": "a"
+        }
+      },
+      "first_load"
+    ],
+    "case": {
+      "page": "b",
+      "headers": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "cache-offline",
+          "store"
+        ]
+      ]
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-11",
+    "title": "Application answers status 500",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [
+      "Q15",
+      "S13"
+    ],
+    "setup": [
+      {
+        "case": {
+          "page": "a"
+        }
+      },
+      "first_load"
+    ],
+    "case": {
+      "page": "b",
+      "status": 500
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-12",
+    "title": "Server down: the proxy refuses connections",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [
+      "Q4",
+      "S3"
+    ],
+    "setup": [],
+    "case": {
+      "page": "a"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "server_down"
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "settle",
+        "ms": 3000
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      },
+      {
+        "do": "server_up"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-13a",
+    "title": "Stream cut after 128 body bytes; the client asks first",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [
+      "Q22",
+      "S17"
+    ],
+    "setup": [],
+    "case": {
+      "page": "a"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "cut",
+        "bytes": 128
+      },
+      {
+        "do": "hold",
+        "point": "head"
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.hold"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "release"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-13b",
+    "title": "Stream cut after 128 body bytes; the network answers first",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [
+      "Q20",
+      "S2"
+    ],
+    "setup": [],
+    "case": {
+      "page": "a"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "cut",
+        "bytes": 128
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-14",
+    "title": "Data update; the proxy drops the etag field",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [
+      "Q18",
+      "S15"
+    ],
+    "setup": [
+      {
+        "case": {
+          "page": "a"
+        }
+      },
+      "first_load"
+    ],
+    "case": {
+      "page": "b"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "drop_field",
+        "name": "etag"
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-15",
+    "title": "A second session for the same URL while the first runs",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [],
+    "setup": [],
+    "case": {
+      "page": "a"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "hold",
+        "point": "head"
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.hold"
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "release"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-16",
+    "title": "Account change between sessions and during a held session",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [],
+    "setup": [
+      {
+        "case": {
+          "page": "a"
+        }
+      },
+      "first_load"
+    ],
+    "case": {
+      "page": "a"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "set_account",
+        "value": "rq-test-account-2"
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      },
+      {
+        "do": "hold",
+        "point": "head"
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.hold"
+      },
+      {
+        "do": "set_account",
+        "value": "rq-test-account"
+      },
+      {
+        "do": "settle",
+        "ms": 300
+      },
+      {
+        "do": "release"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-17",
+    "title": "Set-Cookie on a first load and on a 304; the cookie changes after the session is created",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [],
+    "setup": [],
+    "case": {
+      "page": "a",
+      "headers": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "set-cookie",
+          "session=rq-test-cookie-1; Path=/"
+        ]
+      ]
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "set_cookie",
+        "value": "session=rq-test-cookie-2"
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "set_cookie",
+        "value": "session=rq-test-cookie-3"
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-18",
+    "title": "Destroy before the end of the body, and within 1.5 s after it",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [],
+    "setup": [],
+    "case": {
+      "page": "a"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "hold",
+        "point": "body",
+        "bytes": 128
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.hold"
+      },
+      {
+        "do": "destroy"
+      },
+      {
+        "do": "release"
+      },
+      {
+        "do": "settle",
+        "ms": 500
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "request_resource"
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "settle",
+        "ms": 500
+      },
+      {
+        "do": "destroy"
+      },
+      {
+        "do": "settle",
+        "ms": 1000
+      },
+      {
+        "do": "snapshot_cache"
+      }
+    ],
+    "repeat": 3
+  },
+  {
+    "id": "CS-19",
+    "title": "Real web view smoke run: first load, then a data update",
+    "modes": [
+      "quick",
+      "standard"
+    ],
+    "origin": "lab-node",
+    "rows": [],
+    "setup": [
+      {
+        "case": {
+          "page": "a"
+        }
+      },
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 2500
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "case": {
+      "page": "b"
+    },
+    "config": {
+      "account": "rq-test-account",
+      "account_related": true,
+      "reload_in_bad_network": false
+    },
+    "steps": [
+      {
+        "do": "create_session"
+      },
+      {
+        "do": "bind_client"
+      },
+      {
+        "do": "client_ready"
+      },
+      {
+        "do": "wait",
+        "for": "proxy.response_end"
+      },
+      {
+        "do": "settle",
+        "ms": 3000
+      },
+      {
+        "do": "get_diff"
+      },
+      {
+        "do": "snapshot_cache"
+      },
+      {
+        "do": "destroy"
+      }
+    ],
+    "repeat": 1,
+    "webview": true
+  }
+]

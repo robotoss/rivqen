@@ -4,6 +4,10 @@ This lab runs the **unmodified** upstream Tencent VasSonic server code in isolat
 
 > **Clean-room note.** This directory contains only Rivqen code (harnesses, test pages, runner). Upstream code is mounted read-only from a separate checkout and is never copied into this repository.
 
+## Client lab
+
+The client lab (WP-01 S1) runs the unmodified upstream Android and iOS SDK code. See [`client/CONTRACT.md`](client/CONTRACT.md) (interfaces), [`client/README.md`](client/README.md) (conductor: recording proxy, scripted steps, offline check), [`android/README.md`](android/README.md) (harness and emulator) and [`ios/README.md`](ios/README.md) (function runner). The sections below describe the server lab.
+
 ## Contents
 
 | Path | Content |

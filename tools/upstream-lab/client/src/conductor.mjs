@@ -60,6 +60,7 @@ export async function executeRun(options) {
       case 'hold':
       case 'cut':
       case 'drop_field':
+      case 'set_field':
         return proxy.arm(step);
       case 'release':
         return proxy.release();

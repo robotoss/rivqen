@@ -16,6 +16,7 @@ export function makeRunHandle({ id, scenario, log, channel }) {
     id,
     scenario,
     poll: (ms) => channel.poll(ms),
+    redeliver: (step) => channel.redeliver(step),
     accept: (event) => {
       if (!isObject(event) || typeof event.ev !== 'string' || event.ev === '') throw new LabError('BAD_EVENT', 'event needs a name "ev"');
       const aborts = event.ev === 'run.end' && event.ok === false; // the only conductor event that the harness may send

@@ -296,14 +296,6 @@
       {
         "scenario": "CS-18",
         "mode": "quick"
-      },
-      {
-        "scenario": "CS-19",
-        "mode": "quick"
-      },
-      {
-        "scenario": "CS-19",
-        "mode": "standard"
       }
     ],
     "unstable": [
@@ -504,6 +496,16 @@
         "mode": "standard",
         "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 33: client.intercept / onSessionStateChange callback change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
         "outcome": "stable"
+      }
+    ],
+    "not_checked": [
+      {
+        "scenario": "CS-19",
+        "mode": "quick"
+      },
+      {
+        "scenario": "CS-19",
+        "mode": "standard"
       }
     ]
   },

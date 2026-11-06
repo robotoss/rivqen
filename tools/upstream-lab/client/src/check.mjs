@@ -55,6 +55,7 @@ export const SCHEMA = {
   'proxy.response_end': { src: ['proxy'], need: { exchange: ex, body_len: isInt, body_sha256: hex64, complete: bool } },
   'proxy.cut': { src: ['proxy'], need: { exchange: intOrNull, bytes: isInt } },
   'proxy.drop_field': { src: ['proxy'], need: { exchange: intOrNull, name: str } },
+  'proxy.set_field': { src: ['proxy'], need: { exchange: intOrNull, name: str, value: (v) => typeof v === 'string' } },
   'proxy.hold': { src: ['proxy'], need: { exchange: ex, point: str }, opt: { bytes: isInt } },
   'proxy.release': { src: ['proxy'], need: { exchange: intOrNull, point: str } },
   'client.clear_history': { src: ['harness'], need: {} },
@@ -190,6 +191,9 @@ export function runJsonProblems(j) {
       s.unstable.every((x) => isObject(x) && str(x.scenario) && str(x.mode) && str(x.reason) && x.reason !== '' &&
         (!('outcome' in x) || x.outcome === 'stable' || x.outcome === 'unstable'));
     if (!ok) out.push('run.json: summary needs stable [{scenario, mode}] and unstable [{scenario, mode, reason, outcome?: stable|unstable}]');
+    if (ok && 'not_checked' in s && !(Array.isArray(s.not_checked) && s.not_checked.every((x) => isObject(x) && str(x.scenario) && str(x.mode)))) {
+      out.push('run.json: summary.not_checked must be a list of {scenario, mode}');
+    }
   }
   return out;
 }
@@ -236,7 +240,7 @@ export async function listDir(dir) {
  * Check the evidence tree at `root` (the directory with android/ and run.json).
  * @param {string} root
  * @param {{ catalog?: object[] }} [options]  scenarios.json content: also checks modes and run counts
- * @returns {Promise<{ errors: string[], warnings: string[], unstable: { scenario: string, mode: string, difference: object, outcome: 'stable'|'unstable' }[], runs: number }>}
+ * @returns {Promise<{ errors: string[], warnings: string[], notChecked: { scenario: string, mode: string }[], unstable: { scenario: string, mode: string, difference: object, outcome: 'stable'|'unstable' }[], runs: number }>}
  */
 export async function checkTree(root, { catalog } = {}) {
   const errors = [];
@@ -296,11 +300,21 @@ export async function checkTree(root, { catalog } = {}) {
   const reasons = new Map(listedUnstable.map((u) => [`${u.scenario}/${u.mode}`, u.reason]));
   const listedOutcome = new Map(listedUnstable.filter((u) => 'outcome' in u).map((u) => [`${u.scenario}/${u.mode}`, u.outcome]));
   const stableListed = new Set((runJson?.summary?.stable ?? []).filter(isObject).map((u) => `${u.scenario}/${u.mode}`));
+  const notCheckedListed = new Set((Array.isArray(runJson?.summary?.not_checked) ? runJson.summary.not_checked : []).filter(isObject).map((u) => `${u.scenario}/${u.mode}`));
+  const notChecked = [];
   for (const [scenario, modes] of observed) {
     for (const [mode, { normalized, outcomes }] of modes) {
       if (normalized.length === 0) continue;
-      const difference = firstDifference(normalized);
       const key = `${scenario}/${mode}`;
+      // CONTRACT section 6: fewer than 2 runs cannot show stability.
+      if (normalized.length < 2) {
+        notChecked.push({ scenario, mode });
+        if (stableListed.has(key) || reasons.has(key)) errors.push(`${key}: run.json lists one run as stable or unstable; it is not checked`);
+        if (runJson && !notCheckedListed.has(key)) errors.push(`${key}: one run; not listed in run.json summary.not_checked`);
+        continue;
+      }
+      if (notCheckedListed.has(key)) errors.push(`${key}: run.json says not checked, the mode has ${normalized.length} runs`);
+      const difference = firstDifference(normalized);
       if (difference) {
         const outcome = firstDifference(outcomes) ? 'unstable' : 'stable';
         unstable.push({ scenario, mode, difference, outcome });
@@ -346,7 +360,7 @@ export async function checkTree(root, { catalog } = {}) {
     const known = new Set(catalog.map((s) => s.id));
     for (const id of observed.keys()) if (!known.has(id)) errors.push(`${id}: not in scenarios.json`);
   }
-  return { errors, warnings, unstable, runs };
+  return { errors, warnings, unstable, notChecked, runs };
 }
 
 /** Problems of a functions.jsonl text against the case list (CONTRACT section 7). */

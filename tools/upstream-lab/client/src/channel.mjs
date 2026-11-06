@@ -57,6 +57,20 @@ export class HarnessChannel {
     }
   }
 
+  /**
+   * Make a step that `poll` returned, but whose answer did not reach the harness, available to the next poll.
+   * It does nothing when the step is no longer the current one (acknowledged, replaced or failed).
+   */
+  redeliver(step) {
+    if (step.do === 'end' && this.#ending) {
+      this.#endDelivered = false;
+      this.#wake();
+    } else if (this.#current && this.#queued === step && this.#delivered) {
+      this.#delivered = false;
+      this.#wake();
+    }
+  }
+
   /** Handle a harness event. Returns true when it acknowledged the current step. */
   accept(event) {
     const cur = this.#current;

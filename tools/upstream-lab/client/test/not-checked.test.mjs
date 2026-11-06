@@ -81,6 +81,19 @@ test('check_two_runs_listed_as_not_checked_is_an_error', async () => {
   }
 });
 
+test('check_ignores_a_malformed_not_checked_entry_and_reports_the_summary', async () => {
+  const t = await tree(1);
+  try {
+    await writeFile(t.file, JSON.stringify({ ...t.j, summary: summary({ not_checked: [null] }) }));
+    assert.deepEqual((await checkTree(t.root)).errors, [
+      'run.json: summary.not_checked must be a list of {scenario, mode}',
+      'CS-01/quick: one run; not listed in run.json summary.not_checked',
+    ]);
+  } finally {
+    await t.done();
+  }
+});
+
 test('run_json_not_checked_must_be_a_list_of_scenario_and_mode', async () => {
   const t = await tree(1);
   try {

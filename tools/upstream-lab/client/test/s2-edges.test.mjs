@@ -18,6 +18,23 @@ test('normalize_message_keeps_white_space_and_removes_only_the_member', () => {
   assert.equal(message('\n{"local_refresh_time":2}'), '\n{}');
 });
 
+test('normalize_message_ignores_braces_inside_strings', () => {
+  assert.equal(message('{"x":"}]","local_refresh_time":1,"y":"{["}'), '{"x":"}]","y":"{["}');
+});
+
+test('channel_redeliver_of_the_end_wakes_a_waiting_poll', async () => {
+  const channel = new HarnessChannel();
+  channel.finish(50).catch(() => {});
+  const end = await channel.poll(10);
+  assert.deepEqual(end, { do: 'end' });
+  const waiting = channel.poll(3000);
+  await sleep(20);
+  const started = Date.now();
+  channel.redeliver(end);
+  assert.deepEqual(await waiting, { do: 'end' });
+  assert.ok(Date.now() - started < 1500);
+});
+
 test('channel_redeliver_wakes_a_waiting_poll', async () => {
   const channel = new HarnessChannel();
   const step = { seq: 1, do: 'create_session' };

@@ -43,10 +43,20 @@ Measurements: 116 runs of `run.mjs --all` in 607 s (about 5.2 s per run), then 6
 
 | Result | Strict (CONTRACT §6) | Outcome projection |
 |---|---|---|
-| Stable scenario modes | 7 of 40 | 40 of 40 |
+| Stable scenario modes (38 modes with 3 or more runs) | 5 of 38 | 38 of 38 |
 | Unstable | 33 (window or thread position of SDK events; reasons in `run.json`) | 0 |
+| Not checked (1 run) | CS-19 Quick and Standard | CS-19 Quick and Standard |
 
-<Badge type="tip" text="FACT" /> The 33 strict differences are all of one kind: an SDK event changes places with a step boundary or with an event of another harness thread (for example `proxy.response_head` before or after `step.start bind_client`, or `onSessionFirstLoad` before or after `step.done bind_client`). No client action, code, message or cache file differs.
+<Badge type="tip" text="FACT" /> The 33 strict differences are all of one kind: an SDK event changes places with a step boundary or with an event of another harness thread (for example `proxy.response_head` before or after `step.start bind_client`, or `onSessionFirstLoad` before or after `step.done bind_client`). No client action, code, message or cache file differs. The 33 differences by kind:
+
+| Events that change places | Modes |
+|---|---|
+| A proxy event (`proxy.request`, `proxy.response_head`, `proxy.hold`) and the step boundary of `bind_client` | 15 |
+| A session-thread callback or message and the end of `bind_client` on the main thread | 9 |
+| `client.intercept` and a callback or the end of `request_resource` | 6 |
+| `onSessionLoadLocalCache` (the SDK reads the cache from its constructor, on its thread) and `session.created` | 3 |
+
+<Badge type="tip" text="FACT" /> CS-19 (the real WebView smoke run) has 1 run per mode by plan. `check.mjs` lists a mode with 1 run as stable because there is no second run to compare; its stability is not checked. No Q or S row depends on CS-19 alone.
 
 CS-10 Quick: in the first set of 3 runs, one run had the **setup** first load as Q2 (`loadUrl`, 1000 / 1000) instead of Q1 (data, 1000 / 304). The setup macro (`first_load`) calls `clientReady` before the body ends, so its own order is free. The scenario part was the same. 6 more runs: all equal. The stored evidence has the 6 runs; the variant run is not stored.
 

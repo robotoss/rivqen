@@ -511,6 +511,6 @@
     "scenario_runs": 119,
     "scenario_run_time": "607 s for the 116 runs of run.mjs --all (about 5.2 s per run); the 6 runs of CS-10 quick after it were not timed",
     "evidence_bytes": "1731383 bytes in 331 files",
-    "determinism": "strict CONTRACT section 6: 7 of 40 scenario modes stable; outcome projection (determinism.mjs outcomeRun): 40 of 40 stable"
+    "determinism": "38 scenario modes with 3 or more runs: strict CONTRACT section 6: 5 of 38 stable; outcome projection (determinism.mjs outcomeRun): 38 of 38 stable. CS-19 quick and standard have 1 run each: listed as stable, not checked"
   }
 }

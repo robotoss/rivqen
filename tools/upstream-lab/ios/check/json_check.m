@@ -103,12 +103,26 @@ static void parserGivesInfinityForMinus1e400(void) {
   expect(rqValidJson(rqLine(d)), @"parser: the line of -1e400 is valid JSON");
 }
 
+static void writerEscapesOnlyLoneSurrogates(void) {
+  unichar lone[] = {'a', 0xD83D, 'b'};
+  NSString *loneText = [NSString stringWithCharacters:lone length:3];
+  NSString *line = rqLine(loneText);
+  expectText(line, @"\"a\\ud83db\"", @"writer: a lone high surrogate is escaped");
+  expect([line dataUsingEncoding:NSUTF8StringEncoding] != nil, @"writer: the line of a lone surrogate has a UTF-8 form");
+  unichar low[] = {0xDE00};
+  expectText(rqLine([NSString stringWithCharacters:low length:1]), @"\"\\ude00\"", @"writer: a lone low surrogate is escaped");
+  unichar pair[] = {0xD83D, 0xDE00};
+  NSString *pairText = [NSString stringWithCharacters:pair length:2];
+  expectText(rqLine(pairText), [NSString stringWithFormat:@"\"%@\"", pairText], @"writer: a surrogate pair stays text");
+}
+
 int main(void) {
   @autoreleasepool {
     writerNeverWritesBareNonFinite();
     writerKeepsFiniteNumbers();
     nonFiniteFindsThePointer();
     parserGivesInfinityForMinus1e400();
+    writerEscapesOnlyLoneSurrogates();
   }
   if (failures > 0) {
     printf("%d checks failed\n", failures);

@@ -46,6 +46,14 @@ static void rqWriteString(NSMutableString *out, NSString *s) {
       default:
         if (c < 0x20) {
           [out appendFormat:@"\\u%04x", c];
+        } else if (CFStringIsSurrogateHighCharacter(c) && i + 1 < s.length &&
+                   CFStringIsSurrogateLowCharacter([s characterAtIndex:i + 1])) {
+          // A surrogate pair is one character: write both units as text.
+          [out appendFormat:@"%C%C", c, [s characterAtIndex:i + 1]];
+          i++;
+        } else if (CFStringIsSurrogateHighCharacter(c) || CFStringIsSurrogateLowCharacter(c)) {
+          // A lone surrogate has no UTF-8 form: escape it, so the line stays writable JSON.
+          [out appendFormat:@"\\u%04x", c];
         } else {
           [out appendFormat:@"%C", c];
         }

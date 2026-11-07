@@ -665,6 +665,9 @@ Catalog rows ([fixtures](/engineering/protocol/fixtures) §3): `FX-LEG-INTERRUPT
 | CS-16 | After the first `set_account`: the entry of account 1 removed; first load for account 2 (`1000 / 304`). The second `set_account` stops the held session; the entry of account 2 removed; last snapshot empty |
 | CS-17 | First load, then `304`; `cookie_set` after each response; no `set-cookie` in the page fields or the record |
 | CS-18 | Session 1 stops during the body: its stream ends incomplete, no commit; session 2 commits at the end of the body, the destroy 0.5 s later keeps it |
+| CS-20…CS-27 | As their client fixtures `FX-LEG-CL-CS20-Q`…`FX-LEG-CL-CS27-S` (WP-01 S2 T-06; the rules in their `rules` member) |
+| CS-28 | The rebuild fails CL-29 (wrong `html-sha1` member): `load_url`, intercept `null`, `-1 / -1`, the entry removed (both modes) |
+| CS-29 | The `refresh` sends the validators of entry a and gets a template change (CL-35, CL-31): Quick `load_data` c, Standard `load_url`; `2000 / 2000` at the next `get_diff` (callback dropped); commit c |
 
 ### 9.10 Proposals
 

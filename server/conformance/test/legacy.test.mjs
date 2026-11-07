@@ -262,6 +262,15 @@ describe('profile selection', () => {
     assert.deepEqual(idsOf(r), ['FX-LEG-T-304', 'FX-LEG-T-DATA', 'FX-LEG-T-FIRST', 'FX-LEG-T-PENDING']);
   });
 
+  test('a client fixture is not selected', async () => {
+    const dir = tempFixtures();
+    mkdirSync(`${dir}FX-LEG-CL-T-ONE`);
+    writeFileSync(`${dir}FX-LEG-CL-T-ONE/case.json`, JSON.stringify({ id: 'FX-LEG-CL-T-ONE', kind: 'client' }));
+    writeFileSync(`${dir}FX-LEG-CL-T-ONE/expected.json`, JSON.stringify({ id: 'FX-LEG-CL-T-ONE', kind: 'client', client: {} }));
+    const r = await runLegacy({ dir });
+    assert.deepEqual(idsOf(r), ['FX-LEG-T-304', 'FX-LEG-T-DATA', 'FX-LEG-T-FIRST', 'FX-LEG-T-PENDING']);
+  });
+
   test('--only selects by id prefix', async () => {
     const r = await runLegacy({}, ['--only', 'FX-LEG-T-F']);
     assert.deepEqual(idsOf(r), ['FX-LEG-T-FIRST']);

@@ -259,7 +259,7 @@ How to read the tables:
 | Q8 | yes | data update | Cache given as data first; diff not empty | <Badge type="tip" text="FACT" /> CS-04; CS-24c (`TRUE`: diff sent, then the cache is removed, D-30) |
 | Q9 | yes | data update with `store`, or diff failed | Cache given as data first | <Badge type="tip" text="FACT" /> CS-22 (`store`); the "diff failed" form is not reached |
 | Q10 | yes | data update | Network first | <Badge type="tip" text="FACT" /> CS-05 |
-| Q11 | yes | data update, rebuild fails | Network first | <Badge type="warning" text="RESEARCH" /> not reached: CS-26 changes the `html-sha1` field of the head, but the SDK takes the value of a data update from the body ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
+| Q11 | yes | data update, rebuild fails | Network first | <Badge type="tip" text="FACT" /> CS-28 (wrong `html-sha1` member of the JSON body): `loadUrl`, 200 / 1000, error -1008, the cache is removed; only the rebuilt page stays as `<id>.html.tmp` ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
 | Q12 | yes | template change, not `store` | Cache given as data first | <Badge type="tip" text="FACT" /> CS-06 |
 | Q13 | yes | template change with `store` | Cache given as data first | <Badge type="tip" text="FACT" /> CS-23 |
 | Q14 | yes | template change | Network first | <Badge type="tip" text="FACT" /> CS-07; CS-21 (empty new page): the empty page is given as data, not `loadUrl` ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
@@ -267,7 +267,7 @@ How to read the tables:
 | Q16 | yes | `cache-offline: http` | — | <Badge type="tip" text="FACT" /> CS-24a (`HTTP`), CS-25 (`http`) |
 | Q17 | yes | `cache-offline` absent, empty or `false` | — | <Badge type="tip" text="FACT" /> CS-09 |
 | Q18 | yes | etag or `template-change` missing | — | <Badge type="tip" text="FACT" /> CS-14 |
-| Q19 | any | template change during `refresh()` | — | <Badge type="tip" text="FACT" /> (code reading); not reached in CS-27: the refresh request has the new etag and tag, so the server answers `304` ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
+| Q19 | any | template change during `refresh()` | — | <Badge type="tip" text="FACT" /> CS-29: no load call, 2000 / 2000 at the result, the 1.5 s save writes the new page. CS-27: a refresh right after a template change gets `304` ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
 | Q20 | none | first load, read error | Before any intercept | <Badge type="tip" text="FACT" /> CS-13b |
 | Q21 | any | no request (F3) | — | <Badge type="tip" text="FACT" /> |
 | Q22 | none | first load, read error | During the bridge stream | <Badge type="tip" text="FACT" /> CS-13a |
@@ -289,7 +289,7 @@ How to read the tables:
 | Q11 | `loadUrl` (template missing or `html-sha1` mismatch) | 200 / 1000, silent | removed | `QSS:333-335`, `:736-740`; `SU:301-330` |
 | Q12 | Body complete: data, the new page; else `loadUrl` and the intercept gets the bridge stream (note 5) | 2000 / 2000, silent | 1.5 s or close | `QSS:351-362`, `:530-592` |
 | Q13 | None | 2000 / 304, notify | 1.5 s or close | `QSS:363-366` |
-| Q14 | Data: the new page; with no page text, `loadUrl` | 2000 / 304 silent; `loadUrl`: 2000 / 1000 | 1.5 s or close | `QSS:367-378` |
+| Q14 | Data: the new page, also an empty one (0 bytes; CS-21: 2000 / 304, the old cache is kept, no save); `loadUrl` only when the page text is `null` | 2000 / 304 silent; `loadUrl`: 2000 / 1000 | 1.5 s or close; empty page: none, cache kept | `QSS:367-378` |
 | Q15 | None; the cached page stays (note 3) | -1 / -1 | none; cache kept | `QSS:493-499`, `:207-214` |
 | Q16 | `loadUrl` once: a normal load replaces the cached page | -1 / -1 | none; cache kept | `SS:729-745`; `QSS:508-512`, `:222-229` |
 | Q17 | None; the cached page stays | -1 / -1 | removed | `SS:753-758` |
@@ -302,7 +302,7 @@ How to read the tables:
 Notes:
 
 1. <Badge type="warning" text="RESEARCH" /> Trace (CS-01): with the body complete before `clientReady`, the message waits in the slot and the 1.5 s save runs (3 of 3 runs), so the defect does not occur in that order. The window that remains is `clientReady` between `QSS:628` and `:638` on the session thread; a script cannot place it. Code reading: Q1 happens when the client is not ready yet (the first-load message replaces the held preload), or when the preload message is still in the queue (it is removed). The session posts the 1.5 s save only if, at that moment, the main thread has not yet handled the first-load message (`QSS:638`). If it has, no save follows: a page given as data is never intercepted, so no stream closes. **Probable upstream defect:** a Quick first load can miss its cache write.
-2. <Badge type="warning" text="RESEARCH" /> Not reached in T-05: the upstream servers always send the page body, and no lab page is empty. Code reading: a first-load message "without data" while no intercept happened arises only with an empty `200` body (the read ends at once, `SV:394-400`). If the preload `loadUrl` has not run yet, it is removed or replaced and **nothing loads**. If it ran, the intercept later gets an empty stream. **Probable upstream defect.**
+2. <Badge type="tip" text="FACT" /> Trace (CS-20, S2, page `empty`, 3 of 3 runs): the session makes no load call (no `loadUrl`, no data), the codes stay -1 / -1, no message, no cache; only the scripted intercept gets an empty stream. **Probable upstream defect confirmed:** a web view that waits for the session gets nothing to load. Code reading: a first-load message "without data" while no intercept happened arises only with an empty `200` body (the read ends at once, `SV:394-400`). If the preload `loadUrl` has not run yet, it is removed or replaced and nothing loads. If it ran, the intercept later gets an empty stream.
 3. With `RELOAD_IN_BAD_NETWORK` on (default **off**, `CFG:61`), the error removes the preload message and the session calls `loadUrl` once (`QSS:493-499`, `:207-214`). With a cache, this normal load replaces the cached page.
 4. <Badge type="warning" text="RESEARCH" /> Trace: cache first (CS-04) delivers the diff; network first (CS-05) loads the rebuilt page. The loss needs the preload between `QSS:697` and `:723`, which a script cannot place. After a first load the diff holds **every** block: the first-load data file has the form `{"data": …}` (`SV:436-446`), which the diff does not read as a block map (`SU:251-299`; CS-04). Code reading: the branch is chosen on the session thread (`QSS:697`), but the preload runs on the main thread. If the preload runs between the check and the message, the update arrives with the page but no diff: the page reports 200 / 304 and keeps the old cache on screen. **Probable upstream defect: the data update is lost.** The write: if the diff failed or the rebuilt page is empty, the cache is removed instead (`QSS:736-740`). The local data file becomes the full server data (`QSS:755`).
 5. <Badge type="tip" text="FACT" /> The handler drops the page callback: in CS-06 no message came at the result, and the next `getDiffData` gave 2000 / 2000. <Badge type="warning" text="RESEARCH" /> The read until page finish is not in the catalog. Code reading: in the template change, the session reads the new body until the app reports page finish for the cached page (`QSS:538`). The template-change handler also drops the page callback, so the page must call `getDiffData` again (`QSS:380-381`).
@@ -330,7 +330,7 @@ Notes:
 | S13 | yes | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> CS-11 |
 | S14 | yes | `cache-offline` absent, empty or `false` | — | <Badge type="tip" text="FACT" /> CS-09 |
 | S15 | yes | etag or `template-change` missing | — | <Badge type="tip" text="FACT" /> CS-14 |
-| S16 | any | template change during `refresh()` | — | <Badge type="warning" text="RESEARCH" /> not reached in CS-27: the refresh request has the new etag and tag, so the server answers `304` ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
+| S16 | any | template change during `refresh()` | — | <Badge type="tip" text="FACT" /> CS-29: no load call, 2000 / 304 at the result, the 1.5 s save writes the new page (note 4) ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
 | S17 | none | first load, read error | During the bridge stream | <Badge type="tip" text="FACT" /> CS-13a |
 | S18 | any | no request (F3) | — | <Badge type="tip" text="FACT" /> |
 
@@ -362,7 +362,7 @@ Notes:
 1. <Badge type="tip" text="FACT" /> Trace: body first gives 1000 / 304 and two saves (CS-01); intercept first gives 1000 / 1000 and one save, at the close (CS-02). "Body first" (1000 / 304) means only that the body was read before the intercept; the page still loads through `loadUrl` and the intercept. With a complete body the session posts the 1.5 s save, and the stream close posts a second save (`STD:382-387`, `SS:984-994`).
 2. <Badge type="tip" text="FACT" /> S6 and S8: if F12 does not allow the write (for example `cache-offline: TRUE`, or `Cache-Control: no-store` with `SUPPORT_CACHE_CONTROL`), Standard removes the cache and then writes the files and metadata anyway, because it does not return (`STD:487-515`). Quick returns (`QSS:736-740`). Trace (CS-08, CS-10, value `true,http` or `true,store`): Standard writes the page, data and header files but no template file; Quick leaves no cache.
 3. <Badge type="warning" text="RESEARCH" /> Trace (CS-05): the intercept got the rebuilt page. The defect needs an intercept between `STD:470` and `:472`, which a script cannot place. Code reading: the intercept check (`STD:470`) is outside the stream lock. If the intercept takes the cached stream just after the check, the rebuilt stream is never read and the page reports 200 / 304 while the old cache shows. **Probable upstream defect.**
-4. <Badge type="warning" text="RESEARCH" /> `refresh()` resets the intercept flag, so the handler reports 2000 / 304 and makes no load call. Whether the app reloads the page itself is outside the SDK.
+4. <Badge type="tip" text="FACT" /> Trace (CS-29, 3 of 3 runs): `refresh()` resets the intercept flag, so the handler reports 2000 / 304 and makes no load call; the web view keeps the old page, and the new page waits as the pending stream. The page callback that the page set before gets the message at the result (`isReload` `"true"`). <Badge type="warning" text="RESEARCH" /> Whether the app reloads the page itself is outside the SDK.
 
 ### 3.3 Differences between the modes
 

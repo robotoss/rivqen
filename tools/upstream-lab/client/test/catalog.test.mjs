@@ -20,12 +20,11 @@ test('scenarios_json_is_valid_and_has_the_catalog_of_the_sprint_record', () => {
   assert.deepEqual(
     scenarios.map((s) => s.id),
     ['CS-01', 'CS-02', 'CS-03', 'CS-04', 'CS-05', 'CS-06', 'CS-07', 'CS-08', 'CS-09', 'CS-10', 'CS-11', 'CS-12', 'CS-13a', 'CS-13b', 'CS-14', 'CS-15', 'CS-16', 'CS-17', 'CS-18', 'CS-19',
-      'CS-20', 'CS-21', 'CS-22', 'CS-23', 'CS-24a', 'CS-24b', 'CS-24c', 'CS-25', 'CS-26', 'CS-27'],
+      'CS-20', 'CS-21', 'CS-22', 'CS-23', 'CS-24a', 'CS-24b', 'CS-24c', 'CS-25', 'CS-26', 'CS-27', 'CS-28', 'CS-29'],
   );
   const rows = new Set(scenarios.flatMap((s) => s.rows));
-  // Q11, Q19 and S16 need a body fault and a case step inside steps: no scenario reaches them (S2 lab run).
-  for (const row of ['Q3', 'Q9', 'Q13', 'Q16', 'S4', 'S8', 'S10', 'S12']) assert.ok(rows.has(row), `a scenario observes ${row}`);
-  for (const row of ['Q11', 'Q19', 'S16']) assert.ok(!rows.has(row), `no scenario claims ${row}`);
+  // H-126: Q11 (body fault, CS-28), Q19 and S16 (case step inside the steps, CS-29) are observed too.
+  for (const row of ['Q3', 'Q9', 'Q11', 'Q13', 'Q16', 'Q19', 'S4', 'S8', 'S10', 'S12', 'S16']) assert.ok(rows.has(row), `a scenario observes ${row}`);
   for (const s of scenarios) {
     assert.deepEqual(s.modes, ['quick', 'standard'], s.id);
     assert.equal(s.repeat, s.id === 'CS-19' ? 1 : 3, s.id);
@@ -71,6 +70,24 @@ test('functions_json_has_the_cases_for_the_review_of_the_pages', () => {
   assert.ok(htmls.some((h) => h.includes('<!--SONICDIFF-->A<!--SONICDIFF-END-->')), 'unnamed uppercase marker');
   assert.ok(inputs('message').some((i) => i.src_code === 1000 && i.final_code === 1000 && i.fields.some(([n, v]) => n === 'cache-offline' && v === 'store')), 'store with final 1000');
   assert.ok(inputs('diff').some((i) => i.local && Object.keys(i.server).every((k) => i.local[k] === i.server[k])), 'empty diff');
+});
+
+test('scenarios_json_reaches_q11_with_a_body_fault_and_q19_s16_with_a_case_step', () => {
+  const byId = Object.fromEntries(scenarios.map((s) => [s.id, s]));
+  const cs28 = byId['CS-28'];
+  assert.deepEqual(cs28.rows, ['Q11']);
+  // the body fault is armed before the request of the scenario session, with a non-empty wrong value
+  assert.deepEqual(cs28.steps[0], { do: 'set_body_member', name: 'html-sha1', value: '0000000000000000000000000000000000000000' });
+  assert.equal(cs28.steps[1].do, 'create_session');
+  assert.deepEqual([cs28.setup[0].case.page, cs28.case.page], ['a', 'b']); // a data update: same template, other data
+  const cs29 = byId['CS-29'];
+  assert.deepEqual(cs29.rows, ['Q19', 'S16']);
+  assert.deepEqual([cs29.setup[0].case.page, cs29.case.page], ['a', 'a']); // the session first gets 304 and shows the cache
+  const order = cs29.steps.map((s) => s.do);
+  const at = order.indexOf('case');
+  assert.deepEqual(cs29.steps[at].value, { page: 'c' }); // a new template
+  assert.deepEqual(order.slice(at - 1, at + 3), ['settle', 'case', 'refresh', 'settle']);
+  assert.ok(order.indexOf('client_ready') < at && order.indexOf('request_resource') < at);
 });
 
 test('scenarios_json_names_the_final_row_ids_of_the_pages', () => {
@@ -173,13 +190,16 @@ test('expand_setup_turns_first_load_into_its_steps', () => {
   assert.deepEqual(items[0], { case: { page: 'a' } });
   assert.deepEqual(items.slice(1, 1 + FIRST_LOAD.length).map((i) => i.step), FIRST_LOAD);
   assert.deepEqual(items.at(-1), { step: { do: 'set_account', value: 'x' } });
-  assert.equal(FIRST_LOAD.at(-2).ms, 2500);
+  assert.equal(FIRST_LOAD.at(-3).ms, 2500);
 });
 
 test('first_load_waits_for_body_end', () => {
-  // CONTRACT section 2 (S2): the order is fixed, client_ready comes after the end of the body.
-  assert.deepEqual(FIRST_LOAD.map((s) => s.do), ['create_session', 'bind_client', 'wait', 'client_ready', 'request_resource', 'settle', 'destroy']);
-  assert.equal(FIRST_LOAD[2].for, 'proxy.response_end');
+  // CONTRACT section 2 (S2, H-126): the order is fixed; client_ready comes 300 ms after the end of the body,
+  // and the macro ends with 1500 ms after destroy.
+  assert.deepEqual(FIRST_LOAD, [
+    { do: 'create_session' }, { do: 'bind_client' }, { do: 'wait', for: 'proxy.response_end' }, { do: 'settle', ms: 300 },
+    { do: 'client_ready' }, { do: 'request_resource' }, { do: 'settle', ms: 2500 }, { do: 'destroy' }, { do: 'settle', ms: 1500 },
+  ]);
 });
 
 test('step_set_field_needs_a_name_and_a_string_value', () => {

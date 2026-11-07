@@ -28,7 +28,8 @@ const ex = (v) => isInt(v) && v >= 1;
 
 /** Event name -> { src: allowed sources, need: member checks, opt: optional member checks }. */
 export const SCHEMA = {
-  'run.start': { src: ['conductor'], need: { scenario: str, mode: str, repeat: isInt, origin: str, upstream_sha: str } },
+  // `macro` is the version of the first_load macro; runs stored before H-126 have none (CONTRACT section 5).
+  'run.start': { src: ['conductor'], need: { scenario: str, mode: str, repeat: isInt, origin: str, upstream_sha: str }, opt: { macro: (v) => v === 2 } },
   'step.start': { src: ['conductor'], need: { step: isObject } },
   'step.done': { src: ['conductor', 'harness'], need: { step: isObject }, opt: { error: str } },
   'session.created': { src: ['harness'], need: { session_id: strOrNull } },
@@ -56,6 +57,13 @@ export const SCHEMA = {
   'proxy.cut': { src: ['proxy'], need: { exchange: intOrNull, bytes: isInt } },
   'proxy.drop_field': { src: ['proxy'], need: { exchange: intOrNull, name: str } },
   'proxy.set_field': { src: ['proxy'], need: { exchange: intOrNull, name: str, value: (v) => typeof v === 'string' } },
+  // `reason` exactly when the fault was not applied (CONTRACT section 5).
+  'proxy.set_body_member': {
+    src: ['proxy'],
+    need: { exchange: intOrNull, name: str, value: (v) => typeof v === 'string', applied: bool },
+    opt: { reason: str },
+    rule: (e) => (e.applied === ('reason' in e) ? 'reason only and always with applied false' : null),
+  },
   'proxy.hold': { src: ['proxy'], need: { exchange: ex, point: str }, opt: { bytes: isInt } },
   'proxy.release': { src: ['proxy'], need: { exchange: intOrNull, point: str } },
   'client.clear_history': { src: ['harness'], need: {} },
@@ -100,6 +108,8 @@ export function eventProblems(e) {
     if (k in e && !test(e[k])) out.push(`${e.ev}: bad ${k}`);
   }
   for (const k of Object.keys(e)) if (!known.has(k)) out.push(`${e.ev}: unknown member ${k}`);
+  const broken = spec.rule?.(e);
+  if (broken) out.push(`${e.ev}: ${broken}`);
   return out;
 }
 

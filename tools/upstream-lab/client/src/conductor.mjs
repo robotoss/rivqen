@@ -11,7 +11,7 @@ import { formatExchange } from './httpfile.mjs';
 import { LabError } from './errors.mjs';
 import { makeRunHandle } from './runhandle.mjs';
 import { postCase, PAGES_DIR } from './lab.mjs';
-import { ORIGINS, expandSetup, isHarnessStep } from './steps.mjs';
+import { MACRO_VERSION, ORIGINS, expandSetup, isHarnessStep } from './steps.mjs';
 
 export const DEFAULTS = {
   proxyPort: 18090,
@@ -55,13 +55,17 @@ export async function executeRun(options) {
   const control = new Control({ port: o.controlPort, run, pollMs: o.pollMs });
 
   let epoch = 0; // seq of the latest create_session; `wait` looks at events after it
+  const post = (c) => postCase({ origin: scenario.origin, caseId: runId, scenarioCase: c, pagesDir: o.pagesDir, fetchImpl: o.fetchImpl, ports: o.originPorts });
   async function conductorStep(step) {
     switch (step.do) {
       case 'hold':
       case 'cut':
       case 'drop_field':
       case 'set_field':
+      case 'set_body_member':
         return proxy.arm(step);
+      case 'case':
+        return post(step.value);
       case 'release':
         return proxy.release();
       case 'server_down':
@@ -99,8 +103,7 @@ export async function executeRun(options) {
   try {
     await proxy.start();
     await control.start();
-    log.emit('conductor', 'run.start', { scenario: scenario.id, mode, repeat: o.repeat, origin: scenario.origin, upstream_sha: o.upstreamSha });
-    const post = (c) => postCase({ origin: scenario.origin, caseId: runId, scenarioCase: c, pagesDir: o.pagesDir, fetchImpl: o.fetchImpl, ports: o.originPorts });
+    log.emit('conductor', 'run.start', { scenario: scenario.id, mode, repeat: o.repeat, origin: scenario.origin, upstream_sha: o.upstreamSha, macro: MACRO_VERSION });
     harness = await o.startHarness({ runId, controlUrl: o.controlUrl, controlPort: control.port, proxyPort: proxy.port, onFatal: (e) => channel.fail(e) });
     let seq = 0;
     for (const item of expandSetup(scenario.setup)) {

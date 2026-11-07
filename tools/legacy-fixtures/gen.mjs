@@ -45,7 +45,7 @@ export const CATALOG_SIZE = 59;
  * client run (check 11) are problems; at 0 they are notes. 82 since the
  * client fixtures of WP-01 S2 T-06.
  */
-export const CLIENT_FLOOR = 82;
+export const CLIENT_FLOOR = 86;
 
 const GENERATED = 'expected.json';
 const TRACE_SERVERS = ['java', 'node', 'php'];

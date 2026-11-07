@@ -71,7 +71,8 @@ function writeTraces(root, stem, request, change = {}) {
 }
 
 function options(root, dir, extra = {}) {
-  return { check: true, dir, root, wirePage: WIRE, labPages: join(root, 'no-lab'), traces: [], ...extra };
+  // clientFloor 0: these tests do not test the client floor (gen-client.test.mjs does).
+  return { check: true, dir, root, wirePage: WIRE, labPages: join(root, 'no-lab'), traces: [], clientFloor: 0, ...extra };
 }
 
 test('check_detects_stale_expected', () => {
@@ -366,7 +367,7 @@ test('every_trace_backed_canonical_fixture_names_the_same_trace_scenario_for_the
   for (const name of readdirSync(dir)) {
     if (!name.startsWith('FX-LEG-') || name.includes('--')) continue;
     const c = JSON.parse(readFileSync(join(dir, name, 'case.json'), 'utf8'));
-    if (c.evidence !== 'trace') continue;
+    if (c.kind === 'client' || c.evidence !== 'trace') continue; // a client fixture names one client trace (`trace`)
     const stems = new Set(Object.values(c.traces).map(stem));
     assert.equal(stems.size, 1, name);
     for (const [profile, path] of Object.entries(c.traces)) assert.ok(path.includes(`/${profile.slice(7)}/`), `${name} ${profile}`);
@@ -463,7 +464,7 @@ test('malformed_dir_has_no_rule_coverage_check', () => {
   assert.equal(second.out.stderr, '');
   // without --dir, the old behavior: a directory below the catalog size gets a note about the rules
   const plain = capture();
-  assert.equal(main(['--check'], { ...plain.io, dir, traces: [] }), 0);
+  assert.equal(main(['--check'], { ...plain.io, dir, traces: [], clientFloor: 0 }), 0);
   assert.match(plain.out.stderr, /note: rule coverage is checked at 59 canonical fixtures \(now 1\); not covered yet: C-01, C-17/);
   // a rule that does not exist is still an error in this directory
   write(dir, 'FX-LEG-MAL-S', canonicalCase('FX-LEG-MAL-S', PLAIN_REQUEST, null, { rules: ['C-02', 'C-99'] }));

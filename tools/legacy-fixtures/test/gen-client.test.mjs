@@ -5,11 +5,12 @@
 // temporary directory, with the stored client evidence of the repository.
 
 import assert from 'node:assert/strict';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, test } from 'node:test';
 import { CLIENT_FLOOR, run } from '../gen.mjs';
+import { CLIENT_NAME } from '../src/client-case.mjs';
 import { REPO_ROOT } from '../src/fixture.mjs';
 import { PAGES, recordedModes, scenarioCase } from './client-helpers.mjs';
 
@@ -36,7 +37,8 @@ function fixture(scenario, mode, extra = {}) {
   return { ...scenarioCase(scenario, mode), rules: ['CL-20', 'CL-22'], ...extra };
 }
 
-const gen = (dir, extra = {}) => run({ dir, root: REPO_ROOT, catalog: false, coverage: false, labPages: null, traces: [], check: true, ...extra });
+// clientFloor 0 unless a test sets the floor: a temporary directory has only the fixtures of its test.
+const gen = (dir, extra = {}) => run({ dir, root: REPO_ROOT, catalog: false, coverage: false, labPages: null, traces: [], check: true, clientFloor: 0, ...extra });
 const write_ = (dir, extra = {}) => gen(dir, { check: false, ...extra });
 
 test('writes_and_checks_a_canonical_client_fixture_and_its_android_override', () => {
@@ -166,8 +168,11 @@ test('check11_without_client_fixtures_is_a_note', () => {
   assert.ok(r.notes.includes(`stored-run use is checked when CLIENT_FLOOR is above 0; ${unused} stored scenario modes have no client fixture yet`), r.notes.join('\n'));
 });
 
-test('client_floor_is_0_until_the_client_fixtures_exist', () => {
-  assert.equal(CLIENT_FLOOR, 0);
+test('client_floor_equals_the_number_of_canonical_client_fixtures_of_the_catalog', () => {
+  const catalog = join(REPO_ROOT, 'fixtures/legacy');
+  const canonical = readdirSync(catalog).filter((name) => CLIENT_NAME.test(name) && !name.endsWith('--ANDROID'));
+  assert.ok(canonical.length > 0);
+  assert.equal(CLIENT_FLOOR, canonical.length);
 });
 
 test('client_floor_0_makes_checks_10_and_11_notes_also_with_a_client_fixture', () => {

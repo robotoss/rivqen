@@ -1,0 +1,15 @@
+{
+  "id": "FX-LEG-CL-CS28-S--ANDROID",
+  "kind": "client",
+  "description": "legacy-android: the request carries sonic-sdk-version and empty validators; the answer to the intercepted request differs; D-49 in Standard (A-19): the cached page stays, the page gets the diff of every block with 200 / 200, and the cache keeps the data and the header lines without a page and a template",
+  "profile": "legacy-android",
+  "replaces": "FX-LEG-CL-CS28-S",
+  "divergences": [
+    "D-25",
+    "D-49"
+  ],
+  "sources": [
+    "docs:engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects",
+    "docs:engineering/protocol/legacy-client-traces#_6-new-findings"
+  ]
+}

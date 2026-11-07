@@ -107,11 +107,24 @@ function headerLines(text) {
 
 const FILE_PART = Object.freeze({ '.html': 'page_sha256', '.tpl': 'template_sha256', '.data': 'data_sha256', '.header': 'header' });
 
+/**
+ * The rebuilt page that failed the `html-sha1` check stays as `<stem>.html.tmp` (trace report
+ * section 4 note 8, section 6 finding 15; CS-28). It is a work file, not a part of the cache
+ * record (CL-38, DL-110: page, template, data, header), so the projection does not use it. Its
+ * stem must still be the id of a session of the run.
+ */
+export const WORK_FILE = '.html.tmp';
+
 function snapshotOf(event, sessionsById) {
   if (!Array.isArray(event.files)) throw new TraceProjectionError('TRACE_SNAPSHOT', 'cache.snapshot without files');
   const stems = new Map();
   for (const file of event.files) {
     if (!isObject(file) || typeof file.name !== 'string') throw new TraceProjectionError('TRACE_SNAPSHOT', 'a snapshot file without a name');
+    if (file.name.endsWith(WORK_FILE)) {
+      const stem = file.name.slice(0, -WORK_FILE.length);
+      if (!sessionsById.has(stem)) throw new TraceProjectionError('TRACE_SNAPSHOT', `cache file stem ${stem} is not the id of a session of the run`);
+      continue;
+    }
     const dot = file.name.lastIndexOf('.');
     const ext = dot < 0 ? '' : file.name.slice(dot);
     const part = FILE_PART[ext];

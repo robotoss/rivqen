@@ -342,7 +342,7 @@ The server model of `server_profile` (`respond` in `src/model.mjs`) answers each
 | Item | Rule |
 |---|---|
 | `{ "case": "<name>" }` | Sets the current application response for the next requests (the `case` of a scenario, CONTRACT §2). It is not a step: it has no number and no trace event. A `case` entry must come before the first step that sends a request |
-| `{ "do": "<step word>", … }` | One step of CONTRACT §3, with the members of that step word (`point`, `bytes`, `name`, `value`, `valid`, `for`, `timeout_ms`, `ms`) and the optional `session` (1-based index of the opened sessions) and `wait_ms` (`request_resource`). An unknown word or member is a case error |
+| `{ "do": "<step word>", … }` | One step of CONTRACT §3, with the members of that step word (`point`, `bytes`, `name`, `value`, `valid`, `for`, `timeout_ms`, `ms`) and the optional `session` (1-based index of the opened sessions) and `wait_ms` (`request_resource`). The S2 conductor steps are step words too: `set_body_member` (`name`, `value`; a body fault on the next exchange) and `case` (`value`: the form of a scenario `case`, `page` with optional `status` and `headers`; the application response of every later exchange; unlike a `case` entry it is a numbered step). An unknown word or member is a case error |
 
 Steps are numbered from 1 in schedule order; `case` entries are not counted. For `evidence: trace`, the steps must equal the `step` objects of the `step.start` events of the trace without their `seq` member, in order (check 7). There is no macro: write the steps of `first_load` out. Reason: the macro changed between S1 (free order) and S2 (fixed order), and a trace keeps the steps that ran. A WebView run (`webview: true`, CS-19) has no client fixture.
 

@@ -27,6 +27,8 @@ export const STEP_MEMBERS = Object.freeze({
   cut: ['bytes'],
   drop_field: ['name'],
   set_field: ['name', 'value'],
+  set_body_member: ['name', 'value'],
+  case: ['value'],
   server_down: [],
   server_up: [],
   wait: ['for', 'timeout_ms'],
@@ -37,7 +39,7 @@ export const STEP_MEMBERS = Object.freeze({
 /** The events that a `wait` step can name (CONTRACT section 5) and that the model produces. */
 export const WAIT_EVENTS = Object.freeze([
   'proxy.request', 'proxy.response_head', 'proxy.response_end', 'proxy.hold', 'proxy.release', 'proxy.cut',
-  'proxy.drop_field', 'proxy.set_field', 'session.created', 'session.result', 'session.message', 'client.load_url',
+  'proxy.drop_field', 'proxy.set_field', 'proxy.set_body_member', 'session.created', 'session.result', 'session.message', 'client.load_url',
   'client.load_data', 'client.intercept', 'runtime.cookie_get', 'runtime.cookie_set', 'cache.snapshot',
 ]);
 
@@ -146,6 +148,23 @@ function responseEntry(entry, where) {
   return { page: entry.page, app: appOf(entry.app, `${where}.app`) };
 }
 
+/**
+ * The `value` of a `case` step: the form of a scenario `case` (CONTRACT section 2 and 3; the checks
+ * of the lab, tools/upstream-lab/client/src/steps.mjs): `page`, optional `status` and `headers`.
+ * Returns the response entry { page, app } with the defaults of a `responses` entry.
+ */
+function stepCase(value, where) {
+  onlyKeys(value, ['page', 'status', 'headers'], where);
+  if (typeof value.page !== 'string' || !PAGE_ID.test(value.page)) fail('CASE_STEP', `${where}.page must be a page ID`);
+  const app = { status: DEFAULT_APP.status, headers: DEFAULT_APP.headers.map(([n, v]) => [n, v]) };
+  if (Object.hasOwn(value, 'status')) {
+    if (!isIntIn(value.status, 100, 599)) fail('CASE_STEP', `${where}.status must be an integer from 100 to 599`);
+    app.status = value.status;
+  }
+  if (Object.hasOwn(value, 'headers')) app.headers = fieldPairs(value.headers, `${where}.headers`);
+  return { page: value.page, app };
+}
+
 function urlOf(value, where) {
   if (!isText(value)) fail('CASE_TYPE', `${where} must be a string`);
   let parsed;
@@ -214,9 +233,13 @@ function stepOf(item, index) {
       step.name = item.name;
       break;
     case 'set_field':
+    case 'set_body_member':
       if (!isText(item.name) || item.name === '' || !isText(item.value)) fail('CASE_STEP', `${where}.name and .value must be strings`);
       step.name = item.name;
       step.value = item.value;
+      break;
+    case 'case':
+      step.response = stepCase(item.value, `${where}.value`);
       break;
     case 'wait':
       if (!WAIT_EVENTS.includes(item.for)) fail('CASE_STEP', `${where}.for must be an event that the model produces`);

@@ -1,0 +1,14 @@
+{
+  "id": "FX-LEG-CL-CS29-Q--ANDROID",
+  "kind": "client",
+  "description": "legacy-android: the request carries sonic-sdk-version and empty validators; the answer to the intercepted request differs; load_data keeps the legacy control fields; the cookie calls differ; Q19 (A-20): the refresh sends the empty validators of the 304 and makes no load call; 2000 / 2000 at the result; the cache record differs",
+  "profile": "legacy-android",
+  "replaces": "FX-LEG-CL-CS29-Q",
+  "divergences": [
+    "D-37"
+  ],
+  "sources": [
+    "docs:engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects",
+    "docs:engineering/protocol/legacy-client-traces#_6-new-findings"
+  ]
+}

@@ -3,7 +3,8 @@
 
 // The step engine of the client model (CL-01, CL-02, CL-04): it runs the schedule of a client
 // case, plays the lab runtime (account, cookie, network), the recording proxy (hold, cut,
-// drop_field, set_field, server_down) and the clock, and records the projection of
+// drop_field, set_field, set_body_member, server_down), the conductor `case` step and the clock,
+// and records the projection of
 // fixtures/legacy/README.md "Client expected.json". The session behavior is a profile
 // (src/client-canonical.mjs, src/client-android.mjs); the engine only routes events to it.
 //
@@ -13,6 +14,7 @@
 // ClientCaseError; the engine throws nothing else for a checked case.
 
 import { createHash } from 'node:crypto';
+import { setBodyMember } from '../../upstream-lab/client/src/bodymember.mjs';
 import { forwardFields, setField } from '../../upstream-lab/client/src/proxy.mjs';
 import { ClientCaseError } from './client-case.mjs';
 import { REQUEST_FIELDS, RESPONSE_FIELDS, sortedEntries } from './client-trace.mjs';
@@ -41,7 +43,7 @@ function newPhase() {
   return { steps: [], requests: [], cookies: [], actions: [], intercepts: [], results: [], snapshots: [] };
 }
 
-const noFaults = () => ({ hold: null, cut: null, drop: [], set: [] });
+const noFaults = () => ({ hold: null, cut: null, drop: [], set: [], body: [] });
 
 /**
  * One run of a client case under a profile.
@@ -67,7 +69,8 @@ export class Sim {
     this.pending = noFaults();
     this.holdRef = null;
     this.serverDown = false;
-    this.current = null;
+    this.current = null; // the current application response entry: { page, app } or { fixture }
+    this.bodyEdits = []; // set_body_member outcomes in exchange order: { exchange, name, value, applied, reason? }
     this.seen = new Set();
     this.timers = [];
     this.stepNo = 0;
@@ -80,7 +83,7 @@ export class Sim {
     let close = false;
     for (const item of this.b.schedule) {
       if (item.case !== undefined) {
-        this.current = item.case;
+        this.current = this.b.responses.get(item.case);
         continue;
       }
       if (close) {
@@ -217,6 +220,16 @@ export class Sim {
       case 'set_field':
         this.pending.set.push({ name: step.name, value: step.value });
         return undefined;
+      case 'set_body_member':
+        this.pending.body.push({ name: step.name, value: step.value });
+        return undefined;
+      case 'case':
+        // CONTRACT section 3: the application response changes for every later exchange. The lab
+        // proxy asks the origin only after a `request` hold, so a change during that hold would
+        // reach the held exchange; the model computes the answer at the request: not modeled.
+        if (this.holdRef?.point === 'request' && this.holdRef.ex !== null) throw caseError('CASE_HOLD', `step ${this.stepNo}: a case step while an exchange is held at its request is not modeled`);
+        this.current = step.response;
+        return undefined;
       case 'server_down':
         if (this.holdRef?.ex) throw caseError('CASE_HOLD', `step ${this.stepNo}: server_down while an exchange is held is not modeled`);
         this.serverDown = true;
@@ -269,8 +282,7 @@ export class Sim {
   }
 
   // --- the proxy ---
-  responseOf(name) {
-    const entry = this.b.responses.get(name);
+  responseOf(entry) {
     if (entry.fixture !== undefined) {
       const fx = this.env.fixture?.(entry.fixture) ?? null;
       if (fx === null) throw caseError('CASE_FIXTURE', `responses: server fixture ${entry.fixture} is not a canonical server fixture`);
@@ -298,7 +310,14 @@ export class Sim {
     this.pending = noFaults();
     let headers = forwardFields(response.headers, faults.drop);
     for (const { name, value } of faults.set) headers = setField(headers, name, value);
-    const body = response.body === null ? Buffer.alloc(0) : Buffer.from(response.body);
+    let body = response.body === null ? Buffer.alloc(0) : Buffer.from(response.body);
+    // CONTRACT section 3 `set_body_member`, after the field faults as in the lab proxy (the lab function by import).
+    for (const { name, value } of faults.body) {
+      const edit = setBodyMember({ fields: headers, body, name, value });
+      headers = edit.fields;
+      body = edit.body;
+      this.bodyEdits.push({ exchange: this.exchangeNo + 1, name, value, applied: edit.applied, ...(edit.applied ? {} : { reason: edit.reason }) });
+    }
     const target = new URL(session.url);
     const entry = { exchange: ++this.exchangeNo, method: 'GET', target: `${target.pathname}${target.search}`, fields: pick(fields, REQUEST_FIELDS), response: null };
     this.phase.requests.push(entry);
@@ -319,7 +338,7 @@ export class Sim {
       }
     }
     if (ops.at(-1).op !== 'cut') ops.push({ op: 'body', to: body.length }, { op: 'end' });
-    const ex = { n: entry.exchange, session, gen, status: response.status, headers, body, given: 0, ended: false, complete: false, entry, ops, at: 0, drop: faults.drop, set: faults.set };
+    const ex = { n: entry.exchange, session, gen, status: response.status, headers, body, given: 0, ended: false, complete: false, entry, ops, at: 0, drop: faults.drop, set: faults.set, edits: faults.body.length };
     this.pump(ex);
     return ex;
   }
@@ -334,6 +353,7 @@ export class Sim {
       } else if (op.op === 'head') {
         for (const _ of ex.drop) this.emit('proxy.drop_field');
         for (const _ of ex.set) this.emit('proxy.set_field');
+        if (ex.edits > 0) this.emit('proxy.set_body_member');
         ex.entry.response = { status: ex.status, fields: pick(ex.headers, RESPONSE_FIELDS), complete: false };
         this.emit('proxy.response_head');
         ex.session.onHead(ex);

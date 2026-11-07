@@ -7,8 +7,7 @@
   "server_profile": "legacy-node",
   "rules": [
     "CL-22",
-    "CL-27",
-    "CL-29"
+    "CL-27"
   ],
   "rows": [
     "Q10",

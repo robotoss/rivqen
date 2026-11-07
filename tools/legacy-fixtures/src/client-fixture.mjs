@@ -116,7 +116,8 @@ export function clientPart(o) {
     let out;
     if (runs.length === 0) out = { error: `no stored run for ${c.trace.scenario} ${c.trace.mode}` };
     else {
-      const want = c.schedule.filter((s) => s.do !== undefined);
+      // The steps as written in case.json (a checked `case` step holds its response, not its `value`).
+      const want = c.raw.schedule.filter((s) => s.do !== undefined);
       const bad = runs.findIndex((events) => !isDeepStrictEqual(traceSteps(events), want));
       out = bad >= 0 ? { error: `the steps differ from the steps of run ${bad + 1} of ${c.trace.scenario} ${c.trace.mode}` } : projectRuns(runs, { url: c.url, account: c.config.account });
     }

@@ -56,6 +56,9 @@ test('more_session_created_events_than_create_session_steps_is_a_projection_erro
   const run = parseRun(lines(step(1, { do: 'create_session' }), created(1), created(2)));
   assert.throws(() => projectRun(run, CTX), { code: 'TRACE_SESSION', message: /2 session\.created events for 1 create_session steps/ });
   assert.equal(projectRun(parseRun(lines(step(1, { do: 'create_session' }), created(1))), CTX).sessions.length, 1);
+  // Only conductor steps count, as in traceSteps: a harness step.start is not a create_session step.
+  const harness = { ev: 'step.start', src: 'harness', seq: 2, step: { do: 'create_session', seq: 2 } };
+  assert.equal(projectRun(parseRun(lines(step(1, { do: 'create_session' }), harness, created(1))), CTX).sessions.length, 1);
 });
 
 test('a_run_that_is_not_valid_utf8_is_a_trace_input_error', () => {

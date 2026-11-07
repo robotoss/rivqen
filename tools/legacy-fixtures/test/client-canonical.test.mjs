@@ -428,6 +428,7 @@ test('cl03_cl25_dl123_a_request_cookie_commits_only_with_authenticated_cache_and
   assert.equal(snapAfterFirst({ cookie, authenticated_cache: true }).length, 1);
   assert.deepEqual(snapAfterFirst({ cookie, authenticated_cache: true, account: null }), []);
   assert.equal(snapAfterFirst({ cookie: '' }).length, 1); // an empty cookie is not a credential
+  assert.equal(snapAfterFirst({ cookie: ' \t' }).length, 1); // nor a value of white space only (the field value is empty)
   assert.equal(snapAfterFirst({}).length, 1); // anonymous: no change
 });
 

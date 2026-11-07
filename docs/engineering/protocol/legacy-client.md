@@ -251,23 +251,23 @@ How to read the tables:
 |---|---|---|---|---|
 | Q1 | none | first load | Body complete before the preload `loadUrl` runs | <Badge type="tip" text="FACT" /> CS-01 |
 | Q2 | none | first load | Preload `loadUrl` and intercept first | <Badge type="tip" text="FACT" /> CS-02 |
-| Q3 | none | first load, empty body | Before any intercept | <Badge type="warning" text="RESEARCH" /> not reached (no empty page) |
+| Q3 | none | first load, empty body | Before any intercept | <Badge type="tip" text="FACT" /> CS-20: no load call, the scripted intercept gets an empty stream; probable defect confirmed ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
 | Q4 | none | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> CS-12 |
 | Q5 | none | `cache-offline: http` | — | <Badge type="tip" text="FACT" /> |
 | Q6 | none | first load, `cache-offline` not `true` or `store` | As Q1 or Q2 | <Badge type="tip" text="FACT" /> |
 | Q7 | yes | `304`, or `200` with the request etag | — | <Badge type="tip" text="FACT" /> CS-03 |
-| Q8 | yes | data update | Cache given as data first; diff not empty | <Badge type="tip" text="FACT" /> CS-04 |
-| Q9 | yes | data update with `store`, or diff failed | Cache given as data first | <Badge type="warning" text="RESEARCH" /> not reached (no `store` alone) |
+| Q8 | yes | data update | Cache given as data first; diff not empty | <Badge type="tip" text="FACT" /> CS-04; CS-24c (`TRUE`: diff sent, then the cache is removed, D-30) |
+| Q9 | yes | data update with `store`, or diff failed | Cache given as data first | <Badge type="tip" text="FACT" /> CS-22 (`store`); the "diff failed" form is not reached |
 | Q10 | yes | data update | Network first | <Badge type="tip" text="FACT" /> CS-05 |
-| Q11 | yes | data update, rebuild fails | Network first | <Badge type="warning" text="RESEARCH" /> not in the catalog |
+| Q11 | yes | data update, rebuild fails | Network first | <Badge type="warning" text="RESEARCH" /> not reached: CS-26 changes the `html-sha1` field of the head, but the SDK takes the value of a data update from the body ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
 | Q12 | yes | template change, not `store` | Cache given as data first | <Badge type="tip" text="FACT" /> CS-06 |
-| Q13 | yes | template change with `store` | Cache given as data first | <Badge type="warning" text="RESEARCH" /> not reached (no `store` alone) |
-| Q14 | yes | template change | Network first | <Badge type="tip" text="FACT" /> CS-07 |
+| Q13 | yes | template change with `store` | Cache given as data first | <Badge type="tip" text="FACT" /> CS-23 |
+| Q14 | yes | template change | Network first | <Badge type="tip" text="FACT" /> CS-07; CS-21 (empty new page): the empty page is given as data, not `loadUrl` ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
 | Q15 | yes | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> CS-11 |
-| Q16 | yes | `cache-offline: http` | — | <Badge type="tip" text="FACT" /> |
+| Q16 | yes | `cache-offline: http` | — | <Badge type="tip" text="FACT" /> CS-24a (`HTTP`), CS-25 (`http`) |
 | Q17 | yes | `cache-offline` absent, empty or `false` | — | <Badge type="tip" text="FACT" /> CS-09 |
 | Q18 | yes | etag or `template-change` missing | — | <Badge type="tip" text="FACT" /> CS-14 |
-| Q19 | any | template change during `refresh()` | — | <Badge type="tip" text="FACT" /> |
+| Q19 | any | template change during `refresh()` | — | <Badge type="tip" text="FACT" /> (code reading); not reached in CS-27: the refresh request has the new etag and tag, so the server answers `304` ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
 | Q20 | none | first load, read error | Before any intercept | <Badge type="tip" text="FACT" /> CS-13b |
 | Q21 | any | no request (F3) | — | <Badge type="tip" text="FACT" /> |
 | Q22 | none | first load, read error | During the bridge stream | <Badge type="tip" text="FACT" /> CS-13a |
@@ -315,22 +315,22 @@ Notes:
 
 | ID | Cache | Server | Order | Status |
 |---|---|---|---|---|
-| S1 | none | first load | Intercept first, or body complete first | <Badge type="tip" text="FACT" /> CS-01, CS-02 |
+| S1 | none | first load | Intercept first, or body complete first | <Badge type="tip" text="FACT" /> CS-01, CS-02; CS-20 (empty body: 1000 / 1000, no write) |
 | S2 | none | first load, read error | Before any intercept | <Badge type="tip" text="FACT" /> CS-13b |
 | S3 | none | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> CS-12 |
-| S4 | none or yes | `cache-offline: http` | — | <Badge type="tip" text="FACT" /> |
+| S4 | none or yes | `cache-offline: http` | — | <Badge type="tip" text="FACT" /> CS-24a (`HTTP`), CS-25 (`http`), with a cache |
 | S5 | yes | `304`, or `200` with the request etag | — | <Badge type="tip" text="FACT" /> CS-03 |
 | S6 | yes | data update, `true` or `false` | Intercept first | <Badge type="tip" text="FACT" /> CS-04 |
 | S7 | yes | data update, `true` or `false` | Network first | <Badge type="tip" text="FACT" /> CS-05 |
-| S8 | yes | data update, `store` or another value | — | <Badge type="tip" text="FACT" /> CS-08, CS-10 (another value) |
+| S8 | yes | data update, `store` or another value | — | <Badge type="tip" text="FACT" /> CS-22 (`store`); CS-24b, CS-24c, CS-08, CS-10 (another value: `Store`, `TRUE`, `true,store`, `true,http`) |
 | S9 | yes | template change, `true` or `false` | Intercept first | <Badge type="tip" text="FACT" /> CS-06 |
-| S10 | yes | template change, `store` or another value | Intercept first | <Badge type="warning" text="RESEARCH" /> not reached (no `store` alone) |
+| S10 | yes | template change, `store` or another value | Intercept first | <Badge type="tip" text="FACT" /> CS-23 (`store`) |
 | S11 | yes | template change | Network first | <Badge type="tip" text="FACT" /> CS-07 |
-| S12 | yes | template change, empty body | Network first | <Badge type="warning" text="RESEARCH" /> not reached (no empty page) |
+| S12 | yes | template change, empty body | Network first | <Badge type="tip" text="FACT" /> CS-21 |
 | S13 | yes | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> CS-11 |
 | S14 | yes | `cache-offline` absent, empty or `false` | — | <Badge type="tip" text="FACT" /> CS-09 |
 | S15 | yes | etag or `template-change` missing | — | <Badge type="tip" text="FACT" /> CS-14 |
-| S16 | any | template change during `refresh()` | — | <Badge type="warning" text="RESEARCH" /> not in the catalog |
+| S16 | any | template change during `refresh()` | — | <Badge type="warning" text="RESEARCH" /> not reached in CS-27: the refresh request has the new etag and tag, so the server answers `304` ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
 | S17 | none | first load, read error | During the bridge stream | <Badge type="tip" text="FACT" /> CS-13a |
 | S18 | any | no request (F3) | — | <Badge type="tip" text="FACT" /> |
 

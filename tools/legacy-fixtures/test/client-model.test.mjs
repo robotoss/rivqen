@@ -128,7 +128,7 @@ test('android_branches_next_to_a15_to_a17_are_not_modeled_with_their_rows', () =
   expect(withCache('quick', [S('client_ready'), S('release')]), /empty body after the cached page was given as data.*\(Q12, Q13:/);
   expect(withCache('standard', [S('client_ready'), S('request_resource'), S('release')]), /empty body after the intercept.*\(S9, S10:/);
   expect(android('quick', [...SETUP, { case: 'r2' }, S('hold', { point: 'head' }), S('create_session'), S('refresh')]), /a refresh while the session runs/);
-  expect(android('quick', [...SETUP, { case: 'r1' }, S('create_session'), S('refresh')]), /a refresh after a not-modified/);
+  expect(android('quick', [...SETUP, { case: 'r1' }, S('create_session'), S('refresh')]), /a template-change response to a refresh after a not-modified before client_ready/);
   expect(android('quick', [...TO_REFRESH.slice(0, -1), S('server_down'), S('refresh')]), /a refresh without a connection/);
   expect(android('quick', [...TO_REFRESH.slice(0, -1), S('set_network', { valid: false }), S('refresh')]), /a refresh without a connection/);
   const noIntercept = TO_REFRESH.filter((s, i) => i < SETUP.length || s.do !== 'request_resource');
@@ -342,5 +342,69 @@ test('property_the_model_never_throws_for_a_case_of_any_shape', () => {
         if (!r.ok) assert.match(r.error.code, /^(CASE|CLIENT)_/);
       }
     }
+  }
+});
+
+// --- A-18 to A-20 (S2 traces CS-28, CS-29) ---
+
+const ZEROS = '0'.repeat(40);
+
+/** The CS-27 responses and page b (a data update after page a), page e (empty), on `server_profile`. */
+function androidWith(mode, schedule, server_profile = 'legacy-node') {
+  const base = scenarioCase('CS-27', mode);
+  const app = base.responses.r1.app;
+  const c = { ...base, server_profile, responses: { ...base.responses, b: { page: 'b', app }, e: { page: 'empty', app } }, schedule };
+  return run('legacy-android', mode, c, ENV);
+}
+
+function notModeled(r, pattern) {
+  assert.equal(r.ok, false, JSON.stringify(r.client?.phases.at(-1)));
+  assert.equal(r.error.code, 'CLIENT_NOT_MODELED');
+  assert.match(r.error.message, pattern);
+}
+
+test('android_rebuild_failure_branches_without_a_trace_are_not_modeled', () => {
+  const failing = (mode, steps) => androidWith(mode, [...SETUP, { case: 'b' }, S('set_body_member', { name: 'html-sha1', value: ZEROS }), S('hold', { point: 'head' }), S('create_session'), ...steps, S('release')]);
+  notModeled(failing('quick', [S('bind_client'), S('client_ready')]), /Quick data update whose rebuild fails after the cached page was given as data.*\(Q9, Q11:/);
+  notModeled(failing('standard', [S('bind_client'), S('client_ready'), S('request_resource')]), /Standard data update whose rebuild fails after an intercept.*\(Q11, D-49:/);
+  notModeled(failing('standard', [S('get_diff')]), /Standard data update whose rebuild fails while a page callback waits.*\(Q11, D-49:/);
+});
+
+test('android_quick_rebuild_failure_before_client_ready_loads_the_url_and_removes_the_cache', () => {
+  // A-18 without the scripted intercept: the load call is decided at client_ready.
+  const r = androidWith('quick', [...SETUP, { case: 'b' }, S('set_body_member', { name: 'html-sha1', value: ZEROS }), S('create_session'), S('bind_client'), S('client_ready'), S('snapshot_cache'), S('destroy')]);
+  assert.equal(r.ok, true, r.error?.message);
+  const last = r.client.phases.at(-1);
+  assert.deepEqual(last.actions.filter((a) => a.session === 2).map((a) => a.do), ['load_url']);
+  assert.deepEqual(last.snapshots, [{ entries: [] }]);
+  assert.deepEqual(last.results.at(-1), { session: 2, src_code: 200, final_code: 1000 });
+});
+
+test('android_quick_rebuild_failure_is_silent_for_a_page_callback_set_before_it', () => {
+  // Q11 part B: 200 / 1000, silent. The page gets the result only at its next get_diff.
+  const r = androidWith('quick', [...SETUP, { case: 'b' }, S('set_body_member', { name: 'html-sha1', value: ZEROS }), S('hold', { point: 'head' }), S('create_session'), S('get_diff'), S('release'), S('bind_client'), S('client_ready'), S('get_diff')]);
+  assert.equal(r.ok, true, r.error?.message);
+  const messages = messagesOf(r.client.phases.at(-1)).filter((m) => m.includes('"srcCode":200'));
+  assert.deepEqual(messages.map((m) => JSON.parse(m).code), [1000]);
+});
+
+/** CS-29 up to its refresh: a 304 with the cached page shown, then page c. */
+const AFTER_304 = [...SETUP, { case: 'r1' }, S('create_session'), S('bind_client'), S('client_ready'), S('get_diff'), S('settle', { ms: 2500 }), { case: 'r2' }];
+
+test('android_refresh_after_a_304_branches_without_a_trace_are_not_modeled', () => {
+  notModeled(androidWith('quick', [...AFTER_304, S('set_field', { name: 'cache-offline', value: 'store' }), S('refresh')]), /a template change in a refresh with a cache-offline value other than true.*\(Q19, S16:/);
+  notModeled(androidWith('standard', [...AFTER_304, S('set_field', { name: 'template-change', value: 'false' }), S('refresh')]), /a data-update response to a refresh after a not-modified.*\(Q19, S16:/);
+  notModeled(androidWith('quick', [...AFTER_304, S('refresh'), S('settle', { ms: 10 }), S('refresh')]), /a second refresh.*\(Q19, S16:/);
+  // Java and PHP send a legacy template change with an empty body (CS-21).
+  notModeled(androidWith('quick', [...AFTER_304.slice(0, -1), { case: 'e' }, S('refresh')], 'legacy-java'), /an empty template-change body in a refresh.*\(Q19, S16:/);
+});
+
+test('android_refresh_after_a_304_saves_the_new_page_1500_ms_after_the_body', () => {
+  for (const mode of ['quick', 'standard']) {
+    const r = androidWith(mode, [...AFTER_304, S('refresh'), S('settle', { ms: 1499 }), S('snapshot_cache'), S('settle', { ms: 1 }), S('snapshot_cache')]);
+    assert.equal(r.ok, true, r.error?.message);
+    assert.deepEqual(savedPages(r), [PAGE_A, PAGE_C], mode);
+    const message = JSON.parse(messagesOf(r.client.phases.at(-3)).at(-1));
+    assert.deepEqual([message.code, message.srcCode, message.extra.isReload], [mode === 'quick' ? 2000 : 304, 2000, 'true'], mode);
   }
 });

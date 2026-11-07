@@ -2145,7 +2145,8 @@
     ],
     "origin": "lab-node",
     "rows": [
-      "Q11"
+      "Q10",
+      "S7"
     ],
     "setup": [
       {
@@ -2216,10 +2217,7 @@
       "standard"
     ],
     "origin": "lab-node",
-    "rows": [
-      "Q19",
-      "S16"
-    ],
+    "rows": [],
     "setup": [
       {
         "case": {

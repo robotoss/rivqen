@@ -58,3 +58,6 @@ tools/upstream-lab/android/app/build/
 tools/upstream-lab/android/.gradle/
 tools/upstream-lab/android/local.properties
 tools/upstream-lab/ios/build/
+
+# Upstream server lab work directory (start.sh default WORK)
+tools/upstream-lab/.work/

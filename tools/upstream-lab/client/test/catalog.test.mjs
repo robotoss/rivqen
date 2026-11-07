@@ -23,7 +23,9 @@ test('scenarios_json_is_valid_and_has_the_catalog_of_the_sprint_record', () => {
       'CS-20', 'CS-21', 'CS-22', 'CS-23', 'CS-24a', 'CS-24b', 'CS-24c', 'CS-25', 'CS-26', 'CS-27'],
   );
   const rows = new Set(scenarios.flatMap((s) => s.rows));
-  for (const row of ['Q3', 'Q9', 'Q11', 'Q13', 'Q16', 'S4', 'S8', 'S10', 'S12', 'S16']) assert.ok(rows.has(row), `a scenario observes ${row}`);
+  // Q11, Q19 and S16 need a body fault and a case step inside steps: no scenario reaches them (S2 lab run).
+  for (const row of ['Q3', 'Q9', 'Q13', 'Q16', 'S4', 'S8', 'S10', 'S12']) assert.ok(rows.has(row), `a scenario observes ${row}`);
+  for (const row of ['Q11', 'Q19', 'S16']) assert.ok(!rows.has(row), `no scenario claims ${row}`);
   for (const s of scenarios) {
     assert.deepEqual(s.modes, ['quick', 'standard'], s.id);
     assert.equal(s.repeat, s.id === 'CS-19' ? 1 : 3, s.id);

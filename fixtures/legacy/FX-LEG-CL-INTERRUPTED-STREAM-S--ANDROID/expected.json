@@ -1,0 +1,123 @@
+{
+  "id": "FX-LEG-CL-INTERRUPTED-STREAM-S--ANDROID",
+  "kind": "client",
+  "profile": "legacy-android",
+  "mode": "standard",
+  "server_profile": "legacy-node",
+  "level": "must",
+  "client": {
+    "sessions": [
+      {
+        "step": 3,
+        "opened": true,
+        "session": 1,
+        "partition": "rq-test-account",
+        "url": "https://shop.example.com/catalog"
+      }
+    ],
+    "phases": [
+      {
+        "steps": [1,9],
+        "requests": [
+          {
+            "exchange": 1,
+            "method": "GET",
+            "target": "/catalog",
+            "fields": [
+              ["accept-diff","true"],
+              ["if-none-match",""],
+              ["template-tag",""],
+              ["sonic-sdk-version","Sonic/2.0.0"]
+            ],
+            "response": {
+              "status": 200,
+              "fields": [
+                ["etag","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+                ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+                ["cache-offline","true"],
+                ["template-change","true"]
+              ],
+              "complete": false
+            }
+          }
+        ],
+        "cookies": [
+          {
+            "call": "get",
+            "url": "https://shop.example.com/catalog",
+            "value": null
+          }
+        ],
+        "actions": [
+          {
+            "do": "load_url",
+            "session": 1,
+            "url": "https://shop.example.com/catalog"
+          }
+        ],
+        "intercepts": [],
+        "results": [],
+        "snapshots": []
+      },
+      {
+        "steps": [10,12],
+        "requests": [],
+        "cookies": [],
+        "actions": [
+          {
+            "do": "message",
+            "session": 1,
+            "json": "{\"code\":1000,\"srcCode\":1000,\"extra\":{\"eTag\":\"3e3184cbd12e5294959effe6f2d9985f50f4ea5d\",\"template-tag\":\"3c771bf015df2c410a41a6012804f645b3acc1bc\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+          }
+        ],
+        "intercepts": [
+          {
+            "session": 1,
+            "status": 0,
+            "fields": [
+              ["cache-offline","true"],
+              ["content-type","text/html; charset=utf-8"],
+              ["template-change","true"],
+              ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+              ["vary","template-tag"]
+            ],
+            "body_len": 128,
+            "body_sha256": "5aeb1c9bee58125ad27e7ceb3fca9cbd7331a5461473e8556c2cf2b491cc8d6e",
+            "complete": false
+          }
+        ],
+        "results": [],
+        "snapshots": []
+      },
+      {
+        "steps": [13,15],
+        "requests": [],
+        "cookies": [],
+        "actions": [
+          {
+            "do": "message",
+            "session": 1,
+            "json": "{\"code\":1000,\"srcCode\":1000,\"extra\":{\"eTag\":\"3e3184cbd12e5294959effe6f2d9985f50f4ea5d\",\"template-tag\":\"3c771bf015df2c410a41a6012804f645b3acc1bc\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+          }
+        ],
+        "intercepts": [],
+        "results": [
+          {
+            "session": 1,
+            "src_code": 1000,
+            "final_code": 1000
+          }
+        ],
+        "snapshots": [
+          {
+            "entries": []
+          }
+        ]
+      }
+    ]
+  },
+  "trace": {
+    "scenario": "CS-13a",
+    "mode": "standard"
+  }
+}

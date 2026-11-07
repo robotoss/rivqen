@@ -1,0 +1,109 @@
+{
+  "id": "FX-LEG-CL-NO-STORE-UPDATE-S",
+  "kind": "client",
+  "profile": "legacy-canonical",
+  "mode": "standard",
+  "server_profile": "legacy-canonical",
+  "level": "must",
+  "client": {
+    "sessions": [
+      {
+        "step": 2,
+        "opened": true,
+        "session": 1,
+        "partition": "rq-test-account",
+        "url": "https://shop.example.com/catalog"
+      }
+    ],
+    "phases": [
+      {
+        "steps": [1,7],
+        "requests": [
+          {
+            "exchange": 1,
+            "method": "GET",
+            "target": "/catalog",
+            "fields": [
+              ["accept-diff","true"],
+              ["if-none-match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+              ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"]
+            ],
+            "response": {
+              "status": 200,
+              "fields": [
+                ["etag","4c33dabea7ea65c6255b9e6a6539976674886a2c"],
+                ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+                ["template-change","false"],
+                ["cache-offline","true"]
+              ],
+              "complete": true
+            }
+          }
+        ],
+        "cookies": [
+          {
+            "call": "get",
+            "url": "https://shop.example.com/catalog",
+            "value": null
+          }
+        ],
+        "actions": [
+          {
+            "do": "load_url",
+            "session": 1,
+            "url": "https://shop.example.com/catalog"
+          }
+        ],
+        "intercepts": [
+          {
+            "session": 1,
+            "status": 200,
+            "fields": [
+              ["content-type","text/html; charset=utf-8"]
+            ],
+            "body_len": 296,
+            "body_sha256": "a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb",
+            "complete": true
+          }
+        ],
+        "results": [],
+        "snapshots": []
+      },
+      {
+        "steps": [8,10],
+        "requests": [],
+        "cookies": [],
+        "actions": [],
+        "intercepts": [],
+        "results": [],
+        "snapshots": []
+      },
+      {
+        "steps": [11,13],
+        "requests": [],
+        "cookies": [],
+        "actions": [
+          {
+            "do": "message",
+            "session": 1,
+            "json": "{\"result\":\"{\\\"{price}\\\":\\\"<!--sonicdiff-price--><p class=\\\\\\\"price\\\\\\\">130.00</p><!--sonicdiff-price-end-->\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"4c33dabea7ea65c6255b9e6a6539976674886a2c\",\"template-tag\":\"3c771bf015df2c410a41a6012804f645b3acc1bc\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+          }
+        ],
+        "intercepts": [],
+        "results": [
+          {
+            "session": 1,
+            "src_code": 200,
+            "final_code": 200
+          }
+        ],
+        "snapshots": [
+          {
+            "entries": []
+          }
+        ]
+      }
+    ]
+  },
+  "profiles_same": []
+}

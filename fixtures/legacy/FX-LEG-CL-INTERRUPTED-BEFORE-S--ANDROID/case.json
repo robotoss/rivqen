@@ -1,0 +1,13 @@
+{
+  "id": "FX-LEG-CL-INTERRUPTED-BEFORE-S--ANDROID",
+  "kind": "client",
+  "description": "legacy-android: the request carries sonic-sdk-version and empty validators",
+  "profile": "legacy-android",
+  "replaces": "FX-LEG-CL-INTERRUPTED-BEFORE-S",
+  "divergences": [
+    "D-50"
+  ],
+  "sources": [
+    "docs:engineering/protocol/legacy-client-traces#_6-new-findings"
+  ]
+}

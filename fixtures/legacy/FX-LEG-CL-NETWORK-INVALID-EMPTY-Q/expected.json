@@ -1,0 +1,61 @@
+{
+  "id": "FX-LEG-CL-NETWORK-INVALID-EMPTY-Q",
+  "kind": "client",
+  "profile": "legacy-canonical",
+  "mode": "quick",
+  "server_profile": "legacy-canonical",
+  "level": "must",
+  "client": {
+    "sessions": [
+      {
+        "step": 1,
+        "opened": true,
+        "session": 1,
+        "partition": "rq-test-account",
+        "url": "https://shop.example.com/catalog"
+      }
+    ],
+    "phases": [
+      {
+        "steps": [1,6],
+        "requests": [],
+        "cookies": [],
+        "actions": [
+          {
+            "do": "load_url",
+            "session": 1,
+            "url": "https://shop.example.com/catalog"
+          }
+        ],
+        "intercepts": [
+          {
+            "session": 1,
+            "null": true
+          }
+        ],
+        "results": [],
+        "snapshots": []
+      },
+      {
+        "steps": [7,8],
+        "requests": [],
+        "cookies": [],
+        "actions": [],
+        "intercepts": [],
+        "results": [
+          {
+            "session": 1,
+            "src_code": -1,
+            "final_code": -1
+          }
+        ],
+        "snapshots": [
+          {
+            "entries": []
+          }
+        ]
+      }
+    ]
+  },
+  "profiles_same": []
+}

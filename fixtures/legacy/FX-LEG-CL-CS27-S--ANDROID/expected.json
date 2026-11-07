@@ -1,0 +1,231 @@
+{
+  "id": "FX-LEG-CL-CS27-S--ANDROID",
+  "kind": "client",
+  "profile": "legacy-android",
+  "mode": "standard",
+  "server_profile": "legacy-node",
+  "level": "must",
+  "client": {
+    "sessions": [
+      {
+        "step": 1,
+        "opened": true,
+        "session": 1,
+        "partition": "rq-test-account",
+        "url": "https://shop.example.com/catalog"
+      },
+      {
+        "step": 8,
+        "opened": true,
+        "session": 2,
+        "partition": "rq-test-account",
+        "url": "https://shop.example.com/catalog"
+      }
+    ],
+    "phases": [
+      {
+        "steps": [1,6],
+        "requests": [
+          {
+            "exchange": 1,
+            "method": "GET",
+            "target": "/catalog",
+            "fields": [
+              ["accept-diff","true"],
+              ["if-none-match",""],
+              ["template-tag",""],
+              ["sonic-sdk-version","Sonic/2.0.0"]
+            ],
+            "response": {
+              "status": 200,
+              "fields": [
+                ["etag","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+                ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+                ["cache-offline","true"],
+                ["template-change","true"]
+              ],
+              "complete": true
+            }
+          }
+        ],
+        "cookies": [
+          {
+            "call": "get",
+            "url": "https://shop.example.com/catalog",
+            "value": null
+          }
+        ],
+        "actions": [
+          {
+            "do": "load_url",
+            "session": 1,
+            "url": "https://shop.example.com/catalog"
+          }
+        ],
+        "intercepts": [
+          {
+            "session": 1,
+            "status": 0,
+            "fields": [
+              ["cache-offline","true"],
+              ["content-type","text/html; charset=utf-8"],
+              ["template-change","true"],
+              ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+              ["vary","template-tag"]
+            ],
+            "body_len": 296,
+            "body_sha256": "a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb",
+            "complete": true
+          }
+        ],
+        "results": [],
+        "snapshots": []
+      },
+      {
+        "steps": [7,11],
+        "requests": [
+          {
+            "exchange": 2,
+            "method": "GET",
+            "target": "/catalog",
+            "fields": [
+              ["accept-diff","true"],
+              ["if-none-match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+              ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+              ["sonic-sdk-version","Sonic/2.0.0"]
+            ],
+            "response": {
+              "status": 200,
+              "fields": [
+                ["etag","065e5deb7844c1d1fc95b16962612171ba0efe83"],
+                ["template-tag","35a722c60318e949635024423385fd6c417a6bb5"],
+                ["cache-offline","true"],
+                ["template-change","true"]
+              ],
+              "complete": true
+            }
+          }
+        ],
+        "cookies": [
+          {
+            "call": "get",
+            "url": "https://shop.example.com/catalog",
+            "value": null
+          }
+        ],
+        "actions": [],
+        "intercepts": [],
+        "results": [
+          {
+            "session": 1,
+            "src_code": 1000,
+            "final_code": 304
+          }
+        ],
+        "snapshots": []
+      },
+      {
+        "steps": [12,17],
+        "requests": [
+          {
+            "exchange": 3,
+            "method": "GET",
+            "target": "/catalog",
+            "fields": [
+              ["accept-diff","true"],
+              ["if-none-match","065e5deb7844c1d1fc95b16962612171ba0efe83"],
+              ["template-tag","35a722c60318e949635024423385fd6c417a6bb5"],
+              ["sonic-sdk-version","Sonic/2.0.0"]
+            ],
+            "response": {
+              "status": 304,
+              "fields": [
+                ["cache-offline","store"]
+              ],
+              "complete": true
+            }
+          }
+        ],
+        "cookies": [],
+        "actions": [
+          {
+            "do": "load_url",
+            "session": 2,
+            "url": "https://shop.example.com/catalog"
+          },
+          {
+            "do": "message",
+            "session": 2,
+            "json": "{\"code\":304,\"srcCode\":2000,\"extra\":{\"eTag\":\"065e5deb7844c1d1fc95b16962612171ba0efe83\",\"template-tag\":\"35a722c60318e949635024423385fd6c417a6bb5\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+          },
+          {
+            "do": "message",
+            "session": 2,
+            "json": "{\"code\":304,\"srcCode\":304,\"extra\":{\"cache-offline\":\"store\",\"isReload\":\"true\"}}"
+          }
+        ],
+        "intercepts": [
+          {
+            "session": 2,
+            "status": 0,
+            "fields": [
+              ["cache-offline","true"],
+              ["content-type","text/html; charset=utf-8"],
+              ["template-change","true"],
+              ["template-tag","35a722c60318e949635024423385fd6c417a6bb5"],
+              ["vary","template-tag"]
+            ],
+            "body_len": 315,
+            "body_sha256": "3d86359625128ba375744c6c32b4289e9ac49b5544399354c4542efe1ef30a47",
+            "complete": true
+          }
+        ],
+        "results": [],
+        "snapshots": []
+      },
+      {
+        "steps": [18,20],
+        "requests": [],
+        "cookies": [],
+        "actions": [],
+        "intercepts": [],
+        "results": [
+          {
+            "session": 2,
+            "src_code": 304,
+            "final_code": 304
+          }
+        ],
+        "snapshots": [
+          {
+            "entries": [
+              {
+                "partition": "rq-test-account",
+                "url": "https://shop.example.com/catalog",
+                "vary": [],
+                "etag": "065e5deb7844c1d1fc95b16962612171ba0efe83",
+                "template_tag": "35a722c60318e949635024423385fd6c417a6bb5",
+                "page_sha256": "3d86359625128ba375744c6c32b4289e9ac49b5544399354c4542efe1ef30a47",
+                "template_sha256": "e2933d32a07cbebedfa497c1a59a4de4267d13b05f24a9aea1a54d408f207787",
+                "data_sha256": "2951678607195b65ffa670e00e15510d60a24105979550ff08cdcc6182adc126",
+                "fields": [
+                  ["cache-offline","true"],
+                  ["content-type","text/html; charset=utf-8"],
+                  ["etag","065e5deb7844c1d1fc95b16962612171ba0efe83"],
+                  ["sonic-html-sha1","065e5deb7844c1d1fc95b16962612171ba0efe83"],
+                  ["template-change","true"],
+                  ["template-tag","35a722c60318e949635024423385fd6c417a6bb5"],
+                  ["vary","template-tag"]
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "trace": {
+    "scenario": "CS-27",
+    "mode": "standard"
+  }
+}

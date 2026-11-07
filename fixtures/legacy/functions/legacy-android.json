@@ -1,0 +1,1826 @@
+{
+  "profile": "legacy-android",
+  "cases": "fixtures/legacy/functions/cases.json",
+  "evidence": ["evidence/traces/client/android/functions.jsonl"],
+  "results": [
+    {
+      "id": "FN-ID-01",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_7f408b22a43a75c4019c09a9816a533c"
+      }
+    },
+    {
+      "id": "FN-ID-02",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_b2785581e96e31fae36804a168228fd4"
+      }
+    },
+    {
+      "id": "FN-ID-03",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_c8ff380d976611e72b9f1f5b6eb99c01"
+      }
+    },
+    {
+      "id": "FN-ID-04",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_7f408b22a43a75c4019c09a9816a533c"
+      }
+    },
+    {
+      "id": "FN-ID-05",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_c91fdd7c1ebebc6528c8be42b6270e51"
+      }
+    },
+    {
+      "id": "FN-ID-06",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_7f408b22a43a75c4019c09a9816a533c"
+      }
+    },
+    {
+      "id": "FN-ID-07",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_7f408b22a43a75c4019c09a9816a533c"
+      }
+    },
+    {
+      "id": "FN-ID-08",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "_e31134172806f61c1232431c328327d4"
+      }
+    },
+    {
+      "id": "FN-ID-09",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "null_e31134172806f61c1232431c328327d4"
+      }
+    },
+    {
+      "id": "FN-ID-10",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "e31134172806f61c1232431c328327d4"
+      }
+    },
+    {
+      "id": "FN-ID-11",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_84ead266284be395f2a70acbca29936a"
+      }
+    },
+    {
+      "id": "FN-ID-12",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_84ead266284be395f2a70acbca29936a"
+      }
+    },
+    {
+      "id": "FN-ID-13",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_a06080da207263dacc8a9691077e6238"
+      }
+    },
+    {
+      "id": "FN-ID-14",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_e31134172806f61c1232431c328327d4"
+      }
+    },
+    {
+      "id": "FN-ID-ORD-01",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_6d0a9d073424b1b70d709bd854ba55b4"
+      }
+    },
+    {
+      "id": "FN-ID-ORD-02",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_6d0a9d073424b1b70d709bd854ba55b4"
+      }
+    },
+    {
+      "id": "FN-ID-ORD-03",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_e31134172806f61c1232431c328327d4"
+      }
+    },
+    {
+      "id": "FN-ID-ORD-04",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_06a3a5f1e24e0ac9784914305de22a2d"
+      }
+    },
+    {
+      "id": "FN-ID-ORD-05",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_7fada1d540121fcdc842704ec4f8cfbe"
+      }
+    },
+    {
+      "id": "FN-ID-ORD-06",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_2ace149d372b1e1f88ef8c74796d7dee"
+      }
+    },
+    {
+      "id": "FN-ID-ORD-07",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_6bbaa91719dc067ec5f04f53fb7abe19"
+      }
+    },
+    {
+      "id": "FN-ID-ORD-08",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_5a67b8ac8444f845a33658f011b4ef4f"
+      }
+    },
+    {
+      "id": "FN-ID-ORD-09",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_6bbaa91719dc067ec5f04f53fb7abe19"
+      }
+    },
+    {
+      "id": "FN-ID-ORD-10",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_e535a2e1b3b2544eb3858e71fd243788"
+      }
+    },
+    {
+      "id": "FN-ID-ORD-11",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_a32be52a6ad6116797949d7f91c3afb5"
+      }
+    },
+    {
+      "id": "FN-ID-ORD-12",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_e31134172806f61c1232431c328327d4"
+      }
+    },
+    {
+      "id": "FN-ID-ORD-13",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_0564ba43a37927954c9d23697b945859"
+      }
+    },
+    {
+      "id": "FN-ID-ORD-14",
+      "fn": "session_id",
+      "evidence": "trace",
+      "result": {
+        "id": "rq-test-account_84ead266284be395f2a70acbca29936a"
+      }
+    },
+    {
+      "id": "FN-SPLIT-01",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->",
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-02",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "",
+        "data": {}
+      }
+    },
+    {
+      "id": "FN-SPLIT-03",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "",
+        "data": {}
+      }
+    },
+    {
+      "id": "FN-SPLIT-04",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "",
+        "data": {}
+      }
+    },
+    {
+      "id": "FN-SPLIT-05",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}{b}</body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->",
+          "{b}": "<!--sonicdiff-b-->B<!--sonicdiff-b-end-->",
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-06",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{null}</body></html>",
+        "data": {
+          "{null}": "<!--sonicdiff-->A<!--sonicdiff-end-->",
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-07",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "",
+        "data": {}
+      }
+    },
+    {
+      "id": "FN-SPLIT-08",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a-->A\nB\n<!--sonicdiff-a-end-->",
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-09",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}{a}</body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a-->B<!--sonicdiff-a-end-->",
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-10",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}<!--sonicdiff-a-end--></body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a--><!--sonicdiff-b-->B<!--sonicdiff-b-end-->",
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-11",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "",
+        "data": {}
+      }
+    },
+    {
+      "id": "FN-SPLIT-12",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "",
+        "data": {}
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-01",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-b-end-->",
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-02",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-end-->",
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-03",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{null}</body></html>",
+        "data": {
+          "{null}": "<!--sonicdiff-->A<!--sonicdiff-b-end-->",
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-04",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}{b}</body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->",
+          "{b}": "<!--sonicdiff-b-->B<!--sonicdiff-a-end-->",
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-05",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "",
+        "data": {}
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-06",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{a_1}</body></html>",
+        "data": {
+          "{a_1}": "<!--sonicdiff-a_1-->A<!--sonicdiff-a_1-end-->",
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-07",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "",
+        "data": {}
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-08",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}{null}</body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->",
+          "{null}": "<!--sonicdiff-->B<!--sonicdiff-end-->",
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-01",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "",
+        "data": {}
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-02",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->",
+          "{title}": "<title>Shop</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-03",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head><TITLE>Shop</TITLE></head><body>{a}</body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-04",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head><title lang=\"en\">Shop</title></head><body>{a}</body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-05",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}<title>Two</title></head><body>{a}</body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->",
+          "{title}": "<title>One</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-06",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><body>{a}</body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a--><title>In block</title><!--sonicdiff-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-07",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->",
+          "{title}": "<title></title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-08",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "",
+        "data": {}
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-09",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "",
+        "data": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-01",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {
+          "{a}": "y"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-02",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-03",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {
+          "{b}": "new"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-04",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-05",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {
+          "{a}": "y",
+          "{b}": "new"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-06",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-07",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {
+          "{a}": "1"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-08",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-09",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {
+          "{a}": "x"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-10",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-11",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-12",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {
+          "{a}": ""
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-01",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-02",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-03",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-04",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-NEW-01",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {
+          "{b}": "new"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-NEW-02",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {
+          "{a}": "y",
+          "{b}": "new"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-NEW-03",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": null
+      }
+    },
+    {
+      "id": "FN-DIFF-NEW-04",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {
+          "{b}": "new"
+        }
+      }
+    },
+    {
+      "id": "FN-MSG-01",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-02",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"code\":304,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-03",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"code\":1000,\"srcCode\":1000,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-04",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"code\":2000,\"srcCode\":2000,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-05",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"code\":304,\"srcCode\":304,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-06",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": null
+      }
+    },
+    {
+      "id": "FN-MSG-07",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-08",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-09",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"custom-etag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-10",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"café \\\\\\/ \\\\\\\"q\\\\\\\"\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-11",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": null
+      }
+    },
+    {
+      "id": "FN-MSG-OFFLINE-01",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-OFFLINE-02",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"STORE\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-OFFLINE-03",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"Store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-OFFLINE-04",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"HTTP\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-OFFLINE-05",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"FALSE\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-OFFLINE-06",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"TRUE\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-OFFLINE-07",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-LEGACY-01",
+      "fn": "is_legacy_response",
+      "evidence": "none",
+      "result": null,
+      "note": "D-28: Android has no single legacy response test"
+    },
+    {
+      "id": "FN-LEGACY-02",
+      "fn": "is_legacy_response",
+      "evidence": "none",
+      "result": null,
+      "note": "D-28: Android has no single legacy response test"
+    },
+    {
+      "id": "FN-LEGACY-03",
+      "fn": "is_legacy_response",
+      "evidence": "none",
+      "result": null,
+      "note": "D-28: Android has no single legacy response test"
+    },
+    {
+      "id": "FN-LEGACY-04",
+      "fn": "is_legacy_response",
+      "evidence": "none",
+      "result": null,
+      "note": "D-28: Android has no single legacy response test"
+    },
+    {
+      "id": "FN-LEGACY-05",
+      "fn": "is_legacy_response",
+      "evidence": "none",
+      "result": null,
+      "note": "D-28: Android has no single legacy response test"
+    },
+    {
+      "id": "FN-LEGACY-06",
+      "fn": "is_legacy_response",
+      "evidence": "none",
+      "result": null,
+      "note": "D-28: Android has no single legacy response test"
+    },
+    {
+      "id": "FN-LEGACY-07",
+      "fn": "is_legacy_response",
+      "evidence": "none",
+      "result": null,
+      "note": "D-28: Android has no single legacy response test"
+    },
+    {
+      "id": "FN-LEGACY-08",
+      "fn": "is_legacy_response",
+      "evidence": "none",
+      "result": null,
+      "note": "D-28: Android has no single legacy response test"
+    },
+    {
+      "id": "FN-LEGACY-09",
+      "fn": "is_legacy_response",
+      "evidence": "none",
+      "result": null,
+      "note": "D-28: Android has no single legacy response test"
+    },
+    {
+      "id": "FN-LEGACY-10",
+      "fn": "is_legacy_response",
+      "evidence": "none",
+      "result": null,
+      "note": "D-28: Android has no single legacy response test"
+    },
+    {
+      "id": "FN-LEGACY-CASE-01",
+      "fn": "is_legacy_response",
+      "evidence": "none",
+      "result": null,
+      "note": "D-28: Android has no single legacy response test"
+    },
+    {
+      "id": "FN-LEGACY-CASE-02",
+      "fn": "is_legacy_response",
+      "evidence": "none",
+      "result": null,
+      "note": "D-28: Android has no single legacy response test"
+    },
+    {
+      "id": "FN-LEGACY-CASE-03",
+      "fn": "is_legacy_response",
+      "evidence": "none",
+      "result": null,
+      "note": "D-28: Android has no single legacy response test"
+    },
+    {
+      "id": "FN-LEGACY-CASE-04",
+      "fn": "is_legacy_response",
+      "evidence": "none",
+      "result": null,
+      "note": "D-28: Android has no single legacy response test"
+    },
+    {
+      "id": "FN-LEGACY-CASE-05",
+      "fn": "is_legacy_response",
+      "evidence": "none",
+      "result": null,
+      "note": "D-28: Android has no single legacy response test"
+    },
+    {
+      "id": "FN-TCHANGE-01",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-02",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-TCHANGE-03",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-TCHANGE-04",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-05",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-06",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-07",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-08",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-09",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-10",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-11",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-12",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-13",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-14",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-15",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-16",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-17",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-18",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-19",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-20",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-21",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-22",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-23",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-24",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-25",
+      "fn": "template_change",
+      "evidence": "code-reading",
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-ETAG-01",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "abc"
+      }
+    },
+    {
+      "id": "FN-ETAG-02",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "\"abc\""
+      }
+    },
+    {
+      "id": "FN-ETAG-03",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "abc"
+      }
+    },
+    {
+      "id": "FN-ETAG-04",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "abc"
+      }
+    },
+    {
+      "id": "FN-ETAG-05",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "abc"
+      }
+    },
+    {
+      "id": "FN-ETAG-06",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "\"ABC\""
+      }
+    },
+    {
+      "id": "FN-ETAG-07",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "abc"
+      }
+    },
+    {
+      "id": "FN-ETAG-08",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "'abc'"
+      }
+    },
+    {
+      "id": "FN-ETAG-09",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "\"\""
+      }
+    },
+    {
+      "id": "FN-ETAG-10",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "\""
+      }
+    },
+    {
+      "id": "FN-ETAG-11",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": ""
+      }
+    },
+    {
+      "id": "FN-ETAG-12",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": ""
+      }
+    },
+    {
+      "id": "FN-ETAG-13",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": " \"abc\" "
+      }
+    },
+    {
+      "id": "FN-ETAG-14",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "\"W/abc\""
+      }
+    },
+    {
+      "id": "FN-ETAG-15",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "ab"
+      }
+    },
+    {
+      "id": "FN-ETAG-16",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "\"a\"b\""
+      }
+    },
+    {
+      "id": "FN-ETAG-17",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "abc\""
+      }
+    },
+    {
+      "id": "FN-ETAG-18",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "\"abc"
+      }
+    },
+    {
+      "id": "FN-ETAG-19",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": ""
+      }
+    },
+    {
+      "id": "FN-ETAG-KEY-01",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "e1"
+      }
+    },
+    {
+      "id": "FN-ETAG-KEY-02",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "E1"
+      }
+    },
+    {
+      "id": "FN-ETAG-KEY-03",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "\"e1\""
+      }
+    },
+    {
+      "id": "FN-ETAG-KEY-04",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "e1"
+      }
+    },
+    {
+      "id": "FN-ETAG-KEY-05",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+      }
+    },
+    {
+      "id": "FN-ETAG-KEY-06",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "3E3184CBD12E5294959EFFE6F2D9985F50F4EA5D"
+      }
+    },
+    {
+      "id": "FN-CHARSET-01",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-02",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-03",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-04",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-05",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "gbk"
+      }
+    },
+    {
+      "id": "FN-CHARSET-06",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "gbk"
+      }
+    },
+    {
+      "id": "FN-CHARSET-07",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "UTF-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-08",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "UTF-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-09",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "\"utf-8\""
+      }
+    },
+    {
+      "id": "FN-CHARSET-10",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "'utf-8'"
+      }
+    },
+    {
+      "id": "FN-CHARSET-11",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-12",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "iso-8859-1"
+      }
+    },
+    {
+      "id": "FN-CHARSET-13",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-14",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-15",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "gbk"
+      }
+    },
+    {
+      "id": "FN-CHARSET-16",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "nosuch"
+      }
+    },
+    {
+      "id": "FN-CHARSET-17",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "UTF-8"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-01",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "x"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-02",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "x"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-03",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "x"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-04",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "x"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-05",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": ""
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-06",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "a"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-07",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "ab"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-08",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "ab"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-09",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "x"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-10",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "x"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-11",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": " x"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-12",
+      "fn": "etag",
+      "evidence": "trace",
+      "result": {
+        "value": "'x'"
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-IOS-01",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-IOS-02",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {
+          "{c}": "only new"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-IOS-03",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-IOS-04",
+      "fn": "diff",
+      "evidence": "trace",
+      "result": {
+        "diff": {
+          "{a}": "x"
+        }
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-01",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-02",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "gbk"
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-03",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-04",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-05",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "gbk"
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-06",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "iso-8859-1"
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-07",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-08",
+      "fn": "charset",
+      "evidence": "trace",
+      "result": {
+        "value": "big5"
+      }
+    },
+    {
+      "id": "FN-SPLIT-UNNAMED-01",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{null}</body></html>",
+        "data": {
+          "{null}": "<!--sonicdiff-->A<!--sonicdiff-end-->",
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-UNNAMED-02",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "",
+        "data": {}
+      }
+    },
+    {
+      "id": "FN-SPLIT-UNNAMED-03",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "",
+        "data": {}
+      }
+    },
+    {
+      "id": "FN-SPLIT-UNNAMED-04",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{null}{null}</body></html>",
+        "data": {
+          "{null}": "<!--sonicdiff-->B<!--sonicdiff-end-->",
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-UNNAMED-05",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-end-->",
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-UNNAMED-06",
+      "fn": "split",
+      "evidence": "trace",
+      "result": {
+        "template": "",
+        "data": {}
+      }
+    },
+    {
+      "id": "FN-MSG-STORE-01",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"code\":1000,\"srcCode\":1000,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-STORE-02",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"code\":2000,\"srcCode\":2000,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-STORE-03",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"code\":304,\"srcCode\":2000,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-STORE-04",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-STORE-05",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"code\":304,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-STORE-06",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"code\":304,\"srcCode\":304,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-STORE-07",
+      "fn": "message",
+      "evidence": "code-reading",
+      "result": {
+        "json": "{\"code\":1000,\"srcCode\":1000,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    }
+  ]
+}

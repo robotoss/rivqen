@@ -114,6 +114,8 @@ HTTP/1.1, JSON bodies, `Content-Type: application/json`.
 | `POST /run/event` | One event (section 5). `204` |
 | `GET /run/scenario?run=<run-id>` | `200` with `{ "run": "<run-id>", "scenario": <scenario>, "mode": "quick" }` |
 
+The conductor sends a step again when it cannot know that the harness got the answer (the connection closed before the answer was fully written; S2). The harness executes a step only when its `seq` is above the `seq` of the last step it executed, and ignores a repeat.
+
 The runner starts the harness for one run with an `adb shell am instrument` or `am start` command that passes only `run=<run-id>` and the control URL `http://10.0.2.2:18091`. The harness gets everything else from the control channel.
 
 ## 5. Event log
@@ -142,7 +144,7 @@ Common members: `ev` (name), `seq` (conductor sequence number), `src` (`harness`
 | `proxy.request` | `exchange`, `method`, `target`, `fields` |
 | `proxy.response_head` | `exchange`, `status`, `fields` |
 | `proxy.response_end` | `exchange`, `body_len`, `body_sha256`, `complete` |
-| `proxy.cut`, `proxy.drop_field`, `proxy.set_field`, `proxy.hold`, `proxy.release` | `exchange`, the step members |
+| `proxy.cut`, `proxy.drop_field`, `proxy.set_field`, `proxy.hold`, `proxy.release` | `exchange`, the step members (`set_field`: `name`, `value`) |
 | `client.clear_history` | — |
 | `runtime.notify_error` | `url`, `code` |
 | `runtime.toast` | `text`, `duration` |
@@ -199,5 +201,5 @@ evidence/traces/client/
 ├── ios/
 │   ├── functions.jsonl
 │   └── boolvalue.jsonl   # Foundation probe of NSString boolValue (no upstream code; D-29)
-└── run.json            # date, tool versions, emulator image, upstream SHA, scenario list, stable/unstable summary
+└── run.json            # date, tool versions, emulator image, upstream SHA, scenario list, stable/unstable/not_checked summary
 ```

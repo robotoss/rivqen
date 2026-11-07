@@ -95,6 +95,9 @@ final class ScenarioRun {
 
         long deadline = System.currentTimeMillis() + Lab.RUN_DEADLINE_MS;
         int steps = 0;
+        // The conductor can send a step again when its answer may be lost (CONTRACT section 4).
+        // A step whose seq is not above the last executed one is a repeat: skip it.
+        long lastSeq = 0;
         while (true) {
             if (System.currentTimeMillis() > deadline) {
                 return "run over " + Lab.RUN_DEADLINE_MS + " ms";
@@ -109,6 +112,13 @@ final class ScenarioRun {
             String what = step.optString("do", "");
             if ("end".equals(what)) {
                 break;
+            }
+            long seq = step.optLong("seq", 0);
+            if (seq > 0 && seq <= lastSeq) {
+                continue;
+            }
+            if (seq > 0) {
+                lastSeq = seq;
             }
             if (++steps > Lab.MAX_STEPS) {
                 return "over " + Lab.MAX_STEPS + " steps";

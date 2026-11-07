@@ -6,6 +6,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { sha256hex } from '../src/client-engine.mjs';
 import { run } from '../src/client-model.mjs';
 import { sha1hex } from '../src/model.mjs';
 import { pageOf } from './client-helpers.mjs';
@@ -117,6 +118,30 @@ test('cl11_cookie_set_for_each_response_and_never_stored', () => {
   assert.deepEqual(sets[0].values, ['session=rq-test-cookie-1; Path=/']);
   assert.ok(lastSnapshot(c)[0].fields.every(([n]) => n !== 'set-cookie'));
   assert.ok(actions(c).filter((a) => a.do === 'load_data').every((a) => a.fields.every(([n]) => n !== 'set-cookie')));
+});
+
+test('cl11_dl121_cookie_get_also_when_the_connection_is_then_refused', () => {
+  const c = go(cc({ config: { cookie: 'session=rq-test-cookie-1' }, schedule: [{ case: 'a' }, { do: 'server_down' }, ...FIRST] }));
+  assert.equal(requests(c).length, 0);
+  assert.deepEqual(all(c, 'cookies'), [{ call: 'get', url: URL_, value: 'session=rq-test-cookie-1' }]);
+});
+
+test('cl11_cl35_dl121_old_generation_response_sets_its_cookie_but_not_the_document_codes_or_cache', () => {
+  const app = (value) => ({ status: 200, headers: [['content-type', 'text/html; charset=utf-8'], ['set-cookie', value]] });
+  const responses = { a: { page: 'a', app: app('gen=0') }, c: { page: 'c', app: app('gen=1') } };
+  // Exchange 1 (page a) is held at the head; the refresh sends exchange 2 (page c), which ends at once; then exchange 1 arrives.
+  const schedule = [
+    { case: 'a' }, { do: 'hold', point: 'head' }, { do: 'create_session' },
+    { case: 'c' }, { do: 'refresh' }, { do: 'release' },
+    { do: 'bind_client' }, { do: 'client_ready' }, { do: 'get_diff' }, { do: 'snapshot_cache' }, { do: 'destroy' },
+  ];
+  const c = go(cc({ responses, schedule }));
+  assert.deepEqual(all(c, 'cookies').filter((x) => x.call === 'set').map((x) => x.values).sort(), [['gen=0'], ['gen=1']]);
+  const c256 = sha256hex(pageOf('c'));
+  assert.equal(actions(c).find((a) => a.do === 'load_data').body_sha256, c256);
+  assert.deepEqual(lastSnapshot(c).map((r) => r.page_sha256), [c256]);
+  assert.equal(results(c).length, 1);
+  assert.equal(results(c)[0].src_code, 1000);
 });
 
 test('cl11_no_cookie_call_after_destroy', () => {

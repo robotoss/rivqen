@@ -79,7 +79,9 @@ function exemptScenarios(scenariosFile) {
  * @param {string} o.clientPage docs/engineering/protocol/legacy-client.md
  * @param {string} o.labFunctions tools/upstream-lab/client/functions.json
  * @param {string} o.scenarios tools/upstream-lab/client/scenarios.json
- * @param {boolean} o.coverage rule coverage and stored-run use are checked
+ * @param {boolean} o.coverage the catalog checks (fixtures/legacy): the floor, then rule coverage and stored-run use
+ * @param {number} o.floor the number of canonical client fixtures that the catalog must keep
+ *   (CLIENT_FLOOR of gen.mjs); 0: none yet, so checks 10 (coverage) and 11 (stored runs) give notes
  * @param {(path: string, bytes: Buffer, label: string) => string | null} o.sync write or check one file
  * @returns {{ problems: string[], notes: string[], count: number }}
  */
@@ -157,7 +159,8 @@ export function clientPart(o) {
     const t = traceClient(base);
     if (t.error !== undefined) problems.push(`${p.id}: check 7: ${t.error}`);
     else {
-      const d = compareClient(r.client, t.client);
+      // DL-120: with not_reproduced "U-13", the U-13 fields of a response outside the scope are not compared, and the trace must have them.
+      const d = compareClient(r.client, t.client, { notReproduced: p.notReproduced });
       if (d !== null) problems.push(`${p.id}: check 7: the legacy-android result differs from the trace: ${d}`);
     }
     const canon = expectedOf.get(base.id);
@@ -191,11 +194,16 @@ export function clientPart(o) {
 
   const fn = functionPart(o, problems, notes);
   for (const rule of fn.rules) covered.add(rule);
+  // The floor (as CATALOG_SIZE of the server part): when it says that client fixtures must exist,
+  // the catalog must keep that many canonical client fixtures, and checks 10 and 11 apply. So
+  // removing client fixtures cannot switch the checks off.
   const canonicalCount = [...cases.values()].filter((c) => c.kind === 'client-canonical').length;
-  const enforce = o.coverage && canonicalCount > 0;
+  const floor = o.floor;
+  const enforce = o.coverage && floor > 0;
+  if (enforce && canonicalCount < floor) problems.push(`the catalog has ${canonicalCount} canonical client fixtures, fewer than ${floor} (CLIENT_FLOOR)`);
   const missing = [...known].filter(([rule, fixture]) => fixture && !covered.has(rule)).map(([rule]) => rule);
   if (enforce) for (const rule of missing) problems.push(`rule ${rule} is not covered by any client or function fixture`);
-  else if (o.coverage && missing.length > 0) notes.push(`client rule coverage is checked once a canonical client fixture exists; not covered yet: ${missing.join(', ')}`);
+  else if (o.coverage && missing.length > 0) notes.push(`client rule coverage is checked when CLIENT_FLOOR is above 0; not covered yet: ${missing.join(', ')}`);
 
   // Check 11: every stored scenario mode is the trace of one canonical client fixture, or exempt.
   if (o.coverage) {
@@ -208,7 +216,7 @@ export function clientPart(o) {
       else unused.push(key);
     }
     if (enforce) for (const key of unused) problems.push(`evidence/traces/client/android/${key.replace(' ', '/')}: stored client runs are not used by any client fixture`);
-    else if (unused.length > 0) notes.push(`stored-run use is checked once a canonical client fixture exists; ${unused.length} stored scenario modes have no client fixture yet`);
+    else if (unused.length > 0) notes.push(`stored-run use is checked when CLIENT_FLOOR is above 0; ${unused.length} stored scenario modes have no client fixture yet`);
   }
   return { problems, notes, count: count + fn.count };
 }

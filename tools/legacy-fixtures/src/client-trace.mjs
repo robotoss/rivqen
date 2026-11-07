@@ -15,7 +15,9 @@
 
 import { isDeepStrictEqual } from 'node:util';
 import { firstDifference, normalizeEvent, settlePhases } from '../../upstream-lab/client/src/determinism.mjs';
+import { CLIENT_NOT_REPRODUCIBLE } from './client-case.mjs';
 import { asciiLower } from './fields.mjs';
+import { mediaTypeKey } from './trace.mjs';
 
 /** The lab page origin of CONTRACT section 2: `http://10.0.2.2:18090/`. */
 export const LAB_PREFIX = 'http://10.0.2.2:18090/';
@@ -261,9 +263,15 @@ export function traceSteps(events) {
   });
 }
 
-/** Normalization of a `client` member before the comparison (README items 2 to 4). */
+/**
+ * DL-119: a `content-type` line as a media type (the form of server check 2, mediaTypeKey):
+ * the Tomcat form `text/html;charset=utf-8` equals `text/html; charset=utf-8`. Other lines stay.
+ */
+const mediaTypeLine = ([n, v]) => (n === 'content-type' ? [n, mediaTypeKey(v)] : [n, v]);
+
+/** Normalization of a `client` member before the comparison (README items 2 to 5). */
 export function normalizeClient(client) {
-  const fields = (list) => (Array.isArray(list) ? list.filter((p) => isPair(p) && !TRANSPORT.has(p[0]) && !p[0].startsWith('x-android-')) : list);
+  const fields = (list) => (Array.isArray(list) ? list.filter((p) => isPair(p) && !TRANSPORT.has(p[0]) && !p[0].startsWith('x-android-')).map(mediaTypeLine) : list);
   const intercept = (i) => {
     if (i.null === true) return i;
     const out = { ...i, fields: fields(i.fields) };
@@ -297,13 +305,57 @@ export function clientLines(client) {
   return lines;
 }
 
+// U-13 (legacy wire): the legacy fields that an upstream server adds outside the C-01 scope.
+const U13_FIELDS = new Set(['etag', 'template-tag', 'template-change', 'cache-offline', 'sonic-etag-key']);
+
+/**
+ * DL-120: a response outside the C-01 scope for U-13. Its status is neither 200 nor 304: a 304 is
+ * the legacy answer to a 200 (C-01 scope), and its fields are client input (CS-27).
+ */
+const outsideScope = (response) => response !== null && typeof response === 'object' && response.status !== 200 && response.status !== 304;
+
+function withoutU13(client) {
+  return {
+    ...client,
+    phases: client.phases.map((p) => ({
+      ...p,
+      requests: p.requests.map((r) => (outsideScope(r.response) ? { ...r, response: { ...r.response, fields: r.response.fields.filter(([n]) => !U13_FIELDS.has(n)) } } : r)),
+    })),
+  };
+}
+
+/** DL-120: the trace has a U-13 field on a response outside the scope that the expected response does not have. */
+function showsU13(expected, trace) {
+  const want = new Map();
+  for (const p of expected.phases) for (const r of p.requests) want.set(r.exchange, r.response);
+  for (const p of trace.phases) {
+    for (const r of p.requests) {
+      if (!outsideScope(r.response)) continue;
+      const names = new Set((want.get(r.exchange)?.fields ?? []).map(([n]) => n));
+      if (r.response.fields.some(([n]) => U13_FIELDS.has(n) && !names.has(n))) return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Compare two `client` members after the normalization. Returns null when equal, else a
  * text that names the first difference.
+ *
+ * `notReproduced` "U-13" (DL-120, a client profile fixture): the U-13 fields (etag,
+ * template-tag, template-change, cache-offline, sonic-etag-key) of a response whose status is
+ * not 200 or 304 are not compared, and the trace must have at least one that the expected
+ * response does not have (the documented upstream difference).
  */
-export function compareClient(expected, actual) {
-  const a = normalizeClient(expected);
-  const b = normalizeClient(actual);
+export function compareClient(expected, actual, { notReproduced = null } = {}) {
+  let a = normalizeClient(expected);
+  let b = normalizeClient(actual);
+  if (notReproduced !== null) {
+    if (!CLIENT_NOT_REPRODUCIBLE.includes(notReproduced)) return `not_reproduced ${JSON.stringify(notReproduced)} has no client check`;
+    if (!showsU13(a, b)) return 'U-13: the trace does not show the documented difference (no legacy field on a response whose status is not 200 or 304)';
+    a = withoutU13(a);
+    b = withoutU13(b);
+  }
   if (isDeepStrictEqual(a, b)) return null;
   const d = firstDifference([clientLines(a), clientLines(b)]);
   if (d === null) return 'the projections differ';

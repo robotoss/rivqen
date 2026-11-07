@@ -375,6 +375,8 @@ Limits (a case error, not a crash): at most 256 steps, 16 `create_session` steps
 
 A profile client fixture takes every other member of the replaced fixture (`mode`, `server_profile`, `config`, `responses`, `cache_before`, `schedule`, `trace`). Its `expected.json` is the result of the `legacy-android` client model, and check 7 compares it with the trace of the replaced fixture. iOS has no client fixture (H-119): only function fixtures (`legacy-ios`).
 
+Optional `not_reproduced` (DL-120): the only value is `"U-13"`; another value is a case error. Use it when the lab server of the trace adds the legacy fields to an error response (U-13), which no Rivqen server profile reproduces (DL-082); CS-11 is such a trace (`lab-node`, a `500`). Check 7 then does not compare the fields `etag`, `template-tag`, `template-change`, `cache-offline` and `sonic-etag-key` of a response whose status is not `200` or `304`, and it requires that the trace has at least one of them that the expected response does not have. Every other item is compared as usual. `expected.json` does not repeat the member.
+
 ### Client `expected.json`
 
 Generated. The member names and the member order below are exact.
@@ -493,6 +495,7 @@ Normalization before the comparison:
 2. `fields` of `load_data`, of an intercept and of a record, in the trace and in `expected.json`: remove the transport fields `date`, `connection`, `keep-alive`, `transfer-encoding`, `content-length`, `content-encoding` and every name that starts with `x-android-`, and the fields that no server model reproduces from the traces: `vary`, `cdn-cache-control`, `surrogate-control` (as server check 2, U-12).
 3. An intercept with `complete: false`: `body_len` and `body_sha256` are not compared. They depend on the content coding of the lab server (CS-13a: 128 wire bytes, 139 decoded bytes).
 4. A record: `data_sha256` compares as present or `null` only. The upstream data file has its own form (D-35, D-42), and the trace has its hash only.
+5. `content-type` in the `fields` of `load_data`, of an intercept and of a record, in the trace and in `expected.json`: the value compares as a media type (DL-119), with the form of server check 2: the type, the subtype, the parameter names and the `charset` value in lower case (RFC 9110 §8.3), no white space around `;` and `=`, one pair of quotes removed, the parameter order kept. The Tomcat form `text/html;charset=utf-8` of the `lab-java` traces (CS-08, CS-10) equals `text/html; charset=utf-8`. Another type, subtype, charset or parameter is a difference. `expected.json` keeps the value of the model.
 
 Then the two `client` members must be equal member for member, with the order of the table "client.phases" (exact order, exchange order, multiset or step order).
 
@@ -542,11 +545,13 @@ The check compares only the members of this table. Other members of an evidence 
 | Check | Meaning |
 |---|---|
 | 6. Client files current | Every client `expected.json` and every `functions/<profile>.json` equals the regenerated file byte for byte; `functions/cases.json` is a byte copy of `tools/upstream-lab/client/functions.json` |
-| 7. Client traces | For every canonical client fixture with `evidence: trace`: the steps equal the trace steps; all stored runs of the scenario and mode give one projection; the profile fixture (or, without one, the canonical fixture) equals it after the normalization above |
+| 7. Client traces | For every canonical client fixture with `evidence: trace`: the steps equal the trace steps; all stored runs of the scenario and mode give one projection; the profile fixture (or, without one, the canonical fixture) equals it after the normalization above. A profile fixture with `not_reproduced: "U-13"` gets the U-13 rule of the section "Profile client `case.json`" |
 | 8. `OVERRIDE_NOT_NEEDED` | A `--ANDROID` fixture whose `client` member equals the canonical one |
 | 9. `OVERRIDE_MISSING` | A trace-backed canonical fixture whose trace projection differs from its `client` member, with no `--ANDROID` fixture |
 | 10. Client rules and rows | Every `rules` item is a CL rule of legacy client §9; every CL rule that §9 marks "fixture" is in at least one fixture; every `rows` item is a row of legacy client §3 |
 | 11. Stored runs used | Every stored scenario and mode of `evidence/traces/client/android/` is the `trace` of exactly one canonical client fixture, or the generator lists it with a reason (CS-19: WebView smoke run) |
+
+The client floor `CLIENT_FLOOR` in `tools/legacy-fixtures/gen.mjs` is the number of canonical client fixtures that `fixtures/legacy` must keep (as `CATALOG_SIZE` for the server fixtures). When it is above `0`, fewer canonical client fixtures is a problem, every CL rule that §9 marks "fixture" must be covered (check 10), and every stored scenario mode must be used (check 11). When it is `0`, the generator writes these two checks as notes. The floor is `0` until the client fixtures of T-06 exist; T-06 sets it to the number of its canonical client fixtures. The rule names of check 10 and "one stored mode, one fixture" of check 11 always apply.
 | 12. Function evidence | Every `trace` entry equals its evidence line; every `code-reading` and `none` entry has an `unsupported` evidence line; every case of `cases.json` has one entry in each profile file |
 
 A case error (an unknown member, a step word that CONTRACT §3 does not have, a limit) is a problem of check 6 with the member name. The model never throws for a case of any shape (T-04).

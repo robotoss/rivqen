@@ -9,9 +9,9 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, test } from 'node:test';
-import { run } from '../gen.mjs';
+import { CLIENT_FLOOR, run } from '../gen.mjs';
 import { REPO_ROOT } from '../src/fixture.mjs';
-import { PAGES, scenarioCase } from './client-helpers.mjs';
+import { PAGES, recordedModes, scenarioCase } from './client-helpers.mjs';
 
 const tmp = mkdtempSync(join(tmpdir(), 'legacy-fixtures-client-'));
 after(() => rmSync(tmp, { recursive: true, force: true }));
@@ -77,6 +77,35 @@ test('check7_the_steps_must_equal_the_stored_steps', () => {
   assert.match(gen(dir, { check: false }).problems[0], /check 7: the steps differ from the steps of run 1 of CS-12 quick/);
 });
 
+test('check7_u13_profile_fixture_skips_the_legacy_fields_of_the_500_and_passes', () => {
+  const dir = setup();
+  write(dir, fixture('CS-11', 'standard'));
+  write(dir, android('FX-LEG-CL-CS11-S', { divergences: [], not_reproduced: 'U-13' }));
+  assert.deepEqual(write_(dir).problems, []);
+  assert.deepEqual(gen(dir).problems, []);
+});
+
+test('check7_u13_profile_fixture_whose_trace_has_no_u13_field_is_a_problem', () => {
+  const dir = setup();
+  write(dir, fixture('CS-03', 'standard'));
+  write(dir, android('FX-LEG-CL-CS03-S', { not_reproduced: 'U-13' }));
+  assert.match(write_(dir).problems.join('\n'), /FX-LEG-CL-CS03-S--ANDROID: check 7: the legacy-android result differs from the trace: U-13: the trace does not show the documented difference/);
+});
+
+test('check6_not_reproduced_takes_only_u13', () => {
+  const dir = setup();
+  write(dir, fixture('CS-11', 'standard'));
+  write(dir, android('FX-LEG-CL-CS11-S', { not_reproduced: 'U-11' }));
+  assert.ok(write_(dir).problems.includes('FX-LEG-CL-CS11-S--ANDROID: not_reproduced must be one of U-13'));
+});
+
+test('check7_dl119_the_tomcat_content_type_equals_the_java_server_model', () => {
+  const dir = setup();
+  for (const mode of ['quick', 'standard']) write(dir, fixture('CS-08', mode));
+  for (const id of ['FX-LEG-CL-CS08-Q', 'FX-LEG-CL-CS08-S']) write(dir, android(id));
+  assert.deepEqual(write_(dir).problems, []);
+});
+
 test('check7_profile_fixture_must_equal_the_trace', () => {
   const dir = setup();
   write(dir, fixture('CS-11', 'standard'));
@@ -107,16 +136,16 @@ test('check9_override_missing', () => {
 test('check10_unknown_rule_and_rule_coverage', () => {
   const dir = setup();
   write(dir, fixture('CS-12', 'quick', { rules: ['CL-99'] }));
-  const r = write_(dir, { coverage: true });
+  const r = write_(dir, { coverage: true, clientFloor: 1 });
   assert.ok(r.problems.includes('FX-LEG-CL-CS12-Q: rule CL-99 is not in legacy client section 9'));
   assert.ok(r.problems.includes('rule CL-25 is not covered by any client or function fixture'));
   assert.ok(!r.problems.some((p) => /rule CL-01 /.test(p))); // "—" rules need no fixture
 });
 
-test('check11_stored_runs_must_be_used_once_a_client_fixture_exists', () => {
+test('check11_stored_runs_must_be_used_when_the_client_floor_is_above_0', () => {
   const dir = setup();
   write(dir, fixture('CS-12', 'quick'));
-  const r = write_(dir, { coverage: true });
+  const r = write_(dir, { coverage: true, clientFloor: 1 });
   assert.ok(r.problems.includes('evidence/traces/client/android/CS-01/quick: stored client runs are not used by any client fixture'));
   assert.ok(!r.problems.some((p) => p.includes('CS-12/quick')));
   assert.ok(r.notes.some((n) => /CS-19 quick: stored runs not used: WebView smoke run/.test(n)));
@@ -133,7 +162,33 @@ test('check11_without_client_fixtures_is_a_note', () => {
   const dir = setup();
   const r = gen(dir, { coverage: true });
   assert.deepEqual(r.problems, []);
-  assert.ok(r.notes.some((n) => /38 stored scenario modes have no client fixture yet/.test(n)));
+  const unused = recordedModes().length;
+  assert.ok(r.notes.includes(`stored-run use is checked when CLIENT_FLOOR is above 0; ${unused} stored scenario modes have no client fixture yet`), r.notes.join('\n'));
+});
+
+test('client_floor_is_0_until_the_client_fixtures_exist', () => {
+  assert.equal(CLIENT_FLOOR, 0);
+});
+
+test('client_floor_0_makes_checks_10_and_11_notes_also_with_a_client_fixture', () => {
+  const dir = setup();
+  write(dir, fixture('CS-12', 'quick'));
+  const r = write_(dir, { coverage: true, clientFloor: 0 });
+  assert.deepEqual(r.problems, []);
+  assert.ok(r.notes.some((n) => n.startsWith('client rule coverage is checked when CLIENT_FLOOR is above 0; not covered yet: ')));
+  assert.ok(r.notes.some((n) => /^stored-run use is checked when CLIENT_FLOOR is above 0; \d+ stored scenario modes/.test(n)));
+});
+
+test('client_floor_above_the_number_of_canonical_client_fixtures_is_a_problem', () => {
+  const dir = setup();
+  write(dir, fixture('CS-12', 'quick'));
+  write(dir, fixture('CS-12', 'standard'));
+  const at = write_(dir, { coverage: true, clientFloor: 2 });
+  assert.ok(!at.problems.some((p) => p.includes('CLIENT_FLOOR')));
+  const over = gen(dir, { coverage: true, clientFloor: 3 });
+  assert.ok(over.problems.includes('the catalog has 2 canonical client fixtures, fewer than 3 (CLIENT_FLOOR)'));
+  // Only the catalog checks it: without coverage (another --dir) the floor does not apply.
+  assert.ok(!gen(dir, { coverage: false, clientFloor: 3 }).problems.some((p) => p.includes('CLIENT_FLOOR')));
 });
 
 test('check12_function_files_are_generated_and_cases_json_is_a_byte_copy', () => {

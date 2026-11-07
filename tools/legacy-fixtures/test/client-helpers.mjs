@@ -34,6 +34,22 @@ export function storedRuns(scenario, mode) {
   return readdirSync(dir).filter((f) => /^run-\d+\.jsonl$/.test(f)).sort((a, b) => Number(a.match(/\d+/)[0]) - Number(b.match(/\d+/)[0])).map((f) => parseRun(readFileSync(join(dir, f))));
 }
 
+/**
+ * The scenario modes that the lab record lists with runs (evidence/traces/client/run.json),
+ * without the WebView smoke run of scenarios.json (`webview: true`, CS-19). A new lab run
+ * changes this list; no test has a fixed count.
+ */
+export function recordedModes() {
+  const record = JSON.parse(readFileSync(join(ROOT, 'evidence/traces/client/run.json'), 'utf8'));
+  const webview = new Set(SCENARIOS.filter((s) => s.webview === true).map((s) => s.id));
+  const out = [];
+  for (const s of record.scenarios) {
+    if (webview.has(s.id)) continue;
+    for (const [mode, m] of Object.entries(s.modes)) if (m.runs > 0) out.push({ scenario: s.id, mode });
+  }
+  return out;
+}
+
 /** The stored scenario modes (CS-19 excepted: a WebView smoke run). */
 export function storedModes() {
   const out = [];

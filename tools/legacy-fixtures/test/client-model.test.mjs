@@ -6,28 +6,34 @@
 // for a case of any shape.
 
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { webFields } from '../src/client-android.mjs';
 import { run } from '../src/client-model.mjs';
 import { compareClient, projectRuns } from '../src/client-trace.mjs';
-import { ENV, scenarioCase, storedModes, storedRuns } from './client-helpers.mjs';
+import { ENV, ROOT, recordedModes, scenarioCase, storedModes, storedRuns } from './client-helpers.mjs';
 
 const MODES = storedModes();
 const traceOf = (scenario, mode, c) => projectRuns(storedRuns(scenario, mode), { url: 'https://shop.example.com/catalog', account: c.config.account });
 
 /**
- * Stored modes that the server models cannot reproduce (questions to the architect, T-04 report):
- * CS-08 and CS-10 come from the Java lab server, which writes `text/html;charset=utf-8`;
- * CS-11 gets legacy fields on a 500 from the Node lab server (U-13, not reproduced, DL-082).
+ * The server gaps: stored modes whose lab server does what no Rivqen server profile reproduces.
+ * The profile fixture of such a mode has `not_reproduced` (DL-120). CS-11: the Node.js lab server
+ * adds the legacy fields to a 500 (U-13, DL-082). (CS-08 and CS-10, the Tomcat form of
+ * content-type, are no gap since DL-119.)
  */
-const SERVER_GAPS = new Map([
-  ['CS-08', /content-type","text\/html; charset=utf-8/],
-  ['CS-10', /content-type","text\/html; charset=utf-8/],
-  ['CS-11', /"status":500,"fields":\[\]/],
-]);
+const SERVER_GAPS = new Map([['CS-11', 'U-13']]);
 
-test('the stored evidence has the 38 scenario modes of S1 (CS-19 excepted)', () => {
-  assert.equal(MODES.length, 38);
+test('the_stored_evidence_has_every_scenario_mode_of_the_lab_record_except_the_webview_run', () => {
+  const record = JSON.parse(readFileSync(join(ROOT, 'evidence/traces/client/run.json'), 'utf8'));
+  const want = recordedModes();
+  assert.ok(want.length > 0);
+  assert.deepEqual(MODES, want);
+  for (const { scenario, mode } of want) {
+    const runs = record.scenarios.find((s) => s.id === scenario).modes[mode].runs;
+    assert.equal(storedRuns(scenario, mode).length, runs, `${scenario} ${mode}: the stored runs of run.json`);
+  }
 });
 
 test('android_model_equals_every_stored_trace_except_the_server_gaps', () => {
@@ -37,9 +43,10 @@ test('android_model_equals_every_stored_trace_except_the_server_gaps', () => {
     assert.equal(r.ok, true, `${scenario} ${mode}: ${r.error?.message}`);
     const t = traceOf(scenario, mode, c);
     assert.equal(t.error, undefined, `${scenario} ${mode}: ${t.error}`);
-    const d = compareClient(r.client, t.client);
-    if (SERVER_GAPS.has(scenario)) assert.match(d ?? '', SERVER_GAPS.get(scenario), `${scenario} ${mode}`);
-    else assert.equal(d, null, `${scenario} ${mode}: ${d}`);
+    const gap = SERVER_GAPS.get(scenario) ?? null;
+    assert.equal(compareClient(r.client, t.client, { notReproduced: gap }), null, `${scenario} ${mode}`);
+    // A listed gap is still needed: without its item the trace differs.
+    if (gap !== null) assert.match(compareClient(r.client, t.client), /"status":500,"fields":\[\]/, `${scenario} ${mode}`);
   }
 });
 
@@ -90,7 +97,130 @@ test('android_branch_without_a_fact_row_is_not_modeled', () => {
   const r = run('legacy-android', 'quick', c, ENV);
   assert.equal(r.ok, false);
   assert.equal(r.error.code, 'CLIENT_NOT_MODELED');
-  assert.match(r.error.message, /Q19, S16/);
+  assert.match(r.error.message, /a refresh after a first-load .*\(Q19, S16:/);
+});
+
+// --- A-15 to A-17 (S2 traces CS-20, CS-21, CS-27) ---
+
+const S = (step, extra = {}) => ({ do: step, ...extra });
+/** A first load of page a that the next session finds in the cache (the setup of CS-21 and CS-27). */
+const SETUP = [{ case: 'r1' }, S('create_session'), S('bind_client'), S('wait', { for: 'proxy.response_end' }), S('client_ready'), S('request_resource'), S('settle', { ms: 2500 }), S('destroy')];
+/** CS-27 up to its refresh: a template change to page c, read by the intercept, then refresh. */
+const TO_REFRESH = [...SETUP, { case: 'r2' }, S('create_session'), S('bind_client'), S('wait', { for: 'proxy.response_end' }), S('settle', { ms: 300 }), S('client_ready'), S('request_resource'), S('get_diff'), S('refresh')];
+
+function android(mode, schedule) {
+  const base = scenarioCase('CS-27', mode);
+  const c = { ...base, responses: { ...base.responses, e: { page: 'empty', app: base.responses.r1.app } }, schedule };
+  return run('legacy-android', mode, c, ENV);
+}
+
+test('android_branches_next_to_a15_to_a17_are_not_modeled_with_their_rows', () => {
+  // `held`: no cache; `withCache`: the cache of page a. Both hold the head of the empty response.
+  const held = (mode, steps) => android(mode, [{ case: 'e' }, S('hold', { point: 'head' }), S('create_session'), S('bind_client'), ...steps]);
+  const expect = (r, pattern) => {
+    assert.equal(r.ok, false, JSON.stringify(r.client?.phases.at(-1)));
+    assert.equal(r.error.code, 'CLIENT_NOT_MODELED');
+    assert.match(r.error.message, pattern);
+  };
+  const withCache = (mode, steps) => android(mode, [...SETUP, { case: 'e' }, S('hold', { point: 'head' }), S('create_session'), S('bind_client'), ...steps]);
+  expect(held('quick', [S('client_ready'), S('release')]), /an empty first-load body after the preload loadUrl.*\(Q3:/);
+  expect(held('standard', [S('client_ready'), S('request_resource'), S('release')]), /empty first-load body through the bridge stream.*\(Q2, S1:/);
+  expect(withCache('quick', [S('client_ready'), S('release')]), /empty body after the cached page was given as data.*\(Q12, Q13:/);
+  expect(withCache('standard', [S('client_ready'), S('request_resource'), S('release')]), /empty body after the intercept.*\(S9, S10:/);
+  expect(android('quick', [...SETUP, { case: 'r2' }, S('hold', { point: 'head' }), S('create_session'), S('refresh')]), /a refresh while the session runs/);
+  expect(android('quick', [...SETUP, { case: 'r1' }, S('create_session'), S('refresh')]), /a refresh after a not-modified/);
+  expect(android('quick', [...TO_REFRESH.slice(0, -1), S('server_down'), S('refresh')]), /a refresh without a connection/);
+  expect(android('quick', [...TO_REFRESH.slice(0, -1), S('set_network', { valid: false }), S('refresh')]), /a refresh without a connection/);
+  const noIntercept = TO_REFRESH.filter((s, i) => i < SETUP.length || s.do !== 'request_resource');
+  expect(android('quick', noIntercept), /before the delayed save of a new page that no intercept read/);
+  expect(android('quick', [...TO_REFRESH, S('request_resource')]), /an intercept after a refresh/);
+  expect(android('quick', [...TO_REFRESH.slice(0, -1), { case: 'r1' }, S('refresh')]), /a template-change response to a refresh.*\(Q19, S16:/);
+  expect(android('quick', [...TO_REFRESH, S('get_diff')]), /a second page message while a spaced one waits.*\(section 2.4 item 3:/);
+  expect(android('quick', [...TO_REFRESH.slice(0, -1), S('destroy'), S('refresh')]), /a refresh after destroy/);
+});
+
+const REFRESH_304 = '{"code":304,"srcCode":304,"extra":{"cache-offline":"store","isReload":"true"}}';
+const messagesOf = (phase) => phase.actions.filter((a) => a.do === 'message').map((a) => a.json);
+
+test('android_after_a_refresh_page_messages_are_2_s_apart', () => {
+  // The result message at get_diff (clock 2800); the refresh 304 at once: it waits until 4800.
+  const r = android('quick', [
+    ...TO_REFRESH, S('settle', { ms: 1999 }), S('settle', { ms: 1 }), S('settle', { ms: 2000 }),
+    S('get_diff'), S('settle', { ms: 1000 }), S('get_diff'), S('settle', { ms: 999 }), S('settle', { ms: 1 }),
+  ]);
+  assert.equal(r.ok, true, r.error?.message);
+  const phases = r.client.phases.slice(-6).map(messagesOf);
+  assert.equal(phases[0].length, 1); // get_diff, refresh, settle to 4799: only the 2000 / 304 message
+  assert.match(phases[0][0], /"code":304,"srcCode":2000/);
+  assert.deepEqual(phases[1], [REFRESH_304]); // 4800
+  assert.deepEqual(phases[2], []);
+  assert.deepEqual(phases[3], [REFRESH_304]); // get_diff at 6800: exactly 2 s later, at once
+  assert.deepEqual(phases[4], []); // get_diff at 7800 waits until 8800 (2 s after the last message), not 9800
+  assert.deepEqual(phases[5], [REFRESH_304]);
+});
+
+const PAGE_A = 'a974949d';
+const PAGE_C = '3d863596';
+const savedPages = (r) => r.client.phases.flatMap((p) => p.snapshots).map((s) => s.entries[0].page_sha256.slice(0, 8));
+
+test('android_refresh_moves_the_save_to_1500_ms_after_the_stream_close', () => {
+  // Body end at 2500 (delayed save due 4000); the intercept reads page c at 2800; the refresh at
+  // 3300 cancels the delayed save, and the stream-close save runs at 2800 + 1500 = 4300.
+  const r = android('quick', [...TO_REFRESH.slice(0, -1), S('settle', { ms: 500 }), S('refresh'), S('settle', { ms: 999 }), S('snapshot_cache'), S('settle', { ms: 1 }), S('snapshot_cache')]);
+  assert.equal(r.ok, true, r.error?.message);
+  assert.deepEqual(savedPages(r), [PAGE_A, PAGE_C]);
+});
+
+test('android_destroy_after_a_refresh_keeps_the_stream_close_save', () => {
+  const r = android('quick', [...TO_REFRESH, S('destroy'), S('settle', { ms: 1500 }), S('snapshot_cache')]);
+  assert.equal(r.ok, true, r.error?.message);
+  assert.deepEqual(savedPages(r), [PAGE_C]);
+  // Without the refresh, the destroy cancels the delayed save (A-13): page a stays.
+  assert.deepEqual(savedPages(android('quick', [...TO_REFRESH.slice(0, -1), S('destroy'), S('settle', { ms: 2500 }), S('snapshot_cache')])), [PAGE_A]);
+});
+
+test('android_refresh_after_the_delayed_save_needs_no_intercept', () => {
+  const noIntercept = TO_REFRESH.filter((s, i) => i < SETUP.length || s.do !== 'request_resource');
+  const r = android('quick', [...noIntercept.slice(0, -1), S('settle', { ms: 2000 }), S('refresh'), S('snapshot_cache'), S('destroy')]);
+  assert.equal(r.ok, true, r.error?.message);
+  assert.deepEqual(savedPages(r), [PAGE_C]);
+  assert.deepEqual(r.client.phases.at(-1).results, [{ session: 2, src_code: 304, final_code: 304 }]);
+});
+
+test('android_refresh_resets_the_codes_until_its_response', () => {
+  const r = android('quick', [...TO_REFRESH.slice(0, -1), S('hold', { point: 'head' }), S('refresh'), S('destroy')]);
+  assert.equal(r.ok, true, r.error?.message);
+  assert.deepEqual(r.client.phases.at(-1).results, [{ session: 2, src_code: -1, final_code: -1 }]);
+  const again = android('quick', [...TO_REFRESH.slice(0, -1), S('hold', { point: 'head' }), S('refresh'), S('refresh')]);
+  assert.match(again.error.message, /a refresh while the session runs/);
+});
+
+test('android_page_messages_are_not_spaced_without_a_refresh', () => {
+  // CS-03 order (304 with a cache), and two get_diff calls at one clock: two messages at once.
+  const r = android('quick', [...SETUP, { case: 'r1' }, S('create_session'), S('bind_client'), S('client_ready'), S('get_diff'), S('get_diff')]);
+  assert.equal(r.ok, true, r.error?.message);
+  assert.equal(messagesOf(r.client.phases.at(-1)).length, 2);
+});
+
+test('android_first_message_after_a_refresh_is_not_spaced', () => {
+  // The cache is saved at 1500; the template change and the refresh run at 1500, before any message.
+  const setup = SETUP.map((s) => (s.do === 'settle' ? S('settle', { ms: 1500 }) : s));
+  const r = android('quick', [...setup, { case: 'r2' }, S('create_session'), S('bind_client'), S('wait', { for: 'proxy.response_end' }), S('client_ready'), S('request_resource'), S('refresh'), S('get_diff')]);
+  assert.equal(r.ok, true, r.error?.message);
+  assert.deepEqual(messagesOf(r.client.phases.at(-1)), [REFRESH_304]);
+});
+
+test('android_empty_first_load_in_standard_notifies_a_waiting_page', () => {
+  // S1 "notify": a get_diff before the end of the empty body gets 1000 / 1000 at once.
+  const r = android('standard', [{ case: 'e' }, S('hold', { point: 'head' }), S('create_session'), S('get_diff'), S('release')]);
+  assert.equal(r.ok, true, r.error?.message);
+  assert.deepEqual(messagesOf(r.client.phases.at(-1)).map((m) => JSON.parse(m).code), [1000]);
+});
+
+test('android_cut_at_0_body_bytes_through_the_bridge_stream_is_q22_not_an_empty_body', () => {
+  const r = android('standard', [{ case: 'e' }, S('cut', { bytes: 0 }), S('hold', { point: 'head' }), S('create_session'), S('bind_client'), S('client_ready'), S('request_resource'), S('release'), S('destroy')]);
+  assert.equal(r.ok, true, r.error?.message);
+  assert.deepEqual(r.client.phases.at(-1).results, [{ session: 1, src_code: 1000, final_code: 1000 }]);
 });
 
 test('run_rejects_a_mode_that_differs_from_the_case', () => {

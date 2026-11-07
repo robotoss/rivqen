@@ -22,7 +22,8 @@
 //      the catalog is complete
 //   6-12. the client part (README "Generator checks of the client part"; src/client-fixture.mjs):
 //      client expected.json and functions/*.json current, client traces, OVERRIDE_NOT_NEEDED,
-//      OVERRIDE_MISSING, CL rules and rows, stored runs used, function evidence
+//      OVERRIDE_MISSING, CL rules and rows, stored runs used, function evidence; the coverage of
+//      check 10 and check 11 are problems only when CLIENT_FLOOR is above 0
 // Exit codes: 0 all current (or written), 1 a stale, missing or extra file or a failed
 // check, 2 a usage error.
 
@@ -37,6 +38,14 @@ import { clientPart, isClientDir } from './src/client-fixture.mjs';
 
 /** Number of canonical fixtures of the complete catalog (fixtures/legacy/README.md). */
 export const CATALOG_SIZE = 59;
+
+/**
+ * Number of canonical client fixtures that fixtures/legacy must keep (README "Generator checks of
+ * the client part"). Above 0, the client rule coverage (check 10) and the use of every stored
+ * client run (check 11) are problems; at 0 they are notes. 0 until the client fixtures exist
+ * (WP-01 S2 lane L6 raises it when it adds them).
+ */
+export const CLIENT_FLOOR = 0;
 
 const GENERATED = 'expected.json';
 const TRACE_SERVERS = ['java', 'node', 'php'];
@@ -108,6 +117,7 @@ export function run({
   labPages = join(root, 'tools/upstream-lab/pages'),
   traces = storedTraces(root),
   catalogSize = CATALOG_SIZE,
+  clientFloor = CLIENT_FLOOR,
   catalog = dir === FIXTURES_DIR,
   coverage = true,
   clientEvidence = join(root, 'evidence/traces/client'),
@@ -249,6 +259,7 @@ export function run({
     labFunctions,
     scenarios,
     coverage,
+    floor: clientFloor,
     sync: (path, bytes, label) => sync(path, bytes, check, label),
   });
   problems.push(...client.problems);

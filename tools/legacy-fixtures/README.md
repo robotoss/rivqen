@@ -20,7 +20,7 @@ The client part (WP-01 S2) has a second model: a legacy client with the profiles
 
 The Java order of D-14 on a `304` and the Java rule without `accept-diff: true` follow the field order of traces S22, S24 and S03 (Java writes `Cache-Control` and `Cache-Offline: true` before the application, and `Cache-Offline: store` after it). No trace has an application `cache-offline` on a `304` or without `accept-diff`.
 
-The added lines of a data or full response are in the order of the stored traces (S02, S06, S07; client traces CS-01 to CS-18): `legacy-java` and `legacy-php` write `cache-control` and `cache-offline` first, then `etag`, `template-tag`, `template-change`; `legacy-node` writes `etag`, `template-tag`, `cache-offline`, `template-change`. The client part compares the legacy response fields in order. A server `expected.json` lists the fields by name, so this order changes no server fixture.
+The added lines of a data or full response are in the order of the stored traces (S02, S06, S07; client traces CS-01 to CS-27): `legacy-java` and `legacy-php` write `cache-control` and `cache-offline` first, then `etag`, `template-tag`, `template-change`; `legacy-node` writes `etag`, `template-tag`, `cache-offline`, `template-change`. The client part compares the legacy response fields in order. A server `expected.json` lists the fields by name, so this order changes no server fixture.
 
 ## Run
 
@@ -49,7 +49,7 @@ Exit codes of `gen.mjs`: `0` all files current (or written), `1` a stale, missin
 | `src/client-case.mjs` | Check of a client `case.json` (`validateClientCase`, `validateBehavior`): members, types, limits, step words |
 | `src/client-engine.mjs` | The step engine: schedule, phases, lab runtime, proxy faults (`hold`, `cut`, `drop_field`, `set_field`, `server_down`; the lab `setField` and `forwardFields` by import), clock and timers |
 | `src/client-canonical.mjs` | The canonical session (CL-05 to CL-40), the abstract cache (CL-38), the field rules (CL-14 to CL-16, CL-21) and the canonical functions (CL-24, CL-41, CL-42) |
-| `src/client-android.mjs` | The `legacy-android` differences A-01 to A-14 and the Android functions (session id, split, diff, etag, message) |
+| `src/client-android.mjs` | The `legacy-android` differences A-01 to A-17 and the Android functions (session id, split, diff, etag, message) |
 | `src/client-model.mjs` | `run(profile, mode, case, env)`: the `client` member, or `{ ok: false, error: { code, message } }` |
 | `src/client-trace.mjs` | The trace projection of a stored run (DL-104), the normalization and `compareClient` (phases and message normalization by import from `tools/upstream-lab/client/src/determinism.mjs`) |
 | `src/client-fixture.mjs` | The client part of the generator (checks 6 to 12) |
@@ -136,34 +136,44 @@ The `legacy-android` differences (`src/client-android.mjs`) each cite their row:
 | A-05, A-06 | `template-change`; the page message (org.json `\/`, Android key order, nothing for an empty diff) | D-29, D-26, section 2.4 |
 | A-07 | Web view fields: no `Set-Cookie`, `Cache-Control`, `Expires`, `Etag`, no repeated name | Section 2.9; CS-03, CS-08, CS-09 |
 | A-08 | Cache: a record per session id with the header lines; `sonic-html-sha1` after a first load or template change; Standard writes a refused data update without a template | Section 8; trace report section 6 item 3; CS-04, CS-08 |
-| A-09 | Intercept status `0` | CONTRACT section 5; CS-01 to CS-18 |
+| A-09 | Intercept status `0` | CONTRACT section 5; CS-01 to CS-27 |
 | A-10, A-11 | Cookie read at creation; empty validators without a cache; `sonic-sdk-version` | Section 2.9; CL-09 note; CS-01, CS-12, CS-17 |
 | A-12 | The first data update after a first load sends every block | Trace report section 6 item 1; CS-04 |
 | A-13 | The first-load and template-change save runs 1.5 s after the body; a destroy before it cancels it | Section 2.6 item 6, M-13; CS-18 |
 | A-14 | `{}` at the next `get_diff` after a final-200 message | Trace report section 6 item 2; CS-04 |
-| Flow | Classification F4 to F9, the Quick slot (Q1 to Q22), the Standard pending stream (S1 to S18), M-04, M-05, no account-change rule (section 2.8) | Sections 2 and 3 |
+| A-15 | A body of 0 bytes is never saved (no delayed save, no stream-close save); the cache stays as it was | CS-20, CS-21 (both modes) |
+| A-16 | An empty body. Q3 (first load, Quick, before the preload `loadUrl`): no load call, the intercept gets the empty stream, -1 / -1 (probable upstream defect, confirmed). S1 (Standard): the empty stream, 1000 / 1000, notify. Q14 (Quick template change, network first): the empty page as data, 2000 / 304. S12 (Standard template change, network first): no result; the intercept gets 0 bytes with the header lines of the cached record | Trace report sections 5.1, 5.2, 6 item 10; CS-20, CS-21 |
+| A-17 | `refresh` after a complete template change: codes reset, `isReload` `"true"`; the request has the etag and template tag of the template-change response, no new cookie read; no load call; a `304` gives 304 / 304, notify. Page messages after a refresh are at least 2 s apart; a closer one waits, a destroy cancels it. The delayed save of the template change does not write; the stream-close save writes 1.5 s after the intercept read the page, also after a destroy | Section 2.3, section 2.4 item 3, section 2.6 items 3 and 6, D-26, D-37; trace report section 4 note 7, section 5.2, section 6 item 12; CS-27 |
+| Flow | Classification F4 to F9 (F4 compares with the etag of the request), the Quick slot (Q1 to Q22), the Standard pending stream (S1 to S18), M-04, M-05, no account-change rule (section 2.8). `cache-offline` cases of S2 (D-30, D-47, D-48): `http` in any case is F6 (CS-24a, CS-25: Quick `loadUrl` once, Standard keeps the cached page, cache kept); only exact `true` and `store` pass F12, so `Store` and `TRUE` take Q8 with the cache removed (Quick) and S8 with a write without a template (Standard; CS-24b, CS-24c); `store` alone takes Q9, Q13, S8, S10 (CS-22, CS-23); a head field `html-sha1` changes nothing (CS-26 equals CS-05) | Sections 2 and 3; trace report sections 4 and 5.1 |
 
-Not modeled (`CLIENT_NOT_MODELED`): `refresh` (Q19, S16), a template change or a data update whose body ends with an error, a Standard rebuild failure (Q11), an intercept that arrives while the session reads a first-load body (except a destroy, CS-18), `cache_before` under `legacy-android`.
+Not modeled (`CLIENT_NOT_MODELED`, the message names the row): a `refresh` other than A-17 (Q19, S16: while the session runs, after another outcome than a template change, without a connection, after destroy, before the delayed save when no intercept read the new page, a response other than `304`, an intercept after the refresh); a second page message while a spaced one waits (section 2.4 item 3); an empty first-load body through the bridge stream (Q2, S1) or after the preload `loadUrl` (Q3 note 2); an empty template-change body after the cached page was delivered (Q12, Q13, S9, S10); a template change or a data update whose body ends with an error; a Standard rebuild failure (Q11); an intercept that arrives while the session reads a first-load body (except a destroy, CS-18); `cache_before` under `legacy-android`.
+
+A new stored scenario that the model does not reproduce needs a new A-row (or a `CLIENT_NOT_MODELED` row) in `src/client-android.mjs`, nothing else: the tests take the list of stored modes from `evidence/traces/client/run.json` and `tools/upstream-lab/client/scenarios.json` (CS-19 excepted) and compare every one with the model.
 
 ### Trace projection
 
-`projectRun(events, { url, account })` in `src/client-trace.mjs` makes the `client` member from one stored run; `projectRuns` requires that all runs of a scenario mode give one projection. `compareClient(expected, trace)` applies the normalization of the format README (transport fields, `x-android-*`, `vary` and the CDN fields removed; incomplete intercept bodies not compared; `data_sha256` by presence) and returns `null` or the first different item.
+`projectRun(events, { url, account })` in `src/client-trace.mjs` makes the `client` member from one stored run; `projectRuns` requires that all runs of a scenario mode give one projection. `compareClient(expected, trace, { notReproduced })` applies the normalization of the format README (transport fields, `x-android-*`, `vary` and the CDN fields removed; `content-type` as a media type, DL-119; incomplete intercept bodies not compared; `data_sha256` by presence) and returns `null` or the first different item.
+
+| Rule | How |
+|---|---|
+| DL-119 `content-type` | Each `content-type` line of a `load_data`, an intercept and a record becomes the media-type form of server check 2 (`mediaTypeKey` in `src/trace.mjs`): type, subtype, parameter names and the `charset` value in lower case, no white space around `;` and `=`, one pair of quotes removed, the parameter order kept. So the Tomcat form `text/html;charset=utf-8` (CS-08, CS-10, `lab-java`) equals `text/html; charset=utf-8` of the `legacy-java` server model. Another type, subtype, charset or parameter still differs |
+| DL-120 `notReproduced: "U-13"` | For a client profile fixture with `not_reproduced: "U-13"`. The U-13 fields (`etag`, `template-tag`, `template-change`, `cache-offline`, `sonic-etag-key`) of a response whose status is not `200` or `304` are not compared. The trace must have at least one of them that the expected response does not have; else the result is `U-13: the trace does not show the documented difference …`. A `200` or a `304` is in the C-01 scope: its fields are always compared (the `304` fields are client input, CS-27). `set-cookie` is always compared. Another item is a difference |
 
 ### Checks 6 to 12
 
 | Check | Problem text |
 |---|---|
 | 6. Client files current; a case error | `<id>/expected.json: stale`, `missing`; `functions/<file>: stale`; `<id>: <member message>`; `<id>: <CODE>: <message>` (model error) |
-| 7. Client traces | `<id>: check 7: the steps differ from the steps of run <k> of <scenario> <mode>`; `<id>: check 7: the legacy-android result differs from the trace: first difference at item …`; `<id>: check 7: no stored run …` |
+| 7. Client traces | `<id>: check 7: the steps differ from the steps of run <k> of <scenario> <mode>`; `<id>: check 7: the legacy-android result differs from the trace: first difference at item …` (with `not_reproduced: "U-13"`: `… U-13: the trace does not show the documented difference …`); `<id>: check 7: no stored run …` |
 | 8. `OVERRIDE_NOT_NEEDED` | `<id>--ANDROID: OVERRIDE_NOT_NEEDED: the client member equals <id>` |
 | 9. `OVERRIDE_MISSING` | `<id>: OVERRIDE_MISSING for legacy-android: first difference at item …` |
-| 10. Client rules and rows | `<id>: rule CL-nn is not in legacy client section 9`; `rule CL-nn is not covered by any client or function fixture` |
+| 10. Client rules and rows | `<id>: rule CL-nn is not in legacy client section 9`; `the catalog has <n> canonical client fixtures, fewer than <floor> (CLIENT_FLOOR)`; `rule CL-nn is not covered by any client or function fixture` |
 | 11. Stored runs used | `evidence/traces/client/android/<scenario>/<mode>: stored client runs are not used by any client fixture`; `<id>: the stored runs of <scenario> <mode> are already the trace of <id>` |
 | 12. Function evidence | `functions/<profile>.json: <case>: no evidence line`; `functions/legacy-android.json: <case>: the Android model gives …, the evidence …` |
 
-Checks 10 (coverage) and 11 run when the directory has at least one canonical client fixture; before that, `gen.mjs` writes one note for each. A scenario with `webview: true` in `tools/upstream-lab/client/scenarios.json` (CS-19) is a note with its reason. When `fixtures/legacy/functions/` exists, the generator writes `cases.json` (a byte copy of `tools/upstream-lab/client/functions.json`) and the three profile files; the canonical entries cover CL-14, CL-15, CL-16, CL-23, CL-24, CL-28, CL-41, CL-42 and CL-43. A `trace` entry is the evidence line with the members of the README table; where the Android session model uses a function (session id, split, diff, etag), the model must also equal every evidence line of that function.
+`CLIENT_FLOOR` in `gen.mjs` (as `CATALOG_SIZE`) is the number of canonical client fixtures that `fixtures/legacy` must keep. It is `0` until the client fixtures exist; the lane that adds them raises it. Above `0`, for `fixtures/legacy` only: fewer canonical client fixtures than the floor is a problem, and check 10 (coverage) and check 11 (stored runs used) give problems. At `0` they give one note each, also when client fixtures exist. So removing client fixtures cannot switch the checks off. The rule names of check 10 and the second line of check 11 (one stored mode, one fixture) always apply. A scenario with `webview: true` in `tools/upstream-lab/client/scenarios.json` (CS-19) is a note with its reason. When `fixtures/legacy/functions/` exists, the generator writes `cases.json` (a byte copy of `tools/upstream-lab/client/functions.json`) and the three profile files; the canonical entries cover CL-14, CL-15, CL-16, CL-23, CL-24, CL-28, CL-41, CL-42 and CL-43. A `trace` entry is the evidence line with the members of the README table; where the Android session model uses a function (session id, split, diff, etag), the model must also equal every evidence line of that function.
 
-A new lab run needs no code change: a new scenario mode in `evidence/traces/client/android/` needs one canonical client fixture (and an `--ANDROID` fixture when check 9 asks for one).
+A new lab run needs no change in the generator: a new scenario mode in `evidence/traces/client/android/` needs one canonical client fixture (and an `--ANDROID` fixture when check 9 asks for one, with `not_reproduced: "U-13"` when its lab server adds legacy fields to an error, DL-120). If the `legacy-android` model does not reproduce the new trace, add an A-row (see the table above).
 
 ### Write a client fixture
 

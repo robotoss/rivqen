@@ -312,7 +312,10 @@ function stringList(list, pattern, where, { nonEmpty }) {
 }
 
 const CANONICAL_MEMBERS = ['id', 'kind', 'description', 'profile', 'mode', 'server_profile', 'rules', 'rows', 'divergences', 'upstream', 'sources', 'evidence', 'trace', 'url', 'config', 'responses', 'cache_before', 'schedule', 'level'];
-const PROFILE_MEMBERS = ['id', 'kind', 'description', 'profile', 'replaces', 'divergences', 'sources'];
+const PROFILE_MEMBERS = ['id', 'kind', 'description', 'profile', 'replaces', 'divergences', 'sources', 'not_reproduced'];
+
+/** The `not_reproduced` items of a client profile fixture (DL-120): each has a check in compareClient. */
+export const CLIENT_NOT_REPRODUCIBLE = Object.freeze(['U-13']);
 
 /**
  * The full check of a client case.json (`name` is the directory name). Returns
@@ -332,7 +335,11 @@ export function validateClientCase(name, c) {
     if (c.profile !== 'legacy-android') fail('CASE_TYPE', 'profile must be legacy-android');
     if (c.replaces !== name.slice(0, -'--ANDROID'.length)) fail('CASE_TYPE', 'replaces must be the ID without the suffix');
     const divergences = stringList(c.divergences, DIVERGENCE, 'divergences', { nonEmpty: false });
-    return { kind: 'client-profile', id: name, description: c.description, profile: c.profile, replaces: c.replaces, divergences, sources };
+    if (Object.hasOwn(c, 'not_reproduced') && !CLIENT_NOT_REPRODUCIBLE.includes(c.not_reproduced)) {
+      fail('CASE_TYPE', `not_reproduced must be one of ${CLIENT_NOT_REPRODUCIBLE.join(', ')}`);
+    }
+    const notReproduced = Object.hasOwn(c, 'not_reproduced') ? c.not_reproduced : null;
+    return { kind: 'client-profile', id: name, description: c.description, profile: c.profile, replaces: c.replaces, divergences, sources, notReproduced };
   }
   onlyKeys(c, CANONICAL_MEMBERS, 'case');
   for (const k of ['profile', 'mode', 'server_profile', 'rules', 'rows', 'upstream', 'sources', 'evidence', 'responses', 'cache_before', 'schedule']) {

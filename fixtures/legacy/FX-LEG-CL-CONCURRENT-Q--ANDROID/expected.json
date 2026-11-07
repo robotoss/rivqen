@@ -1,0 +1,143 @@
+{
+  "id": "FX-LEG-CL-CONCURRENT-Q--ANDROID",
+  "kind": "client",
+  "profile": "legacy-android",
+  "mode": "quick",
+  "server_profile": "legacy-node",
+  "level": "must",
+  "client": {
+    "sessions": [
+      {
+        "step": 2,
+        "opened": true,
+        "session": 1,
+        "partition": "rq-test-account",
+        "url": "https://shop.example.com/catalog"
+      },
+      {
+        "step": 8,
+        "opened": false,
+        "partition": "rq-test-account",
+        "url": "https://shop.example.com/catalog"
+      }
+    ],
+    "phases": [
+      {
+        "steps": [1,9],
+        "requests": [
+          {
+            "exchange": 1,
+            "method": "GET",
+            "target": "/catalog",
+            "fields": [
+              ["accept-diff","true"],
+              ["if-none-match",""],
+              ["template-tag",""],
+              ["sonic-sdk-version","Sonic/2.0.0"]
+            ],
+            "response": {
+              "status": 200,
+              "fields": [
+                ["etag","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+                ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+                ["cache-offline","true"],
+                ["template-change","true"]
+              ],
+              "complete": true
+            }
+          }
+        ],
+        "cookies": [
+          {
+            "call": "get",
+            "url": "https://shop.example.com/catalog",
+            "value": null
+          }
+        ],
+        "actions": [
+          {
+            "do": "load_url",
+            "session": 1,
+            "url": "https://shop.example.com/catalog"
+          }
+        ],
+        "intercepts": [],
+        "results": [],
+        "snapshots": []
+      },
+      {
+        "steps": [10,12],
+        "requests": [],
+        "cookies": [],
+        "actions": [
+          {
+            "do": "message",
+            "session": 1,
+            "json": "{\"code\":1000,\"srcCode\":1000,\"extra\":{\"eTag\":\"3e3184cbd12e5294959effe6f2d9985f50f4ea5d\",\"template-tag\":\"3c771bf015df2c410a41a6012804f645b3acc1bc\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+          }
+        ],
+        "intercepts": [
+          {
+            "session": 1,
+            "status": 0,
+            "fields": [
+              ["cache-offline","true"],
+              ["content-type","text/html; charset=utf-8"],
+              ["template-change","true"],
+              ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+              ["vary","template-tag"]
+            ],
+            "body_len": 296,
+            "body_sha256": "a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb",
+            "complete": true
+          }
+        ],
+        "results": [],
+        "snapshots": []
+      },
+      {
+        "steps": [13,14],
+        "requests": [],
+        "cookies": [],
+        "actions": [],
+        "intercepts": [],
+        "results": [
+          {
+            "session": 1,
+            "src_code": 1000,
+            "final_code": 1000
+          }
+        ],
+        "snapshots": [
+          {
+            "entries": [
+              {
+                "partition": "rq-test-account",
+                "url": "https://shop.example.com/catalog",
+                "vary": [],
+                "etag": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d",
+                "template_tag": "3c771bf015df2c410a41a6012804f645b3acc1bc",
+                "page_sha256": "a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb",
+                "template_sha256": "bd2029674273827936e505d98a1cb17748329410b41f739c3643a9c7dc32d801",
+                "data_sha256": "2951678607195b65ffa670e00e15510d60a24105979550ff08cdcc6182adc126",
+                "fields": [
+                  ["cache-offline","true"],
+                  ["content-type","text/html; charset=utf-8"],
+                  ["etag","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+                  ["sonic-html-sha1","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+                  ["template-change","true"],
+                  ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+                  ["vary","template-tag"]
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "trace": {
+    "scenario": "CS-15",
+    "mode": "quick"
+  }
+}

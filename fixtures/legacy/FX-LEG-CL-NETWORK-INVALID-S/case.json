@@ -1,0 +1,82 @@
+{
+  "id": "FX-LEG-CL-NETWORK-INVALID-S",
+  "kind": "client",
+  "description": "Network not valid with a cached entry: no request, the cached page is the document (Standard)",
+  "profile": "legacy-canonical",
+  "mode": "standard",
+  "server_profile": "legacy-canonical",
+  "rules": [
+    "CL-10",
+    "CL-38"
+  ],
+  "rows": [
+    "Q21",
+    "S18"
+  ],
+  "divergences": [
+    "D-50"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-client#_9-rivqen-canonical-client-rules"
+  ],
+  "evidence": "code-reading",
+  "config": {
+    "account": "rq-test-account",
+    "account_related": true,
+    "reload_in_bad_network": false,
+    "network_valid": false
+  },
+  "responses": {
+    "r1": {
+      "page": "a",
+      "app": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "text/html; charset=utf-8"
+          ]
+        ]
+      }
+    }
+  },
+  "cache_before": [
+    {
+      "page": "a"
+    }
+  ],
+  "schedule": [
+    {
+      "case": "r1"
+    },
+    {
+      "do": "create_session"
+    },
+    {
+      "do": "bind_client"
+    },
+    {
+      "do": "client_ready"
+    },
+    {
+      "do": "request_resource"
+    },
+    {
+      "do": "get_diff"
+    },
+    {
+      "do": "settle",
+      "ms": 2500
+    },
+    {
+      "do": "snapshot_cache"
+    },
+    {
+      "do": "destroy"
+    }
+  ]
+}

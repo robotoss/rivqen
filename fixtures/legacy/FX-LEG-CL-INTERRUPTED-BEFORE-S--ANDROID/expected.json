@@ -1,0 +1,101 @@
+{
+  "id": "FX-LEG-CL-INTERRUPTED-BEFORE-S--ANDROID",
+  "kind": "client",
+  "profile": "legacy-android",
+  "mode": "standard",
+  "server_profile": "legacy-node",
+  "level": "must",
+  "client": {
+    "sessions": [
+      {
+        "step": 2,
+        "opened": true,
+        "session": 1,
+        "partition": "rq-test-account",
+        "url": "https://shop.example.com/catalog"
+      }
+    ],
+    "phases": [
+      {
+        "steps": [1,5],
+        "requests": [
+          {
+            "exchange": 1,
+            "method": "GET",
+            "target": "/catalog",
+            "fields": [
+              ["accept-diff","true"],
+              ["if-none-match",""],
+              ["template-tag",""],
+              ["sonic-sdk-version","Sonic/2.0.0"]
+            ],
+            "response": {
+              "status": 200,
+              "fields": [
+                ["etag","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+                ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+                ["cache-offline","true"],
+                ["template-change","true"]
+              ],
+              "complete": false
+            }
+          }
+        ],
+        "cookies": [
+          {
+            "call": "get",
+            "url": "https://shop.example.com/catalog",
+            "value": null
+          }
+        ],
+        "actions": [],
+        "intercepts": [],
+        "results": [],
+        "snapshots": []
+      },
+      {
+        "steps": [6,9],
+        "requests": [],
+        "cookies": [],
+        "actions": [
+          {
+            "do": "load_url",
+            "session": 1,
+            "url": "https://shop.example.com/catalog"
+          }
+        ],
+        "intercepts": [
+          {
+            "session": 1,
+            "null": true
+          }
+        ],
+        "results": [],
+        "snapshots": []
+      },
+      {
+        "steps": [10,12],
+        "requests": [],
+        "cookies": [],
+        "actions": [],
+        "intercepts": [],
+        "results": [
+          {
+            "session": 1,
+            "src_code": -1,
+            "final_code": -1
+          }
+        ],
+        "snapshots": [
+          {
+            "entries": []
+          }
+        ]
+      }
+    ]
+  },
+  "trace": {
+    "scenario": "CS-13b",
+    "mode": "standard"
+  }
+}

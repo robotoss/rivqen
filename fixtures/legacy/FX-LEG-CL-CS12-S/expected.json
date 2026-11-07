@@ -1,0 +1,67 @@
+{
+  "id": "FX-LEG-CL-CS12-S",
+  "kind": "client",
+  "profile": "legacy-canonical",
+  "mode": "standard",
+  "server_profile": "legacy-node",
+  "level": "must",
+  "client": {
+    "sessions": [
+      {
+        "step": 2,
+        "opened": true,
+        "session": 1,
+        "partition": "rq-test-account",
+        "url": "https://shop.example.com/catalog"
+      }
+    ],
+    "phases": [
+      {
+        "steps": [1,7],
+        "requests": [],
+        "cookies": [
+          {
+            "call": "get",
+            "url": "https://shop.example.com/catalog",
+            "value": null
+          }
+        ],
+        "actions": [
+          {
+            "do": "load_url",
+            "session": 1,
+            "url": "https://shop.example.com/catalog"
+          }
+        ],
+        "intercepts": [
+          {
+            "session": 1,
+            "null": true
+          }
+        ],
+        "results": [],
+        "snapshots": []
+      },
+      {
+        "steps": [8,11],
+        "requests": [],
+        "cookies": [],
+        "actions": [],
+        "intercepts": [],
+        "results": [
+          {
+            "session": 1,
+            "src_code": -1,
+            "final_code": -1
+          }
+        ],
+        "snapshots": [
+          {
+            "entries": []
+          }
+        ]
+      }
+    ]
+  },
+  "profiles_same": ["legacy-android"]
+}

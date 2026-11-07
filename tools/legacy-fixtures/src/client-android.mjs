@@ -4,8 +4,9 @@
 // Profile `legacy-android` of the client fixtures (DL-111): the canonical session of
 // src/client-canonical.mjs with the named differences that the FACT rows of
 // docs/engineering/protocol/legacy-client.md (sections 1 to 3: F1-F14, Q1-Q22, S1-S18, M-01-M-16),
-// the divergences D-20-D-52 and the stored Android traces (legacy-client-traces.md, CS-01-CS-18)
-// prove. Each difference is a method or a function below with its row in the comment (A-nn).
+// the divergences D-20-D-52 and the stored Android traces (legacy-client-traces.md, CS-01-CS-27;
+// S1 and S2) prove. Each difference is a method or a function below with its row in the comment
+// (A-nn). The traces are in evidence/traces/client/android/<scenario>/<mode>/.
 //
 // Clean-room (R-1, R-3): written from those rows and from the observable effects in the traces.
 // The model reproduces what the client did (requests, web view calls, codes, messages, cookie
@@ -269,6 +270,11 @@ export class AndroidSession extends CanonicalSession {
     this.mode = 'read';
     this.sent200 = false;
     this.cookie = null;
+    this.requestEtag = ''; // F4: the etag of the last request
+    this.lastResponse = null; // the headers of the last complete template change (A-17)
+    this.save = null; // the delayed save of A-13: { timer, doc }
+    this.lastMessageAt = null; // A-17: the clock of the last page message
+    this.delayedMessage = null; // A-17: the spaced message timer of a refresh
   }
 
   // A-10 (section 2.9, CS-12, CS-17): the cookie is read when the session is created.
@@ -296,15 +302,17 @@ export class AndroidSession extends CanonicalSession {
   }
 
   // A-11 (CL-09 note, CS-01, CS-17): empty validators without a cache, `sonic-sdk-version`, the cookie read at creation.
-  send() {
+  // The validators are those of the cache; a refresh gives its own (A-17).
+  send(etag = this.entry?.etag ?? '', tag = this.entry?.template_tag ?? '') {
     if (!this.sim.config.get_cookie_when_session_create) {
       this.sim.cookieGet(this.url);
       this.cookie = this.sim.runtime.cookie;
     }
+    this.requestEtag = etag;
     const fields = [
       ['accept-diff', this.sim.config.accept_diff ? 'true' : 'false'],
-      ['if-none-match', this.entry?.etag ?? ''],
-      ['template-tag', this.entry?.template_tag ?? ''],
+      ['if-none-match', etag],
+      ['template-tag', tag],
       ['sonic-sdk-version', 'Sonic/2.0.0'],
     ];
     if (this.cookie !== null && this.cookie !== '') fields.push(['cookie', this.cookie]);
@@ -318,7 +326,8 @@ export class AndroidSession extends CanonicalSession {
   androidClassify(ex) {
     const h = ex.headers;
     const etag = joined(h, 'etag');
-    if (ex.status === 304 || (ex.status === 200 && this.entry !== null && etag !== null && androidEtag(etag) === this.entry.etag)) {
+    // F4: a 200 whose etag equals the request etag (the cache etag, or the refresh validator of A-17).
+    if (ex.status === 304 || (ex.status === 200 && this.entry !== null && etag !== null && androidEtag(etag) === this.requestEtag)) {
       if (this.entry === null) throw notModeled('F4', 'a 304 without a cache');
       return 'not-modified';
     }
@@ -336,6 +345,8 @@ export class AndroidSession extends CanonicalSession {
     this.cookies(ex); // F10: Set-Cookie of every status first
     if (ex.gen !== this.gen) return;
     this.kind = this.androidClassify(ex);
+    // A-17: a refresh is settled only for a 304 (CS-27); Q19 and S16 (a template change) and the other outcomes are not.
+    if (this.refreshed && this.kind !== 'not-modified') throw notModeled('Q19, S16', `a ${this.kind} response to a refresh`);
     switch (this.kind) {
       case 'not-modified':
         this.setAndroidResult(304, 304, null, ex.headers, true); // Q7, S5
@@ -404,7 +415,9 @@ export class AndroidSession extends CanonicalSession {
 
   androidFirstLoadEnd(ex) {
     const doc = webDoc('response', ex.body, () => webFields(ex.headers), ex);
+    const empty = ex.complete && ex.body.length === 0;
     if (this.mode === 'bridge') {
+      if (empty) throw notModeled('Q2, S1', 'an empty first-load body through the bridge stream');
       this.finishStreams(ex);
       if (!ex.complete) {
         this.setAndroidResult(1000, 1000, null, ex.headers, true); // Q22, S17: 1000 / 1000, no cache
@@ -419,6 +432,7 @@ export class AndroidSession extends CanonicalSession {
       throw notModeled('S1, Q2', 'an intercept that arrives while the session reads the first-load body');
     }
     if (!ex.complete) return this.flowEnd(); // Q20, S2: a read error before any intercept: no document
+    if (empty) return this.androidEmptyFirstLoad(ex, doc);
     if (this.sim.mode === 'quick') {
       this.netStream = doc;
       if (this.loadUrlInvoked) {
@@ -433,7 +447,29 @@ export class AndroidSession extends CanonicalSession {
       this.pendingGiven = false;
       this.setAndroidResult(1000, 304, null, ex.headers, true);
     }
-    this.scheduleSave(ex, true);
+    this.scheduleSave(ex, true, doc);
+    return this.flowEnd();
+  }
+
+  /**
+   * A-16 (Q3, S1; trace report section 5.2 "Quick empty 200 body" and section 6 item 10;
+   * evidence/traces/client/android/CS-20/quick, CS-20/standard): a complete first-load body of
+   * 0 bytes, read before any intercept.
+   * Quick (Q3, probable upstream defect confirmed): no load call at client_ready; the intercept
+   * gets the empty stream; codes stay -1 / -1, so no message.
+   * Standard (S1 with an empty body): the empty response is the pending stream; 1000 / 1000, notify.
+   * Nothing is saved (A-15). Quick after the preload loadUrl (Q3 note 2) is not settled.
+   */
+  androidEmptyFirstLoad(ex, doc) {
+    if (this.sim.mode === 'quick') {
+      if (this.loadUrlInvoked) throw notModeled('Q3', 'an empty first-load body after the preload loadUrl');
+      this.slot = 'none';
+      this.netStream = doc;
+    } else {
+      this.pending = doc;
+      this.pendingGiven = false;
+      this.setAndroidResult(1000, 1000, null, ex.headers, true);
+    }
     return this.flowEnd();
   }
 
@@ -441,9 +477,12 @@ export class AndroidSession extends CanonicalSession {
     const h = ex.headers;
     const offline = joined(h, 'cache-offline');
     const doc = webDoc('response', ex.body, () => webFields(h), ex);
+    // A-16 (Q14, S12; CS-21): an empty new page. A-15: it is not saved.
+    const empty = ex.body.length === 0;
     if (this.sim.mode === 'quick') {
       this.netStream = doc;
       if (this.loadDataInvoked) {
+        if (empty) throw notModeled('Q12, Q13', 'a template change with an empty body after the cached page was given as data');
         if (offline === 'store') {
           this.setAndroidResult(2000, 304, null, h, true); // Q13
         } else {
@@ -452,13 +491,16 @@ export class AndroidSession extends CanonicalSession {
           this.setAndroidResult(2000, 2000, null, h, false); // Q12: silent
         }
       } else if (!this.presented) {
-        this.slot = 'page'; // Q14: the new page as data, 2000 / 304, silent
+        // Q14: the new page as data, 2000 / 304, silent. An empty page also takes the data path
+        // (CS-21 quick: 0 bytes as data, not the loadUrl of the row text).
+        this.slot = 'page';
         this.slotDoc = doc;
         this.setAndroidResult(2000, 304, null, h, false);
       } else {
         throw notModeled('Q12, Q14', 'a Quick template change after a client_ready without a data load');
       }
     } else if (this.interceptInvoked) {
+      if (empty) throw notModeled('S9, S10', 'a template change with an empty body after the intercept');
       if (offline === 'store') {
         this.setAndroidResult(2000, 304, null, h, true); // S10
       } else {
@@ -467,12 +509,21 @@ export class AndroidSession extends CanonicalSession {
         this.pendingGiven = false;
         this.setAndroidResult(2000, 2000, null, h, true);
       }
+    } else if (empty) {
+      // S12 (CS-21 standard): no result (-1 / -1, no message); the pending stream is the empty
+      // body with the header lines of the cached record (the trace intercept has the
+      // `sonic-html-sha1` and the `template-tag` of the cached page, and 0 bytes).
+      const store = this.sim.store;
+      const id = this.id;
+      this.pending = webDoc('response', ex.body, () => webFields(store.get(id)?.header ?? []), ex);
+      this.pendingGiven = false;
     } else {
       this.pending = doc; // S11: the pending stream is now the new response
       this.pendingGiven = false;
       this.setAndroidResult(2000, 304, null, h, true);
     }
-    this.scheduleSave(ex, true);
+    this.lastResponse = h;
+    this.scheduleSave(ex, true, doc);
     return this.flowEnd();
   }
 
@@ -548,10 +599,13 @@ export class AndroidSession extends CanonicalSession {
   /**
    * A-13 (section 2.6 item 6, M-13; CS-01, CS-02, CS-18): the save of a first load or template
    * change runs 1.5 s after the end of the body; a destroy before it cancels it. F12 applies.
+   * A-15 (CS-20 and CS-21, both modes): a body of 0 bytes is never saved (no delayed save and
+   * no stream-close save; the cache stays as it was).
+   * `doc` is the document of the response that an intercept can read (A-17 needs its close).
    */
-  scheduleSave(ex, withSha1) {
+  scheduleSave(ex, withSha1, doc = null) {
     const offline = joined(ex.headers, 'cache-offline');
-    if (!writeAllowed(offline) || !ex.complete) return;
+    if (!writeAllowed(offline) || !ex.complete || ex.body.length === 0) return;
     const page = ex.body.toString('utf8');
     const record = {
       partition: this.partition,
@@ -563,7 +617,8 @@ export class AndroidSession extends CanonicalSession {
       data: { form: 'wrapped', entries: [] },
       header: [...lowerLines(ex.headers), ...(withSha1 ? [['sonic-html-sha1', sha1hex(ex.body)]] : [])],
     };
-    this.sim.timer(this.sim.clock + 1500, this, () => this.sim.store.write(this.id, record));
+    const write = () => this.sim.store.write(this.id, record);
+    this.save = { timer: this.sim.timer(this.sim.clock + 1500, this, write), doc, write };
   }
 
   // --- results and messages (section 2.4) ---
@@ -576,15 +631,29 @@ export class AndroidSession extends CanonicalSession {
   sendMessage() {
     const r = this.result;
     if (r === null || !this.open) return;
-    if (this.sent200) {
-      this.sim.message(this, '{}');
+    const text = this.androidText(r);
+    if (text === null) return;
+    // A-17 (section 2.4 item 3, D-37; evidence/traces/client/android/CS-27): after a refresh, two
+    // page messages are at least 2 s apart. A closer one waits; a destroy cancels it (CS-27: the
+    // 304 message 2 s after the result message, and no message for the get_diff 0.5 s after it).
+    if (this.refreshed && this.lastMessageAt !== null && this.sim.clock - this.lastMessageAt < 2000) {
+      if (this.delayedMessage !== null) throw notModeled('section 2.4 item 3', 'a second page message while a spaced one waits');
+      this.delayedMessage = this.sim.timer(this.lastMessageAt + 2000, this, () => {
+        this.delayedMessage = null;
+        this.sendMessage();
+      });
       return;
     }
-    if (r.final === 200 && this.sim.clock - r.time > 30_000) return; // section 2.4 item 2
-    const text = androidMessage({ src: r.src, final: r.final, diff: r.diff, headers: r.headers, reload: this.refreshed });
-    if (text === null) return;
     this.sim.message(this, text);
+    this.lastMessageAt = this.sim.clock;
     if (r.final === 200) this.sent200 = true;
+  }
+
+  /** The text of the next page message, or null (A-06, A-14, section 2.4 item 2). */
+  androidText(r) {
+    if (this.sent200) return '{}';
+    if (r.final === 200 && this.sim.clock - r.time > 30_000) return null; // section 2.4 item 2
+    return androidMessage({ src: r.src, final: r.final, diff: r.diff, headers: r.headers, reload: this.refreshed });
   }
 
   getDiff() {
@@ -600,6 +669,7 @@ export class AndroidSession extends CanonicalSession {
     if (this.sim.mode !== 'quick') return this.webLoadUrl(); // M-01: Standard loadUrl only
     // Quick: the held message decides (section 3.1 gate).
     if (this.slot === 'page') return this.webLoadData(this.slotDoc); // Q1, Q10, Q14
+    if (this.slot === 'none') return undefined; // A-16, Q3: an empty first load loads nothing (CS-20)
     if (this.slot === 'unavailable' || this.entry === null) return this.webLoadUrl(); // Q4, Q5, Q16, Q20
     return this.webLoadData(this.cachedPage); // Q7, Q15, Q17, Q18: the cached page as data (CS-03, CS-09, CS-11)
   }
@@ -617,8 +687,12 @@ export class AndroidSession extends CanonicalSession {
   }
 
   giveAndroid(doc) {
-    if (doc.complete) this.sim.interceptBody(this, doc.status, doc.fields, doc.bytes, true);
-    else this.streams.push({ doc });
+    if (doc.complete) {
+      this.sim.interceptBody(this, doc.status, doc.fields, doc.bytes, true);
+      doc.closedAt = this.sim.clock; // the web view read the stream to the end (A-17)
+    } else {
+      this.streams.push({ doc });
+    }
   }
 
   /** The answer of an intercept when the session does not run (M-04, M-05). */
@@ -638,6 +712,8 @@ export class AndroidSession extends CanonicalSession {
   }
 
   intercept() {
+    // Section 2.3: refresh() resets the intercept flag; what a later intercept gets is not settled.
+    if (this.open && this.refreshed) throw notModeled('Q19, S16', 'an intercept after a refresh');
     this.interceptCalls += 1;
     this.interceptInvoked = true;
     if (!this.open) return this.sim.interceptNull(this);
@@ -657,8 +733,38 @@ export class AndroidSession extends CanonicalSession {
     return this.sim.interceptNull(this);
   }
 
+  /**
+   * A-17 (section 2.3 `session.refresh()`, section 2.4 item 3, D-26, D-37; trace report section 4
+   * note 7, section 5.2 and section 6 item 12; evidence/traces/client/android/CS-27/quick and
+   * CS-27/standard). Settled only for a refresh after a complete template change, when the flow
+   * has ended, with a connection:
+   * - the codes go back to -1 / -1 and `isReload` becomes "true";
+   * - the request has the etag and the template tag of the template-change response (not those of
+   *   the cache: the delayed save has not written them yet) and no new cookie read (A-10);
+   * - no load call; a 304 gives 304 / 304, notify, with the message spacing of sendMessage;
+   * - the delayed save of the template change does not write (the SDK reports error -1005). The
+   *   web view read the new page to the end, so the stream-close save writes it 1.5 s after that
+   *   close. A stream-close save blocks destroy (section 2.6 items 3 and 6): a destroy does not
+   *   cancel it.
+   * Every other refresh is CLIENT_NOT_MODELED (Q19, S16).
+   */
   refresh() {
-    throw notModeled('Q19, S16', 'refresh');
+    if (!this.open) throw notModeled('Q19, S16', 'a refresh after destroy');
+    if (this.running) throw notModeled('Q19, S16', 'a refresh while the session runs');
+    if (this.kind !== 'template-change') throw notModeled('Q19, S16', `a refresh after a ${this.kind ?? 'session without a response'} (CS-27 settles the validators after a template change only)`);
+    if (!this.sim.runtime.network || this.sim.serverDown) throw notModeled('Q19, S16', 'a refresh without a connection');
+    if (this.save !== null && !this.save.timer.done) {
+      const closed = this.save.doc?.closedAt;
+      if (closed === undefined) throw notModeled('Q19, S16', 'a refresh before the delayed save of a new page that no intercept read (trace report section 5.2)');
+      this.sim.cancelTimer(this.save.timer);
+      this.sim.timer(closed + 1500, { closeSaveOf: this }, this.save.write);
+    }
+    this.refreshed = true;
+    this.result = null;
+    this.gen += 1;
+    this.running = true;
+    this.kind = null;
+    this.send(joined(this.lastResponse, 'etag') ?? '', joined(this.lastResponse, 'template-tag') ?? '');
   }
 
   destroy() {

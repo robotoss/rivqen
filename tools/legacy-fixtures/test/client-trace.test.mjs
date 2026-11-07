@@ -76,6 +76,56 @@ test('normalization_removes_transport_fields_and_compares_data_by_presence', () 
   assert.match(compareClient(client, other), /phase 1 snapshots/);
 });
 
+// A client member with one load_data, one intercept, one record and one request.
+function member({ type = 'text/html; charset=utf-8', status = 500, responseFields = [] } = {}) {
+  const fields = [['content-type', type]];
+  return {
+    sessions: [],
+    phases: [{
+      steps: [1, 1],
+      requests: [{ exchange: 1, method: 'GET', target: '/catalog', fields: [], response: { status, fields: responseFields, complete: true } }],
+      cookies: [],
+      actions: [{ do: 'load_data', session: 1, url: CTX.url, fields, body_len: 0, body_sha256: 'x' }],
+      intercepts: [{ session: 1, status: 0, fields, body_len: 0, body_sha256: 'x', complete: true }],
+      results: [],
+      snapshots: [{ entries: [{ partition: null, url: CTX.url, vary: [], etag: null, template_tag: null, page_sha256: null, template_sha256: null, data_sha256: null, fields }] }],
+    }],
+  };
+}
+
+test('dl119_content_type_compares_as_a_media_type_in_load_data_intercepts_and_records', () => {
+  for (const same of ['text/html;charset=utf-8', 'TEXT/HTML; Charset=UTF-8', 'text/html ;charset="utf-8"']) {
+    assert.equal(compareClient(member(), member({ type: same })), null, same);
+  }
+  for (const other of ['text/html; charset=gbk', 'text/plain; charset=utf-8', 'text/html', 'text/html; charset=utf-8; q=1']) {
+    assert.match(compareClient(member(), member({ type: other })), /first difference at item \d+: expected phase 1 actions/, other);
+  }
+  // Only the actions differ: the intercept and the record fields are compared the same way.
+  const onlyRecord = member();
+  onlyRecord.phases[0].snapshots[0].entries[0].fields = [['content-type', 'text/html; charset=gbk']];
+  assert.match(compareClient(member(), onlyRecord), /phase 1 snapshots/);
+});
+
+test('dl120_u13_skips_the_legacy_fields_of_a_response_outside_the_scope_and_needs_one_in_the_trace', () => {
+  const legacy = [['etag', 'e'], ['template-tag', 't'], ['cache-offline', 'true'], ['template-change', 'false'], ['sonic-etag-key', 'etag']];
+  const u13 = { notReproduced: 'U-13' };
+  assert.match(compareClient(member(), member({ responseFields: legacy })), /phase 1 requests/);
+  assert.equal(compareClient(member(), member({ responseFields: legacy }), u13), null);
+  for (const [name, value] of legacy) assert.equal(compareClient(member(), member({ responseFields: [[name, value]] }), u13), null, name);
+  // Both sides lose the U-13 fields: other values on the expected side do not count.
+  assert.equal(compareClient(member({ responseFields: [['etag', 'x']] }), member({ responseFields: [['etag', 'y'], ['template-tag', 't']] }), u13), null);
+  // set-cookie is not a U-13 field: it is still compared.
+  assert.match(compareClient(member(), member({ responseFields: [...legacy, ['set-cookie', 'a=b']] }), u13), /phase 1 requests/);
+  // The trace must show the difference.
+  assert.match(compareClient(member(), member(), u13), /^U-13: the trace does not show the documented difference/);
+  assert.match(compareClient(member({ responseFields: legacy }), member({ responseFields: legacy }), u13), /^U-13: the trace does not show/);
+  // A 200 or a 304 is in the scope: its fields are compared, and it does not show U-13.
+  for (const status of [200, 304]) {
+    assert.match(compareClient(member({ status }), member({ status, responseFields: legacy }), u13), /^U-13: the trace does not show/, String(status));
+  }
+  assert.equal(compareClient(member(), member(), { notReproduced: 'U-11' }), 'not_reproduced "U-11" has no client check');
+});
+
 test('trace_steps_drop_seq_and_equal_the_scenario_case_steps', () => {
   const steps = traceSteps(storedRuns('CS-13a', 'quick')[0]);
   assert.deepEqual(steps[0], { bytes: 128, do: 'cut' });

@@ -146,12 +146,20 @@ export class Sim {
     this.emit('session.result');
   }
 
-  /** Run `fn` when the clock reaches `due` (a later `settle`); `owner` cancels it at destroy. */
+  /**
+   * Run `fn` when the clock reaches `due` (a later `settle`); `owner` cancels it at destroy.
+   * Returns the timer: `cancelTimer(t)` cancels this one only; `t.done` is true after it ran.
+   */
   timer(due, owner, fn) {
-    this.timers.push({ due, owner, fn, seq: this.timers.length });
+    const t = { due, owner, fn, seq: this.timers.length, done: false };
+    this.timers.push(t);
+    return t;
   }
   cancelTimers(owner) {
     this.timers = this.timers.filter((t) => t.owner !== owner);
+  }
+  cancelTimer(timer) {
+    this.timers = this.timers.filter((t) => t !== timer);
   }
 
   // --- steps ---
@@ -255,6 +263,7 @@ export class Sim {
       if (due.length === 0) return;
       const t = due[0];
       this.timers = this.timers.filter((x) => x !== t);
+      t.done = true;
       t.fn();
     }
   }

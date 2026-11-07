@@ -453,11 +453,11 @@ test('cl27_dl123_a_credentialed_data_update_is_delivered_then_removes_the_entry'
   assert.equal(lastSnapshot(allowed)[0].etag, sha1hex(pageOf('b')));
 });
 
-test('cl31_dl123_a_credentialed_template_change_is_shown_and_does_not_commit', () => {
+test('cl31_dl123_dl132_a_credentialed_template_change_is_shown_does_not_commit_and_removes_the_old_entry', () => {
   const steps = [{ do: 'set_cookie', value: 'session=rq-test-cookie-1' }, ...CACHED_FIRST];
   const c = go(cc({ schedule: afterFirstLoad('c', steps) }));
   assert.deepEqual(results(c).at(-1), { session: 2, src_code: 2000, final_code: 2000 });
-  assert.equal(lastSnapshot(c)[0].etag, sha1hex(pageOf('a'))); // CL-31 "when CL-25 allows it": the old entry is not replaced
+  assert.deepEqual(lastSnapshot(c), []); // CL-31 (DL-132): no commit, and the old entry with the old template is removed
   const allowed = go(cc({ config: { authenticated_cache: true }, schedule: afterFirstLoad('c', steps) }));
   assert.equal(lastSnapshot(allowed)[0].etag, sha1hex(pageOf('c')));
 });

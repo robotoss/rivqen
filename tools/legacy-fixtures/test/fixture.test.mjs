@@ -321,7 +321,8 @@ test('content_type_is_compared_as_a_media_type_on_every_response', () => {
   const start = performance.now();
   mediaTypeKey(long);
   const ms = performance.now() - start;
-  assert.ok(ms < 100, `${ms.toFixed(1)} ms`);
+  // A quadratic scan of these 192 Ki characters takes seconds; 1 s leaves room for a loaded machine.
+  assert.ok(ms < 1000, `${ms.toFixed(1)} ms`);
 });
 
 test('u13_check_needs_a_pass_through_outside_the_c01_scope_and_a_trace_with_legacy_processing', () => {

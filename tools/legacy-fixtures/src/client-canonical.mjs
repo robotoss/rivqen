@@ -570,8 +570,9 @@ export class CanonicalSession {
       this.setResult(2000, this.finalOf(2000), null, h);
     }
     this.finishStreams(ex); // an intercept that got the new document as a stream (not delivered case)
-    if (offline === 'false') this.sim.store.remove(this.entry); // CL-31: deliver, then remove the entry
-    else if (record !== null) this.sim.store.commit(record);
+    // CL-31 (DL-132): a template change that does not commit removes the old entry; its template is no longer the server's.
+    if (record !== null) this.sim.store.commit(record);
+    else this.sim.store.remove(this.entry);
   }
 
   /** CL-29: the rebuild check. Returns { rebuilt, data } or null. */

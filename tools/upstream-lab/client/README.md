@@ -78,7 +78,7 @@ The conductor step `case` (H-126) posts `value` (the form of the scenario `case`
 
 The proxy does not forward the hop-by-hop fields and the fields that a `Connection` field lists. Without an armed fault it forwards the bytes unchanged. The `empty` page (`../pages/empty.html`, 0 bytes) is posted as `page_base64` of the empty string. The macro `first_load` (version 2, H-126) runs `create_session`, `bind_client`, `wait proxy.response_end`, `settle 300`, `client_ready`, `request_resource`, `settle 2500`, `destroy`, `settle 1500`; `run.start` has `macro: 2` (stored runs before H-126 have no `macro` and ran the 7 steps without the two settles). A long-poll answer that the harness did not receive (the connection closed first) is offered again to the next poll.
 
-Keys of the body JSON are decoded by `decodeJsonString`, not by `JSON.parse`: Node.js 26.8.2 (the conductor of the S2 runs) returns the key `"\\"` for a one-character escaped key such as `"\n"` after it has parsed a key `"\\"` (found by the property test; Node.js 22.20.0 is correct).
+Node.js 26.8.2 (the conductor of the S2 runs) has a `JSON.parse` defect: in an object, a one-character escaped key such as `"\n"` comes back as `"\\"` once a key `"\\"` was parsed (also in a nested object; string values are correct; Node.js 22.20.0 is correct). The property test found it. So `topLevelMembers` parses each key token as a lone string value, and the property test does not compare the keys of a parsed object.
 
 ## Check
 

@@ -10,8 +10,10 @@
 // - Every outcome that is not an edit returns the input body and fields unchanged.
 // - An edit changes only the value of the top-level member `name`. Every other byte of the decoded
 //   text stays as it was (the members keep their order and their raw text).
-// - Never throws for any body: every failure is a `reason`.
+// - `setBodyMember` never throws for any body: every failure is a `reason`.
+// - Every loop is bounded by the text length.
 import zlib from 'node:zlib';
+import { LabError } from './errors.mjs';
 
 export const MAX_BODY_MEMBER_BYTES = 1024 * 1024;
 
@@ -63,7 +65,8 @@ function valueEnd(text, i) {
     return k;
   }
   let k = i;
-  while (k < text.length && !WS.has(text[k]) && text[k] !== ',' && text[k] !== '}' && text[k] !== ']') k += 1;
+  // A scalar of the top level ends at white space, ',' or '}' (an array element is scanned by the branch above).
+  while (k < text.length && !WS.has(text[k]) && text[k] !== ',' && text[k] !== '}') k += 1;
   return k;
 }
 
@@ -72,33 +75,6 @@ function stringEnd(text, i) {
   let k = i + 1;
   while (k < text.length && text[k] !== '"') k += text[k] === '\\' ? 2 : 1;
   return k + 1;
-}
-
-const ESCAPES = { '"': '"', '\\': '\\', '/': '/', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t' };
-
-/**
- * The value of a JSON string token (quotes included) of a text that JSON.parse accepted.
- * Not JSON.parse: Node.js 26.8.2 returns the key "\\" for a later one-character escaped key such as
- * "\n" once it has parsed a key "\\" (seen in the property test below; Node.js 22.20.0 is correct).
- */
-export function decodeJsonString(token) {
-  let out = '';
-  let k = 1;
-  const end = token.length - 1;
-  while (k < end) {
-    const c = token[k];
-    if (c !== '\\') {
-      out += c;
-      k += 1;
-    } else if (token[k + 1] === 'u') {
-      out += String.fromCharCode(Number.parseInt(token.slice(k + 2, k + 6), 16));
-      k += 6;
-    } else {
-      out += ESCAPES[token[k + 1]];
-      k += 2;
-    }
-  }
-  return out;
 }
 
 function skipWs(text, i) {
@@ -114,11 +90,13 @@ function skipWs(text, i) {
 export function topLevelMembers(text) {
   const members = [];
   let k = skipWs(text, 0) + 1; // after '{'
-  for (;;) {
+  while (k < text.length) {
     k = skipWs(text, k);
     if (text[k] === '}') return { members, close: k };
     const keyEnd = stringEnd(text, k);
-    const key = decodeJsonString(text.slice(k, keyEnd));
+    // The key token is parsed as a lone string value. Not as a key of an object: Node.js 26.8.2 returns
+    // the key "\\" for a later one-character escaped key such as "\n" once JSON.parse has seen a key "\\".
+    const key = JSON.parse(text.slice(k, keyEnd));
     k = skipWs(text, keyEnd) + 1; // after ':'
     const valueStart = skipWs(text, k);
     const end = valueEnd(text, valueStart);
@@ -126,6 +104,8 @@ export function topLevelMembers(text) {
     k = skipWs(text, end);
     if (text[k] === ',') k += 1;
   }
+  // Not reached for a text that JSON.parse accepted (the only caller checks it first).
+  throw new LabError('BAD_JSON', 'no closing brace of the top-level object');
 }
 
 /** Replace (or add) the top-level member `name` of a JSON object text. Returns { text } or { reason }. */

@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import zlib from 'node:zlib';
-import { MAX_BODY_MEMBER_BYTES, decodeBounded, decodeJsonString, replaceMember, setBodyMember, topLevelMembers } from '../src/bodymember.mjs';
+import { MAX_BODY_MEMBER_BYTES, decodeBounded, replaceMember, setBodyMember, topLevelMembers } from '../src/bodymember.mjs';
 import { eventProblems } from '../src/check.mjs';
 import { pairs } from '../src/proxy.mjs';
 import { send, startProxy, startUpstream, until } from './helpers.mjs';
@@ -170,6 +170,9 @@ test('set_body_member_keeps_the_raw_text_of_the_other_members', () => {
   assert.deepEqual(topLevelMembers(r.text).members.map((m) => m.key), ['2', 'k', '1', 'n']);
   // an escaped key is compared after decoding; a repeated key gets the value at every place
   assert.equal(replaceMember('{"\\u006b":1,"x":2,"k":3}', 'k', 'v').text, '{"\\u006b":"v","x":2,"k":"v"}');
+  // the white space after a replaced scalar stays
+  assert.equal(replaceMember('{"k": 12 ,"x":true\t}', 'k', 'v').text, '{"k": "v" ,"x":true\t}');
+  assert.equal(replaceMember('{"x":1,"k":null\n}', 'k', 'v').text, '{"x":1,"k":"v"\n}');
   // a nested member with the name is not changed
   assert.equal(replaceMember('{"o":{"k":1}}', 'k', 'v').text, '{"o":{"k":1},"k":"v"}');
 });
@@ -216,7 +219,7 @@ function spaced(r, obj) {
 }
 
 // The oracle does not use the keys of JSON.parse: Node.js 26.8.2 returns a wrong one-character escaped key
-// after a key "\\" (see decodeJsonString). Values of strings and the raw text are compared instead.
+// after a key "\\" (see topLevelMembers). Values of strings and the raw text are compared instead.
 test('set_body_member_property_only_the_named_member_changes', () => {
   const r = rng(20261107);
   for (let i = 0; i < 3000; i += 1) {
@@ -246,13 +249,23 @@ test('set_body_member_property_only_the_named_member_changes', () => {
   }
 });
 
-test('set_body_member_decodes_escaped_keys_itself', () => {
-  for (const token of ['"\\\\"', '"\\n"', '"\\t"', '"k"', '"\\u00e9"', '"\\ud83d\\ude00"', '"a\\/b"', '"\\""', '"\\b\\f\\r"', '""']) {
-    const expected = JSON.parse(`[${token}]`)[0]; // a string value is decoded correctly
-    assert.equal(decodeJsonString(token), expected, token);
+test('set_body_member_reads_escaped_keys_after_a_backslash_key', () => {
+  // Node.js 26.8.2: JSON.parse of this object gives the second key as "\\"; the key tokens are read one by one.
+  const text = '{"\\\\":1,"\\n":2,"\\u00e9\\t":3}';
+  assert.deepEqual(topLevelMembers(text).members.map((m) => m.key), ['\\', '\n', 'é\t']);
+  assert.equal(replaceMember(text, '\n', 'v').text, '{"\\\\":1,"\\n":"v","\\u00e9\\t":3}');
+});
+
+test('set_body_member_member_scan_stops_at_the_end_of_a_text_without_a_closing_brace', () => {
+  for (const text of ['{"a":1', '{', '{"a":[1,{"b":"}"}]', '{"a":"x\\"}']) {
+    assert.throws(() => topLevelMembers(text), (e) => e.code === 'BAD_JSON', text);
+    assert.equal(replaceMember(text, 'a', 'v').reason, 'body is not JSON', text);
   }
-  // after a key "\\", a key "\n" is still a line feed
-  const text = '{"\\\\":1,"\\n":2}';
-  assert.deepEqual(topLevelMembers(text).members.map((m) => m.key), ['\\', '\n']);
-  assert.equal(replaceMember(text, '\n', 'v').text, '{"\\\\":1,"\\n":"v"}');
+});
+
+test('set_body_member_content_length_counts_utf8_bytes', () => {
+  const r = setBodyMember({ fields: [], body: Buffer.from('{"a":"é","b":1}'), name: 'b', value: 'ü€' });
+  assert.equal(r.body.toString('utf8'), '{"a":"é","b":"ü€"}');
+  assert.deepEqual(r.fields, [['Content-Length', String(r.body.length)]]);
+  assert.equal(r.body.length, 22); // 18 characters, of which é and ü take 2 bytes and € takes 3
 });

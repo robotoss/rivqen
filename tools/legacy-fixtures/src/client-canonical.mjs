@@ -501,7 +501,9 @@ export class CanonicalSession {
     if (offline === 'http') return this.http();
     this.decided = true;
     const vary = varyNames(h);
-    if ((offline !== 'true' && offline !== 'store') || vary.star) {
+    // DL-132: a credentialed exchange that CL-25 does not allow writes nothing into the entry; the entry goes.
+    const allowed = credentialsAllowCommit(this.partition, this.requestFields, h, this.sim.config.authenticated_cache);
+    if ((offline !== 'true' && offline !== 'store') || vary.star || !allowed) {
       this.sim.store.remove(this.entry);
     } else {
       // The values come from this request, so the request matches the recomputed entry: the

@@ -505,6 +505,15 @@ test('cl17_dl126_no_store_on_a_304_removes_the_entry_and_the_page_stays', () => 
   assert.deepEqual(lastSnapshot(c), []);
 });
 
+test('cl17_dl132_a_credentialed_304_that_cl25_does_not_allow_removes_the_entry_and_the_page_stays', () => {
+  const steps = [{ do: 'set_cookie', value: 'session=rq-test-cookie-1' }, ...CACHED_FIRST];
+  const c = go(cc({ schedule: afterFirstLoad('a', steps) }));
+  assert.deepEqual(results(c).at(-1), { session: 2, src_code: 304, final_code: 304 });
+  assert.deepEqual(lastSnapshot(c), []);
+  const allowed = go(cc({ config: { authenticated_cache: true }, schedule: afterFirstLoad('a', steps) }));
+  assert.equal(lastSnapshot(allowed)[0].etag, sha1hex(pageOf('a')));
+});
+
 test('cl17_dl126_vary_star_or_a_cache_offline_other_than_true_or_store_on_a_304_removes_the_entry', () => {
   for (const [name, value] of [['vary', '*'], ['cache-offline', 'false'], ['cache-offline', 'maybe']]) {
     const c = go(cc({ schedule: afterFirstLoad('a', [{ do: 'set_field', name, value }, ...CACHED_FIRST]) }));

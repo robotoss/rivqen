@@ -344,6 +344,28 @@
           "runs": 3
         }
       }
+    },
+    {
+      "id": "CS-28",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
+    },
+    {
+      "id": "CS-29",
+      "modes": {
+        "quick": {
+          "runs": 3
+        },
+        "standard": {
+          "runs": 3
+        }
+      }
     }
   ],
   "functions": {
@@ -722,6 +744,30 @@
         "mode": "standard",
         "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 61: proxy.response_head / step.start wait change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
         "outcome": "stable"
+      },
+      {
+        "scenario": "CS-28",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 48: onSessionDataUpdated / step.done bind_client change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-28",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 9: onSessionFirstLoad (setup) / step.done bind_client change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-29",
+        "mode": "quick",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 4: onSessionLoadLocalCache (setup) / session.created change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
+      },
+      {
+        "scenario": "CS-29",
+        "mode": "standard",
+        "reason": "CONTRACT section 6 (strict): run 2 differs from run 1 at normalized line 9: onSessionFirstLoad (setup) / step.done bind_client change places. Events of SDK threads (session thread, file thread, intercept reader) fall into another step window or interleave with another harness thread. Outcome projection (determinism.mjs outcomeRun): stable over 3 runs.",
+        "outcome": "stable"
       }
     ],
     "not_checked": [
@@ -734,14 +780,5 @@
         "mode": "standard"
       }
     ]
-  },
-  "measurements": {
-    "scenario_runs": 179,
-    "scenario_run_time": "S1 (2026-11-05): 607 s for the 116 runs of run.mjs --all (about 5.2 s per run); the 6 runs of CS-10 quick after it were not timed. S2 (2026-11-07): 413 s for 72 runs (CS-20 to CS-27, CS-13a, CS-13b; about 5.7 s per run), then 3 runs of CS-26 standard and 3 runs of CS-24b quick again (see runs_by_date)",
-    "evidence_bytes": "2591019 bytes in 505 files (android/CS-*)",
-    "determinism": "58 scenario modes with 3 or more runs: strict CONTRACT section 6: 7 of 58 stable; outcome projection (determinism.mjs outcomeRun): 58 of 58 stable. CS-19 quick and standard have 1 run each: not checked (summary.not_checked)",
-    "runs_by_date": "2026-11-05 (WP-01 S1 T-05, setup macro first_load of S1): CS-01 to CS-12, CS-14 to CS-19. 2026-11-07 (WP-01 S2 T-05, harness with TallyStream and the step seq check, setup macro first_load of S2): CS-13a, CS-13b (rerun of the RecordingStream fix), CS-20 to CS-27",
-    "s2_runs_not_stored": "CS-26 standard, first set: run 3 failed (the setup session was still waiting for a cache save at destroy, so create_session of the scenario returned null). CS-24b quick, first set: run 3 had the setup first load as Q2 (loadUrl, 1000/1000; the client_ready of the macro came 10 ms before the SDK handled the body); its scenario part was equal to run 1. Both modes were run again (3 runs each) and only the second set is stored",
-    "s2_check_of_s1_runs": "The 22 S1 scenario modes with a first_load setup (CS-03 to CS-11, CS-14, CS-16; 66 runs) were run again with the S2 harness and conductor outside this tree. In the outcome projection, the scenario part (the steps after the setup) of every new run equals the stored S1 runs; only the setup steps differ (the S2 macro). So the S1 runs stay"
   }
 }

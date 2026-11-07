@@ -487,7 +487,7 @@ External storage is readable by other apps on old Android versions. Rivqen store
 
 This section gives the Rivqen canonical result of a legacy client session: the profile `legacy-canonical` of the client fixtures (DL-110, DL-111, DL-112). A person can write a client fixture and know its expected result from these rules alone. The fixture format is in `fixtures/legacy/README.md` ("Client fixtures") and in [fixtures](/engineering/protocol/fixtures) §1.
 
-**Status:** <Badge type="info" text="DESIGN" /> WP-01 S2 T-01. A rule with a source names a decision (DL), a session FSM rule, a cache rule or a page section. A rule that depends on a proposal (P-nn, section 9.10) is a proposal until the architect records it; one proposal class goes to the human (section 9.11). The rules describe observable effects only (R-3): requests, web view actions, page messages, codes, cookie calls and the abstract cache record. They do not define FSM states (R-1); WP-08 maps them to the [session FSM](/engineering/core/session-fsm).
+**Status:** <Badge type="info" text="DESIGN" /> WP-01 S2 T-01. A rule with a source names a decision (DL), a session FSM rule, a cache rule or a page section. Every proposal of section 9.10 is recorded (DL-113…DL-118, H-124, H-125). The rules describe observable effects only (R-3): requests, web view actions, page messages, codes, cookie calls and the abstract cache record. They do not define FSM states (R-1); WP-08 maps them to the [session FSM](/engineering/core/session-fsm).
 
 How to read the rules:
 
@@ -668,7 +668,7 @@ Catalog rows ([fixtures](/engineering/protocol/fixtures) §3): `FX-LEG-INTERRUPT
 
 ### 9.10 Proposals
 
-<Badge type="info" text="DESIGN" /> Proposals for the architect, in the four-part form of the decision log. Each one is a proposal until a decision-log row records it. "Human" marks a proposal that touches security or compatibility (H-120); section 9.11 asks those as two questions.
+<Badge type="info" text="DESIGN" /> Proposals for the architect, in the four-part form of the decision log. Each one is a proposal until a decision-log row records it. **Recorded on 2026-11-07:** P-01 DL-113, P-04 DL-114, P-12 DL-115, the other architect proposals DL-116, CL-06 DL-117, the projection additions DL-118; P-02 and P-03 H-124 (A), P-10, P-17 and P-18 H-125 (A). So every rule of this section is the canonical rule. "Human" marks a proposal that touches security or compatibility (H-120); section 9.11 asks those as two questions.
 
 **P-01 Second session for one key** (R-4, CL-07). Class: architect.
 
@@ -812,7 +812,7 @@ Catalog rows ([fixtures](/engineering/protocol/fixtures) §3): `FX-LEG-INTERRUPT
 
 ### 9.11 Questions for the human
 
-<Badge type="info" text="DESIGN" /> Open until the human answers (H-120). The recommended option is first.
+<Badge type="info" text="DESIGN" /> Decided on 2026-11-07: HQ-1 is H-124, answer **A**; HQ-2 is H-125, answer **A** ([sprint record](/engineering/plan/sprints/WP-01-S2)).
 
 | Question | Options |
 |---|---|

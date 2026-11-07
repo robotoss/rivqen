@@ -931,7 +931,7 @@
       "evidence": "rule",
       "rules": ["CL-14"],
       "result": {
-        "value": true
+        "value": false
       }
     },
     {
@@ -1021,7 +1021,7 @@
       "evidence": "rule",
       "rules": ["CL-14"],
       "result": {
-        "value": true
+        "value": false
       }
     },
     {
@@ -1057,7 +1057,7 @@
       "evidence": "rule",
       "rules": ["CL-14"],
       "result": {
-        "value": true
+        "value": false
       }
     },
     {

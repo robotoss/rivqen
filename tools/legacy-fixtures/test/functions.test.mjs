@@ -60,8 +60,15 @@ test('cl24_cl28_canonical_message_none_for_minus_one_or_an_empty_diff', () => {
 });
 
 test('cl14_cl15_cl16_canonical_field_functions', () => {
-  assert.equal(canon('is_legacy_response', { fields: [['etag', 'e'], ['template-tag', 't'], ['template-change', 'true'], ['cache-offline', 'true']] }).result.value, true);
-  assert.equal(canon('is_legacy_response', { fields: [['etag', 'e'], ['template-tag', 't'], ['template-change', 'true'], ['cache-offline', '']] }).result.value, false);
+  const legacy = [['etag', 'e'], ['template-tag', 't'], ['template-change', 'true'], ['cache-offline', 'true']];
+  const html = ['content-type', 'text/html; charset=utf-8'];
+  assert.equal(canon('is_legacy_response', { fields: [html, ...legacy] }).result.value, true);
+  assert.equal(canon('is_legacy_response', { fields: [html, ...legacy.slice(0, 3), ['cache-offline', '']] }).result.value, false);
+  // DL-125: exactly one Content-Type line with the media type text/html (ASCII case-insensitive).
+  assert.equal(canon('is_legacy_response', { fields: [['Content-Type', 'TEXT/HTML'], ...legacy] }).result.value, true);
+  assert.equal(canon('is_legacy_response', { fields: legacy }).result.value, false);
+  assert.equal(canon('is_legacy_response', { fields: [['content-type', 'text/plain; charset=utf-8'], ...legacy] }).result.value, false);
+  assert.equal(canon('is_legacy_response', { fields: [html, html, ...legacy] }).result.value, false);
   assert.equal(canon('template_change', { value: '0' }).result.value, false);
   assert.equal(canon('template_change', { value: 'FALSE' }).result.value, true);
   assert.equal(canon('etag', { value: 'W/"abc"' }).result.value, 'abc');

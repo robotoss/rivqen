@@ -14,6 +14,11 @@
 //
 // A branch that no FACT row or trace settles is not guessed: it is a ClientCaseError with the
 // code CLIENT_NOT_MODELED and the row, so a fixture cannot get an unproven Android result.
+//
+// The fail-closed canonical rules of the S2 security review (DL-123 to DL-131: CL-14 media type,
+// CL-17 cache rules on a 304, CL-18 item 2, CL-21 action fields, CL-25 credentials, CL-28 reload,
+// CL-44) are not part of this profile: its classification is F4-F9 (a 3xx or a 4xx is the F5
+// error branch). Of these, only CL-25 changes a stored trace mode (CS-17): difference A-21.
 
 import { createHash } from 'node:crypto';
 import { notModeled, sha1hex } from './client-engine.mjs';
@@ -673,6 +678,9 @@ export class AndroidSession extends CanonicalSession {
    * change runs 1.5 s after the end of the body; a destroy before it cancels it. F12 applies.
    * A-15 (CS-20 and CS-21, both modes): a body of 0 bytes is never saved (no delayed save and
    * no stream-close save; the cache stays as it was).
+   * A-21 (CL-25, DL-123 not applied; evidence/traces/client/android/CS-17/quick and CS-17/standard):
+   * a credentialed exchange is saved like any other (a first load with `Set-Cookie` is written);
+   * the request cookie, the `Set-Cookie` lines and `authenticated_cache` play no part.
    * `doc` is the document of the response that an intercept can read (A-17 needs its close).
    */
   scheduleSave(ex, withSha1, doc = null) {

@@ -88,7 +88,8 @@ test('cl08_cl19_http_disables_the_key_for_its_period', () => {
 });
 
 test('cl09_request_has_validators_only_with_a_visible_entry_and_a_cookie', () => {
-  const c = go(cc({ config: { cookie: 'session=rq-test-cookie-1' }, schedule: afterFirstLoad('a', [{ do: 'create_session' }]) }));
+  // authenticated_cache: the first load with a cookie commits (CL-25), so the second request has an entry.
+  const c = go(cc({ config: { cookie: 'session=rq-test-cookie-1', authenticated_cache: true }, schedule: afterFirstLoad('a', [{ do: 'create_session' }]) }));
   const [first, second] = requests(c);
   assert.deepEqual(first.fields, [['accept-diff', 'true'], ['cookie', 'session=rq-test-cookie-1']]);
   assert.deepEqual(second.fields.map(([n]) => n), ['accept-diff', 'if-none-match', 'template-tag', 'cookie']);
@@ -112,7 +113,7 @@ test('cl10_no_network_without_entry_is_a_normal_load', () => {
 
 test('cl11_cookie_set_for_each_response_and_never_stored', () => {
   const app = { status: 200, headers: [['content-type', 'text/html; charset=utf-8'], ['set-cookie', 'session=rq-test-cookie-1; Path=/']] };
-  const c = go(cc({ responses: { a: { page: 'a', app } }, schedule: [{ case: 'a' }, ...FIRST, ...SECOND('quick')] }));
+  const c = go(cc({ config: { authenticated_cache: true }, responses: { a: { page: 'a', app } }, schedule: [{ case: 'a' }, ...FIRST, ...SECOND('quick')] }));
   const sets = all(c, 'cookies').filter((x) => x.call === 'set');
   assert.equal(sets.length, 2);
   assert.deepEqual(sets[0].values, ['session=rq-test-cookie-1; Path=/']);
@@ -135,7 +136,7 @@ test('cl11_cl35_dl121_old_generation_response_sets_its_cookie_but_not_the_docume
     { case: 'c' }, { do: 'refresh' }, { do: 'release' },
     { do: 'bind_client' }, { do: 'client_ready' }, { do: 'get_diff' }, { do: 'snapshot_cache' }, { do: 'destroy' },
   ];
-  const c = go(cc({ responses, schedule }));
+  const c = go(cc({ config: { authenticated_cache: true }, responses, schedule }));
   assert.deepEqual(all(c, 'cookies').filter((x) => x.call === 'set').map((x) => x.values).sort(), [['gen=0'], ['gen=1']]);
   const c256 = sha256hex(pageOf('c'));
   assert.equal(actions(c).find((a) => a.do === 'load_data').body_sha256, c256);
@@ -152,7 +153,7 @@ test('cl11_no_cookie_call_after_destroy', () => {
 test('cl12_vary_values_are_part_of_the_key', () => {
   const app = { status: 200, headers: [['content-type', 'text/html; charset=utf-8'], ['vary', 'Cookie, Template-Tag']] };
   const c = go(cc({
-    config: { cookie: 'session=rq-test-cookie-1' },
+    config: { cookie: 'session=rq-test-cookie-1', authenticated_cache: true },
     responses: { a: { page: 'a', app } },
     schedule: [{ case: 'a' }, ...FIRST, { do: 'set_cookie', value: 'session=rq-test-cookie-2' }, { do: 'create_session' }, { do: 'snapshot_cache' }],
   }));
@@ -320,11 +321,22 @@ function createHashHex(b) {
   return createHash('sha256').update(b).digest('hex');
 }
 
-test('cl28_old_diff_is_not_sent_and_the_final_code_becomes_304', () => {
-  const steps = [{ do: 'hold', point: 'head' }, { do: 'create_session' }, { do: 'bind_client' }, { do: 'client_ready' }, { do: 'release' }, { do: 'settle', ms: 30_001 }, { do: 'get_diff' }, { do: 'destroy' }];
+test('cl28_dl130_old_diff_that_the_page_never_got_gives_a_normal_load_and_final_minus_one', () => {
+  const steps = [{ do: 'hold', point: 'head' }, { do: 'create_session' }, { do: 'bind_client' }, { do: 'client_ready' }, { do: 'release' }, { do: 'settle', ms: 30_001 },
+    { do: 'get_diff' }, { do: 'request_resource' }, { do: 'get_diff' }, { do: 'snapshot_cache' }, { do: 'destroy' }];
   const c = go(cc({ schedule: afterFirstLoad('b', steps) }));
-  assert.deepEqual(actions(c, 2).filter((a) => a.do === 'message'), []);
-  assert.deepEqual(results(c).at(-1), { session: 2, src_code: 200, final_code: 304 });
+  assert.deepEqual(actions(c, 2).map((a) => a.do), ['load_data', 'load_url']); // the cached page, then the reload
+  assert.deepEqual(all(c, 'intercepts').filter((i) => i.session === 2), [{ session: 2, null: true }]);
+  assert.deepEqual(results(c).at(-1), { session: 2, src_code: 200, final_code: -1 });
+  assert.equal(lastSnapshot(c)[0].etag, sha1hex(pageOf('b'))); // the entry stays: the cache has the new data
+});
+
+test('cl28_old_diff_that_the_page_already_got_is_not_sent_again_and_gives_no_reload', () => {
+  const steps = [{ do: 'hold', point: 'head' }, { do: 'create_session' }, { do: 'bind_client' }, { do: 'client_ready' }, { do: 'get_diff' }, { do: 'release' },
+    { do: 'settle', ms: 30_001 }, { do: 'get_diff' }, { do: 'destroy' }];
+  const c = go(cc({ schedule: afterFirstLoad('b', steps) }));
+  assert.deepEqual(actions(c, 2).map((a) => a.do), ['load_data', 'message']);
+  assert.deepEqual(results(c).at(-1), { session: 2, src_code: 200, final_code: 200 });
 });
 
 test('cl29_rebuild_check_failure_is_a_normal_load', () => {
@@ -402,4 +414,174 @@ test('cache_before_expands_into_the_record_of_a_first_load', () => {
   const [r] = c.phases[0].snapshots[0].entries;
   assert.equal(r.partition, 'rq-test-account-2');
   assert.equal(r.etag, sha1hex(pageOf('a')));
+});
+
+// --- S2 security review: DL-123 to DL-131 ---
+
+const HTML = ['content-type', 'text/html; charset=utf-8'];
+const appWith = (status, ...lines) => ({ status, headers: [HTML, ...lines] });
+const snapAfterFirst = (config, responses = undefined) => lastSnapshot(go(cc({ config, ...(responses ? { responses } : {}), schedule: [{ case: 'a' }, ...FIRST, { do: 'snapshot_cache' }] })));
+
+test('cl03_cl25_dl123_a_request_cookie_commits_only_with_authenticated_cache_and_a_partition', () => {
+  const cookie = 'session=rq-test-cookie-1';
+  assert.deepEqual(snapAfterFirst({ cookie }), []);
+  assert.equal(snapAfterFirst({ cookie, authenticated_cache: true }).length, 1);
+  assert.deepEqual(snapAfterFirst({ cookie, authenticated_cache: true, account: null }), []);
+  assert.equal(snapAfterFirst({ cookie: '' }).length, 1); // an empty cookie is not a credential
+  assert.equal(snapAfterFirst({}).length, 1); // anonymous: no change
+});
+
+test('cl25_dl123_set_cookie_or_set_cookie2_in_the_response_makes_the_exchange_credentialed', () => {
+  for (const name of ['Set-Cookie', 'set-cookie2']) {
+    const responses = { a: { page: 'a', app: appWith(200, [name, 'k=v']) } };
+    const c = go(cc({ responses, schedule: [{ case: 'a' }, ...FIRST, { do: 'snapshot_cache' }] }));
+    assert.deepEqual(lastSnapshot(c), [], name);
+    assert.deepEqual(actions(c).map((a) => a.do), ['load_data'], name); // the page is still shown
+    assert.deepEqual(results(c), [{ session: 1, src_code: 1000, final_code: 304 }], name);
+    assert.equal(snapAfterFirst({ authenticated_cache: true }, responses).length, 1, name);
+  }
+});
+
+test('cl27_dl123_a_credentialed_data_update_is_delivered_then_removes_the_entry', () => {
+  const steps = [{ do: 'set_cookie', value: 'session=rq-test-cookie-1' }, ...CACHED_FIRST];
+  const c = go(cc({ schedule: afterFirstLoad('b', steps) }));
+  assert.deepEqual(results(c).at(-1), { session: 2, src_code: 200, final_code: 200 });
+  assert.ok(actions(c, 2).some((a) => a.do === 'message'));
+  assert.deepEqual(lastSnapshot(c), []);
+  const allowed = go(cc({ config: { authenticated_cache: true }, schedule: afterFirstLoad('b', steps) }));
+  assert.equal(lastSnapshot(allowed)[0].etag, sha1hex(pageOf('b')));
+});
+
+test('cl31_dl123_a_credentialed_template_change_is_shown_and_does_not_commit', () => {
+  const steps = [{ do: 'set_cookie', value: 'session=rq-test-cookie-1' }, ...CACHED_FIRST];
+  const c = go(cc({ schedule: afterFirstLoad('c', steps) }));
+  assert.deepEqual(results(c).at(-1), { session: 2, src_code: 2000, final_code: 2000 });
+  assert.equal(lastSnapshot(c)[0].etag, sha1hex(pageOf('a'))); // CL-31 "when CL-25 allows it": the old entry is not replaced
+  const allowed = go(cc({ config: { authenticated_cache: true }, schedule: afterFirstLoad('c', steps) }));
+  assert.equal(lastSnapshot(allowed)[0].etag, sha1hex(pageOf('c')));
+});
+
+test('cl18_dl124_5xx_408_and_429_keep_the_cached_page_and_the_entry', () => {
+  for (const status of [500, 599, 408, 429]) {
+    const c = go(cc({ mode: 'standard', responses: { a: { page: 'a' }, e: { page: 'b', app: { status, headers: [] } } }, schedule: afterFirstLoad('e', SECOND('standard')) }));
+    assert.equal(all(c, 'intercepts').filter((i) => i.session === 2)[0].body_sha256, sha256Of('a'), String(status));
+    assert.equal(lastSnapshot(c).length, 1, String(status));
+    assert.deepEqual(results(c).at(-1), { session: 2, src_code: -1, final_code: -1 });
+  }
+});
+
+test('cl18_dl124_401_403_404_410_after_the_cached_page_was_delivered_load_the_url_and_remove_the_entry', () => {
+  for (const status of [401, 403, 404, 410, 499, 407, 409, 428, 430, 204]) {
+    const c = go(cc({ responses: { a: { page: 'a' }, e: { page: 'b', app: appWith(status) } }, schedule: afterFirstLoad('e', CACHED_FIRST) }));
+    assert.deepEqual(actions(c, 2).map((a) => a.do), ['load_data', 'load_url'], String(status));
+    assert.deepEqual(lastSnapshot(c), [], String(status));
+    assert.deepEqual(results(c).at(-1), { session: 2, src_code: -1, final_code: -1 });
+  }
+});
+
+test('cl18_dl124_403_before_the_delivery_is_a_normal_load_without_the_cached_page', () => {
+  const c = go(cc({ mode: 'standard', responses: { a: { page: 'a' }, e: { page: 'b', app: appWith(403) } }, schedule: afterFirstLoad('e', SECOND('standard')) }));
+  assert.deepEqual(all(c, 'intercepts').filter((i) => i.session === 2), [{ session: 2, null: true }]);
+  assert.deepEqual(lastSnapshot(c), []);
+});
+
+test('cl14_dl125_a_legacy_200_with_text_plain_is_a_normal_load_and_removes_the_entry', () => {
+  const plain = { do: 'set_field', name: 'content-type', value: 'text/plain; charset=utf-8' };
+  const c = go(cc({ schedule: afterFirstLoad('b', [plain, ...CACHED_FIRST]) }));
+  assert.deepEqual(actions(c, 2).map((a) => a.do), ['load_data', 'load_url']);
+  assert.deepEqual(lastSnapshot(c), []);
+  const first = go(cc({ schedule: [{ case: 'a' }, plain, ...FIRST, { do: 'snapshot_cache' }] }));
+  assert.deepEqual(results(first), [{ session: 1, src_code: -1, final_code: -1 }]);
+  assert.deepEqual(lastSnapshot(first), []);
+  const upper = go(cc({ schedule: [{ case: 'a' }, { do: 'set_field', name: 'Content-Type', value: 'Text/HTML' }, ...FIRST, { do: 'snapshot_cache' }] }));
+  assert.equal(lastSnapshot(upper).length, 1);
+});
+
+test('cl17_dl126_no_store_on_a_304_removes_the_entry_and_the_page_stays', () => {
+  const c = go(cc({ schedule: afterFirstLoad('a', [{ do: 'set_field', name: 'cache-control', value: 'private, No-Store' }, ...CACHED_FIRST]) }));
+  assert.deepEqual(actions(c, 2).map((a) => a.do), ['load_data', 'message', 'message']);
+  assert.deepEqual(results(c).at(-1), { session: 2, src_code: 304, final_code: 304 });
+  assert.deepEqual(lastSnapshot(c), []);
+});
+
+test('cl17_dl126_vary_star_or_a_cache_offline_other_than_true_or_store_on_a_304_removes_the_entry', () => {
+  for (const [name, value] of [['vary', '*'], ['cache-offline', 'false'], ['cache-offline', 'maybe']]) {
+    const c = go(cc({ schedule: afterFirstLoad('a', [{ do: 'set_field', name, value }, ...CACHED_FIRST]) }));
+    assert.deepEqual(results(c).at(-1), { session: 2, src_code: 304, final_code: 304 }, value);
+    assert.deepEqual(lastSnapshot(c), [], value);
+  }
+  for (const value of ['true', 'STORE']) {
+    const c = go(cc({ schedule: afterFirstLoad('a', [{ do: 'set_field', name: 'cache-offline', value }, ...CACHED_FIRST]) }));
+    assert.equal(lastSnapshot(c).length, 1, value);
+  }
+});
+
+test('cl17_dl126_http_on_a_304_is_cl19', () => {
+  const c = go(cc({ schedule: afterFirstLoad('a', [{ do: 'set_field', name: 'cache-offline', value: 'http' }, ...CACHED_FIRST, { do: 'create_session' }]) }));
+  assert.deepEqual(actions(c, 2).map((a) => a.do), ['load_data', 'load_url']);
+  assert.deepEqual(results(c).at(-1), { session: 2, src_code: -1, final_code: -1 });
+  assert.deepEqual(lastSnapshot(c), []);
+  assert.equal(c.sessions.at(-1).opened, false); // CL-08: the key is disabled
+});
+
+test('cl17_dl126_a_vary_field_on_a_304_recomputes_the_vary_values_and_replaces_the_entry_of_that_key', () => {
+  const cookie = 'session=rq-test-cookie-1';
+  const steps = [{ case: 'a' }, { do: 'set_field', name: 'vary', value: 'Cookie' }, ...SECOND('quick')];
+  const c = go(cc({ config: { cookie }, cache_before: [{ page: 'a' }, { page: 'a', vary: [['cookie', cookie]] }], schedule: steps }));
+  assert.deepEqual(results(c), [{ session: 1, src_code: 304, final_code: 304 }]);
+  assert.deepEqual(lastSnapshot(c).map((r) => r.vary), [[['cookie', cookie]]]);
+  // Without a Vary field the stored Vary values stay.
+  const keep = go(cc({ cache_before: [{ page: 'a', vary: [['x-a', null]] }], schedule: [{ case: 'a' }, { do: 'drop_field', name: 'vary' }, ...SECOND('quick')] }));
+  assert.deepEqual(lastSnapshot(keep).map((r) => r.vary), [[['x-a', null]]]);
+});
+
+/** The page fields of a first load in both modes: load_data (Quick), the intercept (Standard) and the record. */
+function pageFieldNames(faults) {
+  const out = [];
+  for (const mode of ['quick', 'standard']) {
+    const c = go(cc({ mode, schedule: [{ case: 'a' }, ...faults, ...FIRST, { do: 'snapshot_cache' }] }));
+    const delivered = mode === 'quick' ? actions(c).find((a) => a.do === 'load_data').fields : all(c, 'intercepts').find((i) => i.fields).fields;
+    out.push(delivered.map(([n]) => n), lastSnapshot(c)[0].fields.map(([n]) => n));
+  }
+  return out;
+}
+
+test('cl21_dl129_action_fields_are_not_page_fields_in_any_case_also_as_connection_tokens', () => {
+  const set = (name, value) => ({ do: 'set_field', name, value });
+  const lists = pageFieldNames([
+    set('Clear-Site-Data', '"cache"'), set('REFRESH', '0; url=/login'), set('WWW-Authenticate', 'Basic'), set('authentication-info', 'x'),
+    set('connection', 'X-Hop, X-Other'), set('X-Hop', '1'), set('x-other', '2'), set('content-security-policy', "default-src 'self'"),
+  ]);
+  assert.equal(lists.length, 4);
+  for (const names of lists) assert.deepEqual(names, ['content-security-policy', 'content-type']);
+});
+
+test('cl21_the_fields_that_the_trace_normalization_removes_are_not_page_fields_either', () => {
+  // README "Trace projection": these names are removed on both sides before check 7, so only this test checks CL-21 for them.
+  const set = (name, value) => ({ do: 'set_field', name, value });
+  const lists = pageFieldNames([
+    set('Vary', 'Accept-Language'), set('CDN-Cache-Control', 'max-age=60'), set('surrogate-control', 'max-age=60'),
+    set('Content-Encoding', 'identity'), set('content-length', '296'), set('Transfer-Encoding', 'chunked'),
+  ]);
+  assert.equal(lists.length, 4);
+  for (const names of lists) assert.deepEqual(names, ['content-type']);
+});
+
+test('cl44_dl131_a_redirect_without_an_entry_is_a_normal_load_and_its_cookie_goes_to_the_store', () => {
+  for (const status of [300, 302, 307, 399]) {
+    const app = appWith(status, ['location', 'https://login.example.com/'], ['set-cookie', 'r=1']);
+    const c = go(cc({ mode: 'standard', responses: { r: { page: 'a', app } }, schedule: [{ case: 'r' }, ...FIRST.slice(0, 4), { do: 'snapshot_cache' }, { do: 'destroy' }] }));
+    assert.deepEqual(actions(c).map((a) => a.do), ['load_url'], String(status));
+    assert.deepEqual(all(c, 'intercepts'), [{ session: 1, null: true }]);
+    assert.deepEqual(all(c, 'cookies').filter((x) => x.call === 'set'), [{ call: 'set', url: URL_, values: ['r=1'] }]);
+    assert.deepEqual(lastSnapshot(c), []);
+    assert.deepEqual(results(c), [{ session: 1, src_code: -1, final_code: -1 }]);
+  }
+});
+
+test('cl44_dl131_a_redirect_after_the_cached_page_was_delivered_loads_the_url_and_removes_the_entry', () => {
+  const c = go(cc({ responses: { a: { page: 'a' }, r: { page: 'b', app: appWith(302, ['location', '/login']) } }, schedule: afterFirstLoad('r', CACHED_FIRST) }));
+  assert.deepEqual(actions(c, 2).map((a) => a.do), ['load_data', 'load_url']);
+  assert.deepEqual(lastSnapshot(c), []);
+  assert.deepEqual(results(c).at(-1), { session: 2, src_code: -1, final_code: -1 });
 });

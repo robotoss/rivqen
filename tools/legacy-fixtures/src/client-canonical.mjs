@@ -28,8 +28,18 @@ export function etagFieldName(headers) {
   return key.length > 0 && key[0] !== '' ? asciiLower(key[0]) : 'etag';
 }
 
-/** CL-14: each of the four fields has a line, every line has one value, and the value is not empty. */
+/** CL-14 (DL-125): exactly one `Content-Type` line, and its media type is `text/html` (ASCII case-insensitive). */
+export function isHtmlResponse(headers) {
+  const types = valuesOf(headers, 'content-type');
+  return types.length === 1 && parseContentType(types[0]).type === 'text/html';
+}
+
+/**
+ * CL-14: an HTML response (isHtmlResponse), and each of the four fields has a line, every line
+ * has one value, and the value is not empty.
+ */
 export function isLegacyResponse(headers) {
+  if (!isHtmlResponse(headers)) return false;
   for (const name of [etagFieldName(headers), 'template-tag', 'template-change', 'cache-offline']) {
     const values = valuesOf(headers, name);
     if (values.length === 0 || values[0] === '' || values.some((v) => v !== values[0])) return false;
@@ -80,12 +90,14 @@ export function offlineOf(headers) {
 }
 
 const HOP_BY_HOP = ['connection', 'keep-alive', 'proxy-connection', 'te', 'trailer', 'transfer-encoding', 'upgrade'];
+/** CL-21 (DL-129): the action fields of one response; replayed from the cache they would act again. */
+const ACTION_FIELDS = ['clear-site-data', 'refresh', 'www-authenticate', 'authentication-info'];
 
 /** CL-21: the page fields of a response (lowercase names, sorted by name, stable). */
 export function pageFields(headers) {
   const drop = new Set([
     'set-cookie', 'set-cookie2', ...HOP_BY_HOP, 'cache-control', 'expires', 'content-encoding', 'content-length',
-    etagFieldName(headers), 'sonic-etag-key', 'template-tag', 'template-change', 'cache-offline', 'vary', 'cdn-cache-control', 'surrogate-control',
+    etagFieldName(headers), 'sonic-etag-key', 'template-tag', 'template-change', 'cache-offline', 'vary', 'cdn-cache-control', 'surrogate-control', ...ACTION_FIELDS,
   ]);
   for (const v of valuesOf(headers, 'connection')) for (const t of v.split(',')) if (trimOws(t) !== '') drop.add(asciiLower(trimOws(t)));
   return sortedFields(headers.filter(([n]) => !drop.has(asciiLower(n))));
@@ -111,6 +123,25 @@ export function varyNames(headers) {
 function requestValue(fields, name) {
   const v = valuesOf(fields, name);
   return v.length === 0 ? null : v[0];
+}
+
+/** CL-25 (DL-123, H-62): a non-empty request `cookie`, or a `Set-Cookie` or `Set-Cookie2` line in the response. */
+export function isCredentialed(requestFields, headers) {
+  const cookie = requestValue(requestFields, 'cookie');
+  return (cookie !== null && cookie !== '') || valuesOf(headers, 'set-cookie').length > 0 || valuesOf(headers, 'set-cookie2').length > 0;
+}
+
+/**
+ * CL-25 (DL-123, R-CACHE-03, identity rule 2): a credentialed exchange commits only when the app
+ * allows authenticated caching (config `authenticated_cache`) and the partition is not `null`.
+ */
+export function credentialsAllowCommit(partition, requestFields, headers, authenticatedCache) {
+  return !isCredentialed(requestFields, headers) || (authenticatedCache === true && partition !== null);
+}
+
+/** CL-18 item 1 (DL-124): the statuses that keep the cached page: `5xx`, `408`, `429`. */
+export function keepsCachedPage(status) {
+  return status >= 500 || status === 408 || status === 429;
 }
 
 // --- functions (CL-41, CL-42, CL-24) ---
@@ -205,6 +236,15 @@ export class CanonicalStore {
     this.records = this.records.filter((x) => x !== record);
   }
 
+  /**
+   * CL-17 (DL-126): a `Vary` field of a `304` recomputes the Vary values of the entry (CL-12). The
+   * entry then has the key of the new values; another entry of that key is replaced (CL-26).
+   */
+  rekey(record, vary) {
+    record.vary = vary;
+    this.records = this.records.filter((x) => x === record || !(x.partition === record.partition && x.url === record.url && sameVary(x.vary, vary)));
+  }
+
   removePartition(partition) {
     this.records = this.records.filter((x) => x.partition !== partition);
   }
@@ -222,7 +262,7 @@ export class CanonicalStore {
     const response = respond(sim.b.server_profile, { method: 'GET', headers: request }, app, bytes);
     const body = response.body === null ? Buffer.alloc(0) : Buffer.from(response.body);
     const record = response.status === 200 && isLegacyResponse(response.headers) && isUtf8Text(response.headers, body)
-      ? commitRecord({ partition: sim.config.account, url: sim.url }, response.headers, body, request)
+      ? commitRecord({ partition: sim.config.account, url: sim.url }, response.headers, body, request, sim.config.authenticated_cache)
       : null;
     if (record === null) throw caseError('CASE_CACHE_BEFORE', `cache_before: a canonical first load of page ${entry.page} from ${sim.b.server_profile} commits no record (CL-25)`);
     if (Object.hasOwn(entry, 'partition')) record.partition = entry.partition;
@@ -237,12 +277,14 @@ export class CanonicalStore {
 
 /**
  * CL-25 and CL-12: the record that a complete first load or template change commits, or null
- * when the commit is not allowed (cache-offline not true or store, no-store, Vary `*`,
- * SHA-1 of the page not the etag, SHA-1 of the client template not the template tag).
+ * when the commit is not allowed (cache-offline not true or store, no-store, a credentialed
+ * exchange without `authenticated_cache` or in the `null` partition, Vary `*`, SHA-1 of the page
+ * not the etag, SHA-1 of the client template not the template tag).
  */
-export function commitRecord(key, headers, body, requestFields) {
+export function commitRecord(key, headers, body, requestFields, authenticatedCache) {
   const offline = offlineOf(headers);
   if (offline !== 'true' && offline !== 'store') return null;
+  if (!credentialsAllowCommit(key.partition, requestFields, headers, authenticatedCache)) return null;
   const vary = varyNames(headers);
   if (vary.star) return null;
   const etag = bareEtag(valuesOf(headers, etagFieldName(headers))[0] ?? '');
@@ -360,7 +402,9 @@ export class CanonicalSession {
     this.sim.cookieGet(this.url); // CL-11 item 1
     this.requestFields = this.buildRequest();
     const ex = this.sim.send(this, this.gen, this.requestFields);
-    if (ex === null) this.error(); // CL-13 item 1: a refused connection
+    // CL-13 item 1: a refused connection (CL-18 item 1). A TLS error (CL-18 item 3: normal load,
+    // the entry stays) has no step word in CONTRACT section 3, so the model has no branch for it.
+    if (ex === null) this.error();
   }
 
   // --- response (CL-13) ---
@@ -374,7 +418,8 @@ export class CanonicalSession {
     const etag = valuesOf(h, etagFieldName(h))[0];
     const sameEtag = ex.status === 200 && etag !== undefined && this.entry !== null && bareEtag(etag) === this.entry.etag;
     if (this.entry !== null && (ex.status === 304 || sameEtag)) return 'not-modified';
-    if (ex.status !== 200) return 'error';
+    if (ex.status >= 300 && ex.status <= 399) return 'redirect'; // CL-44: the request does not follow it
+    if (ex.status !== 200) return keepsCachedPage(ex.status) ? 'error' : 'refused'; // CL-18 items 1 and 2
     if (!isLegacyResponse(h) || !isUtf8Text(h, ex.body) || ex.body.length === 0) return 'normal'; // CL-14, CL-16, CL-32
     if (offlineOf(h) === 'http') return 'http';
     if (this.entry === null) return 'first-load';
@@ -395,7 +440,9 @@ export class CanonicalSession {
         return this.notModified(ex);
       case 'error':
         return this.error();
-      case 'normal':
+      case 'normal': // CL-14, CL-16, CL-32
+      case 'redirect': // CL-44: normal load, no commit, the entry removed (Set-Cookie: cookies() above, CL-11)
+      case 'refused': // CL-18 item 2 (DL-124): the server refuses or no longer has the page
         return this.normalLoad(true);
       case 'http':
         return this.http();
@@ -445,17 +492,32 @@ export class CanonicalSession {
 
   // --- outcomes ---
   notModified(ex) {
-    // CL-17: the cached page is the document; the page fields of the response replace the stored lines of their names.
+    // CL-17: the cached page is the document. First the response rules of the cache (DL-126):
+    // `http` → CL-19; `no-store`, `Vary: *` or a cache-offline value other than true or store →
+    // the entry is removed, the shown page stays; a Vary field recomputes the Vary values of the
+    // entry. Then the page fields of the response replace the stored lines of their names.
+    const h = ex.headers;
+    const offline = offlineOf(h); // CL-15: no-store counts as false; http wins
+    if (offline === 'http') return this.http();
     this.decided = true;
-    const update = pageFields(ex.headers);
-    const names = new Set(update.map(([n]) => n));
-    this.entry.fields = [...this.entry.fields.filter(([n]) => !names.has(asciiLower(n))), ...update];
-    this.setResult(304, 304, null, ex.headers);
+    const vary = varyNames(h);
+    if ((offline !== 'true' && offline !== 'store') || vary.star) {
+      this.sim.store.remove(this.entry);
+    } else {
+      // The values come from this request, so the request matches the recomputed entry: the
+      // removal of an entry that the request no longer matches (CL-17) cannot occur here.
+      if (valuesOf(h, 'vary').length > 0) this.sim.store.rekey(this.entry, vary.names.map((n) => [n, requestValue(this.requestFields, n)]));
+      const update = pageFields(h);
+      const names = new Set(update.map(([n]) => n));
+      this.entry.fields = [...this.entry.fields.filter(([n]) => !names.has(asciiLower(n))), ...update];
+    }
+    this.setResult(304, 304, null, h);
     this.resolveWaiting();
+    return undefined;
   }
 
   error() {
-    // CL-18: with a visible entry the cached page stays and the entry stays; else a normal load.
+    // CL-18 item 1: with a visible entry the cached page stays and the entry stays; else a normal load.
     this.decided = true;
     if (this.entry === null) this.normalLoad(false);
     this.resolveWaiting();
@@ -483,7 +545,7 @@ export class CanonicalSession {
 
   firstLoadEnd(ex) {
     this.finishStreams(ex);
-    const record = commitRecord(this, ex.headers, ex.body, this.requestFields); // CL-25, CL-26
+    const record = commitRecord(this, ex.headers, ex.body, this.requestFields, this.sim.config.authenticated_cache); // CL-25, CL-26
     if (record !== null) this.sim.store.commit(record);
     this.setResult(1000, this.finalOf(1000), null, ex.headers);
   }
@@ -491,7 +553,7 @@ export class CanonicalSession {
   templateChangeEnd(ex) {
     const h = ex.headers;
     const offline = offlineOf(h);
-    const record = commitRecord(this, h, ex.body, this.requestFields);
+    const record = commitRecord(this, h, ex.body, this.requestFields, this.sim.config.authenticated_cache); // CL-31: when CL-25 allows it
     if (this.pendingNew !== null && offline === 'store') {
       // CL-30: no reload; final 304.
       this.pendingNew = null;
@@ -552,8 +614,9 @@ export class CanonicalSession {
       this.setResult(200, this.finalOf(200), null, h);
     }
     const vary = varyNames(h);
-    if (offline === 'false' || vary.star) {
-      this.sim.store.remove(this.entry); // CL-27 (D-46), CL-12
+    // CL-27 (D-46), CL-12; CL-25 (DL-123) for a credentialed exchange: deliver, then remove the entry.
+    if (offline === 'false' || vary.star || !credentialsAllowCommit(this.partition, this.requestFields, h, this.sim.config.authenticated_cache)) {
+      this.sim.store.remove(this.entry);
       return undefined;
     }
     this.sim.store.commit({
@@ -604,7 +667,12 @@ export class CanonicalSession {
     if (r === null || r.final === -1 || r.expired || this.stopped || !this.open) return;
     if (r.final === 200 && r.diff !== null && this.sim.clock - r.time > 30_000) {
       r.expired = true; // CL-28: an old diff is not sent, and no later message follows
-      if (!r.diffSent) r.final = 304;
+      if (!r.diffSent) {
+        // CL-28 (DL-130): the page never got the diff, so it must not stay older than the cache:
+        // a normal load (load_url, the next intercept null); the entry stays; final code -1.
+        r.final = -1;
+        this.normalLoad(false);
+      }
       return;
     }
     this.sim.message(this, this.messageText(r));

@@ -50,7 +50,14 @@ const isInt = (v) => Number.isInteger(v);
 export function parseRun(bytes) {
   if (!(bytes instanceof Uint8Array)) throw new TraceProjectionError('TRACE_INPUT', 'a run must be bytes');
   if (bytes.length > TRACE_LIMITS.bytes) throw new TraceProjectionError('TRACE_LIMIT', `a run has more than ${TRACE_LIMITS.bytes} bytes`);
-  const text = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).toString('utf8');
+  // A stored run is UTF-8 (JSON Lines). Bad bytes are an input error, never replaced by U+FFFD;
+  // a byte order mark is kept, so it makes the first line not JSON.
+  let text;
+  try {
+    text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+  } catch (error) {
+    throw new TraceProjectionError('TRACE_INPUT', 'a run is not valid UTF-8', { cause: error });
+  }
   const lines = text.split('\n').filter((l) => l !== '');
   if (lines.length > TRACE_LIMITS.events) throw new TraceProjectionError('TRACE_LIMIT', `a run has more than ${TRACE_LIMITS.events} events`);
   return lines.map((line, i) => {
@@ -190,6 +197,12 @@ export function projectRun(events, context) {
     if (e.ev === 'proxy.response_end' && isInt(e.exchange)) ends.set(e.exchange, e);
   }
   const created = events.filter((e) => e.ev === 'session.created').sort(byNumber('hseq'));
+  // One session.created event for each create_session step: an extra or a missing event would
+  // shift the sessions of the projection.
+  const createSteps = events.filter((e) => e.ev === 'step.start' && e.src === 'conductor' && isObject(e.step) && e.step.do === 'create_session').length;
+  if (createSteps !== created.length) {
+    throw new TraceProjectionError('TRACE_SESSION', `the run has ${created.length} session.created events for ${createSteps} create_session steps`);
+  }
   let account = context.account;
   let stepNo = 0;
   let createdNo = 0;

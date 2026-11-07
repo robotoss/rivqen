@@ -81,13 +81,19 @@
         "steps": [11,13],
         "requests": [],
         "cookies": [],
-        "actions": [],
+        "actions": [
+          {
+            "do": "load_url",
+            "session": 1,
+            "url": "https://shop.example.com/catalog"
+          }
+        ],
         "intercepts": [],
         "results": [
           {
             "session": 1,
             "src_code": 200,
-            "final_code": 304
+            "final_code": -1
           }
         ],
         "snapshots": [

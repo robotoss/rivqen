@@ -1,7 +1,7 @@
 {
   "id": "FX-LEG-CL-COOKIE-VARIANCE-Q--ANDROID",
   "kind": "client",
-  "description": "legacy-android: the request carries sonic-sdk-version and empty validators; the answer to the intercepted request differs; load_data keeps the legacy control fields; the cache record differs",
+  "description": "legacy-android: the request carries sonic-sdk-version and empty validators; the answer to the intercepted request differs; load_data keeps the legacy control fields; the cache record differs; the cache is written although the exchange is credentialed (A-21)",
   "profile": "legacy-android",
   "replaces": "FX-LEG-CL-COOKIE-VARIANCE-Q",
   "divergences": [

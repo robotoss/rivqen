@@ -1,0 +1,83 @@
+{
+  "id": "FX-LEG-CL-INTEGRITY-TEMPLATE-S",
+  "kind": "client",
+  "description": "A cached entry whose template does not match its template tag is removed; the session runs as a first load (Standard)",
+  "profile": "legacy-canonical",
+  "mode": "standard",
+  "server_profile": "legacy-canonical",
+  "rules": [
+    "CL-40",
+    "CL-09"
+  ],
+  "rows": [
+    "Q1",
+    "S1"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-client#_9-rivqen-canonical-client-rules"
+  ],
+  "evidence": "code-reading",
+  "config": {
+    "account": "rq-test-account",
+    "account_related": true,
+    "reload_in_bad_network": false
+  },
+  "responses": {
+    "r1": {
+      "page": "a",
+      "app": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "text/html; charset=utf-8"
+          ]
+        ]
+      }
+    }
+  },
+  "cache_before": [
+    {
+      "page": "a",
+      "template_tag": "0000000000000000000000000000000000000000"
+    }
+  ],
+  "schedule": [
+    {
+      "case": "r1"
+    },
+    {
+      "do": "create_session"
+    },
+    {
+      "do": "bind_client"
+    },
+    {
+      "do": "client_ready"
+    },
+    {
+      "do": "request_resource"
+    },
+    {
+      "do": "wait",
+      "for": "proxy.response_end"
+    },
+    {
+      "do": "settle",
+      "ms": 2500
+    },
+    {
+      "do": "get_diff"
+    },
+    {
+      "do": "snapshot_cache"
+    },
+    {
+      "do": "destroy"
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "id": "FX-LEG-CL-CS23-Q",
+  "kind": "client",
+  "description": "Template change with cache-offline store alone; the cached page is loaded first (set_field) (Quick)",
+  "profile": "legacy-canonical",
+  "mode": "quick",
+  "server_profile": "legacy-node",
+  "rules": [
+    "CL-30"
+  ],
+  "rows": [
+    "Q13",
+    "S10"
+  ],
+  "divergences": [
+    "D-48"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-client#_9-9-expected-results-of-the-stored-scenarios"
+  ],
+  "evidence": "trace",
+  "trace": {
+    "scenario": "CS-23",
+    "mode": "quick"
+  },
+  "config": {
+    "account": "rq-test-account",
+    "account_related": true,
+    "reload_in_bad_network": false
+  },
+  "responses": {
+    "r1": {
+      "page": "a",
+      "app": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "text/html; charset=utf-8"
+          ]
+        ]
+      }
+    },
+    "r2": {
+      "page": "c",
+      "app": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "text/html; charset=utf-8"
+          ]
+        ]
+      }
+    }
+  },
+  "cache_before": [],
+  "schedule": [
+    {
+      "case": "r1"
+    },
+    {
+      "do": "create_session"
+    },
+    {
+      "do": "bind_client"
+    },
+    {
+      "do": "wait",
+      "for": "proxy.response_end"
+    },
+    {
+      "do": "client_ready"
+    },
+    {
+      "do": "request_resource"
+    },
+    {
+      "do": "settle",
+      "ms": 2500
+    },
+    {
+      "do": "destroy"
+    },
+    {
+      "case": "r2"
+    },
+    {
+      "do": "set_field",
+      "name": "cache-offline",
+      "value": "store"
+    },
+    {
+      "do": "hold",
+      "point": "head"
+    },
+    {
+      "do": "create_session"
+    },
+    {
+      "do": "bind_client"
+    },
+    {
+      "do": "client_ready"
+    },
+    {
+      "do": "request_resource"
+    },
+    {
+      "do": "get_diff"
+    },
+    {
+      "do": "wait",
+      "for": "proxy.hold"
+    },
+    {
+      "do": "settle",
+      "ms": 300
+    },
+    {
+      "do": "release"
+    },
+    {
+      "do": "wait",
+      "for": "proxy.response_end"
+    },
+    {
+      "do": "settle",
+      "ms": 2500
+    },
+    {
+      "do": "get_diff"
+    },
+    {
+      "do": "snapshot_cache"
+    },
+    {
+      "do": "destroy"
+    }
+  ]
+}

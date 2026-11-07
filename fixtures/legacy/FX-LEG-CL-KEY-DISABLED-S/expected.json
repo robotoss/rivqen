@@ -1,0 +1,103 @@
+{
+  "id": "FX-LEG-CL-KEY-DISABLED-S",
+  "kind": "client",
+  "profile": "legacy-canonical",
+  "mode": "standard",
+  "server_profile": "legacy-canonical",
+  "level": "must",
+  "client": {
+    "sessions": [
+      {
+        "step": 1,
+        "opened": true,
+        "session": 1,
+        "partition": "rq-test-account",
+        "url": "https://shop.example.com/catalog"
+      },
+      {
+        "step": 8,
+        "opened": false,
+        "partition": "rq-test-account",
+        "url": "https://shop.example.com/catalog"
+      }
+    ],
+    "phases": [
+      {
+        "steps": [1,6],
+        "requests": [
+          {
+            "exchange": 1,
+            "method": "GET",
+            "target": "/catalog",
+            "fields": [
+              ["accept-diff","true"],
+              ["if-none-match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+              ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"]
+            ],
+            "response": {
+              "status": 200,
+              "fields": [
+                ["etag","4c33dabea7ea65c6255b9e6a6539976674886a2c"],
+                ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+                ["template-change","false"],
+                ["cache-offline","http"]
+              ],
+              "complete": true
+            }
+          }
+        ],
+        "cookies": [
+          {
+            "call": "get",
+            "url": "https://shop.example.com/catalog",
+            "value": null
+          }
+        ],
+        "actions": [
+          {
+            "do": "load_url",
+            "session": 1,
+            "url": "https://shop.example.com/catalog"
+          }
+        ],
+        "intercepts": [
+          {
+            "session": 1,
+            "null": true
+          }
+        ],
+        "results": [],
+        "snapshots": []
+      },
+      {
+        "steps": [7,9],
+        "requests": [],
+        "cookies": [],
+        "actions": [],
+        "intercepts": [],
+        "results": [
+          {
+            "session": 1,
+            "src_code": -1,
+            "final_code": -1
+          }
+        ],
+        "snapshots": []
+      },
+      {
+        "steps": [10,10],
+        "requests": [],
+        "cookies": [],
+        "actions": [],
+        "intercepts": [],
+        "results": [],
+        "snapshots": [
+          {
+            "entries": []
+          }
+        ]
+      }
+    ]
+  },
+  "profiles_same": []
+}

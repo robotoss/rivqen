@@ -42,10 +42,10 @@ export const CATALOG_SIZE = 59;
 /**
  * Number of canonical client fixtures that fixtures/legacy must keep (README "Generator checks of
  * the client part"). Above 0, the client rule coverage (check 10) and the use of every stored
- * client run (check 11) are problems; at 0 they are notes. 0 until the client fixtures exist
- * (WP-01 S2 lane L6 raises it when it adds them).
+ * client run (check 11) are problems; at 0 they are notes. 82 since the
+ * client fixtures of WP-01 S2 T-06.
  */
-export const CLIENT_FLOOR = 0;
+export const CLIENT_FLOOR = 82;
 
 const GENERATED = 'expected.json';
 const TRACE_SERVERS = ['java', 'node', 'php'];

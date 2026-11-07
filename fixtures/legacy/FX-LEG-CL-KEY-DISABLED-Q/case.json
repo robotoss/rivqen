@@ -1,0 +1,93 @@
+{
+  "id": "FX-LEG-CL-KEY-DISABLED-Q",
+  "kind": "client",
+  "description": "After cache-offline http the key is disabled: a new session for the key does not open (Quick)",
+  "profile": "legacy-canonical",
+  "mode": "quick",
+  "server_profile": "legacy-canonical",
+  "rules": [
+    "CL-08",
+    "CL-19"
+  ],
+  "rows": [
+    "Q5",
+    "S4"
+  ],
+  "divergences": [
+    "D-47"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-client#_9-rivqen-canonical-client-rules"
+  ],
+  "evidence": "code-reading",
+  "config": {
+    "account": "rq-test-account",
+    "account_related": true,
+    "reload_in_bad_network": false
+  },
+  "responses": {
+    "r1": {
+      "page": "b",
+      "app": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "cache-offline",
+            "http"
+          ]
+        ]
+      }
+    }
+  },
+  "cache_before": [
+    {
+      "page": "a"
+    }
+  ],
+  "schedule": [
+    {
+      "case": "r1"
+    },
+    {
+      "do": "create_session"
+    },
+    {
+      "do": "bind_client"
+    },
+    {
+      "do": "client_ready"
+    },
+    {
+      "do": "request_resource"
+    },
+    {
+      "do": "wait",
+      "for": "proxy.response_end"
+    },
+    {
+      "do": "settle",
+      "ms": 300
+    },
+    {
+      "do": "destroy"
+    },
+    {
+      "do": "create_session"
+    },
+    {
+      "do": "settle",
+      "ms": 300
+    },
+    {
+      "do": "snapshot_cache"
+    }
+  ]
+}

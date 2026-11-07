@@ -8,7 +8,8 @@
   "rules": [
     "CL-11",
     "CL-12",
-    "CL-21"
+    "CL-21",
+    "CL-25"
   ],
   "rows": [],
   "divergences": [

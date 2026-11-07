@@ -93,15 +93,16 @@
             "target": "/catalog",
             "fields": [
               ["accept-diff","true"],
-              ["if-none-match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
-              ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
               ["cookie","session=rq-test-cookie-2"]
             ],
             "response": {
-              "status": 304,
+              "status": 200,
               "fields": [
                 ["set-cookie","session=rq-test-cookie-1; Path=/"],
-                ["cache-offline","store"]
+                ["etag","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+                ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+                ["cache-offline","true"],
+                ["template-change","true"]
               ],
               "complete": true
             }
@@ -133,7 +134,7 @@
           {
             "do": "message",
             "session": 2,
-            "json": "{\"code\":304,\"srcCode\":304,\"extra\":{\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+            "json": "{\"code\":304,\"srcCode\":1000,\"extra\":{\"eTag\":\"3e3184cbd12e5294959effe6f2d9985f50f4ea5d\",\"template-tag\":\"3c771bf015df2c410a41a6012804f645b3acc1bc\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
           }
         ],
         "intercepts": [
@@ -151,21 +152,7 @@
         ],
         "snapshots": [
           {
-            "entries": [
-              {
-                "partition": "rq-test-account",
-                "url": "https://shop.example.com/catalog",
-                "vary": [],
-                "etag": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d",
-                "template_tag": "3c771bf015df2c410a41a6012804f645b3acc1bc",
-                "page_sha256": "a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb",
-                "template_sha256": "bd2029674273827936e505d98a1cb17748329410b41f739c3643a9c7dc32d801",
-                "data_sha256": "e27e3801b12331819bcf51ab4bdad818e789c44e380ba85206bd94171ae78182",
-                "fields": [
-                  ["content-type","text/html; charset=utf-8"]
-                ]
-              }
-            ]
+            "entries": []
           }
         ]
       },
@@ -178,27 +165,13 @@
         "results": [
           {
             "session": 2,
-            "src_code": 304,
+            "src_code": 1000,
             "final_code": 304
           }
         ],
         "snapshots": [
           {
-            "entries": [
-              {
-                "partition": "rq-test-account",
-                "url": "https://shop.example.com/catalog",
-                "vary": [],
-                "etag": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d",
-                "template_tag": "3c771bf015df2c410a41a6012804f645b3acc1bc",
-                "page_sha256": "a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb",
-                "template_sha256": "bd2029674273827936e505d98a1cb17748329410b41f739c3643a9c7dc32d801",
-                "data_sha256": "e27e3801b12331819bcf51ab4bdad818e789c44e380ba85206bd94171ae78182",
-                "fields": [
-                  ["content-type","text/html; charset=utf-8"]
-                ]
-              }
-            ]
+            "entries": []
           }
         ]
       }

@@ -1,7 +1,7 @@
 {
   "id": "FX-LEG-CL-DIFF-AGE-S",
   "kind": "client",
-  "description": "A diff older than 30 s when the page asks for it is not sent; the final code is 304 (Standard)",
+  "description": "A diff older than 30 s when the page asks for it is not sent; the page never got it, so the session gives a normal load and the final code is -1 (Standard)",
   "profile": "legacy-canonical",
   "mode": "standard",
   "server_profile": "legacy-canonical",

@@ -308,7 +308,7 @@ The client fixtures and the server fixtures share `pages/` and the directory. `k
 | `schedule` | array | Steps and `case` entries in order (1 to 256 steps). Rules below |
 | `level` | string | Optional, `must` (default) or `should` |
 
-`config` keys are the keys of the Android harness (`tools/upstream-lab/android/README.md`). Defaults are the harness defaults. Their effect on the canonical result is rule CL-03.
+`config` keys are the keys of the Android harness (`tools/upstream-lab/android/README.md`), and `authenticated_cache`. Defaults are the harness defaults. Their effect on the canonical result is rule CL-03.
 
 | Key | Type | Default |
 |---|---|---|
@@ -325,6 +325,9 @@ The client fixtures and the server fixtures share `pages/` and the directory. `k
 | `cache_verify_with_sha1` | boolean | `true` |
 | `unavailable_time_ms` | integer, 0 to 86 400 000 | `21600000` (6 h) |
 | `connect_timeout_ms`, `read_timeout_ms` | integer | `5000`, `15000` |
+| `authenticated_cache` | boolean | `false` |
+
+`authenticated_cache` is a Rivqen key, not a key of the Android harness (CL-03, CL-25, DL-123): with `true`, a credentialed exchange (a non-empty request `cookie`, or a `Set-Cookie` or `Set-Cookie2` line in the response) can commit when the partition is not `null`. The `legacy-android` model does not read it (A-21). A fixture with `evidence: trace` does not set it, because the lab cannot send it.
 
 Synthetic values only: accounts `rq-test-account`, `rq-test-account-2`; cookies `session=rq-test-cookie-<n>`.
 
@@ -489,10 +492,12 @@ For `legacy-android`, the generator makes the same `client` member from each sto
 | `results` | `session.result` |
 | `snapshots` | `cache.snapshot`. The files of one stem form one record. The stem equals the `session_id` of a session of the run; that session gives `partition` and `url`. `.html` → `page_sha256`, `.tpl` → `template_sha256`, `.data` → `data_sha256`, `.header` `text` (lines `<name> : <value>`) → `fields`, and its `etag` and `template-tag` lines → `etag`, `template_tag`. A stem with no session is a projection error. A file `<stem>.html.tmp` (the rebuilt page that failed the `html-sha1` check, CS-28) is a work file, not part of a record: the projection does not use it, but its stem must be a session id of the run (DL-122). `vary` is `[]` |
 
+A stored run that is not valid UTF-8 (strict decoding; a byte order mark is not removed) is a projection error, and so is a run whose number of `session.created` events differs from its number of `create_session` steps.
+
 Normalization before the comparison:
 
 1. URLs: the lab prefix `http://10.0.2.2:18090/` becomes the origin and path of the fixture `url` (the lab page URL is the fixture URL).
-2. `fields` of `load_data`, of an intercept and of a record, in the trace and in `expected.json`: remove the transport fields `date`, `connection`, `keep-alive`, `transfer-encoding`, `content-length`, `content-encoding` and every name that starts with `x-android-`, and the fields that no server model reproduces from the traces: `vary`, `cdn-cache-control`, `surrogate-control` (as server check 2, U-12).
+2. `fields` of `load_data`, of an intercept and of a record, in the trace and in `expected.json`: remove the transport fields `date`, `connection`, `keep-alive`, `transfer-encoding`, `content-length`, `content-encoding` and every name that starts with `x-android-`, and the fields that no server model reproduces from the traces: `vary`, `cdn-cache-control`, `surrogate-control` (as server check 2, U-12). Because these names are removed on both sides, check 7 does not check CL-21 for `vary`, `cdn-cache-control`, `surrogate-control`, `content-encoding`, `content-length` and `transfer-encoding`. The model tests of `tools/legacy-fixtures` check that the canonical model gives none of them in `load_data`, in an intercept answer or in a record.
 3. An intercept with `complete: false`: `body_len` and `body_sha256` are not compared. They depend on the content coding of the lab server (CS-13a: 128 wire bytes, 139 decoded bytes).
 4. A record: `data_sha256` compares as present or `null` only. The upstream data file has its own form (D-35, D-42), and the trace has its hash only.
 5. `content-type` in the `fields` of `load_data`, of an intercept and of a record, in the trace and in `expected.json`: the value compares as a media type (DL-119), with the form of server check 2: the type, the subtype, the parameter names and the `charset` value in lower case (RFC 9110 §8.3), no white space around `;` and `=`, one pair of quotes removed, the parameter order kept. The Tomcat form `text/html;charset=utf-8` of the `lab-java` traces (CS-08, CS-10) equals `text/html; charset=utf-8`. Another type, subtype, charset or parameter is a difference. `expected.json` keeps the value of the model.
@@ -531,7 +536,7 @@ Then the two `client` members must be equal member for member, with the order of
 | `split` | `html` | `{ "template", "data" }` (`data` keys in the order of the profile) | CL-41 |
 | `diff` | `local` (object or `null`), `server` | `{ "diff" }` (keys in server order) | CL-42 |
 | `message` | `src_code`, `final_code`, `diff`, `fields` | `{ "json" }` (exact text without `local_refresh_time`; `null`: no message) | CL-24 |
-| `is_legacy_response` | `fields` | `{ "value" }` | CL-14 |
+| `is_legacy_response` | `fields` | `{ "value" }` | CL-14 (also the media type of DL-125: without exactly one `Content-Type` line of type `text/html`, the canonical value is `false`) |
 | `template_change` | `value` | `{ "value" }` (`true` = template change) | CL-15 |
 | `etag` | `value` | `{ "value" }` | CL-15 |
 | `charset` | `content_type` | `{ "value" }` | CL-16 |
@@ -551,7 +556,7 @@ The check compares only the members of this table. Other members of an evidence 
 | 10. Client rules and rows | Every `rules` item is a CL rule of legacy client §9; every CL rule that §9 marks "fixture" is in at least one fixture; every `rows` item is a row of legacy client §3 |
 | 11. Stored runs used | Every stored scenario and mode of `evidence/traces/client/android/` is the `trace` of exactly one canonical client fixture, or the generator lists it with a reason (CS-19: WebView smoke run) |
 
-The client floor `CLIENT_FLOOR` in `tools/legacy-fixtures/gen.mjs` is the number of canonical client fixtures that `fixtures/legacy` must keep (as `CATALOG_SIZE` for the server fixtures). When it is above `0`, fewer canonical client fixtures is a problem, every CL rule that §9 marks "fixture" must be covered (check 10), and every stored scenario mode must be used (check 11). When it is `0`, the generator writes these two checks as notes. The floor is the number of canonical client fixtures of the catalog: 86 (T-06: 82, T-04c: 4); a test checks that it equals the number of canonical client fixture directories. The rule names of check 10 and "one stored mode, one fixture" of check 11 always apply.
+The client floor `CLIENT_FLOOR` in `tools/legacy-fixtures/gen.mjs` is the number of canonical client fixtures that `fixtures/legacy` must keep (as `CATALOG_SIZE` for the server fixtures). When it is above `0`, fewer canonical client fixtures is a problem, every CL rule that §9 marks "fixture" must be covered (check 10), and every stored scenario mode must be used (check 11). When it is `0`, the generator writes these two checks as notes. The floor is the number of canonical client fixtures of the catalog: 104 (T-06: 82, T-04c: 4, T-09: 18); a test checks that it equals the number of canonical client fixture directories. The rule names of check 10 and "one stored mode, one fixture" of check 11 always apply.
 | 12. Function evidence | Every `trace` entry equals its evidence line; every `code-reading` and `none` entry has an `unsupported` evidence line; every case of `cases.json` has one entry in each profile file |
 
 A case error (an unknown member, a step word that CONTRACT §3 does not have, a limit) is a problem of check 6 with the member name. The model never throws for a case of any shape (T-04).

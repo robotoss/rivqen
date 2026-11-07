@@ -75,6 +75,7 @@ const CONFIG = Object.freeze({
   auto_start: [isBool, true],
   get_cookie_when_session_create: [isBool, true],
   cache_verify_with_sha1: [isBool, true],
+  authenticated_cache: [isBool, false], // CL-03, CL-25 (DL-123): canonical only; no Android harness key
   unavailable_time_ms: [(v) => isIntIn(v, 0, LIMITS.maxUnavailableMs), 21_600_000],
   connect_timeout_ms: [(v) => isIntIn(v, 0, LIMITS.maxMs), 5000],
   read_timeout_ms: [(v) => isIntIn(v, 0, LIMITS.maxMs), 15000],

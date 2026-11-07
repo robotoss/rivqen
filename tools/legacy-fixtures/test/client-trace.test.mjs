@@ -51,6 +51,26 @@ test('a_create_session_without_session_created_is_a_projection_error', () => {
   assert.throws(() => projectRun(parseRun(lines(step(1, { do: 'create_session' }))), CTX), { code: 'TRACE_SESSION' });
 });
 
+test('more_session_created_events_than_create_session_steps_is_a_projection_error', () => {
+  const created = (hseq) => ({ ev: 'session.created', src: 'harness', hseq, session: hseq, session_id: `id${hseq}` });
+  const run = parseRun(lines(step(1, { do: 'create_session' }), created(1), created(2)));
+  assert.throws(() => projectRun(run, CTX), { code: 'TRACE_SESSION', message: /2 session\.created events for 1 create_session steps/ });
+  assert.equal(projectRun(parseRun(lines(step(1, { do: 'create_session' }), created(1))), CTX).sessions.length, 1);
+  // Only conductor steps count, as in traceSteps: a harness step.start is not a create_session step.
+  const harness = { ev: 'step.start', src: 'harness', seq: 2, step: { do: 'create_session', seq: 2 } };
+  assert.equal(projectRun(parseRun(lines(step(1, { do: 'create_session' }), harness, created(1))), CTX).sessions.length, 1);
+});
+
+test('a_run_that_is_not_valid_utf8_is_a_trace_input_error', () => {
+  const good = lines({ ev: 'x', v: 'é' });
+  assert.equal(parseRun(good)[0].v, 'é');
+  // A lone continuation byte inside a string value: a lenient decoder would give U+FFFD and pass.
+  const bad = Buffer.concat([Buffer.from('{"ev":"x","v":"'), Buffer.from([0x80]), Buffer.from('"}\n')]);
+  assert.throws(() => parseRun(bad), { code: 'TRACE_INPUT', message: /not valid UTF-8/ });
+  // A byte order mark is kept: the first line is then not JSON.
+  assert.throws(() => parseRun(Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), good])), { code: 'TRACE_JSON' });
+});
+
 test('a_refused_session_has_opened_false_and_set_account_changes_the_partition', () => {
   const run = parseRun(lines(step(1, { do: 'set_account', value: 'rq-test-account-2' }), step(2, { do: 'create_session' }), { ev: 'session.created', src: 'harness', hseq: 1, session_id: null }));
   assert.deepEqual(projectRun(run, CTX).sessions, [{ step: 2, opened: false, partition: 'rq-test-account-2', url: CTX.url }]);
@@ -149,6 +169,7 @@ test('a_valid_case_passes_and_gets_the_config_defaults', () => {
   const c = validateClientCase('FX-LEG-CL-CS04-Q', valid());
   assert.equal(c.kind, 'client-canonical');
   assert.equal(c.config.unavailable_time_ms, 21_600_000);
+  assert.equal(c.config.authenticated_cache, false); // CL-03, DL-123
   assert.equal(c.url, 'https://shop.example.com/catalog');
 });
 
@@ -157,6 +178,7 @@ test('case_errors_name_the_member', () => {
     [(c) => { c.extra = 1; }, 'CASE_UNKNOWN_MEMBER'],
     [(c) => { c.config.nope = true; }, 'CASE_UNKNOWN_MEMBER'],
     [(c) => { c.config.accept_diff = 'yes'; }, 'CASE_TYPE'],
+    [(c) => { c.config.authenticated_cache = 'true'; }, 'CASE_TYPE'],
     [(c) => { c.schedule.push({ do: 'jump' }); }, 'CASE_STEP'],
     [(c) => { c.schedule.push({ do: 'settle', ms: 3_600_001 }); }, 'CASE_LIMIT'],
     [(c) => { c.schedule.push({ do: 'hold', point: 'head', bytes: 1 }); }, 'CASE_STEP'],

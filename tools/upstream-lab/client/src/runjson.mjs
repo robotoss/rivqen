@@ -17,6 +17,7 @@ export async function buildRunJson({ root, previous = null, meta }) {
   const scenarios = [];
   const stable = [];
   const unstable = [];
+  const notChecked = [];
   const oldReasons = new Map((previous?.summary?.unstable ?? []).map((u) => [`${u.scenario}/${u.mode}`, u.reason]));
   const dirs = (await listDir(path.join(root, 'android'))).filter((d) => d.isDirectory() && d.name.startsWith('CS-'));
   for (const sd of dirs.sort((a, b) => a.name.localeCompare(b.name))) {
@@ -35,7 +36,8 @@ export async function buildRunJson({ root, previous = null, meta }) {
       modes[mode] = { runs: names.length };
       const diff = firstDifference(runs);
       const key = `${sd.name}/${mode}`;
-      if (!diff) stable.push({ scenario: sd.name, mode });
+      if (names.length < 2) notChecked.push({ scenario: sd.name, mode }); // CONTRACT section 6
+      else if (!diff) stable.push({ scenario: sd.name, mode });
       else {
         const reason = oldReasons.get(key) ?? `runs differ: run ${diff.run + 1} at line ${diff.index + 1}`;
         // outcome: the projection of determinism.mjs (what the client did), see outcomeRun
@@ -56,6 +58,6 @@ export async function buildRunJson({ root, previous = null, meta }) {
     upstream_sha: meta.upstreamSha,
     scenarios,
     ...(Object.keys(functions).length > 0 ? { functions } : {}),
-    summary: { stable, unstable },
+    summary: { stable, unstable, not_checked: notChecked },
   };
 }

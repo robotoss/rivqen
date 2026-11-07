@@ -13,7 +13,7 @@ This is lab tooling for the evidence track. It is not shipped. It binds `127.0.0
 |---|---|
 | `run.mjs` | Runner CLI: runs scenarios against an emulator, stores the evidence |
 | `check.mjs` | Offline check CLI for a stored evidence tree |
-| `scenarios.json` | The scenario catalog (CS-01 … CS-19) |
+| `scenarios.json` | The scenario catalog (CS-01 … CS-27; S2 added CS-20 … CS-27: empty page, `set_field` forms of `cache-offline`, wrong `html-sha1`, refresh during a template change) |
 | `functions.json` | Inputs of the pure-function cases (no expected outputs) |
 | `src/proxy.mjs` | Recording proxy on `127.0.0.1:18090` with the fault steps |
 | `src/control.mjs`, `src/channel.mjs`, `src/runhandle.mjs` | Control channel on `127.0.0.1:18091`, step hand-over, event intake |
@@ -52,7 +52,7 @@ Timeouts: a harness step 60 s (`--step-timeout`), a `wait` step 30 s, the end of
 
 ## Stored evidence
 
-Files follow CONTRACT sections 5 and 8: `android/<scenario>/<mode>/run-<k>.jsonl`, `run-<k>-x<n>.http`, and `run.json`. `run.json` is rebuilt from the tree after every runner call (or with `--run-json`). It copies the meta file of each function runner, `<platform>/functions.jsonl.meta.json` (iOS: macOS version and build, SDK version, compiler, upstream SHA, case count, `limit`, `non_public_calls`), into a `functions` member (`functions.ios`, `functions.android`) when the file exists. Its `summary.unstable` entries keep a reason that a person wrote; a new one gets `runs differ: run N at line L`.
+Files follow CONTRACT sections 5 and 8: `android/<scenario>/<mode>/run-<k>.jsonl`, `run-<k>-x<n>.http`, and `run.json`. `run.json` is rebuilt from the tree after every runner call (or with `--run-json`). It copies the meta file of each function runner, `<platform>/functions.jsonl.meta.json` (iOS: macOS version and build, SDK version, compiler, upstream SHA, case count, `limit`, `non_public_calls`), into a `functions` member (`functions.ios`, `functions.android`) when the file exists. A scenario and mode with fewer than 2 runs is neither stable nor unstable: `summary.not_checked` lists it, and `check.mjs` prints it as "not checked". Its `summary.unstable` entries keep a reason that a person wrote; a new one gets `runs differ: run N at line L`.
 
 ```json
 {
@@ -61,9 +61,18 @@ Files follow CONTRACT sections 5 and 8: `android/<scenario>/<mode>/run-<k>.jsonl
   "emulator_image": "system-images;android-28;default;arm64-v8a",
   "upstream_sha": "59936bef",
   "scenarios": [ { "id": "CS-05", "modes": { "quick": { "runs": 3 }, "standard": { "runs": 3 } } } ],
-  "summary": { "stable": [ { "scenario": "CS-05", "mode": "quick" } ], "unstable": [ { "scenario": "CS-05", "mode": "standard", "reason": "…" } ] }
+  "summary": { "stable": [ { "scenario": "CS-05", "mode": "quick" } ], "unstable": [ { "scenario": "CS-05", "mode": "standard", "reason": "…" } ], "not_checked": [ { "scenario": "CS-19", "mode": "quick" } ] }
 }
 ```
+
+## Fault steps (S2)
+
+| Step | Effect on the next exchange |
+|---|---|
+| `drop_field` | Removes the response field `name` |
+| `set_field` | Replaces every line of the response field `name` (ASCII case-insensitive) with one line `name: value` at the place of the first one; adds the line at the end when the field is absent. Logs `proxy.set_field`; the `.http` file gets a `--- delivered ---` section |
+
+The proxy does not forward the hop-by-hop fields and the fields that a `Connection` field lists. Without an armed fault it forwards the bytes unchanged. The `empty` page (`../pages/empty.html`, 0 bytes) is posted as `page_base64` of the empty string. The macro `first_load` runs `create_session`, `bind_client`, `wait proxy.response_end`, `client_ready`, `request_resource`, `settle 2500`, `destroy`. A long-poll answer that the harness did not receive (the connection closed first) is offered again to the next poll.
 
 ## Check
 
@@ -72,7 +81,7 @@ node tools/upstream-lab/client/check.mjs [<evidence dir>] [--require-functions]
 node --test tools/upstream-lab/client/test
 ```
 
-`check.mjs` exits 0 (valid), 1 (findings) or 2 (bad use). It checks, for every run: JSON Lines with sorted keys and LF; the schema of each event of CONTRACT section 5 (unknown events and members fail; `hseq` on every harness event, 1..n without gaps; a `*.header` cache file has `text`); `seq` from 1 without gaps, `t` not going back, `run.start` first and `run.end` of the conductor last with `ok: true` (a `run.end` of the harness is an abort and an error; a `harness.error` event is a warning); one `.http` file per `proxy.request` and no other; no `http(s)` host other than `10.0.2.2`, `127.0.0.1`, `localhost` and `example.com|org|net`. Then, per scenario and mode, the determinism rule of CONTRACT section 6 (remove `t`, `seq`, worker threads; blank `Date`, `X-Android-Sent-Millis`, `X-Android-Received-Millis`; drop `local_refresh_time` from `session.message`; compare `*.header` by normalized text; compare per step window, harness events by `hseq` and proxy events by `exchange`, each source on its own; the first difference is reported as a line number in that order): runs that differ are an error unless `run.json` lists them as unstable with a reason, and runs that are equal are an error if `run.json` lists them as unstable. `functions.jsonl` lines may be `unsupported` (with a reason) and may carry extra members such as `ns_string_encoding`. A meta file must match `run.json` `functions.<platform>` exactly. It also compares the tree with `run.json` and with `scenarios.json` (modes, number of runs). `functions.jsonl` of each platform is checked against `functions.json` (`--require-functions` makes a missing file an error).
+`check.mjs` exits 0 (valid), 1 (findings) or 2 (bad use). It checks, for every run: JSON Lines with sorted keys and LF; the schema of each event of CONTRACT section 5 (unknown events and members fail; `hseq` on every harness event, 1..n without gaps; a `*.header` cache file has `text`); `seq` from 1 without gaps, `t` not going back, `run.start` first and `run.end` of the conductor last with `ok: true` (a `run.end` of the harness is an abort and an error; a `harness.error` event is a warning); one `.http` file per `proxy.request` and no other; no `http(s)` host other than `10.0.2.2`, `127.0.0.1`, `localhost` and `example.com|org|net`. Then, per scenario and mode, the determinism rule of CONTRACT section 6 (remove `t`, `seq`, worker threads; blank `Date`, `X-Android-Sent-Millis`, `X-Android-Received-Millis`; remove the member `local_refresh_time` from the JSON text of `session.message` (the rest of the text stays byte for byte, so a changed value type shows); compare `*.header` by normalized text; compare per step window, harness events by `hseq` and proxy events by `exchange`, each source on its own; the first difference is reported as a line number in that order): runs that differ are an error unless `run.json` lists them as unstable with a reason, and runs that are equal are an error if `run.json` lists them as unstable. `functions.jsonl` lines may be `unsupported` (with a reason) and may carry extra members such as `ns_string_encoding`. A meta file must match `run.json` `functions.<platform>` exactly. It also compares the tree with `run.json` and with `scenarios.json` (modes, number of runs). `functions.jsonl` of each platform is checked against `functions.json` (`--require-functions` makes a missing file an error).
 
 ## Behavior that CONTRACT leaves open (assumptions)
 

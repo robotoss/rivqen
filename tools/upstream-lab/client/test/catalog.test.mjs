@@ -19,8 +19,11 @@ test('scenarios_json_is_valid_and_has_the_catalog_of_the_sprint_record', () => {
   assert.deepEqual(catalogProblems(scenarios), []);
   assert.deepEqual(
     scenarios.map((s) => s.id),
-    ['CS-01', 'CS-02', 'CS-03', 'CS-04', 'CS-05', 'CS-06', 'CS-07', 'CS-08', 'CS-09', 'CS-10', 'CS-11', 'CS-12', 'CS-13a', 'CS-13b', 'CS-14', 'CS-15', 'CS-16', 'CS-17', 'CS-18', 'CS-19'],
+    ['CS-01', 'CS-02', 'CS-03', 'CS-04', 'CS-05', 'CS-06', 'CS-07', 'CS-08', 'CS-09', 'CS-10', 'CS-11', 'CS-12', 'CS-13a', 'CS-13b', 'CS-14', 'CS-15', 'CS-16', 'CS-17', 'CS-18', 'CS-19',
+      'CS-20', 'CS-21', 'CS-22', 'CS-23', 'CS-24a', 'CS-24b', 'CS-24c', 'CS-25', 'CS-26', 'CS-27'],
   );
+  const rows = new Set(scenarios.flatMap((s) => s.rows));
+  for (const row of ['Q3', 'Q9', 'Q11', 'Q13', 'Q16', 'S4', 'S8', 'S10', 'S12', 'S16']) assert.ok(rows.has(row), `a scenario observes ${row}`);
   for (const s of scenarios) {
     assert.deepEqual(s.modes, ['quick', 'standard'], s.id);
     assert.equal(s.repeat, s.id === 'CS-19' ? 1 : 3, s.id);
@@ -168,8 +171,21 @@ test('expand_setup_turns_first_load_into_its_steps', () => {
   assert.deepEqual(items[0], { case: { page: 'a' } });
   assert.deepEqual(items.slice(1, 1 + FIRST_LOAD.length).map((i) => i.step), FIRST_LOAD);
   assert.deepEqual(items.at(-1), { step: { do: 'set_account', value: 'x' } });
-  assert.deepEqual(FIRST_LOAD.map((s) => s.do), ['create_session', 'bind_client', 'client_ready', 'request_resource', 'wait', 'settle', 'destroy']);
-  assert.equal(FIRST_LOAD[5].ms, 2500);
+  assert.equal(FIRST_LOAD.at(-2).ms, 2500);
+});
+
+test('first_load_waits_for_body_end', () => {
+  // CONTRACT section 2 (S2): the order is fixed, client_ready comes after the end of the body.
+  assert.deepEqual(FIRST_LOAD.map((s) => s.do), ['create_session', 'bind_client', 'wait', 'client_ready', 'request_resource', 'settle', 'destroy']);
+  assert.equal(FIRST_LOAD[2].for, 'proxy.response_end');
+});
+
+test('step_set_field_needs_a_name_and_a_string_value', () => {
+  assert.equal(stepProblem({ do: 'set_field', name: 'cache-offline', value: 'store' }), null);
+  assert.equal(stepProblem({ do: 'set_field', name: 'x', value: '' }), null);
+  for (const s of [{ do: 'set_field', value: 'v' }, { do: 'set_field', name: '', value: 'v' }, { do: 'set_field', name: 'x' }, { do: 'set_field', name: 'x', value: 1 }, { do: 'set_field', name: 'x', value: 'v', extra: 1 }]) {
+    assert.notEqual(stepProblem(s), null, JSON.stringify(s));
+  }
 });
 
 test('adb_commands_are_built_from_the_configuration', () => {

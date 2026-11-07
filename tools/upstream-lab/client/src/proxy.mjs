@@ -23,10 +23,42 @@ export function pairs(raw) {
   return out;
 }
 
-/** Fields to forward: no hop-by-hop field and no field named in `drop` (ASCII case-insensitive). */
+/** Names (lower case) that the Connection fields of a message list: they belong to this connection (RFC 9110 section 7.6.1). */
+function connectionListed(fields) {
+  const names = new Set();
+  for (const [name, value] of fields) {
+    if (lower(name) !== 'connection') continue;
+    for (const token of value.split(',')) {
+      const t = token.trim();
+      if (t !== '') names.add(lower(t));
+    }
+  }
+  return names;
+}
+
+/** Fields to forward: no hop-by-hop field, no field listed in Connection and no field named in `drop` (ASCII case-insensitive). */
 export function forwardFields(fields, drop = []) {
-  const dropped = new Set(drop.map(lower));
+  const dropped = new Set([...drop.map(lower), ...connectionListed(fields)]);
   return fields.filter(([name]) => !HOP_BY_HOP.has(lower(name)) && !dropped.has(lower(name)));
+}
+
+/**
+ * The fault `set_field`: every line of the field `name` (ASCII case-insensitive) becomes one line
+ * `[name, value]` at the place of the first one; an absent field is added at the end.
+ */
+export function setField(fields, name, value) {
+  const key = lower(name);
+  const out = [];
+  let placed = false;
+  for (const field of fields) {
+    if (lower(field[0]) !== key) out.push(field);
+    else if (!placed) {
+      out.push([name, value]);
+      placed = true;
+    }
+  }
+  if (!placed) out.push([name, value]);
+  return out;
 }
 
 /** Collect a stream into one Buffer; fails with TOO_LARGE above `max` bytes. */
@@ -92,7 +124,7 @@ class Hold {
   }
 }
 
-const noFaults = () => ({ hold: null, cut: null, drop: [] });
+const noFaults = () => ({ hold: null, cut: null, drop: [], set: [] });
 
 export class Proxy {
   #upstreamPort;
@@ -167,7 +199,7 @@ export class Proxy {
     await Promise.allSettled([...this.#inflight]);
   }
 
-  /** Arm a fault for the next exchange that starts after this call (steps hold, cut, drop_field). */
+  /** Arm a fault for the next exchange that starts after this call (steps hold, cut, drop_field, set_field). */
   arm(step) {
     switch (step.do) {
       case 'hold': {
@@ -183,6 +215,9 @@ export class Proxy {
         return;
       case 'drop_field':
         this.#pending.drop.push(step.name);
+        return;
+      case 'set_field':
+        this.#pending.set.push({ name: step.name, value: step.value });
         return;
       default:
         throw new LabError('BAD_FAULT', `not a fault step: ${step.do}`);
@@ -246,8 +281,12 @@ export class Proxy {
   async #deliver(res, rec, faults, state) {
     const { exchange } = rec;
     const { status, message, body } = rec.response;
-    const fields = forwardFields(rec.response.fields, faults.drop);
+    let fields = forwardFields(rec.response.fields, faults.drop);
     for (const name of faults.drop) this.#emit('proxy.drop_field', { exchange, name });
+    for (const { name, value } of faults.set) {
+      fields = setField(fields, name, value);
+      this.#emit('proxy.set_field', { exchange, name, value });
+    }
     rec.delivered = { status, fields, body: Buffer.alloc(0) };
     res.sendDate = false;
     res.writeHead(status, message, fields.flat());
@@ -281,7 +320,7 @@ export class Proxy {
     await new Promise((resolve) => res.end(resolve));
     rec.delivered.body = body;
     // CONTRACT section 5: only a drop_field or cut exchange gets a `--- delivered ---` section.
-    if (faults.drop.length === 0) rec.delivered = null;
+    if (faults.drop.length === 0 && faults.set.length === 0) rec.delivered = null;
     this.#end(rec, state, body, true);
   }
 

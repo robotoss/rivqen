@@ -40,6 +40,14 @@ export const CONDUCTOR_STEPS = {
   release: NONE,
   cut: { members: ['bytes'], check: (s) => (isInt(s.bytes) ? null : 'bytes must be a non-negative integer') },
   drop_field: { members: ['name'], check: (s) => (isStr(s.name) ? null : 'name must be a non-empty string') },
+  set_field: {
+    members: ['name', 'value'],
+    check: (s) => {
+      if (!isStr(s.name)) return 'name must be a non-empty string';
+      if (typeof s.value !== 'string') return 'value must be a string';
+      return null;
+    },
+  },
   server_down: NONE,
   server_up: NONE,
   wait: {
@@ -70,9 +78,9 @@ export function stepProblem(step) {
 export const FIRST_LOAD = [
   { do: 'create_session' },
   { do: 'bind_client' },
+  { do: 'wait', for: 'proxy.response_end' },
   { do: 'client_ready' },
   { do: 'request_resource' },
-  { do: 'wait', for: 'proxy.response_end' },
   { do: 'settle', ms: 2500 },
   { do: 'destroy' },
 ];

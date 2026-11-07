@@ -91,7 +91,10 @@ export function normalizeEvent(event) {
   delete copy.hseq;
   if (copy.thread !== 'main') delete copy.thread;
   // `repeat` of run.start is the run number k (the file run-<k>.jsonl); it differs by construction.
-  if (copy.ev === 'run.start') delete copy.repeat;
+  if (copy.ev === 'run.start') {
+    delete copy.repeat;
+    delete copy.macro; // the macro version (CONTRACT section 6)
+  }
   if (copy.ev === 'session.message' && typeof copy.json === 'string') copy.json = normalizeMessage(copy.json);
   if (copy.ev === 'cache.snapshot' && Array.isArray(copy.files)) copy.files = copy.files.map(normalizeSnapshotFile);
   return copy;

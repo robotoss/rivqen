@@ -137,13 +137,13 @@ test('runner_fake_harness', async () => {
     assert.deepEqual((await readdir(dir)).sort(), ['run-1-x1.http', 'run-1-x2.http', 'run-1.jsonl', 'run-2-x1.http', 'run-2-x2.http', 'run-2.jsonl']);
     const events = (await readFile(path.join(dir, 'run-1.jsonl'), 'utf8')).trimEnd().split('\n').map((l) => JSON.parse(l));
     assert.equal(events[0].ev, 'run.start');
-    assert.deepEqual({ ...events[0], t: 0 }, { ev: 'run.start', mode: 'quick', origin: 'lab-node', repeat: 1, scenario: 'CS-90', seq: 1, src: 'conductor', t: 0, upstream_sha: '59936bef' });
+    assert.deepEqual({ ...events[0], t: 0 }, { ev: 'run.start', macro: 2, mode: 'quick', origin: 'lab-node', repeat: 1, scenario: 'CS-90', seq: 1, src: 'conductor', t: 0, upstream_sha: '59936bef' });
     assert.deepEqual(events.at(-1).ok, true);
     const started = events.filter((e) => e.ev === 'step.start').map((e) => e.step.do);
-    // setup first_load (7 steps), then the 11 steps of the scenario
-    assert.equal(started.length, 18);
+    // setup first_load (9 steps, macro 2), then the 11 steps of the scenario
+    assert.equal(started.length, 20);
     assert.deepEqual(started.slice(0, 3), ['create_session', 'bind_client', 'wait']);
-    assert.deepEqual(events.filter((e) => e.ev === 'step.start').map((e) => e.step.seq), Array.from({ length: 18 }, (_, i) => i + 1));
+    assert.deepEqual(events.filter((e) => e.ev === 'step.start').map((e) => e.step.seq), Array.from({ length: 20 }, (_, i) => i + 1));
     assert.equal(events.filter((e) => e.ev === 'proxy.hold').length, 1);
     assert.equal(events.filter((e) => e.ev === 'proxy.response_end').length, 2);
 

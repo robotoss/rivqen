@@ -5,7 +5,7 @@
 
 This file fixes the interfaces between the parts of the client lab: the conductor (`tools/upstream-lab/client/`), the Android harness (`tools/upstream-lab/android/`), the iOS function runner (`tools/upstream-lab/ios/`) and the stored evidence (`evidence/traces/client/`). The architect owns this file. A lane that needs a change writes a shared-file request.
 
-Decisions: H-118 (Rivqen harness around the unmodified Android SDK sources), H-119 (iOS pure functions only), DL-099 (two-sided recording), DL-100 (scripted order), DL-102 (environment), DL-103 (offline checks), DL-104 (outcome projection), H-122 (S2 lab run). Sprint records: `docs/engineering/plan/sprints/WP-01-S1.md`, `WP-01-S2.md`.
+Decisions: H-126 (S2 second run for Q11, Q19, S16), H-118 (Rivqen harness around the unmodified Android SDK sources), H-119 (iOS pure functions only), DL-099 (two-sided recording), DL-100 (scripted order), DL-102 (environment), DL-103 (offline checks), DL-104 (outcome projection), H-122 (S2 lab run). Sprint records: `docs/engineering/plan/sprints/WP-01-S1.md`, `WP-01-S2.md`.
 
 > **Clean-room.** Upstream code is read from a read-only clone outside the repository and compiled unchanged. Nothing of upstream is copied here: no code, no comments, no test code, no sample code or HTML. The lab parts are written from the Rivqen pages (`docs/engineering/protocol/legacy-client.md`) and from the public entry points of the SDK (class and method names are interface facts, `docs/legal/provenance.md` CR-03). Do not read `sonic-android/sample/`, `sonic-android/sdk/src/androidTest/` or `sonic-iOS/SonicSample/`.
 
@@ -64,7 +64,7 @@ All listeners bind `127.0.0.1` only.
 | `modes` | Subset of `quick`, `standard`. One run per mode and repeat |
 | `origin` | `lab-node`, `lab-php`, `lab-java` |
 | `rows` | Row IDs of the Q-02 tables in `docs/engineering/protocol/legacy-client.md` that the scenario observes (`Q1`…, `S1`…) |
-| `setup` | Steps that run first with an empty app state (`pm clear` before each run). `"first_load"` is a macro: a full first load that waits for the end of the body (`proxy.response_end`), then `client_ready`, `request_resource`, 2500 ms settle and `destroy` (S2: a fixed order, so every setup load takes the Q1 or S1 path; in S1 the order was free) |
+| `setup` | Steps that run first with an empty app state (`pm clear` before each run). `"first_load"` is a macro: a full first load that waits for the end of the body (`proxy.response_end`), then a 300 ms settle, `client_ready`, `request_resource`, 2500 ms settle, `destroy` and a 1500 ms settle (S2: a fixed order, so every setup load takes the Q1 or S1 path; in S1 the order was free. The two extra settles were added after the first S2 run, H-126: once `client_ready` came at the same ms as `proxy.response_end` and the load took Q2, and once the SDK deferred a `destroy` behind a pending save so that the next `create_session` was refused. Runs stored before the change keep their logs; `run.start` of a later run has `macro: 2`) |
 | `case` | The application response that the conductor posts to the control endpoint of `origin` before `steps` (`page`, optional `status`, `headers` as in `fixtures/legacy/*/case.json` `app`). `page` names a file of `tools/upstream-lab/pages/`; `empty` is a page of 0 bytes (S2) |
 | `config` | Session and SDK settings the harness applies. Account values are synthetic (`rq-test-account`, `rq-test-account-2`) |
 | `steps` | The scripted order (DL-100); vocabulary in section 3 |
@@ -94,6 +94,8 @@ The `config` keys that the harness accepts are listed in `tools/upstream-lab/and
 | `cut` | Conductor | Close the client connection of the current exchange after `bytes` body bytes (stream cut) |
 | `drop_field` | Conductor | Remove the response field `name` before delivery (fault injection; the trace keeps both forms) |
 | `set_field` | Conductor | Replace every line of the response field `name` (ASCII case-insensitive) with one line `name: value` before delivery; add the line when the field is absent (fault injection, S2; `name` and `value` as given; the trace keeps both forms). Logs `proxy.set_field` |
+| `set_body_member` | Conductor | Arm a body fault for the next proxy exchange (S2, H-126). When its response body, after the content coding is removed, is a JSON object, replace the value of the top-level member `name` with the JSON string `value` (add it when absent), keep the order of the other members, and deliver the new body as UTF-8 without `Content-Encoding` and `Transfer-Encoding`, with a `Content-Length`. Else deliver the response unchanged. The proxy buffers at most 1 MiB of the body for this; a larger body is delivered unchanged. Logs `proxy.set_body_member` with `applied: true` or `false` and a `reason` when `false` |
+| `case` | Conductor | Post `value` (the form of the scenario `case`) to the control endpoint of `origin` before the next step (S2, H-126). The application response changes for every later exchange |
 | `server_down` | Conductor | Refuse connections on 18090 until `server_up` |
 | `server_up` | Conductor | Accept connections again |
 | `wait` | Conductor | Wait for an event (`for`: an event name of section 5, optional `timeout_ms`, default 30000) |
@@ -130,7 +132,7 @@ Common members: `ev` (name), `seq` (conductor sequence number), `src` (`harness`
 
 | Event | Members |
 |---|---|
-| `run.start` | `scenario`, `mode`, `repeat`, `origin`, `upstream_sha` (`src`: `conductor`) |
+| `run.start` | `scenario`, `mode`, `repeat`, `origin`, `upstream_sha`, `macro` (`2` from the H-126 run; absent before) (`src`: `conductor`) |
 | `step.start`, `step.done` | `step` (the step object), `error` (only on failure). The conductor writes `step.start` for every step; the harness writes `step.done` for its own steps |
 | `session.created` | `session_id` (the upstream id; synthetic account only) or `null` (then no `session` member) |
 | `client.load_url` | `url`, `extras` (keys only) |
@@ -144,7 +146,7 @@ Common members: `ev` (name), `seq` (conductor sequence number), `src` (`harness`
 | `proxy.request` | `exchange`, `method`, `target`, `fields` |
 | `proxy.response_head` | `exchange`, `status`, `fields` |
 | `proxy.response_end` | `exchange`, `body_len`, `body_sha256`, `complete` |
-| `proxy.cut`, `proxy.drop_field`, `proxy.set_field`, `proxy.hold`, `proxy.release` | `exchange`, the step members (`set_field`: `name`, `value`) |
+| `proxy.cut`, `proxy.drop_field`, `proxy.set_field`, `proxy.set_body_member`, `proxy.hold`, `proxy.release` | `exchange`, the step members (`set_field`, `set_body_member`: `name`, `value`; `set_body_member` also `applied`, `reason`) |
 | `client.clear_history` | — |
 | `runtime.notify_error` | `url`, `code` |
 | `runtime.toast` | `text`, `duration` |
@@ -152,7 +154,7 @@ Common members: `ev` (name), `seq` (conductor sequence number), `src` (`harness`
 | `harness.error` | `error` |
 | `run.end` | `ok`, `error` (`src`: `conductor`; the harness sends `run.end` with `ok: false` only when it aborts) |
 
-Each proxy exchange is also stored as `run-<k>-x<exchange>.http` in the format of `evidence/traces/server/` (request, `--- response ---`, decoded body). A `drop_field`, `set_field` or `cut` exchange stores the upstream response and adds a `--- delivered ---` section.
+Each proxy exchange is also stored as `run-<k>-x<exchange>.http` in the format of `evidence/traces/server/` (request, `--- response ---`, decoded body). A `drop_field`, `set_field`, `set_body_member` or `cut` exchange stores the upstream response and adds a `--- delivered ---` section.
 
 Never log: real hosts, real accounts, real cookies, tokens, device identifiers. The harness writes no device log except under the tag `RivqenLab`.
 
@@ -164,7 +166,7 @@ Normalization: remove `t`, `seq` and the `thread` of worker threads; blank the v
 
 Comparison: split the log into step windows (from one `step.start` to the next). Inside a window compare the harness events in `hseq` order and the proxy events in `exchange` order, each source on its own. The interleaving of the sources inside a window is not compared: it races (for example `runtime.cookie_get` and `proxy.request`). `check.mjs` (conductor lane) reports every scenario and mode whose runs differ. A timing row is FACT only when its 3 runs are stable.
 
-Normalization also removes `repeat` from `run.start`.
+Normalization also removes `repeat` and `macro` from `run.start`.
 
 **Outcome projection** (DL-104). The SDK emits events on its own threads while the script goes on, so the strict comparison above flags runs whose client behavior is the same. The outcome projection compares what the client did: split the log into phases (a phase ends at the step that follows a `settle`); inside a phase compare the conductor events in order, the harness events of the `main` thread in `hseq` order, the other harness events as a sorted multiset, and the proxy events in `exchange` order. A timing row is FACT when its runs are stable in the outcome projection. A scenario and mode with fewer than 2 runs is **not checked** (S2): it is neither stable nor unstable, and `run.json` lists it in `summary.not_checked`. `run.json` lists every scenario and mode that is not stable under the strict rule, with the reason of the first difference and `outcome: stable` or `unstable`.
 

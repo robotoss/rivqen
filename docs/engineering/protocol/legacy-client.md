@@ -349,7 +349,7 @@ Notes:
 | S9 | `loadUrl` again; the second intercept gets the new response stream | 2000 / 2000, notify | 1.5 s or close | `STD:235-307`, `:88-101` |
 | S10 | None | 2000 / 304, notify | 1.5 s or close | `STD:271-273` |
 | S11 | None; the pending stream is now the new response and the intercept gets it | 2000 / 304, notify | 1.5 s or close | `STD:242-263`, `:275-278` |
-| S12 | No message; the pending stream is the empty new response | -1 / -1 | none | `STD:257-265` |
+| S12 | No message; the pending stream is the empty new response, with the header lines of the cached record (CS-21: 0 bytes, the `sonic-html-sha1` and `template-tag` of page `a`) | -1 / -1 | none | `STD:257-265` |
 | S13 | Callback only; the intercept gets the cached page | -1 / -1 | none; cache kept | `STD:309-317`, `:200-208` |
 | S14 | None; the intercept gets the cached page | -1 / -1 | removed | `SS:753-758` |
 | S15 | As S14 | -1 / -1 | removed | `SS:760-769` |

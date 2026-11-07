@@ -20,6 +20,9 @@
 //   4. OVERRIDE_MISSING: a trace differs from the canonical response and has no profile fixture
 //   5. every rule of a fixture exists in legacy wire section 10; every rule is covered once
 //      the catalog is complete
+//   6-12. the client part (README "Generator checks of the client part"; src/client-fixture.mjs):
+//      client expected.json and functions/*.json current, client traces, OVERRIDE_NOT_NEEDED,
+//      OVERRIDE_MISSING, CL rules and rows, stored runs used, function evidence
 // Exit codes: 0 all current (or written), 1 a stale, missing or extra file or a failed
 // check, 2 a usage error.
 
@@ -30,6 +33,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { fileBytes } from '../rqp-protocol/src/fixtures.mjs';
 import { CaseError, FIXTURES_DIR, PROFILE_SUFFIX, REPO_ROOT, UPSTREAM_PROFILES, expectedOf, loadCase, pageFile, resolvedRequest } from './src/fixture.mjs';
 import { TraceError, compareNotReproduced, compareToTrace, parseTrace, sameRequest } from './src/trace.mjs';
+import { clientPart, isClientDir } from './src/client-fixture.mjs';
 
 /** Number of canonical fixtures of the complete catalog (fixtures/legacy/README.md). */
 export const CATALOG_SIZE = 59;
@@ -106,6 +110,10 @@ export function run({
   catalogSize = CATALOG_SIZE,
   catalog = dir === FIXTURES_DIR,
   coverage = true,
+  clientEvidence = join(root, 'evidence/traces/client'),
+  clientPage = join(root, 'docs/engineering/protocol/legacy-client.md'),
+  labFunctions = join(root, 'tools/upstream-lab/client/functions.json'),
+  scenarios = join(root, 'tools/upstream-lab/client/scenarios.json'),
   log = () => {},
 }) {
   const problems = [];
@@ -113,10 +121,13 @@ export function run({
   checkPages(pagesDir, labPages, problems);
 
   const names = [];
+  const clientNames = [];
   for (const entry of readdirSync(dir).sort()) {
     if (entry === 'pages' || entry === 'README.md') continue;
-    if (entry.startsWith('FX-LEG-') && statSync(join(dir, entry)).isDirectory()) names.push(entry);
-    else problems.push(`${entry}: unknown entry`);
+    if (entry === 'functions' && statSync(join(dir, entry)).isDirectory()) continue;
+    if (!entry.startsWith('FX-LEG-') || !statSync(join(dir, entry)).isDirectory()) problems.push(`${entry}: unknown entry`);
+    else if (isClientDir(dir, entry)) clientNames.push(entry);
+    else names.push(entry);
   }
 
   const cases = new Map();
@@ -219,7 +230,31 @@ export function run({
   for (const path of traces) if (!used.has(path)) problems.push(`${path}: stored trace is not used by any fixture`);
 
   checkRules(canonical, wirePage, { catalogSize, catalog, coverage }, problems, notes);
-  return { problems, notes, count };
+
+  const serverFixture = (id) => {
+    const c = cases.get(id);
+    return c === undefined || c.kind !== 'canonical' ? null : { page: c.page, app: c.app };
+  };
+  const page = (id) => {
+    const path = join(pagesDir, `${id}.html`);
+    return /^[a-z0-9_-]+$/.test(id) && existsSync(path) ? readFileSync(path) : null;
+  };
+  const client = clientPart({
+    dir,
+    names: clientNames,
+    page,
+    serverFixture,
+    evidenceDir: clientEvidence,
+    clientPage,
+    labFunctions,
+    scenarios,
+    coverage,
+    sync: (path, bytes, label) => sync(path, bytes, check, label),
+  });
+  problems.push(...client.problems);
+  notes.push(...client.notes);
+  for (const name of clientNames) log(name);
+  return { problems, notes, count: count + client.count };
 }
 
 // `catalog`: the repository catalog (fixtures/legacy). It must keep at least catalogSize

@@ -56,7 +56,6 @@ export const LIMITS = Object.freeze({
   maxText: 4096,
 });
 
-export const CLIENT_PROFILES = Object.freeze(['legacy-canonical', 'legacy-android']);
 export const SERVER_PROFILES = Object.freeze(['legacy-canonical', 'legacy-node', 'legacy-java', 'legacy-php']);
 export const MODES = Object.freeze(['quick', 'standard']);
 export const DEFAULT_URL = 'https://shop.example.com/catalog';
@@ -287,8 +286,6 @@ function cacheEntry(entry, index) {
   return out;
 }
 
-const BEHAVIOR = ['mode', 'server_profile', 'url', 'config', 'responses', 'cache_before', 'schedule'];
-
 /**
  * The members of a client case that drive the model, checked and with the defaults filled in.
  * Members that do not drive the model are not read. Throws ClientCaseError.
@@ -366,7 +363,7 @@ export function validateClientCase(name, c) {
     return { kind: 'client-profile', id: name, description: c.description, profile: c.profile, replaces: c.replaces, divergences, sources, notReproduced };
   }
   onlyKeys(c, CANONICAL_MEMBERS, 'case');
-  for (const k of ['profile', 'mode', 'server_profile', 'rules', 'rows', 'upstream', 'sources', 'evidence', 'responses', 'cache_before', 'schedule']) {
+  for (const k of ['profile', 'mode', 'server_profile', 'rules', 'rows', 'upstream', 'evidence', 'responses', 'cache_before', 'schedule']) {
     if (!Object.hasOwn(c, k)) fail('CASE_MISSING_MEMBER', `missing member case.${k}`);
   }
   if (c.profile !== 'legacy-canonical') fail('CASE_TYPE', 'profile must be legacy-canonical');

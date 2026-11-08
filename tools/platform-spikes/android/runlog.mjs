@@ -4,7 +4,7 @@
 // Run-log helper of the Android prototype (CONTRACT.md sections 5, 8, 9). Node.js 22, standard
 // library only. run.sh calls it; it never talks to the device or the host.
 //
-//   node runlog.mjs url <capability> <run> [params] [set]        print the page URL of a run
+//   node runlog.mjs url <capability> <run> [params] [set] [api]  print the page URL of a run
 //   node runlog.mjs scenario <capability> [set]                  print the app scenario of a set
 //   node runlog.mjs sets                                         print the named sets as JSON
 //   node runlog.mjs join <work> <out> <capability> <api> <k> <run> <url> <elapsed-ms>
@@ -50,20 +50,44 @@ const echoTarget = (run) => `/s/echo?html=1&run=${run}`;
  * set is a supporting set in `<capability>/<api>/<set>/` (run.sh SPIKE_SET=<set>). Members:
  * - `path`, `origin` (default site A), `params` (an object, or a function of the run id);
  * - `scenario`: the app scenario (RunParams Scenario; default `stream`);
+ * - `byApi`: members that replace the others on one API level (the read block differs);
  * - `kind`: what an ok run needs (`byteChecks`): `stream` (the S1 byte checks), `pass` (the rule passed
  *   the main frame and the WebView read no byte of the early fetch), `probe` (the WebView read no byte
  *   of the early fetch; the decision is the observation), `cut` (the delivered bytes equal the bytes
  *   before the cut, the stream ended with an error, and the fallback load ran).
  */
+/**
+ * WebView 91 (API 29 image) passes bytes on in 64 KiB blocks: each native read asks for the free
+ * space of a 64 KiB Mojo data pipe and the stream read fills it (README "Read blocks"). So the API 29
+ * stream sets use 65,536-byte chunks, as the API 37 sets use 2048-byte chunks.
+ */
+const BLOCK_29 = 65536;
+
 export const SETS = {
   "CAP-A-01": {
-    "": { path: "/s/stream", params: SCENARIOS["CAP-A-01"], kind: "stream" },
+    "": {
+      path: "/s/stream", params: SCENARIOS["CAP-A-01"], kind: "stream",
+      byApi: { 29: { params: { chunks: 4, size: BLOCK_29, gate: "beacon", timeout: 15000 } } },
+    },
     "block-1500": { path: "/s/stream", params: { chunks: 3, size: 1500, gate: "beacon", timeout: 4000 }, kind: "stream" },
-    "paint-delay": { path: "/s/stream", params: { chunks: 3, size: 2048, gate: "delay", delay: 1500 }, kind: "stream" },
+    "paint-delay": {
+      path: "/s/stream", params: { chunks: 3, size: 2048, gate: "delay", delay: 1500 }, kind: "stream",
+      byApi: { 29: { params: { chunks: 3, size: BLOCK_29, gate: "delay", delay: 1500 } } },
+    },
+    // The S1 scenario on API 29: small chunks wait for the 64 KiB block or the end of the body.
+    "small-2048": { path: "/s/stream", params: SCENARIOS["CAP-A-01"], kind: "stream" },
   },
-  "CAP-A-02": { "": { path: "/s/stream", params: SCENARIOS["CAP-A-02"], kind: "stream" } },
+  "CAP-A-02": {
+    "": {
+      path: "/s/stream", params: SCENARIOS["CAP-A-02"], kind: "stream",
+      byApi: { 29: { params: { chunks: 2, size: BLOCK_29, gate: "beacon", timeout: 15000, first: 1000 } } },
+    },
+  },
   "CAP-A-03": {
-    "": { path: "/s/stream", params: SCENARIOS["CAP-A-03"], kind: "stream" },
+    "": {
+      path: "/s/stream", params: SCENARIOS["CAP-A-03"], kind: "stream",
+      byApi: { 29: { params: { chunks: 2, size: BLOCK_29, gate: "beacon", timeout: 15000, csp: 1 } } },
+    },
     "status-400": { path: "/s/stream", params: { chunks: 0 }, kind: "stream" },
   },
   // Redirects (CL-44, H-67): the early fetch does not follow; the rule passes a 3xx head.
@@ -84,20 +108,21 @@ export const SETS = {
 };
 
 /** The run set, or an error for an unknown capability or set. */
-export function setOf(capability, set = "") {
+export function setOf(capability, set = "", api = "37") {
   const sets = SETS[capability];
   if (sets === undefined) throw new Error(`unknown capability ${capability}`);
   const s = sets[set];
   if (s === undefined) throw new Error(`unknown set ${JSON.stringify(set)} of ${capability}`);
-  return { origin: ORIGIN, scenario: "stream", ...s };
+  const { byApi, ...base } = s;
+  return { origin: ORIGIN, scenario: "stream", ...base, ...(byApi?.[api] ?? {}) };
 }
 
 /**
  * The page URL of a run. `override` (exploration only, run.sh SPIKE_PARAMS) replaces the set
  * parameters, for example `chunks=3&size=1500&gate=beacon&timeout=4000`.
  */
-export function pageUrl(capability, run, override, set = "") {
-  const s = setOf(capability, set);
+export function pageUrl(capability, run, override, set = "", api = "37") {
+  const s = setOf(capability, set, api);
   const q = new URLSearchParams({ run });
   const params = override ? Object.fromEntries(new URLSearchParams(override)) : typeof s.params === "function" ? s.params(run) : s.params;
   for (const [k, v] of Object.entries(params)) {
@@ -268,7 +293,7 @@ function join([work, out, capability, api, k, run, url, elapsed, set = ""]) {
     device: device.model ?? null, webview: wv ? `${wv.package} ${wv.version}` : null, prototype: "A-STREAM", k: Number(k),
   };
   const all = [start, ...app, ...host];
-  const { kind } = setOf(capability, set);
+  const { kind } = setOf(capability, set, api);
   const { checks, problems, expected } = byteChecks(all, metrics, kind === "stream" ? expectedBody(url) : null, kind);
   if (status.state !== "done") problems.unshift(`app: ${status.error ?? status.state}`);
   const end = { ev: "run.end", src: "script", seq: 1, t: Number(elapsed), ok: problems.length === 0, error: problems.length === 0 ? null : problems.join("; ") };
@@ -417,7 +442,7 @@ function analyze([out, capability]) {
 }
 
 const [cmd, ...args] = process.argv.slice(2);
-if (cmd === "url") console.log(pageUrl(args[0], args[1], args[2] || undefined, args[3] ?? ""));
+if (cmd === "url") console.log(pageUrl(args[0], args[1], args[2] || undefined, args[3] ?? "", args[4] ?? "37"));
 else if (cmd === "scenario") console.log(setOf(args[0], args[1] ?? "").scenario);
 else if (cmd === "sets") console.log(JSON.stringify(Object.fromEntries(Object.entries(SETS).map(([c, s]) => [c, Object.keys(s)]))));
 else if (cmd === "join") join(args);

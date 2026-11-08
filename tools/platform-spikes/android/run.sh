@@ -82,7 +82,7 @@ okruns=0
 k="$first"
 while [ "$k" -le "$last" ]; do
   run="$cap-android-$api-$k"
-  url="$(node "$HERE/runlog.mjs" url "$cap" "$run" "${SPIKE_PARAMS:-}" "$set_name")"
+  url="$(node "$HERE/runlog.mjs" url "$cap" "$run" "${SPIKE_PARAMS:-}" "$set_name" "$api")"
   rm -f "$WORK"/app.jsonl "$WORK"/host.jsonl "$WORK"/metrics.json "$WORK"/device.json "$WORK"/status.json
   adb_ shell am force-stop "$PKG"
   adb_ shell run-as "$PKG" rm -rf files/out

@@ -36,9 +36,14 @@ public final class SpikeLogicCheck {
         final List<BridgePipe.Outcome> outcomes = Collections.synchronizedList(new ArrayList<BridgePipe.Outcome>());
         final AtomicInteger readBytes = new AtomicInteger();
         final AtomicInteger reads = new AtomicInteger();
+        /** Reads that gave less than 1 or more than the requested bytes. */
+        final AtomicInteger badReads = new AtomicInteger();
 
         @Override
-        public void onRead(int bytes) {
+        public void onRead(int bytes, int requested) {
+            if (bytes < 1 || bytes > requested) {
+                badReads.incrementAndGet();
+            }
             reads.incrementAndGet();
             readBytes.addAndGet(bytes);
         }
@@ -177,6 +182,7 @@ public final class SpikeLogicCheck {
         check(o != null && Arrays.equals(o.sha256, sha(d, 50)), "outcome SHA-256 of the delivered bytes");
         check(o != null && o.error == null, "END has no error");
         check(r.readBytes.get() == 50, "onRead total equals the delivered bytes");
+        check(r.badReads.get() == 0, "every read gives 1..requested bytes");
         check(p.source().read(new byte[4], 0, 4) == -1, "a read after the end gives -1 again");
         p.source().close();
         check(r.outcomes.size() == 1, "no second outcome after more reads and a close");

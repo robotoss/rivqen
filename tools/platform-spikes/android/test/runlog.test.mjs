@@ -17,13 +17,23 @@ const host = (ev, extra = {}) => ({ ev, src: "host", seq: 0, t: 0, ...extra });
 test("set_urls_are_canonical_and_carry_the_run_id", () => {
   for (const [cap, sets] of Object.entries(SETS)) {
     for (const name of Object.keys(sets)) {
-      const run = `${cap}-android-37-1`;
-      const url = pageUrl(cap, run, undefined, name);
-      assert.equal(new URL(url).searchParams.get("run"), run, `${cap}/${name}`);
-      assert.match(url, /^[A-Za-z0-9.:/?&=%-]+$/, `${cap}/${name}: run.sh quotes the URL with single quotes`);
-      assert.ok(url.length <= 2048, `${cap}/${name}: RunParams limit`);
+      for (const api of ["37", "29"]) {
+        const run = `${cap}-android-${api}-1`;
+        const url = pageUrl(cap, run, undefined, name, api);
+        assert.equal(new URL(url).searchParams.get("run"), run, `${cap}/${name}`);
+        assert.match(url, /^[A-Za-z0-9.:/?&=%-]+$/, `${cap}/${name}: run.sh quotes the URL with single quotes`);
+        assert.ok(url.length <= 2048, `${cap}/${name}: RunParams limit`);
+      }
     }
   }
+});
+
+test("api_29_stream_sets_use_the_64_kib_read_block", () => {
+  for (const cap of ["CAP-A-01", "CAP-A-02", "CAP-A-03"]) {
+    assert.equal(new URL(pageUrl(cap, "r", undefined, "", "29")).searchParams.get("size"), "65536", cap);
+    assert.equal(new URL(pageUrl(cap, "r", undefined, "", "37")).searchParams.get("size"), "2048", cap);
+  }
+  assert.equal(new URL(pageUrl("CAP-A-01", "r", undefined, "small-2048", "29")).searchParams.get("size"), "2048");
 });
 
 test("redirect_sets_end_on_the_echo_page_with_the_run_id", () => {

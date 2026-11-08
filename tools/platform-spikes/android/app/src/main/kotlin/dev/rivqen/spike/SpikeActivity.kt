@@ -131,8 +131,9 @@ class SpikeActivity : Activity() {
             PIPE_CAPACITY,
             PIPE_STALL_MS,
             object : BridgePipe.Listener {
-                override fun onRead(bytes: Int) {
-                    log.emit("app.stream.read", mapOf("bytes" to bytes))
+                override fun onRead(bytes: Int, requested: Int) {
+                    // `want`: the length the WebView asked for (the read block; README "Read blocks").
+                    log.emit("app.stream.read", mapOf("bytes" to bytes, "want" to requested))
                 }
 
                 override fun onOutcome(outcome: BridgePipe.Outcome) {

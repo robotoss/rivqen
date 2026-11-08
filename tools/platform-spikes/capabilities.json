@@ -199,8 +199,35 @@
       "Q-12"
     ],
     "sprint": "S2",
-    "results": [],
-    "verdict": "pending"
+    "results": [
+      {
+        "os": "37",
+        "webview": "com.google.android.webview 145.0.7632.218",
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-06/37/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-06/37/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-06/37/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-06/37/run-1.metrics.json",
+        "recording": null
+      },
+      {
+        "os": "29",
+        "webview": "com.google.android.webview 91.0.4472.114",
+        "verdict": "conditional",
+        "condition": "Only by an SDK write: WebView 91 has no COOKIE_INTERCEPT, and a Set-Cookie in the fields of an intercepted response is dropped (not in CookieManager, not in document.cookie); the cookie arrives only when the app writes the fetched Set-Cookie with CookieManager.setCookie before it returns the response (manual set: in document.cookie when the page scripts run)",
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-06/29/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-06/29/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-06/29/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-06/29/run-1.metrics.json",
+        "recording": null
+      }
+    ],
+    "verdict": "conditional"
   },
   {
     "id": "CAP-A-07",
@@ -211,8 +238,35 @@
       "Q-12"
     ],
     "sprint": "S2",
-    "results": [],
-    "verdict": "pending"
+    "results": [
+      {
+        "os": "37",
+        "webview": "com.google.android.webview 145.0.7632.218",
+        "verdict": "conditional",
+        "condition": "CookieManager is the one store and keeps HttpOnly, Secure and SameSite in both directions on both sites, but getCookie(url) has no request context: the native fetch sends SameSite=Strict and Lax cookies in every case, while the WebView leaves out Strict on a cross-site page navigation, so the SDK must apply the SameSite rule itself; SameSite=None without Secure is refused; a cookie set after the last flush() is lost when the process dies",
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-07/37/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-07/37/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-07/37/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-07/37/run-1.metrics.json",
+        "recording": null
+      },
+      {
+        "os": "29",
+        "webview": "com.google.android.webview 91.0.4472.114",
+        "verdict": "conditional",
+        "condition": "CookieManager is the one store and keeps HttpOnly, Secure and SameSite in both directions on both sites, but getCookie(url) has no request context: the native fetch sends SameSite=Strict and Lax cookies in every case, while the WebView leaves out Strict on a cross-site page navigation, so the SDK must apply the SameSite rule itself; SameSite=None without Secure is refused; a cookie set after the last flush() is lost when the process dies",
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-07/29/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-07/29/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-07/29/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-07/29/run-1.metrics.json",
+        "recording": null
+      }
+    ],
+    "verdict": "conditional"
   },
   {
     "id": "CAP-A-08",

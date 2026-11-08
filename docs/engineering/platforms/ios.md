@@ -2,7 +2,7 @@
 
 The iOS SDK connects the Rust core to `WKWebView`. iOS is the hardest platform for Rivqen, because it has no public API to intercept the standard HTTPS main-document load of a web view.
 
-**Status:** <Badge type="info" text="DESIGN" /> <Badge type="danger" text="GATE" /> The navigation strategy is decided by the WP-04 spike and ADR-003.
+**Status:** <Badge type="info" text="DESIGN" /> <Badge type="danger" text="GATE" /> The WP-04 spike gave the data ([parity matrix](/engineering/platforms/ios-parity-matrix)). The navigation strategy is [ADR-003](/engineering/architecture/adr/ADR-003-ios-navigation), proposed; the human decides at G2.
 
 [[toc]]
 

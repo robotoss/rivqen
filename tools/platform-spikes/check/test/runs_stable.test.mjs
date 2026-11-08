@@ -31,3 +31,18 @@ test('runs_stable: a run whose normalized log differs is reported', async (t) =>
   await rewriteRun(dir, 'run-2.jsonl', (lines) => lines.map((l) => l.replace('"status":200', '"status":404')));
   expectProblem(await problemsOf(dir), /run-2\.jsonl differs from .*run-1\.jsonl after normalization/);
 });
+
+test('runs_stable: the CSP nonce form of the run id (dots as underscores) is normalized', async (t) => {
+  // A run id with a dot (iOS 27.0) appears as written in run.start and as the nonce form in a host field.
+  const dir = await copyFixture(t);
+  for (const k of [1, 2, 3]) {
+    await rewriteRun(dir, `run-${k}.jsonl`, (lines) =>
+      lines.map((l) =>
+        l
+          .replace(`"run":"CAP-F-01-ffi-host-jvm-${k}"`, `"run":"CAP-F-01-ffi-27.0-${k}"`)
+          .replace(`"target":"/s/stream?run=CAP-F-01-ffi-host-jvm-${k}"`, `"target":"/s/stream?nonce=CAP-F-01-ffi-27_0-${k}"`),
+      ),
+    );
+  }
+  assert.deepEqual(await problemsOf(dir), []);
+});

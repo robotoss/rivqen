@@ -71,6 +71,9 @@ group_node() {
   step upstream-lab-unit 'node --check tools/upstream-lab/node/app.js && node --test tools/upstream-lab/node/control.test.cjs'
   step upstream-lab-client 'node --test "tools/upstream-lab/client/test/*.test.mjs"'
   step client-evidence 'node tools/upstream-lab/client/check.mjs evidence/traces/client --require-functions'
+  step spike-host 'cd tools/platform-spikes/host && npm test'
+  step spike-check-tests 'node --test tools/platform-spikes/check/test'
+  step spike-evidence 'node tools/platform-spikes/check/check.mjs'
 }
 
 group_python() {

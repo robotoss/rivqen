@@ -51,20 +51,22 @@ Every route is on both sites. Query values are ASCII. Every response has `Cache-
 | Route | Behavior |
 |---|---|
 | `GET /page/<path>` | Pass-through to `rust-reference --site` on 18480 (status, fields and body unchanged, except hop-by-hop fields) |
-| `GET /s/stream?run=&chunks=N&size=B&first=MS&gate=beacon\|delay&delay=MS&timeout=MS&csp=0\|1` | `200 text/html; charset=utf-8`, chunked. Waits `first` ms before the head. Sends `N` chunks of about `B` bytes. Chunk `k` (0-based) ends with `<img src="/s/beacon?run=…&k=<k>" hidden>` and a script that posts `chunk` probe `k` (section 6). `gate=beacon`: chunk `k+1` is sent only after `/s/beacon?k=<k>` arrived, or after `timeout` ms (then the host writes `host.gate_timeout`). `gate=delay`: chunk `k+1` after `delay` ms. `csp=1` adds `Content-Security-Policy: script-src 'nonce-<run>'` and puts that nonce on every script |
+| `GET /s/stream?run=&chunks=N&size=B&first=MS&gate=beacon\|delay&delay=MS&timeout=MS&csp=0\|1` | `200 text/html; charset=utf-8`, chunked. Waits `first` ms before the head. Sends `N` chunks of about `B` bytes. Chunk `k` (0-based) ends with `<img src="/s/beacon?run=…&k=<k>" hidden>` and a script that posts `chunk` probe `k` (section 6). `gate=beacon`: chunk `k+1` is sent only after `/s/beacon?k=<k>` arrived, or after `timeout` ms (then the host writes `host.gate_timeout`). `gate=delay`: chunk `k+1` after `delay` ms. `csp=1` adds `Content-Security-Policy: script-src 'nonce-<n>'` and puts that nonce on every script; `<n>` is the run id with `.` replaced by `_` (a dot is not a nonce character). Limit: `chunks * size` ≤ 64 MiB |
 | `GET /s/beacon?run=&k=` | `204`. Writes `host.beacon` |
-| `GET /s/redirect?run=&n=K&code=301\|302\|303\|307\|308&to=<path>` | Chain of `K` redirects with the code; the last one goes to `<path>` (default `/s/echo`). Hop `i` goes to the other site when `cross=1` |
+| `GET /s/redirect?run=&n=K&code=301\|302\|303\|307\|308&to=<path>` | Chain of `K` redirects with the code; the last one goes to `<path>` (default `/s/echo`). Hop `i` goes to the other site when `cross=1`; `alt=127.0.0.1\|10.0.2.2` (default `127.0.0.1`) names the IP form of site B, so the Android run script passes `alt=10.0.2.2` |
 | `GET /s/cookie/set?run=&name=&value=&attrs=<list>` | `200` page; one `Set-Cookie: <name>=<value>; Path=/; <attrs>`. `attrs` is a comma list of `HttpOnly`, `Secure`, `SameSite=Strict\|Lax\|None`, `Max-Age=<n>`. Values are synthetic (`[a-z0-9-]` only) |
 | `GET /s/echo?run=` | `200 application/json`: `{"cookie": <Cookie field or null>, "site": "A"\|"B", "method", "target", "fields": [names only]}`. Also as `text/html` with the JSON in a `<pre id="echo">` when `html=1` |
 | `GET /s/range?run=&size=B` | Body of `B` bytes. Honors one `Range: bytes=a-b` (or `a-`) with `206`, `Content-Range`; a bad range gives `416` |
-| `GET /s/cut?run=&after=BYTES` | `200 text/html` with `Content-Length` of the full body; closes the connection after `BYTES` bytes |
-| `GET /s/sw.js`, `GET /s/sw-page?run=` | Service Worker script and a page that registers it (S2) |
+| `GET /s/cut?run=&after=BYTES&size=B` | `200 text/html` with `Content-Length` of the full body (`size`, default 4096; `after` < `size`); closes the connection after `BYTES` body bytes |
+| `GET /s/sw.js`, `GET /s/sw-page?run=` | Service Worker script and a page that registers it (S2; `501` in S1) |
+
+A request whose `Host` is not `localhost`, `127.0.0.1` or `10.0.2.2` (with or without the port) gets `400`.
 
 The host never logs a `Cookie` or `Set-Cookie` value that does not match `[a-z0-9-]*`.
 
 ## 4. Control
 
-Plain HTTP on `127.0.0.1:18445`. A run script calls it; an app never does.
+Plain HTTP on `127.0.0.1:18445`. A run script calls it; an app never does. A request needs `Content-Type: application/json` (for `POST`) and `Host` `127.0.0.1` or `localhost` (guard against cross-site requests and DNS rebinding). Limits: 16 open runs, 100,000 events per run. A host event of a run that was not started is dropped.
 
 | Request | Effect |
 |---|---|
@@ -90,7 +92,7 @@ Common members: `ev`, `src` (`app`, `host`, `script`), `seq` (order inside its s
 | `app.probe` | app | `name`, `value` (section 6) |
 | `app.ssl_error` | app | `url`, `primary_error`, `decision` (`cancel`) |
 | `app.error` | app | `error` (class name and message, no data) |
-| `host.request` | host | `site`, `method`, `target`, `fields` (names only, plus `range` value) |
+| `host.request` | host | `site`, `method`, `target`, `fields` (sorted field names only), `range` (the `Range` value, when present) |
 | `host.response` | host | `status`, `fields` (names and values; cookie values synthetic) |
 | `host.chunk` | host | `k`, `bytes` |
 | `host.beacon`, `host.gate_timeout` | host | `k` |
@@ -152,7 +154,7 @@ A page reports a probe by `window.rqLab.probe(name, value)`. The app installs `r
 
 ## 8. Determinism
 
-Normalization: remove `t` and `seq`; remove `k` from `run.start`; replace every occurrence of the run id (section 4) in any string value with `<run>` (it is in `run.start.run`, in `run=` query values, in host targets and in the CSP nonce); remove `app.stream.read` events (their count depends on buffer sizes) but keep the sum of their `bytes`; remove `metric.*` probes; blank `Date` values. Comparison: app events in order, host events in order, each source on its own. A run that is not stable gives no verdict.
+Normalization: remove `t` and `seq`; remove `k` from `run.start`; replace every occurrence of the run id (section 4) in any string value with `<run>` (it is in `run.start.run`, in `run=` query values, in host targets; the CSP nonce form with `_` for `.` too); remove `app.stream.read` events (their count depends on buffer sizes) but keep the sum of their `bytes`; remove `metric.*` probes; blank `Date` values. Comparison: app events in order, host events in order, each source on its own. A run that is not stable gives no verdict.
 
 ## 9. Evidence layout
 

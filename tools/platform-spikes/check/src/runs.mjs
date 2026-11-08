@@ -84,9 +84,12 @@ function blankDates(fields) {
   return fields;
 }
 
-/** Replaces every occurrence of the run id in every string value with `<run>` (CONTRACT section 8). */
+/**
+ * Replaces every occurrence of the run id, and of its CSP nonce form (`.` replaced by `_`), in every string
+ * value with `<run>` (CONTRACT sections 3 and 8).
+ */
 function replaceRunId(value, runId) {
-  if (typeof value === 'string') return value.split(runId).join('<run>');
+  if (typeof value === 'string') return value.split(runId).join('<run>').split(runId.replaceAll('.', '_')).join('<run>');
   if (Array.isArray(value)) return value.map((v) => replaceRunId(v, runId));
   if (isObject(value)) return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, replaceRunId(v, runId)]));
   return value;

@@ -14,7 +14,7 @@ The JS bridge carries messages between the web SDK in the page and the native SD
 | iOS | `WKScriptMessageHandlerWithReply` in a dedicated `WKContentWorld` | Reply handler / `callAsyncJavaScript` in the same world | `message.frameInfo.securityOrigin`, `frameInfo.isMainFrame` |
 | Fallback (old Android WebView) | None | None | The bridge is disabled; pages use HTTP revalidation only |
 
-<Badge type="warning" text="RESEARCH" /> Confirm minimum WebView and iOS versions for these APIs (WP-04). Do not use `addJavascriptInterface` for untrusted content: it exposes methods to every frame.
+<Badge type="tip" text="FACT" /> WP-04 facts: WebView 91 (API 29) has `WEB_MESSAGE_LISTENER` but not `DOCUMENT_START_SCRIPT` ([Android SDK](/engineering/platforms/android) §5, [matrix](/engineering/platforms/android-matrix)). On iOS 27.0, 26.5 and 18.5 the handler of a dedicated `WKContentWorld` is not visible to page scripts: `window.webkit.messageHandlers.rqBridge` is `undefined` in the page world ([iOS SDK](/engineering/platforms/ios) §3, CAP-I-04, [matrix](/engineering/platforms/ios-parity-matrix)). <Badge type="warning" text="RESEARCH" /> The minimum versions are set at WP-10 and WP-11. Do not use `addJavascriptInterface` for untrusted content: it exposes methods to every frame.
 
 ## 2. Message envelope
 

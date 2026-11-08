@@ -2,7 +2,7 @@
 
 The Android SDK connects the Rust core to Android System WebView. It owns the WebView lifecycle, request interception, HTTP, cookies, keys and the JS bridge.
 
-**Status:** <Badge type="info" text="DESIGN" /> Work package WP-10. Feasibility spike in WP-04.
+**Status:** <Badge type="info" text="DESIGN" /> Work package WP-10. Feasibility spike in WP-04: results in §5 and in the [Android capability matrix](/engineering/platforms/android-matrix).
 
 [[toc]]
 
@@ -74,8 +74,8 @@ Rivqen is a new implementation in Kotlin. It keeps the behavior, not the code.
 | `loadDataWithBaseURL` | Loads HTML without response headers (no CSP header) | <Badge type="tip" text="FACT" /> (upstream warns the same) |
 | Target API | Google Play requires new apps and updates to target API 36 from 31 Aug 2026 | <Badge type="tip" text="FACT" /> [Play target API](https://developer.android.com/google/play/requirements/target-sdk) |
 | Android 17 (API 37) | Platform stable in 2026; check WebView API diffs (for example `startSafeBrowsing` deprecated) | <Badge type="tip" text="FACT" /> [API 37 diff](https://developer.android.com/sdk/api_diff/37/changes/android.webkit.WebView) |
-| HTTP stack | Platform `HttpEngine` (API 34+) / Cronet / OkHttp | <Badge type="warning" text="RESEARCH" /> ADR-014 |
-| Prefetch APIs | Compare WebView prefetch/prerender APIs in AndroidX WebKit, `WebViewAssetLoader`, preconnect, and the normal WebView cache | <Badge type="warning" text="RESEARCH" /> WP-04 |
+| HTTP stack | Platform `HttpEngine` (API 34+) / Cronet / OkHttp | <Badge type="warning" text="RESEARCH" /> [ADR-014](/engineering/architecture/adr/ADR-014-android-http-stack) (proposed; decided in WP-10; WP-04 data in the ADR) |
+| Prefetch APIs | Compare WebView prefetch/prerender APIs in AndroidX WebKit, `WebViewAssetLoader`, preconnect, and the normal WebView cache | <Badge type="warning" text="RESEARCH" /> Not measured in WP-04; open for WP-10 |
 | Request nonce (RQP-29, DL-063) | <Badge type="info" text="DESIGN" /> The SDK takes the 16 bytes of `Rq-Nonce` for each network attempt from `java.security.SecureRandom`: `SecureRandom()` (no algorithm and no provider name) and `nextBytes` on a 16-byte array. A release build has no other source: a test input of the nonce exists only in a debug or test build. When the generator fails (an exception), the SDK sends no nonce: no `Rq-Nonce`, no `Rq-Have`, no delta media type ([negotiation §3.9](/engineering/protocol/negotiation#_3-9-rq-nonce)) | <Badge type="tip" text="FACT" /> Java SE 21 API: "This class provides a cryptographically strong random number generator (RNG)" ([SecureRandom](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/security/SecureRandom.html)); Android uses `SecureRandom().nextBytes(iv)` without a provider and says that Android guarantees no provider for an algorithm outside the Android Keystore system; the `Crypto` provider is removed since API 28 ([Android cryptography](https://developer.android.com/privacy-and-security/cryptography)); checked 2026-10-20. The Android reference page of `SecureRandom`: NOT FOUND (the page did not load) |
 
 ::: warning `WebViewAssetLoader` is not HTTP navigation

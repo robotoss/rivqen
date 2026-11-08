@@ -6,7 +6,8 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
-import { SETS, byteChecks, pageUrl, setOf } from "../runlog.mjs";
+import { readFileSync } from "node:fs";
+import { SETS, byteChecks, pageUrl, sameAsStored, setOf } from "../runlog.mjs";
 
 const EMPTY = createHash("sha256").digest("hex");
 const RUN = "CAP-A-04-android-29-1";
@@ -163,4 +164,18 @@ test("partial_run_needs_the_beacon_of_chunk_0_before_the_cut", () => {
   assert.match(byteChecks(late, metrics, null, "partial").problems.join(), /no beacon of chunk 0/);
   // The cut checks still apply.
   assert.match(cutRun({ kind: "partial", beacon: [beacon0], outcome: "end" }).join(), /outcome end/);
+});
+
+test("a fourth run with another run id has the log of the stored runs", () => {
+  // The recording mode (run.sh SPIKE_RECORD=1) records a run k=4 outside evidence/ and keeps the clip
+  // only when that run has the normalized log of the stored runs.
+  const dir = new URL("../../../../evidence/spikes/wp-04/android/CAP-A-08/37/partial/", import.meta.url);
+  const stored = [1, 2, 3].map((k) => readFileSync(new URL(`run-${k}.jsonl`, dir), "utf8"));
+  const fourth = stored[0].replaceAll("CAP-A-08-android-37-1", "CAP-A-08-android-37-4").replace('"k":1,', '"k":4,');
+  assert.notEqual(fourth, stored[0]);
+  assert.deepEqual(sameAsStored(stored, fourth), { same: true, reason: null });
+  const other = fourth.replace("net::ERR_FAILED", "net::ERR_ABORTED");
+  assert.deepEqual(sameAsStored(stored, other), { same: false, reason: "the run differs from the stored runs" });
+  assert.match(sameAsStored(stored.slice(0, 2), fourth).reason, /at least 3/);
+  assert.match(sameAsStored([stored[0], stored[1], other], fourth).reason, /not stable/);
 });

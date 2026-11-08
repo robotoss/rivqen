@@ -851,6 +851,7 @@ class SpikeActivity : Activity() {
         val metrics = metricsJson()
         val device = deviceJson()
         val status = mapOf("state" to if (error == null && log.dropped == 0) "done" else "failed", "error" to (error ?: if (log.dropped > 0) "${log.dropped} events dropped" else null))
+        val linger = lingerMs()
         writer.execute {
             try {
                 writeText(File(outDir, "app.jsonl"), lines.joinToString("") { it + "\n" })
@@ -864,9 +865,15 @@ class SpikeActivity : Activity() {
             }
             // CAP-A-07 `persist` seed: end the process now, so only what was written survives.
             if (params?.scenario == Scenario.COOKIE_SEED) Process.killProcess(Process.myPid())
-            main.post { finishAndRemoveTask() }
+            // run.sh SPIKE_RECORD=1 (S3 recordings): the page stays on screen for `linger` ms after
+            // the output is written, so the clip ends on the page and not on the launcher. The run
+            // log is complete before; a normal run has no `linger` (0).
+            main.postDelayed({ finishAndRemoveTask() }, linger)
         }
     }
+
+    /** The intent extra `linger` (ms), bounded to 0…[MAX_LINGER_MS]; 0 when missing. */
+    private fun lingerMs(): Long = intent.getIntExtra(EXTRA_LINGER, 0).toLong().coerceIn(0L, MAX_LINGER_MS)
 
     private fun fail(reason: String) {
         log.emit("app.error", mapOf("error" to reason))
@@ -942,6 +949,10 @@ class SpikeActivity : Activity() {
 
         /** CAP-A-08 `partial`: the wait before the second `native.doc` of a settled load. */
         const val LATE_SNAPSHOT_MS = 2_000L
+
+        /** run.sh recording mode: how long the page stays after the run (intent extra, ms). */
+        const val EXTRA_LINGER = "linger"
+        const val MAX_LINGER_MS = 10_000L
 
         /** CAP-A-06: the cookie in the store before the load (synthetic; `native.request_cookie`). */
         const val PRE_COOKIE = "a06-pre=v1; Path=/"

@@ -12,6 +12,8 @@
 //        exit 1 when the run is not ok (the files are still written)
 //   node runlog.mjs runjson <work> <out> <api>                    writes <out>/run.json
 //   node runlog.mjs analyze <out> <capability>                    prints the verdict facts as JSON
+//   node runlog.mjs same <stored-dir> <run-file>                  exit 0 when the run file has the
+//        normalized log of the stored runs (at least 3, all stable); the recording mode uses it
 
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
@@ -539,6 +541,32 @@ function analyze([out, capability]) {
   console.log(JSON.stringify(result, null, 2));
 }
 
+/**
+ * Whether one run log (text) has the normalized log of the stored runs (texts). The stored runs
+ * must be at least 3 and stable among themselves (CONTRACT §7, §8).
+ * @param {string[]} stored @param {string} run
+ * @returns {{ same: boolean, reason: string | null }}
+ */
+export function sameAsStored(stored, run) {
+  if (stored.length < 3) return { same: false, reason: `${stored.length} stored runs, at least 3 needed` };
+  const norm = (text) => {
+    const parsed = parseRunLog(text);
+    if (parsed.problems.length > 0) throw new Error(parsed.problems.join("; "));
+    return JSON.stringify(normalizeRunLog(parsed.events));
+  };
+  const base = stored.map(norm);
+  if (!base.every((n) => n === base[0])) return { same: false, reason: "the stored runs are not stable" };
+  if (norm(run) !== base[0]) return { same: false, reason: "the run differs from the stored runs" };
+  return { same: true, reason: null };
+}
+
+function same([dir, file]) {
+  const stored = readdirSync(dir).filter((f) => /^run-\d+\.jsonl$/.test(f)).sort().map((f) => readFileSync(path.join(dir, f), "utf8"));
+  const r = sameAsStored(stored, readFileSync(file, "utf8"));
+  console.log(r.same ? `runlog: ${path.basename(file)} has the log of the ${stored.length} stored runs` : `runlog: NOT SAME: ${r.reason}`);
+  if (!r.same) process.exitCode = 1;
+}
+
 const [cmd, ...args] = process.argv.slice(2);
 if (cmd === "url") console.log(pageUrl(args[0], args[1], args[2] || undefined, args[3] ?? "", args[4] ?? "37"));
 else if (cmd === "scenario") console.log(setOf(args[0], args[1] ?? "").scenario);
@@ -547,7 +575,8 @@ else if (cmd === "sets") console.log(JSON.stringify(Object.fromEntries(Object.en
 else if (cmd === "join") join(args);
 else if (cmd === "runjson") runjson(args);
 else if (cmd === "analyze") analyze(args);
+else if (cmd === "same") same(args);
 else if (cmd !== undefined) {
-  console.error("usage: node runlog.mjs url|scenario|sets|join|runjson|analyze …");
+  console.error("usage: node runlog.mjs url|scenario|sets|join|runjson|analyze|same …");
   process.exit(2);
 }

@@ -1,0 +1,4 @@
+{"capability":"CAP-A-07","device":"Android SDK built for arm64","ev":"run.start","k":2,"os":"29","platform":"android","prototype":"A-STREAM","run":"CAP-A-07-android-29-2","seq":0,"src":"script","t":0,"webview":"com.google.android.webview 91.0.4472.114"}
+{"ev":"app.probe","name":"native.cm_start","seq":0,"src":"app","t":265,"value":"p-session=v1; p-max=v1"}
+{"ev":"app.probe","name":"native.step","seq":1,"src":"app","t":266,"value":"done"}
+{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":1111}

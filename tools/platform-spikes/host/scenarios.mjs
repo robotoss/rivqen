@@ -3,7 +3,7 @@
 
 // Fault scenarios of CONTRACT.md section 3: redirect, cookie/set, echo, range, cut.
 
-import { HostError, MAX_SIZE, enumParam, intParam } from "./util.mjs";
+import { HostError, MAX_MS, MAX_SIZE, enumParam, intParam, sleep } from "./util.mjs";
 
 const HTML = "text/html; charset=utf-8";
 const SYNTHETIC = /^[a-z0-9-]{1,64}$/;
@@ -139,16 +139,57 @@ export function range(rc) {
 
 const CUT_HEAD = "<!doctype html><meta charset=\"utf-8\"><title>cut</title><p>";
 
-/** @param {import("./context.mjs").RequestContext} rc */
-export function cut(rc) {
-  const size = intParam(rc.q, "size", { def: 4096, min: CUT_HEAD.length + 1, max: MAX_SIZE });
+/**
+ * Start of the partial-page body (`hold` > 0): the chunk-0 markup of /s/stream (a `data-k="0"`
+ * element, the beacon of chunk 0 and the script that probes `chunk` 0). A renderer that got the
+ * start of the body before the close then shows it in the run log (`host.beacon` before `host.cut`).
+ * `hold` = 0 keeps the S2 body byte for byte, so the stored CAP-A-08 runs stay reproducible.
+ * @param {string | null} run a run id ([A-Za-z0-9.-], so safe in the attribute)
+ */
+export function partialHead(run) {
+  const runPart = run === null ? "" : `run=${run}&`;
+  return '<!doctype html><meta charset="utf-8"><title>cut</title><p data-k="0">partial page</p>' +
+    `<img src="/s/beacon?${runPart}k=0" hidden><script>window.rqLab&&window.rqLab.probe("chunk",0)</script><p>`;
+}
+
+/**
+ * Wait for the callback of one write, or for the end of the response (whichever comes first), so a
+ * write whose callback never comes cannot hold the route.
+ * @param {import("node:http").ServerResponse} res @param {Uint8Array} data @param {AbortSignal} signal
+ * @returns {Promise<void>}
+ */
+function written(res, data, signal) {
+  return new Promise((resolve) => {
+    const done = () => {
+      signal.removeEventListener("abort", done);
+      resolve();
+    };
+    if (signal.aborted) return resolve();
+    signal.addEventListener("abort", done, { once: true });
+    res.write(data, done);
+  });
+}
+
+/**
+ * GET /s/cut: the head with the Content-Length of the full body, `after` body bytes, then (after
+ * `hold` ms, 0…60000, default 0) the close. The host logs `host.cut` only when it closed the
+ * connection itself; a client that closes first during the hold gets no `host.cut`.
+ * @param {import("./context.mjs").RequestContext} rc
+ */
+export async function cut(rc) {
+  const hold = intParam(rc.q, "hold", { def: 0, min: 0, max: MAX_MS });
+  const start = hold > 0 ? partialHead(rc.run) : CUT_HEAD;
+  const size = intParam(rc.q, "size", { def: 4096, min: start.length + 1, max: MAX_SIZE });
   const after = intParam(rc.q, "after", { min: 0, max: size - 1 });
-  const body = Buffer.from(CUT_HEAD + "x".repeat(size - CUT_HEAD.length));
+  const body = Buffer.from(start + "x".repeat(size - start.length));
   rc.head(200, [["Content-Type", HTML], ["Content-Length", String(size)]]);
   rc.res.flushHeaders();
   const socket = rc.req.socket;
-  rc.res.write(body.subarray(0, after), () => {
-    rc.log("host.cut", { after });
+  await written(rc.res, body.subarray(0, after), rc.signal);
+  if (rc.signal.aborted || (hold > 0 && !(await sleep(hold, rc.signal)))) {
     socket.destroy();
-  });
+    return;
+  }
+  rc.log("host.cut", { after });
+  socket.destroy();
 }

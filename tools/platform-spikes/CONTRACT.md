@@ -58,7 +58,12 @@ Every route is on both sites. Query values are ASCII. Every response has `Cache-
 | `GET /s/echo?run=` | `200 application/json`: `{"cookie": <Cookie field or null>, "site": "A"\|"B", "method", "target", "fields": [names only]}`. Also as `text/html` with the JSON in a `<pre id="echo">` when `html=1` |
 | `GET /s/range?run=&size=B` | Body of `B` bytes. Honors one `Range: bytes=a-b` (or `a-`, or the suffix form `-n`) with `206`, `Content-Range`; a bad range gives `416` |
 | `GET /s/cut?run=&after=BYTES&size=B` | `200 text/html` with `Content-Length` of the full body (`size`, default 4096; `after` < `size`); closes the connection after `BYTES` body bytes |
-| `GET /s/sw.js`, `GET /s/sw-page?run=` | Service Worker script and a page that registers it (S2; `501` in S1) |
+| `GET /s/sw.js` | (S2) `200 text/javascript; charset=utf-8`, `Service-Worker-Allowed: /s/`. On `fetch` of `/s/sw-probe` the worker answers `200 application/json` `{"sw":"worker"}`; every other request goes to the network |
+| `GET /s/sw-page?run=` | (S2) Page that registers `/s/sw.js` with scope `/s/`, waits for `navigator.serviceWorker.ready` (at most 10 s), reloads itself once when it is not controlled yet (`?run=…&again=1`), then fetches `/s/sw-probe` and probes `sw` with `worker` (the worker answered), `network` (registration worked, no control), `unsupported` (`navigator.serviceWorker` is missing) or the error name |
+| `GET /s/sw-probe?run=` | (S2) `200 application/json` `{"sw":"network"}` (the network answer, when no worker controls the page) |
+| `GET /s/csp?run=&mode=header\|meta\|both` | (S2) Page with `script-src 'nonce-<n>'` (nonce rule of `/s/stream`) in the field, in a `<meta http-equiv="Content-Security-Policy">` as the first element of `head`, or both. A nonce script probes `csp.nonce` `true`; an inline script without the nonce would probe `csp.inline` `true`; the nonce script also tries `eval("1")` and probes `csp.eval` `blocked` or `allowed` |
+| `GET /s/hist?run=&step=N` | (S2) Page `N` (0…9) with a link `#next` to step `N+1`. Its script probes `history` (`history.length`) and `location`. The app follows the link with a script click, then goes back and forward |
+| `GET /s/cookie/js?run=&name=&value=&attrs=` | (S2) Page whose script sets `document.cookie = "<name>=<value>; Path=/; <attrs>"` (attrs: `Secure`, `SameSite=…`, `Max-Age=…`; no `HttpOnly`), then probes `cookie` (`document.cookie`). Same value rules as `/s/cookie/set` |
 
 A request whose `Host` is not `localhost`, `127.0.0.1` or `10.0.2.2` (with or without the port) gets `400`.
 
@@ -117,6 +122,8 @@ A page reports a probe by `window.rqLab.probe(name, value)`. The app installs `r
 | `cookie` | `document.cookie` |
 | `echo` | the JSON of `/s/echo` that a `fetch` from the page got |
 | `csp.inline` | `true` when an inline script without the nonce ran |
+| `csp.nonce` | `true` when the nonce script ran |
+| `csp.eval` | `blocked` or `allowed` |
 | `history` | `history.length` |
 | `sw` | registration result (`ok` or the error name) |
 | `metric.first_paint` | `performance` entry `first-contentful-paint` start time, ms |
@@ -176,6 +183,8 @@ evidence/spikes/wp-04/
 evidence/recordings/wp-04/<capability>-<platform>-<os>.mp4   # ≤ 1 MB, ≤ 30 s; total ≤ 25 MB
 ```
 
+URL interop (Q-24, DL-135): the shared input list is `tools/platform-spikes/url-interop/urls.json` (`[{"id","input","base"?,"why"}]`). Each stack writes `evidence/spikes/wp-04/url/<stack>.json` (`<stack>`: `whatwg-node`, `okhttp`, `java-net-uri`, `android-net-uri`, `foundation-url-macos`, `foundation-urlcomponents-macos`, `foundation-url-ios-sim`, `foundation-urlcomponents-ios-sim`): `{"stack","version","runtime","results":[{"id","ok","href","host","path","query","error"}]}`, where `href` is the serialization the stack would send and `error` is the error class when the stack refuses the input. The comparison against `whatwg-node` is `evidence/spikes/wp-04/url/compare.json`, and CAP-U-01 is a `benchmark` result whose `metrics` is that file.
+
 `run.json`: date, tool versions (Xcode, AGP, Kotlin, Swift), device model, OS build, WebView version, user agent, app commit.
 
 ## 10. FFI benchmark
@@ -199,7 +208,14 @@ Result file `evidence/spikes/wp-04/ffi/<target>.json` (`<target>`: `host-jvm`, `
 
 `indicative` is `true` for every WP-04 result (H-129). Optional case members `rust_copied_bytes` and `glue_copied_bytes` split `copied_bytes` into the copy on the Rust side and the copies in the binding glue. `open_stream` with a size or chunk outside the limits gives a stream that is already at its end (fail closed: the SHA-256 check of the harness then fails); the benchmark keeps this signature, an SDK API returns an error instead.
 
-## 11. Commands
+## 11. Lab slots (S2)
+
+- One Android emulator at a time. The Android lane owns `emulator-5602`. Another lane that needs the emulator (FFI, URL) prepares everything first, then returns `BLOCKED: emulator slot` with the exact commands; the architect resumes it when the emulator is free.
+- Simulators: each lane sets `LAB_SIM_TAG` (`ios`, `ffi`, `url`) so its devices are `rivqen-p2-<tag>-<os>`; a lane never boots, changes or deletes a device of another tag or of the human.
+- The architect runs the one shared spike host. A host change is integrated by the architect, who then restarts the host once and tells the lanes; a run that fails during the restart is run again (failed runs never go into `evidence/`).
+- No lane runs a mutation tool. The architect runs StrykerJS with `--incremental` and cargo-mutants on the sprint diff at the close.
+
+## 12. Commands
 
 | Task | Command |
 |---|---|

@@ -50,7 +50,10 @@ LAB_SIM_PREFIX=rivqen-p2
 # iPhone 16 Pro is the newest iPhone that all three runtimes support (one model for every version).
 LAB_SIM_DEVICE_TYPE="com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro"
 LAB_SIM_OS="27.0 26.5 18.5"
-export LAB_SIM_PREFIX LAB_SIM_DEVICE_TYPE LAB_SIM_OS
+# A lane that runs at the same time as another lane sets LAB_SIM_TAG (for example ios, ffi, url):
+# its devices are then rivqen-p2-<tag>-<os>, and "sim.sh delete all" removes only that tag.
+LAB_SIM_NAME_PREFIX="$LAB_SIM_PREFIX${LAB_SIM_TAG:+-$LAB_SIM_TAG}"
+export LAB_SIM_PREFIX LAB_SIM_DEVICE_TYPE LAB_SIM_OS LAB_SIM_NAME_PREFIX
 
 # Spike host ports (CONTRACT.md section 1).
 LAB_HOST_PORT=18443

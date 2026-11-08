@@ -61,8 +61,8 @@ code="$(curl -s -o /dev/null -w '%{http_code}' --cacert "$LAB_TLS/ca.pem" "$ORIG
 [ "$code" = 200 ] || fail "the spike host does not answer on $ORIGIN (got $code); start it: node tools/platform-spikes/host/main.mjs"
 
 # 2. Lab simulator, by its exact name.
-line="$(sh "$ROOT/tools/platform-spikes/lab/sim.sh" list | awk -v n="$LAB_SIM_PREFIX-$OS" '$2 == n { print; exit }')"
-[ -n "$line" ] || fail "no lab simulator $LAB_SIM_PREFIX-$OS; run: sh tools/platform-spikes/lab/sim.sh create $OS && sim.sh boot $OS && sim.sh trust $OS"
+line="$(sh "$ROOT/tools/platform-spikes/lab/sim.sh" list | awk -v n="$LAB_SIM_NAME_PREFIX-$OS" '$2 == n { print; exit }')"
+[ -n "$line" ] || fail "no lab simulator $LAB_SIM_NAME_PREFIX-$OS; run: sh tools/platform-spikes/lab/sim.sh create $OS && sim.sh boot $OS && sim.sh trust $OS"
 UDID="$(echo "$line" | awk '{ print $1 }')"
 STATE="$(echo "$line" | awk '{ print $3 }')"
 [ "$STATE" = Booted ] || sh "$ROOT/tools/platform-spikes/lab/sim.sh" boot "$OS"

@@ -35,7 +35,7 @@ find_device() {
     const d = JSON.parse(require("fs").readFileSync(0, "utf8")).devices;
     const name = process.argv[1];
     for (const list of Object.values(d)) for (const x of list) if (x.name === name) console.log(x.udid + " " + x.state);
-  ' "$LAB_SIM_PREFIX-$1" | head -1
+  ' "$LAB_SIM_NAME_PREFIX-$1" | head -1
 }
 
 # Print "udid name" of every device whose name starts with the lab prefix and a dash.
@@ -44,7 +44,7 @@ lab_devices() {
     const d = JSON.parse(require("fs").readFileSync(0, "utf8")).devices;
     const p = process.argv[1] + "-";
     for (const list of Object.values(d)) for (const x of list) if (x.name.startsWith(p)) console.log(x.udid + " " + x.name + " " + x.state);
-  ' "$LAB_SIM_PREFIX"
+  ' "$LAB_SIM_NAME_PREFIX"
 }
 
 # Print the runtime identifier of the available iOS runtime with this exact version.
@@ -60,7 +60,7 @@ runtime_id() {
 need_device() {
   check_os "$1"
   found="$(find_device "$1")"
-  [ -n "$found" ] || { echo "sim.sh: no lab simulator $LAB_SIM_PREFIX-$1; run: sim.sh create $1" >&2; exit 1; }
+  [ -n "$found" ] || { echo "sim.sh: no lab simulator $LAB_SIM_NAME_PREFIX-$1; run: sim.sh create $1" >&2; exit 1; }
   UDID="${found%% *}"
   STATE="${found#* }"
 }
@@ -74,16 +74,16 @@ case "$cmd" in
   create)
     os="${1:-}"
     check_os "$os"
-    [ -z "$(find_device "$os")" ] || { echo "sim.sh: $LAB_SIM_PREFIX-$os exists"; exit 0; }
+    [ -z "$(find_device "$os")" ] || { echo "sim.sh: $LAB_SIM_NAME_PREFIX-$os exists"; exit 0; }
     rt="$(runtime_id "$os")"
     [ -n "$rt" ] || { echo "sim.sh: no available iOS runtime $os (xcrun simctl list runtimes)" >&2; exit 1; }
     free=$(system_free_gb)
     [ "$free" -ge 20 ] || { echo "sim.sh: only $free GB free on the system volume (need 20)" >&2; exit 1; }
     if [ "$LAB_DRY_RUN" = 1 ]; then
-      echo "dry-run: xcrun simctl create $LAB_SIM_PREFIX-$os $LAB_SIM_DEVICE_TYPE $rt"
+      echo "dry-run: xcrun simctl create $LAB_SIM_NAME_PREFIX-$os $LAB_SIM_DEVICE_TYPE $rt"
     else
-      udid="$(xcrun simctl create "$LAB_SIM_PREFIX-$os" "$LAB_SIM_DEVICE_TYPE" "$rt")"
-      echo "sim.sh: created $LAB_SIM_PREFIX-$os $udid ($rt)"
+      udid="$(xcrun simctl create "$LAB_SIM_NAME_PREFIX-$os" "$LAB_SIM_DEVICE_TYPE" "$rt")"
+      echo "sim.sh: created $LAB_SIM_NAME_PREFIX-$os $udid ($rt)"
     fi
     ;;
   boot)
@@ -107,7 +107,7 @@ case "$cmd" in
     pidfile="$LAB_HOME/logs/sim-record-$UDID.pid"
     case "$sub" in
       start)
-        [ "$STATE" = Booted ] || { echo "sim.sh: $LAB_SIM_PREFIX-$os is not booted" >&2; exit 1; }
+        [ "$STATE" = Booted ] || { echo "sim.sh: $LAB_SIM_NAME_PREFIX-$os is not booted" >&2; exit 1; }
         if [ "$LAB_DRY_RUN" = 1 ]; then echo "dry-run: xcrun simctl io $UDID recordVideo $LAB_OUT/$file"; exit 0; fi
         [ ! -f "$pidfile" ] || { echo "sim.sh: a recording is already running" >&2; exit 1; }
         mkdir -p "$LAB_OUT" "$LAB_HOME/logs"
@@ -147,7 +147,7 @@ case "$cmd" in
       check_os "$target"
       found="$(find_device "$target")"
       devices=""
-      [ -z "$found" ] || devices="${found%% *} $LAB_SIM_PREFIX-$target ${found#* }"
+      [ -z "$found" ] || devices="${found%% *} $LAB_SIM_NAME_PREFIX-$target ${found#* }"
     fi
     if [ -z "$devices" ]; then echo "sim.sh: nothing to delete"; exit 0; fi
     echo "$devices" | while read -r udid name state; do

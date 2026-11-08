@@ -46,6 +46,7 @@ private fun selfCheck() {
     for (h in longArrayOf(0L, -1L, 0x7fff_ffffL)) {
         check(NativeBench.readArray(h, array) == NativeBench.E_HANDLE, "readArray bad handle $h")
         check(NativeBench.readDirect(h, direct) == NativeBench.E_HANDLE, "readDirect bad handle $h")
+        check(NativeBench.readDirectRaw(h, direct) == NativeBench.E_HANDLE, "readDirectRaw bad handle $h")
         check(NativeBench.close(h) == NativeBench.E_HANDLE, "close bad handle $h")
         check(NativeBench.copied(h) == NativeBench.E_HANDLE.toLong(), "copied bad handle $h")
     }
@@ -60,6 +61,23 @@ private fun selfCheck() {
     check(h != 0L, "open")
     // A heap buffer has no address: a JNI error, and the stream does not move.
     check(NativeBench.readDirect(h, ByteBuffer.allocate(16)) == NativeBench.E_JNI, "heap buffer")
+    // Review L-1: a read-only direct buffer is refused by the wrapper and by the JNI function,
+    // nothing is written, and the stream does not move.
+    val readOnly = ByteBuffer.allocateDirect(16).asReadOnlyBuffer()
+    check(NativeBench.readDirect(h, readOnly) == NativeBench.E_ARG, "read-only buffer (wrapper)")
+    check(NativeBench.readDirectRaw(h, readOnly) == NativeBench.E_ARG, "read-only buffer (JNI)")
+    check(readOnly.get(0) == 0.toByte(), "read-only buffer not written")
+    check(
+        NativeBench.readDirectRaw(h, ByteBuffer.allocate(16).asReadOnlyBuffer()) == NativeBench.E_ARG,
+        "read-only heap buffer (JNI)",
+    )
+    // A null buffer (Kotlin cannot pass one; reflection can, as any JNI caller can).
+    val raw = NativeBench::class.java.getMethod(
+        "readDirectRaw",
+        Long::class.javaPrimitiveType,
+        ByteBuffer::class.java,
+    )
+    check(raw.invoke(null, h, null) == NativeBench.E_NULL, "null buffer (JNI)")
     check(NativeBench.readArray(h, ByteArray(0)) == NativeBench.E_ARG, "empty array")
     check(NativeBench.readArray(h, array) == 4, "first read")
     check(array.copyOf(4).contentEquals(byteArrayOf(7, 38, 69, 100)), "first bytes")
@@ -94,8 +112,9 @@ private fun selfCheck() {
 
 private fun json(r: CaseResult): String =
     "{\"chunk\":${r.chunk},\"chunk_median_ns\":${r.chunkMedianNs},\"copied_bytes\":${r.copiedBytes}," +
-        "\"docs\":${r.docs},\"median_ns\":${r.medianNs},\"p95_ns\":${r.p95Ns},\"path\":\"${r.path}\"," +
-        "\"rss_delta_kib\":${r.rssDeltaKib},\"sha256_ok\":${r.sha256Ok},\"size\":${r.size}}\n"
+        "\"docs\":${r.docs},\"glue_copied_bytes\":${r.glueCopiedBytes},\"median_ns\":${r.medianNs}," +
+        "\"p95_ns\":${r.p95Ns},\"path\":\"${r.path}\",\"rss_delta_kib\":${r.rssDeltaKib}," +
+        "\"rust_copied_bytes\":${r.rustCopiedBytes},\"sha256_ok\":${r.sha256Ok},\"size\":${r.size}}\n"
 
 private fun versions(): String {
     val kotlin = KotlinVersion.CURRENT.toString()

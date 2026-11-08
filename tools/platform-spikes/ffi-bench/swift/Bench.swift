@@ -34,6 +34,11 @@ struct BenchFailure: Error, CustomStringConvertible {
   let description: String
 }
 
+/// Largest chunk and document of CONTRACT.md section 10.
+let maxChunk: UInt32 = 65_536
+let maxSize: UInt64 = 256 * 1024 * 1024
+let maxChunkTimes = 1 << 24
+
 struct CaseResult {
   let path: String
   let size: UInt64
@@ -43,13 +48,16 @@ struct CaseResult {
   let p95Ns: UInt64
   let chunkMedianNs: UInt64
   let copiedBytes: UInt64
+  let rustCopiedBytes: UInt64
+  let glueCopiedBytes: UInt64
   let rssDeltaKib: Int64
   let sha256Ok: Bool
 
   var json: String {
     "{\"chunk\":\(chunk),\"chunk_median_ns\":\(chunkMedianNs),\"copied_bytes\":\(copiedBytes),"
-      + "\"docs\":\(docs),\"median_ns\":\(medianNs),\"p95_ns\":\(p95Ns),\"path\":\"\(path)\","
-      + "\"rss_delta_kib\":\(rssDeltaKib),\"sha256_ok\":\(sha256Ok),\"size\":\(size)}\n"
+      + "\"docs\":\(docs),\"glue_copied_bytes\":\(glueCopiedBytes),\"median_ns\":\(medianNs),"
+      + "\"p95_ns\":\(p95Ns),\"path\":\"\(path)\",\"rss_delta_kib\":\(rssDeltaKib),"
+      + "\"rust_copied_bytes\":\(rustCopiedBytes),\"sha256_ok\":\(sha256Ok),\"size\":\(size)}\n"
   }
 }
 
@@ -108,6 +116,10 @@ final class SwiftBench {
   private let buffer: UnsafeMutableBufferPointer<UInt8>
 
   init(path: SwiftPath, size: UInt64, chunk: UInt32) throws {
+    // Bounds of CONTRACT.md section 10; checked first, so no buffer is made for a bad value.
+    guard (1...maxChunk).contains(chunk), (1...maxSize).contains(size) else {
+      throw BenchFailure(description: "chunk must be 1...\(maxChunk) and size 1...\(maxSize)")
+    }
     self.path = path
     self.size = size
     self.chunk = chunk
@@ -132,10 +144,15 @@ final class SwiftBench {
   func run(warmup: Int, docs: Int) throws -> CaseResult {
     guard warmup >= 0, docs > 0 else { throw BenchFailure(description: "bad document counts") }
     let maxChunks = Int((size + UInt64(chunk) - 1) / UInt64(chunk))
+    // At most 2^24 chunk times (128 MiB), so the arrays stay bounded.
+    let (cells, overflow) = docs.multipliedReportingOverflow(by: maxChunks)
+    guard !overflow, cells <= maxChunkTimes, warmup <= maxChunkTimes - docs else {
+      throw BenchFailure(description: "too many documents for size \(size) and chunk \(chunk)")
+    }
     var docNs = [UInt64](repeating: 0, count: docs)
     var chunkNs = [UInt64](repeating: 0, count: docs * maxChunks)
     var chunkCount = 0
-    var copied: UInt64? = nil
+    var copied: (rust: UInt64, glue: UInt64)? = nil
     guard let rssBefore = peakRssBytes() else { throw BenchFailure(description: "no peak RSS") }
     for d in 0..<(warmup + docs) {
       let measured = d >= warmup
@@ -146,7 +163,7 @@ final class SwiftBench {
       guard r.rustCopied == size else {
         throw BenchFailure(description: "document \(d): Rust copied \(r.rustCopied)")
       }
-      let docCopied = r.rustCopied + path.glueCopiesPerByte * r.bytes
+      let docCopied = (rust: r.rustCopied, glue: path.glueCopiesPerByte * r.bytes)
       if let c = copied, c != docCopied { throw BenchFailure(description: "copied bytes changed") }
       copied = docCopied
       if measured {
@@ -162,7 +179,9 @@ final class SwiftBench {
       medianNs: try percentile(docNs[...], 50),
       p95Ns: try percentile(docNs[...], 95),
       chunkMedianNs: try percentile(chunkNs[0..<chunkCount], 50),
-      copiedBytes: copied,
+      copiedBytes: copied.rust + copied.glue,
+      rustCopiedBytes: copied.rust,
+      glueCopiedBytes: copied.glue,
       rssDeltaKib: (rssAfter - rssBefore) / 1024,
       sha256Ok: true)
   }

@@ -2,9 +2,12 @@
 // SPDX-FileCopyrightText: The Rivqen Authors
 
 // Swift harness CLI (run.sh starts one process per case, so the peak RSS of a case is its own):
-//   swift-bench --selfcheck
-//   swift-bench --path <id> --size N --chunk N --warmup N --docs N --out <case.json>
+//   swift-bench --selfcheck [--status <file>]
+//   swift-bench --path <id> --size N --chunk N --warmup N --docs N --out <case.json> [--status <file>]
 // Exit 0 on success; 1 when a check fails (also a SHA-256 mismatch); 2 for a usage error.
+// The same code is the iOS simulator app (run.sh ios-sim). `simctl launch` does not give the
+// exit code, so --status writes "ok", "FAIL: ..." or "usage: ..." to a file. On iOS a file
+// name without a leading "/" is in the Documents folder of the app (its data container).
 
 import Foundation
 import RqBenchC
@@ -76,22 +79,52 @@ func parse(_ argv: [String]) throws -> [String: String] {
   return m
 }
 
-func usage(_ message: String) -> Never {
-  FileHandle.standardError.write(Data("usage: \(message)\n".utf8))
-  exit(2)
+/// The path of an output file: on iOS a relative name is in the Documents folder of the app.
+func outputPath(_ name: String) -> String {
+  #if os(iOS)
+    if !name.hasPrefix("/"),
+      let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+    {
+      return docs.appendingPathComponent(name).path
+    }
+  #endif
+  return name
+}
+
+/// Writes the status file (when --status is set), prints `line` and exits with `code`.
+func finish(_ status: String?, _ code: Int32, _ line: String) -> Never {
+  if let status {
+    do {
+      try "\(line)\n".write(toFile: outputPath(status), atomically: true, encoding: .utf8)
+    } catch {
+      FileHandle.standardError.write(Data("FAIL: status file: \(error)\n".utf8))
+      exit(1)
+    }
+  }
+  if code == 0 {
+    print(line)
+  } else {
+    FileHandle.standardError.write(Data("\(line)\n".utf8))
+  }
+  exit(code)
 }
 
 let options: [String: String]
 do {
   options = try parse(Array(CommandLine.arguments.dropFirst()))
 } catch {
-  usage("\(error)")
+  finish(nil, 2, "usage: \(error)")
+}
+let status = options["status"]
+
+func usage(_ message: String) -> Never {
+  finish(status, 2, "usage: \(message)")
 }
 
 do {
   if options["selfcheck"] != nil {
     try selfCheck()
-    print("self-check ok")
+    finish(status, 0, "ok")
   } else {
     guard let path = options["path"].flatMap(SwiftPath.init(rawValue:)) else { usage("--path") }
     guard let size = options["size"].flatMap(UInt64.init) else { usage("--size") }
@@ -100,10 +133,10 @@ do {
     let warmup = options["warmup"].flatMap(Int.init) ?? 200
     let docs = options["docs"].flatMap(Int.init) ?? 1000
     let r = try SwiftBench(path: path, size: size, chunk: chunk).run(warmup: warmup, docs: docs)
-    try r.json.write(toFile: out, atomically: true, encoding: .utf8)
+    try r.json.write(toFile: outputPath(out), atomically: true, encoding: .utf8)
     print("\(r.path) chunk \(r.chunk): median \(r.medianNs) ns, p95 \(r.p95Ns) ns")
+    finish(status, 0, "ok")
   }
 } catch {
-  FileHandle.standardError.write(Data("FAIL: \(error)\n".utf8))
-  exit(1)
+  finish(status, 1, "FAIL: \(error)")
 }

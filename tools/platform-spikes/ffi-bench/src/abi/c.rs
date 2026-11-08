@@ -68,7 +68,9 @@ pub extern "C" fn rq_bench_open(size: u64, chunk: u32) -> *mut RqBenchStream {
 /// # Safety
 ///
 /// `buf` is null or valid for writes of `cap` bytes. `out_len` is null or valid for one
-/// aligned `size_t` write. `s` may be any value.
+/// aligned `size_t` write. `buf` and `out_len` do not overlap. No other thread reads or
+/// writes this memory during the call. `s` may be any value. The same text is in
+/// `include/rq_bench.h`.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn rq_bench_read(
     s: *mut RqBenchStream,
@@ -104,7 +106,8 @@ pub extern "C" fn rq_bench_close(s: *mut RqBenchStream) -> i32 {
 ///
 /// # Safety
 ///
-/// `out` is null or valid for one aligned `uint64_t` write.
+/// `out` is null or valid for one aligned `uint64_t` write. No other thread reads or writes
+/// this memory during the call. `s` may be any value.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn rq_bench_copied(s: *mut RqBenchStream, out: *mut u64) -> i32 {
     guard(E_PANIC, || {
@@ -127,7 +130,8 @@ pub unsafe extern "C" fn rq_bench_copied(s: *mut RqBenchStream, out: *mut u64) -
 ///
 /// # Safety
 ///
-/// `out` is null or valid for writes of `cap` bytes.
+/// `out` is null or valid for writes of `cap` bytes. No other thread reads or writes this
+/// memory during the call.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn rq_bench_sha256(size: u64, out: *mut u8, cap: usize) -> i32 {
     guard(E_PANIC, || {
@@ -343,5 +347,48 @@ mod tests {
         ] {
             assert!(header.contains(f), "header declaration: {f}");
         }
+    }
+
+    /// Review L-5: each pointer contract of a `# Safety` section is in the C header, so a C or
+    /// Swift caller sees the same rules as a Rust caller.
+    #[test]
+    fn header_has_the_pointer_contracts() {
+        let header = include_str!("../../include/rq_bench.h");
+        // Only the code above the tests, so the strings of this test do not match themselves.
+        let source = include_str!("c.rs");
+        let code = source.split("#[cfg(test)]").next().unwrap();
+        for (c_text, rust_text) in [
+            (
+                "Safety: buf is NULL or valid for writes of cap bytes.",
+                "`buf` is null or valid for writes of `cap` bytes.",
+            ),
+            (
+                "Safety: out_len is NULL or valid for one aligned size_t write.",
+                "`out_len` is null or valid for one\n/// aligned `size_t` write.",
+            ),
+            (
+                "Safety: buf and out_len do not overlap.",
+                "`buf` and `out_len` do not overlap.",
+            ),
+            (
+                "Safety: out is NULL or valid for one aligned uint64_t write.",
+                "`out` is null or valid for one aligned `uint64_t` write.",
+            ),
+            (
+                "Safety: out is NULL or valid for writes of cap bytes.",
+                "`out` is null or valid for writes of `cap` bytes.",
+            ),
+            (
+                "No other thread reads or writes that memory during the call.",
+                "No other thread reads or writes",
+            ),
+            ("s: any value.", "`s` may be any value."),
+        ] {
+            assert!(header.contains(c_text), "header: {c_text}");
+            assert!(code.contains(rust_text), "Rust # Safety: {rust_text}");
+        }
+        // Three unsafe exports, three `# Safety` sections; the safe exports take no pointer.
+        assert_eq!(code.matches("pub unsafe extern \"C\" fn").count(), 3);
+        assert_eq!(code.matches("pub extern \"C\" fn").count(), 2);
     }
 }

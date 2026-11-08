@@ -23,16 +23,17 @@ CONTROL="http://127.0.0.1:$LAB_HOST_CONTROL_PORT"
 APP_TIMEOUT_S=200
 
 die() { echo "run.sh: $*" >&2; exit 1; }
-usage() { echo "usage: [SPIKE_SET=<set>] run.sh CAP-A-01|02|03|04|05|08 37|29 [k | a..b]" >&2; exit 2; }
+usage() { echo "usage: [SPIKE_SET=<set>] run.sh CAP-A-01|02|03|04|05|06|07|08 37|29 [k | a..b]" >&2; exit 2; }
 
 cap="${1:-}"
 api="${2:-}"
 spec="${3:-1..3}"
 set_name="${SPIKE_SET:-}"
-case "$cap" in CAP-A-01 | CAP-A-02 | CAP-A-03 | CAP-A-04 | CAP-A-05 | CAP-A-08) ;; *) usage ;; esac
+case "$cap" in CAP-A-01 | CAP-A-02 | CAP-A-03 | CAP-A-04 | CAP-A-05 | CAP-A-06 | CAP-A-07 | CAP-A-08) ;; *) usage ;; esac
 case "$set_name" in "" | [a-z0-9]*) ;; *) usage ;; esac
 case "$set_name" in *[!a-z0-9-]*) usage ;; esac
 scenario="$(node "$HERE/runlog.mjs" scenario "$cap" "$set_name")" || die "unknown set '$set_name' of $cap"
+seed="$(node "$HERE/runlog.mjs" seed "$cap" "$set_name")" || die "unknown set '$set_name' of $cap"
 case "$api" in 37 | 29) ;; *) usage ;; esac
 case "$spec" in
   [1-9]) first="$spec"; last="$spec" ;;
@@ -86,6 +87,21 @@ while [ "$k" -le "$last" ]; do
   rm -f "$WORK"/app.jsonl "$WORK"/host.jsonl "$WORK"/metrics.json "$WORK"/device.json "$WORK"/status.json
   adb_ shell am force-stop "$PKG"
   adb_ shell run-as "$PKG" rm -rf files/out
+  # A seed launch (CAP-A-07 persist) prepares the app state before the run: no host run, no log.
+  # The app ends its own process after status.json; its output is removed.
+  case "$url" in *"'"*) die "the URL has a quote: $url" ;; esac
+  if [ -n "$seed" ]; then
+    adb_ shell "am start -n $ACTIVITY --es run $run-seed --es capability $cap --es scenario $seed --es url '$url'" >/dev/null
+    i=0
+    while ! adb_ shell run-as "$PKG" ls files/out/status.json >/dev/null 2>&1; do
+      i=$((i + 1))
+      [ "$i" -le 60 ] || die "the seed launch of $run wrote no status"
+      sleep 1
+    done
+    adb_ shell run-as "$PKG" cat files/out/status.json | grep -q '"done"' || die "the seed launch of $run failed"
+    adb_ shell am force-stop "$PKG"
+    adb_ shell run-as "$PKG" rm -rf files/out
+  fi
   # A run id left open by an interrupted earlier run would give 409: close it first.
   post /run/end "{\"run\":\"$run\"}" >/dev/null 2>&1 || true
   post /run/start "{\"run\":\"$run\",\"capability\":\"$cap\",\"platform\":\"android\",\"os\":\"$api\",\"k\":$k}" >/dev/null \

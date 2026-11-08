@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
-Evidence code for CAP-A-01…05 and CAP-A-08 ([CONTRACT.md](../CONTRACT.md), DL-133). It is not the base of the SDK. Kotlin app `dev.rivqen.spike`, minSdk 29, target 37. Dependencies (DL-137, pinned exactly): androidx.webkit 1.18.0, OkHttp 5.5.1 (both Apache-2.0); AGP 9.1.1, Kotlin 2.4.20, Gradle 9.5.1 as `tools/webview-lab`.
+Evidence code for CAP-A-01…08 ([CONTRACT.md](../CONTRACT.md), DL-133). It is not the base of the SDK. Kotlin app `dev.rivqen.spike`, minSdk 29, target 37. Dependencies (DL-137, pinned exactly): androidx.webkit 1.18.0, OkHttp 5.5.1 (both Apache-2.0); AGP 9.1.1, Kotlin 2.4.20, Gradle 9.5.1 as `tools/webview-lab`.
 
 ## What the app does
 
@@ -20,13 +20,23 @@ One run per launch (`SpikeActivity`):
 6. Scenario steps (intent extra `scenario`):
    - `redirect-3xx` (CAP-A-04 probe): the interceptor gives the WebView the fetched 3xx head as a `WebResourceResponse`. The constructor refuses it, and the request passes.
    - `cut-range` (CAP-A-08): the delivered stream ended with an error and the load settled. The app writes `native.doc`, then calls `loadUrl` once more (CL-33: the request passes as `claimed`, and the WebView loads it itself). When that load settled, it writes `native.doc` again and loads `/s/echo?html=1` on site A (an error page has no probe channel; the rule passes this URL as `url`). On that page it runs a script with two byte-range fetches of `/s/range`.
+   - `cookie-on`, `cookie-on-map`, `cookie-off`, `cookie-manual` (CAP-A-06): before the load the app clears `CookieManager` and sets `a06-pre=v1`. `cookie-on` turns on `WebSettingsCompat.setCookiesIncludedInShouldInterceptRequest` (when `COOKIE_INTERCEPT` is supported) and moves the fetched `Set-Cookie` into `WebResourceResponseCompat.setCookies`. `cookie-on-map` turns it on and leaves the value in the field map. `cookie-off` leaves the value in the map with the setting off. `cookie-manual` writes the value with `CookieManager.setCookie` before it returns the response (the interceptor thread waits at most 5 s for the callback) and removes it from the map. After the settled load: `native.cookie_intercept`, `native.doc_cookie`, `native.cm_cookie`.
 7. The run ends when the last load settled, the fetch ended and the pipe has its outcome (then at most 2 s for `metric.first_paint`), or after 150 s.
+
+**Step runs (CAP-A-07).** Scenarios `cookie-sync`, `cookie-persist` and `cookie-seed` have no early fetch and no interception; they run steps on the main thread, each with a bounded wait (callbacks, settled loads, the 150 s run limit), and end with `native.step` `done`.
+
+- `cookie-sync`: clear; `setCookie` of seven variants (`plain`, `http` HttpOnly, `secure`, `strict`, `lax`, `none` = `SameSite=None; Secure`, `none-insecure` = `SameSite=None` without `Secure`) on site A (`a-…`) and site B (`b-…`), `flush`; `getCookie` of both sites; a native OkHttp fetch of `/s/echo` per site with the `getCookie` value as `Cookie` (no cookie jar); then WebView loads of `/s/echo?html=1` started by the app (`loadUrl`, site A and B), by a same-site page and by a cross-site page (script `location.href`, no gesture); each page gives `native.wv_cookie` (the `Cookie` field the host saw) and `native.doc_cookie`. Then the WebView stores cookies itself (`/s/cookie/set` with `HttpOnly,Secure,SameSite=Strict`, `/s/cookie/js` with `SameSite=Lax`), `flush`, `getCookie` and a native fetch again.
+- `persist`: run.sh first starts a **seed launch** (`cookie-seed`, no host run, its output is removed): clear, `p-session` (no Max-Age) and `p-max` (Max-Age 3600), `flush`, then `p-late` (Max-Age 3600) without `flush`; the app then ends its own process. The run (`cookie-persist`) logs `getCookie` (`native.cm_start`).
+
+For each main-frame request of a step run the interceptor logs `native.request` and `shouldOverrideUrlLoading` logs `native.override` (JSON: `url`, `gesture` = `hasGesture()`, `redirect`, field names, and the values of `Referer`, `Origin`, `Sec-Fetch-*` when present; `fields_null` when the field map is null). <Badge type="tip" text="FACT" /> On WebView 91, `WebResourceRequest.getRequestHeaders()` is null in `shouldOverrideUrlLoading` (on WebView 145 it is empty); the first API 29 run crashed on it, so every field read is null-safe (`CookieLab.fields`).
+
+`COOKIE_INTERCEPT` check: the androidx.webkit reference names it a feature for `isFeatureSupported`, but the string definition of the parameter in 1.18.0 does not list it, so lint reports `WrongConstant`; `SpikeActivity.cookieInterceptSupported` holds the one suppression.
 
 The page scripts of the spike host call `window.rqLab.probe(name, value)` from the page world, so the probe object is in the page world. The origin rule is the boundary; the app checks every message (main frame, origin, size, shape).
 
 **After-load channel.** <Badge type="tip" text="FACT" /> WebView 91.0.4472.114 (API 29 `google_apis` image) has `WEB_MESSAGE_LISTENER` but not `DOCUMENT_START_SCRIPT` (`WebViewFeature.isFeatureSupported`; `run.json` `features`). Then the app runs the same script with `evaluateJavascript` in `onPageFinished`, only when the finished URL is on a probe origin (`evaluateJavascript` has no origin rule of its own). The DOMContentLoaded probes then run at once, after `app.nav` `finish`. Page scripts that ran before (the chunk scripts) find no `rqLab`, so there are no `chunk` probes. The chunk beacon requests that the interceptor sees start the visual-state callbacks instead (`metric.visual_beacon_<k>`). A script result other than `installed` is logged as `native.after_load`.
 
-**Lab probes of S2.** App probes (prefix `native.`, CONTRACT §6): `native.range_request` (the `Range` field that `shouldInterceptRequest` gets for a `/s/range` subresource), `native.step` (`fallback-load`, `range-fetch`), `native.doc` (JSON from `evaluateJavascript`: `href`, `title`, `ready`, `text` length of the body, `rqlab`), `native.after_load`. Page probes of the range script: `range.status`, `range.content_range`, `range.bytes`, `range.match` (every byte equals `(i * 31 + 7) mod 251`), `range.bad_status`, `range.error`, `range.done`. Extra members: `app.intercept` has `redirect` (`WebResourceRequest.isRedirect`) and `reason` (the pass reason); `app.stream.read` has `want` (the length the WebView asked for).
+**Lab probes of S2.** App probes (prefix `native.`, CONTRACT §6): `native.range_request` (the `Range` field that `shouldInterceptRequest` gets for a `/s/range` subresource), `native.step` (step labels), `native.doc` (JSON from `evaluateJavascript`: `href`, `title`, `ready`, `text` length of the body, `rqlab`), `native.after_load`; cookies (T-03): `native.request_cookie`, `native.manual_set`, `native.cookie_intercept`, `native.doc_cookie`, `native.cm_cookie`, `native.cm_set`, `native.cm_get_a`, `native.cm_get_b`, `native.fetch_cookie`, `native.wv_cookie`, `native.cm_start`, `native.request`, `native.override`. Cookie names and values are synthetic (`[a-z0-9-]`). Page probes of the range script: `range.status`, `range.content_range`, `range.bytes`, `range.match` (every byte equals `(i * 31 + 7) mod 251`), `range.bad_status`, `range.error`, `range.done`. Extra members: `app.intercept` has `redirect` (`WebResourceRequest.isRedirect`) and `reason` (the pass reason); `app.stream.read` has `want` (the length the WebView asked for).
 
 ### Bridge pipe
 
@@ -83,6 +93,8 @@ sh tools/platform-spikes/lab/emulator.sh stop
 | `pass` | Every main-frame decision is `pass`; the WebView read no byte of the early fetch (outcome `cancel`, 0 bytes) |
 | `probe` | The WebView read no byte of the early fetch (the decision is the observation) |
 | `cut` | The first main-frame request streamed; the fetch ended at `host.cut.after` and did not complete; the WebView read the same bytes (count and SHA-256), outcome `error`; the fallback load ran, and its request passed as `claimed` |
+| `fetched` | The main frame streamed; the fetch read the whole body; the WebView read the same bytes (count and SHA-256), outcome `end` |
+| `steps` | The last `native.step` is `done`; no `app.error` |
 
 A failed run goes to `$LAB_OUT/android-failed/…`, never into `evidence/`. `run.json` is written only next to ok runs.
 
@@ -103,6 +115,10 @@ Run sets (`runlog.mjs` `SETS`). `SPIKE_SET=<set>` selects a supporting set; its 
 | CAP-A-04 `wrr-302` | as CAP-A-04, scenario `redirect-3xx` | probe |
 | CAP-A-05 | `https://10.0.2.2:18444/s/echo?html=1` (site B, bad certificate; no extra `adb reverse`) | pass |
 | CAP-A-08 | `/s/cut` `after=3000&size=8192`, scenario `cut-range` | cut |
+| CAP-A-06 | `/s/cookie/set` `name=a06-set&value=v1&attrs=Secure,SameSite=Lax`, scenario `cookie-on` | fetched |
+| CAP-A-06 `on-map`, `off`, `manual` | as CAP-A-06, scenarios `cookie-on-map`, `cookie-off`, `cookie-manual` | fetched |
+| CAP-A-07 | `/s/echo?html=1` (start page only), scenario `cookie-sync` | steps |
+| CAP-A-07 `persist` | seed launch `cookie-seed`, then scenario `cookie-persist` | steps |
 
 The gate timeout (15 s) is longer than a cold WebView start: the first run after the emulator boot needed 7.4 s to create the WebView.
 
@@ -121,4 +137,4 @@ The app writes events in the order they happen, with these rules that keep the o
 
 ## Evidence
 
-`evidence/spikes/wp-04/android/<capability>/<api>/`: `run-<k>.jsonl`, `run-<k>.metrics.json`, `run.json`. Supporting sets (same layout, not catalog runs): `CAP-A-01/37/block-1500` (read-block stall), `CAP-A-01/<api>/paint-delay` (paint before the end of the body), `CAP-A-01/29/small-2048` (2048-byte chunks wait for the 64 KiB block), `CAP-A-03/<api>/status-400` (an intercepted 400), `CAP-A-04/<api>/cross-site`, `chain-307`, `wrr-302`.
+`evidence/spikes/wp-04/android/<capability>/<api>/`: `run-<k>.jsonl`, `run-<k>.metrics.json`, `run.json`. Supporting sets (same layout, not catalog runs): `CAP-A-01/37/block-1500` (read-block stall), `CAP-A-01/<api>/paint-delay` (paint before the end of the body), `CAP-A-01/29/small-2048` (2048-byte chunks wait for the 64 KiB block), `CAP-A-03/<api>/status-400` (an intercepted 400), `CAP-A-04/<api>/cross-site`, `chain-307`, `wrr-302`, `CAP-A-06/<api>/on-map`, `off`, `manual`, `CAP-A-07/<api>/persist`.

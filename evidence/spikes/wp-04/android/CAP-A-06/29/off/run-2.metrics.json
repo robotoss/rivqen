@@ -1,0 +1,45 @@
+{
+  "run": "CAP-A-06-android-29-2",
+  "url": "https://localhost:18443/s/cookie/set?run=CAP-A-06-android-29-2&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax",
+  "metrics": {
+    "metric.commit": 157,
+    "metric.fetch_end": 88,
+    "metric.finish": 127,
+    "metric.first_paint": 174,
+    "metric.head_wait": 0,
+    "metric.intercept": 11,
+    "metric.load_call": 155,
+    "metric.webview_create": 79
+  },
+  "fetch": {
+    "bytes": 230,
+    "complete": true,
+    "error": null,
+    "sha256": "85966bfcbab2c5f7d7229d3164f3bb5f4eaf31b692ae8493a8d8f45e296161e1"
+  },
+  "stream": {
+    "bytes": 230,
+    "error": null,
+    "outcome": "end",
+    "sha256": "85966bfcbab2c5f7d7229d3164f3bb5f4eaf31b692ae8493a8d8f45e296161e1"
+  },
+  "intercept": {
+    "main_frame_calls": 1,
+    "reason": "match",
+    "subresource_passes": 1
+  },
+  "expected": {
+    "bytes": 230,
+    "sha256": "85966bfcbab2c5f7d7229d3164f3bb5f4eaf31b692ae8493a8d8f45e296161e1"
+  },
+  "checks": {
+    "decisions": [
+      "stream"
+    ],
+    "fetch_bytes": 230,
+    "fetch_complete": true,
+    "stream_read_bytes": 230,
+    "stream_outcome": "end",
+    "stream_sha256_is_fetch": true
+  }
+}

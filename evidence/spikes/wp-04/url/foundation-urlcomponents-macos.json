@@ -1,0 +1,799 @@
+{
+  "stack": "foundation-urlcomponents-macos",
+  "version": "Foundation of Version 26.6.2 (Build 25G83); swift-driver version: 1.168.6 Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1); API: URLComponents(string:), .string (url(relativeTo:)?.absoluteString for a base)",
+  "runtime": "macOS Version 26.6.2 (Build 25G83), arm64",
+  "results": [
+    {
+      "id": "q-apostrophe",
+      "ok": true,
+      "href": "https://a.example/p?q=it's",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=it's",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?q=it's"
+      }
+    },
+    {
+      "id": "q-pipe",
+      "ok": true,
+      "href": "https://a.example/p?q=a%7Cb",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=a%7Cb",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?q=a%7Cb"
+      }
+    },
+    {
+      "id": "q-caret",
+      "ok": true,
+      "href": "https://a.example/p?q=a%5Eb",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=a%5Eb",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?q=a%5Eb"
+      }
+    },
+    {
+      "id": "q-backslash",
+      "ok": true,
+      "href": "https://a.example/p?q=a%5Cb",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=a%5Cb",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?q=a%5Cb"
+      }
+    },
+    {
+      "id": "q-backtick",
+      "ok": true,
+      "href": "https://a.example/p?q=a%60b",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=a%60b",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?q=a%60b"
+      }
+    },
+    {
+      "id": "q-braces",
+      "ok": true,
+      "href": "https://a.example/p?q=%7Ba%7D",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=%7Ba%7D",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?q=%7Ba%7D"
+      }
+    },
+    {
+      "id": "q-space",
+      "ok": true,
+      "href": "https://a.example/p?q=a%20b",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=a%20b",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?q=a%20b"
+      }
+    },
+    {
+      "id": "q-dquote",
+      "ok": true,
+      "href": "https://a.example/p?q=%22x%22",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=%22x%22",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?q=%22x%22"
+      }
+    },
+    {
+      "id": "q-lt-gt",
+      "ok": true,
+      "href": "https://a.example/p?q=%3Cx%3E",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=%3Cx%3E",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?q=%3Cx%3E"
+      }
+    },
+    {
+      "id": "q-brackets",
+      "ok": true,
+      "href": "https://a.example/p?q%5B0%5D=1",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q%5B0%5D=1",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?q%5B0%5D=1"
+      }
+    },
+    {
+      "id": "q-unicode",
+      "ok": true,
+      "href": "https://a.example/p?q=%C3%A9",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=%C3%A9",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?q=%C3%A9"
+      }
+    },
+    {
+      "id": "q-pct-unreserved",
+      "ok": true,
+      "href": "https://a.example/p?q=%41%7e%2D",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=%41%7e%2D",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?q=%41%7e%2D"
+      }
+    },
+    {
+      "id": "q-pct-lower",
+      "ok": true,
+      "href": "https://a.example/p?q=%c3%a9",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=%c3%a9",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?q=%c3%a9"
+      }
+    },
+    {
+      "id": "q-pct-invalid",
+      "ok": true,
+      "href": "https://a.example/p?q=%25zz%25",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=%25zz%25",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?q=%25zz%25"
+      }
+    },
+    {
+      "id": "q-empty",
+      "ok": true,
+      "href": "https://a.example/p?",
+      "host": "a.example",
+      "path": "/p",
+      "query": "",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?"
+      }
+    },
+    {
+      "id": "q-plus-amp",
+      "ok": true,
+      "href": "https://a.example/p?a=1+2&b=%2B&a=3",
+      "host": "a.example",
+      "path": "/p",
+      "query": "a=1+2&b=%2B&a=3",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?a=1+2&b=%2B&a=3"
+      }
+    },
+    {
+      "id": "p-pct-unreserved",
+      "ok": true,
+      "href": "https://a.example/%41%7e/%2e%2E/x",
+      "host": "a.example",
+      "path": "/%41%7e/%2e%2E/x",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/%41%7e/%2e%2E/x"
+      }
+    },
+    {
+      "id": "p-pct-slash",
+      "ok": true,
+      "href": "https://a.example/a%2Fb/c%5Cd",
+      "host": "a.example",
+      "path": "/a%2Fb/c%5Cd",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/a%2Fb/c%5Cd"
+      }
+    },
+    {
+      "id": "p-pct-invalid",
+      "ok": true,
+      "href": "https://a.example/a%25zzb/%25",
+      "host": "a.example",
+      "path": "/a%25zzb/%25",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/a%25zzb/%25"
+      }
+    },
+    {
+      "id": "p-special",
+      "ok": true,
+      "href": "https://a.example/a%20b/%22%3C%3E%60%7B%7D%7C%5E%5B%5D",
+      "host": "a.example",
+      "path": "/a%20b/%22%3C%3E%60%7B%7D%7C%5E%5B%5D",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/a%20b/%22%3C%3E%60%7B%7D%7C%5E%5B%5D"
+      }
+    },
+    {
+      "id": "p-unicode",
+      "ok": true,
+      "href": "https://a.example/caf%C3%A9/%E6%97%A5%E6%9C%AC",
+      "host": "a.example",
+      "path": "/caf%C3%A9/%E6%97%A5%E6%9C%AC",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/caf%C3%A9/%E6%97%A5%E6%9C%AC"
+      }
+    },
+    {
+      "id": "p-backslash",
+      "ok": true,
+      "href": "https://a.example/p%5Cq",
+      "host": "a.example",
+      "path": "/p%5Cq",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p%5Cq"
+      }
+    },
+    {
+      "id": "p-backslash-host",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "URLComponents(string:) returned nil"
+    },
+    {
+      "id": "p-backslash-at",
+      "ok": true,
+      "href": "https://a.example%5C@b.example/p",
+      "host": "b.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example%5C@b.example/p"
+      }
+    },
+    {
+      "id": "p-empty",
+      "ok": true,
+      "href": "https://a.example",
+      "host": "a.example",
+      "path": "",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example"
+      }
+    },
+    {
+      "id": "p-dots",
+      "ok": true,
+      "href": "https://a.example/a/./b/../c",
+      "host": "a.example",
+      "path": "/a/./b/../c",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/a/./b/../c"
+      }
+    },
+    {
+      "id": "p-dots-up",
+      "ok": true,
+      "href": "https://a.example/../../x",
+      "host": "a.example",
+      "path": "/../../x",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/../../x"
+      }
+    },
+    {
+      "id": "p-double-slash",
+      "ok": true,
+      "href": "https://a.example//a//b/",
+      "host": "a.example",
+      "path": "//a//b/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example//a//b/"
+      }
+    },
+    {
+      "id": "p-trailing-dotdot",
+      "ok": true,
+      "href": "https://a.example/a/..",
+      "host": "a.example",
+      "path": "/a/..",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/a/.."
+      }
+    },
+    {
+      "id": "frag",
+      "ok": true,
+      "href": "https://a.example/p?q=1#frag%20ment",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=1",
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p?q=1#frag%20ment"
+      }
+    },
+    {
+      "id": "host-trailing-dot",
+      "ok": true,
+      "href": "https://a.example./p",
+      "host": "a.example.",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example./p"
+      }
+    },
+    {
+      "id": "host-case",
+      "ok": true,
+      "href": "HTTPS://A.Example/P",
+      "host": "A.Example",
+      "path": "/P",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "HTTPS://A.Example/P"
+      }
+    },
+    {
+      "id": "host-idn",
+      "ok": true,
+      "href": "https://xn--fa-hia.example/catalog",
+      "host": "fa%C3%9F.example",
+      "path": "/catalog",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://xn--fa-hia.example/catalog"
+      }
+    },
+    {
+      "id": "host-idn-nfc",
+      "ok": true,
+      "href": "https://xn--bcher-kva.example/",
+      "host": "b%C3%BCcher.example",
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://xn--bcher-kva.example/"
+      }
+    },
+    {
+      "id": "host-idn-nfd",
+      "ok": true,
+      "href": "https://xn--bcher-kva.example/",
+      "host": "b%C3%BCcher.example",
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://xn--bcher-kva.example/"
+      }
+    },
+    {
+      "id": "host-punycode",
+      "ok": true,
+      "href": "https://xn--fa-hia.example/catalog",
+      "host": "fa%C3%9F.example",
+      "path": "/catalog",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://xn--fa-hia.example/catalog"
+      }
+    },
+    {
+      "id": "host-fullwidth",
+      "ok": true,
+      "href": "https://a.example/",
+      "host": "a.example",
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/"
+      }
+    },
+    {
+      "id": "host-ipv4-short",
+      "ok": true,
+      "href": "https://127.1/",
+      "host": "127.1",
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://127.1/"
+      }
+    },
+    {
+      "id": "host-ipv4-hex",
+      "ok": true,
+      "href": "https://0x7f.0.0.1/",
+      "host": "0x7f.0.0.1",
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://0x7f.0.0.1/"
+      }
+    },
+    {
+      "id": "host-ipv4-int",
+      "ok": true,
+      "href": "https://2130706433/",
+      "host": "2130706433",
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://2130706433/"
+      }
+    },
+    {
+      "id": "host-ipv6",
+      "ok": true,
+      "href": "https://[2001:DB8::1]/p",
+      "host": "[2001:DB8::1]",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://[2001:DB8::1]/p"
+      }
+    },
+    {
+      "id": "host-ipv6-zero",
+      "ok": true,
+      "href": "https://[2001:0db8:0:0:0:0:0:1]/p",
+      "host": "[2001:0db8:0:0:0:0:0:1]",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://[2001:0db8:0:0:0:0:0:1]/p"
+      }
+    },
+    {
+      "id": "host-underscore",
+      "ok": true,
+      "href": "https://a_b.example/",
+      "host": "a_b.example",
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a_b.example/"
+      }
+    },
+    {
+      "id": "host-pct",
+      "ok": true,
+      "href": "https://a%2Eexample/",
+      "host": "a%2Eexample",
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a%2Eexample/"
+      }
+    },
+    {
+      "id": "host-space",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "URLComponents(string:) returned nil"
+    },
+    {
+      "id": "host-empty",
+      "ok": true,
+      "href": "https:///p",
+      "host": "",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https:///p"
+      }
+    },
+    {
+      "id": "host-lone-dot",
+      "ok": true,
+      "href": "https://./p",
+      "host": ".",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://./p"
+      }
+    },
+    {
+      "id": "userinfo",
+      "ok": true,
+      "href": "https://user:pw@a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://user:pw@a.example/p"
+      }
+    },
+    {
+      "id": "userinfo-user-only",
+      "ok": true,
+      "href": "https://user@a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://user@a.example/p"
+      }
+    },
+    {
+      "id": "userinfo-special",
+      "ok": true,
+      "href": "https://us%20er:p%40ss@a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://us%20er:p%40ss@a.example/p"
+      }
+    },
+    {
+      "id": "userinfo-empty-pw",
+      "ok": true,
+      "href": "https://:@a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://:@a.example/p"
+      }
+    },
+    {
+      "id": "port-default",
+      "ok": true,
+      "href": "https://a.example:443/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example:443/p"
+      }
+    },
+    {
+      "id": "port-http-default",
+      "ok": true,
+      "href": "http://a.example:80/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "http://a.example:80/p"
+      }
+    },
+    {
+      "id": "port-other-default",
+      "ok": true,
+      "href": "https://a.example:80/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example:80/p"
+      }
+    },
+    {
+      "id": "port-leading-zero",
+      "ok": true,
+      "href": "https://a.example:0443/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example:0443/p"
+      }
+    },
+    {
+      "id": "port-zero",
+      "ok": true,
+      "href": "https://a.example:0/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example:0/p"
+      }
+    },
+    {
+      "id": "port-too-big",
+      "ok": true,
+      "href": "https://a.example:65536/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example:65536/p"
+      }
+    },
+    {
+      "id": "port-empty",
+      "ok": true,
+      "href": "https://a.example:/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example:/p"
+      }
+    },
+    {
+      "id": "port-non-digit",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "URLComponents(string:) returned nil"
+    },
+    {
+      "id": "ws-tab-newline",
+      "ok": true,
+      "href": "https://a.example/p%09q%0Ar",
+      "host": "a.example",
+      "path": "/p%09q%0Ar",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https://a.example/p%09q%0Ar"
+      }
+    },
+    {
+      "id": "ws-edges",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "URLComponents(string:) returned nil"
+    },
+    {
+      "id": "scheme-one-slash",
+      "ok": true,
+      "href": "https:/a.example/p",
+      "host": null,
+      "path": "/a.example/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https:/a.example/p"
+      }
+    },
+    {
+      "id": "scheme-no-slash",
+      "ok": true,
+      "href": "https:a.example/p",
+      "host": null,
+      "path": "a.example/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "url_absoluteString": "https:a.example/p"
+      }
+    },
+    {
+      "id": "rel-dotdot",
+      "ok": true,
+      "href": "https://a.example/dir/x?y=1",
+      "host": null,
+      "path": "../x",
+      "query": "y=1",
+      "error": null,
+      "extra": {
+        "relative_via": "url(relativeTo:)"
+      }
+    },
+    {
+      "id": "rel-authority",
+      "ok": true,
+      "href": "https://b.example/x",
+      "host": "b.example",
+      "path": "/x",
+      "query": null,
+      "error": null,
+      "extra": {
+        "relative_via": "url(relativeTo:)"
+      }
+    },
+    {
+      "id": "rel-query",
+      "ok": true,
+      "href": "https://a.example/dir/page?q=1",
+      "host": null,
+      "path": "",
+      "query": "q=1",
+      "error": null,
+      "extra": {
+        "relative_via": "url(relativeTo:)"
+      }
+    },
+    {
+      "id": "rel-backslash",
+      "ok": true,
+      "href": "https://a.example/dir/%5C%5Cb.example%5Cx",
+      "host": null,
+      "path": "%5C%5Cb.example%5Cx",
+      "query": null,
+      "error": null,
+      "extra": {
+        "relative_via": "url(relativeTo:)"
+      }
+    }
+  ]
+}

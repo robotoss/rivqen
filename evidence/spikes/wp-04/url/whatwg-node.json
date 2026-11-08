@@ -1,0 +1,610 @@
+{
+  "stack": "whatwg-node",
+  "version": "Node.js v26.8.2 (ada 4.0.0); API: new URL(input, base).href",
+  "runtime": "darwin arm64",
+  "results": [
+    {
+      "id": "q-apostrophe",
+      "ok": true,
+      "href": "https://a.example/p?q=it%27s",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=it%27s",
+      "error": null
+    },
+    {
+      "id": "q-pipe",
+      "ok": true,
+      "href": "https://a.example/p?q=a|b",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=a|b",
+      "error": null
+    },
+    {
+      "id": "q-caret",
+      "ok": true,
+      "href": "https://a.example/p?q=a^b",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=a^b",
+      "error": null
+    },
+    {
+      "id": "q-backslash",
+      "ok": true,
+      "href": "https://a.example/p?q=a\\b",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=a\\b",
+      "error": null
+    },
+    {
+      "id": "q-backtick",
+      "ok": true,
+      "href": "https://a.example/p?q=a`b",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=a`b",
+      "error": null
+    },
+    {
+      "id": "q-braces",
+      "ok": true,
+      "href": "https://a.example/p?q={a}",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q={a}",
+      "error": null
+    },
+    {
+      "id": "q-space",
+      "ok": true,
+      "href": "https://a.example/p?q=a%20b",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=a%20b",
+      "error": null
+    },
+    {
+      "id": "q-dquote",
+      "ok": true,
+      "href": "https://a.example/p?q=%22x%22",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=%22x%22",
+      "error": null
+    },
+    {
+      "id": "q-lt-gt",
+      "ok": true,
+      "href": "https://a.example/p?q=%3Cx%3E",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=%3Cx%3E",
+      "error": null
+    },
+    {
+      "id": "q-brackets",
+      "ok": true,
+      "href": "https://a.example/p?q[0]=1",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q[0]=1",
+      "error": null
+    },
+    {
+      "id": "q-unicode",
+      "ok": true,
+      "href": "https://a.example/p?q=%C3%A9",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=%C3%A9",
+      "error": null
+    },
+    {
+      "id": "q-pct-unreserved",
+      "ok": true,
+      "href": "https://a.example/p?q=%41%7e%2D",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=%41%7e%2D",
+      "error": null
+    },
+    {
+      "id": "q-pct-lower",
+      "ok": true,
+      "href": "https://a.example/p?q=%c3%a9",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=%c3%a9",
+      "error": null
+    },
+    {
+      "id": "q-pct-invalid",
+      "ok": true,
+      "href": "https://a.example/p?q=%zz%",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=%zz%",
+      "error": null
+    },
+    {
+      "id": "q-empty",
+      "ok": true,
+      "href": "https://a.example/p?",
+      "host": "a.example",
+      "path": "/p",
+      "query": "",
+      "error": null
+    },
+    {
+      "id": "q-plus-amp",
+      "ok": true,
+      "href": "https://a.example/p?a=1+2&b=%2B&a=3",
+      "host": "a.example",
+      "path": "/p",
+      "query": "a=1+2&b=%2B&a=3",
+      "error": null
+    },
+    {
+      "id": "p-pct-unreserved",
+      "ok": true,
+      "href": "https://a.example/x",
+      "host": "a.example",
+      "path": "/x",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "p-pct-slash",
+      "ok": true,
+      "href": "https://a.example/a%2Fb/c%5Cd",
+      "host": "a.example",
+      "path": "/a%2Fb/c%5Cd",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "p-pct-invalid",
+      "ok": true,
+      "href": "https://a.example/a%zzb/%",
+      "host": "a.example",
+      "path": "/a%zzb/%",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "p-special",
+      "ok": true,
+      "href": "https://a.example/a%20b/%22%3C%3E%60%7B%7D|%5E[]",
+      "host": "a.example",
+      "path": "/a%20b/%22%3C%3E%60%7B%7D|%5E[]",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "p-unicode",
+      "ok": true,
+      "href": "https://a.example/caf%C3%A9/%E6%97%A5%E6%9C%AC",
+      "host": "a.example",
+      "path": "/caf%C3%A9/%E6%97%A5%E6%9C%AC",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "p-backslash",
+      "ok": true,
+      "href": "https://a.example/p/q",
+      "host": "a.example",
+      "path": "/p/q",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "p-backslash-host",
+      "ok": true,
+      "href": "https://a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "p-backslash-at",
+      "ok": true,
+      "href": "https://a.example/@b.example/p",
+      "host": "a.example",
+      "path": "/@b.example/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "p-empty",
+      "ok": true,
+      "href": "https://a.example/",
+      "host": "a.example",
+      "path": "/",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "p-dots",
+      "ok": true,
+      "href": "https://a.example/a/c",
+      "host": "a.example",
+      "path": "/a/c",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "p-dots-up",
+      "ok": true,
+      "href": "https://a.example/x",
+      "host": "a.example",
+      "path": "/x",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "p-double-slash",
+      "ok": true,
+      "href": "https://a.example//a//b/",
+      "host": "a.example",
+      "path": "//a//b/",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "p-trailing-dotdot",
+      "ok": true,
+      "href": "https://a.example/",
+      "host": "a.example",
+      "path": "/",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "frag",
+      "ok": true,
+      "href": "https://a.example/p?q=1#frag%20ment",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=1",
+      "error": null
+    },
+    {
+      "id": "host-trailing-dot",
+      "ok": true,
+      "href": "https://a.example./p",
+      "host": "a.example.",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "host-case",
+      "ok": true,
+      "href": "https://a.example/P",
+      "host": "a.example",
+      "path": "/P",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "host-idn",
+      "ok": true,
+      "href": "https://xn--fa-hia.example/catalog",
+      "host": "xn--fa-hia.example",
+      "path": "/catalog",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "host-idn-nfc",
+      "ok": true,
+      "href": "https://xn--bcher-kva.example/",
+      "host": "xn--bcher-kva.example",
+      "path": "/",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "host-idn-nfd",
+      "ok": true,
+      "href": "https://xn--bcher-kva.example/",
+      "host": "xn--bcher-kva.example",
+      "path": "/",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "host-punycode",
+      "ok": true,
+      "href": "https://xn--fa-hia.example/catalog",
+      "host": "xn--fa-hia.example",
+      "path": "/catalog",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "host-fullwidth",
+      "ok": true,
+      "href": "https://a.example/",
+      "host": "a.example",
+      "path": "/",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "host-ipv4-short",
+      "ok": true,
+      "href": "https://127.0.0.1/",
+      "host": "127.0.0.1",
+      "path": "/",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "host-ipv4-hex",
+      "ok": true,
+      "href": "https://127.0.0.1/",
+      "host": "127.0.0.1",
+      "path": "/",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "host-ipv4-int",
+      "ok": true,
+      "href": "https://127.0.0.1/",
+      "host": "127.0.0.1",
+      "path": "/",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "host-ipv6",
+      "ok": true,
+      "href": "https://[2001:db8::1]/p",
+      "host": "[2001:db8::1]",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "host-ipv6-zero",
+      "ok": true,
+      "href": "https://[2001:db8::1]/p",
+      "host": "[2001:db8::1]",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "host-underscore",
+      "ok": true,
+      "href": "https://a_b.example/",
+      "host": "a_b.example",
+      "path": "/",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "host-pct",
+      "ok": true,
+      "href": "https://a.example/",
+      "host": "a.example",
+      "path": "/",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "host-space",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "TypeError:ERR_INVALID_URL"
+    },
+    {
+      "id": "host-empty",
+      "ok": true,
+      "href": "https://p/",
+      "host": "p",
+      "path": "/",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "host-lone-dot",
+      "ok": true,
+      "href": "https://./p",
+      "host": ".",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "userinfo",
+      "ok": true,
+      "href": "https://user:pw@a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "userinfo-user-only",
+      "ok": true,
+      "href": "https://user@a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "userinfo-special",
+      "ok": true,
+      "href": "https://us%20er:p%40ss@a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "userinfo-empty-pw",
+      "ok": true,
+      "href": "https://a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "port-default",
+      "ok": true,
+      "href": "https://a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "port-http-default",
+      "ok": true,
+      "href": "http://a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "port-other-default",
+      "ok": true,
+      "href": "https://a.example:80/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "port-leading-zero",
+      "ok": true,
+      "href": "https://a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "port-zero",
+      "ok": true,
+      "href": "https://a.example:0/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "port-too-big",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "TypeError:ERR_INVALID_URL"
+    },
+    {
+      "id": "port-empty",
+      "ok": true,
+      "href": "https://a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "port-non-digit",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "TypeError:ERR_INVALID_URL"
+    },
+    {
+      "id": "ws-tab-newline",
+      "ok": true,
+      "href": "https://a.example/pqr",
+      "host": "a.example",
+      "path": "/pqr",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "ws-edges",
+      "ok": true,
+      "href": "https://a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "scheme-one-slash",
+      "ok": true,
+      "href": "https://a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "scheme-no-slash",
+      "ok": true,
+      "href": "https://a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "rel-dotdot",
+      "ok": true,
+      "href": "https://a.example/dir/x?y=1",
+      "host": "a.example",
+      "path": "/dir/x",
+      "query": "y=1",
+      "error": null
+    },
+    {
+      "id": "rel-authority",
+      "ok": true,
+      "href": "https://b.example/x",
+      "host": "b.example",
+      "path": "/x",
+      "query": null,
+      "error": null
+    },
+    {
+      "id": "rel-query",
+      "ok": true,
+      "href": "https://a.example/dir/page?q=1",
+      "host": "a.example",
+      "path": "/dir/page",
+      "query": "q=1",
+      "error": null
+    },
+    {
+      "id": "rel-backslash",
+      "ok": true,
+      "href": "https://b.example/x",
+      "host": "b.example",
+      "path": "/x",
+      "query": null,
+      "error": null
+    }
+  ]
+}

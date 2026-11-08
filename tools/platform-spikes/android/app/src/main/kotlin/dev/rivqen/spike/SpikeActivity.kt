@@ -88,6 +88,9 @@ class SpikeActivity : Activity() {
     private var sslCancelled = false
     private var mainFrameError = false
     private var errorPageStarted = false
+
+    /** `onPageStarted` calls of the current load (a committed page that fails gets a second one). */
+    private var pageStarts = 0
     private var rangeDone = false
     private var cutStep = CutStep.FIRST_LOAD
 
@@ -98,7 +101,7 @@ class SpikeActivity : Activity() {
     /** CAP-A-07 steps: the step that waits for the current load to settle. */
     private var settleWaiter: (() -> Unit)? = null
 
-    /** Steps of [Scenario.CUT_RANGE]. */
+    /** Steps of [Scenario.CUT_RANGE] and [Scenario.CUT_PARTIAL]. */
     private enum class CutStep { FIRST_LOAD, FIRST_SNAPSHOT, FALLBACK_LOAD, FALLBACK_SNAPSHOT, RANGE_PAGE, RANGE }
     private var firstPaint = false
     private var graceStarted = false
@@ -575,9 +578,13 @@ class SpikeActivity : Activity() {
 
         override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
             nav("start", url, null)
+            pageStarts += 1
             // After onReceivedError and onPageFinished of a failed main frame, the WebView commits
             // its error page (one more onPageStarted, API 29 and 37). Only then the load settled.
-            if (mainFrameError && finishedUrl != null) {
+            // S3 partial page: when the page had committed before its body failed, the WebView starts
+            // the error page first (the second onPageStarted of the load), then onReceivedError and
+            // onPageFinished follow (API 37); so a second start also counts as the error-page start.
+            if ((mainFrameError && finishedUrl != null) || pageStarts >= 2) {
                 errorPageStarted = true
                 maybeDone()
             }
@@ -676,7 +683,8 @@ class SpikeActivity : Activity() {
      * The current load settled: a document finished and its DOMContentLoaded probes arrived (the
      * finished page is the page of the `location` probe); or a TLS error was cancelled and a page
      * finished (no error-page commit follows, API 29 and 37); or the main frame failed
-     * (`onReceivedError`), a page finished and the error page started.
+     * (`onReceivedError`), a page finished and the error page started (in either order: S2 cut before
+     * the commit: fail, finish, start; S3 partial page after the commit: start, fail, finish).
      */
     private fun settled(): Boolean {
         val finished = finishedUrl ?: return false
@@ -692,6 +700,7 @@ class SpikeActivity : Activity() {
         sslCancelled = false
         mainFrameError = false
         errorPageStarted = false
+        pageStarts = 0
     }
 
     private fun maybeDone() {
@@ -705,7 +714,7 @@ class SpikeActivity : Activity() {
             return
         }
         if (!settled() || fetchResult == null || outcome == null) return
-        if (params?.scenario == Scenario.CUT_RANGE && !cutRangeSteps()) return
+        if (params?.scenario.let { it == Scenario.CUT_RANGE || it == Scenario.CUT_PARTIAL } && !cutRangeSteps()) return
         if (params?.scenario?.cookieIntercept != null && !cookieSnapshotSteps()) return
         if (firstPaint) {
             complete(null)
@@ -716,7 +725,8 @@ class SpikeActivity : Activity() {
     }
 
     /**
-     * The steps of [Scenario.CUT_RANGE] after a settled load; true when all steps are done.
+     * The steps of [Scenario.CUT_RANGE] (and [Scenario.CUT_PARTIAL]) after a settled load; true when
+     * all steps are done.
      * Step 1 (CL-33): the delivered stream ended with an error, so `loadUrl` runs once more; the
      * rule passes that request (`claimed`) and the WebView loads it itself. Each of the two loads
      * ends with `native.doc`. Step 2: a normal page of the spike host (`/s/echo?html=1`; the rule
@@ -799,7 +809,20 @@ class SpikeActivity : Activity() {
     private fun snapshot(wv: WebView, next: () -> Unit) {
         wv.evaluateJavascript(DOC_SCRIPT) { result ->
             log.emit("app.probe", mapOf("name" to "native.doc", "value" to result?.take(MAX_SCRIPT_RESULT)))
-            next()
+            if (params?.scenario != Scenario.CUT_PARTIAL) {
+                next()
+                return@evaluateJavascript
+            }
+            // S3 partial page: the first snapshot comes right after onPageFinished of the failed load;
+            // the second one shows what stays on the page (the error page start came before the fail).
+            main.postDelayed({
+                if (done) return@postDelayed
+                log.emit("app.probe", mapOf("name" to "native.step", "value" to "late-snapshot"))
+                wv.evaluateJavascript(DOC_SCRIPT) { late ->
+                    log.emit("app.probe", mapOf("name" to "native.doc", "value" to late?.take(MAX_SCRIPT_RESULT)))
+                    next()
+                }
+            }, LATE_SNAPSHOT_MS)
         }
     }
 
@@ -811,7 +834,7 @@ class SpikeActivity : Activity() {
             "error page start".takeIf { mainFrameError && !errorPageStarted },
             "fetch end".takeIf { fetchResult == null },
             "stream outcome".takeIf { outcome == null },
-            "range probes".takeIf { params?.scenario == Scenario.CUT_RANGE && !rangeDone },
+            "range probes".takeIf { (params?.scenario == Scenario.CUT_RANGE || params?.scenario == Scenario.CUT_PARTIAL) && !rangeDone },
             "steps".takeIf { params?.scenario?.steps == true },
         )
         log.emit("app.error", mapOf("error" to "run timeout after $RUN_TIMEOUT_MS ms; missing: ${missing.joinToString()}"))
@@ -828,6 +851,7 @@ class SpikeActivity : Activity() {
         val metrics = metricsJson()
         val device = deviceJson()
         val status = mapOf("state" to if (error == null && log.dropped == 0) "done" else "failed", "error" to (error ?: if (log.dropped > 0) "${log.dropped} events dropped" else null))
+        val linger = lingerMs()
         writer.execute {
             try {
                 writeText(File(outDir, "app.jsonl"), lines.joinToString("") { it + "\n" })
@@ -841,9 +865,15 @@ class SpikeActivity : Activity() {
             }
             // CAP-A-07 `persist` seed: end the process now, so only what was written survives.
             if (params?.scenario == Scenario.COOKIE_SEED) Process.killProcess(Process.myPid())
-            main.post { finishAndRemoveTask() }
+            // run.sh SPIKE_RECORD=1 (S3 recordings): the page stays on screen for `linger` ms after
+            // the output is written, so the clip ends on the page and not on the launcher. The run
+            // log is complete before; a normal run has no `linger` (0).
+            main.postDelayed({ finishAndRemoveTask() }, linger)
         }
     }
+
+    /** The intent extra `linger` (ms), bounded to 0…[MAX_LINGER_MS]; 0 when missing. */
+    private fun lingerMs(): Long = intent.getIntExtra(EXTRA_LINGER, 0).toLong().coerceIn(0L, MAX_LINGER_MS)
 
     private fun fail(reason: String) {
         log.emit("app.error", mapOf("error" to reason))
@@ -916,6 +946,13 @@ class SpikeActivity : Activity() {
         const val RUN_TIMEOUT_MS = 150_000L
         const val FIRST_PAINT_GRACE_MS = 2_000L
         const val COOKIE_WAIT_MS = 5_000L
+
+        /** CAP-A-08 `partial`: the wait before the second `native.doc` of a settled load. */
+        const val LATE_SNAPSHOT_MS = 2_000L
+
+        /** run.sh recording mode: how long the page stays after the run (intent extra, ms). */
+        const val EXTRA_LINGER = "linger"
+        const val MAX_LINGER_MS = 10_000L
 
         /** CAP-A-06: the cookie in the store before the load (synthetic; `native.request_cookie`). */
         const val PRE_COOKIE = "a06-pre=v1; Path=/"

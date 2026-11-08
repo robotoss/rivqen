@@ -17,11 +17,13 @@ One run per launch (`SpikeActivity`):
    - a document finished and its DOMContentLoaded probes arrived (the finished page is the page of the `location` probe);
    - a TLS error was cancelled and a page finished (no error page follows on API 29 and 37);
    - the main frame failed (`onReceivedError`), a page finished, and the WebView started its error page (one more `onPageStarted`, seen on API 29 and 37). An `evaluateJavascript` callback for a document that the error page replaces never comes, so no step runs before the error page.
+   - S3: a page that committed before its body failed gets the second `onPageStarted` **before** `onReceivedError` and `onPageFinished` (API 29 and 37), and its document stays in `loading`. So a second `onPageStarted` of the same load also counts as the error-page start, and the load settles at `onPageFinished`. The S2 order (fail, finish, start) settles as before.
 6. Scenario steps (intent extra `scenario`):
    - `redirect-3xx` (CAP-A-04 probe): the interceptor gives the WebView the fetched 3xx head as a `WebResourceResponse`. The constructor refuses it, and the request passes.
+   - `cut-partial` (CAP-A-08 `partial`, S3): as `cut-range`, but each `native.doc` is taken again 2 s later (`native.step` `late-snapshot`), so the log shows what stays on the page after the body error.
    - `cut-range` (CAP-A-08): the delivered stream ended with an error and the load settled. The app writes `native.doc`, then calls `loadUrl` once more (CL-33: the request passes as `claimed`, and the WebView loads it itself). When that load settled, it writes `native.doc` again and loads `/s/echo?html=1` on site A (an error page has no probe channel; the rule passes this URL as `url`). On that page it runs a script with two byte-range fetches of `/s/range`.
    - `cookie-on`, `cookie-on-map`, `cookie-off`, `cookie-manual` (CAP-A-06): before the load the app clears `CookieManager` and sets `a06-pre=v1`. `cookie-on` turns on `WebSettingsCompat.setCookiesIncludedInShouldInterceptRequest` (when `COOKIE_INTERCEPT` is supported) and moves the fetched `Set-Cookie` into `WebResourceResponseCompat.setCookies`. `cookie-on-map` turns it on and leaves the value in the field map. `cookie-off` leaves the value in the map with the setting off. `cookie-manual` writes the value with `CookieManager.setCookie` before it returns the response (the interceptor thread waits at most 5 s for the callback) and removes it from the map. After the settled load: `native.cookie_intercept`, `native.doc_cookie`, `native.cm_cookie`.
-7. The run ends when the last load settled, the fetch ended and the pipe has its outcome (then at most 2 s for `metric.first_paint`), or after 150 s.
+7. The run ends when the last load settled, the fetch ended and the pipe has its outcome (then at most 2 s for `metric.first_paint`), or after 150 s. With the intent extra `linger` (ms, at most 10,000; recording mode only) the activity stays on screen that long after the output files are written.
 
 **Step runs (CAP-A-07).** Scenarios `cookie-sync`, `cookie-persist` and `cookie-seed` have no early fetch and no interception; they run steps on the main thread, each with a bounded wait (callbacks, settled loads, the 150 s run limit), and end with `native.step` `done`.
 
@@ -65,7 +67,8 @@ The page scripts of the spike host call `window.rqLab.probe(name, value)` from t
 | `app/src/debug/res/xml/network_security_config.xml` | Debug only: lab CA as a `debug-overrides` trust anchor. The release config trusts the system store only |
 | `check/SpikeLogicCheck.java`, `check.sh` | Offline JVM check (DL-139) |
 | `build.sh` | Debug build with Gradle home, SDK and build output in `LAB_HOME` |
-| `run.sh` | One capability (or supporting set) on the lab emulator |
+| `run.sh` | One capability (or supporting set) on the lab emulator; recording mode `SPIKE_RECORD=1` |
+| `clip.sh` | Transcodes a raw screen recording into the recording format (S3) |
 | `runlog.mjs` | Run sets (`SETS`), page URLs, join of the run log, run checks, `run.json`, verdict facts |
 | `test/runlog.test.mjs` | Offline tests of the run sets and the run checks |
 
@@ -85,7 +88,7 @@ node tools/platform-spikes/android/runlog.mjs analyze evidence/spikes/wp-04/andr
 sh tools/platform-spikes/lab/emulator.sh stop
 ```
 
-`run.sh` steps for each run `k`: `POST /run/start`, start the app with the extras `run`, `url`, `capability`, `scenario`, wait for `files/out/status.json` (at most 200 s; with `run-as ls`, because on API 29 `run-as` cannot execute `test`), `POST /run/end`, read the app files with `run-as`, join `run.start`, the app part, the host part and `run.end` (keys sorted, LF). `run.end.ok` is false when the app failed or the run check of the set kind fails:
+`run.sh` steps for each run `k`: clear the app data (`pm clear`, then the `ACCESS_LOCAL_NETWORK` grant again; S3: before, the cookies of the CAP-A-06/07 runs reached later runs as a `Cookie` field), `POST /run/start`, start the app with the extras `run`, `url`, `capability`, `scenario`, wait for `files/out/status.json` (at most 200 s; with `run-as ls`, because on API 29 `run-as` cannot execute `test`), `POST /run/end`, read the app files with `run-as`, join `run.start`, the app part, the host part and `run.end` (keys sorted, LF). `run.end.ok` is false when the app failed or the run check of the set kind fails:
 
 | Kind | An ok run needs |
 |---|---|
@@ -93,6 +96,7 @@ sh tools/platform-spikes/lab/emulator.sh stop
 | `pass` | Every main-frame decision is `pass`; the WebView read no byte of the early fetch (outcome `cancel`, 0 bytes) |
 | `probe` | The WebView read no byte of the early fetch (the decision is the observation) |
 | `cut` | The first main-frame request streamed; the fetch ended at `host.cut.after` and did not complete; the WebView read the same bytes (count and SHA-256), outcome `error`; the fallback load ran, and its request passed as `claimed` |
+| `partial` | As `cut`, and the beacon of chunk 0 (in the first bytes of the body) came before the first `host.cut` in host order: the delivered part reached the renderer before the close |
 | `fetched` | The main frame streamed; the fetch read the whole body; the WebView read the same bytes (count and SHA-256), outcome `end` |
 | `steps` | The last `native.step` is `done`; no `app.error` |
 
@@ -115,6 +119,7 @@ Run sets (`runlog.mjs` `SETS`). `SPIKE_SET=<set>` selects a supporting set; its 
 | CAP-A-04 `wrr-302` | as CAP-A-04, scenario `redirect-3xx` | probe |
 | CAP-A-05 | `https://10.0.2.2:18444/s/echo?html=1` (site B, bad certificate; no extra `adb reverse`) | pass |
 | CAP-A-08 | `/s/cut` `after=3000&size=8192`, scenario `cut-range` | cut |
+| CAP-A-08 `partial` | `/s/cut` `after=3000&size=8192&hold=15000` (API 29: `after=70000&size=139264`), scenario `cut-partial`; the body starts with the chunk-0 markup, and the host closes 15 s after the delivered bytes (S3) | partial |
 | CAP-A-06 | `/s/cookie/set` `name=a06-set&value=v1&attrs=Secure,SameSite=Lax`, scenario `cookie-on` | fetched |
 | CAP-A-06 `on-map`, `off`, `manual` | as CAP-A-06, scenarios `cookie-on-map`, `cookie-off`, `cookie-manual` | fetched |
 | CAP-A-07 | `/s/echo?html=1` (start page only), scenario `cookie-sync` | steps |
@@ -137,4 +142,22 @@ The app writes events in the order they happen, with these rules that keep the o
 
 ## Evidence
 
-`evidence/spikes/wp-04/android/<capability>/<api>/`: `run-<k>.jsonl`, `run-<k>.metrics.json`, `run.json`. Supporting sets (same layout, not catalog runs): `CAP-A-01/37/block-1500` (read-block stall), `CAP-A-01/<api>/paint-delay` (paint before the end of the body), `CAP-A-01/29/small-2048` (2048-byte chunks wait for the 64 KiB block), `CAP-A-03/<api>/status-400` (an intercepted 400), `CAP-A-04/<api>/cross-site`, `chain-307`, `wrr-302`, `CAP-A-06/<api>/on-map`, `off`, `manual`, `CAP-A-07/<api>/persist`.
+`evidence/spikes/wp-04/android/<capability>/<api>/`: `run-<k>.jsonl`, `run-<k>.metrics.json`, `run.json`. Supporting sets (same layout, not catalog runs): `CAP-A-01/37/block-1500` (read-block stall), `CAP-A-01/<api>/paint-delay` (paint before the end of the body), `CAP-A-01/29/small-2048` (2048-byte chunks wait for the 64 KiB block), `CAP-A-03/<api>/status-400` (an intercepted 400), `CAP-A-04/<api>/cross-site`, `chain-307`, `wrr-302`, `CAP-A-06/<api>/on-map`, `off`, `manual`, `CAP-A-07/<api>/persist`, `CAP-A-08/<api>/partial` (S3: a cut after the commit).
+
+## Recordings (S3)
+
+One clip per recorded capability on API 37 (sprint record S3 §2): `evidence/recordings/wp-04/<capability>-android-37.mp4` for CAP-A-01 (set `paint-delay`), CAP-A-02, CAP-A-04, CAP-A-05 and CAP-A-07.
+
+```sh
+SPIKE_RECORD=1 SPIKE_SET=paint-delay sh tools/platform-spikes/android/run.sh CAP-A-01 37 4
+SPIKE_RECORD=1 sh tools/platform-spikes/android/run.sh CAP-A-02 37 4
+```
+
+1. The recording mode runs one run (`k` = 4). Its log goes to `$LAB_OUT/record/…`, never into `evidence/`. The clip is not evidence of the verdict: the stored runs 1–3 are.
+2. Before the run, SystemUI demo mode is on (fixed clock, no notification icons); at the end it is off.
+3. `emulator.sh record start`, then `am start -W` (it returns at the first frame of the activity; a cold WebView draws its first frame at the commit of the page). The app gets `linger` 5000.
+4. After `status.json`, 3 s more, then `emulator.sh record stop`.
+5. `runlog.mjs same <stored set> <run file>`: the run must have the normalized log of the stored runs (CONTRACT §8). Stored runs of the S1 app have no `reason` and `redirect` on `app.intercept`; then these two members are not compared (the output says so). A run that differs gives no clip.
+6. `clip.sh` cuts the part before the first frame of the activity (the launcher), keeps the page up to the stop, and writes the format: H.264, no audio, at most 540 px wide, at most 30 s, at most 1,000,000 bytes, no metadata (the codec name stays in the sample description). It checks the file with `ffprobe`. `ffmpeg` and `ffprobe` are lab tools on the Mac (`FFMPEG`, `FFPROBE`, else `PATH`, else `/opt/homebrew/bin`).
+
+<Badge type="tip" text="FACT" /> One recorded CAP-A-01 run (not kept) differed from the stored runs: the page requested the beacon of chunk 1 twice and late. A run without the recording, made right after it, had the stored log, and so did the next recorded run. So screen recording can change the timing of the emulator.

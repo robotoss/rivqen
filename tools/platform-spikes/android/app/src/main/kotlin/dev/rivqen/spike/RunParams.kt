@@ -16,11 +16,15 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
  *   as a `WebResourceResponse` (documented as not supported) and records what happens.
  * - [CUT_RANGE]: CAP-A-08: a streamed page whose body is cut gets the CL-33 fallback (one normal
  *   load); on the page of that load a script fetches a byte range of `/s/range`.
+ * - [CUT_PARTIAL]: CAP-A-08 `partial` (S3): as [CUT_RANGE]; each `native.doc` snapshot is taken
+ *   again [SpikeActivity] `LATE_SNAPSHOT_MS` later, so the log shows what stays on the page after
+ *   the body error (the partial page or the error page).
  */
 internal enum class Scenario(val extra: String, val cookieIntercept: CookieIntercept? = null, val steps: Boolean = false) {
     STREAM("stream"),
     REDIRECT_3XX("redirect-3xx"),
     CUT_RANGE("cut-range"),
+    CUT_PARTIAL("cut-partial"),
 
     /** CAP-A-06: the intercepted page sets a cookie; [cookieIntercept] says how it reaches the WebView. */
     COOKIE_ON("cookie-on", CookieIntercept.ON_SET_COOKIES),

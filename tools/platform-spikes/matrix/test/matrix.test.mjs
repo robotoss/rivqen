@@ -52,9 +52,13 @@ test('ios page has the 8 items; items without a capability are marked not measur
 });
 
 test('a capability of two items appears in both tables', () => {
-  const page = renderIos(fixture());
-  assert.match(section(page, '### Item 1', '###'), /CAP-I-01/);
-  assert.match(section(page, '### Item 2', '###'), /CAP-I-01/);
+  const c = fixture();
+  c.push(cap('CAP-I-06', 'ios', [res('27.0', 'supported'), res('26.5', 'supported'), res('18.5', 'supported')], 'supported'));
+  const page = renderIos(c);
+  assert.match(section(page, '### Item 3', '###'), /CAP-I-06/);
+  assert.match(section(page, '### Item 6', '###'), /CAP-I-06/);
+  // Item 1 (TLS, redirects) has no iOS capability: not measured in WP-04.
+  assert.match(section(page, '### Item 1', '###'), /not measured/);
 });
 
 test('an iOS capability without an item stops the generator', () => {

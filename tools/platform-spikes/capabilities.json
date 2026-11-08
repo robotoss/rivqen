@@ -802,7 +802,18 @@
       "Q-24"
     ],
     "sprint": "S2",
-    "results": [],
-    "verdict": "pending"
+    "results": [
+      {
+        "os": "native-stacks",
+        "webview": null,
+        "kind": "benchmark",
+        "verdict": "conditional",
+        "condition": "No native URL type equals WHATWG for all inputs (67 URLs): OkHttp HttpUrl matches WHATWG on every Q-24 query class (57/67 equal; differs on `|` in the path, a space in the fragment, numeric IPv4 forms, the host `.` and port 0); java.net.URI 19/67 (refuses 19 inputs WHATWG accepts); Foundation URL and URLComponents 28/67 on macOS and on the iOS 27.0 simulator, and they read `https://a.example\\@b.example/p` with host b.example (WHATWG: a.example); android.net.Uri 22/67 (returns the input as written, no resolve API). So the SDK serializes the URL of the binding with OkHttp on Android and must not take a host or a serialization from Foundation on iOS (DL-040); closure of Q-24 stays with WP-13 (DL-135)",
+        "runs": [],
+        "metrics": "evidence/spikes/wp-04/url/compare.json",
+        "recording": null
+      }
+    ],
+    "verdict": "conditional"
   }
 ]

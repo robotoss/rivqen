@@ -8,6 +8,7 @@ This section holds the evidence behind Rivqen's design: what the upstream projec
 | [Technology landscape](/research/landscape) | Alternatives and complements: HTTP caching, Early Hints, Service Workers, Speculation Rules, dictionary compression, ESI, prerendering |
 | [Standards](/research/standards) | RFCs and W3C specifications Rivqen relies on, with status |
 | [Platform baselines (2026)](/research/platform-baselines) | Current versions of Android, iOS, Rust, web and server platforms |
+| [URL interop of native stacks](/research/url-interop) | How OkHttp, `java.net.URI`, `android.net.Uri` and Foundation `URL`/`URLComponents` serialize URLs against WHATWG (Q-24, WP-04 S2) |
 | [Literature review](/research/literature) | Scientific and engineering papers, with a discussion of what they mean for Rivqen |
 | [Sources and confidence](/research/sources) | All sources with their confidence level |
 

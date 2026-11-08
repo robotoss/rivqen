@@ -265,6 +265,7 @@ const researchSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'Technology landscape', link: '/research/landscape' },
       { text: 'Standards', link: '/research/standards' },
       { text: 'Platform baselines (2026)', link: '/research/platform-baselines' },
+      { text: 'URL interop of native stacks', link: '/research/url-interop' },
       { text: 'Literature review', link: '/research/literature' },
       { text: 'Sources and confidence', link: '/research/sources' }
     ]

@@ -1,0 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: The Rivqen Authors
+
+// Build settings of the WP-04 iOS prototype. Simulator builds only; ad-hoc signature, no team.
+PRODUCT_NAME=PlatformSpike
+PRODUCT_BUNDLE_IDENTIFIER=dev.rivqen.platformspike
+CURRENT_PROJECT_VERSION=1
+MARKETING_VERSION=1.0

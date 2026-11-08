@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+#
+# Versions are pinned exactly (DL-137). AGP, Kotlin and Gradle as tools/webview-lab.
+
+[versions]
+agp = "9.1.1"
+android-compileSdk = "37"
+android-minSdk = "29"
+android-targetSdk = "37"
+# androidx.webkit 1.18.0 (2026-10-21), Apache-2.0: addWebMessageListener, addDocumentStartJavaScript.
+androidx-webkit = "1.18.0"
+kotlin = "2.4.20"
+# OkHttp 5.5.1 (2026-10-22), Apache-2.0: the latest stable release. Its only security note in the
+# 5.x change log: it blocks 8 compromised eMudhra intermediate certificates.
+okhttp = "5.5.1"
+
+[libraries]
+kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+androidx-webkit = { module = "androidx.webkit:webkit", version.ref = "androidx-webkit" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+
+[plugins]
+androidApplication = { id = "com.android.application", version.ref = "agp" }

@@ -4,7 +4,7 @@
 This page describes the **legacy mode** (compatibility with the VasSonic legacy protocol). It ships as an optional module, is **deprecated from 1.0** and is **removed in 1.5**. New integrations use the [Rivqen protocol](/engineering/protocol/markup). See [Modes and legacy deprecation](/engineering/protocol/versioning).
 :::
 
-This page specifies the observable behavior of a legacy protocol client: session identity, the session flow, Quick and Standard modes, result codes, and how the page receives data updates.
+This page specifies the observable behavior of a legacy protocol client: session identity, the session flow, Quick and Standard modes, result codes, and how the page receives data updates. Sections 1 to 8 describe upstream; section 9 gives the Rivqen canonical client rules (`CL-01`…) that the client fixtures check.
 
 **Status:** <Badge type="tip" text="FACT" /> from the upstream Android and iOS clients at `59936bef`, code reading (WP-02 S1; checked again row by row in WP-01 S1 T-01). <Badge type="warning" text="RESEARCH" /> A row that depends on the order of independent events (client ready, the intercepted request, the network head, the end of the body) stays RESEARCH until a client trace with a controlled order confirms it. <Badge type="tip" text="FACT" /> The Android traces and the function runs of WP-01 S1 T-05 confirm the rows marked with a scenario ID ([client trace report](/engineering/protocol/legacy-client-traces)). A trace overrides code reading.
 
@@ -251,23 +251,23 @@ How to read the tables:
 |---|---|---|---|---|
 | Q1 | none | first load | Body complete before the preload `loadUrl` runs | <Badge type="tip" text="FACT" /> CS-01 |
 | Q2 | none | first load | Preload `loadUrl` and intercept first | <Badge type="tip" text="FACT" /> CS-02 |
-| Q3 | none | first load, empty body | Before any intercept | <Badge type="warning" text="RESEARCH" /> not reached (no empty page) |
+| Q3 | none | first load, empty body | Before any intercept | <Badge type="tip" text="FACT" /> CS-20: no load call, the scripted intercept gets an empty stream; probable defect confirmed ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
 | Q4 | none | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> CS-12 |
 | Q5 | none | `cache-offline: http` | — | <Badge type="tip" text="FACT" /> |
 | Q6 | none | first load, `cache-offline` not `true` or `store` | As Q1 or Q2 | <Badge type="tip" text="FACT" /> |
 | Q7 | yes | `304`, or `200` with the request etag | — | <Badge type="tip" text="FACT" /> CS-03 |
-| Q8 | yes | data update | Cache given as data first; diff not empty | <Badge type="tip" text="FACT" /> CS-04 |
-| Q9 | yes | data update with `store`, or diff failed | Cache given as data first | <Badge type="warning" text="RESEARCH" /> not reached (no `store` alone) |
+| Q8 | yes | data update | Cache given as data first; diff not empty | <Badge type="tip" text="FACT" /> CS-04; CS-24c (`TRUE`: diff sent, then the cache is removed, D-30) |
+| Q9 | yes | data update with `store`, or diff failed | Cache given as data first | <Badge type="tip" text="FACT" /> CS-22 (`store`); the "diff failed" form is not reached |
 | Q10 | yes | data update | Network first | <Badge type="tip" text="FACT" /> CS-05 |
-| Q11 | yes | data update, rebuild fails | Network first | <Badge type="warning" text="RESEARCH" /> not in the catalog |
+| Q11 | yes | data update, rebuild fails | Network first | <Badge type="tip" text="FACT" /> CS-28 (wrong `html-sha1` member of the JSON body): `loadUrl`, 200 / 1000, error -1008, the cache is removed; only the rebuilt page stays as `<id>.html.tmp` ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
 | Q12 | yes | template change, not `store` | Cache given as data first | <Badge type="tip" text="FACT" /> CS-06 |
-| Q13 | yes | template change with `store` | Cache given as data first | <Badge type="warning" text="RESEARCH" /> not reached (no `store` alone) |
-| Q14 | yes | template change | Network first | <Badge type="tip" text="FACT" /> CS-07 |
+| Q13 | yes | template change with `store` | Cache given as data first | <Badge type="tip" text="FACT" /> CS-23 |
+| Q14 | yes | template change | Network first | <Badge type="tip" text="FACT" /> CS-07; CS-21 (empty new page): the empty page is given as data, not `loadUrl` ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
 | Q15 | yes | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> CS-11 |
-| Q16 | yes | `cache-offline: http` | — | <Badge type="tip" text="FACT" /> |
+| Q16 | yes | `cache-offline: http` | — | <Badge type="tip" text="FACT" /> CS-24a (`HTTP`), CS-25 (`http`) |
 | Q17 | yes | `cache-offline` absent, empty or `false` | — | <Badge type="tip" text="FACT" /> CS-09 |
 | Q18 | yes | etag or `template-change` missing | — | <Badge type="tip" text="FACT" /> CS-14 |
-| Q19 | any | template change during `refresh()` | — | <Badge type="tip" text="FACT" /> |
+| Q19 | any | template change during `refresh()` | — | <Badge type="tip" text="FACT" /> CS-29: no load call, 2000 / 2000 at the result, the 1.5 s save writes the new page. CS-27: a refresh right after a template change gets `304` ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
 | Q20 | none | first load, read error | Before any intercept | <Badge type="tip" text="FACT" /> CS-13b |
 | Q21 | any | no request (F3) | — | <Badge type="tip" text="FACT" /> |
 | Q22 | none | first load, read error | During the bridge stream | <Badge type="tip" text="FACT" /> CS-13a |
@@ -289,7 +289,7 @@ How to read the tables:
 | Q11 | `loadUrl` (template missing or `html-sha1` mismatch) | 200 / 1000, silent | removed | `QSS:333-335`, `:736-740`; `SU:301-330` |
 | Q12 | Body complete: data, the new page; else `loadUrl` and the intercept gets the bridge stream (note 5) | 2000 / 2000, silent | 1.5 s or close | `QSS:351-362`, `:530-592` |
 | Q13 | None | 2000 / 304, notify | 1.5 s or close | `QSS:363-366` |
-| Q14 | Data: the new page; with no page text, `loadUrl` | 2000 / 304 silent; `loadUrl`: 2000 / 1000 | 1.5 s or close | `QSS:367-378` |
+| Q14 | Data: the new page, also an empty one (0 bytes; CS-21: 2000 / 304, the old cache is kept, no save); `loadUrl` only when the page text is `null` | 2000 / 304 silent; `loadUrl`: 2000 / 1000 | 1.5 s or close; empty page: none, cache kept | `QSS:367-378` |
 | Q15 | None; the cached page stays (note 3) | -1 / -1 | none; cache kept | `QSS:493-499`, `:207-214` |
 | Q16 | `loadUrl` once: a normal load replaces the cached page | -1 / -1 | none; cache kept | `SS:729-745`; `QSS:508-512`, `:222-229` |
 | Q17 | None; the cached page stays | -1 / -1 | removed | `SS:753-758` |
@@ -302,7 +302,7 @@ How to read the tables:
 Notes:
 
 1. <Badge type="warning" text="RESEARCH" /> Trace (CS-01): with the body complete before `clientReady`, the message waits in the slot and the 1.5 s save runs (3 of 3 runs), so the defect does not occur in that order. The window that remains is `clientReady` between `QSS:628` and `:638` on the session thread; a script cannot place it. Code reading: Q1 happens when the client is not ready yet (the first-load message replaces the held preload), or when the preload message is still in the queue (it is removed). The session posts the 1.5 s save only if, at that moment, the main thread has not yet handled the first-load message (`QSS:638`). If it has, no save follows: a page given as data is never intercepted, so no stream closes. **Probable upstream defect:** a Quick first load can miss its cache write.
-2. <Badge type="warning" text="RESEARCH" /> Not reached in T-05: the upstream servers always send the page body, and no lab page is empty. Code reading: a first-load message "without data" while no intercept happened arises only with an empty `200` body (the read ends at once, `SV:394-400`). If the preload `loadUrl` has not run yet, it is removed or replaced and **nothing loads**. If it ran, the intercept later gets an empty stream. **Probable upstream defect.**
+2. <Badge type="tip" text="FACT" /> Trace (CS-20, S2, page `empty`, 3 of 3 runs): the session makes no load call (no `loadUrl`, no data), the codes stay -1 / -1, no message, no cache; only the scripted intercept gets an empty stream. **Probable upstream defect confirmed:** a web view that waits for the session gets nothing to load. Code reading: a first-load message "without data" while no intercept happened arises only with an empty `200` body (the read ends at once, `SV:394-400`). If the preload `loadUrl` has not run yet, it is removed or replaced and nothing loads. If it ran, the intercept later gets an empty stream.
 3. With `RELOAD_IN_BAD_NETWORK` on (default **off**, `CFG:61`), the error removes the preload message and the session calls `loadUrl` once (`QSS:493-499`, `:207-214`). With a cache, this normal load replaces the cached page.
 4. <Badge type="warning" text="RESEARCH" /> Trace: cache first (CS-04) delivers the diff; network first (CS-05) loads the rebuilt page. The loss needs the preload between `QSS:697` and `:723`, which a script cannot place. After a first load the diff holds **every** block: the first-load data file has the form `{"data": …}` (`SV:436-446`), which the diff does not read as a block map (`SU:251-299`; CS-04). Code reading: the branch is chosen on the session thread (`QSS:697`), but the preload runs on the main thread. If the preload runs between the check and the message, the update arrives with the page but no diff: the page reports 200 / 304 and keeps the old cache on screen. **Probable upstream defect: the data update is lost.** The write: if the diff failed or the rebuilt page is empty, the cache is removed instead (`QSS:736-740`). The local data file becomes the full server data (`QSS:755`).
 5. <Badge type="tip" text="FACT" /> The handler drops the page callback: in CS-06 no message came at the result, and the next `getDiffData` gave 2000 / 2000. <Badge type="warning" text="RESEARCH" /> The read until page finish is not in the catalog. Code reading: in the template change, the session reads the new body until the app reports page finish for the cached page (`QSS:538`). The template-change handler also drops the page callback, so the page must call `getDiffData` again (`QSS:380-381`).
@@ -315,22 +315,22 @@ Notes:
 
 | ID | Cache | Server | Order | Status |
 |---|---|---|---|---|
-| S1 | none | first load | Intercept first, or body complete first | <Badge type="tip" text="FACT" /> CS-01, CS-02 |
+| S1 | none | first load | Intercept first, or body complete first | <Badge type="tip" text="FACT" /> CS-01, CS-02; CS-20 (empty body: 1000 / 1000, no write) |
 | S2 | none | first load, read error | Before any intercept | <Badge type="tip" text="FACT" /> CS-13b |
 | S3 | none | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> CS-12 |
-| S4 | none or yes | `cache-offline: http` | — | <Badge type="tip" text="FACT" /> |
+| S4 | none or yes | `cache-offline: http` | — | <Badge type="tip" text="FACT" /> CS-24a (`HTTP`), CS-25 (`http`), with a cache |
 | S5 | yes | `304`, or `200` with the request etag | — | <Badge type="tip" text="FACT" /> CS-03 |
 | S6 | yes | data update, `true` or `false` | Intercept first | <Badge type="tip" text="FACT" /> CS-04 |
 | S7 | yes | data update, `true` or `false` | Network first | <Badge type="tip" text="FACT" /> CS-05 |
-| S8 | yes | data update, `store` or another value | — | <Badge type="tip" text="FACT" /> CS-08, CS-10 (another value) |
+| S8 | yes | data update, `store` or another value | — | <Badge type="tip" text="FACT" /> CS-22 (`store`); CS-24b, CS-24c, CS-08, CS-10 (another value: `Store`, `TRUE`, `true,store`, `true,http`) |
 | S9 | yes | template change, `true` or `false` | Intercept first | <Badge type="tip" text="FACT" /> CS-06 |
-| S10 | yes | template change, `store` or another value | Intercept first | <Badge type="warning" text="RESEARCH" /> not reached (no `store` alone) |
+| S10 | yes | template change, `store` or another value | Intercept first | <Badge type="tip" text="FACT" /> CS-23 (`store`) |
 | S11 | yes | template change | Network first | <Badge type="tip" text="FACT" /> CS-07 |
-| S12 | yes | template change, empty body | Network first | <Badge type="warning" text="RESEARCH" /> not reached (no empty page) |
+| S12 | yes | template change, empty body | Network first | <Badge type="tip" text="FACT" /> CS-21 |
 | S13 | yes | HTTP error or no connection | — | <Badge type="tip" text="FACT" /> CS-11 |
 | S14 | yes | `cache-offline` absent, empty or `false` | — | <Badge type="tip" text="FACT" /> CS-09 |
 | S15 | yes | etag or `template-change` missing | — | <Badge type="tip" text="FACT" /> CS-14 |
-| S16 | any | template change during `refresh()` | — | <Badge type="warning" text="RESEARCH" /> not in the catalog |
+| S16 | any | template change during `refresh()` | — | <Badge type="tip" text="FACT" /> CS-29: no load call, 2000 / 304 at the result, the 1.5 s save writes the new page (note 4) ([trace report](/engineering/protocol/legacy-client-traces#_5-rows-and-probable-defects)) |
 | S17 | none | first load, read error | During the bridge stream | <Badge type="tip" text="FACT" /> CS-13a |
 | S18 | any | no request (F3) | — | <Badge type="tip" text="FACT" /> |
 
@@ -349,7 +349,7 @@ Notes:
 | S9 | `loadUrl` again; the second intercept gets the new response stream | 2000 / 2000, notify | 1.5 s or close | `STD:235-307`, `:88-101` |
 | S10 | None | 2000 / 304, notify | 1.5 s or close | `STD:271-273` |
 | S11 | None; the pending stream is now the new response and the intercept gets it | 2000 / 304, notify | 1.5 s or close | `STD:242-263`, `:275-278` |
-| S12 | No message; the pending stream is the empty new response | -1 / -1 | none | `STD:257-265` |
+| S12 | No message; the pending stream is the empty new response, with the header lines of the cached record (CS-21: 0 bytes, the `sonic-html-sha1` and `template-tag` of page `a`) | -1 / -1 | none | `STD:257-265` |
 | S13 | Callback only; the intercept gets the cached page | -1 / -1 | none; cache kept | `STD:309-317`, `:200-208` |
 | S14 | None; the intercept gets the cached page | -1 / -1 | removed | `SS:753-758` |
 | S15 | As S14 | -1 / -1 | removed | `SS:760-769` |
@@ -362,7 +362,7 @@ Notes:
 1. <Badge type="tip" text="FACT" /> Trace: body first gives 1000 / 304 and two saves (CS-01); intercept first gives 1000 / 1000 and one save, at the close (CS-02). "Body first" (1000 / 304) means only that the body was read before the intercept; the page still loads through `loadUrl` and the intercept. With a complete body the session posts the 1.5 s save, and the stream close posts a second save (`STD:382-387`, `SS:984-994`).
 2. <Badge type="tip" text="FACT" /> S6 and S8: if F12 does not allow the write (for example `cache-offline: TRUE`, or `Cache-Control: no-store` with `SUPPORT_CACHE_CONTROL`), Standard removes the cache and then writes the files and metadata anyway, because it does not return (`STD:487-515`). Quick returns (`QSS:736-740`). Trace (CS-08, CS-10, value `true,http` or `true,store`): Standard writes the page, data and header files but no template file; Quick leaves no cache.
 3. <Badge type="warning" text="RESEARCH" /> Trace (CS-05): the intercept got the rebuilt page. The defect needs an intercept between `STD:470` and `:472`, which a script cannot place. Code reading: the intercept check (`STD:470`) is outside the stream lock. If the intercept takes the cached stream just after the check, the rebuilt stream is never read and the page reports 200 / 304 while the old cache shows. **Probable upstream defect.**
-4. <Badge type="warning" text="RESEARCH" /> `refresh()` resets the intercept flag, so the handler reports 2000 / 304 and makes no load call. Whether the app reloads the page itself is outside the SDK.
+4. <Badge type="tip" text="FACT" /> Trace (CS-29, 3 of 3 runs): `refresh()` resets the intercept flag, so the handler reports 2000 / 304 and makes no load call; the web view keeps the old page, and the new page waits as the pending stream. The page callback that the page set before gets the message at the result (`isReload` `"true"`). <Badge type="warning" text="RESEARCH" /> Whether the app reloads the page itself is outside the SDK.
 
 ### 3.3 Differences between the modes
 
@@ -482,6 +482,361 @@ External storage is readable by other apps on old Android versions. Rivqen store
 | Verify cache files with SHA-1 | on | `SC:61` |
 | Files per session | `<id>.html`, `<id>.tpl`, `<id>.data`, `<id>.header` | `SonicFileUtils.java:45-60` |
 | Metadata | SQLite table with session id, etag, template tag, html SHA-1, unavailable time, size, update time, expiry, hit count | `SonicDataHelper.java:89-100` |
+
+## 9. Rivqen canonical client rules
+
+This section gives the Rivqen canonical result of a legacy client session: the profile `legacy-canonical` of the client fixtures (DL-110, DL-111, DL-112). A person can write a client fixture and know its expected result from these rules alone. The fixture format is in `fixtures/legacy/README.md` ("Client fixtures") and in [fixtures](/engineering/protocol/fixtures) §1.
+
+**Status:** <Badge type="info" text="DESIGN" /> WP-01 S2 T-01. A rule with a source names a decision (DL), a session FSM rule, a cache rule or a page section. Every proposal of section 9.10 is recorded (DL-113…DL-118, H-124, H-125). The rules describe observable effects only (R-3): requests, web view actions, page messages, codes, cookie calls and the abstract cache record. They do not define FSM states (R-1); WP-08 maps them to the [session FSM](/engineering/core/session-fsm).
+
+How to read the rules:
+
+- Rule IDs `CL-nn` are stable once published. The client model (T-04) and the fixtures (T-06) cite them. A changed rule keeps its ID; a removed rule keeps its row with "Removed".
+- "Fixture" in the last column means that a client fixture or a function fixture checks the rule (generator check 10). "—" means a convention of the model or a rule that no catalog fixture reaches yet.
+- Words: the **document** is the HTML that the session gives to the web view: the cached page, the page of the response, the rebuilt page of a data update, or the new page of a template change. **Delivered** means that the web view got the document: by `load_data`, or as the answer of an intercepted request. A **normal load** means that the web view loads the URL itself (FSM-06). A **visible entry** is a cache record of the session key that passes CL-12 and CL-40.
+
+### 9.1 Fixture model
+
+| ID | Rule | Source | Check |
+|---|---|---|---|
+| CL-01 | **Steps.** The model runs the steps in order. After each step it completes every effect that the step allows: a request gets its response at once, unless `hold`, `cut`, `server_down` or a network that is not valid stops it. A response arrives as two events, the head and then the end of the body; the session acts on the head first. `wait` checks that its event occurred (else a case error). `settle` ends a phase and advances the clock (CL-04). So the order of independent events is an input of the case, not a rule | DL-100, DL-104, R-2 | — |
+| CL-02 | **Lab runtime.** The account, the cookie and the network validity come from `config` and change only by `set_account`, `set_cookie` and `set_network`. A `cookie_set` call of the client is recorded; it does not change the cookie that the runtime returns (the lab runtime has no cookie jar, CS-17) | CONTRACT §3 | — |
+| CL-03 | **Configuration.** `account` gives the partition (CL-05); `cookie` and `network_valid` set the runtime (CL-02); `accept_diff` sets the `accept-diff` value (CL-09); `unavailable_time_ms` is the `http` period (CL-19); `support_local_server` turns on CL-37; `authenticated_cache` (default `false`) allows the commit of a credentialed exchange (CL-25). These keys have no canonical effect: `account_related` (identity rule 2: a partition is required), `reload_in_bad_network` (DL-107: no reload), `support_cache_control` (DL-108 D-41: RFC 9111 always), `auto_start` (the request goes at `create_session`, CL-09), `get_cookie_when_session_create` (CL-11), `cache_verify_with_sha1` (CL-40, always), `connect_timeout_ms`, `read_timeout_ms` (no deadline in the model, CL-20) | Identity §3, DL-107, DL-108, [Android](/engineering/platforms/android) §3 | Fixture |
+| CL-04 | **Clock.** The model clock starts at 0 ms and advances only by `settle.ms`. CL-19 (the `http` period) and CL-28 (the diff age) use it | DL-106 (D-36), DL-107 (D-47) | — |
+
+### 9.2 Session, partition and request
+
+| ID | Rule | Source | Check |
+|---|---|---|---|
+| CL-05 | **Session key.** A session opens for the key of the partition (the account at `create_session`; `null` is a partition of its own, never `public`), the URL and the Vary values (CL-12). The client computes no legacy session id (D-20, D-21): the key is the Rivqen [cache key](/engineering/cache/identity). The `public` partition is off (identity rule 3, default) | Section 1 (Rivqen rule), identity §1–§3, ADR-005 (D-20) | Fixture |
+| CL-06 | **Partition change** (`FX-LEG-AUTH-CHANGE`). A `set_account` with another value stops every open session of the old partition at once: no later web view call, message, cookie call or commit; a waiting intercept gets `null`; a stream in delivery ends incomplete; a later response is ignored; its result stays as it was. The entries of the old partition are removed. A new session uses the new partition | Identity rule 4, FSM-01, FSM §4 (`PartitionChanged`), R-CACHE-04 | Fixture |
+| CL-45 | **Cookies or site data cleared.** When the app or the user clears the cookies or the site data of a site, the entries of that site are removed in every partition and its open sessions stop as CL-06 (identity rule 5, R-CACHE-09). No lab step reaches it | Identity rule 5, R-CACHE-09, S2 security review M3 | — |
+| CL-07 | **Second session for one key** (`FX-LEG-CONCURRENT`). While a session of a key is open (until its `destroy`), `create_session` for the same key opens no session (`opened: false`); the web view loads normally; later steps without `session` act on the last opened session. A session of another partition or URL opens | P-01 | Fixture |
+| CL-08 | **Disabled key.** During the `http` period of a key (CL-19), `create_session` for that key opens no session and sends nothing; the web view loads normally | DL-107 (D-47) | Fixture |
+| CL-09 | **Request.** An open session sends one request at `create_session` (and at `refresh`, CL-35) when the network is valid: one `cookie_get` (CL-11), then `GET` with the target = path and query of the URL. Fields: `accept-diff: true` (`false` when `accept_diff` is off); with a visible entry also `if-none-match` = the stored etag and `template-tag` = the stored template tag; without one neither field (upstream Android sends both with an empty value); `cookie` when the cookie is not empty (CL-11); no `sonic-sdk-version`. The model also sends `accept-encoding: gzip` to the server model (transport, not in the projection) | [Legacy wire](/engineering/protocol/legacy-wire) §2, U-08, [Android](/engineering/platforms/android) §3 | Fixture |
+| CL-10 | **Network not valid** (Q21, S18). No request and no cookie call. With a visible entry: the cached page is the document (CL-20) and the entry stays. Without: normal load. Codes `-1 / -1` | DL-107 (error with a cached page; D-50) | Fixture |
+| CL-11 | **Cookies** (`FX-LEG-COOKIE-VARIANCE`). (1) One `cookie_get` immediately before each request, also when the connection is then refused (DL-121); no `cookie` field when the value is `null` or empty. (2) Each response that arrives while the session is open, of any status and also of an older refresh generation (CL-35 ignores it only for the document, the codes and the cache; DL-121) (also `304`, errors, `http`, a response that is not a legacy response), with `Set-Cookie` or `Set-Cookie2` lines: one `cookie_set` with the URL and the values in order, before the session acts on that response. (3) These fields never go to the web view or the cache (CL-21). (4) A session that did not open, or that stopped (CL-06, CL-34), makes no cookie call | DL-108 (D-52), legacy wire §8, P-02 | Fixture |
+| CL-12 | **Vary.** A commit stores the request values of the fields that the response `Vary` names, as `vary` of the record (lowercase names, sorted; `null` for an absent field). The legacy request fields `accept-diff`, `if-none-match` and `template-tag` do not count. An entry is visible to a request only when the request has the same values. `Vary: *` gives no commit. A commit for other values adds an entry for the URL; one for the same values replaces it. The stored form of a value is a keyed digest (identity §1), never the value; the fixture projection shows the value, because the model has no device key (DL-127) | Identity §1 (`vary_values`), P-03, DL-127 | Fixture |
+
+### 9.3 Response classification
+
+| ID | Rule | Source | Check |
+|---|---|---|---|
+| CL-13 | **Order of the tests.** The first match decides: (1) a refused connection, a connection error, a TLS error or a read error before the head → CL-18; (2) a `304`, or a `200` whose etag equals the request `if-none-match` (CL-15), with a visible entry → CL-17; (3) a `3xx` → CL-44; (4) another status than `200` → CL-18; (5) not a legacy response (CL-14, CL-16) or an empty body (CL-32) → that rule; (6) `cache-offline: http` → CL-19; (7) no visible entry → CL-25; (8) `template-change` `false` or `0` → CL-27, else CL-31. A body that ends with an error after the head → CL-33 | DL-105, DL-107 | — |
+| CL-14 | **Legacy response test.** A `200` is a legacy response only when it has exactly one `Content-Type` line whose media type is `text/html` (type and subtype ASCII case-insensitive; DL-125), each of the four fields has at least one line, all lines of the field have one value, and the value is not empty: the etag field (the field that `sonic-etag-key` names when it is present and not empty, else `etag`), `template-tag`, `template-change`, `cache-offline`. Names compare ASCII case-insensitively. So an absent or empty `cache-offline` fails the test (P-04). Not a legacy response: normal load (when the cached page was delivered, a `load_url` and the next intercept `null`), no commit, the entry of the key removed, codes `-1 / -1`. Function `is_legacy_response` | DL-105 (D-28, D-32, D-33), P-04 | Fixture |
+| CL-15 | **Field values.** `template-change`: exactly `false` or `0` is a data update; every other value is a template change (D-29). `cache-offline`: ASCII lowercase, then `true`, `false`, `store`, `http`; another value counts as `false` (D-30). Etag: remove one leading `W/` (exact case), then one pair of outer `"` when both are present; compare byte for byte (D-31). A `Cache-Control` line with the directive `no-store` counts as `cache-offline: false` (`http` still wins). Functions `template_change`, `etag` | DL-105, DL-108 (D-41), legacy wire §7 rule 2, U-07 | Fixture |
+| CL-16 | **Text and charset.** The charset is the `charset` parameter of `Content-Type` (RFC 9110 §8.3, token or quoted string, ASCII lowercase); default `utf-8`. The legacy rules apply only to a `utf-8` body that is valid UTF-8; another response is handled as not a legacy response (CL-14). Function `charset` | DL-105 (D-44), P-05 | Fixture |
+| CL-17 | **Not modified.** The cached page is the document: it stays shown, or CL-20 delivers it. Codes `304 / 304`. The entry stays; its page fields are updated by the page fields of the response (RFC 9111 §4.3.4): each name of the response replaces the stored lines of that name. Before that, the response rules of the cache apply (DL-126): `no-store` (CL-15) or `Vary: *` removes the entry, `cache-offline: http` gives CL-19, another value than `true` or `store` removes the entry; a `Vary` field recomputes the `vary` of the record from its names and the values of this request (CL-12): the entry gets that key, and another entry of that key is replaced. An absent `cache-offline` counts as another value (the entry is removed). A credentialed exchange that CL-25 does not allow removes the entry (no field update; DL-132). A removed entry does not change the shown page. A `304` without a visible entry is handled by CL-44 (normal load, no entry) | DL-105 (D-45), DL-108 (D-51), FSM §4 | Fixture |
+| CL-18 | **Errors** (Q4, Q15, S3, S13). (1) A server error `5xx`, `408` or `429`, a refused connection, a connection error or a read error before the head that is not a TLS error: with a visible entry the cached page stays shown (or CL-20 delivers it), the entry stays, no reload; without: normal load. (2) Another status than `200`, `304` and `3xx` (for example `401`, `403`, `404`, `410`): the entry of the key is removed and the session gives a normal load, also when the cached page was delivered (`load_url`, the next intercept `null`). (3) A TLS error: normal load, also when the cached page was delivered; the entry stays (the server said nothing). Codes `-1 / -1` | DL-107 (D-50), DL-124 | Fixture |
+| CL-19 | **`cache-offline: http`** (Q5, Q16, S4). The entry of the key is removed; the key is disabled for `unavailable_time_ms` (default 6 h) of the model clock (CL-08); normal load in both presentations, also when the cached page was delivered. Codes `-1 / -1` | DL-107 (D-47), legacy wire §7 rule 3 | Fixture |
+| CL-44 | **Redirects.** The legacy request does not follow redirects. A `3xx`: normal load (the web view follows the redirect itself), also when the cached page was delivered (`load_url`, the next intercept `null`); no commit; the entry of the key removed; `Set-Cookie` lines as CL-11. Codes `-1 / -1` | DL-131, [cache identity](/engineering/cache/identity) (H-67) | Fixture |
+
+### 9.4 Delivery, codes and messages
+
+| ID | Rule | Source | Check |
+|---|---|---|---|
+| CL-20 | **Document and delivery.** (1) A session has at most one current document. With a visible entry, the cached page is the current document from `create_session`; an outcome that comes before the delivery replaces it. (2) Quick, at `client_ready`: a complete current document → `load_data` (URL = the session URL; fields of CL-21); else `load_url`. (3) Standard, at `client_ready`: `load_url`. (4) An intercept is the main-frame navigation `GET` of the web view whose canonical URL ([identity](/engineering/cache/identity) §2) equals the session URL; every other request passes through the session (DL-128). The first intercept before any delivery, or the first intercept after a `load_url` of the session, gets the current document: complete when its body has ended, else a stream that ends with the body. With no document yet, the intercept waits for the response head; then it gets the document, or `null` when the outcome has none. (5) Every other intercept gets `null`: after a `load_data`, after the document was already given, after a stop. (6) A normal load ends the current document: before the delivery, Quick calls `load_url` at `client_ready` and the intercept gets `null`, Standard gives `null` to the intercept; after the delivery of a cached page, the session calls `load_url` and the next intercept gets `null`. (7) Before `bind_client` and `client_ready` the session makes no web view call: the state at `client_ready` decides (no one-slot hold, M-06). (8) The model has no deadline: a waiting intercept is answered by a later event, or gets `null` when the session stops | FSM §3 (presentation policies), FSM §4 rows 3–4, [Android](/engineering/platforms/android) §3 steps 3–4, P-06 | Fixture |
+| CL-21 | **Page fields.** The fields of a document (in `load_data`, in an intercept answer and in the cache record) are the response field lines without: `Set-Cookie`, `Set-Cookie2`; the hop-by-hop fields (`Connection`, `Keep-Alive`, `Proxy-Connection`, `TE`, `Trailer`, `Transfer-Encoding`, `Upgrade` and the names that `Connection` lists); `Cache-Control`, `Expires`; `Content-Encoding`, `Content-Length` (the document is decoded); the legacy control fields (the etag field, `sonic-etag-key`, `template-tag`, `template-change`, `cache-offline`); `Vary`, `CDN-Cache-Control`, `Surrogate-Control`; the per-response action fields `Clear-Site-Data`, `Refresh`, `WWW-Authenticate`, `Authentication-Info` (DL-129). Names compare ASCII case-insensitively, also the tokens of `Connection`. Every other field stays, for example `Content-Security-Policy`. A `<meta http-equiv>` copy of a policy does not count as giving the fields (it loses `frame-ancestors`, `sandbox` and the report directives). A rebuilt page has the page fields of the data response; a cached page has the stored ones. Quick gives them with `load_data`; an adapter that cannot give them to its web view uses the Standard actions (U-05) | DL-108 (D-52), U-05, P-07 | Fixture |
+| CL-22 | **Codes.** The source code names the outcome: `1000` first load, `2000` template change, `200` data update, `304` not modified; `-1` when there is no outcome (CL-10, CL-14, CL-16, CL-18, CL-19, CL-29, CL-32, CL-33, a stopped session). The final code is set with the source code: `304` when the web view has not received a document of the session yet (it will get the current document complete), or when the first document that it received is the current document and was complete at the delivery; else equal to the source code. CL-28 and CL-30 can change it to `304`. A result is set when the outcome is decided: at the head for a `304`, at the end of a complete body for the other outcomes | Legacy client §4, FSM §3 (codes mapped in the shim), P-08 | Fixture |
+| CL-23 | **Results and messages.** (1) No message before a result, and none for a final code `-1`. (2) `get_diff` registers the page callback and, when the session has a message, sends it at once (`message` action). (3) When a result is set and a callback is registered, the message goes at once. (4) A later `get_diff` gets the same message again (P-09), within the age rule of CL-28. (5) A reload (CL-14, CL-19, CL-29, CL-31, CL-33) drops the registered callback: the new document registers its own (P-10). (6) No spacing between messages (D-37). (7) A stopped session sends nothing. (8) `results` gives the codes of each session at its `destroy` step | DL-106 (D-26, D-37), P-09, P-10 | Fixture |
+| CL-24 | **Message text.** The JSON object `{"result":…,"code":…,"srcCode":…,"extra":{…}}` without white space. `code`, `srcCode`: integers. `result`: only for a final `200` with a diff that is not empty: the JSON text of the diff (keys in server data order) as a string. `extra`: the etag field under the key `eTag` (or the name that `sonic-etag-key` gives), `template-tag`, `cache-offline` (the raw value) of the response that set the result, each only when present, then `isReload` (`"true"` in a refresh generation, CL-35, else `"false"`). Strings as `JSON.stringify` writes them: `/` is not escaped, non-ASCII characters stay UTF-8. `local_refresh_time` is not part of the compared text (CONTRACT §6). Function `message` (`null`: no message) | DL-106 (D-26), P-11 | Fixture |
+
+### 9.5 Outcomes
+
+| ID | Rule | Source | Check |
+|---|---|---|---|
+| CL-25 | **First load** (Q1, Q2, Q6, S1). No visible entry, a legacy `200`: the page of the response is the current document (CL-20). Commit at the end of the body (CL-26) only when the body is complete, `cache-offline` is `true` or `store`, there is no `no-store`, the exchange is not credentialed or the app allows authenticated caching (`authenticated_cache`, default off) and the partition is not `null` (R-CACHE-03, identity rule 2, DL-123; credentialed: a non-empty request `cookie`, or a `Set-Cookie` or `Set-Cookie2` line in the response, H-62), `Vary` is not `*`, the SHA-1 of the page equals the etag (CL-15) and the SHA-1 of the client template (CL-41) equals `template-tag`. Else no commit; the page is still shown. Codes: `1000` and the final code of CL-22. `store` keeps the final code of CL-22 (D-48: only the update paths) | FSM-07, DL-108, P-12 | Fixture |
+| CL-26 | **Commit.** One commit for an outcome, at the end of a complete and valid document, whatever the web view did (no delayed save, no second save at a stream close). A `destroy` after the commit keeps it; nothing commits after a stop. A commit replaces the entry of its key (CL-12) at once (R-CACHE-05). The record content: CL-38 | FSM-07, FSM §4 rows 1 and 5, R-CACHE-05 | Fixture |
+| CL-27 | **Data update** (Q8, Q10, S6, S7). The rebuilt page is the stored template with each placeholder replaced by the value of the server `data` member (C-08 rebuild rule); it must pass CL-29. When the cached page was delivered: the diff goes to the page (CL-23), codes `200 / 200`. Else the rebuilt page is the current document, codes `200 / 304` (CL-22). Diff: every key of the server data whose value differs from the stored value or that the stored data does not have, in server data order (D-25). After the commit: page = the rebuilt page, data = the full server data (D-35), the template unchanged, etag and template tag of the response, page fields of the response. With `cache-offline` `false` (also another value, D-30, or `no-store`), `Vary: *`, or a credentialed exchange that CL-25 does not allow: deliver in the same way, then remove the entry; no commit (D-46, DL-132) | DL-106 (D-25, D-35), DL-107 (D-46), FSM §4 rows 3–4 | Fixture |
+| CL-28 | **Empty diff and diff age.** An empty diff sends no message, and the final code becomes `304` (D-34). A message with a diff that is older than 30 000 ms of the model clock at the moment of its delivery is not sent, and no later message follows; when the page never got that diff, the session gives a normal load (`load_url`, the next intercept `null`; the page must not stay older than the cache) and the final code becomes `-1` (D-36, DL-130) | DL-106 (D-34, D-36), DL-130 | Fixture |
+| CL-29 | **Rebuild check** (Q11). A data update needs: the response `template-tag` equal to the stored template tag; a body that is a JSON object with a `data` member that is an object of string values; a rebuilt page whose SHA-1 equals the `html-sha1` member and the response etag. Else: normal load (CL-20 item 6), the entry removed, no commit, codes `-1 / -1` | DL-108 (D-49), P-13 | Fixture |
+| CL-30 | **`cache-offline: store`** (Q9, Q13, S8, S10, M-15). A data update or a template change with `store`: commit as with `true` (CL-25 conditions apply, DL-132). When the cached page was delivered: no diff and no reload; the final code is `304`. Else the current document is delivered as in CL-27 or CL-31. So the codes are `200 / 304` or `2000 / 304`; the message has no `result` | DL-106 (D-48), legacy wire §7, P-14 | Fixture |
+| CL-31 | **Template change** (Q12, Q14, S9, S11). The page of the response is the new document. When the cached page was delivered: at the end of the complete body, Quick calls `load_data` with the new document and Standard calls `load_url`, and the next intercept gets the new document complete; codes `2000 / 2000`; the callback is dropped (CL-23). Else the new document is the current document (CL-20), codes `2000 / 304`. Commit at the end of the body with the client template (CL-41) when CL-25 allows it; else deliver, then remove the old entry (its template is no longer the server's; DL-132). A body that ends with an error: CL-33 | FSM §1 (`TemplateChanged` → `FullReady`), FSM-07, P-15 | Fixture |
+| CL-32 | **Empty body** (Q3, S12). A legacy `200` with a body of 0 bytes is no document: as CL-14 (normal load, no commit, the entry removed, `-1 / -1`) | INV-05, P-16 | Fixture |
+| CL-33 | **Stream cut** (`FX-LEG-INTERRUPTED`; Q20, Q22, S2, S17). A body that ends with an error is not complete: no commit. A stream that the web view already receives ends incomplete (`complete: false`); then the session calls `load_url` and the next intercept gets `null` (normal load). Before the delivery: normal load without an entry (D-50); with a visible entry the cached page as CL-18 item 1, but a TLS error as CL-18 item 3 (normal load). Codes `-1 / -1` | FSM-06, FSM-07, DL-107 (D-50), P-17 | Fixture |
+| CL-34 | **Destroy.** After `destroy` the session does nothing: no web view call, message, cookie call or commit; a waiting intercept gets `null`; a stream in delivery ends incomplete; a later response is ignored. The key is free for a new session (CL-07) | FSM-04, FSM §4 (`cancel`) | Fixture |
+| CL-35 | **Refresh** (Q19, S16). `refresh` on an open session starts a new generation: the result is reset to `-1 / -1`, a response of the old generation is ignored, a new request goes with the validators of the visible entry and a new `cookie_get`. The document of the old generation counts as delivered. So a `304` gives `304 / 304`, a data update a diff (`200 / 200`), a template change a reload (CL-31, `2000 / 2000`). `isReload` is `"true"` for its result. No spacing (D-37) | FSM-01, FSM-02, DL-106 (D-37), P-18 | Fixture |
+| CL-36 | **Page finished.** `page_finished` changes nothing in the projection | P-19 | — |
+| CL-37 | **Local server** (D-39). Only with `support_local_server` and only for a `200` that is not a legacy response (CL-14): the Android rule. Off by default (D-38). No lab scenario reaches it yet | DL-109 | — |
+
+### 9.6 Cache
+
+| ID | Rule | Source | Check |
+|---|---|---|---|
+| CL-38 | **Abstract record.** The cache is a set of records, at most one for each key (CL-05, CL-12): `partition`, `url`, `vary`, `etag`, `template_tag`, the page, the template, the data block map and the page fields (CL-21). A fixture sees the records only at `snapshot_cache` steps. File names and file layout are not part of the result (D-42 not reproduced) | DL-108 (D-42), DL-110 | Fixture |
+| CL-39 | **Freshness and `no-store`.** The client sends the request each time the network is valid: there is no fresh-entry skip. `no-store` gives no commit and removes the entry (CL-15). `private` and `no-cache` allow the commit | DL-108 (D-41), U-07, R-CACHE-02, P-20 | Fixture |
+| CL-40 | **Integrity.** An entry is used only when the SHA-1 of its page equals its etag and the SHA-1 of its template equals its template tag. Else the entry is removed and the session runs as without an entry. The SHA-1 check finds damage only; it does not replace the record integrity and encryption of the cache (SEC-19, ADR-011), which WP-08 applies to every legacy record (section 9.12) | [Freshness](/engineering/cache/policy) §2 rule 3, R-CACHE-06, P-12 | Fixture |
+
+### 9.7 Functions
+
+| ID | Rule | Source | Check |
+|---|---|---|---|
+| CL-41 | **Split** (D-22, D-23, D-24). The client split is the canonical server split C-06 to C-08 of [legacy wire](/engineering/protocol/legacy-wire#canonical-server) §10: case-insensitive markers, the name of the opening marker, the title rule of C-06; `data` has `{title}` first, then the blocks in document order. A repeated block name gives the error token `duplicate-block-name` (DL-075, DL-121). Function `split` | ADR-005, [markers](/engineering/protocol/legacy-markers) §4 | Fixture |
+| CL-42 | **Diff** (D-25). The diff of CL-27. `local` `null` gives the full server data. A value that is not a string (local or server) gives the error token `value-not-string` (the session: CL-29). Function `diff` | ADR-005 (D-25), DL-106 | Fixture |
+| CL-43 | **Session id** (D-20, D-21). No canonical value: the canonical client computes no session id (CL-05). The platform profiles `legacy-android` and `legacy-ios` reproduce their platform. Function `session_id` (`none` in `legacy-canonical`) | ADR-005 (D-20) | Fixture |
+
+### 9.8 Row map
+
+Rows of section 3 and their rules:
+
+| Rows | Rules |
+|---|---|
+| Q1, Q2, S1 | CL-20, CL-22, CL-25, CL-26 |
+| Q3, S12 | CL-32 |
+| Q4, Q15, S3, S13 | CL-18 |
+| Q5, Q16, S4 | CL-19, CL-08 |
+| Q6 | CL-25 (no commit) |
+| Q7, S5 | CL-17 |
+| Q8, S6 | CL-27, CL-23 |
+| Q9 | CL-30 (`store`); CL-29 (diff failed) |
+| Q10, S7 | CL-27, CL-22 |
+| Q11 | CL-29 |
+| Q12, S9 | CL-31, CL-23 |
+| Q13, S10 | CL-30 |
+| Q14, S11 | CL-31, CL-22 |
+| Q17, S14 | CL-14 (absent or empty); CL-27 (`false`) |
+| Q18, S15 | CL-14 |
+| Q19, S16 | CL-35, CL-31 |
+| Q20, Q22, S2, S17 | CL-33 |
+| Q21, S18 | CL-10 |
+| S8 | CL-30 (`store`); CL-27 (another value counts as `false`). The traced form `true,http` or `true,store` (two lines with different values, D-33) is CL-14 |
+
+Mode differences M-01 to M-16 (section 3.3): one canonical value for both presentations, except the load call.
+
+| Row | Canonical value | Rules |
+|---|---|---|
+| M-01 | Quick: `load_data` of a complete document, else `load_url`; Standard: `load_url` | CL-20 |
+| M-02 | The page fields in both | CL-21 |
+| M-03 | Quick at `client_ready`; Standard at the intercept | CL-20 |
+| M-04 | No wait with a document; else wait for the head | CL-20 |
+| M-05 | `null` | CL-20 |
+| M-06 | No hold: the state at `client_ready` decides | CL-20 |
+| M-07 | Not compared (threads, DL-110) | — |
+| M-08 | Quick `load_data`, Standard `load_url`, after the complete body | CL-31 |
+| M-09 | No reload in both | CL-18 |
+| M-10 | Normal load in both | CL-19 |
+| M-11 | The rebuilt page is the document in both | CL-27 |
+| M-12 | No commit, entry removed in both | CL-27, CL-15 |
+| M-13 | One commit at the end of the body | CL-26 |
+| M-14 | CL-22 | CL-22 |
+| M-15 | Commit, no refresh, final `304` | CL-30 |
+| M-16 | Dropped in both | CL-23 |
+
+Client divergences ([divergences](/engineering/protocol/legacy-divergences#_2-client-divergences) §2):
+
+| D | Rules | D | Rules |
+|---|---|---|---|
+| D-20 | CL-05, CL-43 | D-36 | CL-28 |
+| D-21 | CL-43 | D-37 | CL-23, CL-35 |
+| D-22…D-24 | CL-41 | D-39 | CL-37 |
+| D-25 | CL-27, CL-42 | D-41 | CL-39, CL-15 |
+| D-26 | CL-24 | D-42 | CL-38 |
+| D-27 | — (platform pages) | D-44 | CL-16 |
+| D-28 | CL-14 | D-45 | CL-17 |
+| D-29…D-31 | CL-15 | D-46 | CL-27, CL-31 |
+| D-32, D-33 | CL-14 | D-47 | CL-19, CL-08 |
+| D-34 | CL-28 | D-48 | CL-30, CL-25 |
+| D-35 | CL-27 | D-49 | CL-29 |
+| D-50 | CL-18, CL-33 | D-51 | CL-17 |
+| D-52 | CL-21, CL-11 | | |
+
+D-38, D-40 and D-43 are not divergences. The subresource preload (`sonic-link`, D-43, F11) is not in the client model.
+
+Catalog rows ([fixtures](/engineering/protocol/fixtures) §3): `FX-LEG-INTERRUPTED` CL-33 (CL-18 with an entry); `FX-LEG-CONCURRENT` CL-07, CL-34; `FX-LEG-AUTH-CHANGE` CL-05, CL-06; client part of `FX-LEG-COOKIE-VARIANCE` CL-11, CL-12, CL-21.
+
+### 9.9 Expected results of the stored scenarios
+
+<Badge type="info" text="DESIGN" /> For the reviewer: the canonical result of each stored scenario under the rules above (no file yet; T-06 writes the fixtures, T-04 generates the files). "Same" means the same web view calls, codes and cache as the Android trace; the request fields always differ (CL-09: no empty validators, no `sonic-sdk-version`), so every trace-backed fixture needs a `--ANDROID` profile fixture.
+
+| ID | Canonical result (both modes unless named) |
+|---|---|
+| CS-01 | Q: `load_data` a, intercept `null`; S: `load_url`, intercept a complete; `1000 / 304`; one commit |
+| CS-02 | `load_url`, intercept a as a stream; `1000 / 1000` at once; one commit |
+| CS-03 | Q: `load_data` a, intercept `null`; S: intercept a; `304 / 304` twice; entry kept |
+| CS-04 | Cached a delivered, diff with `{price}` only (D-35), `200 / 200`; the second `get_diff` gets it again (P-09); commit b |
+| CS-05 | Rebuilt b delivered, `200 / 304`; commit b |
+| CS-06 | Q: `load_data` a, then `load_data` c; S: intercept a, then `load_url`; `2000 / 2000` at the next `get_diff` (callback dropped); commit c |
+| CS-07 | c delivered, `2000 / 304`; commit c |
+| CS-08, CS-10 | `true,http` and `true,store` on two lines: not a legacy response (CL-14): normal load, entry removed, `-1 / -1` |
+| CS-09 | No `cache-offline`: CL-14, as CS-08 |
+| CS-11 | Cached a delivered, entry kept, `-1 / -1` |
+| CS-12, CS-13b | Normal load: `load_url`, intercept `null`, `-1 / -1` |
+| CS-13a | Stream ends incomplete, then `load_url`; `-1 / -1`; no commit |
+| CS-14 | No etag: CL-14, as CS-08 |
+| CS-15 | The second session does not open; the first as CS-02 |
+| CS-16 | After the first `set_account`: the entry of account 1 removed; first load for account 2 (`1000 / 304`). The second `set_account` stops the held session; the entry of account 2 removed; last snapshot empty |
+| CS-17 | The first response has `Set-Cookie`, so the exchange is credentialed: first load without a commit (CL-25, DL-123); the second session is a first load again (`1000 / 304`); `cookie_set` after each response; no `set-cookie` in the page fields; no record |
+| CS-18 | Session 1 stops during the body: its stream ends incomplete, no commit; session 2 commits at the end of the body, the destroy 0.5 s later keeps it |
+| CS-20…CS-27 | As their client fixtures `FX-LEG-CL-CS20-Q`…`FX-LEG-CL-CS27-S` (WP-01 S2 T-06; the rules in their `rules` member) |
+| CS-28 | The rebuild fails CL-29 (wrong `html-sha1` member): `load_url`, intercept `null`, `-1 / -1`, the entry removed (both modes) |
+| CS-29 | The `refresh` sends the validators of entry a and gets a template change (CL-35, CL-31): Quick `load_data` c, Standard `load_url`; `2000 / 2000` at the next `get_diff` (callback dropped); commit c |
+
+### 9.10 Proposals
+
+<Badge type="info" text="DESIGN" /> Proposals for the architect, in the four-part form of the decision log. Each one is a proposal until a decision-log row records it. **Recorded on 2026-11-07:** P-01 DL-113, P-04 DL-114, P-12 DL-115, the other architect proposals DL-116, CL-06 DL-117, the projection additions DL-118; P-02 and P-03 H-124 (A), P-10, P-17 and P-18 H-125 (A). So every rule of this section is the canonical rule. "Human" marks a proposal that touches security or compatibility (H-120); section 9.11 asks those as two questions.
+
+**P-01 Second session for one key** (R-4, CL-07). Class: architect.
+
+1. VasSonic: while a session of the same id runs or is ready (until destroy), a new session is refused; a preloaded session is taken over; there is no queue or merge (§2.7; CS-15).
+2. Why different: the legacy client of Rivqen has no preload; the key is the partition, the URL and the Vary values, not the session id.
+3. Skeptic: R-CACHE-07 asks to share identical requests; a refusal makes no second request, so there is nothing to share. The second web view loads normally: it loses speed, not correctness (INV-05). A shared session would be a second design of the FSM before WP-08 (R-1).
+4. Proposal: CL-07.
+
+**P-02 Cookie flow** (R-4, CL-11). Class: human (security).
+
+1. VasSonic: the request cookie is read when the session is created (default), so a later change is not sent; the `Set-Cookie` values of every status go to the runtime, in another thread while an intercept runs; the stored header file keeps `Set-Cookie`; the web view fields do not have it (§2.9, D-52; CS-17).
+2. Why different: the request must carry the cookie that the web view would send at that moment; the page and its subresources need the cookies of the response before they run; a stored `Set-Cookie` would set an old cookie again (D-52 already says "never stored").
+3. Skeptic: a later read costs nothing (the request is built at the time it is sent). A browser also stores the cookies of an error response. The cookie jar rules (domain, path, expiry) stay with the platform store; a fixture records only the calls (CL-02).
+4. Proposal: CL-11 items 1 to 4.
+
+**P-03 Vary on the legacy request fields** (CL-12). Class: human (security: cache identity).
+
+1. VasSonic: the client does not read `Vary`; the key is the session id.
+2. Why different: identity §1 puts the Vary values in the key; the canonical server adds `vary: template-tag` for shared caches (C-15, U-12). The client takes `template-tag` and `if-none-match` from its own entry, so the next request never has the values of the request that stored the entry (the first load has none): with these names in the key, no entry is ever visible.
+3. Skeptic: a name left out of the key could give one variant for another. These three fields select only the form of the response (full page or data); the client stores the full or rebuilt page, which does not depend on them, and checks it (CL-29, CL-40). `Cookie`, `Accept-Language` and every other name still count, so cookie and partition isolation stay.
+4. Proposal: CL-12.
+
+**P-04 Absent `cache-offline`** (D-28 and D-46, CL-14). Class: architect (fail closed; it resolves two decisions).
+
+1. VasSonic: Android handles an absent field as `false` (cache removed, no update); iOS needs the field for a legacy response.
+2. Why different: DL-105 (D-28) makes a `200` without the four fields a normal load; DL-107 (D-46) says "`false` or absent: deliver the update". Both cannot hold for "absent".
+3. Skeptic: a normal load costs one request more than the update. Without `cache-offline` the response is not a proven legacy response, so its body is not a trusted data body.
+4. Proposal: D-28 wins. Absent or empty → CL-14; D-46 covers `false` and every other value (D-30).
+
+**P-05 Text that is not UTF-8** (CL-16). Class: architect.
+
+1. VasSonic: Android decodes with the `charset` parameter (default: the platform charset); iOS defaults to UTF-8 (D-44).
+2. Why different: the canonical server passes other charsets through (C-03), and the split rules are defined on UTF-8 text.
+3. Skeptic: a legacy server with another charset loses acceleration; the page still loads.
+4. Proposal: CL-16.
+
+**P-06 Delivery** (CL-20; M-01, M-03 to M-06). Class: architect.
+
+1. VasSonic: Quick gives the cached page as data after the client is ready, through a one-slot hold; an intercept gets the pending stream, once in Standard, `null` for a second one in Quick; the path depends on "given as data" (Quick) or "intercepted" (Standard).
+2. Why different: FSM §4 wants one result for every order of "web view ready" and "network complete"; the session needs one current document and one delivery rule.
+3. Skeptic: in the harness, an intercept after a data load is an artifact: a real web view asks for a `data:` URL (CS-19), so `null` changes no real page. "Delivered" in place of "page loaded" (FSM §4 rows 3–4) fits the legacy bridge: the page asks for the diff when its script runs (`get_diff`).
+4. Proposal: CL-20.
+
+**P-07 Page fields** (CL-21). Class: architect (it keeps the security fields, U-05).
+
+1. VasSonic: Android stores all fields and removes `Set-Cookie`, `Cache-Control`, `Expires`, `Etag` and repeated fields for the web view; it keeps `content-encoding: gzip` and `transfer-encoding: chunked` with a decoded stream (trace report §6 item 5); iOS removes another set before it stores.
+2. Why different: the web view gets decoded bytes, so the content coding and the length are wrong; the client consumes the legacy control fields; `Vary` is part of the key.
+3. Skeptic: a removed field could be needed by the page; only the listed fields go, and `Content-Security-Policy` and every other end-to-end field stay.
+4. Proposal: the set of CL-21 (D-52 plus the content coding, the length, the legacy control fields and `Vary`).
+
+**P-08 Final code** (CL-22; M-14). Class: architect (it keeps the upstream meaning of §4).
+
+1. VasSonic: a final `304` means that the session itself loaded the current content; Quick `1000 / 1000` and `1000 / 304` differ only by the local order (§4).
+2. Why different: Rivqen needs one rule without SDK flags.
+3. Skeptic: a legacy page reads `code` to choose an action. The rule gives the upstream code in each row that a trace confirms (Q1, Q2, Q7, Q8, Q10, Q12, Q14, S1, S5, S6, S7, S9, S11); it differs only where the upstream code comes from a defect (Q11, Q22) or a `store` path (M-15).
+4. Proposal: CL-22.
+
+**P-09 Repeated message** (CL-23 item 4). Class: architect.
+
+1. VasSonic: Android sends `{}` to a second `getDiffData` after a data-update message (the diff is cleared and the next send fails to parse it; CS-04); for other codes it sends the same message again (CS-01).
+2. Why different: `{}` is a probable upstream defect (trace report §6 item 2).
+3. Skeptic: a page that applies the diff twice sets the same block values again; the 30 s age rule still drops an old diff.
+4. Proposal: the same message again.
+
+**P-10 Page callback after a reload** (CL-23 item 5; M-16). Class: human (compatibility).
+
+1. VasSonic: Quick drops the page callback in a template change; Standard keeps it (M-16; CS-06).
+2. Why different: a reload replaces the document; the callback belongs to a document that no longer exists; the new document asks with its own `get_diff`.
+3. Skeptic: a Standard legacy page that waits for a push after a template change gets the message only after its own call; legacy pages call `getDiffData` when they load.
+4. Proposal: a reload drops the callback in both presentations.
+
+**P-11 Message text** (CL-24). Class: architect.
+
+1. VasSonic: Android writes the keys in insertion order (`local_refresh_time`, `result`, `code`, `srcCode`, `extra`), writes `/` as `\/`, and leaves out the `extra` key of an absent field (D-26; trace report §6 item 7).
+2. Why different: DL-106 fixes the types, not the text; the fixtures compare the text (CONTRACT §6, S2).
+3. Skeptic: `\/` and `/` are the same JSON string; a page parses the JSON, so the text form does not change its behavior.
+4. Proposal: CL-24 (the Android key order; `JSON.stringify` strings).
+
+**P-12 Commit and entry integrity** (CL-25, CL-40). Class: architect (fail closed).
+
+1. VasSonic: Android checks the cache before use (F1: etag and HTML SHA-1 present, file SHA-1); it stores the server tags without a comparison with its own split.
+2. Why different: the next data update rebuilds the page from the stored template, and the server computes its tag from its own template; an entry with another template can only fail later.
+3. Skeptic: a server whose split differs from the canonical split (D-04 to D-06 of `legacy-java`, `legacy-php`) loses the cache write; the page is still shown. A conforming server loses nothing.
+4. Proposal: commit and use an entry only when SHA-1(page) = etag and SHA-1(template) = template tag.
+
+**P-13 Data update checks and codes** (CL-29; Q11). Class: architect.
+
+1. VasSonic: on an `html-sha1` mismatch Quick calls `loadUrl` and reports `200 / 1000`, and the cache is removed.
+2. Why different: DL-108 (D-49) gives the action but no codes; `200 / 1000` tells the page "first load" although the session loaded nothing.
+3. Skeptic: `-1 / -1` is the code of every other normal load (CL-14, CL-18, CL-19).
+4. Proposal: also require the stored template tag and a data object of strings; a failure gives a normal load, the entry removed, `-1 / -1`.
+
+**P-14 `store`** (CL-30; M-15). Class: architect.
+
+1. VasSonic: Quick reports `200 / 304` without a diff and still loads the rebuilt page when the page is not shown; Standard sends no message on a data update (codes `-1`, old stream served) and `2000 / 304` on a template change; iOS sets `code` to `"304"` for every result (D-48).
+2. Why different: legacy wire §7: `store` stores and does not refresh the current page; DL-106 (D-48): final `304` on the update paths.
+3. Skeptic: to deliver the current document when nothing is shown yet is not a refresh; Quick does it upstream.
+4. Proposal: CL-30.
+
+**P-15 Template-change reload** (CL-31; M-08). Class: architect.
+
+1. VasSonic: Quick loads the new page as data when the body is complete, else calls `loadUrl` and gives the bridge stream, and reads until page finish (Q12 note 5); Standard calls `loadUrl`, and the second intercept gets the new response.
+2. Why different: a partial new page must not replace a complete shown page.
+3. Skeptic: the reload comes later by the body time; the shown page stays meanwhile.
+4. Proposal: reload only after the complete body; no page-finish read (P-19).
+
+**P-16 Empty body** (CL-32; Q3, S12). Class: architect.
+
+1. VasSonic: Quick loads nothing (probable defect, Q3 note 2); Standard serves the empty stream with `-1 / -1` (S12).
+2. Why different: an empty document is a white page (INV-05).
+3. Skeptic: a server that sends an empty page on purpose gets a normal load, which shows the same empty page.
+4. Proposal: CL-32.
+
+**P-17 Stream cut** (CL-33; `FX-LEG-INTERRUPTED`). Class: human (compatibility).
+
+1. VasSonic: the web view gets the bytes so far, then an `IOException`; codes `1000 / 1000` and messages; no cache; a cut before the intercept gives `null` (Q20, Q22, S2, S17; CS-13a, CS-13b).
+2. Why different: a partial page is a broken page; the FSM goes from `Streaming` to `Fallback` on a bad stream, and `Fallback` ends in a normal load (FSM-06, INV-05).
+3. Skeptic: the reload sends the `GET` again (safe) and can show a short blank. The page loses the `1000` message, which a legacy page does not need for a first load.
+4. Proposal: CL-33.
+
+**P-18 Refresh** (CL-35; Q19, S16). Class: human (compatibility).
+
+1. VasSonic: `refresh` resets the intercept flag and the codes; a template change during a refresh makes no load call (Quick `2000 / 2000`, Standard `2000 / 304`); callbacks are at least 2 s apart (D-37).
+2. Why different: FSM-01 makes a reload a new generation; the user asked for the current page, so a template change must show it.
+3. Skeptic: the reload replaces a page that the user sees; that is the purpose of a refresh.
+4. Proposal: CL-35.
+
+**P-19 Page finished** (CL-36). Class: architect.
+
+1. VasSonic: only the template-change read uses the page-finish report (§2.3; Q12 note 5).
+2. Why different: P-15 removes that read.
+3. Skeptic: none.
+4. Proposal: no effect.
+
+**P-20 Always revalidate** (CL-39; F3). Class: architect.
+
+1. VasSonic: with `SUPPORT_CACHE_CONTROL` on (default off) a fresh cache sends no request.
+2. Why different: the canonical server sends `no-cache` (C-09), and D-52 stores no `Cache-Control`, so the client cannot know the freshness later.
+3. Skeptic: RFC 9111 allows, but does not require, a reuse without validation; the cost is one conditional request, which is usually a `304` or a data response.
+4. Proposal: CL-39.
+
+### 9.11 Questions for the human
+
+<Badge type="info" text="DESIGN" /> Decided on 2026-11-07: HQ-1 is H-124, answer **A**; HQ-2 is H-125, answer **A** ([sprint record](/engineering/plan/sprints/WP-01-S2)).
+
+| Question | Options |
+|---|---|
+| HQ-1 (security): cookies and the cache key of the legacy client (P-02, P-03) | **A (recommended):** P-02 and P-03: the cookie is read before each request, every `Set-Cookie` goes to the cookie store before the session uses the response and never to the web view or the cache, and `Vary` names other than the three legacy request fields are part of the key. **B:** upstream timing (the cookie read when the session is created) and no `Vary` in the key. Cost: with `Vary: Cookie` a page can show the snapshot of another cookie value in the same partition. **C:** A, and the three legacy names also count. Cost: no cache hit with any server that follows C-15 (every canonical server), so the legacy acceleration is off |
+| HQ-2 (compatibility): a normal load where upstream leaves a partial or old page (P-17, P-18, P-10) | **A (recommended):** a normal load after a cut stream, a reload for a template change in a refresh, the page callback dropped at a reload. **B:** the upstream behavior: the partial or old page stays, with the upstream codes and messages. Cost: a broken or old page can stay on screen (INV-05) |
+
+### 9.12 Requirements for WP-08
+
+<Badge type="info" text="DESIGN" /> The model of section 9 runs each step atomically and has no storage, deadline or transport. The S2 security review lists what the Rust core must add when it implements these rules (WP-08):
+
+- **Partition race (CL-06, CL-26, CL-45).** Every cache write, the field update of CL-17 included, checks inside its cache transaction that its partition is not revoked, that its site is not cleared since the session started, and that its generation is current (INV-12). A revoke or a site clear aborts the writes of the affected partition or site that are in flight, or runs after them. A write that loses the race writes nothing. A property test covers the `PartitionChanged` row of the FSM.
+- **Record integrity (CL-40).** Every legacy record is stored with the integrity and encryption of the cache (SEC-19, ADR-011) over all its members (page, template, data map, page fields, etag, template tag, Vary digests). A mismatch removes the record (R-CACHE-06).
+- **Deadline (CL-20 item 8).** FSM-05 applies: a deadline gives `Fallback` and a normal load (INV-05, ERR-07).
+- **Transport.** Legacy sessions use `https` only in release builds (identity §2, SEC-01). The legacy request does not follow redirects (CL-44).
+- **`Cache-Control` parse (CL-15, CL-39).** As DL-088 rules 3 and 5: directive names ASCII case-insensitive, comma-separated, `no-store` with an argument counts.
+- **Delivery encoding (CL-16, CL-20).** The document goes to the web view as UTF-8 bytes with an explicit encoding; a leading BOM is removed (T-16, SEC-17).
+- **Site clear signal (CL-45).** The platform adapter turns the clear of cookies or site data (by the app, or by the user in the system settings when the platform reports it) into the CL-45 event.
+- **Partition members.** The partition is the account and also `tenant_id`, `auth_scope` and `environment_id` (identity §1, policy §4); a change of any of them is a partition change (CL-06).
+- **Not changed (recorded):** a `Set-Cookie` of a response that arrives after `destroy` is dropped (CL-11 item 4, CL-34): the web view's own requests get the server cookies again. After CL-06 the old page stays on screen until the app navigates (the app owns the account switch, INV-15 is an app duty).
 
 ## Related
 

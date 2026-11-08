@@ -1,0 +1,38 @@
+GET /catalog HTTP/1.1
+accept-diff: true
+If-None-Match: 3e3184cbd12e5294959effe6f2d9985f50f4ea5d
+template-tag: 3c771bf015df2c410a41a6012804f645b3acc1bc
+method: GET
+Accept-Encoding: gzip
+Accept-Language: zh-CN,zh;
+sonic-sdk-version: Sonic/2.0.0
+User-Agent: RivqenLab/1 (Android harness) Sonic/2.0.0
+Host: 10.0.2.2:18090
+Connection: Keep-Alive
+
+--- response ---
+HTTP 200
+content-type: text/html; charset=utf-8
+Content-Encoding: gzip
+Etag: 4c33dabea7ea65c6255b9e6a6539976674886a2c
+template-tag: 3c771bf015df2c410a41a6012804f645b3acc1bc
+Cache-Offline: true
+template-change: false
+Date: Sat, 07 Nov 2026 18:32:28 GMT
+Connection: close
+Transfer-Encoding: chunked
+
+[body decoded from content-encoding=gzip]
+{"data":{"{title}":"<title>Shop</title>","{price}":"<!--sonicdiff-price--><p class=\"price\">130.00</p><!--sonicdiff-price-end-->","{stock}":"<!--sonicdiff-stock--><p>In stock: 5</p><!--sonicdiff-stock-end-->"},"diff":"","html-sha1":"4c33dabea7ea65c6255b9e6a6539976674886a2c","template-tag":"3c771bf015df2c410a41a6012804f645b3acc1bc"}
+--- delivered ---
+HTTP 200
+content-type: text/html; charset=utf-8
+Etag: 4c33dabea7ea65c6255b9e6a6539976674886a2c
+template-tag: 3c771bf015df2c410a41a6012804f645b3acc1bc
+Cache-Offline: true
+template-change: false
+Date: Sat, 07 Nov 2026 18:32:28 GMT
+Content-Length: 334
+
+[body delivered: 334 of 229 wire bytes, content-encoding=identity]
+{"data":{"{title}":"<title>Shop</title>","{price}":"<!--sonicdiff-price--><p class=\"price\">130.00</p><!--sonicdiff-price-end-->","{stock}":"<!--sonicdiff-stock--><p>In stock: 5</p><!--sonicdiff-stock-end-->"},"diff":"","html-sha1":"0000000000000000000000000000000000000000","template-tag":"3c771bf015df2c410a41a6012804f645b3acc1bc"}

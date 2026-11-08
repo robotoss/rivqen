@@ -66,14 +66,18 @@ function fakeHarness({ failOn = null } = {}) {
       const scenario = await (await fetch(`${base}/run/scenario?run=${runId}`)).json();
       assert.equal(scenario.run, runId);
       for (;;) {
-        await Promise.all(pending);
+        // Let the request of the last step report its result first; a held request must not block the next step.
+        await Promise.race([Promise.allSettled(pending), new Promise((resolve) => setTimeout(resolve, 150))]);
         const res = await fetch(`${base}/run/next?run=${runId}`);
         if (res.status === 204) continue;
         const step = await res.json();
-        if (step.do === 'end') return;
+        if (step.do === 'end') {
+          return;
+        }
         if (step.do === 'create_session') await event('session.created', { session_id: 'sid' });
         if (step.do === 'snapshot_cache') await event('cache.snapshot', { files: [], db: null });
-        if (step.do === 'request_resource') {
+        // The engine starts the network request when the session is created (CONTRACT section 3).
+        if (step.do === 'create_session') {
           pending.push(
             fetch(`http://127.0.0.1:${proxyPort}/catalog`).then(async (r) => {
               const body = Buffer.from(await r.arrayBuffer());
@@ -81,7 +85,7 @@ function fakeHarness({ failOn = null } = {}) {
                 status: r.status, reason: 'OK', mime: 'text/html', encoding: 'utf-8', headers: [['content-type', 'text/html']],
                 body_len: body.length, body_sha256: '0'.repeat(64), complete: true,
               }, 'worker-1');
-            }),
+            }).catch(() => {}),
           );
         }
         await event('step.done', failOn === step.do ? { step, error: 'refused' } : { step });
@@ -133,13 +137,13 @@ test('runner_fake_harness', async () => {
     assert.deepEqual((await readdir(dir)).sort(), ['run-1-x1.http', 'run-1-x2.http', 'run-1.jsonl', 'run-2-x1.http', 'run-2-x2.http', 'run-2.jsonl']);
     const events = (await readFile(path.join(dir, 'run-1.jsonl'), 'utf8')).trimEnd().split('\n').map((l) => JSON.parse(l));
     assert.equal(events[0].ev, 'run.start');
-    assert.deepEqual({ ...events[0], t: 0 }, { ev: 'run.start', mode: 'quick', origin: 'lab-node', repeat: 1, scenario: 'CS-90', seq: 1, src: 'conductor', t: 0, upstream_sha: '59936bef' });
+    assert.deepEqual({ ...events[0], t: 0 }, { ev: 'run.start', macro: 2, mode: 'quick', origin: 'lab-node', repeat: 1, scenario: 'CS-90', seq: 1, src: 'conductor', t: 0, upstream_sha: '59936bef' });
     assert.deepEqual(events.at(-1).ok, true);
     const started = events.filter((e) => e.ev === 'step.start').map((e) => e.step.do);
-    // setup first_load (7 steps), then the 11 steps of the scenario
-    assert.equal(started.length, 18);
-    assert.deepEqual(started.slice(0, 3), ['create_session', 'bind_client', 'client_ready']);
-    assert.deepEqual(events.filter((e) => e.ev === 'step.start').map((e) => e.step.seq), Array.from({ length: 18 }, (_, i) => i + 1));
+    // setup first_load (9 steps, macro 2), then the 11 steps of the scenario
+    assert.equal(started.length, 20);
+    assert.deepEqual(started.slice(0, 3), ['create_session', 'bind_client', 'wait']);
+    assert.deepEqual(events.filter((e) => e.ev === 'step.start').map((e) => e.step.seq), Array.from({ length: 20 }, (_, i) => i + 1));
     assert.equal(events.filter((e) => e.ev === 'proxy.hold').length, 1);
     assert.equal(events.filter((e) => e.ev === 'proxy.response_end').length, 2);
 
@@ -241,13 +245,39 @@ test('runner_conductor_steps_are_logged_and_a_wait_timeout_fails_the_run', async
 test('runner_wait_sees_only_events_after_the_latest_create_session', async () => {
   const lab = await fakeLab();
   // proxy.response_end of the setup load must not satisfy the wait of the scenario
-  const scenario = { ...SCENARIO, steps: [{ do: 'create_session' }, { do: 'wait', for: 'proxy.response_end', timeout_ms: 30 }] };
+  const scenario = { ...SCENARIO, steps: [{ do: 'hold', point: 'head' }, { do: 'create_session' }, { do: 'wait', for: 'proxy.response_end', timeout_ms: 30 }] };
   try {
     const result = await executeRun({
       scenario, mode: 'quick', repeat: 1, upstreamSha: '59936bef', startHarness: fakeHarness(),
       proxyPort: 0, controlPort: 0, originPorts: { 'lab-node': lab.port }, sleep: noSleep, stepMs: 5000, endMs: 5000,
     });
     assert.match(result.error, /^WAIT_TIMEOUT/);
+  } finally {
+    await lab.close();
+  }
+});
+
+test('runner_set_field_step_changes_the_delivered_response', async () => {
+  const lab = await fakeLab();
+  const scenario = {
+    ...SCENARIO,
+    setup: [],
+    steps: [
+      { do: 'set_field', name: 'ETag', value: 'forced' },
+      { do: 'create_session' },
+      { do: 'bind_client' },
+      { do: 'wait', for: 'proxy.response_end' },
+      { do: 'destroy' },
+    ],
+  };
+  try {
+    const result = await executeRun({
+      scenario, mode: 'quick', repeat: 1, upstreamSha: '59936bef', startHarness: fakeHarness(),
+      proxyPort: 0, controlPort: 0, originPorts: { 'lab-node': lab.port }, sleep: noSleep, stepMs: 5000, endMs: 5000,
+    });
+    assert.equal(result.error, null);
+    assert.deepEqual(result.log.events.filter((e) => e.ev === 'proxy.set_field').map((e) => [e.name, e.value]), [['ETag', 'forced']]);
+    assert.match(result.exchanges.get(1).toString(), /--- delivered ---[^]*ETag: forced/);
   } finally {
     await lab.close();
   }

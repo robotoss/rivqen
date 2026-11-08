@@ -1,0 +1,125 @@
+{
+  "id": "FX-LEG-CL-COOKIE-VARIANCE-S",
+  "kind": "client",
+  "description": "Set-Cookie on a first load and on a 304; the cookie changes after the session is created (Standard)",
+  "profile": "legacy-canonical",
+  "mode": "standard",
+  "server_profile": "legacy-node",
+  "rules": [
+    "CL-11",
+    "CL-12",
+    "CL-21",
+    "CL-25"
+  ],
+  "rows": [],
+  "divergences": [
+    "D-52"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-client#_9-9-expected-results-of-the-stored-scenarios"
+  ],
+  "evidence": "trace",
+  "trace": {
+    "scenario": "CS-17",
+    "mode": "standard"
+  },
+  "config": {
+    "account": "rq-test-account",
+    "account_related": true,
+    "reload_in_bad_network": false
+  },
+  "responses": {
+    "r1": {
+      "page": "a",
+      "app": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "set-cookie",
+            "session=rq-test-cookie-1; Path=/"
+          ]
+        ]
+      }
+    }
+  },
+  "cache_before": [],
+  "schedule": [
+    {
+      "case": "r1"
+    },
+    {
+      "do": "create_session"
+    },
+    {
+      "do": "bind_client"
+    },
+    {
+      "do": "set_cookie",
+      "value": "session=rq-test-cookie-2"
+    },
+    {
+      "do": "client_ready"
+    },
+    {
+      "do": "request_resource"
+    },
+    {
+      "do": "get_diff"
+    },
+    {
+      "do": "wait",
+      "for": "proxy.response_end"
+    },
+    {
+      "do": "settle",
+      "ms": 2500
+    },
+    {
+      "do": "snapshot_cache"
+    },
+    {
+      "do": "destroy"
+    },
+    {
+      "do": "create_session"
+    },
+    {
+      "do": "bind_client"
+    },
+    {
+      "do": "set_cookie",
+      "value": "session=rq-test-cookie-3"
+    },
+    {
+      "do": "client_ready"
+    },
+    {
+      "do": "request_resource"
+    },
+    {
+      "do": "get_diff"
+    },
+    {
+      "do": "wait",
+      "for": "proxy.response_end"
+    },
+    {
+      "do": "settle",
+      "ms": 2500
+    },
+    {
+      "do": "snapshot_cache"
+    },
+    {
+      "do": "destroy"
+    }
+  ]
+}

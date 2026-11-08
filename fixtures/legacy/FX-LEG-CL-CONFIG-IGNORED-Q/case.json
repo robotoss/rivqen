@@ -1,0 +1,84 @@
+{
+  "id": "FX-LEG-CL-CONFIG-IGNORED-Q",
+  "kind": "client",
+  "description": "The configuration keys without a canonical effect do not change a first load (Quick)",
+  "profile": "legacy-canonical",
+  "mode": "quick",
+  "server_profile": "legacy-canonical",
+  "rules": [
+    "CL-03",
+    "CL-25"
+  ],
+  "rows": [
+    "Q1",
+    "S1"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-client#_9-rivqen-canonical-client-rules"
+  ],
+  "evidence": "code-reading",
+  "config": {
+    "account": "rq-test-account",
+    "account_related": false,
+    "reload_in_bad_network": true,
+    "support_cache_control": true,
+    "auto_start": false,
+    "get_cookie_when_session_create": false,
+    "cache_verify_with_sha1": false,
+    "connect_timeout_ms": 1000,
+    "read_timeout_ms": 2000
+  },
+  "responses": {
+    "r1": {
+      "page": "a",
+      "app": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "text/html; charset=utf-8"
+          ]
+        ]
+      }
+    }
+  },
+  "cache_before": [],
+  "schedule": [
+    {
+      "case": "r1"
+    },
+    {
+      "do": "create_session"
+    },
+    {
+      "do": "bind_client"
+    },
+    {
+      "do": "client_ready"
+    },
+    {
+      "do": "request_resource"
+    },
+    {
+      "do": "wait",
+      "for": "proxy.response_end"
+    },
+    {
+      "do": "settle",
+      "ms": 2500
+    },
+    {
+      "do": "get_diff"
+    },
+    {
+      "do": "snapshot_cache"
+    },
+    {
+      "do": "destroy"
+    }
+  ]
+}

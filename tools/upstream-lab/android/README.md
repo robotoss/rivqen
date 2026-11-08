@@ -15,6 +15,8 @@ A Rivqen harness app runs the **unmodified** upstream Android SDK (VasSonic `599
 | `env.sh` | Creates `LAB_HOME`: lab SDK root, emulator, platform-tools, API 28 image, AVD, `GRADLE_USER_HOME` |
 | `clean.sh` | Stops the lab emulator and the Gradle daemon; deletes `LAB_HOME` and the build output |
 | `build.sh` | Checks the upstream pin and file hashes; builds the APK; checks the library list |
+| `check.sh` | Plain JVM check of `TallyStream` (JDK only: no Android SDK, no emulator, no `UPSTREAM`) |
+| `check/TallyStreamCheck.java` | The checks of `check.sh` (no test library) |
 | `emulator.sh` | `start` (cold boot, no window), `stop`, `status` of the lab emulator |
 | `install.sh` | Installs the APK on the lab emulator |
 | `run.sh` | One scenario run (`pm clear`, then `am instrument` with the run id and the control URL) |
@@ -119,7 +121,8 @@ Use these commands to start one run. `<adb>` is `$LAB_HOME/sdk/platform-tools/ad
 | `ScenarioRun`, `RunConfig` | Step loop and step execution; scenario `config` through the public SDK builders |
 | `LabRuntime` | The runtime of the SDK (account, cookie, network validity, response object, worker thread) |
 | `RecordingClient` | The session client: each page action becomes an event; in a WebView run it also goes to the WebView |
-| `RecordingStream` | Wraps the intercepted stream: passes bytes unchanged, counts, hashes, records `client.intercept` once |
+| `RecordingStream` | Wraps the intercepted stream: passes bytes unchanged, counts, hashes, records `client.intercept` once. Adds the response members to the outcome of `TallyStream` |
+| `TallyStream` | Count, SHA-256 and the once-only outcome of a stream, under one lock (`java.*` only; see [Intercept stream](#intercept-stream)) |
 | `WebViewActivity` | The real WebView of a WebView run (no JavaScript interface) |
 | `FunctionCases`, `FixedResponseConnection` | CONTRACT §7 cases; a fixed-answer connection for cases that need a server object |
 | `com.tencent.sonic.sdk.RivqenLabAccess` | Rivqen class in the SDK package; it calls package-private and protected members (list below) |
@@ -167,6 +170,21 @@ The harness sends the events of CONTRACT §5 with `ev`, `src: "harness"` and `th
 | `webview.intercept_request`, `webview.page_started`, `webview.page_finished` | `url` (and `method`); WebView run only |
 | `harness.error` | `error`: a harness defect that is not a step error |
 | `run.end` | Sent by the harness only when the harness stops the run (`ok: false`) |
+
+### Intercept stream
+
+<Badge type="info" text="DESIGN" /> `client.intercept` is written once, by the thread that ends the stream (S2 fix of the S1 review finding: a close on one thread and the last read on another thread could hash at the same time and write an event without the bytes of that read). Rules of `TallyStream`:
+
+| Case | Event |
+|---|---|
+| The reader reaches the end | `complete: true`, all bytes |
+| A read fails, no close started | `complete: false`, `error`: the exception class |
+| Close, no read in flight | `complete: false`, `error: null`, the bytes read before |
+| Close while a read is in flight | No event from the close. The last read that returns after the close of the source writes it, with its bytes (`complete: true` if that read reached the end) |
+| A read fails after a close started | A close: `complete: false`, `error: null` |
+| The reader stops at the lab limit (`MAX_INTERCEPT_BODY`) | `complete: false`, `error`: `RecordingStream$LimitExceeded` |
+
+All state is under one lock. The event is sent outside the lock. `mark` and `reset` are not supported (a reset would hash bytes twice); `skip` reads the bytes, so they are hashed. Limit: a source that still gives bytes after its close gives bytes that the event does not count (the event is already written). A read that never returns after a close gives no event. In a scripted run the run end then writes `harness.error` (`intercept reader still open at the end of the run`); the run deadline (`RUN_DEADLINE_MS`) bounds every run. The `thread` member of the event is the thread that ends the stream: the reader thread, or the closer when no read is in flight. Both are worker threads in the harness and in the WebView run (the harness closes no intercept stream on `main`), and CONTRACT §6 removes the `thread` of worker threads.
 
 `session.result` is sent once per session, at `destroy`, from `getSrcResultCode()` and `getFinalResultCode()`: a reading at a fixed step, not at a race with the session thread.
 
@@ -228,7 +246,13 @@ The fixed-answer connection is given through the public `SonicSessionConfig.Buil
 
 ## Tests
 
-The lab code has no unit tests and no mutation run (sprint record: not applicable). It is checked by `build.sh`, by the smoke runs below, and by the determinism rule of the stored runs (CONTRACT §6).
+The lab code has no mutation run (sprint record: not applicable). It is checked by `build.sh`, by `check.sh`, by the smoke runs below, and by the determinism rule of the stored runs (CONTRACT §6).
+
+`check.sh` (S2): 11 checks of `TallyStream` on a plain JVM, compiled at the Java 8 level of the app with all lint warnings as errors. Threads meet at latches (no sleep); every wait stops after 10 s. The checks cover the cases of the table in [Intercept stream](#intercept-stream), two reads in flight at a close, reads during a slow close of the source, `skip`, `reset`, and a free race of one reader and one closer (3000 rounds: one event, its length and SHA-256 equal to the bytes that the reader got, `complete` exactly when the reader got the end). A copy with the S1 close rule (the close writes the event at once, also during a read) fails 4 of the checks. The Gradle project has no unit test source set and no test library (a test library is a dependency change, H-118), so the check is a plain Java program.
+
+```sh
+sh tools/upstream-lab/android/check.sh
+```
 
 Smoke runs (2026-11-05, fake conductor, page `a`, first load; the Quick scripted run and the functions run again after the contract update of `48e4936`):
 

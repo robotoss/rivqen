@@ -106,9 +106,17 @@ fn ids(dir: &Path) -> Vec<String> {
         .unwrap()
         .map(|e| e.unwrap().file_name().into_string().unwrap())
         .filter(|n| n.starts_with("FX-LEG-"))
+        .filter(|n| !is_client(dir, n))
         .collect();
     ids.sort();
     ids
+}
+
+/// A client fixture (`kind: "client"`, fixtures/legacy/README.md "Client fixtures")
+/// checks a client session, not a server answer: the server tests skip it.
+fn is_client(dir: &Path, id: &str) -> bool {
+    let path = dir.join(id).join("case.json");
+    path.is_file() && read_json(&path)["kind"].as_str() == Some("client")
 }
 
 /// The selection rule of `fixtures/legacy/README.md`: canonical runs every

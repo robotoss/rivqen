@@ -25,6 +25,7 @@ const empty = (res, status) => {
  * @property {string} id
  * @property {() => object} scenario  the body of GET /run/scenario
  * @property {(ms: number) => Promise<object|null>} poll
+ * @property {(step: object) => void} [redeliver]  offer a polled step again (the answer was lost)
  * @property {(event: object) => void} accept  throws LabError BAD_EVENT
  */
 
@@ -85,7 +86,13 @@ export class Control {
     if (url.pathname === '/run/scenario') return json(res, 200, this.#run.scenario());
     if (url.pathname === '/run/next') {
       const step = await this.#run.poll(this.#pollMs);
-      return step ? json(res, 200, step) : empty(res, 204);
+      if (!step) return empty(res, 204);
+      // The harness can drop the connection while it waits or before it reads the answer: the next poll gets the step again.
+      if (res.destroyed) return this.#run.redeliver?.(step);
+      res.once('close', () => {
+        if (!res.writableFinished) this.#run.redeliver?.(step);
+      });
+      return json(res, 200, step);
     }
     if (!/^application\/json\s*(;|$)/i.test(req.headers['content-type'] ?? '')) return json(res, 415, { error: 'CONTENT_TYPE' });
     if (Number(req.headers['content-length']) > MAX_EVENT_BYTES) {

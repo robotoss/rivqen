@@ -173,6 +173,8 @@ export function legacyCases({ dir = DEFAULT_DIRS.legacy, profile = DEFAULT_PROFI
       else out.push({ id, error: error.message });
       continue;
     }
+    // A client fixture (fixtures/legacy/README.md "Client fixtures") checks a client session, not a server answer.
+    if (isObject(expected) && expected.kind === 'client') continue;
     if (m === null && suffix !== undefined && !(Array.isArray(expected.profiles_same) && expected.profiles_same.includes(profile))) continue;
     out.push(entry(id, () => loadLegacy(dir, id, expected)));
   }

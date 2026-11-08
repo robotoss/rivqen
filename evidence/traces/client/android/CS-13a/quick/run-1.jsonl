@@ -1,51 +1,51 @@
-{"ev":"run.start","mode":"quick","origin":"lab-node","repeat":1,"scenario":"CS-13a","seq":1,"src":"conductor","t":0,"upstream_sha":"59936bef"}
-{"ev":"step.start","seq":2,"src":"conductor","step":{"bytes":128,"do":"cut","seq":1},"t":3}
-{"ev":"step.done","seq":3,"src":"conductor","step":{"bytes":128,"do":"cut","seq":1},"t":3}
-{"ev":"step.start","seq":4,"src":"conductor","step":{"do":"hold","point":"head","seq":2},"t":3}
-{"ev":"step.done","seq":5,"src":"conductor","step":{"do":"hold","point":"head","seq":2},"t":3}
-{"ev":"step.start","seq":6,"src":"conductor","step":{"do":"create_session","seq":3},"t":3}
-{"ev":"runtime.cookie_get","hseq":1,"seq":7,"src":"harness","t":190,"thread":"main","url":"http://10.0.2.2:18090/catalog","value":null}
-{"ev":"proxy.request","exchange":1,"fields":[["accept-diff","true"],["If-None-Match",""],["template-tag",""],["method","GET"],["Accept-Encoding","gzip"],["Accept-Language","zh-CN,zh;"],["sonic-sdk-version","Sonic/2.0.0"],["User-Agent","RivqenLab/1 (Android harness) Sonic/2.0.0"],["Host","10.0.2.2:18090"],["Connection","Keep-Alive"]],"method":"GET","seq":8,"src":"proxy","t":192,"target":"/catalog"}
-{"ev":"session.created","hseq":2,"seq":9,"session":1,"session_id":"rq-test-account_a1c7b99f65f55fb15c1b0b7e504882a4","src":"harness","t":192,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
-{"ev":"proxy.hold","exchange":1,"point":"head","seq":10,"src":"proxy","t":194}
-{"ev":"step.done","hseq":3,"seq":11,"src":"harness","step":{"do":"create_session","seq":3},"t":195,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
-{"ev":"step.start","seq":12,"src":"conductor","step":{"do":"bind_client","seq":4},"t":195}
-{"args":[],"ev":"session.callback","hseq":4,"name":"onSessionLoadLocalCache","seq":13,"session":1,"src":"harness","t":198,"thread":"pool-sonic-session-thread-1"}
-{"ev":"step.done","hseq":5,"seq":14,"src":"harness","step":{"do":"bind_client","seq":4},"t":202,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
-{"ev":"step.start","seq":15,"src":"conductor","step":{"do":"client_ready","seq":5},"t":203}
-{"ev":"client.load_url","extras":[],"hseq":6,"seq":16,"session":1,"src":"harness","t":207,"thread":"main","url":"http://10.0.2.2:18090/catalog"}
-{"ev":"step.done","hseq":7,"seq":17,"src":"harness","step":{"do":"client_ready","seq":5},"t":210,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
-{"ev":"step.start","seq":18,"src":"conductor","step":{"do":"request_resource","seq":6},"t":210}
-{"ev":"step.done","hseq":8,"seq":19,"src":"harness","step":{"do":"request_resource","seq":6},"t":1216,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
-{"ev":"step.start","seq":20,"src":"conductor","step":{"do":"get_diff","seq":7},"t":1216}
-{"ev":"step.done","hseq":9,"seq":21,"src":"harness","step":{"do":"get_diff","seq":7},"t":1221,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
-{"ev":"step.start","seq":22,"src":"conductor","step":{"do":"wait","for":"proxy.hold","seq":8},"t":1221}
-{"ev":"step.done","seq":23,"src":"conductor","step":{"do":"wait","for":"proxy.hold","seq":8},"t":1221}
-{"ev":"step.start","seq":24,"src":"conductor","step":{"do":"settle","ms":300,"seq":9},"t":1221}
-{"ev":"step.done","seq":25,"src":"conductor","step":{"do":"settle","ms":300,"seq":9},"t":1522}
-{"ev":"step.start","seq":26,"src":"conductor","step":{"do":"release","seq":10},"t":1522}
-{"ev":"proxy.release","exchange":1,"point":"head","seq":27,"src":"proxy","t":1522}
-{"ev":"step.done","seq":28,"src":"conductor","step":{"do":"release","seq":10},"t":1522}
-{"ev":"proxy.response_head","exchange":1,"fields":[["content-type","text/html; charset=utf-8"],["Content-Encoding","gzip"],["Etag","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],["Cache-Offline","true"],["template-change","true"],["Date","Thu, 05 Nov 2026 19:29:32 GMT"]],"seq":29,"src":"proxy","status":200,"t":1522}
-{"ev":"step.start","seq":30,"src":"conductor","step":{"do":"wait","for":"proxy.response_end","seq":11},"t":1522}
-{"bytes":128,"ev":"proxy.cut","exchange":1,"seq":31,"src":"proxy","t":1522}
-{"body_len":128,"body_sha256":"49fd8117117f66950b8dd8e8675bb72c373e2f81b46da2702329769771a9ed4f","complete":false,"ev":"proxy.response_end","exchange":1,"seq":32,"src":"proxy","t":1522}
-{"ev":"step.done","seq":33,"src":"conductor","step":{"do":"wait","for":"proxy.response_end","seq":11},"t":1523}
-{"ev":"step.start","seq":34,"src":"conductor","step":{"do":"settle","ms":2500,"seq":12},"t":1523}
-{"ev":"session.message","hseq":10,"json":"{\"code\":1000,\"srcCode\":1000,\"extra\":{\"eTag\":\"3e3184cbd12e5294959effe6f2d9985f50f4ea5d\",\"template-tag\":\"3c771bf015df2c410a41a6012804f645b3acc1bc\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}","seq":35,"session":1,"src":"harness","t":1532,"thread":"main"}
-{"args":[],"ev":"session.callback","hseq":11,"name":"onSessionFirstLoad","seq":36,"session":1,"src":"harness","t":1535,"thread":"pool-sonic-session-thread-1"}
-{"args":[1,2],"ev":"session.callback","hseq":12,"name":"onSessionStateChange","seq":37,"session":1,"src":"harness","t":1538,"thread":"pool-sonic-session-thread-1"}
-{"body_len":139,"body_sha256":"1f5e317f9027003867367858c55129a0e0a50e203796073357ab5b202954f047","complete":false,"encoding":"utf-8","error":"java.io.EOFException","ev":"client.intercept","headers":[["cache-offline","true"],["connection","keep-alive"],["content-encoding","gzip"],["content-type","text/html; charset=utf-8"],["date","Thu, 05 Nov 2026 19:29:32 GMT"],["keep-alive","timeout=5"],["template-change","true"],["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],["transfer-encoding","chunked"],["x-android-received-millis","1793906973212"],["x-android-response-source","NETWORK 200"],["x-android-selected-protocol","http/1.1"],["x-android-sent-millis","1793906971880"]],"hseq":13,"mime":"text/html","reason":null,"seq":38,"session":1,"src":"harness","status":0,"t":1542,"thread":"rq-intercept-1"}
-{"ev":"step.done","seq":39,"src":"conductor","step":{"do":"settle","ms":2500,"seq":12},"t":4024}
-{"ev":"step.start","seq":40,"src":"conductor","step":{"do":"get_diff","seq":13},"t":4024}
-{"ev":"session.message","hseq":14,"json":"{\"code\":1000,\"srcCode\":1000,\"extra\":{\"eTag\":\"3e3184cbd12e5294959effe6f2d9985f50f4ea5d\",\"template-tag\":\"3c771bf015df2c410a41a6012804f645b3acc1bc\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}","seq":41,"session":1,"src":"harness","t":4031,"thread":"main"}
-{"ev":"step.done","hseq":15,"seq":42,"src":"harness","step":{"do":"get_diff","seq":13},"t":4034,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
-{"ev":"step.start","seq":43,"src":"conductor","step":{"do":"snapshot_cache","seq":14},"t":4034}
-{"db":null,"ev":"cache.snapshot","files":[],"hseq":16,"seq":44,"src":"harness","t":4038,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
-{"ev":"step.done","hseq":17,"seq":45,"src":"harness","step":{"do":"snapshot_cache","seq":14},"t":4041,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
-{"ev":"step.start","seq":46,"src":"conductor","step":{"do":"destroy","seq":15},"t":4041}
-{"ev":"session.result","final_code":1000,"hseq":18,"seq":47,"session":1,"src":"harness","src_code":1000,"t":4046,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
-{"args":[2,3],"ev":"session.callback","hseq":19,"name":"onSessionStateChange","seq":48,"session":1,"src":"harness","t":4049,"thread":"main"}
-{"args":[],"ev":"session.callback","hseq":20,"name":"onSessionDestroy","seq":49,"session":1,"src":"harness","t":4052,"thread":"main"}
-{"ev":"step.done","hseq":21,"seq":50,"src":"harness","step":{"do":"destroy","seq":15},"t":4055,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
-{"error":null,"ev":"run.end","ok":true,"seq":51,"src":"conductor","t":4056}
+{"ev":"run.start","mode":"quick","origin":"lab-node","repeat":1,"scenario":"CS-13a","seq":1,"src":"conductor","t":8,"upstream_sha":"59936bef"}
+{"ev":"step.start","seq":2,"src":"conductor","step":{"bytes":128,"do":"cut","seq":1},"t":58}
+{"ev":"step.done","seq":3,"src":"conductor","step":{"bytes":128,"do":"cut","seq":1},"t":58}
+{"ev":"step.start","seq":4,"src":"conductor","step":{"do":"hold","point":"head","seq":2},"t":58}
+{"ev":"step.done","seq":5,"src":"conductor","step":{"do":"hold","point":"head","seq":2},"t":58}
+{"ev":"step.start","seq":6,"src":"conductor","step":{"do":"create_session","seq":3},"t":58}
+{"ev":"runtime.cookie_get","hseq":1,"seq":7,"src":"harness","t":253,"thread":"main","url":"http://10.0.2.2:18090/catalog","value":null}
+{"ev":"proxy.request","exchange":1,"fields":[["accept-diff","true"],["If-None-Match",""],["template-tag",""],["method","GET"],["Accept-Encoding","gzip"],["Accept-Language","zh-CN,zh;"],["sonic-sdk-version","Sonic/2.0.0"],["User-Agent","RivqenLab/1 (Android harness) Sonic/2.0.0"],["Host","10.0.2.2:18090"],["Connection","Keep-Alive"]],"method":"GET","seq":8,"src":"proxy","t":256,"target":"/catalog"}
+{"ev":"session.created","hseq":2,"seq":9,"session":1,"session_id":"rq-test-account_a1c7b99f65f55fb15c1b0b7e504882a4","src":"harness","t":260,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"proxy.hold","exchange":1,"point":"head","seq":10,"src":"proxy","t":262}
+{"ev":"step.done","hseq":3,"seq":11,"src":"harness","step":{"do":"create_session","seq":3},"t":265,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":12,"src":"conductor","step":{"do":"bind_client","seq":4},"t":265}
+{"args":[],"ev":"session.callback","hseq":4,"name":"onSessionLoadLocalCache","seq":13,"session":1,"src":"harness","t":270,"thread":"pool-sonic-session-thread-1"}
+{"ev":"step.done","hseq":5,"seq":14,"src":"harness","step":{"do":"bind_client","seq":4},"t":283,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":15,"src":"conductor","step":{"do":"client_ready","seq":5},"t":283}
+{"ev":"client.load_url","extras":[],"hseq":6,"seq":16,"session":1,"src":"harness","t":292,"thread":"main","url":"http://10.0.2.2:18090/catalog"}
+{"ev":"step.done","hseq":7,"seq":17,"src":"harness","step":{"do":"client_ready","seq":5},"t":298,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":18,"src":"conductor","step":{"do":"request_resource","seq":6},"t":299}
+{"ev":"step.done","hseq":8,"seq":19,"src":"harness","step":{"do":"request_resource","seq":6},"t":1312,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":20,"src":"conductor","step":{"do":"get_diff","seq":7},"t":1312}
+{"ev":"step.done","hseq":9,"seq":21,"src":"harness","step":{"do":"get_diff","seq":7},"t":1317,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":22,"src":"conductor","step":{"do":"wait","for":"proxy.hold","seq":8},"t":1317}
+{"ev":"step.done","seq":23,"src":"conductor","step":{"do":"wait","for":"proxy.hold","seq":8},"t":1318}
+{"ev":"step.start","seq":24,"src":"conductor","step":{"do":"settle","ms":300,"seq":9},"t":1318}
+{"ev":"step.done","seq":25,"src":"conductor","step":{"do":"settle","ms":300,"seq":9},"t":1621}
+{"ev":"step.start","seq":26,"src":"conductor","step":{"do":"release","seq":10},"t":1621}
+{"ev":"proxy.release","exchange":1,"point":"head","seq":27,"src":"proxy","t":1621}
+{"ev":"step.done","seq":28,"src":"conductor","step":{"do":"release","seq":10},"t":1621}
+{"ev":"proxy.response_head","exchange":1,"fields":[["content-type","text/html; charset=utf-8"],["Content-Encoding","gzip"],["Etag","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],["Cache-Offline","true"],["template-change","true"],["Date","Sat, 07 Nov 2026 17:45:08 GMT"]],"seq":29,"src":"proxy","status":200,"t":1621}
+{"ev":"step.start","seq":30,"src":"conductor","step":{"do":"wait","for":"proxy.response_end","seq":11},"t":1621}
+{"bytes":128,"ev":"proxy.cut","exchange":1,"seq":31,"src":"proxy","t":1621}
+{"body_len":128,"body_sha256":"49fd8117117f66950b8dd8e8675bb72c373e2f81b46da2702329769771a9ed4f","complete":false,"ev":"proxy.response_end","exchange":1,"seq":32,"src":"proxy","t":1621}
+{"ev":"step.done","seq":33,"src":"conductor","step":{"do":"wait","for":"proxy.response_end","seq":11},"t":1622}
+{"ev":"step.start","seq":34,"src":"conductor","step":{"do":"settle","ms":2500,"seq":12},"t":1622}
+{"ev":"session.message","hseq":10,"json":"{\"code\":1000,\"srcCode\":1000,\"extra\":{\"eTag\":\"3e3184cbd12e5294959effe6f2d9985f50f4ea5d\",\"template-tag\":\"3c771bf015df2c410a41a6012804f645b3acc1bc\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}","seq":35,"session":1,"src":"harness","t":1627,"thread":"main"}
+{"args":[],"ev":"session.callback","hseq":11,"name":"onSessionFirstLoad","seq":36,"session":1,"src":"harness","t":1630,"thread":"pool-sonic-session-thread-1"}
+{"args":[1,2],"ev":"session.callback","hseq":12,"name":"onSessionStateChange","seq":37,"session":1,"src":"harness","t":1633,"thread":"pool-sonic-session-thread-1"}
+{"body_len":139,"body_sha256":"1f5e317f9027003867367858c55129a0e0a50e203796073357ab5b202954f047","complete":false,"encoding":"utf-8","error":"java.io.EOFException","ev":"client.intercept","headers":[["cache-offline","true"],["connection","keep-alive"],["content-encoding","gzip"],["content-type","text/html; charset=utf-8"],["date","Sat, 07 Nov 2026 17:45:08 GMT"],["keep-alive","timeout=5"],["template-change","true"],["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],["transfer-encoding","chunked"],["x-android-received-millis","1794073509782"],["x-android-response-source","NETWORK 200"],["x-android-selected-protocol","http/1.1"],["x-android-sent-millis","1794073508415"]],"hseq":13,"mime":"text/html","reason":null,"seq":38,"session":1,"src":"harness","status":0,"t":1636,"thread":"rq-intercept-1"}
+{"ev":"step.done","seq":39,"src":"conductor","step":{"do":"settle","ms":2500,"seq":12},"t":4124}
+{"ev":"step.start","seq":40,"src":"conductor","step":{"do":"get_diff","seq":13},"t":4124}
+{"ev":"session.message","hseq":14,"json":"{\"code\":1000,\"srcCode\":1000,\"extra\":{\"eTag\":\"3e3184cbd12e5294959effe6f2d9985f50f4ea5d\",\"template-tag\":\"3c771bf015df2c410a41a6012804f645b3acc1bc\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}","seq":41,"session":1,"src":"harness","t":4132,"thread":"main"}
+{"ev":"step.done","hseq":15,"seq":42,"src":"harness","step":{"do":"get_diff","seq":13},"t":4135,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":43,"src":"conductor","step":{"do":"snapshot_cache","seq":14},"t":4135}
+{"db":null,"ev":"cache.snapshot","files":[],"hseq":16,"seq":44,"src":"harness","t":4140,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.done","hseq":17,"seq":45,"src":"harness","step":{"do":"snapshot_cache","seq":14},"t":4144,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":46,"src":"conductor","step":{"do":"destroy","seq":15},"t":4144}
+{"ev":"session.result","final_code":1000,"hseq":18,"seq":47,"session":1,"src":"harness","src_code":1000,"t":4150,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"args":[2,3],"ev":"session.callback","hseq":19,"name":"onSessionStateChange","seq":48,"session":1,"src":"harness","t":4153,"thread":"main"}
+{"args":[],"ev":"session.callback","hseq":20,"name":"onSessionDestroy","seq":49,"session":1,"src":"harness","t":4157,"thread":"main"}
+{"ev":"step.done","hseq":21,"seq":50,"src":"harness","step":{"do":"destroy","seq":15},"t":4160,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"error":null,"ev":"run.end","ok":true,"seq":51,"src":"conductor","t":4162}

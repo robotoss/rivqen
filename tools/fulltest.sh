@@ -6,7 +6,7 @@
 # CI (.github/workflows/checks.yml) runs the same groups.
 #
 # Usage: sh tools/fulltest.sh [group ...]
-#   Groups: node python rust java php diff docs. No group: all groups.
+#   Groups: node python rust java php diff lab docs. No group: all groups.
 #
 # Requirements per group (install the dependencies first, see each package README):
 #   node    Node.js 22 or later; `npm ci --ignore-scripts` in tools/rqp-protocol,
@@ -18,6 +18,8 @@
 #   java    JDK 21 and `gradle` on PATH (optional: ORG_GRADLE_PROJECT_rqpMavenMirror)
 #   php     PHP 8.3 or later; `composer install` in tools/rqp-markup/php
 #   diff    all four markup candidates (rust, java, php, node groups)
+#   lab     macOS with xcrun and the JDK 21 that tools/upstream-lab/android/lab-env.sh names
+#           (client lab checks that need no UPSTREAM and no emulator; not in CI)
 #   docs    `npm ci` in the repository root
 #
 # Exit code: 0 when every step passes, 1 otherwise. The log of a failed step is printed.
@@ -99,14 +101,19 @@ group_diff() {
   step markup-diff 'node tools/rqp-markup/diff.mjs'
 }
 
+group_lab() {
+  step android-lab-check 'sh tools/upstream-lab/android/check.sh'
+  step ios-lab-check 'sh tools/upstream-lab/ios/check.sh'
+}
+
 group_docs() {
   step docs 'npm run docs:build'
 }
 
-[ $# -eq 0 ] && set -- node python rust java php diff docs
+[ $# -eq 0 ] && set -- node python rust java php diff lab docs
 for g in "$@"; do
   case $g in
-    node | python | rust | java | php | diff | docs) "group_$g" ;;
+    node | python | rust | java | php | diff | lab | docs) "group_$g" ;;
     *)
       echo "fulltest: unknown group '$g'" >&2
       exit 2

@@ -1,0 +1,78 @@
+{"ev":"run.start","macro":2,"mode":"standard","origin":"lab-node","repeat":3,"scenario":"CS-28","seq":1,"src":"conductor","t":1,"upstream_sha":"59936bef"}
+{"ev":"step.start","seq":2,"src":"conductor","step":{"do":"create_session","seq":1},"t":5}
+{"ev":"runtime.cookie_get","hseq":1,"seq":3,"src":"harness","t":138,"thread":"main","url":"http://10.0.2.2:18090/catalog","value":null}
+{"ev":"proxy.request","exchange":1,"fields":[["accept-diff","true"],["If-None-Match",""],["template-tag",""],["method","GET"],["Accept-Encoding","gzip"],["Accept-Language","zh-CN,zh;"],["sonic-sdk-version","Sonic/2.0.0"],["User-Agent","RivqenLab/1 (Android harness) Sonic/2.0.0"],["Host","10.0.2.2:18090"],["Connection","Keep-Alive"]],"method":"GET","seq":4,"src":"proxy","t":138,"target":"/catalog"}
+{"ev":"session.created","hseq":2,"seq":5,"session":1,"session_id":"rq-test-account_a1c7b99f65f55fb15c1b0b7e504882a4","src":"harness","t":140,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.done","hseq":3,"seq":6,"src":"harness","step":{"do":"create_session","seq":1},"t":142,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":7,"src":"conductor","step":{"do":"bind_client","seq":2},"t":142}
+{"ev":"proxy.response_head","exchange":1,"fields":[["content-type","text/html; charset=utf-8"],["Content-Encoding","gzip"],["Etag","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],["Cache-Offline","true"],["template-change","true"],["Date","Sat, 07 Nov 2026 18:32:55 GMT"]],"seq":8,"src":"proxy","status":200,"t":143}
+{"body_len":194,"body_sha256":"d13a1263730b0b2b4fde7e55c1331e040df98135786ecfb97f2fdc4819de649c","complete":true,"ev":"proxy.response_end","exchange":1,"seq":9,"src":"proxy","t":143}
+{"args":[],"ev":"session.callback","hseq":4,"name":"onSessionLoadLocalCache","seq":10,"session":1,"src":"harness","t":144,"thread":"pool-sonic-session-thread-1"}
+{"args":[],"ev":"session.callback","hseq":5,"name":"onSessionFirstLoad","seq":11,"session":1,"src":"harness","t":147,"thread":"pool-sonic-session-thread-1"}
+{"args":[1,2],"ev":"session.callback","hseq":6,"name":"onSessionStateChange","seq":12,"session":1,"src":"harness","t":149,"thread":"pool-sonic-session-thread-1"}
+{"ev":"step.done","hseq":7,"seq":13,"src":"harness","step":{"do":"bind_client","seq":2},"t":152,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":14,"src":"conductor","step":{"do":"wait","for":"proxy.response_end","seq":3},"t":152}
+{"ev":"step.done","seq":15,"src":"conductor","step":{"do":"wait","for":"proxy.response_end","seq":3},"t":152}
+{"ev":"step.start","seq":16,"src":"conductor","step":{"do":"settle","ms":300,"seq":4},"t":152}
+{"ev":"step.done","seq":17,"src":"conductor","step":{"do":"settle","ms":300,"seq":4},"t":453}
+{"ev":"step.start","seq":18,"src":"conductor","step":{"do":"client_ready","seq":5},"t":453}
+{"ev":"client.load_url","extras":[],"hseq":8,"seq":19,"session":1,"src":"harness","t":456,"thread":"main","url":"http://10.0.2.2:18090/catalog"}
+{"ev":"step.done","hseq":9,"seq":20,"src":"harness","step":{"do":"client_ready","seq":5},"t":459,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":21,"src":"conductor","step":{"do":"request_resource","seq":6},"t":459}
+{"ev":"step.done","hseq":10,"seq":22,"src":"harness","step":{"do":"request_resource","seq":6},"t":463,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":23,"src":"conductor","step":{"do":"settle","ms":2500,"seq":7},"t":463}
+{"body_len":296,"body_sha256":"a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb","complete":true,"encoding":"utf-8","error":null,"ev":"client.intercept","headers":[["cache-offline","true"],["connection","keep-alive"],["content-encoding","gzip"],["content-type","text/html; charset=utf-8"],["date","Sat, 07 Nov 2026 18:32:55 GMT"],["keep-alive","timeout=5"],["template-change","true"],["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],["transfer-encoding","chunked"],["x-android-received-millis","1794076375061"],["x-android-response-source","NETWORK 200"],["x-android-selected-protocol","http/1.1"],["x-android-sent-millis","1794076375057"]],"hseq":11,"mime":"text/html","reason":null,"seq":24,"session":1,"src":"harness","status":0,"t":465,"thread":"rq-intercept-1"}
+{"args":[],"ev":"session.callback","hseq":12,"name":"onSessionSaveCache","seq":25,"session":1,"src":"harness","t":1653,"thread":"SonicSdk_FileThread"}
+{"args":[],"ev":"session.callback","hseq":13,"name":"onSessionSaveCache","seq":26,"session":1,"src":"harness","t":1971,"thread":"SonicSdk_FileThread"}
+{"ev":"step.done","seq":27,"src":"conductor","step":{"do":"settle","ms":2500,"seq":7},"t":2967}
+{"ev":"step.start","seq":28,"src":"conductor","step":{"do":"destroy","seq":8},"t":2967}
+{"ev":"session.result","final_code":304,"hseq":14,"seq":29,"session":1,"src":"harness","src_code":1000,"t":2970,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"args":[2,3],"ev":"session.callback","hseq":15,"name":"onSessionStateChange","seq":30,"session":1,"src":"harness","t":2972,"thread":"main"}
+{"args":[],"ev":"session.callback","hseq":16,"name":"onSessionDestroy","seq":31,"session":1,"src":"harness","t":2975,"thread":"main"}
+{"ev":"step.done","hseq":17,"seq":32,"src":"harness","step":{"do":"destroy","seq":8},"t":2977,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":33,"src":"conductor","step":{"do":"settle","ms":1500,"seq":9},"t":2977}
+{"ev":"step.done","seq":34,"src":"conductor","step":{"do":"settle","ms":1500,"seq":9},"t":4479}
+{"ev":"step.start","seq":35,"src":"conductor","step":{"do":"set_body_member","name":"html-sha1","seq":10,"value":"0000000000000000000000000000000000000000"},"t":4519}
+{"ev":"step.done","seq":36,"src":"conductor","step":{"do":"set_body_member","name":"html-sha1","seq":10,"value":"0000000000000000000000000000000000000000"},"t":4519}
+{"ev":"step.start","seq":37,"src":"conductor","step":{"do":"create_session","seq":11},"t":4519}
+{"ev":"proxy.request","exchange":2,"fields":[["accept-diff","true"],["If-None-Match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],["method","GET"],["Accept-Encoding","gzip"],["Accept-Language","zh-CN,zh;"],["sonic-sdk-version","Sonic/2.0.0"],["User-Agent","RivqenLab/1 (Android harness) Sonic/2.0.0"],["Host","10.0.2.2:18090"],["Connection","Keep-Alive"]],"method":"GET","seq":38,"src":"proxy","t":4521,"target":"/catalog"}
+{"ev":"runtime.cookie_get","hseq":18,"seq":39,"src":"harness","t":4523,"thread":"main","url":"http://10.0.2.2:18090/catalog","value":null}
+{"applied":true,"ev":"proxy.set_body_member","exchange":2,"name":"html-sha1","seq":40,"src":"proxy","t":4525,"value":"0000000000000000000000000000000000000000"}
+{"ev":"proxy.response_head","exchange":2,"fields":[["content-type","text/html; charset=utf-8"],["Etag","4c33dabea7ea65c6255b9e6a6539976674886a2c"],["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],["Cache-Offline","true"],["template-change","false"],["Date","Sat, 07 Nov 2026 18:32:59 GMT"],["Content-Length","334"]],"seq":41,"src":"proxy","status":200,"t":4525}
+{"body_len":334,"body_sha256":"e5c104da26b0da4f271079dec79f30e591bfc73acabcd81263ea803c7c75dfab","complete":true,"ev":"proxy.response_end","exchange":2,"seq":42,"src":"proxy","t":4525}
+{"ev":"session.created","hseq":19,"seq":43,"session":2,"session_id":"rq-test-account_a1c7b99f65f55fb15c1b0b7e504882a4","src":"harness","t":4526,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.done","hseq":20,"seq":44,"src":"harness","step":{"do":"create_session","seq":11},"t":4531,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":45,"src":"conductor","step":{"do":"bind_client","seq":12},"t":4531}
+{"args":[1,2],"ev":"session.callback","hseq":21,"name":"onSessionStateChange","seq":46,"session":2,"src":"harness","t":4533,"thread":"pool-sonic-session-thread-1"}
+{"args":[],"ev":"session.callback","hseq":22,"name":"onSessionLoadLocalCache","seq":47,"session":2,"src":"harness","t":4536,"thread":"pool-sonic-session-thread-1"}
+{"args":[],"ev":"session.callback","hseq":23,"name":"onSessionDataUpdated","seq":48,"session":2,"src":"harness","t":4538,"thread":"pool-sonic-session-thread-1"}
+{"code":-1008,"ev":"runtime.notify_error","hseq":24,"seq":49,"src":"harness","t":4540,"thread":"pool-sonic-session-thread-1","url":"http://10.0.2.2:18090/catalog"}
+{"args":[],"ev":"session.callback","hseq":25,"name":"onSessionSaveCache","seq":50,"session":2,"src":"harness","t":4542,"thread":"pool-sonic-session-thread-1"}
+{"ev":"step.done","hseq":26,"seq":51,"src":"harness","step":{"do":"bind_client","seq":12},"t":4545,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":52,"src":"conductor","step":{"do":"wait","for":"proxy.response_end","seq":13},"t":4545}
+{"ev":"step.done","seq":53,"src":"conductor","step":{"do":"wait","for":"proxy.response_end","seq":13},"t":4545}
+{"ev":"step.start","seq":54,"src":"conductor","step":{"do":"settle","ms":300,"seq":14},"t":4545}
+{"ev":"step.done","seq":55,"src":"conductor","step":{"do":"settle","ms":300,"seq":14},"t":4846}
+{"ev":"step.start","seq":56,"src":"conductor","step":{"do":"client_ready","seq":15},"t":4846}
+{"ev":"client.load_url","extras":[],"hseq":27,"seq":57,"session":2,"src":"harness","t":4849,"thread":"main","url":"http://10.0.2.2:18090/catalog"}
+{"ev":"step.done","hseq":28,"seq":58,"src":"harness","step":{"do":"client_ready","seq":15},"t":4851,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":59,"src":"conductor","step":{"do":"request_resource","seq":16},"t":4851}
+{"ev":"step.done","hseq":29,"seq":60,"src":"harness","step":{"do":"request_resource","seq":16},"t":4855,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":61,"src":"conductor","step":{"do":"get_diff","seq":17},"t":4855}
+{"body_len":296,"body_sha256":"a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb","complete":true,"encoding":"UTF-8","error":null,"ev":"client.intercept","headers":[["cache-offline","true"],["connection","keep-alive"],["content-length","334"],["content-type","text/html; charset=utf-8"],["date","Sat, 07 Nov 2026 18:32:59 GMT"],["keep-alive","timeout=5"],["template-change","false"],["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],["x-android-received-millis","1794076379438"],["x-android-response-source","NETWORK 200"],["x-android-selected-protocol","http/1.1"],["x-android-sent-millis","1794076379434"]],"hseq":30,"mime":"text/html","reason":null,"seq":62,"session":2,"src":"harness","status":0,"t":4857,"thread":"rq-intercept-2"}
+{"ev":"session.message","hseq":31,"json":"{\"local_refresh_time\":332,\"result\":\"{\\\"{title}\\\":\\\"<title>Shop<\\\\\\/title>\\\",\\\"{price}\\\":\\\"<!--sonicdiff-price--><p class=\\\\\\\"price\\\\\\\">130.00<\\\\\\/p><!--sonicdiff-price-end-->\\\",\\\"{stock}\\\":\\\"<!--sonicdiff-stock--><p>In stock: 5<\\\\\\/p><!--sonicdiff-stock-end-->\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"4c33dabea7ea65c6255b9e6a6539976674886a2c\",\"template-tag\":\"3c771bf015df2c410a41a6012804f645b3acc1bc\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}","seq":63,"session":2,"src":"harness","t":4861,"thread":"main"}
+{"ev":"step.done","hseq":32,"seq":64,"src":"harness","step":{"do":"get_diff","seq":17},"t":4863,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":65,"src":"conductor","step":{"do":"settle","ms":2500,"seq":18},"t":4863}
+{"ev":"step.done","seq":66,"src":"conductor","step":{"do":"settle","ms":2500,"seq":18},"t":7366}
+{"ev":"step.start","seq":67,"src":"conductor","step":{"do":"get_diff","seq":19},"t":7366}
+{"ev":"session.message","hseq":33,"json":"{}","seq":68,"session":2,"src":"harness","t":7369,"thread":"main"}
+{"ev":"step.done","hseq":34,"seq":69,"src":"harness","step":{"do":"get_diff","seq":19},"t":7371,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":70,"src":"conductor","step":{"do":"snapshot_cache","seq":20},"t":7371}
+{"db":null,"ev":"cache.snapshot","files":[{"name":"rq-test-account_a1c7b99f65f55fb15c1b0b7e504882a4.data","sha256":"cb1661ee10174bdb7ff0c7e6f1f6e8a1a3ec45caef71b534db3c8c5cbf911ccf","size":205},{"name":"rq-test-account_a1c7b99f65f55fb15c1b0b7e504882a4.header","sha256":"09797f24396f8c04ca68539f8a802aeb2d15bcbff15e015bc0ff399139f75487","size":466,"text":"date : Sat, 07 Nov 2026 18:32:59 GMT\r\ncontent-length : 334\r\nx-android-selected-protocol : http/1.1\r\ntemplate-change : false\r\ntemplate-tag : 3c771bf015df2c410a41a6012804f645b3acc1bc\r\nx-android-response-source : NETWORK 200\r\nx-android-received-millis : 1794076379438\r\nx-android-sent-millis : 1794076379434\r\ncache-offline : true\r\nkeep-alive : timeout=5\r\nconnection : keep-alive\r\ncontent-type : text/html; charset=utf-8\r\netag : 4c33dabea7ea65c6255b9e6a6539976674886a2c\r\n"},{"name":"rq-test-account_a1c7b99f65f55fb15c1b0b7e504882a4.html.tmp","sha256":"052f497b87f8c3d73cb423214201667aa2ed4525c3e9c34de4d81927913fc159","size":296}],"hseq":35,"seq":71,"src":"harness","t":7375,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.done","hseq":36,"seq":72,"src":"harness","step":{"do":"snapshot_cache","seq":20},"t":7377,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":73,"src":"conductor","step":{"do":"destroy","seq":21},"t":7377}
+{"ev":"session.result","final_code":200,"hseq":37,"seq":74,"session":2,"src":"harness","src_code":200,"t":7379,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"args":[2,3],"ev":"session.callback","hseq":38,"name":"onSessionStateChange","seq":75,"session":2,"src":"harness","t":7381,"thread":"main"}
+{"args":[],"ev":"session.callback","hseq":39,"name":"onSessionDestroy","seq":76,"session":2,"src":"harness","t":7383,"thread":"main"}
+{"ev":"step.done","hseq":40,"seq":77,"src":"harness","step":{"do":"destroy","seq":21},"t":7386,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"error":null,"ev":"run.end","ok":true,"seq":78,"src":"conductor","t":7386}

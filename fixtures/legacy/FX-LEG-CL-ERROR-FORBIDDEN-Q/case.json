@@ -1,0 +1,100 @@
+{
+  "id": "FX-LEG-CL-ERROR-FORBIDDEN-Q",
+  "kind": "client",
+  "description": "A 403 after the cached page was delivered: load_url, the next intercept gets null, the entry is removed, codes -1 / -1 (Quick)",
+  "profile": "legacy-canonical",
+  "mode": "quick",
+  "server_profile": "legacy-canonical",
+  "rules": [
+    "CL-18",
+    "CL-20"
+  ],
+  "rows": [],
+  "divergences": [
+    "D-50"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-client#_9-3-response-classification"
+  ],
+  "evidence": "code-reading",
+  "config": {
+    "account": "rq-test-account",
+    "account_related": true,
+    "reload_in_bad_network": false
+  },
+  "responses": {
+    "r1": {
+      "page": "b",
+      "app": {
+        "status": 403,
+        "headers": [
+          [
+            "content-type",
+            "text/html; charset=utf-8"
+          ]
+        ]
+      }
+    }
+  },
+  "cache_before": [
+    {
+      "page": "a"
+    }
+  ],
+  "schedule": [
+    {
+      "case": "r1"
+    },
+    {
+      "do": "hold",
+      "point": "head"
+    },
+    {
+      "do": "create_session"
+    },
+    {
+      "do": "bind_client"
+    },
+    {
+      "do": "client_ready"
+    },
+    {
+      "do": "request_resource"
+    },
+    {
+      "do": "wait",
+      "for": "proxy.hold"
+    },
+    {
+      "do": "settle",
+      "ms": 300
+    },
+    {
+      "do": "release"
+    },
+    {
+      "do": "wait",
+      "for": "proxy.response_end"
+    },
+    {
+      "do": "settle",
+      "ms": 2500
+    },
+    {
+      "do": "request_resource"
+    },
+    {
+      "do": "get_diff"
+    },
+    {
+      "do": "snapshot_cache"
+    },
+    {
+      "do": "destroy"
+    }
+  ]
+}

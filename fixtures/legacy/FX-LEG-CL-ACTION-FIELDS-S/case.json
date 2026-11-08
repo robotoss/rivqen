@@ -1,0 +1,105 @@
+{
+  "id": "FX-LEG-CL-ACTION-FIELDS-S",
+  "kind": "client",
+  "description": "Clear-Site-Data, Refresh, WWW-Authenticate, Authentication-Info and a Connection token in any letter case are not page fields; Content-Security-Policy stays (Standard)",
+  "profile": "legacy-canonical",
+  "mode": "standard",
+  "server_profile": "legacy-canonical",
+  "rules": [
+    "CL-21"
+  ],
+  "rows": [],
+  "divergences": [
+    "D-52"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-client#_9-4-delivery-codes-and-messages"
+  ],
+  "evidence": "code-reading",
+  "config": {
+    "account": "rq-test-account",
+    "account_related": true,
+    "reload_in_bad_network": false
+  },
+  "responses": {
+    "r1": {
+      "page": "a",
+      "app": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "text/html; charset=utf-8"
+          ],
+          [
+            "Clear-Site-Data",
+            "\"cache\", \"cookies\""
+          ],
+          [
+            "REFRESH",
+            "0; url=https://shop.example.com/login"
+          ],
+          [
+            "WWW-Authenticate",
+            "Basic realm=\"shop\""
+          ],
+          [
+            "authentication-info",
+            "nextnonce=\"rq-test\""
+          ],
+          [
+            "Connection",
+            "X-Hop"
+          ],
+          [
+            "x-hop",
+            "1"
+          ],
+          [
+            "Content-Security-Policy",
+            "default-src 'self'"
+          ]
+        ]
+      }
+    }
+  },
+  "cache_before": [],
+  "schedule": [
+    {
+      "case": "r1"
+    },
+    {
+      "do": "create_session"
+    },
+    {
+      "do": "bind_client"
+    },
+    {
+      "do": "client_ready"
+    },
+    {
+      "do": "request_resource"
+    },
+    {
+      "do": "wait",
+      "for": "proxy.response_end"
+    },
+    {
+      "do": "settle",
+      "ms": 2500
+    },
+    {
+      "do": "get_diff"
+    },
+    {
+      "do": "snapshot_cache"
+    },
+    {
+      "do": "destroy"
+    }
+  ]
+}

@@ -1,0 +1,2027 @@
+{
+  "profile": "legacy-canonical",
+  "cases": "fixtures/legacy/functions/cases.json",
+  "evidence": [],
+  "results": [
+    {
+      "id": "FN-ID-01",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-02",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-03",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-04",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-05",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-06",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-07",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-08",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-09",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-10",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-11",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-12",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-13",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-14",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-ORD-01",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-ORD-02",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-ORD-03",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-ORD-04",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-ORD-05",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-ORD-06",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-ORD-07",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-ORD-08",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-ORD-09",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-ORD-10",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-ORD-11",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-ORD-12",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-ORD-13",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-ID-ORD-14",
+      "fn": "session_id",
+      "evidence": "none",
+      "result": null,
+      "note": "CL-43: the canonical client computes no session id"
+    },
+    {
+      "id": "FN-SPLIT-01",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{title}": "<title>T</title>",
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-02",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{title}": "<title>T</title>",
+          "{a}": "<!--SONICDIFF-a-->A<!--SONICDIFF-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-03",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{title}": "<title>T</title>",
+          "{a}": "<!--SonicDiff-a-->A<!--SonicDiff-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-04",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{title}": "<title>T</title>",
+          "{a}": "<!--sonicdiff-a-->A<!--SONICDIFF-a-END-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-05",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}{b}</body></html>",
+        "data": {
+          "{title}": "<title>T</title>",
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->",
+          "{b}": "<!--sonicdiff-b-->B<!--sonicdiff-b-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-06",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body><!--sonicdiff-->A<!--sonicdiff-end--></body></html>",
+        "data": {
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-07",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body><!--sonicdiff-a--><!--sonicdiff-a-end--></body></html>",
+        "data": {
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-08",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{title}": "<title>T</title>",
+          "{a}": "<!--sonicdiff-a-->A\nB\n<!--sonicdiff-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-09",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "error": "duplicate-block-name"
+    },
+    {
+      "id": "FN-SPLIT-10",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}<!--sonicdiff-a-end--></body></html>",
+        "data": {
+          "{title}": "<title>T</title>",
+          "{a}": "<!--sonicdiff-a--><!--sonicdiff-b-->B<!--sonicdiff-b-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-11",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>plain body</body></html>",
+        "data": {
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-12",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "",
+        "data": {
+          "{title}": ""
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-01",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{title}": "<title>T</title>",
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-b-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-02",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{title}": "<title>T</title>",
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-03",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body><!--sonicdiff-->A<!--sonicdiff-b-end--></body></html>",
+        "data": {
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-04",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}{b}</body></html>",
+        "data": {
+          "{title}": "<title>T</title>",
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->",
+          "{b}": "<!--sonicdiff-b-->B<!--sonicdiff-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-05",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body><!--sonicdiff-a b-->A<!--sonicdiff-a b-end--></body></html>",
+        "data": {
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-06",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a_1}</body></html>",
+        "data": {
+          "{title}": "<title>T</title>",
+          "{a_1}": "<!--sonicdiff-a_1-->A<!--sonicdiff-a_1-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-07",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body><!--sonicdiff--a-->A<!--sonicdiff--a-end--></body></html>",
+        "data": {
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-NAME-08",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}<!--sonicdiff-->B<!--sonicdiff-end--></body></html>",
+        "data": {
+          "{title}": "<title>T</title>",
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-01",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>x</body></html>",
+        "data": {
+          "{title}": "<title>Shop</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-02",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{title}": "<title>Shop</title>",
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-03",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{title}": "<TITLE>Shop</TITLE>",
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-04",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{title}": "<title lang=\"en\">Shop</title>",
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-05",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}<title>Two</title></head><body>{a}</body></html>",
+        "data": {
+          "{title}": "<title>One</title>",
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-06",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><body>{a}</body></html>",
+        "data": {
+          "{title}": "<title>In block</title>",
+          "{a}": "<!--sonicdiff-a-->{title}<!--sonicdiff-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-07",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{title}": "<title></title>",
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-08",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head><title>Open",
+        "data": {
+          "{title}": ""
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-TITLE-09",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>no markers</body></html>",
+        "data": {
+          "{title}": "<title>Shop</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-01",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {
+          "{a}": "y"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-02",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-03",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {
+          "{b}": "new"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-04",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {
+          "{b}": ""
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-05",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {
+          "{a}": "y",
+          "{b}": "new"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-06",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-07",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "error": "value-not-string"
+    },
+    {
+      "id": "FN-DIFF-08",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "error": "value-not-string"
+    },
+    {
+      "id": "FN-DIFF-09",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {
+          "{a}": "x"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-10",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-11",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-12",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {
+          "{a}": ""
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-01",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-02",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-03",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-04",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {
+          "{b}": ""
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-NEW-01",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {
+          "{b}": "new"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-NEW-02",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {
+          "{a}": "y",
+          "{b}": "new"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-NEW-03",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {
+          "{a}": "x",
+          "{b}": "y"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-NEW-04",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {
+          "{b}": "new"
+        }
+      }
+    },
+    {
+      "id": "FN-MSG-01",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-02",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"code\":304,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-03",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"code\":1000,\"srcCode\":1000,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-04",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"code\":2000,\"srcCode\":2000,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-05",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"code\":304,\"srcCode\":304,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-06",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": null
+      }
+    },
+    {
+      "id": "FN-MSG-07",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-08",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-09",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"custom-etag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-10",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"café / \\\\\\\"q\\\\\\\"\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-11",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": null
+      }
+    },
+    {
+      "id": "FN-MSG-OFFLINE-01",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-OFFLINE-02",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"STORE\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-OFFLINE-03",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"Store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-OFFLINE-04",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"HTTP\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-OFFLINE-05",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"FALSE\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-OFFLINE-06",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"TRUE\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-OFFLINE-07",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-LEGACY-01",
+      "fn": "is_legacy_response",
+      "evidence": "rule",
+      "rules": ["CL-14"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-LEGACY-02",
+      "fn": "is_legacy_response",
+      "evidence": "rule",
+      "rules": ["CL-14"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-LEGACY-03",
+      "fn": "is_legacy_response",
+      "evidence": "rule",
+      "rules": ["CL-14"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-LEGACY-04",
+      "fn": "is_legacy_response",
+      "evidence": "rule",
+      "rules": ["CL-14"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-LEGACY-05",
+      "fn": "is_legacy_response",
+      "evidence": "rule",
+      "rules": ["CL-14"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-LEGACY-06",
+      "fn": "is_legacy_response",
+      "evidence": "rule",
+      "rules": ["CL-14"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-LEGACY-07",
+      "fn": "is_legacy_response",
+      "evidence": "rule",
+      "rules": ["CL-14"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-LEGACY-08",
+      "fn": "is_legacy_response",
+      "evidence": "rule",
+      "rules": ["CL-14"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-LEGACY-09",
+      "fn": "is_legacy_response",
+      "evidence": "rule",
+      "rules": ["CL-14"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-LEGACY-10",
+      "fn": "is_legacy_response",
+      "evidence": "rule",
+      "rules": ["CL-14"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-LEGACY-CASE-01",
+      "fn": "is_legacy_response",
+      "evidence": "rule",
+      "rules": ["CL-14"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-LEGACY-CASE-02",
+      "fn": "is_legacy_response",
+      "evidence": "rule",
+      "rules": ["CL-14"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-LEGACY-CASE-03",
+      "fn": "is_legacy_response",
+      "evidence": "rule",
+      "rules": ["CL-14"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-LEGACY-CASE-04",
+      "fn": "is_legacy_response",
+      "evidence": "rule",
+      "rules": ["CL-14"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-LEGACY-CASE-05",
+      "fn": "is_legacy_response",
+      "evidence": "rule",
+      "rules": ["CL-14"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-TCHANGE-01",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-02",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-TCHANGE-03",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": false
+      }
+    },
+    {
+      "id": "FN-TCHANGE-04",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-05",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-06",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-07",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-08",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-09",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-10",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-11",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-12",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-13",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-14",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-15",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-16",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-17",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-18",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-19",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-20",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-21",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-22",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-23",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-24",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-TCHANGE-25",
+      "fn": "template_change",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": true
+      }
+    },
+    {
+      "id": "FN-ETAG-01",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "abc"
+      }
+    },
+    {
+      "id": "FN-ETAG-02",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "abc"
+      }
+    },
+    {
+      "id": "FN-ETAG-03",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "abc"
+      }
+    },
+    {
+      "id": "FN-ETAG-04",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "w/\"abc\""
+      }
+    },
+    {
+      "id": "FN-ETAG-05",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "abc"
+      }
+    },
+    {
+      "id": "FN-ETAG-06",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "ABC"
+      }
+    },
+    {
+      "id": "FN-ETAG-07",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "AbC"
+      }
+    },
+    {
+      "id": "FN-ETAG-08",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "'abc'"
+      }
+    },
+    {
+      "id": "FN-ETAG-09",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": ""
+      }
+    },
+    {
+      "id": "FN-ETAG-10",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "\""
+      }
+    },
+    {
+      "id": "FN-ETAG-11",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": ""
+      }
+    },
+    {
+      "id": "FN-ETAG-12",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": ""
+      }
+    },
+    {
+      "id": "FN-ETAG-13",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": " \"abc\" "
+      }
+    },
+    {
+      "id": "FN-ETAG-14",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "W/abc"
+      }
+    },
+    {
+      "id": "FN-ETAG-15",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "a\"b"
+      }
+    },
+    {
+      "id": "FN-ETAG-16",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "a\"b"
+      }
+    },
+    {
+      "id": "FN-ETAG-17",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "abc\""
+      }
+    },
+    {
+      "id": "FN-ETAG-18",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "\"abc"
+      }
+    },
+    {
+      "id": "FN-ETAG-19",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": ""
+      }
+    },
+    {
+      "id": "FN-ETAG-KEY-01",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "e1"
+      }
+    },
+    {
+      "id": "FN-ETAG-KEY-02",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "E1"
+      }
+    },
+    {
+      "id": "FN-ETAG-KEY-03",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "e1"
+      }
+    },
+    {
+      "id": "FN-ETAG-KEY-04",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "e1"
+      }
+    },
+    {
+      "id": "FN-ETAG-KEY-05",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d"
+      }
+    },
+    {
+      "id": "FN-ETAG-KEY-06",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "3E3184CBD12E5294959EFFE6F2D9985F50F4EA5D"
+      }
+    },
+    {
+      "id": "FN-CHARSET-01",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-02",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-03",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-04",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-05",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "gbk"
+      }
+    },
+    {
+      "id": "FN-CHARSET-06",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "gbk"
+      }
+    },
+    {
+      "id": "FN-CHARSET-07",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-08",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": ""
+      }
+    },
+    {
+      "id": "FN-CHARSET-09",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-10",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "'utf-8'"
+      }
+    },
+    {
+      "id": "FN-CHARSET-11",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-12",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "iso-8859-1"
+      }
+    },
+    {
+      "id": "FN-CHARSET-13",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-14",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-15",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-16",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "nosuch"
+      }
+    },
+    {
+      "id": "FN-CHARSET-17",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-01",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "x"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-02",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "w/\"x\""
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-03",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "x"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-04",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "w/x"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-05",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "\""
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-06",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "a"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-07",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "ab"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-08",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "w/\"AB\""
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-09",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "\"x"
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-10",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "w/x\""
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-11",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": " \"x\""
+      }
+    },
+    {
+      "id": "FN-ETAG-WEAK-12",
+      "fn": "etag",
+      "evidence": "rule",
+      "rules": ["CL-15"],
+      "result": {
+        "value": "'x'"
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-IOS-01",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {
+          "{c}": ""
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-IOS-02",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {
+          "{c}": "only new"
+        }
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-IOS-03",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {}
+      }
+    },
+    {
+      "id": "FN-DIFF-EMPTY-IOS-04",
+      "fn": "diff",
+      "evidence": "rule",
+      "rules": ["CL-42"],
+      "result": {
+        "diff": {
+          "{a}": "x"
+        }
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-01",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-02",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "gbk"
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-03",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-04",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-05",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "gbk"
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-06",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "iso-8859-1"
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-07",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "utf-8"
+      }
+    },
+    {
+      "id": "FN-CHARSET-PARAM-08",
+      "fn": "charset",
+      "evidence": "rule",
+      "rules": ["CL-16"],
+      "result": {
+        "value": "big5"
+      }
+    },
+    {
+      "id": "FN-SPLIT-UNNAMED-01",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body><!--sonicdiff-->A<!--sonicdiff-end--></body></html>",
+        "data": {
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-UNNAMED-02",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body><!--SONICDIFF-->A<!--SONICDIFF-END--></body></html>",
+        "data": {
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-UNNAMED-03",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{title}": "<title>T</title>",
+          "{a}": "<!--SONICDIFF-a-->A<!--SONICDIFF-a-END-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-UNNAMED-04",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body><!--sonicdiff-->A<!--sonicdiff-end--><!--sonicdiff-->B<!--sonicdiff-end--></body></html>",
+        "data": {
+          "{title}": "<title>T</title>"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-UNNAMED-05",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{a}</body></html>",
+        "data": {
+          "{title}": "<title>T</title>",
+          "{a}": "<!--sonicdiff-a-->A<!--sonicdiff-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-SPLIT-UNNAMED-06",
+      "fn": "split",
+      "evidence": "rule",
+      "rules": ["CL-41"],
+      "result": {
+        "template": "<html><head>{title}</head><body>{A}</body></html>",
+        "data": {
+          "{title}": "<title>T</title>",
+          "{A}": "<!--SonicDiff-A-->A<!--sonicdiff-a-end-->"
+        }
+      }
+    },
+    {
+      "id": "FN-MSG-STORE-01",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"code\":1000,\"srcCode\":1000,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-STORE-02",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"code\":2000,\"srcCode\":2000,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-STORE-03",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"code\":304,\"srcCode\":2000,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-STORE-04",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"result\":\"{\\\"{a}\\\":\\\"y\\\"}\",\"code\":200,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-STORE-05",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"code\":304,\"srcCode\":200,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-STORE-06",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"code\":304,\"srcCode\":304,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"store\",\"isReload\":\"false\"}}"
+      }
+    },
+    {
+      "id": "FN-MSG-STORE-07",
+      "fn": "message",
+      "evidence": "rule",
+      "rules": ["CL-23","CL-24","CL-28"],
+      "result": {
+        "json": "{\"code\":1000,\"srcCode\":1000,\"extra\":{\"eTag\":\"e1\",\"template-tag\":\"t1\",\"cache-offline\":\"true\",\"isReload\":\"false\"}}"
+      }
+    }
+  ]
+}

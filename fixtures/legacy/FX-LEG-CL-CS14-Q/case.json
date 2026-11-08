@@ -1,0 +1,133 @@
+{
+  "id": "FX-LEG-CL-CS14-Q",
+  "kind": "client",
+  "description": "Data update; the proxy drops the etag field (Quick)",
+  "profile": "legacy-canonical",
+  "mode": "quick",
+  "server_profile": "legacy-node",
+  "rules": [
+    "CL-14"
+  ],
+  "rows": [
+    "Q18",
+    "S15"
+  ],
+  "divergences": [
+    "D-28"
+  ],
+  "upstream": {
+    "repo": "Tencent/VasSonic",
+    "sha": "59936beff656d4b5718ff6444d6c5e001a2c5231"
+  },
+  "sources": [
+    "docs:engineering/protocol/legacy-client#_9-9-expected-results-of-the-stored-scenarios"
+  ],
+  "evidence": "trace",
+  "trace": {
+    "scenario": "CS-14",
+    "mode": "quick"
+  },
+  "config": {
+    "account": "rq-test-account",
+    "account_related": true,
+    "reload_in_bad_network": false
+  },
+  "responses": {
+    "r1": {
+      "page": "a",
+      "app": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "text/html; charset=utf-8"
+          ]
+        ]
+      }
+    },
+    "r2": {
+      "page": "b",
+      "app": {
+        "status": 200,
+        "headers": [
+          [
+            "content-type",
+            "text/html; charset=utf-8"
+          ]
+        ]
+      }
+    }
+  },
+  "cache_before": [],
+  "schedule": [
+    {
+      "case": "r1"
+    },
+    {
+      "do": "create_session"
+    },
+    {
+      "do": "bind_client"
+    },
+    {
+      "do": "client_ready"
+    },
+    {
+      "do": "request_resource"
+    },
+    {
+      "do": "wait",
+      "for": "proxy.response_end"
+    },
+    {
+      "do": "settle",
+      "ms": 2500
+    },
+    {
+      "do": "destroy"
+    },
+    {
+      "case": "r2"
+    },
+    {
+      "do": "drop_field",
+      "name": "etag"
+    },
+    {
+      "do": "create_session"
+    },
+    {
+      "do": "bind_client"
+    },
+    {
+      "do": "wait",
+      "for": "proxy.response_end"
+    },
+    {
+      "do": "settle",
+      "ms": 300
+    },
+    {
+      "do": "client_ready"
+    },
+    {
+      "do": "request_resource"
+    },
+    {
+      "do": "get_diff"
+    },
+    {
+      "do": "settle",
+      "ms": 2500
+    },
+    {
+      "do": "get_diff"
+    },
+    {
+      "do": "snapshot_cache"
+    },
+    {
+      "do": "destroy"
+    }
+  ]
+}

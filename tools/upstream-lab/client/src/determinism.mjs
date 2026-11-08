@@ -28,17 +28,54 @@ export function normalizeHeaderText(text) {
   return text.replace(/^([^:\r\n]+?)(\s*:)[^\r\n]*/gm, (line, name, colon) => (BLANKED.has(name.trim().toLowerCase()) ? `${name}${colon}` : line));
 }
 
+const REMOVED_KEY = 'local_refresh_time';
+
+/** End index (exclusive) of the JSON string that starts at `i` (a quote); the text is valid JSON, so the string ends. */
+function stringEnd(text, i) {
+  let j = i + 1;
+  while (text[j] !== '"') j += text[j] === '\\' ? 2 : 1;
+  return j + 1;
+}
+
+/**
+ * Remove the member `local_refresh_time` of the top-level object from the JSON text. The rest of the text stays
+ * byte for byte, so a changed value type or number form still shows (a parse and stringify would hide it).
+ * Text that is not a JSON object, or has no such member, is returned as it is.
+ */
 function normalizeMessage(json) {
   try {
-    const parsed = JSON.parse(json);
-    if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      delete parsed.local_refresh_time;
-      return JSON.stringify(parsed);
-    }
+    if (!Object.hasOwn(Object(JSON.parse(json)), REMOVED_KEY)) return json;
   } catch {
-    // not JSON: compared as it is
+    return json; // not JSON: compared as it is
   }
-  return json;
+  // [from, to) of each member of the top-level object, split at the commas of depth 1.
+  const open = json.indexOf('{');
+  const members = [];
+  let depth = 0;
+  let from = open + 1;
+  for (let i = open; i < json.length; i += 1) {
+    const c = json[i];
+    if (c === '"') {
+      i = stringEnd(json, i) - 1;
+    } else if (c === '{' || c === '[') {
+      depth += 1;
+    } else if (c === '}' || c === ']') {
+      depth -= 1;
+      if (depth === 0) {
+        members.push([from, i]);
+        break;
+      }
+    } else if (c === ',' && depth === 1) {
+      members.push([from, i]);
+      from = i + 1;
+    }
+  }
+  const keyOf = ([start]) => {
+    const q = json.indexOf('"', start);
+    return JSON.parse(json.slice(q, stringEnd(json, q)));
+  };
+  const kept = members.filter((m) => keyOf(m) !== REMOVED_KEY);
+  return `${json.slice(0, open + 1)}${kept.map(([a, b]) => json.slice(a, b)).join(',')}${json.slice(members.at(-1)[1])}`;
 }
 
 function normalizeSnapshotFile(file) {
@@ -54,7 +91,10 @@ export function normalizeEvent(event) {
   delete copy.hseq;
   if (copy.thread !== 'main') delete copy.thread;
   // `repeat` of run.start is the run number k (the file run-<k>.jsonl); it differs by construction.
-  if (copy.ev === 'run.start') delete copy.repeat;
+  if (copy.ev === 'run.start') {
+    delete copy.repeat;
+    delete copy.macro; // the macro version (CONTRACT section 6)
+  }
   if (copy.ev === 'session.message' && typeof copy.json === 'string') copy.json = normalizeMessage(copy.json);
   if (copy.ev === 'cache.snapshot' && Array.isArray(copy.files)) copy.files = copy.files.map(normalizeSnapshotFile);
   return copy;

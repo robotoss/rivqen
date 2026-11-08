@@ -59,7 +59,7 @@ Where the same person must work in both tracks (small team), they follow the rul
 
 <Badge type="tip" text="FACT" /> The evidence track runs upstream code only in the upstream lab (`tools/upstream-lab/`). The lab holds Rivqen code only: harnesses, test pages, a recording proxy, runners. Upstream code comes from a separate read-only checkout at the pinned SHA and is never copied into the repository.
 
-| Rule | Server lab (WP-01 P0, WP-02) | Client lab (WP-01 S1; H-118, H-119) |
+| Rule | Server lab (WP-01 P0, WP-02) | Client lab (WP-01 S1, S2; H-118, H-119) |
 |---|---|---|
 | Upstream input | The servers of `sonic-java` (binary jar), `sonic-nodejs` (npm package), `sonic-php`, mounted read-only into containers | The Android SDK sources (`sonic-android/sdk/src/main/java`) compiled in place as a source set; the iOS SDK sources (`sonic-iOS/Sonic`) compiled in place for macOS |
 | Changes to upstream | None | None: build flags only (`-fno-objc-arc -fobjc-weak` on iOS). The builds check the pinned SHA and the file hashes of `evidence/source-manifest.lock` and stop on any change |
@@ -69,6 +69,8 @@ Where the same person must work in both tracks (small team), they follow the rul
 | Output | Traces in `evidence/traces/server/` | Traces and function results in `evidence/traces/client/` |
 
 After each lab run the checkout, the containers, the images and the lab SDK root are deleted.
+
+<Badge type="tip" text="FACT" /> WP-01 S2 ran the client lab twice more on 2026-11-07 (CS-20…CS-29, CS-13a and CS-13b again; H-122, H-126) with the same rules. The conductor steps added in S2 (`set_field`, `set_body_member`, `case`) change only the traffic between the lab server and the SDK, never the SDK. The Rivqen client model of the legacy fixtures (`tools/legacy-fixtures/src/client-*.mjs`) is written from the canonical client rules CL-01…CL-43 of the [legacy client](/engineering/protocol/legacy-client) page and from the stored traces; its `legacy-android` profile reproduces the observed behavior as named differences (A-01…A-20), not the upstream code structure (R-1, R-3).
 
 ## 6. If upstream material is ever needed
 

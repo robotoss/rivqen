@@ -40,6 +40,24 @@ export const CONDUCTOR_STEPS = {
   release: NONE,
   cut: { members: ['bytes'], check: (s) => (isInt(s.bytes) ? null : 'bytes must be a non-negative integer') },
   drop_field: { members: ['name'], check: (s) => (isStr(s.name) ? null : 'name must be a non-empty string') },
+  set_field: {
+    members: ['name', 'value'],
+    check: (s) => {
+      if (!isStr(s.name)) return 'name must be a non-empty string';
+      if (typeof s.value !== 'string') return 'value must be a string';
+      return null;
+    },
+  },
+  // S2 (H-126): a body fault and an application response change inside the steps.
+  set_body_member: {
+    members: ['name', 'value'],
+    check: (s) => {
+      if (!isStr(s.name)) return 'name must be a non-empty string';
+      if (typeof s.value !== 'string') return 'value must be a string';
+      return null;
+    },
+  },
+  case: { members: ['value'], check: (s) => caseProblem(s.value) },
   server_down: NONE,
   server_up: NONE,
   wait: {
@@ -66,16 +84,23 @@ export function stepProblem(step) {
   return problem ? `${step.do}: ${problem}` : null;
 }
 
-/** The macro "first_load" (CONTRACT section 2). */
+/**
+ * The macro "first_load", version 2 (CONTRACT section 2, H-126): the settle after the wait lets the SDK
+ * finish its read before `client_ready`; the settle after `destroy` lets a deferred destroy finish.
+ */
 export const FIRST_LOAD = [
   { do: 'create_session' },
   { do: 'bind_client' },
+  { do: 'wait', for: 'proxy.response_end' },
+  { do: 'settle', ms: 300 },
   { do: 'client_ready' },
   { do: 'request_resource' },
-  { do: 'wait', for: 'proxy.response_end' },
   { do: 'settle', ms: 2500 },
   { do: 'destroy' },
+  { do: 'settle', ms: 1500 },
 ];
+/** The `macro` member of `run.start` (CONTRACT section 5): the version of FIRST_LOAD. */
+export const MACRO_VERSION = 2;
 
 export const ORIGINS = { 'lab-node': 18081, 'lab-php': 18082, 'lab-java': 18083 };
 export const PROFILES = { 'lab-node': 'legacy-node', 'lab-php': 'legacy-php', 'lab-java': 'legacy-java' };

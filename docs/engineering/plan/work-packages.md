@@ -11,7 +11,7 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | WP | Name | Phase | Owner role | Depends on | Size | State |
 |---|---|---|---|---|---|---|
 | [WP-00](#wp-00) | Documentation and governance | P0 | Integrator | — | M | **Done** |
-| [WP-01](#wp-01) | Upstream evidence | P0–P1 | Source archaeologist | WP-00 | L | **In progress** — P0 part done; client part (H-110): [S1](/engineering/plan/sprints/WP-01-S1) closed (client traces, Q-02, D-20…D-52); S2 (client part of the fixtures) next |
+| [WP-01](#wp-01) | Upstream evidence | P0–P1 | Source archaeologist | WP-00 | L | **Complete, MR pending** — P0 part done; client part (H-110): [S1](/engineering/plan/sprints/WP-01-S1) closed and merged (2026-11-06, #7: client traces, Q-02, D-20…D-52); [S2](/engineering/plan/sprints/WP-01-S2) closed (2026-11-08: client part of the fixtures, 104 canonical client fixtures, 60 Android overrides, function fixtures) |
 | [WP-02](#wp-02) | Golden fixtures and conformance runner | P1 | Protocol designer | WP-01 | L | **Done (merged 2026-10-31, #5)** ([S1](/engineering/plan/sprints/WP-02-S1), [S2](/engineering/plan/sprints/WP-02-S2) closed) |
 | [WP-03](#wp-03) | Rust reference server (oracle) | P1 | Backend engineer | WP-02 | M | **Done (merged 2026-11-04, #6)** ([S1](/engineering/plan/sprints/WP-03-S1), [S2](/engineering/plan/sprints/WP-03-S2) closed; gate G1 passed) |
 | [WP-04](#wp-04) | Platform feasibility spikes | P2 | Android + iOS engineers | WP-01 | L | Planned |

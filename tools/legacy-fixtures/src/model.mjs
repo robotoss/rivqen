@@ -137,12 +137,18 @@ function plan(profile, request, app, ctx) {
   const { etag, tag, blocks } = ctx;
   const fields = request.headers;
   const noStore = hasDirective(app.headers, 'no-store');
-  const dataOrFull = (given, extra) => {
+  // The order of the added lines is the order of the stored upstream traces (the client part
+  // compares the legacy response fields in order): Java and PHP send the cache fields first;
+  // Node sends cache-offline between template-tag and template-change. A server fixture
+  // compares fields by name, so the order does not change any server expected.json.
+  const dataOrFull = (given, extra, order = 'after') => {
     const kind = given === tag ? 'data' : 'full';
-    return {
-      kind,
-      adds: [['etag', etag], ['template-tag', tag], ['template-change', kind === 'data' ? 'false' : 'true'], ...extra],
-    };
+    const change = ['template-change', kind === 'data' ? 'false' : 'true'];
+    let adds;
+    if (order === 'before') adds = [...extra, ['etag', etag], ['template-tag', tag], change];
+    else if (order === 'node') adds = [['etag', etag], ['template-tag', tag], ...extra, change];
+    else adds = [['etag', etag], ['template-tag', tag], change, ...extra];
+    return { kind, adds };
   };
 
   if (profile === 'legacy-canonical') {
@@ -164,7 +170,7 @@ function plan(profile, request, app, ctx) {
       return { kind: 'not-modified', adds: [...cache, ...javaOffline(app), ['cache-offline', 'store']] };
     }
     // Without accept-diff true, Java adds no cache-offline line and keeps those of the application (D-02, D-14).
-    return dataOrFull(first(fields, 'template-tag'), [...cache, ...(legacy ? javaOffline(app) : app.headers.filter(([n]) => asciiLower(n) === 'cache-offline'))]);
+    return dataOrFull(first(fields, 'template-tag'), [...cache, ...(legacy ? javaOffline(app) : app.headers.filter(([n]) => asciiLower(n) === 'cache-offline'))], 'before');
   }
 
   if (profile === 'legacy-node') {
@@ -172,14 +178,14 @@ function plan(profile, request, app, ctx) {
     if (mode === null || mode === '' || !acceptsGzipOrDeflate(fields)) return { kind: 'pass' };
     if (first(fields, 'if-none-match') === etag) return { kind: 'not-modified', adds: [['cache-offline', 'store']] };
     const given = blocks === 0 ? null : first(fields, 'template-tag');
-    return dataOrFull(given, [['cache-offline', 'true']]);
+    return dataOrFull(given, [['cache-offline', 'true']], 'node');
   }
 
   // legacy-php
   if (firstExactName(fields, 'accept-diff') !== 'true') return { kind: 'pass' };
   const cache = noStore ? [] : [['cache-control', 'no-cache']];
   if (first(fields, 'if-none-match') === etag) return { kind: 'not-modified', adds: [['cache-offline', 'store'], ...cache] };
-  return dataOrFull(first(fields, 'template-tag'), [['cache-offline', 'true'], ...cache]);
+  return dataOrFull(first(fields, 'template-tag'), [...cache, ['cache-offline', 'true']], 'before');
 }
 
 function jsonText(profile, value) {

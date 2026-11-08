@@ -43,6 +43,7 @@ done
 $CC -c -fobjc-arc -Wall -Wextra -Werror $INC \
   "-DRQ_SDK_VERSION=\"$SDK_VERSION\"" "-DRQ_CLANG_VERSION=\"$CLANG_VERSION\"" "-DRQ_UPSTREAM_SHA=\"$PIN\"" \
   "$HERE/runner/main.m" -o "$OBJ/runner.o"
+$CC -c -fobjc-arc -Wall -Wextra -Werror "$HERE/runner/json.m" -o "$OBJ/json.o"
 
 $CC "$OBJ"/*.o -framework Foundation -framework CoreFoundation -framework Security -lsqlite3 -o "$OUT/rivqen-ios-fn"
 echo "built $OUT/rivqen-ios-fn ($n upstream files, macOS SDK $SDK_VERSION)"

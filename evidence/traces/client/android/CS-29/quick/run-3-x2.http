@@ -1,0 +1,20 @@
+GET /catalog HTTP/1.1
+accept-diff: true
+If-None-Match: 3e3184cbd12e5294959effe6f2d9985f50f4ea5d
+template-tag: 3c771bf015df2c410a41a6012804f645b3acc1bc
+method: GET
+Accept-Encoding: gzip
+Accept-Language: zh-CN,zh;
+sonic-sdk-version: Sonic/2.0.0
+User-Agent: RivqenLab/1 (Android harness) Sonic/2.0.0
+Host: 10.0.2.2:18090
+Connection: Keep-Alive
+
+--- response ---
+HTTP 304
+Content-Encoding: gzip
+Cache-Offline: store
+Date: Sat, 07 Nov 2026 18:33:30 GMT
+Connection: close
+
+[body not decoded: content-encoding=gzip, Z_BUF_ERROR]

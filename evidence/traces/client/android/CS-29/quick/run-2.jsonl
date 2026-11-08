@@ -1,0 +1,88 @@
+{"ev":"run.start","macro":2,"mode":"quick","origin":"lab-node","repeat":2,"scenario":"CS-29","seq":1,"src":"conductor","t":1,"upstream_sha":"59936bef"}
+{"ev":"step.start","seq":2,"src":"conductor","step":{"do":"create_session","seq":1},"t":5}
+{"ev":"runtime.cookie_get","hseq":1,"seq":3,"src":"harness","t":532,"thread":"main","url":"http://10.0.2.2:18090/catalog","value":null}
+{"ev":"proxy.request","exchange":1,"fields":[["accept-diff","true"],["If-None-Match",""],["template-tag",""],["method","GET"],["Accept-Encoding","gzip"],["Accept-Language","zh-CN,zh;"],["sonic-sdk-version","Sonic/2.0.0"],["User-Agent","RivqenLab/1 (Android harness) Sonic/2.0.0"],["Host","10.0.2.2:18090"],["Connection","Keep-Alive"]],"method":"GET","seq":4,"src":"proxy","t":533,"target":"/catalog"}
+{"args":[],"ev":"session.callback","hseq":2,"name":"onSessionLoadLocalCache","seq":5,"session":1,"src":"harness","t":535,"thread":"pool-sonic-session-thread-1"}
+{"ev":"session.created","hseq":3,"seq":6,"session":1,"session_id":"rq-test-account_a1c7b99f65f55fb15c1b0b7e504882a4","src":"harness","t":537,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"proxy.response_head","exchange":1,"fields":[["content-type","text/html; charset=utf-8"],["Content-Encoding","gzip"],["Etag","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],["Cache-Offline","true"],["template-change","true"],["Date","Sat, 07 Nov 2026 18:33:14 GMT"]],"seq":7,"src":"proxy","status":200,"t":538}
+{"body_len":194,"body_sha256":"d13a1263730b0b2b4fde7e55c1331e040df98135786ecfb97f2fdc4819de649c","complete":true,"ev":"proxy.response_end","exchange":1,"seq":8,"src":"proxy","t":538}
+{"ev":"step.done","hseq":4,"seq":9,"src":"harness","step":{"do":"create_session","seq":1},"t":540,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":10,"src":"conductor","step":{"do":"bind_client","seq":2},"t":540}
+{"args":[],"ev":"session.callback","hseq":5,"name":"onSessionFirstLoad","seq":11,"session":1,"src":"harness","t":542,"thread":"pool-sonic-session-thread-1"}
+{"args":[1,2],"ev":"session.callback","hseq":6,"name":"onSessionStateChange","seq":12,"session":1,"src":"harness","t":544,"thread":"pool-sonic-session-thread-1"}
+{"ev":"step.done","hseq":7,"seq":13,"src":"harness","step":{"do":"bind_client","seq":2},"t":548,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":14,"src":"conductor","step":{"do":"wait","for":"proxy.response_end","seq":3},"t":548}
+{"ev":"step.done","seq":15,"src":"conductor","step":{"do":"wait","for":"proxy.response_end","seq":3},"t":548}
+{"ev":"step.start","seq":16,"src":"conductor","step":{"do":"settle","ms":300,"seq":4},"t":548}
+{"ev":"step.done","seq":17,"src":"conductor","step":{"do":"settle","ms":300,"seq":4},"t":850}
+{"ev":"step.start","seq":18,"src":"conductor","step":{"do":"client_ready","seq":5},"t":850}
+{"base_url":"http://10.0.2.2:18090/catalog","body_len":296,"body_sha256":"a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb","encoding":"utf-8","ev":"client.load_data","headers":[["cache-offline","true"],["connection","keep-alive"],["content-encoding","gzip"],["content-type","text/html; charset=utf-8"],["date","Sat, 07 Nov 2026 18:33:14 GMT"],["keep-alive","timeout=5"],["template-change","true"],["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],["transfer-encoding","chunked"],["x-android-received-millis","1794076394477"],["x-android-response-source","NETWORK 200"],["x-android-selected-protocol","http/1.1"],["x-android-sent-millis","1794076394472"]],"history_url":"http://10.0.2.2:18090/catalog","hseq":8,"mime":"text/html","seq":19,"session":1,"src":"harness","t":853,"thread":"main"}
+{"ev":"step.done","hseq":9,"seq":20,"src":"harness","step":{"do":"client_ready","seq":5},"t":855,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":21,"src":"conductor","step":{"do":"request_resource","seq":6},"t":855}
+{"ev":"step.done","hseq":10,"seq":22,"src":"harness","step":{"do":"request_resource","seq":6},"t":859,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":23,"src":"conductor","step":{"do":"settle","ms":2500,"seq":7},"t":859}
+{"body_len":296,"body_sha256":"a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb","complete":true,"encoding":"utf-8","error":null,"ev":"client.intercept","headers":[["cache-offline","true"],["connection","keep-alive"],["content-encoding","gzip"],["content-type","text/html; charset=utf-8"],["date","Sat, 07 Nov 2026 18:33:14 GMT"],["keep-alive","timeout=5"],["template-change","true"],["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],["transfer-encoding","chunked"],["x-android-received-millis","1794076394477"],["x-android-response-source","NETWORK 200"],["x-android-selected-protocol","http/1.1"],["x-android-sent-millis","1794076394472"]],"hseq":11,"mime":"text/html","reason":null,"seq":24,"session":1,"src":"harness","status":0,"t":861,"thread":"rq-intercept-1"}
+{"args":[],"ev":"session.callback","hseq":12,"name":"onSessionSaveCache","seq":25,"session":1,"src":"harness","t":2050,"thread":"SonicSdk_FileThread"}
+{"args":[],"ev":"session.callback","hseq":13,"name":"onSessionSaveCache","seq":26,"session":1,"src":"harness","t":2364,"thread":"SonicSdk_FileThread"}
+{"ev":"step.done","seq":27,"src":"conductor","step":{"do":"settle","ms":2500,"seq":7},"t":3361}
+{"ev":"step.start","seq":28,"src":"conductor","step":{"do":"destroy","seq":8},"t":3361}
+{"ev":"session.result","final_code":304,"hseq":14,"seq":29,"session":1,"src":"harness","src_code":1000,"t":3364,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"args":[2,3],"ev":"session.callback","hseq":15,"name":"onSessionStateChange","seq":30,"session":1,"src":"harness","t":3366,"thread":"main"}
+{"args":[],"ev":"session.callback","hseq":16,"name":"onSessionDestroy","seq":31,"session":1,"src":"harness","t":3368,"thread":"main"}
+{"ev":"step.done","hseq":17,"seq":32,"src":"harness","step":{"do":"destroy","seq":8},"t":3370,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":33,"src":"conductor","step":{"do":"settle","ms":1500,"seq":9},"t":3371}
+{"ev":"step.done","seq":34,"src":"conductor","step":{"do":"settle","ms":1500,"seq":9},"t":4872}
+{"ev":"step.start","seq":35,"src":"conductor","step":{"do":"create_session","seq":10},"t":4881}
+{"ev":"proxy.request","exchange":2,"fields":[["accept-diff","true"],["If-None-Match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],["method","GET"],["Accept-Encoding","gzip"],["Accept-Language","zh-CN,zh;"],["sonic-sdk-version","Sonic/2.0.0"],["User-Agent","RivqenLab/1 (Android harness) Sonic/2.0.0"],["Host","10.0.2.2:18090"],["Connection","Keep-Alive"]],"method":"GET","seq":36,"src":"proxy","t":4886,"target":"/catalog"}
+{"ev":"proxy.response_head","exchange":2,"fields":[["Content-Encoding","gzip"],["Cache-Offline","store"],["Date","Sat, 07 Nov 2026 18:33:18 GMT"]],"seq":37,"src":"proxy","status":304,"t":4888}
+{"body_len":0,"body_sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","complete":true,"ev":"proxy.response_end","exchange":2,"seq":38,"src":"proxy","t":4888}
+{"ev":"runtime.cookie_get","hseq":18,"seq":39,"src":"harness","t":4893,"thread":"main","url":"http://10.0.2.2:18090/catalog","value":null}
+{"ev":"session.created","hseq":19,"seq":40,"session":2,"session_id":"rq-test-account_a1c7b99f65f55fb15c1b0b7e504882a4","src":"harness","t":4895,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.done","hseq":20,"seq":41,"src":"harness","step":{"do":"create_session","seq":10},"t":4898,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":42,"src":"conductor","step":{"do":"bind_client","seq":11},"t":4898}
+{"args":[],"ev":"session.callback","hseq":21,"name":"onSessionLoadLocalCache","seq":43,"session":2,"src":"harness","t":4901,"thread":"pool-sonic-session-thread-1"}
+{"args":[],"ev":"session.callback","hseq":22,"name":"onSessionHitCache","seq":44,"session":2,"src":"harness","t":4904,"thread":"pool-sonic-session-thread-1"}
+{"args":[1,2],"ev":"session.callback","hseq":23,"name":"onSessionStateChange","seq":45,"session":2,"src":"harness","t":4906,"thread":"pool-sonic-session-thread-1"}
+{"ev":"step.done","hseq":24,"seq":46,"src":"harness","step":{"do":"bind_client","seq":11},"t":4910,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":47,"src":"conductor","step":{"do":"wait","for":"proxy.response_end","seq":12},"t":4910}
+{"ev":"step.done","seq":48,"src":"conductor","step":{"do":"wait","for":"proxy.response_end","seq":12},"t":4910}
+{"ev":"step.start","seq":49,"src":"conductor","step":{"do":"settle","ms":300,"seq":13},"t":4910}
+{"ev":"step.done","seq":50,"src":"conductor","step":{"do":"settle","ms":300,"seq":13},"t":5210}
+{"ev":"step.start","seq":51,"src":"conductor","step":{"do":"client_ready","seq":14},"t":5210}
+{"base_url":"http://10.0.2.2:18090/catalog","body_len":296,"body_sha256":"a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb","encoding":"UTF-8","ev":"client.load_data","headers":[["cache-offline","true"],["connection","keep-alive"],["content-encoding","gzip"],["content-type","text/html; charset=utf-8"],["date","Sat, 07 Nov 2026 18:33:14 GMT"],["keep-alive","timeout=5"],["sonic-html-sha1","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],["template-change","true"],["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],["transfer-encoding","chunked"],["x-android-received-millis","1794076394477"],["x-android-response-source","NETWORK 200"],["x-android-selected-protocol","http/1.1"],["x-android-sent-millis","1794076394472"]],"history_url":"http://10.0.2.2:18090/catalog","hseq":25,"mime":"text/html","seq":52,"session":2,"src":"harness","t":5217,"thread":"main"}
+{"ev":"step.done","hseq":26,"seq":53,"src":"harness","step":{"do":"client_ready","seq":14},"t":5220,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":54,"src":"conductor","step":{"do":"request_resource","seq":15},"t":5220}
+{"ev":"client.intercept","hseq":27,"null":true,"seq":55,"session":2,"src":"harness","t":5225,"thread":"rq-intercept-2"}
+{"ev":"step.done","hseq":28,"seq":56,"src":"harness","step":{"do":"request_resource","seq":15},"t":5228,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":57,"src":"conductor","step":{"do":"get_diff","seq":16},"t":5228}
+{"ev":"session.message","hseq":29,"json":"{\"code\":304,\"srcCode\":304,\"extra\":{\"cache-offline\":\"store\",\"isReload\":\"false\"}}","seq":58,"session":2,"src":"harness","t":5233,"thread":"main"}
+{"ev":"step.done","hseq":30,"seq":59,"src":"harness","step":{"do":"get_diff","seq":16},"t":5235,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":60,"src":"conductor","step":{"do":"settle","ms":2500,"seq":17},"t":5235}
+{"ev":"step.done","seq":61,"src":"conductor","step":{"do":"settle","ms":2500,"seq":17},"t":7736}
+{"ev":"step.start","seq":62,"src":"conductor","step":{"do":"case","seq":18,"value":{"page":"c"}},"t":7736}
+{"ev":"step.done","seq":63,"src":"conductor","step":{"do":"case","seq":18,"value":{"page":"c"}},"t":7944}
+{"ev":"step.start","seq":64,"src":"conductor","step":{"do":"refresh","seq":19},"t":7944}
+{"ev":"proxy.request","exchange":3,"fields":[["accept-diff","true"],["If-None-Match",""],["template-tag",""],["method","GET"],["Accept-Encoding","gzip"],["Accept-Language","zh-CN,zh;"],["sonic-sdk-version","Sonic/2.0.0"],["User-Agent","RivqenLab/1 (Android harness) Sonic/2.0.0"],["Host","10.0.2.2:18090"],["Connection","Keep-Alive"]],"method":"GET","seq":65,"src":"proxy","t":7946,"target":"/catalog"}
+{"args":[],"ev":"session.callback","hseq":31,"name":"onSonicSessionRefresh","seq":66,"session":2,"src":"harness","t":7948,"thread":"main"}
+{"ev":"proxy.response_head","exchange":3,"fields":[["content-type","text/html; charset=utf-8"],["Content-Encoding","gzip"],["Etag","065e5deb7844c1d1fc95b16962612171ba0efe83"],["template-tag","35a722c60318e949635024423385fd6c417a6bb5"],["Cache-Offline","true"],["template-change","true"],["Date","Sat, 07 Nov 2026 18:33:21 GMT"]],"seq":67,"src":"proxy","status":200,"t":7949}
+{"body_len":206,"body_sha256":"3b2f6fbd908812399980cee5579d80553e52afe93d5b5b1960d75ce0fad5d28b","complete":true,"ev":"proxy.response_end","exchange":3,"seq":68,"src":"proxy","t":7949}
+{"args":[2,1],"ev":"session.callback","hseq":32,"name":"onSessionStateChange","seq":69,"session":2,"src":"harness","t":7951,"thread":"main"}
+{"ev":"step.done","hseq":33,"seq":70,"src":"harness","step":{"do":"refresh","seq":19},"t":7953,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":71,"src":"conductor","step":{"do":"settle","ms":3000,"seq":20},"t":7953}
+{"args":[],"ev":"session.callback","hseq":34,"name":"onSessionTemplateChanged","seq":72,"session":2,"src":"harness","t":7955,"thread":"pool-sonic-session-thread-1"}
+{"args":[1,2],"ev":"session.callback","hseq":35,"name":"onSessionStateChange","seq":73,"session":2,"src":"harness","t":7957,"thread":"pool-sonic-session-thread-1"}
+{"ev":"session.message","hseq":36,"json":"{\"code\":2000,\"srcCode\":2000,\"extra\":{\"eTag\":\"065e5deb7844c1d1fc95b16962612171ba0efe83\",\"template-tag\":\"35a722c60318e949635024423385fd6c417a6bb5\",\"cache-offline\":\"true\",\"isReload\":\"true\"}}","seq":74,"session":2,"src":"harness","t":7959,"thread":"main"}
+{"args":[],"ev":"session.callback","hseq":37,"name":"onSessionSaveCache","seq":75,"session":2,"src":"harness","t":9456,"thread":"SonicSdk_FileThread"}
+{"ev":"step.done","seq":76,"src":"conductor","step":{"do":"settle","ms":3000,"seq":20},"t":10954}
+{"ev":"step.start","seq":77,"src":"conductor","step":{"do":"get_diff","seq":21},"t":10954}
+{"ev":"session.message","hseq":38,"json":"{\"code\":2000,\"srcCode\":2000,\"extra\":{\"eTag\":\"065e5deb7844c1d1fc95b16962612171ba0efe83\",\"template-tag\":\"35a722c60318e949635024423385fd6c417a6bb5\",\"cache-offline\":\"true\",\"isReload\":\"true\"}}","seq":78,"session":2,"src":"harness","t":10958,"thread":"main"}
+{"ev":"step.done","hseq":39,"seq":79,"src":"harness","step":{"do":"get_diff","seq":21},"t":10961,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":80,"src":"conductor","step":{"do":"snapshot_cache","seq":22},"t":10961}
+{"db":null,"ev":"cache.snapshot","files":[{"name":"rq-test-account_a1c7b99f65f55fb15c1b0b7e504882a4.data","sha256":"6ccd1a1aa8dca46024149aead2f7b344eddacacfc59dcd0e9811638729eba6d0","size":327},{"name":"rq-test-account_a1c7b99f65f55fb15c1b0b7e504882a4.header","sha256":"0d299999ef8632abf3b2d559da44c053c8aa8dd19f6f3db45905c8bbee39f1db","size":557,"text":"date : Sat, 07 Nov 2026 18:33:21 GMT\r\ntransfer-encoding : chunked\r\nx-android-selected-protocol : http/1.1\r\ntemplate-change : true\r\ntemplate-tag : 35a722c60318e949635024423385fd6c417a6bb5\r\nx-android-response-source : NETWORK 200\r\nx-android-received-millis : 1794076401886\r\ncontent-encoding : gzip\r\nx-android-sent-millis : 1794076401882\r\ncache-offline : true\r\nsonic-html-sha1 : 065e5deb7844c1d1fc95b16962612171ba0efe83\r\nkeep-alive : timeout=5\r\nconnection : keep-alive\r\ncontent-type : text/html; charset=utf-8\r\netag : 065e5deb7844c1d1fc95b16962612171ba0efe83\r\n"},{"name":"rq-test-account_a1c7b99f65f55fb15c1b0b7e504882a4.html","sha256":"3d86359625128ba375744c6c32b4289e9ac49b5544399354c4542efe1ef30a47","size":315},{"name":"rq-test-account_a1c7b99f65f55fb15c1b0b7e504882a4.tpl","sha256":"e2933d32a07cbebedfa497c1a59a4de4267d13b05f24a9aea1a54d408f207787","size":176}],"hseq":40,"seq":81,"src":"harness","t":10966,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.done","hseq":41,"seq":82,"src":"harness","step":{"do":"snapshot_cache","seq":22},"t":10970,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"ev":"step.start","seq":83,"src":"conductor","step":{"do":"destroy","seq":23},"t":10970}
+{"ev":"session.result","final_code":2000,"hseq":42,"seq":84,"session":2,"src":"harness","src_code":2000,"t":10974,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"args":[2,3],"ev":"session.callback","hseq":43,"name":"onSessionStateChange","seq":85,"session":2,"src":"harness","t":10977,"thread":"main"}
+{"args":[],"ev":"session.callback","hseq":44,"name":"onSessionDestroy","seq":86,"session":2,"src":"harness","t":10980,"thread":"main"}
+{"ev":"step.done","hseq":45,"seq":87,"src":"harness","step":{"do":"destroy","seq":23},"t":10982,"thread":"Instr: org.rivqen.lab.harness.LabInstrumentation"}
+{"error":null,"ev":"run.end","ok":true,"seq":88,"src":"conductor","t":10984}

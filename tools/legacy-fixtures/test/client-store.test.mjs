@@ -10,7 +10,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { CanonicalStore, canonicalDiff, canonicalMessage, charsetOf, etagFieldName, varyNames } from '../src/client-canonical.mjs';
 import { ClientCaseError } from '../src/client-case.mjs';
-import { pageOf } from './client-helpers.mjs';
+import { run } from '../src/client-model.mjs';
+import { ENV, pageOf } from './client-helpers.mjs';
 
 const URL_A = 'https://shop.example.com/catalog';
 const URL_B = 'https://shop.example.com/other';
@@ -48,6 +49,28 @@ test('cl12_a_record_is_found_by_its_partition_url_and_vary_values', () => {
   assert.equal(keyOf(s.find('p', 'https://shop.example.com/v', [['X-A', '1']])), 'p https://shop.example.com/v [["x-a","1"]]');
   assert.equal(s.find('p', 'https://shop.example.com/v', [['x-a', '2']]), null);
   assert.equal(s.find('p', 'https://shop.example.com/v', []), null);
+});
+
+test('cl12_a_cached_record_is_visible_when_its_vary_values_equal_the_values_that_the_client_sends', () => {
+  // The client sends accept-encoding gzip and, when it is not empty, the cookie (CL-09, CL-11).
+  const cookie = 'session=rq-test-cookie-1';
+  const visible = (vary, configCookie) => {
+    const c = { mode: 'quick', server_profile: 'legacy-canonical', config: { cookie: configCookie }, responses: { a: { page: 'a' } }, cache_before: [{ page: 'a', vary }], schedule: [{ case: 'a' }, { do: 'create_session' }] };
+    const r = run('legacy-canonical', 'quick', c, ENV);
+    assert.equal(r.ok, true, r.error?.message);
+    return r.client.phases[0].requests[0].fields.some(([n]) => n === 'if-none-match');
+  };
+  const cases = [
+    [[['accept-encoding', 'gzip']], null, true],
+    [[['accept-encoding', null]], null, false],
+    [[['cookie', null]], null, true],
+    [[['cookie', null]], '', true],
+    [[['cookie', null]], cookie, false],
+    [[['cookie', cookie]], cookie, true],
+    [[['cookie', cookie]], null, false],
+    [[['cookie', '']], '', false],
+  ];
+  for (const [vary, configCookie, want] of cases) assert.equal(visible(vary, configCookie), want, `${JSON.stringify(vary)} ${configCookie}`);
 });
 
 test('cl40_a_record_that_fails_integrity_is_removed_when_it_is_found', () => {

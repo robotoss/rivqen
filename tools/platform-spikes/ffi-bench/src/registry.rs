@@ -219,6 +219,22 @@ mod tests {
     }
 
     #[test]
+    fn old_handle_stays_stale_over_many_reuses_of_its_slot() {
+        // The generation field is wide (52 bits on 64-bit targets), so a slot that is reused many
+        // times never gives an old handle back to a new stream.
+        let mut r = Registry::new();
+        let first = r.open(10, 4).unwrap().get();
+        r.close(first).unwrap();
+        for _ in 0..100 {
+            let h = r.open(10, 4).unwrap().get();
+            assert_ne!(h, first);
+            assert_eq!(r.with(first, |_| ()), Err(RegistryError::Handle));
+            r.close(h).unwrap();
+        }
+        assert_eq!(GEN_BITS, usize::BITS - SLOT_BITS - 1);
+    }
+
+    #[test]
     fn null_and_forged_handles() {
         let mut r = Registry::new();
         let h = r.open(10, 4).unwrap().get();

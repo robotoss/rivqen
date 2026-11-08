@@ -87,7 +87,8 @@ export class BeaconGate {
   }
 
   static key(run, k) {
-    return `${run ?? "-"}:${k}`;
+    // "*" can never be a run id ([A-Za-z0-9.-]), so run-less waiters never meet a real run.
+    return `${run ?? "*"}:${k}`;
   }
 
   /**

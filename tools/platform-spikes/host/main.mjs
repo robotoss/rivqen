@@ -57,12 +57,13 @@ async function main() {
     process.stderr.write(`spike host: cannot start: ${err instanceof Error ? err.message : String(err)}\n`);
     process.exit(1);
   }
-  process.stdout.write(`listening ${host.ports.good} ${host.ports.bad} ${host.ports.control}\n`);
+  // Install the signal handlers before the ready line, so a stop right after "listening" exits 0.
   const stop = () => {
     host.close().then(() => process.exit(0), () => process.exit(1));
   };
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);
+  process.stdout.write(`listening ${host.ports.good} ${host.ports.bad} ${host.ports.control}\n`);
 }
 
 import { pathToFileURL } from "node:url";

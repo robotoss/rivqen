@@ -96,6 +96,38 @@ test("cut_run_is_ok_when_the_webview_got_the_bytes_before_the_cut_and_the_fallba
   assert.deepEqual(cutRun(), []);
 });
 
+test("fetched_run_needs_the_whole_body_delivered_unchanged", () => {
+  const sha = createHash("sha256").update("page").digest("hex");
+  const events = (read) => [
+    app("app.intercept", { decision: "stream" }),
+    app("app.stream.read", { bytes: read }),
+    app("app.fetch.end", { bytes: 230, complete: true }),
+  ];
+  const metrics = (outcome, s = sha) => ({ fetch: { sha256: sha }, stream: { outcome, bytes: 230, sha256: s }, dropped_events: 0 });
+  assert.deepEqual(byteChecks(events(230), metrics("end"), null, "fetched").problems, []);
+  assert.match(byteChecks(events(100), metrics("end"), null, "fetched").problems.join(), /read 100 bytes/);
+  assert.match(byteChecks(events(230), metrics("cancel"), null, "fetched").problems.join(), /outcome cancel/);
+  assert.match(byteChecks(events(230), metrics("end", EMPTY), null, "fetched").problems.join(), /read 230 bytes/);
+  assert.match(byteChecks([app("app.intercept", { decision: "pass" })], metrics("end"), null, "fetched").problems.join(), /not streamed/);
+});
+
+test("step_run_is_ok_only_when_the_last_step_is_done_without_errors", () => {
+  const step = (value) => app("app.probe", { name: "native.step", value });
+  const ok = { dropped_events: 0 };
+  assert.deepEqual(byteChecks([step("clear"), step("done")], ok, null, "steps").problems, []);
+  assert.match(byteChecks([step("clear")], ok, null, "steps").problems.join(), /steps did not end/);
+  assert.match(byteChecks([step("done"), app("app.error", { error: "x" })], ok, null, "steps").problems.join(), /app errors/);
+  assert.match(byteChecks([step("done")], { dropped_events: 2 }, null, "steps").problems.join(), /dropped/);
+});
+
+test("cookie_sets_carry_their_scenarios_and_seed", () => {
+  assert.equal(setOf("CAP-A-06").scenario, "cookie-on");
+  assert.equal(setOf("CAP-A-06", "manual").scenario, "cookie-manual");
+  assert.equal(setOf("CAP-A-07", "persist").seed, "cookie-seed");
+  assert.equal(setOf("CAP-A-07").seed, undefined);
+  assert.equal(new URL(pageUrl("CAP-A-06", "r")).searchParams.get("attrs"), "Secure,SameSite=Lax");
+});
+
 test("cut_run_fails_on_each_broken_condition", () => {
   assert.match(cutRun({ after: 2000 }).join(), /did not end at the cut/);
   assert.match(cutRun({ read: 2048 }).join(), /read 2048 bytes/);

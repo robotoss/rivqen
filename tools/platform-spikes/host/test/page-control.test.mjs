@@ -147,6 +147,16 @@ test("control_rejects_bad_input", async () => {
   await bad("x".repeat(5000), 413);
   await bad(ok, 415, { type: "text/plain" });
   await bad(ok, 400, { host: "evil.example" });
+  // DNS rebinding guard: the whole Host value must be the loopback name and an optional port.
+  await bad(ok, 400, { host: "evil127.0.0.1" });
+  await bad(ok, 400, { host: "localhost.evil.example" });
+  await bad(ok, 400, { host: "127.0.0.1:123456" });
+  // The content type must be JSON, with parameters only after a semicolon.
+  await bad(ok, 415, { type: "text/application/json" });
+  await bad(ok, 415, { type: "application/jsonx" });
+  await bad(ok, 415, { type: "application/json+x; charset=utf-8" });
+  assert.equal((await control(ctl, "POST", "/run/start", { ...ok, run: "ctl-ct" }, { type: "Application/JSON ; charset=utf-8" })).status, 200);
+  await control(ctl, "POST", "/run/end", { run: "ctl-ct" });
   assert.equal((await control(ctl, "GET", "/run/start")).status, 405);
   assert.equal((await control(ctl, "GET", "/other")).status, 404);
   assert.equal((await control(ctl, "GET", "/run/log")).status, 404);

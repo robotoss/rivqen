@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { SETS, byteChecks, pageUrl, sameAsStored, setOf } from "../runlog.mjs";
+import { SETS, byteChecks, pageUrl, sameAsStored, setOf, sortedJson } from "../runlog.mjs";
 
 const EMPTY = createHash("sha256").digest("hex");
 const RUN = "CAP-A-04-android-29-1";
@@ -173,9 +173,28 @@ test("a fourth run with another run id has the log of the stored runs", () => {
   const stored = [1, 2, 3].map((k) => readFileSync(new URL(`run-${k}.jsonl`, dir), "utf8"));
   const fourth = stored[0].replaceAll("CAP-A-08-android-37-1", "CAP-A-08-android-37-4").replace('"k":1,', '"k":4,');
   assert.notEqual(fourth, stored[0]);
-  assert.deepEqual(sameAsStored(stored, fourth), { same: true, reason: null });
+  assert.deepEqual(sameAsStored(stored, fourth), { same: true, reason: null, note: null });
   const other = fourth.replace("net::ERR_FAILED", "net::ERR_ABORTED");
-  assert.deepEqual(sameAsStored(stored, other), { same: false, reason: "the run differs from the stored runs" });
+  assert.deepEqual(sameAsStored(stored, other), { same: false, reason: "the run differs from the stored runs", note: null });
   assert.match(sameAsStored(stored.slice(0, 2), fourth).reason, /at least 3/);
   assert.match(sameAsStored([stored[0], stored[1], other], fourth).reason, /not stable/);
+});
+
+test("runs_of_the_s1_app_are_compared_without_the_s2_intercept_members", () => {
+  // CAP-A-02/37 was stored with the S1 app: app.intercept has no reason and redirect members.
+  const dir = new URL("../../../../evidence/spikes/wp-04/android/CAP-A-02/37/", import.meta.url);
+  const stored = [1, 2, 3].map((k) => readFileSync(new URL(`run-${k}.jsonl`, dir), "utf8"));
+  assert.ok(!stored[0].includes('"reason"'));
+  const now = stored[0].split("\n").map((line) => {
+    if (line === "") return line;
+    const e = JSON.parse(line);
+    if (e.ev === "app.intercept") Object.assign(e, { reason: null, redirect: false });
+    return sortedJson(e);
+  }).join("\n");
+  assert.notEqual(now, stored[0]);
+  const r = sameAsStored(stored, now);
+  assert.equal(r.same, true);
+  assert.match(r.note, /S1 app/);
+  // Any other difference still counts.
+  assert.equal(sameAsStored(stored, now.replace('"decision":"stream"', '"decision":"pass"')).same, false);
 });

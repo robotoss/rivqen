@@ -543,27 +543,38 @@ function analyze([out, capability]) {
 
 /**
  * Whether one run log (text) has the normalized log of the stored runs (texts). The stored runs
- * must be at least 3 and stable among themselves (CONTRACT §7, §8).
+ * must be at least 3 and stable among themselves (CONTRACT §7, §8). Runs stored with the S1 app
+ * have no `reason` and `redirect` members on `app.intercept` (S2 lane members, CONTRACT §5); then
+ * those two members of the run are not compared, and `note` says so.
  * @param {string[]} stored @param {string} run
- * @returns {{ same: boolean, reason: string | null }}
+ * @returns {{ same: boolean, reason: string | null, note: string | null }}
  */
 export function sameAsStored(stored, run) {
-  if (stored.length < 3) return { same: false, reason: `${stored.length} stored runs, at least 3 needed` };
-  const norm = (text) => {
+  if (stored.length < 3) return { same: false, reason: `${stored.length} stored runs, at least 3 needed`, note: null };
+  const parse = (text) => {
     const parsed = parseRunLog(text);
     if (parsed.problems.length > 0) throw new Error(parsed.problems.join("; "));
-    return JSON.stringify(normalizeRunLog(parsed.events));
+    return parsed.events;
   };
-  const base = stored.map(norm);
-  if (!base.every((n) => n === base[0])) return { same: false, reason: "the stored runs are not stable" };
-  if (norm(run) !== base[0]) return { same: false, reason: "the run differs from the stored runs" };
-  return { same: true, reason: null };
+  const storedEvents = stored.map(parse);
+  const s1 = !storedEvents.some((events) => events.some((e) => e.ev === "app.intercept" && ("reason" in e || "redirect" in e)));
+  const runEvents = parse(run).map((e) => {
+    if (!s1 || e.ev !== "app.intercept") return e;
+    const { reason: _reason, redirect: _redirect, ...rest } = e;
+    return rest;
+  });
+  const base = storedEvents.map((events) => JSON.stringify(normalizeRunLog(events)));
+  const note = s1 ? "stored runs of the S1 app: app.intercept reason and redirect not compared" : null;
+  if (!base.every((n) => n === base[0])) return { same: false, reason: "the stored runs are not stable", note };
+  if (JSON.stringify(normalizeRunLog(runEvents)) !== base[0]) return { same: false, reason: "the run differs from the stored runs", note };
+  return { same: true, reason: null, note };
 }
 
 function same([dir, file]) {
   const stored = readdirSync(dir).filter((f) => /^run-\d+\.jsonl$/.test(f)).sort().map((f) => readFileSync(path.join(dir, f), "utf8"));
   const r = sameAsStored(stored, readFileSync(file, "utf8"));
   console.log(r.same ? `runlog: ${path.basename(file)} has the log of the ${stored.length} stored runs` : `runlog: NOT SAME: ${r.reason}`);
+  if (r.note !== null) console.log(`runlog: note: ${r.note}`);
   if (!r.same) process.exitCode = 1;
 }
 

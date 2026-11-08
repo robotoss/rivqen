@@ -95,9 +95,15 @@ else
 fi
 [ -f "$APK" ] || die "no APK at $APK"
 adb_ install -r -t "$APK" >/dev/null || die "adb install failed"
-if [ "$sdk" -ge 37 ]; then
-  adb_ shell pm grant "$PKG" android.permission.ACCESS_LOCAL_NETWORK || die "cannot grant ACCESS_LOCAL_NETWORK"
-fi
+# Every run starts from empty app data (S3): no cookie or WebView state of an earlier run or set
+# (the CAP-A-06/07 cookies otherwise reach later runs as a Cookie field). pm clear also removes
+# the runtime permission, so it is granted again.
+fresh_app() {
+  adb_ shell pm clear "$PKG" >/dev/null || die "pm clear failed"
+  if [ "$sdk" -ge 37 ]; then
+    adb_ shell pm grant "$PKG" android.permission.ACCESS_LOCAL_NETWORK || die "cannot grant ACCESS_LOCAL_NETWORK"
+  fi
+}
 adb_ shell dumpsys webviewupdate > "$WORK/webviewupdate.txt"
 "$JAVA_HOME/bin/java" -version 2>&1 | head -1 > "$WORK/java-version.txt"
 
@@ -133,7 +139,7 @@ while [ "$k" -le "$last" ]; do
   url="$(node "$HERE/runlog.mjs" url "$cap" "$run" "${SPIKE_PARAMS:-}" "$set_name" "$api")"
   rm -f "$WORK"/app.jsonl "$WORK"/host.jsonl "$WORK"/metrics.json "$WORK"/device.json "$WORK"/status.json
   adb_ shell am force-stop "$PKG"
-  adb_ shell run-as "$PKG" rm -rf files/out
+  fresh_app
   # A seed launch (CAP-A-07 persist) prepares the app state before the run: no host run, no log.
   # The app ends its own process after status.json; its output is removed.
   case "$url" in *"'"*) die "the URL has a quote: $url" ;; esac

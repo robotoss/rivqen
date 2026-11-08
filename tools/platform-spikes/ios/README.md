@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
-A SwiftUI app with one mode for each capability CAP-I-01 to CAP-I-07 and CAP-I-11 of [`capabilities.json`](../capabilities.json): IOS-P1 (`loadSimulatedRequest`, `loadHTMLString` with a base URL), IOS-P2 (real navigation with a cached snapshot first and a bridge update), IOS-P3 (own scheme `rqlab` with a `WKURLSchemeHandler`). Contract: [CONTRACT.md](../CONTRACT.md). Results: [iOS SDK](../../../docs/engineering/platforms/ios.md) §2 to §4.
+A SwiftUI app with one mode for each capability CAP-I-01 to CAP-I-11 of [`capabilities.json`](../capabilities.json): IOS-P1 (`loadSimulatedRequest`, `loadHTMLString` with a base URL), IOS-P2 (real navigation with a cached snapshot first and a bridge update), IOS-P3 (own scheme `rqlab` with a `WKURLSchemeHandler`). Contract: [CONTRACT.md](../CONTRACT.md). Results: [iOS SDK](../../../docs/engineering/platforms/ios.md) §2 to §4.
 
 Public API only: no private WebKit API, no global `URLProtocol`, no ATS exception (the app has no `NSAppTransportSecurity` key), no trust override. TLS trust of the lab CA comes from `lab/sim.sh trust` on a `rivqen-p2-*` simulator. No third-party dependencies.
 
@@ -43,7 +43,20 @@ Every run uses a new `WKWebView` with `WKWebsiteDataStore.nonPersistent()` and o
 | CAP-I-05 | IOS-P3: `rqlab://localhost:18443/s/stream?chunks=4&size=2048&gate=beacon&timeout=3000` through the scheme handler. No `host.gate_timeout` means the beacon of chunk k (a request of the parsed chunk) reached the host before chunk k+1 existed |
 | CAP-I-06 | IOS-P3: a real navigation to site A sets `rq-site` (`Secure`, `SameSite=None`); then `rqlab://.../s/cookie/set` (`rq-scheme`). Probes: `location`, `origin`, `cookie` (before and after a script cookie), `echo` (relative, so through the handler), `https.cors`, `https.no_cors`, `https.image` (requests to site A); `native.wk_cookies` |
 | CAP-I-07 | `native.handles_url_scheme.https` and `.rqlab` (`WKWebView.handlesURLScheme`); then the same `gate=beacon` page by IOS-P1 (native fetch first, beacons blocked by a content rule list), IOS-P2 (`load(URLRequest)`), IOS-P3 (`rqlab`) |
+| CAP-I-08 | `/s/csp` in the modes `header`, `meta`, `both`, each with `loadSimulatedRequest`, `loadHTMLString`, `load(URLRequest)` and `rqlab` (a new web view each; `native.step` is `<loader>-<mode>`). Page probes `csp.nonce`, `csp.eval`, `csp.inline`; then one app probe (`location`) |
+| CAP-I-09 | `native.app_bound_domains` (the Info.plist key, or `null`); `/s/sw-page` with the four loaders; the app waits at most 25 s for the page probe `sw` (`native.sw` `missing` when it does not come). Set `app-bound`: the `AppBound` build and `limitsNavigationsToAppBoundDomains` |
+| CAP-I-10 | `/s/hist?step=0` with the four loaders, then `click` (page-started link), `click`, `back`, `forward` (`goBack`, `goForward`), `js-back`, `js-forward` (`history.go`), `back`, `back`. After each step: `native.go` (API steps), `native.nav_outcome` (`finish`, `fail`, `none` after 10 s), `native.back_forward`, and the app probes `state.history`, `state.location`, `state.title`. Every policy decision is `native.policy` (`type`: `link`, `back_forward`, `other`, …) |
 | CAP-I-11 | Cookie sync (Q-12), one cookie per attribute (`CookiePlan`: none, `HttpOnly`, `Secure; SameSite=Strict`, `SameSite=Lax`, `Secure; SameSite=None`) on site A and site B. **Native → web view:** native fetches of `/s/cookie/set` (`na-*`, `nb-*`); `native.url_store` (attributes in the session `HTTPCookieStorage`); native echoes `native.echo.a`, `native.echo.b`, `native.echo.b_cross` (`mainDocumentURL` of site A); each session cookie is copied with `WKHTTPCookieStore.setCookie` before the load; `native.wk_store`; IOS-P1 page on site A: `cookie`, `echo` (same origin), `https.no_cors` and `frame.echo` (site B as a subresource and as an iframe), then a page-started top-level navigation to site B (`location`, `cookie`, `echo`). **Web view → native:** a new web view and a new native session; `load(URLRequest)` of site A and site B, same-origin page fetches set `wa-*`/`wb-*` and a script sets `wa-js`/`wb-js`; `native.wk_store`; `getAllCookies` copied into the native `HTTPCookieStorage`; `native.url_store`; the three native echoes |
+| CAP-I-11 set `initiator` | The native session gets the planned cookies of site A and B; they are copied into `WKHTTPCookieStore`; then top-level navigations: `app-a` (app `load(URLRequest)` from a blank web view), `page-same-site-a` (`location.assign` by the A page), `app-a-from-a`, `app-b` (app load of B while A is shown), `page-cross-site-a` (the B page goes to A). After each: `location` and `echo` (cookie names that the host got) |
+
+## Supporting sets
+
+A supporting set is a run set with another build or more steps; it is not a catalog run set. `SET=<name> sh tools/platform-spikes/ios/run.sh <capability> <os> 1..3` passes `-rqSet <name>` (the app accepts only the sets of the capability, `Capability.supportingSets`) and writes `evidence/spikes/wp-04/ios/<capability>/<os>/<name>/`.
+
+| Set | Build | Use |
+|---|---|---|
+| `CAP-I-09` `app-bound` | `AppBound` configuration: `Debug` and `Configuration/AppBound-Info.plist` (`WKAppBoundDomains = [localhost]`), lab only | Service Worker with App-Bound Domains |
+| `CAP-I-11` `initiator` | `Debug` | Which synced cookies WebKit sends on a top-level navigation, by initiator (Q-12) |
 
 ## Probe channel and bridge
 
@@ -61,6 +74,8 @@ Every run uses a new `WKWebView` with `WKWebsiteDataStore.nonPersistent()` and o
 - CAP-I-07 IOS-P1 blocks the beacons of the simulated page with a `WKContentRuleList`: the body is already complete, and the parallel beacon requests would reach the host in any order.
 - `date` is not logged in `app.fetch.head` fields (it changes on every run).
 - CAP-I-11 copies cookies in sorted order (name, domain, path), so their creation order is the same in every run.
+- S2 loaders log `native.open` only when the first load fails: a page can start its own next navigation (`/s/sw-page` reloads itself) before the app sees `didFinish`, so a success line would race with it.
+- History steps start the navigation and wait for the end with `WebSession.settle`: a step that does not navigate is a result (`none` after 10 s), not an app error.
 - The user agent is read after the run in a separate web view.
 
 ## Limits

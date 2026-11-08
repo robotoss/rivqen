@@ -20,8 +20,8 @@ The iOS SDK connects the Rust core to `WKWebView`. iOS is the hardest platform f
 | API | What it can do | What it cannot do |
 |---|---|---|
 | `WKURLSchemeHandler` | Serve responses for **custom** URL schemes | Intercept `https` loads |
-| `loadHTMLString(_:baseURL:)` / `load(_:mimeType:characterEncodingName:baseURL:)` | Show HTML that the app fetched | Guarantee the same origin, cookies, CSP, Service Worker, history behavior as a real navigation |
-| `loadSimulatedRequest(_:response:responseData:)` (iOS 15+) | Load a request with app-provided response and data. <Badge type="tip" text="FACT" /> iOS 27.0, 26.5 and 18.5: the page gets the URL and origin of the request, `text/html` and `UTF-8` (H-66); relative URLs and same-origin `fetch` go to that origin (CAP-I-01, CAP-I-02, §3). Cookies that the app copies into `WKHTTPCookieStore` before the load are there, with their attributes (CAP-I-11) | <Badge type="tip" text="FACT" /> No streaming: the body is one `Data` (CAP-I-07). WebKit ignores the `Set-Cookie` field of the given response (CAP-I-03). <Badge type="warning" text="RESEARCH" /> CSP and Service Worker: S2 |
+| `loadHTMLString(_:baseURL:)` / `load(_:mimeType:characterEncodingName:baseURL:)` | Show HTML that the app fetched | Guarantee the same origin, cookies, CSP, Service Worker, history behavior as a real navigation. <Badge type="tip" text="FACT" /> `loadHTMLString`: a `Content-Security-Policy` field of the fetched response is lost (only a `meta` policy applies), and the page gets no back-forward entry of its own (CAP-I-08, CAP-I-10, §3) |
+| `loadSimulatedRequest(_:response:responseData:)` (iOS 15+) | Load a request with app-provided response and data. <Badge type="tip" text="FACT" /> iOS 27.0, 26.5 and 18.5: the page gets the URL and origin of the request, `text/html` and `UTF-8` (H-66); relative URLs and same-origin `fetch` go to that origin (CAP-I-01, CAP-I-02, §3). Cookies that the app copies into `WKHTTPCookieStore` before the load are there, with their attributes (CAP-I-11) | <Badge type="tip" text="FACT" /> No streaming: the body is one `Data` (CAP-I-07). WebKit ignores the `Set-Cookie` field of the given response (CAP-I-03). The entry is in the back-forward list, but back to it loads the URL again from the network, not the given data (CAP-I-10). <Badge type="tip" text="FACT" /> A `Content-Security-Policy` field of the given response applies (CAP-I-08). Service Workers only with App-Bound Domains (CAP-I-09) |
 | `load(URLRequest)` | Real navigation | Use bytes that the app already fetched |
 | SwiftUI `WebView` / `WebPage` (iOS 26+) | Declarative web content | No interception of `https` either |
 
@@ -60,6 +60,9 @@ Sources: [WKURLSchemeHandler](https://developer.apple.com/documentation/webkit/w
 | CAP-I-05 IOS-P3 streaming | Supported | Supported | Supported |
 | CAP-I-06 IOS-P3 origin, cookies, subresources | Conditional | Conditional | Conditional |
 | CAP-I-07 https main-document streaming | Impossible | Impossible | Impossible |
+| CAP-I-08 CSP field and meta, nonces (IOS-P1) | Supported | Supported | Supported |
+| CAP-I-09 Service Worker, each prototype | Conditional | Conditional | Conditional |
+| CAP-I-10 history, back and forward, delegate | Conditional | Conditional | Conditional |
 | CAP-I-11 cookie sync, both directions | Conditional | Conditional | Conditional |
 
 <Badge type="tip" text="FACT" /> **Same behavior on the three versions.** The normalized logs of CAP-I-01 to CAP-I-07 on 26.5 are equal to those on 27.0. On 18.5 the only difference is that WebKit sends no `Priority` request field (so the echo bodies are shorter). In CAP-I-11 the cookie behavior is the same on all three versions; only the reported `HTTPCookie.sameSitePolicy` value differs (see the cookie sync below).
@@ -73,6 +76,37 @@ Sources: [WKURLSchemeHandler](https://developer.apple.com/documentation/webkit/w
 **IOS-P3.** A `WKURLSchemeHandler` for `rqlab` that forwards each `URLSession` read with `didReceive(_:)` streams the page: with `gate=beacon` the beacon of every chunk reaches the host before the next chunk exists, and the script of chunk k runs before the host sends chunk k+1 (CAP-I-05, no `host.gate_timeout` in 3 runs on each version). Relative URLs of the page (the beacons) resolve against the `rqlab` base and come back to the handler, which forwards them to the host. The page origin is `rqlab://localhost:18443`; `document.cookie` is empty and a script cannot set a cookie; WebKit does not store a `Set-Cookie` of the handler response. Relative requests carry only the cookies of the app's `URLSession`. `https` requests from the page carry the cookies of the `https` site (a `SameSite=None; Secure` cookie in the test), but a script can read a cross-origin response only with CORS for the `rqlab` origin (CAP-I-06).
 
 **https streaming (CAP-I-07).** `WKWebView.handlesURLScheme("https")` is `true`; Apple documents that `setURLSchemeHandler` raises an exception for a scheme that WebKit handles, such as `https` ([source](https://developer.apple.com/documentation/webkit/wkwebviewconfiguration/seturlschemehandler(_:forurlscheme:))). The run shows what each prototype does with the same `gate=beacon` page: IOS-P1 must have the whole body first (the native fetch waits for 2 gate timeouts, then the page renders at once); IOS-P2 lets WebKit stream the page itself, but the app sees no bytes; IOS-P3 streams through the app, on `rqlab` only. So the app cannot stream an `https` main document with public API.
+
+**CSP (CAP-I-08).** <Badge type="tip" text="FACT" /> `/s/csp` has `script-src 'nonce-…'` in the response field (`header`), in a `meta` element (`meta`) or in both. Each mode is loaded with each prototype in a new web view.
+
+| Loader | `header` | `meta`, `both` |
+|---|---|---|
+| `loadSimulatedRequest` (IOS-P1) | Applies | Applies |
+| `loadHTMLString` (IOS-P1) | Lost | Applies |
+| `load(URLRequest)` (IOS-P2) | Applies | Applies |
+| `rqlab` handler (IOS-P3) | Applies | Applies |
+
+"Applies" means: the nonce script runs, `eval` is blocked, and the inline script without the nonce does not run. "Lost" means: all three run. The `Content-Security-Policy` field of the simulated response and of the scheme handler response is the fetched field, given as is. The app's own `callAsyncJavaScript` probe in the page world runs under each policy. Same on 27.0, 26.5 and 18.5.
+
+**Service Worker (CAP-I-09).** <Badge type="tip" text="FACT" /> `/s/sw-page` registers `/s/sw.js` (scope `/s/`), waits for `ready`, reloads itself once when it is not controlled yet, and fetches `/s/sw-probe`.
+
+| Build | `loadSimulatedRequest`, `loadHTMLString`, `load(URLRequest)` | `rqlab` handler |
+|---|---|---|
+| Normal (no `WKAppBoundDomains`) | `navigator.serviceWorker` is missing | Missing |
+| `AppBound` | The worker answers after one reload | `TypeError` |
+
+The `AppBound` build configuration (lab only) adds `WKAppBoundDomains = [localhost]` to the Info.plist, and the web view sets `limitsNavigationsToAppBoundDomains` (runs `CAP-I-09/<os>/app-bound/`). In every loader the first document is not controlled, and the reload is a real network navigation of WebKit. So with IOS-P1 the worker controls only the reloaded page, not the snapshot. WebKit documents that, with `WKAppBoundDomains`, "JavaScript injection, custom style sheets, cookie manipulation, and message handler use is denied" outside the app-bound domains (at most 10 domains, [App-Bound Domains](https://webkit.org/blog/10882/app-bound-domains/)). Apple documentation of the Service Worker rule: NOT FOUND (the post does not name Service Workers); the runs show it. Simulator only, no device entitlement (H-129).
+
+**History (CAP-I-10).** <Badge type="tip" text="FACT" /> `/s/hist` step 0 is loaded with each prototype, then: two link clicks that the page starts, `goBack()`, `goForward()`, `history.go(-1)`, `history.go(1)`, and `goBack()` twice to the first entry. The pages have `Cache-Control: no-store`.
+
+| Loader | First entry | Back and forward |
+|---|---|---|
+| `loadSimulatedRequest` | An entry with the request URL; back to it loads the URL again from the network (the given data is not reused) | Network load of each `https` page; page scripts run again |
+| `loadHTMLString` | No own entry: the first click replaces it (`history.length` stays 1, and back from step 2 ends at step 1) | As above |
+| `load(URLRequest)` | Normal entry | As above |
+| `rqlab` handler | Normal entry | From the page cache: no handler call and no page script |
+
+The navigation delegate gets `decidePolicyFor` with the type `link` for the clicks, `back_forward` for both the API and `history.go`, and `other` for the loads of the app and for script navigations (`location.assign`, `location.replace`). Each step has `didStartProvisionalNavigation`, `didCommit` and `didFinish`, also a page-cache restore. `history.length` counts the entries of the web view (3 after two clicks), except the `loadHTMLString` entry. Same on 27.0, 26.5 and 18.5.
 
 **Cookie sync (CAP-I-11, Q-12).** <Badge type="tip" text="FACT" /> One cookie per attribute on site A (`localhost`) and site B (`127.0.0.1`): no attribute, `HttpOnly`, `Secure; SameSite=Strict`, `SameSite=Lax`, `Secure; SameSite=None`. Same results on 27.0, 26.5 and 18.5.
 
@@ -91,7 +125,7 @@ Apple documents that a `nil` `sameSitePolicy` means "cross-site requests include
 
 1. The `WKHTTPCookieStore` of the session's `WKWebsiteDataStore` is the store of record. WebKit applies `HttpOnly`, `SameSite` and third-party blocking; `URLSession` does not apply `SameSite`.
 2. Before a native fetch, the SDK copies the cookies for the request URL from `WKHTTPCookieStore` (`getAllCookies`) into the request's session. After the response, it writes each `Set-Cookie` cookie into `WKHTTPCookieStore` and waits for the `setCookie` completion before it loads the page (this is the iOS row of the [cookie table](/engineering/transport/http#_2-cookie-ownership); the runs confirm that both copies keep the attributes).
-3. Because `URLSession` sends `SameSite=Strict` and `Lax` cookies in every context, the native early fetch is only for navigations that WebKit would send with all cookies of the target site (the app starts them, or a same-site page starts them). A navigation that a cross-site page starts goes to WebKit as a normal navigation. Not measured: whether WebKit sends `SameSite=Strict` cookies on a `load(URLRequest)` that the app starts (the S2 runs had no cookies at that point). This is a security rule, so the human decides it (options in the WP-04 S2 T-04 task report).
+3. Because `URLSession` sends `SameSite=Strict` and `Lax` cookies in every context, the native early fetch is only for navigations where WebKit sends all cookies of the target site. <Badge type="tip" text="FACT" /> Runs `CAP-I-11/<os>/initiator/` (27.0, 26.5, 18.5): WebKit sends the `Strict` cookie on an app-started `load(URLRequest)` from a blank web view, on an app-started load of a page of the same site as the shown page, and on a navigation that a same-site page starts. It does not send it on a navigation that a cross-site page starts. On an app-started `load(URLRequest)` of site B while a site A page is shown, WebKit 26.5 and 27.0 do not send it, but 18.5 sends it (the behavior changed between these versions). So the rule is: a native early fetch only when the web view is blank or shows a page of the same site as the target; then WebKit sends all cookies on all three versions, as `URLSession` does. Every other navigation goes to WebKit. The `navigationType` of `decidePolicyFor` is `other` both for app loads and for script navigations (CAP-I-10), so the SDK takes the site of the shown page, not the navigation type. This is a security rule, so the human decides it (options in the WP-04 S2 task reports).
 4. The SDK does not read `sameSitePolicy` to tell `None` from "not set" (the value differs by iOS version); it copies the `HTTPCookie` object as it is.
 
 <Badge type="tip" text="FACT" /> The user agent of `WKWebView` names `iPhone OS 18_7` on the iOS 27.0 and 26.5 simulators, and `iPhone OS 18_5` on iOS 18.5 (`run.json`).
@@ -109,7 +143,7 @@ Test each prototype on supported iPhone and iPad models and iOS versions:
 7. Bridge isolation, app-bound domains, content worlds.
 8. Background, process termination (`webViewWebContentProcessDidTerminate`), memory pressure, offline.
 
-<Badge type="tip" text="FACT" /> S1 and S2 (2026-11-08) give data for items 1 (valid TLS), 2, 3 (origin, relative URLs, `SameSite` and `HttpOnly` cookies and their sync) and 7 (bridge in a content world) on iOS 27.0, 26.5 and 18.5, iPhone 16 Pro simulator only (§3). Items 4 and 5 (CSP, Service Worker, history) are the next S2 task; the other items are not in WP-04 S2.
+<Badge type="tip" text="FACT" /> S1 and S2 (2026-11-08) give data for items 1 (valid TLS), 2, 3 (origin, relative URLs, `SameSite` and `HttpOnly` cookies and their sync), 4 (CSP field and `meta` with nonces, Service Worker registration with and without App-Bound Domains), 5 (history, back and forward, navigation delegate) and 7 (bridge in a content world, App-Bound Domains) on iOS 27.0, 26.5 and 18.5, iPhone 16 Pro simulator only (§3). Not measured in WP-04: IndexedDB, localStorage, deep links, redirects, iPad, and items 6 and 8.
 
 Output: `ios-parity-matrix.md` with **supported / conditional / impossible with public APIs** per item, prototype builds, screen recordings and traces. If full streaming parity is impossible, Rivqen does not promise it. It keeps cache, revalidation and data updates, which bring most of the warm-path benefit.
 

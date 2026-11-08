@@ -575,7 +575,9 @@ final class Runner {
       web = makeSession(handler: handler, logPolicy: logPolicy)
       ok = await web.load(timeout: timeout) { $0.load(URLRequest(url: url)) }
     }
-    recorder.native("open", .bool(ok))
+    // Only a failure is logged: a page may start its own next navigation (sw-page reloads itself)
+    // before `load` sees didFinish, so a success line would race with it. `app.nav` shows success.
+    if !ok { recorder.native("open", .bool(false)) }
     return (web, ok)
   }
 
@@ -630,7 +632,8 @@ final class Runner {
       else { return }
       if ok {
         await historyState(web)
-        for op in ["click", "click", "back", "forward", "js-back", "js-forward"] {
+        // The last two steps go back to the first entry (the one the loader made).
+        for op in ["click", "click", "back", "forward", "js-back", "js-forward", "back", "back"] {
           await historyStep(web, op: op)
         }
       }
@@ -670,8 +673,9 @@ final class Runner {
   /// CAP-I-11 set `initiator`: which synced cookies WebKit sends on a top-level navigation by
   /// initiator. The native session gets the planned cookies of site A and B, the app copies them
   /// into `WKHTTPCookieStore`, then: an app-started `load(URLRequest)` of A (from a blank web
-  /// view), a same-site navigation that the A page starts, an app-started load of B while the A
-  /// page is shown, and a cross-site navigation that the B page starts (back to A).
+  /// view), a same-site navigation that the A page starts, an app-started load of A while the A
+  /// page is shown, an app-started load of B while the A page is shown, and a cross-site
+  /// navigation that the B page starts (back to A).
   private func cookieInitiator() async {
     guard let a = config?.origin else { return }
     let b = a.otherSite
@@ -704,7 +708,8 @@ final class Runner {
     await webKitCookieFacts(web)
 
     let steps: [(name: String, site: LabOrigin, byPage: Bool)] = [
-      ("app-a", a, false), ("page-same-site-a", a, true), ("app-b", b, false),
+      ("app-a", a, false), ("page-same-site-a", a, true), ("app-a-from-a", a, false),
+      ("app-b", b, false),
       ("page-cross-site-a", a, true),
     ]
     for step in steps {

@@ -18,6 +18,10 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
     var schemeHandler: LabSchemeHandler?
     var bridge = false
     var ruleList: WKContentRuleList?
+    /// CAP-I-11: a page-world script in every subframe posts the `#echo` text of its document as
+    /// `frame.echo`; the session keeps it in `frameEchoes` instead of the log, so the runner logs
+    /// it at a fixed place (a subframe message and a script result may arrive in either order).
+    var frameEcho = false
   }
 
   let webView: WKWebView
@@ -27,6 +31,10 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
   private(set) var bridgeApplied = 0
   private(set) var bridgeReady = 0
   private var loadStarted: ContinuousClock.Instant?
+  private let keepsFrameEchoes: Bool
+  /// `frame.echo` values from subframes (`Options.frameEcho`), at most `maxFrameEchoes`.
+  private(set) var frameEchoes: [JSONValue] = []
+  static let maxFrameEchoes = 8
 
   /// The bridge answer for the next `ready` message: `nil` answers `null` (no update).
   var bridgeUpdate: (@MainActor () async -> String?)?
@@ -35,6 +43,7 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
 
   init(recorder: Recorder, container: UIView, options: Options) {
     self.recorder = recorder
+    keepsFrameEchoes = options.frameEcho
     let configuration = WKWebViewConfiguration()
     // A new data store per web view in memory: every run starts without cookies or cache.
     configuration.websiteDataStore = .nonPersistent()
@@ -55,6 +64,12 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
       WKUserScript(
         source: Scripts.rqLab, injectionTime: .atDocumentStart, forMainFrameOnly: true, in: .page))
     controller.add(self, contentWorld: .page, name: "rqLab")
+    if options.frameEcho {
+      controller.addUserScript(
+        WKUserScript(
+          source: Scripts.frameEcho, injectionTime: .atDocumentEnd, forMainFrameOnly: false,
+          in: .page))
+    }
     if options.bridge {
       controller.addUserScript(
         WKUserScript(
@@ -226,6 +241,10 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
     }
     do {
       let probe = try Probe.parseMessage(message.body)
+      if keepsFrameEchoes, probe.name == "frame.echo", !message.frameInfo.isMainFrame {
+        if frameEchoes.count < Self.maxFrameEchoes { frameEchoes.append(probe.value) }
+        return
+      }
       recorder.probe(probe.name, probe.value)
     } catch {
       recorder.error("ProbeRefused: \(error)")

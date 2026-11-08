@@ -36,7 +36,7 @@ fail() {
 CAP="$1"
 OS="$2"
 RANGE="${3:-1}"
-case "$CAP" in CAP-I-0[1-7]) ;; *) fail "capability must be CAP-I-01 to CAP-I-07" ;; esac
+case "$CAP" in CAP-I-0[1-7] | CAP-I-11) ;; *) fail "capability must be CAP-I-01 to CAP-I-07 or CAP-I-11" ;; esac
 case "$OS" in '' | *[!0-9.]*) fail "<os> must be a version such as 27.0" ;; esac
 case "$RANGE" in
   *..*) FIRST="${RANGE%%..*}"; LAST="${RANGE##*..}" ;;

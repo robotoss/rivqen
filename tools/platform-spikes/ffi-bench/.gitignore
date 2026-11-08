@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+# run.sh puts all build output in the lab root (lab-env.sh); these entries catch a manual build.
+target/
+.kotlin/
+jvm/.gradle/
+jvm/build/

@@ -1,0 +1,89 @@
+{
+  "target": "host-jvm",
+  "date": "2026-11-08",
+  "machine": "Apple M4 Pro",
+  "os": "macOS 26.6.2",
+  "toolchain": {
+    "gradle": "9.7.1",
+    "java": "21.0.11+10-LTS",
+    "jna": "5.19.1",
+    "kotlin": "2.4.20",
+    "rust": "1.99.0",
+    "uniffi": "0.32.2"
+  },
+  "indicative": true,
+  "cases": [
+    {
+      "path": "uniffi-kotlin",
+      "size": 1048576,
+      "chunk": 16384,
+      "docs": 1000,
+      "median_ns": 817293,
+      "p95_ns": 1183124,
+      "chunk_median_ns": 12375,
+      "copied_bytes": 3145728,
+      "rss_delta_kib": 370720,
+      "sha256_ok": true
+    },
+    {
+      "path": "uniffi-kotlin",
+      "size": 1048576,
+      "chunk": 65536,
+      "docs": 1000,
+      "median_ns": 478083,
+      "p95_ns": 619042,
+      "chunk_median_ns": 28833,
+      "copied_bytes": 3145728,
+      "rss_delta_kib": 357968,
+      "sha256_ok": true
+    },
+    {
+      "path": "jni-direct",
+      "size": 1048576,
+      "chunk": 16384,
+      "docs": 1000,
+      "median_ns": 19954,
+      "p95_ns": 23710,
+      "chunk_median_ns": 292,
+      "copied_bytes": 1048576,
+      "rss_delta_kib": 1088,
+      "sha256_ok": true
+    },
+    {
+      "path": "jni-direct",
+      "size": 1048576,
+      "chunk": 65536,
+      "docs": 1000,
+      "median_ns": 22376,
+      "p95_ns": 27252,
+      "chunk_median_ns": 1375,
+      "copied_bytes": 1048576,
+      "rss_delta_kib": 1488,
+      "sha256_ok": true
+    },
+    {
+      "path": "jni-bytearray",
+      "size": 1048576,
+      "chunk": 16384,
+      "docs": 1000,
+      "median_ns": 20793,
+      "p95_ns": 25826,
+      "chunk_median_ns": 333,
+      "copied_bytes": 1048576,
+      "rss_delta_kib": 2048,
+      "sha256_ok": true
+    },
+    {
+      "path": "jni-bytearray",
+      "size": 1048576,
+      "chunk": 65536,
+      "docs": 1000,
+      "median_ns": 24208,
+      "p95_ns": 68502,
+      "chunk_median_ns": 1500,
+      "copied_bytes": 1048576,
+      "rss_delta_kib": 1664,
+      "sha256_ok": true
+    }
+  ]
+}

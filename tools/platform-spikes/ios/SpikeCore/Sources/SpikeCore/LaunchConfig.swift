@@ -3,7 +3,8 @@
 
 import Foundation
 
-/// The capabilities of the iOS prototype in sprint S1 (tools/platform-spikes/capabilities.json).
+/// The capabilities of the iOS prototype (tools/platform-spikes/capabilities.json): S1 CAP-I-01 to
+/// CAP-I-07, S2 CAP-I-11.
 public enum Capability: String, Sendable, CaseIterable {
   case simulatedFirstRender = "CAP-I-01"
   case simulatedOrigin = "CAP-I-02"
@@ -12,6 +13,7 @@ public enum Capability: String, Sendable, CaseIterable {
   case schemeStreaming = "CAP-I-05"
   case schemeOrigin = "CAP-I-06"
   case httpsStreaming = "CAP-I-07"
+  case cookieSync = "CAP-I-11"
 
   /// The prototype of the capability (`prototype` of the catalog row).
   public var prototype: String {
@@ -19,7 +21,7 @@ public enum Capability: String, Sendable, CaseIterable {
     case .simulatedFirstRender, .simulatedOrigin, .simulatedCookies: "IOS-P1"
     case .navigationWithSnapshot: "IOS-P2"
     case .schemeStreaming, .schemeOrigin: "IOS-P3"
-    case .httpsStreaming: "IOS-ALL"
+    case .httpsStreaming, .cookieSync: "IOS-ALL"
     }
   }
 }
@@ -100,7 +102,7 @@ public struct LaunchConfig: Sendable, Equatable {
     }
     guard let run = values["-rqRun"] else { return nil }
     guard let capText = values["-rqCap"], let capability = Capability(rawValue: capText) else {
-      throw SpikeError(.argument, "-rqCap must be one of CAP-I-01...CAP-I-07")
+      throw SpikeError(.argument, "-rqCap must be one of CAP-I-01...CAP-I-07, CAP-I-11")
     }
     guard isRunId(run), run.hasPrefix("\(capability.rawValue)-ios-") else {
       throw SpikeError(.argument, "-rqRun must be <capability>-ios-<os>-<k> of [A-Za-z0-9.-]")

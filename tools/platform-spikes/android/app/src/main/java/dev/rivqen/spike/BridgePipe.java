@@ -63,8 +63,8 @@ public final class BridgePipe {
 
     /** Callbacks of the pipe. They must not throw. */
     public interface Listener {
-        /** One read gave {@code bytes} (at least 1) bytes to the reader. Called on the reader thread. */
-        void onRead(int bytes);
+        /** One read gave {@code bytes} (at least 1) of the {@code requested} bytes to the reader. Called on the reader thread. */
+        void onRead(int bytes, int requested);
 
         /** The outcome; called once, on the thread that ended the delivery. */
         void onOutcome(Outcome outcome);
@@ -279,7 +279,7 @@ public final class BridgePipe {
             throw error;
         }
         if (n > 0) {
-            listener.onRead(n);
+            listener.onRead(n, length);
         }
         return n;
     }

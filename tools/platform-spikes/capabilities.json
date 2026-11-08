@@ -22,9 +22,23 @@
         ],
         "metrics": "evidence/spikes/wp-04/android/CAP-A-01/37/run-1.metrics.json",
         "recording": null
+      },
+      {
+        "os": "29",
+        "webview": "com.google.android.webview 91.0.4472.114",
+        "verdict": "conditional",
+        "condition": "Progressive in 64 KiB blocks only: each native read asks for the free space of a 64 KiB Mojo data pipe and the stream read fills it, so a page or a flush smaller than the block reaches the renderer only with the next bytes or at the end of the body (small-2048 runs: all 7 gates timed out, beacons only after the last chunk); WebView 91 has no DOCUMENT_START_SCRIPT, so page scripts that run before the load ends cannot reach a document-start bridge",
+        "source": "https://chromium.googlesource.com/chromium/src/+/refs/tags/91.0.4472.114/components/embedder_support/android/util/android_stream_reader_url_loader.cc",
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-01/29/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-01/29/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-01/29/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-01/29/run-1.metrics.json",
+        "recording": null
       }
     ],
-    "verdict": "pending"
+    "verdict": "conditional"
   },
   {
     "id": "CAP-A-02",
@@ -48,9 +62,22 @@
         ],
         "metrics": "evidence/spikes/wp-04/android/CAP-A-02/37/run-1.metrics.json",
         "recording": null
+      },
+      {
+        "os": "29",
+        "webview": "com.google.android.webview 91.0.4472.114",
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-02/29/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-02/29/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-02/29/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-02/29/run-1.metrics.json",
+        "recording": null
       }
     ],
-    "verdict": "pending"
+    "verdict": "supported"
   },
   {
     "id": "CAP-A-03",
@@ -72,9 +99,22 @@
         ],
         "metrics": "evidence/spikes/wp-04/android/CAP-A-03/37/run-1.metrics.json",
         "recording": null
+      },
+      {
+        "os": "29",
+        "webview": "com.google.android.webview 91.0.4472.114",
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-03/29/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-03/29/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-03/29/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-03/29/run-1.metrics.json",
+        "recording": null
       }
     ],
-    "verdict": "pending"
+    "verdict": "supported"
   },
   {
     "id": "CAP-A-04",
@@ -83,8 +123,35 @@
     "prototype": "A-STREAM",
     "questions": [],
     "sprint": "S2",
-    "results": [],
-    "verdict": "pending"
+    "results": [
+      {
+        "os": "37",
+        "webview": "com.google.android.webview 145.0.7632.218",
+        "verdict": "conditional",
+        "condition": "A redirected document is never streamed: the early fetch does not follow a 3xx (CL-44), the rule passes the request (no byte delivered, so no cache result and no public partition, H-67), and the WebView requests the first URL again and follows the redirect itself (one extra request); a 3xx WebResourceResponse is refused by its constructor (status 300-399), and shouldInterceptRequest is not called for the redirect targets (shouldOverrideUrlLoading is, with isRedirect)",
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-04/37/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-04/37/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-04/37/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-04/37/run-1.metrics.json",
+        "recording": null
+      },
+      {
+        "os": "29",
+        "webview": "com.google.android.webview 91.0.4472.114",
+        "verdict": "conditional",
+        "condition": "A redirected document is never streamed: the early fetch does not follow a 3xx (CL-44), the rule passes the request (no byte delivered, so no cache result and no public partition, H-67), and the WebView requests the first URL again and follows the redirect itself (one extra request); a 3xx WebResourceResponse is refused by its constructor (status 300-399), and shouldInterceptRequest is not called for the redirect targets (shouldOverrideUrlLoading is, with isRedirect)",
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-04/29/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-04/29/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-04/29/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-04/29/run-1.metrics.json",
+        "recording": null
+      }
+    ],
+    "verdict": "conditional"
   },
   {
     "id": "CAP-A-05",
@@ -93,8 +160,35 @@
     "prototype": "A-STREAM",
     "questions": [],
     "sprint": "S2",
-    "results": [],
-    "verdict": "pending"
+    "results": [
+      {
+        "os": "37",
+        "webview": "com.google.android.webview 145.0.7632.218",
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-05/37/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-05/37/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-05/37/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-05/37/run-1.metrics.json",
+        "recording": null
+      },
+      {
+        "os": "29",
+        "webview": "com.google.android.webview 91.0.4472.114",
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-05/29/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-05/29/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-05/29/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-05/29/run-1.metrics.json",
+        "recording": null
+      }
+    ],
+    "verdict": "supported"
   },
   {
     "id": "CAP-A-06",
@@ -127,8 +221,35 @@
     "prototype": "A-STREAM",
     "questions": [],
     "sprint": "S2",
-    "results": [],
-    "verdict": "pending"
+    "results": [
+      {
+        "os": "37",
+        "webview": "com.google.android.webview 145.0.7632.218",
+        "verdict": "conditional",
+        "condition": "A main-frame stream that ends with an error gives an error page (net::ERR_FAILED), not the delivered bytes, so the session must call loadUrl again (CL-33) to get the normal load; a cut after the document committed (partial page) is not tested (/s/cut has no delay). Range requests of subresources pass unchanged: the interceptor sees the Range field, the page gets 206 with the right bytes and 416 for a bad range",
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-08/37/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-08/37/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-08/37/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-08/37/run-1.metrics.json",
+        "recording": null
+      },
+      {
+        "os": "29",
+        "webview": "com.google.android.webview 91.0.4472.114",
+        "verdict": "conditional",
+        "condition": "A main-frame stream that ends with an error gives an error page (net::ERR_FAILED), not the delivered bytes, so the session must call loadUrl again (CL-33) to get the normal load; a cut after the document committed (partial page) is not tested (/s/cut has no delay). Range requests of subresources pass unchanged: the interceptor sees the Range field, the page gets 206 with the right bytes and 416 for a bad range",
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-08/29/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-08/29/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-08/29/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-08/29/run-1.metrics.json",
+        "recording": null
+      }
+    ],
+    "verdict": "conditional"
   },
   {
     "id": "CAP-I-01",
@@ -153,9 +274,35 @@
         ],
         "recording": null,
         "metrics": "evidence/spikes/wp-04/ios/CAP-I-01/27.0/run-1.metrics.json"
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-01/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-01/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-01/26.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "metrics": "evidence/spikes/wp-04/ios/CAP-I-01/26.5/run-1.metrics.json"
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-01/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-01/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-01/18.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "metrics": "evidence/spikes/wp-04/ios/CAP-I-01/18.5/run-1.metrics.json"
       }
     ],
-    "verdict": "pending"
+    "verdict": "supported"
   },
   {
     "id": "CAP-I-02",
@@ -179,9 +326,33 @@
           "evidence/spikes/wp-04/ios/CAP-I-02/27.0/run-3.jsonl"
         ],
         "recording": null
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-02/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-02/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-02/26.5/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-02/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-02/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-02/18.5/run-3.jsonl"
+        ],
+        "recording": null
       }
     ],
-    "verdict": "pending"
+    "verdict": "supported"
   },
   {
     "id": "CAP-I-03",
@@ -199,16 +370,40 @@
         "os": "27.0",
         "webview": null,
         "verdict": "conditional",
-        "condition": "WebKit ignores the Set-Cookie field of the simulated response and does not share the native URLSession cookies; the SDK must put the cookies of its native fetch into the WKHTTPCookieStore of the web view before loadSimulatedRequest (cookie sync is CAP-I-11, S2). Cookies that the page sets (HttpOnly by fetch, script cookies) work and go with same-origin fetches.",
+        "condition": "WebKit ignores the Set-Cookie field of the simulated response and does not share the native URLSession cookies; the SDK must put the cookies of its native fetch into the WKHTTPCookieStore of the web view (setCookie, wait for the completion) before loadSimulatedRequest. With this sync (CAP-I-11) the page has the native cookies with their attributes: document.cookie shows all but the HttpOnly one, and same-origin fetches send all. Cookies that the page sets (HttpOnly by fetch, script cookies) work and go with same-origin fetches.",
         "runs": [
           "evidence/spikes/wp-04/ios/CAP-I-03/27.0/run-1.jsonl",
           "evidence/spikes/wp-04/ios/CAP-I-03/27.0/run-2.jsonl",
           "evidence/spikes/wp-04/ios/CAP-I-03/27.0/run-3.jsonl"
         ],
         "recording": null
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "WebKit ignores the Set-Cookie field of the simulated response and does not share the native URLSession cookies; the SDK must put the cookies of its native fetch into the WKHTTPCookieStore of the web view (setCookie, wait for the completion) before loadSimulatedRequest. With this sync (CAP-I-11) the page has the native cookies with their attributes: document.cookie shows all but the HttpOnly one, and same-origin fetches send all. Cookies that the page sets (HttpOnly by fetch, script cookies) work and go with same-origin fetches.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-03/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-03/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-03/26.5/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "WebKit ignores the Set-Cookie field of the simulated response and does not share the native URLSession cookies; the SDK must put the cookies of its native fetch into the WKHTTPCookieStore of the web view (setCookie, wait for the completion) before loadSimulatedRequest. With this sync (CAP-I-11) the page has the native cookies with their attributes: document.cookie shows all but the HttpOnly one, and same-origin fetches send all. Cookies that the page sets (HttpOnly by fetch, script cookies) work and go with same-origin fetches.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-03/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-03/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-03/18.5/run-3.jsonl"
+        ],
+        "recording": null
       }
     ],
-    "verdict": "pending"
+    "verdict": "conditional"
   },
   {
     "id": "CAP-I-04",
@@ -232,9 +427,35 @@
         ],
         "recording": null,
         "metrics": "evidence/spikes/wp-04/ios/CAP-I-04/27.0/run-1.metrics.json"
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-04/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-04/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-04/26.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "metrics": "evidence/spikes/wp-04/ios/CAP-I-04/26.5/run-1.metrics.json"
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-04/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-04/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-04/18.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "metrics": "evidence/spikes/wp-04/ios/CAP-I-04/18.5/run-1.metrics.json"
       }
     ],
-    "verdict": "pending"
+    "verdict": "supported"
   },
   {
     "id": "CAP-I-05",
@@ -259,9 +480,35 @@
         ],
         "recording": null,
         "metrics": "evidence/spikes/wp-04/ios/CAP-I-05/27.0/run-1.metrics.json"
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-05/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-05/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-05/26.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "metrics": "evidence/spikes/wp-04/ios/CAP-I-05/26.5/run-1.metrics.json"
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-05/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-05/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-05/18.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "metrics": "evidence/spikes/wp-04/ios/CAP-I-05/18.5/run-1.metrics.json"
       }
     ],
-    "verdict": "pending"
+    "verdict": "supported"
   },
   {
     "id": "CAP-I-06",
@@ -285,9 +532,33 @@
           "evidence/spikes/wp-04/ios/CAP-I-06/27.0/run-3.jsonl"
         ],
         "recording": null
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "The page origin is rqlab://localhost:18443, not the https origin; document.cookie is empty and a script cannot set a cookie; WebKit does not store a Set-Cookie of the scheme handler response, so relative requests carry only the cookies of the app's own URLSession. https subresources load and carry the cookies of the https site (SameSite=None; Secure seen), but a script can read a cross-origin https response only with CORS for the rqlab origin.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-06/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-06/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-06/26.5/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "The page origin is rqlab://localhost:18443, not the https origin; document.cookie is empty and a script cannot set a cookie; WebKit does not store a Set-Cookie of the scheme handler response, so relative requests carry only the cookies of the app's own URLSession. https subresources load and carry the cookies of the https site (SameSite=None; Secure seen), but a script can read a cross-origin https response only with CORS for the rqlab origin.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-06/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-06/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-06/18.5/run-3.jsonl"
+        ],
+        "recording": null
       }
     ],
-    "verdict": "pending"
+    "verdict": "conditional"
   },
   {
     "id": "CAP-I-07",
@@ -311,9 +582,35 @@
         ],
         "recording": null,
         "source": "https://developer.apple.com/documentation/webkit/wkwebviewconfiguration/seturlschemehandler(_:forurlscheme:)"
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "impossible",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-07/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-07/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-07/26.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "source": "https://developer.apple.com/documentation/webkit/wkwebviewconfiguration/seturlschemehandler(_:forurlscheme:)"
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "impossible",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-07/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-07/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-07/18.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "source": "https://developer.apple.com/documentation/webkit/wkwebviewconfiguration/seturlschemehandler(_:forurlscheme:)"
       }
     ],
-    "verdict": "pending"
+    "verdict": "impossible"
   },
   {
     "id": "CAP-I-08",
@@ -360,8 +657,45 @@
       "Q-12"
     ],
     "sprint": "S2",
-    "results": [],
-    "verdict": "pending"
+    "results": [
+      {
+        "os": "27.0",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "Sync works in both directions and keeps HttpOnly, Secure and SameSite=Strict/Lax (native HTTPCookieStorage -> WKHTTPCookieStore.setCookie before the load; getAllCookies -> HTTPCookieStorage before a native fetch); WebKit then hides HttpOnly from document.cookie and does not send a SameSite=Strict cookie on a top-level navigation that a cross-site page starts. Conditions: URLSession does not apply SameSite (a native fetch sends Strict and Lax cookies also with a cross-site mainDocumentURL), so the SDK must not use its native fetch for a navigation that a cross-site page started, or must filter the cookies itself; cross-site subresources and iframes of the web view get no cookies at all (WebKit third-party cookie blocking), whatever the sync; SameSite=None and no SameSite are not told apart by HTTPCookie.sameSitePolicy (the value differs by iOS version), so the SDK must not depend on that value.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-11/27.0/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-11/27.0/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-11/27.0/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "Sync works in both directions and keeps HttpOnly, Secure and SameSite=Strict/Lax (native HTTPCookieStorage -> WKHTTPCookieStore.setCookie before the load; getAllCookies -> HTTPCookieStorage before a native fetch); WebKit then hides HttpOnly from document.cookie and does not send a SameSite=Strict cookie on a top-level navigation that a cross-site page starts. Conditions: URLSession does not apply SameSite (a native fetch sends Strict and Lax cookies also with a cross-site mainDocumentURL), so the SDK must not use its native fetch for a navigation that a cross-site page started, or must filter the cookies itself; cross-site subresources and iframes of the web view get no cookies at all (WebKit third-party cookie blocking), whatever the sync; SameSite=None and no SameSite are not told apart by HTTPCookie.sameSitePolicy (the value differs by iOS version), so the SDK must not depend on that value.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-11/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-11/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-11/26.5/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "Sync works in both directions and keeps HttpOnly, Secure and SameSite=Strict/Lax (native HTTPCookieStorage -> WKHTTPCookieStore.setCookie before the load; getAllCookies -> HTTPCookieStorage before a native fetch); WebKit then hides HttpOnly from document.cookie and does not send a SameSite=Strict cookie on a top-level navigation that a cross-site page starts. Conditions: URLSession does not apply SameSite (a native fetch sends Strict and Lax cookies also with a cross-site mainDocumentURL), so the SDK must not use its native fetch for a navigation that a cross-site page started, or must filter the cookies itself; cross-site subresources and iframes of the web view get no cookies at all (WebKit third-party cookie blocking), whatever the sync; SameSite=None and no SameSite are not told apart by HTTPCookie.sameSitePolicy (the value differs by iOS version), so the SDK must not depend on that value.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-11/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-11/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-11/18.5/run-3.jsonl"
+        ],
+        "recording": null
+      }
+    ],
+    "verdict": "conditional"
   },
   {
     "id": "CAP-F-01",

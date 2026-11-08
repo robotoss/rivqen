@@ -32,10 +32,27 @@ internal class ProbeBridge(
 ) : WebViewCompat.WebMessageListener {
     private var count = 0
 
+    /** How the page gets `window.rqLab`. */
+    enum class Channel(val value: String) {
+        /** `addDocumentStartJavaScript`: before every page script (the S1 channel). */
+        DOCUMENT_START("document-start"),
+
+        /**
+         * The WebView has no DOCUMENT_START_SCRIPT (WebView 91 of the API 29 image): [installAfterLoad]
+         * runs [SCRIPT] with `evaluateJavascript` after `onPageFinished`. Page scripts that ran before
+         * (the chunk scripts) find no `rqLab` and send no probe; the DOMContentLoaded probes run at once.
+         */
+        AFTER_LOAD("after-load"),
+    }
+
+    /** The channel of this WebView; set by [install]. */
+    var channel: Channel = Channel.DOCUMENT_START
+        private set
+
     /**
      * Call on the main thread before `loadUrl`.
      *
-     * @throws IllegalStateException when WEB_MESSAGE_LISTENER or DOCUMENT_START_SCRIPT is missing
+     * @throws IllegalStateException when WEB_MESSAGE_LISTENER is missing (no channel at all)
      */
     fun install(webView: WebView) {
         if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
@@ -45,9 +62,32 @@ internal class ProbeBridge(
         }
         if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
             WebViewCompat.addDocumentStartJavaScript(webView, SCRIPT, origins)
+            channel = Channel.DOCUMENT_START
         } else {
-            throw IllegalStateException("DOCUMENT_START_SCRIPT is not supported")
+            channel = Channel.AFTER_LOAD
         }
+    }
+
+    /**
+     * The [Channel.AFTER_LOAD] install: runs [SCRIPT] in the page when [url] (the URL of the page
+     * that finished) is on an allowed origin. `evaluateJavascript` has no origin rule of its own, so
+     * this check is the boundary; the script also stops when the page has no `rqLabPort` (the
+     * listener injects it only into the allowed origins). Main thread only.
+     *
+     * @return true when the script was started
+     */
+    fun installAfterLoad(webView: WebView, url: String): Boolean {
+        if (channel != Channel.AFTER_LOAD) return false
+        val u = Uri.parse(url)
+        val scheme = u.scheme ?: return false
+        val port = if (u.port != -1) u.port else if (scheme == "https") HTTPS_PORT else HTTP_PORT
+        if (InterceptRule.origin(scheme, u.host ?: "", port) !in origins) return false
+        webView.evaluateJavascript(SCRIPT) { result ->
+            // "installed" sends the page probes; any other result means no probes from this page, so
+            // the result is logged (no race with page probes then).
+            if (result != "\"installed\"") log.emit("app.probe", mapOf("name" to "native.after_load", "value" to result?.take(MAX_VALUE)))
+        }
+        return true
     }
 
     override fun onPostMessage(
@@ -120,15 +160,18 @@ internal class ProbeBridge(
         private val NAME = Regex("[a-z][a-z0-9._-]{0,63}")
 
         /**
-         * Runs before the page scripts (addDocumentStartJavaScript). The probes at DOMContentLoaded
-         * come after every chunk probe of the page (the parser has run all chunk scripts by then).
+         * Runs before the page scripts (addDocumentStartJavaScript), or after the load
+         * ([Channel.AFTER_LOAD]; then the DOMContentLoaded probes run at once). The probes at
+         * DOMContentLoaded come after every chunk probe of the page (the parser has run all chunk
+         * scripts by then).
          * `csp.inline` inserts an inline script without a nonce: under `script-src 'nonce-…'` it
          * must not run. A step that throws sends `null` for its probe.
          */
         val SCRIPT = """
             (function () {
               var port = window.rqLabPort;
-              if (!port || window.rqLab) { return; }
+              if (!port) { return 'no-port'; }
+              if (window.rqLab) { return 'present'; }
               function send(name, value) {
                 try {
                   port.postMessage(JSON.stringify({ name: String(name), value: value === undefined ? null : value }));
@@ -142,7 +185,7 @@ internal class ProbeBridge(
                   });
                 }).observe({ type: 'paint', buffered: true });
               } catch (e) { send('metric.first_paint', null); }
-              document.addEventListener('DOMContentLoaded', function () {
+              function domProbes() {
                 send('location', String(document.location.href));
                 send('origin', String(window.origin));
                 var status = null;
@@ -161,7 +204,13 @@ internal class ProbeBridge(
                   inline = window.rqInlineRan === true;
                 } catch (e) { inline = null; }
                 send('csp.inline', inline);
-              });
+              }
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', domProbes);
+              } else {
+                domProbes();
+              }
+              return 'installed';
             })();
         """.trimIndent()
     }

@@ -4,7 +4,9 @@
 // Run-log helper of the Android prototype (CONTRACT.md sections 5, 8, 9). Node.js 22, standard
 // library only. run.sh calls it; it never talks to the device or the host.
 //
-//   node runlog.mjs url <capability> <run> [params]              print the page URL of a run
+//   node runlog.mjs url <capability> <run> [params] [set] [api]  print the page URL of a run
+//   node runlog.mjs scenario <capability> [set]                  print the app scenario of a set
+//   node runlog.mjs sets                                         print the named sets as JSON
 //   node runlog.mjs join <work> <out> <capability> <api> <k> <run> <url> <elapsed-ms>
 //        joins script + app + host parts into <out>/run-<k>.jsonl and writes run-<k>.metrics.json;
 //        exit 1 when the run is not ok (the files are still written)
@@ -37,20 +39,100 @@ export const SCENARIOS = {
 };
 export const BLOCK_SCENARIO = "chunks=3&size=1500&gate=beacon&timeout=4000";
 
+/** Site B on the bad-certificate port (CONTRACT section 1): no `adb reverse` is needed for it. */
+const BAD_ORIGIN = "https://10.0.2.2:18444";
+
+/** The final page of the redirect runs: the HTML echo, with the run id so that the host logs it. */
+const echoTarget = (run) => `/s/echo?html=1&run=${run}`;
+
 /**
- * The page URL of a run. `override` (exploration only, run.sh SPIKE_PARAMS) replaces the scenario
+ * The run sets of each capability (S2). The set "" is the catalog set (`<capability>/<api>/`); a named
+ * set is a supporting set in `<capability>/<api>/<set>/` (run.sh SPIKE_SET=<set>). Members:
+ * - `path`, `origin` (default site A), `params` (an object, or a function of the run id);
+ * - `scenario`: the app scenario (RunParams Scenario; default `stream`);
+ * - `byApi`: members that replace the others on one API level (the read block differs);
+ * - `kind`: what an ok run needs (`byteChecks`): `stream` (the S1 byte checks), `pass` (the rule passed
+ *   the main frame and the WebView read no byte of the early fetch), `probe` (the WebView read no byte
+ *   of the early fetch; the decision is the observation), `cut` (the delivered bytes equal the bytes
+ *   before the cut, the stream ended with an error, and the fallback load ran).
+ */
+/**
+ * WebView 91 (API 29 image) passes bytes on in 64 KiB blocks: each native read asks for the free
+ * space of a 64 KiB Mojo data pipe and the stream read fills it (README "Read blocks"). So the API 29
+ * stream sets use 65,536-byte chunks, as the API 37 sets use 2048-byte chunks.
+ */
+const BLOCK_29 = 65536;
+
+export const SETS = {
+  "CAP-A-01": {
+    "": {
+      path: "/s/stream", params: SCENARIOS["CAP-A-01"], kind: "stream",
+      byApi: { 29: { params: { chunks: 4, size: BLOCK_29, gate: "beacon", timeout: 15000 } } },
+    },
+    "block-1500": { path: "/s/stream", params: { chunks: 3, size: 1500, gate: "beacon", timeout: 4000 }, kind: "stream" },
+    "paint-delay": {
+      path: "/s/stream", params: { chunks: 3, size: 2048, gate: "delay", delay: 1500 }, kind: "stream",
+      byApi: { 29: { params: { chunks: 3, size: BLOCK_29, gate: "delay", delay: 1500 } } },
+    },
+    // The S1 scenario on API 29: small chunks wait for the 64 KiB block or the end of the body.
+    "small-2048": { path: "/s/stream", params: SCENARIOS["CAP-A-01"], kind: "stream" },
+  },
+  "CAP-A-02": {
+    "": {
+      path: "/s/stream", params: SCENARIOS["CAP-A-02"], kind: "stream",
+      byApi: { 29: { params: { chunks: 2, size: BLOCK_29, gate: "beacon", timeout: 15000, first: 1000 } } },
+    },
+  },
+  "CAP-A-03": {
+    "": {
+      path: "/s/stream", params: SCENARIOS["CAP-A-03"], kind: "stream",
+      byApi: { 29: { params: { chunks: 2, size: BLOCK_29, gate: "beacon", timeout: 15000, csp: 1 } } },
+    },
+    "status-400": { path: "/s/stream", params: { chunks: 0 }, kind: "stream" },
+  },
+  // Redirects (CL-44, H-67): the early fetch does not follow; the rule passes a 3xx head.
+  "CAP-A-04": {
+    "": { path: "/s/redirect", params: (run) => ({ n: 1, code: 302, to: echoTarget(run) }), kind: "pass" },
+    "cross-site": {
+      path: "/s/redirect",
+      params: (run) => ({ n: 1, code: 302, cross: 1, alt: "10.0.2.2", to: echoTarget(run) }),
+      kind: "pass",
+    },
+    "chain-307": { path: "/s/redirect", params: (run) => ({ n: 2, code: 307, to: echoTarget(run) }), kind: "pass" },
+    "wrr-302": { path: "/s/redirect", params: (run) => ({ n: 1, code: 302, to: echoTarget(run) }), scenario: "redirect-3xx", kind: "probe" },
+  },
+  // TLS error (A-03): an allowed origin with a self-signed certificate.
+  "CAP-A-05": { "": { origin: BAD_ORIGIN, path: "/s/echo", params: { html: 1 }, kind: "pass" } },
+  // Partial response: a cut main-frame stream (CL-33 fallback), then byte ranges of a subresource.
+  "CAP-A-08": { "": { path: "/s/cut", params: { after: 3000, size: 8192 }, scenario: "cut-range", kind: "cut" } },
+};
+
+/** The run set, or an error for an unknown capability or set. */
+export function setOf(capability, set = "", api = "37") {
+  const sets = SETS[capability];
+  if (sets === undefined) throw new Error(`unknown capability ${capability}`);
+  const s = sets[set];
+  if (s === undefined) throw new Error(`unknown set ${JSON.stringify(set)} of ${capability}`);
+  const { byApi, ...base } = s;
+  return { origin: ORIGIN, scenario: "stream", ...base, ...(byApi?.[api] ?? {}) };
+}
+
+/**
+ * The page URL of a run. `override` (exploration only, run.sh SPIKE_PARAMS) replaces the set
  * parameters, for example `chunks=3&size=1500&gate=beacon&timeout=4000`.
  */
-export function pageUrl(capability, run, override) {
-  const s = SCENARIOS[capability];
-  if (s === undefined) throw new Error(`unknown capability ${capability}`);
+export function pageUrl(capability, run, override, set = "", api = "37") {
+  const s = setOf(capability, set, api);
   const q = new URLSearchParams({ run });
-  const params = override ? Object.fromEntries(new URLSearchParams(override)) : s;
+  const params = override ? Object.fromEntries(new URLSearchParams(override)) : typeof s.params === "function" ? s.params(run) : s.params;
   for (const [k, v] of Object.entries(params)) {
-    if (k === "run" || !/^[a-z]{1,16}$/.test(k) || !/^[A-Za-z0-9.-]{1,32}$/.test(String(v))) throw new Error(`bad parameter ${k}`);
-    q.set(k, String(v));
+    const value = String(v);
+    // An override is a plain value; a set value may be a path with a query (the redirect target).
+    const valueOk = override ? /^[A-Za-z0-9.-]{1,32}$/.test(value) : /^[\x21-\x7e]{1,200}$/.test(value);
+    if (k === "run" || !/^[a-z]{1,16}$/.test(k) || !valueOk) throw new Error(`bad parameter ${k}`);
+    q.set(k, value);
   }
-  return `${ORIGIN}/s/stream?${q}`;
+  return `${s.origin}${s.path}?${q}`;
 }
 
 /** The body the host sends for the URL (host/stream.mjs): byte count and SHA-256. */
@@ -97,7 +179,9 @@ function webviewOf(work) {
  * SHA-256) and the sum of host.chunk. For another answer (a host error page) the host logs no
  * chunks, so the delivered bytes must equal the fetched bytes.
  */
-export function byteChecks(events, metrics, expectedStream) {
+export function byteChecks(events, metrics, expectedStream, kind = "stream") {
+  if (kind === "pass" || kind === "probe") return passChecks(events, metrics, kind);
+  if (kind === "cut") return cutChecks(events, metrics);
   const app = events.filter((e) => e.src === "app");
   const host = events.filter((e) => e.src === "host");
   const hostStatus = host.find((e) => e.ev === "host.response")?.status ?? null;
@@ -131,7 +215,73 @@ export function byteChecks(events, metrics, expectedStream) {
   return { checks, problems, expected };
 }
 
-function join([work, out, capability, api, k, run, url, elapsed]) {
+const EMPTY_SHA256 = createHash("sha256").digest("hex");
+
+/**
+ * Checks of a run whose main frame the WebView loads itself (redirect, TLS error). `pass`: every
+ * main-frame decision is `pass`. Both kinds: the WebView read no byte of the early fetch (the reader
+ * side was closed unread, outcome `cancel`), and the fetch delivered nothing.
+ */
+export function passChecks(events, metrics, kind) {
+  const app = events.filter((e) => e.src === "app");
+  const decisions = app.filter((e) => e.ev === "app.intercept").map((e) => e.decision);
+  const readBytes = app.filter((e) => e.ev === "app.stream.read").reduce((n, e) => n + e.bytes, 0);
+  const checks = {
+    decisions,
+    stream_read_bytes: readBytes,
+    stream_outcome: metrics.stream?.outcome ?? null,
+    stream_bytes: metrics.stream?.bytes ?? null,
+    stream_sha256_is_empty: metrics.stream?.sha256 === EMPTY_SHA256,
+  };
+  const problems = [];
+  if (decisions.length === 0) problems.push("no main-frame decision");
+  if (kind === "pass" && decisions.some((d) => d !== "pass")) problems.push(`decisions ${decisions.join(",")}`);
+  if (readBytes !== 0 || checks.stream_bytes !== 0 || !checks.stream_sha256_is_empty) problems.push(`the WebView read ${readBytes} bytes of the early fetch`);
+  if (checks.stream_outcome !== "cancel") problems.push(`stream outcome ${checks.stream_outcome}`);
+  if ((metrics.dropped_events ?? 0) !== 0) problems.push("app events dropped");
+  return { checks, problems, expected: { bytes: 0, sha256: EMPTY_SHA256 } };
+}
+
+/**
+ * Checks of a cut run (CAP-A-08): the first main-frame request streamed; the fetch read exactly the
+ * bytes before the cut (`host.cut.after`) and did not complete; the WebView read the same bytes
+ * (count and SHA-256) and the stream ended with an error; the app made the fallback load, whose
+ * main-frame request passed (`claimed`).
+ */
+export function cutChecks(events, metrics) {
+  const app = events.filter((e) => e.src === "app");
+  const host = events.filter((e) => e.src === "host");
+  const intercepts = app.filter((e) => e.ev === "app.intercept");
+  const cuts = host.filter((e) => e.ev === "host.cut").map((e) => e.after);
+  const fetchEnd = app.find((e) => e.ev === "app.fetch.end");
+  const readBytes = app.filter((e) => e.ev === "app.stream.read").reduce((n, e) => n + e.bytes, 0);
+  const steps = app.filter((e) => e.ev === "app.probe" && e.name === "native.step").map((e) => e.value);
+  const checks = {
+    decisions: intercepts.map((e) => `${e.decision}${e.reason ? `:${e.reason}` : ""}`),
+    host_cuts: cuts,
+    fetch_bytes: fetchEnd?.bytes ?? null,
+    fetch_complete: fetchEnd?.complete ?? null,
+    stream_read_bytes: readBytes,
+    stream_outcome: metrics.stream?.outcome ?? null,
+    stream_sha256_is_fetch: metrics.stream?.sha256 !== undefined && metrics.stream?.sha256 === metrics.fetch?.sha256,
+    steps,
+  };
+  const problems = [];
+  if (intercepts[0]?.decision !== "stream") problems.push("the first main-frame request was not streamed");
+  if (!(intercepts.length >= 2 && intercepts[1].decision === "pass" && intercepts[1].reason === "claimed")) {
+    problems.push("no fallback request that passed as claimed");
+  }
+  if (cuts.length === 0 || checks.fetch_bytes !== cuts[0] || checks.fetch_complete !== false) problems.push("the fetch did not end at the cut");
+  if (readBytes !== checks.fetch_bytes || metrics.stream?.bytes !== checks.fetch_bytes || !checks.stream_sha256_is_fetch) {
+    problems.push(`the WebView read ${readBytes} bytes, the fetch ${checks.fetch_bytes}`);
+  }
+  if (checks.stream_outcome !== "error") problems.push(`stream outcome ${checks.stream_outcome}`);
+  if (!steps.includes("fallback-load")) problems.push("no fallback load");
+  if ((metrics.dropped_events ?? 0) !== 0) problems.push("app events dropped");
+  return { checks, problems, expected: { bytes: checks.fetch_bytes, sha256: metrics.fetch?.sha256 ?? null } };
+}
+
+function join([work, out, capability, api, k, run, url, elapsed, set = ""]) {
   const app = readLines(path.join(work, "app.jsonl"));
   const host = readLines(path.join(work, "host.jsonl"));
   const device = existsSync(path.join(work, "device.json")) ? readJson(path.join(work, "device.json")) : {};
@@ -143,13 +293,14 @@ function join([work, out, capability, api, k, run, url, elapsed]) {
     device: device.model ?? null, webview: wv ? `${wv.package} ${wv.version}` : null, prototype: "A-STREAM", k: Number(k),
   };
   const all = [start, ...app, ...host];
-  const { checks, problems, expected } = byteChecks(all, metrics, expectedBody(url));
+  const { kind } = setOf(capability, set, api);
+  const { checks, problems, expected } = byteChecks(all, metrics, kind === "stream" ? expectedBody(url) : null, kind);
   if (status.state !== "done") problems.unshift(`app: ${status.error ?? status.state}`);
   const end = { ev: "run.end", src: "script", seq: 1, t: Number(elapsed), ok: problems.length === 0, error: problems.length === 0 ? null : problems.join("; ") };
   const text = [...all, end].map(sortedJson).join("\n") + "\n";
   // A run that is not ok never goes into the evidence folder (it would replace a good run of the same k).
   if (!end.ok) {
-    out = path.join(process.env.LAB_OUT ?? work, "android-failed", capability, api);
+    out = path.join(process.env.LAB_OUT ?? work, "android-failed", capability, api, ...(set ? [set] : []));
     mkdirSync(out, { recursive: true });
   }
   writeFileSync(path.join(out, `run-${k}.jsonl`), text);
@@ -169,7 +320,7 @@ function tomlVersion(text, key) {
   return m ? m[1] : null;
 }
 
-function runjson([work, out, api]) {
+function runjson([work, out, api, set = "", scenario = "stream"]) {
   const device = readJson(path.join(work, "device.json"));
   const toml = readFileSync(path.join(HERE, "gradle/libs.versions.toml"), "utf8");
   const wrapper = readFileSync(path.join(HERE, "gradle/wrapper/gradle-wrapper.properties"), "utf8");
@@ -183,6 +334,8 @@ function runjson([work, out, api]) {
     platform: "android",
     api,
     prototype: "A-STREAM",
+    set: set === "" ? null : set,
+    scenario,
     tools: {
       agp: tomlVersion(toml, "agp"),
       kotlin: tomlVersion(toml, "kotlin"),
@@ -245,13 +398,26 @@ export function facts(events) {
     csp_inline: probe("csp.inline") ?? null,
     // Timing (app clock, ms from the load call): chunks whose content was ready to draw before the
     // network body ended (postVisualStateCallback against the end of the early fetch).
+    // The trigger is the chunk probe, or the chunk beacon when the page has no document-start channel.
     visual_before_stream_end: chunks.filter((k) => {
-      const visual = probe(`metric.visual_chunk_${k}`);
+      const visual = probe(`metric.visual_chunk_${k}`) ?? probe(`metric.visual_beacon_${k}`);
       const end = probe("metric.fetch_end");
       return typeof visual === "number" && typeof end === "number" && visual < end;
     }),
     nav: app.filter((e) => e.ev === "app.nav").map((e) => e.kind),
     errors: app.filter((e) => e.ev === "app.error").map((e) => e.error),
+    // S2 facts: redirect, TLS error, partial response.
+    fetch_head_status: app.find((e) => e.ev === "app.fetch.head")?.status ?? null,
+    intercepts: app.filter((e) => e.ev === "app.intercept").map((e) => ({
+      decision: e.decision, reason: e.reason ?? null, redirect: e.redirect ?? null, status: e.status ?? null, url: e.url,
+    })),
+    navs: app.filter((e) => e.ev === "app.nav").map((e) => ({ kind: e.kind, url: e.url, error: e.error ?? null })),
+    ssl_errors: app.filter((e) => e.ev === "app.ssl_error").map((e) => ({ url: e.url, primary_error: e.primary_error, decision: e.decision })),
+    probes: Object.fromEntries(probes.filter((e) => !e.name.startsWith("metric.") && e.name !== "chunk").map((e) => [e.name, e.value])),
+    native: probes.filter((e) => e.name.startsWith("native.")).map((e) => [e.name, e.value]),
+    host_requests: host.filter((e) => e.ev === "host.request").map((e) => `${e.site} ${e.target}${e.range ? ` [${e.range}]` : ""}`),
+    host_statuses: host.filter((e) => e.ev === "host.response").map((e) => e.status),
+    host_cuts: host.filter((e) => e.ev === "host.cut").map((e) => e.after),
     run_ok: events.at(-1)?.ok ?? false,
   };
 }
@@ -276,11 +442,13 @@ function analyze([out, capability]) {
 }
 
 const [cmd, ...args] = process.argv.slice(2);
-if (cmd === "url") console.log(pageUrl(args[0], args[1], args[2]));
+if (cmd === "url") console.log(pageUrl(args[0], args[1], args[2] || undefined, args[3] ?? "", args[4] ?? "37"));
+else if (cmd === "scenario") console.log(setOf(args[0], args[1] ?? "").scenario);
+else if (cmd === "sets") console.log(JSON.stringify(Object.fromEntries(Object.entries(SETS).map(([c, s]) => [c, Object.keys(s)]))));
 else if (cmd === "join") join(args);
 else if (cmd === "runjson") runjson(args);
 else if (cmd === "analyze") analyze(args);
 else if (cmd !== undefined) {
-  console.error("usage: node runlog.mjs url|join|runjson|analyze …");
+  console.error("usage: node runlog.mjs url|scenario|sets|join|runjson|analyze …");
   process.exit(2);
 }

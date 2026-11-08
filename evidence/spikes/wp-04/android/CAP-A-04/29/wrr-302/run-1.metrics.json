@@ -1,0 +1,43 @@
+{
+  "run": "CAP-A-04-android-29-1",
+  "url": "https://localhost:18443/s/redirect?run=CAP-A-04-android-29-1&n=1&code=302&to=%2Fs%2Fecho%3Fhtml%3D1%26run%3DCAP-A-04-android-29-1",
+  "metrics": {
+    "metric.commit": 273,
+    "metric.fetch_end": -105,
+    "metric.first_paint": 306,
+    "metric.head_wait": 0,
+    "metric.intercept": 24,
+    "metric.load_call": 147,
+    "metric.webview_create": 143
+  },
+  "fetch": {
+    "bytes": 0,
+    "complete": false,
+    "error": null,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stream": {
+    "bytes": 0,
+    "error": null,
+    "outcome": "cancel",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "intercept": {
+    "main_frame_calls": 1,
+    "reason": "redirect-status",
+    "subresource_passes": 1
+  },
+  "expected": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "checks": {
+    "decisions": [
+      "pass"
+    ],
+    "stream_read_bytes": 0,
+    "stream_outcome": "cancel",
+    "stream_bytes": 0,
+    "stream_sha256_is_empty": true
+  }
+}

@@ -36,7 +36,7 @@ fail() {
 CAP="$1"
 OS="$2"
 RANGE="${3:-1}"
-case "$CAP" in CAP-I-0[1-7]) ;; *) fail "capability must be CAP-I-01 to CAP-I-07" ;; esac
+case "$CAP" in CAP-I-0[1-7] | CAP-I-11) ;; *) fail "capability must be CAP-I-01 to CAP-I-07 or CAP-I-11" ;; esac
 case "$OS" in '' | *[!0-9.]*) fail "<os> must be a version such as 27.0" ;; esac
 case "$RANGE" in
   *..*) FIRST="${RANGE%%..*}"; LAST="${RANGE##*..}" ;;
@@ -70,6 +70,30 @@ DEVICE="$(xcrun simctl list devicetypes -j | node -e '
   const t = JSON.parse(require("fs").readFileSync(0, "utf8")).devicetypes.find((d) => d.identifier === process.argv[1]);
   console.log(t ? t.name : "unknown");
 ' "$LAB_SIM_DEVICE_TYPE")"
+
+# The iOS 18.4 to 18.x simulator runtimes keep libswiftWebKit.dylib only in their OS cryptex, where
+# dyld does not look; an app with a deployment target before 18.4 that uses a Swift-refined WebKit
+# API (callAsyncJavaScript, evaluateJavaScript with a content world) then stops at launch with
+# "Library not loaded: /usr/lib/swift/libswiftWebKit.dylib" (WebKit bug 293831). The workaround of
+# that bug: a dyld fallback path to the cryptex copy, for the app process only (simctl passes
+# SIMCTL_CHILD_* to the launched app). Lab only; the app and its deployment target do not change.
+LAUNCH_ENV=""
+case "$OS" in
+  18.[4-9] | 18.[4-9].*)
+    RUNTIME_ROOT="$(xcrun simctl list runtimes -j | node -e '
+      const r = JSON.parse(require("fs").readFileSync(0, "utf8")).runtimes;
+      const m = r.find((x) => x.isAvailable && x.platform === "iOS" && x.version === process.argv[1]);
+      console.log(m ? m.runtimeRoot : "");
+    ' "$OS")"
+    SWIFT_CRYPTEX="$RUNTIME_ROOT/System/Cryptexes/OS/usr/lib/swift"
+    if [ -n "$RUNTIME_ROOT" ] && [ ! -f "$RUNTIME_ROOT/usr/lib/swift/libswiftWebKit.dylib" ] &&
+      [ -f "$SWIFT_CRYPTEX/libswiftWebKit.dylib" ]; then
+      export SIMCTL_CHILD_DYLD_FALLBACK_LIBRARY_PATH="$SWIFT_CRYPTEX"
+      LAUNCH_ENV="DYLD_FALLBACK_LIBRARY_PATH=<runtime root>/System/Cryptexes/OS/usr/lib/swift (WebKit bug 293831)"
+      log "iOS $OS: $LAUNCH_ENV"
+    fi
+    ;;
+esac
 
 # 3. Build and install.
 if [ "${SKIP_BUILD:-0}" != 1 ]; then
@@ -127,6 +151,9 @@ while [ "$k" -le "$LAST" ]; do
   [ "$code" = 200 ] || fail "POST /run/end: $code"
   xcrun simctl terminate "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
   if [ -f "$OUTDIR/DONE" ]; then OUTCOME="$(cat "$OUTDIR/DONE")"; else OUTCOME="error: no DONE after $WAIT s"; fi
+  # An app that stops before it writes anything (for example at launch) leaves no folder; the run
+  # still goes to ios-failed/ with empty app parts.
+  mkdir -p "$OUTDIR"
   for f in app.jsonl metrics.json; do [ -f "$OUTDIR/$f" ] || printf '' >"$OUTDIR/$f"; done
   [ -s "$OUTDIR/metrics.json" ] || echo '{}' >"$OUTDIR/metrics.json"
   node -e '
@@ -157,9 +184,11 @@ if [ -f "$WORK/app-run.json" ]; then
   XCODE="$(xcodebuild -version | tr '\n' ' ' | sed 's/ *$//')"
   SWIFT="$(xcrun swift --version 2>/dev/null | head -1)"
   node -e '
-    const [date, xcode, swift, device, commit] = process.argv.slice(1);
-    process.stdout.write(JSON.stringify({ date, tools: { xcode, swift }, device_model: device, app_commit: commit }));
-  ' "$(date -u +%Y-%m-%d)" "$XCODE" "$SWIFT" "$DEVICE" "$COMMIT" >"$WORK/facts.json"
+    const [date, xcode, swift, device, commit, launchEnv] = process.argv.slice(1);
+    const facts = { date, tools: { xcode, swift }, device_model: device, app_commit: commit };
+    if (launchEnv !== "") facts.launch_env = launchEnv;
+    process.stdout.write(JSON.stringify(facts));
+  ' "$(date -u +%Y-%m-%d)" "$XCODE" "$SWIFT" "$DEVICE" "$COMMIT" "$LAUNCH_ENV" >"$WORK/facts.json"
   node "$HERE/join.mjs" --run-json "$WORK/app-run.json" --facts "$WORK/facts.json" --out "$EVIDENCE"
 fi
 [ "$failed" = 0 ] || exit 1

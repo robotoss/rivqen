@@ -78,7 +78,7 @@ test("probe_run_allows_a_stream_decision_but_no_fetched_bytes", () => {
   assert.deepEqual(byteChecks(events, passMetrics, null, "probe").problems, []);
 });
 
-function cutRun({ after = 3000, read = 3000, outcome = "error", second = { decision: "pass", reason: "claimed" }, fallback = true } = {}) {
+function cutRun({ after = 3000, read = 3000, outcome = "error", second = { decision: "pass", reason: "claimed" }, fallback = true, kind = "cut", beacon = [] } = {}) {
   const sha = createHash("sha256").update("x").digest("hex");
   const events = [
     app("app.intercept", { decision: "stream" }),
@@ -86,10 +86,11 @@ function cutRun({ after = 3000, read = 3000, outcome = "error", second = { decis
     ...(fallback ? [app("app.probe", { name: "native.step", value: "fallback-load" })] : []),
     ...(second ? [app("app.intercept", second)] : []),
     app("app.fetch.end", { bytes: 3000, complete: false }),
+    ...beacon,
     host("host.cut", { after }),
   ];
   const metrics = { fetch: { sha256: sha }, stream: { outcome, bytes: read, sha256: sha }, dropped_events: 0 };
-  return byteChecks(events, metrics, null, "cut").problems;
+  return byteChecks(events, metrics, null, kind).problems;
 }
 
 test("cut_run_is_ok_when_the_webview_got_the_bytes_before_the_cut_and_the_fallback_passed", () => {
@@ -135,4 +136,31 @@ test("cut_run_fails_on_each_broken_condition", () => {
   assert.match(cutRun({ second: null }).join(), /no fallback request/);
   assert.match(cutRun({ second: { decision: "pass", reason: "url" } }).join(), /no fallback request/);
   assert.match(cutRun({ fallback: false }).join(), /no fallback load/);
+});
+
+test("partial_set_holds_the_cut_and_delivers_more_than_one_read_block_on_api_29", () => {
+  const q37 = new URL(pageUrl("CAP-A-08", "r", undefined, "partial", "37")).searchParams;
+  const q29 = new URL(pageUrl("CAP-A-08", "r", undefined, "partial", "29")).searchParams;
+  assert.equal(setOf("CAP-A-08", "partial").scenario, "cut-range");
+  assert.equal(setOf("CAP-A-08", "partial").kind, "partial");
+  for (const q of [q37, q29]) {
+    assert.ok(Number(q.get("hold")) >= 10000 && Number(q.get("hold")) <= 60000, "hold covers a cold WebView start, within the host limit");
+    assert.ok(Number(q.get("after")) < Number(q.get("size")));
+  }
+  assert.ok(Number(q29.get("after")) > 65536, "API 29: more than one 64 KiB read block before the cut");
+  // The catalog set keeps the S2 parameters (no hold), so its stored runs stay reproducible.
+  assert.equal(new URL(pageUrl("CAP-A-08", "r")).searchParams.get("hold"), null);
+});
+
+test("partial_run_needs_the_beacon_of_chunk_0_before_the_cut", () => {
+  const beacon0 = host("host.beacon", { k: 0 });
+  assert.deepEqual(cutRun({ kind: "partial", beacon: [beacon0] }), []);
+  assert.match(cutRun({ kind: "partial" }).join(), /no beacon of chunk 0 before the cut/);
+  assert.match(cutRun({ kind: "partial", beacon: [host("host.beacon", { k: 1 })] }).join(), /no beacon of chunk 0/);
+  // A beacon after the cut does not count.
+  const late = [app("app.intercept", { decision: "stream" }), host("host.cut", { after: 3000 }), beacon0];
+  const metrics = { fetch: { sha256: "a" }, stream: { outcome: "error", bytes: 0, sha256: "a" }, dropped_events: 0 };
+  assert.match(byteChecks(late, metrics, null, "partial").problems.join(), /no beacon of chunk 0/);
+  // The cut checks still apply.
+  assert.match(cutRun({ kind: "partial", beacon: [beacon0], outcome: "end" }).join(), /outcome end/);
 });

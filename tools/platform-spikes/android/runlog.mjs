@@ -57,7 +57,8 @@ const echoTarget = (run) => `/s/echo?html=1&run=${run}`;
  * - `kind`: what an ok run needs (`byteChecks`): `stream` (the S1 byte checks), `pass` (the rule passed
  *   the main frame and the WebView read no byte of the early fetch), `probe` (the WebView read no byte
  *   of the early fetch; the decision is the observation), `cut` (the delivered bytes equal the bytes
- *   before the cut, the stream ended with an error, and the fallback load ran).
+ *   before the cut, the stream ended with an error, and the fallback load ran), `partial` (a `cut`
+ *   run whose beacon of chunk 0 came before the cut: the delivered part reached the renderer).
  */
 /**
  * WebView 91 (API 29 image) passes bytes on in 64 KiB blocks: each native read asks for the free
@@ -65,6 +66,9 @@ const echoTarget = (run) => `/s/echo?html=1&run=${run}`;
  * stream sets use 65,536-byte chunks, as the API 37 sets use 2048-byte chunks.
  */
 const BLOCK_29 = 65536;
+
+/** `/s/cut` hold of the partial set (ms): longer than a cold WebView start (7.4 s seen) and the commit. */
+const PARTIAL_HOLD_MS = 15000;
 
 export const SETS = {
   "CAP-A-01": {
@@ -107,7 +111,18 @@ export const SETS = {
   // TLS error (A-03): an allowed origin with a self-signed certificate.
   "CAP-A-05": { "": { origin: BAD_ORIGIN, path: "/s/echo", params: { html: 1 }, kind: "pass" } },
   // Partial response: a cut main-frame stream (CL-33 fallback), then byte ranges of a subresource.
-  "CAP-A-08": { "": { path: "/s/cut", params: { after: 3000, size: 8192 }, scenario: "cut-range", kind: "cut" } },
+  "CAP-A-08": {
+    "": { path: "/s/cut", params: { after: 3000, size: 8192 }, scenario: "cut-range", kind: "cut" },
+    // S3 partial page: the host holds the connection for PARTIAL_HOLD_MS after the delivered bytes,
+    // whose start is the chunk-0 markup (beacon k=0, chunk probe 0), then it closes. The hold starts
+    // at the early fetch, before the WebView exists, so it is longer than a cold WebView start. On
+    // API 29 the delivered part is larger than one 64 KiB read block, so the first block (with the
+    // chunk-0 markup) reaches the renderer before the close.
+    "partial": {
+      path: "/s/cut", params: { after: 3000, size: 8192, hold: PARTIAL_HOLD_MS }, scenario: "cut-range", kind: "partial",
+      byApi: { 29: { params: { after: BLOCK_29 + 4464, size: 2 * BLOCK_29 + 8192, hold: PARTIAL_HOLD_MS } } },
+    },
+  },
   // Cookie of an intercepted response (COOKIE_INTERCEPT): one Set-Cookie, visible to scripts.
   "CAP-A-06": {
     "": { path: "/s/cookie/set", params: COOKIE_PAGE, scenario: "cookie-on", kind: "fetched" },
@@ -197,6 +212,7 @@ function webviewOf(work) {
 export function byteChecks(events, metrics, expectedStream, kind = "stream") {
   if (kind === "pass" || kind === "probe") return passChecks(events, metrics, kind);
   if (kind === "cut") return cutChecks(events, metrics);
+  if (kind === "partial") return partialChecks(events, metrics);
   if (kind === "fetched") return fetchedChecks(events, metrics);
   if (kind === "steps") return stepChecks(events, metrics);
   const app = events.filter((e) => e.src === "app");
@@ -340,6 +356,26 @@ export function cutChecks(events, metrics) {
   return { checks, problems, expected: { bytes: checks.fetch_bytes, sha256: metrics.fetch?.sha256 ?? null } };
 }
 
+/**
+ * Checks of a partial-page run (CAP-A-08 `partial`): the checks of a cut run, and the delivered part
+ * reached the renderer before the host closed the connection: the beacon of chunk 0 (in the first
+ * bytes of the body) came before the first `host.cut` in host order.
+ */
+export function partialChecks(events, metrics) {
+  const result = cutChecks(events, metrics);
+  const host = events.filter((e) => e.src === "host");
+  result.checks.beacon_before_cut = beaconBeforeCut(host);
+  if (!result.checks.beacon_before_cut) result.problems.push("no beacon of chunk 0 before the cut: the delivered part did not reach the renderer");
+  return result;
+}
+
+/** True when `host.beacon` k=0 comes before the first `host.cut` (host events in host order). */
+function beaconBeforeCut(host) {
+  const beacon = host.findIndex((e) => e.ev === "host.beacon" && e.k === 0);
+  const cut = host.findIndex((e) => e.ev === "host.cut");
+  return beacon >= 0 && cut > beacon;
+}
+
 function join([work, out, capability, api, k, run, url, elapsed, set = ""]) {
   const app = readLines(path.join(work, "app.jsonl"));
   const host = readLines(path.join(work, "host.jsonl"));
@@ -477,6 +513,9 @@ export function facts(events) {
     host_requests: host.filter((e) => e.ev === "host.request").map((e) => `${e.site} ${e.target}${e.range ? ` [${e.range}]` : ""}`),
     host_statuses: host.filter((e) => e.ev === "host.response").map((e) => e.status),
     host_cuts: host.filter((e) => e.ev === "host.cut").map((e) => e.after),
+    // S3 partial page: host order of the beacons and the cuts, and whether chunk 0 reached the renderer first.
+    host_beacons_and_cuts: host.filter((e) => e.ev === "host.beacon" || e.ev === "host.cut").map((e) => (e.ev === "host.cut" ? `cut ${e.after}` : `beacon ${e.k}`)),
+    beacon_before_cut: beaconBeforeCut(host),
     run_ok: events.at(-1)?.ok ?? false,
   };
 }

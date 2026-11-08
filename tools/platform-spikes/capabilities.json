@@ -21,7 +21,7 @@
           "evidence/spikes/wp-04/android/CAP-A-01/37/run-3.jsonl"
         ],
         "metrics": "evidence/spikes/wp-04/android/CAP-A-01/37/run-1.metrics.json",
-        "recording": null
+        "recording": "evidence/recordings/wp-04/CAP-A-01-android-37.mp4"
       },
       {
         "os": "29",
@@ -61,7 +61,7 @@
           "evidence/spikes/wp-04/android/CAP-A-02/37/run-3.jsonl"
         ],
         "metrics": "evidence/spikes/wp-04/android/CAP-A-02/37/run-1.metrics.json",
-        "recording": null
+        "recording": "evidence/recordings/wp-04/CAP-A-02-android-37.mp4"
       },
       {
         "os": "29",
@@ -135,7 +135,7 @@
           "evidence/spikes/wp-04/android/CAP-A-04/37/run-3.jsonl"
         ],
         "metrics": "evidence/spikes/wp-04/android/CAP-A-04/37/run-1.metrics.json",
-        "recording": null
+        "recording": "evidence/recordings/wp-04/CAP-A-04-android-37.mp4"
       },
       {
         "os": "29",
@@ -172,7 +172,7 @@
           "evidence/spikes/wp-04/android/CAP-A-05/37/run-3.jsonl"
         ],
         "metrics": "evidence/spikes/wp-04/android/CAP-A-05/37/run-1.metrics.json",
-        "recording": null
+        "recording": "evidence/recordings/wp-04/CAP-A-05-android-37.mp4"
       },
       {
         "os": "29",
@@ -250,7 +250,7 @@
           "evidence/spikes/wp-04/android/CAP-A-07/37/run-3.jsonl"
         ],
         "metrics": "evidence/spikes/wp-04/android/CAP-A-07/37/run-1.metrics.json",
-        "recording": null
+        "recording": "evidence/recordings/wp-04/CAP-A-07-android-37.mp4"
       },
       {
         "os": "29",
@@ -280,7 +280,7 @@
         "os": "37",
         "webview": "com.google.android.webview 145.0.7632.218",
         "verdict": "conditional",
-        "condition": "A main-frame stream that ends with an error gives an error page (net::ERR_FAILED), not the delivered bytes, so the session must call loadUrl again (CL-33) to get the normal load; a cut after the document committed (partial page) is not tested (/s/cut has no delay). Range requests of subresources pass unchanged: the interceptor sees the Range field, the page gets 206 with the right bytes and 416 for a bad range",
+        "condition": "A main-frame stream that ends with an error before the document committed gives an error page (net::ERR_FAILED), not the delivered bytes; after the commit (partial set: /s/cut hold) the WebView calls onPageStarted, onReceivedError (net::ERR_FAILED) and onPageFinished but keeps the partial page (readyState loading, the delivered text, no error page). In both cases the session must detect the error and call loadUrl again (CL-33). Range requests of subresources pass unchanged: the interceptor sees the Range field, the page gets 206 with the right bytes and 416 for a bad range",
         "runs": [
           "evidence/spikes/wp-04/android/CAP-A-08/37/run-1.jsonl",
           "evidence/spikes/wp-04/android/CAP-A-08/37/run-2.jsonl",
@@ -293,7 +293,7 @@
         "os": "29",
         "webview": "com.google.android.webview 91.0.4472.114",
         "verdict": "conditional",
-        "condition": "A main-frame stream that ends with an error gives an error page (net::ERR_FAILED), not the delivered bytes, so the session must call loadUrl again (CL-33) to get the normal load; a cut after the document committed (partial page) is not tested (/s/cut has no delay). Range requests of subresources pass unchanged: the interceptor sees the Range field, the page gets 206 with the right bytes and 416 for a bad range",
+        "condition": "A main-frame stream that ends with an error before the document committed gives an error page (net::ERR_FAILED), not the delivered bytes; after the commit (partial set: /s/cut hold) the WebView calls onPageStarted, onReceivedError (net::ERR_FAILED) and onPageFinished but keeps the partial page (readyState loading, no error page), and that page has only the bytes of the first full 64 KiB read block (the last 4464 of 70,000 delivered bytes never reach it). In both cases the session must detect the error and call loadUrl again (CL-33). Range requests of subresources pass unchanged: the interceptor sees the Range field, the page gets 206 with the right bytes and 416 for a bad range",
         "runs": [
           "evidence/spikes/wp-04/android/CAP-A-08/29/run-1.jsonl",
           "evidence/spikes/wp-04/android/CAP-A-08/29/run-2.jsonl",

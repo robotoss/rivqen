@@ -120,6 +120,9 @@ test('sessions_follow_the_session_created_order_of_the_harness', () => {
     { step: 2, opened: true, session: 2, partition: CTX.account, url: CTX.url },
     { step: 3, opened: false, partition: CTX.account, url: CTX.url },
   ]);
+  // Only a step.start of the conductor is a create_session step (another event with a step object is not).
+  const end = { ev: 'step.end', src: 'conductor', step: { do: 'create_session' } };
+  assert.equal(project(step(1, { do: 'create_session' }), end, created(1, 1, 'a')).sessions.length, 1);
 });
 
 test('cookie_events_become_sorted_get_and_set_entries', () => {
@@ -236,10 +239,22 @@ test('compare_client_names_the_first_different_item', () => {
   const other = client();
   other.sessions[0].opened = false;
   assert.match(compareClient(client(), other), /^first difference at item 1: expected session \{/);
+  assert.equal(compareClient(client(), client({ steps: [1, 2] })), 'first difference at item 2: expected phase 1 steps [1,1]; trace phase 1 steps [1,2]');
   // A member outside the compared items still makes the members different.
   const extra = client();
   extra.phases[0].extra = 1;
   assert.equal(compareClient(client(), extra), 'the projections differ');
+});
+
+test('dl120_u13_takes_requests_without_a_response_and_trace_requests_that_the_expected_member_lacks', () => {
+  const u13 = { notReproduced: 'U-13' };
+  const request = (exchange, response) => ({ exchange, method: 'GET', target: '/catalog', fields: [], response });
+  const held = request(1, null);
+  const error = request(2, { status: 500, fields: [['etag', 'e']], complete: true });
+  // A request without a response (held, server down) has no U-13 fields; it is compared as usual.
+  // A trace request that the expected member does not have can still show U-13.
+  assert.equal(compareClient(client({ requests: [held] }), client({ requests: [held, error] }), u13), 'first difference at item 4: expected (nothing); trace phase 1 requests {"exchange":2,"method":"GET","target":"/catalog","fields":[],"response":{"status":500,"fields":[],"complete":true}}');
+  assert.match(compareClient(client({ requests: [held] }), client({ requests: [held] }), u13), /^U-13: the trace does not show/);
 });
 
 test('project_runs_names_the_run_and_the_item', () => {

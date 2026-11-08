@@ -165,10 +165,14 @@ The normalization removes `vary`, `cdn-cache-control`, `surrogate-control`, `con
 
 | Input check (`parseRun`, `projectRun`) | Error code |
 |---|---|
-| A run that is not valid UTF-8 (decoded with `TextDecoder` `fatal`; a byte order mark is kept, so that line is not JSON) | `TRACE_INPUT` |
+| A run that is not bytes (`Uint8Array`), events that are not an array, or a run that is not valid UTF-8 (decoded with `TextDecoder` `fatal`; a byte order mark is kept, so that line is not JSON) | `TRACE_INPUT` |
 | More than 16 MiB or more than 100 000 events | `TRACE_LIMIT` |
-| A line that is not JSON, or not an event | `TRACE_JSON`, `TRACE_EVENT` |
+| A line that is not JSON, or not an event (an object with a string `ev`). The message names the line (empty lines are not counted) | `TRACE_JSON`, `TRACE_EVENT` |
 | The number of `session.created` events differs from the number of `create_session` steps | `TRACE_SESSION` |
+| A `cache.snapshot` without a `files` list, a file without a name, an unknown cache file, a file stem that is not a session id of the run, a `.header` file without `text` | `TRACE_SNAPSHOT` |
+| A `.header` line (LF or CRLF) without a colon | `TRACE_HEADER` |
+
+The error keeps the decoder or JSON error as its `cause`. `projectRuns` gives a projection error as the text `run <k>: <message>`; another exception propagates.
 
 | Rule | How |
 |---|---|
@@ -181,12 +185,13 @@ The normalization removes `vary`, `cdn-cache-control`, `surrogate-control`, `con
 | Check | Problem text |
 |---|---|
 | 6. Client files current; a case error | `<id>/expected.json: stale`, `missing`; `functions/<file>: stale`; `<id>: <member message>`; `<id>: <CODE>: <message>` (model error) |
-| 7. Client traces | `<id>: check 7: the steps differ from the steps of run <k> of <scenario> <mode>`; `<id>: check 7: the legacy-android result differs from the trace: first difference at item …` (with `not_reproduced: "U-13"`: `… U-13: the trace does not show the documented difference …`); `<id>: check 7: no stored run …` |
+| 7. Client traces | `<id>: check 7: the steps differ from the steps of run <k> of <scenario> <mode>`; `<id>: check 7: the legacy-android result differs from the trace: first difference at item …` (with `not_reproduced: "U-13"`: `… U-13: the trace does not show the documented difference …`); `<id>: check 7: no stored run …`; `<id>: check 7: a stored run of <scenario> <mode>: <projection error>`. The runs are the files `run-<k>.jsonl` (other files are not read), in the order of `<k>` |
 | 8. `OVERRIDE_NOT_NEEDED` | `<id>--ANDROID: OVERRIDE_NOT_NEEDED: the client member equals <id>` |
 | 9. `OVERRIDE_MISSING` | `<id>: OVERRIDE_MISSING for legacy-android: first difference at item …` |
 | 10. Client rules and rows | `<id>: rule CL-nn is not in legacy client section 9`; `the catalog has <n> canonical client fixtures, fewer than <floor> (CLIENT_FLOOR)`; `rule CL-nn is not covered by any client or function fixture` |
 | 11. Stored runs used | `evidence/traces/client/android/<scenario>/<mode>: stored client runs are not used by any client fixture`; `<id>: the stored runs of <scenario> <mode> are already the trace of <id>` |
-| 12. Function evidence | `functions/<profile>.json: <case>: no evidence line`; `functions/legacy-android.json: <case>: the Android model gives …, the evidence …` |
+| 12. Function evidence | `functions/<profile>.json: <case>: no evidence line`; `functions/legacy-android.json: <case>: the Android model gives …, the evidence …`; `functions/cases.json: <parse error>`; `evidence/traces/client/<path>: <parse error>` (a missing evidence file is skipped) |
+| Other | `<id>/<file>: unknown file` (a client fixture directory has only `case.json` and `expected.json`); `<client page>: no rule CL-nn found` (when client or function fixtures exist) |
 
 `CLIENT_FLOOR` in `gen.mjs` (as `CATALOG_SIZE`) is the number of canonical client fixtures that `fixtures/legacy` must keep. It is 104: the 82 canonical client fixtures of T-06, the four of CS-28 and CS-29 (T-04c) and the 18 of T-09 (the rules of DL-123 to DL-131: `REDIRECT`, `REDIRECT-CACHED`, `ERROR-FORBIDDEN`, `NOT-HTML`, `NO-STORE-304`, `CREDENTIALED`, `CREDENTIALED-ALLOWED`, `ACTION-FIELDS`, `DIFF-AGE-RELOAD`, each `-Q` and `-S`). The lane that adds canonical client fixtures raises it; a test checks that it equals the number of canonical client fixture directories in `fixtures/legacy`. Above `0`, for `fixtures/legacy` only: fewer canonical client fixtures than the floor is a problem, and check 10 (coverage) and check 11 (stored runs used) give problems. At `0` they give one note each, also when client fixtures exist. So removing client fixtures cannot switch the checks off. The rule names of check 10 and the second line of check 11 (one stored mode, one fixture) always apply. A scenario with `webview: true` in `tools/upstream-lab/client/scenarios.json` (CS-19) is a note with its reason. When `fixtures/legacy/functions/` exists, the generator writes `cases.json` (a byte copy of `tools/upstream-lab/client/functions.json`) and the three profile files; the canonical entries cover CL-14, CL-15, CL-16, CL-23, CL-24, CL-28, CL-41, CL-42 and CL-43. A `trace` entry is the evidence line with the members of the README table; where the Android session model uses a function (session id, split, diff, etag), the model must also equal every evidence line of that function.
 

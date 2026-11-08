@@ -4,6 +4,7 @@
   "versions": {
     "okhttp": "OkHttp 5.5.1 (okhttp-android aar classes, the artifact of the Android spike); API: HttpUrl.get(input) or HttpUrl.get(base).resolve(input), toString()",
     "java-net-uri": "JDK 21.0.11 (Azul Systems, Inc.); API: new URI(input) or new URI(base).resolve(new URI(input)), toASCIIString()",
+    "android-net-uri": "android.net.Uri of the framework (API 37); API: Uri.parse(input), toString(), getHost(), getEncodedPath(), getEncodedQuery()",
     "foundation-url-macos": "Foundation of Version 26.6.2 (Build 25G83); swift-driver version: 1.168.6 Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1); API: URL(string:) or URL(string:relativeTo:)?.absoluteURL, absoluteString",
     "foundation-urlcomponents-macos": "Foundation of Version 26.6.2 (Build 25G83); swift-driver version: 1.168.6 Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1); API: URLComponents(string:), .string (url(relativeTo:)?.absoluteString for a base)",
     "foundation-url-ios-sim": "Foundation of Version 27.0 (Build 24A434); swift-driver version: 1.168.6 Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1); API: URL(string:) or URL(string:relativeTo:)?.absoluteURL, absoluteString",
@@ -34,6 +35,18 @@
       "host_differ": 16,
       "path_differ": 10,
       "query_differ": 2
+    },
+    "android-net-uri": {
+      "total": 67,
+      "equal": 22,
+      "differ": 38,
+      "refuses": 4,
+      "accepts-refused": 3,
+      "both-refuse": 0,
+      "missing": 0,
+      "host_differ": 13,
+      "path_differ": 15,
+      "query_differ": 5
     },
     "foundation-url-macos": {
       "total": 67,
@@ -114,6 +127,14 @@
           "href": "differ",
           "href_stack": "https://a.example/p?q=it's"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=it's"
+        },
         "foundation-url-macos": {
           "verdict": "differ",
           "host": "equal",
@@ -172,6 +193,14 @@
         "java-net-uri": {
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a|b"
         },
         "foundation-url-macos": {
           "verdict": "differ",
@@ -232,6 +261,14 @@
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
         },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a^b"
+        },
         "foundation-url-macos": {
           "verdict": "differ",
           "host": "equal",
@@ -290,6 +327,14 @@
         "java-net-uri": {
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a\\b"
         },
         "foundation-url-macos": {
           "verdict": "differ",
@@ -350,6 +395,14 @@
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
         },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a`b"
+        },
         "foundation-url-macos": {
           "verdict": "differ",
           "host": "equal",
@@ -408,6 +461,14 @@
         "java-net-uri": {
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q={a}"
         },
         "foundation-url-macos": {
           "verdict": "differ",
@@ -468,6 +529,14 @@
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a b"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -526,6 +595,14 @@
         "java-net-uri": {
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=\"x\""
         },
         "foundation-url-macos": {
           "verdict": "equal",
@@ -586,6 +663,14 @@
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=<x>"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -642,6 +727,14 @@
           "href_stack": "https://a.example/p?q[0]=1"
         },
         "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q[0]=1"
+        },
+        "android-net-uri": {
           "verdict": "equal",
           "host": "equal",
           "path": "equal",
@@ -712,6 +805,14 @@
           "href": "equal",
           "href_stack": "https://a.example/p?q=%C3%A9"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=é"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -768,6 +869,14 @@
           "href_stack": "https://a.example/p?q=%41%7e%2D"
         },
         "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%41%7e%2D"
+        },
+        "android-net-uri": {
           "verdict": "equal",
           "host": "equal",
           "path": "equal",
@@ -838,6 +947,14 @@
           "href": "equal",
           "href_stack": "https://a.example/p?q=%c3%a9"
         },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%c3%a9"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -897,6 +1014,14 @@
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
         },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%zz%"
+        },
         "foundation-url-macos": {
           "verdict": "differ",
           "host": "equal",
@@ -953,6 +1078,14 @@
           "href_stack": "https://a.example/p?"
         },
         "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?"
+        },
+        "android-net-uri": {
           "verdict": "equal",
           "host": "equal",
           "path": "equal",
@@ -1023,6 +1156,14 @@
           "href": "equal",
           "href_stack": "https://a.example/p?a=1+2&b=%2B&a=3"
         },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?a=1+2&b=%2B&a=3"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -1079,6 +1220,14 @@
           "href_stack": "https://a.example/x"
         },
         "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/%41%7e/%2e%2E/x"
+        },
+        "android-net-uri": {
           "verdict": "differ",
           "host": "equal",
           "path": "differ",
@@ -1149,6 +1298,14 @@
           "href": "equal",
           "href_stack": "https://a.example/a%2Fb/c%5Cd"
         },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/a%2Fb/c%5Cd"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -1208,6 +1365,14 @@
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
         },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/a%zzb/%"
+        },
         "foundation-url-macos": {
           "verdict": "differ",
           "host": "equal",
@@ -1266,6 +1431,14 @@
         "java-net-uri": {
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a b/\"<>`{}|^[]"
         },
         "foundation-url-macos": {
           "verdict": "differ",
@@ -1330,6 +1503,14 @@
           "href": "equal",
           "href_stack": "https://a.example/caf%C3%A9/%E6%97%A5%E6%9C%AC"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/café/日本"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -1388,6 +1569,14 @@
         "java-net-uri": {
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/p\\q"
         },
         "foundation-url-macos": {
           "verdict": "differ",
@@ -1448,6 +1637,14 @@
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example\\p"
+        },
         "foundation-url-macos": {
           "verdict": "refuses",
           "error": "URL(string:) returned nil"
@@ -1490,6 +1687,14 @@
         "java-net-uri": {
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example\\@b.example/p"
         },
         "foundation-url-macos": {
           "verdict": "differ",
@@ -1547,6 +1752,14 @@
           "href_stack": "https://a.example/"
         },
         "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example"
+        },
+        "android-net-uri": {
           "verdict": "differ",
           "host": "equal",
           "path": "differ",
@@ -1617,6 +1830,14 @@
           "href": "differ",
           "href_stack": "https://a.example/a/./b/../c"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a/./b/../c"
+        },
         "foundation-url-macos": {
           "verdict": "differ",
           "host": "equal",
@@ -1673,6 +1894,14 @@
           "href_stack": "https://a.example/x"
         },
         "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/../../x"
+        },
+        "android-net-uri": {
           "verdict": "differ",
           "host": "equal",
           "path": "differ",
@@ -1743,6 +1972,14 @@
           "href": "equal",
           "href_stack": "https://a.example//a//b/"
         },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example//a//b/"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -1799,6 +2036,14 @@
           "href_stack": "https://a.example/"
         },
         "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a/.."
+        },
+        "android-net-uri": {
           "verdict": "differ",
           "host": "equal",
           "path": "differ",
@@ -1865,6 +2110,14 @@
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=1#frag ment"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -1921,6 +2174,14 @@
           "href_stack": "https://a.example./p"
         },
         "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example./p"
+        },
+        "android-net-uri": {
           "verdict": "equal",
           "host": "equal",
           "path": "equal",
@@ -1991,6 +2252,14 @@
           "href": "differ",
           "href_stack": "HTTPS://A.Example/P"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "HTTPS://A.Example/P"
+        },
         "foundation-url-macos": {
           "verdict": "differ",
           "host": "differ",
@@ -2053,6 +2322,14 @@
           "query": "equal",
           "href": "differ",
           "href_stack": "https://fa%C3%9F.example/catalog"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://faß.example/catalog"
         },
         "foundation-url-macos": {
           "verdict": "equal",
@@ -2117,6 +2394,14 @@
           "href": "differ",
           "href_stack": "https://b%C3%BCcher.example/"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://bücher.example/"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "differ",
@@ -2180,6 +2465,14 @@
           "href": "differ",
           "href_stack": "https://b%C3%BCcher.example/"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://bücher.example/"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "differ",
@@ -2236,6 +2529,14 @@
           "href_stack": "https://xn--fa-hia.example/catalog"
         },
         "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--fa-hia.example/catalog"
+        },
+        "android-net-uri": {
           "verdict": "equal",
           "host": "equal",
           "path": "equal",
@@ -2306,6 +2607,14 @@
           "href": "differ",
           "href_stack": "https://%EF%BD%81.example/"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://ａ.example/"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -2362,6 +2671,14 @@
           "href_stack": "https://127.1/"
         },
         "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://127.1/"
+        },
+        "android-net-uri": {
           "verdict": "differ",
           "host": "differ",
           "path": "equal",
@@ -2432,6 +2749,14 @@
           "href": "differ",
           "href_stack": "https://0x7f.0.0.1/"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://0x7f.0.0.1/"
+        },
         "foundation-url-macos": {
           "verdict": "differ",
           "host": "differ",
@@ -2488,6 +2813,14 @@
           "href_stack": "https://2130706433/"
         },
         "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://2130706433/"
+        },
+        "android-net-uri": {
           "verdict": "differ",
           "host": "differ",
           "path": "equal",
@@ -2558,6 +2891,14 @@
           "href": "differ",
           "href_stack": "https://[2001:DB8::1]/p"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://[2001:DB8::1]/p"
+        },
         "foundation-url-macos": {
           "verdict": "differ",
           "host": "differ",
@@ -2614,6 +2955,14 @@
           "href_stack": "https://[2001:db8::1]/p"
         },
         "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://[2001:0db8:0:0:0:0:0:1]/p"
+        },
+        "android-net-uri": {
           "verdict": "differ",
           "host": "differ",
           "path": "equal",
@@ -2684,6 +3033,14 @@
           "href": "equal",
           "href_stack": "https://a_b.example/"
         },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a_b.example/"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -2747,6 +3104,14 @@
           "href": "differ",
           "href_stack": "https://a%2Eexample/"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a%2Eexample/"
+        },
         "foundation-url-macos": {
           "verdict": "differ",
           "host": "differ",
@@ -2802,6 +3167,11 @@
           "verdict": "both-refuse",
           "error": "java.net.URISyntaxException"
         },
+        "android-net-uri": {
+          "verdict": "accepts-refused",
+          "href": "https://a b.example/",
+          "error": null
+        },
         "foundation-url-macos": {
           "verdict": "both-refuse",
           "error": "URL(string:) returned nil"
@@ -2842,6 +3212,14 @@
           "href_stack": "https://p/"
         },
         "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:///p"
+        },
+        "android-net-uri": {
           "verdict": "differ",
           "host": "differ",
           "path": "differ",
@@ -2908,6 +3286,14 @@
           "href": "equal",
           "href_stack": "https://./p"
         },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://./p"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -2964,6 +3350,14 @@
           "href_stack": "https://user:pw@a.example/p"
         },
         "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user:pw@a.example/p"
+        },
+        "android-net-uri": {
           "verdict": "equal",
           "host": "equal",
           "path": "equal",
@@ -3034,6 +3428,14 @@
           "href": "equal",
           "href_stack": "https://user@a.example/p"
         },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user@a.example/p"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -3093,6 +3495,14 @@
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://us er:p@ss@a.example/p"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -3149,6 +3559,14 @@
           "href_stack": "https://a.example/p"
         },
         "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://:@a.example/p"
+        },
+        "android-net-uri": {
           "verdict": "differ",
           "host": "equal",
           "path": "equal",
@@ -3219,6 +3637,14 @@
           "href": "differ",
           "href_stack": "https://a.example:443/p"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:443/p"
+        },
         "foundation-url-macos": {
           "verdict": "differ",
           "host": "equal",
@@ -3275,6 +3701,14 @@
           "href_stack": "http://a.example/p"
         },
         "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "http://a.example:80/p"
+        },
+        "android-net-uri": {
           "verdict": "differ",
           "host": "equal",
           "path": "equal",
@@ -3345,6 +3779,14 @@
           "href": "equal",
           "href_stack": "https://a.example:80/p"
         },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example:80/p"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -3401,6 +3843,14 @@
           "href_stack": "https://a.example/p"
         },
         "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:0443/p"
+        },
+        "android-net-uri": {
           "verdict": "differ",
           "host": "equal",
           "path": "equal",
@@ -3467,6 +3917,14 @@
           "href": "equal",
           "href_stack": "https://a.example:0/p"
         },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example:0/p"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -3523,6 +3981,11 @@
           "href": "https://a.example:65536/p",
           "error": null
         },
+        "android-net-uri": {
+          "verdict": "accepts-refused",
+          "href": "https://a.example:65536/p",
+          "error": null
+        },
         "foundation-url-macos": {
           "verdict": "accepts-refused",
           "href": "https://a.example:65536/p",
@@ -3567,6 +4030,14 @@
           "href_stack": "https://a.example/p"
         },
         "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:/p"
+        },
+        "android-net-uri": {
           "verdict": "differ",
           "host": "equal",
           "path": "equal",
@@ -3630,6 +4101,11 @@
           "href": "https://a.example:44x/p",
           "error": null
         },
+        "android-net-uri": {
+          "verdict": "accepts-refused",
+          "href": "https://a.example:44x/p",
+          "error": null
+        },
         "foundation-url-macos": {
           "verdict": "both-refuse",
           "error": "URL(string:) returned nil"
@@ -3672,6 +4148,14 @@
         "java-net-uri": {
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/p\tq\nr"
         },
         "foundation-url-macos": {
           "verdict": "differ",
@@ -3732,6 +4216,14 @@
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
         },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "  https://a.example/p  "
+        },
         "foundation-url-macos": {
           "verdict": "refuses",
           "error": "URL(string:) returned nil"
@@ -3772,6 +4264,14 @@
           "href_stack": "https://a.example/p"
         },
         "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:/a.example/p"
+        },
+        "android-net-uri": {
           "verdict": "differ",
           "host": "differ",
           "path": "differ",
@@ -3835,6 +4335,14 @@
           "href_stack": "https://a.example/p"
         },
         "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:a.example/p"
+        },
+        "android-net-uri": {
           "verdict": "differ",
           "host": "differ",
           "path": "differ",
@@ -3906,6 +4414,10 @@
           "href": "equal",
           "href_stack": "https://a.example/dir/x?y=1"
         },
+        "android-net-uri": {
+          "verdict": "refuses",
+          "error": "java.lang.UnsupportedOperationException"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -3969,6 +4481,10 @@
           "query": "equal",
           "href": "equal",
           "href_stack": "https://b.example/x"
+        },
+        "android-net-uri": {
+          "verdict": "refuses",
+          "error": "java.lang.UnsupportedOperationException"
         },
         "foundation-url-macos": {
           "verdict": "equal",
@@ -4034,6 +4550,10 @@
           "href": "differ",
           "href_stack": "https://a.example/dir/?q=1"
         },
+        "android-net-uri": {
+          "verdict": "refuses",
+          "error": "java.lang.UnsupportedOperationException"
+        },
         "foundation-url-macos": {
           "verdict": "equal",
           "host": "equal",
@@ -4093,6 +4613,10 @@
         "java-net-uri": {
           "verdict": "refuses",
           "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "refuses",
+          "error": "java.lang.UnsupportedOperationException"
         },
         "foundation-url-macos": {
           "verdict": "differ",

@@ -13,7 +13,7 @@ This page records how the URL types of the native stacks write the same URL, com
 | `whatwg-node` (reference) | Node.js v26.8.2, ada 4.0.0 | `new URL(input, base).href` | `hostname`, `pathname`, `search` without `?` |
 | `okhttp` | OkHttp 5.5.1 (the `okhttp-android` artifact of the Android spike), JDK 21.0.11, Okio 3.18.1 | `HttpUrl.get(input).toString()`; with a base `HttpUrl.get(base).resolve(input)` | `host()`, `encodedPath()`, `encodedQuery()` |
 | `java-net-uri` | `java.net.URI`, JDK 21.0.11 | `new URI(input).toASCIIString()`; `toString()` is in `extra` | `getHost()`, `getRawPath()`, `getRawQuery()` |
-| `android-net-uri` | NOT FOUND (not run yet: the emulator slot) | `Uri.parse(input).toString()` | `getHost()`, `getEncodedPath()`, `getEncodedQuery()` |
+| `android-net-uri` | `android.net.Uri` of the framework, Android 17 (API 37) emulator `sdk_gphone64_arm64` (the dex ran with `app_process`) | `Uri.parse(input).toString()` | `getHost()`, `getEncodedPath()`, `getEncodedQuery()` |
 | `foundation-url-macos`, `foundation-url-ios-sim` | Foundation of macOS 26.6.2 (25G83) and of the iOS 27.0 (24A434) simulator, Swift 6.4.2 | `URL(string:)` (with a base: `URL(string:relativeTo:)?.absoluteURL`), `absoluteString` | `host(percentEncoded: true)`, `path(percentEncoded: true)`, `query(percentEncoded: true)` |
 | `foundation-urlcomponents-macos`, `foundation-urlcomponents-ios-sim` | same | `URLComponents(string:)`, `.string`; `url?.absoluteString` is in `extra` | `percentEncodedHost`, `percentEncodedPath`, `percentEncodedQuery` |
 
@@ -29,7 +29,7 @@ The host comparison removes the brackets of an IPv6 host. A query that is empty 
 | `java.net.URI` | 19 | 26 | 19 | 2 | 1 |
 | Foundation `URL` (macOS = iOS 27.0 simulator) | 28 | 34 | 2 | 1 | 2 |
 | Foundation `URLComponents` (macOS = iOS 27.0 simulator) | 28 | 34 | 2 | 1 | 2 |
-| `android.net.Uri` | NOT FOUND | | | | |
+| `android.net.Uri` (API 37 emulator) | 22 | 38 | 4 (the 4 inputs with a base: no resolve API) | 3 | 0 |
 
 <Badge type="tip" text="FACT" /> The iOS 27.0 simulator gives the same `href`, host, path and query as macOS 26.6.2 for all 67 inputs and both Foundation types. The iOS 26.5 and iOS 18.5 runtimes were not run: NOT FOUND.
 
@@ -53,14 +53,14 @@ The host comparison removes the brackets of an IPv6 host. A query that is empty 
 
 <Badge type="tip" text="FACT" /> Other differences of `HttpUrl`: the path characters `\|` are written as `%7C` (WHATWG keeps `\|`); a space in a fragment stays a space (WHATWG writes `%20`; the fragment is not sent); the hosts `127.1`, `0x7f.0.0.1` and `2130706433` stay as written (WHATWG writes `127.0.0.1`); a host `.` and the port `0` are refused (WHATWG accepts them).
 
-<Badge type="tip" text="FACT" /> Security-relevant row: for the input `https://a.example\@b.example/p`, WHATWG reads the host `a.example` (the backslash ends the authority, the path is `/@b.example/p`). `HttpUrl` gives the same. Foundation `URL` and `URLComponents` give the host `b.example` and the user information `a.example\`. `java.net.URI` refuses the input. The SDK must not take the origin from a re-parse with Foundation (DL-040 already says so for iOS); this row is the evidence.
+<Badge type="tip" text="FACT" /> Security-relevant row: for the input `https://a.example\@b.example/p`, WHATWG reads the host `a.example` (the backslash ends the authority, the path is `/@b.example/p`). `HttpUrl` gives the same. Foundation `URL` and `URLComponents` give the host `b.example` and the user information `a.example\`. `java.net.URI` refuses the input. `android.net.Uri` gives the host `a.example` (same as WHATWG) but the path `\@b.example/p` (differs). The SDK must not take the origin from a re-parse with Foundation (DL-040 already says so for iOS); this row is the evidence.
 
 ### Reading <Badge type="warning" text="RESEARCH" />
 
 - `HttpUrl` is the closest stack to WHATWG for the Q-24 query classes (0 differences for `'`, `|`, `^`, backtick, braces). Its differences are in the host forms (IPv4 shorthand) and in a few path characters.
 - `java.net.URI` and the Foundation types would give another `href` for many URLs. If the SDK builds the binding input U from them, a delta navigation for such a URL ends in `INTEGRITY_ERROR` and one full load (see Q-24). The list shows that the SDK needs a WHATWG-conformant serializer of its own (or takes the string from `HttpUrl` and `URL.absoluteString` only where the table says "same"). This is an input for the decision of WP-13, not a decision.
 - The URL of the real request on iOS is not the issue of this page: `URLResponse.url` was not run through a network task here (no network). NOT FOUND.
-- `android.net.Uri` is parsed lazily and does not normalize: NOT FOUND until the Android run.
+- `android.net.Uri` does not normalize: `toString()` gives the input string as written. Its `href` equals WHATWG only when WHATWG changes nothing. It keeps `'`, a space, quotes, angle brackets and non-ASCII characters in the query, default and empty ports, dot segments, an empty path, an upper-case host, an IDN host as Unicode, and `127.1`-style hosts. Other API levels and the WebView are not part of this run: NOT FOUND.
 
 ## Reproduce
 

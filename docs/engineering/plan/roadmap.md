@@ -67,7 +67,7 @@ flowchart TD
 | Item | Content |
 |---|---|
 | Work packages | WP-04 |
-| Outputs | Android stream demo; iOS P1/P2/P3 prototypes and parity matrix; FFI microbenchmarks; cookie sync tests; ADR-002, ADR-003, ADR-009, ADR-014 accepted |
+| Outputs | Android stream demo; iOS P1/P2/P3 prototypes and parity matrix; FFI microbenchmarks; cookie sync tests; ADR-002 and ADR-003 accepted at G2; ADR-009 and ADR-014 proposed with the WP-04 data (H-127) |
 | Gate **G2** | Platform limits documented as ADRs; no private API needed for the chosen design |
 
 ### P3 — Rust core

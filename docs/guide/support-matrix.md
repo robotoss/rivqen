@@ -10,8 +10,8 @@ Minimum versions are **proposals** (ADR-015). They are confirmed at the start of
 
 | Platform | Proposed minimum | Tested on (target) | Notes |
 |---|---|---|---|
-| Android | API 26 (Android 8.0) — to confirm | API 26 … 37, several System WebView versions | Google Play requires `targetSdk` 36 for new apps and updates from 31 Aug 2026 |
-| iOS / iPadOS | iOS 17 — to confirm | Latest two majors (iOS 26, iOS 27) + minimum | `UIWebView` is not supported |
+| Android | API 26 (Android 8.0) — to confirm | API 26 … 37, several System WebView versions. WP-04 spikes: API 37 and API 29 emulators (H-128) | Google Play requires `targetSdk` 36 for new apps and updates from 31 Aug 2026 |
+| iOS / iPadOS | iOS 17 — to confirm | Latest two majors (iOS 26, iOS 27) + minimum. WP-04 spikes: iOS 27.1, 26.5, 18.5 simulators (H-128) | `UIWebView` is not supported |
 | Web (in WebView) | Evergreen engines | Android System WebView, WKWebView | Bridge needs the native SDK |
 | React | 18 | 18, 19 | |
 | Next.js | 15 | 15, 16 | App Router and Pages Router tested separately |

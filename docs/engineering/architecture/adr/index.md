@@ -53,19 +53,19 @@ An **ADR** records one important decision: the context, the options, the decisio
 | ADR | Title | Owner WP | Blocks | Recommended option |
 |---|---|---|---|---|
 | [ADR-001](#adr-001) | Rust core boundaries | WP-05 | Core design | Pure logic core; adapters own I/O |
-| [ADR-002](#adr-002) | FFI technology: UniFFI vs C ABI | WP-09 | Bindings | UniFFI for control plane; narrow C ABI for byte streams if measured |
-| [ADR-003](#adr-003) | iOS navigation strategy | WP-11 | iOS SDK | Decide after spike IOS-P1/P2/P3 |
+| [ADR-002](#adr-002) | FFI technology: UniFFI vs C ABI | WP-04 (data; human decides at G2, H-127); WP-09 implements | Bindings | UniFFI for control plane; narrow C ABI for byte streams if measured |
+| [ADR-003](#adr-003) | iOS navigation strategy | WP-04 (data; human decides at G2, H-127); WP-11 implements | iOS SDK | Decide after spike IOS-P1/P2/P3 |
 | [ADR-004](#adr-004) | Cache storage format | WP-07 | Cache | Files for bodies + SQLite for metadata, atomic rename |
 | [ADR-005](#adr-005) | Legacy protocol exact semantics and profiles | WP-01, WP-02 | legacy compatibility | **Accepted:** "Rivqen canonical" profile + `legacy-java`, `legacy-node`, `legacy-php` profiles |
 | [ADR-006](#adr-006) | RQP wire schema and markup | WP-17 | RQP | **Accepted:** `data-rq-block` attributes, inline manifest, `Rq-*` Structured Field headers, base64url SHA-256 |
 | [ADR-007](#adr-007) | WebSocket vs WebTransport | WP-16 | Realtime | WebSocket first; WebTransport experimental |
 | [ADR-008](#adr-008) | Security and privacy model | WP-18 | Release | Per threat model |
-| [ADR-009](#adr-009) | Streaming ABI and buffer ownership | WP-09 | Streaming | Bounded chunk API with single owner |
+| [ADR-009](#adr-009) | Streaming ABI and buffer ownership | WP-09 (WP-04 adds data) | Streaming | Bounded chunk API with single owner |
 | [ADR-010](#adr-010) | Server SDK implementation strategy | WP-13…15 | Servers | Native-language SDKs + shared conformance |
 | [ADR-011](#adr-011) | Cache encryption (AEAD and keys) | WP-07, WP-18 | Authenticated cache | Platform keys + audited AEAD crate |
 | [ADR-012](#adr-012) | Release hardening profiles | WP-18, WP-21 | Release | Standard toolchain optimizations only |
 | [ADR-013](#adr-013) | Delta mechanism for RQP | WP-17 | RQP | Evaluate Compression Dictionary Transport against block patches |
-| [ADR-014](#adr-014) | Android HTTP stack | WP-10 | Android | Adapter interface; choose by benchmark |
+| [ADR-014](#adr-014) | Android HTTP stack | WP-10 (WP-04 adds data) | Android | Adapter interface; choose by benchmark |
 | [ADR-015](#adr-015) | Minimum platform versions | WP-21 | Support matrix | See support matrix |
 | [ADR-016](#adr-016) | Native protocol first; legacy mode end of life | WP-00 | Roadmap, packaging | **Accepted direction:** RQP default in 1.0; legacy as optional modules, deprecated 1.0, removed 1.5 |
 | [ADR-017](#adr-017) | Error handling and logging | WP-05 | All code | No ignored errors; typed error chains; redacted structured logs |
@@ -82,7 +82,7 @@ An **ADR** records one important decision: the context, the options, the decisio
 - **Context.** UniFFI generates Kotlin and Swift bindings from Rust. Large byte buffers across UniFFI can be copied on each call.
 - **Options.** (1) UniFFI only. (2) Hand-written C ABI + JNI + Swift wrapper. (3) UniFFI for control plane, C ABI for the HTML byte stream.
 - **Recommendation.** Option 3 if the WP-04 FFI benchmark shows more than the agreed copy cost; otherwise option 1.
-- **Verification.** Microbenchmark: 1 MiB document in 16 KiB chunks, measure latency and copied bytes on a mid-range Android device and an iPhone.
+- **Verification.** Microbenchmark: 1 MiB document in 16 KiB chunks, measure latency and copied bytes. WP-04 measures on the Mac host, the Android emulator and the iOS simulator ("indicative", H-129); WP-09 checks the result on a mid-range Android device and an iPhone.
 
 ## ADR-003: iOS navigation strategy {#adr-003}
 

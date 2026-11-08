@@ -104,6 +104,8 @@ Common members: `ev`, `src` (`app`, `host`, `script`), `seq` (order inside its s
 | `host.cut` | host | `after` |
 | `run.end` | script | `ok`, `error` |
 
+Lane members (S2): `app.intercept` may have `redirect` and `reason`; `app.stream.read` may have `want` (the requested read length).
+
 App order notes (for section 8): `app.intercept` is written for main-frame requests (and for subresources that a scheme handler forwards); `app.fetch.end` may be written at the end of the run with `t` set to the time the fetch ended, because the end of the network body races the probes of the last chunks; Android `onPageCommitVisible` is the metric `metric.commit`, not an `app.nav` `commit` event, because it races the chunk probes.
 
 Never log: real hosts, real accounts, real cookies, tokens, device identifiers. Debug log tag: `RivqenSpike`.
@@ -131,7 +133,7 @@ A page reports a probe by `window.rqLab.probe(name, value)`. The app installs `r
 | `status` | `PerformanceNavigationTiming.responseStatus` of the document |
 
 - The prefix `native.` is reserved for probes that the app writes itself (for example `native.step`, `native.webview`, `native.wk_cookies`); the app refuses a page probe with this prefix.
-- A lane may add probe names for its own cases; it lists them in its README (iOS S1: `base`, `relative`, `content_type`, `charset`, `title`, `data`, `bridge.*`, `rqlab.page_world`, `webview.cookie_set`, `https.*`, `metric.fetch`, `metric.live_finish`).
+- A lane may add probe names for its own cases (Android S2: `native.range_request`, `native.step`, `native.doc`, `native.after_load`, `range.*`); it lists them in its README (iOS S1: `base`, `relative`, `content_type`, `charset`, `title`, `data`, `bridge.*`, `rqlab.page_world`, `webview.cookie_set`, `https.*`, `metric.fetch`, `metric.live_finish`).
 - An app probe script may also return name and value pairs through a script call of the platform (iOS `callAsyncJavaScript` in the page world).
 - <Badge type="tip" text="FACT" /> On iOS a page script cannot see a message handler of another `WKContentWorld`, so `rqLab` is in the page world; the bridge of IOS-P2 is in its own content world (iOS S1, CAP-I-04).
 - On Android `rqLab` is in the page world too (the host page scripts call it); the boundary is the origin rule of `addWebMessageListener` and the checks of each message.

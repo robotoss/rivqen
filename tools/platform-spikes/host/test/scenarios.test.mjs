@@ -228,9 +228,7 @@ test("cut_default_size_is_4096", async () => {
   assert.equal(r.body.length, 0);
 });
 
-test("service_worker_routes_are_not_in_s1", async () => {
-  assert.equal((await g("/s/sw.js")).status, 501);
-  assert.equal((await g("/s/sw-page")).status, 501);
+test("unknown_routes_are_404", async () => {
   assert.equal((await g("/s/nothing")).status, 404);
   assert.equal((await g("/s/constructor")).status, 404);
 });

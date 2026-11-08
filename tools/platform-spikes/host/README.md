@@ -48,7 +48,12 @@ Both sites: A is Host `localhost`, B is Host `127.0.0.1` or `10.0.2.2`. Any othe
 | `/s/cookie/set` | `name` and `value` match `[a-z0-9-]{1,64}`; each attribute at most once; `Max-Age` digits only |
 | `/s/range` | `size` 1 to 8 MiB. Body byte `i` is `(i * 31 + 7) mod 251`. Forms `bytes=a-b` and `bytes=a-`; everything else is `416` |
 | `/s/cut` | `after` (required) is less than `size`; optional `size` (default 4096) |
-| `/s/sw.js`, `/s/sw-page` | `501` until S2 |
+| `/s/sw.js` | Worker with `Service-Worker-Allowed: /s/`; it answers `/s/sw-probe` with `{"sw":"worker"}` and leaves every other request to the network. It calls `skipWaiting` and `clients.claim`, so the page is often controlled without the reload |
+| `/s/sw-page` | Registers the worker (scope `/s/`), waits for `ready` (10 s), reloads once with `again=1` when not controlled, probes `sw` with `worker`, `network`, `unsupported` or the error name |
+| `/s/sw-probe` | `{"sw":"network"}` |
+| `/s/csp` | `mode=header\|meta\|both` (default `header`); policy `script-src 'nonce-<n>'`, `<n>` as in `/s/stream` (`norun` without a run). The meta element is the first element of `head`. Probes `csp.nonce`, `csp.eval` (nonce script) and `csp.inline` (script without nonce) |
+| `/s/hist` | `step` 0 to 9 (default 0); link `<a id="next">` to step `step+1` (step 9 links to step 10, which gives `400`). Probes `history` and `location` |
+| `/s/cookie/js` | Same `name`, `value` and `attrs` rules as `/s/cookie/set`, but `HttpOnly` gives `400`. The script sets `document.cookie`, then probes `cookie` |
 | `/page/<path>` | The path must match the reference server rule (no `..`, no hidden file, no percent-encoding). `502` when the reference server is down |
 
 ## Control and run log

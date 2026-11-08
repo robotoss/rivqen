@@ -39,10 +39,11 @@ for setting in "26 15" "30 15" "34 12" "38 10" "42 8"; do
   fps="${setting#* }"
   # -an: no audio; -map_metadata -1 (file and stream) and -map_chapters -1: no metadata; bitexact:
   # no version or time strings (the codec name "Lavc libx264" stays in the sample description);
-  # filter_units=remove_types=6: no SEI units (x264 writes its settings there).
+  # filter_units=remove_types=6: no SEI units (x264 writes its settings there). screenrecord writes
+  # a frame only when the screen changes, so tpad repeats the last frame up to the kept length.
   "$FFMPEG" -nostdin -y -v error -ss "$(sec "$start_ms")" -i "$raw" -t "$(sec "$dur_ms")" \
     -an -sn -dn -map 0:v:0 -map_metadata -1 -map_metadata:s:v -1 -map_chapters -1 \
-    -vf "scale='min(540,iw)':-2:flags=bicubic,fps=$fps" \
+    -vf "tpad=stop_mode=clone:stop_duration=30,scale='min(540,iw)':-2:flags=bicubic,fps=$fps" \
     -c:v libx264 -preset veryslow -crf "$crf" -pix_fmt yuv420p -profile:v high \
     -bsf:v filter_units=remove_types=6 -fflags +bitexact -flags:v +bitexact \
     -movflags +faststart "$tmp"

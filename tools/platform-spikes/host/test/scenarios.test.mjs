@@ -3,7 +3,8 @@
 
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
-import { labBytes, parseRange } from "../scenarios.mjs";
+import { createHash } from "node:crypto";
+import { labBytes, parseRange, partialHead } from "../scenarios.mjs";
 import { events, get, open, startRun, startTestHost, tempTls, wait } from "./helpers.mjs";
 
 let tls;
@@ -226,6 +227,75 @@ test("cut_default_size_is_4096", async () => {
   const r = await g("/s/cut?after=0");
   assert.equal(r.headers["content-length"], "4096");
   assert.equal(r.body.length, 0);
+});
+
+test("cut_hold", async () => {
+  // S3 partial-page case: the bytes go out at once, the close comes `hold` ms later.
+  await startRun(host, "hold-1");
+  const t0 = Date.now();
+  const s = o("/s/cut?run=hold-1&after=600&size=2000&hold=300");
+  const got = await s.until(/k=0" hidden>/);
+  await s.done.catch(() => undefined); // the close before Content-Length is an error for the client
+  const closedAfter = Date.now() - t0;
+  assert.ok(got < 250, `the delivered bytes came after ${got} ms, not before the hold`);
+  assert.ok(closedAfter >= 295, `the connection closed after ${closedAfter} ms`);
+  assert.equal(Buffer.byteLength(s.text), 600);
+  assert.ok(s.text.startsWith(partialHead("hold-1")));
+  const ev = await events(host, "hold-1");
+  const response = ev.find((e) => e.ev === "host.response");
+  const cut = ev.find((e) => e.ev === "host.cut");
+  assert.equal(response.fields["content-length"], "2000");
+  assert.deepEqual(ev.filter((e) => e.ev === "host.cut").map((e) => e.after), [600]);
+  assert.ok(cut.t - response.t >= 295, `host.cut ${cut.t - response.t} ms after the head`);
+});
+
+test("cut_hold_body_has_the_chunk_0_probe", async () => {
+  await startRun(host, "hold-2");
+  const r = await g("/s/cut?run=hold-2&after=1000&size=1001&hold=1");
+  const body = r.body.toString();
+  assert.equal(r.aborted, true);
+  assert.equal(body.length, 1000);
+  assert.match(body, /^<!doctype html><meta charset="utf-8"><title>cut<\/title><p data-k="0">/);
+  assert.match(body, /<img src="\/s\/beacon\?run=hold-2&k=0" hidden>/);
+  assert.match(body, /<script>window\.rqLab&&window\.rqLab\.probe\("chunk",0\)<\/script><p>x+$/);
+  // Without a run the beacon has no run parameter.
+  assert.match(partialHead(null), /<img src="\/s\/beacon\?k=0" hidden>/);
+});
+
+test("cut_without_hold_keeps_the_s2_body", async () => {
+  // The stored CAP-A-08 runs (after=3000&size=8192) must stay reproducible: same bytes as in S2.
+  const head = '<!doctype html><meta charset="utf-8"><title>cut</title><p>';
+  const expected = createHash("sha256").update(head + "x".repeat(3000 - head.length)).digest("hex");
+  for (const q of ["", "&hold=0"]) {
+    const r = await g(`/s/cut?after=3000&size=8192${q}`);
+    assert.equal(createHash("sha256").update(r.body).digest("hex"), expected, q);
+    assert.equal(r.aborted, true);
+  }
+});
+
+test("cut_hold_bounds", async () => {
+  for (const h of ["60001", "-1", "1.5", "x", ""]) assert.equal((await g(`/s/cut?after=1&size=4096&hold=${h}`)).status, 400, h);
+  // The partial-page start must fit: size at least its length + 1.
+  const n = partialHead("hold-3").length;
+  assert.equal((await g(`/s/cut?run=hold-3&after=0&size=${n}&hold=1`)).status, 400);
+  assert.equal((await g(`/s/cut?run=hold-3&after=0&size=${n + 1}&hold=1`)).status, 200);
+  // The S2 start is shorter, so the same size is fine without hold.
+  assert.equal((await g(`/s/cut?after=0&size=${n}`)).status, 200);
+});
+
+test("cut_hold_ends_when_the_client_closes_first", async () => {
+  // hold=60000 (the maximum): the client closes during the hold; no host.cut, and no timer is left
+  // (the test host closes at once in after()).
+  await startRun(host, "hold-4");
+  const s = o("/s/cut?run=hold-4&after=60&size=400&hold=60000");
+  s.done.catch(() => undefined);
+  await s.until(/<title>/);
+  s.abort();
+  await wait(100);
+  const ev = await events(host, "hold-4");
+  assert.equal(ev.some((e) => e.ev === "host.response"), true);
+  assert.equal(ev.some((e) => e.ev === "host.cut"), false);
+  assert.equal((await g("/s/echo")).status, 200, "the host still answers");
 });
 
 test("unknown_routes_are_404", async () => {

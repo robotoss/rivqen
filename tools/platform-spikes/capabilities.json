@@ -153,9 +153,35 @@
         ],
         "recording": null,
         "metrics": "evidence/spikes/wp-04/ios/CAP-I-01/27.0/run-1.metrics.json"
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-01/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-01/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-01/26.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "metrics": "evidence/spikes/wp-04/ios/CAP-I-01/26.5/run-1.metrics.json"
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-01/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-01/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-01/18.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "metrics": "evidence/spikes/wp-04/ios/CAP-I-01/18.5/run-1.metrics.json"
       }
     ],
-    "verdict": "pending"
+    "verdict": "supported"
   },
   {
     "id": "CAP-I-02",
@@ -179,9 +205,33 @@
           "evidence/spikes/wp-04/ios/CAP-I-02/27.0/run-3.jsonl"
         ],
         "recording": null
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-02/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-02/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-02/26.5/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-02/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-02/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-02/18.5/run-3.jsonl"
+        ],
+        "recording": null
       }
     ],
-    "verdict": "pending"
+    "verdict": "supported"
   },
   {
     "id": "CAP-I-03",
@@ -199,16 +249,40 @@
         "os": "27.0",
         "webview": null,
         "verdict": "conditional",
-        "condition": "WebKit ignores the Set-Cookie field of the simulated response and does not share the native URLSession cookies; the SDK must put the cookies of its native fetch into the WKHTTPCookieStore of the web view before loadSimulatedRequest (cookie sync is CAP-I-11, S2). Cookies that the page sets (HttpOnly by fetch, script cookies) work and go with same-origin fetches.",
+        "condition": "WebKit ignores the Set-Cookie field of the simulated response and does not share the native URLSession cookies; the SDK must put the cookies of its native fetch into the WKHTTPCookieStore of the web view (setCookie, wait for the completion) before loadSimulatedRequest. With this sync (CAP-I-11) the page has the native cookies with their attributes: document.cookie shows all but the HttpOnly one, and same-origin fetches send all. Cookies that the page sets (HttpOnly by fetch, script cookies) work and go with same-origin fetches.",
         "runs": [
           "evidence/spikes/wp-04/ios/CAP-I-03/27.0/run-1.jsonl",
           "evidence/spikes/wp-04/ios/CAP-I-03/27.0/run-2.jsonl",
           "evidence/spikes/wp-04/ios/CAP-I-03/27.0/run-3.jsonl"
         ],
         "recording": null
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "WebKit ignores the Set-Cookie field of the simulated response and does not share the native URLSession cookies; the SDK must put the cookies of its native fetch into the WKHTTPCookieStore of the web view (setCookie, wait for the completion) before loadSimulatedRequest. With this sync (CAP-I-11) the page has the native cookies with their attributes: document.cookie shows all but the HttpOnly one, and same-origin fetches send all. Cookies that the page sets (HttpOnly by fetch, script cookies) work and go with same-origin fetches.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-03/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-03/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-03/26.5/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "WebKit ignores the Set-Cookie field of the simulated response and does not share the native URLSession cookies; the SDK must put the cookies of its native fetch into the WKHTTPCookieStore of the web view (setCookie, wait for the completion) before loadSimulatedRequest. With this sync (CAP-I-11) the page has the native cookies with their attributes: document.cookie shows all but the HttpOnly one, and same-origin fetches send all. Cookies that the page sets (HttpOnly by fetch, script cookies) work and go with same-origin fetches.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-03/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-03/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-03/18.5/run-3.jsonl"
+        ],
+        "recording": null
       }
     ],
-    "verdict": "pending"
+    "verdict": "conditional"
   },
   {
     "id": "CAP-I-04",
@@ -232,9 +306,35 @@
         ],
         "recording": null,
         "metrics": "evidence/spikes/wp-04/ios/CAP-I-04/27.0/run-1.metrics.json"
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-04/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-04/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-04/26.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "metrics": "evidence/spikes/wp-04/ios/CAP-I-04/26.5/run-1.metrics.json"
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-04/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-04/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-04/18.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "metrics": "evidence/spikes/wp-04/ios/CAP-I-04/18.5/run-1.metrics.json"
       }
     ],
-    "verdict": "pending"
+    "verdict": "supported"
   },
   {
     "id": "CAP-I-05",
@@ -259,9 +359,35 @@
         ],
         "recording": null,
         "metrics": "evidence/spikes/wp-04/ios/CAP-I-05/27.0/run-1.metrics.json"
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-05/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-05/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-05/26.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "metrics": "evidence/spikes/wp-04/ios/CAP-I-05/26.5/run-1.metrics.json"
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-05/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-05/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-05/18.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "metrics": "evidence/spikes/wp-04/ios/CAP-I-05/18.5/run-1.metrics.json"
       }
     ],
-    "verdict": "pending"
+    "verdict": "supported"
   },
   {
     "id": "CAP-I-06",
@@ -285,9 +411,33 @@
           "evidence/spikes/wp-04/ios/CAP-I-06/27.0/run-3.jsonl"
         ],
         "recording": null
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "The page origin is rqlab://localhost:18443, not the https origin; document.cookie is empty and a script cannot set a cookie; WebKit does not store a Set-Cookie of the scheme handler response, so relative requests carry only the cookies of the app's own URLSession. https subresources load and carry the cookies of the https site (SameSite=None; Secure seen), but a script can read a cross-origin https response only with CORS for the rqlab origin.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-06/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-06/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-06/26.5/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "The page origin is rqlab://localhost:18443, not the https origin; document.cookie is empty and a script cannot set a cookie; WebKit does not store a Set-Cookie of the scheme handler response, so relative requests carry only the cookies of the app's own URLSession. https subresources load and carry the cookies of the https site (SameSite=None; Secure seen), but a script can read a cross-origin https response only with CORS for the rqlab origin.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-06/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-06/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-06/18.5/run-3.jsonl"
+        ],
+        "recording": null
       }
     ],
-    "verdict": "pending"
+    "verdict": "conditional"
   },
   {
     "id": "CAP-I-07",
@@ -311,9 +461,35 @@
         ],
         "recording": null,
         "source": "https://developer.apple.com/documentation/webkit/wkwebviewconfiguration/seturlschemehandler(_:forurlscheme:)"
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "impossible",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-07/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-07/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-07/26.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "source": "https://developer.apple.com/documentation/webkit/wkwebviewconfiguration/seturlschemehandler(_:forurlscheme:)"
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "impossible",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-07/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-07/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-07/18.5/run-3.jsonl"
+        ],
+        "recording": null,
+        "source": "https://developer.apple.com/documentation/webkit/wkwebviewconfiguration/seturlschemehandler(_:forurlscheme:)"
       }
     ],
-    "verdict": "pending"
+    "verdict": "impossible"
   },
   {
     "id": "CAP-I-08",
@@ -360,8 +536,45 @@
       "Q-12"
     ],
     "sprint": "S2",
-    "results": [],
-    "verdict": "pending"
+    "results": [
+      {
+        "os": "27.0",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "Sync works in both directions and keeps HttpOnly, Secure and SameSite=Strict/Lax (native HTTPCookieStorage -> WKHTTPCookieStore.setCookie before the load; getAllCookies -> HTTPCookieStorage before a native fetch); WebKit then hides HttpOnly from document.cookie and does not send a SameSite=Strict cookie on a top-level navigation that a cross-site page starts. Conditions: URLSession does not apply SameSite (a native fetch sends Strict and Lax cookies also with a cross-site mainDocumentURL), so the SDK must not use its native fetch for a navigation that a cross-site page started, or must filter the cookies itself; cross-site subresources and iframes of the web view get no cookies at all (WebKit third-party cookie blocking), whatever the sync; SameSite=None and no SameSite are not told apart by HTTPCookie.sameSitePolicy (the value differs by iOS version), so the SDK must not depend on that value.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-11/27.0/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-11/27.0/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-11/27.0/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "Sync works in both directions and keeps HttpOnly, Secure and SameSite=Strict/Lax (native HTTPCookieStorage -> WKHTTPCookieStore.setCookie before the load; getAllCookies -> HTTPCookieStorage before a native fetch); WebKit then hides HttpOnly from document.cookie and does not send a SameSite=Strict cookie on a top-level navigation that a cross-site page starts. Conditions: URLSession does not apply SameSite (a native fetch sends Strict and Lax cookies also with a cross-site mainDocumentURL), so the SDK must not use its native fetch for a navigation that a cross-site page started, or must filter the cookies itself; cross-site subresources and iframes of the web view get no cookies at all (WebKit third-party cookie blocking), whatever the sync; SameSite=None and no SameSite are not told apart by HTTPCookie.sameSitePolicy (the value differs by iOS version), so the SDK must not depend on that value.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-11/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-11/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-11/26.5/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "Sync works in both directions and keeps HttpOnly, Secure and SameSite=Strict/Lax (native HTTPCookieStorage -> WKHTTPCookieStore.setCookie before the load; getAllCookies -> HTTPCookieStorage before a native fetch); WebKit then hides HttpOnly from document.cookie and does not send a SameSite=Strict cookie on a top-level navigation that a cross-site page starts. Conditions: URLSession does not apply SameSite (a native fetch sends Strict and Lax cookies also with a cross-site mainDocumentURL), so the SDK must not use its native fetch for a navigation that a cross-site page started, or must filter the cookies itself; cross-site subresources and iframes of the web view get no cookies at all (WebKit third-party cookie blocking), whatever the sync; SameSite=None and no SameSite are not told apart by HTTPCookie.sameSitePolicy (the value differs by iOS version), so the SDK must not depend on that value.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-11/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-11/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-11/18.5/run-3.jsonl"
+        ],
+        "recording": null
+      }
+    ],
+    "verdict": "conditional"
   },
   {
     "id": "CAP-F-01",

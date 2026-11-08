@@ -74,3 +74,15 @@ test('cl06_cl34_steps_on_a_destroyed_or_stopped_session_send_and_show_nothing', 
     assert.equal(last.results.length, 1, mode);
   }
 });
+
+test('a_case_whose_mode_is_not_the_run_mode_is_not_ok', () => {
+  const r = run('legacy-canonical', 'standard', cc([{ case: 'a' }, { do: 'create_session' }]), ENV);
+  assert.equal(r.ok, false);
+  assert.equal(r.error.code, 'CASE_MODE');
+});
+
+test('an_exception_that_is_not_a_case_error_propagates', () => {
+  // A defect of the environment (here: the page source) is not a case error: run() does not hide it.
+  const env = { page: () => { throw new RangeError('page source failed'); }, fixture: () => null };
+  assert.throws(() => outcome(cc([{ case: 'a' }, { do: 'create_session' }]), env), RangeError);
+});

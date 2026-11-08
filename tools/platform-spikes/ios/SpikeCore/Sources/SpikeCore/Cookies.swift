@@ -143,6 +143,21 @@ public enum CookieNames {
       "site": .string(site), "cookies": .array(fromField(cookie).map { .string($0) }),
     ])
   }
+
+  /// The CAP-I-11 form of a page probe value: `cookie` (a `document.cookie` text) becomes the
+  /// sorted names; `echo` and `frame.echo` (the echo JSON text) become the echo summary. Cookies
+  /// that WebKit creates in the same millisecond come in any order, so the sorted form is the one
+  /// that compares across runs. Any other probe, or a value of another form, is unchanged.
+  public static func pageView(name: String, value: JSONValue) -> JSONValue {
+    switch (name, value) {
+    case ("cookie", .string(let text)):
+      return .array(fromField(text).map { .string($0) })
+    case ("echo", .string(let text)), ("frame.echo", .string(let text)):
+      return fromEcho(Data(text.utf8)) ?? value
+    default:
+      return value
+    }
+  }
 }
 
 extension LabOrigin {

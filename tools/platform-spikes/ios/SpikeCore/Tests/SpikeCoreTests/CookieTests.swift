@@ -130,6 +130,29 @@ import Testing
     #expect(CookieNames.fromEcho(big) == nil)
   }
 
+  @Test func pageViewSortsCookieTextsAndSummarizesEchoes() {
+    let a = CookieNames.pageView(name: "cookie", value: .string("b=1; a=1"))
+    let b = CookieNames.pageView(name: "cookie", value: .string("a=1; b=1"))
+    #expect(a == b)
+    #expect(a == .array([.string("a"), .string("b")]))
+    #expect(CookieNames.pageView(name: "cookie", value: .string("")) == .array([]))
+    let echo = JSONValue.string(#"{"cookie":"y=1; x=1","fields":["host"],"site":"A"}"#)
+    let summary = JSONValue.object([
+      "site": .string("A"), "cookies": .array([.string("x"), .string("y")]),
+    ])
+    #expect(CookieNames.pageView(name: "echo", value: echo) == summary)
+    #expect(CookieNames.pageView(name: "frame.echo", value: echo) == summary)
+  }
+
+  @Test func pageViewKeepsOtherValues() {
+    #expect(
+      CookieNames.pageView(name: "echo", value: .string("error:TypeError"))
+        == .string("error:TypeError"))
+    #expect(CookieNames.pageView(name: "echo", value: .null) == .null)
+    #expect(CookieNames.pageView(name: "cookie", value: .int(1)) == .int(1))
+    #expect(CookieNames.pageView(name: "location", value: .string("a=1")) == .string("a=1"))
+  }
+
   @Test func otherSite() throws {
     let a = try LabOrigin(host: "localhost", port: 18443)
     #expect(a.otherSite.https == "https://127.0.0.1:18443")

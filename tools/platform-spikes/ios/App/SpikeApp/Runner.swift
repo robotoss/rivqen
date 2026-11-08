@@ -374,7 +374,7 @@ final class Runner {
       [
         ["cookie", "cookie", ""], ["fetch_text", "echo", paths.echo(tag: "web-a")],
         ["fetch_no_cors", "https.no_cors", b.https + paths.echo(tag: "web-b-no-cors")],
-      ], timeout: timeout)
+      ], timeout: timeout, view: CookieNames.pageView)
     let echoesBefore = web.frameEchoes.count
     let frame = b.https + paths.echo(tag: "web-b-frame", html: true)
     switch await web.callAsync(Scripts.frameLoad, arguments: ["url": frame], timeout: timeout) {
@@ -386,7 +386,9 @@ final class Runner {
     _ = await until(2) { web.frameEchoes.count > echoesBefore }
     recorder.probe(
       "frame.echo",
-      web.frameEchoes.count > echoesBefore ? web.frameEchoes[echoesBefore] : .string("missing"))
+      web.frameEchoes.count > echoesBefore
+        ? CookieNames.pageView(name: "frame.echo", value: web.frameEchoes[echoesBefore])
+        : .string("missing"))
 
     recorder.native("step", .string("web-b-navigation"))
     let navigation = b.https + paths.echo(tag: "web-b-nav", html: true)
@@ -401,7 +403,7 @@ final class Runner {
     else { return }
     await web.probe(
       [["location", "location", ""], ["cookie", "cookie", ""], ["dom_text", "echo", "#echo"]],
-      timeout: timeout)
+      timeout: timeout, view: CookieNames.pageView)
   }
 
   /// Web view → native. A new web view and a new native session (both empty). Real navigations
@@ -429,7 +431,7 @@ final class Runner {
         ]
       }
       steps.append(["set_js_cookie", "cookie", "\(prefix)-js=\(CookiePlan.value); path=/"])
-      await web.probe(steps, timeout: timeout)
+      await web.probe(steps, timeout: timeout, view: CookieNames.pageView)
     }
 
     recorder.native("step", .string("sync-to-native"))

@@ -100,12 +100,16 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
     return finished > done
   }
 
-  /// Runs the probe steps in the page world and logs each result as `app.probe`.
-  func probe(_ steps: [[String]], timeout: Double) async {
+  /// Runs the probe steps in the page world and logs each result as `app.probe`. `view` (CAP-I-11)
+  /// changes a value before the log; `nil` logs it as the page gave it.
+  func probe(
+    _ steps: [[String]], timeout: Double,
+    view: (@MainActor (String, JSONValue) -> JSONValue)? = nil
+  ) async {
     let result = await callAsync(Scripts.probeSteps, arguments: ["steps": steps], timeout: timeout)
     switch result {
     case .success(let pairs):
-      for (name, value) in pairs { recorder.probe(name, value) }
+      for (name, value) in pairs { recorder.probe(name, view?(name, value) ?? value) }
     case .failure(let error):
       recorder.error("ProbeScriptError: \(error)")
     }

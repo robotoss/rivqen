@@ -10,9 +10,7 @@ The items are the 8 items of the spike matrix in [iOS SDK](/engineering/platform
 
 ### Item 1: HTTPS with valid TLS, redirects
 
-| # | ID | 27.0 | 26.5 | 18.5 | Verdict |
-|---|---|---|---|---|---|
-| 1 | CAP-I-01 | <Badge type="tip" text="supported" /> | <Badge type="tip" text="supported" /> | <Badge type="tip" text="supported" /> | <Badge type="tip" text="supported" /> |
+No capability. <Badge type="info" text="not measured" /> in WP-04.
 
 ### Item 2: First render time; early render or streaming
 
@@ -47,7 +45,10 @@ The items are the 8 items of the spike matrix in [iOS SDK](/engineering/platform
 
 ### Item 6: CORS, subresources, cross-origin iframes, video, downloads
 
-No capability. <Badge type="info" text="not measured" /> in WP-04.
+| # | ID | 27.0 | 26.5 | 18.5 | Verdict |
+|---|---|---|---|---|---|
+| 6 | CAP-I-06 | <Badge type="warning" text="conditional" /> | <Badge type="warning" text="conditional" /> | <Badge type="warning" text="conditional" /> | <Badge type="warning" text="conditional" /> |
+| 11 | CAP-I-11 | <Badge type="warning" text="conditional" /> | <Badge type="warning" text="conditional" /> | <Badge type="warning" text="conditional" /> | <Badge type="warning" text="conditional" /> |
 
 ### Item 7: Bridge isolation, app-bound domains, content worlds
 

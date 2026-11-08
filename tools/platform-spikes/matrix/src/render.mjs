@@ -26,17 +26,18 @@ export const IOS_ITEMS = [
  * An iOS capability that is not in this table stops the generator: map it first.
  */
 export const IOS_ITEM_MAP = {
-  'CAP-I-01': [1, 2],
+  // Item 1 (TLS, redirects) has no iOS capability: WP-04 did not measure TLS errors or redirects on iOS.
+  'CAP-I-01': [2],
   'CAP-I-02': [3],
   'CAP-I-03': [3],
   'CAP-I-04': [2, 7],
   'CAP-I-05': [2],
-  'CAP-I-06': [3],
+  'CAP-I-06': [3, 6],
   'CAP-I-07': [2],
   'CAP-I-08': [4],
   'CAP-I-09': [4, 7],
   'CAP-I-10': [5],
-  'CAP-I-11': [3],
+  'CAP-I-11': [3, 6],
 };
 
 const BADGE = { supported: 'tip', conditional: 'warning', impossible: 'danger', 'not-tested': 'info', pending: 'info' };

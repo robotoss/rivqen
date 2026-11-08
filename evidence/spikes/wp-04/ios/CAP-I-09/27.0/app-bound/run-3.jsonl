@@ -1,73 +1,73 @@
 {"capability":"CAP-I-09","device":"iPhone 16 Pro","ev":"run.start","k":3,"os":"27.0","platform":"ios","prototype":"IOS-ALL","run":"CAP-I-09-ios-27.0-3","seq":0,"src":"script","t":0,"webview":null}
-{"ev":"app.probe","name":"native.app_bound_domains","seq":0,"src":"app","t":5,"value":["localhost"]}
-{"ev":"app.probe","name":"native.step","seq":1,"src":"app","t":5,"value":"simulated"}
-{"ev":"app.fetch.start","seq":2,"src":"app","t":5,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}
-{"ev":"app.fetch.head","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"788","content-type":"text/html; charset=utf-8","keep-alive":"timeout=5"},"seq":3,"src":"app","status":200,"t":24,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}
-{"bytes":788,"complete":true,"ev":"app.fetch.end","seq":4,"src":"app","t":25,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}
-{"ev":"app.probe","name":"native.webview","seq":5,"src":"app","t":152,"value":"created"}
-{"ev":"app.probe","name":"native.simulated_response","seq":6,"src":"app","t":152,"value":{"encoding":"utf-8","mime":"text/html"}}
-{"ev":"app.probe","name":"native.policy","seq":7,"src":"app","t":785,"value":{"main_frame":true,"type":"other","url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}}
-{"error":null,"ev":"app.nav","kind":"start","seq":8,"src":"app","t":861,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}
-{"error":null,"ev":"app.nav","kind":"commit","seq":9,"src":"app","t":863,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}
-{"ev":"app.probe","name":"metric.commit","seq":10,"src":"app","t":863,"value":711.317833}
-{"error":null,"ev":"app.nav","kind":"finish","seq":11,"src":"app","t":864,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}
-{"ev":"app.probe","name":"native.policy","seq":12,"src":"app","t":902,"value":{"main_frame":true,"type":"other","url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}}
-{"error":null,"ev":"app.nav","kind":"start","seq":13,"src":"app","t":903,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
-{"error":null,"ev":"app.nav","kind":"commit","seq":14,"src":"app","t":1187,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
-{"ev":"app.probe","name":"metric.commit","seq":15,"src":"app","t":1187,"value":1034.8465}
-{"error":null,"ev":"app.nav","kind":"finish","seq":16,"src":"app","t":1187,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
-{"ev":"app.probe","name":"sw","seq":17,"src":"app","t":1190,"value":"worker"}
-{"ev":"app.probe","name":"native.step","seq":18,"src":"app","t":1201,"value":"html-string"}
-{"ev":"app.fetch.start","seq":19,"src":"app","t":1201,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}
-{"ev":"app.fetch.head","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"788","content-type":"text/html; charset=utf-8","keep-alive":"timeout=5"},"seq":20,"src":"app","status":200,"t":1203,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}
-{"bytes":788,"complete":true,"ev":"app.fetch.end","seq":21,"src":"app","t":1203,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}
-{"ev":"app.probe","name":"native.webview","seq":22,"src":"app","t":1208,"value":"created"}
-{"ev":"app.probe","name":"native.policy","seq":23,"src":"app","t":1584,"value":{"main_frame":true,"type":"other","url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}}
-{"error":null,"ev":"app.nav","kind":"start","seq":24,"src":"app","t":1585,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}
-{"error":null,"ev":"app.nav","kind":"commit","seq":25,"src":"app","t":1586,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}
-{"ev":"app.probe","name":"metric.commit","seq":26,"src":"app","t":1586,"value":377.065666}
-{"error":null,"ev":"app.nav","kind":"finish","seq":27,"src":"app","t":1588,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}
-{"ev":"app.probe","name":"native.policy","seq":28,"src":"app","t":1603,"value":{"main_frame":true,"type":"other","url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}}
-{"error":null,"ev":"app.nav","kind":"start","seq":29,"src":"app","t":1604,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
-{"error":null,"ev":"app.nav","kind":"commit","seq":30,"src":"app","t":1867,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
-{"ev":"app.probe","name":"metric.commit","seq":31,"src":"app","t":1867,"value":658.126166}
-{"error":null,"ev":"app.nav","kind":"finish","seq":32,"src":"app","t":1867,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
-{"ev":"app.probe","name":"sw","seq":33,"src":"app","t":1868,"value":"worker"}
-{"ev":"app.probe","name":"native.step","seq":34,"src":"app","t":1885,"value":"live"}
-{"ev":"app.probe","name":"native.webview","seq":35,"src":"app","t":1890,"value":"created"}
-{"ev":"app.probe","name":"native.policy","seq":36,"src":"app","t":2273,"value":{"main_frame":true,"type":"other","url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=live"}}
-{"error":null,"ev":"app.nav","kind":"start","seq":37,"src":"app","t":2274,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=live"}
-{"error":null,"ev":"app.nav","kind":"commit","seq":38,"src":"app","t":3115,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=live"}
-{"ev":"app.probe","name":"metric.commit","seq":39,"src":"app","t":3115,"value":1224.721833}
-{"error":null,"ev":"app.nav","kind":"finish","seq":40,"src":"app","t":3117,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=live"}
-{"ev":"app.probe","name":"native.policy","seq":41,"src":"app","t":3126,"value":{"main_frame":true,"type":"other","url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}}
-{"error":null,"ev":"app.nav","kind":"start","seq":42,"src":"app","t":3127,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
-{"error":null,"ev":"app.nav","kind":"commit","seq":43,"src":"app","t":3391,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
-{"ev":"app.probe","name":"metric.commit","seq":44,"src":"app","t":3391,"value":1500.600041}
-{"error":null,"ev":"app.nav","kind":"finish","seq":45,"src":"app","t":3391,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
-{"ev":"app.probe","name":"sw","seq":46,"src":"app","t":3392,"value":"worker"}
-{"ev":"app.probe","name":"native.step","seq":47,"src":"app","t":3412,"value":"scheme"}
-{"ev":"app.probe","name":"native.webview","seq":48,"src":"app","t":3417,"value":"created"}
-{"ev":"app.probe","name":"native.policy","seq":49,"src":"app","t":3782,"value":{"main_frame":true,"type":"other","url":"rqlab://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=scheme"}}
-{"error":null,"ev":"app.nav","kind":"start","seq":50,"src":"app","t":3786,"url":"rqlab://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=scheme"}
-{"decision":"stream","ev":"app.intercept","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"788","content-type":"text/html; charset=utf-8","keep-alive":"timeout=5"},"main_frame":true,"method":"GET","seq":51,"src":"app","status":200,"t":3789,"url":"rqlab://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=scheme"}
-{"bytes":788,"ev":"app.stream.read","k":null,"seq":52,"src":"app","t":3789}
-{"error":null,"ev":"app.nav","kind":"commit","seq":53,"src":"app","t":4598,"url":"rqlab://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=scheme"}
-{"ev":"app.probe","name":"metric.commit","seq":54,"src":"app","t":4598,"value":1180.452166}
-{"ev":"app.probe","name":"sw","seq":55,"src":"app","t":4600,"value":"TypeError"}
-{"error":null,"ev":"app.nav","kind":"finish","seq":56,"src":"app","t":4603,"url":"rqlab://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=scheme"}
-{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":0,"site":"A","src":"host","t":583,"target":"/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}
-{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"788","content-type":"text/html; charset=utf-8"},"seq":1,"src":"host","status":200,"t":583}
-{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":2,"site":"A","src":"host","t":1465,"target":"/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
-{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"788","content-type":"text/html; charset=utf-8"},"seq":3,"src":"host","status":200,"t":1465}
-{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":4,"site":"A","src":"host","t":1762,"target":"/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}
-{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"788","content-type":"text/html; charset=utf-8"},"seq":5,"src":"host","status":200,"t":1762}
-{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":6,"site":"A","src":"host","t":2165,"target":"/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
-{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"788","content-type":"text/html; charset=utf-8"},"seq":7,"src":"host","status":200,"t":2165}
-{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":8,"site":"A","src":"host","t":2836,"target":"/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=live"}
-{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"788","content-type":"text/html; charset=utf-8"},"seq":9,"src":"host","status":200,"t":2836}
-{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":10,"site":"A","src":"host","t":3688,"target":"/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
-{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"788","content-type":"text/html; charset=utf-8"},"seq":11,"src":"host","status":200,"t":3688}
-{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":12,"site":"A","src":"host","t":4348,"target":"/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=scheme"}
-{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"788","content-type":"text/html; charset=utf-8"},"seq":13,"src":"host","status":200,"t":4348}
-{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":7230}
+{"ev":"app.probe","name":"native.app_bound_domains","seq":0,"src":"app","t":4,"value":["localhost"]}
+{"ev":"app.probe","name":"native.step","seq":1,"src":"app","t":4,"value":"simulated"}
+{"ev":"app.fetch.start","seq":2,"src":"app","t":4,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}
+{"ev":"app.fetch.head","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"834","content-type":"text/html; charset=utf-8","keep-alive":"timeout=5"},"seq":3,"src":"app","status":200,"t":23,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}
+{"bytes":834,"complete":true,"ev":"app.fetch.end","seq":4,"src":"app","t":23,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}
+{"ev":"app.probe","name":"native.webview","seq":5,"src":"app","t":148,"value":"created"}
+{"ev":"app.probe","name":"native.simulated_response","seq":6,"src":"app","t":149,"value":{"encoding":"utf-8","mime":"text/html"}}
+{"ev":"app.probe","name":"native.policy","seq":7,"src":"app","t":767,"value":{"main_frame":true,"type":"other","url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":8,"src":"app","t":835,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":9,"src":"app","t":838,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}
+{"ev":"app.probe","name":"metric.commit","seq":10,"src":"app","t":838,"value":688.9915}
+{"error":null,"ev":"app.nav","kind":"finish","seq":11,"src":"app","t":839,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}
+{"ev":"app.probe","name":"native.policy","seq":12,"src":"app","t":867,"value":{"main_frame":true,"type":"other","url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":13,"src":"app","t":868,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":14,"src":"app","t":881,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
+{"ev":"app.probe","name":"metric.commit","seq":15,"src":"app","t":881,"value":732.490458}
+{"error":null,"ev":"app.nav","kind":"finish","seq":16,"src":"app","t":881,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
+{"ev":"app.probe","name":"sw","seq":17,"src":"app","t":884,"value":"worker"}
+{"ev":"app.probe","name":"native.step","seq":18,"src":"app","t":885,"value":"html-string"}
+{"ev":"app.fetch.start","seq":19,"src":"app","t":885,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}
+{"ev":"app.fetch.head","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"834","content-type":"text/html; charset=utf-8","keep-alive":"timeout=5"},"seq":20,"src":"app","status":200,"t":892,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}
+{"bytes":834,"complete":true,"ev":"app.fetch.end","seq":21,"src":"app","t":892,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}
+{"ev":"app.probe","name":"native.webview","seq":22,"src":"app","t":898,"value":"created"}
+{"ev":"app.probe","name":"native.policy","seq":23,"src":"app","t":1267,"value":{"main_frame":true,"type":"other","url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":24,"src":"app","t":1268,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":25,"src":"app","t":1269,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}
+{"ev":"app.probe","name":"metric.commit","seq":26,"src":"app","t":1269,"value":371.191167}
+{"error":null,"ev":"app.nav","kind":"finish","seq":27,"src":"app","t":1272,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}
+{"ev":"app.probe","name":"native.policy","seq":28,"src":"app","t":1285,"value":{"main_frame":true,"type":"other","url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":29,"src":"app","t":1286,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":30,"src":"app","t":1290,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
+{"ev":"app.probe","name":"metric.commit","seq":31,"src":"app","t":1290,"value":392.613833}
+{"error":null,"ev":"app.nav","kind":"finish","seq":32,"src":"app","t":1291,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
+{"ev":"app.probe","name":"sw","seq":33,"src":"app","t":1292,"value":"worker"}
+{"ev":"app.probe","name":"native.step","seq":34,"src":"app","t":1302,"value":"live"}
+{"ev":"app.probe","name":"native.webview","seq":35,"src":"app","t":1307,"value":"created"}
+{"ev":"app.probe","name":"native.policy","seq":36,"src":"app","t":1670,"value":{"main_frame":true,"type":"other","url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=live"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":37,"src":"app","t":1671,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=live"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":38,"src":"app","t":1677,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=live"}
+{"ev":"app.probe","name":"metric.commit","seq":39,"src":"app","t":1677,"value":369.862084}
+{"error":null,"ev":"app.nav","kind":"finish","seq":40,"src":"app","t":1679,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=live"}
+{"ev":"app.probe","name":"native.policy","seq":41,"src":"app","t":1686,"value":{"main_frame":true,"type":"other","url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":42,"src":"app","t":1687,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":43,"src":"app","t":1702,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
+{"ev":"app.probe","name":"metric.commit","seq":44,"src":"app","t":1702,"value":394.795417}
+{"error":null,"ev":"app.nav","kind":"finish","seq":45,"src":"app","t":1702,"url":"https://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
+{"ev":"app.probe","name":"sw","seq":46,"src":"app","t":1704,"value":"worker"}
+{"ev":"app.probe","name":"native.step","seq":47,"src":"app","t":1722,"value":"scheme"}
+{"ev":"app.probe","name":"native.webview","seq":48,"src":"app","t":1727,"value":"created"}
+{"ev":"app.probe","name":"native.policy","seq":49,"src":"app","t":2084,"value":{"main_frame":true,"type":"other","url":"rqlab://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=scheme"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":50,"src":"app","t":2088,"url":"rqlab://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=scheme"}
+{"decision":"stream","ev":"app.intercept","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"834","content-type":"text/html; charset=utf-8","keep-alive":"timeout=5"},"main_frame":true,"method":"GET","seq":51,"src":"app","status":200,"t":2089,"url":"rqlab://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=scheme"}
+{"bytes":834,"ev":"app.stream.read","k":null,"seq":52,"src":"app","t":2089}
+{"error":null,"ev":"app.nav","kind":"commit","seq":53,"src":"app","t":2090,"url":"rqlab://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=scheme"}
+{"ev":"app.probe","name":"metric.commit","seq":54,"src":"app","t":2090,"value":363.787083}
+{"ev":"app.probe","name":"sw","seq":55,"src":"app","t":2092,"value":"TypeError"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":56,"src":"app","t":2093,"url":"rqlab://localhost:18443/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=scheme"}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":0,"site":"A","src":"host","t":622,"target":"/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=simulated"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"834","content-type":"text/html; charset=utf-8"},"seq":1,"src":"host","status":200,"t":622}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":2,"site":"A","src":"host","t":1471,"target":"/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"834","content-type":"text/html; charset=utf-8"},"seq":3,"src":"host","status":200,"t":1471}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":4,"site":"A","src":"host","t":1486,"target":"/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=html-string"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"834","content-type":"text/html; charset=utf-8"},"seq":5,"src":"host","status":200,"t":1486}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":6,"site":"A","src":"host","t":1887,"target":"/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"834","content-type":"text/html; charset=utf-8"},"seq":7,"src":"host","status":200,"t":1887}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":8,"site":"A","src":"host","t":2273,"target":"/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=live"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"834","content-type":"text/html; charset=utf-8"},"seq":9,"src":"host","status":200,"t":2273}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":10,"site":"A","src":"host","t":2288,"target":"/s/sw-page?run=CAP-I-09-ios-27.0-3&again=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"834","content-type":"text/html; charset=utf-8"},"seq":11,"src":"host","status":200,"t":2288}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":12,"site":"A","src":"host","t":2689,"target":"/s/sw-page?run=CAP-I-09-ios-27.0-3&tag=scheme"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"834","content-type":"text/html; charset=utf-8"},"seq":13,"src":"host","status":200,"t":2689}
+{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":5257}

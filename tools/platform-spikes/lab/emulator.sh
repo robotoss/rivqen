@@ -81,7 +81,9 @@ case "$cmd" in
     until [ "$($ADB shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do
       i=$((i + 1))
       # A cold boot of the API 29 image can take more than 300 s on a loaded Mac.
-      if [ $i -gt 300 ] || ! running; then
+      # Right after the start the pid is still the launcher, so the boot wait checks only that the
+      # process lives; running() (the emulator name check) is for stop and status.
+      if [ $i -gt 300 ] || ! kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
         echo "emulator.sh: no boot in 600 s; see $LAB_HOME/logs/emulator.log" >&2
         tail -20 "$LAB_HOME/logs/emulator.log" >&2
         exit 1

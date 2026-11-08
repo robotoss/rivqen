@@ -878,9 +878,31 @@
         "kind": "benchmark",
         "verdict": "supported",
         "condition": null,
-        "note": "UniFFI Kotlin through JNA works; 817 µs median per 1 MiB in 16 KiB chunks (C ABI through JNI: 20 µs). Indicative (Mac host, H-129); SHA-256 of every document checked",
+        "note": "UniFFI Kotlin through JNA works; 834 µs median per 1 MiB in 16 KiB chunks (JNI ByteArray: 21 µs); peak RSS +368 MiB (garbage toward -Xmx512m). Indicative (Mac host, H-129); SHA-256 of every document checked",
         "runs": [],
         "metrics": "evidence/spikes/wp-04/ffi/host-jvm.json",
+        "recording": null
+      },
+      {
+        "os": "android-37",
+        "webview": null,
+        "kind": "benchmark",
+        "verdict": "supported",
+        "condition": null,
+        "note": "UniFFI Kotlin through JNA (AAR) works on ART (app_process, API 37 emulator); 2370 µs median per 1 MiB in 16 KiB chunks (JNI ByteArray: 22 µs); peak RSS +5.9 MiB. Indicative (emulator, H-129); SHA-256 of every document checked",
+        "runs": [],
+        "metrics": "evidence/spikes/wp-04/ffi/android-37.json",
+        "recording": null
+      },
+      {
+        "os": "android-37.2-16k",
+        "webview": null,
+        "kind": "benchmark",
+        "verdict": "supported",
+        "condition": null,
+        "note": "UniFFI Kotlin through JNA (AAR) works on ART with 16 KB pages (the human Play image, API 37, emulator-5554, H-133); 6678 µs median per 1 MiB in 16 KiB chunks (JNI ByteArray: 39 µs). Indicative (emulator, H-129); SHA-256 of every document checked",
+        "runs": [],
+        "metrics": "evidence/spikes/wp-04/ffi/android-37.2-16k.json",
         "recording": null
       }
     ],
@@ -902,9 +924,20 @@
         "kind": "benchmark",
         "verdict": "supported",
         "condition": null,
-        "note": "UniFFI Swift works; 490 µs median per 1 MiB in 16 KiB chunks (C from Swift: 12 µs). Indicative (Mac host, H-129); SHA-256 of every document checked",
+        "note": "UniFFI Swift works; 496 µs median per 1 MiB in 16 KiB chunks (C from Swift: 12 µs). Indicative (Mac host, H-129); SHA-256 of every document checked",
         "runs": [],
         "metrics": "evidence/spikes/wp-04/ffi/host-swift.json",
+        "recording": null
+      },
+      {
+        "os": "ios-sim-27.0",
+        "webview": null,
+        "kind": "benchmark",
+        "verdict": "supported",
+        "condition": null,
+        "note": "UniFFI Swift works in a simulator app (iOS 27.0); 982 µs median per 1 MiB in 16 KiB chunks (C from Swift: 11 µs); peak RSS +0.4 MiB. Indicative (simulator, H-129); SHA-256 of every document checked",
+        "runs": [],
+        "metrics": "evidence/spikes/wp-04/ffi/ios-sim-27.0.json",
         "recording": null
       }
     ],
@@ -926,9 +959,31 @@
         "kind": "benchmark",
         "verdict": "supported",
         "condition": null,
-        "note": "C ABI through JNI works with a direct ByteBuffer (20 µs) and a ByteArray (21 µs) median per 1 MiB in 16 KiB chunks. Indicative (Mac host, H-129); SHA-256 of every document checked",
+        "note": "C ABI through JNI works with a direct ByteBuffer (31 µs, read-only buffers refused) and a ByteArray (21 µs) median per 1 MiB in 16 KiB chunks. Indicative (Mac host, H-129); SHA-256 of every document checked",
         "runs": [],
         "metrics": "evidence/spikes/wp-04/ffi/host-jvm.json",
+        "recording": null
+      },
+      {
+        "os": "android-37",
+        "webview": null,
+        "kind": "benchmark",
+        "verdict": "supported",
+        "condition": null,
+        "note": "C ABI through JNI works on ART with a direct ByteBuffer (25 µs, read-only buffers refused) and a ByteArray (22 µs) median per 1 MiB in 16 KiB chunks; library 16 KB aligned. Indicative (emulator, H-129); SHA-256 of every document checked",
+        "runs": [],
+        "metrics": "evidence/spikes/wp-04/ffi/android-37.json",
+        "recording": null
+      },
+      {
+        "os": "android-37.2-16k",
+        "webview": null,
+        "kind": "benchmark",
+        "verdict": "supported",
+        "condition": null,
+        "note": "C ABI through JNI works on ART with 16 KB pages (16 KB aligned library loads; the human Play image, API 37); direct ByteBuffer 69 µs, ByteArray 39 µs median per 1 MiB in 16 KiB chunks. Indicative (emulator, H-129); SHA-256 of every document checked",
+        "runs": [],
+        "metrics": "evidence/spikes/wp-04/ffi/android-37.2-16k.json",
         "recording": null
       }
     ],
@@ -953,6 +1008,17 @@
         "note": "C ABI from Swift works; 12 µs median per 1 MiB in 16 KiB chunks. Indicative (Mac host, H-129); SHA-256 of every document checked",
         "runs": [],
         "metrics": "evidence/spikes/wp-04/ffi/host-swift.json",
+        "recording": null
+      },
+      {
+        "os": "ios-sim-27.0",
+        "webview": null,
+        "kind": "benchmark",
+        "verdict": "supported",
+        "condition": null,
+        "note": "C ABI from Swift works in a simulator app (iOS 27.0); 11 µs median per 1 MiB in 16 KiB chunks. Indicative (simulator, H-129); SHA-256 of every document checked",
+        "runs": [],
+        "metrics": "evidence/spikes/wp-04/ffi/ios-sim-27.0.json",
         "recording": null
       }
     ],

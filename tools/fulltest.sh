@@ -76,6 +76,7 @@ group_node() {
   step ios-spike-join 'node --test tools/platform-spikes/ios/test'
   step android-spike-runlog 'node --test tools/platform-spikes/android/test'
   step url-interop 'cd tools/platform-spikes/url-interop && node --test'
+  step ffi-merge 'cd tools/platform-spikes/ffi-bench && node --test merge.test.mjs'
   step spike-evidence 'node tools/platform-spikes/check/check.mjs'
 }
 

@@ -132,6 +132,8 @@ Copied bytes per document: 3 MiB (`uniffi-kotlin`: 1 MiB Rust, 2 MiB glue), 4 Mi
 
 <Badge type="tip" text="FACT" /> Repeatability: in S1 (load average 13 to 15, four host runs) the medians of a case differed by at most 12 % and the p95 values by up to 2.6 times. In S2 the host p95 values are 3 to 9 times the medians because the load changed during the runs; use the medians. A first S2 run at load average 300 (host) and 600 (simulator) gave medians within 15 % of these for every case.
 
+<Badge type="tip" text="FACT" /> **16 KB pages (supplementary, H-133).** One run on the human's own emulator (Play image `sdk_gphone16k_arm64`, Android 17, API 37, `PAGE_SIZE` 16384), with the same harness: both 16 KB aligned libraries load and the self-check passes; UniFFI Kotlin 6,678 µs, JNI `ByteArray` 39 µs and JNI direct buffer 69 µs median per 1 MiB in 16 KiB chunks (load average 14–16). It is not the main Android result (another image than the lab AVD): `evidence/spikes/wp-04/ffi/android-37.2-16k.json`.
+
 ### 6.3 Observations
 
 <Badge type="tip" text="FACT" /> Measured on the Mac host, the iOS simulator and the Android emulator:

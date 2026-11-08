@@ -1,0 +1,62 @@
+{
+  "target": "host-swift",
+  "date": "2026-11-08",
+  "machine": "Apple M4 Pro",
+  "os": "macOS 26.6.2",
+  "toolchain": {
+    "rust": "1.99.0",
+    "swift": "6.4.2",
+    "uniffi": "0.32.2"
+  },
+  "indicative": true,
+  "cases": [
+    {
+      "path": "uniffi-swift",
+      "size": 1048576,
+      "chunk": 16384,
+      "docs": 1000,
+      "median_ns": 490085,
+      "p95_ns": 643623,
+      "chunk_median_ns": 7583,
+      "copied_bytes": 4194304,
+      "rss_delta_kib": 416,
+      "sha256_ok": true
+    },
+    {
+      "path": "uniffi-swift",
+      "size": 1048576,
+      "chunk": 65536,
+      "docs": 1000,
+      "median_ns": 414334,
+      "p95_ns": 968708,
+      "chunk_median_ns": 25750,
+      "copied_bytes": 4194304,
+      "rss_delta_kib": 1424,
+      "sha256_ok": true
+    },
+    {
+      "path": "c-swift",
+      "size": 1048576,
+      "chunk": 16384,
+      "docs": 1000,
+      "median_ns": 12084,
+      "p95_ns": 17198,
+      "chunk_median_ns": 167,
+      "copied_bytes": 1048576,
+      "rss_delta_kib": 80,
+      "sha256_ok": true
+    },
+    {
+      "path": "c-swift",
+      "size": 1048576,
+      "chunk": 65536,
+      "docs": 1000,
+      "median_ns": 13206,
+      "p95_ns": 20793,
+      "chunk_median_ns": 833,
+      "copied_bytes": 1048576,
+      "rss_delta_kib": 80,
+      "sha256_ok": true
+    }
+  ]
+}

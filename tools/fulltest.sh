@@ -107,6 +107,7 @@ group_diff() {
 group_lab() {
   step android-lab-check 'sh tools/upstream-lab/android/check.sh'
   step ios-lab-check 'sh tools/upstream-lab/ios/check.sh'
+  step ffi-bench-test '. tools/platform-spikes/lab-env.sh && mkdir -p "$LAB_HOME/tmp" && cd tools/platform-spikes/ffi-bench && cargo test --quiet'
 }
 
 group_docs() {

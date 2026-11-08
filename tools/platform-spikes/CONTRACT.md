@@ -175,7 +175,7 @@ One Rust crate `ffi-bench/` with its own `[workspace]` (as DL-084). The Rust sid
 | Path | Interface |
 |---|---|
 | UniFFI | `fn open_stream(size: u64, chunk: u32) -> Arc<DocStream>`; `DocStream::next_chunk(&self) -> Option<Vec<u8>>` (UniFFI copies the bytes out) |
-| C ABI | `rq_bench_open(size: u64, chunk: u32) -> *mut RqBenchStream`; `rq_bench_read(s, buf: *mut u8, cap: usize, out_len: *mut usize) -> i32` (0 ok, 1 end, negative error; copies into the caller buffer); `rq_bench_close(s)`. Kotlin calls it through JNI (`jni` crate) with a reused direct `ByteBuffer` and with a `ByteArray`; Swift calls the hand-written C header |
+| C ABI | `rq_bench_open(size: u64, chunk: u32) -> *mut RqBenchStream`; `rq_bench_read(s, buf: *mut u8, cap: usize, out_len: *mut usize) -> i32` (copies into the caller buffer); `rq_bench_close(s) -> i32` (0, or `-1` for a handle that is not open: a second close is a defined error). Codes: `0` OK, `1` END, `-1` E_HANDLE, `-2` E_NULL, `-3` E_ARG, `-4` E_PANIC, `-5` E_JNI. The handle is an opaque registry id, never a dereferenced pointer. Limits: chunk 1..=65536, size ≤ 256 MiB, at most 1024 open streams. Kotlin calls it through JNI (`jni` crate) with a reused direct `ByteBuffer` and with a `ByteArray`; Swift calls the hand-written C header |
 
 Measure for each path and target: 1 MiB in 16 KiB chunks (64 reads), and 1 MiB in 64 KiB; 200 warm-up documents, then 1000 measured documents. Report per document: median and p95 time (ns), per-chunk median (ns), bytes copied across the boundary (counted by the Rust side and by the foreign side), peak resident memory change. Also check each document with SHA-256 against the Rust value.
 
@@ -187,7 +187,7 @@ Result file `evidence/spikes/wp-04/ffi/<target>.json` (`<target>`: `host-jvm`, `
  "cases":[{"path":"uniffi-kotlin","size":1048576,"chunk":16384,"docs":1000,"median_ns":0,"p95_ns":0,"chunk_median_ns":0,"copied_bytes":0,"rss_delta_kib":0,"sha256_ok":true}]}
 ```
 
-`indicative` is `true` for every WP-04 result (H-129).
+`indicative` is `true` for every WP-04 result (H-129). Optional case members `rust_copied_bytes` and `glue_copied_bytes` split `copied_bytes` into the copy on the Rust side and the copies in the binding glue. `open_stream` with a size or chunk outside the limits gives a stream that is already at its end (fail closed: the SHA-256 check of the harness then fails); the benchmark keeps this signature, an SDK API returns an error instead.
 
 ## 11. Commands
 

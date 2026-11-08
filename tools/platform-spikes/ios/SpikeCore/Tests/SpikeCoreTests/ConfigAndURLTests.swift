@@ -79,6 +79,8 @@ import Testing
     #expect(Capability.navigationWithSnapshot.prototype == "IOS-P2")
     #expect(Capability.schemeOrigin.prototype == "IOS-P3")
     #expect(Capability.httpsStreaming.prototype == "IOS-ALL")
+    #expect(Capability.cookieSync.prototype == "IOS-ALL")
+    #expect(Capability(rawValue: "CAP-I-11") == .cookieSync)
   }
 }
 

@@ -3,7 +3,7 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { joinRun, parseLines, stableStringify } from "../join.mjs";
+import { joinRun, parseLines, runJsonText, stableStringify } from "../join.mjs";
 
 const meta = {
   run: "CAP-I-01-ios-27.0-1", capability: "CAP-I-01", os: "27.0", k: 1, device: "iPhone 16 Pro",
@@ -31,6 +31,20 @@ test("join_refuses_wrong_source", () => {
   assert.throws(() => parseLines('{"ev":"host.request","src":"app"}\n', "host"), /src is "app"/);
   assert.throws(() => parseLines("[1]\n", "app"), /not an object/);
   assert.deepEqual(parseLines("", "app"), []);
+});
+
+test("run_json_names_a_lab_launch_environment_only_when_used", () => {
+  const app = { os_version: "18.5", simulator_runtime_build: "22F77", webkit_version: "8621" };
+  const facts = { date: "2026-11-08", tools: { xcode: "x" }, device_model: "iPhone 16 Pro", app_commit: "abc" };
+  const plain = JSON.parse(runJsonText(app, facts));
+  assert.equal("launch_env" in plain, false);
+  assert.equal(plain.os, "18.5");
+  assert.equal(plain.webview, null);
+  assert.equal(JSON.parse(runJsonText(app, { ...facts, launch_env: "" })).launch_env, undefined);
+  const env = JSON.parse(runJsonText(app, { ...facts, launch_env: "DYLD_FALLBACK_LIBRARY_PATH=x" }));
+  assert.equal(env.launch_env, "DYLD_FALLBACK_LIBRARY_PATH=x");
+  const keys = Object.keys(env);
+  assert.deepEqual(keys, [...keys].sort());
 });
 
 test("stable_stringify_sorts_nested_keys", () => {

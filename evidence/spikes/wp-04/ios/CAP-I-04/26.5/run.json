@@ -1,0 +1,16 @@
+{
+  "app_commit": "10792329d7a6",
+  "date": "2026-11-08",
+  "device_model": "iPhone 16 Pro",
+  "os": "26.5",
+  "os_build": "23F77",
+  "simulator_model": "iPhone17,1",
+  "tools": {
+    "swift": "Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1)",
+    "xcode": "Xcode 27.2 Build version 27B52"
+  },
+  "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+  "webkit_build": "8624.2.5.10.4",
+  "webkit_version": "8624",
+  "webview": null
+}

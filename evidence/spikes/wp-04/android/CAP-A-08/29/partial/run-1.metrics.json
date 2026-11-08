@@ -1,0 +1,60 @@
+{
+  "run": "CAP-A-08-android-29-1",
+  "url": "https://localhost:18443/s/cut?run=CAP-A-08-android-29-1&after=70000&size=139264&hold=15000",
+  "metrics": {
+    "metric.commit": 34011,
+    "metric.fetch_end": 14928,
+    "metric.finish": 31947,
+    "metric.first_paint": 44,
+    "metric.head_wait": 0,
+    "metric.intercept": 33953,
+    "metric.load_call": 111,
+    "metric.visual_beacon_0": 16973,
+    "metric.webview_create": 108
+  },
+  "fetch": {
+    "bytes": 70000,
+    "complete": false,
+    "error": "java.net.ProtocolException: unexpected end of stream",
+    "sha256": "0c1a7cba72c6187f4701c06e5e742b47664822598df6c053242df333088c615b"
+  },
+  "stream": {
+    "bytes": 70000,
+    "error": "java.net.ProtocolException: unexpected end of stream",
+    "outcome": "error",
+    "sha256": "0c1a7cba72c6187f4701c06e5e742b47664822598df6c053242df333088c615b"
+  },
+  "intercept": {
+    "main_frame_calls": 3,
+    "reason": "match",
+    "subresource_passes": 5
+  },
+  "expected": {
+    "bytes": 70000,
+    "sha256": "0c1a7cba72c6187f4701c06e5e742b47664822598df6c053242df333088c615b"
+  },
+  "checks": {
+    "decisions": [
+      "stream",
+      "pass:claimed",
+      "pass:url"
+    ],
+    "host_cuts": [
+      70000,
+      70000
+    ],
+    "fetch_bytes": 70000,
+    "fetch_complete": false,
+    "stream_read_bytes": 70000,
+    "stream_outcome": "error",
+    "stream_sha256_is_fetch": true,
+    "steps": [
+      "late-snapshot",
+      "fallback-load",
+      "late-snapshot",
+      "range-page",
+      "range-fetch"
+    ],
+    "beacon_before_cut": true
+  }
+}

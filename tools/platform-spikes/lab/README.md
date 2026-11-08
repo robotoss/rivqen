@@ -62,3 +62,6 @@ Cold boot of API 37 with `-no-window` and `swiftshader_indirect`: 55 s.
 
 1. `sh tools/platform-spikes/lab/clean.sh --yes` removes the AVDs and the simulators.
 2. The human deletes `/Volumes/BackCat/rivqen-p2-lab` (about 11 GB) and, when wanted, `/tmp/android-<user>/`.
+
+
+Note (WP-04 S3): with Xcode 27.2 and iOS 27.0, `simctl io <udid> recordVideo` records a booted simulator without a window; Xcode 27.2 has no Simulator.app (it has DeviceHub.app). The S1 note that no file was written is out of date.

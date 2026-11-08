@@ -326,7 +326,7 @@
           "evidence/spikes/wp-04/ios/CAP-I-01/27.0/run-2.jsonl",
           "evidence/spikes/wp-04/ios/CAP-I-01/27.0/run-3.jsonl"
         ],
-        "recording": null,
+        "recording": "evidence/recordings/wp-04/CAP-I-01-ios-27.0.mp4",
         "metrics": "evidence/spikes/wp-04/ios/CAP-I-01/27.0/run-1.metrics.json"
       },
       {
@@ -479,7 +479,7 @@
           "evidence/spikes/wp-04/ios/CAP-I-04/27.0/run-2.jsonl",
           "evidence/spikes/wp-04/ios/CAP-I-04/27.0/run-3.jsonl"
         ],
-        "recording": null,
+        "recording": "evidence/recordings/wp-04/CAP-I-04-ios-27.0.mp4",
         "metrics": "evidence/spikes/wp-04/ios/CAP-I-04/27.0/run-1.metrics.json"
       },
       {
@@ -532,7 +532,7 @@
           "evidence/spikes/wp-04/ios/CAP-I-05/27.0/run-2.jsonl",
           "evidence/spikes/wp-04/ios/CAP-I-05/27.0/run-3.jsonl"
         ],
-        "recording": null,
+        "recording": "evidence/recordings/wp-04/CAP-I-05-ios-27.0.mp4",
         "metrics": "evidence/spikes/wp-04/ios/CAP-I-05/27.0/run-1.metrics.json"
       },
       {
@@ -634,7 +634,7 @@
           "evidence/spikes/wp-04/ios/CAP-I-07/27.0/run-2.jsonl",
           "evidence/spikes/wp-04/ios/CAP-I-07/27.0/run-3.jsonl"
         ],
-        "recording": null,
+        "recording": "evidence/recordings/wp-04/CAP-I-07-ios-27.0.mp4",
         "source": "https://developer.apple.com/documentation/webkit/wkwebviewconfiguration/seturlschemehandler(_:forurlscheme:)"
       },
       {
@@ -735,7 +735,7 @@
           "evidence/spikes/wp-04/ios/CAP-I-09/27.0/run-2.jsonl",
           "evidence/spikes/wp-04/ios/CAP-I-09/27.0/run-3.jsonl"
         ],
-        "recording": null
+        "recording": "evidence/recordings/wp-04/CAP-I-09-ios-27.0.mp4"
       },
       {
         "os": "26.5",
@@ -833,7 +833,7 @@
           "evidence/spikes/wp-04/ios/CAP-I-11/27.0/run-2.jsonl",
           "evidence/spikes/wp-04/ios/CAP-I-11/27.0/run-3.jsonl"
         ],
-        "recording": null
+        "recording": "evidence/recordings/wp-04/CAP-I-11-ios-27.0.mp4"
       },
       {
         "os": "26.5",

@@ -15,7 +15,8 @@ Public API only: no private WebKit API, no global `URLProtocol`, no ATS exceptio
 | `App/` | Xcode project `SpikeApp.xcodeproj` (synchronized folder `SpikeApp/`, local package `SpikeCore`), iOS 18.0+, Swift 6, strict concurrency, warnings are errors, ad-hoc signature for the simulator |
 | `run.sh` | One capability, one or more runs (section "Run") |
 | `join.mjs` | Joins script, app and host parts into `run-<k>.jsonl`; writes `run-<k>.metrics.json` and `run.json` |
-| `test/` | `node --test` for `join.mjs` |
+| `record.mjs` | Recordings (S3): compares a recorded run with the stored run; makes the clip with `ffmpeg` and checks it with `ffprobe` |
+| `test/` | `node --test` for `join.mjs` and `record.mjs` |
 
 ## Run
 
@@ -57,6 +58,33 @@ A supporting set is a run set with another build or more steps; it is not a cata
 |---|---|---|
 | `CAP-I-09` `app-bound` | `AppBound` configuration: `Debug` and `Configuration/AppBound-Info.plist` (`WKAppBoundDomains = [localhost]`), lab only | Service Worker with App-Bound Domains |
 | `CAP-I-11` `initiator` | `Debug` | Which synced cookies WebKit sends on a top-level navigation, by initiator (Q-12) |
+
+## Recordings
+
+One clip for each recorded capability (WP-04 S3, CONTRACT.md section 9): `evidence/recordings/wp-04/<capability>-ios-<os>.mp4`. The clip comes from one more run (use `k` = 4). This run is not evidence of the verdict.
+
+1. Make the lab simulator as in "Run" (steps 2 and 3). Close Safari on it when it is open: `xcrun simctl terminate <lab udid> com.apple.mobilesafari`.
+2. Record one capability: `RECORD=1 sh tools/platform-spikes/ios/run.sh CAP-I-05 27.0 4`. For CAP-I-09, add `SET=app-bound`.
+3. Look at the clip. It must show the page of the capability and only the lab simulator.
+4. Delete the lab simulator (step 6 of "Run").
+
+With `RECORD=1`, `run.sh` does these steps:
+
+| Step | What |
+|---|---|
+| Status bar | `simctl status_bar <lab udid> override` (time 9:41, full battery), so the clip shows no clock time |
+| Record | `lab/sim.sh record start` before the run (it waits at most 15 s for "Recording started"), `record stop` 2 s after `POST /run/end`. `simctl io <lab udid> recordVideo` records only the screen of the lab device |
+| App | `-rqRecord 1`: a closed web view leaves a still image (`snapshotView(afterScreenUpdates: false)`, a UIKit view, not a web view) on the screen until the next web view covers it. Screen only: WebKit, the network and the log do not change |
+| Log | The run log and `run.json` go to `$LAB_OUT/ios-recorded/<capability>/<os>[/<set>]/`, never to `evidence/` |
+| Gate | `record.mjs stable`: the run must end ok and its normalized log must equal the stored `run-1.jsonl` (the rule of `check/`). Else: no clip, exit 1 |
+| Clip | `record.mjs clip`: `ffmpeg` (`-an -map_metadata -1`, H.264 `libx264`, 540 px wide, 30 fps, last frame shown 1.5 s more), CRF 28, 32, 36, 40 until the clip is at most 1,000,000 bytes; `ffprobe` checks one H.264 stream, no audio, width, at most 30 s, size, and no date, place, device or software tag. A raw recording longer than 28.5 s is refused, not cut |
+
+`FFMPEG` and `FFPROBE` name the lab tools (default: on `PATH`, else `/opt/homebrew/bin`). They are not dependencies of the repository.
+
+Facts (Xcode 27.2, iOS 27.0, 2026-11-08):
+
+- <Badge type="tip" text="FACT" /> Xcode 27.2 has no Simulator.app (`Contents/Applications` has `DeviceHub.app`). `simctl io recordVideo` records a booted simulator without a window. The S1 test, in which `simctl io` wrote no file, did not happen again.
+- <Badge type="tip" text="FACT" /> `recordVideo` writes HEVC with a variable frame rate: a frame only when the screen changes. The raw file has `creation_time` and Apple tags; the clip has none.
 
 ## Probe channel and bridge
 

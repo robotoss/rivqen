@@ -26,7 +26,12 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
     var logPolicy = false
     /// S2 (CAP-I-09 `app-bound` set): `limitsNavigationsToAppBoundDomains`.
     var limitsToAppBound = false
+    /// S3 (`-rqRecord 1`): `close()` leaves a still frame of the page in the container.
+    var keepsLastFrame = false
   }
+
+  /// The tag of the still frame view (`Options.keepsLastFrame`); the container has at most one.
+  static let lastFrameTag = 0x7271_6c66
 
   let webView: WKWebView
   private let recorder: Recorder
@@ -37,6 +42,7 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
   private var loadStarted: ContinuousClock.Instant?
   private let keepsFrameEchoes: Bool
   private let logsPolicy: Bool
+  private let keepsLastFrame: Bool
   /// `frame.echo` values from subframes (`Options.frameEcho`), at most `maxFrameEchoes`.
   private(set) var frameEchoes: [JSONValue] = []
   static let maxFrameEchoes = 8
@@ -50,6 +56,7 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
     self.recorder = recorder
     keepsFrameEchoes = options.frameEcho
     logsPolicy = options.logPolicy
+    keepsLastFrame = options.keepsLastFrame
     let configuration = WKWebViewConfiguration()
     // A new data store per web view in memory: every run starts without cookies or cache.
     configuration.websiteDataStore = .nonPersistent()
@@ -90,6 +97,15 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
 
   /// Removes the web view and breaks the retain cycle of the message handlers.
   func close() {
+    if keepsLastFrame, let container = webView.superview,
+      let still = webView.snapshotView(afterScreenUpdates: false)
+    {
+      // A view copy of the last screen image, not a web view: it loads and runs nothing.
+      container.viewWithTag(Self.lastFrameTag)?.removeFromSuperview()
+      still.tag = Self.lastFrameTag
+      still.frame = webView.frame
+      container.insertSubview(still, belowSubview: webView)
+    }
     webView.stopLoading()
     webView.configuration.userContentController.removeAllScriptMessageHandlers()
     webView.navigationDelegate = nil

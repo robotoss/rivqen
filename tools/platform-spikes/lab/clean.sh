@@ -36,7 +36,7 @@ else
     rm -rf "$ANDROID_AVD_HOME/$a.avd" "$ANDROID_AVD_HOME/$a.ini"
     echo "clean.sh: removed AVD $a"
   done
-  [ -z "$sims" ] || sh "$HERE/sim.sh" delete all
+  [ -z "$sims" ] || LAB_SIM_ALL_TAGS=1 sh "$HERE/sim.sh" delete all
 fi
 
 echo "== the human may delete (clean.sh never does)"

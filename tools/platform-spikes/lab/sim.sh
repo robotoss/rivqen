@@ -142,6 +142,12 @@ case "$cmd" in
     target="${1:-}"
     [ -n "$target" ] || usage
     if [ "$target" = all ]; then
+      # Without a tag the prefix matches the devices of every lane; that is only for the final cleanup.
+      if [ -z "${LAB_SIM_TAG:-}" ] && [ "${LAB_SIM_ALL_TAGS:-0}" != 1 ]; then
+        echo "sim.sh: delete all without LAB_SIM_TAG removes the devices of every lane; set LAB_SIM_TAG, or LAB_SIM_ALL_TAGS=1 for the final cleanup" >&2
+        lab_devices >&2
+        exit 2
+      fi
       devices="$(lab_devices)"
     else
       check_os "$target"

@@ -81,7 +81,7 @@ test("sw_probe_answers_network", async () => {
 });
 
 function swSandbox({ controlled, again, registerError, fetchSw }) {
-  const calls = { register: [], replaced: [], fetched: [] };
+  const calls = { register: [], replaced: [], fetched: [], cleared: [] };
   const sw = {
     register: (url, opts) => { calls.register.push([url, opts]); return registerError ? Promise.reject({ name: registerError }) : Promise.resolve({}); },
     ready: Promise.resolve({}),
@@ -93,7 +93,8 @@ function swSandbox({ controlled, again, registerError, fetchSw }) {
       navigator: { serviceWorker: sw },
       location: { pathname: "/s/sw-page", search: again ? "?run=r1&again=1" : "?run=r1", replace: (u) => calls.replaced.push(u) },
       fetch: (u) => { calls.fetched.push(u); return Promise.resolve({ json: () => Promise.resolve({ sw: fetchSw }) }); },
-      setTimeout: () => 0,
+      setTimeout: () => 7,
+      clearTimeout: (id) => { calls.cleared.push(id); },
       Promise,
     },
   };
@@ -103,7 +104,7 @@ test("sw_page_probes", async () => {
   const html = await text("/s/sw-page?run=r1");
   const [{ code }] = scripts(html);
 
-  const none = runPage(code, { navigator: {}, location: { search: "" }, setTimeout: () => 0, Promise });
+  const none = runPage(code, { navigator: {}, location: { search: "" }, setTimeout: () => 0, clearTimeout: () => {}, Promise });
   assert.deepEqual(none.probes, [["sw", "unsupported"]]);
 
   const worker = swSandbox({ controlled: true, fetchSw: "worker" });
@@ -171,7 +172,7 @@ test("csp_without_run_uses_norun_nonce", async () => {
 });
 
 test("hist_steps", async () => {
-  for (const step of [0, 5, 9]) {
+  for (const step of [0, 5, 8]) {
     const html = await text(`/s/hist?run=h1&step=${step}`);
     assert.ok(html.includes(`<a id="next" href="/s/hist?run=h1&step=${step + 1}">`));
     assert.ok(html.includes(`<p>step ${step}</p>`));
@@ -203,4 +204,20 @@ test("cookie_js_rules", async () => {
     assert.equal((await g(`/s/cookie/js?${q}`)).status, 400, q);
   }
   assert.equal((await g("/s/cookie/set?name=a&value=b&attrs=HttpOnly")).status, 200);
+});
+
+test("hist_last_step_has_no_link", async () => {
+  const html = await text("/s/hist?run=h1&step=9");
+  assert.ok(html.includes("<p>step 9</p>"));
+  assert.ok(!html.includes('id="next"'));
+  assert.ok((await text("/s/hist?run=h1&step=8")).includes('<a id="next" href="/s/hist?run=h1&step=9">'));
+});
+
+test("sw_page_clears_its_time_limit_when_ready_wins", async () => {
+  const html = await text("/s/sw-page?run=r1");
+  const [{ code }] = scripts(html);
+  const worker = swSandbox({ controlled: true, fetchSw: "worker" });
+  runPage(code, worker.sandbox);
+  await new Promise((r) => setTimeout(r, 20));
+  assert.deepEqual(worker.calls.cleared, [7]);
 });

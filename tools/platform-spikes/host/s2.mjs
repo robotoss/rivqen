@@ -41,10 +41,12 @@ export function swPageScript(run) {
   const again = `${run === null ? "" : `run=${run}&`}again=1`;
   return `(function(){${PROBE_FN}` +
     'if(!navigator.serviceWorker){p("sw","unsupported");return}' +
-    `var limit=new Promise(function(_,no){setTimeout(function(){no({name:"Timeout"})},${SW_READY_MS})});` +
+    // The time limit is cleared when ready wins and has its own catch, so it never rejects unhandled.
+    `var t,limit=new Promise(function(_,no){t=setTimeout(function(){no({name:"Timeout"})},${SW_READY_MS})});` +
+    "limit.catch(function(){});" +
     'navigator.serviceWorker.register("/s/sw.js",{scope:"/s/"})' +
     ".then(function(){return Promise.race([navigator.serviceWorker.ready,limit])})" +
-    ".then(function(){" +
+    ".then(function(){clearTimeout(t);" +
     `if(!navigator.serviceWorker.controller&&location.search.indexOf("again=1")<0){location.replace(location.pathname+"?"+${JSON.stringify(again)});return}` +
     `return fetch(${JSON.stringify(probeUrl)}).then(function(r){return r.json()}).then(function(j){p("sw",j.sw)})})` +
     '.catch(function(e){p("sw",e&&e.name?e.name:"error")})})();';
@@ -76,8 +78,10 @@ export function csp(rc) {
 export function hist(rc) {
   const step = intParam(rc.q, "step", { def: 0, min: 0, max: HIST_LAST });
   const next = `/s/hist?${rc.run === null ? "" : `run=${rc.run}&`}step=${step + 1}`;
+  // The last step has no link, so a run never walks into the 400 answer of step 10.
+  const link = step < HIST_LAST ? `<a id="next" href="${next}">next</a>` : "";
   const body = `<!doctype html><meta charset="utf-8"><title>hist ${step}</title><p>step ${step}</p>` +
-    `<a id="next" href="${next}">next</a>` +
+    link +
     `<script>${PROBE_FN}p("history",history.length);p("location",document.location.href)</script>`;
   rc.send(200, [["Content-Type", HTML]], body);
 }

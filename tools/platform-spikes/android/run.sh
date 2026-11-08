@@ -102,6 +102,10 @@ while [ "$k" -le "$last" ]; do
     adb_ shell am force-stop "$PKG"
     adb_ shell run-as "$PKG" rm -rf files/out
   fi
+  # One run.sh per run id: a second one would close the host log of the first.
+  lock="$LAB_HOME/tmp/run-$run.lock"
+  mkdir "$lock" 2>/dev/null || die "another run.sh runs $run (remove $lock if no run.sh is left)"
+  trap 'rmdir "$lock" 2>/dev/null; rm -rf "$WORK"' EXIT
   # A run id left open by an interrupted earlier run would give 409: close it first.
   post /run/end "{\"run\":\"$run\"}" >/dev/null 2>&1 || true
   post /run/start "{\"run\":\"$run\",\"capability\":\"$cap\",\"platform\":\"android\",\"os\":\"$api\",\"k\":$k}" >/dev/null \
@@ -130,6 +134,7 @@ while [ "$k" -le "$last" ]; do
   else
     failed=$((failed + 1))
   fi
+  rmdir "$lock" 2>/dev/null || true
   k=$((k + 1))
 done
 adb_ shell am force-stop "$PKG"

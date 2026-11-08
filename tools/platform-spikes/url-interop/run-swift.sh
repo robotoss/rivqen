@@ -26,8 +26,8 @@ case "$1" in
   ios-sim)
     os="$2"
     [ "${LAB_SIM_TAG:-}" = url ] || { echo "run-swift.sh: set LAB_SIM_TAG=url" >&2; exit 1; }
-    sdk="$(xcrun --sdk iphonesimulator --show-sdk-path)"
-    swiftc -O -sdk "$sdk" -target arm64-apple-ios17.0-simulator -o "$work/url-ios" "$src"
+    # xcrun picks the simulator toolchain and sysroot together (a bare swiftc mixed in the macOS sysroot).
+    xcrun --sdk iphonesimulator swiftc -O -target arm64-apple-ios17.0-simulator -o "$work/url-ios" "$src"
     sh "$here/../lab/sim.sh" create "$os"
     trap 'sh "$here/../lab/sim.sh" delete "$os" || true' EXIT
     sh "$here/../lab/sim.sh" boot "$os"

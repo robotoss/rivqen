@@ -22,6 +22,10 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
     /// `frame.echo`; the session keeps it in `frameEchoes` instead of the log, so the runner logs
     /// it at a fixed place (a subframe message and a script result may arrive in either order).
     var frameEcho = false
+    /// S2: log each navigation policy decision as `native.policy` (type, main frame, URL).
+    var logPolicy = false
+    /// S2 (CAP-I-09 `app-bound` set): `limitsNavigationsToAppBoundDomains`.
+    var limitsToAppBound = false
   }
 
   let webView: WKWebView
@@ -32,6 +36,7 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
   private(set) var bridgeReady = 0
   private var loadStarted: ContinuousClock.Instant?
   private let keepsFrameEchoes: Bool
+  private let logsPolicy: Bool
   /// `frame.echo` values from subframes (`Options.frameEcho`), at most `maxFrameEchoes`.
   private(set) var frameEchoes: [JSONValue] = []
   static let maxFrameEchoes = 8
@@ -44,11 +49,13 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
   init(recorder: Recorder, container: UIView, options: Options) {
     self.recorder = recorder
     keepsFrameEchoes = options.frameEcho
+    logsPolicy = options.logPolicy
     let configuration = WKWebViewConfiguration()
     // A new data store per web view in memory: every run starts without cookies or cache.
     configuration.websiteDataStore = .nonPersistent()
     configuration.dataDetectorTypes = []
     configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
+    if options.limitsToAppBound { configuration.limitsNavigationsToAppBoundDomains = true }
     if let handler = options.schemeHandler {
       configuration.setURLSchemeHandler(handler, forURLScheme: LabScheme.name)
     }
@@ -98,6 +105,28 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
     let ended = await until(timeout) { self.finished > done || self.failed > bad }
     if !ended { recorder.error("NavigationTimeout: no didFinish after \(Int(timeout)) s") }
     return finished > done
+  }
+
+  /// Starts a navigation and waits for `didFinish`, a failure or `timeout` seconds. Unlike `load`,
+  /// a timeout is a result here, not an app error (S2: a back or forward step may not navigate).
+  /// Returns `finish`, `fail` or `none`.
+  func settle(timeout: Double, _ start: (WKWebView) -> Void) async -> String {
+    let done = finished
+    let bad = failed
+    loadStarted = ContinuousClock.now
+    start(webView)
+    _ = await until(timeout) { self.finished > done || self.failed > bad }
+    return finished > done ? "finish" : failed > bad ? "fail" : "none"
+  }
+
+  /// The back-forward list: counts and the current URL (S2, CAP-I-10).
+  var backForward: JSONValue {
+    let list = webView.backForwardList
+    return .object([
+      "back": .int(list.backList.count), "forward": .int(list.forwardList.count),
+      "current": list.currentItem.map { .string($0.url.absoluteString) } ?? .null,
+      "can_go_back": .bool(webView.canGoBack), "can_go_forward": .bool(webView.canGoForward),
+    ])
   }
 
   /// Runs the probe steps in the page world and logs each result as `app.probe`. `view` (CAP-I-11)
@@ -163,6 +192,15 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
   ) {
     // Main-frame navigations go only to the lab origins; subframes follow the same rule.
     guard let url = navigationAction.request.url else { return decisionHandler(.cancel) }
+    if logsPolicy {
+      recorder.native(
+        "policy",
+        .object([
+          "type": .string(Self.word(navigationAction.navigationType)),
+          "main_frame": .bool(navigationAction.targetFrame?.isMainFrame ?? true),
+          "url": .string(url.absoluteString),
+        ]))
+    }
     let scheme = url.scheme ?? ""
     if scheme == "about" { return decisionHandler(.allow) }
     let port = url.port ?? 0
@@ -173,6 +211,19 @@ final class WebSession: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
     }
     recorder.error("NavigationBlocked: a navigation outside the lab origins")
     decisionHandler(.cancel)
+  }
+
+  /// A log word for a navigation type.
+  static func word(_ type: WKNavigationType) -> String {
+    switch type {
+    case .linkActivated: "link"
+    case .formSubmitted: "form"
+    case .backForward: "back_forward"
+    case .reload: "reload"
+    case .formResubmitted: "form_resubmit"
+    case .other: "other"
+    @unknown default: "unknown"
+    }
   }
 
   func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation?) {

@@ -13,15 +13,22 @@
 # data container, POST /run/end, join script + app + host parts into
 # evidence/spikes/wp-04/ios/<capability>/<os>/run-<k>.jsonl. A run that is not ok goes to
 # $LAB_OUT/ios-failed/ instead, and the script exits 1.
-# Environment: SKIP_BUILD=1 uses the app that is already built; RUN_WAIT (seconds, default 240).
+# Environment: SKIP_BUILD=1 uses the app that is already built; RUN_WAIT (seconds, default 240);
+# SET=<name> runs a supporting set of the capability (README "Supporting sets"): the app gets
+# -rqSet <name>, the runs go to evidence/.../<capability>/<os>/<name>/, and the set app-bound uses
+# the AppBound build configuration (Info.plist WKAppBoundDomains, lab only).
 set -eu
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
 . "$HERE/../lab-env.sh"
 
+SET="${SET:-}"
+case "$SET" in '' | app-bound | initiator) ;; *) printf 'ios/run.sh: SET must be app-bound or initiator\n' >&2; exit 1 ;; esac
 BUNDLE_ID=dev.rivqen.platformspike
+CONFIGURATION=Debug
+[ "$SET" != app-bound ] || CONFIGURATION=AppBound
 DERIVED="$LAB_DERIVED/ios-spike"
-APP="$DERIVED/Build/Products/Debug-iphonesimulator/PlatformSpike.app"
+APP="$DERIVED/Build/Products/$CONFIGURATION-iphonesimulator/PlatformSpike.app"
 CONTROL="http://127.0.0.1:$LAB_HOST_CONTROL_PORT"
 ORIGIN="https://localhost:$LAB_HOST_PORT"
 WAIT="${RUN_WAIT:-240}"
@@ -36,7 +43,8 @@ fail() {
 CAP="$1"
 OS="$2"
 RANGE="${3:-1}"
-case "$CAP" in CAP-I-0[1-7] | CAP-I-11) ;; *) fail "capability must be CAP-I-01 to CAP-I-07 or CAP-I-11" ;; esac
+case "$CAP" in CAP-I-0[1-9] | CAP-I-1[01]) ;; *) fail "capability must be CAP-I-01 to CAP-I-11" ;; esac
+case "$CAP/$SET" in */ | CAP-I-09/app-bound | CAP-I-11/initiator) ;; *) fail "SET=$SET is not a set of $CAP" ;; esac
 case "$OS" in '' | *[!0-9.]*) fail "<os> must be a version such as 27.0" ;; esac
 case "$RANGE" in
   *..*) FIRST="${RANGE%%..*}"; LAST="${RANGE##*..}" ;;
@@ -99,7 +107,7 @@ esac
 if [ "${SKIP_BUILD:-0}" != 1 ]; then
   log "build (DerivedData: $DERIVED)"
   xcodebuild -project "$HERE/App/SpikeApp.xcodeproj" -scheme SpikeApp -sdk iphonesimulator \
-    -destination "id=$UDID" -derivedDataPath "$DERIVED" -quiet build >"$WORK/build.log" 2>&1 || {
+    -configuration "$CONFIGURATION" -destination "id=$UDID" -derivedDataPath "$DERIVED" -quiet build >"$WORK/build.log" 2>&1 || {
     tail -n 40 "$WORK/build.log" >&2
     fail "build failed"
   }
@@ -112,7 +120,9 @@ PROTOTYPE="$(node -e '
   const c = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).find((r) => r.id === process.argv[2]);
   console.log(c ? c.prototype : "unknown");
 ' "$ROOT/tools/platform-spikes/capabilities.json" "$CAP")"
-EVIDENCE="$ROOT/evidence/spikes/wp-04/ios/$CAP/$OS"
+EVIDENCE="$ROOT/evidence/spikes/wp-04/ios/$CAP/$OS${SET:+/$SET}"
+SET_ARGS=""
+[ -z "$SET" ] || SET_ARGS="-rqSet $SET"
 
 now_ms() { perl -MTime::HiRes=time -e 'printf "%d", time * 1000'; }
 
@@ -137,7 +147,7 @@ while [ "$k" -le "$LAST" ]; do
   [ "$code" = 200 ] || fail "POST /run/start: $code $(cat "$WORK/start.out")"
   T0="$(now_ms)"
   xcrun simctl launch --terminate-running-process "$UDID" "$BUNDLE_ID" \
-    -rqRun "$RUN" -rqCap "$CAP" -rqOrigin "$ORIGIN" >/dev/null
+    -rqRun "$RUN" -rqCap "$CAP" -rqOrigin "$ORIGIN" $SET_ARGS >/dev/null
   i=0
   until [ -f "$OUTDIR/DONE" ]; do
     i=$((i + 1))
@@ -165,7 +175,7 @@ while [ "$k" -le "$LAST" ]; do
   if [ "$OUTCOME" = ok ]; then
     DEST="$EVIDENCE"
   else
-    DEST="$LAB_OUT/ios-failed/$CAP/$OS"
+    DEST="$LAB_OUT/ios-failed/$CAP/$OS${SET:+/$SET}"
     failed=1
     log "run $RUN: $OUTCOME (log in $DEST)"
   fi

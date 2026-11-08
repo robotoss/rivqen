@@ -89,7 +89,11 @@ final class Runner {
     case .schemeStreaming: await schemeStreaming()
     case .schemeOrigin: await schemeOrigin()
     case .httpsStreaming: await httpsStreaming()
-    case .cookieSync: await cookieSync()
+    case .contentSecurityPolicy: await contentSecurityPolicy()
+    case .serviceWorker: await serviceWorker()
+    case .history: await history()
+    case .cookieSync:
+      if config?.set == "initiator" { await cookieInitiator() } else { await cookieSync() }
     }
   }
 
@@ -517,6 +521,222 @@ final class Runner {
     recorder.native(name, summary)
   }
 
+  // MARK: S2 (T-05): CSP, Service Worker, history; CAP-I-11 initiator set
+
+  /// The loaders of the S2 matrix: IOS-P1 (`loadSimulatedRequest`, `loadHTMLString` with the page
+  /// URL as base URL), IOS-P2 (`load(URLRequest)`), IOS-P3 (the `rqlab` scheme handler).
+  private enum Loader: String, CaseIterable {
+    case simulated
+    case htmlString = "html-string"
+    case live
+    case scheme
+  }
+
+  /// The longest wait for the `sw` probe of `/s/sw-page` (the page waits at most 10 s for
+  /// `ready`, then may reload itself once).
+  private static let swWait = 25.0
+  /// The longest wait for one history step (a step that does not navigate ends here).
+  private static let navWait = 10.0
+
+  /// Opens `path` with `loader` in a new web view and waits for the end of the first navigation.
+  /// A failed navigation is a result (`native.open` false), not an app error. Returns `nil` only
+  /// when the page cannot be built (then an app error is logged).
+  private func open(_ loader: Loader, path: String, label: String, logPolicy: Bool = false) async
+    -> (web: WebSession, ok: Bool)?
+  {
+    recorder.native("step", .string(label))
+    let web: WebSession
+    let ok: Bool
+    switch loader {
+    case .simulated, .htmlString:
+      guard let url = https(path) else { return nil }
+      let page = await fetcher.fetchAll(url, recorder: recorder)
+      web = makeSession(logPolicy: logPolicy)
+      if loader == .simulated {
+        ok = await loadSimulated(web, url: url, page: page)
+      } else {
+        // H-66 for loadHTMLString: decode the bytes as UTF-8 with Foundation (removes a BOM).
+        guard page.complete, let html = String(data: page.body, encoding: .utf8) else {
+          recorder.error("DecodeError: no complete UTF-8 page")
+          close(web)
+          return nil
+        }
+        ok = await web.load(timeout: timeout) { $0.loadHTMLString(html, baseURL: url) }
+      }
+    case .live:
+      guard let url = https(path) else { return nil }
+      web = makeSession(logPolicy: logPolicy)
+      let request = URLRequest(
+        url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: timeout)
+      ok = await web.load(timeout: timeout) { $0.load(request) }
+    case .scheme:
+      guard let url = scheme(path) else { return nil }
+      let handler = LabSchemeHandler(recorder: recorder, fetcher: fetcher)
+      web = makeSession(handler: handler, logPolicy: logPolicy)
+      ok = await web.load(timeout: timeout) { $0.load(URLRequest(url: url)) }
+    }
+    // Only a failure is logged: a page may start its own next navigation (sw-page reloads itself)
+    // before `load` sees didFinish, so a success line would race with it. `app.nav` shows success.
+    if !ok { recorder.native("open", .bool(false)) }
+    return (web, ok)
+  }
+
+  /// CAP-I-08: `/s/csp` in the modes `header`, `meta` and `both`, with each loader. The page
+  /// probes `csp.nonce`, `csp.eval` and (when an inline script without the nonce runs)
+  /// `csp.inline`; the app then runs one probe script of its own in the page world.
+  private func contentSecurityPolicy() async {
+    for mode in ["header", "meta", "both"] {
+      for loader in Loader.allCases {
+        let path = paths.csp(mode: mode, tag: loader.rawValue)
+        guard let (web, ok) = await open(loader, path: path, label: "\(loader.rawValue)-\(mode)")
+        else { return }
+        if ok { await web.probe([["location", "location", ""]], timeout: timeout) }
+        close(web)
+      }
+    }
+  }
+
+  /// CAP-I-09: `/s/sw-page` with each loader. The page registers `/s/sw.js` and probes `sw`. The
+  /// `app-bound` set is the `AppBound` build (Info.plist `WKAppBoundDomains`) with
+  /// `limitsNavigationsToAppBoundDomains`.
+  private func serviceWorker() async {
+    let domains = Bundle.main.object(forInfoDictionaryKey: "WKAppBoundDomains") as? [String]
+    recorder.native(
+      "app_bound_domains",
+      domains.map { .array($0.prefix(16).map { .string(String($0.prefix(64))) }) } ?? .null)
+    for loader in Loader.allCases {
+      let before = recorder.probeCounts["sw", default: 0]
+      guard
+        let (web, ok) = await open(
+          loader, path: paths.swPage(tag: loader.rawValue), label: loader.rawValue, logPolicy: true)
+      else { return }
+      var got = false
+      if ok {
+        got = await until(Self.swWait) { self.recorder.probeCounts["sw", default: 0] > before }
+      }
+      if !got { recorder.native("sw", .string(ok ? "missing" : "no-page")) }
+      // A reload of the page (again=1) may still run; let it end before the next loader.
+      _ = await until(timeout) { !web.webView.isLoading }
+      close(web)
+    }
+  }
+
+  /// CAP-I-10: `/s/hist` with each loader: two page-started link clicks, then back and forward by
+  /// the web view API and by `history.go`. After each step: the navigation outcome, the
+  /// back-forward list and the page state. Policy decisions are logged as `native.policy`.
+  private func history() async {
+    for loader in Loader.allCases {
+      guard
+        let (web, ok) = await open(
+          loader, path: paths.hist(step: 0), label: loader.rawValue, logPolicy: true)
+      else { return }
+      if ok {
+        await historyState(web)
+        // The last two steps go back to the first entry (the one the loader made).
+        for op in ["click", "click", "back", "forward", "js-back", "js-forward", "back", "back"] {
+          await historyStep(web, op: op)
+        }
+      }
+      close(web)
+    }
+  }
+
+  private func historyStep(_ web: WebSession, op: String) async {
+    recorder.native("step", .string(op))
+    let outcome = await web.settle(timeout: Self.navWait) { view in
+      switch op {
+      case "click":
+        view.callAsyncJavaScript(
+          Scripts.click, arguments: ["id": "next"], in: nil, in: .page, completionHandler: nil)
+      case "back":
+        recorder.native("go", .bool(view.goBack() != nil))
+      case "forward":
+        recorder.native("go", .bool(view.goForward() != nil))
+      default:
+        view.callAsyncJavaScript(
+          Scripts.historyGo, arguments: ["delta": op == "js-back" ? -1 : 1], in: nil, in: .page,
+          completionHandler: nil)
+      }
+    }
+    recorder.native("nav_outcome", .string(outcome))
+    await historyState(web)
+  }
+
+  private func historyState(_ web: WebSession) async {
+    recorder.native("back_forward", web.backForward)
+    switch await web.callAsync(Scripts.state, arguments: [:], timeout: timeout) {
+    case .success(let pairs): for (name, value) in pairs { recorder.probe(name, value) }
+    case .failure(let error): recorder.error("ProbeScriptError: \(error)")
+    }
+  }
+
+  /// CAP-I-11 set `initiator`: which synced cookies WebKit sends on a top-level navigation by
+  /// initiator. The native session gets the planned cookies of site A and B, the app copies them
+  /// into `WKHTTPCookieStore`, then: an app-started `load(URLRequest)` of A (from a blank web
+  /// view), a same-site navigation that the A page starts, an app-started load of A while the A
+  /// page is shown, an app-started load of B while the A page is shown, and a cross-site
+  /// navigation that the B page starts (back to A).
+  private func cookieInitiator() async {
+    guard let a = config?.origin else { return }
+    let b = a.otherSite
+    recorder.native("step", .string("native-set"))
+    for (site, prefix) in [(a, "na"), (b, "nb")] {
+      for c in CookiePlan.cases {
+        let path = paths.cookieSet(
+          name: "\(prefix)-\(c.suffix)", value: CookiePlan.value, attrs: c.attrs)
+        guard let target = url(site.https + path) else { return }
+        guard await fetcher.fetchAll(target, recorder: recorder).complete else { return }
+      }
+    }
+    let native = urlStoreCookies(fetcher.cookieStorage)
+    recorder.native("url_store", Self.list(native.facts))
+
+    recorder.native("step", .string("sync-to-web"))
+    let web = makeSession(logPolicy: true)
+    defer { close(web) }
+    let store = web.webView.configuration.websiteDataStore.httpCookieStore
+    for cookie in native.cookies {
+      let gate = OneShot<Bool>()
+      let ok = await gate.wait(timeout: timeout, onTimeout: false) {
+        store.setCookie(cookie) { gate.resume(true) }
+      }
+      guard ok else {
+        recorder.error("CookieSyncTimeout: WKHTTPCookieStore.setCookie did not finish")
+        return
+      }
+    }
+    await webKitCookieFacts(web)
+
+    let steps: [(name: String, site: LabOrigin, byPage: Bool)] = [
+      ("app-a", a, false), ("page-same-site-a", a, true), ("app-a-from-a", a, false),
+      ("app-b", b, false),
+      ("page-cross-site-a", a, true),
+    ]
+    for step in steps {
+      recorder.native("step", .string(step.name))
+      let target = step.site.https + paths.echo(tag: step.name, html: true)
+      let outcome = await web.settle(timeout: timeout) { view in
+        if step.byPage {
+          view.callAsyncJavaScript(
+            Scripts.navigate, arguments: ["url": target], in: nil, in: .page,
+            completionHandler: nil)
+        } else if let u = URL(string: target) {
+          view.load(
+            URLRequest(
+              url: u, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+              timeoutInterval: timeout))
+        }
+      }
+      guard outcome == "finish" else {
+        recorder.error("NavigationError: \(step.name) ended with \(outcome)")
+        return
+      }
+      await web.probe(
+        [["location", "location", ""], ["dom_text", "echo", "#echo"]], timeout: timeout,
+        view: CookieNames.pageView)
+    }
+  }
+
   // MARK: Steps
 
   private var timeout: Double { config?.stepTimeout ?? LaunchConfig.defaultTimeout }
@@ -539,14 +759,15 @@ final class Runner {
 
   private func makeSession(
     handler: LabSchemeHandler? = nil, bridge: Bool = false, rules: WKContentRuleList? = nil,
-    frameEcho: Bool = false
+    frameEcho: Bool = false, logPolicy: Bool = false
   )
     -> WebSession
   {
     let session = WebSession(
       recorder: recorder, container: model.container,
       options: .init(
-        schemeHandler: handler, bridge: bridge, ruleList: rules, frameEcho: frameEcho))
+        schemeHandler: handler, bridge: bridge, ruleList: rules, frameEcho: frameEcho,
+        logPolicy: logPolicy, limitsToAppBound: config?.set == "app-bound"))
     recorder.native("webview", .string("created"))
     recorder.lastChunkProbe = nil
     return session

@@ -106,8 +106,11 @@ internal object CookieLab {
      * that tell the initiator (`Referer`, `Origin`, `Sec-Fetch-*`). Cookie values are not included.
      */
     fun requestFacts(request: WebResourceRequest): String {
-        val headers = request.requestHeaders.mapKeys { it.key.lowercase() }
+        val raw = fields(request)
+        val headers = raw.orEmpty().mapKeys { it.key.lowercase() }
         val o = JSONObject()
+        // WebView 91 gives no field map (null) in shouldOverrideUrlLoading; WebView 145 an empty one.
+        if (raw == null) o.put("fields_null", true)
         o.put("url", request.url.toString())
         o.put("gesture", request.hasGesture())
         o.put("redirect", request.isRedirect)
@@ -115,6 +118,19 @@ internal object CookieLab {
         for (name in INITIATOR_FIELDS) headers[name]?.let { o.put(name, it) }
         return o.toString()
     }
+
+    /**
+     * The request fields, or null. `getRequestHeaders()` is declared without a null rule, and WebView
+     * 91 returns null in `shouldOverrideUrlLoading` (API 29 run; the app crashed before this guard).
+     */
+    fun fields(request: WebResourceRequest): Map<String, String>? {
+        val m: Map<String, String>? = request.requestHeaders
+        return m
+    }
+
+    /** The value of the field [name] (any letter case), or null. */
+    fun field(request: WebResourceRequest, name: String): String? =
+        fields(request)?.entries?.firstOrNull { it.key.equals(name, ignoreCase = true) }?.value
 
     private const val HTTP_OK = 200
     private const val MAX_ECHO = 16 * 1024

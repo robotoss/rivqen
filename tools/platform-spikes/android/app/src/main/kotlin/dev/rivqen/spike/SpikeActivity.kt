@@ -442,7 +442,7 @@ class SpikeActivity : Activity() {
             val mode = scenario.cookieIntercept
             if (mode != null) {
                 // The Cookie field the WebView gives the interceptor (only with COOKIE_INTERCEPT on).
-                val cookie = request.requestHeaders.entries.firstOrNull { it.key.equals("Cookie", ignoreCase = true) }?.value
+                val cookie = CookieLab.field(request, "Cookie")
                 probe("native.request_cookie", cookie?.let { InterceptRule.loggable("Cookie", it) })
             }
             logIntercept(url, request, "stream", parts.status, parts.fields.entries.map { listOf(it.key, InterceptRule.loggable(it.key, it.value)) })
@@ -506,7 +506,7 @@ class SpikeActivity : Activity() {
             val url = request.url.toString()
             val origin = InterceptRule.origin(request.url.scheme ?: "", request.url.host ?: "", request.url.port)
             if (url.contains(RANGE_PATH) && origin in RunParams.HOST_ORIGINS) {
-                val range = request.requestHeaders.entries.firstOrNull { it.key.equals("Range", ignoreCase = true) }?.value
+                val range = CookieLab.field(request, "Range")
                 log.emit("app.probe", mapOf("name" to "native.range_request", "value" to range))
             }
             if (afterLoad) {

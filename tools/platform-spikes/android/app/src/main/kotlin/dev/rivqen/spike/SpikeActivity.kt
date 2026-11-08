@@ -11,9 +11,11 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.Process
 import android.os.SystemClock
 import android.util.Log
 import android.view.WindowManager
+import android.webkit.CookieManager
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.SslErrorHandler
 import android.webkit.WebResourceError
@@ -22,12 +24,17 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.webkit.WebResourceResponseCompat
+import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
+import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
+import org.json.JSONObject
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -84,6 +91,13 @@ class SpikeActivity : Activity() {
     private var rangeDone = false
     private var cutStep = CutStep.FIRST_LOAD
 
+    /** CAP-A-06: `on`, `off` or `unsupported` (COOKIE_INTERCEPT); the cookie snapshot step. */
+    private var cookieInterceptState: String? = null
+    private var cookieSnapshot = 0
+
+    /** CAP-A-07 steps: the step that waits for the current load to settle. */
+    private var settleWaiter: (() -> Unit)? = null
+
     /** Steps of [Scenario.CUT_RANGE]. */
     private enum class CutStep { FIRST_LOAD, FIRST_SNAPSHOT, FALLBACK_LOAD, FALLBACK_SNAPSHOT, RANGE_PAGE, RANGE }
     private var firstPaint = false
@@ -127,8 +141,12 @@ class SpikeActivity : Activity() {
         // DOCUMENT_START_SCRIPT is optional: without it the probe channel is installed after the load
         // (ProbeBridge.Channel.AFTER_LOAD; WebView 91 of the API 29 image).
         require(WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) { "WEB_MESSAGE_LISTENER is not supported" }
+        if (p.scenario.steps) {
+            beginSteps(p)
+            return
+        }
         val sessionUrl = p.url.toString()
-        rule = InterceptRule(sessionUrl, InterceptRule.origin(p.url.scheme, p.url.host, p.url.port), RunParams.LOAD_ORIGINS)
+        rule =InterceptRule(sessionUrl, InterceptRule.origin(p.url.scheme, p.url.host, p.url.port), RunParams.LOAD_ORIGINS)
         val bridge = BridgePipe(
             PIPE_CAPACITY,
             PIPE_STALL_MS,
@@ -162,11 +180,212 @@ class SpikeActivity : Activity() {
         setContentView(wv)
         webView = wv
         main.postDelayed({ timeout() }, RUN_TIMEOUT_MS)
-        loadCallMs = log.now()
-        log.metric("metric.load_call", loadCallMs - fetchStartMs)
-        loads = 1
-        wv.loadUrl(sessionUrl)
+        val load = {
+            loadCallMs = log.now()
+            log.metric("metric.load_call", loadCallMs - fetchStartMs)
+            loads = 1
+            wv.loadUrl(sessionUrl)
+        }
+        val mode = p.scenario.cookieIntercept
+        if (mode == null) {
+            load()
+            return
+        }
+        // CAP-A-06: the cookie setting of this run, then a clean store with one cookie that the
+        // intercepted request may carry (`native.request_cookie`), then the load.
+        cookieInterceptState = when {
+            mode == CookieIntercept.OFF || mode == CookieIntercept.MANUAL -> "off"
+            cookieInterceptSupported() -> {
+                WebSettingsCompat.setCookiesIncludedInShouldInterceptRequest(wv.settings, true)
+                "on"
+            }
+            else -> "unsupported"
+        }
+        val cm = CookieManager.getInstance()
+        cm.removeAllCookies {
+            cm.setCookie(sessionUrl, PRE_COOKIE) { load() }
+        }
     }
+
+    /**
+     * CAP-A-07 runs ([Scenario.steps]): no early fetch. The WebView and the probe channel as in
+     * [begin]; then the steps of the scenario, one after the other on the main thread.
+     */
+    private fun beginSteps(p: RunParams) {
+        val wv = WebView(this)
+        configure(wv)
+        val bridgeProbes = ProbeBridge(RunParams.HOST_ORIGINS, log) { name, value -> main.post { onProbe(name, value) } }
+        bridgeProbes.install(wv)
+        probes = bridgeProbes
+        wv.webViewClient = Client(p.url.toString(), p.scenario, bridgeProbes.channel == ProbeBridge.Channel.AFTER_LOAD)
+        setContentView(wv)
+        webView = wv
+        main.postDelayed({ timeout() }, RUN_TIMEOUT_MS)
+        loadCallMs = log.now()
+        val steps = when (p.scenario) {
+            Scenario.COOKIE_SEED -> seedSteps()
+            Scenario.COOKIE_PERSIST -> persistSteps(p)
+            else -> syncSteps(p)
+        }
+        runSteps(steps, 0)
+    }
+
+    /** One step: it calls `next` (on the main thread) when it is done. */
+    private fun interface Step {
+        fun run(next: () -> Unit)
+    }
+
+    private fun runSteps(steps: List<Step>, i: Int) {
+        if (done) return
+        if (i == steps.size) {
+            step("done")
+            complete(null)
+            return
+        }
+        steps[i].run { runSteps(steps, i + 1) }
+    }
+
+    private fun step(label: String) {
+        log.emit("app.probe", mapOf("name" to "native.step", "value" to label))
+    }
+
+    private fun probe(name: String, value: Any?) {
+        log.emit("app.probe", mapOf("name" to name, "value" to value))
+    }
+
+    /** Loads [url] (app `loadUrl`) and goes on when the load settled. */
+    private fun loadStep(label: String, url: String): Step = Step { next ->
+        step(label)
+        nextLoad()
+        settleWaiter = next
+        webView?.loadUrl(url)
+    }
+
+    /** The page navigates itself to [url] (script `location.href`, no gesture); goes on when settled. */
+    private fun navigateStep(label: String, url: String): Step = Step { next ->
+        step(label)
+        nextLoad()
+        settleWaiter = next
+        webView?.evaluateJavascript("location.href = ${JSONObject.quote(url)};", null)
+    }
+
+    /** What the current echo page got (`native.wv_cookie`) and what its script sees (`native.doc_cookie`). */
+    private fun readPageStep(): Step = Step { next ->
+        val wv = webView
+        if (wv == null) {
+            next()
+            return@Step
+        }
+        wv.evaluateJavascript(CookieLab.ECHO_SCRIPT) { echo ->
+            probe("native.wv_cookie", CookieLab.echoCookie(CookieLab.jsString(echo)))
+            wv.evaluateJavascript(CookieLab.DOC_COOKIE_SCRIPT) { doc ->
+                probe("native.doc_cookie", CookieLab.jsString(doc))
+                next()
+            }
+        }
+    }
+
+    /** `CookieManager.getCookie(url)` as the probe [name]. */
+    private fun getCookieStep(name: String, url: String): Step = Step { next ->
+        probe(name, CookieManager.getInstance().getCookie(url))
+        next()
+    }
+
+    /** A native fetch of the echo with the `CookieManager` cookies of the URL (`native.fetch_cookie`). */
+    private fun nativeFetchStep(url: HttpUrl): Step = Step { next ->
+        val cookie = CookieManager.getInstance().getCookie(url.toString())
+        CookieLab.fetchEcho(client, url, cookie, main) { seen ->
+            probe("native.fetch_cookie", seen)
+            next()
+        }
+    }
+
+    /**
+     * CAP-A-07 steps. Native → WebView: `setCookie` of each attribute variant on site A and B, flush,
+     * then the WebView loads (app `loadUrl`, a same-site and a cross-site script navigation). WebView
+     * → native: `getCookie` before a native fetch (with OkHttp, no cookie jar), before and after the
+     * WebView stored cookies itself (a `Set-Cookie` with HttpOnly and a script `document.cookie`).
+     */
+    private fun syncSteps(p: RunParams): List<Step> {
+        val cm = CookieManager.getInstance()
+        val siteA = p.url.newBuilder().host("localhost").encodedPath("/").query(null).build()
+        val siteB = p.url.newBuilder().host("10.0.2.2").encodedPath("/").query(null).build()
+        fun echo(site: HttpUrl, html: Boolean, via: String?): HttpUrl = site.newBuilder().encodedPath("/s/echo")
+            .apply { if (html) addQueryParameter("html", "1") }
+            .addQueryParameter("run", p.run)
+            .apply { if (via != null) addQueryParameter("via", via) }
+            .build()
+        fun hostPage(path: String, name: String, attrs: String): String = siteA.newBuilder().encodedPath(path)
+            .addQueryParameter("run", p.run).addQueryParameter("name", name).addQueryParameter("value", "v1")
+            .addQueryParameter("attrs", attrs).build().toString()
+        return listOf(
+            Step { next ->
+                step("clear")
+                cm.removeAllCookies { next() }
+            },
+            Step { next ->
+                step("set-a")
+                CookieLab.setAll(cm, siteA.toString(), CookieLab.lines("a")) { r ->
+                    probe("native.cm_set", r.joinToString(","))
+                    next()
+                }
+            },
+            Step { next ->
+                step("set-b")
+                CookieLab.setAll(cm, siteB.toString(), CookieLab.lines("b")) { r ->
+                    probe("native.cm_set", r.joinToString(","))
+                    cm.flush()
+                    next()
+                }
+            },
+            getCookieStep("native.cm_get_a", echo(siteA, false, null).toString()),
+            getCookieStep("native.cm_get_b", echo(siteB, false, null).toString()),
+            Step { next -> step("native-fetch-a"); next() },
+            nativeFetchStep(echo(siteA, false, null)),
+            Step { next -> step("native-fetch-b"); next() },
+            nativeFetchStep(echo(siteB, false, null)),
+            loadStep("app-load-a", echo(siteA, true, "app").toString()),
+            readPageStep(),
+            navigateStep("same-site-nav-a", echo(siteA, true, "same").toString()),
+            readPageStep(),
+            loadStep("app-load-b", echo(siteB, true, "app").toString()),
+            readPageStep(),
+            navigateStep("cross-site-nav-a", echo(siteA, true, "cross").toString()),
+            readPageStep(),
+            loadStep("webview-set-http", hostPage("/s/cookie/set", "w-http", "HttpOnly,Secure,SameSite=Strict")),
+            loadStep("webview-set-js", hostPage("/s/cookie/js", "w-js", "SameSite=Lax")),
+            Step { next ->
+                cm.flush()
+                next()
+            },
+            getCookieStep("native.cm_get_a", echo(siteA, false, null).toString()),
+            Step { next -> step("native-fetch-a-after"); next() },
+            nativeFetchStep(echo(siteA, false, null)),
+        )
+    }
+
+    /**
+     * CAP-A-07 `persist`, seed launch (no run log): a clean store, a session cookie and a cookie with
+     * Max-Age, `flush`, then one more cookie with Max-Age without `flush`. The process is then killed
+     * ([complete]), so only what was written survives.
+     */
+    private fun seedSteps(): List<Step> {
+        val cm = CookieManager.getInstance()
+        val a = params?.url?.newBuilder()?.encodedPath("/")?.query(null)?.build()?.toString() ?: ""
+        return listOf(
+            Step { next -> cm.removeAllCookies { next() } },
+            Step { next -> CookieLab.setAll(cm, a, listOf("p-session=v1; Path=/", "p-max=v1; Path=/; Max-Age=3600")) { next() } },
+            Step { next ->
+                cm.flush()
+                next()
+            },
+            Step { next -> CookieLab.setAll(cm, a, listOf("p-late=v1; Path=/; Max-Age=3600")) { next() } },
+        )
+    }
+
+    /** CAP-A-07 `persist`: what the store has after the seed launch was killed. */
+    private fun persistSteps(p: RunParams): List<Step> =
+        listOf(getCookieStep("native.cm_start", p.url.toString()))
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun configure(wv: WebView) {
@@ -190,6 +409,11 @@ class SpikeActivity : Activity() {
         private val afterLoad: Boolean,
     ) : WebViewClient() {
         override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+            if (scenario.steps) {
+                // CAP-A-07: nothing is intercepted; the facts of each main-frame request are logged.
+                if (request.isForMainFrame) probe("native.request", CookieLab.requestFacts(request))
+                return null
+            }
             val r = rule ?: return null
             val p = pipe ?: return null
             val f = fetch ?: return null
@@ -215,9 +439,62 @@ class SpikeActivity : Activity() {
             val parts = InterceptRule.head(head.status, head.reason, head.pairs)
                 ?: return pass(url, request, "head-not-expressible", p, f)
             interceptReason.set(verdict.reason)
+            val mode = scenario.cookieIntercept
+            if (mode != null) {
+                // The Cookie field the WebView gives the interceptor (only with COOKIE_INTERCEPT on).
+                val cookie = request.requestHeaders.entries.firstOrNull { it.key.equals("Cookie", ignoreCase = true) }?.value
+                probe("native.request_cookie", cookie?.let { InterceptRule.loggable("Cookie", it) })
+            }
             logIntercept(url, request, "stream", parts.status, parts.fields.entries.map { listOf(it.key, InterceptRule.loggable(it.key, it.value)) })
             if (parts.dropped.isNotEmpty()) log.emit("app.error", mapOf("error" to "fields not passed: ${parts.dropped}"))
+            if (mode != null) return cookieResponse(mode, parts, p)
             return WebResourceResponse(parts.mimeType, parts.encoding, parts.status, parts.reason, parts.fields, p.source())
+        }
+
+        /**
+         * CAP-A-06: the streamed response with its `Set-Cookie` given as [mode] says. For
+         * [CookieIntercept.MANUAL] the app writes each value into `CookieManager` for the session URL
+         * (main thread; this interceptor thread waits at most [COOKIE_WAIT_MS]) and removes it from
+         * the fields (transport/http.md §2).
+         */
+        private fun cookieResponse(mode: CookieIntercept, parts: InterceptRule.Head, p: BridgePipe): WebResourceResponse {
+            val setCookie = parts.fields.entries.filter { it.key.equals("Set-Cookie", ignoreCase = true) }.map { it.value }
+            val without = parts.fields.filterKeys { !it.equals("Set-Cookie", ignoreCase = true) }
+            return when (mode) {
+                CookieIntercept.OFF, CookieIntercept.ON_MAP ->
+                    WebResourceResponse(parts.mimeType, parts.encoding, parts.status, parts.reason, parts.fields, p.source())
+                CookieIntercept.ON_SET_COOKIES -> {
+                    if (!cookieInterceptSupported()) {
+                        // No COOKIE_INTERCEPT: as OFF (the value stays in the field map).
+                        return WebResourceResponse(parts.mimeType, parts.encoding, parts.status, parts.reason, parts.fields, p.source())
+                    }
+                    val compat = WebResourceResponseCompat(parts.mimeType, parts.encoding, parts.status, parts.reason, without, p.source())
+                    compat.setCookies(setCookie)
+                    compat.toWebResourceResponse()
+                }
+                CookieIntercept.MANUAL -> {
+                    val results = ArrayList<Boolean>()
+                    for (value in setCookie) {
+                        val latch = CountDownLatch(1)
+                        val ok = AtomicReference(false)
+                        main.post {
+                            CookieManager.getInstance().setCookie(sessionUrl, value) { r ->
+                                ok.set(r == true)
+                                latch.countDown()
+                            }
+                        }
+                        val inTime = try {
+                            latch.await(COOKIE_WAIT_MS, TimeUnit.MILLISECONDS)
+                        } catch (e: InterruptedException) {
+                            Thread.currentThread().interrupt()
+                            false
+                        }
+                        results.add(inTime && ok.get())
+                    }
+                    probe("native.manual_set", results.joinToString(","))
+                    WebResourceResponse(parts.mimeType, parts.encoding, parts.status, parts.reason, without, p.source())
+                }
+            }
         }
 
         /**
@@ -291,6 +568,8 @@ class SpikeActivity : Activity() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
             // Never overrides; records the main-frame redirects that the WebView follows (CAP-A-04).
             if (request.isForMainFrame && request.isRedirect) nav("redirect", request.url.toString(), null)
+            // CAP-A-07: what the app can see of a navigation that a page starts.
+            if (scenario.steps && request.isForMainFrame) probe("native.override", CookieLab.requestFacts(request))
             return false
         }
 
@@ -416,8 +695,18 @@ class SpikeActivity : Activity() {
     }
 
     private fun maybeDone() {
-        if (done || !settled() || fetchResult == null || outcome == null) return
+        if (done) return
+        if (params?.scenario?.steps == true) {
+            val waiter = settleWaiter
+            if (waiter != null && settled()) {
+                settleWaiter = null
+                waiter()
+            }
+            return
+        }
+        if (!settled() || fetchResult == null || outcome == null) return
         if (params?.scenario == Scenario.CUT_RANGE && !cutRangeSteps()) return
+        if (params?.scenario?.cookieIntercept != null && !cookieSnapshotSteps()) return
         if (firstPaint) {
             complete(null)
         } else if (!graceStarted) {
@@ -479,6 +768,30 @@ class SpikeActivity : Activity() {
     }
 
     /**
+     * CAP-A-06 after the settled load: the COOKIE_INTERCEPT state (`native.cookie_intercept`),
+     * `document.cookie` (`native.doc_cookie`) and `CookieManager.getCookie` of the session URL
+     * (`native.cm_cookie`). True when done.
+     */
+    private fun cookieSnapshotSteps(): Boolean {
+        val wv = webView ?: return true
+        when (cookieSnapshot) {
+            0 -> {
+                cookieSnapshot = 1
+                probe("native.cookie_intercept", cookieInterceptState)
+                wv.evaluateJavascript(CookieLab.DOC_COOKIE_SCRIPT) { doc ->
+                    probe("native.doc_cookie", CookieLab.jsString(doc))
+                    probe("native.cm_cookie", CookieManager.getInstance().getCookie(params?.url.toString()))
+                    cookieSnapshot = 2
+                    maybeDone()
+                }
+                return false
+            }
+            1 -> return false
+            else -> return true
+        }
+    }
+
+    /**
      * What the page has now (CAP-A-08): `native.doc` with the URL, title, ready state and the length
      * of the body text, from `evaluateJavascript` (it needs no page channel and also works on an
      * error page). Then [next] on the main thread.
@@ -499,6 +812,7 @@ class SpikeActivity : Activity() {
             "fetch end".takeIf { fetchResult == null },
             "stream outcome".takeIf { outcome == null },
             "range probes".takeIf { params?.scenario == Scenario.CUT_RANGE && !rangeDone },
+            "steps".takeIf { params?.scenario?.steps == true },
         )
         log.emit("app.error", mapOf("error" to "run timeout after $RUN_TIMEOUT_MS ms; missing: ${missing.joinToString()}"))
         complete("timeout; missing: ${missing.joinToString()}")
@@ -525,6 +839,8 @@ class SpikeActivity : Activity() {
                 // The run script sees no status file and stops at its own time limit.
                 Log.e(TAG, "cannot write the output", e)
             }
+            // CAP-A-07 `persist` seed: end the process now, so only what was written survives.
+            if (params?.scenario == Scenario.COOKIE_SEED) Process.killProcess(Process.myPid())
             main.post { finishAndRemoveTask() }
         }
     }
@@ -557,6 +873,7 @@ class SpikeActivity : Activity() {
             "scenario" to params?.scenario?.extra,
             "channel" to probes?.channel?.value,
             "loads" to loads,
+            "cookie_intercept" to cookieInterceptState,
             "dropped_events" to log.dropped,
         )
     }
@@ -574,6 +891,7 @@ class SpikeActivity : Activity() {
             "features" to mapOf(
                 "WEB_MESSAGE_LISTENER" to WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER),
                 "DOCUMENT_START_SCRIPT" to WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT),
+                "COOKIE_INTERCEPT" to cookieInterceptSupported(),
             ),
         )
     }
@@ -597,6 +915,18 @@ class SpikeActivity : Activity() {
         const val HEAD_WAIT_MS = 30_000L
         const val RUN_TIMEOUT_MS = 150_000L
         const val FIRST_PAINT_GRACE_MS = 2_000L
+        const val COOKIE_WAIT_MS = 5_000L
+
+        /** CAP-A-06: the cookie in the store before the load (synthetic; `native.request_cookie`). */
+        const val PRE_COOKIE = "a06-pre=v1; Path=/"
+
+        /**
+         * `WebViewFeature.COOKIE_INTERCEPT` (androidx.webkit 1.15+). The reference names it a feature
+         * for `isFeatureSupported`, but the string definition of the parameter in 1.18.0 does not list
+         * it, so lint reports WrongConstant for a correct call.
+         */
+        @SuppressLint("WrongConstant")
+        fun cookieInterceptSupported(): Boolean = WebViewFeature.isFeatureSupported(WebViewFeature.COOKIE_INTERCEPT)
         const val MAX_VISUAL_CHUNKS = 64
         const val MAX_SCRIPT_RESULT = 200
         const val RANGE_PATH = "/s/range?"

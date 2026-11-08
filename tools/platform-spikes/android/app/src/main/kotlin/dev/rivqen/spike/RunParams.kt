@@ -17,16 +17,41 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
  * - [CUT_RANGE]: CAP-A-08: a streamed page whose body is cut gets the CL-33 fallback (one normal
  *   load); on the page of that load a script fetches a byte range of `/s/range`.
  */
-internal enum class Scenario(val extra: String) {
+internal enum class Scenario(val extra: String, val cookieIntercept: CookieIntercept? = null, val steps: Boolean = false) {
     STREAM("stream"),
     REDIRECT_3XX("redirect-3xx"),
     CUT_RANGE("cut-range"),
+
+    /** CAP-A-06: the intercepted page sets a cookie; [cookieIntercept] says how it reaches the WebView. */
+    COOKIE_ON("cookie-on", CookieIntercept.ON_SET_COOKIES),
+    COOKIE_ON_MAP("cookie-on-map", CookieIntercept.ON_MAP),
+    COOKIE_OFF("cookie-off", CookieIntercept.OFF),
+    COOKIE_MANUAL("cookie-manual", CookieIntercept.MANUAL),
+
+    /** CAP-A-07: cookie sync steps without the early fetch. */
+    COOKIE_SYNC("cookie-sync", steps = true),
+
+    /** CAP-A-07 `persist`: the seed launch before the run (no run log) and the run that reads what survived. */
+    COOKIE_SEED("cookie-seed", steps = true),
+    COOKIE_PERSIST("cookie-persist", steps = true),
     ;
 
     companion object {
         fun of(extra: String?): Scenario? = if (extra == null) STREAM else entries.firstOrNull { it.extra == extra }
     }
 }
+
+/**
+ * How the `Set-Cookie` of an intercepted response is given to the WebView (CAP-A-06).
+ *
+ * - [ON_SET_COOKIES]: `WebSettingsCompat.setCookiesIncludedInShouldInterceptRequest(true)` and
+ *   `WebResourceResponseCompat.setCookies` (androidx.webkit 1.15, feature COOKIE_INTERCEPT).
+ * - [ON_MAP]: the setting on; the `Set-Cookie` stays in the field map.
+ * - [OFF]: the setting off; the `Set-Cookie` stays in the field map (the S1 prototype).
+ * - [MANUAL]: the setting off; the app writes the `Set-Cookie` into `CookieManager` before it
+ *   returns the response and removes it from the map (the rule of transport/http.md §2).
+ */
+internal enum class CookieIntercept { ON_SET_COOKIES, ON_MAP, OFF, MANUAL }
 
 /**
  * The run parameters from the intent extras (run.sh: `am start --es run <id> --es url <url>

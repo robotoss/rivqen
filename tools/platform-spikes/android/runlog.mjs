@@ -42,6 +42,9 @@ export const BLOCK_SCENARIO = "chunks=3&size=1500&gate=beacon&timeout=4000";
 /** Site B on the bad-certificate port (CONTRACT section 1): no `adb reverse` is needed for it. */
 const BAD_ORIGIN = "https://10.0.2.2:18444";
 
+/** CAP-A-06 page: one synthetic cookie that scripts can read (no HttpOnly). */
+const COOKIE_PAGE = { name: "a06-set", value: "v1", attrs: "Secure,SameSite=Lax" };
+
 /** The final page of the redirect runs: the HTML echo, with the run id so that the host logs it. */
 const echoTarget = (run) => `/s/echo?html=1&run=${run}`;
 
@@ -105,6 +108,18 @@ export const SETS = {
   "CAP-A-05": { "": { origin: BAD_ORIGIN, path: "/s/echo", params: { html: 1 }, kind: "pass" } },
   // Partial response: a cut main-frame stream (CL-33 fallback), then byte ranges of a subresource.
   "CAP-A-08": { "": { path: "/s/cut", params: { after: 3000, size: 8192 }, scenario: "cut-range", kind: "cut" } },
+  // Cookie of an intercepted response (COOKIE_INTERCEPT): one Set-Cookie, visible to scripts.
+  "CAP-A-06": {
+    "": { path: "/s/cookie/set", params: COOKIE_PAGE, scenario: "cookie-on", kind: "fetched" },
+    "on-map": { path: "/s/cookie/set", params: COOKIE_PAGE, scenario: "cookie-on-map", kind: "fetched" },
+    "off": { path: "/s/cookie/set", params: COOKIE_PAGE, scenario: "cookie-off", kind: "fetched" },
+    "manual": { path: "/s/cookie/set", params: COOKIE_PAGE, scenario: "cookie-manual", kind: "fetched" },
+  },
+  // Cookie sync between CookieManager and the native fetch (steps without the early fetch).
+  "CAP-A-07": {
+    "": { path: "/s/echo", params: { html: 1 }, scenario: "cookie-sync", kind: "steps" },
+    "persist": { path: "/s/echo", params: { html: 1 }, scenario: "cookie-persist", seed: "cookie-seed", kind: "steps" },
+  },
 };
 
 /** The run set, or an error for an unknown capability or set. */
@@ -182,6 +197,8 @@ function webviewOf(work) {
 export function byteChecks(events, metrics, expectedStream, kind = "stream") {
   if (kind === "pass" || kind === "probe") return passChecks(events, metrics, kind);
   if (kind === "cut") return cutChecks(events, metrics);
+  if (kind === "fetched") return fetchedChecks(events, metrics);
+  if (kind === "steps") return stepChecks(events, metrics);
   const app = events.filter((e) => e.src === "app");
   const host = events.filter((e) => e.src === "host");
   const hostStatus = host.find((e) => e.ev === "host.response")?.status ?? null;
@@ -216,6 +233,48 @@ export function byteChecks(events, metrics, expectedStream, kind = "stream") {
 }
 
 const EMPTY_SHA256 = createHash("sha256").digest("hex");
+
+/**
+ * Checks of a streamed page that is not built by host/stream.mjs (CAP-A-06 cookie page): the first
+ * main-frame request streamed; the fetch read the whole body; the WebView read the same bytes (count
+ * and SHA-256) and the end.
+ */
+export function fetchedChecks(events, metrics) {
+  const app = events.filter((e) => e.src === "app");
+  const intercepts = app.filter((e) => e.ev === "app.intercept");
+  const fetchEnd = app.find((e) => e.ev === "app.fetch.end");
+  const readBytes = app.filter((e) => e.ev === "app.stream.read").reduce((n, e) => n + e.bytes, 0);
+  const checks = {
+    decisions: intercepts.map((e) => e.decision),
+    fetch_bytes: fetchEnd?.bytes ?? null,
+    fetch_complete: fetchEnd?.complete ?? null,
+    stream_read_bytes: readBytes,
+    stream_outcome: metrics.stream?.outcome ?? null,
+    stream_sha256_is_fetch: metrics.stream?.sha256 !== undefined && metrics.stream?.sha256 === metrics.fetch?.sha256,
+  };
+  const problems = [];
+  if (intercepts[0]?.decision !== "stream") problems.push("the main frame was not streamed");
+  if (checks.fetch_complete !== true || !(checks.fetch_bytes > 0)) problems.push("the fetch did not read the whole body");
+  if (readBytes !== checks.fetch_bytes || metrics.stream?.bytes !== checks.fetch_bytes || !checks.stream_sha256_is_fetch) {
+    problems.push(`the WebView read ${readBytes} bytes, the fetch ${checks.fetch_bytes}`);
+  }
+  if (checks.stream_outcome !== "end") problems.push(`stream outcome ${checks.stream_outcome}`);
+  if ((metrics.dropped_events ?? 0) !== 0) problems.push("app events dropped");
+  return { checks, problems, expected: { bytes: checks.fetch_bytes, sha256: metrics.fetch?.sha256 ?? null } };
+}
+
+/** Checks of a step run (CAP-A-07): the last step is `done`, no app error, nothing dropped. */
+export function stepChecks(events, metrics) {
+  const app = events.filter((e) => e.src === "app");
+  const steps = app.filter((e) => e.ev === "app.probe" && e.name === "native.step").map((e) => e.value);
+  const errors = app.filter((e) => e.ev === "app.error").map((e) => e.error);
+  const checks = { steps, errors };
+  const problems = [];
+  if (steps.at(-1) !== "done") problems.push(`steps did not end: ${steps.join(",")}`);
+  if (errors.length > 0) problems.push(`app errors: ${errors.join("; ")}`);
+  if ((metrics.dropped_events ?? 0) !== 0) problems.push("app events dropped");
+  return { checks, problems, expected: { bytes: null, sha256: null } };
+}
 
 /**
  * Checks of a run whose main frame the WebView loads itself (redirect, TLS error). `pass`: every
@@ -444,6 +503,7 @@ function analyze([out, capability]) {
 const [cmd, ...args] = process.argv.slice(2);
 if (cmd === "url") console.log(pageUrl(args[0], args[1], args[2] || undefined, args[3] ?? "", args[4] ?? "37"));
 else if (cmd === "scenario") console.log(setOf(args[0], args[1] ?? "").scenario);
+else if (cmd === "seed") console.log(setOf(args[0], args[1] ?? "").seed ?? "");
 else if (cmd === "sets") console.log(JSON.stringify(Object.fromEntries(Object.entries(SETS).map(([c, s]) => [c, Object.keys(s)]))));
 else if (cmd === "join") join(args);
 else if (cmd === "runjson") runjson(args);

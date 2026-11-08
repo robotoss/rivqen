@@ -13,14 +13,24 @@ import java.nio.ByteBuffer
  */
 internal object NativeBench {
     const val E_HANDLE = -1
+    const val E_NULL = -2
     const val E_ARG = -3
     const val E_JNI = -5
 
     /** A stream handle, or 0 for a bad argument. */
     @JvmStatic external fun open(size: Long, chunk: Int): Long
 
-    /** Writes the next chunk at address 0 of the direct [buffer], up to its capacity. */
-    @JvmStatic external fun readDirect(handle: Long, buffer: ByteBuffer): Int
+    /**
+     * Writes the next chunk at address 0 of the direct [buffer], up to its capacity, and
+     * ignores its position and limit. A read-only buffer gives [E_ARG] without a native call
+     * (review L-1); the native side checks it again. No other thread may use [buffer] during
+     * the call.
+     */
+    fun readDirect(handle: Long, buffer: ByteBuffer): Int =
+        if (buffer.isReadOnly) E_ARG else readDirectRaw(handle, buffer)
+
+    /** The JNI function behind [readDirect]: it also refuses a read-only buffer ([E_ARG]). */
+    @JvmStatic external fun readDirectRaw(handle: Long, buffer: ByteBuffer): Int
 
     /** Copies the next chunk to [array] from index 0 (`SetByteArrayRegion`). */
     @JvmStatic external fun readArray(handle: Long, array: ByteArray): Int

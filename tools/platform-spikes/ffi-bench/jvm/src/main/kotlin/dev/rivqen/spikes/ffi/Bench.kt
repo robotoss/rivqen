@@ -40,6 +40,11 @@ internal enum class JvmPath(val id: String, val glueCopiesPerByte: Int) {
 
 internal class BenchFailure(message: String) : Exception(message)
 
+/** Largest chunk and document of CONTRACT.md section 10. */
+internal const val MAX_CHUNK = 65_536
+internal const val MAX_SIZE = 256L * 1024 * 1024
+private const val MAX_CHUNK_TIMES = 1 shl 24
+
 internal data class CaseResult(
     val path: String,
     val size: Long,
@@ -49,6 +54,8 @@ internal data class CaseResult(
     val p95Ns: Long,
     val chunkMedianNs: Long,
     val copiedBytes: Long,
+    val rustCopiedBytes: Long,
+    val glueCopiedBytes: Long,
     val rssDeltaKib: Long,
     val sha256Ok: Boolean,
 )
@@ -101,6 +108,12 @@ internal class JvmBench(
     private val chunk: Int,
     private val rssBytes: () -> Long,
 ) {
+    init {
+        // Bounds of CONTRACT.md section 10; checked first, so no buffer is made for a bad value.
+        require(chunk in 1..MAX_CHUNK) { "chunk must be 1..$MAX_CHUNK" }
+        require(size in 1..MAX_SIZE) { "size must be 1..$MAX_SIZE" }
+    }
+
     private val md: MessageDigest = MessageDigest.getInstance("SHA-256")
     private val direct: ByteBuffer = ByteBuffer.allocateDirect(chunk)
     private val array = ByteArray(chunk)
@@ -118,19 +131,27 @@ internal class JvmBench(
     fun run(warmup: Int, docs: Int): CaseResult {
         require(warmup >= 0 && docs > 0) { "bad document counts" }
         val maxChunks = ((size + chunk - 1) / chunk).toInt()
+        // At most 2^24 chunk times (128 MiB of longs), so the arrays stay bounded.
+        require(docs.toLong() * maxChunks <= MAX_CHUNK_TIMES && warmup <= MAX_CHUNK_TIMES - docs) {
+            "too many documents for size $size and chunk $chunk"
+        }
         val docNs = LongArray(docs)
         val chunkNs = LongArray(docs * maxChunks)
         var chunkCount = 0
-        var copied = -1L
+        var rustCopied = -1L
+        var glueCopied = -1L
         val rssBefore = rssBytes()
         for (d in 0 until warmup + docs) {
             val measured = d >= warmup
             val r = oneDocument(if (measured) chunkNs else null, chunkCount)
             if (r.bytes != size) throw BenchFailure("document $d: ${r.bytes} bytes, want $size")
             if (r.rustCopied != size) throw BenchFailure("document $d: Rust copied ${r.rustCopied}")
-            val docCopied = r.rustCopied + path.glueCopiesPerByte * r.bytes
-            if (copied >= 0 && copied != docCopied) throw BenchFailure("copied bytes changed")
-            copied = docCopied
+            val docGlue = path.glueCopiesPerByte * r.bytes
+            if (rustCopied >= 0 && (rustCopied != r.rustCopied || glueCopied != docGlue)) {
+                throw BenchFailure("copied bytes changed")
+            }
+            rustCopied = r.rustCopied
+            glueCopied = docGlue
             if (measured) {
                 docNs[d - warmup] = r.docNs
                 chunkCount += r.chunks
@@ -146,7 +167,9 @@ internal class JvmBench(
             medianNs = percentile(docNs, 50),
             p95Ns = percentile(docNs, 95),
             chunkMedianNs = percentile(chunkNs.copyOf(chunkCount), 50),
-            copiedBytes = copied,
+            copiedBytes = rustCopied + glueCopied,
+            rustCopiedBytes = rustCopied,
+            glueCopiedBytes = glueCopied,
             rssDeltaKib = (rssAfter - rssBefore) / 1024,
             sha256Ok = true,
         )

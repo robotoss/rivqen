@@ -1,0 +1,71 @@
+{
+  "target": "ios-sim-27.0",
+  "date": "2026-11-08",
+  "machine": "Apple M4 Pro (iOS simulator, iPhone-16-Pro)",
+  "os": "iOS 27.0 (24A434) simulator",
+  "toolchain": {
+    "rust": "1.99.0",
+    "swift": "6.4.2",
+    "uniffi": "0.32.2",
+    "xcode": "27.2"
+  },
+  "indicative": true,
+  "cases": [
+    {
+      "path": "uniffi-swift",
+      "size": 1048576,
+      "chunk": 16384,
+      "docs": 1000,
+      "median_ns": 981624,
+      "p95_ns": 1102292,
+      "chunk_median_ns": 15125,
+      "copied_bytes": 4194304,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 3145728,
+      "rss_delta_kib": 416,
+      "sha256_ok": true
+    },
+    {
+      "path": "uniffi-swift",
+      "size": 1048576,
+      "chunk": 65536,
+      "docs": 1000,
+      "median_ns": 690871,
+      "p95_ns": 773374,
+      "chunk_median_ns": 42417,
+      "copied_bytes": 4194304,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 3145728,
+      "rss_delta_kib": 560,
+      "sha256_ok": true
+    },
+    {
+      "path": "c-swift",
+      "size": 1048576,
+      "chunk": 16384,
+      "docs": 1000,
+      "median_ns": 10705,
+      "p95_ns": 11081,
+      "chunk_median_ns": 167,
+      "copied_bytes": 1048576,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 0,
+      "rss_delta_kib": 48,
+      "sha256_ok": true
+    },
+    {
+      "path": "c-swift",
+      "size": 1048576,
+      "chunk": 65536,
+      "docs": 1000,
+      "median_ns": 12128,
+      "p95_ns": 12960,
+      "chunk_median_ns": 750,
+      "copied_bytes": 1048576,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 0,
+      "rss_delta_kib": 48,
+      "sha256_ok": true
+    }
+  ]
+}

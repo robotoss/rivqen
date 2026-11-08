@@ -7,20 +7,53 @@
 //! document, a negative status code of [`super`] on error.
 //!
 //! - `readDirect` writes into the memory of a direct `ByteBuffer` (from address 0, up to its
-//!   capacity); one copy, no JVM heap allocation.
+//!   capacity); one copy, no JVM heap allocation. A read-only buffer gives `E_ARG` (review
+//!   L-1): JNI `GetDirectBufferAddress` gives the address of a read-only buffer too, so the
+//!   glue asks `ByteBuffer.isReadOnly()` before it writes.
 //! - `readArray` copies into a `byte[]` with `SetByteArrayRegion`; one copy.
 //!
 //! Every function runs in [`guard`], and `EnvUnowned::with_env` catches panics as well.
 
 use std::num::NonZeroUsize;
+use std::sync::OnceLock;
 
-use jni::objects::{JByteArray, JByteBuffer, JClass};
+use jni::objects::{JByteArray, JByteBuffer, JClass, JMethodID};
+use jni::signature::{Primitive, ReturnType};
 use jni::sys::{jint, jlong};
-use jni::{EnvUnowned, Outcome};
+use jni::{Env, EnvUnowned, Outcome, jni_sig, jni_str};
 
 use super::c::read_raw;
-use super::{E_ARG, E_HANDLE, E_JNI, E_PANIC, END, OK, code, guard};
+use super::{E_ARG, E_HANDLE, E_JNI, E_NULL, E_PANIC, END, OK, code, guard};
 use crate::registry;
+
+/// Method id of `java.nio.ByteBuffer.isReadOnly()`. `ByteBuffer` is a class of the boot
+/// class loader, which never unloads it, so the id stays valid for the life of the VM
+/// (JNI specification, "Accessing Fields and Methods"). The process has one VM.
+static IS_READ_ONLY: OnceLock<JMethodID> = OnceLock::new();
+
+/// `buffer.isReadOnly()` through the cached method id (one JNI call; the lookup runs once).
+fn is_read_only(env: &mut Env<'_>, buffer: &JByteBuffer<'_>) -> jni::errors::Result<bool> {
+    let id = if let Some(id) = IS_READ_ONLY.get() {
+        *id
+    } else {
+        let id = env.get_method_id(
+            jni_str!("java/nio/ByteBuffer"),
+            jni_str!("isReadOnly"),
+            jni_sig!("()Z"),
+        )?;
+        // Another thread can win the race; its id names the same method.
+        *IS_READ_ONLY.get_or_init(|| id)
+    };
+    // SAFETY: `id` is the method id of `ByteBuffer.isReadOnly()Z` (looked up above with that
+    // name and signature, valid for the life of the VM); `buffer` is a non-null local
+    // reference to a `java.nio.ByteBuffer` (the JVM checks the type of the native method
+    // parameter, and the caller checked null); the method takes no argument and returns
+    // `boolean`, which `ReturnType::Primitive(Boolean)` and the empty argument list match.
+    let v = unsafe {
+        env.call_method_unchecked(buffer, id, ReturnType::Primitive(Primitive::Boolean), &[])
+    }?;
+    v.z()
+}
 
 /// Handle as `usize`; a negative `long` names no stream.
 fn handle(h: jlong) -> Option<usize> {
@@ -71,9 +104,10 @@ pub extern "system" fn Java_dev_rivqen_spikes_ffi_NativeBench_open<'l>(
     })
 }
 
-/// `int readDirect(long handle, ByteBuffer buffer)` for a direct buffer.
+/// `int readDirectRaw(long handle, ByteBuffer buffer)` for a direct buffer that is not
+/// read-only (Kotlin calls it through the checked wrapper `NativeBench.readDirect`).
 #[unsafe(no_mangle)]
-pub extern "system" fn Java_dev_rivqen_spikes_ffi_NativeBench_readDirect<'l>(
+pub extern "system" fn Java_dev_rivqen_spikes_ffi_NativeBench_readDirectRaw<'l>(
     mut env: EnvUnowned<'l>,
     _class: JClass<'l>,
     stream: jlong,
@@ -85,14 +119,23 @@ pub extern "system" fn Java_dev_rivqen_spikes_ffi_NativeBench_readDirect<'l>(
         };
         outcome(
             &env.with_env(|env| -> jni::errors::Result<jint> {
+                if buffer.is_null() {
+                    return Ok(E_NULL);
+                }
+                // Review L-1: never write into a read-only buffer.
+                if is_read_only(env, &buffer)? {
+                    return Ok(E_ARG);
+                }
                 // A heap buffer has no address: GetDirectBufferAddress gives null, and the
                 // crate returns an error (E_JNI).
                 let address = env.get_direct_buffer_address(&buffer)?;
                 let capacity = env.get_direct_buffer_capacity(&buffer)?;
                 // SAFETY: `address` and `capacity` come from GetDirectBufferAddress and
-                // GetDirectBufferCapacity of a direct buffer; the local reference `buffer` keeps
-                // the buffer alive until this native call returns, so its memory is valid for
-                // writes of `capacity` bytes during `read_raw`.
+                // GetDirectBufferCapacity of a direct buffer that is not read-only (checked
+                // above); the local reference `buffer` keeps the buffer alive until this native
+                // call returns, so its memory is valid for writes of `capacity` bytes during
+                // `read_raw`. The harness does not touch the buffer from another thread during
+                // the call (the Kotlin wrapper contract).
                 let (status, n) = unsafe { read_raw(h, address, capacity) };
                 Ok(read_result(status, n))
             })

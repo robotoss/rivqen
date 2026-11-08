@@ -38,8 +38,12 @@ final class Recorder {
 
   func probe(_ name: String, _ value: JSONValue) {
     log.probe(name, value, t: now)
+    if probeCounts.count < 256 || probeCounts[name] != nil { probeCounts[name, default: 0] += 1 }
     if name == "chunk", case .int(let k) = value { lastChunkProbe = max(lastChunkProbe ?? k, k) }
   }
+
+  /// How many probes of each name the run logged (at most 256 names). CAP-I-09 waits for `sw`.
+  private(set) var probeCounts: [String: Int] = [:]
 
   /// The highest `chunk` probe of the current page (`nil` before the first one). The scheme
   /// handler uses it to order beacons after their chunk probe; a new web view resets it.

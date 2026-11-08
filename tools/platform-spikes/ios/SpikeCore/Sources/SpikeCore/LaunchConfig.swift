@@ -4,7 +4,7 @@
 import Foundation
 
 /// The capabilities of the iOS prototype (tools/platform-spikes/capabilities.json): S1 CAP-I-01 to
-/// CAP-I-07, S2 CAP-I-11.
+/// CAP-I-07, S2 CAP-I-08 to CAP-I-11.
 public enum Capability: String, Sendable, CaseIterable {
   case simulatedFirstRender = "CAP-I-01"
   case simulatedOrigin = "CAP-I-02"
@@ -13,15 +13,29 @@ public enum Capability: String, Sendable, CaseIterable {
   case schemeStreaming = "CAP-I-05"
   case schemeOrigin = "CAP-I-06"
   case httpsStreaming = "CAP-I-07"
+  case contentSecurityPolicy = "CAP-I-08"
+  case serviceWorker = "CAP-I-09"
+  case history = "CAP-I-10"
   case cookieSync = "CAP-I-11"
 
   /// The prototype of the capability (`prototype` of the catalog row).
   public var prototype: String {
     switch self {
-    case .simulatedFirstRender, .simulatedOrigin, .simulatedCookies: "IOS-P1"
+    case .simulatedFirstRender, .simulatedOrigin, .simulatedCookies, .contentSecurityPolicy:
+      "IOS-P1"
     case .navigationWithSnapshot: "IOS-P2"
     case .schemeStreaming, .schemeOrigin: "IOS-P3"
-    case .httpsStreaming, .cookieSync: "IOS-ALL"
+    case .httpsStreaming, .serviceWorker, .history, .cookieSync: "IOS-ALL"
+    }
+  }
+
+  /// The supporting sets of the capability (`-rqSet`, evidence folder `<os>/<set>/`): runs with
+  /// another build or more steps that are not the catalog runs.
+  public var supportingSets: Set<String> {
+    switch self {
+    case .serviceWorker: ["app-bound"]
+    case .cookieSync: ["initiator"]
+    default: []
     }
   }
 }
@@ -72,7 +86,8 @@ public struct LabOrigin: Sendable, Equatable {
 }
 
 /// The launch arguments of one run: `-rqRun <id> -rqCap <capability> -rqOrigin <site A>`, and
-/// optional `-rqTimeout <seconds>` for one step. The run script passes them with `simctl launch`.
+/// optional `-rqTimeout <seconds>` for one step and `-rqSet <name>` for a supporting set of the
+/// capability. The run script passes them with `simctl launch`.
 public struct LaunchConfig: Sendable, Equatable {
   public static let defaultTimeout = 20.0
 
@@ -80,6 +95,8 @@ public struct LaunchConfig: Sendable, Equatable {
   public let capability: Capability
   public let origin: LabOrigin
   public let stepTimeout: Double
+  /// The supporting set, or `nil` for the catalog runs.
+  public var set: String? = nil
 
   /// Parses the process arguments. Returns `nil` when `-rqRun` is absent (the app stays idle).
   /// Arguments that do not start with `-rq` are ignored (Xcode and the system add their own).
@@ -92,7 +109,7 @@ public struct LaunchConfig: Sendable, Equatable {
         i += 1
         continue
       }
-      guard ["-rqRun", "-rqCap", "-rqOrigin", "-rqTimeout"].contains(flag) else {
+      guard ["-rqRun", "-rqCap", "-rqOrigin", "-rqTimeout", "-rqSet"].contains(flag) else {
         throw SpikeError(.argument, "unknown flag \(flag.prefix(32))")
       }
       guard i + 1 < arguments.count else { throw SpikeError(.argument, "\(flag) needs a value") }
@@ -102,7 +119,7 @@ public struct LaunchConfig: Sendable, Equatable {
     }
     guard let run = values["-rqRun"] else { return nil }
     guard let capText = values["-rqCap"], let capability = Capability(rawValue: capText) else {
-      throw SpikeError(.argument, "-rqCap must be one of CAP-I-01...CAP-I-07, CAP-I-11")
+      throw SpikeError(.argument, "-rqCap must be one of CAP-I-01...CAP-I-11")
     }
     guard isRunId(run), run.hasPrefix("\(capability.rawValue)-ios-") else {
       throw SpikeError(.argument, "-rqRun must be <capability>-ios-<os>-<k> of [A-Za-z0-9.-]")
@@ -118,7 +135,15 @@ public struct LaunchConfig: Sendable, Equatable {
       }
       timeout = t
     }
-    return LaunchConfig(run: run, capability: capability, origin: origin, stepTimeout: timeout)
+    var config = LaunchConfig(
+      run: run, capability: capability, origin: origin, stepTimeout: timeout)
+    if let set = values["-rqSet"] {
+      guard capability.supportingSets.contains(set) else {
+        throw SpikeError(.argument, "-rqSet is not a supporting set of \(capability.rawValue)")
+      }
+      config.set = set
+    }
+    return config
   }
 
   /// Run id rule of CONTRACT.md section 4 (`[A-Za-z0-9.-]`, at most 128 characters).

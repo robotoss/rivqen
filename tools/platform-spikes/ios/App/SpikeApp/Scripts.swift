@@ -67,6 +67,27 @@ enum Scripts {
     return [];
     """
 
+  /// Page world, `callAsyncJavaScript` (S2, CAP-I-10): the page state after a navigation step.
+  static let state = """
+    return [["state.history", history.length], ["state.location", document.location.href],
+      ["state.title", document.title]];
+    """
+
+  /// Page world, `callAsyncJavaScript` with the argument `id`: clicks the element after the script
+  /// returns (a page-started link navigation), so the call itself ends normally.
+  static let click = """
+    const el = document.getElementById(id);
+    if (el) setTimeout(() => el.click(), 0);
+    return [["click", el ? "ok" : "missing"]];
+    """
+
+  /// Page world, `callAsyncJavaScript` with the argument `delta`: `history.go(delta)` after the
+  /// script returns.
+  static let historyGo = """
+    setTimeout(() => history.go(delta), 0);
+    return [];
+    """
+
   /// Page world, run by the app with `callAsyncJavaScript`. `steps` is a list of
   /// `[kind, probe name, argument]`; the result is a list of `[probe name, value]` in step order.
   /// Every network step waits for its result before the next one, so the host sees the requests

@@ -45,6 +45,21 @@ public struct LabPaths: Sendable, Equatable {
     return nil
   }
 
+  /// `/s/csp` (S2): the CSP page in `mode` (`header`, `meta`, `both`); `tag` tells the loads apart.
+  public func csp(mode: String, tag: String) -> String {
+    "/s/csp?run=\(run)&mode=\(mode)&tag=\(tag)"
+  }
+
+  /// `/s/sw-page` (S2); `tag` tells the loads apart (the page drops it when it reloads itself).
+  public func swPage(tag: String) -> String {
+    "/s/sw-page?run=\(run)&tag=\(tag)"
+  }
+
+  /// `/s/hist` (S2) step `step`, in the form of the page's own `#next` link.
+  public func hist(step: Int) -> String {
+    "/s/hist?run=\(run)&step=\(step)"
+  }
+
   /// `/s/cookie/set` with a synthetic name and value and the attribute list.
   public func cookieSet(name: String, value: String, attrs: [String] = []) -> String {
     let base = "/s/cookie/set?run=\(run)&name=\(name)&value=\(value)"

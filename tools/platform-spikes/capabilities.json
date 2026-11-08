@@ -1,0 +1,288 @@
+[
+  {
+    "id": "CAP-A-01",
+    "platform": "android",
+    "title": "Main-frame response streamed through shouldInterceptRequest renders progressively (gate=beacon)",
+    "prototype": "A-STREAM",
+    "questions": [
+      "RSK-01"
+    ],
+    "sprint": "S1",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-A-02",
+    "platform": "android",
+    "title": "Native early fetch started before the WebView exists is reused as the intercepted main-frame response",
+    "prototype": "A-STREAM",
+    "questions": [
+      "Q-12"
+    ],
+    "sprint": "S1",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-A-03",
+    "platform": "android",
+    "title": "Status, reason and fields (including Content-Security-Policy) of the intercepted response reach the page",
+    "prototype": "A-STREAM",
+    "questions": [],
+    "sprint": "S1",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-A-04",
+    "platform": "android",
+    "title": "Redirect of the main document when the native fetch meets a 3xx",
+    "prototype": "A-STREAM",
+    "questions": [],
+    "sprint": "S2",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-A-05",
+    "platform": "android",
+    "title": "TLS error: onReceivedSslError cancels; native fetch fails closed; no intercept of a bad-certificate document",
+    "prototype": "A-STREAM",
+    "questions": [],
+    "sprint": "S2",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-A-06",
+    "platform": "android",
+    "title": "Set-Cookie of an intercepted response reaches CookieManager (COOKIE_INTERCEPT, androidx.webkit 1.15+)",
+    "prototype": "A-STREAM",
+    "questions": [
+      "Q-12"
+    ],
+    "sprint": "S2",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-A-07",
+    "platform": "android",
+    "title": "Cookie sync between CookieManager and the native fetch for HttpOnly, Secure and SameSite on two sites",
+    "prototype": "A-STREAM",
+    "questions": [
+      "Q-12"
+    ],
+    "sprint": "S2",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-A-08",
+    "platform": "android",
+    "title": "Partial response: Range request and 206 for a subresource; a cut main-frame stream ends in a normal load",
+    "prototype": "A-STREAM",
+    "questions": [],
+    "sprint": "S2",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-I-01",
+    "platform": "ios",
+    "title": "IOS-P1: early URLSession fetch and loadSimulatedRequest(_:response:responseData:) render the page; first render time",
+    "prototype": "IOS-P1",
+    "questions": [
+      "Q-04",
+      "RSK-01"
+    ],
+    "sprint": "S1",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-I-02",
+    "platform": "ios",
+    "title": "IOS-P1: document.location, window.origin and relative URLs after loadSimulatedRequest and after loadHTMLString with a base URL",
+    "prototype": "IOS-P1",
+    "questions": [
+      "Q-04",
+      "RSK-02"
+    ],
+    "sprint": "S1",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-I-03",
+    "platform": "ios",
+    "title": "IOS-P1: cookies (document.cookie, HttpOnly cookie sent on a same-origin fetch) after loadSimulatedRequest",
+    "prototype": "IOS-P1",
+    "questions": [
+      "Q-04",
+      "Q-12",
+      "RSK-02"
+    ],
+    "sprint": "S1",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-I-04",
+    "platform": "ios",
+    "title": "IOS-P2: real navigation with load(URLRequest), a cached page shown first and a data update through the bridge",
+    "prototype": "IOS-P2",
+    "questions": [
+      "Q-04"
+    ],
+    "sprint": "S1",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-I-05",
+    "platform": "ios",
+    "title": "IOS-P3: custom scheme with WKURLSchemeHandler streams a response progressively (gate=beacon)",
+    "prototype": "IOS-P3",
+    "questions": [
+      "Q-04",
+      "RSK-01"
+    ],
+    "sprint": "S1",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-I-06",
+    "platform": "ios",
+    "title": "IOS-P3: origin, cookies and https subresources of a custom-scheme page",
+    "prototype": "IOS-P3",
+    "questions": [
+      "Q-04",
+      "RSK-02"
+    ],
+    "sprint": "S1",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-I-07",
+    "platform": "ios",
+    "title": "Main-document streaming of an https page with public API",
+    "prototype": "IOS-ALL",
+    "questions": [
+      "RSK-01"
+    ],
+    "sprint": "S1",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-I-08",
+    "platform": "ios",
+    "title": "Content-Security-Policy header and nonces with loadSimulatedRequest",
+    "prototype": "IOS-P1",
+    "questions": [
+      "Q-04"
+    ],
+    "sprint": "S2",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-I-09",
+    "platform": "ios",
+    "title": "Service Worker registration per prototype (simulator; App-Bound Domains)",
+    "prototype": "IOS-ALL",
+    "questions": [
+      "Q-04"
+    ],
+    "sprint": "S2",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-I-10",
+    "platform": "ios",
+    "title": "History, back and forward, and the navigation delegate per prototype",
+    "prototype": "IOS-ALL",
+    "questions": [
+      "Q-04"
+    ],
+    "sprint": "S2",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-I-11",
+    "platform": "ios",
+    "title": "Cookie sync between WKHTTPCookieStore and HTTPCookieStorage for HttpOnly, Secure and SameSite",
+    "prototype": "IOS-ALL",
+    "questions": [
+      "Q-12"
+    ],
+    "sprint": "S2",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-F-01",
+    "platform": "ffi",
+    "title": "UniFFI Kotlin (JNA): 1 MiB in 16 KiB chunks",
+    "prototype": "FFI",
+    "questions": [
+      "Q-06"
+    ],
+    "sprint": "S1",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-F-02",
+    "platform": "ffi",
+    "title": "UniFFI Swift: 1 MiB in 16 KiB chunks",
+    "prototype": "FFI",
+    "questions": [
+      "Q-06"
+    ],
+    "sprint": "S1",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-F-03",
+    "platform": "ffi",
+    "title": "C ABI through JNI (direct ByteBuffer and ByteArray): 1 MiB in 16 KiB chunks",
+    "prototype": "FFI",
+    "questions": [
+      "Q-06"
+    ],
+    "sprint": "S1",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-F-04",
+    "platform": "ffi",
+    "title": "C ABI from Swift: 1 MiB in 16 KiB chunks",
+    "prototype": "FFI",
+    "questions": [
+      "Q-06"
+    ],
+    "sprint": "S1",
+    "results": [],
+    "verdict": "pending"
+  },
+  {
+    "id": "CAP-U-01",
+    "platform": "url",
+    "title": "URL serialization of OkHttp HttpUrl, java.net.URI, android.net.Uri, Foundation URL and URLComponents against WHATWG",
+    "prototype": "URL",
+    "questions": [
+      "Q-24"
+    ],
+    "sprint": "S2",
+    "results": [],
+    "verdict": "pending"
+  }
+]

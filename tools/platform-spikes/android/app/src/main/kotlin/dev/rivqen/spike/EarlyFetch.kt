@@ -52,9 +52,11 @@ internal class EarlyFetch(
         c.enqueue(
             object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    head.completeExceptionally(e)
-                    pipe.fail(e)
+                    // Log before the head future completes: the interceptor that waits for the head
+                    // writes its app.intercept after this app.error in every run (CONTRACT section 8).
                     log.emit("app.error", mapOf("error" to describe(e)))
+                    pipe.fail(e)
+                    head.completeExceptionally(e)
                     end(Result(0, hex(sha256().digest()), complete = false, error = describe(e)))
                 }
 
@@ -69,8 +71,19 @@ internal class EarlyFetch(
                                 "fields" to pairs.map { listOf(it[0], InterceptRule.loggable(it[0], it[1])) },
                             ),
                         )
-                        head.complete(Head(r.code, r.message, pairs, r.priorResponse != null))
-                        end(pump(r.body.byteStream()))
+                        val redirected = r.priorResponse != null
+                        val unused = InterceptRule.headPass(redirected, r.code, r.message, pairs)
+                        if (unused != null) {
+                            // The interceptor passes this head (a 3xx, for example): the body is never
+                            // delivered, so it is not read. The pipe gets an error for a reader that
+                            // would still come; the response closes with `use`.
+                            pipe.fail(IOException("head not used: $unused"))
+                            head.complete(Head(r.code, r.message, pairs, redirected))
+                            end(Result(0, hex(sha256().digest()), complete = false, error = null))
+                        } else {
+                            head.complete(Head(r.code, r.message, pairs, redirected))
+                            end(pump(r.body.byteStream()))
+                        }
                     }
                 }
             },

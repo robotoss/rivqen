@@ -57,7 +57,7 @@ Every route is on both sites. Query values are ASCII. Every response has `Cache-
 | `GET /s/cookie/set?run=&name=&value=&attrs=<list>` | `200` page; one `Set-Cookie: <name>=<value>; Path=/; <attrs>`. `attrs` is a comma list of `HttpOnly`, `Secure`, `SameSite=Strict\|Lax\|None`, `Max-Age=<n>`. Values are synthetic (`[a-z0-9-]` only) |
 | `GET /s/echo?run=` | `200 application/json`: `{"cookie": <Cookie field or null>, "site": "A"\|"B", "method", "target", "fields": [names only]}`. Also as `text/html` with the JSON in a `<pre id="echo">` when `html=1` |
 | `GET /s/range?run=&size=B` | Body of `B` bytes. Honors one `Range: bytes=a-b` (or `a-`, or the suffix form `-n`) with `206`, `Content-Range`; a bad range gives `416` |
-| `GET /s/cut?run=&after=BYTES&size=B` | `200 text/html` with `Content-Length` of the full body (`size`, default 4096; `after` < `size`); closes the connection after `BYTES` body bytes |
+| `GET /s/cut?run=&after=BYTES&size=B&hold=MS` | `200 text/html` with `Content-Length` of the full body (`size`, default 4096; `after` < `size`); closes the connection after `BYTES` body bytes; with `hold` (0…60000, default 0, S3) it waits `hold` ms after those bytes before the close |
 | `GET /s/sw.js` | (S2) `200 text/javascript; charset=utf-8`, `Service-Worker-Allowed: /s/`. On `fetch` of `/s/sw-probe` the worker answers `200 application/json` `{"sw":"worker"}`; every other request goes to the network. The worker calls `skipWaiting()` on install and `clients.claim()` on activate, so the page is often controlled without the reload |
 | `GET /s/sw-page?run=` | (S2) Page that registers `/s/sw.js` with scope `/s/`, waits for `navigator.serviceWorker.ready` (at most 10 s), reloads itself once when it is not controlled yet (`?run=…&again=1`), then fetches `/s/sw-probe` and probes `sw` with `worker` (the worker answered), `network` (registration worked, no control), `unsupported` (`navigator.serviceWorker` is missing) or the error name |
 | `GET /s/sw-probe?run=` | (S2) `200 application/json` `{"sw":"network"}` (the network answer, when no worker controls the page) |
@@ -182,7 +182,7 @@ evidence/spikes/wp-04/
 ├── android/<capability>/<api>/run-<k>.jsonl, run-<k>.metrics.json, run.json
 ├── ios/<capability>/<os>/run-<k>.jsonl, run-<k>.metrics.json, run.json
 └── ffi/<target>.json                      # section 10
-evidence/recordings/wp-04/<capability>-<platform>-<os>.mp4   # ≤ 1 MB, ≤ 30 s; total ≤ 25 MB
+evidence/recordings/wp-04/<capability>-<platform>-<os>.mp4   # ≤ 1 MB, ≤ 30 s; total ≤ 25 MB; H.264, no audio, ≤ 540 px wide, metadata removed (S3)
 ```
 
 URL interop (Q-24, DL-135): the shared input list is `tools/platform-spikes/url-interop/urls.json` (`[{"id","input","base"?,"why"}]`). Each stack writes `evidence/spikes/wp-04/url/<stack>.json` (`<stack>`: `whatwg-node`, `okhttp`, `java-net-uri`, `android-net-uri`, `foundation-url-macos`, `foundation-urlcomponents-macos`, `foundation-url-ios-sim`, `foundation-urlcomponents-ios-sim`): `{"stack","version","runtime","results":[{"id","ok","href","host","path","query","error"}]}`, where `href` is the serialization the stack would send and `error` is the error class when the stack refuses the input. The comparison against `whatwg-node` is `evidence/spikes/wp-04/url/compare.json`, and CAP-U-01 is a `benchmark` result whose `metrics` is that file.

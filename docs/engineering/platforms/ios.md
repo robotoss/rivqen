@@ -21,7 +21,7 @@ The iOS SDK connects the Rust core to `WKWebView`. iOS is the hardest platform f
 |---|---|---|
 | `WKURLSchemeHandler` | Serve responses for **custom** URL schemes | Intercept `https` loads |
 | `loadHTMLString(_:baseURL:)` / `load(_:mimeType:characterEncodingName:baseURL:)` | Show HTML that the app fetched | Guarantee the same origin, cookies, CSP, Service Worker, history behavior as a real navigation |
-| `loadSimulatedRequest(_:response:responseData:)` (iOS 15+) | Load a request with app-provided response and data | <Badge type="warning" text="RESEARCH" /> Streaming, cookie and Service Worker behavior must be tested |
+| `loadSimulatedRequest(_:response:responseData:)` (iOS 15+) | Load a request with app-provided response and data. <Badge type="tip" text="FACT" /> iOS 27.0: the page gets the URL and origin of the request, `text/html` and `UTF-8` (H-66); relative URLs and same-origin `fetch` go to that origin (CAP-I-01, CAP-I-02, §3) | <Badge type="tip" text="FACT" /> No streaming: the body is one `Data` (CAP-I-07). WebKit ignores the `Set-Cookie` field of the given response (CAP-I-03). <Badge type="warning" text="RESEARCH" /> CSP and Service Worker: S2 |
 | `load(URLRequest)` | Real navigation | Use bytes that the app already fetched |
 | SwiftUI `WebView` / `WebPage` (iOS 26+) | Declarative web content | No interception of `https` either |
 
@@ -41,6 +41,30 @@ Sources: [WKURLSchemeHandler](https://developer.apple.com/documentation/webkit/w
 
 **Forbidden shortcuts:** private WebKit API, global `NSURLProtocol` interception for `WKWebView`, disabling ATS or TLS validation, trusting all certificates, global cookie replacement, origin spoofing.
 
+### Results on iOS 27.0 (WP-04 S1)
+
+<Badge type="tip" text="FACT" /> Measured on 2026-11-08 with the prototype in `tools/platform-spikes/ios/` (public API only): simulator iPhone 16 Pro, iOS 27.0 (24A434), WebKit 8625.1.29.10.29, Xcode 27.2. Each capability has 3 runs with the same normalized log (`tools/platform-spikes/CONTRACT.md` §8). Runs: `evidence/spikes/wp-04/ios/<capability>/27.0/run-1.jsonl` to `run-3.jsonl`, with `run.json`. iOS 26.5 and 18.5: S2. Times are indicative (simulator, H-129).
+
+| Capability | Verdict |
+|---|---|
+| CAP-I-01 IOS-P1 render, first render | Supported |
+| CAP-I-02 IOS-P1 location, origin, relative URLs | Supported |
+| CAP-I-03 IOS-P1 cookies | Conditional |
+| CAP-I-04 IOS-P2 snapshot, navigation, bridge | Supported |
+| CAP-I-05 IOS-P3 streaming | Supported |
+| CAP-I-06 IOS-P3 origin, cookies, subresources | Conditional |
+| CAP-I-07 https main-document streaming | Impossible |
+
+**IOS-P1.** The `URLSession` fetch starts before the web view exists and ends in 24 to 30 ms. `loadSimulatedRequest` with the fetched status and fields (`Content-Type: text/html; charset=utf-8`) and the fetched bytes renders the page: its scripts run, `document.contentType` is `text/html`, `document.characterSet` is `UTF-8`. In a new web view the commit comes 704 to 732 ms after the load call; first contentful paint is 43 to 97 ms after the navigation start (CAP-I-01). After `loadSimulatedRequest` and after `loadHTMLString` with the page URL as base URL, `document.location`, `document.baseURI` and `window.origin` are those of the page URL; a relative link resolves against it, and a relative `fetch` goes to the host as a same-origin request (CAP-I-02). WebKit does not store a `Set-Cookie` of the simulated response and does not share the cookies of the app's `URLSession`. Cookies that the page sets (an `HttpOnly` cookie by `fetch`, a script cookie) are in `WKHTTPCookieStore` and go with same-origin `fetch` (CAP-I-03). Condition: the SDK copies the cookies of its native fetch into `WKHTTPCookieStore` before the load (the sync is CAP-I-11, S2).
+
+**IOS-P2.** The snapshot (a native copy of the page, by `loadSimulatedRequest`) stays on screen until the real `load(URLRequest)` commits, 348 to 363 ms later. The real page is the WebView's own network answer (its request fields differ from the native ones). After `didFinish`, the bridge script in its own `WKContentWorld` asks the app through `WKScriptMessageHandlerWithReply`, the app fetches the data natively and replies, and the script writes it into the DOM. The page world reads the update from the DOM, and `window.webkit.messageHandlers.rqBridge` is `undefined` there (CAP-I-04). The prefetched page bytes are not used for the real navigation.
+
+**IOS-P3.** A `WKURLSchemeHandler` for `rqlab` that forwards each `URLSession` read with `didReceive(_:)` streams the page: with `gate=beacon` the beacon of every chunk reaches the host before the next chunk exists, and the script of chunk k runs before the host sends chunk k+1 (CAP-I-05, no `host.gate_timeout` in 3 runs). Relative URLs of the page (the beacons) resolve against the `rqlab` base and come back to the handler, which forwards them to the host. The page origin is `rqlab://localhost:18443`; `document.cookie` is empty and a script cannot set a cookie; WebKit does not store a `Set-Cookie` of the handler response. Relative requests carry only the cookies of the app's `URLSession`. `https` requests from the page carry the cookies of the `https` site (a `SameSite=None; Secure` cookie in the test), but a script can read a cross-origin response only with CORS for the `rqlab` origin (CAP-I-06).
+
+**https streaming (CAP-I-07).** `WKWebView.handlesURLScheme("https")` is `true`; Apple documents that `setURLSchemeHandler` raises an exception for a scheme that WebKit handles, such as `https` ([source](https://developer.apple.com/documentation/webkit/wkwebviewconfiguration/seturlschemehandler(_:forurlscheme:))). The run shows what each prototype does with the same `gate=beacon` page: IOS-P1 must have the whole body first (the native fetch waits for 2 gate timeouts, then the page renders at once); IOS-P2 lets WebKit stream the page itself, but the app sees no bytes; IOS-P3 streams through the app, on `rqlab` only. So the app cannot stream an `https` main document with public API.
+
+<Badge type="tip" text="FACT" /> The user agent of `WKWebView` on the iOS 27.0 simulator names `iPhone OS 18_7` (`run.json`).
+
 ## 4. Spike matrix (gate G2)
 
 Test each prototype on supported iPhone and iPad models and iOS versions:
@@ -53,6 +77,8 @@ Test each prototype on supported iPhone and iPad models and iOS versions:
 6. CORS, subresources, cross-origin iframes, video, downloads.
 7. Bridge isolation, app-bound domains, content worlds.
 8. Background, process termination (`webViewWebContentProcessDidTerminate`), memory pressure, offline.
+
+<Badge type="tip" text="FACT" /> S1 (2026-11-08) gives first data for items 1 (valid TLS), 2, 3 (origin, relative URLs, cookies) and 7 (bridge in a content world) on iOS 27.0 (§3). The other items and the other versions are S2.
 
 Output: `ios-parity-matrix.md` with **supported / conditional / impossible with public APIs** per item, prototype builds, screen recordings and traces. If full streaming parity is impossible, Rivqen does not promise it. It keeps cache, revalidation and data updates, which bring most of the warm-path benefit.
 

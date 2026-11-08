@@ -2,12 +2,14 @@
   "run": "CAP-A-08-android-29-3",
   "url": "https://localhost:18443/s/cut?run=CAP-A-08-android-29-3&after=3000&size=8192",
   "metrics": {
-    "metric.fetch_end": -50,
-    "metric.finish": 285,
+    "metric.commit": 474,
+    "metric.fetch_end": -62,
+    "metric.finish": 419,
+    "metric.first_paint": 129,
     "metric.head_wait": 0,
-    "metric.intercept": 249,
-    "metric.load_call": 90,
-    "metric.webview_create": 86
+    "metric.intercept": 427,
+    "metric.load_call": 202,
+    "metric.webview_create": 198
   },
   "fetch": {
     "bytes": 3000,
@@ -22,9 +24,9 @@
     "sha256": "701b9e5eab37cb6260e5be3e8c343edb5ce0c7cc23a417e3d540a2185ac74168"
   },
   "intercept": {
-    "main_frame_calls": 2,
+    "main_frame_calls": 3,
     "reason": "match",
-    "subresource_passes": 2
+    "subresource_passes": 3
   },
   "expected": {
     "bytes": 3000,
@@ -33,7 +35,8 @@
   "checks": {
     "decisions": [
       "stream",
-      "pass:claimed"
+      "pass:claimed",
+      "pass:url"
     ],
     "host_cuts": [
       3000,
@@ -46,6 +49,7 @@
     "stream_sha256_is_fetch": true,
     "steps": [
       "fallback-load",
+      "range-page",
       "range-fetch"
     ]
   }

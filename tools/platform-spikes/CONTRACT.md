@@ -146,12 +146,13 @@ A page reports a probe by `window.rqLab.probe(name, value)`. The app installs `r
 
 - `verdict` of a result: `supported`, `conditional`, `impossible`, `not-tested`. `conditional` needs a `condition` sentence. `impossible` needs a source (platform documentation) or a run that shows the failure.
 - `verdict` of the capability: `pending` until all versions of H-128 have a result; then the weakest result (`impossible` < `conditional` < `supported`; `not-tested` keeps `pending`).
-- A result needs at least 3 runs with the same normalized log (section 8) and, from S3, a recording.
+- A `supported` or `conditional` result, and any result that lists runs, needs at least 3 runs with the same normalized log (section 8) and, from S3, a recording. A `not-tested` result needs no run; an `impossible` result with a `source` needs no run.
+- Sizes: 1 MB = 1,000,000 bytes.
 - `metrics` (optional, FFI and timing): path to a metrics JSON.
 
 ## 8. Determinism
 
-Normalization: remove `t` and `seq`; remove `app.stream.read` events (their count depends on buffer sizes) but keep the sum of their `bytes`; remove `metric.*` probes; blank `Date` values. Comparison: app events in order, host events in order, each source on its own. A run that is not stable gives no verdict.
+Normalization: remove `t` and `seq`; remove `k` from `run.start`; replace every occurrence of the run id (section 4) in any string value with `<run>` (it is in `run.start.run`, in `run=` query values, in host targets and in the CSP nonce); remove `app.stream.read` events (their count depends on buffer sizes) but keep the sum of their `bytes`; remove `metric.*` probes; blank `Date` values. Comparison: app events in order, host events in order, each source on its own. A run that is not stable gives no verdict.
 
 ## 9. Evidence layout
 

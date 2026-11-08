@@ -65,6 +65,7 @@ test('a_platform_entry_follows_the_kind_of_its_evidence_line', () => {
   assert.deepEqual(platform('legacy-ios', tchange, { id: 'X-2', bool_value: 'yes' }, 'boolvalue').file.results, [{ id: 'X-2', fn: 'template_change', evidence: 'none', result: null, note: 'no evidence and no FACT row' }]);
   // A trace result keeps only the members of the README table.
   assert.deepEqual(platform('legacy-ios', { id: 'X-3', fn: 'split', input: { html: '' } }, { result: { template: 't', extra: 1 } }).file.results[0].result, { template: 't' });
+  assert.deepEqual(platform('legacy-ios', { id: 'X-4', fn: 'message', input: {} }, { result: { json: '{}', code: 1 } }).file.results[0].result, { json: '{}' });
 });
 
 test('the_android_model_is_checked_against_each_function_that_the_session_model_uses', () => {
@@ -78,4 +79,6 @@ test('the_android_model_is_checked_against_each_function_that_the_session_model_
     const error = platform('legacy-android', c, { id, error: 'java.lang.Exception: x' }).problems;
     assert.match(error[0], /the evidence "java\.lang\.Exception"$/, id);
   }
+  // A value of another JSON type is a difference, not an exception.
+  assert.equal(platform('legacy-android', byId('FN-DIFF-01'), { id: 'FN-DIFF-01', result: { diff: null } }).problems.length, 1);
 });

@@ -1,0 +1,538 @@
+{"capability":"CAP-I-10","device":"iPhone 16 Pro","ev":"run.start","k":1,"os":"27.0","platform":"ios","prototype":"IOS-ALL","run":"CAP-I-10-ios-27.0-1","seq":0,"src":"script","t":0,"webview":null}
+{"ev":"app.probe","name":"native.step","seq":0,"src":"app","t":71,"value":"simulated"}
+{"ev":"app.fetch.start","seq":1,"src":"app","t":71,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.fetch.head","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"278","content-type":"text/html; charset=utf-8","keep-alive":"timeout=5"},"seq":2,"src":"app","status":200,"t":91,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"bytes":278,"complete":true,"ev":"app.fetch.end","seq":3,"src":"app","t":91,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"native.webview","seq":4,"src":"app","t":216,"value":"created"}
+{"ev":"app.probe","name":"native.simulated_response","seq":5,"src":"app","t":216,"value":{"encoding":"utf-8","mime":"text/html"}}
+{"ev":"app.probe","name":"native.policy","seq":6,"src":"app","t":847,"value":{"main_frame":true,"type":"other","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":7,"src":"app","t":919,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":8,"src":"app","t":921,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"metric.commit","seq":9,"src":"app","t":921,"value":705.153292}
+{"ev":"app.probe","name":"history","seq":10,"src":"app","t":922,"value":1}
+{"ev":"app.probe","name":"location","seq":11,"src":"app","t":922,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":12,"src":"app","t":923,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"native.back_forward","seq":13,"src":"app","t":944,"value":{"back":0,"can_go_back":false,"can_go_forward":false,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":14,"src":"app","t":946,"value":1}
+{"ev":"app.probe","name":"state.location","seq":15,"src":"app","t":946,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"state.title","seq":16,"src":"app","t":946,"value":"hist 0"}
+{"ev":"app.probe","name":"native.step","seq":17,"src":"app","t":946,"value":"click"}
+{"ev":"app.probe","name":"native.policy","seq":18,"src":"app","t":947,"value":{"main_frame":true,"type":"link","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":19,"src":"app","t":948,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":20,"src":"app","t":1288,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":21,"src":"app","t":1288,"value":341.676042}
+{"ev":"app.probe","name":"history","seq":22,"src":"app","t":1288,"value":2}
+{"ev":"app.probe","name":"location","seq":23,"src":"app","t":1288,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":24,"src":"app","t":1288,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":25,"src":"app","t":1308,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":26,"src":"app","t":1308,"value":{"back":1,"can_go_back":true,"can_go_forward":false,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":27,"src":"app","t":1308,"value":2}
+{"ev":"app.probe","name":"state.location","seq":28,"src":"app","t":1308,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":29,"src":"app","t":1308,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":30,"src":"app","t":1308,"value":"click"}
+{"ev":"app.probe","name":"native.policy","seq":31,"src":"app","t":1309,"value":{"main_frame":true,"type":"link","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":32,"src":"app","t":1311,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":33,"src":"app","t":1574,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"metric.commit","seq":34,"src":"app","t":1574,"value":265.702167}
+{"ev":"app.probe","name":"history","seq":35,"src":"app","t":1574,"value":3}
+{"ev":"app.probe","name":"location","seq":36,"src":"app","t":1574,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":37,"src":"app","t":1575,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":38,"src":"app","t":1583,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":39,"src":"app","t":1583,"value":{"back":2,"can_go_back":true,"can_go_forward":false,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":40,"src":"app","t":1583,"value":3}
+{"ev":"app.probe","name":"state.location","seq":41,"src":"app","t":1583,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"state.title","seq":42,"src":"app","t":1583,"value":"hist 2"}
+{"ev":"app.probe","name":"native.step","seq":43,"src":"app","t":1583,"value":"back"}
+{"ev":"app.probe","name":"native.go","seq":44,"src":"app","t":1584,"value":true}
+{"ev":"app.probe","name":"native.policy","seq":45,"src":"app","t":1586,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":46,"src":"app","t":1588,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":47,"src":"app","t":1856,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":48,"src":"app","t":1856,"value":272.521667}
+{"ev":"app.probe","name":"history","seq":49,"src":"app","t":1856,"value":3}
+{"ev":"app.probe","name":"location","seq":50,"src":"app","t":1856,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":51,"src":"app","t":1857,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":52,"src":"app","t":1859,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":53,"src":"app","t":1860,"value":{"back":1,"can_go_back":true,"can_go_forward":true,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":1}}
+{"ev":"app.probe","name":"state.history","seq":54,"src":"app","t":1860,"value":3}
+{"ev":"app.probe","name":"state.location","seq":55,"src":"app","t":1860,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":56,"src":"app","t":1860,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":57,"src":"app","t":1860,"value":"forward"}
+{"ev":"app.probe","name":"native.go","seq":58,"src":"app","t":1860,"value":true}
+{"ev":"app.probe","name":"native.policy","seq":59,"src":"app","t":1861,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":60,"src":"app","t":1862,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":61,"src":"app","t":2126,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"metric.commit","seq":62,"src":"app","t":2126,"value":266.229625}
+{"ev":"app.probe","name":"history","seq":63,"src":"app","t":2126,"value":3}
+{"ev":"app.probe","name":"location","seq":64,"src":"app","t":2126,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":65,"src":"app","t":2127,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":66,"src":"app","t":2136,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":67,"src":"app","t":2136,"value":{"back":2,"can_go_back":true,"can_go_forward":false,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":68,"src":"app","t":2136,"value":3}
+{"ev":"app.probe","name":"state.location","seq":69,"src":"app","t":2136,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"state.title","seq":70,"src":"app","t":2136,"value":"hist 2"}
+{"ev":"app.probe","name":"native.step","seq":71,"src":"app","t":2136,"value":"js-back"}
+{"ev":"app.probe","name":"native.policy","seq":72,"src":"app","t":2138,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":73,"src":"app","t":2139,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":74,"src":"app","t":2402,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":75,"src":"app","t":2402,"value":266.012416}
+{"ev":"app.probe","name":"history","seq":76,"src":"app","t":2402,"value":3}
+{"ev":"app.probe","name":"location","seq":77,"src":"app","t":2402,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":78,"src":"app","t":2403,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":79,"src":"app","t":2411,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":80,"src":"app","t":2411,"value":{"back":1,"can_go_back":true,"can_go_forward":true,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":1}}
+{"ev":"app.probe","name":"state.history","seq":81,"src":"app","t":2411,"value":3}
+{"ev":"app.probe","name":"state.location","seq":82,"src":"app","t":2411,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":83,"src":"app","t":2411,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":84,"src":"app","t":2411,"value":"js-forward"}
+{"ev":"app.probe","name":"native.policy","seq":85,"src":"app","t":2412,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":86,"src":"app","t":2413,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":87,"src":"app","t":2677,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"metric.commit","seq":88,"src":"app","t":2677,"value":266.010958}
+{"ev":"app.probe","name":"history","seq":89,"src":"app","t":2677,"value":3}
+{"ev":"app.probe","name":"location","seq":90,"src":"app","t":2677,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":91,"src":"app","t":2678,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":92,"src":"app","t":2687,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":93,"src":"app","t":2687,"value":{"back":2,"can_go_back":true,"can_go_forward":false,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":94,"src":"app","t":2687,"value":3}
+{"ev":"app.probe","name":"state.location","seq":95,"src":"app","t":2687,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"state.title","seq":96,"src":"app","t":2687,"value":"hist 2"}
+{"ev":"app.probe","name":"native.step","seq":97,"src":"app","t":2687,"value":"back"}
+{"ev":"app.probe","name":"native.go","seq":98,"src":"app","t":2687,"value":true}
+{"ev":"app.probe","name":"native.policy","seq":99,"src":"app","t":2688,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":100,"src":"app","t":2689,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":101,"src":"app","t":2954,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":102,"src":"app","t":2954,"value":266.696125}
+{"ev":"app.probe","name":"history","seq":103,"src":"app","t":2954,"value":3}
+{"ev":"app.probe","name":"location","seq":104,"src":"app","t":2954,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":105,"src":"app","t":2955,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":106,"src":"app","t":2964,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":107,"src":"app","t":2964,"value":{"back":1,"can_go_back":true,"can_go_forward":true,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":1}}
+{"ev":"app.probe","name":"state.history","seq":108,"src":"app","t":2964,"value":3}
+{"ev":"app.probe","name":"state.location","seq":109,"src":"app","t":2964,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":110,"src":"app","t":2964,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":111,"src":"app","t":2964,"value":"back"}
+{"ev":"app.probe","name":"native.go","seq":112,"src":"app","t":2964,"value":true}
+{"ev":"app.probe","name":"native.policy","seq":113,"src":"app","t":2965,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":114,"src":"app","t":2966,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":115,"src":"app","t":3233,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"metric.commit","seq":116,"src":"app","t":3233,"value":268.727084}
+{"ev":"app.probe","name":"history","seq":117,"src":"app","t":3233,"value":3}
+{"ev":"app.probe","name":"location","seq":118,"src":"app","t":3233,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":119,"src":"app","t":3234,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":120,"src":"app","t":3242,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":121,"src":"app","t":3242,"value":{"back":0,"can_go_back":false,"can_go_forward":true,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0","forward":2}}
+{"ev":"app.probe","name":"state.history","seq":122,"src":"app","t":3242,"value":3}
+{"ev":"app.probe","name":"state.location","seq":123,"src":"app","t":3242,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"state.title","seq":124,"src":"app","t":3242,"value":"hist 0"}
+{"ev":"app.probe","name":"native.step","seq":125,"src":"app","t":3243,"value":"html-string"}
+{"ev":"app.fetch.start","seq":126,"src":"app","t":3243,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.fetch.head","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"278","content-type":"text/html; charset=utf-8","keep-alive":"timeout=5"},"seq":127,"src":"app","status":200,"t":3247,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"bytes":278,"complete":true,"ev":"app.fetch.end","seq":128,"src":"app","t":3247,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"native.webview","seq":129,"src":"app","t":3253,"value":"created"}
+{"ev":"app.probe","name":"native.policy","seq":130,"src":"app","t":3957,"value":{"main_frame":true,"type":"other","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":131,"src":"app","t":3958,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":132,"src":"app","t":3959,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"metric.commit","seq":133,"src":"app","t":3959,"value":705.913292}
+{"ev":"app.probe","name":"history","seq":134,"src":"app","t":3960,"value":1}
+{"ev":"app.probe","name":"location","seq":135,"src":"app","t":3960,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":136,"src":"app","t":3962,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"native.back_forward","seq":137,"src":"app","t":3977,"value":{"back":0,"can_go_back":false,"can_go_forward":false,"current":null,"forward":0}}
+{"ev":"app.probe","name":"state.history","seq":138,"src":"app","t":3978,"value":1}
+{"ev":"app.probe","name":"state.location","seq":139,"src":"app","t":3978,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"state.title","seq":140,"src":"app","t":3978,"value":"hist 0"}
+{"ev":"app.probe","name":"native.step","seq":141,"src":"app","t":3978,"value":"click"}
+{"ev":"app.probe","name":"native.policy","seq":142,"src":"app","t":3979,"value":{"main_frame":true,"type":"link","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":143,"src":"app","t":3980,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":144,"src":"app","t":4321,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":145,"src":"app","t":4321,"value":342.95925}
+{"ev":"app.probe","name":"history","seq":146,"src":"app","t":4321,"value":1}
+{"ev":"app.probe","name":"location","seq":147,"src":"app","t":4321,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":148,"src":"app","t":4321,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":149,"src":"app","t":4339,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":150,"src":"app","t":4339,"value":{"back":0,"can_go_back":false,"can_go_forward":false,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":151,"src":"app","t":4339,"value":1}
+{"ev":"app.probe","name":"state.location","seq":152,"src":"app","t":4339,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":153,"src":"app","t":4339,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":154,"src":"app","t":4339,"value":"click"}
+{"ev":"app.probe","name":"native.policy","seq":155,"src":"app","t":4341,"value":{"main_frame":true,"type":"link","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":156,"src":"app","t":4342,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":157,"src":"app","t":4606,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"metric.commit","seq":158,"src":"app","t":4606,"value":266.846334}
+{"ev":"app.probe","name":"history","seq":159,"src":"app","t":4607,"value":2}
+{"ev":"app.probe","name":"location","seq":160,"src":"app","t":4607,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":161,"src":"app","t":4607,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":162,"src":"app","t":4616,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":163,"src":"app","t":4616,"value":{"back":1,"can_go_back":true,"can_go_forward":false,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":164,"src":"app","t":4617,"value":2}
+{"ev":"app.probe","name":"state.location","seq":165,"src":"app","t":4617,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"state.title","seq":166,"src":"app","t":4617,"value":"hist 2"}
+{"ev":"app.probe","name":"native.step","seq":167,"src":"app","t":4617,"value":"back"}
+{"ev":"app.probe","name":"native.go","seq":168,"src":"app","t":4617,"value":true}
+{"ev":"app.probe","name":"native.policy","seq":169,"src":"app","t":4618,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":170,"src":"app","t":4619,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":171,"src":"app","t":4882,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":172,"src":"app","t":4882,"value":264.762375}
+{"ev":"app.probe","name":"history","seq":173,"src":"app","t":4883,"value":2}
+{"ev":"app.probe","name":"location","seq":174,"src":"app","t":4883,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":175,"src":"app","t":4883,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":176,"src":"app","t":4894,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":177,"src":"app","t":4894,"value":{"back":0,"can_go_back":false,"can_go_forward":true,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":1}}
+{"ev":"app.probe","name":"state.history","seq":178,"src":"app","t":4894,"value":2}
+{"ev":"app.probe","name":"state.location","seq":179,"src":"app","t":4894,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":180,"src":"app","t":4894,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":181,"src":"app","t":4894,"value":"forward"}
+{"ev":"app.probe","name":"native.go","seq":182,"src":"app","t":4894,"value":true}
+{"ev":"app.probe","name":"native.policy","seq":183,"src":"app","t":4896,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":184,"src":"app","t":4897,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":185,"src":"app","t":5163,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"metric.commit","seq":186,"src":"app","t":5163,"value":268.584916}
+{"ev":"app.probe","name":"history","seq":187,"src":"app","t":5163,"value":2}
+{"ev":"app.probe","name":"location","seq":188,"src":"app","t":5163,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":189,"src":"app","t":5164,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":190,"src":"app","t":5170,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":191,"src":"app","t":5170,"value":{"back":1,"can_go_back":true,"can_go_forward":false,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":192,"src":"app","t":5170,"value":2}
+{"ev":"app.probe","name":"state.location","seq":193,"src":"app","t":5170,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"state.title","seq":194,"src":"app","t":5170,"value":"hist 2"}
+{"ev":"app.probe","name":"native.step","seq":195,"src":"app","t":5170,"value":"js-back"}
+{"ev":"app.probe","name":"native.policy","seq":196,"src":"app","t":5172,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":197,"src":"app","t":5173,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":198,"src":"app","t":5436,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":199,"src":"app","t":5436,"value":265.804334}
+{"ev":"app.probe","name":"history","seq":200,"src":"app","t":5436,"value":2}
+{"ev":"app.probe","name":"location","seq":201,"src":"app","t":5436,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":202,"src":"app","t":5437,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":203,"src":"app","t":5445,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":204,"src":"app","t":5445,"value":{"back":0,"can_go_back":false,"can_go_forward":true,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":1}}
+{"ev":"app.probe","name":"state.history","seq":205,"src":"app","t":5446,"value":2}
+{"ev":"app.probe","name":"state.location","seq":206,"src":"app","t":5446,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":207,"src":"app","t":5446,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":208,"src":"app","t":5446,"value":"js-forward"}
+{"ev":"app.probe","name":"native.policy","seq":209,"src":"app","t":5447,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":210,"src":"app","t":5448,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":211,"src":"app","t":5711,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"metric.commit","seq":212,"src":"app","t":5711,"value":265.298583}
+{"ev":"app.probe","name":"history","seq":213,"src":"app","t":5711,"value":2}
+{"ev":"app.probe","name":"location","seq":214,"src":"app","t":5711,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":215,"src":"app","t":5712,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":216,"src":"app","t":5722,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":217,"src":"app","t":5722,"value":{"back":1,"can_go_back":true,"can_go_forward":false,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":218,"src":"app","t":5723,"value":2}
+{"ev":"app.probe","name":"state.location","seq":219,"src":"app","t":5723,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"state.title","seq":220,"src":"app","t":5723,"value":"hist 2"}
+{"ev":"app.probe","name":"native.step","seq":221,"src":"app","t":5723,"value":"back"}
+{"ev":"app.probe","name":"native.go","seq":222,"src":"app","t":5723,"value":true}
+{"ev":"app.probe","name":"native.policy","seq":223,"src":"app","t":5724,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":224,"src":"app","t":5725,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":225,"src":"app","t":5997,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":226,"src":"app","t":5997,"value":274.136333}
+{"ev":"app.probe","name":"history","seq":227,"src":"app","t":5997,"value":2}
+{"ev":"app.probe","name":"location","seq":228,"src":"app","t":5997,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":229,"src":"app","t":5998,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":230,"src":"app","t":6000,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":231,"src":"app","t":6000,"value":{"back":0,"can_go_back":false,"can_go_forward":true,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":1}}
+{"ev":"app.probe","name":"state.history","seq":232,"src":"app","t":6000,"value":2}
+{"ev":"app.probe","name":"state.location","seq":233,"src":"app","t":6000,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":234,"src":"app","t":6000,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":235,"src":"app","t":6000,"value":"back"}
+{"ev":"app.probe","name":"native.go","seq":236,"src":"app","t":6000,"value":false}
+{"ev":"app.probe","name":"native.nav_outcome","seq":237,"src":"app","t":16021,"value":"none"}
+{"ev":"app.probe","name":"native.back_forward","seq":238,"src":"app","t":16021,"value":{"back":0,"can_go_back":false,"can_go_forward":true,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":1}}
+{"ev":"app.probe","name":"state.history","seq":239,"src":"app","t":16022,"value":2}
+{"ev":"app.probe","name":"state.location","seq":240,"src":"app","t":16022,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":241,"src":"app","t":16022,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":242,"src":"app","t":16022,"value":"live"}
+{"ev":"app.probe","name":"native.webview","seq":243,"src":"app","t":16027,"value":"created"}
+{"ev":"app.probe","name":"native.policy","seq":244,"src":"app","t":16402,"value":{"main_frame":true,"type":"other","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":245,"src":"app","t":16802,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":246,"src":"app","t":16808,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"metric.commit","seq":247,"src":"app","t":16808,"value":781.202959}
+{"ev":"app.probe","name":"history","seq":248,"src":"app","t":16809,"value":1}
+{"ev":"app.probe","name":"location","seq":249,"src":"app","t":16809,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":250,"src":"app","t":16811,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"native.back_forward","seq":251,"src":"app","t":16812,"value":{"back":0,"can_go_back":false,"can_go_forward":false,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":252,"src":"app","t":16813,"value":1}
+{"ev":"app.probe","name":"state.location","seq":253,"src":"app","t":16813,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"state.title","seq":254,"src":"app","t":16813,"value":"hist 0"}
+{"ev":"app.probe","name":"native.step","seq":255,"src":"app","t":16813,"value":"click"}
+{"ev":"app.probe","name":"native.policy","seq":256,"src":"app","t":16814,"value":{"main_frame":true,"type":"link","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":257,"src":"app","t":16816,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":258,"src":"app","t":16833,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":259,"src":"app","t":16833,"value":20.556916}
+{"ev":"app.probe","name":"history","seq":260,"src":"app","t":16834,"value":2}
+{"ev":"app.probe","name":"location","seq":261,"src":"app","t":16834,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":262,"src":"app","t":16834,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":263,"src":"app","t":16834,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":264,"src":"app","t":16834,"value":{"back":1,"can_go_back":true,"can_go_forward":false,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":265,"src":"app","t":16835,"value":2}
+{"ev":"app.probe","name":"state.location","seq":266,"src":"app","t":16835,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":267,"src":"app","t":16835,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":268,"src":"app","t":16835,"value":"click"}
+{"ev":"app.probe","name":"native.policy","seq":269,"src":"app","t":16836,"value":{"main_frame":true,"type":"link","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":270,"src":"app","t":16837,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":271,"src":"app","t":16843,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"metric.commit","seq":272,"src":"app","t":16843,"value":8.274125}
+{"ev":"app.probe","name":"history","seq":273,"src":"app","t":16843,"value":3}
+{"ev":"app.probe","name":"location","seq":274,"src":"app","t":16843,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":275,"src":"app","t":16844,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":276,"src":"app","t":16856,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":277,"src":"app","t":16856,"value":{"back":2,"can_go_back":true,"can_go_forward":false,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":278,"src":"app","t":16856,"value":3}
+{"ev":"app.probe","name":"state.location","seq":279,"src":"app","t":16856,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"state.title","seq":280,"src":"app","t":16856,"value":"hist 2"}
+{"ev":"app.probe","name":"native.step","seq":281,"src":"app","t":16856,"value":"back"}
+{"ev":"app.probe","name":"native.go","seq":282,"src":"app","t":16856,"value":true}
+{"ev":"app.probe","name":"native.policy","seq":283,"src":"app","t":16858,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":284,"src":"app","t":16859,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":285,"src":"app","t":16876,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":286,"src":"app","t":16876,"value":19.360166}
+{"ev":"app.probe","name":"history","seq":287,"src":"app","t":16876,"value":3}
+{"ev":"app.probe","name":"location","seq":288,"src":"app","t":16876,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":289,"src":"app","t":16876,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":290,"src":"app","t":16878,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":291,"src":"app","t":16878,"value":{"back":1,"can_go_back":true,"can_go_forward":true,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":1}}
+{"ev":"app.probe","name":"state.history","seq":292,"src":"app","t":16878,"value":3}
+{"ev":"app.probe","name":"state.location","seq":293,"src":"app","t":16878,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":294,"src":"app","t":16878,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":295,"src":"app","t":16878,"value":"forward"}
+{"ev":"app.probe","name":"native.go","seq":296,"src":"app","t":16878,"value":true}
+{"ev":"app.probe","name":"native.policy","seq":297,"src":"app","t":16881,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":298,"src":"app","t":16881,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":299,"src":"app","t":16890,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"metric.commit","seq":300,"src":"app","t":16890,"value":11.992792}
+{"ev":"app.probe","name":"history","seq":301,"src":"app","t":16890,"value":3}
+{"ev":"app.probe","name":"location","seq":302,"src":"app","t":16890,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":303,"src":"app","t":16890,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":304,"src":"app","t":16899,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":305,"src":"app","t":16899,"value":{"back":2,"can_go_back":true,"can_go_forward":false,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":306,"src":"app","t":16899,"value":3}
+{"ev":"app.probe","name":"state.location","seq":307,"src":"app","t":16899,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"state.title","seq":308,"src":"app","t":16899,"value":"hist 2"}
+{"ev":"app.probe","name":"native.step","seq":309,"src":"app","t":16899,"value":"js-back"}
+{"ev":"app.probe","name":"native.policy","seq":310,"src":"app","t":16901,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":311,"src":"app","t":16901,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":312,"src":"app","t":16907,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":313,"src":"app","t":16907,"value":8.118625}
+{"ev":"app.probe","name":"history","seq":314,"src":"app","t":16908,"value":3}
+{"ev":"app.probe","name":"location","seq":315,"src":"app","t":16908,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":316,"src":"app","t":16908,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":317,"src":"app","t":16920,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":318,"src":"app","t":16920,"value":{"back":1,"can_go_back":true,"can_go_forward":true,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":1}}
+{"ev":"app.probe","name":"state.history","seq":319,"src":"app","t":16920,"value":3}
+{"ev":"app.probe","name":"state.location","seq":320,"src":"app","t":16920,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":321,"src":"app","t":16920,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":322,"src":"app","t":16920,"value":"js-forward"}
+{"ev":"app.probe","name":"native.policy","seq":323,"src":"app","t":16921,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":324,"src":"app","t":16922,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":325,"src":"app","t":16929,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"metric.commit","seq":326,"src":"app","t":16929,"value":8.7705}
+{"ev":"app.probe","name":"history","seq":327,"src":"app","t":16929,"value":3}
+{"ev":"app.probe","name":"location","seq":328,"src":"app","t":16929,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":329,"src":"app","t":16930,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":330,"src":"app","t":16941,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":331,"src":"app","t":16942,"value":{"back":2,"can_go_back":true,"can_go_forward":false,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":332,"src":"app","t":16942,"value":3}
+{"ev":"app.probe","name":"state.location","seq":333,"src":"app","t":16942,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"state.title","seq":334,"src":"app","t":16942,"value":"hist 2"}
+{"ev":"app.probe","name":"native.step","seq":335,"src":"app","t":16942,"value":"back"}
+{"ev":"app.probe","name":"native.go","seq":336,"src":"app","t":16942,"value":true}
+{"ev":"app.probe","name":"native.policy","seq":337,"src":"app","t":16943,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":338,"src":"app","t":16944,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":339,"src":"app","t":16949,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":340,"src":"app","t":16949,"value":7.19825}
+{"ev":"app.probe","name":"history","seq":341,"src":"app","t":16949,"value":3}
+{"ev":"app.probe","name":"location","seq":342,"src":"app","t":16949,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":343,"src":"app","t":16950,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":344,"src":"app","t":16963,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":345,"src":"app","t":16963,"value":{"back":1,"can_go_back":true,"can_go_forward":true,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":1}}
+{"ev":"app.probe","name":"state.history","seq":346,"src":"app","t":16964,"value":3}
+{"ev":"app.probe","name":"state.location","seq":347,"src":"app","t":16964,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":348,"src":"app","t":16964,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":349,"src":"app","t":16964,"value":"back"}
+{"ev":"app.probe","name":"native.go","seq":350,"src":"app","t":16964,"value":true}
+{"ev":"app.probe","name":"native.policy","seq":351,"src":"app","t":16965,"value":{"main_frame":true,"type":"back_forward","url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":352,"src":"app","t":16966,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":353,"src":"app","t":16971,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"metric.commit","seq":354,"src":"app","t":16971,"value":6.929292}
+{"ev":"app.probe","name":"history","seq":355,"src":"app","t":16971,"value":3}
+{"ev":"app.probe","name":"location","seq":356,"src":"app","t":16971,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":357,"src":"app","t":16971,"url":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":358,"src":"app","t":16985,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":359,"src":"app","t":16985,"value":{"back":0,"can_go_back":false,"can_go_forward":true,"current":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0","forward":2}}
+{"ev":"app.probe","name":"state.history","seq":360,"src":"app","t":16986,"value":3}
+{"ev":"app.probe","name":"state.location","seq":361,"src":"app","t":16986,"value":"https://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"state.title","seq":362,"src":"app","t":16986,"value":"hist 0"}
+{"ev":"app.probe","name":"native.step","seq":363,"src":"app","t":16986,"value":"scheme"}
+{"ev":"app.probe","name":"native.webview","seq":364,"src":"app","t":16990,"value":"created"}
+{"ev":"app.probe","name":"native.policy","seq":365,"src":"app","t":17363,"value":{"main_frame":true,"type":"other","url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":366,"src":"app","t":17366,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"decision":"stream","ev":"app.intercept","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"278","content-type":"text/html; charset=utf-8","keep-alive":"timeout=5"},"main_frame":true,"method":"GET","seq":367,"src":"app","status":200,"t":17376,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"bytes":278,"ev":"app.stream.read","k":null,"seq":368,"src":"app","t":17377}
+{"error":null,"ev":"app.nav","kind":"commit","seq":369,"src":"app","t":17378,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"metric.commit","seq":370,"src":"app","t":17378,"value":387.686875}
+{"ev":"app.probe","name":"history","seq":371,"src":"app","t":17379,"value":1}
+{"ev":"app.probe","name":"location","seq":372,"src":"app","t":17379,"value":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":373,"src":"app","t":17380,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"native.back_forward","seq":374,"src":"app","t":17395,"value":{"back":0,"can_go_back":false,"can_go_forward":false,"current":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":375,"src":"app","t":17396,"value":1}
+{"ev":"app.probe","name":"state.location","seq":376,"src":"app","t":17396,"value":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"state.title","seq":377,"src":"app","t":17396,"value":"hist 0"}
+{"ev":"app.probe","name":"native.step","seq":378,"src":"app","t":17396,"value":"click"}
+{"ev":"app.probe","name":"native.policy","seq":379,"src":"app","t":17397,"value":{"main_frame":true,"type":"link","url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":380,"src":"app","t":17398,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"decision":"stream","ev":"app.intercept","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"278","content-type":"text/html; charset=utf-8","keep-alive":"timeout=5"},"main_frame":true,"method":"GET","seq":381,"src":"app","status":200,"t":17399,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"bytes":278,"ev":"app.stream.read","k":null,"seq":382,"src":"app","t":17399}
+{"error":null,"ev":"app.nav","kind":"commit","seq":383,"src":"app","t":17400,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":384,"src":"app","t":17400,"value":4.049791}
+{"ev":"app.probe","name":"history","seq":385,"src":"app","t":17400,"value":2}
+{"ev":"app.probe","name":"location","seq":386,"src":"app","t":17400,"value":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":387,"src":"app","t":17401,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":388,"src":"app","t":17417,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":389,"src":"app","t":17417,"value":{"back":1,"can_go_back":true,"can_go_forward":false,"current":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":390,"src":"app","t":17417,"value":2}
+{"ev":"app.probe","name":"state.location","seq":391,"src":"app","t":17417,"value":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":392,"src":"app","t":17417,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":393,"src":"app","t":17417,"value":"click"}
+{"ev":"app.probe","name":"native.policy","seq":394,"src":"app","t":17418,"value":{"main_frame":true,"type":"link","url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":395,"src":"app","t":17419,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"decision":"stream","ev":"app.intercept","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"278","content-type":"text/html; charset=utf-8","keep-alive":"timeout=5"},"main_frame":true,"method":"GET","seq":396,"src":"app","status":200,"t":17420,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"bytes":278,"ev":"app.stream.read","k":null,"seq":397,"src":"app","t":17420}
+{"error":null,"ev":"app.nav","kind":"commit","seq":398,"src":"app","t":17421,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"metric.commit","seq":399,"src":"app","t":17421,"value":3.845792}
+{"ev":"app.probe","name":"history","seq":400,"src":"app","t":17421,"value":3}
+{"ev":"app.probe","name":"location","seq":401,"src":"app","t":17421,"value":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":402,"src":"app","t":17422,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":403,"src":"app","t":17438,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":404,"src":"app","t":17438,"value":{"back":2,"can_go_back":true,"can_go_forward":false,"current":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":405,"src":"app","t":17439,"value":3}
+{"ev":"app.probe","name":"state.location","seq":406,"src":"app","t":17439,"value":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"state.title","seq":407,"src":"app","t":17439,"value":"hist 2"}
+{"ev":"app.probe","name":"native.step","seq":408,"src":"app","t":17439,"value":"back"}
+{"ev":"app.probe","name":"native.go","seq":409,"src":"app","t":17439,"value":true}
+{"ev":"app.probe","name":"native.policy","seq":410,"src":"app","t":17440,"value":{"main_frame":true,"type":"back_forward","url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":411,"src":"app","t":17440,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":412,"src":"app","t":17441,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":413,"src":"app","t":17441,"value":2.2115}
+{"error":null,"ev":"app.nav","kind":"finish","seq":414,"src":"app","t":17441,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":415,"src":"app","t":17460,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":416,"src":"app","t":17460,"value":{"back":1,"can_go_back":true,"can_go_forward":true,"current":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":1}}
+{"ev":"app.probe","name":"state.history","seq":417,"src":"app","t":17460,"value":3}
+{"ev":"app.probe","name":"state.location","seq":418,"src":"app","t":17460,"value":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":419,"src":"app","t":17460,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":420,"src":"app","t":17460,"value":"forward"}
+{"ev":"app.probe","name":"native.go","seq":421,"src":"app","t":17460,"value":true}
+{"ev":"app.probe","name":"native.policy","seq":422,"src":"app","t":17461,"value":{"main_frame":true,"type":"back_forward","url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":423,"src":"app","t":17461,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":424,"src":"app","t":17462,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"metric.commit","seq":425,"src":"app","t":17462,"value":1.887459}
+{"error":null,"ev":"app.nav","kind":"finish","seq":426,"src":"app","t":17462,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":427,"src":"app","t":17481,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":428,"src":"app","t":17481,"value":{"back":2,"can_go_back":true,"can_go_forward":false,"current":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":429,"src":"app","t":17481,"value":3}
+{"ev":"app.probe","name":"state.location","seq":430,"src":"app","t":17481,"value":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"state.title","seq":431,"src":"app","t":17481,"value":"hist 2"}
+{"ev":"app.probe","name":"native.step","seq":432,"src":"app","t":17481,"value":"js-back"}
+{"ev":"app.probe","name":"native.policy","seq":433,"src":"app","t":17483,"value":{"main_frame":true,"type":"back_forward","url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":434,"src":"app","t":17483,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":435,"src":"app","t":17484,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":436,"src":"app","t":17484,"value":2.384167}
+{"error":null,"ev":"app.nav","kind":"finish","seq":437,"src":"app","t":17484,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":438,"src":"app","t":17502,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":439,"src":"app","t":17502,"value":{"back":1,"can_go_back":true,"can_go_forward":true,"current":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":1}}
+{"ev":"app.probe","name":"state.history","seq":440,"src":"app","t":17503,"value":3}
+{"ev":"app.probe","name":"state.location","seq":441,"src":"app","t":17503,"value":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":442,"src":"app","t":17503,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":443,"src":"app","t":17503,"value":"js-forward"}
+{"ev":"app.probe","name":"native.policy","seq":444,"src":"app","t":17505,"value":{"main_frame":true,"type":"back_forward","url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":445,"src":"app","t":17505,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":446,"src":"app","t":17506,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"metric.commit","seq":447,"src":"app","t":17506,"value":3.21525}
+{"error":null,"ev":"app.nav","kind":"finish","seq":448,"src":"app","t":17507,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":449,"src":"app","t":17524,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":450,"src":"app","t":17524,"value":{"back":2,"can_go_back":true,"can_go_forward":false,"current":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2","forward":0}}
+{"ev":"app.probe","name":"state.history","seq":451,"src":"app","t":17525,"value":3}
+{"ev":"app.probe","name":"state.location","seq":452,"src":"app","t":17525,"value":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"app.probe","name":"state.title","seq":453,"src":"app","t":17525,"value":"hist 2"}
+{"ev":"app.probe","name":"native.step","seq":454,"src":"app","t":17525,"value":"back"}
+{"ev":"app.probe","name":"native.go","seq":455,"src":"app","t":17525,"value":true}
+{"ev":"app.probe","name":"native.policy","seq":456,"src":"app","t":17526,"value":{"main_frame":true,"type":"back_forward","url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":457,"src":"app","t":17526,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":458,"src":"app","t":17526,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"metric.commit","seq":459,"src":"app","t":17526,"value":1.820542}
+{"error":null,"ev":"app.nav","kind":"finish","seq":460,"src":"app","t":17527,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":461,"src":"app","t":17546,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":462,"src":"app","t":17546,"value":{"back":1,"can_go_back":true,"can_go_forward":true,"current":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1","forward":1}}
+{"ev":"app.probe","name":"state.history","seq":463,"src":"app","t":17546,"value":3}
+{"ev":"app.probe","name":"state.location","seq":464,"src":"app","t":17546,"value":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"app.probe","name":"state.title","seq":465,"src":"app","t":17546,"value":"hist 1"}
+{"ev":"app.probe","name":"native.step","seq":466,"src":"app","t":17546,"value":"back"}
+{"ev":"app.probe","name":"native.go","seq":467,"src":"app","t":17546,"value":true}
+{"ev":"app.probe","name":"native.policy","seq":468,"src":"app","t":17547,"value":{"main_frame":true,"type":"back_forward","url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":469,"src":"app","t":17548,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":470,"src":"app","t":17548,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"metric.commit","seq":471,"src":"app","t":17548,"value":2.147167}
+{"error":null,"ev":"app.nav","kind":"finish","seq":472,"src":"app","t":17548,"url":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"native.nav_outcome","seq":473,"src":"app","t":17567,"value":"finish"}
+{"ev":"app.probe","name":"native.back_forward","seq":474,"src":"app","t":17567,"value":{"back":0,"can_go_back":false,"can_go_forward":true,"current":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0","forward":2}}
+{"ev":"app.probe","name":"state.history","seq":475,"src":"app","t":17567,"value":3}
+{"ev":"app.probe","name":"state.location","seq":476,"src":"app","t":17567,"value":"rqlab://localhost:18443/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"app.probe","name":"state.title","seq":477,"src":"app","t":17567,"value":"hist 0"}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":0,"site":"A","src":"host","t":631,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":1,"src":"host","status":200,"t":631}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":2,"site":"A","src":"host","t":1513,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":3,"src":"host","status":200,"t":1514}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":4,"site":"A","src":"host","t":1853,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":5,"src":"host","status":200,"t":1853}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":6,"site":"A","src":"host","t":2130,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":7,"src":"host","status":200,"t":2130}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":8,"site":"A","src":"host","t":2404,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":9,"src":"host","status":200,"t":2404}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":10,"site":"A","src":"host","t":2681,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":11,"src":"host","status":200,"t":2681}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":12,"site":"A","src":"host","t":2956,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":13,"src":"host","status":200,"t":2956}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":14,"site":"A","src":"host","t":3232,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":15,"src":"host","status":200,"t":3232}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":16,"site":"A","src":"host","t":3509,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":17,"src":"host","status":200,"t":3509}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":18,"site":"A","src":"host","t":3786,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":19,"src":"host","status":200,"t":3786}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":20,"site":"A","src":"host","t":4545,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":21,"src":"host","status":200,"t":4545}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":22,"site":"A","src":"host","t":4885,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":23,"src":"host","status":200,"t":4885}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":24,"site":"A","src":"host","t":5161,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":25,"src":"host","status":200,"t":5161}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":26,"site":"A","src":"host","t":5439,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":27,"src":"host","status":200,"t":5439}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":28,"site":"A","src":"host","t":5715,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":29,"src":"host","status":200,"t":5715}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":30,"site":"A","src":"host","t":5990,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":31,"src":"host","status":200,"t":5990}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":32,"site":"A","src":"host","t":6269,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":33,"src":"host","status":200,"t":6269}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":34,"site":"A","src":"host","t":17346,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":35,"src":"host","status":200,"t":17346}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":36,"site":"A","src":"host","t":17371,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":37,"src":"host","status":200,"t":17371}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":38,"site":"A","src":"host","t":17380,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":39,"src":"host","status":200,"t":17380}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":40,"site":"A","src":"host","t":17413,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":41,"src":"host","status":200,"t":17413}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":42,"site":"A","src":"host","t":17428,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":43,"src":"host","status":200,"t":17428}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":44,"site":"A","src":"host","t":17445,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":45,"src":"host","status":200,"t":17445}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":46,"site":"A","src":"host","t":17467,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":47,"src":"host","status":200,"t":17467}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":48,"site":"A","src":"host","t":17487,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":49,"src":"host","status":200,"t":17487}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":50,"site":"A","src":"host","t":17508,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":51,"src":"host","status":200,"t":17508}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":52,"site":"A","src":"host","t":17916,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=0"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":53,"src":"host","status":200,"t":17916}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":54,"site":"A","src":"host","t":17939,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":55,"src":"host","status":200,"t":17939}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":56,"site":"A","src":"host","t":17961,"target":"/s/hist?run=CAP-I-10-ios-27.0-1&step=2"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"278","content-type":"text/html; charset=utf-8"},"seq":57,"src":"host","status":200,"t":17961}
+{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":20324}

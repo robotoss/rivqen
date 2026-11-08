@@ -3,12 +3,13 @@
 #
 # Environment of the WP-04 platform lab (DL-138). Source this file; it has no side effects.
 # Everything the lab writes goes to LAB_HOME (outside the repository, not on the system volume).
-# Overrides: LAB_HOME, MAIN_SDK, JAVA_HOME, LAB_PORT.
+# Overrides: LAB_HOME, MAIN_SDK, LAB_JAVA_HOME, LAB_PORT.
 
 : "${LAB_HOME:=/Volumes/BackCat/rivqen-p2-lab}"
 # The main Android SDK is only read (a copy of cmdline-tools and the accepted licenses); never written.
 : "${MAIN_SDK:=$HOME/Library/Android/sdk}"
-: "${JAVA_HOME:=$HOME/.gradle/jdks/azul_systems__inc_-21-aarch64-os_x.2/zulu21.50.19-ca-jdk21.0.11-macosx_aarch64/Contents/Home}"
+# JDK 21 for every lab build, also when the shell has another JAVA_HOME (override: LAB_JAVA_HOME).
+JAVA_HOME="${LAB_JAVA_HOME:-$HOME/.gradle/jdks/azul_systems__inc_-21-aarch64-os_x.2/zulu21.50.19-ca-jdk21.0.11-macosx_aarch64/Contents/Home}"
 
 LAB_SDK="$LAB_HOME/sdk"
 export LAB_HOME MAIN_SDK JAVA_HOME LAB_SDK

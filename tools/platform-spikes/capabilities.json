@@ -8,7 +8,22 @@
       "RSK-01"
     ],
     "sprint": "S1",
-    "results": [],
+    "results": [
+      {
+        "os": "37",
+        "webview": "com.google.android.webview 145.0.7632.218",
+        "verdict": "conditional",
+        "condition": "Progressive in WebView read blocks only: the first read takes the bytes that InputStream.available() reports, then the WebView fills each 2048-byte read before it passes bytes to the renderer, so a smaller flush waits for more bytes or the end of the body (block-1500 runs: 4 s stall)",
+        "source": "https://chromium.googlesource.com/chromium/src/+/6036187a1d76f93d870769db672a39bfece18b4d/android_webview/browser/input_stream.cc",
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-01/37/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-01/37/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-01/37/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-01/37/run-1.metrics.json",
+        "recording": null
+      }
+    ],
     "verdict": "pending"
   },
   {
@@ -20,17 +35,45 @@
       "Q-12"
     ],
     "sprint": "S1",
-    "results": [],
+    "results": [
+      {
+        "os": "37",
+        "webview": "com.google.android.webview 145.0.7632.218",
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-02/37/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-02/37/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-02/37/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-02/37/run-1.metrics.json",
+        "recording": null
+      }
+    ],
     "verdict": "pending"
   },
   {
     "id": "CAP-A-03",
     "platform": "android",
-    "title": "Status, reason and fields (including Content-Security-Policy) of the intercepted response reach the page",
+    "title": "Status and fields (including Content-Security-Policy) of the intercepted response reach the page; the reason phrase is not observable from the page",
     "prototype": "A-STREAM",
     "questions": [],
     "sprint": "S1",
-    "results": [],
+    "results": [
+      {
+        "os": "37",
+        "webview": "com.google.android.webview 145.0.7632.218",
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/android/CAP-A-03/37/run-1.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-03/37/run-2.jsonl",
+          "evidence/spikes/wp-04/android/CAP-A-03/37/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/android/CAP-A-03/37/run-1.metrics.json",
+        "recording": null
+      }
+    ],
     "verdict": "pending"
   },
   {

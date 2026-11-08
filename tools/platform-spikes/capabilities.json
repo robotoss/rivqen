@@ -97,7 +97,21 @@
       "RSK-01"
     ],
     "sprint": "S1",
-    "results": [],
+    "results": [
+      {
+        "os": "27.0",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-01/27.0/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-01/27.0/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-01/27.0/run-3.jsonl"
+        ],
+        "recording": null,
+        "metrics": "evidence/spikes/wp-04/ios/CAP-I-01/27.0/run-1.metrics.json"
+      }
+    ],
     "verdict": "pending"
   },
   {
@@ -110,7 +124,20 @@
       "RSK-02"
     ],
     "sprint": "S1",
-    "results": [],
+    "results": [
+      {
+        "os": "27.0",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-02/27.0/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-02/27.0/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-02/27.0/run-3.jsonl"
+        ],
+        "recording": null
+      }
+    ],
     "verdict": "pending"
   },
   {
@@ -124,7 +151,20 @@
       "RSK-02"
     ],
     "sprint": "S1",
-    "results": [],
+    "results": [
+      {
+        "os": "27.0",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "WebKit ignores the Set-Cookie field of the simulated response and does not share the native URLSession cookies; the SDK must put the cookies of its native fetch into the WKHTTPCookieStore of the web view before loadSimulatedRequest (cookie sync is CAP-I-11, S2). Cookies that the page sets (HttpOnly by fetch, script cookies) work and go with same-origin fetches.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-03/27.0/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-03/27.0/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-03/27.0/run-3.jsonl"
+        ],
+        "recording": null
+      }
+    ],
     "verdict": "pending"
   },
   {
@@ -136,7 +176,21 @@
       "Q-04"
     ],
     "sprint": "S1",
-    "results": [],
+    "results": [
+      {
+        "os": "27.0",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-04/27.0/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-04/27.0/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-04/27.0/run-3.jsonl"
+        ],
+        "recording": null,
+        "metrics": "evidence/spikes/wp-04/ios/CAP-I-04/27.0/run-1.metrics.json"
+      }
+    ],
     "verdict": "pending"
   },
   {
@@ -149,7 +203,21 @@
       "RSK-01"
     ],
     "sprint": "S1",
-    "results": [],
+    "results": [
+      {
+        "os": "27.0",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-05/27.0/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-05/27.0/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-05/27.0/run-3.jsonl"
+        ],
+        "recording": null,
+        "metrics": "evidence/spikes/wp-04/ios/CAP-I-05/27.0/run-1.metrics.json"
+      }
+    ],
     "verdict": "pending"
   },
   {
@@ -162,7 +230,20 @@
       "RSK-02"
     ],
     "sprint": "S1",
-    "results": [],
+    "results": [
+      {
+        "os": "27.0",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "The page origin is rqlab://localhost:18443, not the https origin; document.cookie is empty and a script cannot set a cookie; WebKit does not store a Set-Cookie of the scheme handler response, so relative requests carry only the cookies of the app's own URLSession. https subresources load and carry the cookies of the https site (SameSite=None; Secure seen), but a script can read a cross-origin https response only with CORS for the rqlab origin.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-06/27.0/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-06/27.0/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-06/27.0/run-3.jsonl"
+        ],
+        "recording": null
+      }
+    ],
     "verdict": "pending"
   },
   {
@@ -174,7 +255,21 @@
       "RSK-01"
     ],
     "sprint": "S1",
-    "results": [],
+    "results": [
+      {
+        "os": "27.0",
+        "webview": null,
+        "verdict": "impossible",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-07/27.0/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-07/27.0/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-07/27.0/run-3.jsonl"
+        ],
+        "recording": null,
+        "source": "https://developer.apple.com/documentation/webkit/wkwebviewconfiguration/seturlschemehandler(_:forurlscheme:)"
+      }
+    ],
     "verdict": "pending"
   },
   {

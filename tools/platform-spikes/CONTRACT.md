@@ -86,7 +86,7 @@ Common members: `ev`, `src` (`app`, `host`, `script`), `seq` (order inside its s
 |---|---|---|
 | `run.start` | script | `run`, `capability`, `platform`, `os`, `device`, `webview` (Android: WebView package and version; iOS: `null`), `prototype`, `k` |
 | `app.fetch.start`, `app.fetch.head`, `app.fetch.end` | app | `url`; `status`, `fields` (names and synthetic values) on `head`; `bytes`, `complete` on `end` |
-| `app.intercept` | app | `url`, `method`, `main_frame`, `decision` (`stream`, `pass`, `block`), `status`, `fields` |
+| `app.intercept` | app | `url`, `method`, `main_frame`, `decision` (`stream`, `pass`, `block`), `status`, `fields`. `stream` also covers a subresource that a scheme handler forwards (IOS-P3 beacons) |
 | `app.stream.read` | app | `bytes` (one event for each read that returned data; `k` of the last chunk marker seen when known) |
 | `app.nav` | app | `kind` (`start`, `redirect`, `commit`, `finish`, `fail`), `url`, `error` |
 | `app.probe` | app | `name`, `value` (section 6) |
@@ -120,6 +120,11 @@ A page reports a probe by `window.rqLab.probe(name, value)`. The app installs `r
 | `metric.first_paint` | `performance` entry `first-contentful-paint` start time, ms |
 | `metric.commit` | app clock, ms from load call to commit |
 
+- The prefix `native.` is reserved for probes that the app writes itself (for example `native.step`, `native.webview`, `native.wk_cookies`); the app refuses a page probe with this prefix.
+- A lane may add probe names for its own cases; it lists them in its README (iOS S1: `base`, `relative`, `content_type`, `charset`, `title`, `data`, `bridge.*`, `rqlab.page_world`, `webview.cookie_set`, `https.*`, `metric.fetch`, `metric.live_finish`).
+- An app probe script may also return name and value pairs through a script call of the platform (iOS `callAsyncJavaScript` in the page world).
+- <Badge type="tip" text="FACT" /> On iOS a page script cannot see a message handler of another `WKContentWorld`, so `rqLab` is in the page world; the bridge of IOS-P2 is in its own content world (iOS S1, CAP-I-04).
+
 ## 7. Capability catalog
 
 `tools/platform-spikes/capabilities.json` (architect-owned; a lane sends its result rows in its report):
@@ -146,7 +151,7 @@ A page reports a probe by `window.rqLab.probe(name, value)`. The app installs `r
 }
 ```
 
-- `verdict` of a result: `supported`, `conditional`, `impossible`, `not-tested`. `conditional` needs a `condition` sentence. `impossible` needs a source (platform documentation) or a run that shows the failure.
+- `verdict` of a result: `supported`, `conditional`, `impossible`, `not-tested`. `conditional` needs a `condition` sentence. `impossible` needs a `source` (URL of the platform documentation) or a run that shows the failure.
 - `verdict` of the capability: `pending` until all versions of H-128 have a result; then the weakest result (`impossible` < `conditional` < `supported`; `not-tested` keeps `pending`).
 - A `supported` or `conditional` result, and any result that lists runs, needs at least 3 runs with the same normalized log (section 8) and, from S3, a recording. A `not-tested` result needs no run; an `impossible` result with a `source` needs no run.
 - Sizes: 1 MB = 1,000,000 bytes.

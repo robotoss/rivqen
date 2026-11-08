@@ -73,6 +73,7 @@ group_node() {
   step client-evidence 'node tools/upstream-lab/client/check.mjs evidence/traces/client --require-functions'
   step spike-host 'cd tools/platform-spikes/host && npm test'
   step spike-check-tests 'node --test tools/platform-spikes/check/test'
+  step ios-spike-join 'node --test tools/platform-spikes/ios/test'
   step spike-evidence 'node tools/platform-spikes/check/check.mjs'
 }
 
@@ -107,6 +108,7 @@ group_diff() {
 group_lab() {
   step android-lab-check 'sh tools/upstream-lab/android/check.sh'
   step ios-lab-check 'sh tools/upstream-lab/ios/check.sh'
+  step ios-spike-core '. tools/platform-spikes/lab-env.sh && mkdir -p "$LAB_HOME/tmp" && cd tools/platform-spikes/ios/SpikeCore && swift test --scratch-path "$LAB_DERIVED/spikecore-build"'
   step ffi-bench-test '. tools/platform-spikes/lab-env.sh && mkdir -p "$LAB_HOME/tmp" && cd tools/platform-spikes/ffi-bench && cargo test --quiet'
 }
 

@@ -1,0 +1,42 @@
+{"capability":"CAP-A-01","device":"sdk_gphone64_arm64","ev":"run.start","k":3,"os":"37","platform":"android","prototype":"A-STREAM","run":"CAP-A-01-android-37-3","seq":0,"src":"script","t":0,"webview":"com.google.android.webview 145.0.7632.218"}
+{"ev":"app.fetch.start","seq":0,"src":"app","t":80,"url":"https://localhost:18443/s/stream?run=CAP-A-01-android-37-3&chunks=3&size=2048&gate=delay&delay=1500"}
+{"ev":"app.fetch.head","fields":[["Content-Type","text/html; charset=utf-8"],["Cache-Control","no-store"],["Date","Sun, 08 Nov 2026 10:18:00 GMT"],["Connection","keep-alive"],["Keep-Alive","timeout=5"],["Transfer-Encoding","chunked"]],"seq":1,"src":"app","status":200,"t":144,"url":"https://localhost:18443/s/stream?run=CAP-A-01-android-37-3&chunks=3&size=2048&gate=delay&delay=1500"}
+{"ev":"app.probe","name":"metric.webview_create","seq":2,"src":"app","t":191,"value":111}
+{"ev":"app.probe","name":"metric.load_call","seq":3,"src":"app","t":200,"value":120}
+{"ev":"app.probe","name":"metric.intercept","seq":4,"src":"app","t":209,"value":9}
+{"ev":"app.probe","name":"metric.head_wait","seq":5,"src":"app","t":209,"value":0}
+{"decision":"stream","ev":"app.intercept","fields":[["Content-Type","text/html; charset=utf-8"],["Cache-Control","no-store"],["Date","Sun, 08 Nov 2026 10:18:00 GMT"]],"main_frame":true,"method":"GET","seq":6,"src":"app","status":200,"t":209,"url":"https://localhost:18443/s/stream?run=CAP-A-01-android-37-3&chunks=3&size=2048&gate=delay&delay=1500"}
+{"bytes":2048,"ev":"app.stream.read","seq":7,"src":"app","t":210}
+{"error":null,"ev":"app.nav","kind":"start","seq":8,"src":"app","t":289,"url":"https://localhost:18443/s/stream?run=CAP-A-01-android-37-3&chunks=3&size=2048&gate=delay&delay=1500"}
+{"ev":"app.probe","name":"chunk","seq":9,"src":"app","t":313,"value":0}
+{"ev":"app.probe","name":"metric.commit","seq":10,"src":"app","t":358,"value":158}
+{"ev":"app.probe","name":"metric.visual_chunk_0","seq":11,"src":"app","t":359,"value":159}
+{"ev":"app.probe","name":"metric.first_paint","seq":12,"src":"app","t":434,"value":224}
+{"bytes":2048,"ev":"app.stream.read","seq":13,"src":"app","t":1641}
+{"ev":"app.probe","name":"chunk","seq":14,"src":"app","t":1643,"value":1}
+{"ev":"app.probe","name":"metric.visual_chunk_1","seq":15,"src":"app","t":1649,"value":1449}
+{"bytes":2048,"ev":"app.stream.read","seq":16,"src":"app","t":3142}
+{"ev":"app.probe","name":"metric.fetch_end","seq":17,"src":"app","t":3143,"value":2943}
+{"ev":"app.probe","name":"chunk","seq":18,"src":"app","t":3145,"value":2}
+{"ev":"app.probe","name":"location","seq":19,"src":"app","t":3146,"value":"https://localhost:18443/s/stream?run=CAP-A-01-android-37-3&chunks=3&size=2048&gate=delay&delay=1500"}
+{"ev":"app.probe","name":"origin","seq":20,"src":"app","t":3148,"value":"https://localhost:18443"}
+{"ev":"app.probe","name":"status","seq":21,"src":"app","t":3148,"value":200}
+{"ev":"app.probe","name":"csp.inline","seq":22,"src":"app","t":3149,"value":true}
+{"error":null,"ev":"app.nav","kind":"finish","seq":23,"src":"app","t":3150,"url":"https://localhost:18443/s/stream?run=CAP-A-01-android-37-3&chunks=3&size=2048&gate=delay&delay=1500"}
+{"ev":"app.probe","name":"metric.finish","seq":24,"src":"app","t":3150,"value":2950}
+{"bytes":6144,"complete":true,"ev":"app.fetch.end","seq":25,"src":"app","t":3143,"url":"https://localhost:18443/s/stream?run=CAP-A-01-android-37-3&chunks=3&size=2048&gate=delay&delay=1500"}
+{"ev":"host.request","fields":["accept-encoding","connection","host","user-agent"],"method":"GET","seq":0,"site":"A","src":"host","t":369,"target":"/s/stream?run=CAP-A-01-android-37-3&chunks=3&size=2048&gate=delay&delay=1500"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-type":"text/html; charset=utf-8"},"seq":1,"src":"host","status":200,"t":371}
+{"bytes":2048,"ev":"host.chunk","k":0,"seq":2,"src":"host","t":371}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","pragma","referer","sec-ch-ua","sec-ch-ua-mobile","sec-ch-ua-platform","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent","x-requested-with"],"method":"GET","seq":3,"site":"A","src":"host","t":555,"target":"/s/beacon?run=CAP-A-01-android-37-3&k=0"}
+{"ev":"host.beacon","k":0,"seq":4,"src":"host","t":555}
+{"ev":"host.response","fields":{"cache-control":"no-store"},"seq":5,"src":"host","status":204,"t":555}
+{"bytes":2048,"ev":"host.chunk","k":1,"seq":6,"src":"host","t":1873}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","pragma","referer","sec-ch-ua","sec-ch-ua-mobile","sec-ch-ua-platform","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent","x-requested-with"],"method":"GET","seq":7,"site":"A","src":"host","t":1879,"target":"/s/beacon?run=CAP-A-01-android-37-3&k=1"}
+{"ev":"host.beacon","k":1,"seq":8,"src":"host","t":1879}
+{"ev":"host.response","fields":{"cache-control":"no-store"},"seq":9,"src":"host","status":204,"t":1879}
+{"bytes":2048,"ev":"host.chunk","k":2,"seq":10,"src":"host","t":3375}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","pragma","referer","sec-ch-ua","sec-ch-ua-mobile","sec-ch-ua-platform","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent","x-requested-with"],"method":"GET","seq":11,"site":"A","src":"host","t":3380,"target":"/s/beacon?run=CAP-A-01-android-37-3&k=2"}
+{"ev":"host.beacon","k":2,"seq":12,"src":"host","t":3380}
+{"ev":"host.response","fields":{"cache-control":"no-store"},"seq":13,"src":"host","status":204,"t":3380}
+{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":4276}

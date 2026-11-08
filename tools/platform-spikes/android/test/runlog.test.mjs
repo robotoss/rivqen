@@ -141,7 +141,7 @@ test("cut_run_fails_on_each_broken_condition", () => {
 test("partial_set_holds_the_cut_and_delivers_more_than_one_read_block_on_api_29", () => {
   const q37 = new URL(pageUrl("CAP-A-08", "r", undefined, "partial", "37")).searchParams;
   const q29 = new URL(pageUrl("CAP-A-08", "r", undefined, "partial", "29")).searchParams;
-  assert.equal(setOf("CAP-A-08", "partial").scenario, "cut-range");
+  assert.equal(setOf("CAP-A-08", "partial").scenario, "cut-partial");
   assert.equal(setOf("CAP-A-08", "partial").kind, "partial");
   for (const q of [q37, q29]) {
     assert.ok(Number(q.get("hold")) >= 10000 && Number(q.get("hold")) <= 60000, "hold covers a cold WebView start, within the host limit");

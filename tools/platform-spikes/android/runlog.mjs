@@ -119,7 +119,7 @@ export const SETS = {
     // API 29 the delivered part is larger than one 64 KiB read block, so the first block (with the
     // chunk-0 markup) reaches the renderer before the close.
     "partial": {
-      path: "/s/cut", params: { after: 3000, size: 8192, hold: PARTIAL_HOLD_MS }, scenario: "cut-range", kind: "partial",
+      path: "/s/cut", params: { after: 3000, size: 8192, hold: PARTIAL_HOLD_MS }, scenario: "cut-partial", kind: "partial",
       byApi: { 29: { params: { after: BLOCK_29 + 4464, size: 2 * BLOCK_29 + 8192, hold: PARTIAL_HOLD_MS } } },
     },
   },

@@ -110,6 +110,9 @@ test('config_must_be_an_object', () => {
 test('mode_and_server_profile_must_be_known_words', () => {
   rejects(() => validateBehavior(behavior((c) => { c.mode = 'slow'; })), 'CASE_TYPE', 'mode');
   rejects(() => validateBehavior(behavior((c) => { c.server_profile = 'legacy-android'; })), 'CASE_TYPE', 'server_profile');
+  for (const profile of ['legacy-canonical', 'legacy-node', 'legacy-java', 'legacy-php']) {
+    assert.equal(validateBehavior(behavior((c) => { c.server_profile = profile; })).server_profile, profile);
+  }
 });
 
 test('responses_need_1_to_32_entries_with_a_valid_name', () => {
@@ -254,6 +257,16 @@ test('a_bad_cache_before_entry_is_rejected_with_its_member', () => {
 
 // --- schedule items ---
 
+test('the_session_steps_take_the_optional_session_member', () => {
+  // README "schedule": the optional `session` of the steps that act on a session.
+  for (const word of ['bind_client', 'client_ready', 'request_resource', 'page_finished', 'get_diff', 'refresh', 'destroy']) {
+    assert.deepEqual(stepOf({ do: word, session: 2 }), { do: word, session: 2 });
+  }
+  for (const word of ['create_session', 'release', 'server_down', 'server_up', 'snapshot_cache']) {
+    rejects(() => validateBehavior(withStep({ do: word, session: 1 })), 'CASE_UNKNOWN_MEMBER', 'schedule[1].session', word);
+  }
+});
+
 test('each_step_word_takes_its_members_and_no_other', () => {
   const values = { session: 1, wait_ms: 0, value: 'x', valid: false, point: 'body', bytes: 0, name: 'n', for: 'session.created', timeout_ms: 0, ms: 0 };
   for (const [word, members] of Object.entries(STEP_MEMBERS)) {
@@ -317,6 +330,9 @@ test('a_bad_step_member_is_rejected_with_its_member', () => {
     [{ do: 'settle', ms: -1 }, 'CASE_LIMIT', 'schedule[1].ms'],
     [{ do: 'case', value: { page: 'A' } }, 'CASE_STEP', 'schedule[1].value.page'],
     [{ do: 'case', value: { page: 1 } }, 'CASE_STEP', 'schedule[1].value.page'],
+    [{ do: 'case', value: { page: 'a', status: 99 } }, 'CASE_STEP', 'schedule[1].value.status'],
+    [{ do: 'case', value: { page: 'a', headers: [['x']] } }, 'CASE_TYPE', 'schedule[1].value.headers'],
+    [{ do: ['release'] }, 'CASE_STEP', 'schedule[1].do'],
   ];
   for (const [step, code, member] of bad) rejects(() => validateBehavior(withStep(step)), code, member, JSON.stringify(step));
 });
@@ -420,6 +436,8 @@ test('a_profile_case_checks_its_members', () => {
   assert.deepEqual(validateClientCase(`${NAME}--ANDROID`, p()), { kind: 'client-profile', id: `${NAME}--ANDROID`, description: 'd', profile: 'legacy-android', replaces: NAME, divergences: [], sources: ['docs:x'], notReproduced: null });
   assert.equal(validateClientCase(`${NAME}--ANDROID`, { ...p(), not_reproduced: 'U-13' }).notReproduced, 'U-13');
   rejects(() => validateClientCase(`${NAME}--ANDROID`, { ...p(), profile: 'legacy-canonical' }), 'CASE_TYPE', 'profile');
+  rejects(() => validateClientCase(`${NAME}--ANDROID`, { ...p(), replaces: 'FX-LEG-CL-U-Q' }), 'CASE_TYPE', 'replaces');
+  rejects(() => validateClientCase(`${NAME}--ANDROID`, { ...p(), schedule: [] }), 'CASE_UNKNOWN_MEMBER', 'case.schedule');
   rejects(() => validateClientCase(`${NAME}--ANDROID`, { ...p(), not_reproduced: 'U-11' }), 'CASE_TYPE', 'not_reproduced');
   rejects(() => validateClientCase(`${NAME}--ANDROID`, { ...p(), divergences: ['D-1'] }), 'CASE_TYPE', 'divergences');
   rejects(() => validateClientCase(`${NAME}--ANDROID`, { ...p(), sources: [] }), 'CASE_TYPE', 'sources');

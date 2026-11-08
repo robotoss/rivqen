@@ -180,7 +180,8 @@ export async function cut(rc) {
   const hold = intParam(rc.q, "hold", { def: 0, min: 0, max: MAX_MS });
   const start = hold > 0 ? partialHead(rc.run) : CUT_HEAD;
   const size = intParam(rc.q, "size", { def: 4096, min: start.length + 1, max: MAX_SIZE });
-  const after = intParam(rc.q, "after", { min: 0, max: size - 1 });
+  // With hold the cut never falls inside the partial-page markup (beacon and probe of chunk 0).
+  const after = intParam(rc.q, "after", { min: hold > 0 ? start.length : 0, max: size - 1 });
   const body = Buffer.from(start + "x".repeat(size - start.length));
   rc.head(200, [["Content-Type", HTML], ["Content-Length", String(size)]]);
   rc.res.flushHeaders();

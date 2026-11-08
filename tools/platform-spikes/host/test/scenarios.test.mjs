@@ -277,8 +277,10 @@ test("cut_hold_bounds", async () => {
   for (const h of ["60001", "-1", "1.5", "x", ""]) assert.equal((await g(`/s/cut?after=1&size=4096&hold=${h}`)).status, 400, h);
   // The partial-page start must fit: size at least its length + 1.
   const n = partialHead("hold-3").length;
-  assert.equal((await g(`/s/cut?run=hold-3&after=0&size=${n}&hold=1`)).status, 400);
-  assert.equal((await g(`/s/cut?run=hold-3&after=0&size=${n + 1}&hold=1`)).status, 200);
+  assert.equal((await g(`/s/cut?run=hold-3&after=${n}&size=${n}&hold=1`)).status, 400);
+  assert.equal((await g(`/s/cut?run=hold-3&after=${n}&size=${n + 1}&hold=1`)).status, 200);
+  // With hold the cut must not fall inside the partial markup: after >= its length.
+  assert.equal((await g(`/s/cut?run=hold-3&after=${n - 1}&size=${n + 10}&hold=1`)).status, 400);
   // The S2 start is shorter, so the same size is fine without hold.
   assert.equal((await g(`/s/cut?after=0&size=${n}`)).status, 200);
 });
@@ -287,7 +289,7 @@ test("cut_hold_ends_when_the_client_closes_first", async () => {
   // hold=60000 (the maximum): the client closes during the hold; no host.cut, and no timer is left
   // (the test host closes at once in after()).
   await startRun(host, "hold-4");
-  const s = o("/s/cut?run=hold-4&after=60&size=400&hold=60000");
+  const s = o(`/s/cut?run=hold-4&after=${partialHead("hold-4").length}&size=400&hold=60000`);
   s.done.catch(() => undefined);
   await s.until(/<title>/);
   s.abort();

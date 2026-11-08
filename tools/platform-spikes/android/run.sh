@@ -90,6 +90,8 @@ cleanup() {
   rm -rf "$WORK"
 }
 trap cleanup EXIT
+# A stop by a signal also runs the cleanup (demo mode off, recording stopped, lock removed).
+trap 'exit 130' INT TERM HUP
 
 # 2. Build and install.
 if [ "${SKIP_BUILD:-0}" = 1 ]; then

@@ -557,7 +557,8 @@ export function sameAsStored(stored, run) {
     return parsed.events;
   };
   const storedEvents = stored.map(parse);
-  const s1 = !storedEvents.some((events) => events.some((e) => e.ev === "app.intercept" && ("reason" in e || "redirect" in e)));
+  const intercepts = storedEvents.flatMap((events) => events.filter((e) => e.ev === "app.intercept"));
+  const s1 = intercepts.length > 0 && !intercepts.some((e) => "reason" in e || "redirect" in e);
   const runEvents = parse(run).map((e) => {
     if (!s1 || e.ev !== "app.intercept") return e;
     const { reason: _reason, redirect: _redirect, ...rest } = e;

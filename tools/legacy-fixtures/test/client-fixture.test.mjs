@@ -109,8 +109,17 @@ test('check7_stored_runs_are_read_in_run_number_order', () => {
   write(dir, fixture('CS-12', 'quick'));
   const good = storedRun('CS-12', 'quick');
   const fewer = Buffer.from(good.toString('utf8').split('\n').filter((l) => !l.includes('"do":"get_diff"')).join('\n'));
-  const clientEvidence = evidence('CS-12', 'quick', { 'run-2.jsonl': good, 'run-10.jsonl': fewer, 'run-1.jsonl': good });
+  // Run 10 is the third run: it is after run 2 and run 3 in number order, before them in text order.
+  const clientEvidence = evidence('CS-12', 'quick', { 'run-3.jsonl': good, 'run-10.jsonl': fewer, 'run-2.jsonl': good });
   assert.deepEqual(write_(dir, { clientEvidence }).problems, ['FX-LEG-CL-CS12-Q: check 7: the steps differ from the steps of run 3 of CS-12 quick']);
+});
+
+test('check7_an_io_error_of_a_stored_run_propagates', () => {
+  const dir = fixtures();
+  write(dir, fixture('CS-12', 'quick'));
+  const clientEvidence = evidence('CS-12', 'quick', {});
+  mkdirSync(join(clientEvidence, 'android', 'CS-12', 'quick', 'run-1.jsonl'));
+  assert.throws(() => write_(dir, { clientEvidence }), { code: 'EISDIR' });
 });
 
 test('check7_a_stored_run_that_is_not_a_trace_is_a_problem', () => {
@@ -134,8 +143,10 @@ test('a_case_json_that_is_not_json_is_a_problem_of_the_client_part', () => {
   const dir = fresh();
   mkdirSync(join(dir, 'FX-LEG-CL-X-Q'));
   writeFileSync(join(dir, 'FX-LEG-CL-X-Q', 'case.json'), '{');
-  const r = clientPart({ dir, names: ['FX-LEG-CL-X-Q'], page: () => null, serverFixture: () => null, evidenceDir: fresh(), clientPage: join(REPO_ROOT, 'docs/engineering/protocol/legacy-client.md'), labFunctions: '', scenarios: '', coverage: false, floor: 0, sync: () => null });
-  assert.deepEqual(r.problems, ['FX-LEG-CL-X-Q: case.json is not JSON']);
+  const part = (names) => clientPart({ dir, names, page: () => null, serverFixture: () => null, evidenceDir: fresh(), clientPage: join(REPO_ROOT, 'docs/engineering/protocol/legacy-client.md'), labFunctions: '', scenarios: '', coverage: false, floor: 0, sync: () => null });
+  assert.deepEqual(part(['FX-LEG-CL-X-Q']).problems, ['FX-LEG-CL-X-Q: case.json is not JSON']);
+  // An I/O error (here: no case.json) is not a case defect: it propagates.
+  assert.throws(() => part(['FX-LEG-CL-NONE-Q']), { code: 'ENOENT' });
 });
 
 test('a_profile_fixture_cannot_replace_a_code_reading_fixture', () => {

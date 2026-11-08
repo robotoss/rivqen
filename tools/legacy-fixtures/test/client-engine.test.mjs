@@ -59,3 +59,18 @@ test('a_step_acts_on_the_session_that_it_names', () => {
   const none = outcome(cc([...two, { do: 'destroy', session: 3 }]));
   assert.deepEqual([none.error.code, none.error.message], ['CASE_NO_SESSION', 'step 4: session 3 was not opened']);
 });
+
+test('cl06_cl34_steps_on_a_destroyed_or_stopped_session_send_and_show_nothing', () => {
+  const later = [{ do: 'bind_client', session: 1 }, { do: 'client_ready', session: 1 }, { do: 'request_resource', session: 1 }, { do: 'get_diff', session: 1 }, { do: 'page_finished', session: 1 }, { do: 'refresh', session: 1 }, { do: 'destroy', session: 1 }, { do: 'settle', ms: 3000 }];
+  const silent = { requests: [], cookies: [], actions: [], intercepts: [{ session: 1, null: true }], snapshots: [] };
+  for (const mode of ['quick', 'standard']) {
+    // Destroyed: a later step has no effect; the intercept gets null (CL-34).
+    const destroyed = outcome(cc([{ case: 'a' }, { do: 'create_session' }, { do: 'destroy' }, { do: 'settle', ms: 10 }, ...later], { mode }));
+    assert.deepEqual(destroyed.client.phases.at(-1), { steps: [4, 11], ...silent, results: [] }, mode);
+    // Stopped by an account change (CL-06): the same, and the destroy reports the result once.
+    const stopped = outcome(cc([{ case: 'a' }, { do: 'create_session' }, { do: 'set_account', value: 'rq-test-account-2' }, { do: 'settle', ms: 10 }, ...later], { mode }));
+    const last = stopped.client.phases.at(-1);
+    assert.deepEqual({ ...last, results: [] }, { steps: [4, 11], ...silent, results: [] }, mode);
+    assert.equal(last.results.length, 1, mode);
+  }
+});

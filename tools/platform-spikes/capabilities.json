@@ -621,8 +621,45 @@
       "Q-04"
     ],
     "sprint": "S2",
-    "results": [],
-    "verdict": "pending"
+    "results": [
+      {
+        "os": "27.0",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-08/27.0/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-08/27.0/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-08/27.0/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-08/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-08/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-08/26.5/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-08/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-08/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-08/18.5/run-3.jsonl"
+        ],
+        "recording": null
+      }
+    ],
+    "verdict": "supported"
   },
   {
     "id": "CAP-I-09",
@@ -633,8 +670,45 @@
       "Q-04"
     ],
     "sprint": "S2",
-    "results": [],
-    "verdict": "pending"
+    "results": [
+      {
+        "os": "27.0",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "navigator.serviceWorker is missing in a normal app with every prototype (loadSimulatedRequest, loadHTMLString, load(URLRequest), rqlab). Only in an app that declares WKAppBoundDomains in its Info.plist and sets limitsNavigationsToAppBoundDomains (lab build AppBound, runs <os>/app-bound/) does an https page of an app-bound domain register a worker, and the worker controls the page after one reload (a real WebKit navigation, so with IOS-P1 not the snapshot); a rqlab page gets TypeError. App-Bound Domains allow at most 10 domains and deny script injection, message handlers and cookie APIs outside them, and limit navigation to them. Simulator only, no device entitlement (H-129).",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-09/27.0/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-09/27.0/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-09/27.0/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "navigator.serviceWorker is missing in a normal app with every prototype (loadSimulatedRequest, loadHTMLString, load(URLRequest), rqlab). Only in an app that declares WKAppBoundDomains in its Info.plist and sets limitsNavigationsToAppBoundDomains (lab build AppBound, runs <os>/app-bound/) does an https page of an app-bound domain register a worker, and the worker controls the page after one reload (a real WebKit navigation, so with IOS-P1 not the snapshot); a rqlab page gets TypeError. App-Bound Domains allow at most 10 domains and deny script injection, message handlers and cookie APIs outside them, and limit navigation to them. Simulator only, no device entitlement (H-129).",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-09/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-09/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-09/26.5/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "navigator.serviceWorker is missing in a normal app with every prototype (loadSimulatedRequest, loadHTMLString, load(URLRequest), rqlab). Only in an app that declares WKAppBoundDomains in its Info.plist and sets limitsNavigationsToAppBoundDomains (lab build AppBound, runs <os>/app-bound/) does an https page of an app-bound domain register a worker, and the worker controls the page after one reload (a real WebKit navigation, so with IOS-P1 not the snapshot); a rqlab page gets TypeError. App-Bound Domains allow at most 10 domains and deny script injection, message handlers and cookie APIs outside them, and limit navigation to them. Simulator only, no device entitlement (H-129).",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-09/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-09/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-09/18.5/run-3.jsonl"
+        ],
+        "recording": null
+      }
+    ],
+    "verdict": "conditional"
   },
   {
     "id": "CAP-I-10",
@@ -645,8 +719,45 @@
       "Q-04"
     ],
     "sprint": "S2",
-    "results": [],
-    "verdict": "pending"
+    "results": [
+      {
+        "os": "27.0",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "load(URLRequest) and rqlab pages have normal history: link clicks add entries, goBack/goForward and history.go work, decidePolicyFor gives link and back_forward. IOS-P1 differs: the loadSimulatedRequest entry is in the back-forward list, but back to it loads the URL again from the network (the given data is not reused, so the SDK must handle a back_forward navigation to that entry itself if it wants its snapshot); loadHTMLString makes no entry of its own (the first navigation replaces it). no-store https pages are fetched again on back and forward; rqlab pages come from the page cache without a handler call. App loads and script navigations both have the type other.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-10/27.0/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-10/27.0/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-10/27.0/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "26.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "load(URLRequest) and rqlab pages have normal history: link clicks add entries, goBack/goForward and history.go work, decidePolicyFor gives link and back_forward. IOS-P1 differs: the loadSimulatedRequest entry is in the back-forward list, but back to it loads the URL again from the network (the given data is not reused, so the SDK must handle a back_forward navigation to that entry itself if it wants its snapshot); loadHTMLString makes no entry of its own (the first navigation replaces it). no-store https pages are fetched again on back and forward; rqlab pages come from the page cache without a handler call. App loads and script navigations both have the type other.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-10/26.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-10/26.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-10/26.5/run-3.jsonl"
+        ],
+        "recording": null
+      },
+      {
+        "os": "18.5",
+        "webview": null,
+        "verdict": "conditional",
+        "condition": "load(URLRequest) and rqlab pages have normal history: link clicks add entries, goBack/goForward and history.go work, decidePolicyFor gives link and back_forward. IOS-P1 differs: the loadSimulatedRequest entry is in the back-forward list, but back to it loads the URL again from the network (the given data is not reused, so the SDK must handle a back_forward navigation to that entry itself if it wants its snapshot); loadHTMLString makes no entry of its own (the first navigation replaces it). no-store https pages are fetched again on back and forward; rqlab pages come from the page cache without a handler call. App loads and script navigations both have the type other.",
+        "runs": [
+          "evidence/spikes/wp-04/ios/CAP-I-10/18.5/run-1.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-10/18.5/run-2.jsonl",
+          "evidence/spikes/wp-04/ios/CAP-I-10/18.5/run-3.jsonl"
+        ],
+        "recording": null
+      }
+    ],
+    "verdict": "conditional"
   },
   {
     "id": "CAP-I-11",
@@ -662,7 +773,7 @@
         "os": "27.0",
         "webview": null,
         "verdict": "conditional",
-        "condition": "Sync works in both directions and keeps HttpOnly, Secure and SameSite=Strict/Lax (native HTTPCookieStorage -> WKHTTPCookieStore.setCookie before the load; getAllCookies -> HTTPCookieStorage before a native fetch); WebKit then hides HttpOnly from document.cookie and does not send a SameSite=Strict cookie on a top-level navigation that a cross-site page starts. Conditions: URLSession does not apply SameSite (a native fetch sends Strict and Lax cookies also with a cross-site mainDocumentURL), so the SDK must not use its native fetch for a navigation that a cross-site page started, or must filter the cookies itself; cross-site subresources and iframes of the web view get no cookies at all (WebKit third-party cookie blocking), whatever the sync; SameSite=None and no SameSite are not told apart by HTTPCookie.sameSitePolicy (the value differs by iOS version), so the SDK must not depend on that value.",
+        "condition": "Sync works in both directions and keeps HttpOnly, Secure and SameSite=Strict/Lax (native HTTPCookieStorage -> WKHTTPCookieStore.setCookie before the load; getAllCookies -> HTTPCookieStorage before a native fetch); WebKit then hides HttpOnly from document.cookie and does not send a SameSite=Strict cookie on a top-level navigation that a cross-site page starts. Conditions: URLSession does not apply SameSite (a native fetch sends Strict and Lax cookies also with a cross-site mainDocumentURL), so the SDK may use its native fetch only when the web view is blank or shows a page of the same site as the target, where WebKit also sends them (set initiator: on 26.5 and 27.0 WebKit withholds Strict also on an app-started load of another site; 18.5 sends it); cross-site subresources and iframes of the web view get no cookies at all (WebKit third-party cookie blocking), whatever the sync; SameSite=None and no SameSite are not told apart by HTTPCookie.sameSitePolicy (the value differs by iOS version), so the SDK must not depend on that value.",
         "runs": [
           "evidence/spikes/wp-04/ios/CAP-I-11/27.0/run-1.jsonl",
           "evidence/spikes/wp-04/ios/CAP-I-11/27.0/run-2.jsonl",
@@ -674,7 +785,7 @@
         "os": "26.5",
         "webview": null,
         "verdict": "conditional",
-        "condition": "Sync works in both directions and keeps HttpOnly, Secure and SameSite=Strict/Lax (native HTTPCookieStorage -> WKHTTPCookieStore.setCookie before the load; getAllCookies -> HTTPCookieStorage before a native fetch); WebKit then hides HttpOnly from document.cookie and does not send a SameSite=Strict cookie on a top-level navigation that a cross-site page starts. Conditions: URLSession does not apply SameSite (a native fetch sends Strict and Lax cookies also with a cross-site mainDocumentURL), so the SDK must not use its native fetch for a navigation that a cross-site page started, or must filter the cookies itself; cross-site subresources and iframes of the web view get no cookies at all (WebKit third-party cookie blocking), whatever the sync; SameSite=None and no SameSite are not told apart by HTTPCookie.sameSitePolicy (the value differs by iOS version), so the SDK must not depend on that value.",
+        "condition": "Sync works in both directions and keeps HttpOnly, Secure and SameSite=Strict/Lax (native HTTPCookieStorage -> WKHTTPCookieStore.setCookie before the load; getAllCookies -> HTTPCookieStorage before a native fetch); WebKit then hides HttpOnly from document.cookie and does not send a SameSite=Strict cookie on a top-level navigation that a cross-site page starts. Conditions: URLSession does not apply SameSite (a native fetch sends Strict and Lax cookies also with a cross-site mainDocumentURL), so the SDK may use its native fetch only when the web view is blank or shows a page of the same site as the target, where WebKit also sends them (set initiator: on 26.5 and 27.0 WebKit withholds Strict also on an app-started load of another site; 18.5 sends it); cross-site subresources and iframes of the web view get no cookies at all (WebKit third-party cookie blocking), whatever the sync; SameSite=None and no SameSite are not told apart by HTTPCookie.sameSitePolicy (the value differs by iOS version), so the SDK must not depend on that value.",
         "runs": [
           "evidence/spikes/wp-04/ios/CAP-I-11/26.5/run-1.jsonl",
           "evidence/spikes/wp-04/ios/CAP-I-11/26.5/run-2.jsonl",
@@ -686,7 +797,7 @@
         "os": "18.5",
         "webview": null,
         "verdict": "conditional",
-        "condition": "Sync works in both directions and keeps HttpOnly, Secure and SameSite=Strict/Lax (native HTTPCookieStorage -> WKHTTPCookieStore.setCookie before the load; getAllCookies -> HTTPCookieStorage before a native fetch); WebKit then hides HttpOnly from document.cookie and does not send a SameSite=Strict cookie on a top-level navigation that a cross-site page starts. Conditions: URLSession does not apply SameSite (a native fetch sends Strict and Lax cookies also with a cross-site mainDocumentURL), so the SDK must not use its native fetch for a navigation that a cross-site page started, or must filter the cookies itself; cross-site subresources and iframes of the web view get no cookies at all (WebKit third-party cookie blocking), whatever the sync; SameSite=None and no SameSite are not told apart by HTTPCookie.sameSitePolicy (the value differs by iOS version), so the SDK must not depend on that value.",
+        "condition": "Sync works in both directions and keeps HttpOnly, Secure and SameSite=Strict/Lax (native HTTPCookieStorage -> WKHTTPCookieStore.setCookie before the load; getAllCookies -> HTTPCookieStorage before a native fetch); WebKit then hides HttpOnly from document.cookie and does not send a SameSite=Strict cookie on a top-level navigation that a cross-site page starts. Conditions: URLSession does not apply SameSite (a native fetch sends Strict and Lax cookies also with a cross-site mainDocumentURL), so the SDK may use its native fetch only when the web view is blank or shows a page of the same site as the target, where WebKit also sends them (set initiator: on 26.5 and 27.0 WebKit withholds Strict also on an app-started load of another site; 18.5 sends it); cross-site subresources and iframes of the web view get no cookies at all (WebKit third-party cookie blocking), whatever the sync; SameSite=None and no SameSite are not told apart by HTTPCookie.sameSitePolicy (the value differs by iOS version), so the SDK must not depend on that value.",
         "runs": [
           "evidence/spikes/wp-04/ios/CAP-I-11/18.5/run-1.jsonl",
           "evidence/spikes/wp-04/ios/CAP-I-11/18.5/run-2.jsonl",

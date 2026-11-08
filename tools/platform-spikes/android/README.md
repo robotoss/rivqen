@@ -93,6 +93,7 @@ sh tools/platform-spikes/lab/emulator.sh stop
 | `pass` | Every main-frame decision is `pass`; the WebView read no byte of the early fetch (outcome `cancel`, 0 bytes) |
 | `probe` | The WebView read no byte of the early fetch (the decision is the observation) |
 | `cut` | The first main-frame request streamed; the fetch ended at `host.cut.after` and did not complete; the WebView read the same bytes (count and SHA-256), outcome `error`; the fallback load ran, and its request passed as `claimed` |
+| `partial` | As `cut`, and the beacon of chunk 0 (in the first bytes of the body) came before the first `host.cut` in host order: the delivered part reached the renderer before the close |
 | `fetched` | The main frame streamed; the fetch read the whole body; the WebView read the same bytes (count and SHA-256), outcome `end` |
 | `steps` | The last `native.step` is `done`; no `app.error` |
 
@@ -115,6 +116,7 @@ Run sets (`runlog.mjs` `SETS`). `SPIKE_SET=<set>` selects a supporting set; its 
 | CAP-A-04 `wrr-302` | as CAP-A-04, scenario `redirect-3xx` | probe |
 | CAP-A-05 | `https://10.0.2.2:18444/s/echo?html=1` (site B, bad certificate; no extra `adb reverse`) | pass |
 | CAP-A-08 | `/s/cut` `after=3000&size=8192`, scenario `cut-range` | cut |
+| CAP-A-08 `partial` | `/s/cut` `after=3000&size=8192&hold=15000` (API 29: `after=70000&size=139264`), scenario `cut-range`; the body starts with the chunk-0 markup, and the host closes 15 s after the delivered bytes (S3) | partial |
 | CAP-A-06 | `/s/cookie/set` `name=a06-set&value=v1&attrs=Secure,SameSite=Lax`, scenario `cookie-on` | fetched |
 | CAP-A-06 `on-map`, `off`, `manual` | as CAP-A-06, scenarios `cookie-on-map`, `cookie-off`, `cookie-manual` | fetched |
 | CAP-A-07 | `/s/echo?html=1` (start page only), scenario `cookie-sync` | steps |

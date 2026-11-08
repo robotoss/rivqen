@@ -26,6 +26,10 @@ CONTROL="http://127.0.0.1:$LAB_HOST_CONTROL_PORT"
 APP_TIMEOUT_S=200
 # Recording mode: how long the page stays on screen after the run (app extra `linger`, at most 10 s).
 LINGER_MS=5000
+# Recording mode: seconds of the end state in the clip (less than LINGER_MS, so no launcher frame).
+# `am start -W` returns at the first frame of the activity, which a cold WebView draws only at the
+# commit of the page, so the clip starts at the first page frame.
+RECORD_TAIL_S=3
 
 die() { echo "run.sh: $*" >&2; exit 1; }
 usage() { echo "usage: [SPIKE_SET=<set>] run.sh CAP-A-01|02|03|04|05|06|07|08 37|29 [k | a..b]" >&2; exit 2; }
@@ -190,7 +194,8 @@ while [ "$k" -le "$last" ]; do
   done
   t1="$(now_ms)"
   if [ "$record" = 1 ]; then
-    sleep 1
+    # The end state of the page stays in the clip for RECORD_TAIL_S (the app lingers longer).
+    sleep "$RECORD_TAIL_S"
     t_stop="$(now_ms)"
     sh "$HERE/../lab/emulator.sh" record stop "$raw" >/dev/null
     recording=0

@@ -30,7 +30,7 @@ Exit codes: `0` valid (one `ok:` summary line); `1` findings (one `ERROR` line e
 | A result with runs has at least 3 runs, and their normalized logs are equal (`runs_stable`) | §7, §8 |
 | A recording is at most 1,000,000 bytes; the linked recordings total at most 25,000,000 bytes (`recording_caps`) | §9 |
 
-Normalization (§8): `t` and `seq` are removed; `app.stream.read` events are replaced by the sum of their `bytes`; `app.probe` events with a `metric.` name are removed; the value of a `Date` field in `fields` is blanked.
+Normalization (§8): `t` and `seq` are removed; `k` is removed from `run.start`; the run id (`run.start.run`) is replaced by `<run>` in every string value; `app.stream.read` events are replaced by the sum of their `bytes`; `app.probe` events with a `metric.` name are removed; the value of a `Date` field in `fields` is blanked.
 
 ## Not checked here
 

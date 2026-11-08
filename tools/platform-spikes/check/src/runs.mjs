@@ -62,6 +62,9 @@ export function parseRunLog(text) {
     }
   });
   if (events.length > 0 && events[0].ev !== 'run.start') problems.push('the first event is not run.start');
+  if (events.length > 0 && events[0].ev === 'run.start' && (typeof events[0].run !== 'string' || events[0].run === '')) {
+    problems.push('run.start has no run id');
+  }
   if (events.length > 0 && events.at(-1).ev !== 'run.end') problems.push('the last event is not run.end');
   return { events, problems };
 }
@@ -81,12 +84,22 @@ function blankDates(fields) {
   return fields;
 }
 
+/** Replaces every occurrence of the run id in every string value with `<run>` (CONTRACT section 8). */
+function replaceRunId(value, runId) {
+  if (typeof value === 'string') return value.split(runId).join('<run>');
+  if (Array.isArray(value)) return value.map((v) => replaceRunId(v, runId));
+  if (isObject(value)) return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, replaceRunId(v, runId)]));
+  return value;
+}
+
 /**
- * Normalized form of a run (CONTRACT section 8). `t` and `seq` are removed, `app.stream.read` events are
- * replaced by the sum of their bytes, `metric.*` probes are removed and `Date` values are blanked.
+ * Normalized form of a run (CONTRACT section 8). `t` and `seq` are removed, `k` is removed from `run.start`,
+ * the run id is replaced by `<run>` in every string value, `app.stream.read` events are replaced by the sum
+ * of their bytes, `metric.*` probes are removed and `Date` values are blanked.
  * The events are grouped by source; each group keeps its order.
  */
 export function normalizeRunLog(events) {
+  const runId = events[0]?.run;
   const out = { app: [], host: [], script: [], stream_bytes: 0 };
   for (const e of events) {
     if (e.ev === 'app.stream.read') {
@@ -95,8 +108,10 @@ export function normalizeRunLog(events) {
     }
     if (e.ev === 'app.probe' && typeof e.name === 'string' && e.name.startsWith('metric.')) continue;
     const { t, seq, ...rest } = e;
+    if (e.ev === 'run.start') delete rest.k;
     if ('fields' in rest) rest.fields = blankDates(rest.fields);
-    out[e.src].push(rest);
+    const named = typeof runId === 'string' && runId !== '' ? replaceRunId(rest, runId) : rest;
+    out[e.src].push(named);
   }
   return out;
 }

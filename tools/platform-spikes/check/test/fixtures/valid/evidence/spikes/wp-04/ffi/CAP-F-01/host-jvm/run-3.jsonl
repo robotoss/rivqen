@@ -1,7 +1,7 @@
-{"capability":"CAP-F-01","device":"fixture","ev":"run.start","k":1,"os":"host-jvm","platform":"ffi","prototype":"FIXTURE","run":"CAP-F-01-ffi-host-jvm-1","seq":0,"src":"script","t":3,"webview":null}
+{"capability":"CAP-F-01","device":"fixture","ev":"run.start","k":3,"os":"host-jvm","platform":"ffi","prototype":"FIXTURE","run":"CAP-F-01-ffi-host-jvm-3","seq":0,"src":"script","t":3,"webview":null}
 {"ev":"app.probe","name":"chunk","seq":0,"src":"app","t":8,"value":0}
 {"bytes":100,"ev":"app.stream.read","seq":1,"src":"app","t":9}
 {"ev":"app.probe","name":"metric.first_paint","seq":2,"src":"app","t":10,"value":11.0}
-{"ev":"host.request","fields":["Host","Rq-Lab-Run"],"method":"GET","seq":0,"site":"A","src":"host","t":4,"target":"/s/stream?run=CAP-F-01-ffi-host-jvm-1"}
+{"ev":"host.request","fields":["Host","Rq-Lab-Run"],"method":"GET","seq":0,"site":"A","src":"host","t":4,"target":"/s/stream?run=CAP-F-01-ffi-host-jvm-3"}
 {"ev":"host.response","fields":[{"name":"Content-Type","value":"text/html"},{"name":"Date","value":"Mon, 01 Jan 2026 00:00:00 GMT"}],"seq":1,"src":"host","status":200,"t":5}
 {"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":33}

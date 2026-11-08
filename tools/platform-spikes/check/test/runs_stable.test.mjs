@@ -19,6 +19,13 @@ test('runs_stable: a result with fewer than 3 runs is reported', async (t) => {
   expectProblem(await problemsOf(dir, catalog), /2 runs, at least 3 are needed/);
 });
 
+test('runs_stable: a run that differs only in a value other than the run id is reported', async (t) => {
+  // The run id differs between the runs (-1, -2, -3) and is normalized away; the chunk probe value is not.
+  const dir = await copyFixture(t);
+  await rewriteRun(dir, 'run-3.jsonl', (lines) => lines.map((l) => l.replace('"name":"chunk","seq":0,"src":"app","t":8,"value":0', '"name":"chunk","seq":0,"src":"app","t":8,"value":1')));
+  expectProblem(await problemsOf(dir), /run-3\.jsonl differs from .*run-1\.jsonl after normalization/);
+});
+
 test('runs_stable: a run whose normalized log differs is reported', async (t) => {
   const dir = await copyFixture(t);
   await rewriteRun(dir, 'run-2.jsonl', (lines) => lines.map((l) => l.replace('"status":200', '"status":404')));

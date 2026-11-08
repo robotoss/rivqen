@@ -151,6 +151,8 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
     items: [
       { text: 'Android SDK', link: '/engineering/platforms/android' },
       { text: 'iOS SDK', link: '/engineering/platforms/ios' },
+      { text: 'iOS parity matrix', link: '/engineering/platforms/ios-parity-matrix' },
+      { text: 'Android capability matrix', link: '/engineering/platforms/android-matrix' },
       { text: 'Web and React SDK', link: '/engineering/platforms/web-react' },
       { text: 'JS bridge contract', link: '/engineering/platforms/js-bridge' }
     ]

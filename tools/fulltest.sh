@@ -77,6 +77,8 @@ group_node() {
   step android-spike-runlog 'node --test tools/platform-spikes/android/test'
   step url-interop 'cd tools/platform-spikes/url-interop && node --test'
   step ffi-merge 'cd tools/platform-spikes/ffi-bench && node --test merge.test.mjs'
+  step matrix-tests 'node --test tools/platform-spikes/matrix/test'
+  step matrix-gen 'node tools/platform-spikes/matrix/gen.mjs --check'
   step spike-evidence 'node tools/platform-spikes/check/check.mjs'
 }
 

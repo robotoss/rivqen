@@ -37,8 +37,8 @@ A request made by `URLSession` or OkHttp does not share the WebView's HTTP cache
 
 ## 3. Redirects
 
-1. Follow redirects in the native stack only for the same origin, by default.
-2. For a cross-origin redirect, stop and let the WebView do a normal navigation to the final URL.
+1. The native early fetch of a main document does not follow a redirect (DL-141). A 3xx stops it, and the WebView loads the URL itself and follows the redirect. <Badge type="tip" text="FACT" /> On Android `shouldInterceptRequest` answers only for the first URL, so a body that the native stack fetched after a redirect would appear under the first URL; a `WebResourceResponse` cannot carry a 3xx (CAP-A-04). On iOS a redirect gives a real navigation ([ADR-003](/engineering/architecture/adr/ADR-003-ios-navigation)).
+2. Subresource and API requests of the SDK may follow a same-origin redirect; for a cross-origin redirect they stop.
 3. Never forward `Authorization` or cookies to an unexpected origin.
 4. Record the final URL. The cache key uses the URL the user requested **and** the final URL is stored in metadata.
 

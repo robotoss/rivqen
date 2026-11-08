@@ -87,7 +87,11 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'Public surfaces', link: '/engineering/architecture/surfaces' },
       { text: 'Technology stack', link: '/engineering/architecture/technology-stack' },
       { text: 'Errors and logging', link: '/engineering/architecture/errors-logging' },
-      { text: 'Decision records (ADR)', link: '/engineering/architecture/adr/' }
+      { text: 'Decision records (ADR)', link: '/engineering/architecture/adr/' },
+      { text: 'ADR-002 FFI technology', link: '/engineering/architecture/adr/ADR-002-ffi-technology' },
+      { text: 'ADR-003 iOS navigation', link: '/engineering/architecture/adr/ADR-003-ios-navigation' },
+      { text: 'ADR-009 Streaming ABI', link: '/engineering/architecture/adr/ADR-009-streaming-abi' },
+      { text: 'ADR-014 Android HTTP stack', link: '/engineering/architecture/adr/ADR-014-android-http-stack' }
     ]
   },
   {

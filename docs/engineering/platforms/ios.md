@@ -130,6 +130,18 @@ Apple documents that a `nil` `sameSitePolicy` means "cross-site requests include
 
 <Badge type="tip" text="FACT" /> The user agent of `WKWebView` names `iPhone OS 18_7` on the iOS 27.0 and 26.5 simulators, and `iPhone OS 18_5` on iOS 18.5 (`run.json`).
 
+### Screen recordings (WP-04 S3)
+
+<Badge type="tip" text="FACT" /> Recorded on 2026-11-08 on iOS 27.0 (lab simulator, iPhone 16 Pro): CAP-I-01, CAP-I-04, CAP-I-05, CAP-I-07, CAP-I-09 (set `app-bound`) and CAP-I-11. Clips: `evidence/recordings/wp-04/<capability>-ios-27.0.mp4`. Each clip is H.264, 540 × 1174 px, no audio, metadata removed, 4.5 to 8.2 s, 77,607 to 91,156 bytes (494,188 bytes in total).
+
+- Each clip comes from a fourth run (`k` = 4), not from a run that backs the verdict. The run must end ok and must have the same normalized log as the stored `run-1` (CONTRACT §8); otherwise no clip goes into `evidence/`. The log of the recorded run stays in the lab output.
+- `simctl io <lab device> recordVideo` records the screen of that one device. On Xcode 27.2 it records a simulator that has no window. There is no Simulator.app in Xcode 27.2, so no window was opened (H-134 allowed one). The status bar of the lab device shows a fixed time (9:41).
+- In a recorded run (`-rqRecord 1`) the app keeps a still image of a closed web view on the screen until the next web view covers it. This changes only the screen, not WebKit or the log. `simctl` writes a frame only when the screen changes, so the clip shows the last frame for 1.5 s more.
+- The host pages have no `viewport` tag, so WebKit lays them out 980 px wide and their text is small. The CAP-I-01 page is one line of text; the CAP-I-09 page shows almost no text (its result is in the probes).
+- CAP-I-09 `app-bound` on 27.0 was run again before the recording (3 stable runs). The S2 review changed `/s/sw-page` (788 → 834 bytes) after the S2 runs. The new runs have the same events and probes as the old runs, except the page length. The other CAP-I-09 runs are from the earlier page.
+
+Procedure: [`tools/platform-spikes/ios/README.md`](https://github.com/robotoss/rivqen/blob/main/tools/platform-spikes/ios/README.md), section "Recordings".
+
 ## 4. Spike matrix (gate G2)
 
 Test each prototype on supported iPhone and iPad models and iOS versions:
@@ -143,7 +155,7 @@ Test each prototype on supported iPhone and iPad models and iOS versions:
 7. Bridge isolation, app-bound domains, content worlds.
 8. Background, process termination (`webViewWebContentProcessDidTerminate`), memory pressure, offline.
 
-<Badge type="tip" text="FACT" /> S1 and S2 (2026-11-08) give data for items 1 (valid TLS), 2, 3 (origin, relative URLs, `SameSite` and `HttpOnly` cookies and their sync), 4 (CSP field and `meta` with nonces, Service Worker registration with and without App-Bound Domains), 5 (history, back and forward, navigation delegate) and 7 (bridge in a content world, App-Bound Domains) on iOS 27.0, 26.5 and 18.5, iPhone 16 Pro simulator only (§3). Not measured in WP-04: IndexedDB, localStorage, deep links, redirects, iPad, and items 6 and 8.
+<Badge type="tip" text="FACT" /> S1 and S2 (2026-11-08) give data for items 1 (valid TLS), 2, 3 (origin, relative URLs, `SameSite` and `HttpOnly` cookies and their sync), 4 (CSP field and `meta` with nonces, Service Worker registration with and without App-Bound Domains), 5 (history, back and forward, navigation delegate) and 7 (bridge in a content world, App-Bound Domains) on iOS 27.0, 26.5 and 18.5, iPhone 16 Pro simulator only (§3). Not measured in WP-04: IndexedDB, localStorage, deep links, redirects, iPad, and items 6 and 8. Screen recordings: six capabilities on iOS 27.0 (§3, "Screen recordings"); none on 26.5 and 18.5.
 
 Output: `ios-parity-matrix.md` with **supported / conditional / impossible with public APIs** per item, prototype builds, screen recordings and traces. If full streaming parity is impossible, Rivqen does not promise it. It keeps cache, revalidation and data updates, which bring most of the warm-path benefit.
 

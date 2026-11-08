@@ -4,12 +4,14 @@
 #
 # Runs the Android prototype for one capability on the lab emulator (CONTRACT.md sections 4, 5, 9).
 # Usage: sh tools/platform-spikes/android/run.sh <capability> <api> [k | a..b]   (default 1..3)
-#   capability  CAP-A-01 | CAP-A-02 | CAP-A-03
+#   capability  CAP-A-01 | CAP-A-02 | CAP-A-03 | CAP-A-04 | CAP-A-05 | CAP-A-08
 #   api         37 | 29 (the running lab emulator must have this API level)
-# Environment: SKIP_BUILD=1 installs the APK of the last build. Exploration only (never evidence):
-#   SPIKE_PARAMS=<query> replaces the page parameters; SPIKE_OUT=<dir> writes the output there.
+# Environment: SKIP_BUILD=1 installs the APK of the last build. SPIKE_SET=<set> runs a named
+#   supporting set of runlog.mjs SETS (output in <capability>/<api>/<set>/). Exploration only (never
+#   evidence): SPIKE_PARAMS=<query> replaces the page parameters; SPIKE_OUT=<dir> writes the output there.
 # Needs: the lab emulator (lab/emulator.sh start <api>) and the spike host (host/main.mjs) running.
-# Output: evidence/spikes/wp-04/android/<capability>/<api>/run-<k>.jsonl, run-<k>.metrics.json, run.json.
+# Output: evidence/spikes/wp-04/android/<capability>/<api>[/<set>]/run-<k>.jsonl, run-<k>.metrics.json,
+#   run.json (only when at least one run is ok; a failed run goes to $LAB_OUT/android-failed).
 # Every adb call names the lab serial ($LAB_SERIAL); the script never starts or stops the host.
 set -eu
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -21,12 +23,16 @@ CONTROL="http://127.0.0.1:$LAB_HOST_CONTROL_PORT"
 APP_TIMEOUT_S=200
 
 die() { echo "run.sh: $*" >&2; exit 1; }
-usage() { echo "usage: run.sh CAP-A-01|CAP-A-02|CAP-A-03 37|29 [k | a..b]" >&2; exit 2; }
+usage() { echo "usage: [SPIKE_SET=<set>] run.sh CAP-A-01|02|03|04|05|08 37|29 [k | a..b]" >&2; exit 2; }
 
 cap="${1:-}"
 api="${2:-}"
 spec="${3:-1..3}"
-case "$cap" in CAP-A-01 | CAP-A-02 | CAP-A-03) ;; *) usage ;; esac
+set_name="${SPIKE_SET:-}"
+case "$cap" in CAP-A-01 | CAP-A-02 | CAP-A-03 | CAP-A-04 | CAP-A-05 | CAP-A-08) ;; *) usage ;; esac
+case "$set_name" in "" | [a-z0-9]*) ;; *) usage ;; esac
+case "$set_name" in *[!a-z0-9-]*) usage ;; esac
+scenario="$(node "$HERE/runlog.mjs" scenario "$cap" "$set_name")" || die "unknown set '$set_name' of $cap"
 case "$api" in 37 | 29) ;; *) usage ;; esac
 case "$spec" in
   [1-9]) first="$spec"; last="$spec" ;;
@@ -63,7 +69,7 @@ fi
 adb_ shell dumpsys webviewupdate > "$WORK/webviewupdate.txt"
 "$JAVA_HOME/bin/java" -version 2>&1 | head -1 > "$WORK/java-version.txt"
 
-OUT="${SPIKE_OUT:-$ROOT/evidence/spikes/wp-04/android/$cap/$api}"
+OUT="${SPIKE_OUT:-$ROOT/evidence/spikes/wp-04/android/$cap/$api${set_name:+/$set_name}}"
 mkdir -p "$OUT"
 
 post() {
@@ -72,10 +78,11 @@ post() {
 
 # 3. The runs.
 failed=0
+okruns=0
 k="$first"
 while [ "$k" -le "$last" ]; do
   run="$cap-android-$api-$k"
-  url="$(node "$HERE/runlog.mjs" url "$cap" "$run" "${SPIKE_PARAMS:-}")"
+  url="$(node "$HERE/runlog.mjs" url "$cap" "$run" "${SPIKE_PARAMS:-}" "$set_name")"
   rm -f "$WORK"/app.jsonl "$WORK"/host.jsonl "$WORK"/metrics.json "$WORK"/device.json "$WORK"/status.json
   adb_ shell am force-stop "$PKG"
   adb_ shell run-as "$PKG" rm -rf files/out
@@ -84,10 +91,12 @@ while [ "$k" -le "$last" ]; do
   post /run/start "{\"run\":\"$run\",\"capability\":\"$cap\",\"platform\":\"android\",\"os\":\"$api\",\"k\":$k}" >/dev/null \
     || die "POST /run/start failed for $run"
   t0="$(node -e 'process.stdout.write(String(Date.now()))')"
-  # The URL has only [A-Za-z0-9.:/?&=-]; single quotes keep the device shell from reading '&'.
-  adb_ shell "am start -n $ACTIVITY --es run $run --es capability $cap --es url '$url'" >/dev/null
+  # The URL has only [A-Za-z0-9.:/?&=%-]; single quotes keep the device shell from reading '&'.
+  case "$url" in *"'"*) die "the URL has a quote: $url" ;; esac
+  adb_ shell "am start -n $ACTIVITY --es run $run --es capability $cap --es scenario $scenario --es url '$url'" >/dev/null
   i=0
-  while ! adb_ shell run-as "$PKG" test -f files/out/status.json 2>/dev/null; do
+  # `ls`, not `test`: on API 29 run-as cannot execute `test` ("exec failed for test: Permission denied").
+  while ! adb_ shell run-as "$PKG" ls files/out/status.json >/dev/null 2>&1; do
     i=$((i + 1))
     [ "$i" -le "$APP_TIMEOUT_S" ] || break
     sleep 1
@@ -99,16 +108,25 @@ while [ "$k" -le "$last" ]; do
     adb_ exec-out run-as "$PKG" cat "files/out/$f" > "$WORK/$f" 2>/dev/null || rm -f "$WORK/$f"
     [ -s "$WORK/$f" ] || rm -f "$WORK/$f"
   done
-  node "$HERE/runlog.mjs" join "$WORK" "$OUT" "$cap" "$api" "$k" "$run" "$url" "$((t1 - t0))" || failed=$((failed + 1))
-  if [ -f "$WORK/device.json" ]; then cp "$WORK/device.json" "$WORK/device-last.json"; fi
+  if node "$HERE/runlog.mjs" join "$WORK" "$OUT" "$cap" "$api" "$k" "$run" "$url" "$((t1 - t0))" "$set_name"; then
+    okruns=$((okruns + 1))
+    if [ -f "$WORK/device.json" ]; then cp "$WORK/device.json" "$WORK/device-last.json"; fi
+  else
+    failed=$((failed + 1))
+  fi
   k=$((k + 1))
 done
 adb_ shell am force-stop "$PKG"
 
-# 4. run.json (section 9) and the verdict facts.
-if [ -f "$WORK/device-last.json" ]; then
+# 4. run.json (section 9), only next to ok runs, and the verdict facts.
+if [ "$okruns" -gt 0 ] && [ -f "$WORK/device-last.json" ]; then
   cp "$WORK/device-last.json" "$WORK/device.json"
-  node "$HERE/runlog.mjs" runjson "$WORK" "$OUT" "$api"
+  node "$HERE/runlog.mjs" runjson "$WORK" "$OUT" "$api" "$set_name" "$scenario"
+fi
+if ! ls "$OUT"/run-*.jsonl >/dev/null 2>&1; then
+  echo "run.sh: $cap: no ok run in $OUT"
+  [ "$failed" -eq 0 ] || die "$failed run(s) not ok"
+  exit 0
 fi
 node "$HERE/runlog.mjs" analyze "$OUT" "$cap" > "$WORK/analysis.json"
 node -e '

@@ -137,6 +137,41 @@ public final class InterceptRule {
     }
 
     /**
+     * Whether a fetched head can serve the claimed main-frame request. Returns the pass reason, or
+     * {@code null} when the head can be used. The first match decides:
+     *
+     * <ol>
+     *   <li>{@code redirected}: the response came through a redirect or an authentication challenge
+     *       that the HTTP stack followed (OkHttp {@code priorResponse() != null}). Its URL, cookies or
+     *       credentials can differ from the session URL (H-67, DL-042).
+     *   <li>{@code redirect-status}: a 3xx head. The early fetch does not follow redirects (CL-44,
+     *       DL-131), and a {@code WebResourceResponse} cannot carry a 3xx status, so the WebView
+     *       loads the URL itself and follows the redirect.
+     *   <li>{@code head-not-expressible}: {@link #head} refuses the head (status, reason or type).
+     * </ol>
+     *
+     * <p>A pass delivers no byte of the early fetch, so the fetch gives no document and no cache
+     * result (no entry in any partition).
+     *
+     * @param redirected the response has a prior response
+     * @param status the status code
+     * @param reason the reason phrase
+     * @param pairs the fields as [name, value] pairs in the received order
+     */
+    public static String headPass(boolean redirected, int status, String reason, List<String[]> pairs) {
+        if (redirected) {
+            return "redirected";
+        }
+        if (status >= 300 && status <= 399) {
+            return "redirect-status";
+        }
+        if (head(status, reason, pairs) == null) {
+            return "head-not-expressible";
+        }
+        return null;
+    }
+
+    /**
      * Converts a fetched head. Returns {@code null} when the WebView cannot take it as a response
      * (the request then passes): a status outside [100, 299] and [400, 599] (a 3xx cannot be
      * returned), an empty reason phrase, or no usable Content-Type.
@@ -189,6 +224,73 @@ public final class InterceptRule {
         }
         return new Head(media[0], media[1], status, reason, Collections.unmodifiableMap(fields),
                 Collections.unmodifiableList(dropped));
+    }
+
+    /**
+     * The fields of a head without the hop-by-hop fields, one value per name (repeated values joined
+     * with a comma; a second Set-Cookie is left out), for a lab probe that gives the WebView a head
+     * that {@link #head} refuses (the 3xx probe of CAP-A-04). Never used for a delivered response.
+     *
+     * @param pairs the fields as [name, value] pairs in the received order
+     */
+    public static Map<String, String> rawFields(List<String[]> pairs) {
+        Map<String, String> fields = new LinkedHashMap<String, String>();
+        Map<String, String> lowerToName = new LinkedHashMap<String, String>();
+        for (String[] p : pairs) {
+            String lower = p[0].toLowerCase(Locale.ROOT);
+            if (HOP_BY_HOP.contains(lower)) {
+                continue;
+            }
+            String name = lowerToName.get(lower);
+            if (name == null) {
+                lowerToName.put(lower, p[0]);
+                fields.put(p[0], p[1]);
+            } else if (!"set-cookie".equals(lower)) {
+                fields.put(name, fields.get(name) + ", " + p[1]);
+            }
+        }
+        return Collections.unmodifiableMap(fields);
+    }
+
+    /**
+     * The value of the {@code k} query parameter of a spike-host beacon URL
+     * ({@code /s/beacon?run=…&k=<k>}), or -1 when the URL is not a beacon URL of an allowed origin or
+     * has no valid {@code k} (0 to 1023). Plain string work: the URL comes from the WebView.
+     *
+     * @param url the request URL
+     * @param allowedOrigins the origins of the spike host
+     */
+    public static int beaconIndex(String url, Set<String> allowedOrigins) {
+        if (url == null) {
+            return -1;
+        }
+        int path = url.indexOf("/s/beacon?");
+        if (path <= 0 || !allowedOrigins.contains(url.substring(0, path))) {
+            return -1;
+        }
+        String query = url.substring(path + "/s/beacon?".length());
+        int hash = query.indexOf('#');
+        if (hash >= 0) {
+            query = query.substring(0, hash);
+        }
+        for (String part : query.split("&", -1)) {
+            if (part.startsWith("k=")) {
+                String v = part.substring(2);
+                if (v.isEmpty() || v.length() > 4) {
+                    return -1;
+                }
+                int k = 0;
+                for (int i = 0; i < v.length(); i++) {
+                    char c = v.charAt(i);
+                    if (c < '0' || c > '9') {
+                        return -1;
+                    }
+                    k = k * 10 + (c - '0');
+                }
+                return k <= 1023 ? k : -1;
+            }
+        }
+        return -1;
     }
 
     /**

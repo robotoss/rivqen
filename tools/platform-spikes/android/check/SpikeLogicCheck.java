@@ -84,6 +84,9 @@ public final class SpikeLogicCheck {
         run("head_fields", SpikeLogicCheck::headFields);
         run("media_type", SpikeLogicCheck::mediaType);
         run("loggable_values", SpikeLogicCheck::loggable);
+        run("head_pass_reasons", SpikeLogicCheck::headPass);
+        run("raw_fields_keep_3xx_head", SpikeLogicCheck::rawFields);
+        run("beacon_index", SpikeLogicCheck::beaconIndex);
         if (!failures.isEmpty()) {
             for (String f : failures) {
                 System.out.println("FAIL " + f);
@@ -655,5 +658,63 @@ public final class SpikeLogicCheck {
         check("[redacted]".equals(InterceptRule.loggable("Cookie", "a=b; SID=X")), "Cookie with one real pair redacted");
         check("[redacted]".equals(InterceptRule.loggable("Authorization", "Bearer x")), "Authorization redacted");
         check("text/html".equals(InterceptRule.loggable("Content-Type", "text/html")), "other fields unchanged");
+    }
+
+    private static void headPass() {
+        List<String[]> html = pairs("Content-Type", "text/html; charset=utf-8");
+        check(InterceptRule.headPass(false, 200, "OK", html) == null, "a 200 head serves the request");
+        check(InterceptRule.headPass(false, 400, "Bad Request", html) == null, "a 400 head serves the request (S1 status-400)");
+        check("redirected".equals(InterceptRule.headPass(true, 200, "OK", html)), "a 200 after a followed redirect passes (H-67)");
+        check("redirected".equals(InterceptRule.headPass(true, 302, "Found", html)), "redirected is the first reason");
+        int[] redirects = {300, 301, 302, 303, 304, 307, 308, 399};
+        for (int s : redirects) {
+            check("redirect-status".equals(InterceptRule.headPass(false, s, "X", html)), "status " + s + " passes as redirect-status");
+        }
+        check("redirect-status".equals(InterceptRule.headPass(false, 302, "", pairs("Location", "/x"))),
+                "a 3xx without reason or type is still redirect-status");
+        check("head-not-expressible".equals(InterceptRule.headPass(false, 299, "", html)), "an empty reason is not expressible");
+        check("head-not-expressible".equals(InterceptRule.headPass(false, 200, "OK", pairs("Location", "/x"))), "no Content-Type");
+        check("head-not-expressible".equals(InterceptRule.headPass(false, 600, "X", html)), "status 600");
+        check("head-not-expressible".equals(InterceptRule.headPass(false, 99, "X", html)), "status 99");
+    }
+
+    private static void rawFields() {
+        Map<String, String> f = InterceptRule.rawFields(pairs(
+                "Location", "/s/echo",
+                "Content-Type", "text/plain; charset=utf-8",
+                "Transfer-Encoding", "chunked",
+                "Content-Length", "9",
+                "Connection", "close",
+                "Cache-Control", "no-store",
+                "cache-control", "private",
+                "Set-Cookie", "a=1",
+                "Set-Cookie", "b=2"));
+        check("/s/echo".equals(f.get("Location")), "Location kept");
+        check(!f.containsKey("Transfer-Encoding") && !f.containsKey("Content-Length") && !f.containsKey("Connection"), "hop-by-hop removed");
+        check("no-store, private".equals(f.get("Cache-Control")), "repeated fields joined");
+        check("a=1".equals(f.get("Set-Cookie")), "the first Set-Cookie only");
+        check(new ArrayList<String>(f.keySet()).equals(Arrays.asList("Location", "Content-Type", "Cache-Control", "Set-Cookie")),
+                "received order kept: " + f.keySet());
+        check(throwsType(UnsupportedOperationException.class, () -> f.put("x", "y")), "read-only");
+    }
+
+    private static void beaconIndex() {
+        String a = "https://localhost:18443/s/beacon?run=CAP-A-01-android-29-1&k=";
+        check(InterceptRule.beaconIndex(a + "0", ALLOWED) == 0, "k=0");
+        check(InterceptRule.beaconIndex(a + "7", ALLOWED) == 7, "k=7");
+        check(InterceptRule.beaconIndex(a + "1023", ALLOWED) == 1023, "k=1023 is the largest");
+        check(InterceptRule.beaconIndex(a + "1024", ALLOWED) == -1, "k=1024 refused");
+        check(InterceptRule.beaconIndex(a + "12345", ALLOWED) == -1, "five digits refused");
+        check(InterceptRule.beaconIndex(a, ALLOWED) == -1, "empty k refused");
+        check(InterceptRule.beaconIndex(a + "-1", ALLOWED) == -1, "sign refused");
+        check(InterceptRule.beaconIndex(a + "1a", ALLOWED) == -1, "letter refused");
+        check(InterceptRule.beaconIndex(a + "3#x", ALLOWED) == 3, "fragment ignored");
+        check(InterceptRule.beaconIndex("https://10.0.2.2:18443/s/beacon?k=2&run=x", ALLOWED) == 2, "site B, k first");
+        check(InterceptRule.beaconIndex("https://localhost:18444/s/beacon?k=2", ALLOWED) == -1, "other port refused");
+        check(InterceptRule.beaconIndex("https://evil.test/s/beacon?k=2", ALLOWED) == -1, "other origin refused");
+        check(InterceptRule.beaconIndex("https://localhost:18443/x/s/beacon?k=2", ALLOWED) == -1, "other path refused");
+        check(InterceptRule.beaconIndex("https://localhost:18443/s/beacon?kk=2", ALLOWED) == -1, "other name refused");
+        check(InterceptRule.beaconIndex("https://localhost:18443/s/stream?k=2", ALLOWED) == -1, "not a beacon");
+        check(InterceptRule.beaconIndex(null, ALLOWED) == -1, "null");
     }
 }

@@ -17,6 +17,11 @@
 # SET=<name> runs a supporting set of the capability (README "Supporting sets"): the app gets
 # -rqSet <name>, the runs go to evidence/.../<capability>/<os>/<name>/, and the set app-bound uses
 # the AppBound build configuration (Info.plist WKAppBoundDomains, lab only).
+# RECORD=1 records one run (one k, for example 4) with `lab/sim.sh record` (simctl io recordVideo of
+# the lab device only): the run log goes to $LAB_OUT/ios-recorded/, never to evidence/; the run must
+# be ok and equal to the stored run-1 after normalization (record.mjs stable); then record.mjs clip
+# writes evidence/recordings/wp-04/<capability>-ios-<os>.mp4 in the format of CONTRACT.md section 9.
+# FFMPEG and FFPROBE name the lab tools (default: on PATH, else /opt/homebrew/bin).
 set -eu
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
@@ -32,6 +37,7 @@ APP="$DERIVED/Build/Products/$CONFIGURATION-iphonesimulator/PlatformSpike.app"
 CONTROL="http://127.0.0.1:$LAB_HOST_CONTROL_PORT"
 ORIGIN="https://localhost:$LAB_HOST_PORT"
 WAIT="${RUN_WAIT:-240}"
+RECORD="${RECORD:-0}"
 
 log() { printf 'ios/run.sh: %s\n' "$*" >&2; }
 fail() {
@@ -53,11 +59,24 @@ esac
 case "$FIRST$LAST" in '' | *[!0-9]*) fail "k must be a number or a..b" ;; esac
 [ "$FIRST" -ge 1 ] && [ "$LAST" -ge "$FIRST" ] && [ "$LAST" -le 99 ] || fail "k range must be within 1..99"
 case "$WAIT" in '' | *[!0-9]*) fail "RUN_WAIT must be seconds" ;; esac
+case "$RECORD" in 0 | 1) ;; *) fail "RECORD must be 0 or 1" ;; esac
+if [ "$RECORD" = 1 ]; then
+  [ "$FIRST" = "$LAST" ] || fail "RECORD=1 records one run: give one k (for example 4)"
+  FFMPEG="${FFMPEG:-$(command -v ffmpeg || echo /opt/homebrew/bin/ffmpeg)}"
+  FFPROBE="${FFPROBE:-$(command -v ffprobe || echo /opt/homebrew/bin/ffprobe)}"
+  [ -x "$FFMPEG" ] && [ -x "$FFPROBE" ] || fail "RECORD=1 needs ffmpeg and ffprobe (lab tools; set FFMPEG and FFPROBE)"
+fi
 
 mkdir -p "$LAB_HOME/tmp" "$LAB_OUT"
 WORK="$(mktemp -d "$LAB_HOME/tmp/ios-run.XXXXXX")"
+RECORDING=0
+REC_FILE=""
 cleanup() {
   status=$?
+  # A recording that still runs when the script stops is stopped (its file stays in $LAB_OUT).
+  if [ "$RECORDING" = 1 ]; then
+    sh "$ROOT/tools/platform-spikes/lab/sim.sh" record stop "$OS" "$REC_FILE" >/dev/null 2>&1 || true
+  fi
   rm -rf "$WORK"
   exit "$status"
 }
@@ -121,8 +140,21 @@ PROTOTYPE="$(node -e '
   console.log(c ? c.prototype : "unknown");
 ' "$ROOT/tools/platform-spikes/capabilities.json" "$CAP")"
 EVIDENCE="$ROOT/evidence/spikes/wp-04/ios/$CAP/$OS${SET:+/$SET}"
+if [ "$RECORD" = 1 ]; then
+  STORED="$EVIDENCE/run-1.jsonl"
+  [ -f "$STORED" ] || fail "RECORD=1 needs the stored run $STORED"
+  # The recorded run is not evidence of the verdict: its log and run.json stay in the lab output.
+  EVIDENCE="$LAB_OUT/ios-recorded/$CAP/$OS${SET:+/$SET}"
+  CLIP="$ROOT/evidence/recordings/wp-04/$CAP-ios-$OS.mp4"
+  mkdir -p "$ROOT/evidence/recordings/wp-04"
+  # A fixed status bar (time 9:41, full battery) on the lab device, so the clip shows no clock time.
+  xcrun simctl status_bar "$UDID" override --time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 \
+    --cellularMode notSupported --batteryState charged --batteryLevel 100
+fi
 SET_ARGS=""
 [ -z "$SET" ] || SET_ARGS="-rqSet $SET"
+# -rqRecord 1: a closed web view leaves a still frame on screen (screen only; README "Recordings").
+[ "$RECORD" = 0 ] || SET_ARGS="$SET_ARGS -rqRecord 1"
 
 now_ms() { perl -MTime::HiRes=time -e 'printf "%d", time * 1000'; }
 
@@ -137,6 +169,19 @@ while [ "$k" -le "$LAST" ]; do
   log "run $RUN"
   xcrun simctl terminate "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true # not running is fine
   rm -rf "$OUTDIR"
+  if [ "$RECORD" = 1 ]; then
+    REC_FILE="ios-rec-$RUN.mov"
+    REC_LOG="$LAB_HOME/logs/sim-record.log"
+    rm -f "$REC_LOG"
+    sh "$ROOT/tools/platform-spikes/lab/sim.sh" record start "$OS" "$REC_FILE" >&2
+    RECORDING=1
+    i=0
+    until grep -q 'Recording started' "$REC_LOG" 2>/dev/null; do
+      i=$((i + 1))
+      [ "$i" -le 15 ] || fail "simctl io recordVideo did not start in 15 s ($REC_LOG)"
+      sleep 1
+    done
+  fi
   START_BODY="{\"run\":\"$RUN\",\"capability\":\"$CAP\",\"platform\":\"ios\",\"os\":\"$OS\",\"k\":$k}"
   code="$(post /run/start "$WORK/start.out" "$START_BODY")"
   if [ "$code" = 409 ]; then
@@ -159,6 +204,12 @@ while [ "$k" -le "$LAST" ]; do
   T1="$(now_ms)"
   code="$(post /run/end "$WORK/host.jsonl" "{\"run\":\"$RUN\"}")"
   [ "$code" = 200 ] || fail "POST /run/end: $code"
+  if [ "$RECORDING" = 1 ]; then
+    # The last page stays on screen for 2 s more; the host log is already closed.
+    sleep 2
+    sh "$ROOT/tools/platform-spikes/lab/sim.sh" record stop "$OS" "$REC_FILE" >&2
+    RECORDING=0
+  fi
   xcrun simctl terminate "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
   if [ -f "$OUTDIR/DONE" ]; then OUTCOME="$(cat "$OUTDIR/DONE")"; else OUTCOME="error: no DONE after $WAIT s"; fi
   # An app that stops before it writes anything (for example at launch) leaves no folder; the run
@@ -183,6 +234,14 @@ while [ "$k" -le "$LAST" ]; do
     --meta "$WORK/meta.json" --out "$DEST"
   if [ "$OUTCOME" = ok ] && [ -f "$OUTDIR/app-run.json" ]; then
     cp "$OUTDIR/app-run.json" "$WORK/app-run.json"
+  fi
+  if [ "$RECORD" = 1 ] && [ "$OUTCOME" = ok ]; then
+    # The clip goes into evidence only from an ok run whose log equals the stored runs.
+    node "$HERE/record.mjs" stable --recorded "$DEST/run-$k.jsonl" --stored "$STORED" ||
+      fail "the recorded run differs from the stored runs; no clip (raw video: $LAB_OUT/$REC_FILE)"
+    node "$HERE/record.mjs" clip --in "$LAB_OUT/$REC_FILE" --out "$CLIP" --ffmpeg "$FFMPEG" --ffprobe "$FFPROBE" ||
+      fail "no clip (raw video: $LAB_OUT/$REC_FILE)"
+    rm -f "$LAB_OUT/$REC_FILE"
   fi
   k=$((k + 1))
 done

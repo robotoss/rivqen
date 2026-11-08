@@ -767,7 +767,8 @@ final class Runner {
       recorder: recorder, container: model.container,
       options: .init(
         schemeHandler: handler, bridge: bridge, ruleList: rules, frameEcho: frameEcho,
-        logPolicy: logPolicy, limitsToAppBound: config?.set == "app-bound"))
+        logPolicy: logPolicy, limitsToAppBound: config?.set == "app-bound",
+        keepsLastFrame: config?.record == true))
     recorder.native("webview", .string("created"))
     recorder.lastChunkProbe = nil
     return session

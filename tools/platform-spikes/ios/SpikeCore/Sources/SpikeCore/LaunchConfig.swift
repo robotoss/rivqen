@@ -86,8 +86,9 @@ public struct LabOrigin: Sendable, Equatable {
 }
 
 /// The launch arguments of one run: `-rqRun <id> -rqCap <capability> -rqOrigin <site A>`, and
-/// optional `-rqTimeout <seconds>` for one step and `-rqSet <name>` for a supporting set of the
-/// capability. The run script passes them with `simctl launch`.
+/// optional `-rqTimeout <seconds>` for one step, `-rqSet <name>` for a supporting set of the
+/// capability and `-rqRecord 1` for a screen-recorded run. The run script passes them with
+/// `simctl launch`.
 public struct LaunchConfig: Sendable, Equatable {
   public static let defaultTimeout = 20.0
 
@@ -97,6 +98,9 @@ public struct LaunchConfig: Sendable, Equatable {
   public let stepTimeout: Double
   /// The supporting set, or `nil` for the catalog runs.
   public var set: String? = nil
+  /// A screen-recorded run (`-rqRecord 1`, S3): a closed web view leaves a still frame on screen
+  /// until the next web view covers it. It changes only the screen, never WebKit or the log.
+  public var record = false
 
   /// Parses the process arguments. Returns `nil` when `-rqRun` is absent (the app stays idle).
   /// Arguments that do not start with `-rq` are ignored (Xcode and the system add their own).
@@ -109,7 +113,8 @@ public struct LaunchConfig: Sendable, Equatable {
         i += 1
         continue
       }
-      guard ["-rqRun", "-rqCap", "-rqOrigin", "-rqTimeout", "-rqSet"].contains(flag) else {
+      guard ["-rqRun", "-rqCap", "-rqOrigin", "-rqTimeout", "-rqSet", "-rqRecord"].contains(flag)
+      else {
         throw SpikeError(.argument, "unknown flag \(flag.prefix(32))")
       }
       guard i + 1 < arguments.count else { throw SpikeError(.argument, "\(flag) needs a value") }
@@ -142,6 +147,10 @@ public struct LaunchConfig: Sendable, Equatable {
         throw SpikeError(.argument, "-rqSet is not a supporting set of \(capability.rawValue)")
       }
       config.set = set
+    }
+    if let text = values["-rqRecord"] {
+      guard text == "1" else { throw SpikeError(.argument, "-rqRecord must be 1") }
+      config.record = true
     }
     return config
   }

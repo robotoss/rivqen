@@ -165,12 +165,6 @@ test("an unknown route is 404, a method other than GET is 405, an unknown Host i
   assert.match(bad.body.toString(), /^BAD_HOST: /);
 });
 
-test("the Service Worker routes answer 501 with their own code", async () => {
-  const r = await g("/s/sw.js");
-  assert.equal(r.status, 501);
-  assert.match(r.body.toString(), /^NOT_IMPLEMENTED: /);
-});
-
 test("percent-encoded non-ASCII in the path is a missing route, not a bad query", async () => {
   assert.equal((await g("/s/%C3%A9")).status, 404);
 });

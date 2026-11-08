@@ -83,11 +83,20 @@ final class Fetcher {
     self.timeout = timeout
   }
 
-  func start(_ url: URL) -> (task: URLSessionDataTask, events: AsyncStream<FetchEvent>) {
+  /// The cookie store of the run session (in memory, ephemeral configuration). CAP-I-11 reads and
+  /// writes it; `nil` when the configuration has none.
+  var cookieStorage: HTTPCookieStorage? { session.configuration.httpCookieStorage }
+
+  /// Starts a `GET`. `mainDocument` sets `URLRequest.mainDocumentURL` (CAP-I-11: a request in the
+  /// context of another site); `nil` leaves it unset.
+  func start(_ url: URL, mainDocument: URL? = nil) -> (
+    task: URLSessionDataTask, events: AsyncStream<FetchEvent>
+  ) {
     let (stream, continuation) = AsyncStream<FetchEvent>.makeStream()
     var request = URLRequest(
       url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: timeout)
     request.httpMethod = "GET"
+    if let mainDocument { request.mainDocumentURL = mainDocument }
     let task = session.dataTask(with: request)
     task.delegate = FetchDelegate(continuation: continuation)
     task.resume()
@@ -108,10 +117,10 @@ struct FetchResult: Sendable {
 }
 
 extension Fetcher {
-  func fetchAll(_ url: URL, recorder: Recorder) async -> FetchResult {
+  func fetchAll(_ url: URL, recorder: Recorder, mainDocument: URL? = nil) async -> FetchResult {
     let started = ContinuousClock.now
     recorder.event("app.fetch.start", ["url": .string(url.absoluteString)])
-    let (task, events) = start(url)
+    let (task, events) = start(url, mainDocument: mainDocument)
     var head: FetchHead?
     var body = Data()
     var complete = false

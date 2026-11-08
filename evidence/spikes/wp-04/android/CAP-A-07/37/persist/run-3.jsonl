@@ -1,0 +1,4 @@
+{"capability":"CAP-A-07","device":"sdk_gphone64_arm64","ev":"run.start","k":3,"os":"37","platform":"android","prototype":"A-STREAM","run":"CAP-A-07-android-37-3","seq":0,"src":"script","t":0,"webview":"com.google.android.webview 145.0.7632.218"}
+{"ev":"app.probe","name":"native.cm_start","seq":0,"src":"app","t":197,"value":"p-session=v1; p-max=v1"}
+{"ev":"app.probe","name":"native.step","seq":1,"src":"app","t":197,"value":"done"}
+{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":1185}

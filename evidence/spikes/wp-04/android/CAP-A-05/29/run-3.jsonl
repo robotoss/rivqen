@@ -1,0 +1,14 @@
+{"capability":"CAP-A-05","device":"Android SDK built for arm64","ev":"run.start","k":3,"os":"29","platform":"android","prototype":"A-STREAM","run":"CAP-A-05-android-29-3","seq":0,"src":"script","t":0,"webview":"com.google.android.webview 91.0.4472.114"}
+{"ev":"app.fetch.start","seq":0,"src":"app","t":33,"url":"https://10.0.2.2:18444/s/echo?run=CAP-A-05-android-29-3&html=1"}
+{"error":"javax.net.ssl.SSLHandshakeException: java.security.cert.CertPathValidatorException: Trust anchor for certification path not found.","ev":"app.error","seq":1,"src":"app","t":98}
+{"ev":"app.probe","name":"metric.webview_create","seq":2,"src":"app","t":141,"value":108}
+{"ev":"app.probe","name":"metric.load_call","seq":3,"src":"app","t":148,"value":114}
+{"ev":"app.probe","name":"metric.intercept","seq":4,"src":"app","t":168,"value":21}
+{"ev":"app.probe","name":"metric.fetch_end","seq":5,"src":"app","t":169,"value":-49}
+{"ev":"app.probe","name":"metric.head_wait","seq":6,"src":"app","t":169,"value":0}
+{"decision":"pass","ev":"app.intercept","fields":[],"main_frame":true,"method":"GET","reason":"no-head","redirect":false,"seq":7,"src":"app","status":null,"t":169,"url":"https://10.0.2.2:18444/s/echo?run=CAP-A-05-android-29-3&html=1"}
+{"decision":"cancel","ev":"app.ssl_error","primary_error":3,"seq":8,"src":"app","t":345,"url":"https://10.0.2.2:18444/s/echo?run=CAP-A-05-android-29-3&html=1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":9,"src":"app","t":347,"url":"https://10.0.2.2:18444/s/echo?run=CAP-A-05-android-29-3&html=1"}
+{"ev":"app.probe","name":"metric.finish","seq":10,"src":"app","t":347,"value":200}
+{"bytes":0,"complete":false,"ev":"app.fetch.end","seq":11,"src":"app","t":98,"url":"https://10.0.2.2:18444/s/echo?run=CAP-A-05-android-29-3&html=1"}
+{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":3188}

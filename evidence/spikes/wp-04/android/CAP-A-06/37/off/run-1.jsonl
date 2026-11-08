@@ -1,0 +1,30 @@
+{"capability":"CAP-A-06","device":"sdk_gphone64_arm64","ev":"run.start","k":1,"os":"37","platform":"android","prototype":"A-STREAM","run":"CAP-A-06-android-37-1","seq":0,"src":"script","t":0,"webview":"com.google.android.webview 145.0.7632.218"}
+{"ev":"app.fetch.start","seq":0,"src":"app","t":69,"url":"https://localhost:18443/s/cookie/set?run=CAP-A-06-android-37-1&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"ev":"app.fetch.head","fields":[["Content-Type","text/html; charset=utf-8"],["Set-Cookie","a06-set=v1; Path=/; Secure; SameSite=Lax"],["Content-Length","230"],["Cache-Control","no-store"],["Date","Sun, 08 Nov 2026 14:59:50 GMT"],["Connection","keep-alive"],["Keep-Alive","timeout=5"]],"seq":1,"src":"app","status":200,"t":271,"url":"https://localhost:18443/s/cookie/set?run=CAP-A-06-android-37-1&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"ev":"app.probe","name":"metric.webview_create","seq":2,"src":"app","t":392,"value":323}
+{"ev":"app.probe","name":"metric.fetch_end","seq":3,"src":"app","t":488,"value":271}
+{"ev":"app.probe","name":"metric.load_call","seq":4,"src":"app","t":768,"value":699}
+{"ev":"app.probe","name":"metric.intercept","seq":5,"src":"app","t":803,"value":35}
+{"ev":"app.probe","name":"metric.head_wait","seq":6,"src":"app","t":804,"value":0}
+{"ev":"app.probe","name":"native.request_cookie","seq":7,"src":"app","t":804,"value":null}
+{"decision":"stream","ev":"app.intercept","fields":[["Content-Type","text/html; charset=utf-8"],["Set-Cookie","a06-set=v1; Path=/; Secure; SameSite=Lax"],["Cache-Control","no-store"],["Date","Sun, 08 Nov 2026 14:59:50 GMT"]],"main_frame":true,"method":"GET","reason":null,"redirect":false,"seq":8,"src":"app","status":200,"t":804,"url":"https://localhost:18443/s/cookie/set?run=CAP-A-06-android-37-1&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"bytes":230,"ev":"app.stream.read","seq":9,"src":"app","t":804,"want":230}
+{"error":null,"ev":"app.nav","kind":"start","seq":10,"src":"app","t":1238,"url":"https://localhost:18443/s/cookie/set?run=CAP-A-06-android-37-1&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"ev":"app.probe","name":"location","seq":11,"src":"app","t":1239,"value":"https://localhost:18443/s/cookie/set?run=CAP-A-06-android-37-1&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"ev":"app.probe","name":"origin","seq":12,"src":"app","t":1240,"value":"https://localhost:18443"}
+{"ev":"app.probe","name":"cookie","seq":13,"src":"app","t":1240,"value":"a06-pre=v1"}
+{"ev":"app.probe","name":"location","seq":14,"src":"app","t":1240,"value":"https://localhost:18443/s/cookie/set?run=CAP-A-06-android-37-1&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"ev":"app.probe","name":"origin","seq":15,"src":"app","t":1241,"value":"https://localhost:18443"}
+{"ev":"app.probe","name":"status","seq":16,"src":"app","t":1241,"value":200}
+{"ev":"app.probe","name":"csp.inline","seq":17,"src":"app","t":1242,"value":true}
+{"error":null,"ev":"app.nav","kind":"finish","seq":18,"src":"app","t":1248,"url":"https://localhost:18443/s/cookie/set?run=CAP-A-06-android-37-1&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"ev":"app.probe","name":"metric.finish","seq":19,"src":"app","t":1248,"value":480}
+{"ev":"app.probe","name":"native.cookie_intercept","seq":20,"src":"app","t":1248,"value":"off"}
+{"ev":"app.probe","name":"native.doc_cookie","seq":21,"src":"app","t":1254,"value":"a06-pre=v1"}
+{"ev":"app.probe","name":"native.cm_cookie","seq":22,"src":"app","t":1261,"value":"a06-pre=v1"}
+{"ev":"app.probe","name":"metric.commit","seq":23,"src":"app","t":1343,"value":575}
+{"ev":"app.probe","name":"metric.first_paint","seq":24,"src":"app","t":1394,"value":600}
+{"bytes":230,"complete":true,"ev":"app.fetch.end","seq":25,"src":"app","t":271,"url":"https://localhost:18443/s/cookie/set?run=CAP-A-06-android-37-1&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"ev":"host.request","fields":["accept-encoding","connection","host","user-agent"],"method":"GET","seq":0,"site":"A","src":"host","t":498,"target":"/s/cookie/set?run=CAP-A-06-android-37-1&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"230","content-type":"text/html; charset=utf-8","set-cookie":"a06-set=v1; Path=/; Secure; SameSite=Lax"},"seq":1,"src":"host","status":200,"t":498}
+{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":2474}

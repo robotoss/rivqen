@@ -1,0 +1,38 @@
+{"capability":"CAP-I-04","device":"iPhone 16 Pro","ev":"run.start","k":1,"os":"26.5","platform":"ios","prototype":"IOS-P2","run":"CAP-I-04-ios-26.5-1","seq":0,"src":"script","t":0,"webview":null}
+{"ev":"app.fetch.start","seq":0,"src":"app","t":6,"url":"https://localhost:18443/s/echo?run=CAP-I-04-ios-26.5-1&tag=page&html=1"}
+{"ev":"app.fetch.head","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"271","content-type":"text/html; charset=utf-8","keep-alive":"timeout=5"},"seq":1,"src":"app","status":200,"t":23,"url":"https://localhost:18443/s/echo?run=CAP-I-04-ios-26.5-1&tag=page&html=1"}
+{"bytes":271,"complete":true,"ev":"app.fetch.end","seq":2,"src":"app","t":23,"url":"https://localhost:18443/s/echo?run=CAP-I-04-ios-26.5-1&tag=page&html=1"}
+{"ev":"app.probe","name":"native.webview","seq":3,"src":"app","t":71,"value":"created"}
+{"ev":"app.probe","name":"native.step","seq":4,"src":"app","t":72,"value":"snapshot"}
+{"ev":"app.probe","name":"native.simulated_response","seq":5,"src":"app","t":72,"value":{"encoding":"utf-8","mime":"text/html"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":6,"src":"app","t":577,"url":"https://localhost:18443/s/echo?run=CAP-I-04-ios-26.5-1&tag=page&html=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":7,"src":"app","t":577,"url":"https://localhost:18443/s/echo?run=CAP-I-04-ios-26.5-1&tag=page&html=1"}
+{"ev":"app.probe","name":"metric.commit","seq":8,"src":"app","t":577,"value":505.848208}
+{"ev":"app.probe","name":"bridge.ready","seq":9,"src":"app","t":579,"value":"snapshot"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":10,"src":"app","t":579,"url":"https://localhost:18443/s/echo?run=CAP-I-04-ios-26.5-1&tag=page&html=1"}
+{"ev":"app.probe","name":"location","seq":11,"src":"app","t":596,"value":"https://localhost:18443/s/echo?run=CAP-I-04-ios-26.5-1&tag=page&html=1"}
+{"ev":"app.probe","name":"echo","seq":12,"src":"app","t":596,"value":"{\"cookie\":null,\"fields\":[\"accept\",\"accept-encoding\",\"accept-language\",\"cache-control\",\"connection\",\"host\",\"user-agent\"],\"method\":\"GET\",\"site\":\"A\",\"target\":\"/s/echo?run=CAP-I-04-ios-26.5-1&tag=page&html=1\"}"}
+{"ev":"app.probe","name":"native.step","seq":13,"src":"app","t":596,"value":"live"}
+{"error":null,"ev":"app.nav","kind":"start","seq":14,"src":"app","t":598,"url":"https://localhost:18443/s/echo?run=CAP-I-04-ios-26.5-1&tag=page&html=1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":15,"src":"app","t":630,"url":"https://localhost:18443/s/echo?run=CAP-I-04-ios-26.5-1&tag=page&html=1"}
+{"ev":"app.probe","name":"metric.commit","seq":16,"src":"app","t":630,"value":33.948459}
+{"ev":"app.probe","name":"bridge.ready","seq":17,"src":"app","t":630,"value":"live"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":18,"src":"app","t":630,"url":"https://localhost:18443/s/echo?run=CAP-I-04-ios-26.5-1&tag=page&html=1"}
+{"ev":"app.fetch.start","seq":19,"src":"app","t":630,"url":"https://localhost:18443/s/echo?run=CAP-I-04-ios-26.5-1&tag=data"}
+{"ev":"app.fetch.head","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"198","content-type":"application/json","keep-alive":"timeout=5"},"seq":20,"src":"app","status":200,"t":632,"url":"https://localhost:18443/s/echo?run=CAP-I-04-ios-26.5-1&tag=data"}
+{"bytes":198,"complete":true,"ev":"app.fetch.end","seq":21,"src":"app","t":632,"url":"https://localhost:18443/s/echo?run=CAP-I-04-ios-26.5-1&tag=data"}
+{"ev":"app.probe","name":"bridge.applied","seq":22,"src":"app","t":632,"value":"{\"cookie\":null,\"fields\":[\"accept\",\"accept-encoding\",\"accept-language\",\"cache-control\",\"connection\",\"host\",\"user-agent\"],\"method\":\"GET\",\"site\":\"A\",\"target\":\"/s/echo?run=CAP-I-04-ios-26.5-1&tag=data\"}"}
+{"ev":"app.probe","name":"metric.live_finish","seq":23,"src":"app","t":638,"value":42.069958}
+{"ev":"app.probe","name":"location","seq":24,"src":"app","t":639,"value":"https://localhost:18443/s/echo?run=CAP-I-04-ios-26.5-1&tag=page&html=1"}
+{"ev":"app.probe","name":"origin","seq":25,"src":"app","t":639,"value":"https://localhost:18443"}
+{"ev":"app.probe","name":"echo","seq":26,"src":"app","t":639,"value":"{\"cookie\":null,\"fields\":[\"accept\",\"accept-encoding\",\"accept-language\",\"connection\",\"host\",\"priority\",\"sec-fetch-dest\",\"sec-fetch-mode\",\"sec-fetch-site\",\"user-agent\"],\"method\":\"GET\",\"site\":\"A\",\"target\":\"/s/echo?run=CAP-I-04-ios-26.5-1&tag=page&html=1\"}"}
+{"ev":"app.probe","name":"data","seq":27,"src":"app","t":639,"value":"{\"cookie\":null,\"fields\":[\"accept\",\"accept-encoding\",\"accept-language\",\"cache-control\",\"connection\",\"host\",\"user-agent\"],\"method\":\"GET\",\"site\":\"A\",\"target\":\"/s/echo?run=CAP-I-04-ios-26.5-1&tag=data\"}"}
+{"ev":"app.probe","name":"bridge.page_world","seq":28,"src":"app","t":639,"value":"undefined"}
+{"ev":"app.probe","name":"rqlab.page_world","seq":29,"src":"app","t":639,"value":"function"}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":0,"site":"A","src":"host","t":574,"target":"/s/echo?run=CAP-I-04-ios-26.5-1&tag=page&html=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"271","content-type":"text/html; charset=utf-8"},"seq":1,"src":"host","status":200,"t":574}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":2,"site":"A","src":"host","t":1173,"target":"/s/echo?run=CAP-I-04-ios-26.5-1&tag=page&html=1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"317","content-type":"text/html; charset=utf-8"},"seq":3,"src":"host","status":200,"t":1173}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":4,"site":"A","src":"host","t":1183,"target":"/s/echo?run=CAP-I-04-ios-26.5-1&tag=data"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"198","content-type":"application/json"},"seq":5,"src":"host","status":200,"t":1184}
+{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":3415}

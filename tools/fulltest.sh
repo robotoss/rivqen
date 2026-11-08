@@ -74,6 +74,8 @@ group_node() {
   step spike-host 'cd tools/platform-spikes/host && npm test'
   step spike-check-tests 'node --test tools/platform-spikes/check/test'
   step ios-spike-join 'node --test tools/platform-spikes/ios/test'
+  step android-spike-runlog 'node --test tools/platform-spikes/android/test'
+  step url-interop 'cd tools/platform-spikes/url-interop && node --test'
   step spike-evidence 'node tools/platform-spikes/check/check.mjs'
 }
 

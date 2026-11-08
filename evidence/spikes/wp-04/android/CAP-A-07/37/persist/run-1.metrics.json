@@ -1,0 +1,22 @@
+{
+  "run": "CAP-A-07-android-37-1",
+  "url": "https://localhost:18443/s/echo?run=CAP-A-07-android-37-1&html=1",
+  "metrics": {},
+  "fetch": null,
+  "stream": null,
+  "intercept": {
+    "main_frame_calls": 0,
+    "reason": null,
+    "subresource_passes": 0
+  },
+  "expected": {
+    "bytes": null,
+    "sha256": null
+  },
+  "checks": {
+    "steps": [
+      "done"
+    ],
+    "errors": []
+  }
+}

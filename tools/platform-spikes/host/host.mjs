@@ -13,6 +13,7 @@ import { control } from "./control.mjs";
 import { page } from "./page.mjs";
 import { BeaconGate, RunLogs } from "./runlog.mjs";
 import { cookieSet, cut, echo, range, redirect } from "./scenarios.mjs";
+import { cookieJs, csp, hist, swPage, swProbe, swScript } from "./s2.mjs";
 import { beacon, stream } from "./stream.mjs";
 import { ensureTls } from "./tls.mjs";
 import { HostError, parseQuery, runOf, siteOf } from "./util.mjs";
@@ -29,13 +30,13 @@ const ROUTES = {
   "/s/echo": echo,
   "/s/range": range,
   "/s/cut": cut,
-  "/s/sw.js": notInS1,
-  "/s/sw-page": notInS1,
+  "/s/sw.js": swScript,
+  "/s/sw-page": swPage,
+  "/s/sw-probe": swProbe,
+  "/s/csp": csp,
+  "/s/hist": hist,
+  "/s/cookie/js": cookieJs,
 };
-
-function notInS1() {
-  throw new HostError(501, "NOT_IMPLEMENTED", "Service Worker routes come in sprint S2");
-}
 
 /** @param {import("node:http").ServerResponse} res @param {HostError} err */
 function plainError(res, err) {

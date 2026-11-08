@@ -51,7 +51,15 @@ export function redirect(rc) {
 
 /** @param {import("./context.mjs").RequestContext} rc */
 export function cookieSet(rc) {
-  const { q } = rc;
+  const cookie = cookieFromQuery(rc.q, { httpOnly: true });
+  return cookieSetAnswer(rc, cookie);
+}
+
+/**
+ * The cookie string of the name, value and attrs parameters (shared by cookie/set and cookie/js).
+ * @param {URLSearchParams} q @param {{ httpOnly: boolean }} rules whether HttpOnly is allowed
+ */
+export function cookieFromQuery(q, { httpOnly }) {
   const name = q.get("name") ?? "";
   const value = q.get("value") ?? "";
   if (!SYNTHETIC.test(name) || !SYNTHETIC.test(value)) {
@@ -63,12 +71,17 @@ export function cookieSet(rc) {
   for (const raw of list === "" ? [] : list.split(",")) {
     const m = /^(HttpOnly|Secure|SameSite=(?:Strict|Lax|None)|Max-Age=\d{1,10})$/.exec(raw);
     if (m === null) throw new HostError(400, "BAD_PARAM", "attrs has an unknown attribute");
+    if (raw === "HttpOnly" && !httpOnly) throw new HostError(400, "BAD_PARAM", "attrs must not contain HttpOnly here");
     const key = raw.split("=")[0];
     if (seen.has(key)) throw new HostError(400, "BAD_PARAM", "attrs repeats an attribute");
     seen.add(key);
     attrs.push(raw);
   }
-  const cookie = [`${name}=${value}`, "Path=/", ...attrs].join("; ");
+  return [`${name}=${value}`, "Path=/", ...attrs].join("; ");
+}
+
+/** @param {import("./context.mjs").RequestContext} rc @param {string} cookie */
+function cookieSetAnswer(rc, cookie) {
   const body = '<!doctype html><meta charset="utf-8"><title>cookie</title><p>cookie set</p>' +
     "<script>if(window.rqLab){rqLab.probe(\"location\",document.location.href);" +
     'rqLab.probe("origin",window.origin);rqLab.probe("cookie",document.cookie)}</script>';

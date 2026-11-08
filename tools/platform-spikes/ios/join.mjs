@@ -54,6 +54,29 @@ export function joinRun(meta, appText, hostText) {
   return events.map((e) => `${stableStringify(e)}\n`).join("");
 }
 
+/**
+ * The text of run.json (CONTRACT.md section 9) from the app facts and the script facts. `launch_env` is
+ * there only when the run script changed the launch environment of the app (a lab workaround).
+ * @param {Record<string, unknown>} app @param {Record<string, unknown>} facts
+ */
+export function runJsonText(app, facts) {
+  const run = {
+    date: facts.date,
+    tools: facts.tools,
+    device_model: facts.device_model,
+    os: app.os_version,
+    os_build: app.simulator_runtime_build,
+    simulator_model: app.simulator_model,
+    webview: null,
+    webkit_version: app.webkit_version,
+    webkit_build: app.webkit_build,
+    user_agent: app.user_agent,
+    app_commit: facts.app_commit,
+  };
+  if (typeof facts.launch_env === "string" && facts.launch_env !== "") run.launch_env = facts.launch_env;
+  return `${JSON.stringify(JSON.parse(stableStringify(run)), null, 2)}\n`;
+}
+
 function args(argv) {
   const out = {};
   for (let i = 0; i < argv.length; i += 2) {
@@ -69,20 +92,7 @@ function main() {
   if (a["run-json"] !== undefined) {
     const app = JSON.parse(readFileSync(a["run-json"], "utf8"));
     const facts = JSON.parse(readFileSync(a.facts, "utf8"));
-    const run = {
-      date: facts.date,
-      tools: facts.tools,
-      device_model: facts.device_model,
-      os: app.os_version,
-      os_build: app.simulator_runtime_build,
-      simulator_model: app.simulator_model,
-      webview: null,
-      webkit_version: app.webkit_version,
-      webkit_build: app.webkit_build,
-      user_agent: app.user_agent,
-      app_commit: facts.app_commit,
-    };
-    writeFileSync(path.join(a.out, "run.json"), `${JSON.stringify(JSON.parse(stableStringify(run)), null, 2)}\n`);
+    writeFileSync(path.join(a.out, "run.json"), runJsonText(app, facts));
     return;
   }
   const meta = JSON.parse(readFileSync(a.meta, "utf8"));

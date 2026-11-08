@@ -1,0 +1,28 @@
+{"capability":"CAP-A-06","device":"Android SDK built for arm64","ev":"run.start","k":2,"os":"29","platform":"android","prototype":"A-STREAM","run":"CAP-A-06-android-29-2","seq":0,"src":"script","t":0,"webview":"com.google.android.webview 91.0.4472.114"}
+{"ev":"app.fetch.start","seq":0,"src":"app","t":24,"url":"https://localhost:18443/s/cookie/set?run=CAP-A-06-android-29-2&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"ev":"app.fetch.head","fields":[["Content-Type","text/html; charset=utf-8"],["Set-Cookie","a06-set=v1; Path=/; Secure; SameSite=Lax"],["Content-Length","230"],["Cache-Control","no-store"],["Date","Sun, 08 Nov 2026 15:01:15 GMT"],["Connection","keep-alive"],["Keep-Alive","timeout=5"]],"seq":1,"src":"app","status":200,"t":77,"url":"https://localhost:18443/s/cookie/set?run=CAP-A-06-android-29-2&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"ev":"app.probe","name":"metric.webview_create","seq":2,"src":"app","t":95,"value":71}
+{"ev":"app.probe","name":"metric.fetch_end","seq":3,"src":"app","t":106,"value":79}
+{"ev":"app.probe","name":"metric.load_call","seq":4,"src":"app","t":196,"value":172}
+{"ev":"app.probe","name":"metric.intercept","seq":5,"src":"app","t":217,"value":21}
+{"ev":"app.probe","name":"metric.head_wait","seq":6,"src":"app","t":217,"value":0}
+{"ev":"app.probe","name":"native.request_cookie","seq":7,"src":"app","t":218,"value":null}
+{"decision":"stream","ev":"app.intercept","fields":[["Content-Type","text/html; charset=utf-8"],["Set-Cookie","a06-set=v1; Path=/; Secure; SameSite=Lax"],["Cache-Control","no-store"],["Date","Sun, 08 Nov 2026 15:01:15 GMT"]],"main_frame":true,"method":"GET","reason":null,"redirect":false,"seq":8,"src":"app","status":200,"t":218,"url":"https://localhost:18443/s/cookie/set?run=CAP-A-06-android-29-2&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"ev":"app.probe","name":"native.manual_set","seq":9,"src":"app","t":289,"value":"true"}
+{"bytes":230,"ev":"app.stream.read","seq":10,"src":"app","t":293,"want":4096}
+{"error":null,"ev":"app.nav","kind":"start","seq":11,"src":"app","t":329,"url":"https://localhost:18443/s/cookie/set?run=CAP-A-06-android-29-2&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":12,"src":"app","t":350,"url":"https://localhost:18443/s/cookie/set?run=CAP-A-06-android-29-2&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"ev":"app.probe","name":"metric.finish","seq":13,"src":"app","t":351,"value":154}
+{"ev":"app.probe","name":"location","seq":14,"src":"app","t":353,"value":"https://localhost:18443/s/cookie/set?run=CAP-A-06-android-29-2&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"ev":"app.probe","name":"origin","seq":15,"src":"app","t":353,"value":"https://localhost:18443"}
+{"ev":"app.probe","name":"status","seq":16,"src":"app","t":354,"value":null}
+{"ev":"app.probe","name":"csp.inline","seq":17,"src":"app","t":354,"value":true}
+{"ev":"app.probe","name":"native.cookie_intercept","seq":18,"src":"app","t":354,"value":"off"}
+{"ev":"app.probe","name":"metric.commit","seq":19,"src":"app","t":354,"value":158}
+{"ev":"app.probe","name":"native.doc_cookie","seq":20,"src":"app","t":356,"value":"a06-pre=v1; a06-set=v1"}
+{"ev":"app.probe","name":"native.cm_cookie","seq":21,"src":"app","t":358,"value":"a06-pre=v1; a06-set=v1"}
+{"ev":"app.probe","name":"metric.first_paint","seq":22,"src":"app","t":388,"value":177}
+{"bytes":230,"complete":true,"ev":"app.fetch.end","seq":23,"src":"app","t":79,"url":"https://localhost:18443/s/cookie/set?run=CAP-A-06-android-29-2&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"ev":"host.request","fields":["accept-encoding","connection","host","user-agent"],"method":"GET","seq":0,"site":"A","src":"host","t":280,"target":"/s/cookie/set?run=CAP-A-06-android-29-2&name=a06-set&value=v1&attrs=Secure%2CSameSite%3DLax"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"230","content-type":"text/html; charset=utf-8","set-cookie":"a06-set=v1; Path=/; Secure; SameSite=Lax"},"seq":1,"src":"host","status":200,"t":280}
+{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":1143}

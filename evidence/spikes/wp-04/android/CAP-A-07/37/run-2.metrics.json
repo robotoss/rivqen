@@ -1,0 +1,37 @@
+{
+  "run": "CAP-A-07-android-37-2",
+  "url": "https://localhost:18443/s/echo?run=CAP-A-07-android-37-2&html=1",
+  "metrics": {
+    "metric.commit": 2204,
+    "metric.first_paint": 632
+  },
+  "fetch": null,
+  "stream": null,
+  "intercept": {
+    "main_frame_calls": 0,
+    "reason": null,
+    "subresource_passes": 0
+  },
+  "expected": {
+    "bytes": null,
+    "sha256": null
+  },
+  "checks": {
+    "steps": [
+      "clear",
+      "set-a",
+      "set-b",
+      "native-fetch-a",
+      "native-fetch-b",
+      "app-load-a",
+      "same-site-nav-a",
+      "app-load-b",
+      "cross-site-nav-a",
+      "webview-set-http",
+      "webview-set-js",
+      "native-fetch-a-after",
+      "done"
+    ],
+    "errors": []
+  }
+}

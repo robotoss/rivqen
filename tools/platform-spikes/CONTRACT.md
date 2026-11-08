@@ -58,11 +58,11 @@ Every route is on both sites. Query values are ASCII. Every response has `Cache-
 | `GET /s/echo?run=` | `200 application/json`: `{"cookie": <Cookie field or null>, "site": "A"\|"B", "method", "target", "fields": [names only]}`. Also as `text/html` with the JSON in a `<pre id="echo">` when `html=1` |
 | `GET /s/range?run=&size=B` | Body of `B` bytes. Honors one `Range: bytes=a-b` (or `a-`, or the suffix form `-n`) with `206`, `Content-Range`; a bad range gives `416` |
 | `GET /s/cut?run=&after=BYTES&size=B` | `200 text/html` with `Content-Length` of the full body (`size`, default 4096; `after` < `size`); closes the connection after `BYTES` body bytes |
-| `GET /s/sw.js` | (S2) `200 text/javascript; charset=utf-8`, `Service-Worker-Allowed: /s/`. On `fetch` of `/s/sw-probe` the worker answers `200 application/json` `{"sw":"worker"}`; every other request goes to the network |
+| `GET /s/sw.js` | (S2) `200 text/javascript; charset=utf-8`, `Service-Worker-Allowed: /s/`. On `fetch` of `/s/sw-probe` the worker answers `200 application/json` `{"sw":"worker"}`; every other request goes to the network. The worker calls `skipWaiting()` on install and `clients.claim()` on activate, so the page is often controlled without the reload |
 | `GET /s/sw-page?run=` | (S2) Page that registers `/s/sw.js` with scope `/s/`, waits for `navigator.serviceWorker.ready` (at most 10 s), reloads itself once when it is not controlled yet (`?run=…&again=1`), then fetches `/s/sw-probe` and probes `sw` with `worker` (the worker answered), `network` (registration worked, no control), `unsupported` (`navigator.serviceWorker` is missing) or the error name |
 | `GET /s/sw-probe?run=` | (S2) `200 application/json` `{"sw":"network"}` (the network answer, when no worker controls the page) |
-| `GET /s/csp?run=&mode=header\|meta\|both` | (S2) Page with `script-src 'nonce-<n>'` (nonce rule of `/s/stream`) in the field, in a `<meta http-equiv="Content-Security-Policy">` as the first element of `head`, or both. A nonce script probes `csp.nonce` `true`; an inline script without the nonce would probe `csp.inline` `true`; the nonce script also tries `eval("1")` and probes `csp.eval` `blocked` or `allowed` |
-| `GET /s/hist?run=&step=N` | (S2) Page `N` (0…9) with a link `#next` to step `N+1`. Its script probes `history` (`history.length`) and `location`. The app follows the link with a script click, then goes back and forward |
+| `GET /s/csp?run=&mode=header\|meta\|both` | (S2) Page with `script-src 'nonce-<n>'` (nonce rule of `/s/stream`) in the field, in a `<meta http-equiv="Content-Security-Policy">` as the first element of `head`, or both (default `header`). A nonce script probes `csp.nonce` `true`; an inline script without the nonce would probe `csp.inline` `true`; the nonce script also tries `eval("1")` and probes `csp.eval` `blocked` or `allowed` |
+| `GET /s/hist?run=&step=N` | (S2) Page `N` (0…9, default 0) with a link (element id `next`) to step `N+1`; the link of step 9 leads to a `400` page, so a run uses steps below 9. Its script probes `history` (`history.length`) and `location`. The app follows the link with a script click, then goes back and forward |
 | `GET /s/cookie/js?run=&name=&value=&attrs=` | (S2) Page whose script sets `document.cookie = "<name>=<value>; Path=/; <attrs>"` (attrs: `Secure`, `SameSite=…`, `Max-Age=…`; no `HttpOnly`), then probes `cookie` (`document.cookie`). Same value rules as `/s/cookie/set` |
 
 A request whose `Host` is not `localhost`, `127.0.0.1` or `10.0.2.2` (with or without the port) gets `400`.
@@ -104,6 +104,8 @@ Common members: `ev`, `src` (`app`, `host`, `script`), `seq` (order inside its s
 | `host.cut` | host | `after` |
 | `run.end` | script | `ok`, `error` |
 
+Lane members (S2): `app.intercept` may have `redirect` and `reason`; `app.stream.read` may have `want` (the requested read length).
+
 App order notes (for section 8): `app.intercept` is written for main-frame requests (and for subresources that a scheme handler forwards); `app.fetch.end` may be written at the end of the run with `t` set to the time the fetch ended, because the end of the network body races the probes of the last chunks; Android `onPageCommitVisible` is the metric `metric.commit`, not an `app.nav` `commit` event, because it races the chunk probes.
 
 Never log: real hosts, real accounts, real cookies, tokens, device identifiers. Debug log tag: `RivqenSpike`.
@@ -131,7 +133,7 @@ A page reports a probe by `window.rqLab.probe(name, value)`. The app installs `r
 | `status` | `PerformanceNavigationTiming.responseStatus` of the document |
 
 - The prefix `native.` is reserved for probes that the app writes itself (for example `native.step`, `native.webview`, `native.wk_cookies`); the app refuses a page probe with this prefix.
-- A lane may add probe names for its own cases; it lists them in its README (iOS S1: `base`, `relative`, `content_type`, `charset`, `title`, `data`, `bridge.*`, `rqlab.page_world`, `webview.cookie_set`, `https.*`, `metric.fetch`, `metric.live_finish`).
+- A lane may add probe names for its own cases (Android S2: `native.range_request`, `native.step`, `native.doc`, `native.after_load`, `range.*`, and the cookie steps `native.request_cookie`, `native.manual_set`, `native.cookie_intercept`, `native.doc_cookie`, `native.cm_*`, `native.fetch_cookie`, `native.wv_cookie`, `native.request`, `native.override`); it lists them in its README (iOS S1: `base`, `relative`, `content_type`, `charset`, `title`, `data`, `bridge.*`, `rqlab.page_world`, `webview.cookie_set`, `https.*`, `metric.fetch`, `metric.live_finish`).
 - An app probe script may also return name and value pairs through a script call of the platform (iOS `callAsyncJavaScript` in the page world).
 - <Badge type="tip" text="FACT" /> On iOS a page script cannot see a message handler of another `WKContentWorld`, so `rqLab` is in the page world; the bridge of IOS-P2 is in its own content world (iOS S1, CAP-I-04).
 - On Android `rqLab` is in the page world too (the host page scripts call it); the boundary is the origin rule of `addWebMessageListener` and the checks of each message.

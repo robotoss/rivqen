@@ -35,6 +35,59 @@ enum Scripts {
     })();
     """
 
+  /// Page world, document end, every frame (CAP-I-11 sessions only). In a subframe it posts the
+  /// text of `#echo` (the host echo page) as `frame.echo` through the `rqLab` handler, which is in
+  /// all frames of the page world. The main frame does nothing.
+  static let frameEcho = """
+    (function () {
+      if (window === window.top) return;
+      var h = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.rqLab;
+      var el = document.getElementById("echo");
+      try { if (h) h.postMessage({ name: "frame.echo", value: el ? el.textContent : null }); } catch (e) {}
+    })();
+    """
+
+  /// Page world, `callAsyncJavaScript` with the argument `url`: adds an iframe of `url` and
+  /// returns `[["frame.load", "load" | "error" | "timeout"]]` (at most 10 s).
+  static let frameLoad = """
+    return await new Promise((resolve) => {
+      const f = document.createElement("iframe");
+      const timer = setTimeout(() => resolve([["frame.load", "timeout"]]), 10000);
+      f.onload = () => { clearTimeout(timer); resolve([["frame.load", "load"]]); };
+      f.onerror = () => { clearTimeout(timer); resolve([["frame.load", "error"]]); };
+      f.src = url;
+      document.body.appendChild(f);
+    });
+    """
+
+  /// Page world, `callAsyncJavaScript` with the argument `url`: a navigation that the page starts
+  /// (`location.assign`), after the script returns, so the call itself ends normally.
+  static let navigate = """
+    setTimeout(() => location.assign(url), 0);
+    return [];
+    """
+
+  /// Page world, `callAsyncJavaScript` (S2, CAP-I-10): the page state after a navigation step.
+  static let state = """
+    return [["state.history", history.length], ["state.location", document.location.href],
+      ["state.title", document.title]];
+    """
+
+  /// Page world, `callAsyncJavaScript` with the argument `id`: clicks the element after the script
+  /// returns (a page-started link navigation), so the call itself ends normally.
+  static let click = """
+    const el = document.getElementById(id);
+    if (el) setTimeout(() => el.click(), 0);
+    return [["click", el ? "ok" : "missing"]];
+    """
+
+  /// Page world, `callAsyncJavaScript` with the argument `delta`: `history.go(delta)` after the
+  /// script returns.
+  static let historyGo = """
+    setTimeout(() => history.go(delta), 0);
+    return [];
+    """
+
   /// Page world, run by the app with `callAsyncJavaScript`. `steps` is a list of
   /// `[kind, probe name, argument]`; the result is a list of `[probe name, value]` in step order.
   /// Every network step waits for its result before the next one, so the host sees the requests

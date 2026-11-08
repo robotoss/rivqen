@@ -6,7 +6,7 @@
 # Every adb call names the lab serial, so no call reaches emulator-5554 or another device.
 # Usage: sh tools/platform-spikes/lab/emulator.sh [--dry-run] <command>
 #   start 37|29            cold boot of rivqen-p2-api37 or rivqen-p2-api29 without a window; waits
-#                          for the boot (max 300 s); refuses when another process holds the port
+#                          for the boot (max 600 s); refuses when another process holds the port
 #   stop                   stop the lab emulator that this script started
 #   status                 running or not, with the AVD and the serial
 #   reverse                adb reverse of the spike host ports (CONTRACT.md section 1)
@@ -80,8 +80,9 @@ case "$cmd" in
     i=0
     until [ "$($ADB shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do
       i=$((i + 1))
-      if [ $i -gt 150 ] || ! running; then
-        echo "emulator.sh: no boot in 300 s; see $LAB_HOME/logs/emulator.log" >&2
+      # A cold boot of the API 29 image can take more than 300 s on a loaded Mac.
+      if [ $i -gt 300 ] || ! running; then
+        echo "emulator.sh: no boot in 600 s; see $LAB_HOME/logs/emulator.log" >&2
         tail -20 "$LAB_HOME/logs/emulator.log" >&2
         exit 1
       fi

@@ -372,8 +372,20 @@
       "Q-06"
     ],
     "sprint": "S1",
-    "results": [],
-    "verdict": "pending"
+    "results": [
+      {
+        "os": "host-jvm",
+        "webview": null,
+        "kind": "benchmark",
+        "verdict": "supported",
+        "condition": null,
+        "note": "UniFFI Kotlin through JNA works; 817 µs median per 1 MiB in 16 KiB chunks (C ABI through JNI: 20 µs). Indicative (Mac host, H-129); SHA-256 of every document checked",
+        "runs": [],
+        "metrics": "evidence/spikes/wp-04/ffi/host-jvm.json",
+        "recording": null
+      }
+    ],
+    "verdict": "supported"
   },
   {
     "id": "CAP-F-02",
@@ -384,8 +396,20 @@
       "Q-06"
     ],
     "sprint": "S1",
-    "results": [],
-    "verdict": "pending"
+    "results": [
+      {
+        "os": "host-swift",
+        "webview": null,
+        "kind": "benchmark",
+        "verdict": "supported",
+        "condition": null,
+        "note": "UniFFI Swift works; 490 µs median per 1 MiB in 16 KiB chunks (C from Swift: 12 µs). Indicative (Mac host, H-129); SHA-256 of every document checked",
+        "runs": [],
+        "metrics": "evidence/spikes/wp-04/ffi/host-swift.json",
+        "recording": null
+      }
+    ],
+    "verdict": "supported"
   },
   {
     "id": "CAP-F-03",
@@ -396,8 +420,20 @@
       "Q-06"
     ],
     "sprint": "S1",
-    "results": [],
-    "verdict": "pending"
+    "results": [
+      {
+        "os": "host-jvm",
+        "webview": null,
+        "kind": "benchmark",
+        "verdict": "supported",
+        "condition": null,
+        "note": "C ABI through JNI works with a direct ByteBuffer (20 µs) and a ByteArray (21 µs) median per 1 MiB in 16 KiB chunks. Indicative (Mac host, H-129); SHA-256 of every document checked",
+        "runs": [],
+        "metrics": "evidence/spikes/wp-04/ffi/host-jvm.json",
+        "recording": null
+      }
+    ],
+    "verdict": "supported"
   },
   {
     "id": "CAP-F-04",
@@ -408,8 +444,20 @@
       "Q-06"
     ],
     "sprint": "S1",
-    "results": [],
-    "verdict": "pending"
+    "results": [
+      {
+        "os": "host-swift",
+        "webview": null,
+        "kind": "benchmark",
+        "verdict": "supported",
+        "condition": null,
+        "note": "C ABI from Swift works; 12 µs median per 1 MiB in 16 KiB chunks. Indicative (Mac host, H-129); SHA-256 of every document checked",
+        "runs": [],
+        "metrics": "evidence/spikes/wp-04/ffi/host-swift.json",
+        "recording": null
+      }
+    ],
+    "verdict": "supported"
   },
   {
     "id": "CAP-U-01",

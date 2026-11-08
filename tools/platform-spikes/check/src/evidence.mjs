@@ -62,7 +62,8 @@ export async function evidenceProblems(catalog, root) {
       }
       const runs = Array.isArray(r.runs) ? r.runs.filter((p) => typeof p === 'string') : [];
       const distinct = [...new Set(runs)];
-      const needsRuns = r.verdict === 'supported' || r.verdict === 'conditional' || runs.length > 0;
+      // A benchmark result is backed by its metrics file (CONTRACT section 10), not by run logs.
+      const needsRuns = r.kind !== 'benchmark' && (r.verdict === 'supported' || r.verdict === 'conditional' || runs.length > 0);
       if (needsRuns && distinct.length < MIN_RUNS) {
         problems.push(`${label}: ${distinct.length} runs, at least ${MIN_RUNS} are needed`);
       }

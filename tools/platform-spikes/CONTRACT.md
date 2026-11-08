@@ -159,6 +159,7 @@ A page reports a probe by `window.rqLab.probe(name, value)`. The app installs `r
 - `verdict` of the capability: `pending` until all versions of H-128 have a result; then the weakest result (`impossible` < `conditional` < `supported`; `not-tested` keeps `pending`).
 - A `supported` or `conditional` result, and any result that lists runs, needs at least 3 runs with the same normalized log (section 8) and, from S3, a recording. A `not-tested` result needs no run; an `impossible` result with a `source` needs no run.
 - Sizes: 1 MB = 1,000,000 bytes.
+- A measurement result has `"kind": "benchmark"`: it needs a `metrics` file (for FFI the result file of section 10) and has no runs; its stability comes from the repeated documents inside the measurement.
 - `metrics` (optional, FFI and timing): path to a metrics JSON.
 
 ## 8. Determinism

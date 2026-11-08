@@ -41,6 +41,9 @@ function resultProblems(r) {
   if (r.source !== undefined && r.source !== null && !hasSource) out.push('source must be a URL string');
   const hasRun = strings(r.runs) && r.runs.length > 0;
   if (r.verdict === 'impossible' && !hasSource && !hasRun) out.push('an impossible result needs a source or a run');
+  if (r.kind !== undefined && r.kind !== 'benchmark') out.push('kind must be "benchmark" when it is set');
+  if (r.kind === 'benchmark' && !nonEmpty(r.metrics)) out.push('a benchmark result needs a metrics file');
+  if (r.kind === 'benchmark' && hasRun) out.push('a benchmark result has no runs');
   return out;
 }
 

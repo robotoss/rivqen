@@ -53,7 +53,7 @@ Errors cross the boundary as a typed enum with a stable numeric code, a category
 
 ## 6. WP-04 benchmark
 
-<Badge type="warning" text="RESEARCH" /> Data for ADR-002 and Q-06. All numbers are **indicative (H-129)**: Mac host, iOS simulator and Android emulator, no device. The Android emulator run is open (S2 emulator slot). This section does not choose the ADR-002 option; the human decides it at G2.
+<Badge type="warning" text="RESEARCH" /> Data for ADR-002 and Q-06. All numbers are **indicative (H-129)**: Mac host, iOS simulator and Android emulator, no device. This section does not choose the ADR-002 option; the human decides it at G2.
 
 ### 6.1 What was measured
 
@@ -73,68 +73,78 @@ The UniFFI copies: Rust copies the chunk into a `Vec`; UniFFI writes it into a `
 
 Method: one process per case; 200 warm-up and 1000 measured documents; document time is the sum of the open, read and close calls (the SHA-256 update between reads is not timed); nearest-rank median and p95; peak RSS from `getrusage` (`ru_maxrss`), measured documents and warm-up together. Every document is checked with SHA-256 against the Rust digest. Details: [`ffi-bench/README.md`](https://github.com/robotoss/rivqen/blob/main/tools/platform-spikes/ffi-bench/README.md).
 
-Targets:
-
 | Target | How it runs |
 |---|---|
 | `host-jvm` | Kotlin 2.4.20 on JDK 21.0.11 (`-Xmx512m`, default collector) |
 | `host-swift` | Swift 6.4.2 (`-O`), command-line program |
-| `ios-sim-27.0` | The same Swift code as an app (`FfiBench.app`, iOS 18.0 and later) on the lab simulator `rivqen-p2-ffi-27.0` (iPhone 16 Pro, iOS 27.0 24A434); one `simctl launch` per case |
-| `android-37` | The same Kotlin code as DEX (d8 9.2.4) under `app_process` on ART, emulator `rivqen-p2-api37`; library built with `cargo ndk` and NDK r30, 16 KB aligned. Not run yet |
+| `ios-sim-27.0` | The same Swift code as an app (iOS 18.0 and later) on the lab simulator `rivqen-p2-ffi-27.0` (iPhone 16 Pro, iOS 27.0 24A434); one `simctl launch` per case |
+| `android-37` | The same Kotlin code as DEX (d8 9.2.4) under `app_process` on ART, emulator `rivqen-p2-api37` (Android 17, `CE2A.260420.051.A3`, 4 KB pages, heap growth limit 192 MB); library from `cargo ndk` with NDK r30, `LOAD` segments aligned to 16 KB |
 
-Set-up: Apple M4 Pro (14 cores), macOS 26.6.2, Rust 1.99.0, UniFFI 0.32.2, Xcode 27.2, 2026-11-08. The S2 runs happened while other projects of the user ran mutation tests on the Mac: load average about 300 (host) and about 600 (simulator).
+Set-up: Apple M4 Pro (14 cores), macOS 26.6.2, Rust 1.99.0, UniFFI 0.32.2, Xcode 27.2, 2026-11-08. Other projects of the user ran mutation tests on the Mac. One-minute load average at the start and end of each target: `android-37` 25 and 22, `host-jvm` 26 and 33, `host-swift` 47 and 50, `ios-sim-27.0` 217 and 254.
 
 S2 review fixes (S1 security review): the JNI read refuses a read-only direct `ByteBuffer` (L-1), so `jni-direct` now calls `ByteBuffer.isReadOnly()` once per read from Rust and once from Kotlin. The JVM harness builds with a Gradle wrapper that checks the distribution SHA-256 and with dependency verification metadata (L-3). The C header has the pointer contracts (L-5).
 
 ### 6.2 Results
 
-<Badge type="tip" text="FACT" /> Indicative (H-129). Time per 1 MiB document in µs; per-chunk median in µs; RSS Δ in MiB. Files: `evidence/spikes/wp-04/ffi/host-jvm.json`, `host-swift.json`, `ios-sim-27.0.json`.
+<Badge type="tip" text="FACT" /> Indicative (H-129). Time per 1 MiB document in µs; per-chunk median in µs; RSS Δ in MiB. Files: `evidence/spikes/wp-04/ffi/android-37.json`, `host-jvm.json`, `host-swift.json`, `ios-sim-27.0.json`.
 
-JVM (host, load average about 300):
-
-| Path | Chunk | Median | p95 | Chunk | RSS Δ |
-|---|---|---|---|---|---|
-| `uniffi-kotlin` | 16 KiB | 949 | 2237 | 13.8 | 362 |
-| `uniffi-kotlin` | 64 KiB | 532 | 856 | 31.6 | 337 |
-| `jni-direct` | 16 KiB | 35.0 | 51.4 | 0.50 | 1.3 |
-| `jni-direct` | 64 KiB | 30.4 | 43.8 | 1.79 | 3.1 |
-| `jni-bytearray` | 16 KiB | 22.2 | 50.8 | 0.33 | 0.7 |
-| `jni-bytearray` | 64 KiB | 23.8 | 29.2 | 1.42 | 1.6 |
-
-Swift (host, load average about 300):
+Android 17 emulator, ART:
 
 | Path | Chunk | Median | p95 | Chunk | RSS Δ |
 |---|---|---|---|---|---|
-| `uniffi-swift` | 16 KiB | 548 | 628 | 8.08 | 0.4 |
-| `uniffi-swift` | 64 KiB | 433 | 489 | 26.4 | 1.4 |
-| `c-swift` | 16 KiB | 12.1 | 14.1 | 0.17 | 0.1 |
-| `c-swift` | 64 KiB | 13.9 | 39.8 | 0.88 | 0.1 |
+| `uniffi-kotlin` | 16 KiB | 2370 | 4132 | 23.8 | 5.9 |
+| `uniffi-kotlin` | 64 KiB | 1685 | 2348 | 77.1 | 4.9 |
+| `jni-direct` | 16 KiB | 25.2 | 31.9 | 0.38 | 1.1 |
+| `jni-direct` | 64 KiB | 38.1 | 49.3 | 2.29 | 0.8 |
+| `jni-bytearray` | 16 KiB | 22.0 | 43.9 | 0.33 | 0.8 |
+| `jni-bytearray` | 64 KiB | 24.5 | 47.6 | 1.50 | 0.4 |
 
-iOS 27.0 simulator (load average about 600):
+JVM (Mac host, HotSpot):
 
 | Path | Chunk | Median | p95 | Chunk | RSS Δ |
 |---|---|---|---|---|---|
-| `uniffi-swift` | 16 KiB | 1045 | 1268 | 15.7 | 0.4 |
-| `uniffi-swift` | 64 KiB | 723 | 851 | 43.9 | 0.5 |
-| `c-swift` | 16 KiB | 10.8 | 11.3 | 0.17 | 0.0 |
-| `c-swift` | 64 KiB | 12.8 | 15.7 | 0.79 | 0.0 |
+| `uniffi-kotlin` | 16 KiB | 834 | 7155 | 12.7 | 368 |
+| `uniffi-kotlin` | 64 KiB | 476 | 3668 | 29.1 | 336 |
+| `jni-direct` | 16 KiB | 30.6 | 106 | 0.46 | 2.6 |
+| `jni-direct` | 64 KiB | 27.5 | 73.5 | 1.67 | 1.6 |
+| `jni-bytearray` | 16 KiB | 21.2 | 74.8 | 0.33 | 1.3 |
+| `jni-bytearray` | 64 KiB | 22.6 | 47.6 | 1.42 | 0.5 |
+
+Swift (Mac host):
+
+| Path | Chunk | Median | p95 | Chunk | RSS Δ |
+|---|---|---|---|---|---|
+| `uniffi-swift` | 16 KiB | 496 | 1793 | 7.71 | 0.4 |
+| `uniffi-swift` | 64 KiB | 409 | 1399 | 25.4 | 1.4 |
+| `c-swift` | 16 KiB | 12.2 | 31.8 | 0.21 | 0.1 |
+| `c-swift` | 64 KiB | 13.2 | 40.5 | 0.83 | 0.1 |
+
+iOS 27.0 simulator:
+
+| Path | Chunk | Median | p95 | Chunk | RSS Δ |
+|---|---|---|---|---|---|
+| `uniffi-swift` | 16 KiB | 982 | 1102 | 15.1 | 0.4 |
+| `uniffi-swift` | 64 KiB | 691 | 773 | 42.4 | 0.5 |
+| `c-swift` | 16 KiB | 10.7 | 11.1 | 0.17 | 0.0 |
+| `c-swift` | 64 KiB | 12.1 | 13.0 | 0.75 | 0.0 |
 
 Copied bytes per document: 3 MiB (`uniffi-kotlin`: 1 MiB Rust, 2 MiB glue), 4 MiB (`uniffi-swift`: 1 MiB Rust, 3 MiB glue), 1 MiB (C ABI paths, Rust only).
 
-<Badge type="tip" text="FACT" /> S1 (load average 13 to 15, four runs): the medians of a case differed by at most 12 %, the p95 values by up to 2.6 times. The S1 medians at 16 KiB were 817 µs (`uniffi-kotlin`), 20.0 µs (`jni-direct`), 20.8 µs (`jni-bytearray`), 490 µs (`uniffi-swift`) and 12.1 µs (`c-swift`).
+<Badge type="tip" text="FACT" /> Repeatability: in S1 (load average 13 to 15, four host runs) the medians of a case differed by at most 12 % and the p95 values by up to 2.6 times. In S2 the host p95 values are 3 to 9 times the medians because the load changed during the runs; use the medians. A first S2 run at load average 300 (host) and 600 (simulator) gave medians within 15 % of these for every case.
 
 ### 6.3 Observations
 
-<Badge type="tip" text="FACT" /> Measured on the Mac host and the iOS simulator:
+<Badge type="tip" text="FACT" /> Measured on the Mac host, the iOS simulator and the Android emulator:
 
-1. The C ABI paths move 1 MiB in 11 to 35 µs. A read costs about the time of the copy itself.
-2. UniFFI 0.32.2 is about 20 to 100 times slower per document. Most of the cost is in Rust: a separate S1 measurement of the UniFFI lowering of `Option<Vec<u8>>` took 5.8 µs per 16 KiB and 20.5 µs per 64 KiB (median of 18 000 calls), against 0.2 µs and 1.4 µs for the `Vec` copy. UniFFI 0.32.2 writes a `Vec<u8>` element by element (`uniffi_core` 0.32.2, `src/ffi_converter_impls.rs`, `impl Lower for Vec<T>`).
-3. The read-only check of L-1 costs one JNI call into Java per read: the `jni-direct` read median went from 0.29 µs (S1) to 0.50 µs, while `jni-bytearray`, which has no such call, stayed at 0.33 µs. Per 16 KiB document that is about 13 µs more; `jni-direct` is now slower than `jni-bytearray`.
-4. Memory (Q-06). On the JVM, the UniFFI path made the peak RSS grow by about 330 to 375 MiB in five runs (S1 and S2): each document leaves about 1 MiB of `ByteArray` garbage (one per chunk), and the collector grows the heap toward the `-Xmx512m` limit. The JNI paths reuse one buffer and grew by less than 4 MiB. On Swift (host and simulator), both paths grew by less than 2 MiB: reference counting frees each `Data` at once, so the 3 live copies are short-lived.
-5. In the simulator, `c-swift` is as fast as on the host. `uniffi-swift` took about twice the host time; the simulator run had twice the host load, so this difference is not attributed to the simulator.
-6. Larger chunks help UniFFI (fewer calls) and do not help the C ABI paths (the copy dominates).
+1. The C ABI paths move 1 MiB in 11 to 38 µs on every target. A read costs about the time of the copy itself.
+2. UniFFI 0.32.2 is about 15 to 110 times slower per document than the C ABI path of the same runtime. Most of the cost is in Rust: a separate S1 measurement of the UniFFI lowering of `Option<Vec<u8>>` took 5.8 µs per 16 KiB and 20.5 µs per 64 KiB (median of 18 000 calls), against 0.2 µs and 1.4 µs for the `Vec` copy. UniFFI 0.32.2 writes a `Vec<u8>` element by element (`uniffi_core` 0.32.2, `src/ffi_converter_impls.rs`, `impl Lower for Vec<T>`).
+3. On ART, UniFFI Kotlin is about 3 times slower than on HotSpot (2370 µs against 834 µs at 16 KiB); the JNI paths are about as fast as on the host.
+4. Memory (Q-06). On HotSpot, the UniFFI path made the peak RSS grow by about 330 to 375 MiB in every run (S1 and S2): each document leaves about 1 MiB of `ByteArray` garbage (one per chunk), and the collector grows the heap toward the `-Xmx512m` limit. On ART, the same path grew by 4.9 to 5.9 MiB: the runtime collects the garbage in a heap with a 192 MB growth limit, so the garbage costs time (included in item 3), not resident memory. The JNI paths reuse one buffer and grew by less than 3 MiB on both runtimes. On Swift (host and simulator), both paths grew by less than 2 MiB: reference counting frees each `Data` at once, so the 3 live copies are short-lived.
+5. The read-only check of L-1 costs one JNI call into Java per read: the `jni-direct` read median is above `jni-bytearray` by 0.13 µs on HotSpot (0.46 against 0.33 µs) and by 0.05 µs on ART (0.38 against 0.33 µs). In S1, without the check, `jni-direct` was the faster path (0.29 µs). At 64 KiB on ART, `jni-direct` is slower than `jni-bytearray` (2.29 against 1.50 µs per read); the cause is not known.
+6. In the simulator, `c-swift` is as fast as on the host, and `uniffi-swift` takes about twice the host time in both S2 runs (load average 600 and 217); the cause is not known (the simulator uses the libraries of the iOS runtime, not of macOS).
+7. Larger chunks help UniFFI (fewer calls) and do not help the C ABI paths (the copy dominates).
 
-<Badge type="warning" text="RESEARCH" /> Open: the Android emulator run (ART, not HotSpot; `android-37`); a host and simulator run again at low load; device numbers in WP-09 (H-129). Whether a later UniFFI release writes `Vec<u8>` in one copy: not checked (NOT FOUND for 0.32.2).
+<Badge type="warning" text="RESEARCH" /> Open: device numbers in WP-09 (H-129); a run on a 16 KB page image (the libraries are aligned, but the API 37 image used here has 4 KB pages). `run.sh` has an opt-in path for one supplementary run on the human's 16 KB emulator (`android-<sdk>-16k.json`, not the main result); it is not run yet. Whether a later UniFFI release writes `Vec<u8>` in one copy: not checked (NOT FOUND for 0.32.2).
 
 ## Related
 

@@ -38,6 +38,8 @@ Android (`android`):
 3. It converts the JVM harness to DEX with `d8` of build-tools 37.0.0 (`--min-api 29`). JNA for Android comes from the AAR of the same JNA release: its classes and its `arm64-v8a/libjnidispatch.so`.
 4. It pushes the files to `/data/local/tmp/rivqen-ffi` on `emulator-5602`, runs `--selfcheck` on ART first, then one `app_process` per case (the runtime starts as for an app, with the `dalvik.vm.*` heap limits), and removes the folder at the end. Every `adb` call has `-s emulator-5602`.
 5. The pinned toolchain needs the target: `rustup target add --toolchain 1.99.0 aarch64-linux-android`.
+6. Supplementary run on the human's own emulator with 16 KB pages (one-time human decision, 2026-11-08, FFI task only): `RQ_FFI_EMULATOR_SLOT=1 RQ_FFI_SERIAL=emulator-5554 RQ_FFI_HUMAN_DEVICE_OK=1 sh tools/platform-spikes/ffi-bench/run.sh android [selfcheck]`. The script refuses every other serial, refuses while the lab emulator runs, never starts, stops or changes that emulator, stops when `getconf PAGE_SIZE` is not 16384, writes only `/data/local/tmp/rivqen-ffi` and removes it on every exit. The result is a separate file `android-<sdk>-16k.json`, not the main `android-37` result.
+7. Every target prints the load average (1, 5, 15 min) before and after its cases (`load <target> start|end`). The result file has no member for it, so write it in `ffi.md`.
 
 Rust checks (in this directory):
 

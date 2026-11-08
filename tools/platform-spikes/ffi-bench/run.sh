@@ -20,6 +20,9 @@
 #   (RQ_FFI_KEEP_SIM=1 keeps it). It never touches another simulator and never opens Simulator.app.
 # android: needs the lab emulator, started by the lab script (emulator.sh start 37). Every adb
 #   call names $LAB_SERIAL (emulator-5602). This script never starts or stops an emulator.
+#   RQ_FFI_SERIAL=emulator-5554 RQ_FFI_HUMAN_DEVICE_OK=1 (with RQ_FFI_EMULATOR_SLOT=1) runs once on
+#   the human's own 16 KB page emulator (human decision, FFI task only): it pushes only to
+#   /data/local/tmp/rivqen-ffi, removes it at the end, and writes android-<sdk>-16k.json.
 #   It runs on the device only with RQ_FFI_EMULATOR_SLOT=1 (the architect gave the emulator
 #   slot, CONTRACT.md section 11) and only on the AVD rivqen-p2-api37; RQ_FFI_ANDROID_BUILD_ONLY=1
 #   builds and stops before the device. NDK: $RQ_FFI_NDK (default: $LAB_SDK/ndk/30.0.16248370).
@@ -83,6 +86,12 @@ cargo build --quiet --locked --release --lib
     --metadata-no-deps --out-dir "$OUT/gen" "$DYLIB" >/dev/null
 
 # Stops when the pinned toolchain has no standard library for the target (no automatic install).
+# Load average of the Mac (1, 5, 15 min) before and after the cases of a target; the numbers go
+# to the log and to ffi.md (the result file format of section 10 has no member for them).
+load() {
+    echo "load $1: $(sysctl -n vm.loadavg | tr -d '{}' | awk '{$1 = $1; print}')"
+}
+
 need_rust_target() {
     rustup target list --installed | grep -qx "$1" || {
         echo "run.sh: the Rust toolchain $RUST has no target $1; run: rustup target add --toolchain $RUST $1" >&2
@@ -124,6 +133,7 @@ run_jvm() {
     }
     harness --selfcheck
     harness --versions "$OUT/jvm-versions.json"
+    load "host-jvm start"
     cases=""
     for path in uniffi-kotlin jni-direct jni-bytearray; do
         for chunk in $CHUNKS; do
@@ -140,6 +150,7 @@ run_jvm() {
         --toolchain "rust=$RUST" --toolchain "uniffi=$UNIFFI" --toolchain "gradle=$GRADLE_VERSION" \
         --toolchain-file "$OUT/jvm-versions.json" \
         --out "$RESULTS/host-jvm.json" $cases
+    load "host-jvm end"
 }
 
 # Module map of the generated UniFFI header and of include/rq_bench.h.
@@ -169,6 +180,7 @@ run_swift() {
         "$HERE/swift/Bench.swift" "$HERE/swift/main.swift" "$OUT/gen/ffi_bench.swift" \
         "$STATIC" -o "$BIN"
     "$BIN" --selfcheck
+    load "host-swift start"
     cases=""
     for path in uniffi-swift c-swift; do
         for chunk in $CHUNKS; do
@@ -184,6 +196,7 @@ run_swift() {
         --os "macOS $(sw_vers -productVersion)" \
         --toolchain "rust=$RUST" --toolchain "uniffi=$UNIFFI" --toolchain "swift=$SWIFT" \
         --out "$RESULTS/host-swift.json" $cases
+    load "host-swift end"
 }
 
 run_ios_sim() {
@@ -260,6 +273,7 @@ run_ios_sim() {
     ' "$SIM_OS")
     [ -n "$RUNTIME" ] || { echo "run.sh: no runtime $SIM_OS" >&2; exit 1; }
     XCODE=$(xcodebuild -version | awk 'NR == 1 { print $2 }')
+    load "ios-sim-$SIM_OS start"
     cases=""
     for path in uniffi-swift c-swift; do
         for chunk in $CHUNKS; do
@@ -279,6 +293,7 @@ run_ios_sim() {
         --toolchain "rust=$RUST" --toolchain "uniffi=$UNIFFI" --toolchain "swift=$SWIFT" \
         --toolchain "xcode=$XCODE" \
         --out "$RESULTS/ios-sim-$SIM_OS.json" $cases
+    load "ios-sim-$SIM_OS end"
 }
 
 run_android() {
@@ -287,7 +302,21 @@ run_android() {
     # 37.0.0 (d8 9.2) does not.
     BUILD_TOOLS=${RQ_FFI_BUILD_TOOLS:-$LAB_SDK/build-tools/37.0.0}
     ANDROID_JAR=${RQ_FFI_ANDROID_JAR:-$LAB_SDK/platforms/android-37.0/android.jar}
-    ADB="$LAB_ADB -s $LAB_SERIAL"
+    # Device: the lab emulator, or (one-time human decision of 2026-11-08, FFI task only) the
+    # human's own emulator-5554 with a 16 KB page image. Every other serial is refused.
+    SERIAL=${RQ_FFI_SERIAL:-$LAB_SERIAL}
+    case "$SERIAL" in
+    "$LAB_SERIAL") HUMAN=0 ;;
+    emulator-5554)
+        [ "${RQ_FFI_HUMAN_DEVICE_OK:-0}" = 1 ] || {
+            echo "run.sh: emulator-5554 is the human's device; it needs RQ_FFI_HUMAN_DEVICE_OK=1 (human decision)" >&2
+            exit 2
+        }
+        HUMAN=1
+        ;;
+    *) echo "run.sh: refusing device $SERIAL (only $LAB_SERIAL, or emulator-5554 with RQ_FFI_HUMAN_DEVICE_OK=1)" >&2; exit 2 ;;
+    esac
+    ADB="$LAB_ADB -s $SERIAL"
     D=/data/local/tmp/rivqen-ffi
     [ -f "$NDK/source.properties" ] || { echo "run.sh: no NDK at $NDK" >&2; exit 1; }
     [ -x "$BUILD_TOOLS/d8" ] || { echo "run.sh: no d8 in $BUILD_TOOLS" >&2; exit 1; }
@@ -333,16 +362,27 @@ run_android() {
         echo "run.sh: no emulator slot; set RQ_FFI_EMULATOR_SLOT=1 only when the architect gave the slot (or RQ_FFI_ANDROID_BUILD_ONLY=1)" >&2
         exit 1
     }
-    echo "== Android: device $LAB_SERIAL"
+    echo "== Android: device $SERIAL"
     status=$(sh "$ROOT/tools/platform-spikes/lab/emulator.sh" status)
-    case "$status" in
-    running*"$LAB_AVD_37"*) ;;
-    *)
-        echo "run.sh: need the lab emulator $LAB_AVD_37 on $LAB_SERIAL, got: $status" >&2
-        echo "run.sh: start it: sh tools/platform-spikes/lab/emulator.sh start 37" >&2
-        exit 1
-        ;;
-    esac
+    if [ "$HUMAN" = 0 ]; then
+        case "$status" in
+        running*"$LAB_AVD_37"*) ;;
+        *)
+            echo "run.sh: need the lab emulator $LAB_AVD_37 on $LAB_SERIAL, got: $status" >&2
+            echo "run.sh: start it: sh tools/platform-spikes/lab/emulator.sh start 37" >&2
+            exit 1
+            ;;
+        esac
+    else
+        # Never both at the same time; the human's emulator is never started, stopped or changed.
+        case "$status" in
+        running*) echo "run.sh: stop the lab emulator first (one emulator run at a time)" >&2; exit 1 ;;
+        esac
+        $LAB_ADB devices | awk -v s="$SERIAL" '$1 == s && $2 == "device" { f = 1 } END { exit !f }' || {
+            echo "run.sh: $SERIAL is not connected; this script does not start it" >&2
+            exit 1
+        }
+    fi
     API=$($ADB shell getprop ro.build.version.sdk | tr -d '\r')
     ABI=$($ADB shell getprop ro.product.cpu.abi | tr -d '\r')
     REL=$($ADB shell getprop ro.build.version.release | tr -d '\r')
@@ -351,11 +391,22 @@ run_android() {
     HEAP="growth limit $($ADB shell getprop dalvik.vm.heapgrowthlimit | tr -d '\r'), max $($ADB shell getprop dalvik.vm.heapsize | tr -d '\r')"
     [ "$ABI" = arm64-v8a ] || { echo "run.sh: ABI $ABI, need arm64-v8a" >&2; exit 1; }
     echo "Android $REL (API $API, $BUILD_ID), $ABI, page size $PAGE, ART heap $HEAP"
+    TARGET="android-$API"
+    MACHINE="Android emulator $ABI on $HOST_CPU"
+    if [ "$HUMAN" = 1 ]; then
+        # The human's Play image with 16 KB pages: a separate, supplementary result file.
+        [ "$PAGE" = 16384 ] || { echo "run.sh: $SERIAL has page size $PAGE, want 16384" >&2; exit 1; }
+        FULL=$($ADB shell getprop ro.build.version.sdk_full | tr -d '\r')
+        PRODUCT=$($ADB shell getprop ro.product.name | tr -d '\r')
+        TARGET="android-${FULL:-$API}-16k"
+        MACHINE="Android emulator $ABI ($PRODUCT, the human's Play image) on $HOST_CPU"
+    fi
+    # The cleanup runs on every exit after this point, also when a push fails.
+    cleanup_android() { $ADB shell rm -rf "$D" || echo "run.sh: remove $D on $SERIAL failed" >&2; }
+    trap cleanup_android EXIT
     $ADB shell rm -rf "$D"
     $ADB shell mkdir -p "$D"
     $ADB push -q "$SO" "$A/libjnidispatch.so" "$A/bench.jar" "$D/"
-    cleanup_android() { $ADB shell rm -rf "$D" || true; }
-    trap cleanup_android EXIT
     # The harness on ART: app_process starts the runtime as an app process does (heap limits
     # of dalvik.vm.*), as the shell user, from the DEX file. JNA loads its native part from $D.
     harness() {
@@ -366,10 +417,11 @@ run_android() {
     [ "$ARG" != selfcheck ] || return 0
     harness --versions "$D/versions.json"
     $ADB pull -q "$D/versions.json" "$OUT/android-versions.json"
+    load "$TARGET start"
     cases=""
     for path in uniffi-kotlin jni-direct jni-bytearray; do
         for chunk in $CHUNKS; do
-            f="$OUT/cases/android-$API-$path-$chunk.json"
+            f="$OUT/cases/$TARGET-$path-$chunk.json"
             rm -f "$f"
             harness --path "$path" --size "$SIZE" --chunk "$chunk" --warmup "$WARMUP" \
                 --docs "$DOCS" --out "$D/case.json"
@@ -378,12 +430,13 @@ run_android() {
         done
     done
     # shellcheck disable=SC2086
-    node "$HERE/merge.mjs" --target "android-$API" --date "$DATE" \
-        --machine "Android emulator $ABI on $HOST_CPU" --os "Android $REL (API $API, $BUILD_ID)" \
+    node "$HERE/merge.mjs" --target "$TARGET" --date "$DATE" \
+        --machine "$MACHINE" --os "Android $REL (API $API, $BUILD_ID), page size $PAGE" \
         --toolchain "rust=$RUST" --toolchain "uniffi=$UNIFFI" --toolchain "gradle=$GRADLE_VERSION" \
         --toolchain "ndk=$NDK_VERSION" --toolchain "d8=$(basename "$BUILD_TOOLS")" \
         --toolchain-file "$OUT/android-versions.json" \
-        --out "$RESULTS/android-$API.json" $cases
+        --out "$RESULTS/$TARGET.json" $cases
+    load "$TARGET end"
 }
 
 case "$MODE" in

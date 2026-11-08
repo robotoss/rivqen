@@ -13,7 +13,7 @@
 
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { readFileSync, readdirSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildChunk, nonceOf } from "../host/stream.mjs";
@@ -147,6 +147,11 @@ function join([work, out, capability, api, k, run, url, elapsed]) {
   if (status.state !== "done") problems.unshift(`app: ${status.error ?? status.state}`);
   const end = { ev: "run.end", src: "script", seq: 1, t: Number(elapsed), ok: problems.length === 0, error: problems.length === 0 ? null : problems.join("; ") };
   const text = [...all, end].map(sortedJson).join("\n") + "\n";
+  // A run that is not ok never goes into the evidence folder (it would replace a good run of the same k).
+  if (!end.ok) {
+    out = path.join(process.env.LAB_OUT ?? work, "android-failed", capability, api);
+    mkdirSync(out, { recursive: true });
+  }
   writeFileSync(path.join(out, `run-${k}.jsonl`), text);
   const parsed = parseRunLog(text);
   if (parsed.problems.length > 0) {

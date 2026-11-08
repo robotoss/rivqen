@@ -48,3 +48,17 @@ test('run_log_shape: a log whose last event is not run.end is reported', async (
   await rewriteRun(dir, 'run-1.jsonl', (lines) => lines.slice(0, -1));
   expectProblem(await problemsOf(dir), /last event is not run\.end/);
 });
+
+test('run_log_shape: a run that did not end ok is reported', async (t) => {
+  const dir = await copyFixture(t);
+  await rewriteRun(dir, 'run-2.jsonl', (lines) => lines.map((l) => l.replace('"error":null,"ev":"run.end","ok":true', '"error":"app timeout","ev":"run.end","ok":false')));
+  expectProblem(await problemsOf(dir), /run-2\.jsonl: run\.end is not ok/);
+});
+
+test('run_log_shape: a run of another capability or version is reported', async (t) => {
+  const dir = await copyFixture(t);
+  await rewriteRun(dir, 'run-1.jsonl', (lines) => lines.map((l) => l.replace('"capability":"CAP-F-01"', '"capability":"CAP-F-02"').replace('"os":"host-jvm"', '"os":"host-swift"')));
+  const problems = await problemsOf(dir);
+  expectProblem(problems, /run-1\.jsonl: run\.start capability "CAP-F-02" is not "CAP-F-01"/);
+  expectProblem(problems, /run-1\.jsonl: run\.start os "host-swift" is not "host-jvm"/);
+});

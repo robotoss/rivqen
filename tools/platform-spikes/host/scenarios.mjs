@@ -97,6 +97,11 @@ export function echo(rc) {
 /** @param {string | undefined} header @param {number} size @returns {{ from: number, to: number } | null | "bad"} */
 export function parseRange(header, size) {
   if (header === undefined) return null;
+  const suffix = /^bytes=-(\d{1,15})$/.exec(header);
+  if (suffix !== null) {
+    const n = Number(suffix[1]);
+    return n === 0 ? "bad" : { from: Math.max(0, size - n), to: size - 1 };
+  }
   const m = /^bytes=(\d{1,15})-(\d{0,15})$/.exec(header);
   if (m === null) return "bad";
   const from = Number(m[1]);

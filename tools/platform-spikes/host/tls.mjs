@@ -5,8 +5,8 @@
 // "bad" leaf, made with the system openssl when missing. The keys stay in the lab directory.
 
 import { execFileSync } from "node:child_process";
-import { randomBytes } from "node:crypto";
-import { chmodSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { X509Certificate, randomBytes } from "node:crypto";
+import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { HostError } from "./util.mjs";
 
@@ -31,14 +31,31 @@ extendedKeyUsage = serverAuth
 subjectAltName = ${SAN}
 `;
 
+/** Renew the set when a certificate ends within this time (a run must not meet an expired lab CA). */
+export const RENEW_BEFORE_MS = 2 * 24 * 60 * 60 * 1000;
+
+/** True when every certificate of a complete set is valid for at least RENEW_BEFORE_MS more. */
+function setIsFresh(dir, nowMs) {
+  try {
+    return ["ca.pem", "leaf.pem", "bad-leaf.pem"].every((f) => {
+      const cert = new X509Certificate(readFileSync(join(dir, f)));
+      return Date.parse(cert.validTo) - nowMs > RENEW_BEFORE_MS && Date.parse(cert.validFrom) <= nowMs;
+    });
+  } catch {
+    return false; // an unreadable certificate makes the set incomplete
+  }
+}
+
 /**
- * Make the TLS files in `dir` when any is missing. A complete set is kept.
+ * Make the TLS files in `dir` when any is missing or a certificate ends within RENEW_BEFORE_MS.
+ * A complete, fresh set is kept. After a renewal the lab simulators must trust the new CA again
+ * (`lab/sim.sh trust`) and the Android app must be built again.
  * @param {string} dir
- * @param {{ openssl?: string, exec?: (file: string, args: string[], opts: object) => unknown }} [opts]
+ * @param {{ openssl?: string, exec?: (file: string, args: string[], opts: object) => unknown, now?: () => number }} [opts]
  * @returns {{ made: boolean, dir: string }}
  */
-export function ensureTls(dir, { openssl = process.env.OPENSSL ?? "openssl", exec = execFileSync } = {}) {
-  if (TLS_FILES.every((f) => existsSync(join(dir, f)))) return { made: false, dir };
+export function ensureTls(dir, { openssl = process.env.OPENSSL ?? "openssl", exec = execFileSync, now = Date.now } = {}) {
+  if (TLS_FILES.every((f) => existsSync(join(dir, f))) && setIsFresh(dir, now())) return { made: false, dir };
   mkdirSync(dir, { recursive: true, mode: 0o700 });
   // A partial set is replaced as a whole: a leaf must match its CA.
   for (const f of TLS_FILES) rmSync(join(dir, f), { force: true });

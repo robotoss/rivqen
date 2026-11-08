@@ -77,6 +77,16 @@ export async function evidenceProblems(catalog, root) {
         counts.runs += 1;
         for (const p of parsed.problems) problems.push(`${label}: ${rel}: ${p}`);
         if (parsed.problems.length === 0) {
+          // The run must belong to this capability and result, and it must have ended ok.
+          const start = parsed.events[0];
+          for (const [key, want] of [['capability', row.id], ['platform', row.platform], ['os', r.os]]) {
+            if (String(start[key]) !== String(want)) {
+              problems.push(`${label}: ${rel}: run.start ${key} ${JSON.stringify(start[key])} is not ${JSON.stringify(want)}`);
+            }
+          }
+          if (parsed.events.at(-1).ok !== true) problems.push(`${label}: ${rel}: run.end is not ok`);
+        }
+        if (parsed.problems.length === 0) {
           normalized.push({ rel, json: JSON.stringify(normalizeRunLog(parsed.events)) });
         }
       }

@@ -87,3 +87,17 @@ test("chunk_is_the_requested_size_and_ascii", () => {
   assert.ok(!c.includes("<!doctype"), "only chunk 0 has the document head");
   assert.ok(buildChunk({ k: 0, size: 1, run: null, nonce: null }).startsWith("<!doctype html>"));
 });
+
+test("runlogs_drop_stale_runs_when_full", () => {
+  let now = 0;
+  const logs = new RunLogs({ now: () => now, maxRuns: 2, maxAgeMs: 1000 });
+  const meta = (run) => ({ run, capability: "CAP-X", platform: "ios", os: "27.0", k: 1 });
+  logs.start(meta("a-1"));
+  logs.start(meta("a-2"));
+  now = 1000;
+  assert.throws(() => logs.start(meta("a-3")), (e) => e.status === 429);
+  now = 1001;
+  assert.equal(logs.start(meta("a-3")), "a-3");
+  assert.equal(logs.has("a-1"), false);
+  assert.equal(logs.has("a-3"), true);
+});

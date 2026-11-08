@@ -56,7 +56,7 @@ Every route is on both sites. Query values are ASCII. Every response has `Cache-
 | `GET /s/redirect?run=&n=K&code=301\|302\|303\|307\|308&to=<path>` | Chain of `K` redirects with the code; the last one goes to `<path>` (default `/s/echo`). Hop `i` goes to the other site when `cross=1`; `alt=127.0.0.1\|10.0.2.2` (default `127.0.0.1`) names the IP form of site B, so the Android run script passes `alt=10.0.2.2` |
 | `GET /s/cookie/set?run=&name=&value=&attrs=<list>` | `200` page; one `Set-Cookie: <name>=<value>; Path=/; <attrs>`. `attrs` is a comma list of `HttpOnly`, `Secure`, `SameSite=Strict\|Lax\|None`, `Max-Age=<n>`. Values are synthetic (`[a-z0-9-]` only) |
 | `GET /s/echo?run=` | `200 application/json`: `{"cookie": <Cookie field or null>, "site": "A"\|"B", "method", "target", "fields": [names only]}`. Also as `text/html` with the JSON in a `<pre id="echo">` when `html=1` |
-| `GET /s/range?run=&size=B` | Body of `B` bytes. Honors one `Range: bytes=a-b` (or `a-`) with `206`, `Content-Range`; a bad range gives `416` |
+| `GET /s/range?run=&size=B` | Body of `B` bytes. Honors one `Range: bytes=a-b` (or `a-`, or the suffix form `-n`) with `206`, `Content-Range`; a bad range gives `416` |
 | `GET /s/cut?run=&after=BYTES&size=B` | `200 text/html` with `Content-Length` of the full body (`size`, default 4096; `after` < `size`); closes the connection after `BYTES` body bytes |
 | `GET /s/sw.js`, `GET /s/sw-page?run=` | Service Worker script and a page that registers it (S2; `501` in S1) |
 

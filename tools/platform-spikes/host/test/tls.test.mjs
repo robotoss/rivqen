@@ -75,3 +75,14 @@ test("tls_good_and_bad", async (t) => {
   const ip = await get(host.ports.good, "/s/echo", { ca: tls.ca, host: `127.0.0.1:${host.ports.good}` });
   assert.equal(ip.status, 200);
 });
+
+test("tls_renewed_before_expiry", () => {
+  const dir = fresh();
+  assert.equal(ensureTls(dir).made, true);
+  const ca = new X509Certificate(readFileSync(join(dir, "ca.pem")));
+  const end = Date.parse(ca.validTo);
+  // Three days before the end the set is kept; one day before the end it is made again.
+  assert.equal(ensureTls(dir, { now: () => end - 3 * 24 * 3600 * 1000 }).made, false);
+  assert.equal(ensureTls(dir, { now: () => end - 1 * 24 * 3600 * 1000 }).made, true);
+  assert.notEqual(new X509Certificate(readFileSync(join(dir, "ca.pem"))).serialNumber, ca.serialNumber);
+});

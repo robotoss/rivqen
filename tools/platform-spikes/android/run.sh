@@ -79,6 +79,8 @@ while [ "$k" -le "$last" ]; do
   rm -f "$WORK"/app.jsonl "$WORK"/host.jsonl "$WORK"/metrics.json "$WORK"/device.json "$WORK"/status.json
   adb_ shell am force-stop "$PKG"
   adb_ shell run-as "$PKG" rm -rf files/out
+  # A run id left open by an interrupted earlier run would give 409: close it first.
+  post /run/end "{\"run\":\"$run\"}" >/dev/null 2>&1 || true
   post /run/start "{\"run\":\"$run\",\"capability\":\"$cap\",\"platform\":\"android\",\"os\":\"$api\",\"k\":$k}" >/dev/null \
     || die "POST /run/start failed for $run"
   t0="$(node -e 'process.stdout.write(String(Date.now()))')"

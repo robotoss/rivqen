@@ -46,3 +46,13 @@ test('runs_stable: the CSP nonce form of the run id (dots as underscores) is nor
   }
   assert.deepEqual(await problemsOf(dir), []);
 });
+
+test('runs_stable: a lower-case date field is blanked too', async (t) => {
+  const dir = await copyFixture(t);
+  for (const k of [1, 2, 3]) {
+    await rewriteRun(dir, `run-${k}.jsonl`, (lines) =>
+      lines.map((l) => (l.includes('"ev":"host.request"') ? l.replace('"fields":["Host","Rq-Lab-Run"]', `"fields":{"date":"day ${k}","host":"localhost"}`) : l)),
+    );
+  }
+  assert.deepEqual(await problemsOf(dir), []);
+});

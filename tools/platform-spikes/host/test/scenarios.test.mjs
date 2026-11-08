@@ -179,9 +179,13 @@ test("range_206_416", async () => {
   assert.equal(open.status, 206);
   assert.equal(open.headers["content-range"], "bytes 990-999/1000");
   assert.deepEqual(open.body, labBytes(990, 1000));
+  const tail = await g("/s/range?size=1000", { headers: { Range: "bytes=-5" } });
+  assert.equal(tail.status, 206);
+  assert.equal(tail.headers["content-range"], "bytes 995-999/1000");
+  assert.deepEqual(tail.body, labBytes(995, 1000));
   const clamp = await g("/s/range?size=1000", { headers: { Range: "bytes=995-5000" } });
   assert.equal(clamp.headers["content-range"], "bytes 995-999/1000");
-  for (const r of ["bytes=1000-", "bytes=20-10", "bytes=-5", "bytes=0-1,3-4", "items=0-1", "bytes=a-b", "bytes=1"]) {
+  for (const r of ["bytes=1000-", "bytes=20-10", "bytes=-0", "bytes=0-1,3-4", "items=0-1", "bytes=a-b", "bytes=1"]) {
     const bad = await g("/s/range?size=1000", { headers: { Range: r } });
     assert.equal(bad.status, 416, r);
     assert.equal(bad.headers["content-range"], "bytes */1000");
@@ -250,4 +254,11 @@ test("cache_control_is_no_store_on_scenario_routes", async () => {
   for (const p of ["/s/echo", "/s/range?size=5", "/s/beacon?k=0", "/s/redirect", "/s/cookie/set?name=a&value=b", "/nothing"]) {
     assert.equal((await g(p)).headers["cache-control"], "no-store", p);
   }
+});
+
+test("range_suffix", () => {
+  assert.deepEqual(parseRange("bytes=-100", 1000), { from: 900, to: 999 });
+  assert.deepEqual(parseRange("bytes=-5000", 1000), { from: 0, to: 999 });
+  assert.equal(parseRange("bytes=-0", 1000), "bad");
+  assert.equal(parseRange("bytes=-", 1000), "bad");
 });

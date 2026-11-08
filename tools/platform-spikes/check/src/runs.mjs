@@ -69,18 +69,18 @@ export function parseRunLog(text) {
   return { events, problems };
 }
 
-/** Blanks the value of a field named Date inside a `fields` member (CONTRACT section 8). */
+/** Blanks the value of a field named Date (any letter case) inside a `fields` member (CONTRACT section 8). */
+const isDate = (name) => typeof name === 'string' && name.toLowerCase() === 'date';
 function blankDates(fields) {
   if (Array.isArray(fields)) {
     return fields.map((f) => {
-      if (Array.isArray(f) && f[0] === 'Date') return [f[0], ''];
+      if (Array.isArray(f) && isDate(f[0])) return [f[0], ''];
       if (!isObject(f)) return f;
-      if (f.name === 'Date') return { ...f, value: '' };
-      if ('Date' in f) return { ...f, Date: '' };
-      return f;
+      if (isDate(f.name)) return { ...f, value: '' };
+      return Object.fromEntries(Object.entries(f).map(([k, v]) => [k, isDate(k) ? '' : v]));
     });
   }
-  if (isObject(fields) && 'Date' in fields) return { ...fields, Date: '' };
+  if (isObject(fields)) return Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, isDate(k) ? '' : v]));
   return fields;
 }
 

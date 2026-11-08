@@ -23,8 +23,15 @@ AVDFILE="$LAB_HOME/logs/emulator.avd"
 RECFILE="$LAB_HOME/logs/emulator.rec"
 REMOTE_REC=/sdcard/rivqen-p2-rec.mp4
 
+# The pid file is on the lab volume and survives a reboot: a pid counts only while it still is an
+# emulator process (pid reuse must never make stop kill another process).
 running() {
-  [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null
+  [ -f "$PIDFILE" ] || return 1
+  pid="$(cat "$PIDFILE")"
+  case "$(ps -p "$pid" -o comm= 2>/dev/null)" in
+    *emulator* | *qemu-system*) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 # Print the processes that listen on the console port or the adb port of the emulator.

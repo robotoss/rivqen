@@ -8,10 +8,11 @@ import { HostError, isRunId, stableStringify } from "./util.mjs";
 const SAFE = /^[A-Za-z0-9.-]{1,64}$/;
 
 export class RunLogs {
-  /** @param {{ now?: () => number, maxRuns?: number, maxEvents?: number }} [opts] */
-  constructor({ now = () => performance.now(), maxRuns = 16, maxEvents = 100_000 } = {}) {
+  /** @param {{ now?: () => number, maxRuns?: number, maxEvents?: number, maxAgeMs?: number }} [opts] */
+  constructor({ now = () => performance.now(), maxRuns = 16, maxEvents = 100_000, maxAgeMs = 15 * 60 * 1000 } = {}) {
     this.now = now;
     this.maxRuns = maxRuns;
+    this.maxAgeMs = maxAgeMs;
     this.maxEvents = maxEvents;
     /** @type {Map<string, { t0: number, seq: number, lines: string[] }>} */
     this.runs = new Map();
@@ -37,6 +38,11 @@ export class RunLogs {
     if (!kOk) throw new HostError(400, "BAD_RUN_START", "k must be a small integer or a safe token");
     const run = m.run;
     if (this.runs.has(run)) throw new HostError(409, "RUN_EXISTS", "run already started");
+    if (this.runs.size >= this.maxRuns) {
+      // A run script that died before /run/end leaves its run open: drop runs older than maxAgeMs.
+      const t = this.now();
+      for (const [id, r] of this.runs) if (t - r.t0 > this.maxAgeMs) this.runs.delete(id);
+    }
     if (this.runs.size >= this.maxRuns) throw new HostError(429, "TOO_MANY_RUNS", "too many open runs");
     this.runs.set(run, { t0: this.now(), seq: 0, lines: [] });
     return run;

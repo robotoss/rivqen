@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-08T10:17:17.323Z",
+  "platform": "android",
+  "api": "37",
+  "prototype": "A-STREAM",
+  "tools": {
+    "agp": "9.1.1",
+    "kotlin": "2.4.20",
+    "gradle": "9.5.1",
+    "okhttp": "5.5.1",
+    "androidx_webkit": "1.18.0",
+    "compile_sdk": "37",
+    "target_sdk": "37",
+    "jdk": "openjdk version \"25.0.3\" 2026-04-21",
+    "node": "v26.8.2"
+  },
+  "device": {
+    "model": "sdk_gphone64_arm64",
+    "emulator_avd": "rivqen-p2-api37",
+    "image": "google_apis arm64-v8a"
+  },
+  "os": {
+    "release": "17",
+    "sdk_int": 37,
+    "build": "google/sdk_gphone64_arm64/emu64a:17/CE2A.260420.051.A3/16571990:userdebug/dev-keys"
+  },
+  "webview": {
+    "package": "com.google.android.webview",
+    "version": "145.0.7632.218",
+    "version_code": 763221804
+  },
+  "user_agent": "Mozilla/5.0 (Linux; Android 10; K; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/145.0.0.0 Mobile Safari/537.36",
+  "features": {
+    "DOCUMENT_START_SCRIPT": true,
+    "WEB_MESSAGE_LISTENER": true
+  },
+  "app_commit": "4b172af2576b65b95d1d22c58a85b0033edb1ca0",
+  "app_tree_dirty": false
+}

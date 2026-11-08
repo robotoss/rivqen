@@ -1,0 +1,25 @@
+[
+  {
+    "id": "CAP-F-01",
+    "platform": "ffi",
+    "title": "Fixture capability",
+    "prototype": "FIXTURE",
+    "questions": ["Q-06"],
+    "sprint": "S1",
+    "results": [
+      {
+        "os": "host-jvm",
+        "verdict": "supported",
+        "condition": null,
+        "runs": [
+          "evidence/spikes/wp-04/ffi/CAP-F-01/host-jvm/run-1.jsonl",
+          "evidence/spikes/wp-04/ffi/CAP-F-01/host-jvm/run-2.jsonl",
+          "evidence/spikes/wp-04/ffi/CAP-F-01/host-jvm/run-3.jsonl"
+        ],
+        "metrics": "evidence/spikes/wp-04/ffi/CAP-F-01/host-jvm/run-1.metrics.json",
+        "recording": "evidence/recordings/wp-04/CAP-F-01-ffi-host-jvm.mp4"
+      }
+    ],
+    "verdict": "supported"
+  }
+]

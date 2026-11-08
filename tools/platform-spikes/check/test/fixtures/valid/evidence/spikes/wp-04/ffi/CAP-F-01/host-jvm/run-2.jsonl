@@ -1,0 +1,8 @@
+{"capability":"CAP-F-01","device":"fixture","ev":"run.start","k":1,"os":"host-jvm","platform":"ffi","prototype":"FIXTURE","run":"CAP-F-01-ffi-host-jvm-1","seq":0,"src":"script","t":9,"webview":null}
+{"ev":"app.probe","name":"chunk","seq":0,"src":"app","t":14,"value":0}
+{"bytes":60,"ev":"app.stream.read","seq":1,"src":"app","t":15}
+{"bytes":40,"ev":"app.stream.read","seq":2,"src":"app","t":16}
+{"ev":"app.probe","name":"metric.first_paint","seq":3,"src":"app","t":16,"value":14.0}
+{"ev":"host.request","fields":["Host","Rq-Lab-Run"],"method":"GET","seq":0,"site":"A","src":"host","t":10,"target":"/s/stream?run=CAP-F-01-ffi-host-jvm-1"}
+{"ev":"host.response","fields":[{"name":"Content-Type","value":"text/html"},{"name":"Date","value":"Tue, 02 Jan 2026 00:00:00 GMT"}],"seq":1,"src":"host","status":200,"t":11}
+{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":39}

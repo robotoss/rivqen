@@ -1,0 +1,102 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: The Rivqen Authors
+
+// Run log rules of CONTRACT.md sections 5 and 8: shape of each line, and the normalized form that runs are compared by.
+
+/** Known event names and the source each one is written by (CONTRACT section 5). */
+export const SOURCE_OF = new Map([
+  ['run.start', 'script'],
+  ['run.end', 'script'],
+  ['app.fetch.start', 'app'],
+  ['app.fetch.head', 'app'],
+  ['app.fetch.end', 'app'],
+  ['app.intercept', 'app'],
+  ['app.stream.read', 'app'],
+  ['app.nav', 'app'],
+  ['app.probe', 'app'],
+  ['app.ssl_error', 'app'],
+  ['app.error', 'app'],
+  ['host.request', 'host'],
+  ['host.response', 'host'],
+  ['host.chunk', 'host'],
+  ['host.beacon', 'host'],
+  ['host.gate_timeout', 'host'],
+  ['host.cut', 'host'],
+]);
+
+const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+/** Parses one JSON Lines run log. Returns the parsed objects and one message per problem. */
+export function parseRunLog(text) {
+  const problems = [];
+  const events = [];
+  if (text.includes('\r')) problems.push('contains CR (the log is LF only)');
+  const lines = text.split('\n');
+  if (lines.at(-1) === '') lines.pop();
+  if (lines.length === 0) problems.push('empty log');
+  lines.forEach((line, index) => {
+    const n = index + 1;
+    let obj;
+    try {
+      obj = JSON.parse(line);
+    } catch {
+      problems.push(`line ${n}: not JSON`);
+      return;
+    }
+    if (!isObject(obj)) {
+      problems.push(`line ${n}: not a JSON object`);
+      return;
+    }
+    events.push(obj);
+    const keys = Object.keys(obj);
+    const sorted = [...keys].sort();
+    if (keys.some((k, i) => k !== sorted[i])) problems.push(`line ${n}: keys are not sorted`);
+    if (!SOURCE_OF.has(obj.ev)) {
+      problems.push(`line ${n}: unknown ev ${JSON.stringify(obj.ev)}`);
+    } else if (obj.src !== SOURCE_OF.get(obj.ev)) {
+      problems.push(`line ${n}: src ${JSON.stringify(obj.src)} is wrong for ${obj.ev}`);
+    }
+    if (!Number.isInteger(obj.seq) || obj.seq < 0) problems.push(`line ${n}: seq must be an integer >= 0`);
+    if (obj.ev === 'app.stream.read' && (!Number.isInteger(obj.bytes) || obj.bytes < 0)) {
+      problems.push(`line ${n}: app.stream.read bytes must be an integer >= 0`);
+    }
+  });
+  if (events.length > 0 && events[0].ev !== 'run.start') problems.push('the first event is not run.start');
+  if (events.length > 0 && events.at(-1).ev !== 'run.end') problems.push('the last event is not run.end');
+  return { events, problems };
+}
+
+/** Blanks the value of a field named Date inside a `fields` member (CONTRACT section 8). */
+function blankDates(fields) {
+  if (Array.isArray(fields)) {
+    return fields.map((f) => {
+      if (Array.isArray(f) && f[0] === 'Date') return [f[0], ''];
+      if (!isObject(f)) return f;
+      if (f.name === 'Date') return { ...f, value: '' };
+      if ('Date' in f) return { ...f, Date: '' };
+      return f;
+    });
+  }
+  if (isObject(fields) && 'Date' in fields) return { ...fields, Date: '' };
+  return fields;
+}
+
+/**
+ * Normalized form of a run (CONTRACT section 8). `t` and `seq` are removed, `app.stream.read` events are
+ * replaced by the sum of their bytes, `metric.*` probes are removed and `Date` values are blanked.
+ * The events are grouped by source; each group keeps its order.
+ */
+export function normalizeRunLog(events) {
+  const out = { app: [], host: [], script: [], stream_bytes: 0 };
+  for (const e of events) {
+    if (e.ev === 'app.stream.read') {
+      out.stream_bytes += e.bytes;
+      continue;
+    }
+    if (e.ev === 'app.probe' && typeof e.name === 'string' && e.name.startsWith('metric.')) continue;
+    const { t, seq, ...rest } = e;
+    if ('fields' in rest) rest.fields = blankDates(rest.fields);
+    out[e.src].push(rest);
+  }
+  return out;
+}

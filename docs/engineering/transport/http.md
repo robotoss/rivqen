@@ -31,6 +31,10 @@ A request made by `URLSession` or OkHttp does not share the WebView's HTTP cache
 
 `HttpOnly`, `Secure` and `SameSite` attributes must be kept exactly. A test suite (WP-04) verifies each attribute on each platform.
 
+<Badge type="tip" text="FACT" /> WP-04 S2 (Android API 37 and 29, iOS 27.0, 26.5 and 18.5): the native path does not apply `SameSite`. `CookieManager.getCookie(url)` with OkHttp, and `URLSession` with `HTTPCookieStorage`, send `SameSite=Strict` and `Lax` cookies whatever started the navigation. The WebView and WebKit send `Strict` on a load that the app starts and on a navigation from a page of the same site, but not on a navigation that a page of another site starts ([Android §5](/engineering/platforms/android#_5-platform-facts-and-research-items), [iOS §3](/engineering/platforms/ios#_3-prototypes-wp-04)).
+
+<Badge type="info" text="DESIGN" /> **Native early fetch and SameSite (H-131).** The SDK makes a native early fetch with the cookies of the store only in two cases. (1) The app starts the load (`open`, `loadUrl`, `load(URLRequest)`), and the web view is blank or shows a page of the same origin as the target. (2) A page starts the navigation, and the SDK has proof that the page and the target are the same site: the origin of the `Referer` field on Android, the origin of `WKNavigationAction.sourceFrame` on iOS. Without that proof (no `Referer`, an unknown source frame, another site) there is no early fetch: the web view loads normally. "Same site" uses the registrable domain from a Public Suffix List; that list is a new dependency (MPL-2.0 data, a license exception) that WP-10 and WP-11 bring to the human before they add it. Until then, the SDK treats a page-started navigation as same site only when the origins are equal.
+
 ## 3. Redirects
 
 1. Follow redirects in the native stack only for the same origin, by default.

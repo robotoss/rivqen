@@ -78,12 +78,14 @@ class SpikeActivity : Activity() {
     private var finishedUrl: String? = null
     private var location: String? = null
     private var domProbes = false
-    private var mainFrameFailed = false
+    private var sslCancelled = false
+    private var mainFrameError = false
+    private var errorPageStarted = false
     private var rangeDone = false
     private var cutStep = CutStep.FIRST_LOAD
 
     /** Steps of [Scenario.CUT_RANGE]. */
-    private enum class CutStep { FIRST_LOAD, FIRST_SNAPSHOT, FALLBACK_LOAD, FALLBACK_SNAPSHOT, RANGE }
+    private enum class CutStep { FIRST_LOAD, FIRST_SNAPSHOT, FALLBACK_LOAD, FALLBACK_SNAPSHOT, RANGE_PAGE, RANGE }
     private var firstPaint = false
     private var graceStarted = false
     private var fetchResult: EarlyFetch.Result? = null
@@ -294,6 +296,12 @@ class SpikeActivity : Activity() {
 
         override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
             nav("start", url, null)
+            // After onReceivedError and onPageFinished of a failed main frame, the WebView commits
+            // its error page (one more onPageStarted, API 29 and 37). Only then the load settled.
+            if (mainFrameError && finishedUrl != null) {
+                errorPageStarted = true
+                maybeDone()
+            }
         }
 
         override fun onPageCommitVisible(view: WebView, url: String) {
@@ -312,7 +320,7 @@ class SpikeActivity : Activity() {
         override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
             if (request.isForMainFrame) {
                 nav("fail", request.url.toString(), "${error.errorCode} ${error.description}")
-                mainFrameFailed = true
+                mainFrameError = true
                 maybeDone()
             }
         }
@@ -326,7 +334,7 @@ class SpikeActivity : Activity() {
             // A-03: always cancel; never proceed.
             handler.cancel()
             log.emit("app.ssl_error", mapOf("url" to error.url, "primary_error" to error.primaryError, "decision" to "cancel"))
-            mainFrameFailed = true
+            sslCancelled = true
             maybeDone()
         }
 
@@ -387,12 +395,24 @@ class SpikeActivity : Activity() {
 
     /**
      * The current load settled: a document finished and its DOMContentLoaded probes arrived (the
-     * finished page is the page of the `location` probe), or the main frame failed and a page
-     * finished.
+     * finished page is the page of the `location` probe); or a TLS error was cancelled and a page
+     * finished (no error-page commit follows, API 29 and 37); or the main frame failed
+     * (`onReceivedError`), a page finished and the error page started.
      */
     private fun settled(): Boolean {
         val finished = finishedUrl ?: return false
-        return (domProbes && location == finished) || mainFrameFailed
+        return (domProbes && location == finished) || sslCancelled || (mainFrameError && errorPageStarted)
+    }
+
+    /** Clears the state of the current load before the next `loadUrl`. */
+    private fun nextLoad() {
+        loads += 1
+        finishedUrl = null
+        location = null
+        domProbes = false
+        sslCancelled = false
+        mainFrameError = false
+        errorPageStarted = false
     }
 
     private fun maybeDone() {
@@ -409,12 +429,14 @@ class SpikeActivity : Activity() {
     /**
      * The steps of [Scenario.CUT_RANGE] after a settled load; true when all steps are done.
      * Step 1 (CL-33): the delivered stream ended with an error, so `loadUrl` runs once more; the
-     * rule passes that request (`claimed`) and the WebView loads it itself. Step 2: on the page of
-     * that load, [RANGE_SCRIPT] runs; it ends with the probe `range.done`.
+     * rule passes that request (`claimed`) and the WebView loads it itself. Each of the two loads
+     * ends with `native.doc`. Step 2: a normal page of the spike host (`/s/echo?html=1`; the rule
+     * passes it, `url`), because an error page has no probe channel. Step 3: on that page,
+     * [RANGE_SCRIPT] runs; it ends with the probe `range.done`.
      */
     private fun cutRangeSteps(): Boolean {
         val wv = webView ?: return true
-        val url = params?.url?.toString() ?: return true
+        val p = params ?: return true
         when (cutStep) {
             CutStep.FIRST_LOAD -> {
                 if (outcome?.kind != BridgePipe.Kind.ERROR) return true
@@ -422,26 +444,31 @@ class SpikeActivity : Activity() {
                 snapshot(wv) {
                     log.emit("app.probe", mapOf("name" to "native.step", "value" to "fallback-load"))
                     cutStep = CutStep.FALLBACK_LOAD
-                    loads = 2
-                    finishedUrl = null
-                    location = null
-                    domProbes = false
-                    mainFrameFailed = false
-                    wv.loadUrl(url)
+                    nextLoad()
+                    wv.loadUrl(p.url.toString())
                 }
                 return false
             }
             CutStep.FALLBACK_LOAD -> {
                 cutStep = CutStep.FALLBACK_SNAPSHOT
                 snapshot(wv) {
-                    cutStep = CutStep.RANGE
-                    log.emit("app.probe", mapOf("name" to "native.step", "value" to "range-fetch"))
-                    wv.evaluateJavascript(RANGE_SCRIPT) { result ->
-                        if (result != "\"started\"") {
-                            log.emit("app.error", mapOf("error" to "range script did not start: ${result?.take(MAX_SCRIPT_RESULT)}"))
-                            rangeDone = true
-                            maybeDone()
-                        }
+                    log.emit("app.probe", mapOf("name" to "native.step", "value" to "range-page"))
+                    cutStep = CutStep.RANGE_PAGE
+                    nextLoad()
+                    val page = p.url.newBuilder().encodedPath("/s/echo").query(null)
+                        .addQueryParameter("html", "1").addQueryParameter("run", p.run).build()
+                    wv.loadUrl(page.toString())
+                }
+                return false
+            }
+            CutStep.RANGE_PAGE -> {
+                cutStep = CutStep.RANGE
+                log.emit("app.probe", mapOf("name" to "native.step", "value" to "range-fetch"))
+                wv.evaluateJavascript(RANGE_SCRIPT) { result ->
+                    if (result != "\"started\"") {
+                        log.emit("app.error", mapOf("error" to "range script did not start: ${result?.take(MAX_SCRIPT_RESULT)}"))
+                        rangeDone = true
+                        maybeDone()
                     }
                 }
                 return false
@@ -467,7 +494,8 @@ class SpikeActivity : Activity() {
         if (done) return
         val missing = listOfNotNull(
             "page finish".takeIf { finishedUrl == null },
-            "DOMContentLoaded probes".takeIf { !domProbes && !mainFrameFailed },
+            "DOMContentLoaded probes".takeIf { !domProbes && !sslCancelled && !mainFrameError },
+            "error page start".takeIf { mainFrameError && !errorPageStarted },
             "fetch end".takeIf { fetchResult == null },
             "stream outcome".takeIf { outcome == null },
             "range probes".takeIf { params?.scenario == Scenario.CUT_RANGE && !rangeDone },

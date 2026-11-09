@@ -61,3 +61,6 @@ tools/upstream-lab/ios/build/
 
 # Upstream server lab work directory (start.sh default WORK)
 tools/upstream-lab/.work/
+
+# Root Cargo workspace (WP-05, DL-142)
+/target/

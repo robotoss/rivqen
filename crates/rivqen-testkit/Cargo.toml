@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+[package]
+name = "rivqen-testkit"
+description = "Rivqen core test kit: fixture loader and ledger, fake clock, fake transport (tests only)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+rivqen-model.workspace = true
+# Tests and the testkit only (H-138).
+serde_json.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+
+[lints]
+workspace = true

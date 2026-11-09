@@ -49,6 +49,7 @@ Rivqen is an independent, clean-room re-implementation of the ideas of Tencent V
 | Markup parsers agree on all fixtures | `node tools/rqp-markup/diff.mjs` |
 | Protocol fixtures current and passing | `node tools/rqp-protocol/gen.mjs --check` then `node tools/rqp-protocol/check.mjs` |
 | Protocol reference tests | `cd tools/rqp-protocol && npm test` |
+| Rust core workspace (unsafe check, fmt, clippy, tests, cargo-deny) | `sh tools/fulltest.sh core` |
 | Full repository run (as CI) | `sh tools/fulltest.sh [group ...]` |
 | Legacy fixtures current | `node tools/legacy-fixtures/gen.mjs --check` (malformed: add `--dir fixtures/malformed/legacy`) |
 | Conformance over HTTP (harness + runner) | `node server/conformance/e2e/run.mjs --module <handle module> --suite rqp\|legacy [--profile <name>]` |

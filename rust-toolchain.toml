@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+#
+# The Rust toolchain of the core workspace: the same pin as the reference server,
+# the markup candidate and the FFI benchmark (DL-084, DL-142). Change all pins
+# together, on purpose, not through CI.
+[toolchain]
+channel = "1.99.0"
+profile = "minimal"
+components = ["clippy", "rustfmt"]

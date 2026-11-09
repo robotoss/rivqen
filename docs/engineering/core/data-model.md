@@ -19,6 +19,23 @@ This page defines the main data structures of the Rust core. Adapters, fixtures 
 | `Revision` | string, ≤ 128 bytes | Version of a page or template | legacy: opaque, derived from `etag` / `template-tag`. RQP: content-derived `t1.…` / `r1.…`, 46 ASCII characters ([manifest and patch §1.3](/engineering/protocol/manifest-patch#_1-3-hashes-and-revisions)); compared byte for byte. |
 | `V1SessionKey` | string | Upstream-compatible session/cache id derived from the URL | Only in legacy mode. See [legacy client behavior](/engineering/protocol/legacy-client). |
 
+### 1.1 Implemented names (`rivqen-model`)
+
+<Badge type="tip" text="FACT" /> These types exist in `crates/rivqen-model` with unit and property tests. A constructor that refuses its input returns `ValueError { kind, reason }` (static texts, never the input).
+
+| Type | Module | Constructor | `Debug` |
+|---|---|---|---|
+| `SessionId` | `ids` | `from_bytes([u8; 16])` (the core has no random source; the adapter draws the bytes) | `SessionId(` first 8 hex characters `)` |
+| `Generation`, `RequestId` | `ids` | `new(u64)`, `FIRST`, `next() -> Option<Self>` (checked) | number |
+| `PartitionId` | `ids` | `from_bytes([u8; 32])` | `PartitionId(` first 8 hex characters `)` |
+| `Revision` | `ids` | `new(&str) -> Result` | text (not secret) |
+| `Secret<T>` | `safe` | `new(T)`, `expose()`, `into_inner()`; no `Display` | `Secret(<redacted>)` |
+| `SafeUrl` | `safe` | `new(Scheme, host, port, path)`, `with_query(Secret<String>)` | `Display` and `Debug`: origin and path only |
+| `PageBytes` | `safe` | `new(Vec<u8>)` | `PageBytes(len=N)` (no hash: the crate has no dependency) |
+| `ResourceLimits` | `limits` | `Default`: the initial values of [resource limits §1](/engineering/core/resource-limits#_1-limits-table). `memoryL1Bytes` and `diskL2Bytes` use the lowest device class (8 MiB, 64 MiB) | fields |
+
+DESIGN: a `Revision` is 1 to 128 bytes of visible ASCII (0x21 to 0x7E: no space, no control byte). The RQP forms (`t1.…`, `r1.…`) and the legacy lowercase hex values fit. `SafeUrl` host is `[A-Za-z0-9.-]` (lowercased); the path starts with `/` and has no control byte, space, `?` or `#`; the query is kept as a `Secret`. `NavigationId`, `CacheKey` and `V1SessionKey` are not in S1.
+
 ## 2. Request context
 
 `RequestContext` is the input to `open`. The adapter builds it. The core never reads platform state directly.

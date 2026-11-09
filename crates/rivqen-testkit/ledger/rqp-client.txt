@@ -67,7 +67,7 @@ FX-RQ-C15-NO-RQP-SERVER WP-08 normal request-fields
 FX-RQ-C16-AT-LIMIT WP-06 markup request-fields,binding
 FX-RQ-C16-TOO-LARGE WP-05 size request-fields
 FX-RQ-C17-DELTA-DUPLICATE-MEMBER WP-05 patch request-fields
-FX-RQ-C17-MANIFEST-DUPLICATE-MEMBER WP-06 markup request-fields
+FX-RQ-C17-MANIFEST-DUPLICATE-MEMBER WP-06 locator request-fields
 FX-RQ-C18-FALLBACK-DELTA WP-08 patch request-fields
 FX-RQ-C19-POLICY-CHANGED WP-05 integrity request-fields
 FX-RQ-C19-POLICY-SAME WP-06 markup request-fields,binding
@@ -119,8 +119,8 @@ FX-RQ-C25-USERINFO-FINAL WP-08 normal request-fields
 FX-RQ-C25-USERINFO-FINAL-304 WP-08 normal request-fields
 FX-RQ-C25-USERINFO-FINAL-DELTA WP-08 patch request-fields
 FX-RQ-C25-USERINFO-REQUEST WP-08 normal -
-FX-RQ-C26-BOM-CHARSET-ISO-2022-JP WP-06 locator request-fields
-FX-RQ-C26-BOM-NO-CHARSET WP-06 locator request-fields
+FX-RQ-C26-BOM-CHARSET-ISO-2022-JP WP-06 markup request-fields
+FX-RQ-C26-BOM-NO-CHARSET WP-06 markup request-fields
 FX-RQ-C26-CHARSET-ISO-2022-JP WP-05 charset request-fields
 FX-RQ-C26-NO-CHARSET WP-05 charset request-fields
 FX-RQ-C26-TWO-CONTENT-TYPE-LINES WP-05 charset request-fields
@@ -140,7 +140,7 @@ FX-RQ-C27-PUBLIC-SNAPSHOT-NOT-ENABLED-DELTA WP-08 patch request-fields
 FX-RQ-C28-LD-JSON-DELTA WP-06 markup request-fields,binding
 FX-RQ-C28-LD-JSON-MARKUP-TEXT WP-06 markup request-fields,binding
 FX-RQ-C29-MANIFEST-DEFAULT-MEMBERS WP-06 markup request-fields
-FX-RQ-C29-MANIFEST-OLD-FORM WP-06 markup request-fields
+FX-RQ-C29-MANIFEST-OLD-FORM WP-06 locator request-fields
 FX-RQ-C30-DELTA-DUPLICATE-BLOCK WP-05 patch request-fields
 FX-RQ-C30-DELTA-EMPTY-OPERATIONS WP-05 patch request-fields
 FX-RQ-C30-DELTA-NEXT-REVISION WP-05 patch request-fields

@@ -22,7 +22,7 @@ Each sprint has one record. The record is the shared memory of the work: the pla
 | [WP-01-S2](/engineering/plan/sprints/WP-01-S2) | WP-01 | Client part of the legacy fixtures: client model, profiles, catalog rows, function fixtures | Closed (merged #8) |
 | [WP-04-S1](/engineering/plan/sprints/WP-04-S1) | WP-04 | Platform lab and first verdicts: spike host, evidence catalog, iOS IOS-P1/P2/P3, Android stream and early fetch, FFI benchmark on the host | Closed |
 | [WP-04-S2](/engineering/plan/sprints/WP-04-S2) | WP-04 | All versions of H-128 and the remaining capabilities: redirect, TLS error, cookies, partial response, CSP, Service Worker, history; FFI on the emulator and the simulator (Q-06); URL serialization (Q-24) | Closed |
-| [WP-04-S3](/engineering/plan/sprints/WP-04-S3) | WP-04 | ADRs, parity matrices, recordings, gate G2 | Closed (MR pending) |
+| [WP-04-S3](/engineering/plan/sprints/WP-04-S3) | WP-04 | ADRs, parity matrices, recordings, gate G2 | Closed (merged #9) |
 
 ## How to add a record
 

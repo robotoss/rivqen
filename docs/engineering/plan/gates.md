@@ -12,7 +12,7 @@ A gate is a go/no-go decision at the end of a phase. Work cannot pass a gate unt
 |---|---|---|
 | **G0** ✅ passed | P0 | Upstream pinned at a fixed SHA; license inventory done; behavioral audit covers headers, markers, hashing, `cache-offline`, result codes, FSM, cache; divergences listed |
 | **G1** ✅ passed (human, 2026-11-02, H-116; evidence [WP-03 S1](/engineering/plan/sprints/WP-03-S1) §4) | P1 | RQP and legacy golden suites exist **before** SDK code; reference server passes both; each server legacy divergence (D-01…D-13) has a profile and fixture; the client divergences follow before G3 (H-110) |
-| **G2** ✅ passed (human, 2026-11-09, H-137; in force when the WP-04 merge request is merged; evidence [WP-04 S3](/engineering/plan/sprints/WP-04-S3) §4) | P2 | Android and iOS feasibility proven with public APIs; incompatibilities documented publicly (ADRs) |
+| **G2** ✅ passed (human, 2026-11-09, H-137; evidence [WP-04 S3](/engineering/plan/sprints/WP-04-S3) §4) | P2 | Android and iOS feasibility proven with public APIs; incompatibilities documented publicly (ADRs) |
 | **G3** | P3 | Core passes unit, property, fuzz and golden tests; `unsafe` reviewed; resource limits enforced |
 | **G4-S / G4-M / G4-W** | P4 / P5 / P6 | Servers, mobile SDKs and web SDK pass the same conformance set and their E2E suites |
 | **G5** | Beta | `SECURITY-001` passed; benchmarks vs B0 published; signed release pipeline ready |

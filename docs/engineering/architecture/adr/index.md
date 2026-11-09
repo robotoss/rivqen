@@ -2,7 +2,7 @@
 
 An **ADR** records one important decision: the context, the options, the decision and its consequences. ADRs make decisions traceable. A decision in an ADR can change only through a new ADR that supersedes it.
 
-**Status:** <Badge type="info" text="DESIGN" /> ADR-005 and ADR-006 are **Accepted** (human, 2026-10-09); ADR-002 and ADR-003 are **Accepted** (human, 2026-11-09, H-135, H-136; in force when the WP-04 merge request is merged). All other ADRs below are **Proposed**. Each has an owner work package and the evidence that will close it. ADR-002 and ADR-003 go to the human at G2 (H-127); ADR-002, ADR-003, ADR-009 and ADR-014 have their own files (WP-04 S3).
+**Status:** <Badge type="info" text="DESIGN" /> ADR-005 and ADR-006 are **Accepted** (human, 2026-10-09); ADR-002 and ADR-003 are **Accepted** (human, 2026-11-09, H-135, H-136). All other ADRs below are **Proposed**. Each has an owner work package and the evidence that will close it. ADR-002 and ADR-003 go to the human at G2 (H-127); ADR-002, ADR-003, ADR-009 and ADR-014 have their own files (WP-04 S3).
 
 [[toc]]
 

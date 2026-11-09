@@ -1,6 +1,6 @@
 # ADR-002: FFI technology
 
-- Status: **Proposed — the human decides at G2** (H-127)
+- Status: **Accepted** (human, 2026-11-09, H-135; in force when the WP-04 merge request is merged)
 - Date: 2026-11-08
 - Owner: Architect, WP-04 (data); WP-09 implements
 - Reviewers: architecture lead, security reviewer, Android SDK owner (WP-10), iOS SDK owner (WP-11)
@@ -103,7 +103,7 @@ Cost of the recommendation: two mechanisms to maintain and review, and JNA in th
 
 ## Decision
 
-Not decided. **The human decides at G2** (H-127): the option, and the copy budget of the recommendation.
+<Badge type="info" text="DESIGN" /> **Accepted (H-135, human, 2026-11-09): option 3, the hybrid, with the copy budget.** UniFFI carries the control plane; a narrow C ABI byte channel (JNI on Android, a C header in Swift) carries document bytes in both directions; each document byte is copied at most once per direction across the boundary, visible in `ffi_copy_bytes`. WP-09 verifies it on a device and in the direction into the core.
 
 ## Consequences
 

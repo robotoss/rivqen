@@ -2,7 +2,7 @@
 
 An **ADR** records one important decision: the context, the options, the decision and its consequences. ADRs make decisions traceable. A decision in an ADR can change only through a new ADR that supersedes it.
 
-**Status:** <Badge type="info" text="DESIGN" /> ADR-005 and ADR-006 are **Accepted** (human, 2026-10-09). All other ADRs below are **Proposed**. Each has an owner work package and the evidence that will close it. ADR-002 and ADR-003 go to the human at G2 (H-127); ADR-002, ADR-003, ADR-009 and ADR-014 have their own files (WP-04 S3).
+**Status:** <Badge type="info" text="DESIGN" /> ADR-005 and ADR-006 are **Accepted** (human, 2026-10-09); ADR-002 and ADR-003 are **Accepted** (human, 2026-11-09, H-135, H-136; in force when the WP-04 merge request is merged). All other ADRs below are **Proposed**. Each has an owner work package and the evidence that will close it. ADR-002 and ADR-003 go to the human at G2 (H-127); ADR-002, ADR-003, ADR-009 and ADR-014 have their own files (WP-04 S3).
 
 [[toc]]
 
@@ -53,8 +53,8 @@ An **ADR** records one important decision: the context, the options, the decisio
 | ADR | Title | Owner WP | Blocks | Recommended option |
 |---|---|---|---|---|
 | [ADR-001](#adr-001) | Rust core boundaries | WP-05 | Core design | Pure logic core; adapters own I/O |
-| [ADR-002](/engineering/architecture/adr/ADR-002-ffi-technology) | FFI technology: UniFFI vs C ABI | WP-04 (data; human decides at G2, H-127); WP-09 implements | Bindings | Hybrid: UniFFI control plane, C ABI byte channel; at most one copy per byte per direction |
-| [ADR-003](/engineering/architecture/adr/ADR-003-ios-navigation) | iOS navigation strategy | WP-04 (data; human decides at G2, H-127); WP-11 implements | iOS SDK | One path per page class: IOS-P1 public and offline, IOS-P2 authenticated, IOS-P3 own content; no https streaming |
+| [ADR-002](/engineering/architecture/adr/ADR-002-ffi-technology) | FFI technology: UniFFI vs C ABI | WP-04 (accepted at G2, H-135); WP-09 implements | Bindings | **Accepted:** hybrid — UniFFI control plane, C ABI byte channel; at most one copy per byte per direction |
+| [ADR-003](/engineering/architecture/adr/ADR-003-ios-navigation) | iOS navigation strategy | WP-04 (accepted at G2, H-136); WP-11 implements | iOS SDK | **Accepted:** one path per page class — IOS-P1 public and offline, IOS-P2 authenticated, IOS-P3 own content; no https streaming |
 | [ADR-004](#adr-004) | Cache storage format | WP-07 | Cache | Files for bodies + SQLite for metadata, atomic rename |
 | [ADR-005](#adr-005) | Legacy protocol exact semantics and profiles | WP-01, WP-02 | legacy compatibility | **Accepted:** "Rivqen canonical" profile + `legacy-java`, `legacy-node`, `legacy-php` profiles |
 | [ADR-006](#adr-006) | RQP wire schema and markup | WP-17 | RQP | **Accepted:** `data-rq-block` attributes, inline manifest, `Rq-*` Structured Field headers, base64url SHA-256 |
@@ -79,12 +79,12 @@ An **ADR** records one important decision: the context, the options, the decisio
 
 ## ADR-002: FFI technology {#adr-002}
 
-**Status: Proposed — the human decides at G2** (H-127). File: [ADR-002](/engineering/architecture/adr/ADR-002-ffi-technology). Recommendation: UniFFI for the control plane and a narrow C ABI byte channel for document bytes. Measured (indicative, H-129): UniFFI takes 21 to 108 times the time of the C ABI and copies each byte 3 or 4 times, against once. Verification: WP-09 on a device, both directions.
+**Status: Accepted** (human, 2026-11-09, H-135). File: [ADR-002](/engineering/architecture/adr/ADR-002-ffi-technology). Recommendation: UniFFI for the control plane and a narrow C ABI byte channel for document bytes. Measured (indicative, H-129): UniFFI takes 21 to 108 times the time of the C ABI and copies each byte 3 or 4 times, against once. Verification: WP-09 on a device, both directions.
 
 ## ADR-003: iOS navigation strategy {#adr-003}
 
 - **Context.** iOS has no public API to intercept standard HTTPS requests of `WKWebView` like Android's `shouldInterceptRequest`. `WKURLSchemeHandler` works only for custom schemes. <Badge type="tip" text="FACT" />
-- **Status: Proposed — the human decides at G2** (H-127). File: [ADR-003](/engineering/architecture/adr/ADR-003-ios-navigation). Recommendation: IOS-P1 (`loadSimulatedRequest`) for public pages and offline snapshots, IOS-P2 (real navigation) for authenticated pages, IOS-P3 (own scheme) only for own local content; never `loadHTMLString` for a site's page. `https` main-document streaming is impossible with public API (CAP-I-07). Evidence: [iOS parity matrix](/engineering/platforms/ios-parity-matrix).
+- **Status: Accepted** (human, 2026-11-09, H-136). File: [ADR-003](/engineering/architecture/adr/ADR-003-ios-navigation). Recommendation: IOS-P1 (`loadSimulatedRequest`) for public pages and offline snapshots, IOS-P2 (real navigation) for authenticated pages, IOS-P3 (own scheme) only for own local content; never `loadHTMLString` for a site's page. `https` main-document streaming is impossible with public API (CAP-I-07). Evidence: [iOS parity matrix](/engineering/platforms/ios-parity-matrix).
 
 ## ADR-004: Cache storage format {#adr-004}
 

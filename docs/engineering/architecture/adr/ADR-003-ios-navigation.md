@@ -1,6 +1,6 @@
 # ADR-003: iOS navigation strategy
 
-- Status: **Proposed — the human decides at G2** (H-127)
+- Status: **Accepted** (human, 2026-11-09, H-136; in force when the WP-04 merge request is merged)
 - Date: 2026-11-08
 - Owner: Architect, WP-04 (data); WP-11 implements
 - Reviewers: architecture lead, security reviewer, iOS SDK owner (WP-11)
@@ -125,7 +125,7 @@ Cost of the recommendation: three load paths; the cold path of authenticated pag
 
 ## Decision
 
-Not decided. **The human decides at G2** (H-127).
+<Badge type="info" text="DESIGN" /> **Accepted (H-136, human, 2026-11-09): one path per page class.** Public pages and offline snapshots: IOS-P1 (`loadSimulatedRequest` after the early fetch). Authenticated pages: IOS-P2 (the cached snapshot first, then a real navigation) until WP-11 measures redirects and authentication challenges on iOS. Own local content: IOS-P3. Never `loadHTMLString` for a page of a site. `https` main-document streaming is impossible with public API.
 
 ## Consequences
 

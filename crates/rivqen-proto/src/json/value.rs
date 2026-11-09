@@ -12,7 +12,13 @@ use crate::types::MAX_JSON_DEPTH;
 ///
 /// Numbers are integers (rule 4). Object members keep the order of the text
 /// and have unique names (rule 2). [`fmt::Debug`] writes the shape and the
-/// lengths of strings and names, never their text.
+/// lengths of strings and names, never their text, and the kind of a number
+/// or boolean, never its value (block content is never logged).
+///
+/// A tree from [`parse`] or [`parse_with_max_depth`] is at most
+/// [`MAX_JSON_DEPTH`] levels deep. Drop, clone, comparison and
+/// [`fmt::Debug`] of a tree recurse once per level, so this bound keeps their
+/// call stack small.
 #[derive(Clone, PartialEq, Eq)]
 pub enum Value {
     /// `null`
@@ -42,8 +48,8 @@ impl fmt::Debug for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Null => f.write_str("Null"),
-            Self::Bool(b) => write!(f, "Bool({b})"),
-            Self::Integer(n) => write!(f, "Integer({n})"),
+            Self::Bool(_) => f.write_str("Bool(..)"),
+            Self::Integer(_) => f.write_str("Integer(..)"),
             Self::String(s) => write!(f, "String(len={})", s.len()),
             Self::Array(items) => f.debug_list().entries(items).finish(),
             Self::Object(members) => f.debug_list().entries(members).finish(),
@@ -76,12 +82,18 @@ enum Open {
 
 /// Parse a JSON text with the depth limit `max_depth` (rule 5).
 ///
+/// The limit is `min(max_depth, MAX_JSON_DEPTH)`: a larger `max_depth` has no
+/// effect. The read is iterative, but drop, clone, comparison and
+/// [`fmt::Debug`] of a [`Value`] recurse once per level, so a deeper tree
+/// could overflow the call stack. Use [`Reader`] for a deeper stream: it
+/// builds no tree.
+///
 /// # Errors
 ///
 /// A [`JsonError`] for the first break of a rule of manifest-patch section 3.2
 /// or of RFC 8259.
 pub fn parse_with_max_depth(text: &[u8], max_depth: usize) -> Result<Value, JsonError> {
-    let mut reader = Reader::new(text, max_depth)?;
+    let mut reader = Reader::new(text, max_depth.min(MAX_JSON_DEPTH))?;
     let mut stack: Vec<Open> = Vec::new();
     loop {
         // The reader gives a complete value before it gives `None`.

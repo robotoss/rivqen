@@ -210,6 +210,34 @@ fn json_depth_limit_is_a_parameter() {
 }
 
 #[test]
+fn json_tree_depth_is_capped() {
+    // A tree deeper than MAX_JSON_DEPTH would make drop, clone, comparison and
+    // Debug recurse once per level: the builder caps any larger limit.
+    let at_cap = nested(16, "[", "]", "");
+    let tree = parse_with_max_depth(at_cap.as_bytes(), usize::MAX).unwrap();
+    assert_eq!(tree.clone(), tree);
+    assert_eq!(
+        parse_with_max_depth(nested(17, "[", "]", "").as_bytes(), usize::MAX)
+            .unwrap_err()
+            .rule(),
+        JsonRule::Depth
+    );
+    assert_eq!(
+        parse_with_max_depth(nested(17, r#"{"a":"#, "}", "0").as_bytes(), 17)
+            .unwrap_err()
+            .rule(),
+        JsonRule::Depth
+    );
+    // 100 000 levels fail at level 17, without a crash.
+    let deep = nested(100_000, "[", "]", "");
+    let e = parse_with_max_depth(deep.as_bytes(), usize::MAX).unwrap_err();
+    assert_eq!((e.rule(), e.offset()), (JsonRule::Depth, 16));
+    // The streaming reader builds no tree and keeps a larger limit.
+    let mut reader = Reader::new(deep.as_bytes(), usize::MAX).unwrap();
+    while reader.next_event().unwrap().is_some() {}
+}
+
+#[test]
 fn json_rejects_broken_syntax() {
     for text in [
         "",
@@ -342,6 +370,35 @@ fn json_errors_and_debug_hold_no_content() {
     while let Some(e) = reader.next_event().unwrap() {
         assert!(!format!("{e:?} {reader:?}").contains(marker));
     }
+    // Numbers and booleans can be block content too: Debug gives the kind only.
+    let number = "987654321";
+    let text = format!(r#"{{"a":[{number},true,false,null]}}"#);
+    let v = ok(&text);
+    let shown = format!("{v:?}");
+    assert!(!shown.contains(number), "{shown}");
+    assert!(
+        !shown.contains("true") && !shown.contains("false"),
+        "{shown}"
+    );
+    assert_eq!(
+        shown,
+        "[Member(name len=1, [Integer(..), Bool(..), Bool(..), Null])]"
+    );
+    let mut reader = Reader::new(text.as_bytes(), 16).unwrap();
+    let mut events = Vec::new();
+    while let Some(e) = reader.next_event().unwrap() {
+        events.push(format!("{e:?}"));
+    }
+    let shown = events.join(" ");
+    assert!(!shown.contains(number), "{shown}");
+    assert!(
+        !shown.contains("true") && !shown.contains("false"),
+        "{shown}"
+    );
+    assert_eq!(
+        shown,
+        "StartObject Name(len=1) StartArray Integer(..) Bool(..) Bool(..) Null EndArray EndObject"
+    );
 }
 
 #[test]

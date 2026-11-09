@@ -10,8 +10,10 @@
 //! (steps 3 to 6: the operation checks against the snapshot and the next page
 //! revision R′).
 //!
-//! All functions are pure: no I/O, no clock, no logging. Work and memory are
-//! linear in the size of the inputs. The functions never decode a revision:
+//! All functions are pure: no I/O, no clock, no logging. Memory is linear in
+//! the size of the inputs. Work is linear too, except the operation check of
+//! [`next_blocks`]: `O((b + o) log b)` for `b` snapshot blocks and `o`
+//! operations. The functions never decode a revision:
 //! they write the text forms of section 1.3, rule 1.
 //!
 //! - [`policy_line`]: the line `PL\t` S `\n`, or no bytes (H-55).
@@ -20,6 +22,7 @@
 //! - [`binding`]: section 2.2 (H-107, H-108).
 
 use core::fmt;
+use std::collections::BTreeMap;
 
 use rivqen_integrity::{
     Binding, PageRevision, TemplateRevision, b64u_encode, sha256, sha256_parts,
@@ -27,8 +30,8 @@ use rivqen_integrity::{
 use rivqen_model::error::{ErrorCode, HasErrorCode};
 
 use crate::types::{
-    BlockDescriptor, Limits, MAX_BLOCK_BYTES, MAX_BLOCK_ID_BYTES, Mode, Nonce, PatchOp, Policy,
-    SnapshotMeta,
+    BlockDescriptor, BlockId, Limits, MAX_BLOCK_BYTES, MAX_BLOCK_ID_BYTES, Mode, Nonce, PatchOp,
+    Policy, SnapshotMeta,
 };
 
 /// First line of the page revision preimage P (section 1.3, step 4).
@@ -242,41 +245,59 @@ impl HasErrorCode for OperationError {
 
 /// Section 2.4, step 3: the rules 1 to 3 of section 2.3 for the whole list.
 ///
-/// One pass over the snapshot blocks for a valid list; an error case scans the
-/// blocks once more to name the rule.
+/// Returns the snapshot block index of each operation, in operation order.
+/// The index of an operation is the FIRST block of the snapshot with its
+/// block id, and the indices must grow strictly (the reference client,
+/// `tools/rqp-protocol/src/client.mjs` `operationIndices`). This rule also
+/// holds for a snapshot with two blocks of the same id: only the first one
+/// can take an operation. For each operation in order, the first failed rule
+/// gives the error: no block with the id ([`OperationError::UnknownBlock`]),
+/// the same index as the previous operation
+/// ([`OperationError::DuplicateBlock`]), a smaller index
+/// ([`OperationError::NotDocumentOrder`]).
+///
+/// Work: `O((b + o) log b)` for `b` blocks and `o` operations (one ordered
+/// map of the first index of each id); memory: the map and `o` indices.
 fn check_operations(
     blocks: &[BlockDescriptor],
     operations: &[PatchOp],
-) -> Result<(), OperationError> {
+) -> Result<Vec<usize>, OperationError> {
     if operations.is_empty() {
         return Err(OperationError::NoOperations);
     }
-    let mut rest = blocks.iter();
-    let mut previous = None;
-    for (index, operation) in operations.iter().enumerate() {
-        let id = &operation.block_id;
-        if rest.any(|block| block.id == *id) {
-            previous = Some(id);
-            continue;
-        }
-        return Err(if previous == Some(id) {
-            OperationError::DuplicateBlock { index }
-        } else if blocks.iter().any(|block| block.id == *id) {
-            OperationError::NotDocumentOrder { index }
-        } else {
-            OperationError::UnknownBlock { index }
-        });
+    let mut first_index: BTreeMap<&BlockId, usize> = BTreeMap::new();
+    for (position, block) in blocks.iter().enumerate() {
+        first_index.entry(&block.id).or_insert(position);
     }
-    Ok(())
+    let mut indices = Vec::with_capacity(operations.len());
+    let mut previous: Option<usize> = None;
+    for (index, operation) in operations.iter().enumerate() {
+        let Some(&position) = first_index.get(&operation.block_id) else {
+            return Err(OperationError::UnknownBlock { index });
+        };
+        match previous {
+            Some(last) if position == last => {
+                return Err(OperationError::DuplicateBlock { index });
+            }
+            Some(last) if position < last => {
+                return Err(OperationError::NotDocumentOrder { index });
+            }
+            _ => {}
+        }
+        previous = Some(position);
+        indices.push(position);
+    }
+    Ok(indices)
 }
 
 /// The block list L′ of section 2.4, steps 3 to 5.
 ///
 /// Checks the operation list against the snapshot (step 3: each block id
 /// names a block of the snapshot, at most one operation per block, document
-/// order), then the content size of each operation (step 4), and returns a
-/// copy of the snapshot blocks in which each block with an operation has the
-/// hash of its new content, `SHA-256(UTF-8(content))`. Every other block keeps
+/// order; an operation applies to the first snapshot block of its id), then
+/// the content size of each operation (step 4), and returns a copy of the
+/// snapshot blocks in which each block with an operation has the hash of its
+/// new content, `SHA-256(UTF-8(content))`. Every other block keeps
 /// its full hash from the snapshot, never a prefix (H-44); every block keeps
 /// its format.
 ///
@@ -287,17 +308,16 @@ pub fn next_blocks(
     snapshot: &SnapshotMeta,
     operations: &[PatchOp],
 ) -> Result<Vec<BlockDescriptor>, OperationError> {
-    check_operations(&snapshot.blocks, operations)?;
+    let indices = check_operations(&snapshot.blocks, operations)?;
     let mut next = snapshot.blocks.clone();
-    let mut rest = next.iter_mut();
-    for (index, operation) in operations.iter().enumerate() {
+    for (index, (operation, position)) in operations.iter().zip(indices).enumerate() {
         if operation.content.len() > MAX_BLOCK_BYTES {
             return Err(OperationError::ContentTooLarge { index });
         }
-        // check_operations proved that the block follows the previous one; the
+        // check_operations took the position from the snapshot blocks; the
         // error keeps the function total if that ever changes.
-        let block = rest
-            .find(|block| block.id == operation.block_id)
+        let block = next
+            .get_mut(position)
             .ok_or(OperationError::UnknownBlock { index })?;
         block.sha256 = sha256(operation.content.as_bytes());
     }

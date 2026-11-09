@@ -15,7 +15,7 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | [WP-02](#wp-02) | Golden fixtures and conformance runner | P1 | Protocol designer | WP-01 | L | **Done (merged 2026-10-31, #5)** ([S1](/engineering/plan/sprints/WP-02-S1), [S2](/engineering/plan/sprints/WP-02-S2) closed) |
 | [WP-03](#wp-03) | Rust reference server (oracle) | P1 | Backend engineer | WP-02 | M | **Done (merged 2026-11-04, #6)** ([S1](/engineering/plan/sprints/WP-03-S1), [S2](/engineering/plan/sprints/WP-03-S2) closed; gate G1 passed) |
 | [WP-04](#wp-04) | Platform feasibility spikes | P2 | Android + iOS engineers | WP-01 | L | **Done (merged 2026-11-09, #9)** — [S1](/engineering/plan/sprints/WP-04-S1), [S2](/engineering/plan/sprints/WP-04-S2), [S3](/engineering/plan/sprints/WP-04-S3) closed (2026-11-09); gate **G2** passed (H-137); ADR-002 and ADR-003 accepted (H-135, H-136) |
-| [WP-05](#wp-05) | Core workspace, data model, errors, testkit | P3 | Rust core engineer | WP-02 | M | Planned |
+| [WP-05](#wp-05) | Core workspace, data model, errors, testkit | P3 | Rust core engineer | WP-02 | M | **In progress** — [S1](/engineering/plan/sprints/WP-05-S1) planned |
 | [WP-06](#wp-06) | Template engine | P3 | Rust core engineer | WP-05 | M | Planned |
 | [WP-07](#wp-07) | Cache engine | P3 | Rust core engineer | WP-05 | L | Planned |
 | [WP-08](#wp-08) | Session state machine and diff | P3 | Rust core engineer | WP-06, WP-07 | L | Planned |

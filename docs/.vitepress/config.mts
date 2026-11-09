@@ -258,6 +258,7 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'WP-04 S1', link: '/engineering/plan/sprints/WP-04-S1' },
       { text: 'WP-04 S2', link: '/engineering/plan/sprints/WP-04-S2' },
       { text: 'WP-04 S3', link: '/engineering/plan/sprints/WP-04-S3' },
+      { text: 'WP-05 S1', link: '/engineering/plan/sprints/WP-05-S1' },
       { text: 'Sprint record template', link: '/engineering/plan/sprints/template' }
     ]
   }

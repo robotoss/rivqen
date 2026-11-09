@@ -15,7 +15,7 @@
 | Server demo (RQP reference behavior) | ✅ Runs — see [Examples: Server](/guide/examples/server) |
 | Conformance runner (tests a server by URL) | ✅ Available — see [Server conformance](/engineering/server/conformance); RQP and legacy suites |
 | Golden fixtures | ✅ RQP markup: 362 fixtures (`fixtures/rqp/markup/`); RQP protocol: 294 fixtures (141 server, 153 client; `fixtures/rqp/protocol/`); legacy: 171 server fixtures (59 canonical, 112 for the upstream profiles), 164 client fixtures (104 canonical, 60 `legacy-android` overrides) and function fixtures in three profiles (`fixtures/legacy/`); malformed: 22 cases and 54 seeds (`fixtures/malformed/`) |
-| Rust core | ⏳ Planned (P3) |
+| Rust core | ⏳ In progress — WP-05 ([S1](/engineering/plan/sprints/WP-05-S1)): workspace, model, errors, protocol codecs, testkit |
 | Android and iOS SDKs | ⏳ Planned (P5) |
 | Web and React SDK | ⏳ Planned (P6) |
 | Node.js, Java, PHP server SDKs | ⏳ Planned (P4) |

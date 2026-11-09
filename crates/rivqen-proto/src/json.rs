@@ -17,7 +17,10 @@
 //!    is far below it.
 //! 5. Nesting depth at most `max_depth` ([`JsonRule::Depth`]); the top-level
 //!    object or array has depth 1. The default is
-//!    [`MAX_JSON_DEPTH`](crate::types::MAX_JSON_DEPTH) (16).
+//!    [`MAX_JSON_DEPTH`](crate::types::MAX_JSON_DEPTH) (16). The tree
+//!    builder [`parse_with_max_depth`] never accepts more than this default:
+//!    a deeper [`Value`] tree would make its drop, clone, comparison and
+//!    `Debug` recurse too deep. Only [`Reader`] takes a larger limit.
 //!
 //! Every other break of RFC 8259 is [`JsonRule::Syntax`].
 //!
@@ -26,7 +29,8 @@
 //! - [`Reader`] gives the text as a stream of [`Event`]s. It keeps no value
 //!   tree, so a consumer that checks a schema while it reads (the manifest and
 //!   the envelope) needs memory only for the values it keeps.
-//! - [`parse`] builds a [`Value`] tree with the reader.
+//! - [`parse`] builds a [`Value`] tree with the reader, at most
+//!   [`MAX_JSON_DEPTH`](crate::types::MAX_JSON_DEPTH) levels deep.
 //!
 //! Bounds: the reader never panics and never recurses. Its work is linear in
 //! the input, except the duplicate check: each member name goes into an

@@ -167,6 +167,46 @@ fn compute_next_revision_rejects_a_duplicate_block() {
 }
 
 #[test]
+fn compute_duplicate_snapshot_ids_follow_the_oracle() {
+    // The reference client (client.mjs operationIndices) maps each operation
+    // to the FIRST block of its id and needs strictly growing indices. With
+    // two blocks `a`, the second operation on `a` has the same index as the
+    // first: DuplicateBlock (PATCH_INVALID).
+    let snapshot = SnapshotMeta {
+        blocks: vec![
+            block("a", BlockFormat::Html, "1"),
+            block("a", BlockFormat::Html, "2"),
+        ],
+        ..kat_snapshot()
+    };
+    let result = next_page_revision(&snapshot, &[op("a", "x"), op("a", "y")]);
+    assert_eq!(result, Err(OperationError::DuplicateBlock { index: 1 }));
+    assert_eq!(result.unwrap_err().code(), ErrorCode::PatchInvalid);
+    // One operation changes the first block only.
+    let next = next_blocks(&snapshot, &[op("a", "x")]).unwrap();
+    assert_eq!(
+        next,
+        vec![
+            block("a", BlockFormat::Html, "x"),
+            snapshot.blocks[1].clone()
+        ]
+    );
+    // [a, b, a]: an operation on b, then on a, goes back to index 0.
+    let snapshot = SnapshotMeta {
+        blocks: vec![
+            block("a", BlockFormat::Html, "1"),
+            block("b", BlockFormat::Html, "2"),
+            block("a", BlockFormat::Html, "3"),
+        ],
+        ..kat_snapshot()
+    };
+    assert_eq!(
+        next_blocks(&snapshot, &[op("b", "x"), op("a", "y")]),
+        Err(OperationError::NotDocumentOrder { index: 1 })
+    );
+}
+
+#[test]
 fn compute_next_revision_rejects_another_order() {
     assert_eq!(
         next_page_revision(&kat_snapshot(), &[op("price", "1"), op("title", "1")]),
@@ -391,6 +431,25 @@ proptest! {
         ids in prop::collection::vec(0_usize..30, 0..10),
     ) {
         let snapshot = snapshot_of(&blocks);
+        let operations: Vec<PatchOp> = ids
+            .iter()
+            .map(|i| PatchOp { block_id: BlockId::parse(&format!("b{i}")).unwrap(), content: format!("c{i}") })
+            .collect();
+        prop_assert_eq!(next_page_revision(&snapshot, &operations), model(&snapshot, &operations));
+    }
+
+    /// A snapshot with repeated block ids gives the result of the model (the
+    /// first block of an id, as the reference client).
+    #[test]
+    fn compute_next_revision_with_repeated_ids_matches_the_model(
+        blocks in blocks_strategy(),
+        names in prop::collection::vec(0_usize..4, 24),
+        ids in prop::collection::vec(0_usize..5, 0..8),
+    ) {
+        let mut snapshot = snapshot_of(&blocks);
+        for (block, name) in snapshot.blocks.iter_mut().zip(&names) {
+            block.id = BlockId::parse(&format!("b{name}")).unwrap();
+        }
         let operations: Vec<PatchOp> = ids
             .iter()
             .map(|i| PatchOp { block_id: BlockId::parse(&format!("b{i}")).unwrap(), content: format!("c{i}") })

@@ -73,9 +73,13 @@ impl Sha256Digest {
     }
 }
 
+/// Writes the first 8 base64url characters only, e.g.
+/// `Sha256Digest(0Aqua3-_…)`: the full hash of a block would allow
+/// guess-testing of its content in logs (H-60).
 impl fmt::Debug for Sha256Digest {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Sha256Digest({})", self.to_b64u())
+        let text = self.to_b64u();
+        write!(f, "Sha256Digest({}…)", text.get(..8).unwrap_or_default())
     }
 }
 
@@ -165,9 +169,18 @@ macro_rules! identifier {
             }
         }
 
+        /// Writes the prefix and the first 8 base64url characters only (as
+        /// [`Sha256Digest`]); [`fmt::Display`] writes the full wire text.
         impl fmt::Debug for $name {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "{}({self})", stringify!($name))
+                let text = self.0.to_b64u();
+                write!(
+                    f,
+                    "{}({}{}…)",
+                    stringify!($name),
+                    Self::PREFIX,
+                    text.get(..8).unwrap_or_default()
+                )
             }
         }
     };

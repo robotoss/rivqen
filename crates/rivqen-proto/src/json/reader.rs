@@ -14,8 +14,9 @@ use super::{JsonError, JsonRule};
 /// One step of a JSON text.
 ///
 /// Strings and member names are decoded (escapes resolved). They borrow from
-/// the text when it has no escape. [`fmt::Debug`] writes their length only:
-/// they can be page content.
+/// the text when it has no escape. [`fmt::Debug`] writes their length only,
+/// and the kind of a number or boolean without its value: they can be page
+/// content.
 #[derive(Clone, PartialEq, Eq)]
 pub enum Event<'a> {
     /// `{`
@@ -47,8 +48,8 @@ impl fmt::Debug for Event<'_> {
             Self::EndArray => f.write_str("EndArray"),
             Self::Name(name) => write!(f, "Name(len={})", name.len()),
             Self::String(text) => write!(f, "String(len={})", text.len()),
-            Self::Integer(n) => write!(f, "Integer({n})"),
-            Self::Bool(b) => write!(f, "Bool({b})"),
+            Self::Integer(_) => f.write_str("Integer(..)"),
+            Self::Bool(_) => f.write_str("Bool(..)"),
             Self::Null => f.write_str("Null"),
         }
     }

@@ -57,6 +57,17 @@ The session uses a delta, a `304` or a full document only when the final request
 
 Bounds: steps 4 to 6 read at most `maxPatchBytes` bytes; steps 9 to 11 do work linear in the envelope size and in the number of blocks (≤ 256): at most 256 SHA-256 computations over at most `maxPatchBytes` content bytes in total, one over a page revision preimage of at most about 30 KiB, and one over a binding preimage of the URL length plus 125 bytes; step 12 is one markup pass over at most `maxDocumentBytes` and one copy of at most that size; step 13 reads only the patched content, which step 12 has already tokenized.
 
+**Checks in `rivqen-proto` (WP-05 S1).** <Badge type="info" text="DESIGN" /> These checks of the table above are in the crate `rivqen-proto`; the session calls them in this order:
+
+| # | Function | What it does |
+|---|---|---|
+| 4 | `envelope::parse_envelope` | Compares the body length with `envelope_limit(maxPatchBytes, limits)` before the JSON parse; a larger body is `PATCH_TOO_LARGE` |
+| 5 | `json::Reader` (in `parse_envelope`) | Reads the body once, without recursion, with the rules of [manifest and patch §3.2](/engineering/protocol/manifest-patch#_3-2-json-text-of-the-manifest-and-the-envelope); a break is `PATCH_INVALID` with the rule, never with body bytes |
+| 6 | `envelope::parse_envelope` | Checks the schema while it reads and stops at the first failure (also an unknown member or operation 257); it keeps only `binding` and at most 256 operations |
+| 10 | `envelope::check_content_bytes` | The size part: a `content` of more than `maxBlockBytes` UTF-8 bytes is `PATCH_TOO_LARGE`; the session calls it after check 9 |
+
+The manifest checks of [manifest and patch §1.8](/engineering/protocol/manifest-patch#_1-8-client-checks-of-the-manifest), items 1, 2 and 4, are `manifest::read_manifest` in the same crate.
+
 ## 4. Apply plan
 
 A validated patch becomes a `ValidatedPatch`. It contains:

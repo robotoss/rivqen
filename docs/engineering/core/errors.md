@@ -52,6 +52,23 @@ Rivqen errors are typed. Each error has a category, a stable code, and a **fallb
 4. The adapter behavior of a code has priority over the default of its category. Example: `PATCH_CONTENT_REJECTED` is a `SecurityViolation`, but the rejected content is never shown, so a normal load of the page from the network is safe (H-50).
 5. RQP has no generic `PROTOCOL_ERROR` code. A delta that the client did not ask for is an invalid patch (`PATCH_INVALID`).
 
+## 4. Implementation (`rivqen-model`)
+
+<Badge type="tip" text="FACT" /> `ErrorCode` (18 codes), `Category` and `FallbackHint` are in `rivqen_model::error`. `RivqenError { code, context, source }` and `Context` are in `rivqen_model::context`.
+
+- `Context` has only safe fields: `op`, `session`, `generation`, `request`, `bytes`, `state`.
+- `Display` writes the code and `op` only (`MANIFEST_INVALID in split_template`). `Debug` writes the code, the context and whether a cause exists. The cause (`Box<dyn Error + Send + Sync>`) is never printed; it is reachable through `Error::source`.
+- A test formats every public type with `{:?}` and `{}` with planted markers.
+- Reserved and notice codes (`PATCH_BASE_MISMATCH`, `TEMPLATE_MISMATCH`, `LEGACY_MODE_USED`, `SERVER_PASSTHROUGH`) are not in the enum.
+
+Code to hint table (checked by `model_error_catalog_matches_errors_md`):
+
+| Hint | Codes |
+|---|---|
+| `Stop` | `AUTH_PARTITION_CHANGED`, `TLS_ERROR` |
+| `RetryLater` | `TRANSPORT_DISCONNECTED` |
+| `NormalLoad` | all other 15 codes |
+
 ## Related
 
 - [Core API outcomes](/engineering/core/api#_3-outcomes)

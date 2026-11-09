@@ -31,10 +31,14 @@ A request made by `URLSession` or OkHttp does not share the WebView's HTTP cache
 
 `HttpOnly`, `Secure` and `SameSite` attributes must be kept exactly. A test suite (WP-04) verifies each attribute on each platform.
 
+<Badge type="tip" text="FACT" /> WP-04 S2 (Android API 37 and 29, iOS 27.0, 26.5 and 18.5): the native path does not apply `SameSite`. `CookieManager.getCookie(url)` with OkHttp, and `URLSession` with `HTTPCookieStorage`, send `SameSite=Strict` and `Lax` cookies whatever started the navigation. The WebView and WebKit send `Strict` on a load that the app starts and on a navigation from a page of the same site, but not on a navigation that a page of another site starts ([Android §5](/engineering/platforms/android#_5-platform-facts-and-research-items), [iOS §3](/engineering/platforms/ios#_3-prototypes-wp-04)).
+
+<Badge type="info" text="DESIGN" /> **Native early fetch and SameSite (H-131).** The SDK makes a native early fetch with the cookies of the store only in two cases. (1) The app starts the load (`open`, `loadUrl`, `load(URLRequest)`), and the web view is blank or shows a page of the same origin as the target. (2) A page starts the navigation, and the SDK has proof that the page and the target are the same site: the origin of the `Referer` field on Android, the origin of `WKNavigationAction.sourceFrame` on iOS. Without that proof (no `Referer`, an unknown source frame, another site) there is no early fetch: the web view loads normally. "Same site" means (H-132): the same origin, or origins that the app declares as one site in its configuration (for example `https://shop.example` and `https://www.shop.example`). The app can change that list without a new release (remote configuration). The SDK uses no Public Suffix List: a list inside the SDK gets old, and an old list can call two sites one site where the current WebView calls them two, which sends `Strict` cookies that the browser holds back. A domain that is not in the list yet only loses the early fetch.
+
 ## 3. Redirects
 
-1. Follow redirects in the native stack only for the same origin, by default.
-2. For a cross-origin redirect, stop and let the WebView do a normal navigation to the final URL.
+1. The native early fetch of a main document does not follow a redirect (DL-141). A 3xx stops it, and the WebView loads the URL itself and follows the redirect. <Badge type="tip" text="FACT" /> On Android `shouldInterceptRequest` answers only for the first URL, so a body that the native stack fetched after a redirect would appear under the first URL; a `WebResourceResponse` cannot carry a 3xx (CAP-A-04). On iOS a redirect gives a real navigation ([ADR-003](/engineering/architecture/adr/ADR-003-ios-navigation)).
+2. Subresource and API requests of the SDK may follow a same-origin redirect; for a cross-origin redirect they stop.
 3. Never forward `Authorization` or cookies to an unexpected origin.
 4. Record the final URL. The cache key uses the URL the user requested **and** the final URL is stored in metadata.
 

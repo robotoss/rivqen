@@ -1,0 +1,17 @@
+{
+  "app_commit": "96ebf3a57fe5",
+  "date": "2026-11-08",
+  "device_model": "iPhone 16 Pro",
+  "launch_env": "DYLD_FALLBACK_LIBRARY_PATH=<runtime root>/System/Cryptexes/OS/usr/lib/swift (WebKit bug 293831)",
+  "os": "18.5",
+  "os_build": "22F77",
+  "simulator_model": "iPhone17,1",
+  "tools": {
+    "swift": "Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1)",
+    "xcode": "Xcode 27.2 Build version 27B52"
+  },
+  "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+  "webkit_build": "8621.2.5.10.10",
+  "webkit_version": "8621",
+  "webview": null
+}

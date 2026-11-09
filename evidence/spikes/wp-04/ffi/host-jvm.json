@@ -1,0 +1,101 @@
+{
+  "target": "host-jvm",
+  "date": "2026-11-08",
+  "machine": "Apple M4 Pro",
+  "os": "macOS 26.6.2",
+  "toolchain": {
+    "gradle": "9.7.1",
+    "java": "21.0.11+10-LTS",
+    "jna": "5.19.1",
+    "kotlin": "2.4.20",
+    "rust": "1.99.0",
+    "uniffi": "0.32.2"
+  },
+  "indicative": true,
+  "cases": [
+    {
+      "path": "uniffi-kotlin",
+      "size": 1048576,
+      "chunk": 16384,
+      "docs": 1000,
+      "median_ns": 833745,
+      "p95_ns": 7155332,
+      "chunk_median_ns": 12708,
+      "copied_bytes": 3145728,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 2097152,
+      "rss_delta_kib": 377280,
+      "sha256_ok": true
+    },
+    {
+      "path": "uniffi-kotlin",
+      "size": 1048576,
+      "chunk": 65536,
+      "docs": 1000,
+      "median_ns": 475749,
+      "p95_ns": 3667626,
+      "chunk_median_ns": 29125,
+      "copied_bytes": 3145728,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 2097152,
+      "rss_delta_kib": 343664,
+      "sha256_ok": true
+    },
+    {
+      "path": "jni-direct",
+      "size": 1048576,
+      "chunk": 16384,
+      "docs": 1000,
+      "median_ns": 30582,
+      "p95_ns": 106244,
+      "chunk_median_ns": 459,
+      "copied_bytes": 1048576,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 0,
+      "rss_delta_kib": 2704,
+      "sha256_ok": true
+    },
+    {
+      "path": "jni-direct",
+      "size": 1048576,
+      "chunk": 65536,
+      "docs": 1000,
+      "median_ns": 27459,
+      "p95_ns": 73541,
+      "chunk_median_ns": 1667,
+      "copied_bytes": 1048576,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 0,
+      "rss_delta_kib": 1632,
+      "sha256_ok": true
+    },
+    {
+      "path": "jni-bytearray",
+      "size": 1048576,
+      "chunk": 16384,
+      "docs": 1000,
+      "median_ns": 21210,
+      "p95_ns": 74794,
+      "chunk_median_ns": 333,
+      "copied_bytes": 1048576,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 0,
+      "rss_delta_kib": 1344,
+      "sha256_ok": true
+    },
+    {
+      "path": "jni-bytearray",
+      "size": 1048576,
+      "chunk": 65536,
+      "docs": 1000,
+      "median_ns": 22585,
+      "p95_ns": 47624,
+      "chunk_median_ns": 1416,
+      "copied_bytes": 1048576,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 0,
+      "rss_delta_kib": 544,
+      "sha256_ok": true
+    }
+  ]
+}

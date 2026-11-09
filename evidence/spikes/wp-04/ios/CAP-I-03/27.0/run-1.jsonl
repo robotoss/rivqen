@@ -1,0 +1,31 @@
+{"capability":"CAP-I-03","device":"iPhone 16 Pro","ev":"run.start","k":1,"os":"27.0","platform":"ios","prototype":"IOS-P1","run":"CAP-I-03-ios-27.0-1","seq":0,"src":"script","t":0,"webview":null}
+{"ev":"app.fetch.start","seq":0,"src":"app","t":6,"url":"https://localhost:18443/s/cookie/set?run=CAP-I-03-ios-27.0-1&name=rq-native&value=n1"}
+{"ev":"app.fetch.head","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"230","content-type":"text/html; charset=utf-8","keep-alive":"timeout=5","set-cookie":"rq-native=n1; Path=/"},"seq":1,"src":"app","status":200,"t":27,"url":"https://localhost:18443/s/cookie/set?run=CAP-I-03-ios-27.0-1&name=rq-native&value=n1"}
+{"bytes":230,"complete":true,"ev":"app.fetch.end","seq":2,"src":"app","t":28,"url":"https://localhost:18443/s/cookie/set?run=CAP-I-03-ios-27.0-1&name=rq-native&value=n1"}
+{"ev":"app.probe","name":"native.webview","seq":3,"src":"app","t":155,"value":"created"}
+{"ev":"app.probe","name":"native.simulated_response","seq":4,"src":"app","t":155,"value":{"encoding":"utf-8","mime":"text/html"}}
+{"error":null,"ev":"app.nav","kind":"start","seq":5,"src":"app","t":850,"url":"https://localhost:18443/s/cookie/set?run=CAP-I-03-ios-27.0-1&name=rq-native&value=n1"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":6,"src":"app","t":852,"url":"https://localhost:18443/s/cookie/set?run=CAP-I-03-ios-27.0-1&name=rq-native&value=n1"}
+{"ev":"app.probe","name":"metric.commit","seq":7,"src":"app","t":852,"value":696.947709}
+{"ev":"app.probe","name":"location","seq":8,"src":"app","t":853,"value":"https://localhost:18443/s/cookie/set?run=CAP-I-03-ios-27.0-1&name=rq-native&value=n1"}
+{"ev":"app.probe","name":"origin","seq":9,"src":"app","t":853,"value":"https://localhost:18443"}
+{"ev":"app.probe","name":"cookie","seq":10,"src":"app","t":856,"value":""}
+{"error":null,"ev":"app.nav","kind":"finish","seq":11,"src":"app","t":857,"url":"https://localhost:18443/s/cookie/set?run=CAP-I-03-ios-27.0-1&name=rq-native&value=n1"}
+{"ev":"app.probe","name":"cookie","seq":12,"src":"app","t":884,"value":""}
+{"ev":"app.probe","name":"webview.cookie_set","seq":13,"src":"app","t":884,"value":200}
+{"ev":"app.probe","name":"cookie","seq":14,"src":"app","t":884,"value":"rq-js=j1"}
+{"ev":"app.probe","name":"echo","seq":15,"src":"app","t":884,"value":"{\"cookie\":\"rq-js=j1; rq-web=w1\",\"fields\":[\"accept\",\"accept-encoding\",\"accept-language\",\"connection\",\"cookie\",\"host\",\"priority\",\"referer\",\"sec-fetch-dest\",\"sec-fetch-mode\",\"sec-fetch-site\",\"user-agent\"],\"method\":\"GET\",\"site\":\"A\",\"target\":\"/s/echo?run=CAP-I-03-ios-27.0-1&tag=webview\"}"}
+{"ev":"app.probe","name":"native.wk_cookies","seq":16,"src":"app","t":884,"value":["rq-js@localhost","rq-web@localhost;HttpOnly"]}
+{"ev":"app.fetch.start","seq":17,"src":"app","t":884,"url":"https://localhost:18443/s/echo?run=CAP-I-03-ios-27.0-1&tag=native"}
+{"ev":"app.fetch.head","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"219","content-type":"application/json","keep-alive":"timeout=5"},"seq":18,"src":"app","status":200,"t":886,"url":"https://localhost:18443/s/echo?run=CAP-I-03-ios-27.0-1&tag=native"}
+{"bytes":219,"complete":true,"ev":"app.fetch.end","seq":19,"src":"app","t":886,"url":"https://localhost:18443/s/echo?run=CAP-I-03-ios-27.0-1&tag=native"}
+{"ev":"app.probe","name":"native.echo","seq":20,"src":"app","t":886,"value":"{\"cookie\":\"rq-native=n1\",\"fields\":[\"accept\",\"accept-encoding\",\"accept-language\",\"cache-control\",\"connection\",\"cookie\",\"host\",\"user-agent\"],\"method\":\"GET\",\"site\":\"A\",\"target\":\"/s/echo?run=CAP-I-03-ios-27.0-1&tag=native\"}"}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":0,"site":"A","src":"host","t":807,"target":"/s/cookie/set?run=CAP-I-03-ios-27.0-1&name=rq-native&value=n1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"230","content-type":"text/html; charset=utf-8","set-cookie":"rq-native=n1; Path=/"},"seq":1,"src":"host","status":200,"t":807}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":2,"site":"A","src":"host","t":1659,"target":"/s/cookie/set?run=CAP-I-03-ios-27.0-1&name=rq-web&value=w1&attrs=HttpOnly"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"230","content-type":"text/html; charset=utf-8","set-cookie":"rq-web=w1; Path=/; HttpOnly"},"seq":3,"src":"host","status":200,"t":1659}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","cookie","host","priority","referer","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":4,"site":"A","src":"host","t":1663,"target":"/s/echo?run=CAP-I-03-ios-27.0-1&tag=webview"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"283","content-type":"application/json"},"seq":5,"src":"host","status":200,"t":1663}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","cookie","host","user-agent"],"method":"GET","seq":6,"site":"A","src":"host","t":1666,"target":"/s/echo?run=CAP-I-03-ios-27.0-1&tag=native"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"219","content-type":"application/json"},"seq":7,"src":"host","status":200,"t":1666}
+{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":3298}

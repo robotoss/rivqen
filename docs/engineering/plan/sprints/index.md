@@ -19,7 +19,10 @@ Each sprint has one record. The record is the shared memory of the work: the pla
 | [WP-03-S1](/engineering/plan/sprints/WP-03-S1) | WP-03 | Rust reference server passes the RQP, legacy and malformed suites by URL (gate G1) | Closed |
 | [WP-03-S2](/engineering/plan/sprints/WP-03-S2) | WP-03 | Container image, site mode, hardening; JavaScript reference and fixtures for the open inputs | Closed |
 | [WP-01-S1](/engineering/plan/sprints/WP-01-S1) | WP-01 | Legacy client evidence: Q-02, client divergences, Android traces in Quick and Standard mode, iOS function runs | Closed (merged #7) |
-| [WP-01-S2](/engineering/plan/sprints/WP-01-S2) | WP-01 | Client part of the legacy fixtures: client model, profiles, catalog rows, function fixtures | Closed (2026-11-08; MR pending) |
+| [WP-01-S2](/engineering/plan/sprints/WP-01-S2) | WP-01 | Client part of the legacy fixtures: client model, profiles, catalog rows, function fixtures | Closed (merged #8) |
+| [WP-04-S1](/engineering/plan/sprints/WP-04-S1) | WP-04 | Platform lab and first verdicts: spike host, evidence catalog, iOS IOS-P1/P2/P3, Android stream and early fetch, FFI benchmark on the host | Closed |
+| [WP-04-S2](/engineering/plan/sprints/WP-04-S2) | WP-04 | All versions of H-128 and the remaining capabilities: redirect, TLS error, cookies, partial response, CSP, Service Worker, history; FFI on the emulator and the simulator (Q-06); URL serialization (Q-24) | Closed |
+| [WP-04-S3](/engineering/plan/sprints/WP-04-S3) | WP-04 | ADRs, parity matrices, recordings, gate G2 | Closed (MR pending) |
 
 ## How to add a record
 

@@ -1,0 +1,41 @@
+{"capability":"CAP-I-05","device":"iPhone 16 Pro","ev":"run.start","k":2,"os":"27.0","platform":"ios","prototype":"IOS-P3","run":"CAP-I-05-ios-27.0-2","seq":0,"src":"script","t":0,"webview":null}
+{"ev":"app.probe","name":"native.webview","seq":0,"src":"app","t":134,"value":"created"}
+{"error":null,"ev":"app.nav","kind":"start","seq":1,"src":"app","t":594,"url":"rqlab://localhost:18443/s/stream?run=CAP-I-05-ios-27.0-2&chunks=4&size=2048&gate=beacon&timeout=3000"}
+{"decision":"stream","ev":"app.intercept","fields":{"cache-control":"no-store","connection":"keep-alive","content-type":"text/html; charset=utf-8","keep-alive":"timeout=5","transfer-encoding":"Identity"},"main_frame":true,"method":"GET","seq":2,"src":"app","status":200,"t":617,"url":"rqlab://localhost:18443/s/stream?run=CAP-I-05-ios-27.0-2&chunks=4&size=2048&gate=beacon&timeout=3000"}
+{"bytes":2048,"ev":"app.stream.read","k":0,"seq":3,"src":"app","t":617}
+{"error":null,"ev":"app.nav","kind":"commit","seq":4,"src":"app","t":1600,"url":"rqlab://localhost:18443/s/stream?run=CAP-I-05-ios-27.0-2&chunks=4&size=2048&gate=beacon&timeout=3000"}
+{"ev":"app.probe","name":"metric.commit","seq":5,"src":"app","t":1600,"value":1465.5005}
+{"ev":"app.probe","name":"chunk","seq":6,"src":"app","t":1603,"value":0}
+{"decision":"stream","ev":"app.intercept","fields":{"cache-control":"no-store","connection":"keep-alive","keep-alive":"timeout=5"},"main_frame":false,"method":"GET","seq":7,"src":"app","status":204,"t":1630,"url":"rqlab://localhost:18443/s/beacon?run=CAP-I-05-ios-27.0-2&k=0"}
+{"bytes":2048,"ev":"app.stream.read","k":1,"seq":8,"src":"app","t":1630}
+{"ev":"app.probe","name":"chunk","seq":9,"src":"app","t":1638,"value":1}
+{"decision":"stream","ev":"app.intercept","fields":{"cache-control":"no-store","connection":"keep-alive","keep-alive":"timeout=5"},"main_frame":false,"method":"GET","seq":10,"src":"app","status":204,"t":1662,"url":"rqlab://localhost:18443/s/beacon?run=CAP-I-05-ios-27.0-2&k=1"}
+{"bytes":2048,"ev":"app.stream.read","k":2,"seq":11,"src":"app","t":1662}
+{"ev":"app.probe","name":"chunk","seq":12,"src":"app","t":1662,"value":2}
+{"decision":"stream","ev":"app.intercept","fields":{"cache-control":"no-store","connection":"keep-alive","keep-alive":"timeout=5"},"main_frame":false,"method":"GET","seq":13,"src":"app","status":204,"t":1683,"url":"rqlab://localhost:18443/s/beacon?run=CAP-I-05-ios-27.0-2&k=2"}
+{"bytes":2048,"ev":"app.stream.read","k":3,"seq":14,"src":"app","t":1684}
+{"ev":"app.probe","name":"chunk","seq":15,"src":"app","t":1684,"value":3}
+{"decision":"stream","ev":"app.intercept","fields":{"cache-control":"no-store","connection":"keep-alive","keep-alive":"timeout=5"},"main_frame":false,"method":"GET","seq":16,"src":"app","status":204,"t":1707,"url":"rqlab://localhost:18443/s/beacon?run=CAP-I-05-ios-27.0-2&k=3"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":17,"src":"app","t":1707,"url":"rqlab://localhost:18443/s/stream?run=CAP-I-05-ios-27.0-2&chunks=4&size=2048&gate=beacon&timeout=3000"}
+{"ev":"app.probe","name":"location","seq":18,"src":"app","t":1726,"value":"rqlab://localhost:18443/s/stream?run=CAP-I-05-ios-27.0-2&chunks=4&size=2048&gate=beacon&timeout=3000"}
+{"ev":"app.probe","name":"origin","seq":19,"src":"app","t":1726,"value":"rqlab://localhost:18443"}
+{"ev":"app.probe","name":"metric.first_paint","seq":20,"src":"app","t":1726,"value":1008}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":0,"site":"A","src":"host","t":1187,"target":"/s/stream?run=CAP-I-05-ios-27.0-2&chunks=4&size=2048&gate=beacon&timeout=3000"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-type":"text/html; charset=utf-8"},"seq":1,"src":"host","status":200,"t":1189}
+{"bytes":2048,"ev":"host.chunk","k":0,"seq":2,"src":"host","t":1189}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":3,"site":"A","src":"host","t":2202,"target":"/s/beacon?run=CAP-I-05-ios-27.0-2&k=0"}
+{"ev":"host.beacon","k":0,"seq":4,"src":"host","t":2202}
+{"ev":"host.response","fields":{"cache-control":"no-store"},"seq":5,"src":"host","status":204,"t":2202}
+{"bytes":2048,"ev":"host.chunk","k":1,"seq":6,"src":"host","t":2203}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":7,"site":"A","src":"host","t":2234,"target":"/s/beacon?run=CAP-I-05-ios-27.0-2&k=1"}
+{"ev":"host.beacon","k":1,"seq":8,"src":"host","t":2234}
+{"ev":"host.response","fields":{"cache-control":"no-store"},"seq":9,"src":"host","status":204,"t":2234}
+{"bytes":2048,"ev":"host.chunk","k":2,"seq":10,"src":"host","t":2235}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":11,"site":"A","src":"host","t":2256,"target":"/s/beacon?run=CAP-I-05-ios-27.0-2&k=2"}
+{"ev":"host.beacon","k":2,"seq":12,"src":"host","t":2256}
+{"ev":"host.response","fields":{"cache-control":"no-store"},"seq":13,"src":"host","status":204,"t":2256}
+{"bytes":2048,"ev":"host.chunk","k":3,"seq":14,"src":"host","t":2256}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":15,"site":"A","src":"host","t":2279,"target":"/s/beacon?run=CAP-I-05-ios-27.0-2&k=3"}
+{"ev":"host.beacon","k":3,"seq":16,"src":"host","t":2279}
+{"ev":"host.response","fields":{"cache-control":"no-store"},"seq":17,"src":"host","status":204,"t":2279}
+{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":4263}

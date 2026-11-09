@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- SPDX-FileCopyrightText: The Rivqen Authors -->
+<!-- Release: HTTPS only, system trust store only. The debug build replaces this file
+     (src/debug/res/xml) and adds the lab CA as a debug-overrides trust anchor. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

@@ -1,0 +1,27 @@
+{"capability":"CAP-A-04","device":"Android SDK built for arm64","ev":"run.start","k":1,"os":"29","platform":"android","prototype":"A-STREAM","run":"CAP-A-04-android-29-1","seq":0,"src":"script","t":0,"webview":"com.google.android.webview 91.0.4472.114"}
+{"ev":"app.fetch.start","seq":0,"src":"app","t":58,"url":"https://localhost:18443/s/redirect?run=CAP-A-04-android-29-1&n=1&code=302&to=%2Fs%2Fecho%3Fhtml%3D1%26run%3DCAP-A-04-android-29-1"}
+{"ev":"app.fetch.head","fields":[["Location","/s/echo?html=1&run=CAP-A-04-android-29-1"],["Content-Type","text/plain; charset=utf-8"],["Content-Length","9"],["Cache-Control","no-store"],["Date","Sun, 08 Nov 2026 14:10:18 GMT"],["Connection","keep-alive"],["Keep-Alive","timeout=5"]],"seq":1,"src":"app","status":302,"t":100,"url":"https://localhost:18443/s/redirect?run=CAP-A-04-android-29-1&n=1&code=302&to=%2Fs%2Fecho%3Fhtml%3D1%26run%3DCAP-A-04-android-29-1"}
+{"ev":"app.probe","name":"metric.webview_create","seq":2,"src":"app","t":201,"value":143}
+{"ev":"app.probe","name":"metric.load_call","seq":3,"src":"app","t":205,"value":147}
+{"ev":"app.probe","name":"metric.intercept","seq":4,"src":"app","t":229,"value":24}
+{"ev":"app.probe","name":"metric.head_wait","seq":5,"src":"app","t":229,"value":0}
+{"error":"WebResourceResponse refused status 302: java.lang.IllegalArgumentException: statusCode can't be in the [300, 399] range.","ev":"app.error","seq":6,"src":"app","t":230}
+{"decision":"pass","ev":"app.intercept","fields":[],"main_frame":true,"method":"GET","reason":"redirect-status","redirect":false,"seq":7,"src":"app","status":null,"t":230,"url":"https://localhost:18443/s/redirect?run=CAP-A-04-android-29-1&n=1&code=302&to=%2Fs%2Fecho%3Fhtml%3D1%26run%3DCAP-A-04-android-29-1"}
+{"ev":"app.probe","name":"metric.fetch_end","seq":8,"src":"app","t":231,"value":-105}
+{"error":null,"ev":"app.nav","kind":"redirect","seq":9,"src":"app","t":414,"url":"https://localhost:18443/s/echo?html=1&run=CAP-A-04-android-29-1"}
+{"error":null,"ev":"app.nav","kind":"start","seq":10,"src":"app","t":448,"url":"https://localhost:18443/s/echo?html=1&run=CAP-A-04-android-29-1"}
+{"ev":"app.probe","name":"metric.commit","seq":11,"src":"app","t":479,"value":273}
+{"error":null,"ev":"app.nav","kind":"finish","seq":12,"src":"app","t":480,"url":"https://localhost:18443/s/echo?html=1&run=CAP-A-04-android-29-1"}
+{"ev":"app.probe","name":"location","seq":13,"src":"app","t":484,"value":"https://localhost:18443/s/echo?html=1&run=CAP-A-04-android-29-1"}
+{"ev":"app.probe","name":"origin","seq":14,"src":"app","t":484,"value":"https://localhost:18443"}
+{"ev":"app.probe","name":"status","seq":15,"src":"app","t":484,"value":null}
+{"ev":"app.probe","name":"csp.inline","seq":16,"src":"app","t":485,"value":true}
+{"ev":"app.probe","name":"metric.first_paint","seq":17,"src":"app","t":527,"value":306}
+{"bytes":0,"complete":false,"ev":"app.fetch.end","seq":18,"src":"app","t":100,"url":"https://localhost:18443/s/redirect?run=CAP-A-04-android-29-1&n=1&code=302&to=%2Fs%2Fecho%3Fhtml%3D1%26run%3DCAP-A-04-android-29-1"}
+{"ev":"host.request","fields":["accept-encoding","connection","host","user-agent"],"method":"GET","seq":0,"site":"A","src":"host","t":360,"target":"/s/redirect?run=CAP-A-04-android-29-1&n=1&code=302&to=%2Fs%2Fecho%3Fhtml%3D1%26run%3DCAP-A-04-android-29-1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"9","content-type":"text/plain; charset=utf-8","location":"/s/echo?html=1&run=CAP-A-04-android-29-1"},"seq":1,"src":"host","status":302,"t":360}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","pragma","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","sec-fetch-user","upgrade-insecure-requests","user-agent","x-requested-with"],"method":"GET","seq":2,"site":"A","src":"host","t":657,"target":"/s/redirect?run=CAP-A-04-android-29-1&n=1&code=302&to=%2Fs%2Fecho%3Fhtml%3D1%26run%3DCAP-A-04-android-29-1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"9","content-type":"text/plain; charset=utf-8","location":"/s/echo?html=1&run=CAP-A-04-android-29-1"},"seq":3,"src":"host","status":302,"t":657}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","pragma","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","sec-fetch-user","upgrade-insecure-requests","user-agent","x-requested-with"],"method":"GET","seq":4,"site":"A","src":"host","t":683,"target":"/s/echo?html=1&run=CAP-A-04-android-29-1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"384","content-type":"text/html; charset=utf-8"},"seq":5,"src":"host","status":200,"t":683}
+{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":1284}

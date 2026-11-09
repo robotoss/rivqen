@@ -1,0 +1,42 @@
+{
+  "run": "CAP-A-05-android-29-3",
+  "url": "https://10.0.2.2:18444/s/echo?run=CAP-A-05-android-29-3&html=1",
+  "metrics": {
+    "metric.fetch_end": -49,
+    "metric.finish": 200,
+    "metric.head_wait": 0,
+    "metric.intercept": 21,
+    "metric.load_call": 114,
+    "metric.webview_create": 108
+  },
+  "fetch": {
+    "bytes": 0,
+    "complete": false,
+    "error": "javax.net.ssl.SSLHandshakeException: java.security.cert.CertPathValidatorException: Trust anchor for certification path not found.",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stream": {
+    "bytes": 0,
+    "error": null,
+    "outcome": "cancel",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "intercept": {
+    "main_frame_calls": 1,
+    "reason": "no-head",
+    "subresource_passes": 0
+  },
+  "expected": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "checks": {
+    "decisions": [
+      "pass"
+    ],
+    "stream_read_bytes": 0,
+    "stream_outcome": "cancel",
+    "stream_bytes": 0,
+    "stream_sha256_is_empty": true
+  }
+}

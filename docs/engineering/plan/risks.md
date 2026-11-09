@@ -8,8 +8,8 @@ Likelihood and impact: **H** high, **M** medium, **L** low, **C** critical.
 
 | ID | Risk | Likelihood / impact | Detection | Mitigation | Owner WP |
 |---|---|---|---|---|---|
-| RSK-01 | iOS cannot repeat Android stream interception with public APIs | H / H | IOS-P1/P2/P3 spike | Functional equivalent + documented difference; no private API | WP-04, WP-11 |
-| RSK-02 | Cookies or origin break when HTML is loaded with a base URL on iOS | H / H | Cookie/CSP/JS matrix | Real navigation for sensitive pages | WP-04 |
+| RSK-01 | iOS cannot repeat Android stream interception with public APIs | H / H | IOS-P1/P2/P3 spike | Functional equivalent + documented difference; no private API. <Badge type="tip" text="FACT" /> Result (WP-04): confirmed. `https` main-document streaming is impossible with public API on iOS 27.0, 26.5 and 18.5 (CAP-I-07). Mitigation: [ADR-003](/engineering/architecture/adr/ADR-003-ios-navigation) (human decides at G2); [iOS parity matrix](/engineering/platforms/ios-parity-matrix) | WP-04, WP-11 |
+| RSK-02 | Cookies or origin break when HTML is loaded with a base URL on iOS | H / H | Cookie/CSP/JS matrix | Real navigation for sensitive pages. <Badge type="tip" text="FACT" /> Result (WP-04): confirmed and mitigated. The app copies cookies into `WKHTTPCookieStore` before the load (CAP-I-03, CAP-I-11). The CSP field is lost only with `loadHTMLString`, which [ADR-003](/engineering/architecture/adr/ADR-003-ios-navigation) excludes (CAP-I-08); [iOS parity matrix](/engineering/platforms/ios-parity-matrix) | WP-04 |
 | RSK-03 | HTTP/3 or WebTransport not available in a target WebView | H / M | Runtime probes | HTTP/2/1.1 fallback; WT optional | WP-16 |
 | RSK-04 | Push channel delivers out-of-order patches | M / H | Chaos suite | Sequence + base revision + HTTPS resync | WP-16 |
 | RSK-05 | FFI copies too much HTML | M / M | Flamegraphs, copy counters | Chunk API, `bytes`, narrow boundary | WP-09 |

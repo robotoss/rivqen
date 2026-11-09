@@ -1,0 +1,12 @@
+{
+  "name": "rivqen-platform-spike-host",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Spike host of the WP-04 platform lab (TLS, fault scenarios). Node.js standard library only.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\""
+  }
+}

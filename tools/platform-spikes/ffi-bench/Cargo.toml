@@ -1,0 +1,64 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+
+[package]
+name = "ffi-bench"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.85"
+license = "Apache-2.0"
+description = "WP-04 FFI benchmark: one deterministic document through UniFFI and through a hand-written C ABI (CONTRACT.md section 10)"
+publish = false
+
+# Own workspace: evidence code, not part of a repository workspace (DL-084, DL-133).
+[workspace]
+
+[lib]
+name = "ffi_bench"
+# cdylib: JVM (JNA and JNI); staticlib: Swift; lib: Rust tests.
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
+required-features = ["bindgen"]
+
+[features]
+# Builds the UniFFI binding generator (Kotlin and Swift sources); never part of the library.
+bindgen = ["uniffi/cli"]
+
+# Dependencies: DL-137. UniFFI is MPL-2.0 (approved exception, benchmark only).
+[dependencies]
+jni = { version = "=0.22.4", default-features = false }
+uniffi = { version = "=0.32.2", default-features = false }
+
+[dev-dependencies]
+proptest = { version = "=1.11.0", default-features = false, features = ["std"] }
+
+[lints.rust]
+# deny, not forbid: only the module `abi` (C ABI, JNI, getrusage) allows unsafe code.
+unsafe_code = "deny"
+unsafe_op_in_unsafe_fn = "deny"
+unused_must_use = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+let_underscore_must_use = "deny"
+let_underscore_future = "deny"
+todo = "deny"
+unimplemented = "deny"
+dbg_macro = "deny"
+indexing_slicing = "deny"
+arithmetic_side_effects = "deny"
+undocumented_unsafe_blocks = "deny"
+multiple_unsafe_ops_per_block = "deny"
+print_stdout = "deny"
+print_stderr = "deny"
+
+[profile.release]
+panic = "unwind"

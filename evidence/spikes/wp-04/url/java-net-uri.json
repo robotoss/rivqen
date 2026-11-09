@@ -1,0 +1,798 @@
+{
+  "stack": "java-net-uri",
+  "version": "JDK 21.0.11 (Azul Systems, Inc.); API: new URI(input) or new URI(base).resolve(new URI(input)), toASCIIString()",
+  "runtime": "JDK 21.0.11 (Azul Systems, Inc.)",
+  "results": [
+    {
+      "id": "q-apostrophe",
+      "ok": true,
+      "href": "https://a.example/p?q=it's",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=it's",
+      "error": null,
+      "extra": {
+        "toString": "https://a.example/p?q=it's",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "q-pipe",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "q-caret",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "q-backslash",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "q-backtick",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "q-braces",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "q-space",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "q-dquote",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "q-lt-gt",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "q-brackets",
+      "ok": true,
+      "href": "https://a.example/p?q[0]=1",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q[0]=1",
+      "error": null,
+      "extra": {
+        "toString": "https://a.example/p?q[0]=1",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "q-unicode",
+      "ok": true,
+      "href": "https://a.example/p?q=%C3%A9",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=é",
+      "error": null,
+      "extra": {
+        "toString": "https://a.example/p?q=é",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "q-pct-unreserved",
+      "ok": true,
+      "href": "https://a.example/p?q=%41%7e%2D",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=%41%7e%2D",
+      "error": null,
+      "extra": {
+        "toString": "https://a.example/p?q=%41%7e%2D",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "q-pct-lower",
+      "ok": true,
+      "href": "https://a.example/p?q=%c3%a9",
+      "host": "a.example",
+      "path": "/p",
+      "query": "q=%c3%a9",
+      "error": null,
+      "extra": {
+        "toString": "https://a.example/p?q=%c3%a9",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "q-pct-invalid",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "q-empty",
+      "ok": true,
+      "href": "https://a.example/p?",
+      "host": "a.example",
+      "path": "/p",
+      "query": "",
+      "error": null,
+      "extra": {
+        "toString": "https://a.example/p?",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "q-plus-amp",
+      "ok": true,
+      "href": "https://a.example/p?a=1+2&b=%2B&a=3",
+      "host": "a.example",
+      "path": "/p",
+      "query": "a=1+2&b=%2B&a=3",
+      "error": null,
+      "extra": {
+        "toString": "https://a.example/p?a=1+2&b=%2B&a=3",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "p-pct-unreserved",
+      "ok": true,
+      "href": "https://a.example/%41%7e/%2e%2E/x",
+      "host": "a.example",
+      "path": "/%41%7e/%2e%2E/x",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example/%41%7e/%2e%2E/x",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "p-pct-slash",
+      "ok": true,
+      "href": "https://a.example/a%2Fb/c%5Cd",
+      "host": "a.example",
+      "path": "/a%2Fb/c%5Cd",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example/a%2Fb/c%5Cd",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "p-pct-invalid",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "p-special",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "p-unicode",
+      "ok": true,
+      "href": "https://a.example/caf%C3%A9/%E6%97%A5%E6%9C%AC",
+      "host": "a.example",
+      "path": "/café/日本",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example/café/日本",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "p-backslash",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "p-backslash-host",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "p-backslash-at",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "p-empty",
+      "ok": true,
+      "href": "https://a.example",
+      "host": "a.example",
+      "path": "",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "p-dots",
+      "ok": true,
+      "href": "https://a.example/a/./b/../c",
+      "host": "a.example",
+      "path": "/a/./b/../c",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example/a/./b/../c",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "p-dots-up",
+      "ok": true,
+      "href": "https://a.example/../../x",
+      "host": "a.example",
+      "path": "/../../x",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example/../../x",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "p-double-slash",
+      "ok": true,
+      "href": "https://a.example//a//b/",
+      "host": "a.example",
+      "path": "//a//b/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example//a//b/",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "p-trailing-dotdot",
+      "ok": true,
+      "href": "https://a.example/a/..",
+      "host": "a.example",
+      "path": "/a/..",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example/a/..",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "frag",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "host-trailing-dot",
+      "ok": true,
+      "href": "https://a.example./p",
+      "host": "a.example.",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example./p",
+        "rawAuthority": "a.example."
+      }
+    },
+    {
+      "id": "host-case",
+      "ok": true,
+      "href": "HTTPS://A.Example/P",
+      "host": "A.Example",
+      "path": "/P",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "HTTPS://A.Example/P",
+        "rawAuthority": "A.Example"
+      }
+    },
+    {
+      "id": "host-idn",
+      "ok": true,
+      "href": "https://fa%C3%9F.example/catalog",
+      "host": null,
+      "path": "/catalog",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://faß.example/catalog",
+        "rawAuthority": "faß.example"
+      }
+    },
+    {
+      "id": "host-idn-nfc",
+      "ok": true,
+      "href": "https://b%C3%BCcher.example/",
+      "host": null,
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://bücher.example/",
+        "rawAuthority": "bücher.example"
+      }
+    },
+    {
+      "id": "host-idn-nfd",
+      "ok": true,
+      "href": "https://b%C3%BCcher.example/",
+      "host": null,
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://bücher.example/",
+        "rawAuthority": "bücher.example"
+      }
+    },
+    {
+      "id": "host-punycode",
+      "ok": true,
+      "href": "https://xn--fa-hia.example/catalog",
+      "host": "xn--fa-hia.example",
+      "path": "/catalog",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://xn--fa-hia.example/catalog",
+        "rawAuthority": "xn--fa-hia.example"
+      }
+    },
+    {
+      "id": "host-fullwidth",
+      "ok": true,
+      "href": "https://%EF%BD%81.example/",
+      "host": null,
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://ａ.example/",
+        "rawAuthority": "ａ.example"
+      }
+    },
+    {
+      "id": "host-ipv4-short",
+      "ok": true,
+      "href": "https://127.1/",
+      "host": null,
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://127.1/",
+        "rawAuthority": "127.1"
+      }
+    },
+    {
+      "id": "host-ipv4-hex",
+      "ok": true,
+      "href": "https://0x7f.0.0.1/",
+      "host": null,
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://0x7f.0.0.1/",
+        "rawAuthority": "0x7f.0.0.1"
+      }
+    },
+    {
+      "id": "host-ipv4-int",
+      "ok": true,
+      "href": "https://2130706433/",
+      "host": "2130706433",
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://2130706433/",
+        "rawAuthority": "2130706433"
+      }
+    },
+    {
+      "id": "host-ipv6",
+      "ok": true,
+      "href": "https://[2001:DB8::1]/p",
+      "host": "[2001:DB8::1]",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://[2001:DB8::1]/p",
+        "rawAuthority": "[2001:DB8::1]"
+      }
+    },
+    {
+      "id": "host-ipv6-zero",
+      "ok": true,
+      "href": "https://[2001:0db8:0:0:0:0:0:1]/p",
+      "host": "[2001:0db8:0:0:0:0:0:1]",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://[2001:0db8:0:0:0:0:0:1]/p",
+        "rawAuthority": "[2001:0db8:0:0:0:0:0:1]"
+      }
+    },
+    {
+      "id": "host-underscore",
+      "ok": true,
+      "href": "https://a_b.example/",
+      "host": null,
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a_b.example/",
+        "rawAuthority": "a_b.example"
+      }
+    },
+    {
+      "id": "host-pct",
+      "ok": true,
+      "href": "https://a%2Eexample/",
+      "host": null,
+      "path": "/",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a%2Eexample/",
+        "rawAuthority": "a%2Eexample"
+      }
+    },
+    {
+      "id": "host-space",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "host-empty",
+      "ok": true,
+      "href": "https:///p",
+      "host": null,
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https:///p",
+        "rawAuthority": null
+      }
+    },
+    {
+      "id": "host-lone-dot",
+      "ok": true,
+      "href": "https://./p",
+      "host": null,
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://./p",
+        "rawAuthority": "."
+      }
+    },
+    {
+      "id": "userinfo",
+      "ok": true,
+      "href": "https://user:pw@a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://user:pw@a.example/p",
+        "rawAuthority": "user:pw@a.example"
+      }
+    },
+    {
+      "id": "userinfo-user-only",
+      "ok": true,
+      "href": "https://user@a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://user@a.example/p",
+        "rawAuthority": "user@a.example"
+      }
+    },
+    {
+      "id": "userinfo-special",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "userinfo-empty-pw",
+      "ok": true,
+      "href": "https://:@a.example/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://:@a.example/p",
+        "rawAuthority": ":@a.example"
+      }
+    },
+    {
+      "id": "port-default",
+      "ok": true,
+      "href": "https://a.example:443/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example:443/p",
+        "rawAuthority": "a.example:443"
+      }
+    },
+    {
+      "id": "port-http-default",
+      "ok": true,
+      "href": "http://a.example:80/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "http://a.example:80/p",
+        "rawAuthority": "a.example:80"
+      }
+    },
+    {
+      "id": "port-other-default",
+      "ok": true,
+      "href": "https://a.example:80/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example:80/p",
+        "rawAuthority": "a.example:80"
+      }
+    },
+    {
+      "id": "port-leading-zero",
+      "ok": true,
+      "href": "https://a.example:0443/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example:0443/p",
+        "rawAuthority": "a.example:0443"
+      }
+    },
+    {
+      "id": "port-zero",
+      "ok": true,
+      "href": "https://a.example:0/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example:0/p",
+        "rawAuthority": "a.example:0"
+      }
+    },
+    {
+      "id": "port-too-big",
+      "ok": true,
+      "href": "https://a.example:65536/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example:65536/p",
+        "rawAuthority": "a.example:65536"
+      }
+    },
+    {
+      "id": "port-empty",
+      "ok": true,
+      "href": "https://a.example:/p",
+      "host": "a.example",
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example:/p",
+        "rawAuthority": "a.example:"
+      }
+    },
+    {
+      "id": "port-non-digit",
+      "ok": true,
+      "href": "https://a.example:44x/p",
+      "host": null,
+      "path": "/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://a.example:44x/p",
+        "rawAuthority": "a.example:44x"
+      }
+    },
+    {
+      "id": "ws-tab-newline",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "ws-edges",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    },
+    {
+      "id": "scheme-one-slash",
+      "ok": true,
+      "href": "https:/a.example/p",
+      "host": null,
+      "path": "/a.example/p",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https:/a.example/p",
+        "rawAuthority": null
+      }
+    },
+    {
+      "id": "scheme-no-slash",
+      "ok": true,
+      "href": "https:a.example/p",
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https:a.example/p",
+        "rawAuthority": null
+      }
+    },
+    {
+      "id": "rel-dotdot",
+      "ok": true,
+      "href": "https://a.example/dir/x?y=1",
+      "host": "a.example",
+      "path": "/dir/x",
+      "query": "y=1",
+      "error": null,
+      "extra": {
+        "toString": "https://a.example/dir/x?y=1",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "rel-authority",
+      "ok": true,
+      "href": "https://b.example/x",
+      "host": "b.example",
+      "path": "/x",
+      "query": null,
+      "error": null,
+      "extra": {
+        "toString": "https://b.example/x",
+        "rawAuthority": "b.example"
+      }
+    },
+    {
+      "id": "rel-query",
+      "ok": true,
+      "href": "https://a.example/dir/?q=1",
+      "host": "a.example",
+      "path": "/dir/",
+      "query": "q=1",
+      "error": null,
+      "extra": {
+        "toString": "https://a.example/dir/?q=1",
+        "rawAuthority": "a.example"
+      }
+    },
+    {
+      "id": "rel-backslash",
+      "ok": false,
+      "href": null,
+      "host": null,
+      "path": null,
+      "query": null,
+      "error": "java.net.URISyntaxException"
+    }
+  ]
+}

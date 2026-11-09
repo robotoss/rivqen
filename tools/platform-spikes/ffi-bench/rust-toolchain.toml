@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+#
+# The same pin as the reference server and the markup candidate (DL-084).
+[toolchain]
+channel = "1.99.0"
+profile = "minimal"
+components = ["clippy", "rustfmt"]

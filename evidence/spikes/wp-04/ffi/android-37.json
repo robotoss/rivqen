@@ -1,0 +1,103 @@
+{
+  "target": "android-37",
+  "date": "2026-11-08",
+  "machine": "Android emulator arm64-v8a on Apple M4 Pro",
+  "os": "Android 17 (API 37, CE2A.260420.051.A3)",
+  "toolchain": {
+    "d8": "37.0.0",
+    "gradle": "9.7.1",
+    "java": "0.9",
+    "jna": "5.19.1",
+    "kotlin": "2.4.20",
+    "ndk": "30.0.16248370",
+    "rust": "1.99.0",
+    "uniffi": "0.32.2"
+  },
+  "indicative": true,
+  "cases": [
+    {
+      "path": "uniffi-kotlin",
+      "size": 1048576,
+      "chunk": 16384,
+      "docs": 1000,
+      "median_ns": 2369668,
+      "p95_ns": 4132333,
+      "chunk_median_ns": 23792,
+      "copied_bytes": 3145728,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 2097152,
+      "rss_delta_kib": 6076,
+      "sha256_ok": true
+    },
+    {
+      "path": "uniffi-kotlin",
+      "size": 1048576,
+      "chunk": 65536,
+      "docs": 1000,
+      "median_ns": 1684500,
+      "p95_ns": 2348001,
+      "chunk_median_ns": 77083,
+      "copied_bytes": 3145728,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 2097152,
+      "rss_delta_kib": 4992,
+      "sha256_ok": true
+    },
+    {
+      "path": "jni-direct",
+      "size": 1048576,
+      "chunk": 16384,
+      "docs": 1000,
+      "median_ns": 25204,
+      "p95_ns": 31872,
+      "chunk_median_ns": 375,
+      "copied_bytes": 1048576,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 0,
+      "rss_delta_kib": 1120,
+      "sha256_ok": true
+    },
+    {
+      "path": "jni-direct",
+      "size": 1048576,
+      "chunk": 65536,
+      "docs": 1000,
+      "median_ns": 38084,
+      "p95_ns": 49335,
+      "chunk_median_ns": 2292,
+      "copied_bytes": 1048576,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 0,
+      "rss_delta_kib": 812,
+      "sha256_ok": true
+    },
+    {
+      "path": "jni-bytearray",
+      "size": 1048576,
+      "chunk": 16384,
+      "docs": 1000,
+      "median_ns": 21999,
+      "p95_ns": 43919,
+      "chunk_median_ns": 333,
+      "copied_bytes": 1048576,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 0,
+      "rss_delta_kib": 768,
+      "sha256_ok": true
+    },
+    {
+      "path": "jni-bytearray",
+      "size": 1048576,
+      "chunk": 65536,
+      "docs": 1000,
+      "median_ns": 24543,
+      "p95_ns": 47625,
+      "chunk_median_ns": 1500,
+      "copied_bytes": 1048576,
+      "rust_copied_bytes": 1048576,
+      "glue_copied_bytes": 0,
+      "rss_delta_kib": 384,
+      "sha256_ok": true
+    }
+  ]
+}

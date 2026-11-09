@@ -1,0 +1,4656 @@
+{
+  "reference": "whatwg-node",
+  "reference_version": "Node.js v26.8.2 (ada 4.0.0); API: new URL(input, base).href",
+  "versions": {
+    "okhttp": "OkHttp 5.5.1 (okhttp-android aar classes, the artifact of the Android spike); API: HttpUrl.get(input) or HttpUrl.get(base).resolve(input), toString()",
+    "java-net-uri": "JDK 21.0.11 (Azul Systems, Inc.); API: new URI(input) or new URI(base).resolve(new URI(input)), toASCIIString()",
+    "android-net-uri": "android.net.Uri of the framework (API 37); API: Uri.parse(input), toString(), getHost(), getEncodedPath(), getEncodedQuery()",
+    "foundation-url-macos": "Foundation of Version 26.6.2 (Build 25G83); swift-driver version: 1.168.6 Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1); API: URL(string:) or URL(string:relativeTo:)?.absoluteURL, absoluteString",
+    "foundation-urlcomponents-macos": "Foundation of Version 26.6.2 (Build 25G83); swift-driver version: 1.168.6 Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1); API: URLComponents(string:), .string (url(relativeTo:)?.absoluteString for a base)",
+    "foundation-url-ios-sim": "Foundation of Version 27.0 (Build 24A434); swift-driver version: 1.168.6 Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1); API: URL(string:) or URL(string:relativeTo:)?.absoluteURL, absoluteString",
+    "foundation-urlcomponents-ios-sim": "Foundation of Version 27.0 (Build 24A434); swift-driver version: 1.168.6 Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1); API: URLComponents(string:), .string (url(relativeTo:)?.absoluteString for a base)"
+  },
+  "note": "href is the serialization the stack would send; host strips [] before the comparison; null and empty are different values",
+  "summary": {
+    "okhttp": {
+      "total": 67,
+      "equal": 57,
+      "differ": 5,
+      "refuses": 2,
+      "accepts-refused": 0,
+      "both-refuse": 3,
+      "missing": 0,
+      "host_differ": 3,
+      "path_differ": 1,
+      "query_differ": 0
+    },
+    "java-net-uri": {
+      "total": 67,
+      "equal": 19,
+      "differ": 26,
+      "refuses": 19,
+      "accepts-refused": 2,
+      "both-refuse": 1,
+      "missing": 0,
+      "host_differ": 16,
+      "path_differ": 10,
+      "query_differ": 2
+    },
+    "android-net-uri": {
+      "total": 67,
+      "equal": 22,
+      "differ": 38,
+      "refuses": 4,
+      "accepts-refused": 3,
+      "both-refuse": 0,
+      "missing": 0,
+      "host_differ": 13,
+      "path_differ": 15,
+      "query_differ": 5
+    },
+    "foundation-url-macos": {
+      "total": 67,
+      "equal": 28,
+      "differ": 34,
+      "refuses": 2,
+      "accepts-refused": 1,
+      "both-refuse": 2,
+      "missing": 0,
+      "host_differ": 15,
+      "path_differ": 14,
+      "query_differ": 8
+    },
+    "foundation-urlcomponents-macos": {
+      "total": 67,
+      "equal": 28,
+      "differ": 34,
+      "refuses": 2,
+      "accepts-refused": 1,
+      "both-refuse": 2,
+      "missing": 0,
+      "host_differ": 18,
+      "path_differ": 16,
+      "query_differ": 8
+    },
+    "foundation-url-ios-sim": {
+      "total": 67,
+      "equal": 28,
+      "differ": 34,
+      "refuses": 2,
+      "accepts-refused": 1,
+      "both-refuse": 2,
+      "missing": 0,
+      "host_differ": 15,
+      "path_differ": 14,
+      "query_differ": 8
+    },
+    "foundation-urlcomponents-ios-sim": {
+      "total": 67,
+      "equal": 28,
+      "differ": 34,
+      "refuses": 2,
+      "accepts-refused": 1,
+      "both-refuse": 2,
+      "missing": 0,
+      "host_differ": 18,
+      "path_differ": 16,
+      "query_differ": 8
+    }
+  },
+  "entries": [
+    {
+      "id": "q-apostrophe",
+      "input": "https://a.example/p?q=it's",
+      "whatwg": {
+        "id": "q-apostrophe",
+        "ok": true,
+        "href": "https://a.example/p?q=it%27s",
+        "host": "a.example",
+        "path": "/p",
+        "query": "q=it%27s",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=it%27s"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=it's"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=it's"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=it's"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=it's"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=it's"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=it's"
+        }
+      }
+    },
+    {
+      "id": "q-pipe",
+      "input": "https://a.example/p?q=a|b",
+      "whatwg": {
+        "id": "q-pipe",
+        "ok": true,
+        "href": "https://a.example/p?q=a|b",
+        "host": "a.example",
+        "path": "/p",
+        "query": "q=a|b",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a|b"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a|b"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%7Cb"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%7Cb"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%7Cb"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%7Cb"
+        }
+      }
+    },
+    {
+      "id": "q-caret",
+      "input": "https://a.example/p?q=a^b",
+      "whatwg": {
+        "id": "q-caret",
+        "ok": true,
+        "href": "https://a.example/p?q=a^b",
+        "host": "a.example",
+        "path": "/p",
+        "query": "q=a^b",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a^b"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a^b"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%5Eb"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%5Eb"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%5Eb"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%5Eb"
+        }
+      }
+    },
+    {
+      "id": "q-backslash",
+      "input": "https://a.example/p?q=a\\b",
+      "whatwg": {
+        "id": "q-backslash",
+        "ok": true,
+        "href": "https://a.example/p?q=a\\b",
+        "host": "a.example",
+        "path": "/p",
+        "query": "q=a\\b",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a\\b"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a\\b"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%5Cb"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%5Cb"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%5Cb"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%5Cb"
+        }
+      }
+    },
+    {
+      "id": "q-backtick",
+      "input": "https://a.example/p?q=a`b",
+      "whatwg": {
+        "id": "q-backtick",
+        "ok": true,
+        "href": "https://a.example/p?q=a`b",
+        "host": "a.example",
+        "path": "/p",
+        "query": "q=a`b",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a`b"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a`b"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%60b"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%60b"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%60b"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a%60b"
+        }
+      }
+    },
+    {
+      "id": "q-braces",
+      "input": "https://a.example/p?q={a}",
+      "whatwg": {
+        "id": "q-braces",
+        "ok": true,
+        "href": "https://a.example/p?q={a}",
+        "host": "a.example",
+        "path": "/p",
+        "query": "q={a}",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q={a}"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q={a}"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=%7Ba%7D"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=%7Ba%7D"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=%7Ba%7D"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=%7Ba%7D"
+        }
+      }
+    },
+    {
+      "id": "q-space",
+      "input": "https://a.example/p?q=a b",
+      "whatwg": {
+        "id": "q-space",
+        "ok": true,
+        "href": "https://a.example/p?q=a%20b",
+        "host": "a.example",
+        "path": "/p",
+        "query": "q=a%20b",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a%20b"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=a b"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a%20b"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a%20b"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a%20b"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=a%20b"
+        }
+      }
+    },
+    {
+      "id": "q-dquote",
+      "input": "https://a.example/p?q=\"x\"",
+      "whatwg": {
+        "id": "q-dquote",
+        "ok": true,
+        "href": "https://a.example/p?q=%22x%22",
+        "host": "a.example",
+        "path": "/p",
+        "query": "q=%22x%22",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%22x%22"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=\"x\""
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%22x%22"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%22x%22"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%22x%22"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%22x%22"
+        }
+      }
+    },
+    {
+      "id": "q-lt-gt",
+      "input": "https://a.example/p?q=<x>",
+      "whatwg": {
+        "id": "q-lt-gt",
+        "ok": true,
+        "href": "https://a.example/p?q=%3Cx%3E",
+        "host": "a.example",
+        "path": "/p",
+        "query": "q=%3Cx%3E",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%3Cx%3E"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=<x>"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%3Cx%3E"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%3Cx%3E"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%3Cx%3E"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%3Cx%3E"
+        }
+      }
+    },
+    {
+      "id": "q-brackets",
+      "input": "https://a.example/p?q[0]=1",
+      "whatwg": {
+        "id": "q-brackets",
+        "ok": true,
+        "href": "https://a.example/p?q[0]=1",
+        "host": "a.example",
+        "path": "/p",
+        "query": "q[0]=1",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q[0]=1"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q[0]=1"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q[0]=1"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q%5B0%5D=1"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q%5B0%5D=1"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q%5B0%5D=1"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q%5B0%5D=1"
+        }
+      }
+    },
+    {
+      "id": "q-unicode",
+      "input": "https://a.example/p?q=é",
+      "whatwg": {
+        "id": "q-unicode",
+        "ok": true,
+        "href": "https://a.example/p?q=%C3%A9",
+        "host": "a.example",
+        "path": "/p",
+        "query": "q=%C3%A9",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%C3%A9"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%C3%A9"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=é"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%C3%A9"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%C3%A9"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%C3%A9"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%C3%A9"
+        }
+      }
+    },
+    {
+      "id": "q-pct-unreserved",
+      "input": "https://a.example/p?q=%41%7e%2D",
+      "whatwg": {
+        "id": "q-pct-unreserved",
+        "ok": true,
+        "href": "https://a.example/p?q=%41%7e%2D",
+        "host": "a.example",
+        "path": "/p",
+        "query": "q=%41%7e%2D",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%41%7e%2D"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%41%7e%2D"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%41%7e%2D"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%41%7e%2D"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%41%7e%2D"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%41%7e%2D"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%41%7e%2D"
+        }
+      }
+    },
+    {
+      "id": "q-pct-lower",
+      "input": "https://a.example/p?q=%c3%a9",
+      "whatwg": {
+        "id": "q-pct-lower",
+        "ok": true,
+        "href": "https://a.example/p?q=%c3%a9",
+        "host": "a.example",
+        "path": "/p",
+        "query": "q=%c3%a9",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%c3%a9"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%c3%a9"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%c3%a9"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%c3%a9"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%c3%a9"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%c3%a9"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%c3%a9"
+        }
+      }
+    },
+    {
+      "id": "q-pct-invalid",
+      "input": "https://a.example/p?q=%zz%",
+      "whatwg": {
+        "id": "q-pct-invalid",
+        "ok": true,
+        "href": "https://a.example/p?q=%zz%",
+        "host": "a.example",
+        "path": "/p",
+        "query": "q=%zz%",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%zz%"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=%zz%"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=%25zz%25"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=%25zz%25"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=%25zz%25"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "differ",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=%25zz%25"
+        }
+      }
+    },
+    {
+      "id": "q-empty",
+      "input": "https://a.example/p?",
+      "whatwg": {
+        "id": "q-empty",
+        "ok": true,
+        "href": "https://a.example/p?",
+        "host": "a.example",
+        "path": "/p",
+        "query": "",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?"
+        }
+      }
+    },
+    {
+      "id": "q-plus-amp",
+      "input": "https://a.example/p?a=1+2&b=%2B&a=3",
+      "whatwg": {
+        "id": "q-plus-amp",
+        "ok": true,
+        "href": "https://a.example/p?a=1+2&b=%2B&a=3",
+        "host": "a.example",
+        "path": "/p",
+        "query": "a=1+2&b=%2B&a=3",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?a=1+2&b=%2B&a=3"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?a=1+2&b=%2B&a=3"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?a=1+2&b=%2B&a=3"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?a=1+2&b=%2B&a=3"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?a=1+2&b=%2B&a=3"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?a=1+2&b=%2B&a=3"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?a=1+2&b=%2B&a=3"
+        }
+      }
+    },
+    {
+      "id": "p-pct-unreserved",
+      "input": "https://a.example/%41%7e/%2e%2E/x",
+      "whatwg": {
+        "id": "p-pct-unreserved",
+        "ok": true,
+        "href": "https://a.example/x",
+        "host": "a.example",
+        "path": "/x",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/x"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/%41%7e/%2e%2E/x"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/%41%7e/%2e%2E/x"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/%41%7e/%2e%2E/x"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/%41%7e/%2e%2E/x"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/%41%7e/%2e%2E/x"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/%41%7e/%2e%2E/x"
+        }
+      }
+    },
+    {
+      "id": "p-pct-slash",
+      "input": "https://a.example/a%2Fb/c%5Cd",
+      "whatwg": {
+        "id": "p-pct-slash",
+        "ok": true,
+        "href": "https://a.example/a%2Fb/c%5Cd",
+        "host": "a.example",
+        "path": "/a%2Fb/c%5Cd",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/a%2Fb/c%5Cd"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/a%2Fb/c%5Cd"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/a%2Fb/c%5Cd"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/a%2Fb/c%5Cd"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/a%2Fb/c%5Cd"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/a%2Fb/c%5Cd"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/a%2Fb/c%5Cd"
+        }
+      }
+    },
+    {
+      "id": "p-pct-invalid",
+      "input": "https://a.example/a%zzb/%",
+      "whatwg": {
+        "id": "p-pct-invalid",
+        "ok": true,
+        "href": "https://a.example/a%zzb/%",
+        "host": "a.example",
+        "path": "/a%zzb/%",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/a%zzb/%"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/a%zzb/%"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a%25zzb/%25"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a%25zzb/%25"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a%25zzb/%25"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a%25zzb/%25"
+        }
+      }
+    },
+    {
+      "id": "p-special",
+      "input": "https://a.example/a b/\"<>`{}|^[]",
+      "whatwg": {
+        "id": "p-special",
+        "ok": true,
+        "href": "https://a.example/a%20b/%22%3C%3E%60%7B%7D|%5E[]",
+        "host": "a.example",
+        "path": "/a%20b/%22%3C%3E%60%7B%7D|%5E[]",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a%20b/%22%3C%3E%60%7B%7D%7C%5E[]"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a b/\"<>`{}|^[]"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a%20b/%22%3C%3E%60%7B%7D%7C%5E%5B%5D"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a%20b/%22%3C%3E%60%7B%7D%7C%5E%5B%5D"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a%20b/%22%3C%3E%60%7B%7D%7C%5E%5B%5D"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a%20b/%22%3C%3E%60%7B%7D%7C%5E%5B%5D"
+        }
+      }
+    },
+    {
+      "id": "p-unicode",
+      "input": "https://a.example/café/日本",
+      "whatwg": {
+        "id": "p-unicode",
+        "ok": true,
+        "href": "https://a.example/caf%C3%A9/%E6%97%A5%E6%9C%AC",
+        "host": "a.example",
+        "path": "/caf%C3%A9/%E6%97%A5%E6%9C%AC",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/caf%C3%A9/%E6%97%A5%E6%9C%AC"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/caf%C3%A9/%E6%97%A5%E6%9C%AC"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/café/日本"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/caf%C3%A9/%E6%97%A5%E6%9C%AC"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/caf%C3%A9/%E6%97%A5%E6%9C%AC"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/caf%C3%A9/%E6%97%A5%E6%9C%AC"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/caf%C3%A9/%E6%97%A5%E6%9C%AC"
+        }
+      }
+    },
+    {
+      "id": "p-backslash",
+      "input": "https://a.example/p\\q",
+      "whatwg": {
+        "id": "p-backslash",
+        "ok": true,
+        "href": "https://a.example/p/q",
+        "host": "a.example",
+        "path": "/p/q",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p/q"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/p\\q"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/p%5Cq"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/p%5Cq"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/p%5Cq"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/p%5Cq"
+        }
+      }
+    },
+    {
+      "id": "p-backslash-host",
+      "input": "https://a.example\\p",
+      "whatwg": {
+        "id": "p-backslash-host",
+        "ok": true,
+        "href": "https://a.example/p",
+        "host": "a.example",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example\\p"
+        },
+        "foundation-url-macos": {
+          "verdict": "refuses",
+          "error": "URL(string:) returned nil"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "refuses",
+          "error": "URLComponents(string:) returned nil"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "refuses",
+          "error": "URL(string:) returned nil"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "refuses",
+          "error": "URLComponents(string:) returned nil"
+        }
+      }
+    },
+    {
+      "id": "p-backslash-at",
+      "input": "https://a.example\\@b.example/p",
+      "whatwg": {
+        "id": "p-backslash-at",
+        "ok": true,
+        "href": "https://a.example/@b.example/p",
+        "host": "a.example",
+        "path": "/@b.example/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/@b.example/p"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example\\@b.example/p"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example%5C@b.example/p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example%5C@b.example/p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example%5C@b.example/p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example%5C@b.example/p"
+        }
+      }
+    },
+    {
+      "id": "p-empty",
+      "input": "https://a.example",
+      "whatwg": {
+        "id": "p-empty",
+        "ok": true,
+        "href": "https://a.example/",
+        "host": "a.example",
+        "path": "/",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example"
+        }
+      }
+    },
+    {
+      "id": "p-dots",
+      "input": "https://a.example/a/./b/../c",
+      "whatwg": {
+        "id": "p-dots",
+        "ok": true,
+        "href": "https://a.example/a/c",
+        "host": "a.example",
+        "path": "/a/c",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/a/c"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a/./b/../c"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a/./b/../c"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a/./b/../c"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a/./b/../c"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a/./b/../c"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a/./b/../c"
+        }
+      }
+    },
+    {
+      "id": "p-dots-up",
+      "input": "https://a.example/../../x",
+      "whatwg": {
+        "id": "p-dots-up",
+        "ok": true,
+        "href": "https://a.example/x",
+        "host": "a.example",
+        "path": "/x",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/x"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/../../x"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/../../x"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/../../x"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/../../x"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/../../x"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/../../x"
+        }
+      }
+    },
+    {
+      "id": "p-double-slash",
+      "input": "https://a.example//a//b/",
+      "whatwg": {
+        "id": "p-double-slash",
+        "ok": true,
+        "href": "https://a.example//a//b/",
+        "host": "a.example",
+        "path": "//a//b/",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example//a//b/"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example//a//b/"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example//a//b/"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example//a//b/"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example//a//b/"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example//a//b/"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example//a//b/"
+        }
+      }
+    },
+    {
+      "id": "p-trailing-dotdot",
+      "input": "https://a.example/a/..",
+      "whatwg": {
+        "id": "p-trailing-dotdot",
+        "ok": true,
+        "href": "https://a.example/",
+        "host": "a.example",
+        "path": "/",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a/.."
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a/.."
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a/.."
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a/.."
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a/.."
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/a/.."
+        }
+      }
+    },
+    {
+      "id": "frag",
+      "input": "https://a.example/p?q=1#frag ment",
+      "whatwg": {
+        "id": "frag",
+        "ok": true,
+        "href": "https://a.example/p?q=1#frag%20ment",
+        "host": "a.example",
+        "path": "/p",
+        "query": "q=1",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=1#frag ment"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/p?q=1#frag ment"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=1#frag%20ment"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=1#frag%20ment"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=1#frag%20ment"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p?q=1#frag%20ment"
+        }
+      }
+    },
+    {
+      "id": "host-trailing-dot",
+      "input": "https://a.example./p",
+      "whatwg": {
+        "id": "host-trailing-dot",
+        "ok": true,
+        "href": "https://a.example./p",
+        "host": "a.example.",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example./p"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example./p"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example./p"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example./p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example./p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example./p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example./p"
+        }
+      }
+    },
+    {
+      "id": "host-case",
+      "input": "HTTPS://A.Example/P",
+      "whatwg": {
+        "id": "host-case",
+        "ok": true,
+        "href": "https://a.example/P",
+        "host": "a.example",
+        "path": "/P",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/P"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "HTTPS://A.Example/P"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "HTTPS://A.Example/P"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "HTTPS://A.Example/P"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "HTTPS://A.Example/P"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "HTTPS://A.Example/P"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "HTTPS://A.Example/P"
+        }
+      }
+    },
+    {
+      "id": "host-idn",
+      "input": "https://faß.example/catalog",
+      "whatwg": {
+        "id": "host-idn",
+        "ok": true,
+        "href": "https://xn--fa-hia.example/catalog",
+        "host": "xn--fa-hia.example",
+        "path": "/catalog",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--fa-hia.example/catalog"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://fa%C3%9F.example/catalog"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://faß.example/catalog"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--fa-hia.example/catalog"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--fa-hia.example/catalog"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--fa-hia.example/catalog"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--fa-hia.example/catalog"
+        }
+      }
+    },
+    {
+      "id": "host-idn-nfc",
+      "input": "https://bücher.example/",
+      "whatwg": {
+        "id": "host-idn-nfc",
+        "ok": true,
+        "href": "https://xn--bcher-kva.example/",
+        "host": "xn--bcher-kva.example",
+        "path": "/",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--bcher-kva.example/"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://b%C3%BCcher.example/"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://bücher.example/"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--bcher-kva.example/"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--bcher-kva.example/"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--bcher-kva.example/"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--bcher-kva.example/"
+        }
+      }
+    },
+    {
+      "id": "host-idn-nfd",
+      "input": "https://bücher.example/",
+      "whatwg": {
+        "id": "host-idn-nfd",
+        "ok": true,
+        "href": "https://xn--bcher-kva.example/",
+        "host": "xn--bcher-kva.example",
+        "path": "/",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--bcher-kva.example/"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://b%C3%BCcher.example/"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://bücher.example/"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--bcher-kva.example/"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--bcher-kva.example/"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--bcher-kva.example/"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--bcher-kva.example/"
+        }
+      }
+    },
+    {
+      "id": "host-punycode",
+      "input": "https://xn--fa-hia.example/catalog",
+      "whatwg": {
+        "id": "host-punycode",
+        "ok": true,
+        "href": "https://xn--fa-hia.example/catalog",
+        "host": "xn--fa-hia.example",
+        "path": "/catalog",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--fa-hia.example/catalog"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--fa-hia.example/catalog"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--fa-hia.example/catalog"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--fa-hia.example/catalog"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--fa-hia.example/catalog"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--fa-hia.example/catalog"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://xn--fa-hia.example/catalog"
+        }
+      }
+    },
+    {
+      "id": "host-fullwidth",
+      "input": "https://ａ.example/",
+      "whatwg": {
+        "id": "host-fullwidth",
+        "ok": true,
+        "href": "https://a.example/",
+        "host": "a.example",
+        "path": "/",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://%EF%BD%81.example/"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://ａ.example/"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/"
+        }
+      }
+    },
+    {
+      "id": "host-ipv4-short",
+      "input": "https://127.1/",
+      "whatwg": {
+        "id": "host-ipv4-short",
+        "ok": true,
+        "href": "https://127.0.0.1/",
+        "host": "127.0.0.1",
+        "path": "/",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://127.1/"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://127.1/"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://127.1/"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://127.1/"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://127.1/"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://127.1/"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://127.1/"
+        }
+      }
+    },
+    {
+      "id": "host-ipv4-hex",
+      "input": "https://0x7f.0.0.1/",
+      "whatwg": {
+        "id": "host-ipv4-hex",
+        "ok": true,
+        "href": "https://127.0.0.1/",
+        "host": "127.0.0.1",
+        "path": "/",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://0x7f.0.0.1/"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://0x7f.0.0.1/"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://0x7f.0.0.1/"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://0x7f.0.0.1/"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://0x7f.0.0.1/"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://0x7f.0.0.1/"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://0x7f.0.0.1/"
+        }
+      }
+    },
+    {
+      "id": "host-ipv4-int",
+      "input": "https://2130706433/",
+      "whatwg": {
+        "id": "host-ipv4-int",
+        "ok": true,
+        "href": "https://127.0.0.1/",
+        "host": "127.0.0.1",
+        "path": "/",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://2130706433/"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://2130706433/"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://2130706433/"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://2130706433/"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://2130706433/"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://2130706433/"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://2130706433/"
+        }
+      }
+    },
+    {
+      "id": "host-ipv6",
+      "input": "https://[2001:DB8::1]/p",
+      "whatwg": {
+        "id": "host-ipv6",
+        "ok": true,
+        "href": "https://[2001:db8::1]/p",
+        "host": "[2001:db8::1]",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://[2001:db8::1]/p"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://[2001:DB8::1]/p"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://[2001:DB8::1]/p"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://[2001:DB8::1]/p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://[2001:DB8::1]/p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://[2001:DB8::1]/p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://[2001:DB8::1]/p"
+        }
+      }
+    },
+    {
+      "id": "host-ipv6-zero",
+      "input": "https://[2001:0db8:0:0:0:0:0:1]/p",
+      "whatwg": {
+        "id": "host-ipv6-zero",
+        "ok": true,
+        "href": "https://[2001:db8::1]/p",
+        "host": "[2001:db8::1]",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://[2001:db8::1]/p"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://[2001:0db8:0:0:0:0:0:1]/p"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://[2001:0db8:0:0:0:0:0:1]/p"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://[2001:0db8:0:0:0:0:0:1]/p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://[2001:0db8:0:0:0:0:0:1]/p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://[2001:0db8:0:0:0:0:0:1]/p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://[2001:0db8:0:0:0:0:0:1]/p"
+        }
+      }
+    },
+    {
+      "id": "host-underscore",
+      "input": "https://a_b.example/",
+      "whatwg": {
+        "id": "host-underscore",
+        "ok": true,
+        "href": "https://a_b.example/",
+        "host": "a_b.example",
+        "path": "/",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a_b.example/"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a_b.example/"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a_b.example/"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a_b.example/"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a_b.example/"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a_b.example/"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a_b.example/"
+        }
+      }
+    },
+    {
+      "id": "host-pct",
+      "input": "https://a%2Eexample/",
+      "whatwg": {
+        "id": "host-pct",
+        "ok": true,
+        "href": "https://a.example/",
+        "host": "a.example",
+        "path": "/",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a%2Eexample/"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a%2Eexample/"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a%2Eexample/"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a%2Eexample/"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a%2Eexample/"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a%2Eexample/"
+        }
+      }
+    },
+    {
+      "id": "host-space",
+      "input": "https://a b.example/",
+      "whatwg": {
+        "id": "host-space",
+        "ok": false,
+        "href": null,
+        "host": null,
+        "path": null,
+        "query": null,
+        "error": "TypeError:ERR_INVALID_URL"
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "both-refuse",
+          "error": "java.lang.IllegalArgumentException"
+        },
+        "java-net-uri": {
+          "verdict": "both-refuse",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "accepts-refused",
+          "href": "https://a b.example/",
+          "error": null
+        },
+        "foundation-url-macos": {
+          "verdict": "both-refuse",
+          "error": "URL(string:) returned nil"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "both-refuse",
+          "error": "URLComponents(string:) returned nil"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "both-refuse",
+          "error": "URL(string:) returned nil"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "both-refuse",
+          "error": "URLComponents(string:) returned nil"
+        }
+      }
+    },
+    {
+      "id": "host-empty",
+      "input": "https:///p",
+      "whatwg": {
+        "id": "host-empty",
+        "ok": true,
+        "href": "https://p/",
+        "host": "p",
+        "path": "/",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://p/"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:///p"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:///p"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:///p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:///p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:///p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:///p"
+        }
+      }
+    },
+    {
+      "id": "host-lone-dot",
+      "input": "https://./p",
+      "whatwg": {
+        "id": "host-lone-dot",
+        "ok": true,
+        "href": "https://./p",
+        "host": ".",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "refuses",
+          "error": "java.lang.IllegalArgumentException"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://./p"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://./p"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://./p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://./p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://./p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://./p"
+        }
+      }
+    },
+    {
+      "id": "userinfo",
+      "input": "https://user:pw@a.example/p",
+      "whatwg": {
+        "id": "userinfo",
+        "ok": true,
+        "href": "https://user:pw@a.example/p",
+        "host": "a.example",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user:pw@a.example/p"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user:pw@a.example/p"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user:pw@a.example/p"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user:pw@a.example/p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user:pw@a.example/p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user:pw@a.example/p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user:pw@a.example/p"
+        }
+      }
+    },
+    {
+      "id": "userinfo-user-only",
+      "input": "https://user@a.example/p",
+      "whatwg": {
+        "id": "userinfo-user-only",
+        "ok": true,
+        "href": "https://user@a.example/p",
+        "host": "a.example",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user@a.example/p"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user@a.example/p"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user@a.example/p"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user@a.example/p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user@a.example/p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user@a.example/p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://user@a.example/p"
+        }
+      }
+    },
+    {
+      "id": "userinfo-special",
+      "input": "https://us er:p@ss@a.example/p",
+      "whatwg": {
+        "id": "userinfo-special",
+        "ok": true,
+        "href": "https://us%20er:p%40ss@a.example/p",
+        "host": "a.example",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://us%20er:p%40ss@a.example/p"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://us er:p@ss@a.example/p"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://us%20er:p%40ss@a.example/p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://us%20er:p%40ss@a.example/p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://us%20er:p%40ss@a.example/p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://us%20er:p%40ss@a.example/p"
+        }
+      }
+    },
+    {
+      "id": "userinfo-empty-pw",
+      "input": "https://:@a.example/p",
+      "whatwg": {
+        "id": "userinfo-empty-pw",
+        "ok": true,
+        "href": "https://a.example/p",
+        "host": "a.example",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://:@a.example/p"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://:@a.example/p"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://:@a.example/p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://:@a.example/p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://:@a.example/p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://:@a.example/p"
+        }
+      }
+    },
+    {
+      "id": "port-default",
+      "input": "https://a.example:443/p",
+      "whatwg": {
+        "id": "port-default",
+        "ok": true,
+        "href": "https://a.example/p",
+        "host": "a.example",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:443/p"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:443/p"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:443/p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:443/p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:443/p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:443/p"
+        }
+      }
+    },
+    {
+      "id": "port-http-default",
+      "input": "http://a.example:80/p",
+      "whatwg": {
+        "id": "port-http-default",
+        "ok": true,
+        "href": "http://a.example/p",
+        "host": "a.example",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "http://a.example/p"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "http://a.example:80/p"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "http://a.example:80/p"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "http://a.example:80/p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "http://a.example:80/p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "http://a.example:80/p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "http://a.example:80/p"
+        }
+      }
+    },
+    {
+      "id": "port-other-default",
+      "input": "https://a.example:80/p",
+      "whatwg": {
+        "id": "port-other-default",
+        "ok": true,
+        "href": "https://a.example:80/p",
+        "host": "a.example",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example:80/p"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example:80/p"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example:80/p"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example:80/p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example:80/p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example:80/p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example:80/p"
+        }
+      }
+    },
+    {
+      "id": "port-leading-zero",
+      "input": "https://a.example:0443/p",
+      "whatwg": {
+        "id": "port-leading-zero",
+        "ok": true,
+        "href": "https://a.example/p",
+        "host": "a.example",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:0443/p"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:0443/p"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:0443/p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:0443/p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:0443/p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:0443/p"
+        }
+      }
+    },
+    {
+      "id": "port-zero",
+      "input": "https://a.example:0/p",
+      "whatwg": {
+        "id": "port-zero",
+        "ok": true,
+        "href": "https://a.example:0/p",
+        "host": "a.example",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "refuses",
+          "error": "java.lang.IllegalArgumentException"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example:0/p"
+        },
+        "android-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example:0/p"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example:0/p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example:0/p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example:0/p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example:0/p"
+        }
+      }
+    },
+    {
+      "id": "port-too-big",
+      "input": "https://a.example:65536/p",
+      "whatwg": {
+        "id": "port-too-big",
+        "ok": false,
+        "href": null,
+        "host": null,
+        "path": null,
+        "query": null,
+        "error": "TypeError:ERR_INVALID_URL"
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "both-refuse",
+          "error": "java.lang.IllegalArgumentException"
+        },
+        "java-net-uri": {
+          "verdict": "accepts-refused",
+          "href": "https://a.example:65536/p",
+          "error": null
+        },
+        "android-net-uri": {
+          "verdict": "accepts-refused",
+          "href": "https://a.example:65536/p",
+          "error": null
+        },
+        "foundation-url-macos": {
+          "verdict": "accepts-refused",
+          "href": "https://a.example:65536/p",
+          "error": null
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "accepts-refused",
+          "href": "https://a.example:65536/p",
+          "error": null
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "accepts-refused",
+          "href": "https://a.example:65536/p",
+          "error": null
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "accepts-refused",
+          "href": "https://a.example:65536/p",
+          "error": null
+        }
+      }
+    },
+    {
+      "id": "port-empty",
+      "input": "https://a.example:/p",
+      "whatwg": {
+        "id": "port-empty",
+        "ok": true,
+        "href": "https://a.example/p",
+        "host": "a.example",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:/p"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:/p"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:/p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:/p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:/p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example:/p"
+        }
+      }
+    },
+    {
+      "id": "port-non-digit",
+      "input": "https://a.example:44x/p",
+      "whatwg": {
+        "id": "port-non-digit",
+        "ok": false,
+        "href": null,
+        "host": null,
+        "path": null,
+        "query": null,
+        "error": "TypeError:ERR_INVALID_URL"
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "both-refuse",
+          "error": "java.lang.IllegalArgumentException"
+        },
+        "java-net-uri": {
+          "verdict": "accepts-refused",
+          "href": "https://a.example:44x/p",
+          "error": null
+        },
+        "android-net-uri": {
+          "verdict": "accepts-refused",
+          "href": "https://a.example:44x/p",
+          "error": null
+        },
+        "foundation-url-macos": {
+          "verdict": "both-refuse",
+          "error": "URL(string:) returned nil"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "both-refuse",
+          "error": "URLComponents(string:) returned nil"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "both-refuse",
+          "error": "URL(string:) returned nil"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "both-refuse",
+          "error": "URLComponents(string:) returned nil"
+        }
+      }
+    },
+    {
+      "id": "ws-tab-newline",
+      "input": "https://a.example/p\tq\nr",
+      "whatwg": {
+        "id": "ws-tab-newline",
+        "ok": true,
+        "href": "https://a.example/pqr",
+        "host": "a.example",
+        "path": "/pqr",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/pqr"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/p\tq\nr"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/p%09q%0Ar"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/p%09q%0Ar"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/p%09q%0Ar"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/p%09q%0Ar"
+        }
+      }
+    },
+    {
+      "id": "ws-edges",
+      "input": "  https://a.example/p  ",
+      "whatwg": {
+        "id": "ws-edges",
+        "ok": true,
+        "href": "https://a.example/p",
+        "host": "a.example",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "  https://a.example/p  "
+        },
+        "foundation-url-macos": {
+          "verdict": "refuses",
+          "error": "URL(string:) returned nil"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "refuses",
+          "error": "URLComponents(string:) returned nil"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "refuses",
+          "error": "URL(string:) returned nil"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "refuses",
+          "error": "URLComponents(string:) returned nil"
+        }
+      }
+    },
+    {
+      "id": "scheme-one-slash",
+      "input": "https:/a.example/p",
+      "whatwg": {
+        "id": "scheme-one-slash",
+        "ok": true,
+        "href": "https://a.example/p",
+        "host": "a.example",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:/a.example/p"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:/a.example/p"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:/a.example/p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:/a.example/p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:/a.example/p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:/a.example/p"
+        }
+      }
+    },
+    {
+      "id": "scheme-no-slash",
+      "input": "https:a.example/p",
+      "whatwg": {
+        "id": "scheme-no-slash",
+        "ok": true,
+        "href": "https://a.example/p",
+        "host": "a.example",
+        "path": "/p",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/p"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:a.example/p"
+        },
+        "android-net-uri": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:a.example/p"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:a.example/p"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:a.example/p"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:a.example/p"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https:a.example/p"
+        }
+      }
+    },
+    {
+      "id": "rel-dotdot",
+      "input": "../x?y=1",
+      "base": "https://a.example/dir/sub/page",
+      "whatwg": {
+        "id": "rel-dotdot",
+        "ok": true,
+        "href": "https://a.example/dir/x?y=1",
+        "host": "a.example",
+        "path": "/dir/x",
+        "query": "y=1",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/dir/x?y=1"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/dir/x?y=1"
+        },
+        "android-net-uri": {
+          "verdict": "refuses",
+          "error": "java.lang.UnsupportedOperationException"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/dir/x?y=1"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/dir/x?y=1"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/dir/x?y=1"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/dir/x?y=1"
+        }
+      }
+    },
+    {
+      "id": "rel-authority",
+      "input": "//b.example/x",
+      "base": "https://a.example/dir/page",
+      "whatwg": {
+        "id": "rel-authority",
+        "ok": true,
+        "href": "https://b.example/x",
+        "host": "b.example",
+        "path": "/x",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://b.example/x"
+        },
+        "java-net-uri": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://b.example/x"
+        },
+        "android-net-uri": {
+          "verdict": "refuses",
+          "error": "java.lang.UnsupportedOperationException"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://b.example/x"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://b.example/x"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://b.example/x"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://b.example/x"
+        }
+      }
+    },
+    {
+      "id": "rel-query",
+      "input": "?q=1",
+      "base": "https://a.example/dir/page?old=1",
+      "whatwg": {
+        "id": "rel-query",
+        "ok": true,
+        "href": "https://a.example/dir/page?q=1",
+        "host": "a.example",
+        "path": "/dir/page",
+        "query": "q=1",
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/dir/page?q=1"
+        },
+        "java-net-uri": {
+          "verdict": "differ",
+          "host": "equal",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/dir/?q=1"
+        },
+        "android-net-uri": {
+          "verdict": "refuses",
+          "error": "java.lang.UnsupportedOperationException"
+        },
+        "foundation-url-macos": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/dir/page?q=1"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/dir/page?q=1"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/dir/page?q=1"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "equal",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://a.example/dir/page?q=1"
+        }
+      }
+    },
+    {
+      "id": "rel-backslash",
+      "input": "\\\\b.example\\x",
+      "base": "https://a.example/dir/page",
+      "whatwg": {
+        "id": "rel-backslash",
+        "ok": true,
+        "href": "https://b.example/x",
+        "host": "b.example",
+        "path": "/x",
+        "query": null,
+        "error": null
+      },
+      "stacks": {
+        "okhttp": {
+          "verdict": "equal",
+          "host": "equal",
+          "path": "equal",
+          "query": "equal",
+          "href": "equal",
+          "href_stack": "https://b.example/x"
+        },
+        "java-net-uri": {
+          "verdict": "refuses",
+          "error": "java.net.URISyntaxException"
+        },
+        "android-net-uri": {
+          "verdict": "refuses",
+          "error": "java.lang.UnsupportedOperationException"
+        },
+        "foundation-url-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/dir/%5C%5Cb.example%5Cx"
+        },
+        "foundation-urlcomponents-macos": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/dir/%5C%5Cb.example%5Cx"
+        },
+        "foundation-url-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/dir/%5C%5Cb.example%5Cx"
+        },
+        "foundation-urlcomponents-ios-sim": {
+          "verdict": "differ",
+          "host": "differ",
+          "path": "differ",
+          "query": "equal",
+          "href": "differ",
+          "href_stack": "https://a.example/dir/%5C%5Cb.example%5Cx"
+        }
+      }
+    }
+  ]
+}

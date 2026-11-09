@@ -71,6 +71,15 @@ group_node() {
   step upstream-lab-unit 'node --check tools/upstream-lab/node/app.js && node --test tools/upstream-lab/node/control.test.cjs'
   step upstream-lab-client 'node --test "tools/upstream-lab/client/test/*.test.mjs"'
   step client-evidence 'node tools/upstream-lab/client/check.mjs evidence/traces/client --require-functions'
+  step spike-host 'cd tools/platform-spikes/host && npm test'
+  step spike-check-tests 'node --test "tools/platform-spikes/check/test/*.test.mjs"'
+  step ios-spike-join 'node --test "tools/platform-spikes/ios/test/*.test.mjs"'
+  step android-spike-runlog 'node --test "tools/platform-spikes/android/test/*.test.mjs"'
+  step url-interop 'node --test "tools/platform-spikes/url-interop/test/*.test.mjs"'
+  step ffi-merge 'cd tools/platform-spikes/ffi-bench && node --test merge.test.mjs'
+  step matrix-tests 'node --test "tools/platform-spikes/matrix/test/*.test.mjs"'
+  step matrix-gen 'node tools/platform-spikes/matrix/gen.mjs --check'
+  step spike-evidence 'node tools/platform-spikes/check/check.mjs'
 }
 
 group_python() {
@@ -104,6 +113,9 @@ group_diff() {
 group_lab() {
   step android-lab-check 'sh tools/upstream-lab/android/check.sh'
   step ios-lab-check 'sh tools/upstream-lab/ios/check.sh'
+  step spike-android-check 'sh tools/platform-spikes/android/check.sh'
+  step ios-spike-core '. tools/platform-spikes/lab-env.sh && mkdir -p "$LAB_HOME/tmp" && cd tools/platform-spikes/ios/SpikeCore && swift test --scratch-path "$LAB_DERIVED/spikecore-build"'
+  step ffi-bench-test '. tools/platform-spikes/lab-env.sh && mkdir -p "$LAB_HOME/tmp" && cd tools/platform-spikes/ffi-bench && cargo test --quiet'
 }
 
 group_docs() {

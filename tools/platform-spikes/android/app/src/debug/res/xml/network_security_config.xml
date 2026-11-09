@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- SPDX-FileCopyrightText: The Rivqen Authors -->
+<!-- Debug only: the lab CA ($LAB_TLS/ca.pem, copied by the labCaResources task into a generated raw
+     resource) is trusted in addition to the system store, and only while the app is debuggable
+     (debug-overrides). No trust-all, no cleartext. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="@raw/lab_ca" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

@@ -1,0 +1,49 @@
+{
+  "run": "CAP-A-03-android-29-1",
+  "url": "https://localhost:18443/s/stream?run=CAP-A-03-android-29-1&chunks=0",
+  "metrics": {
+    "metric.commit": 332,
+    "metric.fetch_end": -77,
+    "metric.finish": 326,
+    "metric.first_paint": 356,
+    "metric.head_wait": 0,
+    "metric.intercept": 37,
+    "metric.load_call": 110,
+    "metric.webview_create": 106
+  },
+  "fetch": {
+    "bytes": 44,
+    "complete": true,
+    "error": null,
+    "sha256": "c5aca668bc943bdaae29b60893f823934f9ebf5bde7534a1751a279d228139b9"
+  },
+  "stream": {
+    "bytes": 44,
+    "error": null,
+    "outcome": "end",
+    "sha256": "c5aca668bc943bdaae29b60893f823934f9ebf5bde7534a1751a279d228139b9"
+  },
+  "intercept": {
+    "main_frame_calls": 1,
+    "reason": "match",
+    "subresource_passes": 1
+  },
+  "expected": {
+    "bytes": 44,
+    "sha256": "c5aca668bc943bdaae29b60893f823934f9ebf5bde7534a1751a279d228139b9"
+  },
+  "checks": {
+    "streamed": true,
+    "host_status": 400,
+    "expected_from": "fetched bytes",
+    "host_chunk_bytes": 0,
+    "expected_bytes": 44,
+    "fetch_bytes": 44,
+    "fetch_complete": true,
+    "stream_read_bytes": 44,
+    "stream_outcome": "end",
+    "stream_once": true,
+    "fetch_sha256_is_expected": true,
+    "stream_sha256_is_expected": true
+  }
+}

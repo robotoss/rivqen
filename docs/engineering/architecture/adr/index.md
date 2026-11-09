@@ -2,7 +2,7 @@
 
 An **ADR** records one important decision: the context, the options, the decision and its consequences. ADRs make decisions traceable. A decision in an ADR can change only through a new ADR that supersedes it.
 
-**Status:** <Badge type="info" text="DESIGN" /> ADR-005 and ADR-006 are **Accepted** (human, 2026-10-09). All other ADRs below are **Proposed**. Each has an owner work package and the evidence that will close it.
+**Status:** <Badge type="info" text="DESIGN" /> ADR-005 and ADR-006 are **Accepted** (human, 2026-10-09); ADR-002 and ADR-003 are **Accepted** (human, 2026-11-09, H-135, H-136; in force when the WP-04 merge request is merged). All other ADRs below are **Proposed**. Each has an owner work package and the evidence that will close it. ADR-002 and ADR-003 go to the human at G2 (H-127); ADR-002, ADR-003, ADR-009 and ADR-014 have their own files (WP-04 S3).
 
 [[toc]]
 
@@ -53,19 +53,19 @@ An **ADR** records one important decision: the context, the options, the decisio
 | ADR | Title | Owner WP | Blocks | Recommended option |
 |---|---|---|---|---|
 | [ADR-001](#adr-001) | Rust core boundaries | WP-05 | Core design | Pure logic core; adapters own I/O |
-| [ADR-002](#adr-002) | FFI technology: UniFFI vs C ABI | WP-09 | Bindings | UniFFI for control plane; narrow C ABI for byte streams if measured |
-| [ADR-003](#adr-003) | iOS navigation strategy | WP-11 | iOS SDK | Decide after spike IOS-P1/P2/P3 |
+| [ADR-002](/engineering/architecture/adr/ADR-002-ffi-technology) | FFI technology: UniFFI vs C ABI | WP-04 (accepted at G2, H-135); WP-09 implements | Bindings | **Accepted:** hybrid — UniFFI control plane, C ABI byte channel; at most one copy per byte per direction |
+| [ADR-003](/engineering/architecture/adr/ADR-003-ios-navigation) | iOS navigation strategy | WP-04 (accepted at G2, H-136); WP-11 implements | iOS SDK | **Accepted:** one path per page class — IOS-P1 public and offline, IOS-P2 authenticated, IOS-P3 own content; no https streaming |
 | [ADR-004](#adr-004) | Cache storage format | WP-07 | Cache | Files for bodies + SQLite for metadata, atomic rename |
 | [ADR-005](#adr-005) | Legacy protocol exact semantics and profiles | WP-01, WP-02 | legacy compatibility | **Accepted:** "Rivqen canonical" profile + `legacy-java`, `legacy-node`, `legacy-php` profiles |
 | [ADR-006](#adr-006) | RQP wire schema and markup | WP-17 | RQP | **Accepted:** `data-rq-block` attributes, inline manifest, `Rq-*` Structured Field headers, base64url SHA-256 |
 | [ADR-007](#adr-007) | WebSocket vs WebTransport | WP-16 | Realtime | WebSocket first; WebTransport experimental |
 | [ADR-008](#adr-008) | Security and privacy model | WP-18 | Release | Per threat model |
-| [ADR-009](#adr-009) | Streaming ABI and buffer ownership | WP-09 | Streaming | Bounded chunk API with single owner |
+| [ADR-009](/engineering/architecture/adr/ADR-009-streaming-abi) | Streaming ABI and buffer ownership | WP-09 (WP-04 adds data) | Streaming | Pull into a caller-owned buffer; no ownership transfer; the WebView block sets the granularity |
 | [ADR-010](#adr-010) | Server SDK implementation strategy | WP-13…15 | Servers | Native-language SDKs + shared conformance |
 | [ADR-011](#adr-011) | Cache encryption (AEAD and keys) | WP-07, WP-18 | Authenticated cache | Platform keys + audited AEAD crate |
 | [ADR-012](#adr-012) | Release hardening profiles | WP-18, WP-21 | Release | Standard toolchain optimizations only |
 | [ADR-013](#adr-013) | Delta mechanism for RQP | WP-17 | RQP | Evaluate Compression Dictionary Transport against block patches |
-| [ADR-014](#adr-014) | Android HTTP stack | WP-10 | Android | Adapter interface; choose by benchmark |
+| [ADR-014](/engineering/architecture/adr/ADR-014-android-http-stack) | Android HTTP stack | WP-10 (WP-04 adds data) | Android | Adapter contract from the WP-04 data; OkHttp reference adapter; measure HttpEngine in WP-10 |
 | [ADR-015](#adr-015) | Minimum platform versions | WP-21 | Support matrix | See support matrix |
 | [ADR-016](#adr-016) | Native protocol first; legacy mode end of life | WP-00 | Roadmap, packaging | **Accepted direction:** RQP default in 1.0; legacy as optional modules, deprecated 1.0, removed 1.5 |
 | [ADR-017](#adr-017) | Error handling and logging | WP-05 | All code | No ignored errors; typed error chains; redacted structured logs |
@@ -79,17 +79,12 @@ An **ADR** records one important decision: the context, the options, the decisio
 
 ## ADR-002: FFI technology {#adr-002}
 
-- **Context.** UniFFI generates Kotlin and Swift bindings from Rust. Large byte buffers across UniFFI can be copied on each call.
-- **Options.** (1) UniFFI only. (2) Hand-written C ABI + JNI + Swift wrapper. (3) UniFFI for control plane, C ABI for the HTML byte stream.
-- **Recommendation.** Option 3 if the WP-04 FFI benchmark shows more than the agreed copy cost; otherwise option 1.
-- **Verification.** Microbenchmark: 1 MiB document in 16 KiB chunks, measure latency and copied bytes on a mid-range Android device and an iPhone.
+**Status: Accepted** (human, 2026-11-09, H-135). File: [ADR-002](/engineering/architecture/adr/ADR-002-ffi-technology). Recommendation: UniFFI for the control plane and a narrow C ABI byte channel for document bytes. Measured (indicative, H-129): UniFFI takes 21 to 108 times the time of the C ABI and copies each byte 3 or 4 times, against once. Verification: WP-09 on a device, both directions.
 
 ## ADR-003: iOS navigation strategy {#adr-003}
 
 - **Context.** iOS has no public API to intercept standard HTTPS requests of `WKWebView` like Android's `shouldInterceptRequest`. `WKURLSchemeHandler` works only for custom schemes. <Badge type="tip" text="FACT" />
-- **Options.** IOS-P1 early fetch + `loadHTMLString`/`load(_:mimeType:…baseURL:)`; IOS-P2 normal navigation + JS diff; IOS-P3 custom scheme for trusted content; plus `loadSimulatedRequest` if the spike confirms it.
-- **Recommendation.** Decide after the spike matrix in WP-04. Prefer real navigation (P2) for authenticated pages.
-- **Verification.** `ios-parity-matrix.md` with supported / conditional / impossible per feature.
+- **Status: Accepted** (human, 2026-11-09, H-136). File: [ADR-003](/engineering/architecture/adr/ADR-003-ios-navigation). Recommendation: IOS-P1 (`loadSimulatedRequest`) for public pages and offline snapshots, IOS-P2 (real navigation) for authenticated pages, IOS-P3 (own scheme) only for own local content; never `loadHTMLString` for a site's page. `https` main-document streaming is impossible with public API (CAP-I-07). Evidence: [iOS parity matrix](/engineering/platforms/ios-parity-matrix).
 
 ## ADR-004: Cache storage format {#adr-004}
 
@@ -126,7 +121,7 @@ An **ADR** records one important decision: the context, the options, the decisio
 
 ## ADR-009: Streaming ABI {#adr-009}
 
-- **Recommendation.** Each chunk has one owner and a bounded size. The adapter pulls chunks (pull model) to get natural backpressure.
+**Status: Proposed — decided in WP-09** (H-127). File: [ADR-009](/engineering/architecture/adr/ADR-009-streaming-abi). Recommendation: pull into a buffer that the caller owns (one copy, no ownership transfer); an error is never END; pending bytes are at most `prefixBufferBytes + maxChunkBytes`. The Android WebView reads in 2048-byte (WebView 145) or 64 KiB (WebView 91) blocks.
 
 ## ADR-010: Server SDK strategy {#adr-010}
 
@@ -149,12 +144,18 @@ An **ADR** records one important decision: the context, the options, the decisio
 
 ## ADR-014: Android HTTP stack {#adr-014}
 
-- **Options.** Platform `HttpEngine` (API 34+) / Cronet, OkHttp, `HttpURLConnection`.
-- **Recommendation.** Define an adapter interface. Default to the stack the host app already uses for cookies and auth. Do not ship two stacks without a measured benefit.
+**Status: Proposed — decided in WP-10** (H-127). File: [ADR-014](/engineering/architecture/adr/ADR-014-android-http-stack). Recommendation: an adapter contract from the WP-04 data (visible redirects, fail-closed TLS, `CookieManager` cookies by H-131 and H-132, body errors, WHATWG binding URL), OkHttp as the reference adapter, and `HttpEngine` measured before WP-10 fixes the default. `HttpEngine`, Cronet and `HttpURLConnection`: NOT FOUND (not measured). Evidence: [Android capability matrix](/engineering/platforms/android-matrix).
 
 ## ADR-015: Minimum platform versions {#adr-015}
 
 - **Recommendation.** Set the minimum versions at the start of WP-10/WP-11 from current store requirements and market data. See [Support matrix](/guide/support-matrix).
+- **Data from WP-04** (S1, S2):
+  - <Badge type="tip" text="FACT" /> WebView updates through Google Play since Android 5.0, but Chromium no longer supports WebView updates on Android 5 to 9 ([Lollipop](https://developer.android.com/about/versions/lollipop), [Chromium WebView prerelease](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/prerelease.md)).
+  - <Badge type="tip" text="FACT" /> Device share (Android Studio data, 2026-10-01): API ≥ 24 99.4 %, ≥ 26 99.0 %, ≥ 28 97.0 %, ≥ 29 93.9 % ([distributions.json](https://dl.google.com/android/studio/metadata/distributions.json)). androidx.webkit 1.18.0 has minSdk 24. Google Play requires targetSdk 36 from 31 Aug 2026.
+  - <Badge type="tip" text="FACT" /> The WebView of the API 29 image (91) has no `DOCUMENT_START_SCRIPT` and no `COOKIE_INTERCEPT`, reads in 64 KiB blocks and can give a null `getRequestHeaders()`. It is the WebView of the image, not of users (R-3).
+  - <Badge type="tip" text="FACT" /> An app with a deployment target before 18.4, built with Xcode 27.2, that calls Swift-refined WebKit APIs, stops at launch on the iOS 18.5 simulator ([WebKit bug 293831](https://bugs.webkit.org/show_bug.cgi?id=293831)); on a device: NOT FOUND. WP-21 tests the SDK sample app on an 18.4+ runtime with the lowest deployment target.
+  - <Badge type="tip" text="FACT" /> iOS 27.0, 26.5 and 18.5 give the same verdicts, except the `SameSite=Strict` behavior on an app load of another site and the `sameSitePolicy` value. iOS 17 is not tested (H-128): the proposed minimum "iOS 17" has no WP-04 data.
+  - <Badge type="tip" text="FACT" /> FFI libraries with 16 KB aligned segments load on a 16 KB page image (API 37, H-133).
 
 ## ADR-016: Native protocol first; legacy mode end of life {#adr-016}
 

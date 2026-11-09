@@ -1,0 +1,43 @@
+{"capability":"CAP-I-06","device":"iPhone 16 Pro","ev":"run.start","k":2,"os":"26.5","platform":"ios","prototype":"IOS-P3","run":"CAP-I-06-ios-26.5-2","seq":0,"src":"script","t":0,"webview":null}
+{"ev":"app.probe","name":"native.webview","seq":0,"src":"app","t":63,"value":"created"}
+{"ev":"app.probe","name":"native.step","seq":1,"src":"app","t":63,"value":"site"}
+{"error":null,"ev":"app.nav","kind":"start","seq":2,"src":"app","t":502,"url":"https://localhost:18443/s/cookie/set?run=CAP-I-06-ios-26.5-2&name=rq-site&value=a1&attrs=Secure,SameSite=None"}
+{"error":null,"ev":"app.nav","kind":"commit","seq":3,"src":"app","t":516,"url":"https://localhost:18443/s/cookie/set?run=CAP-I-06-ios-26.5-2&name=rq-site&value=a1&attrs=Secure,SameSite=None"}
+{"ev":"app.probe","name":"metric.commit","seq":4,"src":"app","t":516,"value":453.413041}
+{"ev":"app.probe","name":"location","seq":5,"src":"app","t":519,"value":"https://localhost:18443/s/cookie/set?run=CAP-I-06-ios-26.5-2&name=rq-site&value=a1&attrs=Secure,SameSite=None"}
+{"ev":"app.probe","name":"origin","seq":6,"src":"app","t":519,"value":"https://localhost:18443"}
+{"ev":"app.probe","name":"cookie","seq":7,"src":"app","t":519,"value":"rq-site=a1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":8,"src":"app","t":519,"url":"https://localhost:18443/s/cookie/set?run=CAP-I-06-ios-26.5-2&name=rq-site&value=a1&attrs=Secure,SameSite=None"}
+{"ev":"app.probe","name":"native.step","seq":9,"src":"app","t":519,"value":"scheme"}
+{"error":null,"ev":"app.nav","kind":"start","seq":10,"src":"app","t":521,"url":"rqlab://localhost:18443/s/cookie/set?run=CAP-I-06-ios-26.5-2&name=rq-scheme&value=s1"}
+{"decision":"stream","ev":"app.intercept","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"230","content-type":"text/html; charset=utf-8","keep-alive":"timeout=5","set-cookie":"rq-scheme=s1; Path=/"},"main_frame":true,"method":"GET","seq":11,"src":"app","status":200,"t":541,"url":"rqlab://localhost:18443/s/cookie/set?run=CAP-I-06-ios-26.5-2&name=rq-scheme&value=s1"}
+{"bytes":230,"ev":"app.stream.read","k":null,"seq":12,"src":"app","t":541}
+{"error":null,"ev":"app.nav","kind":"commit","seq":13,"src":"app","t":542,"url":"rqlab://localhost:18443/s/cookie/set?run=CAP-I-06-ios-26.5-2&name=rq-scheme&value=s1"}
+{"ev":"app.probe","name":"metric.commit","seq":14,"src":"app","t":542,"value":22.861917}
+{"ev":"app.probe","name":"location","seq":15,"src":"app","t":542,"value":"rqlab://localhost:18443/s/cookie/set?run=CAP-I-06-ios-26.5-2&name=rq-scheme&value=s1"}
+{"ev":"app.probe","name":"origin","seq":16,"src":"app","t":542,"value":"rqlab://localhost:18443"}
+{"ev":"app.probe","name":"cookie","seq":17,"src":"app","t":543,"value":""}
+{"error":null,"ev":"app.nav","kind":"finish","seq":18,"src":"app","t":543,"url":"rqlab://localhost:18443/s/cookie/set?run=CAP-I-06-ios-26.5-2&name=rq-scheme&value=s1"}
+{"decision":"stream","ev":"app.intercept","fields":{"cache-control":"no-store","connection":"keep-alive","content-length":"221","content-type":"application/json","keep-alive":"timeout=5"},"main_frame":false,"method":"GET","seq":19,"src":"app","status":200,"t":564,"url":"rqlab://localhost:18443/s/echo?run=CAP-I-06-ios-26.5-2&tag=relative"}
+{"ev":"app.probe","name":"location","seq":20,"src":"app","t":589,"value":"rqlab://localhost:18443/s/cookie/set?run=CAP-I-06-ios-26.5-2&name=rq-scheme&value=s1"}
+{"ev":"app.probe","name":"origin","seq":21,"src":"app","t":589,"value":"rqlab://localhost:18443"}
+{"ev":"app.probe","name":"cookie","seq":22,"src":"app","t":589,"value":""}
+{"ev":"app.probe","name":"cookie","seq":23,"src":"app","t":589,"value":""}
+{"ev":"app.probe","name":"echo","seq":24,"src":"app","t":589,"value":"{\"cookie\":\"rq-scheme=s1\",\"fields\":[\"accept\",\"accept-encoding\",\"accept-language\",\"cache-control\",\"connection\",\"cookie\",\"host\",\"user-agent\"],\"method\":\"GET\",\"site\":\"A\",\"target\":\"/s/echo?run=CAP-I-06-ios-26.5-2&tag=relative\"}"}
+{"ev":"app.probe","name":"https.cors","seq":25,"src":"app","t":589,"value":"error:TypeError"}
+{"ev":"app.probe","name":"https.no_cors","seq":26,"src":"app","t":589,"value":"opaque"}
+{"ev":"app.probe","name":"https.image","seq":27,"src":"app","t":589,"value":"error"}
+{"ev":"app.probe","name":"native.wk_cookies","seq":28,"src":"app","t":589,"value":["rq-site@localhost"]}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","host","priority","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":0,"site":"A","src":"host","t":985,"target":"/s/cookie/set?run=CAP-I-06-ios-26.5-2&name=rq-site&value=a1&attrs=Secure,SameSite=None"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"230","content-type":"text/html; charset=utf-8","set-cookie":"rq-site=a1; Path=/; Secure; SameSite=None"},"seq":1,"src":"host","status":200,"t":985}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","host","user-agent"],"method":"GET","seq":2,"site":"A","src":"host","t":1019,"target":"/s/cookie/set?run=CAP-I-06-ios-26.5-2&name=rq-scheme&value=s1"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"230","content-type":"text/html; charset=utf-8","set-cookie":"rq-scheme=s1; Path=/"},"seq":3,"src":"host","status":200,"t":1019}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","cache-control","connection","cookie","host","user-agent"],"method":"GET","seq":4,"site":"A","src":"host","t":1043,"target":"/s/echo?run=CAP-I-06-ios-26.5-2&tag=relative"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"221","content-type":"application/json"},"seq":5,"src":"host","status":200,"t":1043}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","cookie","host","origin","priority","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":6,"site":"A","src":"host","t":1057,"target":"/s/echo?run=CAP-I-06-ios-26.5-2&tag=cors"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"270","content-type":"application/json"},"seq":7,"src":"host","status":200,"t":1057}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","cookie","host","priority","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":8,"site":"A","src":"host","t":1061,"target":"/s/echo?run=CAP-I-06-ios-26.5-2&tag=no-cors"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"264","content-type":"application/json"},"seq":9,"src":"host","status":200,"t":1061}
+{"ev":"host.request","fields":["accept","accept-encoding","accept-language","connection","cookie","host","priority","sec-fetch-dest","sec-fetch-mode","sec-fetch-site","user-agent"],"method":"GET","seq":10,"site":"A","src":"host","t":1065,"target":"/s/echo?run=CAP-I-06-ios-26.5-2&tag=image"}
+{"ev":"host.response","fields":{"cache-control":"no-store","content-length":"262","content-type":"application/json"},"seq":11,"src":"host","status":200,"t":1065}
+{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":3336}

@@ -1,0 +1,14 @@
+{"capability":"CAP-A-05","device":"Android SDK built for arm64","ev":"run.start","k":1,"os":"29","platform":"android","prototype":"A-STREAM","run":"CAP-A-05-android-29-1","seq":0,"src":"script","t":0,"webview":"com.google.android.webview 91.0.4472.114"}
+{"ev":"app.fetch.start","seq":0,"src":"app","t":35,"url":"https://10.0.2.2:18444/s/echo?run=CAP-A-05-android-29-1&html=1"}
+{"error":"javax.net.ssl.SSLHandshakeException: java.security.cert.CertPathValidatorException: Trust anchor for certification path not found.","ev":"app.error","seq":1,"src":"app","t":85}
+{"ev":"app.probe","name":"metric.webview_create","seq":2,"src":"app","t":116,"value":81}
+{"ev":"app.probe","name":"metric.load_call","seq":3,"src":"app","t":121,"value":86}
+{"ev":"app.probe","name":"metric.intercept","seq":4,"src":"app","t":135,"value":14}
+{"ev":"app.probe","name":"metric.head_wait","seq":5,"src":"app","t":135,"value":0}
+{"decision":"pass","ev":"app.intercept","fields":[],"main_frame":true,"method":"GET","reason":"no-head","redirect":false,"seq":6,"src":"app","status":null,"t":135,"url":"https://10.0.2.2:18444/s/echo?run=CAP-A-05-android-29-1&html=1"}
+{"ev":"app.probe","name":"metric.fetch_end","seq":7,"src":"app","t":137,"value":-36}
+{"decision":"cancel","ev":"app.ssl_error","primary_error":3,"seq":8,"src":"app","t":279,"url":"https://10.0.2.2:18444/s/echo?run=CAP-A-05-android-29-1&html=1"}
+{"error":null,"ev":"app.nav","kind":"finish","seq":9,"src":"app","t":283,"url":"https://10.0.2.2:18444/s/echo?run=CAP-A-05-android-29-1&html=1"}
+{"ev":"app.probe","name":"metric.finish","seq":10,"src":"app","t":283,"value":162}
+{"bytes":0,"complete":false,"ev":"app.fetch.end","seq":11,"src":"app","t":85,"url":"https://10.0.2.2:18444/s/echo?run=CAP-A-05-android-29-1&html=1"}
+{"error":null,"ev":"run.end","ok":true,"seq":1,"src":"script","t":3307}

@@ -87,7 +87,11 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'Public surfaces', link: '/engineering/architecture/surfaces' },
       { text: 'Technology stack', link: '/engineering/architecture/technology-stack' },
       { text: 'Errors and logging', link: '/engineering/architecture/errors-logging' },
-      { text: 'Decision records (ADR)', link: '/engineering/architecture/adr/' }
+      { text: 'Decision records (ADR)', link: '/engineering/architecture/adr/' },
+      { text: 'ADR-002 FFI technology', link: '/engineering/architecture/adr/ADR-002-ffi-technology' },
+      { text: 'ADR-003 iOS navigation', link: '/engineering/architecture/adr/ADR-003-ios-navigation' },
+      { text: 'ADR-009 Streaming ABI', link: '/engineering/architecture/adr/ADR-009-streaming-abi' },
+      { text: 'ADR-014 Android HTTP stack', link: '/engineering/architecture/adr/ADR-014-android-http-stack' }
     ]
   },
   {
@@ -151,6 +155,8 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
     items: [
       { text: 'Android SDK', link: '/engineering/platforms/android' },
       { text: 'iOS SDK', link: '/engineering/platforms/ios' },
+      { text: 'iOS parity matrix', link: '/engineering/platforms/ios-parity-matrix' },
+      { text: 'Android capability matrix', link: '/engineering/platforms/android-matrix' },
       { text: 'Web and React SDK', link: '/engineering/platforms/web-react' },
       { text: 'JS bridge contract', link: '/engineering/platforms/js-bridge' }
     ]
@@ -249,6 +255,9 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'WP-03 S2', link: '/engineering/plan/sprints/WP-03-S2' },
       { text: 'WP-01 S1', link: '/engineering/plan/sprints/WP-01-S1' },
       { text: 'WP-01 S2', link: '/engineering/plan/sprints/WP-01-S2' },
+      { text: 'WP-04 S1', link: '/engineering/plan/sprints/WP-04-S1' },
+      { text: 'WP-04 S2', link: '/engineering/plan/sprints/WP-04-S2' },
+      { text: 'WP-04 S3', link: '/engineering/plan/sprints/WP-04-S3' },
       { text: 'Sprint record template', link: '/engineering/plan/sprints/template' }
     ]
   }
@@ -263,6 +272,7 @@ const researchSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'Technology landscape', link: '/research/landscape' },
       { text: 'Standards', link: '/research/standards' },
       { text: 'Platform baselines (2026)', link: '/research/platform-baselines' },
+      { text: 'URL interop of native stacks', link: '/research/url-interop' },
       { text: 'Literature review', link: '/research/literature' },
       { text: 'Sources and confidence', link: '/research/sources' }
     ]

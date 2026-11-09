@@ -1,0 +1,50 @@
+{
+  "run": "CAP-A-03-android-37-2",
+  "url": "https://localhost:18443/s/stream?run=CAP-A-03-android-37-2&chunks=3&size=2048&gate=beacon&timeout=15000&csp=1",
+  "metrics": {
+    "metric.commit": 182,
+    "metric.fetch_end": 161,
+    "metric.finish": 187,
+    "metric.first_paint": 172,
+    "metric.head_wait": 0,
+    "metric.intercept": 8,
+    "metric.load_call": 122,
+    "metric.visual_chunk_0": 182,
+    "metric.webview_create": 112
+  },
+  "fetch": {
+    "bytes": 6144,
+    "complete": true,
+    "error": null,
+    "sha256": "6b7475c8ed3e22fdd9852791588f0ab24c9a6175a95cd880634f44a284ec9d2a"
+  },
+  "stream": {
+    "bytes": 6144,
+    "error": null,
+    "outcome": "end",
+    "sha256": "6b7475c8ed3e22fdd9852791588f0ab24c9a6175a95cd880634f44a284ec9d2a"
+  },
+  "intercept": {
+    "main_frame_calls": 1,
+    "reason": "match",
+    "subresource_passes": 4
+  },
+  "expected": {
+    "bytes": 6144,
+    "sha256": "6b7475c8ed3e22fdd9852791588f0ab24c9a6175a95cd880634f44a284ec9d2a"
+  },
+  "checks": {
+    "streamed": true,
+    "host_status": 200,
+    "expected_from": "host/stream.mjs",
+    "host_chunk_bytes": 6144,
+    "expected_bytes": 6144,
+    "fetch_bytes": 6144,
+    "fetch_complete": true,
+    "stream_read_bytes": 6144,
+    "stream_outcome": "end",
+    "stream_once": true,
+    "fetch_sha256_is_expected": true,
+    "stream_sha256_is_expected": true
+  }
+}

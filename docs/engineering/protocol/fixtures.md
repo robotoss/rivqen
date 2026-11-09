@@ -58,6 +58,8 @@ fixtures/legacy/
 
 <Badge type="tip" text="FACT" /> The RQP fixtures (`fixtures/rqp/`) have their own layout. See section 4.
 
+<Badge type="tip" text="FACT" /> The Rust core reads the fixtures as data through `rivqen-testkit` (DL-146). `load_rqp_protocol()`, `load_legacy()` and `load_malformed()` return every case directory with `case.json` and `expected.json` as JSON values, `response.body` and page files as raw bytes, and the seed files as raw bytes. Typed accessors give the client `context`, `response`, expected request lines and `result`, and the server delta `binding`, `binding_inputs` and `blocks`. A missing or unreadable file fails with its path. The ledger `crates/rivqen-testkit/ledger/rqp-client.txt` lists each of the 153 client fixtures with its owner WP (DL-145: 25 WP-05, 104 WP-06, 24 WP-08), a one-word reason and the WP-05 checks (`request-fields`, `binding`). A client fixture without a line, or a line without a fixture, fails `ledger_covers_every_client_fixture`.
+
 ## 2. Rules
 
 1. Files use UTF-8 and LF line ends, except where the fixture tests CRLF or encodings.

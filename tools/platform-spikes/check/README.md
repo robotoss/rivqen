@@ -8,7 +8,7 @@ Offline check of the capability catalog and the stored evidence, against [CONTRA
 ```sh
 node tools/platform-spikes/check/check.mjs
 node tools/platform-spikes/check/check.mjs --root <dir> --catalog <path>
-node --test tools/platform-spikes/check/test
+node --test "tools/platform-spikes/check/test/*.test.mjs"
 ```
 
 | Option | Default |

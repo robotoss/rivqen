@@ -78,7 +78,7 @@ The `labCaResources` task copies `$LAB_TLS/ca.pem` into a generated raw resource
 
 ```sh
 sh tools/platform-spikes/android/check.sh               # offline, JDK only
-node --test tools/platform-spikes/android/test           # offline, run sets and run checks
+node --test "tools/platform-spikes/android/test/*.test.mjs"        # offline, run sets and run checks
 sh tools/platform-spikes/lab/emulator.sh start 37        # the lab emulator (emulator-5602)
 node tools/platform-spikes/host/main.mjs                 # the spike host (if it does not run)
 sh tools/platform-spikes/android/run.sh CAP-A-01 37 1..3

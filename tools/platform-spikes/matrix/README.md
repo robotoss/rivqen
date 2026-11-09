@@ -8,7 +8,7 @@ Writes two pages from `tools/platform-spikes/capabilities.json`:
 ```sh
 node tools/platform-spikes/matrix/gen.mjs           # write the pages
 node tools/platform-spikes/matrix/gen.mjs --check   # exit 1 when a page is stale or missing
-node --test tools/platform-spikes/matrix/test
+node --test "tools/platform-spikes/matrix/test/*.test.mjs"
 ```
 
 Node.js 22, standard library only, no network. Options for tests: `--catalog <file>`, `--out-dir <dir>`. Exit codes: 0 current, 1 stale page or defective catalog, 2 usage error. The generator checks the catalog with the rules of `check/src/catalog.mjs` first.

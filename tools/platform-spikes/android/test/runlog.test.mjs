@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: The Rivqen Authors
 
 // Offline tests of the run sets and the run acceptance of runlog.mjs (what an ok run needs before
-// it may go into evidence/). Run: node --test tools/platform-spikes/android/test
+// it may go into evidence/). Run: node --test "tools/platform-spikes/android/test/*.test.mjs"
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";

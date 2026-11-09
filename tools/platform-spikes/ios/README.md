@@ -29,7 +29,7 @@ Public API only: no private WebKit API, no global `URLProtocol`, no ATS exceptio
 
 `run.sh` builds into `$LAB_DERIVED/ios-spike` (`SKIP_BUILD=1` skips the build), installs the app, and for each `k`: `POST /run/start`, `simctl launch` with `-rqRun <capability>-ios-<os>-<k> -rqCap <capability> -rqOrigin https://localhost:18443`, waits for `Documents/spike-output/DONE` in the app data container, `POST /run/end`, joins the parts into `evidence/spikes/wp-04/ios/<capability>/<os>/`. A run that is not `ok` goes to `$LAB_OUT/ios-failed/` and the script exits 1. The script never starts or stops the host and never touches a simulator without the lab prefix. On an iOS 18.4 to 18.x runtime it sets `DYLD_FALLBACK_LIBRARY_PATH` for the app process to the runtime's cryptex Swift folder, because there the app (deployment target 18.0) otherwise stops at launch without `libswiftWebKit.dylib` ([WebKit bug 293831](https://bugs.webkit.org/show_bug.cgi?id=293831)); `run.json` then has `launch_env`.
 
-Checks: `cd tools/platform-spikes/ios/SpikeCore && swift test`, `node --test tools/platform-spikes/ios/test`, `xcrun swift-format lint --strict -r SpikeCore/Sources SpikeCore/Tests App/SpikeApp`.
+Checks: `cd tools/platform-spikes/ios/SpikeCore && swift test`, `node --test "tools/platform-spikes/ios/test/*.test.mjs"`, `xcrun swift-format lint --strict -r SpikeCore/Sources SpikeCore/Tests App/SpikeApp`.
 
 ## What each capability does
 

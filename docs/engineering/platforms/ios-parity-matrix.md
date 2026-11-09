@@ -63,7 +63,7 @@ No capability. <Badge type="info" text="not measured" /> in WP-04.
 
 ## Shared rows (FFI and URL)
 
-These rows are the same on the Android and the iOS page (the note numbers differ).Each result in the notes is one target: host, device or simulator.
+These rows are the same on the Android and the iOS page (the note numbers differ). Each result in the notes is one target: host, device or simulator.
 
 | # | ID | Verdict |
 |---|---|---|

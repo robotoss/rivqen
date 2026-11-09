@@ -100,7 +100,7 @@ function sharedSection(catalog, startNumber) {
   const rows = shared.map((c, i) => [String(startNumber + i), c.id, badge(c.verdict)]);
   return {
     text:
-      `## Shared rows (FFI and URL)\n\nThese rows are the same on the Android and the iOS page (the note numbers differ).` +
+      `## Shared rows (FFI and URL)\n\nThese rows are the same on the Android and the iOS page (the note numbers differ). ` +
       `Each result in the notes is one target: host, device or simulator.\n\n${table(['#', 'ID', 'Verdict'], rows)}`,
     notes: shared.map((c, i) => noteBlock(startNumber + i, c)),
   };

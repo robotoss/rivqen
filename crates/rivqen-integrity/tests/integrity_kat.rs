@@ -176,7 +176,7 @@ fn integrity_identifiers_parse_and_display_kat() {
     assert_eq!(page.digest(), &sha256(preimage_a(PRICE).as_bytes()));
     let binding = Binding::parse(BINDING_PRICE).unwrap();
     assert_eq!(binding.to_string(), BINDING_PRICE);
-    assert_eq!(format!("{page:?}"), "PageRevision(r1.RdZd06nC…)");
+    assert_eq!(format!("{page:?}"), "PageRevision(r1.RdZd06nC...)");
     assert_eq!(TemplateRevision::PREFIX, "t1.");
     assert_eq!(PageRevision::PREFIX, "r1.");
     assert_eq!(Binding::PREFIX, "d1.");
@@ -205,7 +205,7 @@ fn integrity_digest_text_round_trip_kat() {
         assert_eq!(digest.to_b64u().len(), DIGEST_B64U_CHARS);
         assert_eq!(
             format!("{digest:?}"),
-            format!("Sha256Digest({}…)", &hash[..8])
+            format!("Sha256Digest({}...)", &hash[..8])
         );
     }
 }

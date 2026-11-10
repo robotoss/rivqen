@@ -101,7 +101,7 @@ Exceptions use `#[expect(lint, reason = "…")]` with a written reason. A review
 | `SafeUrl` | URL | `origin + path` only |
 | `PageBytes` | HTML / block content | `PageBytes(len=12345, sha256=…8 hex)` |
 | `PartitionId` | Keyed hash | First 8 hex characters |
-| `Sha256Digest`, `TemplateRevision`, `PageRevision`, `Binding` (Rust core) | Unkeyed SHA-256 values (H-60: they allow guess-testing of content) | First 8 base64url characters and `…`; `Display` (the wire form) is the full value |
+| `Sha256Digest`, `TemplateRevision`, `PageRevision`, `Binding` (Rust core) | Unkeyed SHA-256 values (H-60: they allow guess-testing of content) | First 8 base64url characters and `...`; `Display` (the wire form) is the full value |
 | `Nonce` (Rust core) | Nonce N of a request (RQP-17) | `Nonce(<redacted>)` |
 | JSON `Value` and `Event` (Rust core) | Parsed manifest, envelope or block JSON | Shape and string lengths; numbers and booleans as `Integer(..)` and `Bool(..)` |
 

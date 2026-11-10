@@ -19,13 +19,13 @@ const BINDING: &str = "d1.orrx-_-Iflnnjs7DvvuOOdxW3FzbZpU_PTlR0jdWw54";
 #[test]
 fn integrity_debug_prints_a_prefix_only() {
     let digest = Sha256Digest::from_b64u(HASH).unwrap();
-    assert_eq!(format!("{digest:?}"), "Sha256Digest(0Aqua3-_…)");
+    assert_eq!(format!("{digest:?}"), "Sha256Digest(0Aqua3-_...)");
     let template = TemplateRevision::parse(TEMPLATE_REVISION).unwrap();
-    assert_eq!(format!("{template:?}"), "TemplateRevision(t1.86FtOeBe…)");
+    assert_eq!(format!("{template:?}"), "TemplateRevision(t1.86FtOeBe...)");
     let page = PageRevision::parse(PAGE_REVISION).unwrap();
-    assert_eq!(format!("{page:?}"), "PageRevision(r1.RdZd06nC…)");
+    assert_eq!(format!("{page:?}"), "PageRevision(r1.RdZd06nC...)");
     let binding = Binding::parse(BINDING).unwrap();
-    assert_eq!(format!("{binding:?}"), "Binding(d1.orrx-_-I…)");
+    assert_eq!(format!("{binding:?}"), "Binding(d1.orrx-_-I...)");
     // Display is the full wire text.
     assert_eq!(template.to_string(), TEMPLATE_REVISION);
     assert_eq!(page.to_string(), PAGE_REVISION);
@@ -42,9 +42,9 @@ proptest! {
     fn integrity_debug_never_writes_more_than_8_characters(data in prop::collection::vec(any::<u8>(), 0..64)) {
         let digest = sha256(&data);
         let full = digest.to_b64u();
-        prop_assert_eq!(format!("{digest:?}"), format!("Sha256Digest({}…)", &full[..8]));
+        prop_assert_eq!(format!("{digest:?}"), format!("Sha256Digest({}...)", &full[..8]));
         let page = PageRevision::from_digest(digest);
-        prop_assert_eq!(format!("{page:?}"), format!("PageRevision(r1.{}…)", &full[..8]));
+        prop_assert_eq!(format!("{page:?}"), format!("PageRevision(r1.{}...)", &full[..8]));
         prop_assert_eq!(page.to_string(), format!("r1.{full}"));
     }
 }

@@ -2,7 +2,7 @@
 
 The Rust core is the single implementation of Rivqen's logic for Android and iOS. This page lists the crates, their responsibilities and their dependency order.
 
-**Status:** <Badge type="info" text="DESIGN" /> Crate names are working names. WP-05 creates the workspace.
+**Status:** <Badge type="info" text="DESIGN" /> Crate names are working names. <Badge type="tip" text="FACT" /> WP-05 S1 created the root workspace (`Cargo.toml`, `crates/`) with `rivqen-model`, `rivqen-integrity` (SHA-256 part), `rivqen-proto` (codecs without the markup analysis, DL-145) and `rivqen-testkit` (DL-142, DL-143); every crate has `#![forbid(unsafe_code)]`. The other crates come with their work packages.
 
 [[toc]]
 
@@ -28,6 +28,7 @@ The Rust core is the single implementation of Rivqen's logic for Android and iOS
 | `rivqen-cache` | Cache keys, partitions, policy (RFC 9111 + legacy), snapshots, transactions, quotas | `integrity` | `SonicCacheInterceptor`, `SonicDataHelper` |
 | `rivqen-stream` | Bounded chunk buffers, backpressure, split of cached prefix + network rest | — | `SonicSessionStream` |
 | `rivqen-integrity` | SHA-1 (legacy compatibility only), SHA-256 (RQP), revision identifiers | — | SHA-1 helpers |
+| `rivqen-model` | Identifiers, secret-safe wrappers, the error catalog, safe error context, resource limits, the clock contract (DL-143) | — | — |
 | `rivqen-ffi` | Stable, minimal ABI for Kotlin and Swift; handle lifetimes | `core` | — |
 | `rivqen-telemetry` | Typed metrics and spans with privacy redaction | — | Statistics callbacks |
 | `rivqen-testkit` | Fixtures loader, fake clock, fake transport, property-test generators | all (dev) | — |
@@ -52,6 +53,8 @@ flowchart TD
   diff --> tpl
   diff --> integ
   cache --> integ
+  p2 --> model[rivqen-model]
+  core --> model
 ```
 
 ## 4. Core rules

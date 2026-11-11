@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+#
+# cargo-fuzz needs a nightly compiler (DL-154). Move this date with the stable
+# pin of the core workspace (DL-142).
+[toolchain]
+channel = "nightly-2026-11-01"
+profile = "minimal"

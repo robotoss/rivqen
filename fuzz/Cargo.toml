@@ -1,0 +1,49 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+#
+# Fuzz targets of the Rust core (DL-148, DL-154). Own workspace: it is not part
+# of the root workspace or of any release build.
+[package]
+name = "rivqen-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+license = "Apache-2.0"
+
+[package.metadata]
+cargo-fuzz = true
+
+# libfuzzer-sys is approved by H-138 (only through cargo-fuzz).
+[dependencies]
+libfuzzer-sys = "0.4"
+rivqen-proto = { path = "../crates/rivqen-proto" }
+
+[workspace]
+
+[[bin]]
+name = "sf_fields"
+path = "fuzz_targets/sf_fields.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "json_reader"
+path = "fuzz_targets/json_reader.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "manifest"
+path = "fuzz_targets/manifest.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "envelope"
+path = "fuzz_targets/envelope.rs"
+test = false
+doc = false
+bench = false

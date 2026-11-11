@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 
 use rivqen_integrity::Binding;
 use rivqen_model::error::{ErrorCode, HasErrorCode};
-use rivqen_proto::envelope::{EnvelopeError, check_content_bytes, envelope_limit, parse_envelope};
+use rivqen_proto::envelope::{EnvelopeError, envelope_limit, parse_envelope};
 use rivqen_proto::json::{JsonRule, SchemaKeyword};
 use rivqen_proto::types::{
     BlockId, Limits, MAX_BLOCK_BYTES, MAX_PATCH_BYTES, PatchEnvelope, PatchOp,
@@ -191,36 +191,15 @@ fn envelope_size_limit() {
 }
 
 #[test]
-fn envelope_content_bytes_limit() {
-    let id = BlockId::parse("a").unwrap();
-    let op = |content: String| PatchOp {
-        block_id: id.clone(),
-        content,
-    };
-    let binding = Binding::parse(BINDING).unwrap();
-    let mut env = PatchEnvelope {
-        binding,
-        operations: vec![op("x".into()), op("é".repeat(MAX_BLOCK_BYTES / 2))],
-    };
-    assert_eq!(check_content_bytes(&env), Ok(()));
-    env.operations
-        .push(op(format!("{}x", "é".repeat(MAX_BLOCK_BYTES / 2))));
-    let e = check_content_bytes(&env).unwrap_err();
-    assert_eq!(e, EnvelopeError::ContentTooLarge(2));
-    assert_eq!(e.code(), ErrorCode::PatchTooLarge);
-}
-
-#[test]
 fn envelope_content_code_point_limit() {
     // maxLength counts code points: 1 048 576 two-byte characters pass the
-    // schema (and fail the byte check of check 10 later).
+    // schema. The byte check of check 10 is later, in compute::next_blocks
+    // (tests delta_check_order_*).
     let big = "é".repeat(1_048_576);
     let text = envelope(&format!(r#"{{"block_id":"a","content":"{big}"}}"#), "");
     let env = parse_envelope(text.as_bytes(), 4 * 1024 * 1024, None).unwrap();
-    assert_eq!(
-        check_content_bytes(&env),
-        Err(EnvelopeError::ContentTooLarge(0))
-    );
+    assert_eq!(env.operations[0].content.len(), 2 * 1_048_576);
+    assert!(env.operations[0].content.len() > MAX_BLOCK_BYTES);
     let bigger = "a".repeat(1_048_577);
     let text = envelope(&format!(r#"{{"block_id":"a","content":"{bigger}"}}"#), "");
     match parse_envelope(text.as_bytes(), 4 * 1024 * 1024, None) {
@@ -431,10 +410,6 @@ fn envelope_errors_hold_no_content() {
     ))
     .unwrap();
     assert!(!format!("{env:?}").contains(marker));
-    assert_eq!(
-        EnvelopeError::ContentTooLarge(3).to_string(),
-        "PATCH_TOO_LARGE: operation content larger than maxBlockBytes (operation 3)"
-    );
     assert_eq!(
         EnvelopeError::TooLarge.to_string(),
         "PATCH_TOO_LARGE: envelope larger than min(maxPatchBytes, max_patch_bytes)"

@@ -57,14 +57,17 @@ The session uses a delta, a `304` or a full document only when the final request
 
 Bounds: steps 4 to 6 read at most `maxPatchBytes` bytes; steps 9 to 11 do work linear in the envelope size and in the number of blocks (≤ 256): at most 256 SHA-256 computations over at most `maxPatchBytes` content bytes in total, one over a page revision preimage of at most about 30 KiB, and one over a binding preimage of the URL length plus 125 bytes; step 12 is one markup pass over at most `maxDocumentBytes` and one copy of at most that size; step 13 reads only the patched content, which step 12 has already tokenized.
 
-**Checks in `rivqen-proto` (WP-05 S1).** <Badge type="info" text="DESIGN" /> These checks of the table above are in the crate `rivqen-proto`; the session calls them in this order:
+**Checks in `rivqen-proto` (WP-05).** <Badge type="tip" text="FACT" /> Checks 4, 5, 6, 9, 10 and 11 of the table above are in the crate `rivqen-proto`. The session calls one function for all of them, `delta::verify_delta`, after checks 1 to 3 and before checks 12 and 13 (tests `delta_check_order_*`, `delta_prop_any_body`):
 
 | # | Function | What it does |
 |---|---|---|
+| 4 to 11 | `delta::verify_delta` | Runs checks 4, 5, 6, 9, 10 and 11 in this order and stops at the first failure. Inputs: the decoded body, the client `maxPatchBytes`, the snapshot values (template revision, page revision B, blocks, `policy` and `limits`), the canonical final URL U and the nonce N of the request (both optional), the client `maxBlockBytes`. The result is a `VerifiedDelta` (the envelope, R′, the list L′ and the new hash of each operation, so checks 12 and 13 do not hash again), or a `DeltaError` with the check number and the code `PATCH_TOO_LARGE`, `PATCH_INVALID` or `INTEGRITY_ERROR`. The error text has no content, block id, URL or nonce |
 | 4 | `envelope::parse_envelope` | Compares the body length with `envelope_limit(maxPatchBytes, limits)` before the JSON parse; a larger body is `PATCH_TOO_LARGE` |
 | 5 | `json::Reader` (in `parse_envelope`) | Reads the body once, without recursion, with the rules of [manifest and patch §3.2](/engineering/protocol/manifest-patch#_3-2-json-text-of-the-manifest-and-the-envelope); a break is `PATCH_INVALID` with the rule, never with body bytes |
-| 6 | `envelope::parse_envelope` | Checks the schema while it reads and stops at the first failure (also an unknown member or operation 257); it keeps only `binding` and at most 256 operations |
-| 10 | `envelope::check_content_bytes` | The size part: a `content` of more than `maxBlockBytes` UTF-8 bytes is `PATCH_TOO_LARGE`; the session calls it after check 9 |
+| 6 | `envelope::parse_envelope` | Checks the schema while it reads and stops at the first failure (also an unknown member or operation 257); it keeps only `binding` and at most 256 operations. Checks 5 and 6 share one pass, so the first failure in text order stops it; both are `PATCH_INVALID` |
+| 9 | `compute::next_blocks` | The operations against the snapshot block list, for the whole list: a known block (the first block with the id), at most one operation per block, document order; else `PATCH_INVALID` |
+| 10 | `compute::next_blocks` | For each operation: the UTF-8 bytes of `content` are at most `maxBlockBytes` (a parameter; else `PATCH_TOO_LARGE`), then `SHA-256(UTF-8(content))` replaces the hash of its block in L′. This is the only content size check |
+| 11 | `compute::page_revision`, `compute::binding` (in `verify_delta`) | R′ from the template revision, L′ and the policy line of the snapshot; the binding of U, B, N and R′ equals `binding`. No U (absent or empty) or no N is a mismatch, never another code; else `INTEGRITY_ERROR` |
 
 The manifest checks of [manifest and patch §1.8](/engineering/protocol/manifest-patch#_1-8-client-checks-of-the-manifest), items 1, 2 and 4, are `manifest::read_manifest` in the same crate.
 

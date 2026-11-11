@@ -58,14 +58,20 @@ fn op(id: &str, content: &str) -> PatchOp {
 
 #[test]
 fn compute_next_revision_kat_price() {
-    let next = next_page_revision(&kat_snapshot(), &[op("price", "130.00")]).unwrap();
+    let next =
+        next_page_revision(&kat_snapshot(), &[op("price", "130.00")], MAX_BLOCK_BYTES).unwrap();
     assert_eq!(next.to_string(), NEXT_REVISION_PRICE);
 }
 
 #[test]
 fn compute_next_revision_keeps_unchanged_hashes_and_formats() {
     let snapshot = kat_snapshot();
-    let next = next_blocks(&snapshot, &[op("title", ""), op("cart", "[]")]).unwrap();
+    let next = next_blocks(
+        &snapshot,
+        &[op("title", ""), op("cart", "[]")],
+        MAX_BLOCK_BYTES,
+    )
+    .unwrap();
     assert_eq!(
         next,
         vec![
@@ -80,7 +86,7 @@ fn compute_next_revision_keeps_unchanged_hashes_and_formats() {
 
 #[test]
 fn compute_next_revision_hashes_the_utf8_bytes_of_the_content() {
-    let next = next_blocks(&kat_snapshot(), &[op("price", "<b>é</b>")]).unwrap();
+    let next = next_blocks(&kat_snapshot(), &[op("price", "<b>é</b>")], MAX_BLOCK_BYTES).unwrap();
     assert_eq!(next[1].sha256, sha256("<b>é</b>".as_bytes()));
     assert_eq!(next[1].sha256, sha256(b"<b>\xC3\xA9</b>"));
 }
@@ -96,7 +102,7 @@ fn compute_next_revision_uses_the_snapshot_policy_line() {
     snapshot.limits = Some(Limits {
         max_patch_bytes: Some(65_536),
     });
-    let next = next_page_revision(&snapshot, &[op("price", "130.00")]).unwrap();
+    let next = next_page_revision(&snapshot, &[op("price", "130.00")], MAX_BLOCK_BYTES).unwrap();
     // spec/rqp/examples/kat/kat.json, with_policy_limits.page_revision_b.
     assert_eq!(
         next.to_string(),
@@ -107,7 +113,7 @@ fn compute_next_revision_uses_the_snapshot_policy_line() {
         ..Policy::default()
     });
     assert_ne!(
-        next_page_revision(&snapshot, &[op("price", "130.00")]).unwrap(),
+        next_page_revision(&snapshot, &[op("price", "130.00")], MAX_BLOCK_BYTES).unwrap(),
         next
     );
 }
@@ -115,10 +121,11 @@ fn compute_next_revision_uses_the_snapshot_policy_line() {
 #[test]
 fn compute_next_revision_does_not_read_the_snapshot_page_revision() {
     let mut snapshot = kat_snapshot();
-    let expected = next_page_revision(&snapshot, &[op("price", "130.00")]).unwrap();
+    let expected =
+        next_page_revision(&snapshot, &[op("price", "130.00")], MAX_BLOCK_BYTES).unwrap();
     snapshot.page_revision = PageRevision::parse(NEXT_REVISION_PRICE).unwrap();
     assert_eq!(
-        next_page_revision(&snapshot, &[op("price", "130.00")]).unwrap(),
+        next_page_revision(&snapshot, &[op("price", "130.00")], MAX_BLOCK_BYTES).unwrap(),
         expected
     );
     assert_eq!(
@@ -131,11 +138,15 @@ fn compute_next_revision_does_not_read_the_snapshot_page_revision() {
 fn compute_next_revision_rejects_an_unknown_block() {
     let snapshot = kat_snapshot();
     assert_eq!(
-        next_page_revision(&snapshot, &[op("stock", "1")]),
+        next_page_revision(&snapshot, &[op("stock", "1")], MAX_BLOCK_BYTES),
         Err(OperationError::UnknownBlock { index: 0 })
     );
     assert_eq!(
-        next_page_revision(&snapshot, &[op("title", "x"), op("stock", "1")]),
+        next_page_revision(
+            &snapshot,
+            &[op("title", "x"), op("stock", "1")],
+            MAX_BLOCK_BYTES
+        ),
         Err(OperationError::UnknownBlock { index: 1 })
     );
     let empty = SnapshotMeta {
@@ -143,7 +154,7 @@ fn compute_next_revision_rejects_an_unknown_block() {
         ..kat_snapshot()
     };
     assert_eq!(
-        next_page_revision(&empty, &[op("title", "x")]),
+        next_page_revision(&empty, &[op("title", "x")], MAX_BLOCK_BYTES),
         Err(OperationError::UnknownBlock { index: 0 })
     );
 }
@@ -152,7 +163,11 @@ fn compute_next_revision_rejects_an_unknown_block() {
 fn compute_next_revision_rejects_a_duplicate_block() {
     let snapshot = kat_snapshot();
     assert_eq!(
-        next_page_revision(&snapshot, &[op("price", "1"), op("price", "1")]),
+        next_page_revision(
+            &snapshot,
+            &[op("price", "1"), op("price", "1")],
+            MAX_BLOCK_BYTES
+        ),
         Err(OperationError::DuplicateBlock { index: 1 })
     );
     // A later operation of an earlier block also breaks document order; the
@@ -160,7 +175,8 @@ fn compute_next_revision_rejects_a_duplicate_block() {
     assert_eq!(
         next_page_revision(
             &snapshot,
-            &[op("title", "1"), op("price", "1"), op("title", "1")]
+            &[op("title", "1"), op("price", "1"), op("title", "1")],
+            MAX_BLOCK_BYTES
         ),
         Err(OperationError::NotDocumentOrder { index: 2 })
     );
@@ -179,11 +195,11 @@ fn compute_duplicate_snapshot_ids_follow_the_oracle() {
         ],
         ..kat_snapshot()
     };
-    let result = next_page_revision(&snapshot, &[op("a", "x"), op("a", "y")]);
+    let result = next_page_revision(&snapshot, &[op("a", "x"), op("a", "y")], MAX_BLOCK_BYTES);
     assert_eq!(result, Err(OperationError::DuplicateBlock { index: 1 }));
     assert_eq!(result.unwrap_err().code(), ErrorCode::PatchInvalid);
     // One operation changes the first block only.
-    let next = next_blocks(&snapshot, &[op("a", "x")]).unwrap();
+    let next = next_blocks(&snapshot, &[op("a", "x")], MAX_BLOCK_BYTES).unwrap();
     assert_eq!(
         next,
         vec![
@@ -201,7 +217,7 @@ fn compute_duplicate_snapshot_ids_follow_the_oracle() {
         ..kat_snapshot()
     };
     assert_eq!(
-        next_blocks(&snapshot, &[op("b", "x"), op("a", "y")]),
+        next_blocks(&snapshot, &[op("b", "x"), op("a", "y")], MAX_BLOCK_BYTES),
         Err(OperationError::NotDocumentOrder { index: 1 })
     );
 }
@@ -209,13 +225,18 @@ fn compute_duplicate_snapshot_ids_follow_the_oracle() {
 #[test]
 fn compute_next_revision_rejects_another_order() {
     assert_eq!(
-        next_page_revision(&kat_snapshot(), &[op("price", "1"), op("title", "1")]),
+        next_page_revision(
+            &kat_snapshot(),
+            &[op("price", "1"), op("title", "1")],
+            MAX_BLOCK_BYTES
+        ),
         Err(OperationError::NotDocumentOrder { index: 1 })
     );
     assert_eq!(
         next_page_revision(
             &kat_snapshot(),
-            &[op("title", "1"), op("cart", "1"), op("price", "1")]
+            &[op("title", "1"), op("cart", "1"), op("price", "1")],
+            MAX_BLOCK_BYTES
         ),
         Err(OperationError::NotDocumentOrder { index: 2 })
     );
@@ -224,7 +245,7 @@ fn compute_next_revision_rejects_another_order() {
 #[test]
 fn compute_next_revision_rejects_no_operations() {
     assert_eq!(
-        next_page_revision(&kat_snapshot(), &[]),
+        next_page_revision(&kat_snapshot(), &[], MAX_BLOCK_BYTES),
         Err(OperationError::NoOperations)
     );
 }
@@ -233,20 +254,46 @@ fn compute_next_revision_rejects_no_operations() {
 fn compute_next_revision_content_limit_is_in_utf8_bytes() {
     let snapshot = kat_snapshot();
     let at_limit = "x".repeat(MAX_BLOCK_BYTES);
-    assert!(next_page_revision(&snapshot, &[op("price", &at_limit)]).is_ok());
+    assert!(next_page_revision(&snapshot, &[op("price", &at_limit)], MAX_BLOCK_BYTES).is_ok());
     let over = "x".repeat(MAX_BLOCK_BYTES + 1);
     assert_eq!(
-        next_page_revision(&snapshot, &[op("title", ""), op("price", &over)]),
+        next_page_revision(
+            &snapshot,
+            &[op("title", ""), op("price", &over)],
+            MAX_BLOCK_BYTES
+        ),
         Err(OperationError::ContentTooLarge { index: 1 })
     );
     // MAX_BLOCK_BYTES / 2 two-byte characters are at the limit; one more is over.
     let wide = "é".repeat(MAX_BLOCK_BYTES / 2);
-    assert!(next_page_revision(&snapshot, &[op("price", &wide)]).is_ok());
+    assert!(next_page_revision(&snapshot, &[op("price", &wide)], MAX_BLOCK_BYTES).is_ok());
     let wide_over = format!("{wide}é");
     assert_eq!(
-        next_page_revision(&snapshot, &[op("price", &wide_over)]),
+        next_page_revision(&snapshot, &[op("price", &wide_over)], MAX_BLOCK_BYTES),
         Err(OperationError::ContentTooLarge { index: 0 })
     );
+}
+
+#[test]
+fn compute_next_revision_content_limit_is_the_parameter() {
+    // maxBlockBytes comes from the caller (a configurable limit); the
+    // function has no limit of its own.
+    let snapshot = kat_snapshot();
+    let ops = [op("title", "ab"), op("price", "é")];
+    assert!(next_blocks(&snapshot, &ops, 2).is_ok());
+    assert_eq!(
+        next_blocks(&snapshot, &ops, 1),
+        Err(OperationError::ContentTooLarge { index: 0 })
+    );
+    assert_eq!(
+        next_blocks(&snapshot, &[op("title", ""), op("price", "é")], 1),
+        Err(OperationError::ContentTooLarge { index: 1 })
+    );
+    // A limit of 0 passes only empty content.
+    assert!(next_blocks(&snapshot, &[op("price", "")], 0).is_ok());
+    // A limit over MAX_BLOCK_BYTES is the caller's choice.
+    let over = "x".repeat(MAX_BLOCK_BYTES + 1);
+    assert!(next_blocks(&snapshot, &[op("price", &over)], MAX_BLOCK_BYTES + 1).is_ok());
 }
 
 #[test]
@@ -255,7 +302,11 @@ fn compute_next_revision_checks_the_list_before_the_sizes() {
     // gives PATCH_INVALID here, not PATCH_TOO_LARGE).
     let over = "x".repeat(MAX_BLOCK_BYTES + 1);
     assert_eq!(
-        next_page_revision(&kat_snapshot(), &[op("price", &over), op("stock", "1")]),
+        next_page_revision(
+            &kat_snapshot(),
+            &[op("price", &over), op("stock", "1")],
+            MAX_BLOCK_BYTES
+        ),
         Err(OperationError::UnknownBlock { index: 1 })
     );
 }
@@ -282,11 +333,21 @@ fn compute_operation_error_has_no_id_or_content() {
     let snapshot = kat_snapshot();
     let over = format!("{MARKER}{}", "x".repeat(MAX_BLOCK_BYTES));
     let errors = [
-        next_page_revision(&snapshot, &[]).unwrap_err(),
-        next_page_revision(&snapshot, &[op(MARKER, MARKER)]).unwrap_err(),
-        next_page_revision(&snapshot, &[op("price", MARKER), op("price", MARKER)]).unwrap_err(),
-        next_page_revision(&snapshot, &[op("price", MARKER), op("title", MARKER)]).unwrap_err(),
-        next_page_revision(&snapshot, &[op("price", &over)]).unwrap_err(),
+        next_page_revision(&snapshot, &[], MAX_BLOCK_BYTES).unwrap_err(),
+        next_page_revision(&snapshot, &[op(MARKER, MARKER)], MAX_BLOCK_BYTES).unwrap_err(),
+        next_page_revision(
+            &snapshot,
+            &[op("price", MARKER), op("price", MARKER)],
+            MAX_BLOCK_BYTES,
+        )
+        .unwrap_err(),
+        next_page_revision(
+            &snapshot,
+            &[op("price", MARKER), op("title", MARKER)],
+            MAX_BLOCK_BYTES,
+        )
+        .unwrap_err(),
+        next_page_revision(&snapshot, &[op("price", &over)], MAX_BLOCK_BYTES).unwrap_err(),
     ];
     let mut texts = std::collections::BTreeSet::new();
     for error in errors {
@@ -384,9 +445,9 @@ proptest! {
             .map(|(b, (_, content))| PatchOp { block_id: b.id.clone(), content: content.clone() })
             .collect();
         prop_assume!(!operations.is_empty());
-        let next = next_page_revision(&snapshot, &operations);
+        let next = next_page_revision(&snapshot, &operations, MAX_BLOCK_BYTES);
         prop_assert_eq!(next, model(&snapshot, &operations));
-        let list = next_blocks(&snapshot, &operations).unwrap();
+        let list = next_blocks(&snapshot, &operations, MAX_BLOCK_BYTES).unwrap();
         prop_assert_eq!(list.len(), snapshot.blocks.len());
         for (before, after) in snapshot.blocks.iter().zip(&list) {
             prop_assert_eq!(&before.id, &after.id);
@@ -400,7 +461,7 @@ proptest! {
             .find(|b| b.id == operations[0].block_id)
             .unwrap();
         replaced.sha256 = sha256(b"another old content");
-        prop_assert_eq!(next_page_revision(&other, &operations), next);
+        prop_assert_eq!(next_page_revision(&other, &operations, MAX_BLOCK_BYTES), next);
     }
 
     /// Any order other than document order is rejected at the first
@@ -417,7 +478,7 @@ proptest! {
             .iter()
             .map(|&p| PatchOp { block_id: snapshot.blocks[p].id.clone(), content: String::new() })
             .collect();
-        let result = next_page_revision(&snapshot, &operations);
+        let result = next_page_revision(&snapshot, &operations, MAX_BLOCK_BYTES);
         prop_assert_eq!(result, model(&snapshot, &operations));
         let increasing = positions.windows(2).all(|w| w[0] < w[1]);
         prop_assert_eq!(result.is_ok(), increasing);
@@ -435,7 +496,7 @@ proptest! {
             .iter()
             .map(|i| PatchOp { block_id: BlockId::parse(&format!("b{i}")).unwrap(), content: format!("c{i}") })
             .collect();
-        prop_assert_eq!(next_page_revision(&snapshot, &operations), model(&snapshot, &operations));
+        prop_assert_eq!(next_page_revision(&snapshot, &operations, MAX_BLOCK_BYTES), model(&snapshot, &operations));
     }
 
     /// A snapshot with repeated block ids gives the result of the model (the
@@ -454,6 +515,6 @@ proptest! {
             .iter()
             .map(|i| PatchOp { block_id: BlockId::parse(&format!("b{i}")).unwrap(), content: format!("c{i}") })
             .collect();
-        prop_assert_eq!(next_page_revision(&snapshot, &operations), model(&snapshot, &operations));
+        prop_assert_eq!(next_page_revision(&snapshot, &operations, MAX_BLOCK_BYTES), model(&snapshot, &operations));
     }
 }

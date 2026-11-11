@@ -33,8 +33,8 @@ use rivqen_proto::compute::{
     snapshot_page_revision,
 };
 use rivqen_proto::types::{
-    BlockDescriptor, BlockFormat, BlockId, Limits, Mode, NONCE_BYTES, Nonce, PatchOp, Policy,
-    SnapshotMeta,
+    BlockDescriptor, BlockFormat, BlockId, Limits, MAX_BLOCK_BYTES, Mode, NONCE_BYTES, Nonce,
+    PatchOp, Policy, SnapshotMeta,
 };
 use serde_json::Value;
 
@@ -392,7 +392,7 @@ fn compute_next_revision_kat() {
         for entry in bindings.as_array().unwrap() {
             let patch = kat_file(text(entry, "patch"));
             let operations = operations_of(&patch);
-            let next = next_page_revision(&snapshot, &operations).unwrap();
+            let next = next_page_revision(&snapshot, &operations, MAX_BLOCK_BYTES).unwrap();
             assert_eq!(next.to_string(), text(entry, "next_revision"));
             assert_eq!(
                 snapshot.page_revision.to_string(),
@@ -526,11 +526,11 @@ fn compute_next_revision_server_fixtures() {
                 }
             })
             .collect();
-        let next = next_page_revision(&snapshot, &operations).unwrap();
+        let next = next_page_revision(&snapshot, &operations, MAX_BLOCK_BYTES).unwrap();
         assert_eq!(next.to_string(), text(inputs, "next_revision"), "{name}");
         // L′ is the block list of the current page.
         assert_eq!(
-            next_blocks(&snapshot, &operations).unwrap(),
+            next_blocks(&snapshot, &operations, MAX_BLOCK_BYTES).unwrap(),
             current.blocks,
             "{name}"
         );
@@ -616,7 +616,7 @@ fn compute_next_revision_client_fixtures() {
         );
         let envelope = read_json(&dir.join(text(&expected["response"], "body")));
         let operations = operations_of(&envelope);
-        let next = next_page_revision(&snapshot, &operations);
+        let next = next_page_revision(&snapshot, &operations, MAX_BLOCK_BYTES);
         let computed = next.map(|next| {
             binding(
                 final_url,

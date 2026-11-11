@@ -60,9 +60,9 @@ fn roomy() -> ResourceLimits {
 fn rejected(limits: ResourceLimits) -> (RivqenError, ConfigError) {
     let err = Engine::new(EngineConfig::new(limits)).expect_err("must be rejected");
     let cause = *ConfigError::of(&err).expect("cause is a ConfigError");
-    assert_eq!(err.code(), ErrorCode::InternalError);
+    assert_eq!(err.code(), ErrorCode::ConfigInvalid);
     assert_eq!(err.context().op, CONFIG_OP);
-    assert_eq!(cause.code(), ErrorCode::InternalError);
+    assert_eq!(cause.code(), ErrorCode::ConfigInvalid);
     assert_eq!(EngineConfig::new(limits).check(), Err(cause));
     (err, cause)
 }
@@ -172,7 +172,7 @@ fn core_config_error_names_the_limit_never_the_value() {
         assert!(!text.contains("987654321"), "value in {text}");
         assert!(!text.contains("987_654_321"), "value in {text}");
     }
-    assert_eq!(err.to_string(), "INTERNAL_ERROR in engine_new");
+    assert_eq!(err.to_string(), "CONFIG_INVALID in engine_new");
     assert_eq!(
         cause.to_string(),
         "maxDocumentBytes is above its safe range"
@@ -197,7 +197,7 @@ fn core_config_error_names_the_limit_never_the_value() {
 #[test]
 fn core_config_of_ignores_other_errors() {
     use rivqen_model::context::Context;
-    let plain = RivqenError::new(ErrorCode::InternalError, Context::new(CONFIG_OP));
+    let plain = RivqenError::new(ErrorCode::ConfigInvalid, Context::new(CONFIG_OP));
     assert!(ConfigError::of(&plain).is_none());
 }
 
@@ -241,7 +241,7 @@ proptest! {
             }
             Err(err) => {
                 prop_assert!(!valid(&l));
-                prop_assert_eq!(err.code(), ErrorCode::InternalError);
+                prop_assert_eq!(err.code(), ErrorCode::ConfigInvalid);
                 let cause = ConfigError::of(&err).copied();
                 prop_assert!(cause.is_some());
                 let cause = cause.unwrap();

@@ -95,11 +95,14 @@ pub enum ErrorCode {
     TimeoutTotal,
     /// `INTERNAL_ERROR`
     InternalError,
+    /// `CONFIG_INVALID`: the host app gave a configuration outside the safe
+    /// ranges (resource-limits section 1.1, DL-158).
+    ConfigInvalid,
 }
 
 impl ErrorCode {
     /// Every code, in catalog order.
-    pub const ALL: [ErrorCode; 18] = [
+    pub const ALL: [ErrorCode; 19] = [
         Self::ProtocolUnsupported,
         Self::ManifestInvalid,
         Self::PatchInvalid,
@@ -118,6 +121,7 @@ impl ErrorCode {
         Self::TimeoutFirstByte,
         Self::TimeoutTotal,
         Self::InternalError,
+        Self::ConfigInvalid,
     ];
 
     /// The stable code text, for example `"MANIFEST_INVALID"`.
@@ -142,6 +146,7 @@ impl ErrorCode {
             Self::TimeoutFirstByte => "TIMEOUT_FIRST_BYTE",
             Self::TimeoutTotal => "TIMEOUT_TOTAL",
             Self::InternalError => "INTERNAL_ERROR",
+            Self::ConfigInvalid => "CONFIG_INVALID",
         }
     }
 
@@ -166,7 +171,7 @@ impl ErrorCode {
                 Category::ResourceLimit
             }
             Self::TimeoutFirstByte | Self::TimeoutTotal => Category::Timeout,
-            Self::InternalError => Category::Internal,
+            Self::InternalError | Self::ConfigInvalid => Category::Internal,
         }
     }
 
@@ -191,7 +196,8 @@ impl ErrorCode {
             | Self::DocumentTooLarge
             | Self::TimeoutFirstByte
             | Self::TimeoutTotal
-            | Self::InternalError => FallbackHint::NormalLoad,
+            | Self::InternalError
+            | Self::ConfigInvalid => FallbackHint::NormalLoad,
         }
     }
 }

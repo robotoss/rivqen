@@ -109,11 +109,11 @@ impl ConfigError {
 }
 
 impl HasErrorCode for ConfigError {
-    /// `INTERNAL_ERROR`: a configuration outside the safe range is a bug of
-    /// the host app (errors.md section 2: "a broken invariant"); the adapter
-    /// loads pages normally. No catalog code is specific to configuration.
+    /// `CONFIG_INVALID` (errors.md section 2, DL-158): a configuration
+    /// outside the safe range is a bug of the host app; the adapter loads
+    /// pages normally.
     fn code(&self) -> ErrorCode {
-        ErrorCode::InternalError
+        ErrorCode::ConfigInvalid
     }
 }
 
@@ -142,7 +142,7 @@ impl Engine {
     ///
     /// # Errors
     ///
-    /// `INTERNAL_ERROR` in operation [`CONFIG_OP`] when a limit is outside its
+    /// `CONFIG_INVALID` in operation [`CONFIG_OP`] when a limit is outside its
     /// safe range; the cause is a [`ConfigError`] (see [`ConfigError::of`]).
     #[expect(
         clippy::result_large_err,

@@ -84,3 +84,16 @@ proptest! {
         prop_assert!(Revision::new(&s).is_err());
     }
 }
+
+#[test]
+fn model_ids_value_error_display_names_kind_and_reason() {
+    let e = Revision::new("").unwrap_err();
+    assert_eq!(e.to_string(), "invalid Revision: empty");
+}
+
+#[test]
+fn model_ids_generation_get_returns_the_number() {
+    assert_eq!(Generation::new(7).get(), 7);
+    assert_eq!(Generation::new(u64::MAX).get(), u64::MAX);
+    assert_eq!(Generation::FIRST.get(), 0);
+}

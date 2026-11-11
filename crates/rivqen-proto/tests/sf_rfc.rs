@@ -848,3 +848,9 @@ fn sf_serialize_dictionary_true_member_keeps_parameters() {
     );
     assert_ne!(e.reason(), "");
 }
+
+#[test]
+fn sf_parse_error_reason_text_is_fixed() {
+    let e = parse_list("a, b c").unwrap_err();
+    assert_eq!(e.reason(), "expected a comma after a member");
+}

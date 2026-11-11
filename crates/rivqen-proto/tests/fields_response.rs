@@ -460,3 +460,24 @@ fn fields_response_reads_are_linear() {
         assert!(took < LIMIT, "{took:?}");
     }
 }
+
+#[test]
+fn fields_response_charset_needs_a_semicolon_before_the_parameter() {
+    for v in ["xcharset=utf-8", "text/htmlcharset=utf-8"] {
+        assert_eq!(
+            content_type_charset(&one("Content-Type", v)),
+            ContentTypeCharset::Absent,
+            "{v}"
+        );
+        assert!(!decoded_as_utf8(&one("Content-Type", v), b"x"), "{v}");
+    }
+}
+
+#[test]
+fn fields_response_charset_skips_the_rest_after_a_quoted_value() {
+    let f = one(
+        "Content-Type",
+        "text/html;a=\"b\"xcharset=bad;charset=utf-8",
+    );
+    assert_eq!(content_type_charset(&f), ContentTypeCharset::Utf8);
+}

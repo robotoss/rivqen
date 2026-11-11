@@ -37,7 +37,7 @@ Every input to the core is bounded. Limits protect the app from memory exhaustio
 
 <Badge type="info" text="DESIGN" /> The values come from WP-05 S2 (T-04) and are recorded in [DL-155](/engineering/plan/decision-log). "Proposal" in the reason column means that no document gives the number; WP-19 measurements can change it.
 
-<Badge type="warning" text="RESEARCH" /> In WP-05 the checked values are not used yet: the parsers of `rivqen-proto` use their own constants (`MAX_JSON_DEPTH`, `MAX_PATCH_BYTES` as the default, `MAX_BLOCK_BYTES` as a cap) and take the client limits as parameters. The session (WP-08) passes the values of the checked `EngineConfig` to them; a test pins the defaults to the constants (`limits_consistency.rs`).
+<Badge type="tip" text="FACT" /> In WP-05 the checked values are not used yet: the parsers of `rivqen-proto` use their own constants (`MAX_JSON_DEPTH`, `MAX_PATCH_BYTES` as the default, `MAX_BLOCK_BYTES` as a cap) and take the client limits as parameters. The session (WP-08) passes the values of the checked `EngineConfig` to them; a test pins the defaults to the constants (`limits_consistency.rs`).
 
 | Limit | Min | Max | Reason |
 |---|---|---|---|

@@ -38,7 +38,7 @@ Rivqen errors are typed. Each error has a category, a stable code, and a **fallb
 | `WEBVIEW_CAPABILITY_MISSING` | UnsupportedCapability | Disable that optimization, not the whole navigation |
 | `TRANSPORT_DISCONNECTED` | Network | HTTP revalidation with backoff; resync |
 | `MEMORY_BUDGET_EXCEEDED` | ResourceLimit | Free L1 cache, stop prefetch, fallback |
-| `PATCH_TOO_LARGE` / `DOCUMENT_TOO_LARGE` | ResourceLimit | Fallback |
+| `PATCH_TOO_LARGE` / `DOCUMENT_TOO_LARGE` | ResourceLimit | Fallback. `DOCUMENT_TOO_LARGE` also when the response head is over `maxHeaderBytes` (DL-153): the core reads no field of that response |
 | `TIMEOUT_FIRST_BYTE` / `TIMEOUT_TOTAL` | Timeout | Fallback |
 | `INTERNAL_ERROR` | Internal | A broken invariant or a caught panic. Fallback; report with location and build id. |
 | `LEGACY_MODE_USED` | Notice | Not an error: the deprecated legacy module served this session. One warning per origin per app start. |

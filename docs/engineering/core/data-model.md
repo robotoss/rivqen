@@ -32,7 +32,7 @@ This page defines the main data structures of the Rust core. Adapters, fixtures 
 | `Secret<T>` | `safe` | `new(T)`, `expose()`, `into_inner()`; no `Display` | `Secret(<redacted>)` |
 | `SafeUrl` | `safe` | `new(Scheme, host, port, path)`, `with_query(Secret<String>)` | `Display` and `Debug`: origin and path only |
 | `PageBytes` | `safe` | `new(Vec<u8>)` | `PageBytes(len=N)` (no hash: the crate has no dependency) |
-| `ResourceLimits` | `limits` | `Default`: the initial values of [resource limits §1](/engineering/core/resource-limits#_1-limits-table). `memoryL1Bytes` and `diskL2Bytes` use the lowest device class (8 MiB, 64 MiB) | fields |
+| `ResourceLimits` | `limits` | `Default`: the initial values of [resource limits §1](/engineering/core/resource-limits#_1-limits-table). `memoryL1Bytes` and `diskL2Bytes` use the lowest device class (8 MiB, 64 MiB). `Limit`, `LimitRange` and `get(limit)` give the safe ranges of §1.1 (DL-155); the limits fixed by `rqp/1` (`Rq-Have`, `Rq-Capabilities`, `Rq-Nonce`) are constants of `rivqen-proto`, not fields | fields |
 
 DESIGN: a `Revision` is 1 to 128 bytes of visible ASCII (0x21 to 0x7E: no space, no control byte). The RQP forms (`t1.…`, `r1.…`) and the legacy lowercase hex values fit. `SafeUrl` host is `[A-Za-z0-9.-]` (lowercased); the path starts with `/` and has no control byte, space, `?` or `#`; the query is kept as a `Secret`. `NavigationId`, `CacheKey` and `V1SessionKey` are not in S1.
 
@@ -103,9 +103,10 @@ flowchart TD
 | `policy_line(policy, limits)` | The policy line `PL` of [manifest and patch §1.3](/engineering/protocol/manifest-patch#_1-3-hashes-and-revisions), step 4; no bytes without both members (H-55) |
 | `page_revision(template, blocks, policy, limits)` | The page revision `r1.` of §1.3, steps 4 and 5 |
 | `snapshot_page_revision(snapshot)` | The page revision from the values of a `SnapshotMeta`, for the check of §1.8, item 5 |
-| `next_blocks(snapshot, operations)` | The list `L′` of [§2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), steps 3 to 5; `OperationError` (`PATCH_INVALID`, `PATCH_TOO_LARGE`) for an unknown block, a second operation for a block, another order, no operation or content over `maxBlockBytes` |
-| `next_page_revision(snapshot, operations)` | The next page revision `R′` of §2.4, step 6, with the policy line of the snapshot |
+| `next_blocks(snapshot, operations, max_block_bytes)` | The list `L′` of [§2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), steps 3 to 5; `OperationError` (`PATCH_INVALID`, `PATCH_TOO_LARGE`) for an unknown block, a second operation for a block, another order, no operation or content over `max_block_bytes` (the only content size check, DL-156) |
+| `next_page_revision(snapshot, operations, max_block_bytes)` | The next page revision `R′` of §2.4, step 6, with the policy line of the snapshot |
 | `binding(url, base, nonce, next)` | The `d1.` binding of [§2.2](/engineering/protocol/manifest-patch#_2-2-fields) (H-107, H-108); `url` is the canonical final URL as text (the URL parser is in WP-08) |
+| `delta::verify_delta(body, max_patch_bytes, snapshot, final_url, nonce, max_block_bytes)` | Checks 4 to 6 and 9 to 11 of [diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation) in that order (WP-05 S2): the envelope, `R′`, `L′` and the new block hashes, or the first failure (`PATCH_TOO_LARGE`, `PATCH_INVALID`, `INTEGRITY_ERROR`); no final URL or no nonce is a mismatch (DL-156) |
 
 ## 5. Events and actions
 

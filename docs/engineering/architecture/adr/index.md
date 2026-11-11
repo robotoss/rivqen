@@ -2,7 +2,7 @@
 
 An **ADR** records one important decision: the context, the options, the decision and its consequences. ADRs make decisions traceable. A decision in an ADR can change only through a new ADR that supersedes it.
 
-**Status:** <Badge type="info" text="DESIGN" /> ADR-005 and ADR-006 are **Accepted** (human, 2026-10-09); ADR-002 and ADR-003 are **Accepted** (human, 2026-11-09, H-135, H-136). All other ADRs below are **Proposed**. Each has an owner work package and the evidence that will close it. ADR-002 and ADR-003 go to the human at G2 (H-127); ADR-002, ADR-003, ADR-009 and ADR-014 have their own files (WP-04 S3).
+**Status:** <Badge type="info" text="DESIGN" /> ADR-005 and ADR-006 are **Accepted** (human, 2026-10-09); ADR-002 and ADR-003 are **Accepted** (human, 2026-11-09, H-135, H-136). All other ADRs below are **Proposed**. Each has an owner work package and the evidence that will close it. ADR-002 and ADR-003 go to the human at G2 (H-127); ADR-002, ADR-003, ADR-009 and ADR-014 have their own files (WP-04 S3); ADR-001 and ADR-017 have their own files (WP-05 S2).
 
 [[toc]]
 
@@ -76,6 +76,7 @@ An **ADR** records one important decision: the context, the options, the decisio
 - **Options.** (1) Pure logic core: events in, actions out. (2) Core owns HTTP. (3) Hybrid: core owns HTTP only for realtime channels.
 - **Recommendation.** Option 1 now. Option 3 is an experiment after cookie/auth correctness is proven.
 - **Verification.** Core builds with no platform dependency; all core tests run on a host machine with fake transports.
+- **File:** [ADR-001](/engineering/architecture/adr/ADR-001-core-boundaries) with the WP-05 evidence (Proposed; to the human with the WP-05 merge request, DL-149).
 
 ## ADR-002: FFI technology {#adr-002}
 
@@ -169,3 +170,4 @@ An **ADR** records one important decision: the context, the options, the decisio
 
 - **Decision direction:** no error is ignored; every error is typed, carries context and a stable code, and is propagated to a place that decides; logs are structured and redacted; release builds never crash on recoverable errors and never log secrets or page content.
 - **Details:** [Error handling and logging](/engineering/architecture/errors-logging).
+- **File:** [ADR-017](/engineering/architecture/adr/ADR-017-errors-logging) with the WP-05 evidence (Proposed; to the human with the WP-05 merge request, DL-149).

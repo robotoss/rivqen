@@ -932,3 +932,42 @@ proptest! {
         );
     }
 }
+
+#[test]
+fn delta_block_limit_of_caller_cannot_raise_the_rqp1_limit() {
+    // maxBlockBytes is fixed by rqp/1 (DL-155): a caller that passes a larger
+    // value (here usize::MAX) still gets PATCH_TOO_LARGE at check 10. The
+    // content is two-byte characters, so it passes the schema maxLength in
+    // code points (check 6) and reaches the byte check.
+    let snapshot = kat_snapshot();
+    let big = op("price", &"\u{e9}".repeat(MAX_BLOCK_BYTES / 2 + 1));
+    let any_binding = bound(&snapshot, URL, &kat_nonce(), &[op("price", "1")]);
+    let body = envelope(&any_binding, std::slice::from_ref(&big));
+    let err = verify_delta(
+        &body,
+        2 * MAX_BLOCK_BYTES,
+        &snapshot,
+        Some(URL),
+        Some(&kat_nonce()),
+        usize::MAX,
+    )
+    .unwrap_err();
+    assert_eq!(
+        err,
+        DeltaError::Operations(OperationError::ContentTooLarge { index: 0 })
+    );
+    assert_eq!(err.code(), ErrorCode::PatchTooLarge);
+    // At the limit the content passes check 10 and fails only the binding.
+    let at_limit = op("price", &"\u{e9}".repeat(MAX_BLOCK_BYTES / 2));
+    let body = envelope(&any_binding, std::slice::from_ref(&at_limit));
+    let err = verify_delta(
+        &body,
+        2 * MAX_BLOCK_BYTES,
+        &snapshot,
+        Some(URL),
+        Some(&kat_nonce()),
+        usize::MAX,
+    )
+    .unwrap_err();
+    assert_eq!(err.code(), ErrorCode::IntegrityError);
+}

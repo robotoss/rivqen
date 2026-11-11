@@ -34,8 +34,8 @@ use rivqen_integrity::{
 use rivqen_model::error::{ErrorCode, HasErrorCode};
 
 use crate::types::{
-    BlockDescriptor, BlockId, Limits, MAX_BLOCK_ID_BYTES, Mode, Nonce, PatchOp, Policy,
-    SnapshotMeta,
+    BlockDescriptor, BlockId, Limits, MAX_BLOCK_BYTES, MAX_BLOCK_ID_BYTES, Mode, Nonce, PatchOp,
+    Policy, SnapshotMeta,
 };
 
 /// First line of the page revision preimage P (section 1.3, step 4).
@@ -315,6 +315,9 @@ pub(crate) fn next_blocks_with_hashes(
     operations: &[PatchOp],
     max_block_bytes: usize,
 ) -> Result<NextBlocks, OperationError> {
+    // `maxBlockBytes` is fixed by rqp/1 (DL-155): a caller value can only
+    // lower the limit, never raise it (S2 security review S2-1).
+    let max_block_bytes = max_block_bytes.min(MAX_BLOCK_BYTES);
     let indices = check_operations(&snapshot.blocks, operations)?;
     let mut blocks = snapshot.blocks.clone();
     let mut patched = Vec::with_capacity(indices.len());

@@ -12,9 +12,10 @@ use std::fs;
 use std::path::PathBuf;
 
 use rivqen_testkit::fixtures::{
-    ExpectedBody, FixtureError, load_legacy, load_legacy_at, load_malformed, load_rqp_protocol,
-    load_rqp_protocol_at,
+    ExpectedBody, FixtureError, LimitsMembers, Members, PolicyMembers, SnapshotData, load_json,
+    load_legacy, load_legacy_at, load_malformed, load_rqp_protocol, load_rqp_protocol_at,
 };
+use serde_json::json;
 
 fn scratch(name: &str) -> PathBuf {
     let dir = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join(name);
@@ -185,4 +186,118 @@ fn testkit_reports_shape_error_with_path() {
     let err = all.client[0].client_result().unwrap_err();
     assert!(matches!(err, FixtureError::Shape { .. }));
     assert!(err.to_string().contains("FX-RQ-C99-SHAPE"), "{err}");
+    let err = all.client[0].client_context_data().unwrap_err();
+    assert!(err.to_string().contains("FX-RQ-C99-SHAPE"), "{err}");
+}
+
+#[test]
+fn testkit_reads_typed_client_context() {
+    let all = load_rqp_protocol().unwrap();
+    let mut with_snapshot = 0;
+    let mut with_policy = 0;
+    for f in &all.client {
+        let ctx = f.client_context_data().unwrap();
+        assert!(ctx.final_url.starts_with("http"), "{}", f.id);
+        assert!(
+            ["first-visit", "delta", "fallback"].contains(&ctx.navigation.as_str()),
+            "{}",
+            f.id
+        );
+        if let Some(s) = &ctx.snapshot {
+            with_snapshot += 1;
+            with_policy += usize::from(s.members.policy.is_some());
+            assert!(s.template_revision.starts_with("t1."), "{}", f.id);
+            assert!(s.page_revision.starts_with("r1."), "{}", f.id);
+            // The page that the loader read is the page of the snapshot.
+            assert_eq!(s.page.is_some(), f.page.is_some(), "{}", f.id);
+        }
+    }
+    assert_eq!(with_snapshot, 95);
+    assert_eq!(with_policy, 16);
+    let c = all
+        .client
+        .iter()
+        .find(|f| f.id == "FX-RQ-C32-NONCE-ACCEPTED")
+        .unwrap()
+        .client_context_data()
+        .unwrap();
+    assert_eq!(c.nonce.as_deref(), Some("8PHy8_T19vf4-fr7_P3-_w"));
+    let snapshot = c.snapshot.unwrap();
+    assert_eq!(snapshot.partition.as_deref(), Some("request"));
+    assert_eq!(snapshot.blocks[2].format, "json");
+}
+
+#[test]
+fn testkit_members_keep_presence_and_reject_unknown_fields() {
+    let members = Members::from_json(&json!({
+        "policy": {"mode": "public", "ttl_seconds": 60},
+        "origin": "https://shop.example.com"
+    }))
+    .unwrap();
+    assert_eq!(
+        members,
+        Members {
+            policy: Some(PolicyMembers {
+                mode: Some("public".into()),
+                ttl_seconds: Some(60),
+                offline: None,
+            }),
+            limits: None,
+        }
+    );
+    let empty = Members::from_json(&json!({"limits": {}})).unwrap();
+    assert_eq!(
+        empty.limits,
+        Some(LimitsMembers {
+            max_patch_bytes: None
+        })
+    );
+    let offline = Members::from_json(&json!({"policy": {"offline": false}})).unwrap();
+    assert_eq!(offline.policy.unwrap().offline, Some(false));
+    let limit = Members::from_json(&json!({"limits": {"max_patch_bytes": 1024}})).unwrap();
+    assert_eq!(limit.limits.unwrap().max_patch_bytes, Some(1024));
+    assert!(Members::from_json(&json!({"policy": {"modes": "public"}})).is_err());
+    assert!(Members::from_json(&json!({"limits": {"max_patch_bytes": "1"}})).is_err());
+    assert!(Members::from_json(&json!({"limits": {"other": 1}})).is_err());
+    assert!(Members::from_json(&json!({"policy": {"offline": 1}})).is_err());
+    assert!(Members::from_json(&json!({"policy": {"mode": 1}})).is_err());
+    assert!(Members::from_json(&json!({"policy": 1})).is_err());
+}
+
+#[test]
+fn testkit_snapshot_data_rejects_unknown_and_missing_members() {
+    let good = json!({
+        "template_revision": "t1.x",
+        "page_revision": "r1.y",
+        "blocks": [{"id": "a", "format": "html", "sha256": "z"}]
+    });
+    let s = SnapshotData::from_json(&good).unwrap();
+    assert_eq!(s.page, None);
+    assert_eq!(s.partition, None);
+    assert_eq!(s.members, Members::default());
+    assert_eq!(s.blocks.len(), 1);
+    let mut extra = good.clone();
+    extra["sha256"] = json!("x");
+    assert!(SnapshotData::from_json(&extra).is_err());
+    let mut block_extra = good.clone();
+    block_extra["blocks"][0]["start"] = json!(1);
+    assert!(SnapshotData::from_json(&block_extra).is_err());
+    let mut block_missing = good.clone();
+    block_missing["blocks"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("sha256");
+    assert!(SnapshotData::from_json(&block_missing).is_err());
+    let mut missing = good;
+    missing.as_object_mut().unwrap().remove("page_revision");
+    assert!(SnapshotData::from_json(&missing).is_err());
+}
+
+#[test]
+fn testkit_loads_a_json_file() {
+    let root = rivqen_testkit::repo_root();
+    let kat = load_json(&root.join("spec/rqp/examples/kat/kat.json")).unwrap();
+    assert!(kat.get("bindings").is_some());
+    let err = load_json(&root.join("spec/none.json")).unwrap_err();
+    assert!(err.to_string().contains("none.json"), "{err}");
 }

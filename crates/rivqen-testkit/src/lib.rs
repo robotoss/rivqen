@@ -20,11 +20,16 @@ pub mod fixtures;
 pub mod ledger;
 pub mod transport;
 
-/// The `fixtures/` directory of the repository.
+/// The root directory of the repository.
 #[must_use]
-pub fn fixtures_root() -> PathBuf {
+pub fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join("..")
-        .join("fixtures")
+}
+
+/// The `fixtures/` directory of the repository.
+#[must_use]
+pub fn fixtures_root() -> PathBuf {
+    repo_root().join("fixtures")
 }

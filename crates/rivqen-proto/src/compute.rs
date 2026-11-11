@@ -20,18 +20,22 @@
 //! - [`page_revision`], [`snapshot_page_revision`]: steps 4 and 5.
 //! - [`next_blocks`], [`next_page_revision`]: section 2.4, steps 3 to 6.
 //! - [`binding`]: section 2.2 (H-107, H-108).
+//!
+//! The content size check of section 2.4, step 4 (`maxBlockBytes`) is in
+//! [`next_blocks`] only; the caller gives the limit. [`crate::delta`] runs it
+//! as check 10 of diff-engine section 3.
 
 use core::fmt;
 use std::collections::BTreeMap;
 
 use rivqen_integrity::{
-    Binding, PageRevision, TemplateRevision, b64u_encode, sha256, sha256_parts,
+    Binding, PageRevision, Sha256Digest, TemplateRevision, b64u_encode, sha256, sha256_parts,
 };
 use rivqen_model::error::{ErrorCode, HasErrorCode};
 
 use crate::types::{
-    BlockDescriptor, BlockId, Limits, MAX_BLOCK_BYTES, MAX_BLOCK_ID_BYTES, Mode, Nonce, PatchOp,
-    Policy, SnapshotMeta,
+    BlockDescriptor, BlockId, Limits, MAX_BLOCK_ID_BYTES, Mode, Nonce, PatchOp, Policy,
+    SnapshotMeta,
 };
 
 /// First line of the page revision preimage P (section 1.3, step 4).
@@ -166,12 +170,7 @@ pub fn page_revision(
 /// when the result is equal to it (section 1.8, item 5).
 #[must_use]
 pub fn snapshot_page_revision(snapshot: &SnapshotMeta) -> PageRevision {
-    page_revision(
-        &snapshot.template_revision,
-        &snapshot.blocks,
-        snapshot.policy.as_ref(),
-        snapshot.limits.as_ref(),
-    )
+    snapshot_revision_of(snapshot, &snapshot.blocks)
 }
 
 /// Why an operation list does not apply to a snapshot (section 2.4, steps 3
@@ -201,8 +200,9 @@ pub enum OperationError {
         /// Position of the operation.
         index: usize,
     },
-    /// The UTF-8 bytes of the content are more than [`MAX_BLOCK_BYTES`]
-    /// (section 2.3, rule 7; section 2.4, step 4). `PATCH_TOO_LARGE`.
+    /// The UTF-8 bytes of the content are more than the client limit
+    /// `maxBlockBytes` that the caller gives (section 2.3, rule 7; section
+    /// 2.4, step 4). `PATCH_TOO_LARGE`.
     ContentTooLarge {
         /// Position of the operation.
         index: usize,
@@ -290,38 +290,77 @@ fn check_operations(
     Ok(indices)
 }
 
+/// The new hash of one block with an operation (section 2.4, step 4).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PatchedBlock {
+    /// The index of the block in the snapshot block list: the first block
+    /// with the `block_id` of the operation.
+    pub block: usize,
+    /// `SHA-256(UTF-8(content))` of the operation.
+    pub sha256: Sha256Digest,
+}
+
+/// The list L′ and the new hash of each operation, in operation order.
+pub(crate) struct NextBlocks {
+    /// L′: the snapshot blocks with the new hashes.
+    pub(crate) blocks: Vec<BlockDescriptor>,
+    /// One entry for each operation, in envelope order.
+    pub(crate) patched: Vec<PatchedBlock>,
+}
+
+/// Steps 3 to 5 of section 2.4; see [`next_blocks`]. Also returns the new
+/// hash of each operation, so a caller does not hash the content again.
+pub(crate) fn next_blocks_with_hashes(
+    snapshot: &SnapshotMeta,
+    operations: &[PatchOp],
+    max_block_bytes: usize,
+) -> Result<NextBlocks, OperationError> {
+    let indices = check_operations(&snapshot.blocks, operations)?;
+    let mut blocks = snapshot.blocks.clone();
+    let mut patched = Vec::with_capacity(indices.len());
+    for (index, (operation, position)) in operations.iter().zip(indices).enumerate() {
+        if operation.content.len() > max_block_bytes {
+            return Err(OperationError::ContentTooLarge { index });
+        }
+        // check_operations took the position from the snapshot blocks; the
+        // error keeps the function total if that ever changes.
+        let block = blocks
+            .get_mut(position)
+            .ok_or(OperationError::UnknownBlock { index })?;
+        let digest = sha256(operation.content.as_bytes());
+        block.sha256 = digest;
+        patched.push(PatchedBlock {
+            block: position,
+            sha256: digest,
+        });
+    }
+    Ok(NextBlocks { blocks, patched })
+}
+
 /// The block list L′ of section 2.4, steps 3 to 5.
 ///
 /// Checks the operation list against the snapshot (step 3: each block id
 /// names a block of the snapshot, at most one operation per block, document
 /// order; an operation applies to the first snapshot block of its id), then
-/// the content size of each operation (step 4), and returns a copy of the
+/// the content size of each operation (step 4: at most `max_block_bytes`
+/// UTF-8 bytes, the client limit `maxBlockBytes`), and returns a copy of the
 /// snapshot blocks in which each block with an operation has the hash of its
 /// new content, `SHA-256(UTF-8(content))`. Every other block keeps
 /// its full hash from the snapshot, never a prefix (H-44); every block keeps
 /// its format.
 ///
+/// This is the only content size check of step 4 in the crate.
+///
 /// # Errors
 ///
-/// [`OperationError`]: the first rule that fails, step 3 before step 4.
+/// [`OperationError`]: the first rule that fails, step 3 for the whole list
+/// before step 4.
 pub fn next_blocks(
     snapshot: &SnapshotMeta,
     operations: &[PatchOp],
+    max_block_bytes: usize,
 ) -> Result<Vec<BlockDescriptor>, OperationError> {
-    let indices = check_operations(&snapshot.blocks, operations)?;
-    let mut next = snapshot.blocks.clone();
-    for (index, (operation, position)) in operations.iter().zip(indices).enumerate() {
-        if operation.content.len() > MAX_BLOCK_BYTES {
-            return Err(OperationError::ContentTooLarge { index });
-        }
-        // check_operations took the position from the snapshot blocks; the
-        // error keeps the function total if that ever changes.
-        let block = next
-            .get_mut(position)
-            .ok_or(OperationError::UnknownBlock { index })?;
-        block.sha256 = sha256(operation.content.as_bytes());
-    }
-    Ok(next)
+    next_blocks_with_hashes(snapshot, operations, max_block_bytes).map(|next| next.blocks)
 }
 
 /// The next page revision R′ of section 2.4, step 6: [`page_revision`] of the
@@ -334,14 +373,24 @@ pub fn next_blocks(
 pub fn next_page_revision(
     snapshot: &SnapshotMeta,
     operations: &[PatchOp],
+    max_block_bytes: usize,
 ) -> Result<PageRevision, OperationError> {
-    let blocks = next_blocks(snapshot, operations)?;
-    Ok(page_revision(
+    let blocks = next_blocks(snapshot, operations, max_block_bytes)?;
+    Ok(snapshot_revision_of(snapshot, &blocks))
+}
+
+/// [`page_revision`] of the template revision and the manifest members of
+/// `snapshot` with another block list.
+pub(crate) fn snapshot_revision_of(
+    snapshot: &SnapshotMeta,
+    blocks: &[BlockDescriptor],
+) -> PageRevision {
+    page_revision(
         &snapshot.template_revision,
-        &blocks,
+        blocks,
         snapshot.policy.as_ref(),
         snapshot.limits.as_ref(),
-    ))
+    )
 }
 
 /// The binding of section 2.2 (H-107, H-108):

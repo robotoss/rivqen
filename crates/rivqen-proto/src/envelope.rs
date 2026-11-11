@@ -20,8 +20,10 @@
 //! The check reads the body once, stops at the first failure and keeps only
 //! the binding and at most 256 operations.
 //!
-//! Check 9 (the operations against the snapshot block list) runs next, in a
-//! later step; then [`check_content_bytes`] is the size part of check 10.
+//! Checks 9 to 11 (the operations against the snapshot, the content size and
+//! hash, the binding) are in [`crate::delta::verify_delta`], which calls
+//! [`parse_envelope`] first. The content size check of check 10 is in
+//! [`crate::compute::next_blocks`] only.
 
 use core::fmt;
 
@@ -31,9 +33,7 @@ use rivqen_model::error::{ErrorCode, HasErrorCode};
 use crate::json::{
     Item, JsonError, Reader, SchemaKeyword, SchemaViolation, next_item, next_member,
 };
-use crate::types::{
-    BlockId, Limits, MAX_BLOCK_BYTES, MAX_BLOCKS, MAX_JSON_DEPTH, PatchEnvelope, PatchOp,
-};
+use crate::types::{BlockId, Limits, MAX_BLOCKS, MAX_JSON_DEPTH, PatchEnvelope, PatchOp};
 
 /// Schema `maxLength` of `content`, in code points (manifest-patch section
 /// 2.3, rule 7).
@@ -49,10 +49,6 @@ pub enum EnvelopeError {
     Json(JsonError),
     /// The value fails `patch.schema.json` (`PATCH_INVALID`).
     Schema(SchemaViolation),
-    /// The UTF-8 bytes of the `content` of an operation are more than
-    /// `maxBlockBytes` (`PATCH_TOO_LARGE`; check 10). The index of the
-    /// operation.
-    ContentTooLarge(usize),
 }
 
 impl EnvelopeError {
@@ -63,7 +59,6 @@ impl EnvelopeError {
             Self::TooLarge => "envelope larger than min(maxPatchBytes, max_patch_bytes)",
             Self::Json(_) => "envelope breaks a JSON rule",
             Self::Schema(_) => "envelope fails the schema",
-            Self::ContentTooLarge(_) => "operation content larger than maxBlockBytes",
         }
     }
 }
@@ -74,7 +69,6 @@ impl fmt::Display for EnvelopeError {
         match self {
             Self::Json(e) => write!(f, ": {e}"),
             Self::Schema(v) => write!(f, ": {v}"),
-            Self::ContentTooLarge(i) => write!(f, " (operation {i})"),
             Self::TooLarge => Ok(()),
         }
     }
@@ -85,7 +79,7 @@ impl core::error::Error for EnvelopeError {
         match self {
             Self::Json(e) => Some(e),
             Self::Schema(v) => Some(v),
-            Self::TooLarge | Self::ContentTooLarge(_) => None,
+            Self::TooLarge => None,
         }
     }
 }
@@ -93,7 +87,7 @@ impl core::error::Error for EnvelopeError {
 impl HasErrorCode for EnvelopeError {
     fn code(&self) -> ErrorCode {
         match self {
-            Self::TooLarge | Self::ContentTooLarge(_) => ErrorCode::PatchTooLarge,
+            Self::TooLarge => ErrorCode::PatchTooLarge,
             Self::Json(_) | Self::Schema(_) => ErrorCode::PatchInvalid,
         }
     }
@@ -173,25 +167,6 @@ pub fn parse_envelope(
         binding,
         operations,
     })
-}
-
-/// The size part of check 10 (manifest-patch section 2.4, step 4): the UTF-8
-/// bytes of each `content` are at most [`MAX_BLOCK_BYTES`]. It runs after the
-/// operation checks against the snapshot (check 9).
-///
-/// # Errors
-///
-/// [`EnvelopeError::ContentTooLarge`] with the index of the first operation
-/// over the limit.
-pub fn check_content_bytes(envelope: &PatchEnvelope) -> Result<(), EnvelopeError> {
-    match envelope
-        .operations
-        .iter()
-        .position(|op| op.content.len() > MAX_BLOCK_BYTES)
-    {
-        Some(i) => Err(EnvelopeError::ContentTooLarge(i)),
-        None => Ok(()),
-    }
 }
 
 /// `binding`: `d1.` and a canonical digest (the schema pattern).

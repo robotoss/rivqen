@@ -164,6 +164,11 @@ impl Ledger {
         self.entries().filter(move |e| e.owner == owner)
     }
 
+    /// The entries that list one WP-05 check.
+    pub fn with_check(&self, check: Check) -> impl Iterator<Item = &LedgerEntry> {
+        self.entries().filter(move |e| e.checks.contains(&check))
+    }
+
     /// Check that `ids` and the ledger list the same fixtures.
     ///
     /// # Errors

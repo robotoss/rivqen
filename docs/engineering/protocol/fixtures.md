@@ -60,6 +60,17 @@ fixtures/legacy/
 
 <Badge type="tip" text="FACT" /> The Rust core reads the fixtures as data through `rivqen-testkit` (DL-146). `load_rqp_protocol()`, `load_legacy()` and `load_malformed()` return every case directory with `case.json` and `expected.json` as JSON values, `response.body` and page files as raw bytes, and the seed files as raw bytes. Typed accessors give the client `context`, `response`, expected request lines and `result`, and the server delta `binding`, `binding_inputs` and `blocks`. A missing or unreadable file fails with its path. The ledger `crates/rivqen-testkit/ledger/rqp-client.txt` lists each of the 153 client fixtures with its owner WP (DL-145: 25 WP-05, 104 WP-06, 24 WP-08), a one-word reason and the WP-05 checks (`request-fields`, `binding`). A client fixture without a line, or a line without a fixture, fails `ledger_covers_every_client_fixture`.
 
+<Badge type="tip" text="FACT" /> **What WP-05 runs (`crates/rivqen-proto/tests/fixtures_ledger.rs`).** The ledger selects the client fixtures; `expected.json` gives the expected values. The test file has no list of fixture ids.
+
+| Ledger selection | Count | Rust check | Test |
+|---|---|---|---|
+| Check `request-fields` | 150 | `fields::request_fields` gives the request field lines of `expected.json`, byte for byte | `fixtures_request_fields_match_ledger` |
+| Owner WP-05, reason `integrity`, `patch` or `size` | 13, 8, 1 | `delta::verify_delta` (checks 4 to 6 and 9 to 11 of the [diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation)) gives the code of the result: `INTEGRITY_ERROR` (always check 11), `PATCH_INVALID`, `PATCH_TOO_LARGE` | `fixtures_wp05_outcomes` |
+| Owner WP-05, reason `charset` | 3 | `fields::media_type`, `rq_version_is_1` and `decoded_as_utf8` ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response), item 3) give `MANIFEST_INVALID` | `fixtures_wp05_outcomes` |
+| Check `binding` | 26 | `delta::verify_delta` accepts the delta; R′ and the new block hashes are the page revision and the blocks of the expected snapshot | `fixtures_bindings_accept` |
+
+The inputs of the checks that belong to the session (WP-08) come from the context, as the session gives them: the client limits (`maxPatchBytes` 256 KiB, `maxBlockBytes` 1 MiB), the snapshot values, the nonce, and U of the final URL. One fixture (`FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-REDIRECT-HOST-CASE`) has a final URL with an upper-case host; a test helper writes U for the URL forms of the fixtures (lower-case scheme and host, no default port, no fragment) and gives the KAT value of `binding_with_query`. The URL canonicalization of the product is WP-08. `fixtures_ledger_fully_covered` fails when a fixture of a selection is not run, when a count differs from DL-145, or when a WP-05 fixture has no WP-05 check. A ledger line whose reason does not match the code of `expected.json` fails `fixtures_wp05_outcomes`. The other 104 WP-06 and 24 WP-08 outcomes are not run in WP-05.
+
 ## 2. Rules
 
 1. Files use UTF-8 and LF line ends, except where the fixture tests CRLF or encodings.

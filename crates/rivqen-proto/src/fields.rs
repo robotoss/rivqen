@@ -20,10 +20,13 @@
 //!
 //! # Response (negotiation section 6.3, field parts)
 //!
-//! [`rq_version_is_1`], [`media_type`], [`content_type_charset`],
-//! [`decoded_as_utf8`] and [`etag_matches_snapshot`] read the response fields
-//! as `handleResponse`, `decodedAsUtf8` and `notModifiedAccepted` of the
-//! oracle do.
+//! [`ResponseHead::check`] tests the field lines against `maxHeaderBytes`
+//! (DL-153). The methods [`ResponseHead::rq_version_is_1`],
+//! [`ResponseHead::media_type`], [`ResponseHead::content_type_charset`],
+//! [`ResponseHead::decoded_as_utf8`] and
+//! [`ResponseHead::etag_matches_snapshot`] read the response fields as
+//! `handleResponse`, `decodedAsUtf8` and `notModifiedAccepted` of the oracle
+//! do. No other path reads a response field.
 //!
 //! # Safety rules
 //!
@@ -34,10 +37,7 @@ mod request;
 mod response;
 
 pub use request::{RequestBasis, RequestFieldsError, request_fields};
-pub use response::{
-    ContentTypeCharset, combined_value, content_type_charset, decoded_as_utf8,
-    etag_matches_snapshot, media_type, rq_version_is_1,
-};
+pub use response::{ContentTypeCharset, HeadLimitError, ResponseHead};
 
 /// The delta media type (negotiation section 3.6).
 pub const DELTA_MEDIA_TYPE: &str = "application/vnd.rivqen.delta+json";

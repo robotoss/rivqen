@@ -15,13 +15,12 @@
     clippy::arithmetic_side_effects
 )]
 
-use std::fs;
+mod common;
 
 use proptest::prelude::*;
 use rivqen_integrity::PageRevision;
 use rivqen_model::http::FieldLine;
 use rivqen_proto::fields::{ContentTypeCharset, DELTA_MEDIA_TYPE, HTML_MEDIA_TYPE, ResponseHead};
-use serde_json::Value;
 
 const R: &str = "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8";
 const OTHER_R: &str = "r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI";
@@ -344,36 +343,14 @@ fn fields_response_etag_weak_comparison_with_the_snapshot() {
 
 // --- Client fixtures -------------------------------------------------------
 
-fn fixture(id: &str) -> Value {
-    let path = rivqen_testkit::fixtures_root()
-        .join("rqp")
-        .join("protocol")
-        .join(id)
-        .join("expected.json");
-    serde_json::from_str(&fs::read_to_string(path).unwrap()).unwrap()
-}
-
-fn response_fields(expected: &Value) -> Vec<FieldLine> {
-    expected["response"]["headers"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|h| FieldLine::new(h[0].as_str().unwrap(), h[1].as_str().unwrap()))
-        .collect()
-}
-
-fn response_body(id: &str, expected: &Value) -> Vec<u8> {
-    match expected["response"]["body"].as_str() {
-        None => Vec::new(),
-        Some(file) => fs::read(
-            rivqen_testkit::fixtures_root()
-                .join("rqp")
-                .join("protocol")
-                .join(id)
-                .join(file),
-        )
-        .unwrap(),
-    }
+/// The response field lines, the body and the outcome of a client fixture,
+/// read through `rivqen-testkit`.
+fn client(id: &str) -> (Vec<FieldLine>, Vec<u8>, String) {
+    let fixture = common::client_fixture(id);
+    let response = fixture.client_response().unwrap();
+    let body = fixture.response_body.clone().unwrap_or_default();
+    let outcome = fixture.client_result().unwrap().outcome;
+    (response.headers, body, outcome)
 }
 
 #[test]
@@ -386,22 +363,21 @@ fn fields_response_utf8_check_matches_c26_fixtures() {
         ("FX-RQ-C26-TWO-CONTENT-TYPE-LINES", false),
         ("FX-RQ-C05-TYPE-UPPERCASE", true),
     ] {
-        let e = fixture(id);
-        let f = response_fields(&e);
+        let (f, body, outcome) = client(id);
         assert!(rq_version_is_1(&f), "{id}");
         assert_eq!(media_type(&f).as_deref(), Some(HTML_MEDIA_TYPE), "{id}");
-        assert_eq!(decoded_as_utf8(&f, &response_body(id, &e)), utf8, "{id}");
+        assert_eq!(decoded_as_utf8(&f, &body), utf8, "{id}");
         // The fixture outcome: a document that fails the check is rejected.
-        assert_eq!(e["result"]["outcome"] != "rejected", utf8, "{id}");
+        assert_eq!(outcome != "rejected", utf8, "{id}");
     }
 }
 
 #[test]
 fn fields_response_rq_version_matches_c04_and_c15_fixtures() {
     for id in ["FX-RQ-C04-NO-RQ-VERSION", "FX-RQ-C15-NO-RQP-SERVER"] {
-        let e = fixture(id);
-        assert!(!rq_version_is_1(&response_fields(&e)), "{id}");
-        assert_eq!(e["result"]["outcome"], "normal", "{id}");
+        let (f, _, outcome) = client(id);
+        assert!(!rq_version_is_1(&f), "{id}");
+        assert_eq!(outcome, "normal", "{id}");
     }
 }
 
@@ -412,15 +388,11 @@ fn fields_response_etag_matches_c22_fixtures() {
         ("FX-RQ-C22-304-WEAK-ETAG", true),
         ("FX-RQ-C22-304-OTHER-ETAG", false),
     ] {
-        let e = fixture(id);
-        let r = PageRevision::parse(e["context"]["snapshot"]["page_revision"].as_str().unwrap())
-            .unwrap();
-        assert_eq!(
-            etag_matches_snapshot(&response_fields(&e), &r),
-            matches,
-            "{id}"
-        );
-        assert_eq!(e["result"]["outcome"] == "not-modified", matches, "{id}");
+        let (f, _, outcome) = client(id);
+        let ctx = common::client_fixture(id).client_context_data().unwrap();
+        let r = PageRevision::parse(&ctx.snapshot.unwrap().page_revision).unwrap();
+        assert_eq!(etag_matches_snapshot(&f, &r), matches, "{id}");
+        assert_eq!(outcome == "not-modified", matches, "{id}");
     }
 }
 

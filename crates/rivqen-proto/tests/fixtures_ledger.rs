@@ -32,10 +32,10 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use rivqen_model::error::HasErrorCode;
 use rivqen_model::http::FieldLine;
+use rivqen_model::limits::ResourceLimits;
 use rivqen_proto::delta::{DeltaError, VerifiedDelta, verify_delta};
 use rivqen_proto::fields::{
-    DELTA_MEDIA_TYPE, HTML_MEDIA_TYPE, RequestBasis, decoded_as_utf8, media_type, request_fields,
-    rq_version_is_1,
+    DELTA_MEDIA_TYPE, HTML_MEDIA_TYPE, RequestBasis, ResponseHead, request_fields,
 };
 use rivqen_proto::types::{MAX_BLOCK_BYTES, MAX_PATCH_BYTES};
 use rivqen_testkit::fixtures::{ClientContext, Fixture};
@@ -152,7 +152,7 @@ fn run_delta(fixture: &Fixture) -> Result<VerifiedDelta, DeltaError> {
     // snapshot and a nonce.
     assert_eq!(response.status, 200, "{id}");
     assert_eq!(
-        media_type(&response.headers).as_deref(),
+        head(&response.headers).media_type().as_deref(),
         Some(DELTA_MEDIA_TYPE),
         "{id}"
     );
@@ -192,13 +192,23 @@ fn run_full_charset(fixture: &Fixture) -> Option<&'static str> {
     );
     assert_eq!(response.status, 200, "{id}");
     assert_eq!(
-        media_type(&response.headers).as_deref(),
+        head(&response.headers).media_type().as_deref(),
         Some(HTML_MEDIA_TYPE),
         "{id}"
     );
-    assert!(rq_version_is_1(&response.headers), "{id}");
+    let head = head(&response.headers);
+    assert!(head.rq_version_is_1(), "{id}");
     let body = fixture.response_body.as_deref().unwrap_or_default();
-    (!decoded_as_utf8(&response.headers, body)).then_some("MANIFEST_INVALID")
+    (!head.decoded_as_utf8(body)).then_some("MANIFEST_INVALID")
+}
+
+/// The response head of a fixture, checked against the default
+/// `maxHeaderBytes` limits (DL-153); every fixture head is within them.
+fn head(lines: &[FieldLine]) -> ResponseHead<'_> {
+    let limits = ResourceLimits::default();
+    let line = usize::try_from(limits.max_header_bytes).unwrap();
+    let total = usize::try_from(limits.max_headers_total_bytes).unwrap();
+    ResponseHead::check(lines, line, total).unwrap()
 }
 
 /// The code that the ledger reason of a WP-05 fixture stands for.

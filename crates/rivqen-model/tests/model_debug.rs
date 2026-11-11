@@ -14,7 +14,7 @@ use rivqen_model::context::{Context, RivqenError};
 use rivqen_model::error::{Category, ErrorCode, FallbackHint};
 use rivqen_model::http::FieldLine;
 use rivqen_model::ids::{Generation, PartitionId, RequestId, Revision, SessionId, ValueError};
-use rivqen_model::limits::ResourceLimits;
+use rivqen_model::limits::{Limit, ResourceLimits};
 use rivqen_model::safe::{PageBytes, SafeUrl, Scheme, Secret};
 use rivqen_model::time::Instant;
 
@@ -89,6 +89,8 @@ fn model_debug_has_no_marker() {
         ("Category", format!("{:?}", Category::Network)),
         ("FallbackHint", format!("{:?}", FallbackHint::Stop)),
         ("ResourceLimits", format!("{:?}", ResourceLimits::default())),
+        ("Limit", format!("{:?}", Limit::MaxHeaderBytes)),
+        ("LimitRange", format!("{:?}", Limit::MaxHeaderBytes.range())),
     ];
     for (what, text) in &debug {
         assert_clean(what, text);

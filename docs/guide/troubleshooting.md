@@ -51,3 +51,4 @@ This is a security problem. Do not open a public issue. Follow the [security pol
 | `TLS_ERROR` | Certificate problem | Fix the server certificate. Rivqen never bypasses it. |
 | `MEMORY_BUDGET_EXCEEDED` | Memory limit reached | Reduce the page size or raise the budget. |
 | `DOCUMENT_TOO_LARGE` | Page above the size limit | Reduce the page or raise `maxDocumentBytes`. |
+| `CONFIG_INVALID` | A limit in the engine configuration is outside its safe range | Fix the value of the limit that the error names ([safe ranges](/engineering/core/resource-limits#_1-1-safe-ranges)). Pages load normally until then. |

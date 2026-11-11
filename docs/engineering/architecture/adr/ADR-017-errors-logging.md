@@ -1,6 +1,6 @@
 # ADR-017: Error handling and logging
 
-- Status: **Proposed** (to the human with the WP-05 merge request, DL-149)
+- Status: **Accepted** (human, 2026-11-11, H-140)
 - Date: 2026-11-11
 - Owner: Architect, WP-05
 - Reviewers: architecture lead, security reviewer
@@ -35,8 +35,8 @@ Option 1: no ignored error; every error is typed, carries a stable code with a c
 
 | Check | Evidence |
 |---|---|
-| Catalog in code | `rivqen-model::error`: `ErrorCode` (18 codes with `as_str`, `category`, `fallback`), `Category`, `FallbackHint`, trait `HasErrorCode`; every error type of `rivqen-proto` and `rivqen-core` implements it |
-| Context without data | `RivqenError` with a safe `Context` (operation name, no value); `Engine::new` names the limit, never the value (DL-155) |
+| Catalog in code | `rivqen-model::error`: `ErrorCode` (19 codes with `as_str`, `category`, `fallback`), `Category`, `FallbackHint`, trait `HasErrorCode`; every error type of `rivqen-proto` and `rivqen-core` implements it |
+| Context without data | `RivqenError` with a safe `Context` (operation name, no value); `Engine::new` gives `CONFIG_INVALID` and names the limit, never the value (DL-155, H-141) |
 | Panic paths forbidden | Workspace lints deny `unwrap_used`, `expect_used`, `panic`, `todo`, `unimplemented`, `indexing_slicing`, `arithmetic_side_effects`, `let_underscore_must_use`, `print_stdout`, `print_stderr`; `unused_must_use` is an error |
 | Redaction | Hand-written `Debug` for `FieldLine`, `Nonce`, `PatchOp`, digests and identifiers (8-character prefix), JSON values and events, `ResponseHead` errors; marker scan tests plant secrets and check that no `Debug` or `Display` shows them (`model_debug.rs`, `core_types.rs` and the text tests of `rivqen-proto`) |
 | No crash on untrusted input | Property tests for every parser (256 cases or more); fuzz targets for the field parser, the JSON reader, the manifest and the envelope (DL-154) |

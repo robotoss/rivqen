@@ -1,6 +1,6 @@
 # ADR-001: Rust core boundaries
 
-- Status: **Proposed** (to the human with the WP-05 merge request, DL-149)
+- Status: **Accepted** (human, 2026-11-11, H-139)
 - Date: 2026-11-11
 - Owner: Architect, WP-05
 - Reviewers: architecture lead, security reviewer, Android SDK owner (WP-10), iOS SDK owner (WP-11)
@@ -37,7 +37,7 @@ Option 1: the Rust core is pure logic (sans-I/O); the adapters own all I/O. Opti
 |---|---|
 | No platform dependency | The five crates `rivqen-model`, `rivqen-integrity`, `rivqen-proto`, `rivqen-testkit`, `rivqen-core` depend only on each other and on `sha2` and `base64` (runtime) and `serde_json`, `proptest` (tests and the test kit only), H-138. `cargo deny check` passes |
 | No I/O in the core crates | No `std::net`, `std::fs`, `std::thread` or system clock in the `src/` of the four core crates; time comes in through the `Clock` trait (`rivqen-model::time`). The test kit reads fixture files in tests only |
-| All tests on the host with fakes | `cargo test --workspace` runs on the Mac host and in the CI job `core` with `FakeClock` and `FakeTransport` (`rivqen-testkit`), no sleep, no thread; 329 tests at the S2 integration |
+| All tests on the host with fakes | `cargo test --workspace` runs on the Mac host and in the CI job `core` with `FakeClock` and `FakeTransport` (`rivqen-testkit`), no sleep, no thread; 330 tests at the S2 close |
 | Events in, actions out | `rivqen-core` gives `EngineConfig`, `Engine::new`, `Event`, `Action` and `Outcome` (skeleton, no session logic, DL-143) |
 | No `unsafe` | `#![forbid(unsafe_code)]` in every crate; `tools/rust-core/check-unsafe.sh` in CI; `rivqen-ffi` (WP-09) is the only planned exception |
 

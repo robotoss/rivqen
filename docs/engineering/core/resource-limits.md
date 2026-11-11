@@ -65,7 +65,7 @@ Every input to the core is bounded. Limits protect the app from memory exhaustio
 
 Pairs: a valid configuration also has `maxPatchBytes` ≤ `maxDocumentBytes` (manifest and patch §1.5: a patch larger than a full document has no use), `maxHeaderBytes` (line) ≤ `maxHeaderBytes` (total), and `timeoutConnect`, `timeoutFirstByte` ≤ `timeoutTotal` (`Limit::NOT_ABOVE`). The ranges alone give `maxChunkBytes` ≤ `prefixBufferBytes` and `maxBlockBytes`, `maxManifestBytes` ≤ `maxDocumentBytes`.
 
-A value outside its range, or a pair in the wrong order, gives `INTERNAL_ERROR` in operation `engine_new`: a configuration outside the safe range is a bug of the host app. The cause is a `ConfigError` with the limit name and the rule. It never holds the value. The check runs the limits in the order of the table, then the pairs; the first failure wins.
+A value outside its range, or a pair in the wrong order, gives `CONFIG_INVALID` in operation `engine_new` (H-141, DL-158): a configuration outside the safe range is a bug of the host app. The cause is a `ConfigError` with the limit name and the rule. It never holds the value. The check runs the limits in the order of the table, then the pairs; the first failure wins.
 
 ## 2. Device classes
 

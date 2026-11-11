@@ -4,7 +4,7 @@ This page defines how adapters call the Rust core. The core is a deterministic *
 
 **Status:** <Badge type="info" text="DESIGN" /> The Rust code below is a design sketch, not a final signature. Planned API — not released.
 
-<Badge type="tip" text="FACT" /> WP-05 adds the crate `rivqen-core` as a skeleton with no session logic: `config::EngineConfig` (the resource limits), `config::Engine::new`, which rejects a limit outside its [safe range](/engineering/core/resource-limits#_1-1-safe-ranges) with `INTERNAL_ERROR` and a `ConfigError` cause, `event::Event` and `action::Action` with the variants of [data model §5](/engineering/core/data-model#_5-events-and-actions), and `action::Outcome` with the variants of §3. The enums are `#[non_exhaustive]`. Their payloads are opaque placeholder types with no public constructor; WP-07, WP-08 and WP-09 define the fields. `open`, `handle`, `cancel` and the other calls of §1 come with WP-08.
+<Badge type="tip" text="FACT" /> WP-05 adds the crate `rivqen-core` as a skeleton with no session logic: `config::EngineConfig` (the resource limits), `config::Engine::new`, which rejects a limit outside its [safe range](/engineering/core/resource-limits#_1-1-safe-ranges) with `CONFIG_INVALID` (H-141) and a `ConfigError` cause, `event::Event` and `action::Action` with the variants of [data model §5](/engineering/core/data-model#_5-events-and-actions), and `action::Outcome` with the variants of §3. The enums are `#[non_exhaustive]`. Their payloads are opaque placeholder types with no public constructor; WP-07, WP-08 and WP-09 define the fields. `open`, `handle`, `cancel` and the other calls of §1 come with WP-08.
 
 [[toc]]
 

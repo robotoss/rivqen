@@ -35,7 +35,9 @@ Every input to the core is bounded. Limits protect the app from memory exhaustio
 
 <Badge type="tip" text="FACT" /> `rivqen_model::limits::Limit::range` holds one range (minimum and maximum, both allowed) per configurable limit. `Engine::new` in `rivqen-core` rejects a value outside its range (tests `core_config_out_of_range_rejected`, `core_config_both_ends_of_each_range_pass`).
 
-<Badge type="info" text="DESIGN" /> The values are a proposal of WP-05 S2 (T-04). The architect records the decision. "Proposal" in the reason column means that no document gives the number; WP-19 measurements can change it.
+<Badge type="info" text="DESIGN" /> The values come from WP-05 S2 (T-04) and are recorded in [DL-155](/engineering/plan/decision-log). "Proposal" in the reason column means that no document gives the number; WP-19 measurements can change it.
+
+<Badge type="warning" text="RESEARCH" /> In WP-05 the checked values are not used yet: the parsers of `rivqen-proto` use their own constants (`MAX_JSON_DEPTH`, `MAX_PATCH_BYTES` as the default, `MAX_BLOCK_BYTES` as a cap) and take the client limits as parameters. The session (WP-08) passes the values of the checked `EngineConfig` to them; a test pins the defaults to the constants (`limits_consistency.rs`).
 
 | Limit | Min | Max | Reason |
 |---|---|---|---|

@@ -7,12 +7,13 @@
 //! delta body whose outcome depends only on steps 3 to 7 of manifest-patch
 //! section 2.4.
 //!
-//! The fixtures name pages, not snapshots. [`analyze`] is a test oracle for
-//! the simple block markup of these pages (one element per block, no element
-//! of the same name inside it); it is not the markup analysis of WP-06. Each
-//! use checks its result against a value of the fixture (the page revision of
-//! the manifest, the base revision of a binding, the hash of a changed block),
-//! so a wrong extraction fails the test and never passes it.
+//! The test kit reads every file (DL-146); `common` converts its data to the
+//! core types. The fixtures name pages, not snapshots. [`analyze`] is a test
+//! oracle for the simple block markup of these pages (one element per block,
+//! no element of the same name inside it); it is not the markup analysis of
+//! WP-06. Each use checks its result against a value of the fixture (the page
+//! revision of the manifest, the base revision of a binding, the hash of a
+//! changed block), so a wrong extraction fails the test and never passes it.
 
 #![allow(
     clippy::unwrap_used,
@@ -22,37 +23,28 @@
     clippy::arithmetic_side_effects
 )]
 
-use std::fs;
-use std::path::{Path, PathBuf};
+mod common;
 
-use rivqen_integrity::{
-    Binding, PageRevision, Sha256Digest, TemplateRevision, b64u_encode, sha256, sha256_parts,
-};
+use std::path::PathBuf;
+
+use rivqen_integrity::{Binding, PageRevision, TemplateRevision, sha256, sha256_parts};
 use rivqen_proto::compute::{
     OperationError, binding, next_blocks, next_page_revision, page_revision, policy_line,
     snapshot_page_revision,
 };
+use rivqen_proto::json;
 use rivqen_proto::types::{
-    BlockDescriptor, BlockFormat, BlockId, Limits, MAX_BLOCK_BYTES, Mode, NONCE_BYTES, Nonce,
-    PatchOp, Policy, SnapshotMeta,
+    BlockDescriptor, BlockFormat, BlockId, MAX_BLOCK_BYTES, NONCE_BYTES, PatchOp, SnapshotMeta,
+};
+use rivqen_testkit::fixtures::{
+    BlockData, ExpectedBody, Fixture, Members, SnapshotData, load_json,
 };
 use serde_json::Value;
 
+use common::{canonical_url, nonce, protocol, snapshot_meta};
+
 // ---------------------------------------------------------------------------
 // Helpers
-
-fn repo_root() -> PathBuf {
-    rivqen_testkit::fixtures_root().join("..")
-}
-
-fn protocol_root() -> PathBuf {
-    rivqen_testkit::fixtures_root().join("rqp").join("protocol")
-}
-
-fn read_json(path: &Path) -> Value {
-    let text = fs::read(path).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
-    serde_json::from_slice(&text).unwrap_or_else(|e| panic!("{}: {e}", path.display()))
-}
 
 fn text<'a>(value: &'a Value, name: &str) -> &'a str {
     value[name]
@@ -60,66 +52,29 @@ fn text<'a>(value: &'a Value, name: &str) -> &'a str {
         .unwrap_or_else(|| panic!("member {name} is not a string"))
 }
 
-fn u32_of(value: &Value) -> u32 {
-    u32::try_from(value.as_u64().expect("an integer")).expect("a u32")
-}
-
 /// `policy` and `limits` of a manifest, a case or a snapshot, with member
-/// presence kept: a member that is absent stays `None`.
-fn members(object: &Value) -> (Option<Policy>, Option<Limits>) {
-    let policy = object.get("policy").map(|p| {
-        let p = p.as_object().expect("policy is an object");
-        Policy {
-            mode: p.get("mode").map(|m| match m.as_str() {
-                Some("private") => Mode::Private,
-                Some("public") => Mode::Public,
-                other => panic!("mode {other:?}"),
-            }),
-            ttl_seconds: p.get("ttl_seconds").map(u32_of),
-            offline: p.get("offline").map(|o| o.as_bool().expect("a boolean")),
-        }
-    });
-    let limits = object.get("limits").map(|l| {
-        let l = l.as_object().expect("limits is an object");
-        Limits {
-            max_patch_bytes: l.get("max_patch_bytes").map(u32_of),
-        }
-    });
-    (policy, limits)
-}
-
-fn format_of(text: &str) -> BlockFormat {
-    match text {
-        "html" => BlockFormat::Html,
-        "json" => BlockFormat::Json,
-        other => panic!("format {other}"),
-    }
+/// presence kept.
+fn members(
+    object: &Value,
+) -> (
+    Option<rivqen_proto::types::Policy>,
+    Option<rivqen_proto::types::Limits>,
+) {
+    common::members(&Members::from_json(object).unwrap_or_else(|e| panic!("{e}")))
 }
 
 fn descriptor(block: &Value) -> BlockDescriptor {
-    BlockDescriptor {
-        id: BlockId::parse(text(block, "id")).unwrap(),
-        format: format_of(text(block, "format")),
-        sha256: Sha256Digest::from_b64u(text(block, "sha256")).unwrap(),
-    }
+    common::descriptor(&BlockData {
+        id: text(block, "id").to_owned(),
+        format: text(block, "format").to_owned(),
+        sha256: text(block, "sha256").to_owned(),
+    })
 }
 
 /// A snapshot from a JSON object with `template_revision`, `page_revision`,
 /// `blocks` and the optional `policy` and `limits`.
 fn snapshot_of(object: &Value) -> SnapshotMeta {
-    let (policy, limits) = members(object);
-    SnapshotMeta {
-        template_revision: TemplateRevision::parse(text(object, "template_revision")).unwrap(),
-        page_revision: PageRevision::parse(text(object, "page_revision")).unwrap(),
-        blocks: object["blocks"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(descriptor)
-            .collect(),
-        policy,
-        limits,
-    }
+    snapshot_meta(&SnapshotData::from_json(object).unwrap_or_else(|e| panic!("{e}")))
 }
 
 fn operations_of(envelope: &Value) -> Vec<PatchOp> {
@@ -134,31 +89,51 @@ fn operations_of(envelope: &Value) -> Vec<PatchOp> {
         .collect()
 }
 
-/// The 16 nonce bytes of the text N (22 base64url characters, no padding).
-fn nonce_of(n: &str) -> Nonce {
-    let mut bits: u32 = 0;
-    let mut count = 0;
-    let mut bytes = Vec::with_capacity(NONCE_BYTES);
-    for c in n.bytes() {
-        let value = match c {
-            b'A'..=b'Z' => c - b'A',
-            b'a'..=b'z' => c - b'a' + 26,
-            b'0'..=b'9' => c - b'0' + 52,
-            b'-' => 62,
-            b'_' => 63,
-            _ => panic!("nonce text {n}"),
-        };
-        bits = (bits << 6) | u32::from(value);
-        count += 6;
-        if count >= 8 {
-            count -= 8;
-            bytes.push(u8::try_from((bits >> count) & 0xFF).unwrap());
-        }
-    }
-    let nonce = Nonce(bytes.try_into().expect("16 bytes"));
-    // The decoder is right when the encoder of the crate writes N again.
-    assert_eq!(b64u_encode(&nonce.0), n);
-    nonce
+/// `binding` and the operations of a delta body, read with the JSON reader
+/// of the crate and without the schema (an empty list stays empty).
+fn envelope_parts(body: &[u8]) -> (Binding, Vec<PatchOp>) {
+    let json::Value::Object(members) = json::parse(body).unwrap() else {
+        panic!("envelope is not an object");
+    };
+    let member = |name: &str| {
+        &members
+            .iter()
+            .find(|m| m.name == name)
+            .unwrap_or_else(|| panic!("no member {name}"))
+            .value
+    };
+    let string = |value: &json::Value| match value {
+        json::Value::String(s) => s.clone(),
+        other => panic!("not a string: {other:?}"),
+    };
+    let json::Value::Array(operations) = member("operations") else {
+        panic!("operations is not an array");
+    };
+    let operations = operations
+        .iter()
+        .map(|op| {
+            let json::Value::Object(fields) = op else {
+                panic!("operation is not an object");
+            };
+            let field = |name: &str| {
+                string(
+                    &fields
+                        .iter()
+                        .find(|m| m.name == name)
+                        .unwrap_or_else(|| panic!("no member {name}"))
+                        .value,
+                )
+            };
+            PatchOp {
+                block_id: BlockId::parse(&field("block_id")).unwrap(),
+                content: field("content"),
+            }
+        })
+        .collect();
+    (
+        Binding::parse(&string(member("binding"))).unwrap(),
+        operations,
+    )
 }
 
 /// One block of a page: descriptor and content bytes.
@@ -229,13 +204,8 @@ fn analyze(page: &[u8]) -> Analysis {
     }
 }
 
-fn read_page(name: &str) -> Vec<u8> {
-    let path = protocol_root().join("pages").join(format!("{name}.html"));
-    fs::read(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display()))
-}
-
-fn snapshot_of_page(page: &str, members_of: &Value) -> (SnapshotMeta, Analysis) {
-    let analysis = analyze(&read_page(page));
+fn snapshot_of_page(page: &[u8], members_of: &Value) -> (SnapshotMeta, Analysis) {
+    let analysis = analyze(page);
     let (policy, limits) = members(members_of);
     let blocks: Vec<BlockDescriptor> = analysis
         .blocks
@@ -258,51 +228,34 @@ fn snapshot_of_page(page: &str, members_of: &Value) -> (SnapshotMeta, Analysis) 
     (snapshot, analysis)
 }
 
-/// Every fixture directory with the given name prefix, in name order.
-fn fixture_dirs(prefix: &str) -> Vec<PathBuf> {
-    let mut dirs: Vec<PathBuf> = fs::read_dir(protocol_root())
-        .unwrap()
-        .map(|e| e.unwrap().path())
-        .filter(|p| {
-            p.file_name()
-                .and_then(|n| n.to_str())
-                .is_some_and(|n| n.starts_with(prefix))
-        })
-        .collect();
-    dirs.sort();
-    dirs
-}
-
-fn name_of(dir: &Path) -> String {
-    dir.file_name().unwrap().to_string_lossy().into_owned()
-}
-
 /// Server fixtures whose expected body has the given kind.
-fn server_fixtures(kind: &str) -> Vec<(String, Value, Value)> {
-    fixture_dirs("FX-RQ-P")
-        .into_iter()
-        .filter_map(|dir| {
-            let expected = read_json(&dir.join("expected.json"));
-            (expected["body"]["kind"] == kind)
-                .then(|| (name_of(&dir), read_json(&dir.join("case.json")), expected))
+fn server_fixtures(kind: &str) -> Vec<&'static Fixture> {
+    protocol()
+        .server
+        .iter()
+        .filter(|f| {
+            matches!(
+                (kind, f.server_body().unwrap()),
+                ("full", ExpectedBody::Full { .. }) | ("delta", ExpectedBody::Delta(_))
+            )
         })
         .collect()
 }
 
 fn kat_root() -> PathBuf {
-    repo_root()
+    rivqen_testkit::repo_root()
         .join("spec")
         .join("rqp")
         .join("examples")
         .join("kat")
 }
 
-fn kat() -> Value {
-    read_json(&kat_root().join("kat.json"))
+fn kat_file(relative: &str) -> Value {
+    load_json(&kat_root().join(relative)).unwrap_or_else(|e| panic!("{e}"))
 }
 
-fn kat_file(relative: &str) -> Value {
-    read_json(&kat_root().join(relative))
+fn kat() -> Value {
+    kat_file("kat.json")
 }
 
 // ---------------------------------------------------------------------------
@@ -312,7 +265,7 @@ fn kat_file(relative: &str) -> Value {
 fn compute_page_revision_kat() {
     let kat = kat();
     let computed = &kat["computed"];
-    let page = fs::read(kat_root().join(text(&kat, "document"))).unwrap();
+    let page = std::fs::read(kat_root().join(text(&kat, "document"))).unwrap();
     let analysis = analyze(&page);
     assert_eq!(
         analysis.template_revision.to_string(),
@@ -401,7 +354,7 @@ fn compute_next_revision_kat() {
             let value = binding(
                 text(entry, "url"),
                 &snapshot.page_revision,
-                &nonce_of(text(entry, "nonce")),
+                &nonce(text(entry, "nonce")),
                 &next,
             );
             assert_eq!(value.to_string(), text(entry, "binding"));
@@ -415,7 +368,7 @@ fn compute_next_revision_kat() {
 #[test]
 fn compute_binding_kat() {
     let kat = kat();
-    assert_eq!(nonce_of(text(&kat["nonce"], "n")).0, {
+    assert_eq!(nonce(text(&kat["nonce"], "n")).0, {
         let mut bytes = [0_u8; NONCE_BYTES];
         for (i, b) in bytes.iter_mut().enumerate() {
             *b = u8::try_from(i).unwrap();
@@ -432,7 +385,7 @@ fn compute_binding_kat() {
         let value = binding(
             text(entry, "url"),
             &PageRevision::parse(text(entry, "base_revision")).unwrap(),
-            &nonce_of(text(entry, "nonce")),
+            &nonce(text(entry, "nonce")),
             &PageRevision::parse(text(entry, "next_revision")).unwrap(),
         );
         assert_eq!(value.to_string(), text(entry, "binding"));
@@ -442,6 +395,24 @@ fn compute_binding_kat() {
     }
 }
 
+/// The test helper for U gives the KAT value (manifest-patch section 2.2,
+/// "The canonical URL U").
+#[test]
+fn compute_canonical_url_helper_matches_kat() {
+    let kat = kat();
+    let entry = &kat["binding_with_query"];
+    assert_eq!(canonical_url(text(entry, "url_input")), text(entry, "url"));
+    assert_eq!(canonical_url(text(entry, "url")), text(entry, "url"));
+    assert_eq!(
+        canonical_url("http://Example.COM:80?q=1#f"),
+        "http://example.com/?q=1"
+    );
+    assert_eq!(
+        canonical_url("https://example.com:8443/a"),
+        "https://example.com:8443/a"
+    );
+}
+
 // ---------------------------------------------------------------------------
 // Server fixtures FX-RQ-P*
 
@@ -449,9 +420,10 @@ fn compute_binding_kat() {
 fn compute_page_revision_server_fixtures() {
     let fixtures = server_fixtures("full");
     assert_ne!(fixtures.len(), 0);
-    for (name, case, expected) in &fixtures {
-        let manifest = &expected["body"]["manifest"];
-        let (snapshot, _) = snapshot_of_page(text(case, "page"), manifest);
+    for fixture in &fixtures {
+        let name = &fixture.id;
+        let manifest = &fixture.expected["body"]["manifest"];
+        let (snapshot, _) = snapshot_of_page(fixture.page.as_deref().unwrap(), manifest);
         assert_eq!(
             snapshot.page_revision.to_string(),
             text(manifest, "page_revision"),
@@ -464,16 +436,18 @@ fn compute_page_revision_server_fixtures() {
 fn compute_binding_matches_server_fixtures() {
     let fixtures = server_fixtures("delta");
     assert_ne!(fixtures.len(), 0);
-    for (name, _, expected) in &fixtures {
-        let body = &expected["body"];
-        let inputs = &body["binding_inputs"];
+    for fixture in &fixtures {
+        let ExpectedBody::Delta(delta) = fixture.server_body().unwrap() else {
+            panic!("{}: not a delta", fixture.id);
+        };
+        let inputs = &delta.inputs;
         let value = binding(
-            text(inputs, "url"),
-            &PageRevision::parse(text(inputs, "base_revision")).unwrap(),
-            &nonce_of(text(inputs, "nonce")),
-            &PageRevision::parse(text(inputs, "next_revision")).unwrap(),
+            &inputs.url,
+            &PageRevision::parse(&inputs.base_revision).unwrap(),
+            &nonce(&inputs.nonce),
+            &PageRevision::parse(&inputs.next_revision).unwrap(),
         );
-        assert_eq!(value.to_string(), text(body, "binding"), "{name}");
+        assert_eq!(value.to_string(), delta.binding, "{}", fixture.id);
     }
 }
 
@@ -485,40 +459,44 @@ fn compute_next_revision_server_fixtures() {
     let fixtures = server_fixtures("delta");
     assert_ne!(fixtures.len(), 0);
     let none = Value::Object(serde_json::Map::new());
-    for (name, case, expected) in &fixtures {
-        let body = &expected["body"];
-        let inputs = &body["binding_inputs"];
+    for fixture in &fixtures {
+        let name = &fixture.id;
+        let case = &fixture.case;
+        let ExpectedBody::Delta(delta) = fixture.server_body().unwrap() else {
+            panic!("{name}: not a delta");
+        };
+        let inputs = &delta.inputs;
         let client_members = case.get("client_members").unwrap_or(&none);
-        let (snapshot, _) = snapshot_of_page(text(case, "client_page"), client_members);
+        let (snapshot, _) =
+            snapshot_of_page(fixture.client_page.as_deref().unwrap(), client_members);
         assert_eq!(
             snapshot.page_revision.to_string(),
-            text(inputs, "base_revision"),
+            inputs.base_revision,
             "{name}: snapshot"
         );
         let (current, analysis) = snapshot_of_page(
-            text(case, "page"),
+            fixture.page.as_deref().unwrap(),
             case.get("server_config").unwrap_or(&none),
         );
         assert_eq!(
             current.page_revision.to_string(),
-            text(inputs, "next_revision"),
+            inputs.next_revision,
             "{name}: current page"
         );
-        let operations: Vec<PatchOp> = body["blocks"]
-            .as_array()
-            .unwrap()
+        let operations: Vec<PatchOp> = delta
+            .blocks
             .iter()
             .map(|changed| {
-                let id = text(changed, "id");
                 let block = analysis
                     .blocks
                     .iter()
-                    .find(|b| b.descriptor.id.as_str() == id)
-                    .unwrap_or_else(|| panic!("{name}: no block {id}"));
+                    .find(|b| b.descriptor.id.as_str() == changed.id)
+                    .unwrap_or_else(|| panic!("{name}: no block {}", changed.id));
                 assert_eq!(
                     block.descriptor.sha256.to_b64u(),
-                    text(changed, "sha256"),
-                    "{name}: {id}"
+                    changed.sha256,
+                    "{name}: {}",
+                    changed.id
                 );
                 PatchOp {
                     block_id: block.descriptor.id.clone(),
@@ -527,7 +505,7 @@ fn compute_next_revision_server_fixtures() {
             })
             .collect();
         let next = next_page_revision(&snapshot, &operations, MAX_BLOCK_BYTES).unwrap();
-        assert_eq!(next.to_string(), text(inputs, "next_revision"), "{name}");
+        assert_eq!(next.to_string(), inputs.next_revision, "{name}");
         // L′ is the block list of the current page.
         assert_eq!(
             next_blocks(&snapshot, &operations, MAX_BLOCK_BYTES).unwrap(),
@@ -540,10 +518,6 @@ fn compute_next_revision_server_fixtures() {
 // ---------------------------------------------------------------------------
 // Client fixtures FX-RQ-C* with a delta body
 
-/// Client fixtures whose final URL is not in the canonical form; U needs the
-/// URL parser of WP-08.
-const NOT_CANONICAL_FINAL_URL: &[&str] = &["FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-REDIRECT-HOST-CASE"];
-
 /// The fixture results that depend on steps 3 to 7 only, and the result of
 /// those steps: the binding is equal, the binding differs, or step 3 fails.
 enum StepResult {
@@ -552,10 +526,10 @@ enum StepResult {
     Operations(OperationError),
 }
 
-fn step_result(name: &str, result: &Value) -> Option<StepResult> {
-    match (name, result["outcome"].as_str(), result["error"].as_str()) {
+fn step_result(name: &str, outcome: &str, error: Option<&str>) -> Option<StepResult> {
+    match (name, outcome, error) {
         // Steps 8 and 9 come after the binding check: their fixtures pass step 7.
-        (_, Some("patched"), _) | (_, _, Some("PATCH_CONTENT_REJECTED")) => {
+        (_, "patched", _) | (_, _, Some("PATCH_CONTENT_REJECTED")) => {
             Some(StepResult::BindingEqual)
         }
         (_, _, Some("INTEGRITY_ERROR")) => Some(StepResult::BindingDiffers),
@@ -585,56 +559,48 @@ fn step_result(name: &str, result: &Value) -> Option<StepResult> {
 #[test]
 fn compute_next_revision_client_fixtures() {
     let mut checked = 0;
-    let mut not_canonical = Vec::new();
-    for dir in fixture_dirs("FX-RQ-C") {
-        let name = name_of(&dir);
-        let expected = read_json(&dir.join("expected.json"));
-        let delta = expected["response"]["headers"]
-            .as_array()
-            .is_some_and(|headers| {
-                headers
-                    .iter()
-                    .any(|h| h[0] == "content-type" && h[1] == "application/vnd.rivqen.delta+json")
-            });
-        let context = &expected["context"];
-        if !delta || context["snapshot"].is_null() {
-            continue;
-        }
-        let Some(step) = step_result(&name, &expected["result"]) else {
+    for fixture in &protocol().client {
+        let name = &fixture.id;
+        let response = fixture.client_response().unwrap();
+        let delta = response
+            .headers
+            .iter()
+            .any(|h| h.is("content-type") && h.value == rivqen_proto::fields::DELTA_MEDIA_TYPE);
+        let context = fixture.client_context_data().unwrap();
+        let Some(data) = context.snapshot.as_ref().filter(|_| delta) else {
             continue;
         };
-        let final_url = text(context, "final_url");
-        if final_url.bytes().any(|b| b.is_ascii_uppercase()) {
-            not_canonical.push(name);
+        let result = fixture.client_result().unwrap();
+        let Some(step) = step_result(name, &result.outcome, result.error.as_deref()) else {
             continue;
-        }
-        let snapshot = snapshot_of(&context["snapshot"]);
+        };
+        let snapshot = snapshot_meta(data);
         assert_eq!(
             snapshot_page_revision(&snapshot),
             snapshot.page_revision,
             "{name}: snapshot"
         );
-        let envelope = read_json(&dir.join(text(&expected["response"], "body")));
-        let operations = operations_of(&envelope);
+        let (sent, operations) = envelope_parts(fixture.response_body.as_deref().unwrap());
         let next = next_page_revision(&snapshot, &operations, MAX_BLOCK_BYTES);
         let computed = next.map(|next| {
             binding(
-                final_url,
+                &canonical_url(&context.final_url),
                 &snapshot.page_revision,
-                &nonce_of(text(context, "nonce")),
+                &nonce(context.nonce.as_deref().unwrap()),
                 &next,
             )
         });
-        let sent = Binding::parse(text(&envelope, "binding")).unwrap();
         match step {
             StepResult::BindingEqual => assert_eq!(computed, Ok(sent), "{name}"),
             StepResult::BindingDiffers => {
-                assert_ne!(computed.expect(&name), sent, "{name}");
+                assert_ne!(computed.expect(name), sent, "{name}");
             }
             StepResult::Operations(error) => assert_eq!(computed, Err(error), "{name}"),
         }
         checked += 1;
     }
-    assert_eq!(not_canonical, NOT_CANONICAL_FINAL_URL);
-    assert!(checked > 0);
+    // 26 patched, 34 PATCH_CONTENT_REJECTED and 13 INTEGRITY_ERROR binding
+    // comparisons and 4 operation failures. S1 ran 76 of these 77: the
+    // host-case fixture needs U from common::canonical_url.
+    assert_eq!(checked, 77);
 }

@@ -72,7 +72,7 @@ fn envelope_examples() {
     assert_eq!(invalid.len(), 24);
     for file in &invalid {
         let name = file.file_name().unwrap().to_str().unwrap();
-        let wrapper: serde_json::Value = serde_json::from_slice(&fs::read(file).unwrap()).unwrap();
+        let wrapper = rivqen_testkit::fixtures::load_json(file).unwrap();
         // No instance has a duplicate name or a number that serde_json writes
         // in another form, so the defect survives the round trip.
         let text = serde_json::to_vec(&wrapper["instance"]).unwrap();

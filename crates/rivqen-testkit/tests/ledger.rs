@@ -66,6 +66,13 @@ fn ledger_checks_follow_the_fixtures() {
     }
     assert_eq!(request_fields, 150);
     assert_eq!(binding, 26);
+    assert_eq!(ledger.with_check(Check::RequestFields).count(), 150);
+    assert_eq!(ledger.with_check(Check::Binding).count(), 26);
+    assert!(
+        ledger
+            .with_check(Check::Binding)
+            .all(|e| e.checks.contains(&Check::RequestFields))
+    );
 }
 
 #[test]

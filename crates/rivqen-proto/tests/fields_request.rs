@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: The Rivqen Authors
 
-//! The RQP request fields against the request lines of the client fixtures
-//! `fixtures/rqp/protocol/FX-RQ-C*/expected.json` (oracle: `requestHeaders` of
-//! `tools/rqp-protocol/src/client.mjs`), byte for byte, and the `Rq-Have`
-//! limit of negotiation section 3.4.
+//! The RQP request fields for inputs that no fixture has (oracle:
+//! `requestHeaders` of `tools/rqp-protocol/src/client.mjs`), the server's
+//! reading of the values and the `Rq-Have` limit of negotiation section 3.4.
 //!
-//! The test reads the fixtures with `serde_json` directly; S2 runs all 153
-//! client fixtures through the test kit. The choices that belong to the
-//! caller (WP-08) are made here as the oracle makes them: a fixture whose
-//! request has no RQP field (allowlist, scheme, user information) is not an
-//! input of `request_fields`, and a snapshot in the `public` partition with
-//! the setting off is no snapshot (H-81).
+//! The comparison with the request lines of the 150 client fixtures with
+//! the ledger check `request-fields` is `fixtures_request_fields_match_ledger`
+//! (`fixtures_ledger.rs`, through the test kit).
 
 #![allow(
     clippy::unwrap_used,
@@ -21,7 +17,7 @@
     clippy::arithmetic_side_effects
 )]
 
-use std::fs;
+mod common;
 
 use proptest::prelude::*;
 use rivqen_integrity::{PageRevision, Sha256Digest, TemplateRevision, sha256};
@@ -32,40 +28,9 @@ use rivqen_proto::types::{
     BlockDescriptor, BlockFormat, BlockId, MAX_BLOCKS, MAX_RQ_HAVE_BYTES, MAX_RQ_NONCE_BYTES,
     Nonce, SnapshotMeta,
 };
-use serde_json::Value;
 
 const T: &str = "t1.86FtOeBe__KDLc87s9j68x63RC6DK9AYpEkvnbgQ_LM";
 const R: &str = "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8";
-
-/// base64url without padding → bytes (an independent decoder for the test).
-fn b64u_decode(text: &str) -> Vec<u8> {
-    let value = |c: u8| -> u32 {
-        match c {
-            b'A'..=b'Z' => u32::from(c - b'A'),
-            b'a'..=b'z' => u32::from(c - b'a') + 26,
-            b'0'..=b'9' => u32::from(c - b'0') + 52,
-            b'-' => 62,
-            b'_' => 63,
-            _ => panic!("not base64url: {c}"),
-        }
-    };
-    let mut out = Vec::new();
-    let (mut acc, mut bits) = (0_u32, 0_u32);
-    for &c in text.as_bytes() {
-        acc = (acc << 6) | value(c);
-        bits += 6;
-        if bits >= 8 {
-            bits -= 8;
-            out.push(u8::try_from(acc >> bits).unwrap());
-            acc &= (1 << bits) - 1;
-        }
-    }
-    out
-}
-
-fn nonce_of(text: &str) -> Nonce {
-    Nonce(b64u_decode(text).try_into().unwrap())
-}
 
 fn block(id: &str, format: BlockFormat, digest: Sha256Digest) -> BlockDescriptor {
     BlockDescriptor {
@@ -97,35 +62,6 @@ fn snapshot(n: usize) -> SnapshotMeta {
     }
 }
 
-/// The context snapshot of a fixture as the client keeps it. `policy` and
-/// `limits` do not take part in the request fields.
-fn snapshot_of(v: &Value) -> SnapshotMeta {
-    SnapshotMeta {
-        template_revision: TemplateRevision::parse(v["template_revision"].as_str().unwrap())
-            .unwrap(),
-        page_revision: PageRevision::parse(v["page_revision"].as_str().unwrap()).unwrap(),
-        blocks: v["blocks"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|b| {
-                let format = match b["format"].as_str().unwrap() {
-                    "html" => BlockFormat::Html,
-                    "json" => BlockFormat::Json,
-                    other => panic!("format {other}"),
-                };
-                block(
-                    b["id"].as_str().unwrap(),
-                    format,
-                    Sha256Digest::from_b64u(b["sha256"].as_str().unwrap()).unwrap(),
-                )
-            })
-            .collect(),
-        policy: None,
-        limits: None,
-    }
-}
-
 fn lines(fields: &[rivqen_model::http::FieldLine]) -> Vec<(String, String)> {
     fields
         .iter()
@@ -140,151 +76,12 @@ fn pairs(expected: &[(&str, &str)]) -> Vec<(String, String)> {
         .collect()
 }
 
-/// What the caller gives to `request_fields` for a fixture context.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Shape {
-    /// The oracle sends no RQP field: not an input of `request_fields`.
-    NoRqp,
-    FirstVisit,
-    Fallback,
-    /// A delta navigation whose snapshot is not usable (H-81).
-    UnusableSnapshot,
-    Delta,
-}
-
-struct Case {
-    id: String,
-    shape: Shape,
-    nonce: String,
-    checked: bool,
-}
-
-/// Check every client fixture; returns the cases by shape.
-fn check_all_client_fixtures() -> Vec<Case> {
-    let root = rivqen_testkit::fixtures_root().join("rqp").join("protocol");
-    let mut ids: Vec<String> = fs::read_dir(&root)
-        .unwrap()
-        .map(|e| e.unwrap().file_name().into_string().unwrap())
-        .filter(|n| n.starts_with("FX-RQ-C"))
-        .collect();
-    ids.sort();
-    let mut cases = Vec::new();
-    for id in ids {
-        let text = fs::read_to_string(root.join(&id).join("expected.json")).unwrap();
-        let expected: Value = serde_json::from_str(&text).unwrap();
-        let ctx = &expected["context"];
-        let want: Vec<(String, String)> = expected["request"]["headers"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|h| {
-                (
-                    h[0].as_str().unwrap().to_owned(),
-                    h[1].as_str().unwrap().to_owned(),
-                )
-            })
-            .collect();
-        let nonce_text = ctx["nonce"].as_str().unwrap_or_default().to_owned();
-        let snap = (!ctx["snapshot"].is_null()).then(|| snapshot_of(&ctx["snapshot"]));
-        let usable = !ctx["snapshot"].is_null()
-            && (ctx["snapshot"]["partition"] != "public" || ctx["public_enabled"] == true);
-        let navigation = ctx["navigation"].as_str().unwrap();
-        let shape = if !want.iter().any(|(n, _)| n == "rq-version") {
-            Shape::NoRqp
-        } else if navigation == "delta" && usable {
-            Shape::Delta
-        } else if navigation == "delta" && snap.is_some() {
-            Shape::UnusableSnapshot
-        } else if navigation == "fallback" {
-            Shape::Fallback
-        } else {
-            Shape::FirstVisit
-        };
-        let nonce = nonce_of(&nonce_text);
-        let basis = match shape {
-            Shape::NoRqp => None,
-            Shape::FirstVisit | Shape::UnusableSnapshot => Some(RequestBasis::FirstVisit),
-            Shape::Fallback => Some(RequestBasis::FallbackLoad),
-            Shape::Delta => Some(RequestBasis::Snapshot {
-                snapshot: snap.as_ref().unwrap(),
-                nonce: Some(&nonce),
-            }),
-        };
-        if let Some(basis) = basis {
-            let got = lines(&request_fields(basis).unwrap());
-            assert_eq!(got, want, "{id}");
-        }
-        cases.push(Case {
-            id,
-            shape,
-            nonce: nonce_text,
-            checked: basis.is_some(),
-        });
-    }
-    cases
-}
-
-fn count(cases: &[Case], shape: Shape) -> usize {
-    cases.iter().filter(|c| c.shape == shape).count()
-}
-
-#[test]
-fn fields_request_matches_every_client_fixture_with_rqp_fields() {
-    let cases = check_all_client_fixtures();
-    assert_eq!(cases.len(), 153);
-    // The three fixtures without RQP fields are caller decisions (WP-08).
-    assert_eq!(count(&cases, Shape::NoRqp), 3);
-    assert_eq!(cases.iter().filter(|c| c.checked).count(), 150);
-}
-
-#[test]
-fn fields_request_first_visit_matches_fixtures() {
-    let cases = check_all_client_fixtures();
-    assert_eq!(count(&cases, Shape::FirstVisit), 55);
-}
-
-#[test]
-fn fields_request_snapshot_with_blocks_matches_fixtures() {
-    let cases = check_all_client_fixtures();
-    assert_eq!(count(&cases, Shape::Delta), 91);
-}
-
-#[test]
-fn fields_request_nonce_matches_fixtures() {
-    let cases = check_all_client_fixtures();
-    let other: Vec<&str> = cases
-        .iter()
-        .filter(|c| c.shape == Shape::Delta && c.nonce != "AAECAwQFBgcICQoLDA0ODw")
-        .map(|c| c.id.as_str())
-        .collect();
-    assert_eq!(other, ["FX-RQ-C32-NONCE-ACCEPTED"]);
-    // The output of requestHeaders (client.mjs) for the nonce of 16 bytes FF.
-    let snap = snapshot(1);
-    let nonce = nonce_of("_____________________w");
-    let got = request_fields(RequestBasis::Snapshot {
-        snapshot: &snap,
-        nonce: Some(&nonce),
-    })
-    .unwrap();
-    assert_eq!(
-        got.last().map(|f| (f.name.as_str(), f.value.as_str())),
-        Some(("rq-nonce", "://///////////////////w==:"))
-    );
-}
-
-#[test]
-fn fields_request_fallback_and_unusable_snapshot_match_fixtures() {
-    let cases = check_all_client_fixtures();
-    assert_eq!(count(&cases, Shape::Fallback), 2);
-    assert_eq!(count(&cases, Shape::UnusableSnapshot), 2);
-}
-
 /// No fixture has a snapshot with 0 blocks; the expected lines are the output
 /// of `requestHeaders` (client.mjs) for this snapshot and the nonce 00…0F.
 #[test]
 fn fields_request_snapshot_with_0_blocks_matches_oracle() {
     let snap = snapshot(0);
-    let nonce = nonce_of("AAECAwQFBgcICQoLDA0ODw");
+    let nonce = common::nonce("AAECAwQFBgcICQoLDA0ODw");
     let got = request_fields(RequestBasis::Snapshot {
         snapshot: &snap,
         nonce: Some(&nonce),
@@ -306,6 +103,23 @@ fn fields_request_snapshot_with_0_blocks_matches_oracle() {
             ),
             ("rq-nonce", ":AAECAwQFBgcICQoLDA0ODw==:"),
         ])
+    );
+}
+
+/// The output of `requestHeaders` (client.mjs) for the nonce of 16 bytes FF
+/// (standard base64 with padding in the Byte Sequence).
+#[test]
+fn fields_request_nonce_ff_matches_oracle() {
+    let snap = snapshot(1);
+    let nonce = common::nonce("_____________________w");
+    let got = request_fields(RequestBasis::Snapshot {
+        snapshot: &snap,
+        nonce: Some(&nonce),
+    })
+    .unwrap();
+    assert_eq!(
+        got.last().map(|f| (f.name.as_str(), f.value.as_str())),
+        Some(("rq-nonce", "://///////////////////w==:"))
     );
 }
 

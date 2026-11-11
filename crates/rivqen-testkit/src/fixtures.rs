@@ -81,6 +81,15 @@ fn read_json(path: &Path) -> Result<Value, FixtureError> {
     })
 }
 
+/// Read one JSON file of the repository (for example a known-answer file of
+/// `spec/rqp/examples/kat`) with the same reader as the fixtures.
+///
+/// # Errors
+/// [`FixtureError::Io`] or [`FixtureError::Json`] with the path.
+pub fn load_json(path: &Path) -> Result<Value, FixtureError> {
+    read_json(path)
+}
+
 fn io_err(path: &Path) -> impl Fn(io::Error) -> FixtureError + '_ {
     move |source| FixtureError::Io {
         path: path.to_path_buf(),
@@ -256,6 +265,40 @@ impl Fixture {
             .ok_or_else(|| self.shape("context is missing"))
     }
 
+    /// The `context` of a client fixture with the members that the protocol
+    /// checks read, typed.
+    ///
+    /// # Errors
+    /// [`FixtureError::Shape`] when `context` or one of these members is
+    /// missing or mistyped.
+    pub fn client_context_data(&self) -> Result<ClientContext, FixtureError> {
+        let ctx = self.client_context()?;
+        let snapshot = match ctx.get("snapshot") {
+            None | Some(Value::Null) => None,
+            Some(s) => Some(
+                SnapshotData::from_json(s)
+                    .map_err(|what| self.shape(format!("context.snapshot: {what}")))?,
+            ),
+        };
+        let nonce = match ctx.get("nonce") {
+            None | Some(Value::Null) => None,
+            Some(Value::String(n)) => Some(n.clone()),
+            Some(_) => return Err(self.shape("context.nonce is not a string")),
+        };
+        let public_enabled = ctx
+            .get("public_enabled")
+            .and_then(Value::as_bool)
+            .ok_or_else(|| self.shape("context.public_enabled is missing or not a boolean"))?;
+        Ok(ClientContext {
+            url: self.str_member(ctx, "url", "context")?,
+            final_url: self.str_member(ctx, "final_url", "context")?,
+            navigation: self.str_member(ctx, "navigation", "context")?,
+            nonce,
+            public_enabled,
+            snapshot,
+        })
+    }
+
     /// The `response` of a client fixture: status, field lines and body sizes.
     ///
     /// # Errors
@@ -348,6 +391,209 @@ impl Fixture {
                 next_revision: input("next_revision")?,
             },
             blocks,
+        })
+    }
+}
+
+/// The members of a client `context` that the protocol checks read.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ClientContext {
+    /// The request URL.
+    pub url: String,
+    /// The final URL after redirects, as the fixture writes it (not always
+    /// canonical).
+    pub final_url: String,
+    /// `first-visit`, `delta` or `fallback`.
+    pub navigation: String,
+    /// The text N of the request nonce (base64url, no padding), if any.
+    pub nonce: Option<String>,
+    /// The app setting for the `public` partition.
+    pub public_enabled: bool,
+    /// The snapshot that the client holds, if any.
+    pub snapshot: Option<SnapshotData>,
+}
+
+/// A snapshot as a fixture writes it: the computed values of manifest-patch
+/// section 1.2 as text. The conversion to the core types belongs to the
+/// crate under test (the test kit does not depend on it).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SnapshotData {
+    /// The page id of the snapshot document, if the object names one.
+    pub page: Option<String>,
+    /// Template revision text `t1.`.
+    pub template_revision: String,
+    /// Page revision text `r1.`.
+    pub page_revision: String,
+    /// The blocks in document order.
+    pub blocks: Vec<BlockData>,
+    /// `request` or `public`, if the object names one.
+    pub partition: Option<String>,
+    /// The `policy` and `limits` members of the snapshot manifest.
+    pub members: Members,
+}
+
+/// One block of a [`SnapshotData`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlockData {
+    /// Block id.
+    pub id: String,
+    /// `html` or `json`.
+    pub format: String,
+    /// Base64url SHA-256 of the content.
+    pub sha256: String,
+}
+
+/// The `policy` and `limits` members of a manifest, a case or a snapshot. A
+/// member or a field that is absent stays `None`: presence changes the page
+/// revision (manifest-patch section 1.3, policy line).
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Members {
+    /// `policy`, if present.
+    pub policy: Option<PolicyMembers>,
+    /// `limits`, if present.
+    pub limits: Option<LimitsMembers>,
+}
+
+/// The fields of a `policy` member.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct PolicyMembers {
+    /// `mode` text, if present.
+    pub mode: Option<String>,
+    /// `ttl_seconds`, if present.
+    pub ttl_seconds: Option<u64>,
+    /// `offline`, if present.
+    pub offline: Option<bool>,
+}
+
+/// The fields of a `limits` member.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct LimitsMembers {
+    /// `max_patch_bytes`, if present.
+    pub max_patch_bytes: Option<u64>,
+}
+
+/// The members of `object` when every name is in `names`; another member
+/// name is an error, so a new field never drops out of a computed value
+/// silently.
+fn known_members<'a>(
+    object: &'a Value,
+    owner: &str,
+    names: &[&str],
+) -> Result<&'a serde_json::Map<String, Value>, String> {
+    let map = object
+        .as_object()
+        .ok_or_else(|| format!("{owner} is not an object"))?;
+    match map.keys().find(|k| !names.contains(&k.as_str())) {
+        Some(other) => Err(format!("{owner} has the unknown member {other:?}")),
+        None => Ok(map),
+    }
+}
+
+fn opt_u64(map: &serde_json::Map<String, Value>, key: &str) -> Result<Option<u64>, String> {
+    map.get(key)
+        .map(|v| v.as_u64().ok_or_else(|| format!("{key} is not an integer")))
+        .transpose()
+}
+
+fn req_str(object: &Value, key: &str) -> Result<String, String> {
+    object
+        .get(key)
+        .and_then(Value::as_str)
+        .map(str::to_owned)
+        .ok_or_else(|| format!("{key} is missing or not a string"))
+}
+
+impl Members {
+    /// The `policy` and `limits` members of a JSON object; other members of
+    /// the object are not read.
+    ///
+    /// # Errors
+    /// A text that names the member when `policy` or `limits` has an unknown
+    /// field or a field of the wrong type.
+    pub fn from_json(object: &Value) -> Result<Self, String> {
+        let policy = object
+            .get("policy")
+            .map(|p| {
+                let map = known_members(p, "policy", &["mode", "ttl_seconds", "offline"])?;
+                let mode = map
+                    .get("mode")
+                    .map(|m| {
+                        m.as_str()
+                            .map(str::to_owned)
+                            .ok_or_else(|| "policy.mode is not a string".to_owned())
+                    })
+                    .transpose()?;
+                let offline = map
+                    .get("offline")
+                    .map(|o| {
+                        o.as_bool()
+                            .ok_or_else(|| "policy.offline is not a boolean".to_owned())
+                    })
+                    .transpose()?;
+                Ok::<_, String>(PolicyMembers {
+                    mode,
+                    ttl_seconds: opt_u64(map, "ttl_seconds")?,
+                    offline,
+                })
+            })
+            .transpose()?;
+        let limits = object
+            .get("limits")
+            .map(|l| {
+                let map = known_members(l, "limits", &["max_patch_bytes"])?;
+                Ok::<_, String>(LimitsMembers {
+                    max_patch_bytes: opt_u64(map, "max_patch_bytes")?,
+                })
+            })
+            .transpose()?;
+        Ok(Self { policy, limits })
+    }
+}
+
+impl SnapshotData {
+    /// A snapshot object: `template_revision`, `page_revision`, `blocks`
+    /// (`id`, `format`, `sha256`), and the optional `page`, `partition`,
+    /// `policy` and `limits`.
+    ///
+    /// # Errors
+    /// A text that names the member when a member is missing, mistyped or
+    /// unknown.
+    pub fn from_json(object: &Value) -> Result<Self, String> {
+        known_members(
+            object,
+            "snapshot",
+            &[
+                "page",
+                "template_revision",
+                "page_revision",
+                "blocks",
+                "partition",
+                "policy",
+                "limits",
+            ],
+        )?;
+        let blocks = object
+            .get("blocks")
+            .and_then(Value::as_array)
+            .ok_or_else(|| "blocks is missing or not a list".to_owned())?
+            .iter()
+            .map(|b| {
+                known_members(b, "block", &["id", "format", "sha256"])?;
+                Ok(BlockData {
+                    id: req_str(b, "id")?,
+                    format: req_str(b, "format")?,
+                    sha256: req_str(b, "sha256")?,
+                })
+            })
+            .collect::<Result<Vec<_>, String>>()?;
+        let opt = |key: &str| object.get(key).and_then(Value::as_str).map(str::to_owned);
+        Ok(Self {
+            page: opt("page"),
+            template_revision: req_str(object, "template_revision")?,
+            page_revision: req_str(object, "page_revision")?,
+            blocks,
+            partition: opt("partition"),
+            members: Members::from_json(object)?,
         })
     }
 }

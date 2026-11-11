@@ -22,7 +22,7 @@ Every input to the core is bounded. Limits protect the app from memory exhaustio
 | `maxRqCapabilitiesBytes` | 1024 bytes, fixed by `rqp/1` | Request field `Rq-Capabilities`, all field lines combined | Server: field is absent, not parsed |
 | `maxRqNonceBytes` | 128 bytes, fixed by `rqp/1` | Request field `Rq-Nonce`, the field value without leading and trailing white space (DL-063) | Server: no nonce, not parsed (the full document F) |
 | `maxJsonDepth` | 16 | legacy data JSON, RQP envelopes | Protocol error |
-| `maxHeaderBytes` | 16 KiB per header, 64 KiB total | Response headers parsed by the core | Protocol error |
+| `maxHeaderBytes` | 16 KiB per header, 64 KiB total | Response field lines that the adapter gives to the core. Size of a line = name bytes + value bytes (no separator, no line end); a size equal to a limit passes. `ResponseHead::check` tests all lines before any field read; the response field reads are methods of the checked head (**FACT**, WP-05 S2 T-03) | `DOCUMENT_TOO_LARGE` for the whole head; no RQP field is read; normal load (never drop one field: [negotiation §6.3](/engineering/protocol/negotiation#_6-3-response) item 1; [DL-153](/engineering/plan/decision-log)) |
 | `maxActiveSessions` | 8 per engine | Concurrent sessions | Oldest background session is cancelled |
 | `maxConcurrentPrefetch` | 2 | Prefetch requests | Queue |
 | `timeoutConnect` | 5 s | Connection | Fallback |

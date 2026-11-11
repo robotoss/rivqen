@@ -20,14 +20,41 @@ use std::fs;
 use proptest::prelude::*;
 use rivqen_integrity::PageRevision;
 use rivqen_model::http::FieldLine;
-use rivqen_proto::fields::{
-    ContentTypeCharset, DELTA_MEDIA_TYPE, HTML_MEDIA_TYPE, combined_value, content_type_charset,
-    decoded_as_utf8, etag_matches_snapshot, media_type, rq_version_is_1,
-};
+use rivqen_proto::fields::{ContentTypeCharset, DELTA_MEDIA_TYPE, HTML_MEDIA_TYPE, ResponseHead};
 use serde_json::Value;
 
 const R: &str = "r1.RdZd06nCaPfKHlfMbqXINPA1sGSJ58jvWVRWF94FDz8";
 const OTHER_R: &str = "r1.psbsc6whgs8ooESisNWp6E3PrQfkg4D69WmXAo12pbI";
+
+// Every read goes through the checked head (DL-153). The limits here are far
+// above any test input; the limit behavior is in `fields_head_limit.rs`.
+fn head(fields: &[FieldLine]) -> ResponseHead<'_> {
+    ResponseHead::check(fields, usize::MAX, usize::MAX).expect("limits are not reached")
+}
+
+fn combined_value<'a>(fields: &'a [FieldLine], name: &str) -> Option<std::borrow::Cow<'a, str>> {
+    head(fields).combined_value(name)
+}
+
+fn rq_version_is_1(fields: &[FieldLine]) -> bool {
+    head(fields).rq_version_is_1()
+}
+
+fn media_type(fields: &[FieldLine]) -> Option<String> {
+    head(fields).media_type()
+}
+
+fn content_type_charset(fields: &[FieldLine]) -> ContentTypeCharset {
+    head(fields).content_type_charset()
+}
+
+fn decoded_as_utf8(fields: &[FieldLine], body: &[u8]) -> bool {
+    head(fields).decoded_as_utf8(body)
+}
+
+fn etag_matches_snapshot(fields: &[FieldLine], r: &PageRevision) -> bool {
+    head(fields).etag_matches_snapshot(r)
+}
 
 fn fields(lines: &[(&str, &str)]) -> Vec<FieldLine> {
     lines.iter().map(|(n, v)| FieldLine::new(*n, *v)).collect()

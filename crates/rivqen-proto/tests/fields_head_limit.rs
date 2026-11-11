@@ -79,6 +79,8 @@ fn fields_head_error_holds_no_field() {
         }
         assert_eq!(e.code(), ErrorCode::DocumentTooLarge);
         assert_eq!(e.code().as_str(), "DOCUMENT_TOO_LARGE");
+        // Display is the static reason, so a log line says why.
+        assert_eq!(format!("{e}"), e.reason());
     }
     assert_ne!(err.reason(), total.reason());
 }

@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+[package]
+name = "rivqen-core"
+description = "Rivqen core facade: engine configuration with safe limit ranges, events, actions and outcomes (skeleton, no session logic)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+rivqen-model.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+rivqen-testkit.workspace = true
+
+[lints]
+workspace = true

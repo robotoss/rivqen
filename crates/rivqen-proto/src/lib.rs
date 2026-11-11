@@ -12,6 +12,7 @@
 #![forbid(unsafe_code)]
 
 pub mod compute;
+pub mod delta;
 pub mod envelope;
 pub mod fields;
 pub mod json;

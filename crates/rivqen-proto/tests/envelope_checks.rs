@@ -451,3 +451,33 @@ fn envelope_errors_hold_no_content() {
     );
     assert!(core::error::Error::source(&EnvelopeError::TooLarge).is_none());
 }
+
+#[test]
+fn envelope_schema_violation_reports_pointer_template_and_operation_index() {
+    let text = envelope(
+        &format!("{PRICE},{PRICE},{{\"block_id\":null,\"content\":\"\"}}"),
+        "",
+    );
+    match parse(&text) {
+        Err(EnvelopeError::Schema(v)) => {
+            assert_eq!(v.pointer(), "/operations/*/block_id");
+            assert_eq!(v.operation(), Some(2));
+        }
+        other => panic!("schema error expected, got {other:?}"),
+    }
+}
+
+#[test]
+fn types_display_and_debug_texts() {
+    let id = BlockId::parse("price").unwrap();
+    assert_eq!(id.to_string(), "price");
+    let err = BlockId::parse("").unwrap_err();
+    assert_eq!(err.to_string(), "not a block id (markup M-15)");
+    let op = PatchOp {
+        block_id: id,
+        content: "SECRET".to_owned(),
+    };
+    let text = format!("{op:?}");
+    assert_eq!(text, "PatchOp(price, content len=6)");
+    assert!(!text.contains("SECRET"));
+}

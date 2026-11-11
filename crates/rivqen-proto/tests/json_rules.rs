@@ -422,3 +422,24 @@ fn json_error_display_names_the_rule_and_offset() {
         assert_eq!(rule.to_string(), name);
     }
 }
+
+#[test]
+fn json_reader_debug_shows_counts_not_input() {
+    let mut reader = Reader::new(b"[\"SECRET\"]", 16).unwrap();
+    assert_eq!(format!("{reader:?}"), "Reader(len=10, pos=0, depth=0)");
+    reader.next_event().unwrap();
+    let text = format!("{reader:?}");
+    assert_eq!(text, "Reader(len=10, pos=1, depth=1)");
+    assert!(!text.contains("SECRET"));
+}
+
+#[test]
+fn json_string_refuses_raw_control_character_before_and_after_an_escape() {
+    // Fast path: no escape before the control character.
+    assert_eq!(rule("\"a\u{1}\""), JsonRule::Syntax);
+    // Slow path: a two-character escape first, then a raw U+0001.
+    assert_eq!(rule("\"a\\n\u{1}\""), JsonRule::Syntax);
+    assert_eq!(rule("\"a\\nb\u{1}c\""), JsonRule::Syntax);
+    // The same text without the control character is accepted.
+    assert_eq!(ok("\"a\\nb\""), Value::String("a\nb".into()));
+}

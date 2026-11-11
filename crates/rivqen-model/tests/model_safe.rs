@@ -73,3 +73,14 @@ fn model_safe_page_bytes_debug_shows_length_only() {
     assert_eq!(p.into_vec().len(), 19);
     assert!(PageBytes::new(Vec::new()).is_empty());
 }
+
+#[test]
+fn model_safe_url_port_is_the_explicit_port_only() {
+    let with = SafeUrl::new(Scheme::Https, "a.test", Some(8443), "/").unwrap();
+    assert_eq!(with.port(), Some(8443));
+    // A default port is kept as given; there is no default-port rule.
+    let default = SafeUrl::new(Scheme::Https, "a.test", Some(443), "/").unwrap();
+    assert_eq!(default.port(), Some(443));
+    let without = SafeUrl::new(Scheme::Https, "a.test", None, "/").unwrap();
+    assert_eq!(without.port(), None);
+}

@@ -276,8 +276,8 @@ fn compute_next_revision_content_limit_is_in_utf8_bytes() {
 
 #[test]
 fn compute_next_revision_content_limit_is_the_parameter() {
-    // maxBlockBytes comes from the caller (a configurable limit); the
-    // function has no limit of its own.
+    // maxBlockBytes comes from the caller; the caller value can only lower
+    // the rqp/1 limit MAX_BLOCK_BYTES (DL-155, DL-157).
     let snapshot = kat_snapshot();
     let ops = [op("title", "ab"), op("price", "é")];
     assert!(next_blocks(&snapshot, &ops, 2).is_ok());
@@ -291,9 +291,14 @@ fn compute_next_revision_content_limit_is_the_parameter() {
     );
     // A limit of 0 passes only empty content.
     assert!(next_blocks(&snapshot, &[op("price", "")], 0).is_ok());
-    // A limit over MAX_BLOCK_BYTES is the caller's choice.
+    // A limit over MAX_BLOCK_BYTES does not raise it.
     let over = "x".repeat(MAX_BLOCK_BYTES + 1);
-    assert!(next_blocks(&snapshot, &[op("price", &over)], MAX_BLOCK_BYTES + 1).is_ok());
+    assert_eq!(
+        next_blocks(&snapshot, &[op("price", &over)], MAX_BLOCK_BYTES + 1),
+        Err(OperationError::ContentTooLarge { index: 0 })
+    );
+    let at_limit = "x".repeat(MAX_BLOCK_BYTES);
+    assert!(next_blocks(&snapshot, &[op("price", &at_limit)], usize::MAX).is_ok());
 }
 
 #[test]

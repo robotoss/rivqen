@@ -2,7 +2,7 @@
 
 The template engine (`rivqen-template`) splits HTML into a template and data blocks, rebuilds HTML from them, and computes the legacy hashes. It must reproduce the upstream legacy behavior exactly (canonical profile), and it must be safe on any input.
 
-**Status:** <Badge type="info" text="DESIGN" /> Normative rules: [legacy markers grammar](/engineering/protocol/legacy-markers).
+**Status:** <Badge type="tip" text="FACT" /> Implemented in `crates/rivqen-template` (WP-06 S1, 2026-11-12): the canonical legacy split and rebuild, the legacy SHA-1 values and the RQP markup analysis with its token scanner. <Badge type="info" text="DESIGN" /> The manifest locator, the build of the patched document and the patch content rule follow in WP-06 S2 (H-142). Normative rules: [legacy markers grammar](/engineering/protocol/legacy-markers), [RQP markup](/engineering/protocol/markup).
 
 [[toc]]
 

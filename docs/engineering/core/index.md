@@ -51,6 +51,9 @@ flowchart TD
   p1 --> integ[rivqen-integrity]
   p2 --> integ
   diff --> tpl
+  tpl --> p2
+  tpl --> integ
+  tpl --> model
   diff --> integ
   cache --> integ
   p2 --> model[rivqen-model]

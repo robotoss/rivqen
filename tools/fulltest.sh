@@ -96,6 +96,8 @@ group_core() {
   step core-test 'RUST_TEST_THREADS=4 cargo test --workspace -q'
   # The core without the legacy feature (WP-23 goal; DL-164).
   step core-no-legacy 'cargo clippy -p rivqen-integrity -p rivqen-template --all-targets --no-default-features -q -- -D warnings && RUST_TEST_THREADS=4 cargo test -p rivqen-integrity -p rivqen-template --no-default-features -q'
+  # Linear time of the legacy split and rebuild (C-16, DL-077), release build.
+  step core-timing 'cargo test -p rivqen-template --release -q --test legacy_timing -- --ignored'
   step core-deny 'cargo deny check'
 }
 

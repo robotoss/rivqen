@@ -10,9 +10,13 @@
 //! last character is canonical (`[AEIMQUYcgkosw048]`, the schemas of
 //! `spec/rqp/schemas/`). Values are compared byte for byte.
 //!
-//! WP-06 adds SHA-1 for the legacy protocol.
+//! The feature `legacy` adds SHA-1 for the legacy protocol (module
+//! [`legacy`], H-143, DL-164).
 
 #![forbid(unsafe_code)]
+
+#[cfg(feature = "legacy")]
+pub mod legacy;
 
 use core::fmt;
 

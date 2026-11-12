@@ -1,0 +1,156 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: The Rivqen Authors
+
+//! RQP markup analysis (`split_rqp`; WP-06 S1 contract).
+//!
+//! Normative text: docs/engineering/protocol/markup.md (M-01 to M-27) and
+//! docs/engineering/protocol/manifest-patch.md section 1.3 (template and
+//! revisions). A port of the candidate `tools/rqp-markup/rust` (DL-161).
+//!
+//! The names, the types and the signatures marked "contract" are the S1
+//! contract: a lane replaces the function bodies and adds private modules
+//! and the module [`scan`], and it does not change a contract item.
+
+use core::fmt;
+
+use rivqen_integrity::{PageRevision, TemplateRevision};
+use rivqen_proto::compute::page_revision;
+use rivqen_proto::types::{BlockDescriptor, Limits, Policy};
+
+use crate::limits::TemplateLimits;
+
+pub mod scan;
+
+/// Error code of the markup analysis (markup section 2.10). Contract.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum MarkupCode {
+    /// `RQP_MARKUP_ENCODING`
+    Encoding,
+    /// `RQP_MARKUP_LIMIT`
+    Limit,
+    /// `RQP_MARKUP_INVALID_ID`
+    InvalidId,
+    /// `RQP_MARKUP_FORBIDDEN_ELEMENT`
+    ForbiddenElement,
+    /// `RQP_MARKUP_DUPLICATE`
+    Duplicate,
+    /// `RQP_MARKUP_NESTED`
+    Nested,
+    /// `RQP_MARKUP_STRUCTURE`
+    Structure,
+    /// `RQP_MARKUP_BAD_JSON`
+    BadJson,
+    /// `RQP_MARKUP_RESERVED`
+    Reserved,
+}
+
+impl MarkupCode {
+    /// The wire name of the code.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Encoding => "RQP_MARKUP_ENCODING",
+            Self::Limit => "RQP_MARKUP_LIMIT",
+            Self::InvalidId => "RQP_MARKUP_INVALID_ID",
+            Self::ForbiddenElement => "RQP_MARKUP_FORBIDDEN_ELEMENT",
+            Self::Duplicate => "RQP_MARKUP_DUPLICATE",
+            Self::Nested => "RQP_MARKUP_NESTED",
+            Self::Structure => "RQP_MARKUP_STRUCTURE",
+            Self::BadJson => "RQP_MARKUP_BAD_JSON",
+            Self::Reserved => "RQP_MARKUP_RESERVED",
+        }
+    }
+}
+
+/// The document is not valid RQP markup. The error holds the code and the
+/// rule id only, never document bytes. The caller maps it to its catalog
+/// code (`MANIFEST_INVALID` for a full document, `PATCH_CONTENT_REJECTED`
+/// after a patch; H-142, WP-06 S2). Contract.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MarkupError {
+    code: MarkupCode,
+    rule: &'static str,
+}
+
+impl MarkupError {
+    /// An error with a code and the rule id (for example `"M-23"`).
+    #[must_use]
+    pub const fn new(code: MarkupCode, rule: &'static str) -> Self {
+        Self { code, rule }
+    }
+
+    /// The code.
+    #[must_use]
+    pub const fn code(self) -> MarkupCode {
+        self.code
+    }
+
+    /// The rule id.
+    #[must_use]
+    pub const fn rule(self) -> &'static str {
+        self.rule
+    }
+}
+
+impl fmt::Display for MarkupError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} ({})", self.code.as_str(), self.rule)
+    }
+}
+
+impl core::error::Error for MarkupError {}
+
+/// One block of a valid document (markup M-27). Contract.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RqpBlock {
+    /// Id, format and the SHA-256 of the exact content bytes.
+    pub descriptor: BlockDescriptor,
+    /// Byte offset of the first content byte: the byte after the `>` of the
+    /// start tag.
+    pub start: usize,
+    /// Byte offset of the `<` of the end tag. The content is
+    /// `input[start..end]`.
+    pub end: usize,
+}
+
+/// The result of a valid analysis. Contract.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RqpDocument {
+    /// `t1.` of the template (manifest and patch section 1.3).
+    pub template_revision: TemplateRevision,
+    /// The blocks in document order.
+    pub blocks: Vec<RqpBlock>,
+}
+
+impl RqpDocument {
+    /// The page revision with the policy line of the manifest members
+    /// `policy` and `limits` (section 1.3, H-55); `None` for both gives the
+    /// revision of the markup fixtures.
+    #[must_use]
+    pub fn page_revision(&self, policy: Option<&Policy>, limits: Option<&Limits>) -> PageRevision {
+        let blocks: Vec<BlockDescriptor> = self
+            .blocks
+            .iter()
+            .map(|block| block.descriptor.clone())
+            .collect();
+        page_revision(&self.template_revision, &blocks, policy, limits)
+    }
+}
+
+/// Analyze a document with the RQP markup rules. The input limit is the
+/// smaller of `limits.max_document_bytes` and the M-01 limit. Contract.
+///
+/// # Errors
+///
+/// [`MarkupError`] when the document is not valid RQP markup.
+pub fn split_rqp(input: &[u8], limits: &TemplateLimits) -> Result<RqpDocument, MarkupError> {
+    // Stub of the S1 contract: T-02 replaces the body.
+    let max = limits
+        .max_document_bytes
+        .min(crate::limits::MAX_MARKUP_INPUT_BYTES);
+    if input.len() > max {
+        return Err(MarkupError::new(MarkupCode::Limit, "M-01"));
+    }
+    Err(MarkupError::new(MarkupCode::Structure, "stub"))
+}

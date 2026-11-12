@@ -17,6 +17,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 rivqen-proto = { path = "../crates/rivqen-proto" }
+rivqen-template = { path = "../crates/rivqen-template" }
 
 [workspace]
 
@@ -44,6 +45,27 @@ bench = false
 [[bin]]
 name = "envelope"
 path = "fuzz_targets/envelope.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "split_v1"
+path = "fuzz_targets/split_v1.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "render_v1"
+path = "fuzz_targets/render_v1.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "split_rqp"
+path = "fuzz_targets/split_rqp.rs"
 test = false
 doc = false
 bench = false

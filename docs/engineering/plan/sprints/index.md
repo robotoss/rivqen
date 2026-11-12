@@ -25,7 +25,7 @@ Each sprint has one record. The record is the shared memory of the work: the pla
 | [WP-04-S3](/engineering/plan/sprints/WP-04-S3) | WP-04 | ADRs, parity matrices, recordings, gate G2 | Closed (merged #9) |
 | [WP-05-S1](/engineering/plan/sprints/WP-05-S1) | WP-05 | Core workspace, model and errors, protocol codecs, testkit | Closed (2026-11-11) |
 | [WP-05-S2](/engineering/plan/sprints/WP-05-S2) | WP-05 | Delta checks, fixture checks, core facade, fuzz targets | Closed (merged #10) |
-| [WP-06-S1](/engineering/plan/sprints/WP-06-S1) | WP-06 | Canonical legacy split and SHA-1, port of the RQP markup analysis, golden tests, three fuzz targets | Planned |
+| [WP-06-S1](/engineering/plan/sprints/WP-06-S1) | WP-06 | Canonical legacy split and SHA-1, port of the RQP markup analysis, golden tests, three fuzz targets | Running |
 
 ## How to add a record
 

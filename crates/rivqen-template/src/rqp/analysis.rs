@@ -63,7 +63,7 @@ impl Internal for MarkupError {
 pub(crate) fn analyze(input: &[u8], limits: &TemplateLimits) -> Result<RqpDocument, MarkupError> {
     // M-01 first, before any work that grows with the input. A lower
     // `max_document_bytes` lowers the limit (DL-163).
-    let max = limits.max_document_bytes.min(MAX_MARKUP_INPUT_BYTES);
+    let max = limits.max_document_bytes().min(MAX_MARKUP_INPUT_BYTES);
     if input.len() > max {
         return Err(MarkupError::new(MarkupCode::Limit, "M-01"));
     }

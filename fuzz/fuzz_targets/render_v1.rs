@@ -10,7 +10,7 @@
 
 use libfuzzer_sys::fuzz_target;
 use rivqen_template::legacy::{DataBlock, render_v1};
-use rivqen_template::limits::TemplateLimits;
+use rivqen_template::limits::{MAX_LEGACY_NAME_BYTES, MAX_OPEN_ELEMENTS, TemplateLimits};
 
 fuzz_target!(|data: &[u8]| {
     let text = String::from_utf8_lossy(data);
@@ -33,15 +33,10 @@ fuzz_target!(|data: &[u8]| {
             },
         })
         .collect();
-    let small = TemplateLimits {
-        max_document_bytes: 64,
-        max_blocks: 4,
-        max_block_bytes: 16,
-        ..TemplateLimits::default()
-    };
+    let small = TemplateLimits::new(64, 4, 16, MAX_LEGACY_NAME_BYTES, MAX_OPEN_ELEMENTS);
     for limits in [TemplateLimits::default(), small] {
         if let Ok(page) = render_v1(template, &entries, &limits) {
-            assert!(page.len() <= limits.max_document_bytes);
+            assert!(page.len() <= limits.max_document_bytes());
         }
     }
 });

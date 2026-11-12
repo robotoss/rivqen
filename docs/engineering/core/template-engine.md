@@ -44,6 +44,14 @@ Upstream uses regular expressions over the raw text. Rivqen uses a **hand-writte
 4. `RenderError::Mismatch`: a key that is not `{title}` or `{name}` (1 to `max_name_bytes` bytes of `[A-Za-z0-9_]`), a repeated key, no `{title}` entry, or an entry (other than the empty `{title}`) without a placeholder.
 5. The scanner reads the template once. At each `{` it reads at most the length of the longest key, then looks the token up among the keys that have no placeholder yet.
 
+<Badge type="tip" text="FACT" /> The result of `render_v1` is not verified (rules 1 and 3; DL-166, DL-167). The caller (WP-08) MUST do these steps before it uses the page (legacy client CL-29):
+
+1. Compute the SHA-1 of the page with `etag_v1`.
+2. Compare it with the `html-sha1` member of the response and with the response etag.
+3. If a value is different, discard the page and load the page normally.
+
+The doc comment of `render_v1` gives the same rule.
+
 <Badge type="tip" text="FACT" /> Measured on 2026-11-12 on the Mac host, release build, best of three runs (`legacy_linear_time`): `split_v1` takes 0.24 ms to 1.1 ms on each of nine adversarial 256 KiB inputs (title openers without LF, title openers with an LF before the only close, unclosed block openers, end marker prefixes, 500-byte names without a tail, all `<`, and others); `render_v1` takes 1.9 ms on a 256 KiB template of key-like text with 256 keys. The C-16 budget is 100 ms.
 
 Why not a regex crate: the scanner gives linear time with explicit limits and exact control of edge cases (empty names, mismatched end names), and it is easy to fuzz. A test compares the scanner with a backtracking matcher of the C-06 and C-07 expressions, written from the spec, on random inputs (differential testing, DL-162). No `memchr` is needed: a plain byte scan takes at most 4.4 ms per 5 MiB on the worst measured input (DL-162).
@@ -62,6 +70,22 @@ Why not an HTML parser: legacy is textual. An HTML parser (for example `html5eve
 Complexity: one pass for markers, one pass for the title rule; O(n) time, O(blocks) extra memory.
 
 <Badge type="tip" text="FACT" /> The functions take one `TemplateLimits` value (DL-163). Each limit passes at its value and fails one above it (`legacy_limits_*`). Every `LimitError` has the code `DOCUMENT_TOO_LARGE`.
+
+<Badge type="tip" text="FACT" /> `TemplateLimits` has private fields and the getters `max_document_bytes()`, `max_blocks()`, `max_block_bytes()`, `max_name_bytes()` and `max_open_elements()` (WP-06 S1 T-06, security review finding S1-4). Only three constructors exist, and each caps every value. So no caller can make a limit larger than its cap (tests `limits_new_caps_every_value`, `limits_try_from_caps_document`).
+
+| Constructor | Values |
+|---|---|
+| `TemplateLimits::default()` | 5 MiB, 256, 1 MiB, 128, 256 |
+| `TemplateLimits::try_from(&ResourceLimits)` | The configured values, capped. A value that does not fit `usize` gives `LimitsError` |
+| `TemplateLimits::new` (`const fn`; five values in the order of the getters) | The given values, capped |
+
+| Value | Cap |
+|---|---|
+| `max_document_bytes` | 32 MiB: the top of the safe range of `maxDocumentBytes` (`Limit::MaxDocumentBytes.range()`) |
+| `max_blocks` | 256 (`MAX_BLOCKS`, M-26) |
+| `max_block_bytes` | 1 MiB (`MAX_BLOCK_BYTES`, M-26) |
+| `max_name_bytes` | 128 (`MAX_LEGACY_NAME_BYTES`, C-07) |
+| `max_open_elements` | 256 (`MAX_OPEN_ELEMENTS`, M-26) |
 
 | Check | `split_v1` | `render_v1` |
 |---|---|---|
@@ -134,9 +158,18 @@ The template of a split is never longer than the input, so `split_v1` has no out
 
 <Badge type="tip" text="FACT" /> A lower value gives `RQP_MARKUP_LIMIT` earlier. A higher value has no effect. `TemplateLimits::default()` gives the values of M-26 (tests `rqp_limits_*`).
 
-<Badge type="tip" text="FACT" /> Resource bounds: the token stack holds at most D elements, and D is at most `max_open_elements`. The work and the memory are linear in the input size: the name table holds one entry per distinct tag name, and the check of a `noscript` content makes one copy of that content. The scan of the module `scan` has no limit of its own: call `split_rqp` first.
+<Badge type="tip" text="FACT" /> Resource bounds: the token stack holds at most D elements, and D is at most `max_open_elements`. The work and the memory are linear in the input size: the name table holds one entry per distinct tag name, and the check of a `noscript` content makes one copy of that content.
 
-<Badge type="tip" text="FACT" /> Errors: `MarkupError` holds the code and the rule id only. `Display` and `Debug` hold no document bytes (test `rqp_error_holds_no_input`).
+<Badge type="tip" text="FACT" /> The scan `scan(input, limits)` takes the same `TemplateLimits` (WP-06 S1 T-06, security review finding S1-2). A limit stop is one error item, the last item of the scan, never a silent cut. The caller must fail closed.
+
+| Limit | Error item |
+|---|---|
+| Input larger than the smaller of `max_document_bytes()` and 5 MiB | `RQP_MARKUP_LIMIT`, rule `M-01`, before any token |
+| A push that makes the token stack larger than `max_open_elements()` + 2 (resource limits: the WHATWG stack is at most D + 2) | `RQP_MARKUP_LIMIT`, rule `M-26`, in place of the start tag |
+
+<Badge type="tip" text="FACT" /> The scan does not apply the implied closure of M-09, so its token stack can be larger than the token stack of `split_rqp`. A valid document with a long table of cells and rows without end tags stops the scan: the markup fixture `FX-RQ-MARKUP-TABLE-CLOSE-DEPTH` (300 rows of `<tr><td>a<td>b`, max D 5) is valid and stops the scan at the stack limit. It is the only one of the 401 HTML inputs of `fixtures/rqp` (185 valid) that `split_rqp` accepts and the scan stops (tests `scan_limit_stops_of_the_markup_fixtures`, `scan_limit_stack_can_stop_a_document_that_split_rqp_accepts`). The other stop is `FX-RQ-MARKUP-LIMIT-INPUT-SIZE` (M-01). <Badge type="info" text="DESIGN" /> WP-06 S2 decides whether the scan applies the closure of M-09 before the head walk and the patch content rule use it.
+
+<Badge type="tip" text="FACT" /> Errors: `MarkupError` holds the code and the rule id only. `Display` and `Debug` hold no document bytes (test `rqp_error_holds_no_input`). The `Debug` output of the public types of the scan (`Token`, `Tag`, `Attribute`, `Attributes`, `Scanner`, `Span`) holds spans, lengths and flags only, never input bytes, tag names, attribute names or values (test `scan_debug_holds_no_input`; [errors and logging](/engineering/architecture/errors-logging) §4).
 
 ### 6.2 Tests
 
@@ -145,6 +178,7 @@ The template of a split is never longer than the input, so `split_v1` has no out
 | `rqp_markup_fixtures` | All 362 markup fixtures (148 valid, 214 invalid): `valid`, the error code, the blocks (id, format, start, end, sha256), the template revision and `page_revision(None, None)` equal `expected.json` |
 | `rqp_rules`, `rqp_api`, `rqp_props` | Ports of the candidate tests of the rules, of the scan API and of the properties |
 | `rqp_limits_*` | The limits of section 6.1 at the value and one above, with lower, default and higher values |
+| `rqp_scan` (`scan_debug_*`, `scan_limit_*`) | The scan: no input bytes in `Debug`; the M-01 limit and the token stack limit at the value and one above; the stops on the markup fixtures |
 | `rqp_prop_round_trip` | The template (the input without every `[start, end)`) plus the block contents gives the input back; the template revision and the block hashes agree |
 | `rqp_prop_any_bytes` | Any bytes with any limits: no panic, no internal defect, a valid result within the limits |
 

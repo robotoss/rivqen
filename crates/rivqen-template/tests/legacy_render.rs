@@ -8,8 +8,9 @@
 #![cfg(feature = "legacy")]
 #![allow(clippy::unwrap_used, clippy::panic, clippy::indexing_slicing)]
 
+use rivqen_proto::types::{MAX_BLOCK_BYTES, MAX_BLOCKS};
 use rivqen_template::legacy::{DataBlock, RenderError, SplitOutcome, render_v1, split_v1};
-use rivqen_template::limits::TemplateLimits;
+use rivqen_template::limits::{MAX_MARKUP_INPUT_BYTES, MAX_OPEN_ELEMENTS, TemplateLimits};
 
 fn data(entries: &[(&str, &str)]) -> Vec<DataBlock> {
     entries
@@ -200,10 +201,13 @@ fn legacy_render_malformed_key_is_a_mismatch() {
 
 #[test]
 fn legacy_render_title_is_valid_with_a_short_name_limit() {
-    let limits = TemplateLimits {
-        max_name_bytes: 1,
-        ..TemplateLimits::default()
-    };
+    let limits = TemplateLimits::new(
+        MAX_MARKUP_INPUT_BYTES,
+        MAX_BLOCKS,
+        MAX_BLOCK_BYTES,
+        1,
+        MAX_OPEN_ELEMENTS,
+    );
     let entries = data(&[("{title}", "T"), ("{a}", "A")]);
     assert_eq!(render_v1("{title}{a}", &entries, &limits).unwrap(), "TA");
     let entries = data(&[("{title}", "T"), ("{ab}", "A")]);

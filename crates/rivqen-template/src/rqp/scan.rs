@@ -5,6 +5,11 @@
 //! Keep the rules equal to the candidate: a change of the markup rules
 //! changes both copies (WP-06 S1, risk R-2).
 //!
+//! Port changes (WP-06 S1 T-06, from the security review): [`scan`] takes
+//! the [`TemplateLimits`] and stops at the M-01 input limit and at a token
+//! stack limit; the `Debug` output of the public types holds no input
+//! bytes. The token rules are unchanged.
+//!
 //! The tokens of a document, as [`crate::rqp::split_rqp`] reads them (`markup.md`
 //! section 2.3).
 //!
@@ -52,21 +57,48 @@
 //!
 //! # Resource limits
 //!
-//! The work is linear in the input size. The memory is linear in the input
-//! size: the token stack holds at most one element per start tag, and the
-//! name table one entry per distinct tag name. [`Tag::attributes`] holds no
-//! memory that grows with the input; each call reads the tag again (linear
-//! in the tag length). No input panics. The scan does not check M-01 or
-//! M-02: call [`crate::rqp::split_rqp`] first.
+//! [`scan`] takes the [`TemplateLimits`] of [`crate::rqp::split_rqp`] and
+//! stops with an error item when the input is over a limit (WP-06 S1
+//! security review, finding S1-2). A limit stop is never a silent cut: the
+//! error is the last item, and the caller must fail closed.
+//!
+//! - **M-01.** An input larger than the smaller of
+//!   [`TemplateLimits::max_document_bytes`] and [`MAX_MARKUP_INPUT_BYTES`]
+//!   gives one item, `RQP_MARKUP_LIMIT` with the rule `M-01`, before any
+//!   token.
+//! - **Token stack.** A push that makes the token stack larger than
+//!   [`TemplateLimits::max_open_elements`] + 2 gives `RQP_MARKUP_LIMIT` with
+//!   the rule `M-26` in place of the start tag (resource-limits.md: the
+//!   WHATWG stack is at most D + 2). So the token stack holds at most 258
+//!   elements.
+//!
+//! The work is linear in the input size. The token stack is bounded as
+//! above; the name table holds one entry per distinct tag name (linear in
+//! the input size). [`Tag::attributes`] holds no memory that grows with the
+//! input; each call reads the tag again (linear in the tag length). No input
+//! panics. The scan does not check M-02 or any other markup rule: call
+//! [`crate::rqp::split_rqp`] first.
+//!
+//! The scan does not apply the implied closure of M-09, so its token stack
+//! can be larger than the one of `analyze`: a table row with many cells and
+//! no `</td>` closes each cell in `analyze` and keeps it open here. Such a
+//! document can pass `analyze` and still stop the scan at the stack limit.
+//!
+//! # Debug output
+//!
+//! The `Debug` output of every public type of this module holds offsets,
+//! lengths and flags only, never input bytes (errors-logging.md section 4;
+//! WP-06 S1 security review, finding S1-1).
 //!
 //! # Example
 //!
 //! ```
+//! use rivqen_template::limits::TemplateLimits;
 //! use rivqen_template::rqp::scan::{scan, Token};
 //!
 //! let input = b"<p a=1 A=2>x</p>";
 //! let mut names = Vec::new();
-//! for token in scan(input) {
+//! for token in scan(input, &TemplateLimits::default()) {
 //!     match token? {
 //!         Token::StartTag(tag) => {
 //!             for attribute in tag.attributes() {
@@ -81,12 +113,14 @@
 //! # Ok::<(), rivqen_template::rqp::MarkupError>(())
 //! ```
 
+use core::fmt;
 use std::iter::FusedIterator;
 
-use crate::rqp::MarkupError;
+use crate::limits::{MAX_MARKUP_INPUT_BYTES, TemplateLimits};
 use crate::rqp::analysis::Internal as _;
 use crate::rqp::names::{Known, NameId, NameTable, flag, raw_kind};
 use crate::rqp::tokenizer::{self, RawAttr, TagStep, TagWalk, Tokenizer};
+use crate::rqp::{MarkupCode, MarkupError};
 
 pub use crate::rqp::tokenizer::Span;
 
@@ -96,21 +130,33 @@ pub use crate::rqp::tokenizer::Span;
 /// A UTF-8 byte order mark at offset 0 is part of the first gap. (The
 /// tokenizer of [`crate::rqp::split_rqp`] starts after it; the bytes `EF BB BF` are
 /// never a token, so the tokens are the same.)
+///
+/// `limits` are the limits of [`crate::rqp::split_rqp`]. An input over the
+/// M-01 limit gives one error item and no token; a token stack over
+/// `max_open_elements() + 2` gives an error item that ends the scan (see
+/// the module comment, "Resource limits").
 #[must_use]
-pub fn scan(input: &[u8]) -> Scanner<'_> {
+pub fn scan<'a>(input: &'a [u8], limits: &TemplateLimits) -> Scanner<'a> {
+    let max_input = limits.max_document_bytes().min(MAX_MARKUP_INPUT_BYTES);
+    let stop = (input.len() > max_input).then(|| MarkupError::new(MarkupCode::Limit, "M-01"));
     Scanner {
         input,
         tokens: Tokenizer::new(input, 0),
-        stack: TokenStack::new(),
+        stack: TokenStack::new(limits.max_open_elements().saturating_add(STACK_SLACK)),
         cursor: 0,
         pending: None,
+        stop,
         done: false,
     }
 }
 
+/// The token stack of the scan may be this much larger than D: the WHATWG
+/// stack is at most D + 2 (resource-limits.md, `maxOpenElements`).
+const STACK_SLACK: usize = 2;
+
 /// One token or one gap of a [`scan`].
 #[non_exhaustive]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Token<'a> {
     /// The bytes between two tokens, or before the first or after the last
     /// token. They are character data (also the raw text of RCDATA,
@@ -143,6 +189,24 @@ pub enum Token<'a> {
     },
 }
 
+/// Spans and flags only (errors-logging.md section 4).
+impl fmt::Debug for Token<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Gap(span) => f.debug_tuple("Gap").field(span).finish(),
+            Self::StartTag(tag) => f.debug_tuple("StartTag").field(tag).finish(),
+            Self::EndTag(tag) => f.debug_tuple("EndTag").field(tag).finish(),
+            Self::Comment(span) => f.debug_tuple("Comment").field(span).finish(),
+            Self::Doctype(span) => f.debug_tuple("Doctype").field(span).finish(),
+            Self::Cdata { span, well_formed } => f
+                .debug_struct("Cdata")
+                .field("span", span)
+                .field("well_formed", well_formed)
+                .finish(),
+        }
+    }
+}
+
 impl Token<'_> {
     /// The bytes of the input that this token or gap covers.
     #[must_use]
@@ -158,7 +222,7 @@ impl Token<'_> {
 }
 
 /// A start tag or an end tag.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Tag<'a> {
     input: &'a [u8],
     span: Span,
@@ -166,6 +230,20 @@ pub struct Tag<'a> {
     name: &'a [u8],
     self_closing: bool,
     foreign: bool,
+}
+
+/// Spans, the name length and the flags only, never the name or the input
+/// (errors-logging.md section 4).
+impl fmt::Debug for Tag<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Tag")
+            .field("span", &self.span)
+            .field("name_span", &self.name_span)
+            .field("name_len", &self.name.len())
+            .field("self_closing", &self.self_closing)
+            .field("in_foreign_region", &self.foreign)
+            .finish()
+    }
 }
 
 impl<'a> Tag<'a> {
@@ -218,12 +296,25 @@ impl<'a> Tag<'a> {
 }
 
 /// One raw attribute of a tag.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Attribute<'a> {
     name: &'a [u8],
     name_span: Span,
     value: &'a [u8],
     value_span: Option<Span>,
+}
+
+/// Spans and lengths only, never the name or the value (errors-logging.md
+/// section 4).
+impl fmt::Debug for Attribute<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Attribute")
+            .field("name_span", &self.name_span)
+            .field("name_len", &self.name.len())
+            .field("value_span", &self.value_span)
+            .field("value_len", &self.value.len())
+            .finish()
+    }
 }
 
 impl<'a> Attribute<'a> {
@@ -259,10 +350,20 @@ impl<'a> Attribute<'a> {
 ///
 /// An item is an error only for an internal defect of this crate (an offset
 /// outside the input). The caller must then fail closed.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Attributes<'a> {
     input: &'a [u8],
     walk: Option<TagWalk<'a>>,
+}
+
+/// Only whether the walk has ended: the private walk holds the input
+/// (errors-logging.md section 4).
+impl fmt::Debug for Attributes<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Attributes")
+            .field("finished", &self.walk.is_none())
+            .finish_non_exhaustive()
+    }
 }
 
 impl<'a> Iterator for Attributes<'a> {
@@ -314,49 +415,58 @@ fn attribute(input: &[u8], raw: RawAttr) -> Result<Attribute<'_>, MarkupError> {
 }
 
 /// The token stack of M-05, only as far as the foreign region needs it.
-#[derive(Debug)]
+/// Not `Debug`: the name table holds tag names of the input.
 struct TokenStack {
     names: NameTable,
     /// The name of each open element and the stack index of the previous
-    /// open element with the same name.
+    /// open element with the same name. At most `max` elements.
     elements: Vec<(NameId, Option<usize>)>,
     /// Stack index of the region root (M-05 item 4).
     root: Option<usize>,
+    /// The largest size of `elements` (`max_open_elements() + 2`).
+    max: usize,
 }
 
 impl TokenStack {
-    fn new() -> Self {
+    fn new(max: usize) -> Self {
         Self {
             names: NameTable::new(),
             elements: Vec::new(),
             root: None,
+            max,
         }
     }
 
-    fn push(&mut self, name: NameId) -> usize {
+    /// A push that makes the stack larger than `max` is a limit error
+    /// (M-26); the stack does not change.
+    fn push(&mut self, name: NameId) -> Result<usize, MarkupError> {
         let index = self.elements.len();
+        if index >= self.max {
+            return Err(MarkupError::new(MarkupCode::Limit, "M-26"));
+        }
         let previous = self.names.replace_top(name, Some(index));
         self.elements.push((name, previous));
-        index
+        Ok(index)
     }
 
     /// M-05 items 1 and 2.
-    fn start_tag(&mut self, raw_name: &[u8], self_closing: bool) {
+    fn start_tag(&mut self, raw_name: &[u8], self_closing: bool) -> Result<(), MarkupError> {
         let name = self.names.intern(raw_name);
         if self.root.is_some() {
             if !self_closing {
-                self.push(name);
+                self.push(name)?;
             }
-            return;
+            return Ok(());
         }
         let is_root = name == Known::Svg.id() || name == Known::Math.id();
         if (is_root && self_closing) || self.names.has(name, flag::VOID) {
-            return;
+            return Ok(());
         }
-        let index = self.push(name);
+        let index = self.push(name)?;
         if is_root {
             self.root = Some(index);
         }
+        Ok(())
     }
 
     /// M-05 item 3: pops the nearest element with the name and every element
@@ -384,10 +494,10 @@ impl TokenStack {
 
 /// The iterator of [`scan`].
 ///
-/// An item is an error only for an internal defect of this crate (an offset
-/// outside the input, or tokens out of order). The scan then ends; the
-/// caller must fail closed.
-#[derive(Debug)]
+/// An item is an error for a limit (`RQP_MARKUP_LIMIT`, rules `M-01` and
+/// `M-26`; see the module comment) or for an internal defect of this crate
+/// (an offset outside the input, or tokens out of order). The scan then
+/// ends; the caller must fail closed.
 pub struct Scanner<'a> {
     input: &'a [u8],
     tokens: Tokenizer<'a>,
@@ -396,7 +506,25 @@ pub struct Scanner<'a> {
     cursor: usize,
     /// A token that follows the gap given out last.
     pending: Option<Token<'a>>,
+    /// An error to give before any token (M-01).
+    stop: Option<MarkupError>,
     done: bool,
+}
+
+/// Offsets, sizes and flags only, never input bytes or tag names
+/// (errors-logging.md section 4).
+impl fmt::Debug for Scanner<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Scanner")
+            .field("input_len", &self.input.len())
+            .field("cursor", &self.cursor)
+            .field("open_elements", &self.stack.elements.len())
+            .field("max_open_elements", &self.stack.max)
+            .field("in_foreign_region", &self.stack.root.is_some())
+            .field("pending", &self.pending.is_some())
+            .field("done", &self.done)
+            .finish()
+    }
 }
 
 impl<'a> Scanner<'a> {
@@ -422,7 +550,7 @@ impl<'a> Scanner<'a> {
         Ok(Some(match token {
             tokenizer::Token::StartTag(tag) => {
                 let out = self.tag(&tag, foreign)?;
-                self.stack.start_tag(out.name, tag.self_closing);
+                self.stack.start_tag(out.name, tag.self_closing)?;
                 // M-04: in HTML context only, also with the self-closing flag.
                 if !foreign && let Some((kind, end_name)) = raw_kind(out.name) {
                     self.tokens.set_raw(kind, end_name);
@@ -481,6 +609,10 @@ impl<'a> Iterator for Scanner<'a> {
     type Item = Result<Token<'a>, MarkupError>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        if let Some(error) = self.stop.take() {
+            self.done = true;
+            return Some(Err(error));
+        }
         if self.done && self.pending.is_none() {
             return None;
         }
@@ -543,7 +675,7 @@ mod tests {
     }
 
     fn scan_tokens(input: &[u8]) -> Seen {
-        scan(input)
+        scan(input, &TemplateLimits::default())
             .filter_map(|token| match token.unwrap() {
                 Token::Gap(_) => None,
                 Token::StartTag(tag) => Some(("start", tag.span(), tag.in_foreign_region())),
@@ -594,12 +726,15 @@ mod tests {
 
     #[test]
     fn region_root_end_ends_the_region() {
-        let foreign: Vec<bool> = scan(b"<svg><g><style></g></svg><style><g></style>")
-            .filter_map(|t| match t.unwrap() {
-                Token::StartTag(tag) => Some(tag.in_foreign_region()),
-                _ => None,
-            })
-            .collect();
+        let foreign: Vec<bool> = scan(
+            b"<svg><g><style></g></svg><style><g></style>",
+            &TemplateLimits::default(),
+        )
+        .filter_map(|t| match t.unwrap() {
+            Token::StartTag(tag) => Some(tag.in_foreign_region()),
+            _ => None,
+        })
+        .collect();
         assert_eq!(foreign, [false, true, true, false]);
     }
 
@@ -609,7 +744,7 @@ mod tests {
     #[test]
     fn end_tag_below_the_root_ends_the_region() {
         let input = b"<b><svg><g></b><style><i></style>";
-        let tags: Vec<(String, bool)> = scan(input)
+        let tags: Vec<(String, bool)> = scan(input, &TemplateLimits::default())
             .filter_map(|t| match t.unwrap() {
                 Token::StartTag(tag) | Token::EndTag(tag) => Some((
                     String::from_utf8_lossy(tag.name()).into_owned(),
@@ -635,7 +770,7 @@ mod tests {
 
     #[test]
     fn a_no_match_end_tag_keeps_the_region() {
-        let foreign: Vec<bool> = scan(b"<svg></x><g>")
+        let foreign: Vec<bool> = scan(b"<svg></x><g>", &TemplateLimits::default())
             .filter_map(|t| match t.unwrap() {
                 Token::StartTag(tag) => Some(tag.in_foreign_region()),
                 _ => None,

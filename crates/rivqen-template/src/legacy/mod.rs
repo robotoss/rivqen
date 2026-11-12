@@ -173,7 +173,7 @@ impl core::error::Error for RenderError {}
 ///
 /// [`LimitError`] when the page is over a limit of `limits`.
 pub fn split_v1(html: &[u8], limits: &TemplateLimits) -> Result<SplitOutcome, LimitError> {
-    if html.len() > limits.max_document_bytes {
+    if html.len() > limits.max_document_bytes() {
         return Err(LimitError::DocumentTooLarge);
     }
     let Ok(text) = core::str::from_utf8(html) else {
@@ -198,6 +198,14 @@ pub fn split_v1(html: &[u8], limits: &TemplateLimits) -> Result<SplitOutcome, Li
 
 /// Rebuild a page from a template and data (legacy markers section 5,
 /// canonical rule).
+///
+/// The result is **not verified**. The placeholder of a key is its first
+/// occurrence in the template (DL-166), and a page with its title inside a
+/// block cannot be rebuilt (DL-167), so an `Ok` page can differ from the
+/// page of the server. Before it uses the page, the caller MUST compare the
+/// SHA-1 of the page ([`etag_v1`]) with the `html-sha1` member of the
+/// response and with the response etag (legacy client CL-29). On a mismatch,
+/// the caller discards the page and loads the page normally.
 ///
 /// # Errors
 ///

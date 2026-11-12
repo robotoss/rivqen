@@ -52,9 +52,9 @@ impl RuleLimits {
     /// The limits of `limits`, each capped at its `rqp/1` constant.
     pub(crate) fn new(limits: &TemplateLimits) -> Self {
         Self {
-            blocks: limits.max_blocks.min(MAX_BLOCKS),
-            block_bytes: limits.max_block_bytes.min(MAX_BLOCK_BYTES),
-            open_elements: limits.max_open_elements.min(MAX_OPEN_ELEMENTS),
+            blocks: limits.max_blocks().min(MAX_BLOCKS),
+            block_bytes: limits.max_block_bytes().min(MAX_BLOCK_BYTES),
+            open_elements: limits.max_open_elements().min(MAX_OPEN_ELEMENTS),
         }
     }
 }

@@ -27,6 +27,8 @@
 //! M-26 limits are `max_blocks`, `max_block_bytes` and `max_open_elements`
 //! of [`TemplateLimits`], each capped at its `rqp/1` constant. A lower value
 //! gives `RQP_MARKUP_LIMIT` earlier; a higher value has no effect.
+//! [`scan::scan`] takes the same limits: the M-01 input limit and a token
+//! stack of at most `max_open_elements() + 2` elements.
 
 use core::fmt;
 

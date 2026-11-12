@@ -182,21 +182,17 @@ fn any_limits() -> impl Strategy<Value = TemplateLimits> {
     prop_oneof![
         Just(TemplateLimits::default()),
         (0..2048_usize, 0..5_usize, 0..64_usize, 0..10_usize).prop_map(
-            |(document, blocks, block_bytes, open)| TemplateLimits {
-                max_document_bytes: document,
-                max_blocks: blocks,
-                max_block_bytes: block_bytes,
-                max_name_bytes: 128,
-                max_open_elements: open,
+            |(document, blocks, block_bytes, open)| {
+                TemplateLimits::new(document, blocks, block_bytes, 128, open)
             }
         ),
-        Just(TemplateLimits {
-            max_document_bytes: usize::MAX,
-            max_blocks: usize::MAX,
-            max_block_bytes: usize::MAX,
-            max_name_bytes: usize::MAX,
-            max_open_elements: usize::MAX,
-        }),
+        Just(TemplateLimits::new(
+            usize::MAX,
+            usize::MAX,
+            usize::MAX,
+            usize::MAX,
+            usize::MAX,
+        )),
     ]
 }
 
@@ -232,17 +228,17 @@ proptest! {
     fn rqp_prop_any_bytes(input in any_input(), limits in any_limits()) {
         let result = split_rqp(&input, &limits);
         prop_assert_eq!(&result, &split_rqp(&input, &limits));
-        let max_input = limits.max_document_bytes.min(MAX_MARKUP_INPUT_BYTES);
+        let max_input = limits.max_document_bytes().min(MAX_MARKUP_INPUT_BYTES);
         match result {
             Ok(doc) => {
                 prop_assert!(input.len() <= max_input);
-                prop_assert!(doc.blocks.len() <= limits.max_blocks.min(MAX_BLOCKS));
+                prop_assert!(doc.blocks.len() <= limits.max_blocks().min(MAX_BLOCKS));
                 let mut previous_end = 0;
                 for block in &doc.blocks {
                     prop_assert!(previous_end <= block.start);
                     prop_assert!(block.start <= block.end && block.end <= input.len());
                     let size = block.end - block.start;
-                    prop_assert!(size <= limits.max_block_bytes.min(MAX_BLOCK_BYTES));
+                    prop_assert!(size <= limits.max_block_bytes().min(MAX_BLOCK_BYTES));
                     previous_end = block.end;
                 }
             }

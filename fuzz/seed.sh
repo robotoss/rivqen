@@ -35,3 +35,20 @@ for f in "$root"/fixtures/rqp/protocol/*/response.body; do
     copy envelope "$f"
     copy json_reader "$f"
 done
+
+# Template engine targets: HTML pages of the legacy and malformed fixtures,
+# the RQP markup inputs and the protocol pages (any file may be a seed).
+for t in split_v1 render_v1 split_rqp; do
+    for d in "$root"/fixtures/legacy/pages "$root"/fixtures/malformed/legacy/pages \
+        "$root"/fixtures/malformed/seeds/pages; do
+        for f in "$d"/*; do
+            [ -f "$f" ] && copy "$t" "$f"
+        done
+    done
+    for f in "$root"/fixtures/rqp/markup/*/input.html; do
+        [ -f "$f" ] && copy "$t" "$f"
+    done
+    for f in "$root"/fixtures/rqp/protocol/*/*.html; do
+        [ -f "$f" ] && copy "$t" "$f"
+    done
+done

@@ -157,6 +157,16 @@ fn scan_debug_holds_no_input() {
     assert!(text.contains("in_foreign_region: false"), "{text}");
     let text = format!("{attribute:?}");
     assert!(text.contains(&format!("value_len: {}", m.len())), "{text}");
+    let text = format!("{:?}", tag.attributes());
+    assert!(text.contains("finished: false"), "{text}");
+    let text = format!("{:?}", scan(input, &limits));
+    assert!(
+        text.contains(&format!("input_len: {}", input.len())),
+        "{text}"
+    );
+    let first = scan(input, &limits).next().unwrap().unwrap();
+    let text = format!("{first:?}");
+    assert!(text.starts_with("Doctype("), "{text}");
 }
 
 #[test]

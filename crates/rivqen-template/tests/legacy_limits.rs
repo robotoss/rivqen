@@ -215,6 +215,17 @@ fn legacy_limits_error_code_is_document_too_large() {
     }
 }
 
+#[test]
+fn legacy_limits_reason_names_the_limit() {
+    for (error, limit) in [
+        (LimitError::DocumentTooLarge, "maxDocumentBytes"),
+        (LimitError::TooManyBlocks, "maxBlocks"),
+        (LimitError::BlockTooLarge, "maxBlockBytes"),
+    ] {
+        assert!(error.reason().contains(limit), "{error:?}");
+    }
+}
+
 fn entries(list: &[(&str, String)]) -> Vec<DataBlock> {
     list.iter()
         .map(|(key, value)| DataBlock {

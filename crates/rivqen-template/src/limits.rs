@@ -172,3 +172,22 @@ impl TryFrom<&ResourceLimits> for TemplateLimits {
         Ok(Self::new(document, blocks, block_bytes, name, open))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{Limit, LimitsError};
+
+    // A `LimitsError` comes only from a target where `usize` is smaller than
+    // `u64`, so the test makes one directly.
+    #[test]
+    fn limits_error_names_the_limit() {
+        let error = LimitsError {
+            limit: Limit::MaxDocumentBytes,
+        };
+        assert_eq!(error.limit(), Limit::MaxDocumentBytes);
+        assert_eq!(
+            error.to_string(),
+            "the limit maxDocumentBytes does not fit this target"
+        );
+    }
+}

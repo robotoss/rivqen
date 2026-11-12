@@ -332,7 +332,7 @@ impl Matcher<'_> {
 ///
 /// As `split_v1`.
 pub fn split(html: &[u8], limits: &TemplateLimits) -> Result<SplitOutcome, LimitError> {
-    if html.len() > limits.max_document_bytes {
+    if html.len() > limits.max_document_bytes() {
         return Err(LimitError::DocumentTooLarge);
     }
     if std::str::from_utf8(html).is_err() {
@@ -361,7 +361,7 @@ pub fn split(html: &[u8], limits: &TemplateLimits) -> Result<SplitOutcome, Limit
         let (name_start, name_end) = caps[1].unwrap();
         let (end_start, end_end) = caps[3].unwrap();
         let name = &text[name_start..name_end];
-        if name.is_empty() || name.len() > limits.max_name_bytes {
+        if name.is_empty() || name.len() > limits.max_name_bytes() {
             continue;
         }
         if !names.insert(name.to_vec()) {
@@ -370,10 +370,10 @@ pub fn split(html: &[u8], limits: &TemplateLimits) -> Result<SplitOutcome, Limit
         if name == b"title" {
             return Ok(SplitOutcome::NotApplied(NotApplied::BlockNamedTitle));
         }
-        if data.len() > limits.max_blocks {
+        if data.len() > limits.max_blocks() {
             return Err(LimitError::TooManyBlocks);
         }
-        if end - start > limits.max_block_bytes {
+        if end - start > limits.max_block_bytes() {
             return Err(LimitError::BlockTooLarge);
         }
         let key = format!("{{{}}}", String::from_utf8(name.to_vec()).unwrap());
@@ -433,7 +433,7 @@ pub fn placeholders(html: &[u8], limits: &TemplateLimits) -> Option<Vec<(usize, 
         let (start, end) = caps[0].unwrap();
         let (name_start, name_end) = caps[1].unwrap();
         let name = &text[name_start..name_end];
-        if name.is_empty() || name.len() > limits.max_name_bytes {
+        if name.is_empty() || name.len() > limits.max_name_bytes() {
             continue;
         }
         copy(&mut out, &mut template_len, cursor, start);

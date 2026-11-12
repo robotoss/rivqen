@@ -22,7 +22,7 @@ use proptest::test_runner::RngSeed;
 use rivqen_template::legacy::{
     DataBlock, Diagnostic, RenderError, SplitOutcome, render_v1, split_v1,
 };
-use rivqen_template::limits::TemplateLimits;
+use rivqen_template::limits::{MAX_OPEN_ELEMENTS, TemplateLimits};
 
 fn config(cases: u32, seed: u64) -> ProptestConfig {
     ProptestConfig {
@@ -111,12 +111,8 @@ fn limits() -> impl Strategy<Value = TemplateLimits> {
         prop::sample::select(vec![0_usize, 36, 60, 1024 * 1024]),
         prop::sample::select(vec![0_usize, 1, 3, 5, 128]),
     )
-        .prop_map(|(document, blocks, block, name)| TemplateLimits {
-            max_document_bytes: document,
-            max_blocks: blocks,
-            max_block_bytes: block,
-            max_name_bytes: name,
-            ..TemplateLimits::default()
+        .prop_map(|(document, blocks, block, name)| {
+            TemplateLimits::new(document, blocks, block, name, MAX_OPEN_ELEMENTS)
         });
     prop_oneof![3 => Just(TemplateLimits::default()), 2 => small]
 }
@@ -126,16 +122,16 @@ fn assert_within_limits(html: &[u8], outcome: &SplitOutcome, limits: &TemplateLi
     let SplitOutcome::Applied(split) = outcome else {
         return;
     };
-    assert!(html.len() <= limits.max_document_bytes);
+    assert!(html.len() <= limits.max_document_bytes());
     assert!(split.template.len() <= html.len());
     assert_eq!(split.data[0].key, "{title}");
-    assert!(split.data.len() <= limits.max_blocks + 1);
+    assert!(split.data.len() <= limits.max_blocks() + 1);
     for block in &split.data[1..] {
         let name = &block.key[1..block.key.len() - 1];
         assert!(block.key.starts_with('{') && block.key.ends_with('}'));
-        assert!(!name.is_empty() && name.len() <= limits.max_name_bytes);
+        assert!(!name.is_empty() && name.len() <= limits.max_name_bytes());
         assert!(name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_'));
-        assert!(block.value.len() <= limits.max_block_bytes);
+        assert!(block.value.len() <= limits.max_block_bytes());
     }
     for diagnostic in &split.diagnostics {
         let Diagnostic::MismatchedEndName { index } = diagnostic else {
@@ -289,7 +285,7 @@ proptest! {
                 if let SplitOutcome::Applied(split) = outcome
                     && let Ok(page) = render_v1(&split.template, &split.data, &limits)
                 {
-                    prop_assert!(page.len() <= limits.max_document_bytes);
+                    prop_assert!(page.len() <= limits.max_document_bytes());
                 }
             }
         }
@@ -308,7 +304,7 @@ proptest! {
             .map(|(key, value)| DataBlock { key, value })
             .collect();
         if let Ok(page) = render_v1(&template, &data, &limits) {
-            prop_assert!(page.len() <= limits.max_document_bytes);
+            prop_assert!(page.len() <= limits.max_document_bytes());
         }
     }
 }

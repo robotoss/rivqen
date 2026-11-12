@@ -19,10 +19,33 @@ use rivqen_proto::types::{MAX_BLOCK_BYTES, MAX_BLOCKS};
 use rivqen_template::limits::{MAX_MARKUP_INPUT_BYTES, MAX_OPEN_ELEMENTS, TemplateLimits};
 use rivqen_template::rqp::{MarkupCode, split_rqp};
 
-fn limits(edit: impl FnOnce(&mut TemplateLimits)) -> TemplateLimits {
-    let mut limits = TemplateLimits::default();
-    edit(&mut limits);
-    limits
+/// The values of `TemplateLimits::new`, to change one of them in a test.
+/// The field names are the getter names.
+#[allow(clippy::struct_field_names)]
+struct Values {
+    max_document_bytes: usize,
+    max_blocks: usize,
+    max_block_bytes: usize,
+    max_open_elements: usize,
+}
+
+/// The default limits with the changes of `edit`.
+fn limits(edit: impl FnOnce(&mut Values)) -> TemplateLimits {
+    let default = TemplateLimits::default();
+    let mut values = Values {
+        max_document_bytes: default.max_document_bytes(),
+        max_blocks: default.max_blocks(),
+        max_block_bytes: default.max_block_bytes(),
+        max_open_elements: default.max_open_elements(),
+    };
+    edit(&mut values);
+    TemplateLimits::new(
+        values.max_document_bytes,
+        values.max_blocks,
+        values.max_block_bytes,
+        default.max_name_bytes(),
+        values.max_open_elements,
+    )
 }
 
 /// The code and the rule of an invalid input.
@@ -162,10 +185,10 @@ fn rqp_limits_depth_is_capped_at_m26() {
 #[test]
 fn rqp_limits_default_equals_m26() {
     let default = TemplateLimits::default();
-    assert_eq!(default.max_document_bytes, 5_242_880);
-    assert_eq!(default.max_blocks, 256);
-    assert_eq!(default.max_block_bytes, 1_048_576);
-    assert_eq!(default.max_open_elements, 256);
+    assert_eq!(default.max_document_bytes(), 5_242_880);
+    assert_eq!(default.max_blocks(), 256);
+    assert_eq!(default.max_block_bytes(), 1_048_576);
+    assert_eq!(default.max_open_elements(), 256);
     assert_eq!(
         TemplateLimits::try_from(&ResourceLimits::default()).unwrap(),
         default

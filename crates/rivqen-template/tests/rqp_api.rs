@@ -16,6 +16,7 @@
 )]
 
 use proptest::prelude::*;
+use rivqen_template::limits::TemplateLimits;
 use rivqen_template::rqp::scan::{Span, Tag, Token, scan};
 
 mod rqp_common;
@@ -23,7 +24,9 @@ mod rqp_common;
 use rqp_common::{MAX_INPUT_BYTES, analyze};
 
 fn tokens(input: &[u8]) -> Vec<Token<'_>> {
-    scan(input).map(Result::unwrap).collect()
+    scan(input, &TemplateLimits::default())
+        .map(Result::unwrap)
+        .collect()
 }
 
 /// Short descriptions: `gap "x"`, `<name>`, `</name>`, `comment`, ...
@@ -57,7 +60,7 @@ fn describe(input: &str) -> Vec<String> {
 fn assert_covers(input: &[u8]) {
     let mut at = 0;
     let mut gap_before = false;
-    for token in scan(input) {
+    for token in scan(input, &TemplateLimits::default()) {
         let token = token.unwrap();
         let span = token.span();
         assert_eq!(span.start, at, "a hole or an overlap at {at}");
@@ -485,14 +488,23 @@ fn api_scan_is_linear_on_large_inputs() {
     let tags = start_tags(&input);
     assert_eq!(tags.len(), 1);
     assert_eq!(tags[0].attributes().count(), (MAX_INPUT_BYTES - 3) / 2);
-    // About 1.7 million open elements, and a foreign region deep inside.
-    let mut deep = b"<b>".repeat(1_700_000);
-    deep.extend_from_slice(b"<svg><style><b></style>");
-    let tags = start_tags(&deep);
+    // About 1.5 million elements, opened and closed, and a foreign region at
+    // the end.
+    let mut wide = b"<b></b>".repeat(740_000);
+    wide.extend_from_slice(b"<svg><style><b></style>");
+    let tags = start_tags(&wide);
     let last = tags.last().unwrap();
     assert_eq!(last.name(), b"b");
     assert!(last.in_foreign_region());
-    assert_covers(&deep);
+    assert_covers(&wide);
+    // About 1.7 million open elements: the token stack limit (D + 2 = 258,
+    // WP-06 S1 finding S1-2) stops the scan at the 259th start tag, with
+    // one error item as the last item.
+    let deep = b"<b>".repeat(1_700_000);
+    let items: Vec<_> = scan(&deep, &TemplateLimits::default()).collect();
+    assert_eq!(items.len(), 259);
+    let error = items.last().unwrap().as_ref().unwrap_err();
+    assert_eq!(error.to_string(), "RQP_MARKUP_LIMIT (M-26)");
 }
 
 /// Markup pieces for generated documents.

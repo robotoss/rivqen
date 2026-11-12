@@ -64,10 +64,10 @@ fn wanted<'d>(
                 continue;
             }
         } else {
-            if !is_block_key(&entry.key, limits.max_name_bytes) {
+            if !is_block_key(&entry.key, limits.max_name_bytes()) {
                 return Err(RenderError::Mismatch);
             }
-            if entry.value.len() > limits.max_block_bytes {
+            if entry.value.len() > limits.max_block_bytes() {
                 return Err(RenderError::Limit(LimitError::BlockTooLarge));
             }
         }
@@ -129,10 +129,10 @@ pub(super) fn render(
     limits: &TemplateLimits,
 ) -> Result<String, RenderError> {
     let too_large = RenderError::Limit(LimitError::DocumentTooLarge);
-    if template.len() > limits.max_document_bytes {
+    if template.len() > limits.max_document_bytes() {
         return Err(too_large);
     }
-    if data.len() > limits.max_blocks.saturating_add(1) {
+    if data.len() > limits.max_blocks().saturating_add(1) {
         return Err(RenderError::Limit(LimitError::TooManyBlocks));
     }
     let (wanted, longest) = wanted(data, limits)?;
@@ -144,7 +144,7 @@ pub(super) fn render(
             .and_then(|rest| rest.checked_add(entry.value.len()))
             .ok_or(too_large)?;
     }
-    if len > limits.max_document_bytes {
+    if len > limits.max_document_bytes() {
         return Err(too_large);
     }
     let mut out = String::with_capacity(len);

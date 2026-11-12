@@ -31,7 +31,7 @@ fuzz_target!(|data: &[u8]| {
             if in_domain {
                 assert_eq!(page.as_bytes(), data, "round trip inside the domain");
             }
-            assert!(page.len() <= limits.max_document_bytes);
+            assert!(page.len() <= limits.max_document_bytes());
         }
         Err(error) => {
             assert!(!in_domain, "rebuild failed inside the domain: {error:?}");

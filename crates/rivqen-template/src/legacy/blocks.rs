@@ -131,7 +131,7 @@ pub(super) fn split(text: &Text<'_>, title: &str, limits: &TemplateLimits) -> Re
         pos = found.close.end;
         let name = (found.open.name_start, found.open.name_end);
         let name_len = name.1.saturating_sub(name.0);
-        if name_len == 0 || name_len > limits.max_name_bytes {
+        if name_len == 0 || name_len > limits.max_name_bytes() {
             // The match stays in the template, with no key (C-07, D-05).
             continue;
         }
@@ -142,10 +142,10 @@ pub(super) fn split(text: &Text<'_>, title: &str, limits: &TemplateLimits) -> Re
         if name_bytes == TITLE_NAME {
             return Err(Stop::NotApplied(NotApplied::BlockNamedTitle));
         }
-        if blocks.len() >= limits.max_blocks {
+        if blocks.len() >= limits.max_blocks() {
             return Err(Stop::Limit(LimitError::TooManyBlocks));
         }
-        if found.close.end.saturating_sub(found.start) > limits.max_block_bytes {
+        if found.close.end.saturating_sub(found.start) > limits.max_block_bytes() {
             return Err(Stop::Limit(LimitError::BlockTooLarge));
         }
         let mut key = String::with_capacity(name_len.saturating_add(2));

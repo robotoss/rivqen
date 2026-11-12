@@ -79,7 +79,9 @@ The template of a split is never longer than the input, so `split_v1` has no out
 | P-TPL-1 | `render_v1(split_v1(h)) == h` for every `h` the grammar accepts |
 | P-TPL-2 | `split_v1` never panics and stays within limits for any byte input |
 | P-TPL-3 | `split_v1` equals a test-only backtracking matcher of the C-06 and C-07 expressions (differential, DL-162) |
-| P-TPL-4 | `etag_v1` and `template_tag_v1` equal the values in every golden fixture |
+| P-TPL-4 | `etag_v1` and `template_tag_v1` equal the values in every golden fixture. Tests: `legacy_fixtures_pages`, `legacy_fixtures_malformed`, `legacy_fixtures_functions` (see below) |
+
+<Badge type="tip" text="FACT" /> The golden tests (`crates/rivqen-template/tests/legacy_fixtures.rs`) read the fixtures as data through `rivqen-testkit` (`fixtures`, `functions`). They check `split_v1`, `render_v1`, `etag_v1` and `template_tag_v1` against: 59 canonical server fixtures of `fixtures/legacy` with a `split` member, the 22 cases of `fixtures/malformed/legacy`, and the 35 canonical `split` function fixtures (34 results and FN-SPLIT-09, `duplicate-block-name`). A fixture with `split.applied = false` has one of two reasons. Scope rule (C-01, C-03: HEAD or POST, status other than 200, content type other than one `text/html; charset=utf-8`): the test checks that the condition is in the fixture data and that `split_v1` applies on the body. Body rule (invalid UTF-8, repeated block name, block named `title`): `split_v1` must give the same reason. Server profile fixtures, the Android and iOS results (DL-159), and the function fixtures for `diff` and `etag` (DL-160) are not tested here. The function test compares split results only: FN-SPLIT-TITLE-06 cannot be rebuilt (DL-167).
 
 <Badge type="tip" text="FACT" /> P-TPL-1 holds exactly when each placeholder is the first occurrence of its key in the template and the `{title}` placeholder is in the template (§2, rebuild rules 1 and 3). The pages `{a}<block a>` and `<block a>{a}` give the same template and data, so no rebuild rule can give both back. The tests (`crates/rivqen-template/tests/`, fixed seeds, `PROPTEST_CASES` raises the count):
 

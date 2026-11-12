@@ -15,7 +15,7 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | [WP-02](#wp-02) | Golden fixtures and conformance runner | P1 | Protocol designer | WP-01 | L | **Done (merged 2026-10-31, #5)** ([S1](/engineering/plan/sprints/WP-02-S1), [S2](/engineering/plan/sprints/WP-02-S2) closed) |
 | [WP-03](#wp-03) | Rust reference server (oracle) | P1 | Backend engineer | WP-02 | M | **Done (merged 2026-11-04, #6)** ([S1](/engineering/plan/sprints/WP-03-S1), [S2](/engineering/plan/sprints/WP-03-S2) closed; gate G1 passed) |
 | [WP-04](#wp-04) | Platform feasibility spikes | P2 | Android + iOS engineers | WP-01 | L | **Done (merged 2026-11-09, #9)** — [S1](/engineering/plan/sprints/WP-04-S1), [S2](/engineering/plan/sprints/WP-04-S2), [S3](/engineering/plan/sprints/WP-04-S3) closed (2026-11-09); gate **G2** passed (H-137); ADR-002 and ADR-003 accepted (H-135, H-136) |
-| [WP-05](#wp-05) | Core workspace, data model, errors, testkit | P3 | Rust core engineer | WP-02 | M | **Complete, MR pending** — [S1](/engineering/plan/sprints/WP-05-S1), [S2](/engineering/plan/sprints/WP-05-S2) closed (2026-11-11); ADR-001 and ADR-017 Accepted (H-139, H-140) |
+| [WP-05](#wp-05) | Core workspace, data model, errors, testkit | P3 | Rust core engineer | WP-02 | M | **Done (merged 2026-11-12, #10)** — [S1](/engineering/plan/sprints/WP-05-S1), [S2](/engineering/plan/sprints/WP-05-S2) closed (2026-11-11); ADR-001 and ADR-017 accepted (H-139, H-140); error code `CONFIG_INVALID` (H-141) |
 | [WP-06](#wp-06) | Template engine | P3 | Rust core engineer | WP-05 | M | Planned |
 | [WP-07](#wp-07) | Cache engine | P3 | Rust core engineer | WP-05 | L | Planned |
 | [WP-08](#wp-08) | Session state machine and diff | P3 | Rust core engineer | WP-06, WP-07 | L | Planned |
@@ -116,6 +116,7 @@ flowchart TD
 | Deliverables | Cargo workspace; `rivqen-core` facade skeleton; data model types; error types; `rivqen-testkit` with fixture loader, fake clock and fake transport; `rivqen-proto` crate (RQP types, manifest, patch and header parsing, checked against `fixtures/rqp/protocol`; moved from WP-17); CI for Rust. |
 | Acceptance | `cargo test` runs fixtures as data; `#![forbid(unsafe_code)]` in all crates except `rivqen-ffi`. |
 | Note | The root workspace excludes `server/rust-reference` and `tools/rqp-markup/rust`: both keep their own workspace (DL-084). |
+| Status | **Done (merged 2026-11-12, #10).** [S1](/engineering/plan/sprints/WP-05-S1) and [S2](/engineering/plan/sprints/WP-05-S2) closed (2026-11-11): workspace of five crates, data model and error catalog (19 codes), RQP codecs and delta checks, test kit, `rivqen-core` facade skeleton, four fuzz targets; 330 tests. ADR-001 and ADR-017 accepted (H-139, H-140). |
 
 ### WP-06 — Template engine {#wp-06}
 

@@ -10,6 +10,23 @@
 //! The names, the types and the signatures marked "contract" are the S1
 //! contract: a lane replaces the function bodies and adds private modules
 //! and the module [`scan`], and it does not change a contract item.
+//!
+//! # Layout (port of the candidate, DL-161)
+//!
+//! | Module | Candidate file | Content |
+//! |---|---|---|
+//! | `tokenizer` (private) | `src/tokenizer.rs` | WHATWG tokenizer subset with byte spans (M-03, M-04) |
+//! | `names` (private) | `src/names.rs` | tag name interning and the name sets of section 2.1 |
+//! | `rules` (private) | `src/rules.rs` | one pass: token stack M-05, rules M-06 to M-26 |
+//! | `json` (private) | `src/json.rs` | JSON text check of M-25 (depth at most 64) |
+//! | `analysis` (private) | `src/lib.rs` | M-01, M-02, result M-27, template revision |
+//! | [`scan`] (public) | `src/scan.rs` | tokens, gaps and raw attributes for WP-06 S2 |
+//!
+//! Limits (DL-163): M-01 is the smaller of `max_document_bytes` and
+//! [`MAX_MARKUP_INPUT_BYTES`](crate::limits::MAX_MARKUP_INPUT_BYTES); the
+//! M-26 limits are `max_blocks`, `max_block_bytes` and `max_open_elements`
+//! of [`TemplateLimits`], each capped at its `rqp/1` constant. A lower value
+//! gives `RQP_MARKUP_LIMIT` earlier; a higher value has no effect.
 
 use core::fmt;
 
@@ -19,7 +36,12 @@ use rivqen_proto::types::{BlockDescriptor, Limits, Policy};
 
 use crate::limits::TemplateLimits;
 
+mod analysis;
+mod json;
+mod names;
+mod rules;
 pub mod scan;
+mod tokenizer;
 
 /// Error code of the markup analysis (markup section 2.10). Contract.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -145,12 +167,5 @@ impl RqpDocument {
 ///
 /// [`MarkupError`] when the document is not valid RQP markup.
 pub fn split_rqp(input: &[u8], limits: &TemplateLimits) -> Result<RqpDocument, MarkupError> {
-    // Stub of the S1 contract: T-02 replaces the body.
-    let max = limits
-        .max_document_bytes
-        .min(crate::limits::MAX_MARKUP_INPUT_BYTES);
-    if input.len() > max {
-        return Err(MarkupError::new(MarkupCode::Limit, "M-01"));
-    }
-    Err(MarkupError::new(MarkupCode::Structure, "stub"))
+    analysis::analyze(input, limits)
 }

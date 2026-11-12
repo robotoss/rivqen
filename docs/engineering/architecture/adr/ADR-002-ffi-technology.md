@@ -1,6 +1,6 @@
 # ADR-002: FFI technology
 
-- Status: **Accepted** (human, 2026-11-09, H-135; in force when the WP-04 merge request is merged)
+- Status: **Accepted** (human, 2026-11-09, H-135)
 - Date: 2026-11-08
 - Owner: Architect, WP-04 (data); WP-09 implements
 - Reviewers: architecture lead, security reviewer, Android SDK owner (WP-10), iOS SDK owner (WP-11)

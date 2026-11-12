@@ -55,6 +55,8 @@ flowchart TD
 
 Tools: `proptest` (Rust), `cargo-fuzz` (libFuzzer), Miri for `unsafe` code, Kotest property tests (Kotlin), Swift Testing parameterized tests, `fast-check` (TypeScript).
 
+<Badge type="tip" text="FACT" /> **Fuzz targets of the Rust core (WP-05).** `fuzz/` is a `cargo-fuzz` workspace on `nightly-2026-11-01` (DL-154) with four targets: `sf_fields` (the three Structured Fields parsers; a parsed value serializes and parses again to the same value), `json_reader` (the strict JSON pull reader), `manifest` and `envelope` (`TooLarge` exactly over the envelope limit). `fuzz/seed.sh` builds the seed corpora from `fixtures/malformed/seeds/fields`, `spec/rqp/examples` and the delta bodies of `fixtures/rqp/protocol`. The procedure is in `fuzz/README.md`. There is no CI fuzz job before WP-20 (DL-148).
+
 ## 4. Golden fixtures
 
 Golden fixtures are the shared truth for every implementation. See [Golden fixtures](/engineering/protocol/fixtures).

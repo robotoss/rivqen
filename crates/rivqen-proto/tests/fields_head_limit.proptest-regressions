@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 7e6e2b0823ae1159d4544f238605aded060d59c8836ee56614de1a36d3ca8cda # shrinks to lines = [("", "")], max_line = 0, max_total = 0
+cc 0145ca04d3ca87bd0d58a35cfa913f77b00374d0a1d06637137b67f7c6d7d2b0 # shrinks to lines = [("", "𐀀0ࠀ A𐀀ࠀ𐀀a𐀀0A¡𐀀𐀀\u{b} a0𐀀ࠀA\0aA¡ 𐀀0\0a\0\u{b}𐀀AA  AA¡𐀀 ¡¡ AA0a 𐀀a𐀀𐀀𐀀0a𐀀\0AA  ࠀ A\0𐀀 aa\u{b}a\0¡ A𐀀ࠀ0a𐀀  𐀀\u{11e78}%`Ⱥ\u{202e}🕴\u{b}\u{1b}X{𮐙A\u{feff}\u{1b};*{\u{bc455}\u{6dcc4}Nq%\r\u{b2e16}\u{202e}T\u{5}\r\u{b1eaa}\tm\tH🕴\u{85bd8}\"\u{533a0}D_Y\u{1074b6}%\"🕴\u{1}\"\\?`J*৩%>`'D%"), ("��\u{4}5$=\u{feff}{{<\u{1ead4}\u{1b}\\\0", "¥Æ\u{9a}~&\u{afaaa}HV\"P$=�%O\u{64e7a}\u{202e}\u{6f534}\t'\u{6253a}%:.\r2&&\u{feff}D\\\u{ab3f4},\u{a1c26}\u{884c4}=\\\"Ѩ\\MGL\u{6}/\u{85f33}9 𬾙\0X\u{b}$``%6\t\u{5f07a}\u{1b}�🕴\u{eb936}\u{4de40}Z^\u{b9103}`\0.*$\u{4b47e}𘩄*I%\u{7f}\u{ea0e5}*\u{3cf58}s\u{6d7c2}ì\0.b*h\0\u{6d11f}:&Qm\u{47070}Y/:\u{1b}\u{a18da}%🕴~&&âѨW\u{84}\"dg=:�\u{b}G\u{1b}#🕴\u{1b}🕴\u{8}{*\tx=\u{faf2d}/a*\u{3}.m�j<]*:\u{202e}\u{b92ea}\u{8}{Ѩ`Ⱥ\u{45051}\u{b}`:\u{6}Ѩ\u{1b}i\u{b}�\u{5b22d}:C=(/\u{202e}\\&j\u{68776}!\u{bf4ee}?\u{2}*\u{feff}𧐒<\u{8}.\u{b}\u{2}{\u{2}*Z\u{fa28d}:lEBmT?🕴"), ("", "{\u{ea063}\u{8e22d}\u{a60c8}�Ѩ\u{b}\u{cf0fe}�\u{e8152}𘩀e\u{202e}&=6hC\u{bc30b}{<\"_%w\u{1b}�&0\u{fbe35}\u{54f27}Ⱥ\u{feff}Ác\tR\u{c8778}\u{b}|¹\u{91}\"u\u{3}")], max_line = 354, max_total = 702

@@ -19,6 +19,23 @@ This page defines the main data structures of the Rust core. Adapters, fixtures 
 | `Revision` | string, ≤ 128 bytes | Version of a page or template | legacy: opaque, derived from `etag` / `template-tag`. RQP: content-derived `t1.…` / `r1.…`, 46 ASCII characters ([manifest and patch §1.3](/engineering/protocol/manifest-patch#_1-3-hashes-and-revisions)); compared byte for byte. |
 | `V1SessionKey` | string | Upstream-compatible session/cache id derived from the URL | Only in legacy mode. See [legacy client behavior](/engineering/protocol/legacy-client). |
 
+### 1.1 Implemented names (`rivqen-model`)
+
+<Badge type="tip" text="FACT" /> These types exist in `crates/rivqen-model` with unit and property tests. A constructor that refuses its input returns `ValueError { kind, reason }` (static texts, never the input).
+
+| Type | Module | Constructor | `Debug` |
+|---|---|---|---|
+| `SessionId` | `ids` | `from_bytes([u8; 16])` (the core has no random source; the adapter draws the bytes) | `SessionId(` first 8 hex characters `)` |
+| `Generation`, `RequestId` | `ids` | `new(u64)`, `FIRST`, `next() -> Option<Self>` (checked) | number |
+| `PartitionId` | `ids` | `from_bytes([u8; 32])` | `PartitionId(` first 8 hex characters `)` |
+| `Revision` | `ids` | `new(&str) -> Result` | text (not secret) |
+| `Secret<T>` | `safe` | `new(T)`, `expose()`, `into_inner()`; no `Display` | `Secret(<redacted>)` |
+| `SafeUrl` | `safe` | `new(Scheme, host, port, path)`, `with_query(Secret<String>)` | `Display` and `Debug`: origin and path only |
+| `PageBytes` | `safe` | `new(Vec<u8>)` | `PageBytes(len=N)` (no hash: the crate has no dependency) |
+| `ResourceLimits` | `limits` | `Default`: the initial values of [resource limits §1](/engineering/core/resource-limits#_1-limits-table). `memoryL1Bytes` and `diskL2Bytes` use the lowest device class (8 MiB, 64 MiB). `Limit`, `LimitRange` and `get(limit)` give the safe ranges of §1.1 (DL-155); the limits fixed by `rqp/1` (`Rq-Have`, `Rq-Capabilities`, `Rq-Nonce`) are constants of `rivqen-proto`, not fields | fields |
+
+DESIGN: a `Revision` is 1 to 128 bytes of visible ASCII (0x21 to 0x7E: no space, no control byte). The RQP forms (`t1.…`, `r1.…`) and the legacy lowercase hex values fit. `SafeUrl` host is `[A-Za-z0-9.-]` (lowercased); the path starts with `/` and has no control byte, space, `?` or `#`; the query is kept as a `Secret`. `NavigationId`, `CacheKey` and `V1SessionKey` are not in S1.
+
 ## 2. Request context
 
 `RequestContext` is the input to `open`. The adapter builds it. The core never reads platform state directly.
@@ -78,6 +95,18 @@ flowchart TD
 | `BlockDescriptor` | `id`, `format` (`html`/`json`), `sha256` | Computed by the client, not sent in the manifest (H-103). SHA-256 (base64url) over the exact content bytes; no normalization (H-2, H-11). |
 | `PatchEnvelope` | `binding`, `operations[]` | No `type`, `protocol`, base, template or page revision (H-104, H-107). `binding` is a SHA-256 value over the canonical final URL, the base page revision, the nonce of the request and the next page revision (H-108); the client computes all four and compares ([manifest and patch §2.2](/engineering/protocol/manifest-patch#_2-2-fields)). The new snapshot has the page revision that the client computed. Validated before apply ([diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation)). No `page_id` and no `sequence` over HTTP (H-9). |
 | `PatchOp` | `block_id`, `content` | The only operation of `rqp/1`: replace the content of a block (H-47). No `op`, `format` or `sha256` (H-104); the client computes the hash. The client rejects content with script or event handlers ([manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules)). |
+
+**Computed values.** <Badge type="tip" text="FACT" /> The module `rivqen_proto::compute` (`crates/rivqen-proto/src/compute.rs`, WP-05 S1) computes these values. The tests compare them with the known answers of `spec/rqp/examples/kat/`, the 85 `full` manifests and the 24 `delta` bodies of the server fixtures, and the 76 client fixtures with a delta body that steps 3 to 7 decide.
+
+| Function | Computes |
+|---|---|
+| `policy_line(policy, limits)` | The policy line `PL` of [manifest and patch §1.3](/engineering/protocol/manifest-patch#_1-3-hashes-and-revisions), step 4; no bytes without both members (H-55) |
+| `page_revision(template, blocks, policy, limits)` | The page revision `r1.` of §1.3, steps 4 and 5 |
+| `snapshot_page_revision(snapshot)` | The page revision from the values of a `SnapshotMeta`, for the check of §1.8, item 5 |
+| `next_blocks(snapshot, operations, max_block_bytes)` | The list `L′` of [§2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), steps 3 to 5; `OperationError` (`PATCH_INVALID`, `PATCH_TOO_LARGE`) for an unknown block, a second operation for a block, another order, no operation or content over `max_block_bytes` (the only content size check, DL-156) |
+| `next_page_revision(snapshot, operations, max_block_bytes)` | The next page revision `R′` of §2.4, step 6, with the policy line of the snapshot |
+| `binding(url, base, nonce, next)` | The `d1.` binding of [§2.2](/engineering/protocol/manifest-patch#_2-2-fields) (H-107, H-108); `url` is the canonical final URL as text (the URL parser is in WP-08) |
+| `delta::verify_delta(body, max_patch_bytes, snapshot, final_url, nonce, max_block_bytes)` | Checks 4 to 6 and 9 to 11 of [diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation) in that order (WP-05 S2): the envelope, `R′`, `L′` and the new block hashes, or the first failure (`PATCH_TOO_LARGE`, `PATCH_INVALID`, `INTEGRITY_ERROR`); no final URL or no nonce is a mismatch (DL-156) |
 
 ## 5. Events and actions
 

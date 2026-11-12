@@ -7,6 +7,8 @@
 # - markup: Rust, Java and PHP markup candidates and the differential runner
 #   (the four parsers agree on every markup fixture)
 # - .claude: every rules checklist points to an existing standards page
+# - core: the Rust core workspace (crates/, WP-05, DL-147): unsafe check, fmt,
+#   clippy, tests with the fixtures as data, cargo-deny
 #
 # SDK toolchains (Swift, Kotlin) are added by the WPs that create those
 # packages (WP-05, WP-10, WP-11, WP-14, WP-15).
@@ -99,3 +101,23 @@ jobs:
 
       - name: Rust, Java, PHP and differential groups of the full run
         run: sh tools/fulltest.sh rust java php diff
+
+  core:
+    name: Rust core
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      # rustup 1.28 and later does not install the toolchain of
+      # rust-toolchain.toml on its own (DL-147).
+      - name: Install the pinned Rust toolchain
+        run: rustup toolchain install
+
+      # The version of docs/engineering/standards/rust.md; no third-party action
+      # (pinning by SHA is WP-20).
+      - name: Install cargo-deny
+        run: cargo install --locked cargo-deny --version 0.20.2
+
+      - name: Core group of the full run
+        run: sh tools/fulltest.sh core

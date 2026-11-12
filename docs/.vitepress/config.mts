@@ -88,10 +88,12 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'Technology stack', link: '/engineering/architecture/technology-stack' },
       { text: 'Errors and logging', link: '/engineering/architecture/errors-logging' },
       { text: 'Decision records (ADR)', link: '/engineering/architecture/adr/' },
+      { text: 'ADR-001 Core boundaries', link: '/engineering/architecture/adr/ADR-001-core-boundaries' },
       { text: 'ADR-002 FFI technology', link: '/engineering/architecture/adr/ADR-002-ffi-technology' },
       { text: 'ADR-003 iOS navigation', link: '/engineering/architecture/adr/ADR-003-ios-navigation' },
       { text: 'ADR-009 Streaming ABI', link: '/engineering/architecture/adr/ADR-009-streaming-abi' },
-      { text: 'ADR-014 Android HTTP stack', link: '/engineering/architecture/adr/ADR-014-android-http-stack' }
+      { text: 'ADR-014 Android HTTP stack', link: '/engineering/architecture/adr/ADR-014-android-http-stack' },
+      { text: 'ADR-017 Errors and logging', link: '/engineering/architecture/adr/ADR-017-errors-logging' }
     ]
   },
   {
@@ -258,6 +260,8 @@ const engineeringSidebar: DefaultTheme.SidebarItem[] = [
       { text: 'WP-04 S1', link: '/engineering/plan/sprints/WP-04-S1' },
       { text: 'WP-04 S2', link: '/engineering/plan/sprints/WP-04-S2' },
       { text: 'WP-04 S3', link: '/engineering/plan/sprints/WP-04-S3' },
+      { text: 'WP-05 S1', link: '/engineering/plan/sprints/WP-05-S1' },
+      { text: 'WP-05 S2', link: '/engineering/plan/sprints/WP-05-S2' },
       { text: 'Sprint record template', link: '/engineering/plan/sprints/template' }
     ]
   }

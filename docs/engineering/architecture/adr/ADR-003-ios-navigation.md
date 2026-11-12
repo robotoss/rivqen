@@ -1,6 +1,6 @@
 # ADR-003: iOS navigation strategy
 
-- Status: **Accepted** (human, 2026-11-09, H-136; in force when the WP-04 merge request is merged)
+- Status: **Accepted** (human, 2026-11-09, H-136)
 - Date: 2026-11-08
 - Owner: Architect, WP-04 (data); WP-11 implements
 - Reviewers: architecture lead, security reviewer, iOS SDK owner (WP-11)

@@ -6,13 +6,15 @@
 # CI (.github/workflows/checks.yml) runs the same groups.
 #
 # Usage: sh tools/fulltest.sh [group ...]
-#   Groups: node python rust java php diff lab docs. No group: all groups.
+#   Groups: node python core rust java php diff lab docs. No group: all groups.
 #
 # Requirements per group (install the dependencies first, see each package README):
 #   node    Node.js 22 or later; `npm ci --ignore-scripts` in tools/rqp-protocol,
 #           tools/rqp-schema, tools/rqp-markup/node, tools/rqp-markup/crosscheck,
 #           tools/webview-lab and examples/server-demo
 #   python  Python 3
+#   core    the Rust core workspace (crates/, DL-147): the toolchain of rust-toolchain.toml
+#           and cargo-deny
 #   rust    cargo with rustfmt and clippy; Node.js 22 or later (the runner against the
 #           reference server, DL-090)
 #   java    JDK 21 and `gradle` on PATH (optional: ORG_GRADLE_PROJECT_rqpMavenMirror)
@@ -87,6 +89,14 @@ group_python() {
   step markup-gen-unit 'python3 -m unittest tools/rqp-markup/test_gen.py'
 }
 
+group_core() {
+  step core-unsafe 'sh tools/rust-core/check-unsafe.sh'
+  step core-fmt 'cargo fmt --all -- --check'
+  step core-clippy 'cargo clippy --workspace --all-targets --all-features -q -- -D warnings'
+  step core-test 'RUST_TEST_THREADS=4 cargo test --workspace -q'
+  step core-deny 'cargo deny check'
+}
+
 group_rust() {
   step rust 'cd tools/rqp-markup/rust && cargo fmt --check && cargo clippy --all-targets -q -- -D warnings && RUST_TEST_THREADS=4 cargo test -q'
   step rule-probe 'cd tools/rqp-markup/corpus/rule-probe && cargo build -q'
@@ -122,10 +132,10 @@ group_docs() {
   step docs 'npm run docs:build'
 }
 
-[ $# -eq 0 ] && set -- node python rust java php diff lab docs
+[ $# -eq 0 ] && set -- node python core rust java php diff lab docs
 for g in "$@"; do
   case $g in
-    node | python | rust | java | php | diff | lab | docs) "group_$g" ;;
+    node | python | core | rust | java | php | diff | lab | docs) "group_$g" ;;
     *)
       echo "fulltest: unknown group '$g'" >&2
       exit 2

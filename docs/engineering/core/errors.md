@@ -2,7 +2,7 @@
 
 Rivqen errors are typed. Each error has a category, a stable code, and a **fallback hint** that tells the adapter what to do. Errors never contain secrets.
 
-**Status:** <Badge type="info" text="DESIGN" /> RQP codes `MANIFEST_INVALID`, `PATCH_INVALID` and `PATCH_CONTENT_REJECTED`: decided by the human (H-50, [WP-17 S2](/engineering/plan/sprints/WP-17-S2)).
+**Status:** <Badge type="info" text="DESIGN" /> RQP codes `MANIFEST_INVALID`, `PATCH_INVALID` and `PATCH_CONTENT_REJECTED`: decided by the human (H-50, [WP-17 S2](/engineering/plan/sprints/WP-17-S2)). `CONFIG_INVALID`: decided by the human (H-141, [WP-05 S2](/engineering/plan/sprints/WP-05-S2)).
 
 ## 1. Categories
 
@@ -38,9 +38,10 @@ Rivqen errors are typed. Each error has a category, a stable code, and a **fallb
 | `WEBVIEW_CAPABILITY_MISSING` | UnsupportedCapability | Disable that optimization, not the whole navigation |
 | `TRANSPORT_DISCONNECTED` | Network | HTTP revalidation with backoff; resync |
 | `MEMORY_BUDGET_EXCEEDED` | ResourceLimit | Free L1 cache, stop prefetch, fallback |
-| `PATCH_TOO_LARGE` / `DOCUMENT_TOO_LARGE` | ResourceLimit | Fallback |
+| `PATCH_TOO_LARGE` / `DOCUMENT_TOO_LARGE` | ResourceLimit | Fallback. `DOCUMENT_TOO_LARGE` also when the response head is over `maxHeaderBytes` (DL-153): the core reads no field of that response |
 | `TIMEOUT_FIRST_BYTE` / `TIMEOUT_TOTAL` | Timeout | Fallback |
 | `INTERNAL_ERROR` | Internal | A broken invariant or a caught panic. Fallback; report with location and build id. |
+| `CONFIG_INVALID` | Internal | `Engine::new` got a configuration outside the [safe ranges](/engineering/core/resource-limits#_1-1-safe-ranges) (H-141, DL-158): a bug of the host app. No engine; load pages normally. The cause names the limit and the rule, never the value. Hint: `NormalLoad` |
 | `LEGACY_MODE_USED` | Notice | Not an error: the deprecated legacy module served this session. One warning per origin per app start. |
 | `SERVER_PASSTHROUGH` | Server | Server SDK error: the original response is sent unchanged, without its `Rq-*` fields (DL-030). |
 
@@ -51,6 +52,23 @@ Rivqen errors are typed. Each error has a category, a stable code, and a **fallb
 3. A `SecurityViolation` is always reported as a metric, even when telemetry export is off (local counter only).
 4. The adapter behavior of a code has priority over the default of its category. Example: `PATCH_CONTENT_REJECTED` is a `SecurityViolation`, but the rejected content is never shown, so a normal load of the page from the network is safe (H-50).
 5. RQP has no generic `PROTOCOL_ERROR` code. A delta that the client did not ask for is an invalid patch (`PATCH_INVALID`).
+
+## 4. Implementation (`rivqen-model`)
+
+<Badge type="tip" text="FACT" /> `ErrorCode` (19 codes), `Category` and `FallbackHint` are in `rivqen_model::error`. `RivqenError { code, context, source }` and `Context` are in `rivqen_model::context`.
+
+- `Context` has only safe fields: `op`, `session`, `generation`, `request`, `bytes`, `state`.
+- `Display` writes the code and `op` only (`MANIFEST_INVALID in split_template`). `Debug` writes the code, the context and whether a cause exists. The cause (`Box<dyn Error + Send + Sync>`) is never printed; it is reachable through `Error::source`.
+- A test formats every public type with `{:?}` and `{}` with planted markers.
+- Reserved and notice codes (`PATCH_BASE_MISMATCH`, `TEMPLATE_MISMATCH`, `LEGACY_MODE_USED`, `SERVER_PASSTHROUGH`) are not in the enum.
+
+Code to hint table (checked by `model_error_catalog_matches_errors_md`):
+
+| Hint | Codes |
+|---|---|
+| `Stop` | `AUTH_PARTITION_CHANGED`, `TLS_ERROR` |
+| `RetryLater` | `TRANSPORT_DISCONNECTED` |
+| `NormalLoad` | all other 16 codes |
 
 ## Related
 

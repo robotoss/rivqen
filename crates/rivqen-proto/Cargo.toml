@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+[package]
+name = "rivqen-proto"
+description = "Rivqen protocol (RQP) types and codecs: Structured Fields, strict JSON, manifest, patch envelope, request and response fields"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+rivqen-integrity.workspace = true
+rivqen-model.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+rivqen-testkit.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

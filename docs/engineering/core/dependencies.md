@@ -1,6 +1,8 @@
 # Dependencies
 
-This page lists candidate dependencies for the Rust core with their license and role. No dependency is approved until WP-05 adds it with a benchmark or a clear need. Fewer dependencies is better.
+This page lists candidate dependencies for the Rust core with their license and role. A dependency is approved only when a WP adds it with a benchmark or a clear need. Fewer dependencies is better.
+
+<Badge type="tip" text="FACT" /> **Approved for the core (human, H-138, 2026-11-09, [WP-05 S1](/engineering/plan/sprints/WP-05-S1)):** runtime `sha2` =0.11.0 and `base64` =0.23.1; tests and `rivqen-testkit` only: `serde_json` =1.0.151 and `proptest` =1.11.0; fuzz only (own workspace, nightly): `libfuzzer-sys` through `cargo-fuzz` 0.13.2. The same pins as the reference server (H-113). Not in WP-05: `serde`, `thiserror`, `sfv` (no `forbid(unsafe_code)`, no length limit, MSRV 1.95; DL-144) and `tracing` (with the log sink of WP-08/WP-09). All other rows below are candidates.
 
 **Status:** <Badge type="tip" text="FACT" /> versions and licenses from crates.io on 9 October 2026. <Badge type="info" text="DESIGN" /> recommendations.
 

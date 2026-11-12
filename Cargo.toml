@@ -1,0 +1,67 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+#
+# Root workspace of the Rust core (WP-05, DL-142). The architect owns this file:
+# lanes ask for changes in their task report.
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+# These projects keep their own workspace (DL-084, DL-142).
+exclude = [
+    "server/rust-reference",
+    "tools/rqp-markup/rust",
+    "tools/rqp-markup/corpus/rule-probe",
+    "tools/platform-spikes/ffi-bench",
+    # cargo-fuzz targets: nightly, own workspace (DL-148).
+    "fuzz",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+# CI tests only the pinned toolchain (DL-142).
+rust-version = "1.99"
+license = "Apache-2.0"
+publish = false
+
+# Approved by the human: H-138 (WP-05 S1). Same pins as the reference server (H-113).
+[workspace.dependencies]
+base64 = { version = "=0.23.1", default-features = false, features = ["alloc"] }
+sha2 = { version = "=0.11.0", default-features = false }
+# Tests and rivqen-testkit only (H-138).
+serde_json = "=1.0.151"
+proptest = { version = "=1.11.0", default-features = false, features = ["std"] }
+# Workspace crates.
+rivqen-core = { path = "crates/rivqen-core" }
+rivqen-integrity = { path = "crates/rivqen-integrity" }
+rivqen-model = { path = "crates/rivqen-model" }
+rivqen-proto = { path = "crates/rivqen-proto" }
+rivqen-testkit = { path = "crates/rivqen-testkit" }
+
+# docs/engineering/standards/rust.md section 3; docs/engineering/architecture/errors-logging.md 2.2.
+[workspace.lints.rust]
+unsafe_code = "forbid"
+unsafe_op_in_unsafe_fn = "deny"
+unused_must_use = "deny"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+let_underscore_must_use = "deny"
+let_underscore_future = "deny"
+todo = "deny"
+unimplemented = "deny"
+dbg_macro = "deny"
+print_stdout = "deny"
+print_stderr = "deny"
+# The core reads untrusted input everywhere it parses (standards section 3).
+indexing_slicing = "deny"
+arithmetic_side_effects = "deny"
+
+[profile.release]
+# The FFI boundary catches panics (errors-logging 2.3).
+panic = "unwind"

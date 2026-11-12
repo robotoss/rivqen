@@ -19,6 +19,11 @@ use rivqen_model::error::{ErrorCode, HasErrorCode};
 
 use crate::limits::TemplateLimits;
 
+mod blocks;
+mod render;
+mod text;
+mod title;
+
 /// One data block of a split: the key in wire form (`{name}`, with braces;
 /// `{title}` for the title rule) and the value (the whole match, markers
 /// or tags included; C-06, C-07).
@@ -168,11 +173,27 @@ impl core::error::Error for RenderError {}
 ///
 /// [`LimitError`] when the page is over a limit of `limits`.
 pub fn split_v1(html: &[u8], limits: &TemplateLimits) -> Result<SplitOutcome, LimitError> {
-    // Stub of the S1 contract: T-01 replaces the body.
     if html.len() > limits.max_document_bytes {
         return Err(LimitError::DocumentTooLarge);
     }
-    Ok(SplitOutcome::NotApplied(NotApplied::InvalidUtf8))
+    let Ok(text) = core::str::from_utf8(html) else {
+        return Ok(SplitOutcome::NotApplied(NotApplied::InvalidUtf8));
+    };
+    let title = title::find_title(html);
+    let title_value = match title {
+        Some((start, end)) => text.get(start..end),
+        None => Some(""),
+    };
+    // A C-06 match starts at `<` and ends at `>`: always on character
+    // boundaries. The `None` arms fail closed.
+    let (Some(title_value), Some(joined)) = (title_value, text::Text::new(text, title)) else {
+        return Ok(SplitOutcome::NotApplied(NotApplied::InvalidUtf8));
+    };
+    match blocks::split(&joined, title_value, limits) {
+        Ok(split) => Ok(SplitOutcome::Applied(split)),
+        Err(blocks::Stop::NotApplied(reason)) => Ok(SplitOutcome::NotApplied(reason)),
+        Err(blocks::Stop::Limit(limit)) => Err(limit),
+    }
 }
 
 /// Rebuild a page from a template and data (legacy markers section 5,
@@ -187,11 +208,7 @@ pub fn render_v1(
     data: &[DataBlock],
     limits: &TemplateLimits,
 ) -> Result<String, RenderError> {
-    // Stub of the S1 contract: T-01 replaces the body.
-    if template.len() > limits.max_document_bytes || data.len() > limits.max_blocks {
-        return Err(RenderError::Limit(LimitError::DocumentTooLarge));
-    }
-    Err(RenderError::Mismatch)
+    render::render(template, data, limits)
 }
 
 /// The legacy `etag`: lowercase hex SHA-1 of the body bytes (C-04).

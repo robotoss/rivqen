@@ -62,3 +62,15 @@ pub fn sha1_hex(bytes: &[u8]) -> Sha1Hex {
     }
     Sha1Hex(out)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{HEX, hex_digit};
+
+    #[test]
+    fn hex_digit_maps_each_nibble_to_its_lowercase_digit() {
+        for (nibble, expected) in (0_u8..16).zip(HEX.iter()) {
+            assert_eq!(hex_digit(nibble), *expected);
+        }
+    }
+}

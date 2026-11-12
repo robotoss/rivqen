@@ -23,7 +23,7 @@ The Rust core is the single implementation of Rivqen's logic for Android and iOS
 | `rivqen-session` | Session state machine, deadlines, generations, cancellation, race handling | `proto-*`, `cache`, `stream`, `diff` | `SonicSession`, `QuickSonicSession`, `StandardSonicSession` |
 | `rivqen-proto-legacy` | Legacy protocol headers, normalization, decision tree, response parsing | `template`, `integrity` | Header handling in client and servers |
 | `rivqen-proto` | Rivqen protocol typed messages, capability negotiation, schemas | `integrity` | — (new) |
-| `rivqen-template` | Strict, bounded parser for data-block markers; template/data split; serializer | — | Marker regex code in clients and servers |
+| `rivqen-template` | Strict, bounded parser for data-block markers; template/data split; serializer; RQP markup analysis, manifest locator, build of the patched document and patch content rule (H-142) | `integrity`, `model` | Marker regex code in clients and servers |
 | `rivqen-diff` | Data diff, patch validation, base-revision check, atomic apply plan | `template`, `integrity` | Data-diff code in clients |
 | `rivqen-cache` | Cache keys, partitions, policy (RFC 9111 + legacy), snapshots, transactions, quotas | `integrity` | `SonicCacheInterceptor`, `SonicDataHelper` |
 | `rivqen-stream` | Bounded chunk buffers, backpressure, split of cached prefix + network rest | — | `SonicSessionStream` |

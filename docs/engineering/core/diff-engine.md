@@ -57,6 +57,8 @@ The session uses a delta, a `304` or a full document only when the final request
 
 Bounds: steps 4 to 6 read at most `maxPatchBytes` bytes; steps 9 to 11 do work linear in the envelope size and in the number of blocks (≤ 256): at most 256 SHA-256 computations over at most `maxPatchBytes` content bytes in total, one over a page revision preimage of at most about 30 KiB, and one over a binding preimage of the URL length plus 125 bytes; step 12 is one markup pass over at most `maxDocumentBytes` and one copy of at most that size; step 13 reads only the patched content, which step 12 has already tokenized.
 
+<Badge type="info" text="DESIGN" /> Checks 12 and 13 use functions of `rivqen-template` (WP-06, H-142): the build of the patched document (`render_rqp`), the markup analysis (`split_rqp`) and the patch content and attribute rule. `rivqen-diff` keeps the order of the checks and the apply plan.
+
 **Checks in `rivqen-proto` (WP-05).** <Badge type="tip" text="FACT" /> Checks 4, 5, 6, 9, 10 and 11 of the table above are in the crate `rivqen-proto`. The session calls one function for all of them, `delta::verify_delta`, after checks 1 to 3 and before checks 12 and 13 (tests `delta_check_order_*`, `delta_prop_any_body`):
 
 | # | Function | What it does |

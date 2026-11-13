@@ -175,6 +175,12 @@ impl RqpDocument {
     }
 }
 
+/// ASCII white space of the HTML standard: `09`, `0A`, `0C`, `0D`, `20`
+/// (the white space of the head walk and of the `srcset` split).
+pub(crate) const fn is_ascii_white_space(byte: u8) -> bool {
+    matches!(byte, 0x09 | 0x0A | 0x0C | 0x0D | 0x20)
+}
+
 /// Analyze a document with the RQP markup rules. The input limit is the
 /// smaller of `limits.max_document_bytes` and the M-01 limit. Contract.
 ///

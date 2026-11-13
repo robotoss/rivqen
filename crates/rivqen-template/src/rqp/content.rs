@@ -63,7 +63,7 @@ use rivqen_proto::types::BlockFormat;
 
 use crate::rqp::analysis::Internal as _;
 use crate::rqp::scan::{Tag, Token, scan};
-use crate::rqp::{MarkupError, RqpDocument};
+use crate::rqp::{MarkupError, RqpDocument, is_ascii_white_space};
 
 /// Start tag names that a patch cannot bring in HTML context (section 4,
 /// item 1.1; H-78, H-96). Contract.
@@ -651,11 +651,6 @@ fn scheme_rejects(element: &[u8], foreign: bool, name: &[u8], raw: &[u8]) -> boo
 
 // ---------------------------------------------------------------------------
 // Section 4.2, item 4.3: srcset.
-
-/// ASCII white space of the WHATWG text: `09`, `0A`, `0C`, `0D`, `20`.
-const fn is_ascii_white_space(byte: u8) -> bool {
-    matches!(byte, 0x09 | 0x0A | 0x0C | 0x0D | 0x20)
-}
 
 /// Item 4.3: the named references (the bytes after the `&`,
 /// case-sensitive) that decode to white space, `,`, `(` or `)`.

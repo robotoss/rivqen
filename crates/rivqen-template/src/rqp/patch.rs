@@ -12,7 +12,8 @@
 //! to 7) passed:
 //!
 //! 1. build the patched document with [`render_rqp`]; over
-//!    `max_document_bytes`: `PATCH_TOO_LARGE`;
+//!    `max_document_bytes` (or over the M-01 input limit, when that is
+//!    smaller): `PATCH_TOO_LARGE`;
 //! 2. [`split_rqp`](crate::rqp::split_rqp) of it: not valid,
 //!    `PATCH_CONTENT_REJECTED`;
 //! 3. template revision T and the blocks (`id`, `format`, order) of the
@@ -32,7 +33,7 @@ use rivqen_model::error::{ErrorCode, HasErrorCode};
 use rivqen_proto::delta::VerifiedDelta;
 use rivqen_proto::types::SnapshotMeta;
 
-use crate::limits::TemplateLimits;
+use crate::limits::{MAX_MARKUP_INPUT_BYTES, TemplateLimits};
 use crate::rqp::content::{ContentError, check_patch_content};
 use crate::rqp::{MarkupError, RqpDocument, split_rqp};
 
@@ -61,7 +62,8 @@ impl fmt::Debug for Replacement<'_> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum RenderRqpError {
-    /// The patched document is larger than `max_document_bytes`
+    /// The patched document is larger than the smaller of
+    /// `max_document_bytes` and the M-01 input limit of the analysis
     /// (`PATCH_TOO_LARGE`). The size is computed before the output is
     /// allocated.
     TooLarge,
@@ -113,7 +115,11 @@ pub fn render_rqp(
     limits: &TemplateLimits,
 ) -> Result<Vec<u8>, RenderRqpError> {
     let size = checked_output_size(original, document, replacements)?;
-    if size > limits.max_document_bytes() {
+    // The patched document is the input of the markup analysis: its limit
+    // is the smaller of `max_document_bytes` and M-01, as in `split_rqp`.
+    // Without the M-01 part a configured limit over 5 MiB would give
+    // `PATCH_CONTENT_REJECTED` (M-01) where step 8 says `PATCH_TOO_LARGE`.
+    if size > limits.max_document_bytes().min(MAX_MARKUP_INPUT_BYTES) {
         return Err(RenderRqpError::TooLarge);
     }
     let mut output: Vec<u8> = Vec::with_capacity(size);

@@ -246,6 +246,38 @@ fn patch_render_size_limit_passes_at_the_limit_and_fails_one_over() {
 }
 
 #[test]
+fn patch_render_size_limit_is_at_most_the_markup_input_limit() {
+    // A configured `max_document_bytes` over 5 MiB does not raise the limit
+    // of an RQP document (M-01): the size check gives TooLarge, not a
+    // markup error of the analysis.
+    const M01: usize = 5 * 1024 * 1024;
+    let filler = "<!--".len() + "-->".len();
+    let pad = "x".repeat(M01 - PAGE.len() - filler);
+    let page = PAGE.replace("</body>", &format!("<!--{pad}--></body>"));
+    assert_eq!(page.len(), M01);
+    let big = small(8 * 1024 * 1024);
+    let analysis = split_rqp(page.as_bytes(), &big).unwrap();
+    let same = [Replacement {
+        block: 0,
+        content: b"Shop",
+    }];
+    assert_eq!(
+        render_rqp(page.as_bytes(), &analysis, &same, &big)
+            .unwrap()
+            .len(),
+        M01
+    );
+    let longer = [Replacement {
+        block: 0,
+        content: b"Shop!",
+    }];
+    assert_eq!(
+        render_rqp(page.as_bytes(), &analysis, &longer, &big),
+        Err(RenderRqpError::TooLarge)
+    );
+}
+
+#[test]
 fn patch_render_shrinking_patch_fits_a_limit_below_the_original() {
     let analysis = analyze(PAGE);
     let size = PAGE.len() - 5;

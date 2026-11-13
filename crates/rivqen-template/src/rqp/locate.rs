@@ -61,9 +61,9 @@ use core::ops::Range;
 use rivqen_model::error::{ErrorCode, HasErrorCode};
 
 use crate::limits::TemplateLimits;
-use crate::rqp::MarkupError;
 use crate::rqp::analysis::Internal as _;
 use crate::rqp::scan::{Scanner, Span, Tag, Token, scan};
+use crate::rqp::{MarkupError, is_ascii_white_space};
 
 /// The place of the manifest element in a full document. Contract.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -314,11 +314,6 @@ fn is_one_of(name: &[u8], names: &[&[u8]]) -> bool {
     names.iter().any(|known| name.eq_ignore_ascii_case(known))
 }
 
-/// White space of the head walk: `09 0A 0C 0D 20`.
-const fn is_white_space(byte: u8) -> bool {
-    matches!(byte, 0x09 | 0x0A | 0x0C | 0x0D | 0x20)
-}
-
 /// The next token of the scan; a scan stop is [`LocateError::Markup`].
 fn next_token<'a>(tokens: &mut Scanner<'a>) -> Result<Option<Token<'a>>, LocateError> {
     tokens.next().transpose().map_err(LocateError::Markup)
@@ -409,7 +404,7 @@ impl HeadWalk {
     fn gap(self, bytes: &[u8], span: Span, shift: usize) -> Result<Walk, MarkupError> {
         let start = shifted(span.start, shift)?;
         let white = bytes.iter().enumerate().all(|(index, &byte)| {
-            is_white_space(byte)
+            is_ascii_white_space(byte)
                 || (self.bom && start.checked_add(index).is_some_and(|at| at < BOM.len()))
         });
         Ok(if white {

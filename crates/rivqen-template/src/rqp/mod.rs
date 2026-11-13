@@ -42,7 +42,7 @@
 use core::fmt;
 
 use rivqen_integrity::{PageRevision, TemplateRevision};
-use rivqen_proto::compute::page_revision;
+use rivqen_proto::compute::page_revision_of;
 use rivqen_proto::types::{BlockDescriptor, Limits, Policy};
 
 use crate::limits::TemplateLimits;
@@ -166,12 +166,12 @@ impl RqpDocument {
     /// revision of the markup fixtures.
     #[must_use]
     pub fn page_revision(&self, policy: Option<&Policy>, limits: Option<&Limits>) -> PageRevision {
-        let blocks: Vec<BlockDescriptor> = self
-            .blocks
-            .iter()
-            .map(|block| block.descriptor.clone())
-            .collect();
-        page_revision(&self.template_revision, &blocks, policy, limits)
+        page_revision_of(
+            &self.template_revision,
+            self.blocks.iter().map(|block| &block.descriptor),
+            policy,
+            limits,
+        )
     }
 }
 

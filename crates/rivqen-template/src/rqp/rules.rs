@@ -3,7 +3,9 @@
 
 //! Port of `tools/rqp-markup/rust/src/rules.rs` (commit `92c708e1`; DL-161).
 //! Keep the rules equal to the candidate: a change of the markup rules
-//! changes both copies (WP-06 S1, risk R-2).
+//! changes both copies (WP-06 S1, risk R-2). Changed in both copies in
+//! WP-06 S2: the implied closure of M-09 is one shared step function, also
+//! used by the scan (DL-170).
 //!
 //! One pass over the tokens: the token stack (M-05), the document rules
 //! (M-06…M-13) and the block rules (M-14…M-26) of `markup.md` section 2.
@@ -227,7 +229,56 @@ const NOSCRIPT_END: &[u8] = b"</noscript>";
 
 /// The most implied closure steps for one start tag (M-09, H-85a): a row
 /// group, a row and a cell.
-const CLOSURE_STEPS: usize = 3;
+pub(crate) const CLOSURE_STEPS: usize = 3;
+
+/// The flags of the elements that the search for F of M-09 reads: the
+/// names in `TABLE_FAMILY` and `template`. Only elements pushed in HTML
+/// context count.
+pub(crate) const TABLE_MARKS: u32 = flag::TABLE_FAMILY | flag::TEMPLATE;
+
+/// M-09: F from the nearest element pushed in HTML context with a name in
+/// [`TABLE_MARKS`] (its stack index and name): none when that element is a
+/// `template` (the search stops there).
+pub(crate) fn table_context(
+    names: &NameTable,
+    nearest: Option<(usize, NameId)>,
+) -> Option<(usize, NameId)> {
+    nearest.filter(|&(_, name)| !names.has(name, flag::TEMPLATE))
+}
+
+/// One step of the implied closure of M-09 (H-85a).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Closure {
+    /// F is none or allows the start tag: the closure ends.
+    Done,
+    /// Step 2 fails: F must be the current node and is not
+    /// (`RQP_MARKUP_STRUCTURE`, M-09).
+    NotCurrent,
+    /// Step 3: apply the end tag of F, at this stack index with this name.
+    Close(usize, NameId),
+}
+
+/// Steps 1 and 2 of the implied closure of M-09 (H-85a) for a start tag in
+/// HTML context with `name`, outside block content and outside the
+/// `noscript` content C. `f` is F (see [`table_context`]); `stack_len` is
+/// the size of the token stack. Do at most [`CLOSURE_STEPS`] steps. The
+/// analysis and the token stack of `scan` both use it.
+pub(crate) fn closure_step(name: NameId, f: Option<(usize, NameId)>, stack_len: usize) -> Closure {
+    use Known::{Colgroup, Tbody, Tfoot, Thead, Tr};
+    let (Some(allowed), Some((index, context))) = (allowed_parents(name), f) else {
+        return Closure::Done;
+    };
+    if is_any(context, allowed) {
+        return Closure::Done;
+    }
+    // Step 2: as condition 2, F is the current node.
+    if is_any(context, &[Tr, Tbody, Thead, Tfoot, Colgroup])
+        && index.checked_add(1) != Some(stack_len)
+    {
+        return Closure::NotCurrent;
+    }
+    Closure::Close(index, context)
+}
 
 /// M-09: the names that F may have for a table part start tag. `None` for
 /// every other name (also `table`).
@@ -373,11 +424,7 @@ impl Pass<'_> {
     fn table_context_at(&self) -> Option<(usize, NameId)> {
         let index = *self.table_marks.last()?;
         let name = self.stack.get(index)?.name;
-        if self.names.has(name, flag::TEMPLATE) {
-            None
-        } else {
-            Some((index, name))
-        }
+        table_context(&self.names, Some((index, name)))
     }
 
     /// M-09: the name of F.
@@ -457,7 +504,7 @@ impl Pass<'_> {
             marked: false,
             implied: 0,
         });
-        if html && self.names.has(name, flag::TABLE_FAMILY | flag::TEMPLATE) {
+        if html && self.names.has(name, TABLE_MARKS) {
             self.table_marks.push(index);
         }
         if html && name == Known::Form.id() {
@@ -598,27 +645,15 @@ impl Pass<'_> {
     /// does not allow the tag. Each step is the end tag of F. At most
     /// [`CLOSURE_STEPS`] steps; it never closes a `table`.
     fn implied_closure(&mut self, name: NameId) -> Result<(), MarkupError> {
-        use Known::{Colgroup, Tbody, Tfoot, Thead, Tr};
         if self.block.is_some() || self.in_noscript {
             return Ok(());
         }
-        let Some(allowed) = allowed_parents(name) else {
-            return Ok(());
-        };
         for _ in 0..CLOSURE_STEPS {
-            let Some((index, context)) = self.table_context_at() else {
-                return Ok(());
-            };
-            if is_any(context, allowed) {
-                return Ok(());
+            match closure_step(name, self.table_context_at(), self.stack.len()) {
+                Closure::Done => return Ok(()),
+                Closure::NotCurrent => return Err(structure("M-09")),
+                Closure::Close(index, context) => self.close(context, index)?,
             }
-            // Step 2: as condition 2, F is the current node.
-            if is_any(context, &[Tr, Tbody, Thead, Tfoot, Colgroup])
-                && index.checked_add(1) != Some(self.stack.len())
-            {
-                return Err(structure("M-09"));
-            }
-            self.close(context, index)?;
         }
         Ok(())
     }

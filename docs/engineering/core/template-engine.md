@@ -158,7 +158,18 @@ The template of a split is never longer than the input, so `split_v1` has no out
 
 <Badge type="tip" text="FACT" /> A lower value gives `RQP_MARKUP_LIMIT` earlier. A higher value has no effect. `TemplateLimits::default()` gives the values of M-26 (tests `rqp_limits_*`).
 
-<Badge type="tip" text="FACT" /> Resource bounds: the token stack holds at most D elements, and D is at most `max_open_elements`. The work and the memory are linear in the input size: the name table holds one entry per distinct tag name, and the check of a `noscript` content makes one copy of that content.
+<Badge type="tip" text="FACT" /> Resource bounds: the token stack holds at most D elements, and D is at most `max_open_elements`. The work and the memory are linear in the input size. The check of a `noscript` content makes one copy of that content.
+
+<Badge type="tip" text="FACT" /> Name table (WP-06 S2, security review finding S1-3): the table of tag names keeps the names of the rules (static bytes) and another name only while an element with that name is open on the token stack, plus one pending name (the last start tag that pushed nothing). A freed entry is used again for the next new name. So the table holds at most R + S + 1 entries (R: the names of the rules; S: the largest token stack, at most D in the analysis and `max_open_elements` + 2 in the scan). It copies at most the bytes of the open names, which are at most the input size (plus the 11 bytes of the `</noscript>` that M-11 item 8 adds after C). The hash reads the normalized name from the raw bytes, so no buffer grows with a name. The candidate `tools/rqp-markup/rust` has the same table (DL-161). Test: `rqp_names_memory_bound`.
+
+| Input of about 5 MiB | Extra peak heap before | After |
+|---|---|---|
+| 635 000 distinct self-closing names in `<svg>` | 66.8 MB | 30.5 KB |
+| 352 000 distinct names, each opened and closed | 33.4 MB | 30.5 KB |
+| One start tag with a name of U+0000 bytes | 32.5 MB | 5.3 MB |
+| 256 open elements with names of 20 KiB | 5.3 MB | 5.3 MB |
+
+<Badge type="tip" text="FACT" /> The table gives the peak heap of `split_rqp` above the input, measured on 2026-11-13 with a counting global allocator in a release build (Rust 1.99.0). The scan has the same values within 8 KB. The last two rows are the copies of the open names (one copy of the input bytes at most); before the change a U+0000 name also had a normalized copy and a normalized scratch buffer of three times its size.
 
 <Badge type="tip" text="FACT" /> The scan `scan(input, limits)` takes the same `TemplateLimits` (WP-06 S1 T-06, security review finding S1-2). A limit stop is one error item, the last item of the scan, never a silent cut. The caller must fail closed.
 
@@ -167,7 +178,9 @@ The template of a split is never longer than the input, so `split_v1` has no out
 | Input larger than the smaller of `max_document_bytes()` and 5 MiB | `RQP_MARKUP_LIMIT`, rule `M-01`, before any token |
 | A push that makes the token stack larger than `max_open_elements()` + 2 (resource limits: the WHATWG stack is at most D + 2) | `RQP_MARKUP_LIMIT`, rule `M-26`, in place of the start tag |
 
-<Badge type="tip" text="FACT" /> The scan does not apply the implied closure of M-09, so its token stack can be larger than the token stack of `split_rqp`. A valid document with a long table of cells and rows without end tags stops the scan: the markup fixture `FX-RQ-MARKUP-TABLE-CLOSE-DEPTH` (300 rows of `<tr><td>a<td>b`, max D 5) is valid and stops the scan at the stack limit. It is the only one of the 401 HTML inputs of `fixtures/rqp` (185 valid) that `split_rqp` accepts and the scan stops (tests `scan_limit_stops_of_the_markup_fixtures`, `scan_limit_stack_can_stop_a_document_that_split_rqp_accepts`). The other stop is `FX-RQ-MARKUP-LIMIT-INPUT-SIZE` (M-01). <Badge type="info" text="DESIGN" /> WP-06 S2 decides whether the scan applies the closure of M-09 before the head walk and the patch content rule use it.
+<Badge type="tip" text="FACT" /> The token stack of the scan applies the implied closure of M-09 (H-85a) with the same steps as `split_rqp` (WP-06 S2, DL-170): a table part start tag in HTML context first closes F while F does not allow the tag (at most three steps; a `template` ends the search for F; when F must be the current node and is not, nothing closes and `split_rqp` rejects the document). Both use one function of the rules module, so the rule tables have one copy. `split_rqp` applies no closure in block content; there a closure step would close only where M-09 rejects the start tag, so the scan does not track blocks. For a document that `split_rqp` accepts, the token stack of the scan is the one of `split_rqp`: it is never larger than D, and each tag has the foreign region of `split_rqp`.
+
+<Badge type="tip" text="FACT" /> Of the 401 HTML inputs of `fixtures/rqp` (185 valid), the scan stops only on `FX-RQ-MARKUP-LIMIT-INPUT-SIZE` (M-01), where `split_rqp` gives `RQP_MARKUP_LIMIT` too. It reads `FX-RQ-MARKUP-TABLE-CLOSE-DEPTH` (300 rows of `<tr><td>a<td>b`, max D 5) to the end; before WP-06 S2 that valid fixture stopped the scan at the stack limit. Tests: `scan_reads_every_valid_markup_fixture`, `scan_stack_applies_implied_closure`, and the property `scan_prop_valid_documents_scan_to_the_end` (for generated documents that the analysis accepts with `max_open_elements` from 0 to 24: no error item, the stack at most D, the foreign region of every tag equal to the one of the analysis).
 
 <Badge type="tip" text="FACT" /> Errors: `MarkupError` holds the code and the rule id only. `Display` and `Debug` hold no document bytes (test `rqp_error_holds_no_input`). The `Debug` output of the public types of the scan (`Token`, `Tag`, `Attribute`, `Attributes`, `Scanner`, `Span`) holds spans, lengths and flags only, never input bytes, tag names, attribute names or values (test `scan_debug_holds_no_input`; [errors and logging](/engineering/architecture/errors-logging) §4).
 
@@ -178,7 +191,9 @@ The template of a split is never longer than the input, so `split_v1` has no out
 | `rqp_markup_fixtures` | All 362 markup fixtures (148 valid, 214 invalid): `valid`, the error code, the blocks (id, format, start, end, sha256), the template revision and `page_revision(None, None)` equal `expected.json` |
 | `rqp_rules`, `rqp_api`, `rqp_props` | Ports of the candidate tests of the rules, of the scan API and of the properties |
 | `rqp_limits_*` | The limits of section 6.1 at the value and one above, with lower, default and higher values |
-| `rqp_scan` (`scan_debug_*`, `scan_limit_*`) | The scan: no input bytes in `Debug`; the M-01 limit and the token stack limit at the value and one above; the stops on the markup fixtures |
+| `rqp_scan` (`scan_debug_*`, `scan_limit_*`, `scan_reads_every_valid_markup_fixture`, `scan_stack_applies_implied_closure`) | The scan: no input bytes in `Debug`; the M-01 limit and the token stack limit at the value and one above; the implied closure of M-09 on the token stack; the stops on the HTML inputs of `fixtures/rqp` |
+| `scan_prop_valid_documents_scan_to_the_end` (unit test of `scan`) | For a document that the analysis accepts, the scan reads to the end with the token stack of the analysis and its foreign regions |
+| `rqp_names_memory_bound` (unit test of `names`) | The name table on pages of distinct names stays at the rule names plus the open names, and copies at most the input size |
 | `rqp_prop_round_trip` | The template (the input without every `[start, end)`) plus the block contents gives the input back; the template revision and the block hashes agree |
 | `rqp_prop_any_bytes` | Any bytes with any limits: no panic, no internal defect, a valid result within the limits |
 

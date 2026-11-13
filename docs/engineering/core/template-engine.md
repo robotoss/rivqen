@@ -183,3 +183,37 @@ The template of a split is never longer than the input, so `split_v1` has no out
 | `rqp_prop_any_bytes` | Any bytes with any limits: no panic, no internal defect, a valid result within the limits |
 
 <Badge type="info" text="DESIGN" /> Two copies of the markup analysis exist until the candidate retires. A change of the markup rules changes both copies. The fixture test and `diff.mjs` find a drift of either copy (WP-06 S1, risk R-2).
+
+## 9. Patched document
+
+<Badge type="tip" text="FACT" /> `rqp::patch` builds and checks the patched document: steps 8 and 9 of [manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), checks 12 and 13 of the [diff engine](/engineering/core/diff-engine). It runs after `rivqen_proto::delta::verify_delta` (steps 3 to 7).
+
+| Function | Content |
+|---|---|
+| `render_rqp(original, analysis, replacements, limits)` | The stored original with the content range `start..end` of each named block replaced. Blocks must be in strictly increasing order and their ranges must lie in the original, else `BadReplacement` (`PATCH_INVALID`). The output size is computed with checked arithmetic before the one allocation. Over `max_document_bytes`: `TooLarge` (`PATCH_TOO_LARGE`). The limit passes at its value and fails one byte over. No partial result on an error |
+| `check_patch(original, stored, meta, delta, limits)` | The checks below, in this order. The result is a `PatchedDocument` (document, analysis, R′) or a `PatchError` for the first failed check |
+| `compute::page_revision_of` (`rivqen-proto`) | The page revision from descriptors taken by reference from an iterator. Same value as `page_revision`; `RqpDocument::page_revision` uses it, so it does not clone the descriptors (DL-175) |
+
+Order of the checks in `check_patch`:
+
+| # | Check | Error | Code |
+|---|---|---|---|
+| 1 | `stored` is the analysis of the snapshot of `meta` (same template revision, same descriptors in order) | `Snapshot` | `INTEGRITY_ERROR` |
+| 2 | Build the patched document; operation i replaces block `delta.patched()[i].block` with the UTF-8 bytes of its content | `TooLarge` | `PATCH_TOO_LARGE` |
+| 3 | `split_rqp` of the result | `Markup` | `PATCH_CONTENT_REJECTED` |
+| 4 | Template revision equal to `meta.template_revision` | `TemplateChanged` | `PATCH_CONTENT_REJECTED` |
+| 5 | Same blocks (`id`, `format`, order) | `BlocksChanged` | `PATCH_CONTENT_REJECTED` |
+| 6 | Page revision of the result with `meta.policy` and `meta.limits` equals R′ of the delta | `PageRevisionDiffers` | `INTEGRITY_ERROR` |
+| 7 | `check_patch_content` on the block indices of `delta.patched()` (step 9) | `Content` | `PATCH_CONTENT_REJECTED` |
+
+A delta that does not fit the stored document (a block index without a block) gives `Snapshot`. The id and the format of a block are in its start tag, so a changed block list with an equal template revision cannot occur; check 5 is a second guard. A content that closes its block early changes the template and gives `TemplateChanged`. No error holds a document byte.
+
+| Test (`rqp_patch`) | Checks |
+|---|---|
+| `patch_render_*` | Replacement, order, missing block, range outside the original, size limit at the value and one over, error codes |
+| `patch_check_accepts_json_patch`, `patch_check_uses_operation_content`, `patch_check_applies_each_operation_to_its_own_block` | The accept path and the content bytes |
+| `patch_check_order_*`, `patch_check_codes`, `patch_check_page_revision_*`, `patch_check_early_close_changes_the_template` | Order of the checks and the codes |
+| `patch_check_markup_*` | Cases of [§4.1](/engineering/protocol/manifest-patch#_4-1-markup-analysis-of-the-patched-document) rejected in step 8 |
+| `patch_check_html_operation_reaches_the_content_rule` | Step 9 wiring |
+| `patch_errors_hold_no_content` | No content byte in `Display` or `Debug` of an error |
+| `patch_prop_render_keeps_template`, `patch_prop_page_revision_of_equals_page_revision` | Render keeps the template and the block ids; each patched block has the hash of its new content; `page_revision_of` equals `page_revision` |

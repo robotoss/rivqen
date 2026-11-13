@@ -33,8 +33,8 @@ use rivqen_proto::delta::VerifiedDelta;
 use rivqen_proto::types::SnapshotMeta;
 
 use crate::limits::TemplateLimits;
-use crate::rqp::content::ContentError;
-use crate::rqp::{MarkupError, RqpDocument};
+use crate::rqp::content::{ContentError, check_patch_content};
+use crate::rqp::{MarkupError, RqpDocument, split_rqp};
 
 /// The new content of one block. Contract.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -101,8 +101,64 @@ pub fn render_rqp(
     replacements: &[Replacement<'_>],
     limits: &TemplateLimits,
 ) -> Result<Vec<u8>, RenderRqpError> {
-    let _ = (original, document, replacements, limits);
-    Err(RenderRqpError::BadReplacement)
+    let size = checked_output_size(original, document, replacements)?;
+    if size > limits.max_document_bytes() {
+        return Err(RenderRqpError::TooLarge);
+    }
+    let mut output: Vec<u8> = Vec::with_capacity(size);
+    let mut cursor = 0_usize;
+    for replacement in replacements {
+        let block = document
+            .blocks
+            .get(replacement.block)
+            .ok_or(RenderRqpError::BadReplacement)?;
+        let before = original
+            .get(cursor..block.start)
+            .ok_or(RenderRqpError::BadReplacement)?;
+        output.extend_from_slice(before);
+        output.extend_from_slice(replacement.content);
+        cursor = block.end;
+    }
+    let tail = original
+        .get(cursor..)
+        .ok_or(RenderRqpError::BadReplacement)?;
+    output.extend_from_slice(tail);
+    Ok(output)
+}
+
+/// Check every replacement and compute the output size with checked
+/// arithmetic, before anything is allocated. Ranges must lie in `original`,
+/// follow each other and not overlap.
+fn checked_output_size(
+    original: &[u8],
+    document: &RqpDocument,
+    replacements: &[Replacement<'_>],
+) -> Result<usize, RenderRqpError> {
+    let mut size = original.len();
+    let mut cursor = 0_usize;
+    let mut previous: Option<usize> = None;
+    for replacement in replacements {
+        if previous.is_some_and(|p| replacement.block <= p) {
+            return Err(RenderRqpError::BadReplacement);
+        }
+        previous = Some(replacement.block);
+        let block = document
+            .blocks
+            .get(replacement.block)
+            .ok_or(RenderRqpError::BadReplacement)?;
+        if block.start < cursor || block.start > block.end || block.end > original.len() {
+            return Err(RenderRqpError::BadReplacement);
+        }
+        cursor = block.end;
+        let removed = block.end.checked_sub(block.start);
+        size = removed
+            .and_then(|removed| size.checked_sub(removed))
+            .ok_or(RenderRqpError::BadReplacement)?;
+        size = size
+            .checked_add(replacement.content.len())
+            .ok_or(RenderRqpError::TooLarge)?;
+    }
+    Ok(size)
 }
 
 /// A patched document that passed steps 8 and 9. Contract.
@@ -219,6 +275,64 @@ pub fn check_patch(
     delta: &VerifiedDelta,
     limits: &TemplateLimits,
 ) -> Result<PatchedDocument, PatchError> {
-    let _ = (original, stored, meta, delta, limits);
-    Err(PatchError::Snapshot)
+    if !is_snapshot_analysis(stored, meta) {
+        return Err(PatchError::Snapshot);
+    }
+    let operations = &delta.envelope().operations;
+    let patched = delta.patched();
+    if operations.len() != patched.len() {
+        return Err(PatchError::Snapshot);
+    }
+    let replacements: Vec<Replacement<'_>> = operations
+        .iter()
+        .zip(patched)
+        .map(|(operation, entry)| Replacement {
+            block: entry.block,
+            content: operation.content.as_bytes(),
+        })
+        .collect();
+    let document = render_rqp(original, stored, &replacements, limits).map_err(|e| match e {
+        RenderRqpError::TooLarge => PatchError::TooLarge,
+        // The delta does not belong to this stored document.
+        RenderRqpError::BadReplacement => PatchError::Snapshot,
+    })?;
+    let analysis = split_rqp(&document, limits).map_err(PatchError::Markup)?;
+    if analysis.template_revision != meta.template_revision {
+        return Err(PatchError::TemplateChanged);
+    }
+    let same_blocks = analysis.blocks.len() == stored.blocks.len()
+        && analysis
+            .blocks
+            .iter()
+            .zip(&stored.blocks)
+            .all(|(new, old)| {
+                new.descriptor.id == old.descriptor.id
+                    && new.descriptor.format == old.descriptor.format
+            });
+    if !same_blocks {
+        return Err(PatchError::BlocksChanged);
+    }
+    let page_revision = analysis.page_revision(meta.policy.as_ref(), meta.limits.as_ref());
+    if page_revision != *delta.next_revision() {
+        return Err(PatchError::PageRevisionDiffers);
+    }
+    let indices: Vec<usize> = patched.iter().map(|entry| entry.block).collect();
+    check_patch_content(&document, &analysis, &indices, limits).map_err(PatchError::Content)?;
+    Ok(PatchedDocument {
+        document,
+        analysis,
+        page_revision,
+    })
+}
+
+/// `stored` is the analysis of the snapshot of `meta`: same template
+/// revision and the same descriptors in order.
+fn is_snapshot_analysis(stored: &RqpDocument, meta: &SnapshotMeta) -> bool {
+    stored.template_revision == meta.template_revision
+        && stored.blocks.len() == meta.blocks.len()
+        && stored
+            .blocks
+            .iter()
+            .zip(&meta.blocks)
+            .all(|(block, descriptor)| block.descriptor == *descriptor)
 }

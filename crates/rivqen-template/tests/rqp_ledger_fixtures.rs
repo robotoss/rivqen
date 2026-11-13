@@ -46,10 +46,10 @@ use rivqen_testkit::fixtures::{
 use rivqen_testkit::ledger::{Ledger, Owner};
 use serde_json::Value;
 
-/// The DL-145 counts of the WP-06 part of the ledger.
+/// The counts of the WP-06 part of the ledger (DL-145; reasons DL-176).
 const WP06: usize = 104;
-const MARKUP: usize = 68;
-const CONTENT: usize = 34;
+const MARKUP: usize = 74;
+const CONTENT: usize = 28;
 const LOCATOR: usize = 2;
 /// The branches of the document part (measured from `expected.json`).
 const FULL_STORED: usize = 28;
@@ -450,10 +450,22 @@ fn run_delta(fixture: &Fixture, reason: &str) -> Branch {
                 "PATCH_CONTENT_REJECTED",
                 "{id}: {error:?}"
             );
+            // The reason names the step that rejects (DL-176): `content` is
+            // step 9, `markup` is step 8.
             if reason == "content" {
                 assert!(
                     matches!(error, PatchError::Content(_)),
                     "{id}: content reason, got {error:?}"
+                );
+            } else {
+                assert!(
+                    matches!(
+                        error,
+                        PatchError::Markup(_)
+                            | PatchError::TemplateChanged
+                            | PatchError::BlocksChanged
+                    ),
+                    "{id}: {reason} reason, got {error:?}"
                 );
             }
             Branch::DeltaRejected

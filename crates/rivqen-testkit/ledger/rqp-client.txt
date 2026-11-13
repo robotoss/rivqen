@@ -8,9 +8,11 @@
 # Read by rivqen_testkit::ledger; a fixture without a line, or a line without a fixture, fails the test.
 # WP-06 reasons (R-4 of WP-06 S1; the WP-06 test is rivqen-template tests/rqp_ledger_fixtures.rs):
 #   markup  - the document part decides the outcome: the manifest position and the analysis of the
-#             full document (manifest-patch 1.7, 1.8 item 5) or of the patched document (2.4 step 8);
-#             also the accepted cases, whose snapshot the test compares
-#   content - the patch content rule of the patched html blocks (2.4 step 9, section 4)
+#             full document (manifest-patch 1.7, 1.8 item 5) or of the patched document (2.4 step 8,
+#             also when it rejects a delta: the C-10 cases, DL-176); also the accepted cases, whose
+#             snapshot the test compares
+#   content - the patch content rule of the patched html blocks (2.4 step 9, section 4); the test
+#             requires that step 9 is the step that rejects
 #   locator - the manifest text that the locator finds fails the JSON rules or the schema (1.8 items 1, 2)
 FX-RQ-C01-OTHER-BASE WP-05 integrity request-fields
 FX-RQ-C02-OMITTED-BLOCK WP-05 integrity request-fields
@@ -57,12 +59,12 @@ FX-RQ-C09-SVG-ONLOAD WP-06 content request-fields
 FX-RQ-C09-SVG-USE-JAVASCRIPT WP-06 content request-fields
 FX-RQ-C09-VBSCRIPT WP-06 content request-fields
 FX-RQ-C09-VBSCRIPT-CASE-CONTROL WP-06 content request-fields
-FX-RQ-C10-CLOSE-P WP-06 content request-fields
-FX-RQ-C10-JSON-EMPTY WP-06 content request-fields
-FX-RQ-C10-TEMPLATE-SHADOWROOT WP-06 content request-fields
-FX-RQ-C10-TEMPLATE-SHADOWROOT-LEGACY WP-06 content request-fields
-FX-RQ-C10-TEMPLATE-SHADOWROOT-UPPER WP-06 content request-fields
-FX-RQ-C10-TITLE-END WP-06 content request-fields
+FX-RQ-C10-CLOSE-P WP-06 markup request-fields
+FX-RQ-C10-JSON-EMPTY WP-06 markup request-fields
+FX-RQ-C10-TEMPLATE-SHADOWROOT WP-06 markup request-fields
+FX-RQ-C10-TEMPLATE-SHADOWROOT-LEGACY WP-06 markup request-fields
+FX-RQ-C10-TEMPLATE-SHADOWROOT-UPPER WP-06 markup request-fields
+FX-RQ-C10-TITLE-END WP-06 markup request-fields
 FX-RQ-C11-MANIFEST-OTHER-PAGE WP-06 markup request-fields
 FX-RQ-C12-MANIFEST-IN-BODY WP-06 markup request-fields
 FX-RQ-C13-TWO-MANIFESTS WP-06 markup request-fields

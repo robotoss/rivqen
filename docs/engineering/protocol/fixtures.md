@@ -75,14 +75,14 @@ The inputs of the checks that belong to the session (WP-08) come from the contex
 
 | Selection | Count | Run | Test |
 |---|---|---|---|
-| Ledger of WP-06: reasons `markup` 68, `content` 34, `locator` 2 | 104 | the counts of the ledger | `ledger_wp06_counts` |
+| Ledger of WP-06: reasons `markup` 74, `content` 28, `locator` 2 | 104 | the counts of the ledger | `ledger_wp06_counts` |
 | First visit, `stored` | 28 | `rqp::full::read_full_document`; `expected.result.snapshot` | `ledger_wp06_full_stored` |
 | First visit, `MANIFEST_INVALID` (2 with the reason `locator` fail in `FullDocumentError::Manifest`) | 16 | `read_full_document` | `ledger_wp06_full_rejected` |
 | Delta, `patched` | 26 | `delta::verify_delta`, then `rqp::patch::check_patch`; `expected.result.snapshot` | `ledger_wp06_delta_patched` |
 | Delta, `PATCH_CONTENT_REJECTED` | 34 | `verify_delta`, then `check_patch`; the error code | `ledger_wp06_delta_rejected` |
 | All branches together | 104 | the count of each branch is 28, 16, 26, 34 | `ledger_wp06_fully_covered` |
 
-<Badge type="info" text="DESIGN" /> **WP-06 reasons (H-142).** `markup` (68): the document part decides the outcome: the manifest position and the markup analysis of the full document (manifest and patch §1.7, §1.8 item 5) or of the patched document (§2.4 step 8); the accepted cases are here too, and the test compares their snapshot (template revision, page revision, blocks, `document_sha256`). `content` (34): the patch content rule of the patched `html` blocks (§2.4 step 9, §4). `locator` (2): the manifest text that the locator finds fails the JSON rules or the schema (§1.8 items 1 and 2). WP-06 runs all 104 in `crates/rivqen-template/tests/rqp_ledger_fixtures.rs` (WP-06 S2); partition, URL canonicalization, allowlist, build flags and `next` are the end-to-end test of WP-08.
+<Badge type="info" text="DESIGN" /> **WP-06 reasons (H-142, DL-176).** The reason names the step that decides. `markup` (74): the manifest position and the markup analysis of the full document (manifest and patch §1.7, §1.8 item 5) or of the patched document (§2.4 step 8); the 54 accepted cases are here, and the test compares their snapshot (template revision, page revision, blocks, `document_sha256`); so are the six C-10 deltas that step 8 rejects with `PATCH_CONTENT_REJECTED`. `content` (28): step 9, the patch content rule of the patched `html` blocks (§4); the test requires that step 9 is the step that rejects. `locator` (2): the manifest text that the locator finds fails the JSON rules or the schema (§1.8 items 1 and 2). WP-06 runs all 104 in `crates/rivqen-template/tests/rqp_ledger_fixtures.rs` (WP-06 S2); partition, URL canonicalization, allowlist, build flags and `next` are the end-to-end test of WP-08.
 
 ## 2. Rules
 

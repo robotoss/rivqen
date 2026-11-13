@@ -3,7 +3,8 @@
 
 //! The scan of `rivqen_template::rqp::scan` after the WP-06 S1 security
 //! review: no input bytes in `Debug` (finding S1-1), and the M-01 input
-//! limit and the token stack limit `max_open_elements() + 2` (finding S1-2).
+//! limit and the token stack limit `max_open_elements() + 2` (finding S1-2);
+//! the implied closure of M-09 on the token stack (WP-06 S2, DL-170).
 
 #![allow(
     clippy::unwrap_used,
@@ -19,6 +20,8 @@ use rivqen_template::limits::{
 use rivqen_template::rqp::scan::{Token, scan};
 use rivqen_template::rqp::{MarkupCode, MarkupError, split_rqp};
 use rivqen_testkit::markup::load;
+use std::fs;
+use std::path::{Path, PathBuf};
 
 const MARKER: &str = "qzsecretmarkerqz";
 
@@ -265,54 +268,115 @@ fn scan_limit_stack_over_open_elements() {
     );
 }
 
-/// The markup fixtures that stop the scan with the default limits. A stop
-/// is one `RQP_MARKUP_LIMIT` item. An invalid fixture that stops is one
-/// that `split_rqp` rejects with `RQP_MARKUP_LIMIT` too. The one valid
-/// fixture that stops is the known gap of the next test.
-#[test]
-fn scan_limit_stops_of_the_markup_fixtures() {
-    let fixtures = load().unwrap();
-    assert_eq!(fixtures.len(), 362);
-    let limits = TemplateLimits::default();
-    let (mut valid, mut stopped_valid, mut stopped_invalid) = (0, Vec::new(), Vec::new());
-    for fixture in &fixtures {
-        let errors: Vec<MarkupError> = scan(&fixture.input, &limits)
-            .filter_map(Result::err)
-            .collect();
-        let result = split_rqp(&fixture.input, &limits);
-        valid += usize::from(result.is_ok());
-        match errors.as_slice() {
-            [] => continue,
-            [stop] => assert_eq!(stop.code(), MarkupCode::Limit, "{}", fixture.id),
-            more => panic!("{}: {more:?}", fixture.id),
-        }
-        match result {
-            Ok(_) => stopped_valid.push(fixture.id.as_str()),
-            Err(error) => {
-                assert_eq!(error.code(), MarkupCode::Limit, "{}", fixture.id);
-                stopped_invalid.push(fixture.id.as_str());
-            }
+/// Every `*.html` file under `dir`, in path order.
+fn html_files(dir: &Path, out: &mut Vec<PathBuf>) {
+    let mut entries: Vec<PathBuf> = fs::read_dir(dir)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .collect();
+    entries.sort();
+    for path in entries {
+        if path.is_dir() {
+            html_files(&path, out);
+        } else if path.extension().is_some_and(|ext| ext == "html") {
+            out.push(path);
         }
     }
-    assert_eq!(valid, 148);
-    assert_eq!(stopped_valid, ["FX-RQ-MARKUP-TABLE-CLOSE-DEPTH"]);
-    assert_eq!(stopped_invalid, ["FX-RQ-MARKUP-LIMIT-INPUT-SIZE"]);
 }
 
-/// Known gap (WP-06 S1 T-06 report): the scan does not apply the implied
-/// closure of M-09, so a table row with more than 258 cells without `</td>`
-/// passes `split_rqp` and stops the scan. The stop fails closed.
+/// DL-170: of the HTML inputs of `fixtures/rqp` (the markup fixtures and
+/// the pages of the protocol fixtures), the scan with the default limits
+/// stops only where `split_rqp` gives `RQP_MARKUP_LIMIT` too, and it reads
+/// every input that `split_rqp` accepts to the end. Before the implied
+/// closure of M-09, `FX-RQ-MARKUP-TABLE-CLOSE-DEPTH` (valid) stopped it.
 #[test]
-fn scan_limit_stack_can_stop_a_document_that_split_rqp_accepts() {
+fn scan_reads_every_valid_markup_fixture() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/rqp");
+    let mut paths = Vec::new();
+    html_files(&root, &mut paths);
+    assert_eq!(paths.len(), 401);
     let limits = TemplateLimits::default();
-    let cells = |count: usize| format!("<table><tr>{}</table>", "<td>a".repeat(count)).into_bytes();
-    let short = cells(256);
-    assert!(split_rqp(&short, &limits).is_ok());
-    assert!(items(&short, &limits).iter().all(Result::is_ok));
-    let long = cells(300);
-    assert!(split_rqp(&long, &limits).is_ok());
-    assert_eq!(
-        last_error(&items(&long, &limits)),
-        (MarkupCode::Limit, "M-26")
-    );
+    let (mut valid, mut stopped) = (0, Vec::new());
+    for path in &paths {
+        let input = fs::read(path).unwrap();
+        let name = path.strip_prefix(&root).unwrap().display().to_string();
+        let errors: Vec<MarkupError> = scan(&input, &limits).filter_map(Result::err).collect();
+        let result = split_rqp(&input, &limits);
+        valid += usize::from(result.is_ok());
+        match (errors.as_slice(), result) {
+            ([], _) => {}
+            ([stop], Err(error)) => {
+                assert_eq!(stop.code(), MarkupCode::Limit, "{name}");
+                assert_eq!(error.code(), MarkupCode::Limit, "{name}");
+                stopped.push(name);
+            }
+            (more, result) => panic!("{name}: {more:?}, split_rqp {:?}", result.err()),
+        }
+    }
+    assert_eq!(valid, 185);
+    assert_eq!(stopped, ["markup/FX-RQ-MARKUP-LIMIT-INPUT-SIZE/input.html"]);
+    // The markup fixture of DL-170 is among the inputs and valid.
+    let table = load()
+        .unwrap()
+        .into_iter()
+        .find(|fixture| fixture.id == "FX-RQ-MARKUP-TABLE-CLOSE-DEPTH")
+        .unwrap();
+    assert!(split_rqp(&table.input, &limits).is_ok());
+    assert!(items(&table.input, &limits).iter().all(Result::is_ok));
+}
+
+/// DL-170: the token stack of the scan applies the implied closure of M-09
+/// (H-85a) as `split_rqp` does, so a table without the end tags of its
+/// cells, rows, row groups, caption or column group keeps a small stack.
+/// The cap `max_open_elements() + 2` stays.
+#[test]
+fn scan_stack_applies_implied_closure() {
+    // One unit of D gives a stack of at most 3 in the scan.
+    let one = limits(MAX_MARKUP_INPUT_BYTES, 1);
+    let tight = limits(MAX_MARKUP_INPUT_BYTES, 8);
+    let ok = |input: &str, limits: &TemplateLimits| {
+        items(input.as_bytes(), limits).iter().all(Result::is_ok)
+    };
+    let stops = |input: &str, limits: &TemplateLimits| {
+        last_error(&items(input.as_bytes(), limits)) == (MarkupCode::Limit, "M-26")
+    };
+    for (shape, open) in [
+        // Cells close cells and rows close rows (stack table, tr, td).
+        ("<table><tr>{}</table>", "<td>a"),
+        ("<table><tr>{}</table>", "<td>a<th>b"),
+        ("<table>{}</table>", "<tr><td>a<td>b"),
+        // A row group closes the cell, the row and the row group.
+        ("<table>{}</table>", "<thead><tr><th>h<tbody><tr><td>d"),
+        // A caption and a column group close before a row.
+        (
+            "<table>{}</table>",
+            "<caption>c<colgroup><col><tr><td>x<tbody>",
+        ),
+        // The closure crosses elements as the end tag of F does.
+        ("<table><tr><td><div>a{}</table>", "<td>b"),
+    ] {
+        let input = shape.replace("{}", &open.repeat(300));
+        assert_eq!(split_rqp(input.as_bytes(), &tight).err(), None, "{open}");
+        assert!(ok(&input, &tight), "{open}");
+    }
+    // The fixture shape: 300 rows of `<tr><td>a<td>b`, D at most 5.
+    let rows = format!("<table>{}</table>", "<tr><td>a<td>b".repeat(300));
+    let five = limits(MAX_MARKUP_INPUT_BYTES, 5);
+    assert!(split_rqp(rows.as_bytes(), &five).is_ok());
+    assert!(ok(&rows, &one));
+
+    // No closure: a `template` ends the search for F, and F that must be
+    // the current node is not (step 2; `split_rqp` rejects that document).
+    assert!(stops("<table><td><template><td><td>", &one));
+    assert!(ok("<table><td><template></template><td><td>", &one));
+    assert!(stops("<table><tr><b><td>", &one));
+    assert!(ok("<table><td><b><td>", &one));
+    // In a foreign region a table part is a foreign element: no closure.
+    assert!(stops("<svg><td><td><td>", &one));
+    assert!(ok("<table><td><svg></svg><td><td>", &one));
+    // A table part closes only table parts: `table` is never closed.
+    assert!(stops("<table><td><table><td>", &one));
+    // The cap stays: elements that are not table parts still count.
+    assert!(stops(&"<div>".repeat(4), &one));
+    assert!(ok(&"<div>".repeat(3), &one));
 }

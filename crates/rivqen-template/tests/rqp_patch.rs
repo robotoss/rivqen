@@ -574,6 +574,19 @@ fn patch_errors_hold_no_content() {
     )
     .unwrap_err();
     assert!(!format!("{render} {render:?}").contains(MARK));
+    // A replacement: Debug gives the block index and the length (S2-1).
+    let replacement = Replacement {
+        block: 1,
+        content: MARK.as_bytes(),
+    };
+    let text = format!("{replacement:?} {replacement:#?}");
+    assert!(!text.contains(MARK), "{text}");
+    assert!(!text.contains(&format!("{:?}", MARK.as_bytes())), "{text}");
+    assert!(text.contains("block: 1"), "{text}");
+    assert!(
+        text.contains(&format!("content_len: {}", MARK.len())),
+        "{text}"
+    );
     // An accepted patched document: Debug gives sizes only.
     let done = patch(PAGE, &[op("price", &format!("<b>{MARK}</b>"))]).unwrap();
     let text = format!("{done:?} {done:#?}");

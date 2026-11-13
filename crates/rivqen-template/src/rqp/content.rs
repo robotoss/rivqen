@@ -237,9 +237,18 @@ impl HasErrorCode for ContentError {
 /// is not in `document`, rejects with [`ContentViolation::Markup`]. The
 /// first violation in document order wins. Contract.
 ///
+/// `analysis` MUST be the result of [`split_rqp`](crate::rqp::split_rqp)
+/// on exactly these `document` bytes: with the block ranges of another
+/// document (for example of the stored original) the rule reads other
+/// bytes than the new content. A session calls
+/// [`check_patch`](crate::rqp::patch::check_patch), which keeps the pair
+/// together; this function is public for the tests and the fuzz target.
+///
 /// The function first checks every index of `patched` (also of a `json`
 /// block): a missing block, a range with `start > end` or `end` after the
-/// end of `document`, and two patched `html` blocks whose ranges overlap
+/// end of `document`, a range that does not start after a `>` and end at a
+/// `<` (the start tag and the end tag of the block), and two patched `html`
+/// blocks whose ranges overlap
 /// reject with [`ContentViolation::Markup`] (an internal defect of the
 /// caller; a valid analysis has none of them). When no patched block is an
 /// `html` block, the document is not read. Else the [`scan`] reads
@@ -363,6 +372,18 @@ fn html_ranges(
     for &block in patched {
         let entry = analysis.blocks.get(block).ok_or_else(|| defect(block))?;
         if entry.start > entry.end || entry.end > document.len() {
+            return Err(defect(block));
+        }
+        // `analysis` must be the analysis of `document` (S2 security
+        // review, finding S2-2). The content of a block starts after the
+        // `>` of its start tag and ends at the `<` of its end tag (M-27);
+        // ranges of another document that do not have these bytes reject.
+        let after_start_tag = entry
+            .start
+            .checked_sub(1)
+            .and_then(|at| document.get(at))
+            .is_some_and(|&byte| byte == b'>');
+        if !after_start_tag || document.get(entry.end) != Some(&b'<') {
             return Err(defect(block));
         }
         if entry.descriptor.format == BlockFormat::Html {

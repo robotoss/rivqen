@@ -242,26 +242,72 @@ fn content_scope_range_outside_the_document_rejects() {
             "{start}..{end}"
         );
     }
-    // Also for a `json` block, and an empty range at the end is in range.
+    // Also for a `json` block, and an empty content is in range.
     let analysis = analysis(&[(23, 99, BlockFormat::Json)]);
     assert!(check_patch_content(text, &analysis, &[0], &TemplateLimits::default()).is_err());
-    let analysis = self::analysis(&[(31, 31, BlockFormat::Html)]);
+    let empty = b"<div data-rq-block=\"a\"></div>";
+    let analysis = self::analysis(&[(23, 23, BlockFormat::Html)]);
     assert_eq!(
-        check_patch_content(text, &analysis, &[0], &TemplateLimits::default()),
+        check_patch_content(empty, &analysis, &[0], &TemplateLimits::default()),
         Ok(())
     );
 }
 
 #[test]
+fn content_scope_range_not_at_the_tags_of_a_block_rejects() {
+    // S2-2: the ranges must be the ranges of this document. A content range
+    // starts after the `>` of the start tag and ends at the `<` of the end
+    // tag; the ranges of another document reject, also for a `json` block.
+    let text = b"<div data-rq-block=\"a\">ok</div>";
+    assert_eq!(&text[23..25], b"ok");
+    for format in [BlockFormat::Html, BlockFormat::Json] {
+        for (start, end) in [(24, 25), (23, 24), (0, 25), (23, 31), (31, 31)] {
+            let analysis = analysis(&[(start, end, format)]);
+            let error =
+                check_patch_content(text, &analysis, &[0], &TemplateLimits::default()).unwrap_err();
+            assert!(
+                matches!(error.violation, ContentViolation::Markup(_)),
+                "{start}..{end}"
+            );
+        }
+        let analysis = analysis(&[(23, 25, format)]);
+        assert_eq!(
+            check_patch_content(text, &analysis, &[0], &TemplateLimits::default()),
+            Ok(())
+        );
+    }
+    // The analysis of the stored original with the bytes of the patched
+    // document: the event handler is in the new content, outside the old
+    // range, and the call rejects.
+    let (original, stored) = document("", &["ok"], "");
+    let patched = String::from_utf8(original.clone())
+        .unwrap()
+        .replace("ok", "<img src=x onerror=x()>ok");
+    assert_ne!(patched.as_bytes(), original.as_slice());
+    assert!(
+        check_patch_content(
+            patched.as_bytes(),
+            &stored,
+            &[0],
+            &TemplateLimits::default()
+        )
+        .is_err()
+    );
+}
+
+#[test]
 fn content_scope_overlapping_ranges_reject() {
-    let text = b"<div data-rq-block=\"a\">okokok</div>";
-    let analysis = analysis(&[(23, 27, BlockFormat::Html), (25, 29, BlockFormat::Html)]);
+    // Each range starts after a `>` and ends at a `<`, so only the overlap
+    // rejects.
+    let text = b"x>ab>cd<ef<";
+    let analysis = analysis(&[(2, 7, BlockFormat::Html), (5, 10, BlockFormat::Html)]);
     let error =
         check_patch_content(text, &analysis, &[0, 1], &TemplateLimits::default()).unwrap_err();
     assert_eq!(error.block, 1);
     assert!(matches!(error.violation, ContentViolation::Markup(_)));
     // Adjacent ranges do not overlap.
-    let analysis = self::analysis(&[(23, 25, BlockFormat::Html), (25, 29, BlockFormat::Html)]);
+    let text = b"x>ab><cd<";
+    let analysis = self::analysis(&[(2, 5, BlockFormat::Html), (5, 8, BlockFormat::Html)]);
     assert_eq!(
         check_patch_content(text, &analysis, &[1, 0], &TemplateLimits::default()),
         Ok(())

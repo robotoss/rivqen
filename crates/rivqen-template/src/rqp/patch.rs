@@ -37,13 +37,24 @@ use crate::rqp::content::{ContentError, check_patch_content};
 use crate::rqp::{MarkupError, RqpDocument, split_rqp};
 
 /// The new content of one block. Contract.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Replacement<'a> {
     /// The index of the block in the blocks of the analysis of the original
     /// document.
     pub block: usize,
     /// The new content bytes.
     pub content: &'a [u8],
+}
+
+/// The block index and the content length, never content bytes
+/// (errors-logging.md section 4; S2 security review, finding S2-1).
+impl fmt::Debug for Replacement<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Replacement")
+            .field("block", &self.block)
+            .field("content_len", &self.content.len())
+            .finish()
+    }
 }
 
 /// Why [`render_rqp`] gives no document. Contract.

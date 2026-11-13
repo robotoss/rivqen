@@ -2,7 +2,7 @@
 
 The template engine (`rivqen-template`) splits HTML into a template and data blocks, rebuilds HTML from them, and computes the legacy hashes. It must reproduce the upstream legacy behavior exactly (canonical profile), and it must be safe on any input.
 
-**Status:** <Badge type="tip" text="FACT" /> Implemented in `crates/rivqen-template` (WP-06 S1, 2026-11-12): the canonical legacy split and rebuild, the legacy SHA-1 values and the RQP markup analysis with its token scanner. <Badge type="info" text="DESIGN" /> The manifest locator, the build of the patched document and the patch content rule follow in WP-06 S2 (H-142). Normative rules: [legacy markers grammar](/engineering/protocol/legacy-markers), [RQP markup](/engineering/protocol/markup).
+**Status:** <Badge type="tip" text="FACT" /> Implemented in `crates/rivqen-template` (WP-06 S1, 2026-11-12): the canonical legacy split and rebuild, the legacy SHA-1 values and the RQP markup analysis with its token scanner; (WP-06 S2, 2026-11-13, H-142): the manifest locator with the client checks of a full document (section 7), the patch content rule (section 8) and the build and check of the patched document (section 9). Normative rules: [legacy markers grammar](/engineering/protocol/legacy-markers), [RQP markup](/engineering/protocol/markup).
 
 [[toc]]
 
@@ -15,9 +15,9 @@ The template engine (`rivqen-template`) splits HTML into a template and data blo
 | `etag_v1(html)` | HTML bytes | Lowercase hex SHA-1 |
 | `template_tag_v1(template)` | Template bytes | Lowercase hex SHA-1 |
 | `split_rqp(input, limits)` | Untrusted bytes with `data-rq-block` markup, checked with the rules M-01 to M-27 of [RQP markup](/engineering/protocol/markup) (section 6) | `RqpDocument`: template revision `t1.`, blocks in document order (`BlockDescriptor` and content offsets; digests computed by the client, H-103), or `MarkupError` (code and rule) |
-| Manifest locator | Full RQP document | The one manifest element at the insertion point P of the head walk ([manifest and patch](/engineering/protocol/manifest-patch) §1.7), or `MANIFEST_INVALID` (H-142) |
-| `render_rqp` | Stored document, block offsets, new block contents | The patched document for the analysis of §2.4 step 8 (H-142) |
-| Patch content rule | Content of each patched `html` block | Accept, or `PATCH_CONTENT_REJECTED` ([manifest and patch](/engineering/protocol/manifest-patch) §4, §4.2; §2.4 step 9; H-142) |
+| `locate_manifest(full, limits)`, `insertion_point(document, limits)`, `read_full_document(full, origin, path, limits)` (section 7) | Full RQP document | The one manifest element at the insertion point P of the head walk ([manifest and patch](/engineering/protocol/manifest-patch) §1.7), or `MANIFEST_INVALID` (H-142) |
+| `render_rqp(original, document, replacements, limits)`, `check_patch(original, stored, meta, delta, limits)` (section 9) | Stored document, block offsets, new block contents | The patched document for the analysis of §2.4 step 8, and the result of steps 8 and 9 (H-142) |
+| `check_patch_content(document, analysis, patched, limits)`, `check_attribute(element, foreign, name, raw_value)` (section 8) | Content of each patched `html` block | Accept, or `PATCH_CONTENT_REJECTED` ([manifest and patch](/engineering/protocol/manifest-patch) §4, §4.2; §2.4 step 9; H-142) |
 
 <Badge type="info" text="DESIGN" /> The legacy data diff (`diff_v1`) is in `rivqen-diff` (WP-08, [diff engine](/engineering/core/diff-engine) §2; DL-160). The legacy functions are behind the Cargo feature `legacy` (DL-164). The limits come as one `TemplateLimits` value (DL-163).
 

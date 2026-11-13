@@ -33,11 +33,22 @@ use crate::rqp::locate::{LocateError, locate_manifest};
 use crate::rqp::{MarkupError, RqpDocument, split_rqp};
 
 /// A full document that passed the client checks. Contract.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct FullDocument {
     original: Vec<u8>,
     document: RqpDocument,
     manifest: PageManifest,
+}
+
+/// Sizes only, never document bytes, the manifest URL or a revision
+/// (errors-logging.md section 4).
+impl fmt::Debug for FullDocument {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("FullDocument")
+            .field("original_len", &self.original.len())
+            .field("blocks", &self.document.blocks.len())
+            .finish_non_exhaustive()
+    }
 }
 
 impl FullDocument {

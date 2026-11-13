@@ -579,3 +579,19 @@ proptest! {
         }
     }
 }
+
+#[test]
+fn full_debug_of_an_accepted_document_holds_no_document_bytes() {
+    let page = PAGE.replace("Static header", SECRET);
+    let full = full_of(&page, &manifest(&revision(&page, None, None), ""));
+    let document = read(full.as_bytes()).unwrap();
+    let text = format!("{document:?} {document:#?}");
+    assert!(!text.contains(SECRET), "{text}");
+    assert!(!text.contains("shop.example.com"), "{text}");
+    assert!(!text.contains('<'), "{text}");
+    assert!(
+        text.contains(&format!("original_len: {}", page.len())),
+        "{text}"
+    );
+    assert!(text.contains("blocks: 3"), "{text}");
+}

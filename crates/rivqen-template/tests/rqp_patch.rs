@@ -455,10 +455,18 @@ fn patch_check_page_revision_uses_policy_and_limits_of_the_snapshot() {
 #[test]
 fn patch_check_html_operation_reaches_the_content_rule() {
     // The step 9 wiring: a patched html block goes to the content rule.
-    // Assert the variant and the code only.
-    let (error, code) = code_of(patch(PAGE, &[op("price", "130.00")]));
+    // The content is valid markup (step 8 passes) with an event handler.
+    let (error, code) = code_of(patch(PAGE, &[op("price", "<b onclick=\"x()\">130.00</b>")]));
     assert!(matches!(error, PatchError::Content(_)), "{error:?}");
     assert_eq!(code, ErrorCode::PatchContentRejected);
+}
+
+#[test]
+fn patch_check_accepts_html_patch() {
+    let done = patch(PAGE, &[op("price", "<b>130.00</b>")]).unwrap();
+    let expected = PAGE.replace("120.00", "<b>130.00</b>");
+    assert_eq!(done.document(), expected.as_bytes());
+    assert_eq!(*done.analysis(), analyze(&expected));
 }
 
 // ---------------------------------------------------------------------------
@@ -544,7 +552,12 @@ fn patch_errors_hold_no_content() {
     let markup = check_patch(PAGE.as_bytes(), &analysis, &meta, &bad, &limits()).unwrap_err();
     let too_large =
         check_patch(PAGE.as_bytes(), &analysis, &meta, &bad, &small(PAGE.len())).unwrap_err();
-    let html = patch(PAGE, &[op("price", &format!("<b>{MARK}</b>"))]).unwrap_err();
+    let html = patch(
+        PAGE,
+        &[op("price", &format!("<b onclick=\"{MARK}\">{MARK}</b>"))],
+    )
+    .unwrap_err();
+    assert!(matches!(html, PatchError::Content(_)), "{html:?}");
     for error in [markup, too_large, html] {
         let text = format!("{error} {error:?}");
         assert!(!text.contains(MARK), "{text}");
@@ -561,6 +574,16 @@ fn patch_errors_hold_no_content() {
     )
     .unwrap_err();
     assert!(!format!("{render} {render:?}").contains(MARK));
+    // An accepted patched document: Debug gives sizes only.
+    let done = patch(PAGE, &[op("price", &format!("<b>{MARK}</b>"))]).unwrap();
+    let text = format!("{done:?} {done:#?}");
+    assert!(!text.contains(MARK), "{text}");
+    assert!(!text.contains('<'), "{text}");
+    assert!(
+        text.contains(&format!("document_len: {}", done.document().len())),
+        "{text}"
+    );
+    assert!(text.contains("blocks: 3"), "{text}");
 }
 
 // ---------------------------------------------------------------------------

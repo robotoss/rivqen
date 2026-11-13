@@ -162,11 +162,22 @@ fn checked_output_size(
 }
 
 /// A patched document that passed steps 8 and 9. Contract.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct PatchedDocument {
     document: Vec<u8>,
     analysis: RqpDocument,
     page_revision: PageRevision,
+}
+
+/// Sizes only, never document bytes or a revision (errors-logging.md
+/// section 4).
+impl fmt::Debug for PatchedDocument {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PatchedDocument")
+            .field("document_len", &self.document.len())
+            .field("blocks", &self.analysis.blocks.len())
+            .finish_non_exhaustive()
+    }
 }
 
 impl PatchedDocument {

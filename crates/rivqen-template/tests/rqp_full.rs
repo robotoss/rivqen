@@ -414,6 +414,11 @@ fn full_errors_are_manifest_invalid() {
         )),
         FullDocumentError::PageRevisionDiffers,
     ];
+    // Each reason is a text of its own: a reason goes to the log record.
+    let reasons: std::collections::BTreeSet<&str> =
+        errors.iter().map(FullDocumentError::reason).collect();
+    assert_eq!(reasons.len(), errors.len());
+    assert!(reasons.iter().all(|reason| reason.contains(' ')));
     for error in errors {
         assert_eq!(error.code(), ErrorCode::ManifestInvalid, "{error:?}");
         assert_eq!(error.to_string(), error.reason());

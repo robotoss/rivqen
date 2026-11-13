@@ -232,7 +232,9 @@ fn content_scope_index_without_a_block_rejects() {
 #[test]
 fn content_scope_range_outside_the_document_rejects() {
     let text = b"<div data-rq-block=\"a\">ok</div>";
-    for (start, end) in [(23, 32), (23, usize::MAX), (26, 25), (40, 41)] {
+    // `(23, 0)` is an inverted range with a `>` before its start and a `<`
+    // at its end.
+    for (start, end) in [(23, 32), (23, usize::MAX), (26, 25), (23, 0), (40, 41)] {
         let analysis = analysis(&[(start, end, BlockFormat::Html)]);
         let error =
             check_patch_content(text, &analysis, &[0], &TemplateLimits::default()).unwrap_err();

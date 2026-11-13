@@ -790,6 +790,11 @@ fn locate_errors_are_manifest_invalid_and_hold_no_bytes() {
             "M-01",
         )),
     ];
+    // Each reason is a text of its own: a reason goes to the log record.
+    let reasons: std::collections::BTreeSet<&str> =
+        errors.iter().map(|error| error.reason()).collect();
+    assert_eq!(reasons.len(), errors.len());
+    assert!(reasons.iter().all(|reason| reason.contains(' ')));
     for error in errors {
         assert_eq!(error.code(), ErrorCode::ManifestInvalid);
         assert_eq!(error.to_string(), error.reason());

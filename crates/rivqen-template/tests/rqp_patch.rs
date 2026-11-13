@@ -174,6 +174,29 @@ fn patch_render_empty_content_removes_the_block_text() {
 }
 
 #[test]
+fn patch_render_fills_an_empty_block() {
+    // A block that is empty in the stored document (an empty cart) has a
+    // content range of zero bytes; the replacement goes to that offset.
+    let page = PAGE.replace(">120.00<", "><");
+    let analysis = analyze(&page);
+    assert_eq!(analysis.blocks[1].start, analysis.blocks[1].end);
+    let out = render_rqp(
+        page.as_bytes(),
+        &analysis,
+        &[Replacement {
+            block: 1,
+            content: b"99.50",
+        }],
+        &limits(),
+    )
+    .unwrap();
+    assert_eq!(
+        String::from_utf8(out).unwrap(),
+        PAGE.replace("120.00", "99.50")
+    );
+}
+
+#[test]
 fn patch_render_rejects_blocks_not_in_increasing_order() {
     let analysis = analyze(PAGE);
     let r = |block| Replacement {
@@ -218,6 +241,22 @@ fn patch_render_rejects_a_range_outside_the_original() {
                 content: b"x"
             }],
             &limits()
+        ),
+        Err(RenderRqpError::BadReplacement)
+    );
+    // The range check is before the size check: a range outside the
+    // original with a content over the size limit is a bad replacement
+    // (the delta does not belong to this document), not a large patch.
+    let large = vec![b'x'; PAGE.len() * 2];
+    assert_eq!(
+        render_rqp(
+            short,
+            &analysis,
+            &[Replacement {
+                block: 2,
+                content: &large
+            }],
+            &small(PAGE.len())
         ),
         Err(RenderRqpError::BadReplacement)
     );
@@ -301,6 +340,14 @@ fn patch_render_errors_have_the_catalog_codes() {
         RenderRqpError::BadReplacement.code(),
         ErrorCode::PatchInvalid
     );
+    // Each reason is a text of its own: a reason goes to the log record.
+    let too_large = RenderRqpError::TooLarge;
+    let bad = RenderRqpError::BadReplacement;
+    assert_ne!(too_large.reason(), bad.reason());
+    for error in [too_large, bad] {
+        assert!(error.reason().contains(' '));
+        assert_eq!(error.to_string(), error.reason());
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -590,7 +637,13 @@ fn patch_errors_hold_no_content() {
     )
     .unwrap_err();
     assert!(matches!(html, PatchError::Content(_)), "{html:?}");
+    // Each reason is a text of its own: a reason goes to the log record.
+    assert_ne!(markup.reason(), too_large.reason());
+    assert_ne!(markup.reason(), html.reason());
+    assert_ne!(too_large.reason(), html.reason());
     for error in [markup, too_large, html] {
+        assert!(error.reason().contains(' '));
+        assert_eq!(error.to_string(), error.reason());
         let text = format!("{error} {error:?}");
         assert!(!text.contains(MARK), "{text}");
         assert!(!text.contains("120.00"), "{text}");

@@ -246,6 +246,52 @@ The template of a split is never longer than the input, so `split_v1` has no out
 | `full_errors_*` | Every error is `MANIFEST_INVALID`; no document byte in `Debug` or `Display` |
 | `full_prop_insert_at_point` | For generated documents with a head or an implied head and a manifest (with and without `policy` and `limits`): the element at P is accepted with `original() == O`; at every other token boundary of O, F is rejected |
 
+## 8. Patch content rule
+
+<Badge type="tip" text="FACT" /> The module `rivqen_template::rqp::content` implements the patch content rule of [manifest and patch](/engineering/protocol/manifest-patch) §4 item 1 and the attribute rule of §4.2 (section 2.4, step 9; WP-06 S2 T-02, H-142). It is new code from the normative text (DL-173). This rule is the XSS boundary of a patch (R-1): it fails closed on every input that it cannot read. Every error is `PATCH_CONTENT_REJECTED`.
+
+| Function | Input | Output |
+|---|---|---|
+| `check_patch_content(document, analysis, patched, limits)` | The patched document, its markup analysis (step 8), the indices of the blocks with an operation (any order) | `Ok`, or `ContentError { block, violation }` for the first violation in document order |
+| `check_attribute(element, foreign, name, raw_value)` | One attribute: the tag name and the attribute name in lower case, the foreign flag, the raw value | `Ok`, or the `ContentViolation` of the first item that rejects |
+
+### 8.1 What the rule reads
+
+<Badge type="tip" text="FACT" /> `check_patch_content` works in this order:
+
+1. Check each index of `patched` (also of a `json` block). An index without a block, a range with `start > end` or with `end` after the document, and two patched `html` ranges that overlap give `Markup` (an internal defect of the caller).
+2. Keep the ranges of the patched `html` blocks. A `json` block and a block without an operation are not read. When no patched block is `html`, stop with `Ok` (the document is not scanned).
+3. Scan the document from offset 0 with `rqp::scan` and the same `TemplateLimits`, up to the end of the last patched `html` block. The scan reads the content as the analysis reads it: the RCDATA of a `title` block has no start tags, and a `template` of the content does not hide its start tags.
+4. For each start tag whose `<` is in `[start, end)` of a patched `html` block, in document order: the name (item 1.1 in HTML context, item 1.2 in a foreign region), then each attribute in source order, also a duplicate that the tokenizer drops (M-03), with `check_attribute`. End tags and the self-closing flag do not change the result. Names are compared in ASCII lower case.
+
+`check_attribute` applies, in order: item 1 (a name that starts with `on`); for `srcset` only item 4.3 (every `srcset` failure is `Srcset`); for every other attribute item 2 (`CharacterReference`), then items 3, 4.1 and 4.2 (`Scheme`). Item 2 and item 4.3 read numeric character references on the raw bytes (markup M-13: decimal or `x`/`X` hexadecimal, all digits, `;` optional, the value capped at `110000`), never on the copy of item 3. So `java&#x73⏎cript:x` rejects (the trap of the audit).
+
+### 8.2 Fail closed
+
+| Case | Result |
+|---|---|
+| Patched index without a block, range outside the document, overlapping patched `html` ranges | `Markup` (rule `internal`), with that block index |
+| Scan stop (M-01 input limit, token stack limit, internal defect) before the end of the last patched `html` block | `Markup` with the error of the scan and the first patched `html` block that the scan did not read to its end |
+| Scan stop after the end of the last patched `html` block | No effect: the rule has read all patched content |
+| Attribute walk with an internal defect | `Markup` |
+| `data:` type part longer than the longest raster type (24 bytes) | `Scheme` (not exactly a raster type) |
+
+<Badge type="tip" text="FACT" /> Resource bounds: one scan pass up to the end of the last patched `html` block; each attribute value is read a constant number of times, the `srcset` split included (tests `content_attr_srcset_is_linear`, `content_scope_large_content_is_read_in_one_pass`). Memory: the list of the patched `html` ranges and two name buffers, which hold a lower-case copy of a name with an ASCII upper-case letter only. `check_attribute` allocates nothing. No input panics (workspace lints: no indexing, no unchecked arithmetic). `ContentError` and `ContentViolation` hold the block index, the kind and, for `Markup`, the code and rule id of the scan: no content byte, tag name or attribute value in `Debug` or `Display` (test `content_error_holds_no_content`).
+
+### 8.3 Tests
+
+| Test | Checks |
+|---|---|
+| `content_scope_*` | What the rule reads: `json` blocks and blocks without an operation are not read; tags outside the content, the block start tag and a start tag at `end` are not content; a `title` block is RCDATA; the fail-closed cases of §8.2; the first violation in document order; the analysis of `split_rqp`; the pages `page-b-*.html` of `fixtures/rqp/protocol/pages` (block `price`) |
+| `content_forbidden_*` | Item 1.1: each `PATCH_FORBIDDEN` name, upper case, self-closing, in a `template`; end tags do not matter; other names pass |
+| `content_foreign_*` | Item 1.2: all 70 `FOREIGN_ALLOWED` names pass in `svg` and `math`; the names of §4 that are not in the set reject; the region root is in HTML context; the region ends with its root |
+| `content_attr_*` | §4.2: event handlers (also a dropped duplicate), item 2 (every numeric value 00 to 100 in three forms, the cap, the six named references, the decision byte, the trap of the audit), items 3 and 4.1, item 4.2 (all raster types in the five allowed places, every rejected place and spelling), item 4.3 (separator references, the WHATWG split, every element) |
+| `content_table_rows` | Each row of the result table of §4.2, also each tag of a row alone |
+| `content_error_holds_no_content` | No content in `Debug` and `Display`; the code `PATCH_CONTENT_REJECTED` |
+| `content_prop_no_missed_scheme` | P-CONTENT-1: a test-only model (character references, then the scheme steps of the URL Standard, and the WHATWG `srcset` split on the decoded value) finds a `javascript:`, `vbscript:` or forbidden `data:` URL only in values that `check_attribute` rejects (20 000 cases in 12 places; a guard test checks that the generator reaches such values) |
+| `content_prop_accepted_has_no_forbidden` | P-CONTENT-2: any content (pieces of tags or any bytes, any stack limit): the result equals an independent reading of the scan tokens; an accepted content has no forbidden start tag and no `on*` attribute |
+| `content_prop_any_ranges_never_panic`, `content_prop_attribute_any_bytes` | Any document, ranges, indices and attribute bytes: no panic |
+
 ## 9. Patched document
 
 <Badge type="tip" text="FACT" /> `rqp::patch` builds and checks the patched document: steps 8 and 9 of [manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), checks 12 and 13 of the [diff engine](/engineering/core/diff-engine). It runs after `rivqen_proto::delta::verify_delta` (steps 3 to 7).

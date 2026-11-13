@@ -21,6 +21,7 @@ Fuzz targets for the parsers of `rivqen-proto` and the template engine `rivqen-t
 | `split_v1` | `legacy::split_v1` with default limits, then `render_v1` on an applied split | `{title}` is the first entry; the rebuild equals the input when each key stands once in the template (P-TPL-1, DL-166, DL-167); outside that domain the rebuild may differ or give `Mismatch`; the page is at most `max_document_bytes` |
 | `render_v1` | `legacy::render_v1` on a template and data built from the bytes (split at U+0001 and U+0002), default and small limits | An `Ok` page is at most `max_document_bytes` |
 | `split_rqp` | `rqp::split_rqp` with default limits | On `Ok`: blocks in order, not overlapping, in bounds, at most 256; the template and the contents give the input back |
+| `patch_content` | The input is the new content of the `price` block of `fixtures/rqp/protocol/pages/page-a.html` (embedded); `render_rqp`, `split_rqp`, then `check_patch_content` on the patched block | The rule gives the same result on a second call; an accepted content has no start tag with a `PATCH_FORBIDDEN` name in HTML context (by the scan) and no attribute name that starts with `on` |
 
 ## Build
 
@@ -38,7 +39,7 @@ cd fuzz
 sh seed.sh
 ```
 
-The script copies files from `fixtures/malformed/seeds/fields`, `spec/rqp/examples` and the `response.body` files of `fixtures/rqp/protocol` into `corpus/<target>/`. For the template targets it copies the pages of `fixtures/legacy/pages`, `fixtures/malformed/legacy/pages`, `fixtures/malformed/seeds/pages` and `fixtures/rqp/protocol/pages`, and `fixtures/rqp/markup/*/input.html`. It only reads the fixtures. You can run it again.
+The script copies files from `fixtures/malformed/seeds/fields`, `spec/rqp/examples` and the `response.body` files of `fixtures/rqp/protocol` into `corpus/<target>/`. For the template targets it copies the pages of `fixtures/legacy/pages`, `fixtures/malformed/legacy/pages`, `fixtures/malformed/seeds/pages` and `fixtures/rqp/protocol/pages`, and `fixtures/rqp/markup/*/input.html`. For `patch_content` it writes the content of every delta operation of the WP-06 fixtures of the ledger and the block contents of the protocol pages (one file for each content). It only reads the fixtures. You can run it again.
 
 ## Run
 
@@ -46,7 +47,7 @@ Run the seed corpus once:
 
 ```sh
 cd fuzz
-for t in sf_fields json_reader manifest envelope split_v1 render_v1 split_rqp; do cargo fuzz run $t -- -runs=0; done
+for t in sf_fields json_reader manifest envelope split_v1 render_v1 split_rqp patch_content; do cargo fuzz run $t -- -runs=0; done
 ```
 
 Fuzz one target for 60 seconds. Run one target at a time:

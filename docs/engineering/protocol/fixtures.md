@@ -71,6 +71,17 @@ fixtures/legacy/
 
 The inputs of the checks that belong to the session (WP-08) come from the context, as the session gives them: the client limits (`maxPatchBytes` 256 KiB, `maxBlockBytes` 1 MiB), the snapshot values, the nonce, and U of the final URL. One fixture (`FX-RQ-C27-PUBLIC-SNAPSHOT-DELTA-REDIRECT-HOST-CASE`) has a final URL with an upper-case host; a test helper writes U for the URL forms of the fixtures (lower-case scheme and host, no default port, no fragment) and gives the KAT value of `binding_with_query`. The URL canonicalization of the product is WP-08. `fixtures_ledger_fully_covered` fails when a fixture of a selection is not run, when a count differs from DL-145, or when a WP-05 fixture has no WP-05 check. A ledger line whose reason does not match the code of `expected.json` fails `fixtures_wp05_outcomes`. The other 104 WP-06 and 24 WP-08 outcomes are not run in WP-05.
 
+<Badge type="tip" text="FACT" /> **What WP-06 runs.** `crates/rivqen-template/tests/rqp_ledger_fixtures.rs` selects the fixtures with `ledger.owned_by(Owner::Wp06)` (no list of ids, no skip list). `expected.json` decides. The test compares the revisions, each block (id, format, SHA-256, content when `expected.json` gives it) and the SHA-256 of the document.
+
+| Selection | Count | Run | Test |
+|---|---|---|---|
+| Ledger of WP-06: reasons `markup` 68, `content` 34, `locator` 2 | 104 | the counts of the ledger | `ledger_wp06_counts` |
+| First visit, `stored` | 28 | `rqp::full::read_full_document`; `expected.result.snapshot` | `ledger_wp06_full_stored` |
+| First visit, `MANIFEST_INVALID` (2 with the reason `locator` fail in `FullDocumentError::Manifest`) | 16 | `read_full_document` | `ledger_wp06_full_rejected` |
+| Delta, `patched` | 26 | `delta::verify_delta`, then `rqp::patch::check_patch`; `expected.result.snapshot` | `ledger_wp06_delta_patched` |
+| Delta, `PATCH_CONTENT_REJECTED` | 34 | `verify_delta`, then `check_patch`; the error code | `ledger_wp06_delta_rejected` |
+| All branches together | 104 | the count of each branch is 28, 16, 26, 34 | `ledger_wp06_fully_covered` |
+
 <Badge type="info" text="DESIGN" /> **WP-06 reasons (H-142).** `markup` (68): the document part decides the outcome: the manifest position and the markup analysis of the full document (manifest and patch §1.7, §1.8 item 5) or of the patched document (§2.4 step 8); the accepted cases are here too, and the test compares their snapshot (template revision, page revision, blocks, `document_sha256`). `content` (34): the patch content rule of the patched `html` blocks (§2.4 step 9, §4). `locator` (2): the manifest text that the locator finds fails the JSON rules or the schema (§1.8 items 1 and 2). WP-06 runs all 104 in `crates/rivqen-template/tests/rqp_ledger_fixtures.rs` (WP-06 S2); partition, URL canonicalization, allowlist, build flags and `next` are the end-to-end test of WP-08.
 
 ## 2. Rules

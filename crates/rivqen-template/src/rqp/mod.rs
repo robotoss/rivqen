@@ -22,6 +22,15 @@
 //! | `analysis` (private) | `src/lib.rs` | M-01, M-02, result M-27, template revision |
 //! | [`scan`] (public) | `src/scan.rs` | tokens, gaps and raw attributes for WP-06 S2 |
 //!
+//! WP-06 S2 contract (H-142), new code from the normative text:
+//!
+//! | Module | Content |
+//! |---|---|
+//! | [`locate`] | manifest locator and head walk (manifest-patch section 1.7) |
+//! | [`full`] | client checks of a full document (section 1.8) |
+//! | [`patch`] | build and check of the patched document (section 2.4, steps 8 and 9) |
+//! | [`content`] | patch content rule and attribute rule (section 4, section 4.2) |
+//!
 //! Limits (DL-163): M-01 is the smaller of `max_document_bytes` and
 //! [`MAX_MARKUP_INPUT_BYTES`](crate::limits::MAX_MARKUP_INPUT_BYTES); the
 //! M-26 limits are `max_blocks`, `max_block_bytes` and `max_open_elements`
@@ -39,8 +48,12 @@ use rivqen_proto::types::{BlockDescriptor, Limits, Policy};
 use crate::limits::TemplateLimits;
 
 mod analysis;
+pub mod content;
+pub mod full;
 mod json;
+pub mod locate;
 mod names;
+pub mod patch;
 mod rules;
 pub mod scan;
 mod tokenizer;

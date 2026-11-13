@@ -6,6 +6,12 @@
 # owner: WP-05, WP-06 or WP-08. reason: one word. checks: comma list of
 # request-fields (expected request has rq-* fields) and binding (outcome patched), or "-".
 # Read by rivqen_testkit::ledger; a fixture without a line, or a line without a fixture, fails the test.
+# WP-06 reasons (R-4 of WP-06 S1; the WP-06 test is rivqen-template tests/rqp_ledger_fixtures.rs):
+#   markup  - the document part decides the outcome: the manifest position and the analysis of the
+#             full document (manifest-patch 1.7, 1.8 item 5) or of the patched document (2.4 step 8);
+#             also the accepted cases, whose snapshot the test compares
+#   content - the patch content rule of the patched html blocks (2.4 step 9, section 4)
+#   locator - the manifest text that the locator finds fails the JSON rules or the schema (1.8 items 1, 2)
 FX-RQ-C01-OTHER-BASE WP-05 integrity request-fields
 FX-RQ-C02-OMITTED-BLOCK WP-05 integrity request-fields
 FX-RQ-C03-UNSOLICITED WP-08 patch request-fields

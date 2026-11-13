@@ -69,3 +69,10 @@ path = "fuzz_targets/split_rqp.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "patch_content"
+path = "fuzz_targets/patch_content.rs"
+test = false
+doc = false
+bench = false

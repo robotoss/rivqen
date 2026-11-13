@@ -16,7 +16,7 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | [WP-03](#wp-03) | Rust reference server (oracle) | P1 | Backend engineer | WP-02 | M | **Done (merged 2026-11-04, #6)** ([S1](/engineering/plan/sprints/WP-03-S1), [S2](/engineering/plan/sprints/WP-03-S2) closed; gate G1 passed) |
 | [WP-04](#wp-04) | Platform feasibility spikes | P2 | Android + iOS engineers | WP-01 | L | **Done (merged 2026-11-09, #9)** — [S1](/engineering/plan/sprints/WP-04-S1), [S2](/engineering/plan/sprints/WP-04-S2), [S3](/engineering/plan/sprints/WP-04-S3) closed (2026-11-09); gate **G2** passed (H-137); ADR-002 and ADR-003 accepted (H-135, H-136) |
 | [WP-05](#wp-05) | Core workspace, data model, errors, testkit | P3 | Rust core engineer | WP-02 | M | **Done (merged 2026-11-12, #10)** — [S1](/engineering/plan/sprints/WP-05-S1), [S2](/engineering/plan/sprints/WP-05-S2) closed (2026-11-11); ADR-001 and ADR-017 accepted (H-139, H-140); error code `CONFIG_INVALID` (H-141) |
-| [WP-06](#wp-06) | Template engine | P3 | Rust core engineer | WP-05 | M | **In progress** — [S1](/engineering/plan/sprints/WP-06-S1) closed; S2 next; H-142…H-144 |
+| [WP-06](#wp-06) | Template engine | P3 | Rust core engineer | WP-05 | M | **In progress** — [S1](/engineering/plan/sprints/WP-06-S1) closed; [S2](/engineering/plan/sprints/WP-06-S2) planned; H-142…H-144 |
 | [WP-07](#wp-07) | Cache engine | P3 | Rust core engineer | WP-05 | L | Planned |
 | [WP-08](#wp-08) | Session state machine and diff | P3 | Rust core engineer | WP-06, WP-07 | L | Planned |
 | [WP-09](#wp-09) | Streaming and FFI | P3 | Rust core engineer | WP-04, WP-08 | L | Planned |
@@ -126,7 +126,7 @@ flowchart TD
 | Deliverables | `rivqen-template`, `rivqen-integrity` (SHA-1 for legacy, SHA-256). |
 | Acceptance | All marker fixtures pass; round-trip property holds; fuzz target clean for the agreed time; limits enforced. |
 | Scope note | H-142: also the document part of the 104 RQP client fixtures of the ledger (manifest locator and head walk, `split_rqp` of the full and the patched document, patch content and attribute rule); the end-to-end outcome is WP-08. Canonical legacy profile only (DL-159); `diff_v1` goes to WP-08 (DL-160). "Agreed time" of the fuzz item: 1 h per target, one target at a time (H-144). |
-| Status | **In progress.** [S1](/engineering/plan/sprints/WP-06-S1) closed (2026-11-12): canonical legacy split and rebuild with SHA-1, port of the RQP markup analysis, legacy golden tests, three fuzz targets. Next: S2 (manifest locator, build of the patched document, patch content rule, the 104 ledger fixtures). |
+| Status | **In progress.** [S1](/engineering/plan/sprints/WP-06-S1) closed (2026-11-12): canonical legacy split and rebuild with SHA-1, port of the RQP markup analysis, legacy golden tests, three fuzz targets. [S2](/engineering/plan/sprints/WP-06-S2) planned (2026-11-13): manifest locator and full document checks, build and check of the patched document, patch content rule, the 104 ledger fixtures. |
 
 ### WP-07 — Cache engine {#wp-07}
 

@@ -183,3 +183,50 @@ The template of a split is never longer than the input, so `split_v1` has no out
 | `rqp_prop_any_bytes` | Any bytes with any limits: no panic, no internal defect, a valid result within the limits |
 
 <Badge type="info" text="DESIGN" /> Two copies of the markup analysis exist until the candidate retires. A change of the markup rules changes both copies. The fixture test and `diff.mjs` find a drift of either copy (WP-06 S1, risk R-2).
+
+## 7. Full document
+
+<Badge type="tip" text="FACT" /> The client checks of a full RQP document F are in the modules `rivqen_template::rqp::locate` and `rivqen_template::rqp::full` (WP-06 S2 T-01, H-142). They are new code from [manifest and patch](/engineering/protocol/manifest-patch) §1.7 and §1.8 (DL-173). Every error has the code `MANIFEST_INVALID`.
+
+| Function | Input | Output |
+|---|---|---|
+| `insertion_point(document, limits)` | A document | The insertion point P of the walk "Document head" (§1.7): the byte after the `>` of the head start tag, the `<` of an implied-head start tag, or `None`. `MarkupError` when the scan stops |
+| `locate_manifest(full, limits)` | F | `ManifestLocation`: the element range, the range of the manifest text M, and O (F without the element), or `LocateError` |
+| `read_full_document(full, origin, path, limits)` | F, the origin and the path of the final URL | `FullDocument`: O, the markup analysis of O and the checked manifest, or `FullDocumentError` |
+
+<Badge type="tip" text="FACT" /> `read_full_document` does the checks in this order. The first failed check is the error.
+
+1. `locate_manifest` (§1.7, client items 1, 4, 5 and 3):
+   - Item 1: the first `script` start tag of the scan whose first `type` attribute has the raw value `application/rivqen-manifest+json`, ASCII case-insensitive. Else `NoManifest`.
+   - Item 4: M ends at the `<` of the next `script` end tag of the scan. Else `Unterminated`.
+   - Item 3: the `<` of the start tag is at P of O. Else `NoHead` (O has no P) or `WrongPosition`.
+   - A scan stop before the end of these steps (M-01, the token stack limit) is `Markup`.
+2. `read_manifest` of `rivqen-proto` on M (§1.8, items 1, 2 and 4): `Manifest` with `TooLarge`, `Json`, `Schema` or `UrlMismatch`.
+3. One copy of O, then `split_rqp` on O (§1.8, item 5): `Markup`.
+4. The page revision of O with the members `policy` and `limits` of the manifest (§1.3, H-55) must be equal to `page_revision`: else `PageRevisionDiffers`.
+
+<Badge type="tip" text="FACT" /> Item 2 (exactly one manifest element): the locator reads F up to the first match. A second manifest element is a `script` start tag of O, and M-13 of the analysis of O rejects it (`Markup` with `RQP_MARKUP_RESERVED`; DL-172; test `full_two_manifests_rejects`).
+
+<Badge type="tip" text="FACT" /> Item 3 on O in one pass. `locate_manifest` does not copy O. Before the start tag, the tokens of F are the tokens of O. After the end tag of the element, the tokenizer is in the data state with the token stack of before the start tag, so the tokens of F are the tokens of O, shifted by the length of the element. The walk tests a gap byte by byte, so a gap of O that the element cuts in two gives the same result. The byte order mark rule uses the first 3 bytes of O. The property test `locate_prop_any_bytes` compares the result with the walk on a copy of O for any bytes and for markup-rich inputs. One difference is allowed: when the token stack is full of `html` elements before the start tag, the scan of F stops (`Markup`). The analysis of O rejects such a document too (M-26; test `locate_position_full_stack_before_the_element_is_markup_and_o_is_invalid`).
+
+<Badge type="info" text="DESIGN" /> Token kinds in the walk: a `<![CDATA[` before the head is a comment, because in HTML context the WHATWG tokenizer gives a bogus comment for it (M-03, M-04). A processing instruction is a comment (M-03).
+
+<Badge type="tip" text="FACT" /> Resource bounds: one scan of F up to the end tag of the manifest, plus the walk after the element up to its stop (the next token for an accepted document), plus the passes of `read_manifest` and `split_rqp`. O is allocated once, in `read_full_document`. No input panics: offsets are read with checked access; an offset outside the input is an internal defect and fails closed (`Markup` with the rule `internal`). Section 1.7 items 6 (UTF-8) and 7 (delivery to the WebView) belong to the caller (WP-08).
+
+<Badge type="tip" text="FACT" /> Errors: `LocateError`, `FullDocumentError` and `ManifestLocation` hold no document byte in `Debug` or `Display` (tests `locate_errors_are_manifest_invalid_and_hold_no_bytes`, `full_errors_hold_no_document_bytes`). The derived `Debug` of `FullDocument` (a contract item) prints O and the manifest. Do not log a `FullDocument`.
+
+### 7.1 Tests
+
+| Test | Checks |
+|---|---|
+| `locate_point_*` (`tests/rqp_locate.rs`) | One test per row of the table of insertion points of §1.7, and the details of items 1 and 2: each white space byte, the byte order mark, `</>`, the end of the input, names in any case, attributes and the self-closing flag, each implied-head name, ignored end tags, the scan stop |
+| `locate_type_*` | Item 1: exact value, ASCII case, other values (white space, parameters, character references, other lengths), non-ASCII bytes, only the first `type` attribute, only `script` start tags, no match in comments or raw text, the first match wins |
+| `locate_text_*` | Item 4: M, an empty M, end tag forms, the end tag of the tokenizer (also the double-escaped state), no end tag |
+| `locate_position_*` | Item 3: white space or a comment after the head start tag, implied head and white space after the element, `<head lang>`, text, body content, `noscript`, the old position, a byte order mark that the element cuts, the scan stops, the fixture bodies `FX-RQ-C21-*` and `FX-RQ-C05-*` |
+| `locate_prop_any_bytes`, `locate_prop_soup` | No panic; an accepted element is at P of its O; the result is equal to the walk on a copy of O |
+| `full_accepts_*` (`tests/rqp_full.rs`) | The known-answer full documents of §1.3 (`spec/rqp/examples/kat`, with and without the policy line), an implied head, the stored `FX-RQ-C21-*`, `FX-RQ-C05-TYPE-UPPERCASE`, `FX-RQ-C29-MANIFEST-DEFAULT-MEMBERS` |
+| `full_order_*` | The order of the checks and the variant of each error |
+| `full_page_revision_*` | Another page, the members `policy` and `limits` in and out of the page revision, member order and white space of M |
+| `full_two_manifests_rejects`, `full_text_with_lt_rejects` | Item 2 by M-13 of O; a text with `<` never gives an accepted document |
+| `full_errors_*` | Every error is `MANIFEST_INVALID`; no document byte in `Debug` or `Display` |
+| `full_prop_insert_at_point` | For generated documents with a head or an implied head and a manifest (with and without `policy` and `limits`): the element at P is accepted with `original() == O`; at every other token boundary of O, F is rejected |

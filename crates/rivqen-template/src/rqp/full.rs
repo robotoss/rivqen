@@ -24,12 +24,13 @@ use core::fmt;
 
 use rivqen_integrity::PageRevision;
 use rivqen_model::error::{ErrorCode, HasErrorCode};
-use rivqen_proto::manifest::ManifestError;
+use rivqen_proto::manifest::{ManifestError, read_manifest};
 use rivqen_proto::types::PageManifest;
 
 use crate::limits::TemplateLimits;
-use crate::rqp::locate::LocateError;
-use crate::rqp::{MarkupError, RqpDocument};
+use crate::rqp::analysis::Internal as _;
+use crate::rqp::locate::{LocateError, locate_manifest};
+use crate::rqp::{MarkupError, RqpDocument, split_rqp};
 
 /// A full document that passed the client checks. Contract.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -133,6 +134,31 @@ pub fn read_full_document(
     final_path: &str,
     limits: &TemplateLimits,
 ) -> Result<FullDocument, FullDocumentError> {
-    let _ = (full, final_origin, final_path, limits);
-    Err(FullDocumentError::Locate(LocateError::NoManifest))
+    // Section 1.7, items 1, 3, 4 and 5.
+    let location = locate_manifest(full, limits).map_err(FullDocumentError::Locate)?;
+    let text = location.manifest_text(full).ok_or_else(internal)?;
+    // Section 1.8, items 1, 2 and 4.
+    let manifest =
+        read_manifest(text, final_origin, final_path).map_err(FullDocumentError::Manifest)?;
+    // Section 1.7, item 5: the only copy of O. Section 1.7, item 2: a second
+    // manifest element is a `script` start tag of O that M-13 rejects
+    // (DL-172).
+    let original = location.original(full).ok_or_else(internal)?;
+    // Section 1.8, item 5.
+    let document = split_rqp(&original, limits).map_err(FullDocumentError::Markup)?;
+    let computed = document.page_revision(manifest.policy.as_ref(), manifest.limits.as_ref());
+    if computed != manifest.page_revision {
+        return Err(FullDocumentError::PageRevisionDiffers);
+    }
+    Ok(FullDocument {
+        original,
+        document,
+        manifest,
+    })
+}
+
+/// An internal defect of this crate (a location outside `full`): fail
+/// closed.
+fn internal() -> FullDocumentError {
+    FullDocumentError::Locate(LocateError::Markup(MarkupError::internal()))
 }

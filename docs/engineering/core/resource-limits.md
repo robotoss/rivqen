@@ -46,7 +46,7 @@ Every input to the core is bounded. Limits protect the app from memory exhaustio
 | `prefixBufferBytes` | 64 KiB | 2 MiB | Min: one chunk of the largest `maxChunkBytes`. Max: proposal (16 sessions × 2 MiB stay at 32 MiB) |
 | `maxChunkBytes` | 8 KiB | 64 KiB | Chunks are 8 to 64 KiB ([streaming](/engineering/core/streaming), ADR-009) |
 | `maxBlocks` | 256 | 256 | Fixed: [markup](/engineering/protocol/markup) M-26 |
-| `maxBlockKeyBytes` (legacy) | 128 | 1024 | Min: a lower value rejects keys that the default accepts. Max: proposal |
+| `maxBlockKeyBytes` (legacy) | 128 | 128 | Fixed: legacy wire C-07 (a longer name stays in the template). The template engine caps a higher value at 128 (DL-163, DL-169) |
 | `maxBlockKeyBytes` (RQP) | 64 | 64 | Fixed: M-15 block id grammar |
 | `maxBlockBytes` | 1 MiB | 1 MiB | Fixed: M-26 |
 | `maxManifestBytes` | 64 KiB | 64 KiB | Fixed: [manifest and patch](/engineering/protocol/manifest-patch) §1.8, item 1 (H-50) |

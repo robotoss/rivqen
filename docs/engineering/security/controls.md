@@ -2,7 +2,7 @@
 
 This register lists every security control. Each control has a test that proves it. A control is not "done" until its test passes in CI or on devices.
 
-**Status:** <Badge type="info" text="DESIGN" /> All controls: **planned**.
+**Status:** <Badge type="info" text="DESIGN" /> All controls: **planned**. <Badge type="tip" text="FACT" /> The Rust core part of `SEC-03` is implemented (WP-06): the patch content and attribute rule in `rivqen-template` ([template engine](/engineering/core/template-engine) §8), with the 28 `content` fixtures of the ledger, property tests, the fuzz target `patch_content` and a security review (DL-177). The control stays planned until the SDKs apply a patch through this check and the browser security suite runs.
 
 [[toc]]
 

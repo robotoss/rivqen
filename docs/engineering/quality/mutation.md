@@ -65,6 +65,14 @@ The exact Gradle property for `targetClasses` is set up in WP-14 / WP-10. The co
 ### Notes per tool
 
 1. **Rust.** `--in-diff` mutates only code in changed hunks. It does not react to changes in test code only. Use the default test tool (`cargo test`) for mutation runs: `cargo-nextest` skips doctests, so mutants caught only by doctests would show as missed. Skip a function with `#[mutants::skip]` (needs `mutants` as a normal dependency) and a comment. Configure in `.cargo/mutants.toml` (for example `exclude_re = ["impl Debug"]`).
+
+   Run setup for a crate with many test binaries (measured at the close of [WP-06 S2](/engineering/plan/sprints/WP-06-S2), DL-178):
+
+   - Give the test selection to the build phase: `-C=--test=<name>` (one per test file, `-C=--lib` for the unit tests). Arguments after `--` reach only the test phase, so each mutant still builds every test binary of the package.
+   - Use one run per source file (`-f <file>`) with the test files of that file. `cargo test` runs the test binaries in name order, so in one common set the last binary gets the least time.
+   - Measure the test time of the selected set at the current machine load and set `--timeout` to 4 times that value or more. Run a timeout again with a longer limit before you count it: a hang and a slow test are not the same result.
+   - Run the survivors of a narrow set again on the full package tests before you record them.
+   - cargo-mutants copies the tree before each run. In this repository the copy is about 7 GB, because the build directories of other packages (`server/rust-reference/target`, `tools/rqp-markup/rust/target`) and `node_modules` are in it. <Badge type="warning" text="RESEARCH" /> A run from a clean `git worktree` avoids the copy of these directories; not measured.
 2. **TypeScript.** Stryker has no git mode; the helper gives it line ranges. Set `"thresholds": { "break": 80 }` for critical packages and use the `typescript` checker so that mutants that do not compile are not counted.
 3. **PHP.** Infection is the most complete: line scope, base ref and minimum score built in.
 4. **JVM.** Open-source PIT has no git-diff scope (the Maven `scmMutationCoverage` goal was removed in PIT 1.18.0). We scope by changed classes. Line-level git scope and Kotlin-aware mutation exist in the commercial Arcmutate plugins (free licences for open-source projects are announced, not verified). This is a dependency/licence decision → [Q-16](/engineering/plan/open-questions). For Android, PIT runs only on JVM unit tests: keep logic in pure Kotlin/JVM modules or in the Rust core.

@@ -129,7 +129,7 @@ fn model_limits_ranges_are_the_table_of_section_1_1() {
             (64 * KIB, 2 * MIB),
             (8 * KIB, 64 * KIB),
             (256, 256),
-            (128, 1024),
+            (128, 128),
             (64, 64),
             (MIB, MIB),
             (64 * KIB, 64 * KIB),
@@ -195,6 +195,7 @@ fn model_limits_fixed_ranges_are_the_protocol_values() {
         fixed,
         [
             "maxBlocks",
+            "maxBlockKeyBytesLegacy",
             "maxBlockKeyBytesRqp",
             "maxBlockBytes",
             "maxManifestBytes",

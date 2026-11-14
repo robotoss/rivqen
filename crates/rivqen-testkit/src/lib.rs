@@ -6,6 +6,8 @@
 //! - [`fixtures`]: loads the committed fixtures of `fixtures/rqp/protocol`,
 //!   `fixtures/legacy` and `fixtures/malformed` as data.
 //! - [`ledger`]: the owner WP of each fixture (DL-145).
+//! - [`markup`]: the RQP markup fixtures (WP-06).
+//! - [`functions`]: the legacy function fixtures (WP-06).
 //! - [`clock`]: a fake [`rivqen_model::time::Clock`].
 //! - [`transport`]: a fake transport with scripted responses.
 //!
@@ -17,7 +19,9 @@ use std::path::PathBuf;
 
 pub mod clock;
 pub mod fixtures;
+pub mod functions;
 pub mod ledger;
+pub mod markup;
 pub mod transport;
 
 /// The root directory of the repository.

@@ -113,8 +113,9 @@ If the WP is complete:
 
 9. Check each acceptance item of the WP. Write the evidence in the sprint record.
 10. Commit the sprint record. Push `wp/<WP-ID>`.
-11. Give the human the merge request (MR) title and description: deliverables, test results, mutation score, review findings, changed pages.
-12. Stop. The human opens the MR, merges it into `main` and deletes `wp/<WP-ID>`.
+11. Run the light documentation check ([Documentation](/engineering/ai/documentation#_4-documentation-check) §4.1). Fix the confirmed findings, build the site, commit and push.
+12. Give the human the merge request (MR) title and description: deliverables, test results, mutation score, review findings, changed pages.
+13. Stop. The human opens the MR, merges it into `main` and deletes `wp/<WP-ID>`.
 
 ::: warning Agents never push to `main`
 Only the human merges into `main`, through an MR. An agent pushes only its own branch (`wp/<WP-ID>` or a `chore/` branch). An agent never force-pushes. Decision: [DL-006](/engineering/plan/decision-log).

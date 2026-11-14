@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
-The Rust candidate of WP-17 S1 (tasks T-03, T-08, T-09, T-11, T-13 and T-16) S3 (task T-04: the markup rules H-71, H-73, H-74 and H-75) and S4 (task T-04: H-78, H-84, H-86 with DL-048) and S5 (task T-06b: H-94 to H-97 with DL-055). It implements the rules M-01…M-27 of `docs/engineering/protocol/markup.md` (rqp/1), with M-24 items j and k (human decision H-18), the decided edge cases E1…E8 (H-21, H-22), the rules of the security review (M-06 items 2 to 4: H-26, H-30, H-32; M-11 item 5: H-27; M-13 item 3: H-28), the rules of security review round 2 (M-09 condition 1: H-35; M-10 item 2: H-36; M-09 condition 2: H-37; M-11 item 6: H-38), the implied closure of M-09 (S4 task T-10b: H-85a, DL-050), the depth counter D of M-26 (H-25, H-31), and the interface of `tools/rqp-markup/CONTRACT.md`. It is a tool for the differential test, not the production crate (`rivqen-proto`, P3).
+The Rust candidate of WP-17 S1 (tasks T-03, T-08, T-09, T-11, T-13 and T-16) S3 (task T-04: the markup rules H-71, H-73, H-74 and H-75) and S4 (task T-04: H-78, H-84, H-86 with DL-048) and S5 (task T-06b: H-94 to H-97 with DL-055). It implements the rules M-01…M-27 of `docs/engineering/protocol/markup.md` (rqp/1), with M-24 items j and k (human decision H-18), the decided edge cases E1…E8 (H-21, H-22), the rules of the security review (M-06 items 2 to 4: H-26, H-30, H-32; M-11 item 5: H-27; M-13 item 3: H-28), the rules of security review round 2 (M-09 condition 1: H-35; M-10 item 2: H-36; M-09 condition 2: H-37; M-11 item 6: H-38), the implied closure of M-09 (S4 task T-10b: H-85a, DL-050), the depth counter D of M-26 (H-25, H-31), and the interface of `tools/rqp-markup/CONTRACT.md`. It is a tool for the differential test, not the production crate. The production code is the module `rqp` of `crates/rivqen-template`, a port of this candidate at commit `92c708e1` (WP-06, DL-145, DL-161); a change of the markup rules changes both copies. WP-06 S2 changed `names.rs`, `rules.rs` and `scan.rs` in both copies (DL-170, DL-175).
 
 ## Build
 
@@ -79,7 +79,7 @@ DESIGN: why the whole document and no start state: §4 reads the content "as the
 ### Resource limits
 
 - Time: linear in the input size. Each element is pushed and popped at most once; `attributes()` reads one tag (linear in the tag length) for each call.
-- Memory: the token stack holds at most one entry per start tag, and the name table one entry per distinct tag name; both are linear in the input size. `attributes()` holds no memory that grows with the input. The scan has no depth limit of its own: M-26 limits only `analyze`, and a valid document can have a deeper M-05 stack than the stack of `analyze` (M-09 closures).
+- Memory: the token stack holds at most one entry per open element, and the name table holds the rule names and the names of open elements only (WP-06 S2, DL-175). `attributes()` holds no memory that grows with the input. The scan applies the implied closure of M-09 as `analyze` does (WP-06 S2, DL-170), so for a valid document its stack is the stack of `analyze`. The scan of this candidate has no depth limit of its own: M-26 limits only `analyze` (the product scan has a cap, DL-169).
 - No input panics (property tests on arbitrary bytes; checked indexing and arithmetic).
 
 ### Checks of T-04
@@ -282,7 +282,7 @@ Run the sweeps of `tools/rqp-markup/crosscheck/README.md` with `--only rust` and
 
 Before T-08, seeds 4 and 5 gave 9 block-byte disagreements (all M-24 j or k shapes) and manifest findings in the scripting-disabled view (E8).
 
-Result for T-13 (2026-10-11, release build, both views, `TMPDIR` on disk). "With a class" counts the documents that a rule class of the cross-check (`src/depth.mjs`: M-06 items 2 to 4, M-11 item 5, M-13 item 3, M-26) rejects and that the candidate accepts; it must be 0. "Depth invariant" counts the documents where parse5 is deeper than the claim of M-26 allows, and how many of them the candidate accepts.
+Result for T-13 (2026-10-11, release build, both views, `TMPDIR` on disk). "With a class" counts the documents that a rule class of the cross-check (`tools/rqp-markup/crosscheck/src/depth.mjs`: M-06 items 2 to 4, M-11 item 5, M-13 item 3, M-26) rejects and that the candidate accepts; it must be 0. "Depth invariant" counts the documents where parse5 is deeper than the claim of M-26 allows, and how many of them the candidate accepts.
 
 | Sweep | Documents | Valid | Valid with blocks | Findings | Accepted with a class | Depth invariant |
 |---|---|---|---|---|---|---|

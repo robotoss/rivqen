@@ -26,7 +26,7 @@ Each sprint has one record. The record is the shared memory of the work: the pla
 | [WP-05-S1](/engineering/plan/sprints/WP-05-S1) | WP-05 | Core workspace, model and errors, protocol codecs, testkit | Closed (2026-11-11) |
 | [WP-05-S2](/engineering/plan/sprints/WP-05-S2) | WP-05 | Delta checks, fixture checks, core facade, fuzz targets | Closed (merged #10) |
 | [WP-06-S1](/engineering/plan/sprints/WP-06-S1) | WP-06 | Canonical legacy split and SHA-1, port of the RQP markup analysis, golden tests, three fuzz targets | Closed |
-| [WP-06-S2](/engineering/plan/sprints/WP-06-S2) | WP-06 | Manifest locator and full document checks, build and check of the patched document, patch content rule, the 104 ledger fixtures, fuzz target `patch_content` | Running |
+| [WP-06-S2](/engineering/plan/sprints/WP-06-S2) | WP-06 | Manifest locator and full document checks, build and check of the patched document, patch content rule, the 104 ledger fixtures, fuzz target `patch_content` | Closed (2026-11-14) |
 
 ## How to add a record
 

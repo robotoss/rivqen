@@ -2,7 +2,7 @@
 
 The Rust core is the single implementation of Rivqen's logic for Android and iOS. This page lists the crates, their responsibilities and their dependency order.
 
-**Status:** <Badge type="info" text="DESIGN" /> Crate names are working names. <Badge type="tip" text="FACT" /> WP-05 S1 created the root workspace (`Cargo.toml`, `crates/`) with `rivqen-model`, `rivqen-integrity` (SHA-256 part), `rivqen-proto` (codecs without the markup analysis, DL-145) and `rivqen-testkit` (DL-142, DL-143); every crate has `#![forbid(unsafe_code)]`. The other crates come with their work packages.
+**Status:** <Badge type="info" text="DESIGN" /> Crate names are working names. <Badge type="tip" text="FACT" /> WP-05 S1 created the root workspace (`Cargo.toml`, `crates/`) with `rivqen-model`, `rivqen-integrity` (SHA-256 part), `rivqen-proto` (codecs without the markup analysis, DL-145) and `rivqen-testkit` (DL-142, DL-143); every crate has `#![forbid(unsafe_code)]`. WP-05 S2 added the `rivqen-core` facade skeleton (configuration, events, actions). WP-06 added `rivqen-template` and the SHA-1 part of `rivqen-integrity` (Cargo feature `legacy`). The other crates come with their work packages.
 
 [[toc]]
 
@@ -22,7 +22,7 @@ The Rust core is the single implementation of Rivqen's logic for Android and iOS
 | `rivqen-core` | Public facade: `Engine`, `Session`, configuration, event loop | all below | `SonicEngine` |
 | `rivqen-session` | Session state machine, deadlines, generations, cancellation, race handling | `proto-*`, `cache`, `stream`, `diff` | `SonicSession`, `QuickSonicSession`, `StandardSonicSession` |
 | `rivqen-proto-legacy` | Legacy protocol headers, normalization, decision tree, response parsing | `template`, `integrity` | Header handling in client and servers |
-| `rivqen-proto` | Rivqen protocol typed messages, capability negotiation, schemas | `integrity` | — (new) |
+| `rivqen-proto` | Rivqen protocol typed messages, capability negotiation, schemas | `integrity`, `model` | — (new) |
 | `rivqen-template` | Strict, bounded parser for data-block markers; template/data split; serializer; RQP markup analysis, manifest locator, build of the patched document and patch content rule (H-142) | `proto`, `integrity`, `model` | Marker regex code in clients and servers |
 | `rivqen-diff` | Data diff, patch validation, base-revision check, atomic apply plan | `template`, `integrity` | Data-diff code in clients |
 | `rivqen-cache` | Cache keys, partitions, policy (RFC 9111 + legacy), snapshots, transactions, quotas | `integrity` | `SonicCacheInterceptor`, `SonicDataHelper` |

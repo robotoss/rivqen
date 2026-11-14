@@ -143,6 +143,7 @@ flowchart TD
 | Goal | The deterministic session FSM for legacy Quick and Standard behavior, plus the diff engine. |
 | Deliverables | `rivqen-session`, `rivqen-proto-legacy`, `rivqen-diff`. |
 | Acceptance | Every legacy fixture produces `expected.actions.json`; FSM property tests (cancel, stale generation, interleavings) pass. |
+| Inputs from WP-06 | [WP-06 S2](/engineering/plan/sprints/WP-06-S2) §5: `diff_v1` and the function fixtures `diff` and `etag` (DL-160); a `Rebuilt` type for `render_v1` (S1-5, DL-169); the end-to-end outcome of the 104 RQP client fixtures (H-142); the session builds `TemplateLimits` from the checked `EngineConfig` (DL-163); the UTF-8 check of manifest and patch §1.7 item 6 before `read_full_document`, as an exit criterion (S2-3, DL-177); the ledger test helpers move to `rivqen-testkit`; the size rule of F ([Q-25](/engineering/plan/open-questions)). |
 
 ### WP-09 — Streaming and FFI {#wp-09}
 
@@ -226,6 +227,7 @@ flowchart TD
 | Goal | Every change is built, tested, scanned and traceable. |
 | Deliverables | Workflows per ecosystem; `deny.toml`; SBOM; provenance; DCO check; REUSE compliance. |
 | Acceptance | All checks in [CI/CD](/engineering/delivery/ci-cd) active and required. |
+| Inputs from WP-06 | Fuzz in CI (DL-148, DL-165): eight targets in `fuzz/`; longer runs of `patch_content` and `split_rqp`, which still found new inputs after 1 hour ([WP-06 S2](/engineering/plan/sprints/WP-06-S2) §4, §5). |
 
 ### WP-21 — Release, packaging, legal and brand {#wp-21}
 

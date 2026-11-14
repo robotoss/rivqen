@@ -14,7 +14,7 @@ Likelihood and impact: **H** high, **M** medium, **L** low, **C** critical.
 | RSK-04 | Push channel delivers out-of-order patches | M / H | Chaos suite | Sequence + base revision + HTTPS resync | WP-16 |
 | RSK-05 | FFI copies too much HTML | M / M | Flamegraphs, copy counters | Chunk API, `bytes`, narrow boundary | WP-09 |
 | RSK-06 | Data of another account appears from cache | M / C | Adversarial auth tests | Mandatory partition, encryption, revoke on logout | WP-07 |
-| RSK-07 | Marker parser enables XSS | M / C | Fuzz + DOM security suite | Formal grammar, context escaping, narrow trust | WP-06 |
+| RSK-07 | Marker parser enables XSS | M / C | Fuzz + DOM security suite | Formal grammar, context escaping, narrow trust. <Badge type="tip" text="FACT" /> Result (WP-06): the legacy split is a linear scanner checked against the golden fixtures; the RQP markup analysis and the patch content and attribute rule fail closed; two security reviews found no critical or high issue (DL-169, DL-177); four fuzz targets ran 1 hour each without a crash. Not done: the DOM security suite in a real WebView (with the SDKs) | WP-06 |
 | RSK-08 | Server languages compute different hashes or templates | H / H | Cross-language golden tests | Exact canonicalization spec + oracle | WP-02 |
 | RSK-09 | Streaming SSR conflicts with diff | M / M | Partial-block tests | Block-boundary buffering | WP-12, WP-13 |
 | RSK-10 | Binary size grows (Rust + two HTTP stacks) | M / M | Size and startup profiling | Platform HTTP first; LTO/strip by measurement | WP-09, WP-10 |

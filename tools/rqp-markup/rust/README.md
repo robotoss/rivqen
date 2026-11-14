@@ -282,7 +282,7 @@ Run the sweeps of `tools/rqp-markup/crosscheck/README.md` with `--only rust` and
 
 Before T-08, seeds 4 and 5 gave 9 block-byte disagreements (all M-24 j or k shapes) and manifest findings in the scripting-disabled view (E8).
 
-Result for T-13 (2026-10-11, release build, both views, `TMPDIR` on disk). "With a class" counts the documents that a rule class of the cross-check (`src/depth.mjs`: M-06 items 2 to 4, M-11 item 5, M-13 item 3, M-26) rejects and that the candidate accepts; it must be 0. "Depth invariant" counts the documents where parse5 is deeper than the claim of M-26 allows, and how many of them the candidate accepts.
+Result for T-13 (2026-10-11, release build, both views, `TMPDIR` on disk). "With a class" counts the documents that a rule class of the cross-check (`tools/rqp-markup/crosscheck/src/depth.mjs`: M-06 items 2 to 4, M-11 item 5, M-13 item 3, M-26) rejects and that the candidate accepts; it must be 0. "Depth invariant" counts the documents where parse5 is deeper than the claim of M-26 allows, and how many of them the candidate accepts.
 
 | Sweep | Documents | Valid | Valid with blocks | Findings | Accepted with a class | Depth invariant |
 |---|---|---|---|---|---|---|

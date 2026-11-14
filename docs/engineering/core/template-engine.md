@@ -10,10 +10,10 @@ The template engine (`rivqen-template`) splits HTML into a template and data blo
 
 | Function | Input | Output |
 |---|---|---|
-| `split_v1(html, limits)` | UTF-8 bytes, limits (canonical profile only, CL-41, DL-159) | `Template`, ordered `DataBlocks`, diagnostics |
-| `render_v1(template, data)` | Template + data | HTML bytes |
+| `split_v1(html, limits)` | UTF-8 bytes, limits (canonical profile only, CL-41, DL-159) | `SplitOutcome`: `Applied(Split)` with the template text, the data blocks in order (`DataBlock`: key and value, `{title}` first) and diagnostics, or `NotApplied` with the reason; `LimitError` over a limit |
+| `render_v1(template, data, limits)` | Template text, data blocks, limits | HTML text, or `RenderError` |
 | `etag_v1(html)` | HTML bytes | Lowercase hex SHA-1 |
-| `template_tag_v1(template)` | Template bytes | Lowercase hex SHA-1 |
+| `template_tag_v1(template)` | Template text | Lowercase hex SHA-1 |
 | `split_rqp(input, limits)` | Untrusted bytes with `data-rq-block` markup, checked with the rules M-01 to M-27 of [RQP markup](/engineering/protocol/markup) (section 6) | `RqpDocument`: template revision `t1.`, blocks in document order (`BlockDescriptor` and content offsets; digests computed by the client, H-103), or `MarkupError` (code and rule) |
 | `locate_manifest(full, limits)`, `insertion_point(document, limits)`, `read_full_document(full, origin, path, limits)` (section 7) | Full RQP document | The one manifest element at the insertion point P of the head walk ([manifest and patch](/engineering/protocol/manifest-patch) §1.7), or `MANIFEST_INVALID` (H-142) |
 | `render_rqp(original, document, replacements, limits)`, `check_patch(original, stored, meta, delta, limits)` (section 9) | Stored document, block offsets, new block contents | The patched document for the analysis of §2.4 step 8, and the result of steps 8 and 9 (H-142) |

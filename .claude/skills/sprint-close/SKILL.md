@@ -20,7 +20,8 @@ If the WP is complete:
 
 9. Check each acceptance item of the WP. Write the evidence (paths, test names, results) in the sprint record. Ask the human to confirm acceptance items that need a human (gate).
 10. Commit the sprint record with `git commit -s`. Push `wp/$0`.
-11. Give the human the merge request (MR) title and description: deliverables, test results, mutation score, review findings, changed pages.
-12. Stop. The human opens and merges the MR into `main` and deletes `wp/$0`. Never push to `main`. Never force-push.
+11. **Documentation check.** Run the light check of `docs/engineering/ai/documentation.md` §4.1: read-only `junior` agents in parallel, from the docs to the code. Verify each finding in the source yourself. Fix the confirmed findings, run `npm run docs:build`, commit and push `wp/$0`.
+12. Give the human the merge request (MR) title and description: deliverables, test results, mutation score, review findings, changed pages.
+13. Stop. The human opens and merges the MR into `main` and deletes `wp/$0`. Never push to `main`. Never force-push.
 
 Give the human a short report: tests, mutation score, review findings, docs changed, what is next.

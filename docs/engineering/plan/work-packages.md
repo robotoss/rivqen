@@ -143,7 +143,7 @@ flowchart TD
 | Goal | The deterministic session FSM for legacy Quick and Standard behavior, plus the diff engine. |
 | Deliverables | `rivqen-session`, `rivqen-proto-legacy`, `rivqen-diff`. |
 | Acceptance | Every legacy fixture produces `expected.actions.json`; FSM property tests (cancel, stale generation, interleavings) pass. |
-| Inputs from WP-06 | [WP-06 S2](/engineering/plan/sprints/WP-06-S2) §5: `diff_v1` and the function fixtures `diff` and `etag` (DL-160); a `Rebuilt` type for `render_v1` (S1-5, DL-169); the end-to-end outcome of the 104 RQP client fixtures (H-142); the session builds `TemplateLimits` from the checked `EngineConfig` (DL-163); the UTF-8 check of manifest and patch §1.7 item 6 before `read_full_document`, as an exit criterion (S2-3, DL-177); the ledger test helpers move to `rivqen-testkit`; the size rule of F ([Q-25](/engineering/plan/open-questions)). |
+| Inputs from WP-06 | [WP-06 S2](/engineering/plan/sprints/WP-06-S2) §5: `diff_v1` and the function fixtures `diff` and `etag` (DL-160); a `Rebuilt` type for `render_v1` (S1-5, DL-169); the end-to-end outcome of the 104 RQP client fixtures (H-142); the session builds `TemplateLimits` from the checked `EngineConfig` (DL-163); the UTF-8 check of manifest and patch §1.7 item 6 before `read_full_document`, as an exit criterion (S2-3, DL-177); the ledger test helpers move to `rivqen-testkit`; the size rule of F ([Q-25](/engineering/plan/open-questions)); the test `model_error_catalog_matches_errors_md` reads the code table of [errors](/engineering/core/errors) §2 (DL-179). |
 
 ### WP-09 — Streaming and FFI {#wp-09}
 

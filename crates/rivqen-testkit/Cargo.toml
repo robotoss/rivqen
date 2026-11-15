@@ -10,6 +10,7 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+rivqen-cache.workspace = true
 rivqen-model.workspace = true
 # Tests and the testkit only (H-138).
 serde_json.workspace = true

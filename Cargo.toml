@@ -34,6 +34,7 @@ sha1 = { version = "=0.11.0", default-features = false }
 serde_json = "=1.0.151"
 proptest = { version = "=1.11.0", default-features = false, features = ["std"] }
 # Workspace crates.
+rivqen-cache = { path = "crates/rivqen-cache", default-features = false }
 rivqen-core = { path = "crates/rivqen-core" }
 # No default features: a crate that needs SHA-1 enables `legacy` (DL-164).
 rivqen-integrity = { path = "crates/rivqen-integrity", default-features = false }

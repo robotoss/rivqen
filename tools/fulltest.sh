@@ -91,11 +91,13 @@ group_python() {
 
 group_core() {
   step core-unsafe 'sh tools/rust-core/check-unsafe.sh'
+  # No I/O in the core crates (ADR-001, DL-180).
+  step core-sansio 'sh tools/rust-core/check-sansio.sh'
   step core-fmt 'cargo fmt --all -- --check'
   step core-clippy 'cargo clippy --workspace --all-targets --all-features -q -- -D warnings'
   step core-test 'RUST_TEST_THREADS=4 cargo test --workspace -q'
   # The core without the legacy feature (WP-23 goal; DL-164).
-  step core-no-legacy 'cargo clippy -p rivqen-integrity -p rivqen-template --all-targets --no-default-features -q -- -D warnings && RUST_TEST_THREADS=4 cargo test -p rivqen-integrity -p rivqen-template --no-default-features -q'
+  step core-no-legacy 'cargo clippy -p rivqen-integrity -p rivqen-template -p rivqen-cache --all-targets --no-default-features -q -- -D warnings && RUST_TEST_THREADS=4 cargo test -p rivqen-integrity -p rivqen-template -p rivqen-cache --no-default-features -q'
   # Linear time of the legacy split and rebuild (C-16, DL-077), release build.
   step core-timing 'cargo test -p rivqen-template --release -q --test legacy_timing -- --ignored'
   step core-deny 'cargo deny check'

@@ -97,3 +97,26 @@ fn model_ids_generation_get_returns_the_number() {
     assert_eq!(Generation::new(u64::MAX).get(), u64::MAX);
     assert_eq!(Generation::FIRST.get(), 0);
 }
+
+#[test]
+fn model_cache_key_debug_shows_a_prefix_only() {
+    let mut bytes = [0u8; 32];
+    for (i, byte) in bytes.iter_mut().enumerate() {
+        *byte = u8::try_from(i).unwrap();
+    }
+    let key = rivqen_model::ids::CacheKey::from_bytes(bytes);
+    assert_eq!(format!("{key:?}"), "CacheKey(00010203)");
+    assert_eq!(key.as_bytes(), &bytes);
+    let other = rivqen_model::ids::CacheKey::from_bytes([0xFF; 32]);
+    assert!(key < other);
+}
+
+#[test]
+fn model_unix_time_differences_and_sums_are_checked() {
+    use rivqen_model::time::UnixTime;
+    assert_eq!(UnixTime(100).since(UnixTime(40)), Some(60));
+    assert_eq!(UnixTime(40).since(UnixTime(40)), Some(0));
+    assert_eq!(UnixTime(40).since(UnixTime(100)), None);
+    assert_eq!(UnixTime(40).plus(60), UnixTime(100));
+    assert_eq!(UnixTime(u64::MAX - 1).plus(60), UnixTime(u64::MAX));
+}

@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+[package]
+name = "rivqen-cache"
+description = "Rivqen cache engine: cache key and partitions, RFC 9111 and legacy policy, transactions, quotas and the storage driver interface (no I/O)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+rivqen-integrity.workspace = true
+rivqen-model.workspace = true
+rivqen-proto.workspace = true
+
+[features]
+default = ["legacy"]
+# Legacy `cache-offline` policy (R-CACHE-08, DL-164). Removed with legacy mode in 1.5.
+legacy = []
+
+[dev-dependencies]
+proptest.workspace = true
+rivqen-testkit.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,10 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc ca35d847c924ac38ef2d06d6c26432a06daf88b425fff407f80e20bad434b6f2 # shrinks to raw = "&#32;javascript:x", place = ("a", false, "href")
+cc 4507d8b2ec0aacb2dff4ece2fd5737dfd22316f7df7642d40e724fd80c5a55e9 # shrinks to raw = "/a 1x&comma;javascript:x", place = ("img", false, "srcset")
+cc 75ed5d0dfc032150e9374ddeb208f7d0683b9a13708deba5d3d6146f6861d51c # shrinks to raw = "\n data:x", place = ("a", false, "href")
+cc d1eb55fcfa45b2eda675d310f37de03acb8415deff8c59ff793a467b79568ede # shrinks to raw = "j&#X61;vascript:x", place = ("a", false, "href")

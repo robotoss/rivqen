@@ -96,6 +96,8 @@ flowchart TD
 | `PatchEnvelope` | `binding`, `operations[]` | No `type`, `protocol`, base, template or page revision (H-104, H-107). `binding` is a SHA-256 value over the canonical final URL, the base page revision, the nonce of the request and the next page revision (H-108); the client computes all four and compares ([manifest and patch §2.2](/engineering/protocol/manifest-patch#_2-2-fields)). The new snapshot has the page revision that the client computed. Validated before apply ([diff engine §3](/engineering/core/diff-engine#_3-rqp-patch-validation)). No `page_id` and no `sequence` over HTTP (H-9). |
 | `PatchOp` | `block_id`, `content` | The only operation of `rqp/1`: replace the content of a block (H-47). No `op`, `format` or `sha256` (H-104); the client computes the hash. The client rejects content with script or event handlers ([manifest and patch §4](/engineering/protocol/manifest-patch#_4-content-rules)). |
 
+<Badge type="tip" text="FACT" /> Names in the code (`rivqen-proto`, WP-05): the rows `Capabilities`, `RqHave` and `RqNonce` describe the values of the request fields; they are not types. `fields::request_fields(RequestBasis)` builds the three field lines (`RequestBasis::FirstVisit`, or `RequestBasis::Snapshot` with the snapshot and the nonce), and the nonce type is `types::Nonce`.
+
 **Computed values.** <Badge type="tip" text="FACT" /> The module `rivqen_proto::compute` (`crates/rivqen-proto/src/compute.rs`, WP-05 S1) computes these values. The tests compare them with the known answers of `spec/rqp/examples/kat/`, the 85 `full` manifests and the 24 `delta` bodies of the server fixtures, and the 76 client fixtures with a delta body that steps 3 to 7 decide.
 
 | Function | Computes |

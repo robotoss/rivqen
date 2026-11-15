@@ -137,9 +137,27 @@ pub fn page_revision(
     policy: Option<&Policy>,
     limits: Option<&Limits>,
 ) -> PageRevision {
+    page_revision_of(template, blocks, policy, limits)
+}
+
+/// The same value as [`page_revision`] for the descriptors that `blocks`
+/// gives, in order. The descriptors are taken by reference, so a caller that
+/// holds them inside other values does not clone them (DL-175).
+#[must_use]
+pub fn page_revision_of<'a, I>(
+    template: &TemplateRevision,
+    blocks: I,
+    policy: Option<&Policy>,
+    limits: Option<&Limits>,
+) -> PageRevision
+where
+    I: IntoIterator<Item = &'a BlockDescriptor>,
+{
+    let blocks = blocks.into_iter();
     let line = policy_line(policy, limits);
     let capacity = blocks
-        .len()
+        .size_hint()
+        .0
         .saturating_mul(MAX_BLOCK_LINE_BYTES)
         .saturating_add(PAGE_REVISION_TAG.len())
         .saturating_add(REVISION_CHARS)

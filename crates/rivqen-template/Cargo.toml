@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+[package]
+name = "rivqen-template"
+description = "Rivqen template engine: legacy marker split and rebuild, RQP markup analysis"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+rivqen-integrity.workspace = true
+rivqen-model.workspace = true
+rivqen-proto.workspace = true
+
+[features]
+default = ["legacy"]
+# Legacy protocol: marker split, rebuild, SHA-1 values (DL-164). WP-23 removes it.
+legacy = ["rivqen-integrity/legacy"]
+
+[dev-dependencies]
+proptest.workspace = true
+rivqen-testkit.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

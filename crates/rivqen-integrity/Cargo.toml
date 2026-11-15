@@ -12,6 +12,13 @@ publish.workspace = true
 [dependencies]
 base64.workspace = true
 sha2.workspace = true
+# Legacy SHA-1 (H-143).
+sha1 = { workspace = true, optional = true }
+
+[features]
+default = ["legacy"]
+# Legacy protocol: SHA-1 (DL-164). WP-23 removes it.
+legacy = ["dep:sha1"]
 
 [dev-dependencies]
 proptest.workspace = true

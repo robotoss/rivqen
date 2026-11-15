@@ -103,6 +103,7 @@ Exceptions use `#[expect(lint, reason = "…")]` with a written reason. A review
 | `PartitionId` | Keyed hash | First 8 hex characters |
 | `Sha256Digest`, `TemplateRevision`, `PageRevision`, `Binding` (Rust core) | Unkeyed SHA-256 values (H-60: they allow guess-testing of content) | First 8 base64url characters and `...`; `Display` (the wire form) is the full value |
 | `Nonce` (Rust core) | Nonce N of a request (RQP-17) | `Nonce(<redacted>)` |
+| `Sha1Hex` (Rust core, feature `legacy`) | Unkeyed SHA-1 of a legacy body or template (`etag`, `template-tag`, `html-sha1`; H-143) | First 8 hex characters and `…`; `Display` (the wire form) is the full value (as H-60) |
 | JSON `Value` and `Event` (Rust core) | Parsed manifest, envelope or block JSON | Shape and string lengths; numbers and booleans as `Integer(..)` and `Bool(..)` |
 
 CI includes a test that formats every public type with `{:?}` / `toString()` and fails if a known secret marker appears.

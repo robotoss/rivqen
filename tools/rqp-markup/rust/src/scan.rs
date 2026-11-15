@@ -25,10 +25,20 @@
 //! module cannot read a tag, a comment or a raw text in two ways.
 //!
 //! The scan keeps the token stack of M-05 as `markup.md` defines it, to know
-//! the foreign region. For a document that `analyze` accepts, the foreign
-//! region of each token is the one of `analyze`. (`analyze` also closes table
-//! parts by M-09; this changes only HTML elements outside block content, so
-//! it never changes a foreign region of a valid document.)
+//! the foreign region, with the implied closure of M-09 (H-85a): a table
+//! part start tag in HTML context first closes F while F does not allow it,
+//! with the same steps as `analyze` (`rules::closure_step`; DL-170). For a
+//! document that `analyze` accepts, the token stack of the scan is the token
+//! stack of `analyze` after each token, so the foreign region of each token
+//! is the one of `analyze`.
+//!
+//! `analyze` applies no closure in the content of a block and in the
+//! `noscript` content C. The scan does not track blocks: in block content a
+//! start tag where a closure step would close an element is invalid (M-09:
+//! F does not allow it), so for a valid document the closure closes nothing
+//! there. C is RAWTEXT for the scan (M-04), so it has no tokens. Step 2 of
+//! the closure (F is not the current node) makes `analyze` reject the
+//! document; the scan then closes nothing.
 //!
 //! # Coverage
 //!
@@ -49,8 +59,9 @@
 //! # Resource limits
 //!
 //! The work is linear in the input size. The memory is linear in the input
-//! size: the token stack holds at most one element per start tag, and the
-//! name table one entry per distinct tag name. [`Tag::attributes`] holds no
+//! size: the token stack holds at most one element per start tag; the name
+//! table holds the names of the rules and the names of the open elements
+//! only. [`Tag::attributes`] holds no
 //! memory that grows with the input; each call reads the tag again (linear
 //! in the tag length). No input panics. The scan does not check M-01 or
 //! M-02: call [`crate::analyze`] first.
@@ -81,6 +92,7 @@ use std::iter::FusedIterator;
 
 use crate::MarkupError;
 use crate::names::{Known, NameId, NameTable, flag, raw_kind};
+use crate::rules::{self, Closure};
 use crate::tokenizer::{self, RawAttr, TagStep, TagWalk, Tokenizer};
 
 pub use crate::tokenizer::Span;
@@ -315,6 +327,10 @@ struct TokenStack {
     /// The name of each open element and the stack index of the previous
     /// open element with the same name.
     elements: Vec<(NameId, Option<usize>)>,
+    /// Stack indices of the elements with a name in `TABLE_FAMILY` or
+    /// `template` (M-09), in stack order. The closure reads them in HTML
+    /// context only, where the stack holds no element of a foreign region.
+    table_marks: Vec<usize>,
     /// Stack index of the region root (M-05 item 4).
     root: Option<usize>,
 }
@@ -324,6 +340,7 @@ impl TokenStack {
         Self {
             names: NameTable::new(),
             elements: Vec::new(),
+            table_marks: Vec::new(),
             root: None,
         }
     }
@@ -332,10 +349,14 @@ impl TokenStack {
         let index = self.elements.len();
         let previous = self.names.replace_top(name, Some(index));
         self.elements.push((name, previous));
+        if self.names.has(name, rules::TABLE_MARKS) {
+            self.table_marks.push(index);
+        }
         index
     }
 
-    /// M-05 items 1 and 2.
+    /// M-05 items 1 and 2, after the implied closure of M-09 in HTML
+    /// context.
     fn start_tag(&mut self, raw_name: &[u8], self_closing: bool) {
         let name = self.names.intern(raw_name);
         if self.root.is_some() {
@@ -344,6 +365,7 @@ impl TokenStack {
             }
             return;
         }
+        self.implied_closure(name);
         let is_root = name == Known::Svg.id() || name == Known::Math.id();
         if (is_root && self_closing) || self.names.has(name, flag::VOID) {
             return;
@@ -354,23 +376,48 @@ impl TokenStack {
         }
     }
 
+    /// The implied closure of M-09 (H-85a) for a start tag in HTML context:
+    /// the steps of `analyze` (see the module comment, "One tokenizer").
+    /// Each step is the end tag of F.
+    fn implied_closure(&mut self, name: NameId) {
+        for _ in 0..rules::CLOSURE_STEPS {
+            let nearest = self
+                .table_marks
+                .last()
+                .and_then(|&index| Some((index, self.elements.get(index)?.0)));
+            let f = rules::table_context(&self.names, nearest);
+            match rules::closure_step(name, f, self.elements.len()) {
+                Closure::Close(index, _) => self.pop_to(index),
+                Closure::Done | Closure::NotCurrent => return,
+            }
+        }
+    }
+
     /// M-05 item 3: pops the nearest element with the name and every element
-    /// above it. An end tag without such an element is ignored. Every
-    /// element is popped at most once, so the work stays linear.
+    /// above it. An end tag without such an element is ignored.
     fn end_tag(&mut self, raw_name: &[u8]) {
-        let Some(target) = self
+        if let Some(target) = self
             .names
             .lookup(raw_name)
             .and_then(|name| self.names.top(name))
-        else {
-            return;
-        };
+        {
+            self.pop_to(target);
+        }
+    }
+
+    /// Pops the element at `target` and every element above it. Every
+    /// element is popped at most once, so the work stays linear.
+    fn pop_to(&mut self, target: usize) {
         while self.elements.len() > target {
             let Some((name, previous)) = self.elements.pop() else {
                 return;
             };
+            let index = self.elements.len();
+            if self.table_marks.last() == Some(&index) {
+                self.table_marks.pop();
+            }
             self.names.replace_top(name, previous);
-            if self.root == Some(self.elements.len()) {
+            if self.root == Some(index) {
                 self.root = None;
             }
         }
@@ -498,7 +545,8 @@ impl FusedIterator for Scanner<'_> {}
 #[allow(
     clippy::unwrap_used,
     clippy::indexing_slicing,
-    clippy::arithmetic_side_effects
+    clippy::arithmetic_side_effects,
+    clippy::format_push_string
 )]
 mod tests {
     use super::*;
@@ -573,7 +621,7 @@ mod tests {
             b"<math><mi><script>x</script></mi></math><script></script><p>",
             b"<svg/><style><b></style><math/><script><b></script>",
             b"<svg><style><b></style></svg><textarea><b></textarea>",
-            // M-09 closure: `analyze` pops the `caption`; the scan keeps it.
+            // M-09 closure: `analyze` and the scan pop the `caption`.
             b"<table><caption><tr><td><svg><g></g></svg></td></tr></table><xmp><b></xmp>",
             b"<p><noscript><svg><b></svg></noscript></p><b>",
             b"\xEF\xBB\xBF<p>x</p>",
@@ -652,6 +700,150 @@ mod tests {
         };
         assert!(attribute(b"abc", raw).unwrap_err().is_internal());
     }
+
+    /// Only tags carry a context in the scan.
+    fn tags_only(seen: &mut Seen) {
+        for token in seen {
+            if token.0 != "start" && token.0 != "end" {
+                token.2 = false;
+            }
+        }
+    }
+
+    /// The largest D that the analysis allows with `open`.
+    fn max_depth(open: usize) -> usize {
+        open
+    }
+
+    /// For a document that the analysis accepts with `open`: the scan with
+    /// the same limit gives no error item, its token stack is never larger
+    /// than the largest D, and every tag has the foreign region of the
+    /// analysis. For another document: the scan reads the tokens of the
+    /// analysis up to the token where it stops.
+    fn assert_valid_scans_to_the_end(input: &[u8], open: usize) -> bool {
+        let (mut seen, valid) = analyze_tokens(input);
+        tags_only(&mut seen);
+        let mut items = scan(input);
+        let mut scanned = Vec::new();
+        let mut largest = 0;
+        let mut stopped = false;
+        while let Some(item) = items.next() {
+            largest = largest.max(items.stack.elements.len());
+            match item {
+                Ok(Token::StartTag(tag)) => {
+                    scanned.push(("start", tag.span(), tag.in_foreign_region()));
+                }
+                Ok(Token::EndTag(tag)) => {
+                    scanned.push(("end", tag.span(), tag.in_foreign_region()));
+                }
+                Ok(Token::Comment(span)) => scanned.push(("comment", span, false)),
+                Ok(Token::Doctype(span)) => scanned.push(("doctype", span, false)),
+                Ok(Token::Cdata { span, .. }) => scanned.push(("cdata", span, false)),
+                Ok(Token::Gap(_)) => {}
+                Err(_) => stopped = true,
+            }
+        }
+        let text = String::from_utf8_lossy(input);
+        if valid {
+            assert!(!stopped, "the scan stops: {text:?}");
+            assert!(largest <= max_depth(open), "stack {largest}: {text:?}");
+            assert_eq!(scanned, seen, "{text:?}");
+        } else {
+            scanned.truncate(seen.len());
+            assert_eq!(scanned, seen, "{text:?}");
+        }
+        valid
+    }
+
+    /// Tables whose cells, rows, row groups, caption and column group may
+    /// leave out their end tags (M-09 implied closure, H-85a), with cell
+    /// content that is closed, left open, foreign or a block, at the top
+    /// level, in a `div` or in the content of a block (no closure there).
+    /// Returns the input and whether an end tag was left out.
+    fn tables() -> impl Strategy<Value = (Vec<u8>, bool)> {
+        let cell = (any::<bool>(), 0..CELL_CONTENT.len(), any::<bool>());
+        let row = (prop::collection::vec(cell, 1..5), any::<bool>());
+        let group = (
+            prop::option::of(pick(&["tbody", "thead", "tfoot"])),
+            prop::collection::vec(row, 0..4),
+            any::<bool>(),
+        );
+        (
+            prop::option::of(any::<bool>()),
+            prop::option::of(any::<bool>()),
+            prop::collection::vec(group, 1..3),
+            0..3_usize,
+            1..4_usize,
+        )
+            .prop_map(|(caption, colgroup, groups, place, copies)| {
+                let mut out = String::new();
+                let mut omitted = false;
+                let mut block = 0;
+                let mut end = |out: &mut String, name: &str, close: bool| {
+                    if close {
+                        out.push_str(&format!("</{name}>"));
+                    } else {
+                        omitted = true;
+                    }
+                };
+                for _ in 0..copies {
+                    out.push_str("<table>");
+                    if let Some(close) = caption {
+                        out.push_str("<caption>c");
+                        end(&mut out, "caption", close);
+                    }
+                    if let Some(close) = colgroup {
+                        out.push_str("<colgroup><col><col>");
+                        end(&mut out, "colgroup", close);
+                    }
+                    for (name, rows, close_group) in &groups {
+                        if let Some(name) = name {
+                            out.push_str(&format!("<{name}>"));
+                        }
+                        for (cells, close_row) in rows {
+                            out.push_str("<tr>");
+                            for &(th, content, close) in cells {
+                                let tag = if th { "th" } else { "td" };
+                                out.push_str(&format!("<{tag}>"));
+                                let text = CELL_CONTENT[content];
+                                if text.contains("{id}") {
+                                    block += 1;
+                                    out.push_str(&text.replace("{id}", &format!("b{block}")));
+                                } else {
+                                    out.push_str(text);
+                                }
+                                end(&mut out, tag, close);
+                            }
+                            end(&mut out, "tr", *close_row);
+                        }
+                        if let Some(name) = name {
+                            end(&mut out, name, *close_group);
+                        }
+                    }
+                    out.push_str("</table>");
+                }
+                let out = match place {
+                    0 => out,
+                    1 => format!("<div>{out}</div>"),
+                    _ => format!("<div data-rq-block=\"t\">{out}</div>"),
+                };
+                (out.into_bytes(), omitted)
+            })
+    }
+
+    /// Cell content for [`tables`]; `{id}` is a new block id.
+    const CELL_CONTENT: &[&str] = &[
+        "x",
+        "<b>y</b>",
+        "<b>open",
+        "<div>open",
+        "<svg><g></g></svg>",
+        "<math><mi>x</mi></math>",
+        "<p data-rq-block=\"{id}\">v</p>",
+        "<table><tr><td>in</td></tr></table>",
+        "<template><td>t</td></template>",
+        "<svg><td></td></svg>",
+    ];
 
     /// Pieces that reach the M-04 state changes and the foreign region.
     const PIECES: &[&str] = &[
@@ -807,6 +999,20 @@ mod tests {
             assert_same_tokens(&input);
         }
 
+        /// DL-170: for every document that the analysis accepts, the scan
+        /// with the same limits reads to the end, its token stack is at
+        /// most D, and each tag is in the foreign region of the analysis
+        /// (also the start tags of block content).
+        #[test]
+        fn scan_prop_valid_documents_scan_to_the_end(
+            (input, _) in tables(),
+            other in prop_oneof![balanced(), soup()],
+            open in Just(crate::MAX_OPEN_ELEMENTS),
+        ) {
+            assert_valid_scans_to_the_end(&input, open);
+            assert_valid_scans_to_the_end(&other, open);
+        }
+
         #[test]
         fn scan_and_analyze_read_the_same_tokens_of_any_bytes(
             input in prop::collection::vec(any::<u8>(), 0..300)
@@ -845,5 +1051,28 @@ mod tests {
             "only {foreign} valid documents with a region"
         );
         assert!(raw_after > 400, "only {raw_after} with a raw text after it");
+    }
+
+    /// Guard against a table generator that never reaches the closure:
+    /// valid documents that leave out end tags, also with a low limit.
+    #[test]
+    fn generator_reaches_valid_tables_with_implied_closure() {
+        use proptest::strategy::ValueTree as _;
+        let mut runner = proptest::test_runner::TestRunner::deterministic();
+        let (mut omitted, mut in_block) = (0, 0);
+        for _ in 0..2000 {
+            let (input, left_out) = tables().new_tree(&mut runner).unwrap().current();
+            if left_out && assert_valid_scans_to_the_end(&input, crate::MAX_OPEN_ELEMENTS) {
+                omitted += 1;
+            }
+            if input.starts_with(b"<div data-rq-block") && analyze_tokens(&input).1 {
+                in_block += 1;
+            }
+        }
+        assert!(
+            omitted > 300,
+            "only {omitted} valid tables without end tags"
+        );
+        assert!(in_block > 20, "only {in_block} valid tables in a block");
     }
 }

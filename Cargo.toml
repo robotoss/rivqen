@@ -28,14 +28,18 @@ publish = false
 [workspace.dependencies]
 base64 = { version = "=0.23.1", default-features = false, features = ["alloc"] }
 sha2 = { version = "=0.11.0", default-features = false }
+# Legacy only, behind the feature `legacy` (H-143, DL-164).
+sha1 = { version = "=0.11.0", default-features = false }
 # Tests and rivqen-testkit only (H-138).
 serde_json = "=1.0.151"
 proptest = { version = "=1.11.0", default-features = false, features = ["std"] }
 # Workspace crates.
 rivqen-core = { path = "crates/rivqen-core" }
-rivqen-integrity = { path = "crates/rivqen-integrity" }
+# No default features: a crate that needs SHA-1 enables `legacy` (DL-164).
+rivqen-integrity = { path = "crates/rivqen-integrity", default-features = false }
 rivqen-model = { path = "crates/rivqen-model" }
 rivqen-proto = { path = "crates/rivqen-proto" }
+rivqen-template = { path = "crates/rivqen-template", default-features = false }
 rivqen-testkit = { path = "crates/rivqen-testkit" }
 
 # docs/engineering/standards/rust.md section 3; docs/engineering/architecture/errors-logging.md 2.2.

@@ -266,7 +266,8 @@ impl Limit {
 
     /// The table of names and safe ranges. Reasons per row: resource-limits
     /// section 1.1. A range with `min == max` is a value that a protocol rule
-    /// of `rqp/1` fixes (markup M-15, M-26; manifest-patch 1.8).
+    /// of `rqp/1` fixes (markup M-15, M-26; manifest-patch 1.8), or the
+    /// legacy name limit of legacy wire C-07 (DL-169).
     const fn spec(self) -> (&'static str, LimitRange) {
         match self {
             Self::MaxDocumentBytes => ("maxDocumentBytes", LimitRange::new(MIB, 32 * MIB)),
@@ -274,7 +275,7 @@ impl Limit {
             Self::PrefixBufferBytes => ("prefixBufferBytes", LimitRange::new(64 * KIB, 2 * MIB)),
             Self::MaxChunkBytes => ("maxChunkBytes", LimitRange::new(8 * KIB, 64 * KIB)),
             Self::MaxBlocks => ("maxBlocks", LimitRange::new(256, 256)),
-            Self::MaxBlockKeyBytesLegacy => ("maxBlockKeyBytesLegacy", LimitRange::new(128, 1024)),
+            Self::MaxBlockKeyBytesLegacy => ("maxBlockKeyBytesLegacy", LimitRange::new(128, 128)),
             Self::MaxBlockKeyBytesRqp => ("maxBlockKeyBytesRqp", LimitRange::new(64, 64)),
             Self::MaxBlockBytes => ("maxBlockBytes", LimitRange::new(MIB, MIB)),
             Self::MaxManifestBytes => ("maxManifestBytes", LimitRange::new(64 * KIB, 64 * KIB)),

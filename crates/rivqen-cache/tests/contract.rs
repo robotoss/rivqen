@@ -6,7 +6,7 @@
 
 use rivqen_cache::driver::{StoreError, StoreErrorKind};
 use rivqen_cache::key::{KeyParts, Partition, Protocol, VaryDigest, VaryEntry};
-use rivqen_cache::txn::{CommitStep, SnapshotBody};
+use rivqen_cache::txn::{CommitStep, SnapshotBody, Validators};
 use rivqen_model::error::{Category, ErrorCode, FallbackHint, HasErrorCode};
 use rivqen_model::http::FieldLine;
 use rivqen_model::ids::PartitionId;
@@ -84,6 +84,33 @@ fn cache_debug_texts_hold_no_content() {
     assert!(!text.contains(MARKER), "{text}");
     assert!(!text.contains("shop.example.com"), "{text}");
     assert!(!text.to_ascii_lowercase().contains("abab"), "{text}");
+}
+
+#[test]
+fn cache_validators_debug_shows_a_prefix_only() {
+    let validators = Validators {
+        etag: Some("0123456789abcdef0123456789abcdef01234567".to_owned()),
+        template_tag: Some("fedcba98".to_owned() + MARKER),
+        rqp: None,
+    };
+    assert_eq!(
+        format!("{validators:?}"),
+        "Validators { etag: Some(01234567...), template_tag: Some(fedcba98...), rqp: None }"
+    );
+    // A tag shorter than the prefix, and one that is not ASCII: no panic.
+    let short = Validators {
+        etag: Some("ab".to_owned()),
+        template_tag: Some("ééééééééé".to_owned()),
+        rqp: None,
+    };
+    assert_eq!(
+        format!("{short:?}"),
+        "Validators { etag: Some(ab...), template_tag: Some(éééééééé...), rqp: None }"
+    );
+    assert_eq!(
+        format!("{:?}", Validators::default()),
+        "Validators { etag: None, template_tag: None, rqp: None }"
+    );
 }
 
 #[test]

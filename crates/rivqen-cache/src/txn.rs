@@ -55,7 +55,10 @@ pub struct EntryVersion(pub u64);
 pub struct Epoch(pub u64);
 
 /// The validators of an entry (data model section 3).
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+///
+/// [`fmt::Debug`] writes the first 8 characters of each tag: a tag can be an
+/// unkeyed hash of the content (errors-logging section 4, H-143).
+#[derive(Clone, PartialEq, Eq, Default)]
 pub struct Validators {
     /// Legacy `etag` (lower-case hex) or the HTTP entity tag.
     pub etag: Option<String>,
@@ -63,6 +66,26 @@ pub struct Validators {
     pub template_tag: Option<String>,
     /// The computed values of an RQP snapshot.
     pub rqp: Option<SnapshotMeta>,
+}
+
+impl fmt::Debug for Validators {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Validators")
+            .field("etag", &self.etag.as_deref().map(ShortTag))
+            .field("template_tag", &self.template_tag.as_deref().map(ShortTag))
+            .field("rqp", &self.rqp)
+            .finish()
+    }
+}
+
+/// A tag in a `Debug` text: at most its first 8 characters.
+struct ShortTag<'a>(&'a str);
+
+impl fmt::Debug for ShortTag<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let prefix: String = self.0.chars().take(8).collect();
+        write!(f, "{prefix}...")
+    }
 }
 
 /// The metadata of one entry.

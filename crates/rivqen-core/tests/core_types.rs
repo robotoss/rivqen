@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: The Rivqen Authors
 //! No public type of the facade prints a planted marker or a configured value
 //! (ERR-06, errors-logging section 4; the pattern of rivqen-model
-//! `model_debug`). The placeholder payloads have no public constructor; their
+//! `model_debug`). The placeholder payloads of later work packages have no public constructor; their
 //! `Debug` is checked inside the crate (`core_action_placeholders_*`,
 //! `core_event_placeholders_*`).
 #![allow(

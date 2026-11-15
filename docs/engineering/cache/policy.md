@@ -87,7 +87,7 @@ The manifest policy of an RQP page ([manifest and patch §1.4](/engineering/prot
 | No `max-age` and no `Expires` | Lifetime 0: no heuristic freshness |
 | `Expires` without `Date`, or not after `Date` | Lifetime 0 |
 | Freshness information that is not valid | Lifetime 0 |
-| Age | `max(apparent_age, corrected_age_value)` plus the time in the cache (RFC 9111 §4.2.3); an absent `Age` is 0 |
+| Age | `max(apparent_age, corrected_age_value)` plus the time in the cache (RFC 9111 §4.2.3); an absent `Age` is 0; an absent `Date` gives the apparent age 0 |
 | `now` before the response time | Not fresh; revalidate; no stale use |
 | Fresh | While the age is less than the lifetime |
 | `ttl_seconds` of the manifest | The lifetime is the smaller value; the stale windows start at the end of that lifetime |

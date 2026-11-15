@@ -60,6 +60,8 @@ Flash storage uses wear leveling. Overwriting a file does not guarantee that old
 | Critical pressure | `TRIM_MEMORY_RUNNING_CRITICAL` / `COMPLETE` | Memory warning while backgrounded | Clear L1; cancel background sessions |
 | Process kill | Process death | Jetsam | Nothing to do; L2 is consistent by design |
 
+<Badge type="tip" text="FACT" /> `rivqen_cache::memory::L1Cache` keeps its values within a byte budget: `get` marks a value as the most recently used, and `insert` evicts the least recently used values until the new one fits. A value larger than the budget gives `OverBudget` and changes nothing. On `Moderate` pressure it evicts the least recently used values until at most half of the budget (rounded down) is in use; on `Critical` it clears. `rivqen_cache::quota::plan_eviction` names the L2 entries to remove for a new entry: the least recently used entries of the partition of the writer first, then of the other partitions, in the order of last use and then of the key. `rivqen_cache::inflight::InFlight` gives one leader for each partition and key (R-CACHE-07). The signals of the platforms and the wiring to sessions are WP-08, WP-10 and WP-11.
+
 ## 5. Library candidates
 
 | Need | Candidate | Note |

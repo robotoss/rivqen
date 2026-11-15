@@ -110,13 +110,13 @@ JNI rules (`src/abi/jni.rs`):
 | `proptest` | =1.11.0 | MIT OR Apache-2.0 | Property test (dev) |
 | JNA `net.java.dev.jna:jna` | 5.19.1 (`.jar` on the JVM, `.aar` on Android) | Apache-2.0 option of LGPL-2.1+ OR Apache-2.0 | UniFFI Kotlin runtime |
 | Kotlin Gradle plugin | 2.4.20 | Apache-2.0 | Local toolchain |
-| Gradle | 9.7.1 (wrapper) | Apache-2.0 | Local toolchain |
+| Gradle | 9.9.1 (wrapper) | Apache-2.0 | Local toolchain |
 
 Every transitive crate is MIT, Apache-2.0, `Unlicense OR MIT`, Unicode-3.0 or MPL-2.0 (`uniffi*` only). The crate has its own `[workspace]` and `Cargo.lock` (DL-084) and the toolchain pin 1.99.0.
 
 Supply chain of the JVM harness (review L-3):
 
-- `jvm/gradlew` is the Gradle 9.7.1 wrapper. `gradle-wrapper.properties` has `distributionSha256Sum` (`acd53f1e…`, from `services.gradle.org`), so the wrapper refuses another distribution. `gradle-wrapper.jar` has the published SHA-256 of the 9.7.1 wrapper (`7a9ce74c…`).
+- `jvm/gradlew` starts Gradle 9.9.1 (DL-180; the evidence runs of WP-04 used 9.7.1). `gradle-wrapper.properties` has `distributionSha256Sum` (`d8a18a7a…`, from `services.gradle.org`), so the wrapper refuses another distribution. `gradle-wrapper.jar` is not changed: it has the published SHA-256 of the 9.7.1 wrapper (`7a9ce74c…`).
 - `jvm/gradle/verification-metadata.xml` has the SHA-256 of every plugin, library and POM of the build (`--write-verification-metadata sha256`). Gradle stops when an artifact differs. The values came from the lab Gradle cache; the SHA-1 of the JNA jar and AAR, `kotlin-stdlib` and `annotations` were the same as on Maven Central (checked 2026-11-08). To add an artifact, run `./gradlew --write-verification-metadata sha256 installDist` with the `run.sh` properties and review the diff.
 
 Lab tools (not in the repository): NDK r30 (`ndk;30.0.16248370`, 2.8 GB) and build-tools 37.0.0 (192 MB), installed into the lab SDK with `sdkmanager`.

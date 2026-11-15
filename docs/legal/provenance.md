@@ -65,7 +65,7 @@ Where the same person must work in both tracks (small team), they follow the rul
 | Changes to upstream | None | None: build flags only (`-fno-objc-arc -fobjc-weak` on iOS). The builds check the pinned SHA and the file hashes of `evidence/source-manifest.lock` and stop on any change |
 | Rivqen glue | Harness per server, control endpoint | Android: a runtime and a session client written from the [legacy client](/engineering/protocol/legacy-client) page; one Rivqen class in the SDK package (`com.tencent.sonic.sdk.RivqenLabAccess`) calls package-private or protected members, listed in `tools/upstream-lab/android/package-access.json`; it writes no upstream field. iOS: a runner that calls SDK functions, a stand-in header for one UIKit name, and a category declaration of one method that the SDK defines but does not declare (listed as non-public calls in the run metadata) |
 | Not read | The upstream sample apps | `sonic-android/sample/`, `sonic-android/sdk/src/androidTest/`, `sonic-iOS/SonicSample/` (CR-04) |
-| Lab-only dependencies (not shipped) | Container images, the npm dependencies of the upstream demo, Gson 2.8.2 (pinned) | Android Gradle Plugin 9.5.0 and Gradle 9.8.2 (pinned, verification metadata), `com.android.support:support-annotations:28.0.0` (Apache-2.0) |
+| Lab-only dependencies (not shipped) | Container images, the npm dependencies of the upstream demo, Gson 2.8.2 (pinned) | Android Gradle Plugin 9.5.0 and Gradle 9.9.1 (pinned, verification metadata; 9.8.2 until DL-180), `com.android.support:support-annotations:28.0.0` (Apache-2.0) |
 | Output | Traces in `evidence/traces/server/` | Traces and function results in `evidence/traces/client/` |
 
 After each lab run the checkout, the containers, the images and the lab SDK root are deleted.

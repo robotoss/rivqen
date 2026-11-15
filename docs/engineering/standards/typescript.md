@@ -22,7 +22,7 @@ TypeScript is used for the web SDK (`sdk/web-core`, `sdk/react`), the Node.js se
 | Formatter | Prettier — version pinned in WP-12 | MIT | `prettier --check .` <Badge type="warning" text="RESEARCH" /> |
 | Vitest | 5.0.3 | MIT | `vitest run --coverage` |
 | fast-check | Pinned in WP-12 | MIT | Property tests |
-| StrykerJS | 10.0.0 | Apache-2.0 | See [Mutation testing](/engineering/quality/mutation) |
+| StrykerJS | 10.1.1 | Apache-2.0 | See [Mutation testing](/engineering/quality/mutation) |
 
 `tsconfig.json` sets these flags explicitly:
 

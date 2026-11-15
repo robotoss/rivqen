@@ -30,7 +30,7 @@ The reference functions here are the source of the expected results. They are no
 ## Requirements
 
 - Node.js 22 or later.
-- No runtime dependency. The only development dependency is `@stryker-mutator/core` 10.0.0 for the mutation check (see [Dependencies](#dependencies)). The package imports the Node.js markup candidate by a relative path (`../rqp-markup/node/src/`), which has no runtime dependency. It does not use Ajv: `src/schema.mjs` checks the same schema files, and its tests compare it with every example of `spec/rqp/examples` (the keyword and the instance path that Ajv 8.20.0 reports).
+- No runtime dependency. The only development dependency is `@stryker-mutator/core` 10.1.1 for the mutation check (see [Dependencies](#dependencies)). The package imports the Node.js markup candidate by a relative path (`../rqp-markup/node/src/`), which has no runtime dependency. It does not use Ajv: `src/schema.mjs` checks the same schema files, and its tests compare it with every example of `spec/rqp/examples` (the keyword and the instance path that Ajv 8.20.0 reports).
 - For the tests: `parse5` 8.0.1 of `tools/rqp-markup/crosscheck`. `test/attribute-soundness.test.mjs` imports it by a relative path (tests only; it is not a dependency of this package), and the test file fails when it is missing. Install it once: `(cd tools/rqp-markup/crosscheck && npm ci --ignore-scripts)`.
 
 ## Procedure: run the checks
@@ -68,7 +68,7 @@ A case can have `"level": "should"` (today the eight `FX-RQ-P35-*` cases, H-56, 
 
 ## Procedure: run the mutation check
 
-StrykerJS 10.0.0 with the command runner (`stryker.config.json`, policy: `docs/engineering/quality/mutation.md`). Each mutant runs `node --test "test/*.test.mjs"`. The run fails below 80 %.
+StrykerJS 10.1.1 with the command runner (`stryker.config.json`, policy: `docs/engineering/quality/mutation.md`). Each mutant runs `node --test "test/*.test.mjs"`. The run fails below 80 %.
 
 `inPlace` is on: the sources reach `fixtures/`, `spec/` and the Node.js candidate by relative paths, and a sandbox copy breaks these paths. Stryker writes the mutants into `src/`, adds `// @ts-nocheck` to the files in `test/`, and puts the original files back at the end. A run that stops before its end (a crash, a kill) can leave mutants there: after every run, run `git diff --exit-code -- src test` in this directory, and restore the files with `git checkout -- src test` when it reports a change.
 
@@ -241,9 +241,9 @@ Development only (`devDependencies`, exact version, `package-lock.json`; install
 
 | Package | Version | License | Use |
 |---|---|---|---|
-| `@stryker-mutator/core` | 10.0.0 | Apache-2.0 | Mutation check (the version of `tools/rqp-markup/node`; H-23, H-29, DL-016) |
+| `@stryker-mutator/core` | 10.1.1 | Apache-2.0 | Mutation check (the version of `tools/rqp-markup/node`; H-23, H-29, DL-016, DL-183) |
 
-The locked tree has 166 packages: MIT 136, Apache-2.0 14, ISC 10, BSD-3-Clause 3, 0BSD 1, and the two dev-only exceptions of H-29: `caniuse-lite` 1.0.30001816 (CC-BY-4.0) and `minimatch` 10.2.6 (BlueOak-1.0.0). Checked on 2026-10-18 from the `license` field of each installed `package.json`.
+The locked tree has 176 packages: MIT 146, Apache-2.0 14, ISC 10, BSD-3-Clause 3, 0BSD 1, and the two dev-only exceptions of H-29: `caniuse-lite` 1.0.30001826 (CC-BY-4.0) and `minimatch` 10.2.6 (BlueOak-1.0.0). Checked on 2026-11-15 from the `license` field of each entry of `package-lock.json` (DL-183). `npm audit` lists `minimatch` 10.2.6 (GHSA-g3hv-75wg-m249, moderate): the fix is only in 11.0.1 and later, and Stryker 10.1.1 asks for `~10.2.4`.
 
 `typed-rest-client` 2.3.1 (a Stryker dependency for the dashboard reporter, which is not used) pins `qs` 6.15.x, which has moderate advisories. `package.json` overrides it to `qs` 6.16.2 (BSD-3-Clause), as `tools/rqp-markup/node` does (H-23, DL-017; 6.16.0 until DL-182). `npm audit` reports no advisory for `qs`. Remove the override when Stryker depends on a fixed `qs`.
 

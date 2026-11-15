@@ -55,14 +55,14 @@ An **ADR** records one important decision: the context, the options, the decisio
 | [ADR-001](#adr-001) | Rust core boundaries | WP-05 | Core design | Pure logic core; adapters own I/O |
 | [ADR-002](/engineering/architecture/adr/ADR-002-ffi-technology) | FFI technology: UniFFI vs C ABI | WP-04 (accepted at G2, H-135); WP-09 implements | Bindings | **Accepted:** hybrid — UniFFI control plane, C ABI byte channel; at most one copy per byte per direction |
 | [ADR-003](/engineering/architecture/adr/ADR-003-ios-navigation) | iOS navigation strategy | WP-04 (accepted at G2, H-136); WP-11 implements | iOS SDK | **Accepted:** one path per page class — IOS-P1 public and offline, IOS-P2 authenticated, IOS-P3 own content; no https streaming |
-| [ADR-004](#adr-004) | Cache storage format | WP-07 | Cache | Files for bodies + SQLite for metadata, atomic rename |
+| [ADR-004](#adr-004) | Cache storage format | WP-07 | Cache | Files for bodies + SQLite for metadata, atomic rename. Direction decided (H-146): a Rust driver with bundled SQLite |
 | [ADR-005](#adr-005) | Legacy protocol exact semantics and profiles | WP-01, WP-02 | legacy compatibility | **Accepted:** "Rivqen canonical" profile + `legacy-java`, `legacy-node`, `legacy-php` profiles |
 | [ADR-006](#adr-006) | RQP wire schema and markup | WP-17 | RQP | **Accepted:** `data-rq-block` attributes, inline manifest, `Rq-*` Structured Field headers, base64url SHA-256 |
 | [ADR-007](#adr-007) | WebSocket vs WebTransport | WP-16 | Realtime | WebSocket first; WebTransport experimental |
 | [ADR-008](#adr-008) | Security and privacy model | WP-18 | Release | Per threat model |
 | [ADR-009](/engineering/architecture/adr/ADR-009-streaming-abi) | Streaming ABI and buffer ownership | WP-09 (WP-04 adds data) | Streaming | Pull into a caller-owned buffer; no ownership transfer; the WebView block sets the granularity |
 | [ADR-010](#adr-010) | Server SDK implementation strategy | WP-13…15 | Servers | Native-language SDKs + shared conformance |
-| [ADR-011](#adr-011) | Cache encryption (AEAD and keys) | WP-07, WP-18 | Authenticated cache | Platform keys + audited AEAD crate |
+| [ADR-011](#adr-011) | Cache encryption (AEAD and keys) | WP-07, WP-18 | Authenticated cache | Platform keys + audited AEAD crate. Direction decided (H-147): XChaCha20-Poly1305 |
 | [ADR-012](#adr-012) | Release hardening profiles | WP-18, WP-21 | Release | Standard toolchain optimizations only |
 | [ADR-013](#adr-013) | Delta mechanism for RQP | WP-17 | RQP | Evaluate Compression Dictionary Transport against block patches |
 | [ADR-014](/engineering/architecture/adr/ADR-014-android-http-stack) | Android HTTP stack | WP-10 (WP-04 adds data) | Android | Adapter contract from the WP-04 data; OkHttp reference adapter; measure HttpEngine in WP-10 |
@@ -92,6 +92,7 @@ An **ADR** records one important decision: the context, the options, the decisio
 - **Context.** The cache must survive crashes without mixing versions, and must be removable per partition.
 - **Recommendation.** Body files written as temp file → fsync → rename. Metadata in SQLite (WAL mode) with one transaction per commit. Each partition is a separate directory.
 - **Verification.** Kill-9 fault injection at every write step; corruption tests.
+- **Direction (human, 2026-11-15, H-146, [WP-07 S1](/engineering/plan/sprints/WP-07-S1)).** <Badge type="info" text="DESIGN" /> One driver in Rust for both platforms: the crate `rivqen-store`, outside the dependency graph of `rivqen-core` (DL-180), with `rusqlite` =0.42.0 and bundled SQLite. Measured cost: +1.2 MB for each Android ABI. Not chosen: a Rust driver with files only; platform drivers in Kotlin and Swift on the system SQLite. Open for the ADR file (WP-07 S2): entry directories with a version, because a `rename` cannot replace a directory that is not empty; the delete of the old directory only after a durable commit. The status stays **Proposed** until the ADR file has the WP-07 evidence.
 
 ## ADR-005: Legacy protocol exact semantics {#adr-005}
 
@@ -132,6 +133,7 @@ An **ADR** records one important decision: the context, the options, the decisio
 ## ADR-011: Cache encryption {#adr-011}
 
 - **Recommendation.** AEAD (AES-256-GCM or ChaCha20-Poly1305) from an audited crate. Data keys wrapped by Android Keystore / iOS Keychain keys. One key per partition, so logout revokes by key deletion.
+- **Direction (human, 2026-11-15, H-147, [WP-07 S1](/engineering/plan/sprints/WP-07-S1)).** <Badge type="info" text="DESIGN" /> XChaCha20-Poly1305 from `chacha20poly1305` =0.11.0, with a random 192-bit nonce for each file, `hmac` =0.13.0 for keyed digests and `zeroize` =1.9.1 for key buffers. WP-07 implements the encryption on the host with a test key provider; the platform key wrap is WP-10 and WP-11; WP-18 checks the design against the threat model. Not chosen: AES-256-GCM. The status stays **Proposed** until the ADR file has the WP-07 evidence.
 
 ## ADR-012: Release hardening profiles {#adr-012}
 

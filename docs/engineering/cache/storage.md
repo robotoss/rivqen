@@ -2,7 +2,7 @@
 
 This page defines how cache data is written to disk, how it is protected, and how Rivqen reacts to memory pressure.
 
-**Status:** <Badge type="info" text="DESIGN" /> ADR-004 (format) and ADR-011 (encryption) are proposed.
+**Status:** <Badge type="info" text="DESIGN" /> ADR-004 (format) and ADR-011 (encryption) are proposed; their direction is decided (H-146, H-147, [WP-07 S1](/engineering/plan/sprints/WP-07-S1)). The write procedure of section 2 gets its exact form in the ADR-004 file (WP-07 S2).
 
 [[toc]]
 
@@ -42,9 +42,9 @@ This page defines how cache data is written to disk, how it is protected, and ho
 | Item | Design |
 |---|---|
 | Scope | Entries in authenticated partitions. Public entries are not encrypted by default. |
-| Algorithm | AEAD: AES-256-GCM or ChaCha20-Poly1305 from an audited Rust crate (ADR-011) |
+| Algorithm | AEAD: XChaCha20-Poly1305 from the crate `chacha20poly1305` (H-147, ADR-011) |
 | Keys | One data key per partition. The data key is wrapped by a platform key (Android Keystore / iOS Keychain with `ThisDeviceOnly`). |
-| Nonce | Random 96-bit per file + a per-key counter limit; rotate the key before the limit |
+| Nonce | Random 192-bit per file (H-147). The 192-bit nonce needs no per-key counter |
 | Associated data | `cache_key ‖ file role ‖ schema_version` (prevents moving files between entries) |
 | Logout | Delete the partition key first (crypto-shredding), then delete files |
 

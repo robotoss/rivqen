@@ -11,7 +11,7 @@ This page defines where Rivqen uses cryptography and which rules apply. Rivqen d
 | legacy compatibility hashes | SHA-1 | Reproduce upstream `etag` / `html-sha1` / `template-tag` values | **None.** Compatibility only. Never used for security decisions. |
 | RQP block hashes | SHA-256 | Detect corruption and mismatched canonicalization | Integrity against accidents, not authorship |
 | Partition IDs | HMAC-SHA256 with a device key | Unlinkable partition names on disk | Privacy |
-| Private cache | AEAD (AES-256-GCM or ChaCha20-Poly1305) | Confidentiality and integrity at rest | Security |
+| Private cache | AEAD: XChaCha20-Poly1305 (H-147) | Confidentiality and integrity at rest | Security |
 | Manifest signatures (optional, future) | Ed25519 | Authorship of offline packages | Security; needs its own threat model (Q-08) |
 | Transport | TLS 1.2+ / TLS 1.3 via the platform | Confidentiality in transit | Security (platform-owned) |
 

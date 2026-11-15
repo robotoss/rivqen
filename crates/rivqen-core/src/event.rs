@@ -8,13 +8,52 @@
 //! request id of each event (INV-12, core API section 2 rule 3) come with the
 //! session in WP-08.
 
+use core::fmt;
+
+use rivqen_cache::txn::StoredEntry;
 use rivqen_model::time::Instant;
 
 use crate::action::placeholder;
 
-placeholder! {
-    /// A stored snapshot that a cache lookup found (`CacheResult`). Fields: WP-07.
-    Snapshot
+/// How much memory the OS asks to free (`MemoryPressure`; storage section 4).
+/// Its `Debug` writes the level name only.
+pub use rivqen_cache::memory::PressureLevel;
+
+/// A stored snapshot that a cache lookup found (`CacheResult`): the entry as
+/// the driver returned it, checked against its stored hashes.
+///
+/// [`fmt::Debug`] writes the version and the size in bytes only: the entry
+/// holds the host, the validators and the page.
+#[derive(Clone, PartialEq, Eq)]
+pub struct Snapshot(Box<StoredEntry>);
+
+impl Snapshot {
+    /// Wraps a stored entry.
+    #[must_use]
+    pub fn new(entry: StoredEntry) -> Self {
+        Self(Box::new(entry))
+    }
+
+    /// The entry.
+    #[must_use]
+    pub fn entry(&self) -> &StoredEntry {
+        &self.0
+    }
+
+    /// The entry, by value.
+    #[must_use]
+    pub fn into_entry(self) -> StoredEntry {
+        *self.0
+    }
+}
+
+impl fmt::Debug for Snapshot {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Snapshot")
+            .field("version", &self.0.version)
+            .field("size_bytes", &self.0.body.size_bytes())
+            .finish_non_exhaustive()
+    }
 }
 placeholder! {
     /// Status and response field lines (`HttpResponseHead`). Fields: WP-08.
@@ -27,10 +66,6 @@ placeholder! {
 placeholder! {
     /// Why the body failed (`HttpFailed`). Fields: WP-08.
     HttpFailure
-}
-placeholder! {
-    /// How much memory the OS asks to free (`MemoryPressure`). Levels: WP-07.
-    PressureLevel
 }
 
 /// What the adapter reports (data-model section 5, table "Event").
@@ -71,10 +106,6 @@ mod tests {
     fn core_event_placeholders_print_the_type_name_only() {
         let events = [
             (
-                Event::CacheResult(Some(Snapshot::placeholder())),
-                "CacheResult(Some(Snapshot(..)))",
-            ),
-            (
                 Event::HttpResponseHead(ResponseMeta::placeholder()),
                 "HttpResponseHead(ResponseMeta(..))",
             ),
@@ -87,8 +118,8 @@ mod tests {
                 "HttpFailed(HttpFailure(..))",
             ),
             (
-                Event::MemoryPressure(PressureLevel::placeholder()),
-                "MemoryPressure(PressureLevel(..))",
+                Event::MemoryPressure(PressureLevel::Critical),
+                "MemoryPressure(Critical)",
             ),
         ];
         for (event, want) in &events {

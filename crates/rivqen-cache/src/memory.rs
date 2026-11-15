@@ -57,10 +57,13 @@ impl<V> L1Cache<V> {
     }
 
     /// The value of `key` in `partition`; marks it as most recently used.
+    ///
+    /// The entries are in order of use: the first is the least recently used.
     pub fn get(&mut self, partition: Partition, key: &CacheKey) -> Option<&V> {
-        // Stub (T-06).
-        let _ = (partition, key);
-        None
+        let index = self.position(partition, key)?;
+        let entry = self.entries.remove(index);
+        self.entries.push(entry);
+        self.entries.last().map(|entry| &entry.3)
     }
 
     /// Stores a value of `size_bytes` and evicts least recently used values
@@ -77,21 +80,26 @@ impl<V> L1Cache<V> {
         value: V,
         size_bytes: u64,
     ) -> Result<(), OverBudget> {
-        // Stub (T-06).
-        let _ = (partition, key, value, size_bytes);
-        Err(OverBudget)
+        if size_bytes > self.budget_bytes {
+            return Err(OverBudget);
+        }
+        self.remove(partition, &key);
+        let room = self.budget_bytes.saturating_sub(size_bytes);
+        self.evict_down_to(room);
+        self.entries.push((partition, key, size_bytes, value));
+        Ok(())
     }
 
     /// Removes one value.
     pub fn remove(&mut self, partition: Partition, key: &CacheKey) {
-        // Stub (T-06).
-        let _ = (partition, key);
+        if let Some(index) = self.position(partition, key) {
+            self.entries.remove(index);
+        }
     }
 
     /// Removes every value of a partition (R-CACHE-04).
     pub fn remove_partition(&mut self, partition: Partition) {
-        // Stub (T-06).
-        let _ = partition;
+        self.entries.retain(|entry| entry.0 != partition);
     }
 
     /// Removes every value (site clear; a caller that knows the hosts uses
@@ -100,9 +108,34 @@ impl<V> L1Cache<V> {
         self.entries.clear();
     }
 
-    /// Reacts to memory pressure (storage section 4).
+    /// Reacts to memory pressure (storage section 4): `Moderate` evicts least
+    /// recently used values until at most half of the budget (rounded down)
+    /// is in use; `Critical` clears the cache.
     pub fn on_pressure(&mut self, level: PressureLevel) {
-        // Stub (T-06).
-        let _ = level;
+        match level {
+            PressureLevel::Moderate => self.evict_down_to(self.budget_bytes / 2),
+            PressureLevel::Critical => self.clear(),
+        }
+    }
+
+    fn position(&self, partition: Partition, key: &CacheKey) -> Option<usize> {
+        self.entries
+            .iter()
+            .position(|entry| entry.0 == partition && entry.1 == *key)
+    }
+
+    /// Removes the least recently used values until `used_bytes` is at most
+    /// `limit`.
+    fn evict_down_to(&mut self, limit: u64) {
+        let mut used = self.used_bytes();
+        let mut count = 0usize;
+        for entry in &self.entries {
+            if used <= limit {
+                break;
+            }
+            used = used.saturating_sub(entry.2);
+            count = count.saturating_add(1);
+        }
+        self.entries.drain(..count);
     }
 }

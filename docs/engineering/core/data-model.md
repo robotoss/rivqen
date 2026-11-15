@@ -142,6 +142,8 @@ The core is an event-driven state machine. The adapter sends **events**. The cor
 | `EmitMetric(metric)` | Record this metric locally. |
 | `ScheduleTimer(deadline)` | Send a `Tick` at this time. |
 
+<Badge type="tip" text="FACT" /> WP-07 defines these payloads in `rivqen-core`: `snapshot` is a stored entry, `level` is `Moderate` or `Critical`, `ref` is a key and an entry version, `txn` is a cache transaction, and `key` is a partition and a key hash. Their `Debug` shows no URL, host, field value or page byte. The other payloads are placeholders until WP-08 and WP-09.
+
 ## 6. Serialization
 
 | Data | Format | Canonical form |

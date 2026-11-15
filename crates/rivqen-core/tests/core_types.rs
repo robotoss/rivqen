@@ -12,11 +12,18 @@
     clippy::indexing_slicing
 )]
 
-use rivqen_core::action::Outcome;
+use rivqen_cache::key::Partition;
+use rivqen_cache::memory::PressureLevel;
+use rivqen_cache::txn::{
+    CacheTransaction, EntryVersion, Epoch, Expect, Preconditions, StoredEntry, TxnOp,
+};
+use rivqen_core::action::{Action, CacheKey, CacheTxn, DocumentRef, Outcome};
 use rivqen_core::config::{ConfigError, Engine, EngineConfig, Violation};
-use rivqen_core::event::Event;
+use rivqen_core::event::{Event, Snapshot};
+use rivqen_model::ids::CacheKey as ModelCacheKey;
 use rivqen_model::limits::{Limit, ResourceLimits};
 use rivqen_model::time::Instant;
+use rivqen_testkit::store::contract::sample_entry;
 
 const MARKER: &str = "PLANTEDMARKER";
 /// A configured value; it must not appear in an error text.
@@ -28,6 +35,77 @@ fn assert_clean(what: &str, text: &str) {
         !text.contains(&PLANTED_VALUE.to_string()),
         "{what} leaks the configured value: {text}"
     );
+}
+
+#[test]
+fn core_types_debug_has_no_content() {
+    let key = ModelCacheKey::from_bytes([9; 32]);
+    let (meta, body) = sample_entry(Partition::Public, key, MARKER, MARKER, 7);
+    let pre = Preconditions {
+        entry: Expect::Any,
+        partition_epoch: Epoch(0),
+        site_epoch: Epoch(0),
+    };
+    let txn = |op| CacheTxn::new(CacheTransaction { op, pre });
+    let ops = [
+        TxnOp::Replace {
+            meta: Box::new(meta.clone()),
+            body: Box::new(body.clone()),
+        },
+        TxnOp::UpdateFields {
+            partition: Partition::Public,
+            key,
+            fields: vec![rivqen_model::http::FieldLine::new("x-planted", MARKER)],
+            policy: meta.policy,
+        },
+        TxnOp::ClearSite {
+            domain: Some(MARKER.to_owned()),
+        },
+        TxnOp::Remove {
+            partition: Partition::Public,
+            key,
+        },
+    ];
+    let snapshot = Snapshot::new(StoredEntry {
+        meta,
+        version: EntryVersion(1),
+        body,
+    });
+    let mut cache_debug: Vec<(&str, String)> = vec![
+        ("Snapshot", format!("{snapshot:?}")),
+        (
+            "Event",
+            format!("{:?}", Event::CacheResult(Some(snapshot.clone()))),
+        ),
+        (
+            "Event",
+            format!("{:?}", Event::MemoryPressure(PressureLevel::Moderate)),
+        ),
+        (
+            "Action",
+            format!(
+                "{:?}",
+                Action::ShowCachedDocument(DocumentRef::new(
+                    CacheKey::new(Partition::Public, key),
+                    EntryVersion(1)
+                ))
+            ),
+        ),
+        (
+            "Action",
+            format!(
+                "{:?}",
+                Action::InvalidateCache(CacheKey::new(Partition::Public, key))
+            ),
+        ),
+    ];
+    for op in ops {
+        cache_debug.push(("Action", format!("{:?}", Action::CommitCache(txn(op)))));
+    }
+    for (what, text) in &cache_debug {
+        assert_clean(what, text);
+    }
+    assert!(cache_debug[0].1.contains("size_bytes"));
 }
 
 #[test]

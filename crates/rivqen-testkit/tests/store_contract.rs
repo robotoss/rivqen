@@ -56,7 +56,6 @@ fn store_contract_clear_site_every_partition() {
 }
 
 #[test]
-#[ignore = "T-01"]
 fn store_contract_clear_site_keeps_other_sites() {
     passes(contract::clear_site_keeps_other_sites(&mut power_loss));
 }
@@ -103,7 +102,6 @@ fn store_contract_touch() {
 }
 
 #[test]
-#[ignore = "T-01"]
 fn store_contract_run_all() {
     passes(contract::run_all(&mut power_loss));
     passes(contract::run_all(&mut process_kill));

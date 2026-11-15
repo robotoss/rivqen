@@ -176,7 +176,6 @@ fn store_partitions_same_key_bytes_stay_apart() {
 /// With the key layout of T-01, the same URL gives another key in each
 /// partition (R-CACHE-01).
 #[test]
-#[ignore = "T-01"]
 fn store_partitions_keys_differ() {
     assert_ne!(key_for(profile(0xA1)), key_for(profile(0xB2)));
     assert_ne!(key_for(profile(0xA1)), key_for(Partition::Public));

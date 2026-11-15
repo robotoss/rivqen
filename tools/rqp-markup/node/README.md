@@ -256,9 +256,9 @@ All are development dependencies, pinned to exact versions, installed with `--ig
 |---|---|---|---|
 | `parse5` | 8.0.1 | MIT | Test oracle only (tokenizer and tree builder) |
 | `entities` (via parse5) | 8.1.0 | BSD-2-Clause | parse5 dependency |
-| `@stryker-mutator/core` | 10.1.1 | Apache-2.0 | Mutation check; resolves `chalk` 5.6.2 (10.0.0 until DL-183; the mutation results on this page are from 10.0.0) |
+| `@stryker-mutator/core` | 10.1.1 | Apache-2.0 | Mutation check; resolves `chalk` 5.6.2 (10.0.0 until DL-191; the mutation results on this page are from 10.0.0) |
 
-`typed-rest-client` 2.3.1 (a Stryker dependency for the dashboard reporter) pins `qs` 6.15.1, which has moderate advisories. `package.json` overrides it to `qs` 6.16.2 (BSD-3-Clause; decision H-23, DL-017; 6.16.0 until DL-182, because 6.16.0 has GHSA-6pq8-jhm2-2vcw). `npm audit` reports no advisory for `qs`. Remove the override when Stryker depends on a fixed `qs`.
+`typed-rest-client` 2.3.1 (a Stryker dependency for the dashboard reporter) pins `qs` 6.15.1, which has moderate advisories. `package.json` overrides it to `qs` 6.16.2 (BSD-3-Clause; decision H-23, DL-017; 6.16.0 until DL-190, because 6.16.0 has GHSA-6pq8-jhm2-2vcw). `npm audit` reports no advisory for `qs`. Remove the override when Stryker depends on a fixed `qs`.
 
 ## Security
 

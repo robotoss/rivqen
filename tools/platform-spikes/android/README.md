@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- SPDX-FileCopyrightText: The Rivqen Authors -->
 
-Evidence code for CAP-A-01…08 ([CONTRACT.md](../CONTRACT.md), DL-133). It is not the base of the SDK. Kotlin app `dev.rivqen.spike`, minSdk 29, target 37. Dependencies (DL-137, pinned exactly): androidx.webkit 1.18.0, OkHttp 5.5.1 (both Apache-2.0); AGP 9.1.1, Kotlin 2.4.20 and Gradle 9.9.1 (DL-180; the evidence runs of WP-04 used 9.5.1) as `tools/webview-lab`.
+Evidence code for CAP-A-01…08 ([CONTRACT.md](../CONTRACT.md), DL-133). It is not the base of the SDK. Kotlin app `dev.rivqen.spike`, minSdk 29, target 37. Dependencies (DL-137, pinned exactly): androidx.webkit 1.18.0, OkHttp 5.5.1 (both Apache-2.0); AGP 9.1.1, Kotlin 2.4.20 and Gradle 9.9.1 (DL-188; the evidence runs of WP-04 used 9.5.1) as `tools/webview-lab`.
 
 ## What the app does
 

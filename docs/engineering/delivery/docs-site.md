@@ -15,7 +15,7 @@ This page explains how the documentation site is built and published, and how to
 
 Versions are pinned exactly in `package.json`. Update them in a separate pull request and check every diagram after the update.
 
-<Badge type="tip" text="FACT" /> Known advisories on 2026-11-15 (`npm audit`, DL-187): `vite` 5.4.21 and `esbuild` 0.21.5 (through VitePress 1.6.4; dev server) and `katex` 0.16.47 (through Mermaid 11). The `markdown-it` copy inside VitePress 1.6.4 also has advisories that `npm audit` does not show. No fix exists in the VitePress 1.x line or in Mermaid 11. The site has only our own pages, so the risk is accepted. Do not expose `npm run docs:dev` to a network.
+<Badge type="tip" text="FACT" /> Known advisories on 2026-11-15 (`npm audit`, DL-195): `vite` 5.4.21 and `esbuild` 0.21.5 (through VitePress 1.6.4; dev server) and `katex` 0.16.47 (through Mermaid 11). The `markdown-it` copy inside VitePress 1.6.4 also has advisories that `npm audit` does not show. No fix exists in the VitePress 1.x line or in Mermaid 11. The site has only our own pages, so the risk is accepted. Do not expose `npm run docs:dev` to a network.
 
 ## 2. Run locally
 

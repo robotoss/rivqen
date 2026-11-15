@@ -116,7 +116,7 @@ Every transitive crate is MIT, Apache-2.0, `Unlicense OR MIT`, Unicode-3.0 or MP
 
 Supply chain of the JVM harness (review L-3):
 
-- `jvm/gradlew` starts Gradle 9.9.1 (DL-180; the evidence runs of WP-04 used 9.7.1). `gradle-wrapper.properties` has `distributionSha256Sum` (`d8a18a7a…`, from `services.gradle.org`), so the wrapper refuses another distribution. `gradle-wrapper.jar` is not changed: it has the published SHA-256 of the 9.7.1 wrapper (`7a9ce74c…`).
+- `jvm/gradlew` starts Gradle 9.9.1 (DL-188; the evidence runs of WP-04 used 9.7.1). `gradle-wrapper.properties` has `distributionSha256Sum` (`d8a18a7a…`, from `services.gradle.org`), so the wrapper refuses another distribution. `gradle-wrapper.jar` is not changed: it has the published SHA-256 of the 9.7.1 wrapper (`7a9ce74c…`).
 - `jvm/gradle/verification-metadata.xml` has the SHA-256 of every plugin, library and POM of the build (`--write-verification-metadata sha256`). Gradle stops when an artifact differs. The values came from the lab Gradle cache; the SHA-1 of the JNA jar and AAR, `kotlin-stdlib` and `annotations` were the same as on Maven Central (checked 2026-11-08). To add an artifact, run `./gradlew --write-verification-metadata sha256 installDist` with the `run.sh` properties and review the diff.
 
 Lab tools (not in the repository): NDK r30 (`ndk;30.0.16248370`, 2.8 GB) and build-tools 37.0.0 (192 MB), installed into the lab SDK with `sdkmanager`.

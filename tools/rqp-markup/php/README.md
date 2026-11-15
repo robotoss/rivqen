@@ -95,7 +95,7 @@ All dev tools are pinned to exact versions in `composer.json` and `composer.lock
 |---|---|---|
 | PHPUnit | 12.5.44 (the newest major that runs on PHP 8.3) | BSD-3-Clause |
 | PHPStan | 2.3.5, level max | MIT |
-| Infection | 0.35.11 (DL-186; the mutation results on this page are from 0.35.6) | BSD-3-Clause |
+| Infection | 0.35.11 (DL-194; the mutation results on this page are from 0.35.6) | BSD-3-Clause |
 
 ## Design
 

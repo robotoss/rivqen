@@ -50,36 +50,103 @@ pub struct StoreFacts {
 }
 
 /// The partition for the snapshot of a full document.
+///
+/// [`Partition::Public`] only when every condition of cache identity rule 3
+/// holds (H-61 to H-64, H-67, H-81, DL-038): the setting is on, the origin is
+/// declared public, no redirect, all fields seen, no `private`, no
+/// `Set-Cookie` or `Set-Cookie2`, the manifest has `"mode": "public"`, and
+/// the response has an explicit `public` or the credentials are known to be
+/// absent. Else the partition of the request.
 #[must_use]
 pub fn store_partition(request: PartitionId, facts: &StoreFacts) -> Partition {
-    // Stub (T-01): the fail-closed answer.
-    let _ = facts;
-    Partition::Scoped(request)
+    let credentials_allow = facts.explicit_public || known_absent(facts.credentials);
+    if shared_conditions(facts) && credentials_allow {
+        Partition::Public
+    } else {
+        Partition::Scoped(request)
+    }
 }
 
 /// The partition for the result of a delta on a snapshot in `snapshot`
 /// (H-65): an explicit `public` of the delta response does not count.
+///
+/// [`Partition::Public`] only when the snapshot is in `public`, the
+/// conditions of [`store_partition`] other than the explicit `public` hold
+/// for the delta response (`manifest_public` is the policy of the snapshot,
+/// negotiation section 6.3 item 2.6), and the credentials are known to be
+/// absent. A snapshot in a scoped partition never moves to `public`.
 #[must_use]
 pub fn delta_partition(snapshot: Partition, request: PartitionId, facts: &StoreFacts) -> Partition {
-    // Stub (T-01): the fail-closed answer.
-    let _ = (snapshot, facts);
-    Partition::Scoped(request)
+    let stays_public = matches!(snapshot, Partition::Public)
+        && shared_conditions(facts)
+        && known_absent(facts.credentials);
+    if stays_public {
+        Partition::Public
+    } else {
+        Partition::Scoped(request)
+    }
 }
 
 /// True when a request in the partition `request` may read, offer or
 /// revalidate an entry in `entry` (cache identity rules 2 and 3, DL-053).
+///
+/// A scoped entry: only for its own partition. A `public` entry: only with
+/// the setting on. With both readable, the session prefers the entry of the
+/// partition of the request (DL-039); that choice is not made here.
 #[must_use]
 pub fn readable(entry: Partition, request: PartitionId, public_enabled: bool) -> bool {
-    // Stub (T-01): the fail-closed answer.
-    let _ = (entry, request, public_enabled);
-    false
+    match entry {
+        Partition::Scoped(owner) => owner == request,
+        Partition::Public => public_enabled,
+    }
 }
 
 /// True when `host` is `cleared_domain` or a subdomain of it (cache
 /// identity rule 5, H-60). Both are lower-case ASCII host names.
+///
+/// The match is on a label boundary: `shop.example.com` matches
+/// `example.com`, `notexample.com` does not. A site clear must clear more,
+/// never less, so the function also accepts what a caller may give in
+/// another form: ASCII case does not count, one trailing dot of each name
+/// and one leading dot of the domain (the cookie `Domain` form) are
+/// ignored. An empty domain (also `.`) matches nothing; a clear of all
+/// sites is a clear without a domain.
 #[must_use]
 pub fn site_matches(host: &str, cleared_domain: &str) -> bool {
-    // Stub (T-01): clears more, never less.
-    let _ = (host, cleared_domain);
-    true
+    let domain = strip_trailing_dot(cleared_domain.as_bytes());
+    let domain = domain.strip_prefix(b".").unwrap_or(domain);
+    if domain.is_empty() {
+        return false;
+    }
+    let host = strip_trailing_dot(host.as_bytes());
+    let Some(cut) = host.len().checked_sub(domain.len()) else {
+        return false;
+    };
+    let Some((head, tail)) = host.split_at_checked(cut) else {
+        return false;
+    };
+    tail.eq_ignore_ascii_case(domain) && (head.is_empty() || head.ends_with(b"."))
+}
+
+/// The conditions of rule 3 that a full document and a delta share: all but
+/// the choice between an explicit `public` and absent credentials.
+const fn shared_conditions(facts: &StoreFacts) -> bool {
+    facts.public_enabled
+        && facts.origin_public
+        && !facts.redirected
+        && facts.fields_visible
+        && !facts.private
+        && !facts.set_cookie
+        && facts.manifest_public
+}
+
+/// True only for credentials that the client knows are absent; unknown
+/// counts as present (H-62).
+const fn known_absent(credentials: Credentials) -> bool {
+    matches!(credentials, Credentials::Absent)
+}
+
+/// `name` without one trailing `.`.
+fn strip_trailing_dot(name: &[u8]) -> &[u8] {
+    name.strip_suffix(b".").unwrap_or(name)
 }

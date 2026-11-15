@@ -26,6 +26,27 @@ cache_key = SHA-256(partition ‖ origin ‖ canonical_url ‖ method ‖ vary_v
 | `vary_values` | Response `Vary` | Values of the request headers named in `Vary`. `Vary: *` → do not cache. |
 | `variant` | Protocol | `legacy` or `RQP`, plus language/region if the app declares them. |
 
+### Byte layout
+
+<Badge type="tip" text="FACT" /> `rivqen_cache::key::cache_key` gives the 32-byte `CacheKey` (DL-184). It is SHA-256 over a list of fields. Each field is `len ‖ bytes`, where `len` is the number of bytes as an unsigned 64-bit big-endian integer (8 bytes). The fields, in this order:
+
+| # | Bytes of the field |
+|---|---|
+| 1 | `rivqen-cache-key-v1`: domain tag with the layout version (ASCII) |
+| 2 | Partition. Scoped: `01` and the 32 bytes of the `PartitionId` (33 bytes). `public`: `02` only (1 byte) |
+| 3 | Origin (UTF-8) |
+| 4 | Canonical URL with its query (UTF-8) |
+| 5 | `GET` |
+| 6 | The number n of `Vary` entries (8 bytes, big-endian) |
+| 7 … 6+2n | For each entry two fields: the name (UTF-8); then the value: `00` when the request had no such field, else `01` and the 32-byte digest |
+| 7+2n | Protocol: `legacy` or `rqp` (ASCII) |
+| 8+2n | Locale: `00` when the app declares none, else `01` and the locale (UTF-8) |
+
+- The function sorts the `Vary` entries: by the bytes of the name, then an absent value first, then by the digest bytes. So the order of the entries does not change the key. It does not change the case of a name: the parser gives lower case.
+- Every field has a length, and fields 2, 6 and the values start with a tag. So two different sets of parts give two different byte strings: `("ab","c")` and `("a","bc")` differ, the `public` field (1 byte) is never a scoped field (33 bytes), an absent value differs from any digest, and an absent locale differs from an empty one.
+- The inputs come from other parts: the `PartitionId` from the adapter (the HMAC of the first line), the canonical URL from the URL parser of WP-08 (section 2), the `Vary` digests from the key port (HMAC-SHA256, DL-127, H-147). `Vary: *` gives no entry, so it has no key.
+- Tests: `crates/rivqen-cache/tests/key_layout.rs` writes the bytes of each case by hand and compares the hash; two known answers are also checked with `shasum -a 256` outside Rust (`key_known_answers`). `key_prop.rs` checks that one changed part changes the key and that two partitions never share a key.
+
 ## 2. URL canonicalization
 
 1. Lowercase the scheme and the host. Apply IDNA to the host.

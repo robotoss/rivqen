@@ -40,25 +40,45 @@ impl InFlight {
 
     /// Adds `request` for `key` in `partition`.
     pub fn join(&mut self, partition: Partition, key: CacheKey, request: RequestId) -> Join {
-        // Stub (T-06): every request is its own leader.
-        let _ = (partition, key, request);
+        if let Some(entry) = self
+            .entries
+            .iter_mut()
+            .find(|entry| entry.0 == partition && entry.1 == key)
+        {
+            entry.3.push(request);
+            return Join::Follower(entry.2);
+        }
+        self.entries.push((partition, key, request, Vec::new()));
         Join::Leader
     }
 
     /// The leader of `key` finished or failed: removes the key and returns
     /// its followers in the order of their joins.
     pub fn finish(&mut self, partition: Partition, key: &CacheKey) -> Vec<RequestId> {
-        // Stub (T-06).
-        let _ = (partition, key);
-        Vec::new()
+        match self
+            .entries
+            .iter()
+            .position(|entry| entry.0 == partition && entry.1 == *key)
+        {
+            Some(index) => self.entries.remove(index).3,
+            None => Vec::new(),
+        }
     }
 
     /// Removes every key of a partition (R-CACHE-04) and returns all its
-    /// requests: they are cancelled.
+    /// requests: they are cancelled. For each key the leader comes first,
+    /// then its followers.
     pub fn cancel_partition(&mut self, partition: Partition) -> Vec<RequestId> {
-        // Stub (T-06).
-        let _ = partition;
-        Vec::new()
+        let (gone, kept): (Vec<_>, Vec<_>) = std::mem::take(&mut self.entries)
+            .into_iter()
+            .partition(|entry| entry.0 == partition);
+        self.entries = kept;
+        let mut requests = Vec::new();
+        for (_, _, leader, followers) in gone {
+            requests.push(leader);
+            requests.extend(followers);
+        }
+        requests
     }
 
     /// The number of keys in flight.

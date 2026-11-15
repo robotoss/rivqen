@@ -44,7 +44,38 @@ pub fn plan_eviction(
     incoming_bytes: u64,
     budget_bytes: u64,
 ) -> Result<Vec<(Partition, CacheKey)>, TooLarge> {
-    // Stub (T-06): the strictest answer.
-    let _ = (entries, writer, replaced, incoming_bytes, budget_bytes);
-    Err(TooLarge)
+    if incoming_bytes > budget_bytes {
+        return Err(TooLarge);
+    }
+    let counted: Vec<&EntryUsage> = entries
+        .iter()
+        .filter(|entry| !(entry.partition == writer && replaced == Some(&entry.key)))
+        .collect();
+    let total = counted
+        .iter()
+        .fold(u128::from(incoming_bytes), |sum, entry| {
+            sum.saturating_add(u128::from(entry.size_bytes))
+        });
+    let mut missing = total.saturating_sub(u128::from(budget_bytes));
+    let mut own: Vec<&EntryUsage> = Vec::new();
+    let mut others: Vec<&EntryUsage> = Vec::new();
+    for entry in counted {
+        if entry.partition == writer {
+            own.push(entry);
+        } else {
+            others.push(entry);
+        }
+    }
+    // Stable sort: equal time and key keep the input order.
+    own.sort_by_key(|entry| (entry.last_used_at, entry.key));
+    others.sort_by_key(|entry| (entry.last_used_at, entry.key));
+    let mut plan = Vec::new();
+    for entry in own.into_iter().chain(others) {
+        if missing == 0 {
+            break;
+        }
+        missing = missing.saturating_sub(u128::from(entry.size_bytes));
+        plan.push((entry.partition, entry.key));
+    }
+    Ok(plan)
 }

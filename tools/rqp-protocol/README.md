@@ -245,7 +245,7 @@ Development only (`devDependencies`, exact version, `package-lock.json`; install
 
 The locked tree has 166 packages: MIT 136, Apache-2.0 14, ISC 10, BSD-3-Clause 3, 0BSD 1, and the two dev-only exceptions of H-29: `caniuse-lite` 1.0.30001816 (CC-BY-4.0) and `minimatch` 10.2.6 (BlueOak-1.0.0). Checked on 2026-10-18 from the `license` field of each installed `package.json`.
 
-`typed-rest-client` 2.3.1 (a Stryker dependency for the dashboard reporter, which is not used) pins `qs` 6.15.x, which has moderate advisories. `package.json` overrides it to `qs` 6.16.0 (BSD-3-Clause), as `tools/rqp-markup/node` does (H-23, DL-017). `npm audit` reports no advisory. Remove the override when Stryker depends on a fixed `qs`.
+`typed-rest-client` 2.3.1 (a Stryker dependency for the dashboard reporter, which is not used) pins `qs` 6.15.x, which has moderate advisories. `package.json` overrides it to `qs` 6.16.2 (BSD-3-Clause), as `tools/rqp-markup/node` does (H-23, DL-017; 6.16.0 until DL-182). `npm audit` reports no advisory for `qs`. Remove the override when Stryker depends on a fixed `qs`.
 
 ## Design
 

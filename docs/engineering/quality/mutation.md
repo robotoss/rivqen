@@ -55,7 +55,7 @@ node $ROOT/tools/mutation/diff-ranges.mjs --base main --ext .java,.kt --format p
 |---|---|---|---|
 | Rust | cargo-mutants 27.1.0, MIT | Lines | `D=$(mktemp) && git -c core.quotePath=false diff --src-prefix=a/ --dst-prefix=b/ --no-ext-diff $(git merge-base main HEAD) -- '*.rs' > "$D" && cargo mutants --in-diff "$D" --no-shuffle` |
 | TypeScript | StrykerJS 10.1.1 + vitest-runner 10.1.1, Apache-2.0 | Lines | `npx stryker run --mutate "$(node $ROOT/tools/mutation/diff-ranges.mjs --base main --ext .ts,.tsx,.mts,.cts,.js,.jsx,.mjs,.cjs --format stryker)" --incremental` |
-| PHP | Infection 0.35.6, BSD-3-Clause | Lines | `vendor/bin/infection --git-diff-lines --git-diff-base=main --min-msi=80 --threads=max` |
+| PHP | Infection 0.35.11, BSD-3-Clause | Lines | `vendor/bin/infection --git-diff-lines --git-diff-base=main --min-msi=80 --threads=max` |
 | Java | PIT 1.30.0 + Gradle plugin `info.solidsoft.pitest` 1.19.0, Apache-2.0 | Classes | `./gradlew pitest -Ppitest.targetClasses="$(node $ROOT/tools/mutation/diff-ranges.mjs --base main --ext .java --format pit-classes)"` |
 | Kotlin | PIT (as Java) | Classes | Same as Java with `--ext .kt`. Advisory until [Q-16](/engineering/plan/open-questions) is closed. |
 | Swift | Muter (tag 16, MIT) | Files | `muter --files-to-mutate "$(node $ROOT/tools/mutation/diff-ranges.mjs --base main --ext .swift --format files)"`. Advisory, no gate. |

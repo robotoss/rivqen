@@ -743,7 +743,7 @@ fn cache_policy_files_follow_the_readme() {
     // The four files, in the README order; each row has the kind of its file.
     assert_eq!(files.iter().map(|f| f.kind).collect::<Vec<_>>(), Kind::ALL);
     let counts: Vec<usize> = files.iter().map(|f| f.rows.len()).collect();
-    assert_eq!(counts, [43, 15, 24, 33], "update the counts with the rows");
+    assert_eq!(counts, [62, 24, 24, 33], "update the counts with the rows");
     assert!(counts.iter().sum::<usize>() >= 60);
 
     let mut ids = BTreeSet::new();
@@ -813,9 +813,14 @@ fn check_dates(id: &str, case: &Case) {
         }
     }
     if times.is_some() {
-        assert_eq!(field(fields, "date").len(), 1, "{id}: one Date field");
+        // DL-198 item b: the row that tests an absent `Date` has none.
+        let dates = usize::from(!NO_DATE_ROWS.contains(&id));
+        assert_eq!(field(fields, "date").len(), dates, "{id}: Date fields");
     }
 }
+
+/// The rows that test an `Expires` field without a `Date` field (DL-198 item b).
+const NO_DATE_ROWS: [&str; 1] = ["POL-LOOKUP-050"];
 
 #[test]
 fn cache_policy_rows_cover_the_brief() {
@@ -892,4 +897,77 @@ fn cache_policy_rows_cover_the_brief() {
             );
         }
     }
+}
+
+#[test]
+fn cache_policy_rows_cover_the_decisions_of_dl_198() {
+    let files = load().unwrap();
+    let all: Vec<&Case> = files
+        .iter()
+        .flat_map(|f| f.rows.iter().map(|r| &r.case))
+        .collect();
+    let lookups = || {
+        all.iter().filter_map(|c| match c {
+            Case::Lookup(l) => Some(l),
+            _ => None,
+        })
+    };
+    // DL-198: the rows of T-04b, by the case that each one decides.
+    let lookup_with = |text: &str, expected: (u64, ExpectedUse)| {
+        lookups().any(|l| {
+            l.expect.lifetime == expected.0
+                && l.expect.entry_use == expected.1
+                && field(&l.response_fields, "cache-control")
+                    .iter()
+                    .any(|v| v.contains(text))
+        })
+    };
+    // Item d: the window follows the bounded lifetime.
+    assert!(lookup_with(
+        "stale-while-revalidate=30",
+        (100, ExpectedUse::StaleWhileRevalidate)
+    ));
+    // Item f: max-age=0 is explicit; no max-age gives no window.
+    assert!(lookup_with(
+        "max-age=0, stale-while-revalidate=60",
+        (0, ExpectedUse::StaleWhileRevalidate)
+    ));
+    assert!(lookup_with(
+        "stale-while-revalidate=60",
+        (0, ExpectedUse::Revalidate)
+    ));
+    // Items b and c: Expires with no Date, and Expires before Date, give 0.
+    assert!(
+        lookups().any(|l| field(&l.response_fields, "date").is_empty()
+            && !field(&l.response_fields, "expires").is_empty()
+            && l.expect.lifetime == 0)
+    );
+    assert!(lookups().any(|l| {
+        l.expect.lifetime == 0
+            && field(&l.response_fields, "expires")
+                .iter()
+                .any(|e| imf_fixdate(e).is_some_and(|x| x < 1_700_000_000))
+    }));
+    // DL-197 item 4: the largest max-age, and two different values.
+    assert!(lookups().any(|l| l.expect.lifetime == 2_147_483_648));
+    assert!(lookup_with(
+        "max-age=600, max-age=300",
+        (0, ExpectedUse::Revalidate)
+    ));
+    // Items e, f, h: failure rows that do not serve, and the row before response_time.
+    let failures_with = |text: &str, serve: bool| {
+        all.iter().any(|c| {
+            matches!(c, Case::Failure(f)
+            if f.serve == serve
+                && field(&f.response_fields, "cache-control").iter().any(|v| v.contains(text)))
+        })
+    };
+    assert!(failures_with(
+        "no-cache, max-age=600, stale-if-error",
+        false
+    ));
+    assert!(failures_with("stale-if-error=1200", false));
+    assert!(failures_with("max-age=0, stale-if-error=60", true));
+    assert!(all.iter().any(|c| matches!(c, Case::Failure(f)
+        if !f.serve && f.times.now.0 < f.times.response_time.0)));
 }

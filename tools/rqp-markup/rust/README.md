@@ -9,7 +9,7 @@ The Rust candidate of WP-17 S1 (tasks T-03, T-08, T-09, T-11, T-13 and T-16) S3 
 
 Run these commands in `tools/rqp-markup/rust`:
 
-1. Install `rustup`. The toolchain is pinned in `tools/rqp-markup/rust-toolchain.toml` (Rust 1.99.1 with clippy and rustfmt); `rustup toolchain install` in this directory installs it. The minimum version for a build is 1.85 (`rust-version`).
+1. Install `rustup`. The toolchain is pinned in `tools/rqp-markup/rust-toolchain.toml` (Rust 1.99.1 with clippy and rustfmt); `rustup toolchain install` in this directory installs it. The minimum version for a build is 1.88, because `sha2` 0.11.1 needs it; the `rust-version` field still says 1.85 (DL-185).
 2. Run `cargo build --release`.
 3. The command is `target/release/rqp-markup`.
 
@@ -309,7 +309,7 @@ The review cases (`cases/review-cases.json`): every repro is rejected with the c
 
 | Crate | Version | License | Use |
 |---|---|---|---|
-| `sha2` | 0.11.0 | MIT OR Apache-2.0 | SHA-256 (runtime) |
+| `sha2` | 0.11.1 | MIT OR Apache-2.0 | SHA-256 (runtime; MSRV 1.88, DL-185) |
 | `base64` | 0.23.1 | MIT OR Apache-2.0 | base64url without padding (runtime; default features off, no SIMD `unsafe`) |
 | `proptest` | 1.11.0 | MIT OR Apache-2.0 | Property tests (dev; default features off, `std` only) |
 | `serde_json` | 1.0.151 | MIT OR Apache-2.0 | Reading `expected.json` and result lines in tests (dev) |

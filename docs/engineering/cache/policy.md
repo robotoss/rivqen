@@ -78,6 +78,22 @@ The core applies these rules in order. The first rule that matches decides.
 
 The manifest policy of an RQP page ([manifest and patch §1.4](/engineering/protocol/manifest-patch#_1-4-policy)) never allows what these rules or the app policy deny (H-61). `ttl_seconds` only shortens the freshness lifetime of rule 4. `offline: true` has an effect only inside rule 6 (`stale-if-error`). `"mode": "public"` selects the `public` partition only under the conditions of [cache identity](/engineering/cache/identity) rule 3, also for the result of a delta on a `public` entry (H-65), and only when the app turned the `public` partition on (H-81; off by default). A result that comes through a redirect never goes to `public` (H-67). A `304` (rule 8) does not change the partition of an entry, and a `304` that does not meet the conditions of `public` (RQP-25) does not update the stored freshness of a `public` entry (DL-040).
 
+<Badge type="info" text="DESIGN" /> **Rule 1 and an RQP delta ([DL-199](/engineering/plan/decision-log)).** A delta D always has `Cache-Control: no-store` (RQP-01). That directive applies to D as a message: the client never stores D and never uses it again. The patched snapshot is stored ([negotiation §6.3](/engineering/protocol/negotiation#_6-3-response-handling), item 2.6). Its store decision uses the request directives of this request and the response directives that are stored with the base snapshot S; the partition follows RQP-25. The freshness and the offline policy of a patched snapshot are an open question ([Q-26](/engineering/plan/open-questions)).
+
+<Badge type="info" text="DESIGN" /> **Arithmetic of rules 4 to 6 ([DL-182](/engineering/plan/decision-log), [DL-198](/engineering/plan/decision-log)).** Where RFC 9111 and RFC 5861 leave a choice, the cache takes the result that asks the server:
+
+| Case | Result |
+|---|---|
+| No `max-age` and no `Expires` | Lifetime 0: no heuristic freshness |
+| `Expires` without `Date`, or not after `Date` | Lifetime 0 |
+| Freshness information that is not valid | Lifetime 0 |
+| Age | `max(apparent_age, corrected_age_value)` plus the time in the cache (RFC 9111 §4.2.3); an absent `Age` is 0 |
+| `now` before the response time | Not fresh; revalidate; no stale use |
+| Fresh | While the age is less than the lifetime |
+| `ttl_seconds` of the manifest | The lifetime is the smaller value; the stale windows start at the end of that lifetime |
+| Stale windows (`stale-while-revalidate`, `stale-if-error`) | Only with valid explicit freshness (`max-age`, or `Expires` with `Date`); stale for exactly N seconds is inside the window |
+| `no-cache` or `must-revalidate` | No stale use (RFC 9111 §4.2.4) |
+
 ## 3. Sensitive content
 
 1. The app can mark routes as **sensitive**. Sensitive routes never show stale content without a visible stale state.

@@ -9,8 +9,14 @@ result. `rivqen-cache` must give the expected result for every row
 
 1. Each expected value comes from a source, not from the code: a section of RFC 9111,
    RFC 9110 or RFC 5861, a rule of `docs/engineering/cache/policy.md` §2 or §3, a rule of
-   `docs/engineering/protocol/negotiation.md` §5, `manifest-patch.md` §1.4, or a CL rule of
-   `docs/engineering/protocol/legacy-client.md` §9. The member `source` names it.
+   `docs/engineering/protocol/negotiation.md` §5 or §6.3, `manifest-patch.md` §1.4,
+   `docs/engineering/cache/identity.md` §1, a rule of `docs/engineering/cache/index.md` §3
+   (R-CACHE-02, R-CACHE-03), `legacy-wire.md` §7 or §10, a CL rule or §9.12 of
+   `docs/engineering/protocol/legacy-client.md`, or an entry of the decision log (`DL-198`
+   for the cases where the RFC texts leave a choice). The member `source` names it in one
+   of these forms: `RFC 9111 §4.2.1`, `cache policy §2`, `negotiation §6.3`,
+   `manifest-patch §1.4`, `cache identity §1`, `cache index §3`, `legacy-wire §7`,
+   `legacy-client §9.12`, `CL-25`, `DL-198`.
 2. The author of the rows does not read `crates/rivqen-cache/src/policy/`. A reviewer who
    did not write the policy code checks each row against its source.
 3. One row tests one rule. A row for a boundary has a twin row on the other side of the
@@ -63,3 +69,20 @@ by `id`.
 | `legacy` | `commit`: boolean, `remove_entry`: boolean, `disable_key_ms`: number or `null` |
 
 A new member needs a row in these tables first.
+
+## Meaning of the values
+
+- `manifest: null` means no manifest policy: no `ttl_seconds` bound and `offline` false
+  (DL-198 item i). A member that is absent in a `manifest` object also has no effect:
+  no bound for `ttl_seconds`, false for `offline`.
+- `lifetime` is never negative. A response without valid explicit freshness information
+  has the lifetime 0 (DL-182, DL-198).
+- A `failure` row asks one question: does the cache show the stored entry after the
+  error? `serve: true` always means "with the stale state to the app" (policy §2 rule 6).
+- A `legacy` row is one legacy response with the given `status`. All its other legacy
+  fields are valid, the body is complete, the SHA-1 values match and the partition is not
+  `null`, so only the cache rules decide. `commit: true` means that the rules allow the
+  commit of the entry. `remove_entry: true` means that the rules remove the entry of the
+  key when one exists. `disable_key_ms` is the period of CL-19, or `null`.
+- A `store` row is the response to a request for a full document. A delta is not a row:
+  its own `no-store` does not decide the store of the patched snapshot (DL-199).

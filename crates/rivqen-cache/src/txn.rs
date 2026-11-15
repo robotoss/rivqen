@@ -8,6 +8,26 @@
 //! A transaction is one atomic change of the store. It carries its
 //! preconditions; a driver refuses a transaction whose precondition is
 //! false, and a refused transaction writes nothing.
+//!
+//! Rules that every driver follows (DL-200; the driver contract suite of
+//! `rivqen-testkit` checks them):
+//!
+//! - `RevokePartition` and `ClearSite` ignore the preconditions and are
+//!   never refused.
+//! - A keyed kind checks the partition epoch, then the site epoch, then the
+//!   entry, at the commit point (`CommitStep::CommitMeta`), not before the
+//!   first step. An epoch that differs from the current one is refused, also
+//!   a higher one.
+//! - `UpdateFields` without an entry is `Refused::Entry` for every `Expect`;
+//!   it replaces the whole field list. `Remove` and `DisableKey` without an
+//!   entry are applied, with no version.
+//! - A version differs from every earlier version of its key. An epoch grows
+//!   by exactly 1.
+//! - `ClearSite` with a domain keeps the disabled-key records: they have no
+//!   host and no page data. `ClearSite` of all sites and `RevokePartition`
+//!   remove them.
+//! - A `Replace` of a disabled key is stored; a read hides it until the time
+//!   of the record.
 
 use std::fmt;
 

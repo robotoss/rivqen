@@ -75,6 +75,8 @@ cache_key = SHA-256(partition ‖ origin ‖ canonical_url ‖ method ‖ vary_v
 4. A partition change cancels all sessions in the old partition.
 5. When the user or the app clears the cookies or the site data of a site, the client deletes the snapshots of that site in all partitions, also in `public` (H-60). The snapshots of a site are those of every origin whose host is the cleared domain or a subdomain of it. When all cookies or all site data are cleared, the client deletes all snapshots. A snapshot holds content and revisions that the server gave for the old cookies; it must not outlive them.
 
+<Badge type="tip" text="FACT" /> `rivqen_cache::partition::store_partition`, `delta_partition` and `readable` implement rules 2 and 3; `site_matches` implements the host match of rule 5. For a delta, the manifest condition is the policy of the stored snapshot ([DL-196](/engineering/plan/decision-log)). Tests: `crates/rivqen-cache/tests/partition_rules.rs` (one row for each row of section 4 that names a partition) and `partition_prop.rs`.
+
 ## 4. Verification
 
 | Test | Expected result |

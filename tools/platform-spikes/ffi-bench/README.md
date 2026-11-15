@@ -29,7 +29,7 @@ iOS simulator (`ios-sim`):
 2. It creates and boots the device when it is missing (`lab/sim.sh`), and deletes it at the end, also after an error. `RQ_FFI_KEEP_SIM=1` keeps it. It never opens Simulator.app.
 3. It builds the Rust library for `aarch64-apple-ios-sim`, links the same `Bench.swift` and `main.swift` into `FfiBench.app` (iOS 18.0 and later, ad-hoc signature), installs it, and starts one app process per case with `simctl launch`.
 4. The app writes its result and a status file (`ok`, `FAIL: …`, `usage: …`) into its `Documents` folder. The status file is the verdict: `simctl launch` gives no exit code, and it reports "did not return a process handle" when the app exits before the launch returns.
-5. The pinned toolchain needs the target: `rustup target add --toolchain 1.99.0 aarch64-apple-ios-sim`.
+5. The pinned toolchain needs the target: `rustup target add --toolchain 1.99.1 aarch64-apple-ios-sim`.
 
 Android (`android`):
 
@@ -37,7 +37,7 @@ Android (`android`):
 2. It builds `libffi_bench.so` with `cargo ndk -t arm64-v8a -P 29` and NDK r30 from the lab SDK (`$RQ_FFI_NDK`; default `$LAB_SDK/ndk/30.0.16248370`), and stops when a `LOAD` segment of `libffi_bench.so` or `libjnidispatch.so` is not aligned to 16 KB.
 3. It converts the JVM harness to DEX with `d8` of build-tools 37.0.0 (`--min-api 29`). JNA for Android comes from the AAR of the same JNA release: its classes and its `arm64-v8a/libjnidispatch.so`.
 4. It pushes the files to `/data/local/tmp/rivqen-ffi` on `emulator-5602`, runs `--selfcheck` on ART first, then one `app_process` per case (the runtime starts as for an app, with the `dalvik.vm.*` heap limits), and removes the folder at the end. Every `adb` call has `-s emulator-5602`.
-5. The pinned toolchain needs the target: `rustup target add --toolchain 1.99.0 aarch64-linux-android`.
+5. The pinned toolchain needs the target: `rustup target add --toolchain 1.99.1 aarch64-linux-android`.
 6. Supplementary run on the human's own emulator with 16 KB pages (one-time human decision, 2026-11-08, FFI task only): `RQ_FFI_EMULATOR_SLOT=1 RQ_FFI_SERIAL=emulator-5554 RQ_FFI_HUMAN_DEVICE_OK=1 sh tools/platform-spikes/ffi-bench/run.sh android [selfcheck]`. The script refuses every other serial, refuses while the lab emulator runs, never starts, stops or changes that emulator, stops when `getconf PAGE_SIZE` is not 16384, writes only `/data/local/tmp/rivqen-ffi` and removes it on every exit. The result is a separate file `android-<sdk>-16k.json`, not the main `android-37` result.
 7. Every target prints the load average (1, 5, 15 min) before and after its cases (`load <target> start|end`). The result file has no member for it, so write it in `ffi.md`.
 

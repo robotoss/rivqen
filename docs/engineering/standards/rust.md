@@ -16,7 +16,7 @@ Rust is used for the core (`crates/`), the FFI layer and the reference server.
 
 | Tool | Version (2026-10-09) | License | Command |
 |---|---|---|---|
-| Rust stable | 1.99.0 | MIT / Apache-2.0 | Pinned in `rust-toolchain.toml` |
+| Rust stable | 1.99.1 | MIT / Apache-2.0 | Pinned in `rust-toolchain.toml` (DL-184) |
 | rustfmt, clippy | With the toolchain | MIT / Apache-2.0 | `cargo fmt --all -- --check`; `cargo clippy --workspace --all-targets --all-features -- -D warnings` |
 | cargo-nextest | 0.9.148 | MIT / Apache-2.0 | `cargo nextest run --workspace` + `cargo test --doc` |
 | proptest | 1.11.0 | MIT / Apache-2.0 | Property tests |

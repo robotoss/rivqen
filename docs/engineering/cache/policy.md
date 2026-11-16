@@ -94,11 +94,30 @@ The manifest policy of an RQP page ([manifest and patch §1.4](/engineering/prot
 | Stale windows (`stale-while-revalidate`, `stale-if-error`) | Only with valid explicit freshness (`max-age`, or `Expires` with `Date`); stale for exactly N seconds is inside the window |
 | `no-cache` or `must-revalidate` | No stale use (RFC 9111 §4.2.4) |
 
+<Badge type="tip" text="FACT" /> **Code (WP-07 S1 T-03).** The module `policy` of `rivqen-cache` has these rules. Each function is pure and takes the time as an input (DL-183).
+
+| Function | Rules |
+|---|---|
+| `freshness_lifetime` | The lifetime of the table above, then the smaller of it and `ttl_seconds` |
+| `current_age` | The age of the table above; `None` when `now` is before the response time; each sum stops at the largest 64-bit value |
+| `lookup_use` | `no-store` or `no-cache`: revalidate. No age: revalidate. Age less than the lifetime: rule 4. Inside `stale-while-revalidate` with explicit freshness and no `must-revalidate`: rule 5. Else rule 8 |
+| `serve_on_failure` | Rule 6 and §3 rule 2 |
+| `store_decision` | Rule 1 for a full document, in this order: `no-store` (request or response), `Vary: *`, credentials without `authenticated_cache` (R-CACHE-03), a status other than `200`. `private` and `no-cache` store |
+| `legacy::legacy_cache_outcome` | Rule 7 (feature `legacy`), see below |
+
+<Badge type="tip" text="FACT" /> A `5xx`, `408` or `429` gives the skip reason `TransientStatus`: the entry of the key stays (legacy client CL-18 item 1). Another status gives `Status`: the entry is removed.
+
+<Badge type="tip" text="FACT" /> `legacy_cache_outcome` takes the `cache-offline` value and the result of `store_decision`. Order: `TransientStatus` keeps the entry; `Status` removes it (CL-44, CL-18 item 2); `http` removes the entry and disables the key for `unavailable_time_ms` (CL-19), also with `no-store`, `Vary: *` or credentials; another skip removes the entry (CL-15, CL-39); `true` and `store` commit (CL-25, CL-30); `false`, another value or no field removes the entry (CL-14, CL-15).
+
+<Badge type="tip" text="FACT" /> **Tests.** `crates/rivqen-cache/tests/policy_matrix.rs` runs every row of the policy matrix `fixtures/cache/policy/` (`lookup.json`, `failure.json`, `store.json`, `legacy.json`; the legacy rows only with the feature `legacy`). It builds the inputs with the parsers of §1.1. `policy_freshness.rs` and `policy_store.rs` check each boundary on both sides. `policy_prop.rs` checks that `no-store` never stores, that the use of an entry only gets stricter as time passes, that a larger `ttl_seconds` never gives a stricter result, and that no input panics.
+
 ## 3. Sensitive content
 
 1. The app can mark routes as **sensitive**. Sensitive routes never show stale content without a visible stale state.
 2. `TLS_ERROR` never falls back to stale sensitive content.
 3. Authenticated pages follow `R-CACHE-03`: off by default.
+
+<Badge type="tip" text="FACT" /> `serve_on_failure` gives `false` for `Failure::Tls` on a route that the caller marks sensitive (rule 2). A network error on a sensitive route can serve the entry; the caller shows the stale state (rule 1). `store_decision` skips a credentialed exchange (credentials present or unknown, or `Set-Cookie`) unless `authenticated_cache` is on (rule 3). Tests: `policy_failure_tls_on_a_sensitive_route_never_serves`, `policy_store_credentials_skip_without_the_app_setting` and the rows `POL-FAILURE-008` to `-010` and `POL-STORE-011` to `-016`.
 
 ## 4. Invalidation triggers
 

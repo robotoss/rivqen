@@ -232,7 +232,8 @@ pub fn current_age(policy: &EntryPolicy, now: UnixTime) -> Option<u64> {
 }
 
 /// Rules 4, 5 and 8 of freshness section 2 for a readable entry that passed
-/// its integrity check.
+/// its integrity check. `sensitive` is true when the app marked the route
+/// sensitive (freshness section 3, rules 1 and 2).
 ///
 /// Rule order:
 ///
@@ -240,11 +241,18 @@ pub fn current_age(policy: &EntryPolicy, now: UnixTime) -> Option<u64> {
 /// 2. `now` before the response time (no age): [`Use::Revalidate`].
 /// 3. age less than [`freshness_lifetime`]: [`Use::Fresh`].
 /// 4. A stale use is allowed (valid explicit freshness, no
-///    `must-revalidate`), `stale-while-revalidate` is present and the age is
-///    at most the lifetime plus its value: [`Use::StaleWhileRevalidate`].
+///    `must-revalidate`), `stale-while-revalidate` is present, the age is
+///    at most the lifetime plus its value, `ttl_seconds` is not `0` and the
+///    route is not sensitive: [`Use::StaleWhileRevalidate`].
 /// 5. Else [`Use::Revalidate`].
+///
+/// `ttl_seconds` `0` means that the client revalidates before it shows the
+/// snapshot (manifest and patch section 1.4), so it has no stale window.
+/// A stale sensitive page is not shown before the request: a TLS failure of
+/// the background request would come after the page is visible (freshness
+/// section 3 rule 2).
 #[must_use]
-pub fn lookup_use(policy: &EntryPolicy, now: UnixTime) -> Use {
+pub fn lookup_use(policy: &EntryPolicy, now: UnixTime, sensitive: bool) -> Use {
     let cc = &policy.cache_control;
     if never_reuse(cc) {
         return Use::Revalidate;
@@ -256,8 +264,9 @@ pub fn lookup_use(policy: &EntryPolicy, now: UnixTime) -> Use {
     if age < lifetime {
         return Use::Fresh;
     }
+    let window_allowed = !sensitive && policy.ttl_seconds != Some(0) && stale_use_allowed(policy);
     match cc.stale_while_revalidate {
-        Some(window) if stale_use_allowed(policy) && within_window(age, lifetime, window) => {
+        Some(window) if window_allowed && within_window(age, lifetime, window) => {
             Use::StaleWhileRevalidate
         }
         _ => Use::Revalidate,

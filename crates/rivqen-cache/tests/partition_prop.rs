@@ -188,6 +188,18 @@ proptest! {
     }
 
     #[test]
+    fn partition_prop_site_leading_dots_do_not_change_the_match(
+        host in "[a-c.]{0,12}",
+        domain in "[a-c][a-c.]{0,8}",
+        dots in 1_usize..6,
+    ) {
+        // The cookie `Domain` form with any number of leading dots names the
+        // same site (a site clear clears more, never less).
+        let dotted = format!("{}{domain}", ".".repeat(dots));
+        prop_assert_eq!(site_matches(&host, &dotted), site_matches(&host, &domain));
+    }
+
+    #[test]
     fn partition_prop_site_any_text_never_panics(host in ".{0,16}", domain in "[.a]{0,3}|.{0,16}") {
         // A domain of dots only (also empty) matches nothing.
         if site_matches(&host, &domain) {

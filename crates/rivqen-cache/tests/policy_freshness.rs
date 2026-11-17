@@ -336,7 +336,7 @@ fn policy_age_large_age_makes_the_entry_stale() {
         age: Some(u64::MAX),
         ..swr_policy()
     };
-    assert_eq!(lookup_use(&p, at(T)), Use::Revalidate);
+    assert_eq!(lookup_use(&p, at(T), false), Use::Revalidate);
 }
 
 // ---- Use -----------------------------------------------------------------
@@ -344,16 +344,19 @@ fn policy_age_large_age_makes_the_entry_stale() {
 #[test]
 fn policy_use_fresh_while_age_is_below_the_lifetime() {
     let p = policy(max_age(600));
-    assert_eq!(lookup_use(&p, at(T)), Use::Fresh);
-    assert_eq!(lookup_use(&p, at(T + 599)), Use::Fresh);
-    assert_eq!(lookup_use(&p, at(T + 600)), Use::Revalidate);
+    assert_eq!(lookup_use(&p, at(T), false), Use::Fresh);
+    assert_eq!(lookup_use(&p, at(T + 599), false), Use::Fresh);
+    assert_eq!(lookup_use(&p, at(T + 600), false), Use::Revalidate);
 }
 
 #[test]
 fn policy_use_lifetime_zero_is_never_fresh() {
-    assert_eq!(lookup_use(&policy(max_age(0)), at(T)), Use::Revalidate);
     assert_eq!(
-        lookup_use(&policy(CacheControl::default()), at(T)),
+        lookup_use(&policy(max_age(0)), at(T), false),
+        Use::Revalidate
+    );
+    assert_eq!(
+        lookup_use(&policy(CacheControl::default()), at(T), false),
         Use::Revalidate
     );
 }
@@ -364,7 +367,7 @@ fn policy_use_no_cache_revalidates_a_fresh_entry() {
         no_cache: true,
         ..max_age(600)
     });
-    assert_eq!(lookup_use(&p, at(T + 10)), Use::Revalidate);
+    assert_eq!(lookup_use(&p, at(T + 10), false), Use::Revalidate);
 }
 
 #[test]
@@ -373,7 +376,7 @@ fn policy_use_no_store_revalidates_a_fresh_entry() {
         no_store: true,
         ..max_age(600)
     });
-    assert_eq!(lookup_use(&p, at(T + 10)), Use::Revalidate);
+    assert_eq!(lookup_use(&p, at(T + 10), false), Use::Revalidate);
 }
 
 #[test]
@@ -382,21 +385,27 @@ fn policy_use_must_revalidate_has_no_effect_while_fresh() {
         must_revalidate: true,
         ..max_age(600)
     });
-    assert_eq!(lookup_use(&p, at(T + 300)), Use::Fresh);
+    assert_eq!(lookup_use(&p, at(T + 300), false), Use::Fresh);
 }
 
 #[test]
 fn policy_use_now_before_response_time_revalidates() {
-    assert_eq!(lookup_use(&swr_policy(), at(T - 1)), Use::Revalidate);
+    assert_eq!(lookup_use(&swr_policy(), at(T - 1), false), Use::Revalidate);
 }
 
 #[test]
 fn policy_use_stale_window_is_inclusive() {
     let p = swr_policy();
-    assert_eq!(lookup_use(&p, at(T + 599)), Use::Fresh);
-    assert_eq!(lookup_use(&p, at(T + 600)), Use::StaleWhileRevalidate);
-    assert_eq!(lookup_use(&p, at(T + 630)), Use::StaleWhileRevalidate);
-    assert_eq!(lookup_use(&p, at(T + 631)), Use::Revalidate);
+    assert_eq!(lookup_use(&p, at(T + 599), false), Use::Fresh);
+    assert_eq!(
+        lookup_use(&p, at(T + 600), false),
+        Use::StaleWhileRevalidate
+    );
+    assert_eq!(
+        lookup_use(&p, at(T + 630), false),
+        Use::StaleWhileRevalidate
+    );
+    assert_eq!(lookup_use(&p, at(T + 631), false), Use::Revalidate);
 }
 
 #[test]
@@ -405,11 +414,83 @@ fn policy_use_window_starts_at_the_bounded_lifetime() {
         ttl_seconds: Some(100),
         ..swr_policy()
     };
-    assert_eq!(lookup_use(&p, at(T + 99)), Use::Fresh);
-    assert_eq!(lookup_use(&p, at(T + 100)), Use::StaleWhileRevalidate);
-    assert_eq!(lookup_use(&p, at(T + 130)), Use::StaleWhileRevalidate);
-    assert_eq!(lookup_use(&p, at(T + 131)), Use::Revalidate);
-    assert_eq!(lookup_use(&p, at(T + 610)), Use::Revalidate);
+    assert_eq!(lookup_use(&p, at(T + 99), false), Use::Fresh);
+    assert_eq!(
+        lookup_use(&p, at(T + 100), false),
+        Use::StaleWhileRevalidate
+    );
+    assert_eq!(
+        lookup_use(&p, at(T + 130), false),
+        Use::StaleWhileRevalidate
+    );
+    assert_eq!(lookup_use(&p, at(T + 131), false), Use::Revalidate);
+    assert_eq!(lookup_use(&p, at(T + 610), false), Use::Revalidate);
+}
+
+#[test]
+fn policy_use_ttl_zero_has_no_window() {
+    // Manifest and patch section 1.4: with `0` the client revalidates before
+    // it shows the snapshot. The twin with `1` keeps the window.
+    let zero = EntryPolicy {
+        ttl_seconds: Some(0),
+        ..swr_policy()
+    };
+    assert_eq!(lookup_use(&zero, at(T), false), Use::Revalidate);
+    assert_eq!(lookup_use(&zero, at(T + 10), false), Use::Revalidate);
+    assert_eq!(lookup_use(&zero, at(T + 30), false), Use::Revalidate);
+    let one = EntryPolicy {
+        ttl_seconds: Some(1),
+        ..swr_policy()
+    };
+    assert_eq!(lookup_use(&one, at(T), false), Use::Fresh);
+    assert_eq!(
+        lookup_use(&one, at(T + 10), false),
+        Use::StaleWhileRevalidate
+    );
+    assert_eq!(
+        lookup_use(&one, at(T + 31), false),
+        Use::StaleWhileRevalidate
+    );
+    assert_eq!(lookup_use(&one, at(T + 32), false), Use::Revalidate);
+}
+
+#[test]
+fn policy_use_ttl_zero_does_not_change_serve_on_failure() {
+    // The rule of `ttl_seconds` `0` is for the lookup only (rule 6 of
+    // freshness section 2 is not changed).
+    let zero = EntryPolicy {
+        ttl_seconds: Some(0),
+        ..sie_policy()
+    };
+    assert!(serve_network(&zero, T + 10));
+    assert!(serve_network(&zero, T + 1200));
+    assert!(!serve_network(&zero, T + 1201));
+}
+
+#[test]
+fn policy_use_sensitive_fresh_stays_fresh() {
+    let p = swr_policy();
+    assert_eq!(lookup_use(&p, at(T), true), Use::Fresh);
+    assert_eq!(lookup_use(&p, at(T + 599), true), Use::Fresh);
+    let must = policy(CacheControl {
+        must_revalidate: true,
+        ..max_age(600)
+    });
+    assert_eq!(lookup_use(&must, at(T + 300), true), Use::Fresh);
+}
+
+#[test]
+fn policy_use_sensitive_inside_the_window_revalidates() {
+    // Freshness section 3: a stale sensitive page is not shown before the
+    // request. The same entry on a route that is not sensitive has the
+    // window.
+    let p = swr_policy();
+    for now in [T + 600, T + 615, T + 630] {
+        assert_eq!(lookup_use(&p, at(now), true), Use::Revalidate);
+        assert_eq!(lookup_use(&p, at(now), false), Use::StaleWhileRevalidate);
+    }
+    assert_eq!(lookup_use(&p, at(T + 631), true), Use::Revalidate);
+    assert_eq!(lookup_use(&p, at(T - 1), true), Use::Revalidate);
 }
 
 #[test]
@@ -418,8 +499,11 @@ fn policy_use_window_zero_is_only_the_end_of_the_lifetime() {
         stale_while_revalidate: Some(0),
         ..max_age(600)
     });
-    assert_eq!(lookup_use(&p, at(T + 600)), Use::StaleWhileRevalidate);
-    assert_eq!(lookup_use(&p, at(T + 601)), Use::Revalidate);
+    assert_eq!(
+        lookup_use(&p, at(T + 600), false),
+        Use::StaleWhileRevalidate
+    );
+    assert_eq!(lookup_use(&p, at(T + 601), false), Use::Revalidate);
 }
 
 #[test]
@@ -428,9 +512,9 @@ fn policy_use_max_age_zero_has_a_window() {
         stale_while_revalidate: Some(60),
         ..max_age(0)
     });
-    assert_eq!(lookup_use(&p, at(T)), Use::StaleWhileRevalidate);
-    assert_eq!(lookup_use(&p, at(T + 60)), Use::StaleWhileRevalidate);
-    assert_eq!(lookup_use(&p, at(T + 61)), Use::Revalidate);
+    assert_eq!(lookup_use(&p, at(T), false), Use::StaleWhileRevalidate);
+    assert_eq!(lookup_use(&p, at(T + 60), false), Use::StaleWhileRevalidate);
+    assert_eq!(lookup_use(&p, at(T + 61), false), Use::Revalidate);
 }
 
 #[test]
@@ -444,16 +528,16 @@ fn policy_use_expires_with_date_has_a_window() {
         expires: Expires::At(at(T)),
         ..policy(swr)
     };
-    assert_eq!(lookup_use(&p, at(T + 10)), Use::StaleWhileRevalidate);
+    assert_eq!(lookup_use(&p, at(T + 10), false), Use::StaleWhileRevalidate);
     // The same Expires without Date: no explicit freshness.
     let no_date = EntryPolicy { date: None, ..p };
-    assert_eq!(lookup_use(&no_date, at(T + 10)), Use::Revalidate);
+    assert_eq!(lookup_use(&no_date, at(T + 10), false), Use::Revalidate);
     // Expires that is not valid: no explicit freshness.
     let invalid = EntryPolicy {
         expires: Expires::Invalid,
         ..p
     };
-    assert_eq!(lookup_use(&invalid, at(T + 10)), Use::Revalidate);
+    assert_eq!(lookup_use(&invalid, at(T + 10), false), Use::Revalidate);
 }
 
 #[test]
@@ -462,7 +546,7 @@ fn policy_use_no_window_without_explicit_freshness() {
         stale_while_revalidate: Some(60),
         ..CacheControl::default()
     });
-    assert_eq!(lookup_use(&p, at(T + 30)), Use::Revalidate);
+    assert_eq!(lookup_use(&p, at(T + 30), false), Use::Revalidate);
 }
 
 #[test]
@@ -472,7 +556,7 @@ fn policy_use_no_window_with_invalid_freshness() {
         invalid_freshness: true,
         ..max_age(0)
     });
-    assert_eq!(lookup_use(&p, at(T + 30)), Use::Revalidate);
+    assert_eq!(lookup_use(&p, at(T + 30), false), Use::Revalidate);
 }
 
 #[test]
@@ -487,14 +571,14 @@ fn policy_use_no_window_with_no_cache_or_must_revalidate() {
             ..swr_policy().cache_control
         },
     ] {
-        assert_eq!(lookup_use(&policy(cc), at(T + 610)), Use::Revalidate);
+        assert_eq!(lookup_use(&policy(cc), at(T + 610), false), Use::Revalidate);
     }
 }
 
 #[test]
 fn policy_use_stale_if_error_and_offline_do_not_change_a_lookup() {
     let p = sie_policy();
-    assert_eq!(lookup_use(&p, at(T + 700)), Use::Revalidate);
+    assert_eq!(lookup_use(&p, at(T + 700), false), Use::Revalidate);
 }
 
 #[test]
@@ -504,7 +588,7 @@ fn policy_use_window_sum_saturates() {
         ..max_age(600)
     });
     assert_eq!(
-        lookup_use(&p, at(u64::MAX)),
+        lookup_use(&p, at(u64::MAX), false),
         Use::StaleWhileRevalidate,
         "lifetime plus window is larger than every age"
     );

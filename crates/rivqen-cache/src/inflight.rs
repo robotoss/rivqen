@@ -7,10 +7,16 @@
 //! Contract (architect): the public items of this file. The table is state,
 //! not a lock: the core has no threads (R-CORE-12). The session (WP-08)
 //! connects it to requests and events (DL-185).
+//!
+//! The table is keyed by the partition of the REQUEST ([`PartitionId`]),
+//! never by the partition of a stored entry: a network request carries the
+//! credentials of the profile that made it. With [`Partition::Public`] as a
+//! key, two profiles would join one request made with the credentials of the
+//! first one (a cross-account leak).
+//!
+//! [`Partition::Public`]: crate::key::Partition::Public
 
-use rivqen_model::ids::{CacheKey, RequestId};
-
-use crate::key::Partition;
+use rivqen_model::ids::{CacheKey, PartitionId, RequestId};
 
 /// The role of a request that joins the table.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -22,11 +28,11 @@ pub enum Join {
     Follower(RequestId),
 }
 
-/// The requests in flight, by partition and key. A key of one partition
-/// never joins a request of another partition.
+/// The requests in flight, by request partition and key. A request of one
+/// partition never joins a request of another partition.
 #[derive(Debug, Default)]
 pub struct InFlight {
-    entries: Vec<(Partition, CacheKey, RequestId, Vec<RequestId>)>,
+    entries: Vec<(PartitionId, CacheKey, RequestId, Vec<RequestId>)>,
 }
 
 impl InFlight {
@@ -38,8 +44,9 @@ impl InFlight {
         }
     }
 
-    /// Adds `request` for `key` in `partition`.
-    pub fn join(&mut self, partition: Partition, key: CacheKey, request: RequestId) -> Join {
+    /// Adds `request` for `key`; `partition` is the partition of the request
+    /// (its profile), also when the entry it may read is in `public`.
+    pub fn join(&mut self, partition: PartitionId, key: CacheKey, request: RequestId) -> Join {
         if let Some(entry) = self
             .entries
             .iter_mut()
@@ -52,9 +59,10 @@ impl InFlight {
         Join::Leader
     }
 
-    /// The leader of `key` finished or failed: removes the key and returns
-    /// its followers in the order of their joins.
-    pub fn finish(&mut self, partition: Partition, key: &CacheKey) -> Vec<RequestId> {
+    /// The leader of `key` in the request partition `partition` finished or
+    /// failed: removes the key and returns its followers in the order of
+    /// their joins.
+    pub fn finish(&mut self, partition: PartitionId, key: &CacheKey) -> Vec<RequestId> {
         match self
             .entries
             .iter()
@@ -65,10 +73,10 @@ impl InFlight {
         }
     }
 
-    /// Removes every key of a partition (R-CACHE-04) and returns all its
-    /// requests: they are cancelled. For each key the leader comes first,
-    /// then its followers.
-    pub fn cancel_partition(&mut self, partition: Partition) -> Vec<RequestId> {
+    /// Removes every key of a request partition (R-CACHE-04) and returns all
+    /// its requests: they are cancelled. For each key the leader comes
+    /// first, then its followers.
+    pub fn cancel_partition(&mut self, partition: PartitionId) -> Vec<RequestId> {
         let (gone, kept): (Vec<_>, Vec<_>) = std::mem::take(&mut self.entries)
             .into_iter()
             .partition(|entry| entry.0 == partition);

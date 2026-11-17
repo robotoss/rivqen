@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: The Rivqen Authors
 
-//! Property: the L1 cache never holds more than its budget.
+//! Properties: the L1 cache never holds more than its budget, and after an
+//! insert the key never holds an older value.
 
 #![allow(
     clippy::unwrap_used,
@@ -61,9 +62,10 @@ proptest! {
                 Op::Insert(a, b, s) => {
                     let ok = c.insert(p(a), k(b), b, s).is_ok();
                     prop_assert_eq!(ok, s <= budget);
-                    if ok {
-                        prop_assert_eq!(c.get(p(a), &k(b)), Some(&b));
-                    }
+                    // After an insert the key holds the new value or no
+                    // value: never an older one.
+                    let want = if ok { Some(&b) } else { None };
+                    prop_assert_eq!(c.get(p(a), &k(b)), want);
                 }
                 Op::Get(a, b) => { let _ = c.get(p(a), &k(b)); }
                 Op::Remove(a, b) => c.remove(p(a), &k(b)),

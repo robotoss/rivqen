@@ -45,13 +45,28 @@ fn memory_value_of_exactly_the_budget_fits() {
 }
 
 #[test]
-fn memory_value_over_the_budget_changes_nothing() {
+fn memory_value_over_the_budget_of_a_new_key_changes_nothing() {
     let mut c = L1Cache::new(100);
     c.insert(p(1), k(1), "a", 30).unwrap();
     assert_eq!(c.insert(p(1), k(2), "b", 101), Err(OverBudget));
-    assert_eq!(c.insert(p(1), k(1), "c", 101), Err(OverBudget));
     assert_eq!(c.used_bytes(), 30);
     assert_eq!(c.get(p(1), &k(1)), Some(&"a"));
+    assert_eq!(c.get(p(1), &k(2)), None);
+}
+
+#[test]
+fn memory_value_over_the_budget_removes_the_old_value_of_its_key() {
+    // A newer version that does not fit must not leave the older version
+    // readable: L2 already has the newer one.
+    let mut c = L1Cache::new(100);
+    c.insert(p(1), k(1), "a", 30).unwrap();
+    c.insert(p(2), k(1), "other partition", 20).unwrap();
+    c.insert(p(1), k(2), "other key", 10).unwrap();
+    assert_eq!(c.insert(p(1), k(1), "c", 101), Err(OverBudget));
+    assert_eq!(c.get(p(1), &k(1)), None);
+    assert_eq!(c.used_bytes(), 30);
+    assert_eq!(c.get(p(2), &k(1)), Some(&"other partition"));
+    assert_eq!(c.get(p(1), &k(2)), Some(&"other key"));
 }
 
 #[test]

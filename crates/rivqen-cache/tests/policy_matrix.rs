@@ -194,7 +194,7 @@ fn run(row: &PolicyRow) -> Result<Ran, String> {
             check("age", current_age(&policy, now), case.expect.age)?;
             check(
                 "use",
-                lookup_use(&policy, now),
+                lookup_use(&policy, now, false),
                 expected_use(case.expect.entry_use),
             )?;
             Ok(Ran::Passed)

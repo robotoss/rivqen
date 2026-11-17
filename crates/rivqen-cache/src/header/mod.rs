@@ -68,7 +68,8 @@ pub enum Vary {
 ///   case-insensitively; an argument is a token or a quoted-string (RFC 9111
 ///   section 5.2). Unknown directives and `s-maxage` are ignored.
 /// - `no-store` counts with an argument and wherever the split of DL-088
-///   (at every `,` and `;`, quotes not parsed) finds it. `no-cache` and
+///   (at every `,`, `;`, SP and HTAB, quotes not parsed) finds it, also
+///   inside a quoted string. `no-cache` and
 ///   `private` count with and without an argument; `must-revalidate` also
 ///   with an argument; `public` only without one.
 /// - `max-age`, `stale-while-revalidate`, `stale-if-error`: delta-seconds
@@ -98,21 +99,22 @@ pub fn parse_http_date(value: &str) -> Option<UnixTime> {
     date::parse_with_reference(value, date::RFC850_REFERENCE)
 }
 
-/// Reads the `Age` field: `None` when it is absent or not valid.
+/// Reads the `Age` field: `None` when it is absent or when no member is
+/// valid.
 ///
-/// The value is the first non-empty member of the field lines in order
-/// (RFC 9111 section 5.1); it must be delta-seconds. A value too large for
-/// `u64` is `u64::MAX` (RFC 9111 section 1.2.2: a larger age is the stricter
-/// result).
+/// The value is the first member of the field lines in order that is
+/// delta-seconds (RFC 9111 section 5.1); a member that is not valid is
+/// ignored and does not hide a later valid one (no age counts as 0, which
+/// would make the entry younger). A value too large for `u64` is `u64::MAX`
+/// (RFC 9111 section 1.2.2: a larger age is the stricter result).
 #[must_use]
 pub fn parse_age(fields: &[FieldLine]) -> Option<u64> {
-    let first = fields
+    fields
         .iter()
         .filter(|line| line.is("age"))
         .flat_map(|line| line.value.split(','))
-        .map(trim_ows)
-        .find(|member| !member.is_empty())?;
-    delta_seconds(first, u64::MAX).map(|(_, seconds)| seconds)
+        .find_map(|member| delta_seconds(trim_ows(member), u64::MAX))
+        .map(|(_, seconds)| seconds)
 }
 
 /// Reads all `Vary` field lines of `fields`.

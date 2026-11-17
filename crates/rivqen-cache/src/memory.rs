@@ -71,8 +71,10 @@ impl<V> L1Cache<V> {
     ///
     /// # Errors
     ///
-    /// [`OverBudget`] when `size_bytes` is over the budget; the cache does
-    /// not change.
+    /// [`OverBudget`] when `size_bytes` is over the budget. The value is not
+    /// stored, and an older value of the same partition and key is removed:
+    /// the caller committed a newer version to L2, so the older one must not
+    /// stay readable. Other values do not change.
     pub fn insert(
         &mut self,
         partition: Partition,
@@ -80,10 +82,10 @@ impl<V> L1Cache<V> {
         value: V,
         size_bytes: u64,
     ) -> Result<(), OverBudget> {
+        self.remove(partition, &key);
         if size_bytes > self.budget_bytes {
             return Err(OverBudget);
         }
-        self.remove(partition, &key);
         let room = self.budget_bytes.saturating_sub(size_bytes);
         self.evict_down_to(room);
         self.entries.push((partition, key, size_bytes, value));

@@ -742,5 +742,29 @@
     "now": 1700000061,
     "manifest": {"ttl_seconds": 31536000},
     "expect": {"lifetime": 0, "age": 61, "use": "revalidate"}
+  },
+  {
+    "id": "POL-LOOKUP-063",
+    "kind": "lookup",
+    "source": ["manifest-patch §1.4", "DL-198"],
+    "note": "ttl_seconds 0 removes the stale-while-revalidate window: lifetime 0 and age 10 is revalidated before the snapshot is shown.",
+    "response_fields": [["date", "Tue, 14 Nov 2023 22:13:20 GMT"], ["cache-control", "max-age=600, stale-while-revalidate=30"]],
+    "request_time": 1700000000,
+    "response_time": 1700000000,
+    "now": 1700000010,
+    "manifest": {"ttl_seconds": 0},
+    "expect": {"lifetime": 0, "age": 10, "use": "revalidate"}
+  },
+  {
+    "id": "POL-LOOKUP-064",
+    "kind": "lookup",
+    "source": ["manifest-patch §1.4", "DL-198"],
+    "note": "Boundary twin: ttl_seconds 1 keeps the window, so lifetime 1 and age 10 is inside the 30 s window.",
+    "response_fields": [["date", "Tue, 14 Nov 2023 22:13:20 GMT"], ["cache-control", "max-age=600, stale-while-revalidate=30"]],
+    "request_time": 1700000000,
+    "response_time": 1700000000,
+    "now": 1700000010,
+    "manifest": {"ttl_seconds": 1},
+    "expect": {"lifetime": 1, "age": 10, "use": "stale-while-revalidate"}
   }
 ]

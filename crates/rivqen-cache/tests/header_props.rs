@@ -451,16 +451,14 @@ proptest! {
         let age = parse_age(&lines("age", &values));
         let joined = values.join(",");
         prop_assert_eq!(parse_age(&lines("age", std::slice::from_ref(&joined))), age);
-        if let Some(seconds) = age {
-            let first = joined
-                .split(',')
-                .map(|member| member.trim_matches([' ', '\t']))
-                .find(|member| !member.is_empty())
-                .unwrap();
-            prop_assert!(first.bytes().all(|b| b.is_ascii_digit()));
-            // Only digits: a parse error is an overflow, which saturates.
-            prop_assert_eq!(first.parse::<u64>().unwrap_or(u64::MAX), seconds);
-        }
+        // The first member that is only digits; members that are not valid
+        // are skipped (DL-197 item 5).
+        let first = joined
+            .split(',')
+            .map(|member| member.trim_matches([' ', '\t']))
+            .find(|member| !member.is_empty() && member.bytes().all(|b| b.is_ascii_digit()));
+        // Only digits: a parse error is an overflow, which saturates.
+        prop_assert_eq!(first.map(|digits| digits.parse::<u64>().unwrap_or(u64::MAX)), age);
 
         let vary = parse_vary(&lines("vary", &values));
         prop_assert_eq!(parse_vary(&lines("vary", std::slice::from_ref(&joined))), vary.clone());

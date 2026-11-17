@@ -514,6 +514,88 @@ fn header_cache_control_invalid_line_counts_hidden_restrictive_directives() {
 }
 
 #[test]
+fn header_cache_control_space_separated_no_store_is_found() {
+    // A real misconfiguration: directives separated by spaces. The line is
+    // one member that is not a token, so the list grammar finds nothing.
+    for value in [
+        "no-cache no-store",
+        "private no-store",
+        "no-store private",
+        "max-age=60 no-store",
+        "public\tno-store",
+        "max-age=60, public no-store",
+        "a= no-store",
+    ] {
+        let parsed = one(value);
+        assert!(parsed.no_store, "{value:?}");
+        assert!(parsed.invalid_freshness, "{value:?}");
+        assert!(!parsed.public, "{value:?}");
+    }
+}
+
+#[test]
+fn header_cache_control_space_separated_restrictive_names_on_a_broken_line() {
+    assert_eq!(
+        one("no-cache no-store"),
+        CacheControl {
+            no_store: true,
+            no_cache: true,
+            invalid_freshness: true,
+            ..CacheControl::default()
+        }
+    );
+    assert_eq!(
+        one("private no-store"),
+        CacheControl {
+            no_store: true,
+            private: true,
+            invalid_freshness: true,
+            ..CacheControl::default()
+        }
+    );
+    let parsed = one("max-age=5, public must-revalidate\tno-cache");
+    assert!(parsed.must_revalidate);
+    assert!(parsed.no_cache);
+    assert!(!parsed.private);
+    assert!(!parsed.no_store);
+    assert_eq!(parsed.max_age, Some(5));
+}
+
+#[test]
+fn header_cache_control_space_separated_valid_lines_keep_their_result() {
+    // OWS around commas does not add a directive.
+    assert_eq!(
+        one("max-age=5, public"),
+        CacheControl {
+            public: true,
+            max_age: Some(5),
+            ..CacheControl::default()
+        }
+    );
+    assert_eq!(
+        one(" \tmax-age=5 ,\tpublic\t, s-maxage=9 "),
+        CacheControl {
+            public: true,
+            max_age: Some(5),
+            ..CacheControl::default()
+        }
+    );
+    // On a valid line a name inside a quoted string with spaces adds only
+    // `no-store` (stricter, accepted): not `private`, `no-cache` or
+    // `must-revalidate`.
+    let quoted = one("public, foo=\"a no-store private no-cache must-revalidate\"");
+    assert!(quoted.no_store);
+    assert!(!quoted.private);
+    assert!(!quoted.no_cache);
+    assert!(!quoted.must_revalidate);
+    assert!(quoted.public);
+    assert!(!quoted.invalid_freshness);
+    // Words that only contain a name are not the name.
+    assert!(!one("no store").no_store);
+    assert!(!one("foo=\"no-stores\"").no_store);
+}
+
+#[test]
 fn header_cache_control_unclosed_quote_keeps_the_directive_name() {
     let parsed = one("max-age=5, no-cache=\"a, private");
     assert!(parsed.no_cache);

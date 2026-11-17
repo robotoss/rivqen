@@ -12,11 +12,16 @@
 //!    loses `public`.
 //! 2. The split of DL-088 (items 3 and 5 of legacy wire section 10): at every
 //!    `,` and `;`, quotes not parsed; a piece counts by its name before any
-//!    `=`, without SP, HTAB and `"` at its ends, ASCII case-insensitive.
-//!    `no-store` always counts this way,
-//!    so `private="a, no-store"` is `no-store`, as on the canonical server
-//!    (C-09). On a line with a syntax error, `no-cache`, `private` and
-//!    `must-revalidate` also count this way: the broken member can hide them.
+//!    `=`, without `"` at its ends, ASCII case-insensitive. The split also
+//!    cuts at SP and HTAB, so directives that a misconfigured server
+//!    separates with spaces (`no-cache no-store`) are found (stricter than
+//!    item 5). `no-store` always counts this way, so `private="a, no-store"`
+//!    and `foo="a no-store"` are `no-store`. That follows the text of item 5;
+//!    the two reference models of the legacy fixtures differ for this input
+//!    (they split only at commas and keep the quote in the name; sprint
+//!    record WP-07 S1, section 5). On a line with a syntax error,
+//!    `no-cache`, `private` and `must-revalidate` also count this way: the
+//!    broken member can hide them.
 
 use rivqen_model::http::FieldLine;
 
@@ -88,18 +93,19 @@ struct Named {
     must_revalidate: bool,
 }
 
-/// The DL-088 split of one field line. The name of a piece is the text
-/// before any `=` without SP, HTAB and `"` at its ends, so that a name at the
-/// edge of a quoted string counts (`private="a, no-store"`, DL-088 item 5).
-/// It finds every name that the comma split of the legacy reference models
-/// finds, and more.
+/// The DL-088 split of one field line, also at SP and HTAB. The name of a
+/// piece is the text before any `=` without `"` at its ends, so that a name
+/// at the edge of a quoted string counts (`private="a, no-store"`, DL-088
+/// item 5), and so do directives separated only by white space
+/// (`private no-store`). It finds every name that the comma split of the
+/// legacy reference models finds, and more.
 fn dl088_names(value: &str) -> Named {
     let mut named = Named::default();
-    for piece in value.split([',', ';']) {
+    for piece in value.split([',', ';', ' ', '\t']) {
         let name = piece
             .split_once('=')
             .map_or(piece, |(name, _)| name)
-            .trim_matches([' ', '\t', '"']);
+            .trim_matches('"');
         if name.eq_ignore_ascii_case("no-store") {
             named.no_store = true;
         } else if name.eq_ignore_ascii_case("no-cache") {

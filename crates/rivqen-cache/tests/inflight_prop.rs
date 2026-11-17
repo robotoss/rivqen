@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: The Rivqen Authors
 
-//! Property: no request id comes back twice.
+//! Properties: no request id comes back twice, and a follower joins only a
+//! leader of its own request partition.
 
 #![allow(
     clippy::unwrap_used,
@@ -9,12 +10,11 @@
     clippy::cast_possible_truncation
 )]
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use proptest::prelude::*;
 use proptest::test_runner::RngSeed;
 use rivqen_cache::inflight::{InFlight, Join};
-use rivqen_cache::key::Partition;
 use rivqen_model::ids::{CacheKey, PartitionId, RequestId};
 
 proptest! {
@@ -30,15 +30,19 @@ proptest! {
         let mut t = InFlight::new();
         let mut returned = HashSet::new();
         let mut joined = HashSet::new();
+        // The request partition of each joined request.
+        let mut owner = HashMap::new();
         for (i, (kind, a, b)) in ops.into_iter().enumerate() {
-            let part = Partition::Scoped(PartitionId::from_bytes([a; 32]));
+            let part = PartitionId::from_bytes([a; 32]);
             let key = CacheKey::from_bytes([b; 32]);
             let id = RequestId::new(i as u64);
             let out: Vec<RequestId> = match kind {
                 0 => {
                     joined.insert(id);
+                    owner.insert(id, part);
                     if let Join::Follower(l) = t.join(part, key, id) {
                         prop_assert!(joined.contains(&l) && l != id);
+                        prop_assert_eq!(owner.get(&l), Some(&part));
                     }
                     vec![]
                 }

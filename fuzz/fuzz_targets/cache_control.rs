@@ -116,15 +116,16 @@ fn check_age_and_vary(first: &str, second: &str) {
     let joined = format!("{first},{second}");
     let age = parse_age(&lines("age", &[first, second]));
     assert_eq!(parse_age(&lines("age", &[&joined])), age);
-    if let Some(seconds) = age {
-        let member = joined
-            .split(',')
-            .map(|member| member.trim_matches([' ', '\t']))
-            .find(|member| !member.is_empty())
-            .unwrap_or_default();
-        assert!(member.bytes().all(|b| b.is_ascii_digit()));
-        assert_eq!(member.parse::<u64>().unwrap_or(u64::MAX), seconds);
-    }
+    // The first member that is only digits; members that are not valid are
+    // skipped (DL-197 item 5).
+    let member = joined
+        .split(',')
+        .map(|member| member.trim_matches([' ', '\t']))
+        .find(|member| !member.is_empty() && member.bytes().all(|b| b.is_ascii_digit()));
+    assert_eq!(
+        member.map(|digits| digits.parse::<u64>().unwrap_or(u64::MAX)),
+        age
+    );
 
     let vary = parse_vary(&lines("vary", &[first, second]));
     assert_eq!(parse_vary(&lines("vary", &[&joined])), vary);

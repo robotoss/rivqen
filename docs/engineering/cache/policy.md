@@ -31,7 +31,7 @@ This page defines when a cached page is fresh, when Rivqen may show a stale page
 
 | Directive | Result |
 |---|---|
-| `no-store` | Counts with or without an argument (DL-088 item 3). Also counts when the split of DL-088 item 5 finds it: at every `,` and `;`, quotes not parsed, the name before `=` without spaces, tabs and `"` at its ends. So `private="a, no-store"` is `no-store` |
+| `no-store` | Counts with or without an argument (DL-088 item 3). Also counts when a split at every `,`, `;`, space and tab finds it (quotes not parsed; the name before `=` without `"` at its ends; legacy wire §10 item 5, DL-197, DL-202). So `private="a, no-store"` and `no-cache no-store` are `no-store` |
 | `no-cache` | Counts with or without field names (the qualified form counts as the plain form) |
 | `private` | Counts with or without field names |
 | `must-revalidate` | Counts, also with an argument |
@@ -48,14 +48,14 @@ This page defines when a cached page is fresh, when Rivqen may show a stale page
 | `max-age`, `stale-while-revalidate` or `stale-if-error` without a value, with a value that is not digits, with a quoted-pair, or twice with two different values | No number for that directive, and `invalid_freshness`: the response is stale (RFC 9111 §4.2.1). The same value twice counts once |
 | A member that does not match the grammar (a name that is not a token, white space around `=`, an unclosed quoted-string, text after the closing quote) | `invalid_freshness`, `public` does not count, and the DL-088 split of that line also counts `no-cache`, `private` and `must-revalidate` |
 | An HTTP-date that does not match one of the three forms of RFC 9110 §5.6.7 exactly; a zone other than `GMT`; a day that the month does not have; a time out of range; a year before 1970 | No date |
-| `Age` with a first member that is not delta-seconds | No age (RFC 9111 §5.1) |
+| `Age` with no member that is delta-seconds | No age (RFC 9111 §5.1) |
 | A `Vary` member that is not a token | `Vary: *`: the response is not stored |
 | A `cache-offline` value other than `true`, `false`, `store` or `http` after ASCII lower case, or no field | `false` (CL-15) |
 
 **Details.**
 
 - HTTP-date: letters match ASCII case-insensitively (RFC 9111 §4.2), also `GMT`. The day name must be one of the seven names; it is not checked against the date. `23:59:60` is `23:59:59`, the nearest second that is not later (RFC 9111 §4.2). The RFC 850 form has a two-digit year: it is the latest year with those digits that is not more than 50 years after 2026-01-01T00:00:00Z (RFC 9110 §5.6.7; the function has no current time).
-- `Age`: the first non-empty member of the field lines in order. A value too large for 64 bits is the largest 64-bit value: a larger age is the stricter result.
+- `Age`: the first member of the field lines in order that is a valid delta-seconds value; a member that is not valid is skipped (DL-202). A value too large for 64 bits is the largest 64-bit value: a larger age is the stricter result.
 - `Vary`: `*` in any member gives "any". Else the names in ASCII lower case, sorted, each name once. No field, or only empty members, gives "none". The legacy request fields of CL-12 (`accept-diff`, `if-none-match`, `template-tag`) are removed by the key code, not by the parser.
 - `cache-offline`: the value is not trimmed; the field line value has no white space at its ends.
 - `Pragma` is not read.
@@ -101,7 +101,7 @@ The manifest policy of an RQP page ([manifest and patch §1.4](/engineering/prot
 |---|---|
 | `freshness_lifetime` | The lifetime of the table above, then the smaller of it and `ttl_seconds` |
 | `current_age` | The age of the table above; `None` when `now` is before the response time; each sum stops at the largest 64-bit value |
-| `lookup_use` | `no-store` or `no-cache`: revalidate. No age: revalidate. Age less than the lifetime: rule 4. Inside `stale-while-revalidate` with explicit freshness and no `must-revalidate`: rule 5. Else rule 8 |
+| `lookup_use` | `no-store` or `no-cache`: revalidate. No age: revalidate. Age less than the lifetime: rule 4. Inside `stale-while-revalidate` with explicit freshness, no `must-revalidate`, a `ttl_seconds` that is not 0 and a route that is not sensitive: rule 5. Else rule 8 |
 | `serve_on_failure` | Rule 6 and §3 rule 2 |
 | `store_decision` | Rule 1 for a full document, in this order: `no-store` (request or response), `Vary: *`, credentials without `authenticated_cache` (R-CACHE-03), a status other than `200`. `private` and `no-cache` store |
 | `legacy::legacy_cache_outcome` | Rule 7 (feature `legacy`), see below |

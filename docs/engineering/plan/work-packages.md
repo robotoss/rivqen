@@ -17,7 +17,7 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | [WP-04](#wp-04) | Platform feasibility spikes | P2 | Android + iOS engineers | WP-01 | L | **Done (merged 2026-11-09, #9)** — [S1](/engineering/plan/sprints/WP-04-S1), [S2](/engineering/plan/sprints/WP-04-S2), [S3](/engineering/plan/sprints/WP-04-S3) closed (2026-11-09); gate **G2** passed (H-137); ADR-002 and ADR-003 accepted (H-135, H-136) |
 | [WP-05](#wp-05) | Core workspace, data model, errors, testkit | P3 | Rust core engineer | WP-02 | M | **Done (merged 2026-11-12, #10)** — [S1](/engineering/plan/sprints/WP-05-S1), [S2](/engineering/plan/sprints/WP-05-S2) closed (2026-11-11); ADR-001 and ADR-017 accepted (H-139, H-140); error code `CONFIG_INVALID` (H-141) |
 | [WP-06](#wp-06) | Template engine | P3 | Rust core engineer | WP-05 | M | **Done (merged 2026-11-15, #11)** — [S1](/engineering/plan/sprints/WP-06-S1) closed (2026-11-12), [S2](/engineering/plan/sprints/WP-06-S2) closed (2026-11-14); H-142…H-144 |
-| [WP-07](#wp-07) | Cache engine | P3 | Rust core engineer | WP-05 | L | **In progress** — kickoff 2026-11-15, [S1](/engineering/plan/sprints/WP-07-S1) planned; H-146…H-148 |
+| [WP-07](#wp-07) | Cache engine | P3 | Rust core engineer | WP-05 | L | **In progress** — [S1](/engineering/plan/sprints/WP-07-S1) closed 2026-11-18 (pure logic); S2 next; H-146…H-148 |
 | [WP-08](#wp-08) | Session state machine and diff | P3 | Rust core engineer | WP-06, WP-07 | L | Planned |
 | [WP-09](#wp-09) | Streaming and FFI | P3 | Rust core engineer | WP-04, WP-08 | L | Planned |
 | [WP-10](#wp-10) | Android SDK | P5 | Android engineer | WP-09 | XL | Planned |
@@ -136,7 +136,7 @@ flowchart TD
 | Deliverables | `rivqen-cache`; storage driver interface; reference file + SQLite driver; ADR-004, ADR-011. |
 | Acceptance | Fault-injection tests (kill at every step) pass; multi-partition tests pass; policy matrix tests pass. |
 | Scope note | The driver is the crate `rivqen-store`, outside the dependency graph of `rivqen-core` (DL-180), with bundled SQLite (H-146). "Kill at every step": a fault model on a fake store, and real stops (in-process and `SIGKILL`) on the driver (DL-181). The policy matrix is a data file with the source of each expected value (DL-182). Encryption on the host with XChaCha20-Poly1305 and a test key provider (H-147); the platform key wrap is WP-10 and WP-11. The session use of the cache, the URL parser and the end-to-end run of the legacy and ledger client fixtures are WP-08 (DL-187). |
-| Status | **In progress.** Kickoff 2026-11-15; [S1](/engineering/plan/sprints/WP-07-S1) planned (pure logic); S2: the driver, encryption, ADR-004 and ADR-011. |
+| Status | **In progress.** [S1](/engineering/plan/sprints/WP-07-S1) closed 2026-11-18: `rivqen-cache` (key, partition rules, field parsers, freshness and store policy with a matrix of 145 rows, transactions, quotas), the driver interface and the fake store with the fault model. Next, S2: the reference driver, encryption, ADR-004 and ADR-011. |
 
 ### WP-08 — Session state machine and diff {#wp-08}
 

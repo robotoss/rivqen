@@ -3,8 +3,9 @@
 
 //! Properties of the policy functions (WP-07 S1 T-03; SEC-06): `no-store`
 //! never stores, the use of an entry only gets stricter as time passes, a
-//! larger `ttl_seconds` never gives a stricter result, and no input panics
-//! (also `u64::MAX` in every time and number).
+//! larger `ttl_seconds` never gives a stricter result, a sensitive route or
+//! `ttl_seconds` `0` never gives a stale use before the request, and no
+//! input panics (also `u64::MAX` in every time and number).
 
 #![allow(clippy::arithmetic_side_effects)]
 
@@ -147,7 +148,7 @@ proptest! {
     ) {
         let lifetime = freshness_lifetime(&policy);
         let age = current_age(&policy, now);
-        let entry_use = lookup_use(&policy, now);
+        let entry_use = lookup_use(&policy, now, sensitive);
         let serve = serve_on_failure(&policy, now, failure, sensitive);
         if now < policy.response_time {
             prop_assert_eq!(age, None);
@@ -223,13 +224,40 @@ proptest! {
         policy in entry_policy(),
         first in seconds(),
         more in seconds(),
+        sensitive in any::<bool>(),
     ) {
         // From the response time on; before it the entry is stale (DL-183).
         let earlier = policy.response_time.plus(first);
         let later = earlier.plus(more);
-        let before = rank(lookup_use(&policy, earlier));
-        let after = rank(lookup_use(&policy, later));
+        let before = rank(lookup_use(&policy, earlier, sensitive));
+        let after = rank(lookup_use(&policy, later, sensitive));
         prop_assert!(before <= after, "{} then {}", before, after);
+    }
+
+    #[test]
+    fn policy_prop_sensitive_is_never_less_strict(
+        policy in entry_policy(),
+        now in time(),
+    ) {
+        // Freshness section 3: the mark only removes the stale window; a
+        // fresh entry stays fresh.
+        let plain = lookup_use(&policy, now, false);
+        let marked = lookup_use(&policy, now, true);
+        prop_assert!(rank(plain) <= rank(marked));
+        prop_assert_ne!(marked, Use::StaleWhileRevalidate);
+        prop_assert_eq!(plain == Use::Fresh, marked == Use::Fresh);
+    }
+
+    #[test]
+    fn policy_prop_ttl_zero_never_gives_a_stale_use(
+        policy in entry_policy(),
+        now in time(),
+        sensitive in any::<bool>(),
+    ) {
+        // Manifest and patch section 1.4: with `0` the client revalidates
+        // before it shows the snapshot.
+        let zero = EntryPolicy { ttl_seconds: Some(0), ..policy };
+        prop_assert_eq!(lookup_use(&zero, now, sensitive), Use::Revalidate);
     }
 
     #[test]
@@ -260,7 +288,9 @@ proptest! {
         let shorter = EntryPolicy { ttl_seconds: small, ..policy };
         let longer = EntryPolicy { ttl_seconds: large, ..policy };
         prop_assert!(freshness_lifetime(&shorter) <= freshness_lifetime(&longer));
-        prop_assert!(rank(lookup_use(&longer, now)) <= rank(lookup_use(&shorter, now)));
+        prop_assert!(
+            rank(lookup_use(&longer, now, sensitive)) <= rank(lookup_use(&shorter, now, sensitive))
+        );
         if serve_on_failure(&shorter, now, failure, sensitive) {
             prop_assert!(serve_on_failure(&longer, now, failure, sensitive));
         }
@@ -275,14 +305,14 @@ proptest! {
     ) {
         let cc = policy.cache_control;
         if cc.no_store || cc.no_cache {
-            prop_assert_eq!(lookup_use(&policy, now), Use::Revalidate);
+            prop_assert_eq!(lookup_use(&policy, now, sensitive), Use::Revalidate);
         }
         if cc.no_store || cc.no_cache || cc.must_revalidate || !policy.offline {
             prop_assert!(!serve_on_failure(&policy, now, failure, sensitive));
         }
         if cc.invalid_freshness {
             prop_assert_eq!(freshness_lifetime(&policy), 0);
-            prop_assert_ne!(lookup_use(&policy, now), Use::StaleWhileRevalidate);
+            prop_assert_ne!(lookup_use(&policy, now, sensitive), Use::StaleWhileRevalidate);
             prop_assert!(!serve_on_failure(&policy, now, failure, sensitive));
         }
         if failure == Failure::Tls && sensitive {

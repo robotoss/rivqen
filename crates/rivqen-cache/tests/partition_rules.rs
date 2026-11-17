@@ -444,8 +444,29 @@ fn partition_site_clears_more_for_other_forms() {
 }
 
 #[test]
-fn partition_site_strips_at_most_one_dot() {
+fn partition_site_strips_at_most_one_trailing_dot() {
     assert!(!site_matches("example.com", "example.com.."));
-    assert!(!site_matches("example.com", "..example.com"));
     assert!(!site_matches("example.com..", "example.com"));
+}
+
+#[test]
+fn partition_site_strips_every_leading_dot_of_the_domain() {
+    // A site clear must clear more, never less: `..example.com` is the same
+    // site as `.example.com`.
+    assert!(site_matches("example.com", "..example.com"));
+    assert!(site_matches("shop.example.com", "..example.com"));
+    assert!(site_matches("shop.example.com", "...example.com."));
+    assert!(site_matches("Shop.Example.com.", "....EXAMPLE.COM"));
+    assert!(!site_matches("notexample.com", "..example.com"));
+    assert!(!site_matches("example.org", "..example.com"));
+}
+
+#[test]
+fn partition_site_domain_of_dots_only_matches_nothing() {
+    for domain in ["..", "...", "....", "....."] {
+        assert!(!site_matches("example.com", domain), "{domain:?}");
+        assert!(!site_matches("", domain), "{domain:?}");
+        assert!(!site_matches(".", domain), "{domain:?}");
+        assert!(!site_matches("..", domain), "{domain:?}");
+    }
 }

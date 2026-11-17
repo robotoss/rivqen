@@ -743,7 +743,7 @@ fn cache_policy_files_follow_the_readme() {
     // The four files, in the README order; each row has the kind of its file.
     assert_eq!(files.iter().map(|f| f.kind).collect::<Vec<_>>(), Kind::ALL);
     let counts: Vec<usize> = files.iter().map(|f| f.rows.len()).collect();
-    assert_eq!(counts, [62, 24, 24, 33], "update the counts with the rows");
+    assert_eq!(counts, [64, 24, 24, 33], "update the counts with the rows");
     assert!(counts.iter().sum::<usize>() >= 60);
 
     let mut ids = BTreeSet::new();

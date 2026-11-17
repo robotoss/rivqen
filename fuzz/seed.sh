@@ -40,6 +40,8 @@ put cache_control quoted-no-cache 'no-cache="set-cookie, x-a", max-age="60"'
 put cache_control two-lines 'public, max-age=60
 no-store=1, private="a, no-store"'
 put cache_control dl088-split 'max-age=5; no-store, x"y, must-revalidate"'
+put cache_control space-separated-no-cache 'no-cache no-store'
+put cache_control space-separated-private 'private no-store'
 put cache_control age-list '5, 10'
 put cache_control vary-list 'Accept-Encoding, accept-language, *'
 put http_date imf-fixdate 'Sun, 06 Nov 1994 08:49:37 GMT'

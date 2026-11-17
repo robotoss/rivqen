@@ -108,13 +108,13 @@ pub fn readable(entry: Partition, request: PartitionId, public_enabled: bool) ->
 /// `example.com`, `notexample.com` does not. A site clear must clear more,
 /// never less, so the function also accepts what a caller may give in
 /// another form: ASCII case does not count, one trailing dot of each name
-/// and one leading dot of the domain (the cookie `Domain` form) are
-/// ignored. An empty domain (also `.`) matches nothing; a clear of all
-/// sites is a clear without a domain.
+/// and every leading dot of the domain (the cookie `Domain` form, also
+/// written twice) are ignored. An empty domain (also a domain of dots
+/// only) matches nothing; a clear of all sites is a clear without a domain.
 #[must_use]
 pub fn site_matches(host: &str, cleared_domain: &str) -> bool {
     let domain = strip_trailing_dot(cleared_domain.as_bytes());
-    let domain = domain.strip_prefix(b".").unwrap_or(domain);
+    let domain = strip_leading_dots(domain);
     if domain.is_empty() {
         return false;
     }
@@ -149,4 +149,10 @@ const fn known_absent(credentials: Credentials) -> bool {
 /// `name` without one trailing `.`.
 fn strip_trailing_dot(name: &[u8]) -> &[u8] {
     name.strip_suffix(b".").unwrap_or(name)
+}
+
+/// `name` without every leading `.`.
+fn strip_leading_dots(name: &[u8]) -> &[u8] {
+    let dots = name.iter().take_while(|&&b| b == b'.').count();
+    name.get(dots..).unwrap_or_default()
 }

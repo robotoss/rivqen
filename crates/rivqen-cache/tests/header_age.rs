@@ -34,7 +34,7 @@ fn header_age_one_non_negative_integer() {
 
 #[test]
 fn header_age_list_or_lines_give_the_first_value() {
-    // RFC 9111 section 5.1: the first member, the others discarded.
+    // RFC 9111 section 5.1: the first valid member, the others discarded.
     assert_eq!(age(&["5, 10"]), Some(5));
     assert_eq!(age(&["5,x"]), Some(5));
     assert_eq!(age(&["5", "10"]), Some(5));
@@ -53,13 +53,32 @@ fn header_age_list_or_lines_give_the_first_value() {
 
 #[test]
 fn header_age_not_valid_gives_none() {
-    // RFC 9111 section 5.1: the cache ignores the field.
+    // RFC 9111 section 5.1: the cache ignores a value that is not valid; with
+    // no valid member there is no age.
     for value in [
-        "", ",", "-1", "+1", "1.5", "abc", "\"5\"", "5 6", "5s", "0x10", "\u{FF15}", "x, 5",
+        "", ",", "-1", "+1", "1.5", "abc", "\"5\"", "5 6", "5s", "0x10", "\u{FF15}", "x, y",
     ] {
         assert_eq!(age(&[value]), None, "{value:?}");
     }
-    assert_eq!(age(&["x", "5"]), None);
+    assert_eq!(age(&["x", "-5"]), None);
+}
+
+#[test]
+fn header_age_skips_members_that_are_not_valid() {
+    // DL-197 item 5: a member that is not valid is ignored. It must not hide a
+    // later valid member: no `Age` counts as 0, which makes the entry younger.
+    assert_eq!(age(&["x, 5"]), Some(5));
+    assert_eq!(age(&["x", "500"]), Some(500));
+    assert_eq!(age(&["-1, \"7\", 1.5", "", "abc, 42, 9"]), Some(42));
+    let fields = [
+        FieldLine::new("age", "x"),
+        FieldLine::new("date", "60"),
+        FieldLine::new("age", "500"),
+    ];
+    assert_eq!(parse_age(&fields), Some(500));
+    // The first valid member wins, also when a later one is larger.
+    assert_eq!(age(&["100, 5"]), Some(100));
+    assert_eq!(age(&["x, 100", "5"]), Some(100));
 }
 
 #[test]

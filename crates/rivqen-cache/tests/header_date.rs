@@ -291,3 +291,20 @@ fn header_date_text_that_is_not_a_date() {
         assert_eq!(at(value), None, "{value}");
     }
 }
+
+/// The window of the two-digit year is closed at exactly 50 years: a date
+/// 50 years after the reference to the second is not "more than 50 years in
+/// the future" (RFC 9110 section 5.6.7; reference 2026-01-01T00:00:00Z,
+/// DL-197 item 8).
+#[test]
+fn header_date_rfc850_year_exactly_50_years_ahead_stays() {
+    assert_eq!(
+        parse_http_date("Thursday, 01-Jan-76 00:00:00 GMT"),
+        Some(UnixTime(3_345_062_400))
+    );
+    // One second later is more than 50 years ahead: the earlier century.
+    assert_eq!(
+        parse_http_date("Thursday, 01-Jan-76 00:00:01 GMT"),
+        Some(UnixTime(189_302_401))
+    );
+}

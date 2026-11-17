@@ -27,6 +27,7 @@ fn inflight_first_is_leader_later_follow() {
     assert_eq!(t.join(p(1), k(1), r(2)), Join::Follower(r(1)));
     assert_eq!(t.join(p(1), k(1), r(3)), Join::Follower(r(1)));
     assert_eq!(t.len(), 1);
+    assert!(!t.is_empty());
 }
 
 #[test]

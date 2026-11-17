@@ -38,6 +38,51 @@ fn assert_clean(what: &str, text: &str) {
 }
 
 #[test]
+fn core_types_cache_txn_debug_names_the_kind() {
+    let key = ModelCacheKey::from_bytes([9; 32]);
+    let (meta, body) = sample_entry(Partition::Public, key, "example.com", "tag", 7);
+    let pre = Preconditions {
+        entry: Expect::Any,
+        partition_epoch: Epoch(0),
+        site_epoch: Epoch(0),
+    };
+    let partition = Partition::Public;
+    let ops = [
+        (
+            "Replace",
+            TxnOp::Replace {
+                meta: Box::new(meta.clone()),
+                body: Box::new(body),
+            },
+        ),
+        (
+            "UpdateFields",
+            TxnOp::UpdateFields {
+                partition,
+                key,
+                fields: Vec::new(),
+                policy: meta.policy,
+            },
+        ),
+        ("Remove", TxnOp::Remove { partition, key }),
+        (
+            "DisableKey",
+            TxnOp::DisableKey {
+                partition,
+                key,
+                until: rivqen_model::time::UnixTime(1),
+            },
+        ),
+        ("RevokePartition", TxnOp::RevokePartition { partition }),
+        ("ClearSite", TxnOp::ClearSite { domain: None }),
+    ];
+    for (kind, op) in ops {
+        let text = format!("{:?}", CacheTxn::new(CacheTransaction { op, pre }));
+        assert_eq!(text, format!("CacheTxn {{ op: {kind}, .. }}"));
+    }
+}
+
+#[test]
 fn core_types_debug_has_no_content() {
     let key = ModelCacheKey::from_bytes([9; 32]);
     let (meta, body) = sample_entry(Partition::Public, key, MARKER, MARKER, 7);

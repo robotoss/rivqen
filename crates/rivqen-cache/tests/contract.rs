@@ -81,6 +81,7 @@ fn cache_debug_texts_hold_no_content() {
         locale: None,
     };
     let text = format!("{parts:?}");
+    assert!(text.starts_with("KeyParts"), "{text}");
     assert!(!text.contains(MARKER), "{text}");
     assert!(!text.contains("shop.example.com"), "{text}");
     assert!(!text.to_ascii_lowercase().contains("abab"), "{text}");

@@ -42,6 +42,20 @@
 //! `partition_epoch_base` is the epoch of a partition that has no epoch
 //! row. `PRAGMA user_version` is [`META_FORMAT`].
 //!
+//! At open, `sqlite_schema` must hold exactly the four tables, with the
+//! text of their `CREATE TABLE` statements, and the automatic index of
+//! each primary key: a trigger, a view, another index or another table is
+//! `Corrupted`, so a reset follows. An epoch write and a counter write
+//! must change exactly one row, else the transaction gives `Unavailable`
+//! and commits nothing.
+//!
+//! # Files
+//!
+//! On unix, `meta.sqlite` is created with mode 0600 before SQLite opens it
+//! (`create_new`; SQLite gives `-wal` and `-shm` the mode of the database
+//! file), and the reset marker is created with `create_new` and mode 0600.
+//! The driver creates the directories with mode 0700.
+//!
 //! # Integers
 //!
 //! SQLite stores a signed 64-bit integer. The rules:
@@ -76,15 +90,23 @@
 //!
 //! 1. Take the three random values. A failure of the source changes
 //!    nothing.
-//! 2. Write the marker file `meta.reset` and sync it and the directory.
+//! 2. Create the marker file `meta.reset` and sync it and the directory. A
+//!    marker that exists is kept when it is a regular file; any other
+//!    entry with its name (a link, a directory) is `Unavailable`.
 //! 3. Remove every other entry of the schema directory: the database with
 //!    its `-wal` and `-shm` files, `files/`, `tmp/`.
 //! 4. Create the new database with the random counters in one transaction.
 //! 5. Remove the marker and sync the directory.
 //!
-//! While the marker exists, [`MetaDb::open`] gives `Corrupted`, so a reset
-//! that stops at any step runs again with new random values. It never
-//! leaves a store whose counters start at 0.
+//! While an entry named `meta.reset` exists, [`MetaDb::open`] gives
+//! `Corrupted`, so a reset that stops at any step runs again with new
+//! random values. It never leaves a store whose counters start at 0.
+//!
+//! [`MetaDb::open_or_reset`] also resets when the database has no tables
+//! (or does not exist) and the schema directory is not fresh: it holds an
+//! entry file, a temporary file or any other entry. Only an empty
+//! directory, or one with `meta.sqlite`, an empty `tmp/` and empty
+//! directories in `files/`, gets counters at 0.
 
 mod codec;
 mod txn;
@@ -96,10 +118,13 @@ use std::path::Path;
 use std::time::Duration;
 
 use rivqen_cache::driver::{StoreError, StoreErrorKind};
+use rivqen_model::time::UnixTime;
+use rusqlite::types::ValueRef;
 use rusqlite::{Connection, ErrorCode, OpenFlags, TransactionBehavior, params};
 
 use self::codec::{corrupted, decode_u64, sql_u64, unavailable};
 pub use self::txn::{FILE_ID_LEN, MetaTxn, Row};
+use crate::driver::{FILES_DIR, TMP_DIR};
 
 /// The name of the database file in the schema directory.
 pub const DB_FILE: &str = "meta.sqlite";
@@ -134,9 +159,9 @@ const COUNTERS: [&str; 3] = [
 /// 2^62 increments below `i64::MAX`.
 const RANDOM_MASK: u64 = 0x3FFF_FFFF_FFFF_FFFF;
 
-/// The tables of ADR-004 section 3.
-const SCHEMA: &str = r#"
-CREATE TABLE entry (
+/// The tables of ADR-004 section 3. SQLite keeps the text of each
+/// statement in `sqlite_schema`; the schema check compares it.
+const TABLE_ENTRY: &str = r#"CREATE TABLE entry (
     "partition" BLOB NOT NULL,
     "key" BLOB NOT NULL,
     host TEXT NOT NULL,
@@ -147,26 +172,67 @@ CREATE TABLE entry (
     last_used_at INTEGER NOT NULL,
     sealed BLOB NOT NULL,
     PRIMARY KEY ("partition", "key")
-);
-CREATE TABLE partition_epoch (
+)"#;
+const TABLE_PARTITION_EPOCH: &str = r#"CREATE TABLE partition_epoch (
     "partition" BLOB NOT NULL PRIMARY KEY,
     epoch INTEGER NOT NULL
-);
-CREATE TABLE disabled_key (
+)"#;
+const TABLE_DISABLED_KEY: &str = r#"CREATE TABLE disabled_key (
     "partition" BLOB NOT NULL,
     "key" BLOB NOT NULL,
     until INTEGER NOT NULL,
     PRIMARY KEY ("partition", "key")
-);
-CREATE TABLE counter (
+)"#;
+const TABLE_COUNTER: &str = "CREATE TABLE counter (
     name TEXT NOT NULL PRIMARY KEY,
     value INTEGER NOT NULL
-);
-"#;
+)";
+const TABLES: [&str; 4] = [
+    TABLE_ENTRY,
+    TABLE_PARTITION_EPOCH,
+    TABLE_DISABLED_KEY,
+    TABLE_COUNTER,
+];
+
+/// The exact objects of `sqlite_schema`: `type`, `name`, `tbl_name` and
+/// `sql`. Each table has the automatic index of its primary key (a key
+/// that is not `INTEGER PRIMARY KEY`), whose `sql` is `NULL`. Any other
+/// object (a trigger, a view, another index or table) is not ours.
+const SCHEMA_OBJECTS: [(&str, &str, &str, Option<&str>); 8] = [
+    ("table", "entry", "entry", Some(TABLE_ENTRY)),
+    ("index", "sqlite_autoindex_entry_1", "entry", None),
+    (
+        "table",
+        "partition_epoch",
+        "partition_epoch",
+        Some(TABLE_PARTITION_EPOCH),
+    ),
+    (
+        "index",
+        "sqlite_autoindex_partition_epoch_1",
+        "partition_epoch",
+        None,
+    ),
+    (
+        "table",
+        "disabled_key",
+        "disabled_key",
+        Some(TABLE_DISABLED_KEY),
+    ),
+    (
+        "index",
+        "sqlite_autoindex_disabled_key_1",
+        "disabled_key",
+        None,
+    ),
+    ("table", "counter", "counter", Some(TABLE_COUNTER)),
+    ("index", "sqlite_autoindex_counter_1", "counter", None),
+];
 
 const INSERT_COUNTER: &str = "INSERT INTO counter (name, value) VALUES (?1, ?2)";
 const SELECT_COUNTER: &str = "SELECT value FROM counter WHERE name = ?1";
 const COUNT_SCHEMA_OBJECTS: &str = "SELECT count(*) FROM sqlite_schema";
+const SELECT_SCHEMA_OBJECTS: &str = "SELECT type, name, tbl_name, sql FROM sqlite_schema";
 
 const OP_OPEN: &str = "meta.open";
 const OP_RESET: &str = "meta.reset";
@@ -239,16 +305,21 @@ impl MetaDb {
     /// may use [`Self::open_or_reset`]); `Unavailable` for every other
     /// failure, also a lock that another connection holds.
     pub fn open(dir: &Path) -> Result<Self, StoreError> {
-        if marker_exists(dir)? {
-            return Err(corrupted(OP_OPEN));
-        }
-        Self::open_with(dir, [0; 3]).map(|(db, _)| db)
+        Self::open_checked(dir, true)
     }
 
-    /// [`Self::open`]; when that gives `Corrupted`, removes the content of
-    /// `dir` and starts an empty store whose counters start at random
-    /// 62-bit values from `random` (see "Reset" in the module
-    /// documentation). `dir` must be the schema directory of the store.
+    /// [`Self::open`] with one more rule; when that gives `Corrupted`,
+    /// removes the content of `dir` and starts an empty store whose
+    /// counters start at random 62-bit values from `random` (see "Reset"
+    /// in the module documentation). `dir` must be the schema directory of
+    /// the store.
+    ///
+    /// The rule: a database with no tables (also a `meta.sqlite` that does
+    /// not exist) gets counters at 0 only in a fresh schema directory, one
+    /// that holds nothing else than `meta.sqlite`, an empty `tmp/` and a
+    /// `files/` with only empty directories. In any other directory a lost
+    /// database is `Corrupted` and takes the reset: its files could be of a
+    /// store whose epochs a writer holds (S2 security review L1).
     ///
     /// # Errors
     ///
@@ -259,7 +330,8 @@ impl MetaDb {
         dir: &Path,
         random: &mut dyn FnMut(&mut [u8]) -> Result<(), StoreError>,
     ) -> Result<(Self, Opened), StoreError> {
-        match Self::open(dir) {
+        let opened = fresh_dir(dir).and_then(|fresh| Self::open_checked(dir, fresh));
+        match opened {
             Ok(db) => Ok((db, Opened::Kept)),
             Err(error) if error.kind() == StoreErrorKind::Corrupted => {
                 Self::reset(dir, random).map(|db| (db, Opened::Reset))
@@ -330,15 +402,29 @@ impl MetaDb {
         })
     }
 
-    /// Opens the database; creates the tables with `start` when it is new.
+    /// [`Self::open`]: `may_create` allows the tables of a new database.
+    fn open_checked(dir: &Path, may_create: bool) -> Result<Self, StoreError> {
+        if marker_exists(dir)? {
+            return Err(corrupted(OP_OPEN));
+        }
+        Self::open_with(dir, [0; 3], may_create).map(|(db, _)| db)
+    }
+
+    /// Opens the database; creates the tables with `start` when it is new
+    /// and `may_create` allows it (else a new database is `Corrupted`).
     /// True when it was created.
-    fn open_with(dir: &Path, start: Counters) -> Result<(Self, bool), StoreError> {
+    fn open_with(
+        dir: &Path,
+        start: Counters,
+        may_create: bool,
+    ) -> Result<(Self, bool), StoreError> {
+        let path = dir.join(DB_FILE);
+        create_db_file(dir, &path)?;
         let flags = OpenFlags::SQLITE_OPEN_READ_WRITE
             | OpenFlags::SQLITE_OPEN_CREATE
             | OpenFlags::SQLITE_OPEN_NO_MUTEX
             | OpenFlags::SQLITE_OPEN_NOFOLLOW;
-        let conn = Connection::open_with_flags(dir.join(DB_FILE), flags)
-            .map_err(|error| open_error(&error))?;
+        let conn = Connection::open_with_flags(&path, flags).map_err(|error| open_error(&error))?;
         conn.busy_timeout(Duration::ZERO)
             .map_err(|error| open_error(&error))?;
         // The first statement reads the file: a file that is not a
@@ -366,13 +452,13 @@ impl MetaDb {
         if check != "ok" {
             return Err(corrupted(OP_OPEN));
         }
-        let created = db.prepare_schema(start)?;
+        let created = db.prepare_schema(start, may_create)?;
         Ok((db, created))
     }
 
-    /// Creates the tables of a new database, or checks those of an
-    /// existing one. True when it created them.
-    fn prepare_schema(&mut self, start: Counters) -> Result<bool, StoreError> {
+    /// Creates the tables of a new database when `may_create` allows it,
+    /// or checks those of an existing one. True when it created them.
+    fn prepare_schema(&mut self, start: Counters, may_create: bool) -> Result<bool, StoreError> {
         let tx = self
             .conn
             .transaction_with_behavior(TransactionBehavior::Immediate)
@@ -383,11 +469,13 @@ impl MetaDb {
                 // A database with no format holds nothing of ours. Any
                 // object in it is not ours either.
                 let objects = query_int(&tx, COUNT_SCHEMA_OBJECTS)?;
-                if objects != 0 {
+                if objects != 0 || !may_create {
                     return Err(corrupted(OP_OPEN));
                 }
-                tx.execute_batch(SCHEMA)
-                    .map_err(|error| open_error(&error))?;
+                for table in TABLES {
+                    tx.execute_batch(table)
+                        .map_err(|error| open_error(&error))?;
+                }
                 for (name, value) in COUNTERS.iter().zip(start) {
                     let value = sql_u64(value, OP_OPEN)?;
                     tx.execute(INSERT_COUNTER, params![name, value])
@@ -400,6 +488,7 @@ impl MetaDb {
             META_FORMAT => false,
             _ => return Err(corrupted(OP_OPEN)),
         };
+        check_schema_objects(&tx)?;
         // Tables of another shape fail to prepare a statement.
         for sql in txn::ALL_STATEMENTS {
             tx.prepare(sql).map_err(|error| schema_error(&error))?;
@@ -431,28 +520,172 @@ impl MetaDb {
             *value = u64::from_be_bytes(bytes) & RANDOM_MASK;
         }
         let marker = dir.join(RESET_MARKER);
-        let file = fs::File::create(&marker).map_err(|_| unavailable(OP_RESET))?;
-        file.sync_all().map_err(|_| unavailable(OP_RESET))?;
-        drop(file);
-        sync_dir(dir)?;
+        create_marker(&marker)?;
+        sync_dir(dir, OP_RESET)?;
         clear_dir(dir)?;
         // The new database is made by this call: any failure here is a
         // failure of the reset, never a reason for another one.
-        let (db, created) = Self::open_with(dir, start).map_err(|_| unavailable(OP_RESET))?;
+        let (db, created) = Self::open_with(dir, start, true).map_err(|_| unavailable(OP_RESET))?;
         if !created {
             return Err(unavailable(OP_RESET));
         }
         fs::remove_file(&marker).map_err(|_| unavailable(OP_RESET))?;
-        sync_dir(dir)?;
+        sync_dir(dir, OP_RESET)?;
         Ok(db)
     }
 }
 
-/// True when the marker of an unfinished reset is in `dir`.
+/// A time as the metadata stores it (see "Integers"): a time above
+/// `i64::MAX` is `i64::MAX`. The driver seals this value, so the sealed
+/// copy of `stored_at` equals the clear column.
+pub(crate) const fn stored_time(time: UnixTime) -> UnixTime {
+    let max = i64::MAX.unsigned_abs();
+    if time.0 > max { UnixTime(max) } else { time }
+}
+
+/// True when an entry named like the marker of an unfinished reset is in
+/// `dir`, of any type: a link is not followed, so a link is a marker too.
 fn marker_exists(dir: &Path) -> Result<bool, StoreError> {
-    dir.join(RESET_MARKER)
-        .try_exists()
-        .map_err(|_| unavailable(OP_OPEN))
+    match fs::symlink_metadata(dir.join(RESET_MARKER)) {
+        Ok(_) => Ok(true),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(false),
+        Err(_) => Err(unavailable(OP_OPEN)),
+    }
+}
+
+/// Creates the reset marker and syncs it. A marker that exists already (a
+/// reset that did not finish) is kept as it is, but only when it is a
+/// regular file: the marker is never followed through a link and never
+/// truncated.
+fn create_marker(path: &Path) -> Result<(), StoreError> {
+    match new_file(path) {
+        Ok(file) => file.sync_all().map_err(|_| unavailable(OP_RESET)),
+        Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {
+            match fs::symlink_metadata(path) {
+                Ok(meta) if meta.is_file() => Ok(()),
+                Ok(_) | Err(_) => Err(unavailable(OP_RESET)),
+            }
+        }
+        Err(_) => Err(unavailable(OP_RESET)),
+    }
+}
+
+/// Creates `meta.sqlite` with mode 0600 (unix) before SQLite opens it, when
+/// it does not exist, and syncs `dir`. SQLite gives its `-wal` and `-shm`
+/// files the mode of the database file. An entry that exists is left to
+/// SQLite (`SQLITE_OPEN_NOFOLLOW` refuses a link).
+fn create_db_file(dir: &Path, path: &Path) -> Result<(), StoreError> {
+    match new_file(path) {
+        Ok(file) => {
+            drop(file);
+            sync_dir(dir, OP_OPEN)
+        }
+        Err(error) if error.kind() == io::ErrorKind::AlreadyExists => Ok(()),
+        Err(_) => Err(unavailable(OP_OPEN)),
+    }
+}
+
+/// A new empty file at `path` (`create_new`: never an existing entry,
+/// never through a link), mode 0600 on unix.
+fn new_file(path: &Path) -> io::Result<fs::File> {
+    let mut options = fs::OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    options.open(path)
+}
+
+/// True when `dir` holds nothing of a store (see
+/// [`MetaDb::open_or_reset`]): no entry other than `meta.sqlite`, an empty
+/// `tmp/` and a `files/` that holds only empty directories. A link is not
+/// followed and is not fresh. The walk stops at the first entry that is
+/// not fresh, and reads at most `files/` and each of its directories.
+fn fresh_dir(dir: &Path) -> Result<bool, StoreError> {
+    for entry in fs::read_dir(dir).map_err(|_| unavailable(OP_OPEN))? {
+        let entry = entry.map_err(|_| unavailable(OP_OPEN))?;
+        let name = entry.file_name();
+        let is_dir = entry
+            .file_type()
+            .map_err(|_| unavailable(OP_OPEN))?
+            .is_dir();
+        let fresh = if name == DB_FILE {
+            true
+        } else if is_dir && name == TMP_DIR {
+            dir_is_empty(&entry.path())?
+        } else if is_dir && name == FILES_DIR {
+            holds_only_empty_dirs(&entry.path())?
+        } else {
+            false
+        };
+        if !fresh {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+/// True when the directory `dir` has no entry.
+fn dir_is_empty(dir: &Path) -> Result<bool, StoreError> {
+    let mut entries = fs::read_dir(dir).map_err(|_| unavailable(OP_OPEN))?;
+    Ok(entries.next().is_none())
+}
+
+/// True when every entry of `dir` is an empty directory (not a link).
+fn holds_only_empty_dirs(dir: &Path) -> Result<bool, StoreError> {
+    for entry in fs::read_dir(dir).map_err(|_| unavailable(OP_OPEN))? {
+        let entry = entry.map_err(|_| unavailable(OP_OPEN))?;
+        let is_dir = entry
+            .file_type()
+            .map_err(|_| unavailable(OP_OPEN))?
+            .is_dir();
+        if !is_dir || !dir_is_empty(&entry.path())? {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+/// Checks that `sqlite_schema` holds exactly [`SCHEMA_OBJECTS`]. Any other
+/// object, a missing one or another `sql` text is `Corrupted`. The loop
+/// ends at the first object that is unknown or seen twice, so it reads at
+/// most one row more than the expected set.
+fn check_schema_objects(conn: &Connection) -> Result<(), StoreError> {
+    let mut stmt = conn
+        .prepare(SELECT_SCHEMA_OBJECTS)
+        .map_err(|error| open_error(&error))?;
+    let mut rows = stmt.query(params![]).map_err(|error| open_error(&error))?;
+    let mut seen = [false; SCHEMA_OBJECTS.len()];
+    while let Some(row) = rows.next().map_err(|error| open_error(&error))? {
+        let column = |index: usize| -> Result<Option<&[u8]>, StoreError> {
+            match row.get_ref(index).map_err(|error| open_error(&error))? {
+                ValueRef::Text(text) => Ok(Some(text)),
+                ValueRef::Null => Ok(None),
+                _ => Err(corrupted(OP_OPEN)),
+            }
+        };
+        let found = (column(0)?, column(1)?, column(2)?, column(3)?);
+        let known = SCHEMA_OBJECTS.iter().position(|&(kind, name, table, sql)| {
+            found
+                == (
+                    Some(kind.as_bytes()),
+                    Some(name.as_bytes()),
+                    Some(table.as_bytes()),
+                    sql.map(str::as_bytes),
+                )
+        });
+        match known.and_then(|index| seen.get_mut(index)) {
+            Some(flag) if !*flag => *flag = true,
+            _ => return Err(corrupted(OP_OPEN)),
+        }
+    }
+    if seen.iter().all(|flag| *flag) {
+        Ok(())
+    } else {
+        Err(corrupted(OP_OPEN))
+    }
 }
 
 /// Removes every entry of `dir` except the reset marker. A symbolic link is
@@ -482,10 +715,10 @@ fn clear_dir(dir: &Path) -> Result<(), StoreError> {
 }
 
 /// Makes the entries of `dir` durable.
-fn sync_dir(dir: &Path) -> Result<(), StoreError> {
+fn sync_dir(dir: &Path, op: &'static str) -> Result<(), StoreError> {
     fs::File::open(dir)
         .and_then(|handle| handle.sync_all())
-        .map_err(|_| unavailable(OP_RESET))
+        .map_err(|_| unavailable(op))
 }
 
 /// The integer answer of a constant pragma.

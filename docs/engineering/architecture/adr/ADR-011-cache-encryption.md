@@ -35,7 +35,7 @@ The driver seals every entry: the content file and the `sealed` column of its me
 | Data key of `public` | Entries of the `public` partition | The key port |
 
 - A data key is 32 random bytes. The key port creates it at the first use and keeps it; on a device the platform adapter wraps it with a key of the Android Keystore or the iOS Keychain (`ThisDeviceOnly`) (WP-10, WP-11). WP-07 has a host key provider for tests only.
-- The driver holds a key only for the time of one call, in a buffer that is set to zero on drop (`zeroize`). `Debug` of a key prints no byte.
+- The driver holds a key only for the time of one call, in a buffer that is set to zero on drop (`zeroize`); the cipher crate has its `zeroize` feature on, so its own copy of the key is set to zero too ([DL-210](/engineering/plan/decision-log)). `Debug` of a key prints no byte.
 - The key port also gives the random bytes for nonces and file ids. The driver has no random source of its own, so no new dependency.
 
 Key port (Rust trait of `rivqen-store`; the platform form is WP-09):
@@ -43,7 +43,7 @@ Key port (Rust trait of `rivqen-store`; the platform form is WP-09):
 | Call | Result |
 |---|---|
 | `data_key(partition)` | The key, created when it does not exist; an error is `STORAGE_UNAVAILABLE` |
-| `delete_key(partition id)` | The key is gone; a later `data_key` gives a new key |
+| `delete_key(partition)` | The key is gone; a later `data_key` gives a new key |
 | `random(buffer)` | Random bytes from the system source |
 
 ### 3. Sealed form
@@ -55,9 +55,9 @@ One format for a file and for the `sealed` column:
 ```
 
 - Algorithm: XChaCha20-Poly1305 (`chacha20poly1305` =0.11.0). The nonce is 24 random bytes for each seal.
-- Associated data, each part with a length of 8 bytes, big-endian, as in the cache key ([cache identity](/engineering/cache/identity) §1): `rivqen-seal-v1`, the role (`file` or `row`), the schema version, the partition field of the cache key (`02`, or `01` and the id), the cache key, the file id.
+- Associated data, each part with a length of 8 bytes, big-endian, as in the cache key ([cache identity](/engineering/cache/identity) §1): `rivqen-seal-v1`, the role (`file` or `row`), the schema version (4 bytes, big-endian), the partition field of the cache key (`02`, or `01` and the id), the cache key, the file id.
 - So a file or a row that is moved to another partition, key, role or entry version does not open. The entry version is bound through the file id: each `Replace` has a new file id, and `UpdateFields` seals the row again with the same file id.
-- Plain text of a file: the page, the template (absent or present) and the data blocks, each with a length. Plain text of a row: the protocol, the `Vary` entries, the validators, the freshness inputs and the page fields, in a format with a version byte. Both decoders read untrusted bytes: bounded, no panic, with fuzz targets.
+- Plain text of a file: a format byte, the page, the template (absent or present) and the data blocks, each with a length. Plain text of a row: the protocol, the `Vary` entries, the validators, the freshness inputs and the page fields, in a format with a version byte. Both decoders read untrusted bytes: bounded, no panic, with fuzz targets.
 - Any failure to open (wrong magic, short input, tag mismatch, decode error) is `CACHE_CORRUPTED`. The error names no reason that helps an attacker and holds no byte of the data.
 
 ### 4. Logout and site clear

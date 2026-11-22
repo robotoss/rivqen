@@ -58,19 +58,20 @@ The steps are the values of `rivqen_cache::txn::CommitStep`.
 
 ### 3. Metadata
 
-SQLite settings: `journal_mode=WAL`, `synchronous=FULL`, `foreign_keys=ON`, a busy timeout of 0 (one writer). `FULL` makes an applied revoke or site clear durable: with `NORMAL` a power loss could bring back the entries of a logged-out account.
+SQLite settings: `journal_mode=WAL`, `synchronous=FULL`, `fullfsync=ON`, `checkpoint_fullfsync=ON`, `foreign_keys=ON`, `trusted_schema=OFF`, `cell_size_check=ON`, a busy timeout of 0 (one writer). The driver reads the settings back and does not open the store when one differs. On Apple targets SQLite syncs with `F_FULLFSYNC` only when `fullfsync` is on; on other platforms the two flags change nothing ([DL-209](/engineering/plan/decision-log)). `FULL` makes an applied revoke or site clear durable: with `NORMAL` a power loss could bring back the entries of a logged-out account.
 
 | Table | Columns | Notes |
 |---|---|---|
 | `entry` | `partition` (blob: `00` for `public`, or `01` and the 32 id bytes), `key` (blob 32), `host` (text), `version` (integer), `file_id` (blob 16), `content_bytes` (integer), `stored_at`, `last_used_at` (integer), `sealed` (blob) | Primary key (`partition`, `key`). `sealed` holds the protocol, the `Vary` entries, the validators, the freshness inputs and the page fields, sealed as ADR-011 defines |
 | `partition_epoch` | `partition`, `epoch` | A row is never deleted |
 | `disabled_key` | `partition`, `key`, `until` | Recovery removes the rows whose time is before `now` |
-| `counter` | `name`, `value` | `version` (last entry version), `site_epoch`. Never reset |
+| `counter` | `name`, `value` | `version` (last entry version), `site_epoch`, `partition_epoch_base` (the epoch of a partition that has no row). Never reset while the database is kept |
 
 - The clear columns are what the driver needs without a key: the address, the host for the site clear ([DL-184](/engineering/plan/decision-log)), sizes and times for the quota. Everything else is in `sealed`.
 - The driver refuses a `Replace` whose host is not a lower-case ASCII host name or an IP literal (S1 security review L4).
 - A decode failure of a row or of `sealed` is `CACHE_CORRUPTED`: the driver removes the entry and keeps every other entry (R-CACHE-06).
-- When `meta.sqlite` itself cannot be opened or fails `PRAGMA quick_check`, the driver removes the whole schema directory and starts empty, but keeps the counters when it can read them; when it cannot, the new store starts every epoch at a random 62-bit value, so a writer with an old epoch is always refused (S1 security review R2).
+- When `meta.sqlite` is not a database, fails `PRAGMA quick_check` or has an unknown format, the driver removes the content of the schema directory and starts empty. No counter of the failed database is kept: the version counter, the site epoch and the base epoch of the partitions start at random 62-bit values, so a writer with an old epoch is always refused (S1 security review R2, DL-209). A marker file (`meta.reset`) makes a reset that did not finish run again. A busy database or an I/O error is `STORAGE_UNAVAILABLE` and never starts a reset.
+- A `sealed` column is at most 1 MiB. A value above the SQLite integer range is refused; a time above it is stored as the largest value.
 
 ### 4. Recovery
 

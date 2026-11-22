@@ -156,14 +156,20 @@ pub fn site_matches(host: &str, cleared_domain: &str) -> bool {
 ///   literal (`192.0.2.1`) has this form too. An internationalized name is
 ///   valid only in its ASCII (`xn--`) form; the adapter applies IDNA
 ///   (cache identity section 2).
-/// - An IPv6 literal in brackets with lower-case hexadecimal digits:
-///   eight groups of 1 to 4 digits, or fewer groups with one `::`
-///   (`[2001:db8::1]`, `[::1]`). An embedded IPv4 form (`[::ffff:192.0.2.1]`)
-///   and a zone (`%25`) are not valid.
+/// - An IPv6 literal in brackets, only in the one text form that the
+///   WHATWG URL serializer and RFC 5952 section 4 write (`[2001:db8::1]`,
+///   `[::1]`, `[::]`): lower-case hexadecimal digits; each group without a
+///   leading zero (`0` itself is a group); the longest run of two or more
+///   zero groups written as `::`, the first one when two runs are equally
+///   long; no `::` for one zero group; no other `::`. [`site_matches`]
+///   compares bytes, so a second form of one address could escape a site
+///   clear (DL-208 a). An embedded IPv4 form (`[::ffff:192.0.2.1]`) and a
+///   zone (`%25`) are not valid.
 ///
 /// Not valid, for example: `Shop.example.com`, `shop.example.com:443`,
 /// `shop.example.com.`, a host with non-ASCII characters, an empty text,
-/// `https://shop.example.com/`. The time is linear in the length of `host`;
+/// `https://shop.example.com/`, `[2001:db8:0:0:0:0:0:1]`, `[2001:0db8::1]`,
+/// `[2001:db8::1:1:1:1:1]`. The time is linear in the length of `host`;
 /// the function allocates nothing.
 #[must_use]
 pub fn valid_host(host: &str) -> bool {
@@ -184,24 +190,62 @@ fn host_name(name: &[u8]) -> bool {
         })
 }
 
-/// An IPv6 address of [`valid_host`], without its brackets.
+/// For each group of an IPv6 address: `true` when the group is zero.
+type ZeroGroups = [bool; IPV6_GROUPS];
+
+/// An IPv6 address of [`valid_host`], without its brackets, in the one
+/// form of RFC 5952 section 4: every group written in its shortest form,
+/// and `::` exactly at the run of zero groups that
+/// [`compressed_run`] names, or no `::` when it names none.
 fn ipv6_address(text: &[u8]) -> bool {
-    let Some(gap) = text.windows(2).position(|pair| pair == b"::") else {
-        return ipv6_groups(text) == Some(IPV6_GROUPS);
+    // The groups that `::` stands for keep this value: zero.
+    let mut zeros: ZeroGroups = [true; IPV6_GROUPS];
+    let written = match text.windows(2).position(|pair| pair == b"::") {
+        None => {
+            if ipv6_groups(text, &mut zeros) != Some(IPV6_GROUPS) {
+                return false;
+            }
+            None
+        }
+        Some(gap) => {
+            let (Some(head), Some(tail)) = (text.get(..gap), text.get(gap.saturating_add(2)..))
+            else {
+                return false;
+            };
+            let mut tail_zeros: ZeroGroups = [false; IPV6_GROUPS];
+            let (Some(before), Some(after)) = (
+                ipv6_groups(head, &mut zeros),
+                ipv6_groups(tail, &mut tail_zeros),
+            ) else {
+                return false;
+            };
+            // The groups that `::` stands for. A `run` of 0 or 1 never equals
+            // the result of `compressed_run`, so the check below refuses it.
+            let Some(run) = IPV6_GROUPS.checked_sub(before.saturating_add(after)) else {
+                return false;
+            };
+            // The tail groups are the last `after` groups of the address.
+            let (Some(target), Some(source)) = (
+                zeros.get_mut(before.saturating_add(run)..),
+                tail_zeros.get(..after),
+            ) else {
+                return false;
+            };
+            for (group, &zero) in target.iter_mut().zip(source) {
+                *group = zero;
+            }
+            Some((before, run))
+        }
     };
-    let head = text.get(..gap);
-    let tail = text.get(gap.saturating_add(2)..);
-    match (head.and_then(ipv6_groups), tail.and_then(ipv6_groups)) {
-        // `::` stands for at least one group of zeros.
-        (Some(before), Some(after)) => before.saturating_add(after) < IPV6_GROUPS,
-        _ => false,
-    }
+    written == compressed_run(zeros)
 }
 
-/// The number of groups of `text`: groups of 1 to 4 lower-case hexadecimal
-/// digits with one `:` between two groups. `Some(0)` for an empty text;
-/// `None` for any other form, also for a second `::`.
-fn ipv6_groups(text: &[u8]) -> Option<usize> {
+/// Reads `text`: groups of 1 to 4 lower-case hexadecimal digits with one `:`
+/// between two groups, each group without a leading zero (`0` itself is a
+/// group). Marks the zero groups in `zeros` from its first place on.
+/// Returns the number of groups: `Some(0)` for an empty text; `None` for any
+/// other form (also a second `::`) and for more groups than `zeros` holds.
+fn ipv6_groups(text: &[u8], zeros: &mut ZeroGroups) -> Option<usize> {
     if text.is_empty() {
         return Some(0);
     }
@@ -211,12 +255,40 @@ fn ipv6_groups(text: &[u8]) -> Option<usize> {
             && group
                 .iter()
                 .all(|&byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte));
-        if !digits {
+        // The shortest form: a leading `0` only in the group `0`.
+        let shortest = group.len() == 1 || group.first() != Some(&b'0');
+        if !digits || !shortest {
             return None;
         }
+        *zeros.get_mut(count)? = group == b"0";
         count = count.checked_add(1)?;
     }
     Some(count)
+}
+
+/// The run of zero groups that RFC 5952 section 4.2 writes as `::`: the
+/// longest run of two or more zero groups, the first one when two runs are
+/// equally long. `(first group, length)`, or `None` when no run has two
+/// groups.
+fn compressed_run(zeros: ZeroGroups) -> Option<(usize, usize)> {
+    let mut best: Option<(usize, usize)> = None;
+    let mut start = 0;
+    let mut length: usize = 0;
+    for (index, zero) in zeros.into_iter().enumerate() {
+        if zero {
+            if length == 0 {
+                start = index;
+            }
+            length = length.saturating_add(1);
+            let longer = best.is_none_or(|(_, best_length)| length > best_length);
+            if length >= 2 && longer {
+                best = Some((start, length));
+            }
+        } else {
+            length = 0;
+        }
+    }
+    best
 }
 
 /// The conditions of rule 3 that a full document and a delta share: all but

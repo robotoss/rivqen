@@ -17,7 +17,7 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | [WP-04](#wp-04) | Platform feasibility spikes | P2 | Android + iOS engineers | WP-01 | L | **Done (merged 2026-11-09, #9)** — [S1](/engineering/plan/sprints/WP-04-S1), [S2](/engineering/plan/sprints/WP-04-S2), [S3](/engineering/plan/sprints/WP-04-S3) closed (2026-11-09); gate **G2** passed (H-137); ADR-002 and ADR-003 accepted (H-135, H-136) |
 | [WP-05](#wp-05) | Core workspace, data model, errors, testkit | P3 | Rust core engineer | WP-02 | M | **Done (merged 2026-11-12, #10)** — [S1](/engineering/plan/sprints/WP-05-S1), [S2](/engineering/plan/sprints/WP-05-S2) closed (2026-11-11); ADR-001 and ADR-017 accepted (H-139, H-140); error code `CONFIG_INVALID` (H-141) |
 | [WP-06](#wp-06) | Template engine | P3 | Rust core engineer | WP-05 | M | **Done (merged 2026-11-15, #11)** — [S1](/engineering/plan/sprints/WP-06-S1) closed (2026-11-12), [S2](/engineering/plan/sprints/WP-06-S2) closed (2026-11-14); H-142…H-144 |
-| [WP-07](#wp-07) | Cache engine | P3 | Rust core engineer | WP-05 | L | **In progress** — [S1](/engineering/plan/sprints/WP-07-S1) closed 2026-11-18 (pure logic); S2 next; H-146…H-148 |
+| [WP-07](#wp-07) | Cache engine | P3 | Rust core engineer | WP-05 | L | **In progress** — [S1](/engineering/plan/sprints/WP-07-S1) closed 2026-11-18 (pure logic); [S2](/engineering/plan/sprints/WP-07-S2) planned; H-146…H-148, H-150, H-151 |
 | [WP-08](#wp-08) | Session state machine and diff | P3 | Rust core engineer | WP-06, WP-07 | L | Planned |
 | [WP-09](#wp-09) | Streaming and FFI | P3 | Rust core engineer | WP-04, WP-08 | L | Planned |
 | [WP-10](#wp-10) | Android SDK | P5 | Android engineer | WP-09 | XL | Planned |

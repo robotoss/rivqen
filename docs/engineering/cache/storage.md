@@ -2,7 +2,7 @@
 
 This page defines how cache data is written to disk, how it is protected, and how Rivqen reacts to memory pressure.
 
-**Status:** <Badge type="info" text="DESIGN" /> ADR-004 (format) and ADR-011 (encryption) are proposed; their direction is decided (H-146, H-147, [WP-07 S1](/engineering/plan/sprints/WP-07-S1)). The write procedure of section 2 gets its exact form in the ADR-004 file (WP-07 S2).
+**Status:** <Badge type="info" text="DESIGN" /> ADR-004 (format) and ADR-011 (encryption) are proposed; their direction is decided (H-146, H-147, [WP-07 S1](/engineering/plan/sprints/WP-07-S1)). The exact layout and write procedure are in [ADR-004](/engineering/architecture/adr/ADR-004-cache-storage) and the sealed form in [ADR-011](/engineering/architecture/adr/ADR-011-cache-encryption) (both Proposed, WP-07 S2); sections 1 and 2 below are the first draft and change when the ADRs are accepted.
 
 [[toc]]
 
@@ -41,7 +41,7 @@ This page defines how cache data is written to disk, how it is protected, and ho
 
 | Item | Design |
 |---|---|
-| Scope | Entries in authenticated partitions. Public entries are not encrypted by default. |
+| Scope | Every entry: scoped entries with the key of their partition, `public` entries with the key of `public` (H-151, [ADR-011](/engineering/architecture/adr/ADR-011-cache-encryption)) |
 | Algorithm | AEAD: XChaCha20-Poly1305 from the crate `chacha20poly1305` (H-147, ADR-011) |
 | Keys | One data key per partition. The data key is wrapped by a platform key (Android Keystore / iOS Keychain with `ThisDeviceOnly`). |
 | Nonce | Random 192-bit per file (H-147). The 192-bit nonce needs no per-key counter |

@@ -113,3 +113,44 @@ for (const f of fs.readdirSync(pages)) {
   while ((m = re.exec(html)) !== null) put(`block__${f}__${i++}`, m[2]);
 }
 ' "$root" "corpus/patch_content"
+
+# store_file_decode and store_row_decode (WP-07 S2): plain texts of the entry
+# file and of the row of rivqen-store, written from the layouts in
+# crates/rivqen-store/src/crypto/file.rs and row.rs. Lengths and counts are
+# 8 bytes big-endian; an option is 00, or 01 and the value.
+node -e '
+const fs = require("fs"), path = require("path");
+const [fileDir, rowDir] = process.argv.slice(1);
+fs.mkdirSync(fileDir, { recursive: true });
+fs.mkdirSync(rowDir, { recursive: true });
+const u8 = (v) => Buffer.from([v]);
+const u32 = (v) => { const b = Buffer.alloc(4); b.writeUInt32BE(v); return b; };
+const u64 = (v) => { const b = Buffer.alloc(8); b.writeBigUInt64BE(BigInt(v)); return b; };
+const lp = (s) => { const b = Buffer.from(s); return Buffer.concat([u64(b.length), b]); };
+const some = (...parts) => Buffer.concat([u8(1), ...parts]);
+const none = u8(0);
+const cat = (...parts) => Buffer.concat(parts);
+const file = (page, template, blocks) => cat(u8(1), lp(page),
+  template === null ? none : some(lp(template)),
+  u64(blocks.length), ...blocks.map(([k, v]) => cat(lp(k), lp(v))));
+fs.writeFileSync(path.join(fileDir, "legacy"), file("P!", "T", [["k", "vv"], ["{b1}", "<b>x</b>"]]));
+fs.writeFileSync(path.join(fileDir, "rqp"), file("<html><div data-rq-block=\"main\">x</div></html>", null, []));
+fs.writeFileSync(path.join(fileDir, "empty"), file("", null, []));
+fs.writeFileSync(path.join(fileDir, "empty-blocks"), file("", "", [["", ""], ["", ""]]));
+const policy = cat(u8(0), u8(1), u8(0), u8(1), u8(0), some(u64(60)), none, some(u64(5)), u8(0),
+  u8(2), u64(1000), some(u64(990)), none, u64(980), u64(985), some(u32(30)), u8(1));
+const zeroPolicy = cat(Buffer.alloc(5), none, none, none, u8(0), u8(0), none, none, u64(0), u64(0), none, u8(0));
+const row = (protocol, vary, etag, rqp, pol, fields) => cat(u8(1), u8(protocol),
+  u64(vary.length), ...vary.map(([n, d]) => cat(lp(n), d === null ? none : some(Buffer.alloc(32, d)))),
+  etag === null ? none : some(lp(etag)), none, rqp === null ? none : some(rqp), pol,
+  u64(fields.length), ...fields.map(([n, v]) => cat(lp(n), lp(v))));
+const snapshot = cat(Buffer.alloc(32, 1), Buffer.alloc(32, 2), u64(2),
+  lp("main"), u8(0), Buffer.alloc(32, 3), lp("price-1"), u8(1), Buffer.alloc(32, 4),
+  some(some(u8(1)), some(u32(600)), some(u8(1))), some(some(u32(65536))));
+fs.writeFileSync(path.join(rowDir, "legacy"),
+  row(0, [["accept-language", 7], ["x", null]], "abc", null, policy, [["content-type", "text/html"]]));
+fs.writeFileSync(path.join(rowDir, "rqp-snapshot"), row(1, [], null, snapshot, policy, []));
+fs.writeFileSync(path.join(rowDir, "minimal"), row(1, [], null, null, zeroPolicy, []));
+fs.writeFileSync(path.join(rowDir, "empty-items"),
+  row(0, [["", null]], "", null, zeroPolicy, [["", ""], ["", ""]]));
+' "corpus/store_file_decode" "corpus/store_row_decode"

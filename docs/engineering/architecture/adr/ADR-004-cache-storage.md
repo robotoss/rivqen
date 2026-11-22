@@ -80,7 +80,7 @@ SQLite settings: `journal_mode=WAL`, `synchronous=FULL`, `fullfsync=ON`, `checkp
 1. Remove the directories of other schema versions.
 2. Remove every file in `tmp/`.
 3. Remove every file in `files/` that no row names.
-4. Remove every row whose file is missing or whose size differs from `content_bytes`.
+4. Remove every row whose file is missing or has a length that no file with `content_bytes` of content can have. `content_bytes` is the size of the plain content, so a list needs no file read ([DL-212](/engineering/plan/decision-log)).
 5. Remove the disabled-key rows whose time is before `now`.
 
 A read checks more than recovery: the seal of the file and of the row, and that the opened row names the partition and the key of the request.

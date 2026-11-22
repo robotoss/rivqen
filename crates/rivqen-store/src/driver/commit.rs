@@ -6,7 +6,7 @@
 //! the fault points of the contract tests.
 
 use std::fs::{self, File};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use rivqen_cache::driver::{StoreError, StoreErrorKind};
 use rivqen_cache::key::Partition;
@@ -20,21 +20,25 @@ use rivqen_model::http::FieldLine;
 use rivqen_model::ids::CacheKey;
 use rivqen_model::time::UnixTime;
 
-use super::entry::{aad_of, content_bytes, open_row};
-use super::layout::{ensure_dir, remove_file, sync_dir, write_new};
+use super::entry::{aad_of, content_bytes, file_fits, open_row};
+use super::layout::{ensure_dir, remove_unnamed, sync_dir, write_new};
 use super::{FileStore, Life, as_unavailable, unavailable};
 use crate::crypto::{
-    DecodeLimits, FileId, KeyProvider, Role, SEAL_OVERHEAD, encode_file, encode_row, seal,
+    DecodeLimits, FileId, KeyProvider, Role, RowContent, SEAL_OVERHEAD, encode_file, seal,
 };
-use crate::meta::{MAX_SEALED_BYTES, MetaTxn, Row};
+use crate::meta::{MAX_SEALED_BYTES, MetaTxn, Row, stored_time};
 
 const OP: &str = "driver.apply";
 
 /// A transaction in the terms of the driver.
 pub(super) enum Plan {
+    /// `meta` keeps the address, the host and the times; its `Vary`
+    /// entries, its validators and the page fields of `body` are moved to
+    /// `row`, the plain text of the sealed row.
     Replace {
         meta: Box<EntryMeta>,
         body: Box<SnapshotBody>,
+        row: Box<RowContent>,
     },
     Update {
         partition: Partition,
@@ -63,7 +67,24 @@ impl Plan {
     /// The plan of `op`; `None` for a kind that this driver does not know.
     fn of(op: TxnOp) -> Option<Self> {
         Some(match op {
-            TxnOp::Replace { meta, body } => Self::Replace { meta, body },
+            TxnOp::Replace { mut meta, mut body } => {
+                let row = RowContent {
+                    host: meta.host.clone(),
+                    // The value of the clear column, so the two are equal
+                    // at every open.
+                    stored_at: stored_time(meta.stored_at),
+                    protocol: meta.protocol,
+                    vary: std::mem::take(&mut meta.vary),
+                    validators: std::mem::take(&mut meta.validators),
+                    policy: meta.policy,
+                    fields: std::mem::take(&mut body.fields),
+                };
+                Self::Replace {
+                    meta,
+                    body,
+                    row: Box::new(row),
+                }
+            }
             TxnOp::UpdateFields {
                 partition,
                 key,
@@ -119,24 +140,39 @@ struct Written {
 /// The state of one commit between its steps.
 #[derive(Default)]
 struct Work {
+    /// The plain text of the new row of a `Replace` that writes a file,
+    /// checked against the limits before the first step.
+    row_plain: Option<Vec<u8>>,
     written: Option<Written>,
     outcome: Option<TxnOutcome>,
     old: Vec<FileId>,
+    /// The error of a key deletion that failed before a revoke or a clear
+    /// of all sites that was still committed.
+    key_error: Option<StoreError>,
 }
 
 impl Work {
     /// Removes the new file of a commit that did not reach its commit
-    /// point or was refused. A failure leaves an orphan that recovery
-    /// removes (ADR-004 section 4), so it is not an error of the call: the
-    /// call gives its own result.
+    /// point or was refused ([`remove_unnamed`]: the call gives its own
+    /// result).
     fn discard(&mut self) {
         if let Some(path) = self
             .written
             .as_mut()
             .and_then(|written| written.path.take())
         {
-            remove_orphan(&path);
+            remove_unnamed(&path, false);
         }
+    }
+
+    /// The result of a commit after `CommitMeta`: `Unavailable` when the key
+    /// port did not delete a key, so the caller runs the revoke or the
+    /// clear again (a second run is a normal one); else the outcome.
+    fn finish(self) -> Result<TxnOutcome, StoreError> {
+        if let Some(error) = self.key_error {
+            return Err(as_unavailable(error));
+        }
+        self.outcome.ok_or_else(|| unavailable(OP))
     }
 }
 
@@ -217,6 +253,23 @@ fn check_row_size(plain_len: usize) -> Result<(), StoreError> {
     }
 }
 
+/// The plain text of the row of a `Replace`, when the entry can be stored:
+/// the file content and the row decode with `limits`, and the sealed row
+/// fits the `sealed` column (DL-211). Else `Unavailable`: the entry would
+/// be stored and then read as corrupted, so it is not stored at all.
+fn row_plain_of(
+    body: &SnapshotBody,
+    row: &RowContent,
+    limits: &DecodeLimits,
+) -> Result<Vec<u8>, StoreError> {
+    if !file_fits(body, limits) || !row.fits(limits) {
+        return Err(unavailable(OP));
+    }
+    let plain = row.encode();
+    check_row_size(plain.len())?;
+    Ok(plain)
+}
+
 impl<P: KeyProvider> FileStore<P> {
     /// `StorageDriver::apply` with the fault points `stop` and `fail`.
     pub(super) fn commit(
@@ -227,24 +280,37 @@ impl<P: KeyProvider> FileStore<P> {
     ) -> Result<TxnOutcome, StoreError> {
         let CacheTransaction { op, pre } = txn;
         let plan = Plan::of(op).ok_or_else(|| unavailable(OP))?;
-        // DL-211: before the first step, so nothing is written.
-        if let Plan::Replace { meta, body } = &plan {
-            check_row_size(encode_row(meta, &body.fields).len())?;
-        }
         let mut work = Work::default();
+        // Before the first step, so nothing is written. A `Replace` with a
+        // host that the check refuses writes no row and no file; it is
+        // refused at the commit point, after the epochs (DL-208).
+        if let Plan::Replace { meta, body, row } = &plan
+            && valid_host(&meta.host)
+        {
+            work.row_plain = Some(row_plain_of(body, row, &self.limits)?);
+        }
         for step in CommitStep::ALL {
             if fail == Some(step) {
                 if step == CommitStep::RemoveOld {
                     // The commit stands; recovery removes the old files.
-                    return work.outcome.ok_or_else(|| unavailable(OP));
+                    return work.finish();
                 }
+                // An injected failure comes before the step: at
+                // `CommitMeta` no metadata transaction ran, so the new file
+                // is removed.
                 work.discard();
                 return Err(unavailable(OP));
             }
             if let Err(error) = self.step(step, &plan, &pre, &mut work) {
-                // Only the steps before the commit point fail; `RemoveOld`
-                // never gives an error.
-                work.discard();
+                // Only the steps up to the commit point fail; `RemoveOld`
+                // never gives an error. A metadata transaction that failed
+                // may still be committed (SQLite can replay its commit at
+                // the next open), and then a row names the new file: the
+                // file stays, and recovery removes it when no row names it
+                // (ADR-004 section 4, step 3).
+                if step != CommitStep::CommitMeta {
+                    work.discard();
+                }
                 return Err(as_unavailable(error));
             }
             if stop == Some(step) {
@@ -253,7 +319,7 @@ impl<P: KeyProvider> FileStore<P> {
                 return Err(unavailable(OP));
             }
         }
-        work.outcome.ok_or_else(|| unavailable(OP))
+        work.finish()
     }
 
     fn step(
@@ -265,12 +331,12 @@ impl<P: KeyProvider> FileStore<P> {
     ) -> Result<(), StoreError> {
         match step {
             CommitStep::WriteTemp => {
-                // A `Replace` with a host that the check refuses writes no
-                // file; the epochs are still checked first (DL-208).
-                if let Plan::Replace { meta, body } = plan
-                    && valid_host(&meta.host)
+                // Only a `Replace` with a valid host has a row plain text;
+                // the other kinds write no file.
+                if let Plan::Replace { meta, body, .. } = plan
+                    && let Some(row_plain) = work.row_plain.take()
                 {
-                    work.written = Some(self.write_temp(meta, body)?);
+                    work.written = Some(self.write_temp(meta, body, &row_plain)?);
                 }
                 Ok(())
             }
@@ -284,7 +350,7 @@ impl<P: KeyProvider> FileStore<P> {
                 None => Ok(()),
             },
             CommitStep::CommitMeta => {
-                let (outcome, old) = self.commit_meta(plan, pre, work.written.as_ref())?;
+                let (outcome, old) = self.commit_meta(plan, pre, work)?;
                 match outcome {
                     TxnOutcome::Refused(_) => work.discard(),
                     TxnOutcome::Applied { .. } => {
@@ -303,7 +369,7 @@ impl<P: KeyProvider> FileStore<P> {
                 // orphan that recovery removes, so a failure here is not an
                 // error of the call (DL-200 h).
                 for id in &work.old {
-                    remove_orphan(&self.layout.file_path(id));
+                    remove_unnamed(&self.layout.file_path(id), false);
                 }
                 Ok(())
             }
@@ -312,21 +378,23 @@ impl<P: KeyProvider> FileStore<P> {
 
     /// `WriteTemp`: seals the content and the row, writes the file to
     /// `tmp/<file-id>.tmp`.
-    fn write_temp(&mut self, meta: &EntryMeta, body: &SnapshotBody) -> Result<Written, StoreError> {
+    fn write_temp(
+        &mut self,
+        meta: &EntryMeta,
+        body: &SnapshotBody,
+        row_plain: &[u8],
+    ) -> Result<Written, StoreError> {
         let id = FileId::new(&mut self.keys)?;
         let data_key = self.keys.data_key(meta.partition)?;
         let file_aad = aad_of(Role::File, meta.partition, &meta.key, &id);
         let sealed = seal(&data_key, &mut self.keys, &file_aad, &encode_file(body))?;
         let row_aad = aad_of(Role::Row, meta.partition, &meta.key, &id);
-        let row_sealed = seal(
-            &data_key,
-            &mut self.keys,
-            &row_aad,
-            &encode_row(meta, &body.fields),
-        )?;
+        let row_sealed = seal(&data_key, &mut self.keys, &row_aad, row_plain)?;
         let path = self.layout.temp_path(&id);
         // A part of the file may be on disk after a failure.
-        let temp = write_new(&path, &sealed, OP).inspect_err(|_| remove_orphan(&path))?;
+        let temp = write_new(&path, &sealed, OP).inspect_err(|_| {
+            remove_unnamed(&path, false);
+        })?;
         Ok(Written {
             id,
             temp: Some(temp),
@@ -361,19 +429,27 @@ impl<P: KeyProvider> FileStore<P> {
     /// `CommitMeta`: deletes a key first when the plan says so, then runs
     /// the checks and the change in one metadata transaction. Gives the
     /// outcome and the files that no row names any more.
+    ///
+    /// A key deletion that fails does not stop a revoke or a clear of all
+    /// sites: the rows still go and the epoch still grows, so no writer of
+    /// the old epoch commits and no row of the partition is read. The error
+    /// is kept in `work`, and the call gives `Unavailable` after
+    /// `RemoveOld`, so the caller runs the revoke again to delete the key.
     fn commit_meta(
         &mut self,
         plan: &Plan,
         pre: &Preconditions,
-        written: Option<&Written>,
+        work: &mut Work,
     ) -> Result<(TxnOutcome, Vec<FileId>), StoreError> {
         // ADR-004 section 2 and ADR-011 section 4: the key goes first, so
         // a file that a power loss brings back cannot be opened.
-        match plan {
-            Plan::Revoke { partition } => self.keys.delete_key(*partition)?,
-            Plan::Clear { domain: None } => self.keys.delete_key(Partition::Public)?,
-            _ => {}
-        }
+        let deleted = match plan {
+            Plan::Revoke { partition } => self.keys.delete_key(*partition),
+            Plan::Clear { domain: None } => self.keys.delete_key(Partition::Public),
+            _ => Ok(()),
+        };
+        work.key_error = deleted.err();
+        let written = work.written.as_ref();
         let Self {
             db, keys, limits, ..
         } = self;
@@ -473,6 +549,11 @@ fn change<P: KeyProvider>(
 
 /// `UpdateFields`: opens the row, sets the fields and the freshness inputs
 /// and seals it again with the same file id (ADR-011 section 3).
+///
+/// A row that does not open (seal, decode, or a host or a store time that
+/// differs from its clear column) is corrupted: it is removed in this
+/// transaction and the outcome is `Refused(Entry)` (R-CACHE-06); its file
+/// goes at `RemoveOld`. A key port that fails removes nothing.
 fn update_fields<P: KeyProvider>(
     txn: &mut MetaTxn<'_>,
     row: Row,
@@ -482,14 +563,26 @@ fn update_fields<P: KeyProvider>(
     keys: &mut P,
     limits: &DecodeLimits,
 ) -> Result<(TxnOutcome, Vec<FileId>), StoreError> {
-    let data_key = keys.data_key(partition)?;
-    // A row that does not open cannot be updated; the next read finds it
-    // and removes it.
-    let mut content = open_row(&data_key, &row, limits).map_err(as_unavailable)?;
+    let data_key = keys.data_key(partition).map_err(as_unavailable)?;
+    let mut content = match open_row(&data_key, &row, limits) {
+        Ok(content) => content,
+        Err(error) if error.kind() == StoreErrorKind::Corrupted => {
+            txn.delete_row(row.partition, &row.key)?;
+            return Ok((
+                TxnOutcome::Refused(Refused::Entry),
+                vec![FileId::from_bytes(row.file_id)],
+            ));
+        }
+        Err(error) => return Err(as_unavailable(error)),
+    };
     content.fields = fields.to_vec();
     content.policy = policy;
+    // An update whose row would not decode, or does not fit the `sealed`
+    // column (DL-211), writes nothing.
+    if !content.fits(limits) {
+        return Err(unavailable(OP));
+    }
     let row_plain = content.encode();
-    // DL-211: an update whose row does not fit writes nothing.
     check_row_size(row_plain.len())?;
     let id = FileId::from_bytes(row.file_id);
     let sealed = seal(
@@ -542,14 +635,4 @@ fn clear_site(
     }
     txn.bump_site_epoch()?;
     Ok((TxnOutcome::Applied { version: None }, old))
-}
-
-/// Removes a file that no row names, on a path where the call gives its
-/// own result. A failure leaves an orphan: recovery removes every file
-/// that no row names (ADR-004 section 4, step 3), which is how this error
-/// is handled.
-fn remove_orphan(path: &Path) {
-    match remove_file(path, OP) {
-        Ok(()) | Err(_) => {}
-    }
 }

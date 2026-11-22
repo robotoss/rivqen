@@ -12,7 +12,7 @@ use rivqen_model::ids::CacheKey;
 use rivqen_model::safe::PageBytes;
 use rivqen_model::time::UnixTime;
 
-use super::layout::{read_entry_file, remove_file};
+use super::layout::{read_entry_file, remove_unnamed};
 use super::{FileStore, as_unavailable, corrupted, unavailable};
 use crate::crypto::{
     Aad, DataKey, DecodeLimits, FileContent, FileId, KeyProvider, Role, RowContent, SEAL_OVERHEAD,
@@ -22,6 +22,7 @@ use crate::meta::{MetaTxn, Row};
 
 const OP_READ: &str = "driver.read";
 const OP_LIST: &str = "driver.list";
+const OP_OPEN_ROW: &str = "driver.open_row";
 
 /// The lengths that an entry file can have for a content size
 /// (`content_bytes` of the row: page, template and data blocks).
@@ -140,8 +141,25 @@ pub(super) fn aad_of(role: Role, partition: Partition, key: &CacheKey, id: &File
     Aad::new(role, SCHEMA_VERSION, partition, key, id)
 }
 
-/// Opens and decodes the `sealed` column of `row`. Every failure is
-/// `Corrupted`.
+/// True when the content of `body` (page, template, data blocks) decodes
+/// from an entry file with `limits`: the size checks of `decode_file` on
+/// the values, with no encode. A file of such a content also has a length
+/// that [`FileShape::fits`] accepts for its `content_bytes`: the content is
+/// at most `max_content`, and the length is the one of its encoding.
+pub(super) fn file_fits(body: &SnapshotBody, limits: &DecodeLimits) -> bool {
+    let document = |bytes: &PageBytes| len_u64(bytes.len()) <= limits.max_document_bytes;
+    document(&body.page)
+        && body.template.as_ref().is_none_or(document)
+        && len_u64(body.data.len()) <= limits.max_blocks
+        && body.data.iter().all(|(key, value)| {
+            len_u64(key.len()) <= limits.max_block_key_bytes
+                && len_u64(value.len()) <= limits.max_block_bytes
+        })
+}
+
+/// Opens and decodes the `sealed` column of `row`, and checks that the
+/// host and the store time under the seal are the clear columns of `row`
+/// (ADR-011 section 3). Every failure is `Corrupted`.
 pub(super) fn open_row(
     key: &DataKey,
     row: &Row,
@@ -150,7 +168,11 @@ pub(super) fn open_row(
     let id = FileId::from_bytes(row.file_id);
     let aad = aad_of(Role::Row, row.partition, &row.key, &id);
     let plain = open(key, &aad, &row.sealed)?;
-    decode_row(&plain, limits)
+    let content = decode_row(&plain, limits)?;
+    if content.host != row.host || content.stored_at != row.stored_at {
+        return Err(corrupted(OP_OPEN_ROW));
+    }
+    Ok(content)
 }
 
 /// The metadata of an entry from its clear columns and its opened row.
@@ -158,12 +180,12 @@ pub(super) fn entry_meta(row: &Row, content: RowContent) -> (EntryMeta, Vec<Fiel
     let meta = EntryMeta {
         key: row.key,
         partition: row.partition,
-        host: row.host.clone(),
+        host: content.host,
         protocol: content.protocol,
         vary: content.vary,
         validators: content.validators,
         policy: content.policy,
-        stored_at: row.stored_at,
+        stored_at: content.stored_at,
         last_used_at: row.last_used_at,
     };
     (meta, content.fields)
@@ -268,14 +290,16 @@ impl<P: KeyProvider> FileStore<P> {
     }
 
     /// Removes the entry of `row` (R-CACHE-06) and gives `Corrupted`; gives
-    /// `Unavailable` when the removal fails.
+    /// `Unavailable` when the removal of the row fails.
     fn remove_corrupted<T>(&mut self, row: &Row) -> Result<T, StoreError> {
         self.remove_rows(std::slice::from_ref(row), OP_READ)?;
         Err(corrupted(OP_READ))
     }
 
-    /// Removes the rows of `rows` from the metadata, then their files. A
-    /// file that stays after a failure is an orphan that recovery removes.
+    /// Removes the rows of `rows` from the metadata, then their files. Only
+    /// the metadata transaction can fail the call: once the rows are gone,
+    /// a file that cannot be removed is an orphan that recovery removes
+    /// ([`remove_unnamed`]).
     fn remove_rows(&mut self, rows: &[Row], op: &'static str) -> Result<(), StoreError> {
         if rows.is_empty() {
             return Ok(());
@@ -289,7 +313,10 @@ impl<P: KeyProvider> FileStore<P> {
             })
             .map_err(as_unavailable)?;
         for row in rows {
-            remove_file(&self.layout.file_path(&FileId::from_bytes(row.file_id)), op)?;
+            remove_unnamed(
+                &self.layout.file_path(&FileId::from_bytes(row.file_id)),
+                false,
+            );
         }
         Ok(())
     }

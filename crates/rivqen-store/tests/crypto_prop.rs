@@ -156,8 +156,14 @@ fn snapshot() -> impl Strategy<Value = SnapshotMeta> {
         })
 }
 
+/// A host: a short name, or one near the limit of 253 bytes.
+fn host() -> impl Strategy<Value = String> {
+    prop_oneof!["[a-z0-9.-]{0,24}", "[a-z]{250,256}", text(4)]
+}
+
 fn row_content() -> impl Strategy<Value = RowContent> {
     (
+        (host(), any::<u64>()),
         prop_oneof![Just(Protocol::Legacy), Just(Protocol::Rqp)],
         proptest::collection::vec(
             (text(10), any::<Option<[u8; 32]>>()).prop_map(|(name, value)| VaryEntry {
@@ -176,16 +182,20 @@ fn row_content() -> impl Strategy<Value = RowContent> {
         ),
     )
         .prop_map(
-            |(protocol, vary, etag, template_tag, rqp, policy, fields)| RowContent {
-                protocol,
-                vary,
-                validators: Validators {
-                    etag,
-                    template_tag,
-                    rqp,
-                },
-                policy,
-                fields,
+            |((host, stored_at), protocol, vary, etag, template_tag, rqp, policy, fields)| {
+                RowContent {
+                    host,
+                    stored_at: UnixTime(stored_at),
+                    protocol,
+                    vary,
+                    validators: Validators {
+                        etag,
+                        template_tag,
+                        rqp,
+                    },
+                    policy,
+                    fields,
+                }
             },
         )
 }
@@ -230,7 +240,17 @@ proptest! {
     #[test]
     fn crypto_codec_prop_row_round_trip(row in row_content()) {
         let bytes = row.encode();
-        prop_assert_eq!(decode_row(&bytes, &DecodeLimits::default()).ok(), Some(row));
+        let fits = row.fits(&DecodeLimits::default());
+        prop_assert_eq!(decode_row(&bytes, &DecodeLimits::default()).ok(), fits.then_some(row));
+    }
+
+    /// What `RowContent::fits` accepts, the decoder accepts; what it
+    /// refuses, the decoder refuses (the driver stores only what it can
+    /// read back).
+    #[test]
+    fn crypto_codec_prop_row_fits_iff_it_decodes(row in row_content(), small in any::<bool>()) {
+        let limits = if small { small_limits() } else { DecodeLimits::default() };
+        prop_assert_eq!(row.fits(&limits), decode_row(&row.encode(), &limits).is_ok());
     }
 
     #[test]

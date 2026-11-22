@@ -2,12 +2,22 @@
 // SPDX-FileCopyrightText: The Rivqen Authors
 
 //! The plain text of the `sealed` column of a row (ADR-004 section 3,
-//! ADR-011 section 3): what the driver needs only with the key. The
-//! address, the host, the version, the file id, the size and the times are
-//! clear columns and are not here.
+//! ADR-011 section 3): what the driver needs only with the key, and the
+//! host and the store time of the entry.
+//!
+//! The host and the store time are also clear columns: the site clear and
+//! the quota need them without a key. Their copy under the seal
+//! authenticates them: the driver compares both with the clear columns at
+//! every open of a row, and a difference is a corrupted entry. The
+//! address (partition and key) and the file id are bound through the
+//! associated data. `version`, `last_used_at` and `content_bytes` are not
+//! in the plain text: the driver compares `content_bytes` with the decoded
+//! file, and `version` and `last_used_at` are not authenticated.
 //!
 //! ```text
-//! ROW_FORMAT (u8)
+//! ROW_FORMAT (u8)     2
+//! host                text (at most meta::MAX_HOST_BYTES)
+//! stored_at           u64 (the value of the clear column)
 //! protocol            u8: 00 legacy, 01 rqp
 //! vary                count, then for each entry:
 //!   name              text (at most max_header_bytes; all names at most
@@ -44,6 +54,9 @@
 //!   name, value       text each (name and value at most max_header_bytes;
 //!                     all lines at most max_headers_total_bytes)
 //! ```
+//!
+//! Only format 2 decodes. [`RowContent::fits`] answers, without an
+//! encode, whether the encoding of a value decodes with given limits.
 
 use rivqen_cache::driver::StoreError;
 use rivqen_cache::header::CacheControl;
@@ -60,9 +73,11 @@ use rivqen_proto::types::{
 
 use super::codec::{Bad, Budget, DecodeLimits, LEN_BYTES, Reader, Writer};
 use super::corrupted;
+use crate::meta::MAX_HOST_BYTES;
 
-/// The format byte of the row plain text.
-pub const ROW_FORMAT: u8 = 1;
+/// The format byte of the row plain text. Format 1 had no host and no
+/// store time; it does not decode.
+pub const ROW_FORMAT: u8 = 2;
 
 /// The length of a digest in the row.
 const DIGEST_BYTES: usize = 32;
@@ -70,6 +85,11 @@ const DIGEST_BYTES: usize = 32;
 /// The sealed part of a row.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RowContent {
+    /// The host of the entry: the same text as the clear column `host`.
+    pub host: String,
+    /// When the entry was stored: the same value as the clear column
+    /// `stored_at`.
+    pub stored_at: UnixTime,
     /// The protocol variant.
     pub protocol: Protocol,
     /// The `Vary` entries of the key.
@@ -86,27 +106,43 @@ impl RowContent {
     /// The plain text of this row content.
     #[must_use]
     pub fn encode(&self) -> Vec<u8> {
-        write_row(
-            self.protocol,
-            &self.vary,
-            &self.validators,
-            &self.policy,
-            &self.fields,
-        )
+        write_row(&self.parts())
+    }
+
+    /// True when the plain text of this row content decodes with `limits`:
+    /// [`decode_row`] of [`Self::encode`] gives `Ok` exactly when this
+    /// gives `true`. One pass over the sizes, no encode.
+    #[must_use]
+    pub fn fits(&self, limits: &DecodeLimits) -> bool {
+        check_row(&self.parts(), limits).is_ok()
+    }
+
+    fn parts(&self) -> Parts<'_> {
+        Parts {
+            host: &self.host,
+            stored_at: self.stored_at,
+            protocol: self.protocol,
+            vary: &self.vary,
+            validators: &self.validators,
+            policy: &self.policy,
+            fields: &self.fields,
+        }
     }
 }
 
-/// The row plain text of `meta` and the page `fields`. The address, the
-/// host and the times of `meta` are not written.
+/// The row plain text of `meta` and the page `fields`. The address and
+/// `last_used_at` of `meta` are not written; the host and `stored_at` are.
 #[must_use]
 pub fn encode_row(meta: &EntryMeta, fields: &[FieldLine]) -> Vec<u8> {
-    write_row(
-        meta.protocol,
-        &meta.vary,
-        &meta.validators,
-        &meta.policy,
+    write_row(&Parts {
+        host: &meta.host,
+        stored_at: meta.stored_at,
+        protocol: meta.protocol,
+        vary: &meta.vary,
+        validators: &meta.validators,
+        policy: &meta.policy,
         fields,
-    )
+    })
 }
 
 /// Reads the row plain text.
@@ -116,40 +152,111 @@ pub fn encode_row(meta: &EntryMeta, fields: &[FieldLine]) -> Vec<u8> {
 /// [`rivqen_cache::driver::StoreErrorKind::Corrupted`] with no reason when
 /// the bytes are not one value of the format: another format byte, an
 /// unknown tag, a length or a count over the remaining input or over
-/// `limits`, a text that is not UTF-8, a block id that is not valid, or a
-/// trailing byte.
+/// `limits`, a host over [`MAX_HOST_BYTES`], a text that is not UTF-8, a
+/// block id that is not valid, or a trailing byte.
 pub fn decode_row(bytes: &[u8], limits: &DecodeLimits) -> Result<RowContent, StoreError> {
     read_row(bytes, limits).map_err(|Bad| corrupted("decode_row"))
 }
 
-fn write_row(
+/// The values of a row plain text, borrowed from a [`RowContent`] or from
+/// an [`EntryMeta`] and its fields.
+struct Parts<'a> {
+    host: &'a str,
+    stored_at: UnixTime,
     protocol: Protocol,
-    vary: &[VaryEntry],
-    validators: &Validators,
-    policy: &EntryPolicy,
-    fields: &[FieldLine],
-) -> Vec<u8> {
+    vary: &'a [VaryEntry],
+    validators: &'a Validators,
+    policy: &'a EntryPolicy,
+    fields: &'a [FieldLine],
+}
+
+fn write_row(row: &Parts<'_>) -> Vec<u8> {
     let mut w = Writer::with_capacity(256);
     w.u8(ROW_FORMAT);
-    w.u8(match protocol {
+    w.text(row.host);
+    w.u64(row.stored_at.0);
+    w.u8(match row.protocol {
         Protocol::Legacy => 0,
         Protocol::Rqp => 1,
     });
-    w.len(vary.len());
-    for entry in vary {
+    w.len(row.vary.len());
+    for entry in row.vary {
         w.text(&entry.name);
         w.option(entry.value.as_ref(), |w, digest| w.raw(digest.as_bytes()));
     }
-    w.option(validators.etag.as_deref(), Writer::text);
-    w.option(validators.template_tag.as_deref(), Writer::text);
-    w.option(validators.rqp.as_ref(), write_snapshot);
-    write_policy(&mut w, policy);
-    w.len(fields.len());
-    for line in fields {
+    w.option(row.validators.etag.as_deref(), Writer::text);
+    w.option(row.validators.template_tag.as_deref(), Writer::text);
+    w.option(row.validators.rqp.as_ref(), write_snapshot);
+    write_policy(&mut w, row.policy);
+    w.len(row.fields.len());
+    for line in row.fields {
         w.text(&line.name);
         w.text(&line.value);
     }
     w.into_bytes()
+}
+
+/// The size checks of [`read_row`] on the values, with the same limits.
+/// Every other part of an encoding always decodes: a text of a `String` is
+/// UTF-8, each tag is one that the reader knows, and each count is the
+/// number of the items that follow it.
+fn check_row(row: &Parts<'_>, limits: &DecodeLimits) -> Result<(), Bad> {
+    within(row.host.len(), host_limit()?)?;
+    let mut names = Budget::new(limits.max_headers_total_bytes);
+    for entry in row.vary {
+        within(entry.name.len(), limits.max_header_bytes)?;
+        names.take(entry.name.len())?;
+    }
+    for tag in [&row.validators.etag, &row.validators.template_tag]
+        .into_iter()
+        .flatten()
+    {
+        within(tag.len(), limits.max_header_bytes)?;
+    }
+    if let Some(snapshot) = &row.validators.rqp {
+        within(snapshot.blocks.len(), block_limit(limits)?)?;
+        for block in &snapshot.blocks {
+            let id = block.id.as_str();
+            within(id.len(), block_id_limit()?)?;
+            BlockId::parse(id).map_err(|_| Bad)?;
+        }
+    }
+    let mut total = Budget::new(limits.max_headers_total_bytes);
+    for line in row.fields {
+        within(line.name.len(), limits.max_header_bytes)?;
+        within(line.value.len(), limits.max_header_bytes)?;
+        let len = line.name.len().checked_add(line.value.len()).ok_or(Bad)?;
+        within(len, limits.max_header_bytes)?;
+        total.take(len)?;
+    }
+    Ok(())
+}
+
+/// `Ok` when `len` is at most `limit`.
+fn within(len: usize, limit: u64) -> Result<(), Bad> {
+    if u64::try_from(len).map_err(|_| Bad)? <= limit {
+        Ok(())
+    } else {
+        Err(Bad)
+    }
+}
+
+/// [`MAX_HOST_BYTES`] as a limit of the reader.
+fn host_limit() -> Result<u64, Bad> {
+    u64::try_from(MAX_HOST_BYTES).map_err(|_| Bad)
+}
+
+/// [`MAX_BLOCK_ID_BYTES`] as a limit of the reader.
+fn block_id_limit() -> Result<u64, Bad> {
+    u64::try_from(MAX_BLOCK_ID_BYTES).map_err(|_| Bad)
+}
+
+/// The most blocks of an RQP snapshot: the limit of the caller, and at
+/// most `MAX_BLOCKS` of rqp/1.
+fn block_limit(limits: &DecodeLimits) -> Result<u64, Bad> {
+    Ok(limits
+        .max_blocks
+        .min(u64::try_from(MAX_BLOCKS).map_err(|_| Bad)?))
 }
 
 fn write_snapshot(w: &mut Writer, meta: &SnapshotMeta) {
@@ -211,6 +318,8 @@ fn read_row(bytes: &[u8], limits: &DecodeLimits) -> Result<RowContent, Bad> {
     if r.u8()? != ROW_FORMAT {
         return Err(Bad);
     }
+    let host = r.text(host_limit()?)?;
+    let stored_at = UnixTime(r.u64()?);
     let protocol = match r.u8()? {
         0 => Protocol::Legacy,
         1 => Protocol::Rqp,
@@ -250,6 +359,8 @@ fn read_row(bytes: &[u8], limits: &DecodeLimits) -> Result<RowContent, Bad> {
     r.finish()?;
 
     Ok(RowContent {
+        host,
+        stored_at,
         protocol,
         vary,
         validators: Validators {
@@ -265,14 +376,11 @@ fn read_row(bytes: &[u8], limits: &DecodeLimits) -> Result<RowContent, Bad> {
 fn read_snapshot(r: &mut Reader<'_>, limits: &DecodeLimits) -> Result<SnapshotMeta, Bad> {
     let template_revision = TemplateRevision::from_digest(read_digest(r)?);
     let page_revision = PageRevision::from_digest(read_digest(r)?);
-    let max_blocks = limits
-        .max_blocks
-        .min(u64::try_from(MAX_BLOCKS).map_err(|_| Bad)?);
     // A block takes at least its id length, its format and its digest.
-    let count = r.count(max_blocks, LEN_BYTES + 1 + DIGEST_BYTES)?;
+    let count = r.count(block_limit(limits)?, LEN_BYTES + 1 + DIGEST_BYTES)?;
     let mut blocks = Vec::with_capacity(count);
     for _ in 0..count {
-        let id = r.text(u64::try_from(MAX_BLOCK_ID_BYTES).map_err(|_| Bad)?)?;
+        let id = r.text(block_id_limit()?)?;
         let id = BlockId::parse(&id).map_err(|_| Bad)?;
         let format = match r.u8()? {
             0 => BlockFormat::Html,

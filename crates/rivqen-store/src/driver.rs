@@ -30,12 +30,20 @@
 //!   refused transaction removes its promoted file and commits no row.
 //! - RSK-06: a row and a file open only with the key of their partition and
 //!   the associated data of their partition, key and file id. A read checks
-//!   the address of the row against the request.
+//!   the address of the row against the request. The host and the store
+//!   time are sealed in the row too: every open of a row (read, list,
+//!   update) compares them with the clear columns `host` and `stored_at`.
+//!   `version` and `last_used_at` are not authenticated; `content_bytes`
+//!   is compared with the decoded file at a read.
+//! - Every entry that the driver stores decodes with its [`DecodeLimits`]:
+//!   a `Replace` whose content or row would not decode, and an
+//!   `UpdateFields` whose row would not, writes nothing.
 //! - R-CACHE-04: `RevokePartition` deletes the key of the partition before
 //!   its metadata transaction; `ClearSite` of all sites deletes the key of
 //!   `public` (ADR-011 section 4).
 //! - R-CACHE-06: an entry that fails a check is removed with its file; the
-//!   other entries stay. A failing key port removes nothing.
+//!   other entries stay. A failing key port removes nothing at a read, a
+//!   list or an update.
 //! - No path, host, key, file id or content is in an error or in a `Debug`
 //!   text.
 //!
@@ -43,11 +51,16 @@
 //!
 //! | Failure | Result |
 //! |---|---|
-//! | I/O error, full disk, SQLite error, key port error | `Unavailable`; before the commit point the new file is removed and the store holds the state before the call |
+//! | I/O error, full disk, SQLite error, key port error before the commit point | `Unavailable`; the new file is removed and the store holds the state before the call |
+//! | An error of the metadata transaction of `CommitMeta` | `Unavailable`; the promoted file stays, as SQLite may replay the commit at the next open; recovery removes it when no row names it |
 //! | A failure at `RemoveOld` | The commit stands; recovery removes the old files (DL-200 h) |
-//! | A row that seals to more than `meta::MAX_SEALED_BYTES` | `Unavailable` before the first step; nothing is written (DL-211) |
-//! | A row or a file that does not open or decode, a missing file, a file length that no file of `content_bytes` has | `Corrupted` at a read; the entry is removed |
-//! | A database that is not a database or fails its check | Reset at open (`MetaDb::open_or_reset`); every file goes with it |
+//! | A content or a row that would not decode with the limits, a row that seals to more than `meta::MAX_SEALED_BYTES` | `Unavailable` before the first step (`UpdateFields`: inside its transaction); nothing is written (DL-211) |
+//! | The key port does not delete the key of a `RevokePartition` or a `ClearSite` of all sites | The metadata transaction and `RemoveOld` still run (rows gone, epoch incremented); then `Unavailable`, so the caller runs it again: a second run is a normal one and deletes the key |
+//! | The key is deleted, then the metadata transaction fails | `Unavailable`; the caller must run the revoke again. The old rows stay until then, but they cannot be opened: a read or a list gives `Corrupted` and removes them |
+//! | A row or a file that does not open or decode, a host or a store time under the seal that differs from its clear column, a missing file, a file length that no file of `content_bytes` has | `Corrupted` at a read; the entry is removed. `list` removes it and does not list it; `UpdateFields` removes it and gives `Refused(Entry)` |
+//! | A file that cannot be unlinked after its row is removed | Not an error: the call gives its own result; the file is an orphan for the next recovery |
+//! | A database that is not a database, fails its check, or holds an object that is not ours | Reset at open (`MetaDb::open_or_reset`); every file goes with it |
+//! | A missing database in a schema directory that holds files | Reset at open: the counters start at random values, not at 0 |
 //! | A process kill or a power loss at any point | Recovery gives the old or the new entry |
 //!
 //! # Resource limits
@@ -68,7 +81,7 @@
 //! | `SyncTemp` | `sync_all` on the temporary file |
 //! | `Promote` | `sync_all` on `files/` when `files/<hh>` is new; after the rename, on `files/<hh>` and on `tmp` |
 //! | `CommitMeta` | SQLite (`synchronous=FULL`, `fullfsync`; [`crate::meta`]) |
-//! | Open and recovery | `sync_all` on the parent of each directory that the driver creates |
+//! | Open and recovery | `sync_all` on the parent of each directory that the driver creates (mode 0700 on unix) |
 //!
 //! `RemoveOld` and the removals of recovery are not synced: a file that
 //! comes back is an orphan that the next recovery removes.
@@ -158,10 +171,11 @@ impl<P: KeyProvider> FileStore<P> {
 
     /// Opens the store at `root` with the key port `keys`. Creates `root`
     /// (its parent must exist), the schema directory, `files/` and `tmp/`
-    /// when they do not exist, and syncs the parent of each. A metadata
-    /// database that is not a database or fails its check is replaced by
-    /// an empty store whose counters start at random values from the key
-    /// port (ADR-004 section 3); every file goes with it.
+    /// when they do not exist (mode 0700 on unix), and syncs the parent of
+    /// each. A metadata database that is not a database or fails its check,
+    /// and a missing database in a schema directory that holds files, is
+    /// replaced by an empty store whose counters start at random values
+    /// from the key port (ADR-004 section 3); every file goes with it.
     ///
     /// `limits` bound every decode of a row and a file; use the limits of
     /// the core configuration. Call [`StorageDriver::recover`] next.
@@ -225,9 +239,10 @@ impl<P: KeyProvider> FileStore<P> {
     }
 
     /// Fault point: the next [`StorageDriver::apply`] fails at `step` as an
-    /// I/O error would. Before the commit point it removes its new file and
-    /// returns `Unavailable`; at `RemoveOld` the commit stands and the call
-    /// succeeds. For fault tests only (DL-181).
+    /// I/O error before the step would. Up to `CommitMeta` it removes its
+    /// new file and returns `Unavailable` (at `CommitMeta` no metadata
+    /// transaction and no key deletion ran); at `RemoveOld` the commit
+    /// stands and the call succeeds. For fault tests only (DL-181).
     pub fn fail_at(&mut self, step: CommitStep) {
         self.fail = Some(step);
     }

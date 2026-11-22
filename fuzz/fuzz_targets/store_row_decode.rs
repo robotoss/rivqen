@@ -9,11 +9,14 @@
 //!   value), with the default limits and with small limits;
 //! - a value that decodes with the small limits also decodes with the
 //!   default limits, to the same value;
-//! - the page fields and the `Vary` names keep the limits.
+//! - the page fields, the `Vary` names and the host keep the limits;
+//! - `RowContent::fits` accepts every decoded value with its limits (the
+//!   driver check before a write agrees with the decoder).
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
 use rivqen_store::crypto::{DecodeLimits, RowContent, decode_row};
+use rivqen_store::meta::MAX_HOST_BYTES;
 
 fn small() -> DecodeLimits {
     DecodeLimits {
@@ -38,6 +41,8 @@ fn check_limits(row: &RowContent, limits: &DecodeLimits) {
     let names: usize = row.vary.iter().map(|entry| entry.name.len()).sum();
     assert!(names <= total);
     assert!(row.vary.iter().all(|entry| entry.name.len() <= header));
+    assert!(row.host.len() <= MAX_HOST_BYTES);
+    assert!(row.fits(limits));
 }
 
 fuzz_target!(|data: &[u8]| {

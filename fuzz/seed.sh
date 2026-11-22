@@ -140,7 +140,9 @@ fs.writeFileSync(path.join(fileDir, "empty-blocks"), file("", "", [["", ""], [""
 const policy = cat(u8(0), u8(1), u8(0), u8(1), u8(0), some(u64(60)), none, some(u64(5)), u8(0),
   u8(2), u64(1000), some(u64(990)), none, u64(980), u64(985), some(u32(30)), u8(1));
 const zeroPolicy = cat(Buffer.alloc(5), none, none, none, u8(0), u8(0), none, none, u64(0), u64(0), none, u8(0));
-const row = (protocol, vary, etag, rqp, pol, fields) => cat(u8(1), u8(protocol),
+// Row format 2: the host and the store time follow the format byte.
+const row = (protocol, vary, etag, rqp, pol, fields, host = "shop.example.com",
+  storedAt = 1700000000) => cat(u8(2), lp(host), u64(storedAt), u8(protocol),
   u64(vary.length), ...vary.map(([n, d]) => cat(lp(n), d === null ? none : some(Buffer.alloc(32, d)))),
   etag === null ? none : some(lp(etag)), none, rqp === null ? none : some(rqp), pol,
   u64(fields.length), ...fields.map(([n, v]) => cat(lp(n), lp(v))));
@@ -152,5 +154,9 @@ fs.writeFileSync(path.join(rowDir, "legacy"),
 fs.writeFileSync(path.join(rowDir, "rqp-snapshot"), row(1, [], null, snapshot, policy, []));
 fs.writeFileSync(path.join(rowDir, "minimal"), row(1, [], null, null, zeroPolicy, []));
 fs.writeFileSync(path.join(rowDir, "empty-items"),
-  row(0, [["", null]], "", null, zeroPolicy, [["", ""], ["", ""]]));
+  row(0, [["", null]], "", null, zeroPolicy, [["", ""], ["", ""]], "", 0));
+fs.writeFileSync(path.join(rowDir, "host-at-limit"),
+  row(1, [], null, null, zeroPolicy, [], "a".repeat(253), "18446744073709551615"));
+fs.writeFileSync(path.join(rowDir, "ipv6-host"),
+  row(1, [], null, null, zeroPolicy, [], "[2001:db8::1]"));
 ' "corpus/store_file_decode" "corpus/store_row_decode"

@@ -1362,7 +1362,13 @@ fn meta_reset_lost_database_with_store_files_resets() {
     // (name, setup): a schema directory with no `meta.sqlite` that holds
     // something of a store.
     type Setup = fn(&TestDir);
-    let cases: [(&str, Setup); 6] = [
+    let cases: [(&str, Setup); 8] = [
+        ("lost_tmp_is_a_file", |dir| {
+            fs::write(dir.path().join("tmp"), b"").unwrap();
+        }),
+        ("lost_files_is_a_file", |dir| {
+            fs::write(dir.path().join("files"), b"").unwrap();
+        }),
         ("lost_entry_file", |dir| {
             fs::create_dir_all(dir.path().join("files/ab")).unwrap();
             fs::write(dir.path().join("files/ab/abcd.rqf"), b"sealed").unwrap();
@@ -1413,11 +1419,17 @@ fn meta_reset_empty_database_file_with_store_files_resets() {
 
 #[test]
 fn meta_reset_fresh_directory_starts_at_zero() {
-    for (name, buckets, tmp) in [
-        ("fresh_empty", &[][..], false),
-        ("fresh_empty_tree", &["00", "ab"][..], true),
+    for (name, buckets, tmp, empty_db) in [
+        ("fresh_empty", &[][..], false, false),
+        ("fresh_empty_tree", &["00", "ab"][..], true, false),
+        // A database file that SQLite has not written yet (an open that
+        // stopped before its first transaction).
+        ("fresh_empty_db_file", &["00"][..], true, true),
     ] {
         let dir = TestDir::new(name);
+        if empty_db {
+            fs::write(dir.db_path(), b"").unwrap();
+        }
         for bucket in buckets {
             fs::create_dir_all(dir.path().join("files").join(bucket)).unwrap();
         }

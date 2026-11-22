@@ -50,10 +50,12 @@ use rivqen_cache::header::CacheControl;
 use rivqen_cache::key::{Protocol, VaryDigest, VaryEntry};
 use rivqen_cache::policy::{EntryPolicy, Expires};
 use rivqen_cache::txn::{EntryMeta, Validators};
+use rivqen_integrity::{PageRevision, Sha256Digest, TemplateRevision, b64u_encode};
 use rivqen_model::http::FieldLine;
 use rivqen_model::time::UnixTime;
 use rivqen_proto::types::{
-    BlockFormat, BlockId, Limits, MAX_BLOCK_ID_BYTES, MAX_BLOCKS, Mode, Policy, SnapshotMeta,
+    BlockDescriptor, BlockFormat, BlockId, Limits, MAX_BLOCK_ID_BYTES, MAX_BLOCKS, Mode, Policy,
+    SnapshotMeta,
 };
 
 use super::codec::{Bad, Budget, DecodeLimits, LEN_BYTES, Reader, Writer};
@@ -116,9 +118,6 @@ pub fn encode_row(meta: &EntryMeta, fields: &[FieldLine]) -> Vec<u8> {
 /// unknown tag, a length or a count over the remaining input or over
 /// `limits`, a text that is not UTF-8, a block id that is not valid, or a
 /// trailing byte.
-///
-/// Known gap: a row whose validators hold an RQP snapshot is `Corrupted`
-/// (see `build_snapshot`).
 pub fn decode_row(bytes: &[u8], limits: &DecodeLimits) -> Result<RowContent, StoreError> {
     read_row(bytes, limits).map_err(|Bad| corrupted("decode_row"))
 }
@@ -232,10 +231,6 @@ fn read_row(bytes: &[u8], limits: &DecodeLimits) -> Result<RowContent, Bad> {
     let etag = r.option(|r| r.text(limits.max_header_bytes))?;
     let template_tag = r.option(|r| r.text(limits.max_header_bytes))?;
     let rqp = r.option(|r| read_snapshot(r, limits))?;
-    let rqp = match rqp {
-        Some(raw) => Some(build_snapshot(&raw)?),
-        None => None,
-    };
     let policy = read_policy(&mut r)?;
 
     // A field line takes at least its two lengths.
@@ -267,22 +262,9 @@ fn read_row(bytes: &[u8], limits: &DecodeLimits) -> Result<RowContent, Bad> {
     })
 }
 
-/// The parts of an RQP snapshot as the row holds them.
-#[expect(
-    dead_code,
-    reason = "build_snapshot reads the parts when rivqen-integrity is a dependency (shared file request of T-03)"
-)]
-struct RawSnapshot {
-    template_revision: [u8; DIGEST_BYTES],
-    page_revision: [u8; DIGEST_BYTES],
-    blocks: Vec<(BlockId, BlockFormat, [u8; DIGEST_BYTES])>,
-    policy: Option<Policy>,
-    limits: Option<Limits>,
-}
-
-fn read_snapshot(r: &mut Reader<'_>, limits: &DecodeLimits) -> Result<RawSnapshot, Bad> {
-    let template_revision = r.array::<DIGEST_BYTES>()?;
-    let page_revision = r.array::<DIGEST_BYTES>()?;
+fn read_snapshot(r: &mut Reader<'_>, limits: &DecodeLimits) -> Result<SnapshotMeta, Bad> {
+    let template_revision = TemplateRevision::from_digest(read_digest(r)?);
+    let page_revision = PageRevision::from_digest(read_digest(r)?);
     let max_blocks = limits
         .max_blocks
         .min(u64::try_from(MAX_BLOCKS).map_err(|_| Bad)?);
@@ -297,7 +279,11 @@ fn read_snapshot(r: &mut Reader<'_>, limits: &DecodeLimits) -> Result<RawSnapsho
             1 => BlockFormat::Json,
             _ => return Err(Bad),
         };
-        blocks.push((id, format, r.array::<DIGEST_BYTES>()?));
+        blocks.push(BlockDescriptor {
+            id,
+            format,
+            sha256: read_digest(r)?,
+        });
     }
     let policy = r.option(|r| {
         let mode = r.option(|r| match r.u8()? {
@@ -318,7 +304,7 @@ fn read_snapshot(r: &mut Reader<'_>, limits: &DecodeLimits) -> Result<RawSnapsho
             max_patch_bytes: r.option(Reader::u32)?,
         })
     })?;
-    Ok(RawSnapshot {
+    Ok(SnapshotMeta {
         template_revision,
         page_revision,
         blocks,
@@ -327,16 +313,12 @@ fn read_snapshot(r: &mut Reader<'_>, limits: &DecodeLimits) -> Result<RawSnapsho
     })
 }
 
-/// The snapshot of `raw`.
-///
-/// Known gap: `SnapshotMeta` holds `rivqen_integrity` types
-/// (`TemplateRevision`, `PageRevision`, `Sha256Digest`) that this crate
-/// cannot build without a dependency on `rivqen-integrity`, a shared file
-/// change. Until then a row with an RQP snapshot does not decode, so the
-/// driver treats it as corrupted (fail closed). The format does not change
-/// when the dependency is added.
-fn build_snapshot(_: &RawSnapshot) -> Result<SnapshotMeta, Bad> {
-    Err(Bad)
+/// A SHA-256 digest: 32 bytes. `rivqen-integrity` builds a digest only
+/// from its base64url text; every 32 bytes have one, so the error path is
+/// not reached.
+fn read_digest(r: &mut Reader<'_>) -> Result<Sha256Digest, Bad> {
+    let bytes = r.array::<DIGEST_BYTES>()?;
+    Sha256Digest::from_b64u(&b64u_encode(&bytes)).map_err(|_| Bad)
 }
 
 fn read_policy(r: &mut Reader<'_>) -> Result<EntryPolicy, Bad> {

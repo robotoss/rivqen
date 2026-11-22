@@ -16,10 +16,14 @@ use rivqen_cache::header::CacheControl;
 use rivqen_cache::key::{Partition, Protocol, VaryDigest, VaryEntry};
 use rivqen_cache::policy::{EntryPolicy, Expires};
 use rivqen_cache::txn::Validators;
+use rivqen_integrity::{PageRevision, TemplateRevision, sha256};
 use rivqen_model::http::FieldLine;
 use rivqen_model::ids::{CacheKey, PartitionId};
 use rivqen_model::safe::PageBytes;
 use rivqen_model::time::UnixTime;
+use rivqen_proto::types::{
+    BlockDescriptor, BlockFormat, BlockId, Limits, Mode, Policy, SnapshotMeta,
+};
 use rivqen_store::crypto::{
     Aad, DataKey, DecodeLimits, FileContent, FileId, HostKeys, Role, RowContent, decode_file,
     decode_row, open, seal,
@@ -112,6 +116,46 @@ fn policy() -> impl Strategy<Value = EntryPolicy> {
         )
 }
 
+fn snapshot() -> impl Strategy<Value = SnapshotMeta> {
+    let block = ("[a-z0-9][a-z0-9_-]{0,63}", any::<bool>(), any::<[u8; 4]>()).prop_map(
+        |(id, json, seed)| BlockDescriptor {
+            id: BlockId::parse(&id).unwrap_or_else(|_| unreachable!("the pattern is M-15")),
+            format: if json {
+                BlockFormat::Json
+            } else {
+                BlockFormat::Html
+            },
+            sha256: sha256(&seed),
+        },
+    );
+    let policy = (
+        proptest::option::of(prop_oneof![Just(Mode::Private), Just(Mode::Public)]),
+        any::<Option<u32>>(),
+        any::<Option<bool>>(),
+    )
+        .prop_map(|(mode, ttl_seconds, offline)| Policy {
+            mode,
+            ttl_seconds,
+            offline,
+        });
+    (
+        any::<[u8; 4]>(),
+        any::<[u8; 4]>(),
+        proptest::collection::vec(block, 0..5),
+        proptest::option::of(policy),
+        proptest::option::of(
+            any::<Option<u32>>().prop_map(|max_patch_bytes| Limits { max_patch_bytes }),
+        ),
+    )
+        .prop_map(|(template, page, blocks, policy, limits)| SnapshotMeta {
+            template_revision: TemplateRevision::from_digest(sha256(&template)),
+            page_revision: PageRevision::from_digest(sha256(&page)),
+            blocks,
+            policy,
+            limits,
+        })
+}
+
 fn row_content() -> impl Strategy<Value = RowContent> {
     (
         prop_oneof![Just(Protocol::Legacy), Just(Protocol::Rqp)],
@@ -124,6 +168,7 @@ fn row_content() -> impl Strategy<Value = RowContent> {
         ),
         proptest::option::of(text(12)),
         proptest::option::of(text(12)),
+        proptest::option::of(snapshot()),
         policy(),
         proptest::collection::vec(
             (text(10), text(20)).prop_map(|(n, v)| FieldLine::new(n, v)),
@@ -131,13 +176,13 @@ fn row_content() -> impl Strategy<Value = RowContent> {
         ),
     )
         .prop_map(
-            |(protocol, vary, etag, template_tag, policy, fields)| RowContent {
+            |(protocol, vary, etag, template_tag, rqp, policy, fields)| RowContent {
                 protocol,
                 vary,
                 validators: Validators {
                     etag,
                     template_tag,
-                    rqp: None,
+                    rqp,
                 },
                 policy,
                 fields,

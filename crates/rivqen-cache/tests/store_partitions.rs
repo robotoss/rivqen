@@ -40,16 +40,47 @@ fn key_for(partition: Partition) -> CacheKey {
 
 fn ready() -> FakeStore {
     let mut store = FakeStore::new();
-    store.recover().unwrap();
+    store.recover(NOW).unwrap();
     store
 }
 
-/// The preconditions that a session reads when it starts.
+/// The preconditions that a session reads when it starts. A scoped
+/// partition is also the partition of the request; `Public` has none here.
 fn session_start(store: &mut FakeStore, partition: Partition, entry: Expect) -> Preconditions {
+    match partition {
+        Partition::Scoped(id) => session_of(store, id, partition, entry),
+        Partition::Public => Preconditions {
+            entry,
+            request: None,
+            partition_epoch: store.partition_epoch(partition).unwrap(),
+            site_epoch: store.site_epoch().unwrap(),
+        },
+    }
+}
+
+/// The preconditions of a session of the request partition `request` that
+/// writes into `target`.
+fn session_of(
+    store: &mut FakeStore,
+    request: PartitionId,
+    target: Partition,
+    entry: Expect,
+) -> Preconditions {
     Preconditions {
         entry,
-        partition_epoch: store.partition_epoch(partition).unwrap(),
+        request: Some((
+            request,
+            store.partition_epoch(Partition::Scoped(request)).unwrap(),
+        )),
+        partition_epoch: store.partition_epoch(target).unwrap(),
         site_epoch: store.site_epoch().unwrap(),
+    }
+}
+
+fn id_of(partition: Partition) -> PartitionId {
+    match partition {
+        Partition::Scoped(id) => id,
+        Partition::Public => panic!("not scoped"),
     }
 }
 
@@ -298,7 +329,7 @@ fn store_partitions_revoke_during_pending_commit() {
         // Only the file of bob is left.
         assert_eq!(store.files(), FileCount { temp: 0, entry: 1 }, "{step:?}");
         store.restart().unwrap();
-        store.recover().unwrap();
+        store.recover(NOW).unwrap();
         assert_eq!(store.files(), FileCount { temp: 0, entry: 1 }, "{step:?}");
         assert_eq!(read(&mut store, alice, key), None, "{step:?}");
         assert!(read(&mut store, bob, key_for(bob)).is_some());
@@ -332,7 +363,7 @@ fn store_partitions_revoke_after_a_stopped_commit() {
     for kind in [StopKind::PowerLoss, StopKind::ProcessKill] {
         for step in CommitStep::ALL {
             let mut store = FakeStore::new().with_stop_kind(kind);
-            store.recover().unwrap();
+            store.recover(NOW).unwrap();
             let key = key_for(alice);
             let pre = session_start(&mut store, alice, Expect::Absent);
             store.apply(replace(alice, key, "old", pre)).unwrap();
@@ -342,7 +373,7 @@ fn store_partitions_revoke_after_a_stopped_commit() {
             store.stop_after(step);
             assert!(store.apply(replace(alice, key, "new", pre)).is_err());
             store.restart().unwrap();
-            store.recover().unwrap();
+            store.recover(NOW).unwrap();
             let txn = revoke(alice, &mut store);
             store.apply(txn).unwrap();
             assert_eq!(read(&mut store, alice, key), None, "{kind:?} {step:?}");
@@ -350,14 +381,14 @@ fn store_partitions_revoke_after_a_stopped_commit() {
             // The deleted files of alice are orphans after a power loss;
             // the next recovery removes them.
             store.restart().unwrap();
-            let report = store.recover().unwrap();
+            let report = store.recover(NOW).unwrap();
             assert_eq!(report.entries_removed, 0);
             assert_eq!(
                 store.files(),
                 FileCount { temp: 0, entry: 1 },
                 "{kind:?} {step:?}"
             );
-            assert_eq!(store.recover().unwrap(), RecoveryReport::default());
+            assert_eq!(store.recover(NOW).unwrap(), RecoveryReport::default());
         }
     }
 }
@@ -388,6 +419,119 @@ fn store_partitions_public_and_scoped_revoke_apart() {
         read(&mut store, alice, key).unwrap().body.page.as_slice(),
         b"alice2/page"
     );
+}
+
+/// A session of a profile plans a write into `Public`; the profile logs
+/// out (its partition is revoked) before the commit: the commit is refused
+/// for every keyed kind, also when the revoke runs between two steps, and
+/// the `Public` entry of another profile stays (DL-205; cache identity
+/// rule 4, RSK-06). A session of another profile and a new session of the
+/// same profile commit.
+#[test]
+fn store_partitions_revoked_request_cannot_commit_to_public() {
+    let (alice, bob) = (profile(0xA1), profile(0xB2));
+    let mut store = ready();
+    let key = key_for(Partition::Public);
+    let other = CacheKey::from_bytes([0x77; 32]);
+    let pre = session_of(&mut store, id_of(bob), Partition::Public, Expect::Absent);
+    store
+        .apply(replace(Partition::Public, key, "bob-public", pre))
+        .unwrap();
+    let bob_entry = read(&mut store, Partition::Public, key).unwrap();
+
+    let late = session_of(&mut store, id_of(alice), Partition::Public, Expect::Any);
+    let pre_bob = session_of(&mut store, id_of(bob), Partition::Public, Expect::Absent);
+    let txn = revoke(alice, &mut store);
+    store.apply(txn).unwrap();
+    // The epoch of `Public` did not change: only the request check refuses.
+    assert_eq!(
+        late.partition_epoch,
+        store.partition_epoch(Partition::Public).unwrap()
+    );
+    for op in [
+        replace(Partition::Public, other, "alice-late", late),
+        replace(Partition::Public, key, "alice-late", late),
+        CacheTransaction {
+            op: TxnOp::UpdateFields {
+                partition: Partition::Public,
+                key,
+                fields: Vec::new(),
+                policy: rivqen_testkit::store::contract::sample_policy(60),
+            },
+            pre: late,
+        },
+        CacheTransaction {
+            op: TxnOp::Remove {
+                partition: Partition::Public,
+                key,
+            },
+            pre: late,
+        },
+        CacheTransaction {
+            op: TxnOp::DisableKey {
+                partition: Partition::Public,
+                key,
+                until: NOW.plus(60),
+            },
+            pre: late,
+        },
+    ] {
+        assert_eq!(
+            store.apply(op).unwrap(),
+            TxnOutcome::Refused(Refused::PartitionRevoked)
+        );
+    }
+    assert_eq!(read(&mut store, Partition::Public, key).unwrap(), bob_entry);
+    assert_eq!(read(&mut store, Partition::Public, other), None);
+    assert!(!store.key_disabled(Partition::Public, &key, NOW).unwrap());
+    assert_eq!(store.files(), FileCount { temp: 0, entry: 1 });
+
+    // The session of bob is not touched by the logout of alice.
+    assert!(matches!(
+        store
+            .apply(replace(Partition::Public, other, "bob-other", pre_bob))
+            .unwrap(),
+        TxnOutcome::Applied { version: Some(_) }
+    ));
+
+    // A revoke between two steps of the commit: refused at the commit
+    // point, and the promoted file is gone.
+    for step in [
+        CommitStep::WriteTemp,
+        CommitStep::SyncTemp,
+        CommitStep::Promote,
+    ] {
+        let pending = session_of(&mut store, id_of(alice), Partition::Public, Expect::Any);
+        let txn = revoke(alice, &mut store);
+        store.run_between(step, txn);
+        let outcome = store
+            .apply(replace(Partition::Public, key, "alice-pending", pending))
+            .unwrap();
+        assert_eq!(
+            outcome,
+            TxnOutcome::Refused(Refused::PartitionRevoked),
+            "{step:?}"
+        );
+        assert_eq!(
+            store.between_outcome(),
+            Some(Ok(TxnOutcome::Applied { version: None }))
+        );
+        assert_eq!(
+            read(&mut store, Partition::Public, key).unwrap(),
+            bob_entry,
+            "{step:?}"
+        );
+        assert_eq!(store.files(), FileCount { temp: 0, entry: 2 }, "{step:?}");
+    }
+
+    // A new session of alice reads the new epoch and commits.
+    let fresh = session_of(&mut store, id_of(alice), Partition::Public, Expect::Any);
+    assert!(matches!(
+        store
+            .apply(replace(Partition::Public, key, "alice-new", fresh))
+            .unwrap(),
+        TxnOutcome::Applied { version: Some(_) }
+    ));
 }
 
 /// A site clear removes the site in every partition, also `Public`.

@@ -13,8 +13,17 @@
 //!
 //! Readings of the contract that the suite enforces:
 //!
-//! - A transaction with a key checks its preconditions; a revoke and a
-//!   site clear are never refused (they only remove data).
+//! - A transaction with a key checks its preconditions in the order of
+//!   `rivqen_cache::txn`: request partition epoch, target partition
+//!   epoch, site epoch, host (`Replace`), entry; a revoke and a site clear
+//!   are never refused (they only remove data).
+//! - A session whose request partition was revoked commits nothing, also
+//!   not into `Public`; a precondition without a request partition is not
+//!   checked for it (DL-205).
+//! - A `Replace` whose host fails `valid_host` is `Refused(InvalidHost)`
+//!   and writes nothing, also when the commit stops (DL-205).
+//! - `recover(now)` removes the disabled-key records whose time is before
+//!   `now` and keeps the others (DL-205).
 //! - `UpdateFields` without an entry is `Refused(Entry)`.
 //! - A replace or a field update gives a version that differs from the
 //!   version before; epochs grow by exactly one.
@@ -55,11 +64,48 @@ macro_rules! drive {
     }};
 }
 
+/// The ids of the two scoped partitions of the checks.
+const SCOPED_IDS: [PartitionId; 2] = [
+    PartitionId::from_bytes([0xA1; 32]),
+    PartitionId::from_bytes([0xB2; 32]),
+];
+
 /// The partitions of the checks: two scoped partitions and `Public`.
 pub const PARTITIONS: [Partition; 3] = [
-    Partition::Scoped(PartitionId::from_bytes([0xA1; 32])),
-    Partition::Scoped(PartitionId::from_bytes([0xB2; 32])),
+    Partition::Scoped(SCOPED_IDS[0]),
+    Partition::Scoped(SCOPED_IDS[1]),
     Partition::Public,
+];
+
+/// Hosts that a driver must refuse in a `Replace` (DL-205): a port, upper
+/// case, an IDN in Unicode, an empty text, the URL form, a trailing or
+/// leading dot, an empty label, an IPv6 literal with a port or upper case,
+/// user information, a path and a space.
+pub const INVALID_HOSTS: [&str; 15] = [
+    "shop.example.com:443",
+    "Shop.example.com",
+    "SHOP.EXAMPLE.COM",
+    "sh\u{f6}p.example.com",
+    "",
+    "https://shop.example.com/",
+    "shop.example.com.",
+    ".example.com",
+    "shop..example.com",
+    "[::1]:443",
+    "[2001:DB8::1]",
+    "192.0.2.1:80",
+    "user@shop.example.com",
+    "shop.example.com/cart",
+    "shop example.com",
+];
+
+/// Hosts that a driver must store: a name in its IDNA form, an IPv4
+/// literal and two IPv6 literals.
+pub const VALID_HOSTS: [&str; 4] = [
+    "xn--bcher-kva.example",
+    "192.0.2.1",
+    "[2001:db8::1]",
+    "[::1]",
 ];
 
 /// The keys of the checks. The same key is used in every partition.
@@ -225,6 +271,14 @@ pub enum Action {
     Damage,
 }
 
+/// The keyed kinds: the kinds that check preconditions.
+const KEYED: [Action; 4] = [
+    Action::Replace,
+    Action::UpdateFields,
+    Action::Remove,
+    Action::DisableKey,
+];
+
 /// The entry precondition of a script step.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ScriptExpect {
@@ -242,12 +296,17 @@ pub enum ScriptExpect {
 /// Which epoch of a script step is old.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Stale {
-    /// Both epochs are current.
+    /// Every epoch is current.
     Neither,
     /// The partition epoch differs from the current one.
     Partition,
     /// The site epoch differs from the current one.
     Site,
+    /// The epoch of the request partition differs from the current one
+    /// (DL-205). The request partition of a step is the target partition
+    /// when it is scoped; for `Public` it is the scoped partition of index
+    /// `key % 2`.
+    Request,
 }
 
 /// A fault of a script step.
@@ -353,6 +412,7 @@ impl ScriptOp {
         let stale = match bits(9, 7) {
             0 => Stale::Partition,
             1 => Stale::Site,
+            2 => Stale::Request,
             _ => Stale::Neither,
         };
         let step = |index: u32| {
@@ -422,6 +482,12 @@ impl Model {
             *epoch = epoch.saturating_add(1);
         }
     }
+
+    /// What `recover(now)` removes from the model: the disabled-key
+    /// records whose time is before `now`.
+    fn expire(&mut self, now: UnixTime) {
+        self.disabled.retain(|_, until| *until >= now);
+    }
 }
 
 fn cell_of(meta: &EntryMeta) -> Option<Cell> {
@@ -444,6 +510,23 @@ fn host_at(index: usize) -> &'static str {
     HOSTS.get(index).copied().unwrap_or("invalid.invalid")
 }
 
+/// The request partition of a script step on `cell` (see
+/// [`Stale::Request`]): two profiles write into `Public`.
+fn request_of(cell: Cell) -> PartitionId {
+    let [first, second] = SCOPED_IDS;
+    let index = if cell.0 < SCOPED_IDS.len() {
+        cell.0
+    } else {
+        cell.1 % 2
+    };
+    if index == 0 { first } else { second }
+}
+
+/// An epoch that differs from `epoch`: one below, or 1 for epoch 0.
+fn older(epoch: Epoch) -> Epoch {
+    Epoch(epoch.0.checked_sub(1).unwrap_or(1))
+}
+
 fn next_partition(index: usize) -> usize {
     match index {
         0 => 1,
@@ -462,7 +545,7 @@ struct Harness<'a, D> {
 
 impl<'a, D: FaultInjection> Harness<'a, D> {
     fn start(driver: &'a mut D, check: &'static str) -> Result<Self, Violation> {
-        call(check, "recover", driver.recover())?;
+        call(check, "recover", driver.recover(NOW))?;
         let mut epochs = [0_u64; 3];
         for (index, epoch) in epochs.iter_mut().enumerate() {
             *epoch = call(
@@ -605,14 +688,26 @@ impl<'a, D: FaultInjection> Harness<'a, D> {
         }
     }
 
+    /// Recovers the driver at `now` and the model with it.
+    fn recover_at(&mut self, now: UnixTime) -> Result<RecoveryReport, Violation> {
+        let report = drive!(self, "recover", recover(now))?;
+        self.model.expire(now);
+        Ok(report)
+    }
+
     fn preconditions(&mut self, op: &ScriptOp, cell: Cell) -> Result<Preconditions, Violation> {
+        let request = request_of(cell);
+        let request_epoch = drive!(
+            self,
+            "partition_epoch",
+            partition_epoch(Partition::Scoped(request))
+        )?;
         let partition = drive!(
             self,
             "partition_epoch",
             partition_epoch(partition_at(cell.0))
         )?;
         let site = drive!(self, "site_epoch", site_epoch())?;
-        let older = |epoch: Epoch| Epoch(epoch.0.checked_sub(1).unwrap_or(1));
         let entry = match op.expect {
             ScriptExpect::Any => Expect::Any,
             ScriptExpect::Absent => Expect::Absent,
@@ -623,6 +718,14 @@ impl<'a, D: FaultInjection> Harness<'a, D> {
         };
         Ok(Preconditions {
             entry,
+            request: Some((
+                request,
+                if op.stale == Stale::Request {
+                    older(request_epoch)
+                } else {
+                    request_epoch
+                },
+            )),
             partition_epoch: if op.stale == Stale::Partition {
                 older(partition)
             } else {
@@ -646,7 +749,7 @@ impl<'a, D: FaultInjection> Harness<'a, D> {
             return None;
         }
         match op.stale {
-            Stale::Partition => return Some(Refused::PartitionRevoked),
+            Stale::Request | Stale::Partition => return Some(Refused::PartitionRevoked),
             Stale::Site => return Some(Refused::SiteCleared),
             Stale::Neither => {}
         }
@@ -690,8 +793,8 @@ impl<'a, D: FaultInjection> Harness<'a, D> {
             Some(Fault::StopAfter(step)) => {
                 self.ensure_unavailable(&result)?;
                 drive!(self, "restart", restart())?;
-                drive!(self, "recover", recover())?;
-                let again = drive!(self, "second recover", recover())?;
+                self.recover_at(NOW)?;
+                let again = drive!(self, "second recover", recover(NOW))?;
                 self.ensure_eq("second recover", &again, &RecoveryReport::default())?;
                 if refused.is_none() && after_commit_point(step) {
                     self.model_apply(change, cell, Ver::New { not: old_version });
@@ -891,7 +994,15 @@ impl<'a, D: FaultInjection> Harness<'a, D> {
         drive!(self, "apply", apply(txn))
     }
 
+    /// The preconditions of a session that starts now on `cell`, with
+    /// the request partition of [`Stale::Request`].
     fn current_pre(&mut self, cell: Cell, entry: Expect) -> Result<Preconditions, Violation> {
+        let request = request_of(cell);
+        let request_epoch = drive!(
+            self,
+            "partition_epoch",
+            partition_epoch(Partition::Scoped(request))
+        )?;
         let partition = drive!(
             self,
             "partition_epoch",
@@ -900,9 +1011,48 @@ impl<'a, D: FaultInjection> Harness<'a, D> {
         let site = drive!(self, "site_epoch", site_epoch())?;
         Ok(Preconditions {
             entry,
+            request: Some((request, request_epoch)),
             partition_epoch: partition,
             site_epoch: site,
         })
+    }
+
+    /// Applies `txn` and expects `want`.
+    fn expect_outcome(&mut self, what: &str, txn: CacheTransaction, want: TxnOutcome) -> Checked {
+        let outcome = self.apply(txn)?;
+        self.ensure_eq(what, &outcome, &want)
+    }
+
+    /// Applies a `Replace` of `meta` and `body` with `pre` and puts the new
+    /// entry into the model.
+    fn put_explicit(
+        &mut self,
+        cell: Cell,
+        meta: EntryMeta,
+        body: SnapshotBody,
+        pre: Preconditions,
+    ) -> Checked {
+        let change = Change::Put(Box::new((meta.clone(), body.clone())));
+        let outcome = self.apply(replace_txn(meta, body, pre))?;
+        match outcome {
+            TxnOutcome::Applied {
+                version: Some(version),
+            } => {
+                self.model_apply(change, cell, Ver::Is(version));
+                self.settle()
+            }
+            other => Err(self.fail(format!("a replace gave {other:?}"))),
+        }
+    }
+}
+
+fn replace_txn(meta: EntryMeta, body: SnapshotBody, pre: Preconditions) -> CacheTransaction {
+    CacheTransaction {
+        op: TxnOp::Replace {
+            meta: Box::new(meta),
+            body: Box::new(body),
+        },
+        pre,
     }
 }
 
@@ -1306,7 +1456,7 @@ where
         let pre = h.current_pre((0, 2), Expect::Absent)?;
         match stale {
             Stale::Site => h.run(ScriptOp::new(Action::ClearSite(Some(2)), 0, 0))?,
-            Stale::Partition | Stale::Neither => {
+            Stale::Partition | Stale::Request | Stale::Neither => {
                 h.run(ScriptOp::new(Action::RevokePartition, 0, 0))?;
             }
         }
@@ -1324,7 +1474,7 @@ where
         let mut ahead = h.current_pre((1, 0), Expect::Any)?;
         match stale {
             Stale::Site => ahead.site_epoch = Epoch(ahead.site_epoch.0.saturating_add(1)),
-            Stale::Partition | Stale::Neither => {
+            Stale::Partition | Stale::Request | Stale::Neither => {
                 ahead.partition_epoch = Epoch(ahead.partition_epoch.0.saturating_add(1));
             }
         }
@@ -1376,6 +1526,266 @@ where
         Stale::Site,
         Refused::SiteCleared,
     )
+}
+
+/// A session whose request partition was revoked after it read the epoch
+/// commits nothing (DL-205; cache identity rule 4, RSK-06): every keyed
+/// kind is `Refused(PartitionRevoked)`, into `Public` and into its own
+/// partition, also with every other epoch current; an epoch ahead of the
+/// current one is refused too; a revoke of another partition refuses
+/// nothing.
+///
+/// # Errors
+///
+/// The first [`Violation`].
+pub fn refused_request_partition_revoked<D, F>(make: &mut F) -> Checked
+where
+    D: FaultInjection,
+    F: FnMut() -> D,
+{
+    with_driver(make, "refused_request_partition_revoked", |h| {
+        h.run(put(0, 0))?;
+        h.run(put(2, 0))?;
+        h.run(put(2, 1))?;
+        for action in KEYED {
+            // `Public` with the request partition 0 and 1, then partition 0.
+            h.run(ScriptOp::new(action, 2, 0).with_stale(Stale::Request))?;
+            h.run(ScriptOp::new(action, 2, 1).with_stale(Stale::Request))?;
+            h.run(ScriptOp::new(action, 0, 0).with_stale(Stale::Request))?;
+        }
+        // A session of partition 0 reads the epochs, a logout revokes
+        // partition 0, then the session commits into `Public`: refused.
+        let late = h.current_pre((2, 2), Expect::Absent)?;
+        h.run(ScriptOp::new(Action::RevokePartition, 0, 0))?;
+        let (meta, body) = sample_entry(Partition::Public, key_at(2), host_at(2), "late", 0);
+        h.expect_outcome(
+            "a session of a revoked partition into Public",
+            replace_txn(meta, body, late),
+            TxnOutcome::Refused(Refused::PartitionRevoked),
+        )?;
+        h.settle()?;
+        // A revoke of partition 1 does not touch a session of partition 0.
+        let pre = h.current_pre((2, 2), Expect::Absent)?;
+        h.run(ScriptOp::new(Action::RevokePartition, 1, 0))?;
+        let (meta, body) = sample_entry(Partition::Public, key_at(2), host_at(2), "p2/ok", 0);
+        h.put_explicit((2, 2), meta, body, pre)?;
+        // An epoch one above the current one.
+        let mut ahead = h.current_pre((2, 0), Expect::Any)?;
+        ahead.request = ahead
+            .request
+            .map(|(id, epoch)| (id, Epoch(epoch.0.saturating_add(1))));
+        h.expect_outcome(
+            "request epoch ahead",
+            CacheTransaction {
+                op: TxnOp::Remove {
+                    partition: Partition::Public,
+                    key: key_at(0),
+                },
+                pre: ahead,
+            },
+            TxnOutcome::Refused(Refused::PartitionRevoked),
+        )?;
+        h.settle()
+    })
+}
+
+/// A precondition without a request partition (`request: None`) is not
+/// checked for it: the change is applied after a revoke of any
+/// partition other than the target.
+///
+/// # Errors
+///
+/// The first [`Violation`].
+pub fn refused_request_partition_none_is_not_checked<D, F>(make: &mut F) -> Checked
+where
+    D: FaultInjection,
+    F: FnMut() -> D,
+{
+    with_driver(make, "refused_request_partition_none_is_not_checked", |h| {
+        h.run(put(2, 0))?;
+        let mut pre = h.current_pre((2, 0), Expect::Any)?;
+        pre.request = None;
+        h.run(ScriptOp::new(Action::RevokePartition, 0, 0))?;
+        h.run(ScriptOp::new(Action::RevokePartition, 1, 0))?;
+        let (meta, body) = sample_entry(Partition::Public, key_at(0), host_at(0), "p2/none", 3);
+        h.put_explicit((2, 0), meta, body, pre)
+    })
+}
+
+/// The order of the checks of a keyed kind: request partition epoch,
+/// target partition epoch, site epoch, host (`Replace`), entry. Each row
+/// makes every later check false too, so only the first one decides.
+///
+/// # Errors
+///
+/// The first [`Violation`].
+pub fn refusal_order<D, F>(make: &mut F) -> Checked
+where
+    D: FaultInjection,
+    F: FnMut() -> D,
+{
+    with_driver(make, "refusal_order", |h| {
+        h.run(put(2, 0))?;
+        h.run(put(1, 1))?;
+        // The request partition of (2, 1) is partition 1: not the target.
+        let fresh = h.current_pre((2, 1), Expect::Version(WRONG_VERSION))?;
+        let ahead = |epoch: Epoch| Epoch(epoch.0.saturating_add(1));
+        let stale_request = Preconditions {
+            request: fresh.request.map(|(id, epoch)| (id, ahead(epoch))),
+            ..fresh
+        };
+        let stale_target = Preconditions {
+            partition_epoch: ahead(fresh.partition_epoch),
+            ..fresh
+        };
+        let stale_site = Preconditions {
+            site_epoch: ahead(fresh.site_epoch),
+            ..fresh
+        };
+        let all_stale = Preconditions {
+            partition_epoch: stale_target.partition_epoch,
+            site_epoch: stale_site.site_epoch,
+            ..stale_request
+        };
+        let request_and_site = Preconditions {
+            site_epoch: stale_site.site_epoch,
+            ..stale_request
+        };
+        let target_and_site = Preconditions {
+            site_epoch: stale_site.site_epoch,
+            ..stale_target
+        };
+        let bad_host = INVALID_HOSTS.first().copied().unwrap_or_default();
+        let rows = [
+            (all_stale, bad_host, Refused::PartitionRevoked),
+            (request_and_site, bad_host, Refused::PartitionRevoked),
+            (target_and_site, bad_host, Refused::PartitionRevoked),
+            (stale_site, bad_host, Refused::SiteCleared),
+            (fresh, bad_host, Refused::InvalidHost),
+            (fresh, host_at(1), Refused::Entry),
+        ];
+        for (pre, host, reason) in rows {
+            let (meta, body) = sample_entry(Partition::Public, key_at(1), host, "order", 0);
+            h.expect_outcome(
+                &format!("{reason:?} first"),
+                replace_txn(meta, body, pre),
+                TxnOutcome::Refused(reason),
+            )?;
+        }
+        h.settle()
+    })
+}
+
+/// A `Replace` whose host fails `valid_host` is `Refused(InvalidHost)`
+/// and writes nothing, in a scoped partition and in `Public`, also with
+/// a stop after each step; every host of [`VALID_HOSTS`] is stored, and
+/// a site clear of that host removes it (R-CACHE-09).
+///
+/// # Errors
+///
+/// The first [`Violation`].
+pub fn refused_invalid_host<D, F>(make: &mut F) -> Checked
+where
+    D: FaultInjection,
+    F: FnMut() -> D,
+{
+    with_driver(make, "refused_invalid_host", |h| {
+        h.run(put(0, 0))?;
+        for host in INVALID_HOSTS {
+            for cell in [(0, 3), (2, 3), (0, 0)] {
+                let pre = h.current_pre(cell, Expect::Any)?;
+                let (meta, body) =
+                    sample_entry(partition_at(cell.0), key_at(cell.1), host, "host", 5);
+                h.expect_outcome(
+                    &format!("host {host:?}"),
+                    replace_txn(meta, body, pre),
+                    TxnOutcome::Refused(Refused::InvalidHost),
+                )?;
+            }
+            h.settle()?;
+        }
+        for step in CommitStep::ALL {
+            let pre = h.current_pre((0, 0), Expect::Any)?;
+            let (meta, body) = sample_entry(partition_at(0), key_at(0), "Shop.example.com", "x", 7);
+            h.driver.stop_after(step);
+            let result = h.driver.apply(replace_txn(meta, body, pre));
+            h.ensure_unavailable(&result)?;
+            drive!(h, "restart", restart())?;
+            h.recover_at(NOW)?;
+            h.settle()?;
+        }
+        for host in VALID_HOSTS {
+            let pre = h.current_pre((2, 3), Expect::Any)?;
+            let (meta, body) = sample_entry(Partition::Public, key_at(3), host, "p2/valid", 1);
+            h.put_explicit((2, 3), meta, body, pre)?;
+            let pre = h.current_pre((2, 3), Expect::Any)?;
+            let domain = Some(host.to_owned());
+            h.expect_outcome(
+                &format!("site clear of {host:?}"),
+                CacheTransaction {
+                    op: TxnOp::ClearSite {
+                        domain: domain.clone(),
+                    },
+                    pre,
+                },
+                TxnOutcome::Applied { version: None },
+            )?;
+            h.model_apply(Change::Clear(domain), (2, 3), Ver::New { not: None });
+            let left = h.read((2, 3), NOW)?;
+            h.ensure(left.is_none(), || {
+                format!("a site clear of {host:?} left its entry")
+            })?;
+            h.settle()?;
+        }
+        Ok(())
+    })
+}
+
+/// `recover(now)` removes the disabled-key records whose time is before
+/// `now`, keeps a record whose time is `now` or later, and keeps the
+/// entry that was stored for an expired key; the removal is durable.
+///
+/// # Errors
+///
+/// The first [`Violation`].
+pub fn recover_removes_expired_disabled_keys<D, F>(make: &mut F) -> Checked
+where
+    D: FaultInjection,
+    F: FnMut() -> D,
+{
+    with_driver(make, "recover_removes_expired_disabled_keys", |h| {
+        // Until NOW + 5, NOW + 10 and NOW + 20.
+        h.run(ScriptOp::new(Action::DisableKey, 0, 0).with_variant(4))?;
+        h.run(ScriptOp::new(Action::DisableKey, 1, 0).with_variant(9))?;
+        h.run(ScriptOp::new(Action::DisableKey, 2, 1).with_variant(19))?;
+        // A replace of a disabled key: stored and hidden.
+        h.run(put(0, 0))?;
+        let now = NOW.plus(10);
+        drive!(h, "restart", restart())?;
+        h.recover_at(now)?;
+        // The model reads at NOW: only the record of NOW + 5 is gone.
+        h.settle()?;
+        let checks = [
+            ((0, 0), false, "a record before now stays"),
+            ((1, 0), true, "a record at now was removed"),
+            ((2, 1), true, "a record after now was removed"),
+        ];
+        for (cell, disabled, detail) in checks {
+            let got = drive!(
+                h,
+                "key_disabled",
+                key_disabled(partition_at(cell.0), &key_at(cell.1), NOW)
+            )?;
+            h.ensure(got == disabled, || detail.to_owned())?;
+        }
+        let entry = h.read((0, 0), NOW)?;
+        h.ensure(entry.is_some(), || {
+            "the entry of an expired key is not readable".to_owned()
+        })?;
+        drive!(h, "restart", restart())?;
+        h.recover_at(NOW)?;
+        h.settle()
+    })
 }
 
 /// A revoke and a site clear are applied with any preconditions: a
@@ -1475,7 +1885,7 @@ where
                 "the damaged entry is readable".to_owned()
             })?;
             drive!(h, "restart", restart())?;
-            drive!(h, "recover", recover())?;
+            h.recover_at(NOW)?;
             h.settle()?;
             // A damage of an entry that does not exist does nothing.
             h.run(ScriptOp::new(Action::Damage, 0, 0).with_variant(variant))
@@ -1523,6 +1933,8 @@ pub fn fault_table() -> Vec<ScriptOp> {
         ScriptOp::new(Action::ClearSite(None), 0, 0),
         // A refused transaction with a stop: always the old state.
         put(0, 0).with_stale(Stale::Partition),
+        // A session of a revoked request partition, into `Public`.
+        put(2, 0).with_stale(Stale::Request),
     ]
 }
 
@@ -1624,7 +2036,7 @@ pub fn script_keeps_partitions_apart<D: FaultInjection>(
     script: &[ScriptOp],
 ) -> Checked {
     const CHECK: &str = "script_keeps_partitions_apart";
-    call(CHECK, "recover", driver.recover())?;
+    call(CHECK, "recover", driver.recover(NOW))?;
     for (seq, op) in script.iter().enumerate() {
         let cell = (usize::from(op.partition), usize::from(op.key));
         let partition = partition_at(cell.0);
@@ -1706,11 +2118,24 @@ fn apply_blind<D: FaultInjection>(
         ScriptExpect::Current => Expect::Version(current.unwrap_or(WRONG_VERSION)),
         ScriptExpect::Wrong => Expect::Version(WRONG_VERSION),
     };
+    let request = request_of(cell);
+    let request_epoch = call(
+        CHECK,
+        "partition_epoch",
+        driver.partition_epoch(Partition::Scoped(request)),
+    )?;
     let partition_epoch = call(CHECK, "partition_epoch", driver.partition_epoch(partition))?;
     let site_epoch = call(CHECK, "site_epoch", driver.site_epoch())?;
-    let older = |epoch: Epoch| Epoch(epoch.0.checked_sub(1).unwrap_or(1));
     let pre = Preconditions {
         entry,
+        request: Some((
+            request,
+            if op.stale == Stale::Request {
+                older(request_epoch)
+            } else {
+                request_epoch
+            },
+        )),
         partition_epoch: if op.stale == Stale::Partition {
             older(partition_epoch)
         } else {
@@ -1763,7 +2188,7 @@ fn apply_blind<D: FaultInjection>(
     let result = driver.apply(CacheTransaction { op: txn_op, pre });
     if let Some(Fault::StopAfter(_)) = op.fault {
         call(CHECK, "restart", driver.restart())?;
-        call(CHECK, "recover", driver.recover())?;
+        call(CHECK, "recover", driver.recover(NOW))?;
     }
     Ok(op.action == Action::RevokePartition && matches!(result, Ok(TxnOutcome::Applied { .. })))
 }
@@ -1789,6 +2214,11 @@ where
     refused_entry(make)?;
     refused_partition_revoked(make)?;
     refused_site_cleared(make)?;
+    refused_request_partition_revoked(make)?;
+    refused_request_partition_none_is_not_checked(make)?;
+    refusal_order(make)?;
+    refused_invalid_host(make)?;
+    recover_removes_expired_disabled_keys(make)?;
     removals_are_never_refused(make)?;
     partitions_never_mix(make)?;
     corrupted(make)?;

@@ -10,7 +10,7 @@
 
 use rivqen_cache::key::Partition;
 use rivqen_cache::partition::{
-    Credentials, StoreFacts, delta_partition, readable, site_matches, store_partition,
+    Credentials, StoreFacts, delta_partition, readable, site_matches, store_partition, valid_host,
 };
 use rivqen_model::ids::PartitionId;
 
@@ -459,6 +459,186 @@ fn partition_site_strips_every_leading_dot_of_the_domain() {
     assert!(site_matches("Shop.Example.com.", "....EXAMPLE.COM"));
     assert!(!site_matches("notexample.com", "..example.com"));
     assert!(!site_matches("example.org", "..example.com"));
+}
+
+#[test]
+fn partition_valid_host_lower_case_names() {
+    for host in [
+        "example.com",
+        "shop.example.com",
+        "a",
+        "localhost",
+        "a-b.c0.example",
+        "-a.b-",
+        "0.example",
+        "xn--bcher-kva.example",
+    ] {
+        assert!(valid_host(host), "{host:?}");
+    }
+}
+
+#[test]
+fn partition_valid_host_refuses_a_port() {
+    for host in [
+        "shop.example.com:443",
+        "shop.example.com:",
+        "192.0.2.1:80",
+        "[::1]:443",
+        "[2001:db8::1]:8443",
+    ] {
+        assert!(!valid_host(host), "{host:?}");
+    }
+}
+
+#[test]
+fn partition_valid_host_refuses_upper_case() {
+    for host in [
+        "Shop.example.com",
+        "SHOP.EXAMPLE.COM",
+        "shop.example.Com",
+        "[2001:DB8::1]",
+        "[::A]",
+    ] {
+        assert!(!valid_host(host), "{host:?}");
+    }
+}
+
+#[test]
+fn partition_valid_host_refuses_an_idn_in_unicode() {
+    for host in [
+        "b\u{fc}cher.example",
+        "\u{4f8b}\u{3048}.jp",
+        "shop.\u{0435}xample.com",
+    ] {
+        assert!(!valid_host(host), "{host:?}");
+    }
+}
+
+#[test]
+fn partition_valid_host_refuses_empty_and_empty_labels() {
+    for host in [
+        "",
+        ".",
+        "..",
+        "example.com.",
+        ".example.com",
+        "shop..example.com",
+        "[]",
+        "[",
+        "]",
+    ] {
+        assert!(!valid_host(host), "{host:?}");
+    }
+}
+
+#[test]
+fn partition_valid_host_refuses_the_url_form_and_other_bytes() {
+    for host in [
+        "https://shop.example.com/",
+        "https://shop.example.com",
+        "shop.example.com/cart",
+        "user@shop.example.com",
+        "shop example.com",
+        "shop_example.com",
+        "shop.example.com\0",
+        "*.example.com",
+        "shop.example.com?x",
+        "shop.example.com#x",
+        "%73hop.example.com",
+    ] {
+        assert!(!valid_host(host), "{host:?}");
+    }
+}
+
+#[test]
+fn partition_valid_host_label_and_total_length_bounds() {
+    let label_63 = "a".repeat(63);
+    let label_64 = "a".repeat(64);
+    assert!(valid_host(&label_63));
+    assert!(valid_host(&format!("{label_63}.com")));
+    assert!(!valid_host(&label_64));
+    assert!(!valid_host(&format!("{label_64}.com")));
+    // 4 labels of 63 and one dot each: 255 bytes; cut to 253 and 254.
+    let name_253 = format!("{label_63}.{label_63}.{label_63}.{}", "a".repeat(61));
+    assert_eq!(name_253.len(), 253);
+    assert!(valid_host(&name_253));
+    let name_254 = format!("{name_253}a");
+    assert!(!valid_host(&name_254));
+}
+
+#[test]
+fn partition_valid_host_ipv4_literal() {
+    // A dotted-decimal IPv4 literal has the form of a host name.
+    for host in ["192.0.2.1", "127.0.0.1", "0.0.0.0", "255.255.255.255"] {
+        assert!(valid_host(host), "{host:?}");
+    }
+    for host in ["192.0.2.1.", ".192.0.2.1", "192..2.1"] {
+        assert!(!valid_host(host), "{host:?}");
+    }
+}
+
+#[test]
+fn partition_valid_host_ipv6_literal() {
+    for host in [
+        "[::1]",
+        "[::]",
+        "[2001:db8::1]",
+        "[2001:db8::]",
+        "[::ffff:c000:201]",
+        "[2001:db8:0:0:0:0:0:1]",
+        "[2001:0db8:0000:0000:0000:0000:0000:0001]",
+        "[1:2:3:4:5:6:7::]",
+        "[::2:3:4:5:6:7:8]",
+        "[1:2:3::6:7:8]",
+    ] {
+        assert!(valid_host(host), "{host:?}");
+    }
+    for host in [
+        // No brackets.
+        "::1",
+        "2001:db8::1",
+        // One bracket.
+        "[::1",
+        "::1]",
+        // Two `::`.
+        "[1::2::3]",
+        "[:::1]",
+        // Seven groups without `::`; nine groups.
+        "[1:2:3:4:5:6:7]",
+        "[1:2:3:4:5:6:7:8:9]",
+        // Eight groups and `::`.
+        "[1:2:3:4::5:6:7:8]",
+        "[1:2:3:4:5:6:7:8::]",
+        // A group of 5 digits; a single leading or trailing colon.
+        "[2001:db8::10000]",
+        "[:1:2:3:4:5:6:7]",
+        "[1:2:3:4:5:6:7:]",
+        // Not hexadecimal; embedded IPv4; a zone.
+        "[2001:db8::g]",
+        "[::ffff:192.0.2.1]",
+        "[fe80::1%25eth0]",
+        "[fe80::1%eth0]",
+        // A host name in brackets.
+        "[example.com]",
+    ] {
+        assert!(!valid_host(host), "{host:?}");
+    }
+}
+
+#[test]
+fn partition_valid_host_is_matched_by_a_site_clear_of_itself() {
+    for host in [
+        "shop.example.com",
+        "192.0.2.1",
+        "[2001:db8::1]",
+        "xn--bcher-kva.example",
+    ] {
+        assert!(valid_host(host), "{host:?}");
+        assert!(site_matches(host, host), "{host:?}");
+    }
+    // The refused forms are those a site clear of the site could miss.
+    assert!(!site_matches("shop.example.com:443", "example.com"));
+    assert!(!valid_host("shop.example.com:443"));
 }
 
 #[test]

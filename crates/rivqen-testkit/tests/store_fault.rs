@@ -29,13 +29,18 @@ const K2: CacheKey = KEYS[1];
 
 fn ready(kind: StopKind) -> FakeStore {
     let mut store = FakeStore::new().with_stop_kind(kind);
-    assert_eq!(store.recover().unwrap(), RecoveryReport::default());
+    assert_eq!(store.recover(NOW).unwrap(), RecoveryReport::default());
     store
 }
 
 fn pre(store: &mut FakeStore, partition: Partition, entry: Expect) -> Preconditions {
+    let request = match partition {
+        Partition::Scoped(id) => Some((id, store.partition_epoch(partition).unwrap())),
+        Partition::Public => None,
+    };
     Preconditions {
         entry,
+        request,
         partition_epoch: store.partition_epoch(partition).unwrap(),
         site_epoch: store.site_epoch().unwrap(),
     }
@@ -125,7 +130,7 @@ fn store_fault_replace_table() {
             store.stop_after(step);
             unavailable(store.apply(txn), "apply");
             store.restart().unwrap();
-            let report = store.recover().unwrap();
+            let report = store.recover(NOW).unwrap();
             let orphans = if kind == StopKind::PowerLoss {
                 orphans_power
             } else {
@@ -150,7 +155,7 @@ fn store_fault_replace_table() {
             assert_eq!(page(&mut store, B, K1).unwrap(), b"other/page");
             assert_eq!(store.files(), files(0, 2), "{kind:?} {step:?}");
             assert_eq!(store.durable_files(), files(0, 2), "{kind:?} {step:?}");
-            assert_eq!(store.recover().unwrap(), RecoveryReport::default());
+            assert_eq!(store.recover(NOW).unwrap(), RecoveryReport::default());
         }
     }
 }
@@ -187,7 +192,7 @@ fn store_fault_remove_table() {
                 orphans_kill
             };
             assert_eq!(
-                store.recover().unwrap(),
+                store.recover(NOW).unwrap(),
                 RecoveryReport {
                     orphans_removed: orphans,
                     entries_removed: 0
@@ -240,12 +245,12 @@ fn store_fault_stopped_store_answers_unavailable() {
     unavailable(store.key_disabled(A, &K1, NOW), "key_disabled");
     unavailable(store.list(), "list");
     unavailable(store.touch(A, &K1, NOW), "touch");
-    unavailable(store.recover(), "recover");
+    unavailable(store.recover(NOW), "recover");
     store.restart().unwrap();
     // After a restart: recover first.
     unavailable(store.read(A, &K1, NOW), "read");
     unavailable(store.list(), "list");
-    store.recover().unwrap();
+    store.recover(NOW).unwrap();
     assert_eq!(page(&mut store, A, K1).unwrap(), b"new/page");
 }
 
@@ -254,7 +259,7 @@ fn store_fault_new_store_needs_recover() {
     let mut store = FakeStore::default();
     unavailable(store.read(A, &K1, NOW), "read");
     unavailable(store.site_epoch(), "site_epoch");
-    assert_eq!(store.recover().unwrap(), RecoveryReport::default());
+    assert_eq!(store.recover(NOW).unwrap(), RecoveryReport::default());
     assert_eq!(store.site_epoch().unwrap(), Epoch(0));
     assert_eq!(store.partition_epoch(A).unwrap(), Epoch(0));
     assert_eq!(store.partition_epoch(Partition::Public).unwrap(), Epoch(0));
@@ -268,14 +273,14 @@ fn store_fault_stop_is_for_the_next_apply_only() {
     store.stop_after(CommitStep::WriteTemp);
     unavailable(store.apply(txn), "apply");
     store.restart().unwrap();
-    store.recover().unwrap();
+    store.recover(NOW).unwrap();
     // A stop is used once.
     put(&mut store, A, K1, "a");
     // A restart clears an armed stop and an armed failure.
     store.stop_after(CommitStep::Promote);
     store.fail_at(CommitStep::SyncTemp);
     store.restart().unwrap();
-    store.recover().unwrap();
+    store.recover(NOW).unwrap();
     put(&mut store, A, K1, "b");
     assert_eq!(page(&mut store, A, K1).unwrap(), b"b/page");
     // A failure is used once too.
@@ -303,7 +308,7 @@ fn store_fault_fail_at_each_step() {
             // The old file stays until recovery.
             assert_eq!(store.files(), files(0, 2));
             assert_eq!(
-                store.recover().unwrap(),
+                store.recover(NOW).unwrap(),
                 RecoveryReport {
                     orphans_removed: 1,
                     entries_removed: 0
@@ -332,7 +337,7 @@ fn store_fault_versions_are_never_used_twice() {
     store.stop_after(CommitStep::CommitMeta);
     unavailable(store.apply(txn), "apply");
     store.restart().unwrap();
-    store.recover().unwrap();
+    store.recover(NOW).unwrap();
     assert_eq!(
         store.read(A, &K1, NOW).unwrap().unwrap().version,
         EntryVersion(3)
@@ -341,7 +346,7 @@ fn store_fault_versions_are_never_used_twice() {
     store.stop_after(CommitStep::Promote);
     unavailable(store.apply(txn), "apply");
     store.restart().unwrap();
-    store.recover().unwrap();
+    store.recover(NOW).unwrap();
     // A version that never was committed is not given again either.
     assert_eq!(put(&mut store, A, K1, "e"), EntryVersion(4));
     let update = CacheTransaction {
@@ -420,7 +425,7 @@ fn store_fault_refusal_order_and_epochs() {
     assert_eq!(store.site_epoch().unwrap(), Epoch(1));
     // The epochs survive a restart.
     store.restart().unwrap();
-    store.recover().unwrap();
+    store.recover(NOW).unwrap();
     assert_eq!(store.partition_epoch(B).unwrap(), Epoch(2));
     assert_eq!(store.site_epoch().unwrap(), Epoch(1));
 }
@@ -440,7 +445,7 @@ fn store_fault_refused_replace_leaves_no_file() {
     // loss.
     store.restart().unwrap();
     assert_eq!(
-        store.recover().unwrap(),
+        store.recover(NOW).unwrap(),
         RecoveryReport {
             orphans_removed: 1,
             entries_removed: 0
@@ -457,7 +462,7 @@ fn store_fault_damage_and_recovery() {
     put(&mut store, B, K1, "b");
     assert!(store.damage(A, &K1, Damage::Content).unwrap());
     store.restart().unwrap();
-    assert_eq!(store.recover().unwrap(), RecoveryReport::default());
+    assert_eq!(store.recover(NOW).unwrap(), RecoveryReport::default());
     let error = store.read(A, &K1, NOW).unwrap_err();
     assert_eq!(error.kind(), StoreErrorKind::Corrupted);
     assert_eq!(error.op(), "read");
@@ -472,7 +477,7 @@ fn store_fault_damage_and_recovery() {
     assert!(store.damage(A, &K1, Damage::Missing).unwrap());
     store.restart().unwrap();
     assert_eq!(
-        store.recover().unwrap(),
+        store.recover(NOW).unwrap(),
         RecoveryReport {
             orphans_removed: 0,
             entries_removed: 1
@@ -513,7 +518,7 @@ fn store_fault_damage_and_recovery() {
     );
     store.restart().unwrap();
     assert_eq!(
-        store.recover().unwrap(),
+        store.recover(NOW).unwrap(),
         RecoveryReport {
             orphans_removed: 0,
             entries_removed: 1
@@ -572,7 +577,7 @@ fn store_fault_damage_of_an_empty_page() {
     store.restart().unwrap();
     // The page got a byte: the size differs.
     assert_eq!(
-        store.recover().unwrap(),
+        store.recover(NOW).unwrap(),
         RecoveryReport {
             orphans_removed: 0,
             entries_removed: 1
@@ -587,12 +592,12 @@ fn store_fault_touch_is_lost_at_a_stop_until_a_commit() {
     store.touch(A, &K1, NOW.plus(5)).unwrap();
     assert_eq!(store.list().unwrap()[0].meta.last_used_at, NOW.plus(5));
     store.restart().unwrap();
-    store.recover().unwrap();
+    store.recover(NOW).unwrap();
     assert_eq!(store.list().unwrap()[0].meta.last_used_at, NOW);
     store.touch(A, &K1, NOW.plus(7)).unwrap();
     put(&mut store, B, K2, "b");
     store.restart().unwrap();
-    store.recover().unwrap();
+    store.recover(NOW).unwrap();
     let entry = store.read(A, &K1, NOW).unwrap().unwrap();
     assert_eq!(entry.meta.last_used_at, NOW.plus(7));
 }
@@ -709,7 +714,7 @@ fn store_fault_second_writer_between_steps() {
     // The old file of A and the promoted file come back after a power loss
     // and recovery removes both.
     assert_eq!(
-        store.recover().unwrap(),
+        store.recover(NOW).unwrap(),
         RecoveryReport {
             orphans_removed: 2,
             entries_removed: 0
@@ -770,4 +775,88 @@ fn store_fault_defects_fail_the_suite() {
     assert_eq!(violation.check, "script_keeps_partitions_apart");
     assert!(contract::run_script(&mut leaky(), &script).is_err());
     assert!(contract::script_keeps_partitions_apart(&mut FakeStore::new(), &script).is_ok());
+}
+
+/// The suite finds each defect of the DL-205 rules, and only the check of
+/// the rule fails for it among the refusal checks.
+#[test]
+fn store_fault_dl205_defects_fail_the_suite() {
+    let mut no_pre = || FakeStore::new().with_defect(Defect::NoPreconditions);
+    assert!(contract::refused_request_partition_revoked(&mut no_pre).is_err());
+    assert!(contract::refused_invalid_host(&mut no_pre).is_err());
+    assert!(contract::refusal_order(&mut no_pre).is_err());
+
+    let mut no_request = || FakeStore::new().with_defect(Defect::NoRequestCheck);
+    let violation = contract::refused_request_partition_revoked(&mut no_request).unwrap_err();
+    assert_eq!(violation.check, "refused_request_partition_revoked");
+    assert!(contract::refusal_order(&mut no_request).is_err());
+    assert!(contract::refused_partition_revoked(&mut no_request).is_ok());
+    assert!(contract::refused_invalid_host(&mut no_request).is_ok());
+    assert!(contract::run_all(&mut no_request).is_err());
+
+    let mut any_host = || FakeStore::new().with_defect(Defect::AnyHost);
+    let violation = contract::refused_invalid_host(&mut any_host).unwrap_err();
+    assert_eq!(violation.check, "refused_invalid_host");
+    assert!(contract::refusal_order(&mut any_host).is_err());
+    assert!(contract::refused_request_partition_revoked(&mut any_host).is_ok());
+    assert!(contract::run_all(&mut any_host).is_err());
+
+    let mut keeps = || FakeStore::new().with_defect(Defect::KeepsExpiredDisabledKeys);
+    let violation = contract::recover_removes_expired_disabled_keys(&mut keeps).unwrap_err();
+    assert_eq!(violation.check, "recover_removes_expired_disabled_keys");
+    assert!(contract::disable_key(&mut keeps).is_ok());
+    assert!(contract::run_all(&mut keeps).is_err());
+}
+
+/// `recover(now)` removes a disabled-key record whose time is before `now`
+/// and keeps one whose time is `now` or later, on both sides of the
+/// boundary; the removal survives a power loss; the entry of the expired
+/// key becomes readable; a site clear and a revoke are not needed for it.
+#[test]
+fn store_fault_recover_removes_expired_disabled_keys() {
+    let mut store = ready(StopKind::PowerLoss);
+    let now = UnixTime(NOW.0 + 100);
+    let disable = |store: &mut FakeStore, partition, key, until| {
+        let txn = CacheTransaction {
+            op: TxnOp::DisableKey {
+                partition,
+                key,
+                until,
+            },
+            pre: pre(store, partition, Expect::Any),
+        };
+        assert_eq!(
+            store.apply(txn).unwrap(),
+            TxnOutcome::Applied { version: None }
+        );
+    };
+    // One second before now, exactly now, one second after now.
+    disable(&mut store, A, K1, UnixTime(now.0 - 1));
+    disable(&mut store, A, K2, now);
+    disable(&mut store, B, K1, UnixTime(now.0 + 1));
+    put(&mut store, A, K1, "a");
+    assert_eq!(store.read(A, &K1, NOW).unwrap(), None);
+    // A recover at an earlier time removes nothing.
+    assert_eq!(store.recover(NOW).unwrap(), RecoveryReport::default());
+    assert!(store.key_disabled(A, &K1, NOW).unwrap());
+
+    store.restart().unwrap();
+    assert_eq!(store.recover(now).unwrap(), RecoveryReport::default());
+    // Asked at NOW, before every time: only the removed record is gone.
+    assert!(!store.key_disabled(A, &K1, NOW).unwrap());
+    assert!(store.key_disabled(A, &K2, NOW).unwrap());
+    assert!(store.key_disabled(B, &K1, NOW).unwrap());
+    assert_eq!(page(&mut store, A, K1).unwrap(), b"a/page");
+
+    // Recovery synced the removal: a power loss does not bring it back.
+    store.restart().unwrap();
+    store.recover(NOW).unwrap();
+    assert!(!store.key_disabled(A, &K1, NOW).unwrap());
+    assert!(store.key_disabled(A, &K2, NOW).unwrap());
+
+    // One second later the record of `now` goes too.
+    store.restart().unwrap();
+    store.recover(UnixTime(now.0 + 1)).unwrap();
+    assert!(!store.key_disabled(A, &K2, NOW).unwrap());
+    assert!(store.key_disabled(B, &K1, NOW).unwrap());
 }

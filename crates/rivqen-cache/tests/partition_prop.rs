@@ -14,7 +14,7 @@ use proptest::prelude::*;
 use proptest::test_runner::RngSeed;
 use rivqen_cache::key::Partition;
 use rivqen_cache::partition::{
-    Credentials, StoreFacts, delta_partition, readable, site_matches, store_partition,
+    Credentials, StoreFacts, delta_partition, readable, site_matches, store_partition, valid_host,
 };
 use rivqen_model::ids::PartitionId;
 
@@ -197,6 +197,47 @@ proptest! {
         // same site (a site clear clears more, never less).
         let dotted = format!("{}{domain}", ".".repeat(dots));
         prop_assert_eq!(site_matches(&host, &dotted), site_matches(&host, &domain));
+    }
+
+    #[test]
+    fn partition_prop_valid_host_names_are_cleared_by_every_parent(
+        labels in proptest::collection::vec("[a-z0-9-]{1,12}", 1..6),
+        port in 0_u16..,
+    ) {
+        let host = labels.join(".");
+        prop_assert!(valid_host(&host));
+        // A site clear of the host or of any parent domain removes it.
+        for start in 0..labels.len() {
+            prop_assert!(site_matches(&host, &labels[start..].join(".")));
+        }
+        // The forms that a clear could miss are refused.
+        let refused = [
+            format!("{host}:{port}"),
+            format!("{host}."),
+            format!(".{host}"),
+            format!("https://{host}/"),
+        ];
+        for other in &refused {
+            prop_assert!(!valid_host(other), "{:?}", other);
+        }
+        if host.bytes().any(|b| b.is_ascii_lowercase()) {
+            prop_assert!(!valid_host(&host.to_ascii_uppercase()));
+        }
+    }
+
+    #[test]
+    fn partition_prop_valid_host_any_text_never_panics(host in ".{0,64}|[\\[\\]0-9a-fA-F:.]{0,48}") {
+        // A valid host is lower-case ASCII of a bounded size, with a colon
+        // only inside brackets.
+        if valid_host(&host) {
+            prop_assert!(host.is_ascii());
+            prop_assert!(!host.bytes().any(|b| b.is_ascii_uppercase()));
+            prop_assert!(host.len() <= 253);
+            if host.contains(':') {
+                prop_assert!(host.starts_with('[') && host.ends_with(']'));
+                prop_assert!(host.len() <= 41);
+            }
+        }
     }
 
     #[test]

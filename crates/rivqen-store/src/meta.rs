@@ -10,11 +10,22 @@
 //!
 //! # Settings
 //!
-//! `journal_mode=WAL`, `synchronous=FULL`, `foreign_keys=ON`, a busy
-//! timeout of 0 (one writer; a lock held by another connection fails at
-//! once), `trusted_schema=OFF` and `cell_size_check=ON` (more corruption is
-//! found as an error). [`MetaDb::open`] sets them and reads them back.
-//! Every transaction is `BEGIN IMMEDIATE`.
+//! `journal_mode=WAL`, `synchronous=FULL`, `fullfsync=ON`,
+//! `checkpoint_fullfsync=ON`, `foreign_keys=ON`, a busy timeout of 0 (one
+//! writer; a lock held by another connection fails at once),
+//! `trusted_schema=OFF` and `cell_size_check=ON` (more corruption is found
+//! as an error). [`MetaDb::open`] sets them, reads them back and refuses a
+//! difference with [`StoreErrorKind::Unavailable`]. Every transaction is
+//! `BEGIN IMMEDIATE`.
+//!
+//! `fullfsync` and `checkpoint_fullfsync`: on Apple targets SQLite syncs
+//! with `fcntl(F_FULLFSYNC)` only when these are on; without them
+//! `synchronous=FULL` is a plain `fsync()`, which does not flush the drive
+//! cache, and a revoke could be lost at a power cut. Both are flag pragmas
+//! of SQLite on every platform (`PragTyp_FLAG` in `sqlite3.c`): the read-back
+//! is the flag bit, 1 after it is set, also on Linux and Android. There the
+//! flag changes nothing: the unix VFS ignores it when `F_FULLFSYNC` is not
+//! defined (`HAVE_FULLFSYNC` is 0) and keeps `fsync()` or `fdatasync()`.
 //!
 //! # Tables
 //!
@@ -165,6 +176,7 @@ const OP_RESET: &str = "meta.reset";
 type Counters = [u64; 3];
 
 /// The effective settings of the connection (ADR-004 section 3).
+#[allow(clippy::struct_excessive_bools)] // one flag per on/off pragma
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Settings {
     /// `journal_mode` is `wal`.
@@ -175,6 +187,12 @@ pub struct Settings {
     pub foreign_keys: bool,
     /// The busy timeout in milliseconds.
     pub busy_timeout_ms: u64,
+    /// `fullfsync` is on: a commit syncs with `F_FULLFSYNC` on Apple
+    /// targets.
+    pub fullfsync: bool,
+    /// `checkpoint_fullfsync` is on: a checkpoint syncs with `F_FULLFSYNC`
+    /// on Apple targets.
+    pub checkpoint_fullfsync: bool,
 }
 
 impl Settings {
@@ -184,6 +202,8 @@ impl Settings {
         synchronous_full: true,
         foreign_keys: true,
         busy_timeout_ms: 0,
+        fullfsync: true,
+        checkpoint_fullfsync: true,
     };
 }
 
@@ -297,12 +317,16 @@ impl MetaDb {
         let synchronous = pragma_int(&self.conn, "PRAGMA synchronous", OP)?;
         let foreign_keys = pragma_int(&self.conn, "PRAGMA foreign_keys", OP)?;
         let busy_timeout = pragma_int(&self.conn, "PRAGMA busy_timeout", OP)?;
+        let fullfsync = pragma_int(&self.conn, "PRAGMA fullfsync", OP)?;
+        let checkpoint_fullfsync = pragma_int(&self.conn, "PRAGMA checkpoint_fullfsync", OP)?;
         Ok(Settings {
             journal_mode_wal: mode.eq_ignore_ascii_case("wal"),
             // `FULL` is 2 (SQLite pragma documentation).
             synchronous_full: synchronous == 2,
             foreign_keys: foreign_keys == 1,
             busy_timeout_ms: u64::try_from(busy_timeout).map_err(|_| unavailable(OP))?,
+            fullfsync: fullfsync == 1,
+            checkpoint_fullfsync: checkpoint_fullfsync == 1,
         })
     }
 
@@ -326,7 +350,8 @@ impl MetaDb {
             return Err(unavailable(OP_OPEN));
         }
         conn.execute_batch(
-            "PRAGMA synchronous = FULL; PRAGMA foreign_keys = ON; \
+            "PRAGMA synchronous = FULL; PRAGMA fullfsync = ON; \
+             PRAGMA checkpoint_fullfsync = ON; PRAGMA foreign_keys = ON; \
              PRAGMA trusted_schema = OFF; PRAGMA cell_size_check = ON;",
         )
         .map_err(|error| open_error(&error))?;

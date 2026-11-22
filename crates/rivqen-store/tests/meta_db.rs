@@ -215,13 +215,33 @@ fn meta_open_creates_the_four_tables() {
 fn meta_open_applies_the_settings() {
     let dir = TestDir::new("open_settings");
     let db = open(&dir);
-    assert_eq!(db.settings().unwrap(), Settings::REQUIRED);
+    let settings = db.settings().unwrap();
+    assert_eq!(settings, Settings::REQUIRED);
+    assert!(settings.journal_mode_wal && settings.synchronous_full && settings.foreign_keys);
+    assert_eq!(settings.busy_timeout_ms, 0);
+    assert!(settings.fullfsync && settings.checkpoint_fullfsync);
     // WAL is a property of the file: another connection sees it.
     let mode: String = dir
         .raw()
         .query_row("PRAGMA journal_mode", [], |row| row.get(0))
         .unwrap();
     assert_eq!(mode, "wal");
+}
+
+#[test]
+fn meta_open_sets_fullfsync_that_is_off_by_default() {
+    let dir = TestDir::new("open_fullfsync");
+    let db = open(&dir);
+    // A connection with the SQLite defaults syncs with plain `fsync()` on
+    // Apple targets; the store connection turns both flags on.
+    let raw = dir.raw();
+    for pragma in ["PRAGMA fullfsync", "PRAGMA checkpoint_fullfsync"] {
+        let default: i64 = raw.query_row(pragma, [], |row| row.get(0)).unwrap();
+        assert_eq!(default, 0, "{pragma}");
+    }
+    let settings = db.settings().unwrap();
+    assert!(settings.fullfsync);
+    assert!(settings.checkpoint_fullfsync);
 }
 
 #[test]

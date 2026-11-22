@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: The Rivqen Authors
 //! The cost of one committed metadata transaction with `synchronous=FULL`
+//! and `fullfsync=ON`
 //! (ADR-004 "Verification", R-4 of WP-07 S2). A measurement, not a check:
 //! it is ignored by default. Run it with
 //! `cargo test -p rivqen-store --release --test meta_cost -- --ignored --nocapture`.
@@ -67,7 +68,7 @@ fn meta_cost_of_one_committed_transaction() {
     let median = times[SAMPLES / 2];
     let p90 = times[SAMPLES * 9 / 10];
     eprintln!(
-        "meta commit, synchronous=FULL, {SAMPLES} samples: median {median:?}, p90 {p90:?}, min {:?}, max {:?}",
+        "meta commit, synchronous=FULL, fullfsync=ON, {SAMPLES} samples: median {median:?}, p90 {p90:?}, min {:?}, max {:?}",
         times[0],
         times[SAMPLES - 1]
     );

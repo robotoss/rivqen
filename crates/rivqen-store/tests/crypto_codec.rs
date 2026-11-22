@@ -16,11 +16,15 @@ use rivqen_cache::header::CacheControl;
 use rivqen_cache::key::{Partition, Protocol, VaryDigest, VaryEntry};
 use rivqen_cache::policy::{EntryPolicy, Expires};
 use rivqen_cache::txn::{EntryMeta, SnapshotBody, Validators};
+use rivqen_integrity::{PageRevision, Sha256Digest, TemplateRevision, b64u_encode};
 use rivqen_model::http::FieldLine;
 use rivqen_model::ids::CacheKey;
 use rivqen_model::limits::ResourceLimits;
 use rivqen_model::safe::PageBytes;
 use rivqen_model::time::UnixTime;
+use rivqen_proto::types::{
+    BlockDescriptor, BlockFormat, BlockId, Limits, MAX_BLOCKS, Mode, Policy, SnapshotMeta,
+};
 use rivqen_store::crypto::{
     DecodeLimits, FILE_FORMAT, FileContent, ROW_FORMAT, RowContent, decode_file, decode_row,
     encode_file, encode_row,
@@ -518,9 +522,15 @@ fn crypto_codec_row_limits() {
     assert_eq!(decode_row(&row.encode(), &small), Err(row_error()));
 }
 
-/// A row whose validators hold an RQP snapshot with one block, written by
-/// hand; `id` and `format` are the block id and format bytes.
-fn rqp_row(id: &[u8], format: u8, count: u64) -> Vec<u8> {
+fn digest(byte: u8) -> Sha256Digest {
+    Sha256Digest::from_b64u(&b64u_encode(&[byte; 32])).unwrap()
+}
+
+/// A row whose validators hold an RQP snapshot with `count` blocks, written
+/// by hand; `id` and `format` are the bytes of each block id and format.
+/// With `members`, the snapshot has `policy` (public, 600 s, offline) and
+/// `limits` (65 536 bytes).
+fn rqp_row_with(id: &[u8], format: u8, count: u64, members: bool) -> Vec<u8> {
     let mut out = vec![ROW_FORMAT, 1];
     u64be(&mut out, 0);
     out.push(0);
@@ -529,19 +539,97 @@ fn rqp_row(id: &[u8], format: u8, count: u64) -> Vec<u8> {
     out.extend_from_slice(&[1; 32]);
     out.extend_from_slice(&[2; 32]);
     u64be(&mut out, count);
-    lp(&mut out, id);
-    out.push(format);
-    out.extend_from_slice(&[3; 32]);
-    out.push(0);
-    out.push(0);
+    for _ in 0..count {
+        lp(&mut out, id);
+        out.push(format);
+        out.extend_from_slice(&[3; 32]);
+    }
+    if members {
+        out.extend_from_slice(&[1, 1, 1, 1]);
+        out.extend_from_slice(&600_u32.to_be_bytes());
+        out.extend_from_slice(&[1, 1]);
+        out.extend_from_slice(&[1, 1]);
+        out.extend_from_slice(&65_536_u32.to_be_bytes());
+    } else {
+        out.extend_from_slice(&[0, 0]);
+    }
     sample_policy_bytes(&mut out);
     u64be(&mut out, 0);
     out
 }
 
+fn rqp_row(id: &[u8], format: u8, count: u64) -> Vec<u8> {
+    rqp_row_with(id, format, count, false)
+}
+
+/// The value of `rqp_row_with(b"main", format, 1, members)`.
+fn rqp_content(format: BlockFormat, members: bool) -> RowContent {
+    RowContent {
+        protocol: Protocol::Rqp,
+        vary: Vec::new(),
+        validators: Validators {
+            etag: None,
+            template_tag: None,
+            rqp: Some(SnapshotMeta {
+                template_revision: TemplateRevision::from_digest(digest(1)),
+                page_revision: PageRevision::from_digest(digest(2)),
+                blocks: vec![BlockDescriptor {
+                    id: BlockId::parse("main").unwrap(),
+                    format,
+                    sha256: digest(3),
+                }],
+                policy: members.then_some(Policy {
+                    mode: Some(Mode::Public),
+                    ttl_seconds: Some(600),
+                    offline: Some(true),
+                }),
+                limits: members.then_some(Limits {
+                    max_patch_bytes: Some(65_536),
+                }),
+            }),
+        },
+        policy: sample_policy(),
+        fields: Vec::new(),
+    }
+}
+
+#[test]
+fn crypto_codec_row_rqp_layout() {
+    for (format, byte) in [(BlockFormat::Html, 0), (BlockFormat::Json, 1)] {
+        for members in [false, true] {
+            let bytes = rqp_row_with(b"main", byte, 1, members);
+            let row = rqp_content(format, members);
+            assert_eq!(row.encode(), bytes);
+            assert_eq!(decode_row(&bytes, &limits()).unwrap(), row);
+        }
+    }
+}
+
+#[test]
+fn crypto_codec_row_rqp_members_of_each_value() {
+    let mut row = rqp_content(BlockFormat::Html, true);
+    let snapshot = row.validators.rqp.as_mut().unwrap();
+    snapshot.policy = Some(Policy {
+        mode: Some(Mode::Private),
+        ttl_seconds: None,
+        offline: Some(false),
+    });
+    snapshot.limits = Some(Limits {
+        max_patch_bytes: None,
+    });
+    snapshot.blocks.clear();
+    assert_eq!(decode_row(&row.encode(), &limits()).unwrap(), row);
+    row.validators.rqp.as_mut().unwrap().policy = Some(Policy::default());
+    assert_eq!(decode_row(&row.encode(), &limits()).unwrap(), row);
+}
+
 #[test]
 fn crypto_codec_row_rejects_a_bad_rqp_block() {
     let limits = limits();
+    // The same row with a valid block decodes.
+    assert!(decode_row(&rqp_row(b"main", 0, 1), &limits).is_ok());
+    assert!(decode_row(&rqp_row(b"a-1_b", 1, 1), &limits).is_ok());
+    assert!(decode_row(&rqp_row(&[b'a'; 64], 0, 1), &limits).is_ok());
     // A block id that is not valid (markup M-15), too long, not UTF-8.
     for id in [&b"Main"[..], b"-a", b"", &[b'a'; 65], &[0xff]] {
         assert_eq!(decode_row(&rqp_row(id, 0, 1), &limits), Err(row_error()));
@@ -551,12 +639,46 @@ fn crypto_codec_row_rejects_a_bad_rqp_block() {
         decode_row(&rqp_row(b"main", 2, 1), &limits),
         Err(row_error())
     );
-    // More blocks than the limit.
-    let none = DecodeLimits {
-        max_blocks: 0,
-        ..limits
+    // A tag of the mode, the policy or the limits that is not 00 or 01.
+    let good = rqp_row_with(b"main", 0, 1, true);
+    let policy_at = 2 + 8 + 3 + 64 + 8 + (8 + 4 + 1 + 32);
+    for (at, value) in [
+        (0, 2),
+        (1, 2),
+        (2, 2),
+        (3, 2),
+        (8, 2),
+        (9, 2),
+        (10, 2),
+        (11, 2),
+    ] {
+        let mut bad = good.clone();
+        assert_eq!(bad[policy_at + at], 1, "{at}");
+        bad[policy_at + at] = value;
+        assert_eq!(decode_row(&bad, &limits), Err(row_error()), "{at}");
+    }
+}
+
+#[test]
+fn crypto_codec_row_rqp_block_count_limits() {
+    // The limit of the caller.
+    let one = DecodeLimits {
+        max_blocks: 1,
+        ..limits()
     };
-    assert_eq!(decode_row(&rqp_row(b"main", 0, 1), &none), Err(row_error()));
+    assert!(decode_row(&rqp_row(b"main", 0, 1), &one).is_ok());
+    assert_eq!(decode_row(&rqp_row(b"main", 0, 2), &one), Err(row_error()));
+    // MAX_BLOCKS of rqp/1 also holds when the caller allows more.
+    let many = DecodeLimits {
+        max_blocks: 1000,
+        ..limits()
+    };
+    let max = MAX_BLOCKS as u64;
+    assert!(decode_row(&rqp_row(b"main", 0, max), &many).is_ok());
+    assert_eq!(
+        decode_row(&rqp_row(b"main", 0, max + 1), &many),
+        Err(row_error())
+    );
 }
 
 #[test]

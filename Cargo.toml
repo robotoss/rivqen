@@ -36,7 +36,7 @@ proptest = { version = "=1.11.0", default-features = false, features = ["std"] }
 # The reference storage driver `rivqen-store` only (H-146, H-147; ADR-004, ADR-011).
 # Never a dependency of a core crate (DL-180).
 rusqlite = { version = "=0.42.0", default-features = false, features = ["bundled"] }
-chacha20poly1305 = { version = "=0.11.0", default-features = false, features = ["alloc"] }
+chacha20poly1305 = { version = "=0.11.0", default-features = false, features = ["alloc", "zeroize"] }
 zeroize = { version = "=1.9.1", default-features = false }
 # Workspace crates.
 rivqen-cache = { path = "crates/rivqen-cache", default-features = false }

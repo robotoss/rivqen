@@ -323,8 +323,10 @@ pub fn serve_on_failure(
 ///    [`SkipReason::Credentialed`] (R-CACHE-03). For [`Protocol::Legacy`]
 ///    the consent is `authenticated_cache`. For [`Protocol::Rqp`] it is
 ///    `authenticated_cache` and a valid `private` or `public` directive of
-///    the response (H-150, DL-207). A directive that a syntax error cleared
-///    is no consent.
+///    the response (H-150, DL-207): [`CacheControl::valid_private`] or
+///    [`CacheControl::public`]. A syntax error in any `Cache-Control` member
+///    clears both, so it is no consent; [`CacheControl::private`] alone
+///    (also found on a broken line) is no consent.
 /// 4. A status other than `200`: [`SkipReason::TransientStatus`] for a
 ///    `5xx`, `408` or `429`, else [`SkipReason::Status`].
 /// 5. Else [`StoreDecision::Store`]. `private` and `no-cache` allow the
@@ -355,7 +357,7 @@ fn credentialed_consent(input: &StoreInput<'_>) -> bool {
     match input.protocol {
         Protocol::Legacy => input.authenticated_cache,
         Protocol::Rqp => {
-            input.authenticated_cache && (input.response.private || input.response.public)
+            input.authenticated_cache && (input.response.valid_private || input.response.public)
         }
     }
 }

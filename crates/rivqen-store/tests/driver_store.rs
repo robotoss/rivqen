@@ -19,7 +19,7 @@ use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
 use rivqen_cache::driver::{RecoveryReport, StorageDriver, StoreError, StoreErrorKind};
-use rivqen_cache::key::Partition;
+use rivqen_cache::key::{Partition, VaryEntry};
 use rivqen_cache::txn::{
     CacheTransaction, CommitStep, EntryMeta, EntryVersion, Expect, Preconditions, Refused,
     SCHEMA_VERSION, SnapshotBody, TxnOp, TxnOutcome,
@@ -461,25 +461,9 @@ fn driver_commit_revoke_deletes_the_key_first() {
     put(&mut store, Partition::Scoped(A), K1, "p0/a");
     put(&mut store, Partition::Scoped(B), K1, "p1/b");
 
-    // A key port that cannot delete the key stops the revoke before the
-    // commit: nothing changes.
-    *keys.fail_delete.borrow_mut() = true;
     let revoke = TxnOp::RevokePartition {
         partition: Partition::Scoped(A),
     };
-    let pre = fresh(&mut store, Partition::Scoped(A), Expect::Any);
-    let epoch = pre.partition_epoch;
-    assert_eq!(
-        kind(store.apply(CacheTransaction {
-            op: revoke.clone(),
-            pre,
-        })),
-        StoreErrorKind::Unavailable
-    );
-    assert_eq!(store.partition_epoch(Partition::Scoped(A)).unwrap(), epoch);
-    assert!(page_of(&mut store, Partition::Scoped(A), K1).is_some());
-
-    *keys.fail_delete.borrow_mut() = false;
     let outcome = apply(&mut store, revoke, Partition::Scoped(A));
     assert_eq!(outcome, TxnOutcome::Applied { version: None });
     assert_eq!(*keys.deleted.borrow(), vec![Partition::Scoped(A)]);
@@ -510,6 +494,521 @@ fn driver_commit_clear_of_all_sites_deletes_the_public_key() {
     );
     assert_eq!(*keys.deleted.borrow(), vec![Partition::Public]);
     assert_eq!(entry_files(&dir), NO_FILES);
+}
+
+#[test]
+fn driver_commit_revoke_with_a_failing_key_port_still_revokes() {
+    let dir = TestDir::new("commit_revoke_with_a_failing_key_port");
+    let keys = Recording::new();
+    let mut store = FileStore::open(&dir.root(), keys.clone()).unwrap();
+    store.recover(NOW).unwrap();
+    put(&mut store, Partition::Scoped(A), K1, "p0/a");
+    put(&mut store, Partition::Scoped(A), K2, "p0/b");
+    put(&mut store, Partition::Scoped(B), K1, "p1/a");
+    // A writer of A that started before the revoke.
+    let late = fresh(&mut store, Partition::Scoped(A), Expect::Any);
+    let revoke = TxnOp::RevokePartition {
+        partition: Partition::Scoped(A),
+    };
+
+    // The key port cannot delete the key: the rows still go and the epoch
+    // still grows, and the call asks for a retry.
+    *keys.fail_delete.borrow_mut() = true;
+    let pre = fresh(&mut store, Partition::Scoped(A), Expect::Any);
+    assert_eq!(
+        kind(store.apply(CacheTransaction {
+            op: revoke.clone(),
+            pre,
+        })),
+        StoreErrorKind::Unavailable
+    );
+    assert_eq!(keys.deleted.borrow().len(), 0);
+    let epoch = late.partition_epoch.0;
+    assert_eq!(
+        store.partition_epoch(Partition::Scoped(A)).unwrap().0,
+        epoch + 1
+    );
+    assert!(page_of(&mut store, Partition::Scoped(A), K1).is_none());
+    assert!(page_of(&mut store, Partition::Scoped(A), K2).is_none());
+    assert!(page_of(&mut store, Partition::Scoped(B), K1).is_some());
+    assert_eq!(entry_files(&dir).len(), 1);
+    // The writer with the old epoch is refused.
+    let (meta, body) = sample_entry(Partition::Scoped(A), K1, HOST, "p0/late", 0);
+    assert_eq!(
+        store.apply(replace_txn(meta, body, late)).unwrap(),
+        TxnOutcome::Refused(Refused::PartitionRevoked)
+    );
+
+    // The retry is a normal revoke: it deletes the key.
+    *keys.fail_delete.borrow_mut() = false;
+    let outcome = apply(&mut store, revoke, Partition::Scoped(A));
+    assert_eq!(outcome, TxnOutcome::Applied { version: None });
+    assert_eq!(*keys.deleted.borrow(), vec![Partition::Scoped(A)]);
+    assert_eq!(
+        store.partition_epoch(Partition::Scoped(A)).unwrap().0,
+        epoch + 2
+    );
+    assert!(page_of(&mut store, Partition::Scoped(B), K1).is_some());
+}
+
+#[test]
+fn driver_commit_clear_of_all_sites_with_a_failing_key_port_still_clears() {
+    let dir = TestDir::new("commit_clear_with_a_failing_key_port");
+    let keys = Recording::new();
+    let mut store = FileStore::open(&dir.root(), keys.clone()).unwrap();
+    store.recover(NOW).unwrap();
+    put(&mut store, Partition::Public, K1, "p2/a");
+    put(&mut store, Partition::Scoped(A), K1, "p0/a");
+    let site = store.site_epoch().unwrap().0;
+    *keys.fail_delete.borrow_mut() = true;
+    let clear = TxnOp::ClearSite { domain: None };
+    let pre = fresh(&mut store, Partition::Public, Expect::Any);
+    assert_eq!(
+        kind(store.apply(CacheTransaction {
+            op: clear.clone(),
+            pre,
+        })),
+        StoreErrorKind::Unavailable
+    );
+    assert_eq!(store.site_epoch().unwrap().0, site + 1);
+    assert_eq!(store.list().unwrap().len(), 0);
+    assert_eq!(entry_files(&dir), NO_FILES);
+    assert_eq!(keys.deleted.borrow().len(), 0);
+    *keys.fail_delete.borrow_mut() = false;
+    assert_eq!(
+        apply(&mut store, clear, Partition::Public),
+        TxnOutcome::Applied { version: None }
+    );
+    assert_eq!(*keys.deleted.borrow(), vec![Partition::Public]);
+    assert_eq!(store.site_epoch().unwrap().0, site + 2);
+}
+
+#[test]
+fn driver_commit_revoke_with_a_failing_key_port_and_a_failure_at_remove_old() {
+    let dir = TestDir::new("commit_revoke_failing_key_port_remove_old");
+    let keys = Recording::new();
+    let mut store = FileStore::open(&dir.root(), keys.clone()).unwrap();
+    store.recover(NOW).unwrap();
+    put(&mut store, Partition::Scoped(A), K1, "p0/a");
+    *keys.fail_delete.borrow_mut() = true;
+    store.fail_at(CommitStep::RemoveOld);
+    let pre = fresh(&mut store, Partition::Scoped(A), Expect::Any);
+    let revoke = TxnOp::RevokePartition {
+        partition: Partition::Scoped(A),
+    };
+    // The key is not deleted: the call is not a success, also when the
+    // commit stands.
+    assert_eq!(
+        kind(store.apply(CacheTransaction { op: revoke, pre })),
+        StoreErrorKind::Unavailable
+    );
+    assert!(page_of(&mut store, Partition::Scoped(A), K1).is_none());
+}
+
+#[test]
+fn driver_commit_revoke_fault_before_the_commit_point_deletes_no_key() {
+    let dir = TestDir::new("commit_revoke_fault_before_the_commit_point");
+    let keys = Recording::new();
+    let mut store = FileStore::open(&dir.root(), keys.clone()).unwrap();
+    store.recover(NOW).unwrap();
+    put(&mut store, Partition::Scoped(A), K1, "p0/a");
+    let epoch = store.partition_epoch(Partition::Scoped(A)).unwrap();
+    let revoke = TxnOp::RevokePartition {
+        partition: Partition::Scoped(A),
+    };
+    for (step, stop) in [
+        (CommitStep::WriteTemp, false),
+        (CommitStep::SyncTemp, false),
+        (CommitStep::Promote, false),
+        (CommitStep::CommitMeta, false),
+        (CommitStep::WriteTemp, true),
+        (CommitStep::Promote, true),
+    ] {
+        if stop {
+            store.stop_after(step);
+        } else {
+            store.fail_at(step);
+        }
+        let pre = fresh(&mut store, Partition::Scoped(A), Expect::Any);
+        assert_eq!(
+            kind(store.apply(CacheTransaction {
+                op: revoke.clone(),
+                pre,
+            })),
+            StoreErrorKind::Unavailable,
+            "{step:?}"
+        );
+        if stop {
+            store.restart().unwrap();
+            store.recover(NOW).unwrap();
+        }
+        assert_eq!(keys.deleted.borrow().len(), 0, "{step:?}");
+        assert_eq!(
+            store.partition_epoch(Partition::Scoped(A)).unwrap(),
+            epoch,
+            "{step:?}"
+        );
+        assert!(
+            page_of(&mut store, Partition::Scoped(A), K1).is_some(),
+            "{step:?}"
+        );
+    }
+}
+
+#[test]
+fn driver_commit_meta_error_keeps_the_promoted_file_for_recovery() {
+    let dir = TestDir::new("commit_meta_error_keeps_the_promoted_file");
+    let mut store = store(&dir);
+    put(&mut store, Partition::Scoped(A), K1, "p0/old");
+    let (meta, body) = sample_entry(Partition::Scoped(A), K1, HOST, "p0/new", 0);
+    let pre = fresh(&mut store, Partition::Scoped(A), Expect::Any);
+    // Another connection holds the write lock: the metadata transaction
+    // fails at `CommitMeta` (the busy timeout is 0).
+    let lock = raw(&dir);
+    lock.execute_batch("BEGIN IMMEDIATE").unwrap();
+    assert_eq!(
+        kind(store.apply(replace_txn(meta, body, pre))),
+        StoreErrorKind::Unavailable
+    );
+    drop(lock);
+    // The promoted file stays: SQLite could still replay a commit.
+    assert_eq!(entry_files(&dir).len(), 2);
+    assert_eq!(temp_files(&dir), NO_FILES);
+    assert_eq!(
+        page_of(&mut store, Partition::Scoped(A), K1).unwrap(),
+        b"p0/old/page"
+    );
+    // No row names it, so recovery removes it.
+    store.restart().unwrap();
+    assert_eq!(store.recover(NOW).unwrap().orphans_removed, 1);
+    assert_eq!(entry_files(&dir).len(), 1);
+    assert_eq!(
+        page_of(&mut store, Partition::Scoped(A), K1).unwrap(),
+        b"p0/old/page"
+    );
+}
+
+// ---------------------------------------------------------------- limits
+
+/// Small decode limits for the boundary tests of the driver.
+fn small_limits() -> DecodeLimits {
+    DecodeLimits {
+        max_document_bytes: 32,
+        max_blocks: 2,
+        max_block_key_bytes: 4,
+        max_block_bytes: 8,
+        max_header_bytes: 64,
+        max_headers_total_bytes: 100,
+    }
+}
+
+fn small_store(dir: &TestDir) -> FileStore<HostKeys> {
+    let mut store =
+        FileStore::open_with_limits(&dir.root(), HostKeys::new().unwrap(), small_limits()).unwrap();
+    store.recover(NOW).unwrap();
+    store
+}
+
+/// An entry of `key` in partition A at every limit of `small_limits`.
+fn entry_at_the_limits(key: CacheKey) -> (EntryMeta, SnapshotBody) {
+    let (mut meta, mut body) = sample_entry(Partition::Scoped(A), key, HOST, "p0/lim", 0);
+    body.page = PageBytes::new(vec![b'p'; 32]);
+    body.template = Some(PageBytes::new(vec![b't'; 32]));
+    body.data = vec![
+        ("abcd".to_owned(), PageBytes::new(vec![b'v'; 8])),
+        ("efgh".to_owned(), PageBytes::new(vec![b'w'; 8])),
+    ];
+    // Lines of 64 and 36 bytes: 100 together.
+    body.fields = vec![
+        FieldLine::new("x-a", "a".repeat(61)),
+        FieldLine::new("x-b", "b".repeat(33)),
+    ];
+    meta.vary = vec![
+        VaryEntry {
+            name: "n".repeat(64),
+            value: None,
+        },
+        VaryEntry {
+            name: "m".repeat(36),
+            value: None,
+        },
+    ];
+    meta.validators.etag = Some("e".repeat(64));
+    meta.validators.template_tag = Some("g".repeat(64));
+    (meta, body)
+}
+
+type Change = fn(&mut EntryMeta, &mut SnapshotBody);
+
+#[test]
+fn driver_commit_content_over_the_decode_limits_writes_nothing() {
+    let dir = TestDir::new("commit_content_over_the_decode_limits");
+    let mut store = small_store(&dir);
+    let over: [(&str, Change); 11] = [
+        ("page", |_, body| body.page = PageBytes::new(vec![b'p'; 33])),
+        ("template", |_, body| {
+            body.template = Some(PageBytes::new(vec![b't'; 33]));
+        }),
+        ("blocks", |_, body| {
+            body.data.push(("i".to_owned(), PageBytes::new(Vec::new())));
+        }),
+        ("block key", |_, body| body.data[0].0.push('x')),
+        ("block value", |_, body| {
+            body.data[1].1 = PageBytes::new(vec![b'w'; 9]);
+        }),
+        ("field line", |_, body| body.fields[0].value.push('a')),
+        ("fields together", |_, body| body.fields[1].value.push('b')),
+        ("vary name", |meta, _| meta.vary[0].name.push('n')),
+        ("vary names together", |meta, _| meta.vary[1].name.push('m')),
+        ("etag", |meta, _| {
+            meta.validators.etag.as_mut().unwrap().push('e');
+        }),
+        ("template tag", |meta, _| {
+            meta.validators.template_tag.as_mut().unwrap().push('g');
+        }),
+    ];
+    for (name, change) in over {
+        let (mut meta, mut body) = entry_at_the_limits(K1);
+        change(&mut meta, &mut body);
+        let pre = fresh(&mut store, Partition::Scoped(A), Expect::Any);
+        assert_eq!(
+            kind(store.apply(replace_txn(meta, body, pre))),
+            StoreErrorKind::Unavailable,
+            "{name}"
+        );
+        assert_eq!(entry_files(&dir), NO_FILES, "{name}");
+        assert_eq!(temp_files(&dir), NO_FILES, "{name}");
+        assert_eq!(store.list().unwrap().len(), 0, "{name}");
+    }
+    // At every limit: stored and read back.
+    let (meta, body) = entry_at_the_limits(K1);
+    let pre = fresh(&mut store, Partition::Scoped(A), Expect::Any);
+    let stored = store
+        .apply(replace_txn(meta.clone(), body.clone(), pre))
+        .unwrap();
+    assert!(matches!(stored, TxnOutcome::Applied { version: Some(_) }));
+    let read = store.read(Partition::Scoped(A), &K1, NOW).unwrap().unwrap();
+    assert_eq!(read.meta, meta);
+    assert_eq!(read.body, body);
+}
+
+#[test]
+fn driver_commit_update_fields_over_the_decode_limits_writes_nothing() {
+    let dir = TestDir::new("commit_update_fields_over_the_decode_limits");
+    let mut store = small_store(&dir);
+    let (meta, body) = entry_at_the_limits(K1);
+    let pre = fresh(&mut store, Partition::Scoped(A), Expect::Any);
+    let TxnOutcome::Applied {
+        version: Some(version),
+    } = store.apply(replace_txn(meta, body.clone(), pre)).unwrap()
+    else {
+        panic!("not stored");
+    };
+    let update = |store: &mut FileStore<HostKeys>, fields: Vec<FieldLine>| {
+        let pre = fresh(store, Partition::Scoped(A), Expect::Version(version));
+        store.apply(CacheTransaction {
+            op: TxnOp::UpdateFields {
+                partition: Partition::Scoped(A),
+                key: K1,
+                fields,
+                policy: rivqen_testkit::store::contract::sample_policy(5),
+            },
+            pre,
+        })
+    };
+    for fields in [
+        // A line of 65 bytes.
+        vec![FieldLine::new("x-c", "c".repeat(62))],
+        // Lines of 101 bytes together.
+        vec![
+            FieldLine::new("x-c", "c".repeat(61)),
+            FieldLine::new("x-d", "d".repeat(34)),
+        ],
+    ] {
+        assert_eq!(
+            kind(update(&mut store, fields)),
+            StoreErrorKind::Unavailable
+        );
+        let kept = store.read(Partition::Scoped(A), &K1, NOW).unwrap().unwrap();
+        assert_eq!(kept.version, version);
+        assert_eq!(kept.body, body);
+    }
+    // At the limits: applied.
+    let fields = vec![
+        FieldLine::new("x-c", "c".repeat(61)),
+        FieldLine::new("x-d", "d".repeat(33)),
+    ];
+    assert!(matches!(
+        update(&mut store, fields.clone()).unwrap(),
+        TxnOutcome::Applied { version: Some(_) }
+    ));
+    let read = store.read(Partition::Scoped(A), &K1, NOW).unwrap().unwrap();
+    assert_eq!(read.body.fields, fields);
+}
+
+// ---------------------------------------------------------------- authenticated columns
+
+/// Flips one bit of the tag of the sealed row of `key`.
+fn flip_sealed(dir: &TestDir, key: CacheKey) {
+    let conn = raw(dir);
+    let mut sealed: Vec<u8> = conn
+        .query_row(
+            r#"SELECT sealed FROM entry WHERE "key" = ?1"#,
+            [key.as_bytes().as_slice()],
+            |row| row.get(0),
+        )
+        .unwrap();
+    let last = sealed.len() - 1;
+    sealed[last] ^= 0x80;
+    conn.execute(
+        r#"UPDATE entry SET sealed = ?1 WHERE "key" = ?2"#,
+        rusqlite::params![sealed, key.as_bytes().as_slice()],
+    )
+    .unwrap();
+}
+
+/// Runs `sql` with the key of the row as `?1`.
+fn change_row(dir: &TestDir, key: CacheKey, sql: &str) {
+    let changed = raw(dir).execute(sql, [key.as_bytes().as_slice()]).unwrap();
+    assert_eq!(changed, 1);
+}
+
+const SET_HOST: &str = r#"UPDATE entry SET host = 'other.example.org' WHERE "key" = ?1"#;
+const SET_STORED_AT: &str = r#"UPDATE entry SET stored_at = stored_at + 1 WHERE "key" = ?1"#;
+
+#[test]
+fn driver_read_host_or_store_time_that_differs_is_corrupted() {
+    let dir = TestDir::new("read_host_or_store_time_that_differs");
+    let mut store = store(&dir);
+    for key in [K1, K2, K3] {
+        put(&mut store, Partition::Scoped(A), key, "p0/a");
+    }
+    for sql in [SET_HOST, SET_STORED_AT] {
+        let file = file_of(&dir, Partition::Scoped(A), K1);
+        change_row(&dir, K1, sql);
+        assert_eq!(
+            kind(store.read(Partition::Scoped(A), &K1, NOW)),
+            StoreErrorKind::Corrupted,
+            "{sql}"
+        );
+        assert!(!file.exists(), "{sql}");
+        assert!(
+            store
+                .read(Partition::Scoped(A), &K1, NOW)
+                .unwrap()
+                .is_none()
+        );
+        put(&mut store, Partition::Scoped(A), K1, "p0/a");
+    }
+    // `list` removes such a row and does not list it.
+    change_row(&dir, K2, SET_HOST);
+    change_row(&dir, K3, SET_STORED_AT);
+    let listed = store.list().unwrap();
+    assert_eq!(
+        listed
+            .iter()
+            .map(|summary| summary.meta.key)
+            .collect::<Vec<_>>(),
+        vec![K1]
+    );
+    assert!(page_of(&mut store, Partition::Scoped(A), K2).is_none());
+    assert!(page_of(&mut store, Partition::Scoped(A), K3).is_none());
+}
+
+#[test]
+fn driver_read_last_used_and_version_are_not_authenticated() {
+    let dir = TestDir::new("read_last_used_and_version");
+    let mut store = store(&dir);
+    put(&mut store, Partition::Scoped(A), K1, "p0/a");
+    change_row(
+        &dir,
+        K1,
+        r#"UPDATE entry SET last_used_at = 5, version = version + 100 WHERE "key" = ?1"#,
+    );
+    let read = store.read(Partition::Scoped(A), &K1, NOW).unwrap().unwrap();
+    assert_eq!(read.meta.last_used_at, UnixTime(5));
+}
+
+#[test]
+fn driver_commit_store_time_above_i64_max_reads_back() {
+    let dir = TestDir::new("commit_store_time_above_i64_max");
+    let mut store = store(&dir);
+    let (mut meta, body) = sample_entry(Partition::Public, K1, HOST, "p2/t", 0);
+    meta.stored_at = UnixTime(u64::MAX);
+    let pre = fresh(&mut store, Partition::Public, Expect::Any);
+    store.apply(replace_txn(meta, body, pre)).unwrap();
+    let max = UnixTime(u64::try_from(i64::MAX).unwrap());
+    let read = store.read(Partition::Public, &K1, NOW).unwrap().unwrap();
+    assert_eq!(read.meta.stored_at, max);
+    assert_eq!(store.list().unwrap()[0].meta.stored_at, max);
+}
+
+#[test]
+fn driver_commit_update_of_a_row_that_does_not_open_removes_it() {
+    for (name, damage) in [
+        ("seal", None),
+        ("host", Some(SET_HOST)),
+        ("stored_at", Some(SET_STORED_AT)),
+    ] {
+        let dir = TestDir::new(&format!("commit_update_of_a_row_that_does_not_open_{name}"));
+        let mut store = store(&dir);
+        put(&mut store, Partition::Scoped(A), K1, "p0/a");
+        put(&mut store, Partition::Scoped(A), K2, "p0/b");
+        let file = file_of(&dir, Partition::Scoped(A), K1);
+        match damage {
+            Some(sql) => change_row(&dir, K1, sql),
+            None => flip_sealed(&dir, K1),
+        }
+        let update = TxnOp::UpdateFields {
+            partition: Partition::Scoped(A),
+            key: K1,
+            fields: Vec::new(),
+            policy: rivqen_testkit::store::contract::sample_policy(2),
+        };
+        assert_eq!(
+            apply(&mut store, update, Partition::Scoped(A)),
+            TxnOutcome::Refused(Refused::Entry),
+            "{name}"
+        );
+        assert!(!file.exists(), "{name}");
+        assert!(
+            store
+                .read(Partition::Scoped(A), &K1, NOW)
+                .unwrap()
+                .is_none(),
+            "{name}"
+        );
+        assert_eq!(store.list().unwrap().len(), 1, "{name}");
+        store.restart().unwrap();
+        assert_eq!(
+            store.recover(NOW).unwrap(),
+            RecoveryReport::default(),
+            "{name}"
+        );
+    }
+}
+
+#[test]
+fn driver_commit_update_with_a_locked_key_port_removes_nothing() {
+    let dir = TestDir::new("commit_update_with_a_locked_key_port");
+    let mut store = store(&dir);
+    let version = put(&mut store, Partition::Scoped(A), K1, "p0/a");
+    let pre = fresh(&mut store, Partition::Scoped(A), Expect::Version(version));
+    store.keys_mut().set_locked(true);
+    let update = CacheTransaction {
+        op: TxnOp::UpdateFields {
+            partition: Partition::Scoped(A),
+            key: K1,
+            fields: Vec::new(),
+            policy: rivqen_testkit::store::contract::sample_policy(2),
+        },
+        pre,
+    };
+    assert_eq!(kind(store.apply(update)), StoreErrorKind::Unavailable);
+    store.keys_mut().set_locked(false);
+    let read = store.read(Partition::Scoped(A), &K1, NOW).unwrap().unwrap();
+    assert_eq!(read.version, version);
+    assert_eq!(entry_files(&dir).len(), 1);
 }
 
 #[test]
@@ -710,16 +1209,18 @@ fn driver_read_entry_at_the_block_limit() {
     );
     store.restart().unwrap();
     assert_eq!(store.recover(NOW).unwrap(), RecoveryReport::default());
-    // One block more: stored, but no file of that length fits the limits.
+    // One block more: the file would not decode, so nothing is stored.
     let (meta, mut body) = sample_entry(Partition::Public, K2, HOST, "p2/over", 7);
     body.data
         .push(("{b3}".to_owned(), PageBytes::new(b"x".to_vec())));
     let pre = fresh(&mut store, Partition::Public, Expect::Any);
-    store.apply(replace_txn(meta, body, pre)).unwrap();
     assert_eq!(
-        kind(store.read(Partition::Public, &K2, NOW)),
-        StoreErrorKind::Corrupted
+        kind(store.apply(replace_txn(meta, body, pre))),
+        StoreErrorKind::Unavailable
     );
+    assert!(store.read(Partition::Public, &K2, NOW).unwrap().is_none());
+    assert_eq!(entry_files(&dir).len(), 1);
+    assert_eq!(temp_files(&dir), NO_FILES);
 }
 
 #[test]
@@ -1177,6 +1678,161 @@ fn driver_recover_after_a_stop_removes_the_files_of_the_commit() {
             page,
             "{step:?}"
         );
+    }
+}
+
+// ---------------------------------------------------------------- orphans
+
+/// Sets the mode of the directory `dir`.
+#[cfg(unix)]
+fn set_dir_mode(dir: &Path, mode: u32) {
+    use std::os::unix::fs::PermissionsExt;
+    fs::set_permissions(dir, fs::Permissions::from_mode(mode)).unwrap();
+}
+
+#[cfg(unix)]
+#[test]
+fn driver_read_unlink_failure_after_the_removal_is_an_orphan() {
+    let dir = TestDir::new("read_unlink_failure_is_an_orphan");
+    let mut store = store(&dir);
+    put(&mut store, Partition::Scoped(A), K1, "p0/a");
+    let file = file_of(&dir, Partition::Scoped(A), K1);
+    let bucket = file.parent().unwrap().to_path_buf();
+    flip_sealed(&dir, K1);
+    // The file cannot be unlinked (a user other than root).
+    set_dir_mode(&bucket, 0o500);
+    let read = store.read(Partition::Scoped(A), &K1, NOW);
+    let stayed = file.exists();
+    set_dir_mode(&bucket, 0o700);
+    assert_eq!(kind(read), StoreErrorKind::Corrupted);
+    assert!(
+        store
+            .read(Partition::Scoped(A), &K1, NOW)
+            .unwrap()
+            .is_none()
+    );
+    store.restart().unwrap();
+    assert_eq!(
+        store.recover(NOW).unwrap().orphans_removed,
+        u64::from(stayed)
+    );
+    assert_eq!(entry_files(&dir), NO_FILES);
+}
+
+#[cfg(unix)]
+#[test]
+fn driver_list_unlink_failure_after_the_removal_is_an_orphan() {
+    let dir = TestDir::new("list_unlink_failure_is_an_orphan");
+    let mut store = store(&dir);
+    put(&mut store, Partition::Scoped(A), K1, "p0/a");
+    put(&mut store, Partition::Public, K2, "p2/b");
+    let file = file_of(&dir, Partition::Scoped(A), K1);
+    let bucket = file.parent().unwrap().to_path_buf();
+    flip_sealed(&dir, K1);
+    set_dir_mode(&bucket, 0o500);
+    let listed = store.list();
+    let stayed = file.exists();
+    set_dir_mode(&bucket, 0o700);
+    let listed = listed.unwrap();
+    assert_eq!(listed.len(), 1);
+    assert_eq!(listed[0].meta.key, K2);
+    store.restart().unwrap();
+    assert_eq!(
+        store.recover(NOW).unwrap().orphans_removed,
+        u64::from(stayed)
+    );
+    assert_eq!(entry_files(&dir).len(), 1);
+}
+
+#[cfg(unix)]
+#[test]
+fn driver_recover_unlink_failure_after_the_removal_is_an_orphan() {
+    let dir = TestDir::new("recover_unlink_failure_is_an_orphan");
+    let mut store = store(&dir);
+    put(&mut store, Partition::Scoped(A), K1, "p0/a");
+    let file = file_of(&dir, Partition::Scoped(A), K1);
+    let bucket = file.parent().unwrap().to_path_buf();
+    // A file of another length: recovery removes the row, then the file.
+    let mut bytes = fs::read(&file).unwrap();
+    bytes.push(0);
+    fs::write(&file, &bytes).unwrap();
+    store.restart().unwrap();
+    set_dir_mode(&bucket, 0o500);
+    let report = store.recover(NOW);
+    let stayed = file.exists();
+    set_dir_mode(&bucket, 0o700);
+    // The file of a removed row is not counted as an orphan; a file that
+    // stays is not counted either.
+    assert_eq!(
+        report.unwrap(),
+        RecoveryReport {
+            orphans_removed: 0,
+            entries_removed: 1
+        }
+    );
+    assert!(page_of(&mut store, Partition::Scoped(A), K1).is_none());
+    store.restart().unwrap();
+    assert_eq!(
+        store.recover(NOW).unwrap(),
+        RecoveryReport {
+            orphans_removed: u64::from(stayed),
+            entries_removed: 0
+        }
+    );
+    assert_eq!(entry_files(&dir), NO_FILES);
+}
+
+// ---------------------------------------------------------------- open
+
+#[test]
+fn driver_open_lost_database_with_entry_files_resets() {
+    let dir = TestDir::new("open_lost_database_with_entry_files");
+    let mut store = store(&dir);
+    put(&mut store, Partition::Scoped(A), K1, "p0/a");
+    assert_eq!(store.site_epoch().unwrap().0, 0);
+    drop(store);
+    let schema = schema_dir(&dir.root());
+    for name in [DB_FILE, "meta.sqlite-wal", "meta.sqlite-shm"] {
+        let path = schema.join(name);
+        if path.exists() {
+            fs::remove_file(path).unwrap();
+        }
+    }
+    let mut store = FileStore::open(&dir.root(), HostKeys::new().unwrap()).unwrap();
+    assert_eq!(entry_files(&dir), NO_FILES);
+    assert_eq!(store.recover(NOW).unwrap(), RecoveryReport::default());
+    // A writer of the lost store holds epoch 0: it is refused.
+    assert_ne!(store.site_epoch().unwrap().0, 0);
+    assert_ne!(store.partition_epoch(Partition::Scoped(A)).unwrap().0, 0);
+    assert_eq!(store.list().unwrap().len(), 0);
+}
+
+#[cfg(unix)]
+#[test]
+fn driver_open_modes_of_the_directories_and_the_database() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = TestDir::new("open_modes");
+    let mut store = store(&dir);
+    put(&mut store, Partition::Scoped(A), K1, "p0/a");
+    let root = dir.root();
+    let schema = schema_dir(&root);
+    let bucket = file_of(&dir, Partition::Scoped(A), K1)
+        .parent()
+        .unwrap()
+        .to_path_buf();
+    let mode = |path: &Path| fs::symlink_metadata(path).unwrap().permissions().mode() & 0o777;
+    for path in [
+        root.clone(),
+        schema.clone(),
+        schema.join(FILES_DIR),
+        schema.join(TMP_DIR),
+        bucket,
+    ] {
+        assert_eq!(mode(&path), 0o700, "{}", path.display());
+    }
+    // The store is open: `-wal` and `-shm` exist.
+    for name in [DB_FILE, "meta.sqlite-wal", "meta.sqlite-shm"] {
+        assert_eq!(mode(&schema.join(name)), 0o600, "{name}");
     }
 }
 

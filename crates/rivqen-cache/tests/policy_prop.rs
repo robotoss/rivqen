@@ -10,13 +10,14 @@
 #![allow(clippy::arithmetic_side_effects)]
 
 use proptest::prelude::*;
-use rivqen_cache::header::{CacheControl, Vary};
+use rivqen_cache::header::{CacheControl, Vary, parse_cache_control};
 use rivqen_cache::key::Protocol;
 use rivqen_cache::partition::Credentials;
 use rivqen_cache::policy::{
     EntryPolicy, Expires, Failure, SkipReason, StoreDecision, StoreInput, Use, current_age,
     freshness_lifetime, lookup_use, serve_on_failure, store_decision,
 };
+use rivqen_model::http::FieldLine;
 use rivqen_model::time::UnixTime;
 
 const T: u64 = 1_700_000_000;
@@ -52,7 +53,7 @@ fn time() -> impl Strategy<Value = UnixTime> {
 
 prop_compose! {
     fn cache_control()(
-        flags in prop::array::uniform6(any::<bool>()),
+        flags in prop::array::uniform7(any::<bool>()),
         max_age in prop::option::of(seconds()),
         stale_while_revalidate in prop::option::of(seconds()),
         stale_if_error in prop::option::of(seconds()),
@@ -61,6 +62,7 @@ prop_compose! {
             no_store: flags[0],
             no_cache: flags[1],
             private: flags[2],
+            valid_private: flags[6],
             public: flags[3],
             must_revalidate: flags[4],
             max_age,
@@ -111,12 +113,45 @@ fn protocol() -> impl Strategy<Value = Protocol> {
     prop_oneof![Just(Protocol::Rqp), Just(Protocol::Legacy)]
 }
 
-/// The consent of the server (H-150): only RQP asks for a directive.
+/// The consent of the server (H-150): only RQP asks for a valid directive.
 fn consent(protocol: Protocol, response: &CacheControl) -> bool {
     match protocol {
         Protocol::Legacy => true,
-        Protocol::Rqp => response.private || response.public,
+        Protocol::Rqp => response.valid_private || response.public,
     }
+}
+
+/// Members of a `Cache-Control` line, also the directives that consent.
+fn member() -> impl Strategy<Value = &'static str> {
+    prop::sample::select(vec![
+        "private",
+        "public",
+        "private=\"set-cookie\"",
+        "private=x",
+        "max-age=60",
+        "max-age=abc",
+        "no-cache",
+        "must-revalidate",
+        "community=\"a, b\"",
+        "",
+    ])
+}
+
+/// A member with a syntax error (RFC 9111 section 5.2). The last member of
+/// its line, so that an unclosed quoted-string hides nothing else.
+fn syntax_error() -> impl Strategy<Value = &'static str> {
+    prop::sample::select(vec![
+        "private=",
+        "no-transform private",
+        "private =x",
+        "public=\"a\"b",
+        "a b",
+        "=",
+        "max-age =5",
+        "x=\"private",
+        "private=\"public",
+        "foo=\"a\u{1}\"",
+    ])
 }
 
 fn credentials() -> impl Strategy<Value = Credentials> {
@@ -246,7 +281,9 @@ proptest! {
         set_cookie in any::<bool>(),
         authenticated_cache in any::<bool>(),
     ) {
-        response.private = false;
+        // `private` alone (the restrictive reading, also from a broken line)
+        // is no consent.
+        response.valid_private = false;
         response.public = false;
         let credentialed = credentials != Credentials::Absent || set_cookie;
         let decision = store_decision(&StoreInput {
@@ -262,6 +299,46 @@ proptest! {
         if credentialed {
             prop_assert_ne!(decision, StoreDecision::Store);
         }
+    }
+
+    #[test]
+    fn policy_prop_rqp_credentialed_with_a_syntax_error_never_stores(
+        lines in prop::collection::vec(prop::collection::vec(member(), 0..5), 1..4),
+        broken_line in any::<prop::sample::Index>(),
+        error in syntax_error(),
+        credentials in prop_oneof![Just(Credentials::Present), Just(Credentials::Unknown)],
+        set_cookie in any::<bool>(),
+    ) {
+        // Security review L2, H-150: a `Cache-Control` value with a syntax
+        // error anywhere is no consent, whatever else it holds.
+        let broken = broken_line.index(lines.len());
+        let fields: Vec<FieldLine> = lines
+            .iter()
+            .enumerate()
+            .map(|(n, members)| {
+                let mut members = members.clone();
+                if n == broken {
+                    members.push(error);
+                }
+                FieldLine::new("Cache-Control", members.join(", "))
+            })
+            .collect();
+        let response = parse_cache_control(&fields);
+        let decision = store_decision(&StoreInput {
+            status: 200,
+            request: &CacheControl::default(),
+            response: &response,
+            vary: &Vary::None,
+            credentials,
+            set_cookie,
+            authenticated_cache: true,
+            protocol: Protocol::Rqp,
+        });
+        prop_assert_eq!(
+            decision,
+            StoreDecision::Skip(SkipReason::Credentialed),
+            "{:?}", fields
+        );
     }
 
     #[test]

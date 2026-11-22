@@ -1344,3 +1344,262 @@ fn meta_reset_removes_a_link_and_not_its_target() {
     assert!(fs::symlink_metadata(dir.path().join("files")).is_err());
     assert!(outside.path().join("keep").exists());
 }
+
+// ---------------------------------------------------------------- lost database
+
+/// The counters of a store that starts at 0.
+fn assert_zero_start(db: &mut MetaDb) {
+    db.transaction(|txn| {
+        assert_eq!(txn.site_epoch()?, Epoch(0));
+        assert_eq!(txn.partition_epoch(scoped(1))?, Epoch(0));
+        Ok(())
+    })
+    .unwrap();
+}
+
+#[test]
+fn meta_reset_lost_database_with_store_files_resets() {
+    // (name, setup): a schema directory with no `meta.sqlite` that holds
+    // something of a store.
+    type Setup = fn(&TestDir);
+    let cases: [(&str, Setup); 8] = [
+        ("lost_tmp_is_a_file", |dir| {
+            fs::write(dir.path().join("tmp"), b"").unwrap();
+        }),
+        ("lost_files_is_a_file", |dir| {
+            fs::write(dir.path().join("files"), b"").unwrap();
+        }),
+        ("lost_entry_file", |dir| {
+            fs::create_dir_all(dir.path().join("files/ab")).unwrap();
+            fs::write(dir.path().join("files/ab/abcd.rqf"), b"sealed").unwrap();
+        }),
+        ("lost_temp_file", |dir| {
+            fs::create_dir_all(dir.path().join("files")).unwrap();
+            fs::create_dir_all(dir.path().join("tmp")).unwrap();
+            fs::write(dir.path().join("tmp/ef.tmp"), b"partial").unwrap();
+        }),
+        ("lost_file_in_files", |dir| {
+            fs::create_dir_all(dir.path().join("files")).unwrap();
+            fs::write(dir.path().join("files/x"), b"x").unwrap();
+        }),
+        ("lost_other_file", |dir| {
+            fs::write(dir.path().join("unknown"), b"x").unwrap();
+        }),
+        ("lost_wal_only", |dir| {
+            fs::write(dir.path().join(format!("{DB_FILE}-wal")), b"w").unwrap();
+        }),
+        ("lost_deep_directory", |dir| {
+            fs::create_dir_all(dir.path().join("files/ab/cd")).unwrap();
+        }),
+    ];
+    for (name, setup) in cases {
+        let dir = TestDir::new(name);
+        setup(&dir);
+        let mut random = Counting::new();
+        let (mut db, opened) = open_or_reset(&dir, &mut random).unwrap();
+        assert_eq!(opened, Opened::Reset, "{name}");
+        assert_random_start(&mut db);
+        for entry in dir.names() {
+            assert!(entry.starts_with(DB_FILE), "{name}: left {entry}");
+        }
+    }
+}
+
+#[test]
+fn meta_reset_empty_database_file_with_store_files_resets() {
+    // A database file with no tables is a lost database too.
+    let dir = TestDir::new("reset_empty_db_file");
+    fs::write(dir.db_path(), b"").unwrap();
+    store_files(&dir);
+    let mut random = Counting::new();
+    let (mut db, opened) = open_or_reset(&dir, &mut random).unwrap();
+    assert_eq!(opened, Opened::Reset);
+    assert_random_start(&mut db);
+}
+
+#[test]
+fn meta_reset_fresh_directory_starts_at_zero() {
+    for (name, buckets, tmp, empty_db) in [
+        ("fresh_empty", &[][..], false, false),
+        ("fresh_empty_tree", &["00", "ab"][..], true, false),
+        // A database file that SQLite has not written yet (an open that
+        // stopped before its first transaction).
+        ("fresh_empty_db_file", &["00"][..], true, true),
+    ] {
+        let dir = TestDir::new(name);
+        if empty_db {
+            fs::write(dir.db_path(), b"").unwrap();
+        }
+        for bucket in buckets {
+            fs::create_dir_all(dir.path().join("files").join(bucket)).unwrap();
+        }
+        if tmp {
+            fs::create_dir_all(dir.path().join("tmp")).unwrap();
+        }
+        let mut random = Counting::new();
+        let (mut db, opened) = open_or_reset(&dir, &mut random).unwrap();
+        assert_eq!(opened, Opened::Kept, "{name}");
+        assert_eq!(random.calls, 0, "{name}");
+        assert_zero_start(&mut db);
+        drop(db);
+        // A second open keeps the new database.
+        let (mut db, opened) = open_or_reset(&dir, &mut random).unwrap();
+        assert_eq!(opened, Opened::Kept, "{name}");
+        assert_zero_start(&mut db);
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn meta_reset_lost_database_with_a_linked_files_directory_resets() {
+    let dir = TestDir::new("lost_linked_files");
+    let outside = TestDir::new("lost_linked_files_target");
+    std::os::unix::fs::symlink(outside.path(), dir.path().join("files")).unwrap();
+    let mut random = Counting::new();
+    let (_db, opened) = open_or_reset(&dir, &mut random).unwrap();
+    assert_eq!(opened, Opened::Reset);
+    assert!(fs::symlink_metadata(dir.path().join("files")).is_err());
+    assert!(outside.path().exists());
+}
+
+// ---------------------------------------------------------------- schema objects
+
+#[test]
+fn meta_open_schema_objects_are_exact() {
+    for (name, extra) in [
+        (
+            "schema_trigger",
+            "CREATE TRIGGER t AFTER INSERT ON entry BEGIN DELETE FROM counter; END",
+        ),
+        ("schema_view", "CREATE VIEW v AS SELECT * FROM entry"),
+        ("schema_index", "CREATE INDEX i ON entry (host)"),
+        ("schema_table", "CREATE TABLE other (x INTEGER)"),
+        (
+            "schema_text",
+            "PRAGMA writable_schema = ON; \
+             UPDATE sqlite_schema SET sql = replace(sql, 'NOT NULL', 'NOT  NULL') \
+             WHERE name = 'counter'; PRAGMA writable_schema = OFF;",
+        ),
+    ] {
+        let dir = TestDir::new(name);
+        drop(open(&dir));
+        dir.raw().execute_batch(extra).unwrap();
+        assert_eq!(
+            kind(MetaDb::open(dir.path())),
+            StoreErrorKind::Corrupted,
+            "{name}"
+        );
+        let mut random = Counting::new();
+        let (_db, opened) = open_or_reset(&dir, &mut random).unwrap();
+        assert_eq!(opened, Opened::Reset, "{name}");
+    }
+}
+
+#[test]
+fn meta_open_missing_table_is_corrupted() {
+    let dir = TestDir::new("schema_missing_table");
+    drop(open(&dir));
+    dir.raw().execute_batch("DROP TABLE disabled_key").unwrap();
+    assert_eq!(kind(MetaDb::open(dir.path())), StoreErrorKind::Corrupted);
+}
+
+#[test]
+fn meta_counter_write_that_changes_no_row_is_unavailable() {
+    let dir = TestDir::new("counter_no_row");
+    let mut db = open(&dir);
+    // After the check of the open: a view with a trigger in place of the
+    // counter table takes the update and changes no row.
+    dir.raw()
+        .execute_batch(
+            "ALTER TABLE counter RENAME TO counter_data;
+             CREATE VIEW counter AS SELECT name, value FROM counter_data;
+             CREATE TRIGGER counter_update INSTEAD OF UPDATE ON counter
+             BEGIN SELECT 1; END;",
+        )
+        .unwrap();
+    assert_eq!(
+        kind(db.transaction(|txn| {
+            txn.bump_partition_epoch(scoped(1))?;
+            txn.next_version()
+        })),
+        StoreErrorKind::Unavailable
+    );
+    assert_eq!(
+        kind(db.transaction(|txn| txn.bump_site_epoch())),
+        StoreErrorKind::Unavailable
+    );
+    // Nothing of the first transaction was committed.
+    let epochs: i64 = dir
+        .raw()
+        .query_row("SELECT count(*) FROM partition_epoch", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(epochs, 0);
+}
+
+// ---------------------------------------------------------------- files
+
+#[cfg(unix)]
+fn mode_of(path: &Path) -> u32 {
+    use std::os::unix::fs::PermissionsExt;
+    fs::symlink_metadata(path).unwrap().permissions().mode() & 0o777
+}
+
+#[cfg(unix)]
+#[test]
+fn meta_open_creates_the_database_with_mode_0600() {
+    let dir = TestDir::new("files_mode");
+    let mut db = open(&dir);
+    put(&mut db, &row(scoped(1), 1, 1));
+    // SQLite gives `-wal` and `-shm` the mode of the database file.
+    for name in [DB_FILE, "meta.sqlite-wal", "meta.sqlite-shm"] {
+        assert_eq!(mode_of(&dir.path().join(name)), 0o600, "{name}");
+    }
+    drop(db);
+    // A reset removes a database of another mode and makes its new one
+    // with mode 0600.
+    fs::remove_file(dir.db_path()).unwrap();
+    fs::write(dir.db_path(), vec![0x5A; 8192]).unwrap();
+    fs::set_permissions(
+        dir.db_path(),
+        std::os::unix::fs::PermissionsExt::from_mode(0o644),
+    )
+    .unwrap();
+    let mut random = Counting::new();
+    let (_db, opened) = open_or_reset(&dir, &mut random).unwrap();
+    assert_eq!(opened, Opened::Reset);
+    assert_eq!(mode_of(&dir.db_path()), 0o600);
+}
+
+#[cfg(unix)]
+#[test]
+fn meta_reset_marker_link_is_never_followed() {
+    for (name, dangling) in [("marker_link", false), ("marker_dangling_link", true)] {
+        let dir = TestDir::new(name);
+        let outside = TestDir::new(&format!("{name}_target"));
+        let target = outside.path().join("target");
+        if !dangling {
+            fs::write(&target, b"keep").unwrap();
+        }
+        drop(open(&dir));
+        std::os::unix::fs::symlink(&target, dir.path().join(RESET_MARKER)).unwrap();
+        // A marker of any type stops a plain open.
+        assert_eq!(
+            kind(MetaDb::open(dir.path())),
+            StoreErrorKind::Corrupted,
+            "{name}"
+        );
+        // The reset does not write through the link and does not go on.
+        let mut random = Counting::new();
+        assert_eq!(
+            kind(open_or_reset(&dir, &mut random)),
+            StoreErrorKind::Unavailable,
+            "{name}"
+        );
+        if dangling {
+            assert!(!target.exists(), "{name}");
+        } else {
+            assert_eq!(fs::read(&target).unwrap(), b"keep", "{name}");
+        }
+        assert!(dir.db_path().exists(), "{name}");
+    }
+}

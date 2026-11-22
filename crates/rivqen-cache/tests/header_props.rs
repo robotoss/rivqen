@@ -125,12 +125,15 @@ fn style() -> impl Strategy<Value = Style> {
         )
 }
 
-/// A `CacheControl` that a field can express. An invalid freshness with
-/// all three numbers needs a syntax error, which clears `public`.
+/// A `CacheControl` that a field can express. A syntax error clears
+/// `public` and `valid_private` and sets `invalid_freshness`. Two values
+/// need one: an invalid freshness with all three numbers, and `private`
+/// without `valid_private`.
 fn cache_control() -> impl Strategy<Value = CacheControl> {
     let number = prop_oneof![Just(None), (0..=CAP).prop_map(Some)];
     (
         (
+            any::<bool>(),
             any::<bool>(),
             any::<bool>(),
             any::<bool>(),
@@ -144,23 +147,25 @@ fn cache_control() -> impl Strategy<Value = CacheControl> {
     )
         .prop_map(
             |(
-                (no_store, no_cache, private, public, must_revalidate),
+                (no_store, no_cache, private, consent, public, must_revalidate),
                 max_age,
                 swr,
                 sie,
                 invalid,
             )| {
                 let all_numbers = max_age.is_some() && swr.is_some() && sie.is_some();
+                let syntax_error = (invalid && all_numbers) || (private && !consent);
                 CacheControl {
                     no_store,
                     no_cache,
                     private,
-                    public: public && !(invalid && all_numbers),
+                    valid_private: private && !syntax_error,
+                    public: public && !syntax_error,
                     must_revalidate,
                     max_age,
                     stale_while_revalidate: swr,
                     stale_if_error: sie,
-                    invalid_freshness: invalid,
+                    invalid_freshness: invalid || syntax_error,
                 }
             },
         )
@@ -214,10 +219,14 @@ fn serialize(value: &CacheControl, style: &Style) -> Vec<String> {
             None => free_slot = free_slot.or(Some(directive)),
         }
     }
+    // `private` that is no consent: only a syntax error gives it.
+    let syntax_error = value.private && !value.valid_private;
     if value.invalid_freshness {
         match free_slot {
-            Some(directive) => members.push(format!("{}=x", name(directive))),
-            None => members.push("bad member".to_owned()),
+            Some(directive) if !syntax_error => {
+                members.push(format!("{}=x", name(directive)));
+            }
+            _ => members.push("bad member".to_owned()),
         }
     }
     if style.split_lines {
@@ -355,6 +364,8 @@ proptest! {
         {
             prop_assert!(seconds <= CAP);
         }
+        // The permission implies the restrictive flag.
+        prop_assert!(!parsed.valid_private || parsed.private);
         // The order of the field lines does not matter.
         let mut reversed = values.clone();
         reversed.reverse();
@@ -399,6 +410,8 @@ proptest! {
         let broken = cc(&with);
         prop_assert!(broken.invalid_freshness);
         prop_assert!(!broken.public);
+        // A syntax error on any line is no consent (H-150, DL-207).
+        prop_assert!(!broken.valid_private);
         prop_assert_eq!(broken.max_age, base.max_age);
         prop_assert_eq!(broken.no_store, base.no_store);
         prop_assert_eq!(broken.private, base.private);

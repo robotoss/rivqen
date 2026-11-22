@@ -11,7 +11,7 @@
 //! <root>/schema-1/tmp/<file-id>.tmp
 //! ```
 
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self, DirBuilder, File, OpenOptions};
 use std::io::{self, ErrorKind, Read, Write};
 use std::path::{Path, PathBuf};
 
@@ -123,9 +123,10 @@ pub(super) fn sync_dir(dir: &Path, op: &'static str) -> Result<(), StoreError> {
         .map_err(|_| unavailable(op))
 }
 
-/// Creates the directory `dir` when it does not exist and then syncs its
-/// parent, so the new entry is durable. An existing entry that is not a
-/// directory (also a symbolic link) is refused.
+/// Creates the directory `dir` when it does not exist (mode 0700 on unix)
+/// and then syncs its parent, so the new entry is durable. An existing
+/// entry that is not a directory (also a symbolic link) is refused. The
+/// mode of an existing directory is not changed.
 pub(super) fn ensure_dir(dir: &Path, op: &'static str) -> Result<(), StoreError> {
     let missing = match fs::symlink_metadata(dir) {
         Ok(meta) if meta.is_dir() => return Ok(()),
@@ -135,7 +136,14 @@ pub(super) fn ensure_dir(dir: &Path, op: &'static str) -> Result<(), StoreError>
     if !missing {
         return Err(unavailable(op));
     }
-    match fs::create_dir(dir) {
+    let mut builder = DirBuilder::new();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        // The entries are sealed; the mode only keeps other users out.
+        builder.mode(0o700);
+    }
+    match builder.create(dir) {
         Ok(()) => {}
         Err(error) if error.kind() == ErrorKind::AlreadyExists => return Ok(()),
         Err(_) => return Err(unavailable(op)),
@@ -168,14 +176,21 @@ pub(super) fn write_new(path: &Path, bytes: &[u8], op: &'static str) -> Result<F
     Ok(file)
 }
 
-/// Removes the file at `path`. A file that is gone already is not an
-/// error: the goal of the call holds.
-pub(super) fn remove_file(path: &Path, op: &'static str) -> Result<(), StoreError> {
-    match fs::remove_file(path) {
-        Ok(()) => Ok(()),
-        Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
-        Err(_) => Err(unavailable(op)),
-    }
+/// Removes an entry that no row names: the new file of a commit that did
+/// not reach its commit point or was refused, the file of a row that a
+/// committed transaction removed, or an entry of `files/` that recovery
+/// finds with no row. A directory goes with its content; a link is removed,
+/// never followed. True when the entry is gone (also when it was gone
+/// before).
+///
+/// The error of the removal is not given to the caller: the call that
+/// removes the file has its own result (the commit stands, the read gives
+/// `Corrupted`, the list gives its entries, recovery gives its report),
+/// and a file that stays is an orphan that the next recovery removes
+/// (ADR-004 section 4, step 3: every file that no row names). This is how
+/// the error is handled.
+pub(super) fn remove_unnamed(path: &Path, is_dir: bool) -> bool {
+    remove_entry(path, is_dir, "driver.remove_unnamed").is_ok()
 }
 
 /// Removes the entry at `path` without following a symbolic link: a

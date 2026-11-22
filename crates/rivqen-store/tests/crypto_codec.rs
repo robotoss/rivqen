@@ -253,6 +253,7 @@ fn sample_policy() -> EntryPolicy {
             no_store: false,
             no_cache: true,
             private: false,
+            valid_private: false,
             public: true,
             must_revalidate: false,
             max_age: Some(60),
@@ -270,8 +271,28 @@ fn sample_policy() -> EntryPolicy {
     }
 }
 
+/// The host of the sample rows.
+const HOST: &str = "shop.example.com";
+/// The store time of the sample rows.
+const STORED_AT: u64 = 1_700_000_000;
+/// The offset of the protocol byte: the format byte, the host with its
+/// length, the store time.
+const PROTOCOL_AT: usize = 1 + 8 + HOST.len() + 8;
+
+/// The head of a row plain text up to the protocol byte, by hand.
+fn row_head(protocol: u8) -> Vec<u8> {
+    let mut out = vec![ROW_FORMAT];
+    lp(&mut out, HOST.as_bytes());
+    u64be(&mut out, STORED_AT);
+    out.push(protocol);
+    assert_eq!(out.len(), PROTOCOL_AT + 1);
+    out
+}
+
 fn sample_row() -> RowContent {
     RowContent {
+        host: HOST.to_owned(),
+        stored_at: UnixTime(STORED_AT),
         protocol: Protocol::Legacy,
         vary: vec![
             VaryEntry {
@@ -295,7 +316,8 @@ fn sample_row() -> RowContent {
 
 /// The policy part of `sample_policy`, by hand.
 fn sample_policy_bytes(out: &mut Vec<u8>) {
-    out.extend_from_slice(&[0, 1, 0, 1, 0]);
+    // no_store, no_cache, private, valid_private, public, must_revalidate.
+    out.extend_from_slice(&[0, 1, 0, 0, 1, 0]);
     out.push(1);
     u64be(out, 60);
     out.push(0);
@@ -316,7 +338,7 @@ fn sample_policy_bytes(out: &mut Vec<u8>) {
 
 /// The bytes of `sample_row`, written by hand from the layout.
 fn sample_row_bytes() -> Vec<u8> {
-    let mut out = vec![ROW_FORMAT, 0];
+    let mut out = row_head(0);
     u64be(&mut out, 2);
     lp(&mut out, b"accept-language");
     out.push(1);
@@ -336,6 +358,7 @@ fn sample_row_bytes() -> Vec<u8> {
 
 #[test]
 fn crypto_codec_row_layout() {
+    assert_eq!(ROW_FORMAT, 2);
     assert_eq!(sample_row().encode(), sample_row_bytes());
     assert_eq!(
         decode_row(&sample_row_bytes(), &limits()).unwrap(),
@@ -349,16 +372,52 @@ fn crypto_codec_row_of_entry_meta() {
     let meta = EntryMeta {
         key: CacheKey::from_bytes([3; 32]),
         partition: Partition::Public,
-        host: "shop.example.com".to_owned(),
+        host: HOST.to_owned(),
         protocol: row.protocol,
         vary: row.vary.clone(),
         validators: row.validators.clone(),
         policy: row.policy,
-        stored_at: UnixTime(1),
+        stored_at: UnixTime(STORED_AT),
         last_used_at: UnixTime(2),
     };
-    // The address, the host and the times are not in the row.
+    // The address and `last_used_at` are not in the row; the host and the
+    // store time are.
     assert_eq!(encode_row(&meta, &row.fields), sample_row_bytes());
+}
+
+#[test]
+fn crypto_codec_row_format_1_does_not_decode() {
+    // The format 1 layout had the protocol right after the format byte.
+    let mut old = vec![1, 0];
+    old.extend_from_slice(&sample_row_bytes()[PROTOCOL_AT + 1..]);
+    assert_eq!(decode_row(&old, &limits()), Err(row_error()));
+    let mut bytes = sample_row_bytes();
+    bytes[0] = 1;
+    assert_eq!(decode_row(&bytes, &limits()), Err(row_error()));
+}
+
+#[test]
+fn crypto_codec_row_host_and_store_time() {
+    // The host is at most 253 bytes (`meta::MAX_HOST_BYTES`), with any
+    // decode limits; the store time takes every `u64`.
+    let mut row = sample_row();
+    row.stored_at = UnixTime(u64::MAX);
+    row.host = "a".repeat(253);
+    assert_eq!(decode_row(&row.encode(), &limits()).unwrap(), row);
+    let huge = DecodeLimits {
+        max_header_bytes: u64::MAX,
+        max_headers_total_bytes: u64::MAX,
+        ..limits()
+    };
+    row.host.push('a');
+    assert_eq!(decode_row(&row.encode(), &huge), Err(row_error()));
+    // An empty host decodes: the clear column decides what it must be.
+    row.host.clear();
+    assert_eq!(decode_row(&row.encode(), &limits()).unwrap(), row);
+    // A host that is not UTF-8.
+    let mut bytes = sample_row_bytes();
+    bytes[1 + 8] = 0xff;
+    assert_eq!(decode_row(&bytes, &limits()), Err(row_error()));
 }
 
 #[test]
@@ -376,6 +435,7 @@ fn crypto_codec_row_round_trip_of_each_variant() {
         no_store: true,
         no_cache: false,
         private: true,
+        valid_private: true,
         public: false,
         must_revalidate: true,
         max_age: None,
@@ -420,9 +480,9 @@ fn assert_bad_byte(at: usize, value: u8) {
 fn crypto_codec_row_rejects_unknown_tags() {
     // Format, protocol, the digest tag of the first Vary entry.
     assert_bad_byte(0, 0);
-    assert_bad_byte(0, 2);
-    assert_bad_byte(1, 2);
-    let vary_tag = 2 + 8 + 8 + 15;
+    assert_bad_byte(0, 3);
+    assert_bad_byte(PROTOCOL_AT, 2);
+    let vary_tag = PROTOCOL_AT + 1 + 8 + 8 + 15;
     assert_eq!(sample_row_bytes()[vary_tag], 1);
     assert_bad_byte(vary_tag, 2);
     // The etag option, the rqp option and each boolean and option of the
@@ -431,12 +491,41 @@ fn crypto_codec_row_rejects_unknown_tags() {
     assert_eq!(sample_row_bytes()[etag], 1);
     assert_bad_byte(etag, 2);
     let policy = etag + 1 + 8 + 3 + 1 + 1;
-    for at in [0, 1, 2, 3, 4, 5, 14, 15, 24] {
+    for at in [0, 1, 2, 3, 4, 5, 6, 15, 16, 25] {
         assert_bad_byte(policy + at, 2);
     }
     // The expires tag: 3.
-    assert_eq!(sample_row_bytes()[policy + 25], 2);
-    assert_bad_byte(policy + 25, 3);
+    assert_eq!(sample_row_bytes()[policy + 26], 2);
+    assert_bad_byte(policy + 26, 3);
+}
+
+#[test]
+fn crypto_codec_row_valid_private_only_with_private() {
+    // `private`, then `valid_private`: the bytes 2 and 3 of the policy.
+    let policy = PROTOCOL_AT + 1 + 8 + (8 + 15 + 1 + 32) + (8 + 1 + 1);
+    let policy = policy + (1 + 8 + 3) + 1 + 1;
+    let bytes = sample_row_bytes();
+    assert_eq!(bytes[policy..policy + 6], [0, 1, 0, 0, 1, 0]);
+    // Both set: decodes, and `fits` agrees.
+    let mut row = sample_row();
+    row.policy.cache_control.private = true;
+    row.policy.cache_control.valid_private = true;
+    assert_fits(&row, &limits(), true);
+    let mut both = bytes.clone();
+    both[policy + 2] = 1;
+    both[policy + 3] = 1;
+    assert_eq!(both, row.encode());
+    // `private` only: decodes.
+    row.policy.cache_control.valid_private = false;
+    assert_fits(&row, &limits(), true);
+    // `valid_private` without `private`: no value of the parser, no
+    // encoding.
+    row.policy.cache_control.private = false;
+    row.policy.cache_control.valid_private = true;
+    assert_fits(&row, &limits(), false);
+    let mut alone = bytes;
+    alone[policy + 3] = 1;
+    assert_eq!(decode_row(&alone, &limits()), Err(row_error()));
 }
 
 #[test]
@@ -449,7 +538,7 @@ fn crypto_codec_row_rejects_text_that_is_not_utf8() {
 
 #[test]
 fn crypto_codec_row_rejects_counts_over_the_input() {
-    let mut bytes = vec![ROW_FORMAT, 0];
+    let mut bytes = row_head(0);
     u64be(&mut bytes, u64::MAX);
     assert_eq!(decode_row(&bytes, &limits()), Err(row_error()));
     let mut bytes = sample_row_bytes();
@@ -461,7 +550,7 @@ fn crypto_codec_row_rejects_counts_over_the_input() {
     assert_eq!(decode_row(&bytes, &limits()), Err(row_error()));
 }
 
-fn row_with(vary: &[&str], fields: &[(&str, &str)]) -> Vec<u8> {
+fn row_content_with(vary: &[&str], fields: &[(&str, &str)]) -> RowContent {
     let mut row = sample_row();
     row.vary = vary
         .iter()
@@ -474,7 +563,17 @@ fn row_with(vary: &[&str], fields: &[(&str, &str)]) -> Vec<u8> {
         .iter()
         .map(|(name, value)| FieldLine::new(*name, *value))
         .collect();
-    row.encode()
+    row
+}
+
+/// `row` decodes with `limits` and `fits` says so, or neither.
+fn assert_fits(row: &RowContent, limits: &DecodeLimits, expected: bool) {
+    assert_eq!(row.fits(limits), expected, "{row:?}");
+    assert_eq!(
+        decode_row(&row.encode(), limits).is_ok(),
+        expected,
+        "{row:?}"
+    );
 }
 
 #[test]
@@ -486,40 +585,61 @@ fn crypto_codec_row_limits() {
     };
     // At the limits: a field line of 6 bytes, 10 bytes of lines, 10 bytes
     // of Vary names, a validator of 6 bytes.
-    assert!(
-        decode_row(
-            &row_with(&["abcdef", "ghij"], &[("ab", "cdef"), ("a", "b")]),
-            &small
-        )
-        .is_ok()
+    assert_fits(
+        &row_content_with(&["abcdef", "ghij"], &[("ab", "cdef"), ("a", "b")]),
+        &small,
+        true,
     );
-    for bytes in [
+    for row in [
         // A Vary name of 7 bytes.
-        row_with(&["abcdefg"], &[]),
+        row_content_with(&["abcdefg"], &[]),
         // Vary names of 11 bytes together.
-        row_with(&["abcdef", "ghijk"], &[]),
+        row_content_with(&["abcdef", "ghijk"], &[]),
         // A field line of 7 bytes: each part is within the limit.
-        row_with(&[], &[("abc", "defg")]),
+        row_content_with(&[], &[("abc", "defg")]),
         // A name or a value of 7 bytes.
-        row_with(&[], &[("abcdefg", "")]),
-        row_with(&[], &[("", "abcdefg")]),
+        row_content_with(&[], &[("abcdefg", "")]),
+        row_content_with(&[], &[("", "abcdefg")]),
         // Lines of 11 bytes together.
-        row_with(&[], &[("abc", "def"), ("ab", "cde")]),
+        row_content_with(&[], &[("abc", "def"), ("ab", "cde")]),
     ] {
-        assert_eq!(decode_row(&bytes, &small), Err(row_error()));
-        assert!(decode_row(&bytes, &limits()).is_ok());
+        assert_fits(&row, &small, false);
+        assert_fits(&row, &limits(), true);
     }
-    // The etag (6 bytes is the limit).
+    // The etag and the template tag (6 bytes is the limit).
     let mut row = sample_row();
     row.vary.clear();
     row.fields.clear();
     row.validators.etag = Some("abcdef".to_owned());
-    assert!(decode_row(&row.encode(), &small).is_ok());
+    assert_fits(&row, &small, true);
     row.validators.etag = Some("abcdefg".to_owned());
-    assert_eq!(decode_row(&row.encode(), &small), Err(row_error()));
+    assert_fits(&row, &small, false);
     row.validators.etag = None;
+    row.validators.template_tag = Some("abcdef".to_owned());
+    assert_fits(&row, &small, true);
     row.validators.template_tag = Some("abcdefg".to_owned());
-    assert_eq!(decode_row(&row.encode(), &small), Err(row_error()));
+    assert_fits(&row, &small, false);
+}
+
+#[test]
+fn crypto_codec_row_fits_host_and_blocks() {
+    let mut row = sample_row();
+    row.host = "a".repeat(253);
+    assert_fits(&row, &limits(), true);
+    row.host.push('a');
+    assert_fits(&row, &limits(), false);
+    // The blocks of an RQP snapshot: the limit of the caller.
+    let mut row = rqp_content(BlockFormat::Html, false);
+    let one = DecodeLimits {
+        max_blocks: 1,
+        ..limits()
+    };
+    assert_fits(&row, &one, true);
+    let snapshot = row.validators.rqp.as_mut().unwrap();
+    let block = snapshot.blocks[0].clone();
+    snapshot.blocks.push(block);
+    assert_fits(&row, &one, false);
+    assert_fits(&row, &limits(), true);
 }
 
 fn digest(byte: u8) -> Sha256Digest {
@@ -531,7 +651,7 @@ fn digest(byte: u8) -> Sha256Digest {
 /// With `members`, the snapshot has `policy` (public, 600 s, offline) and
 /// `limits` (65 536 bytes).
 fn rqp_row_with(id: &[u8], format: u8, count: u64, members: bool) -> Vec<u8> {
-    let mut out = vec![ROW_FORMAT, 1];
+    let mut out = row_head(1);
     u64be(&mut out, 0);
     out.push(0);
     out.push(0);
@@ -565,6 +685,8 @@ fn rqp_row(id: &[u8], format: u8, count: u64) -> Vec<u8> {
 /// The value of `rqp_row_with(b"main", format, 1, members)`.
 fn rqp_content(format: BlockFormat, members: bool) -> RowContent {
     RowContent {
+        host: HOST.to_owned(),
+        stored_at: UnixTime(STORED_AT),
         protocol: Protocol::Rqp,
         vary: Vec::new(),
         validators: Validators {
@@ -641,7 +763,7 @@ fn crypto_codec_row_rejects_a_bad_rqp_block() {
     );
     // A tag of the mode, the policy or the limits that is not 00 or 01.
     let good = rqp_row_with(b"main", 0, 1, true);
-    let policy_at = 2 + 8 + 3 + 64 + 8 + (8 + 4 + 1 + 32);
+    let policy_at = PROTOCOL_AT + 1 + 8 + 3 + 64 + 8 + (8 + 4 + 1 + 32);
     for (at, value) in [
         (0, 2),
         (1, 2),

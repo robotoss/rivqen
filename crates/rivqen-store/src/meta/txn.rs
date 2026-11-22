@@ -409,15 +409,18 @@ impl<'conn> MetaTxn<'conn> {
     ///
     /// # Errors
     ///
-    /// `Unavailable` when SQLite fails or the new epoch would be above
+    /// `Unavailable` when SQLite fails, when the write changed another
+    /// number of rows than one, or when the new epoch would be above
     /// `i64::MAX` (nothing is written then); `Corrupted` when the stored
     /// value does not decode.
     pub fn bump_partition_epoch(&mut self, partition: Partition) -> Result<Epoch, StoreError> {
         const OP: &str = "meta.bump_partition_epoch";
         let (next, column) = increment(self.partition_epoch(partition)?.0, OP)?;
-        self.tx
+        let changed = self
+            .tx
             .execute(UPSERT_EPOCH, params![partition_bytes(partition), column])
             .map_err(|_| unavailable(OP))?;
+        one_row(changed, OP)?;
         Ok(Epoch(next))
     }
 
@@ -570,11 +573,19 @@ impl<'conn> MetaTxn<'conn> {
             .tx
             .execute(UPDATE_COUNTER, params![name, value])
             .map_err(|_| unavailable(op))?;
-        if changed == 1 {
-            Ok(())
-        } else {
-            Err(corrupted(op))
-        }
+        one_row(changed, op)
+    }
+}
+
+/// `Ok` when a write changed exactly one row. Any other count is
+/// `Unavailable`: the caller's transaction rolls back and commits nothing.
+/// The schema check at open allows no trigger, so another count is not
+/// expected.
+fn one_row(changed: usize, op: &'static str) -> Result<(), StoreError> {
+    if changed == 1 {
+        Ok(())
+    } else {
+        Err(unavailable(op))
     }
 }
 

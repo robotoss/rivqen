@@ -234,9 +234,12 @@ fn rqp_credentialed(response: CacheControl) -> Exchange {
     }
 }
 
+/// `private` and `public` as the parser gives them for a valid line: a
+/// `private` member sets both `private` flags.
 fn directive(private: bool, public: bool) -> CacheControl {
     CacheControl {
         private,
+        valid_private: private,
         public,
         ..CacheControl::default()
     }
@@ -314,6 +317,51 @@ fn policy_store_rqp_consent_needs_a_valid_directive() {
     assert!(!response.public, "the parser clears public");
     let e = rqp_credentialed(response);
     assert_eq!(decide(&e), skip(SkipReason::Credentialed));
+}
+
+#[test]
+fn policy_store_rqp_consent_needs_a_valid_private() {
+    // Security review L2, H-150: `private` that only the DL-088 split found
+    // (a broken line) restricts, but is no consent.
+    let restrictive_only = CacheControl {
+        private: true,
+        ..CacheControl::default()
+    };
+    assert_eq!(
+        decide(&rqp_credentialed(restrictive_only)),
+        skip(SkipReason::Credentialed)
+    );
+    for value in [
+        "private=",
+        "no-transform private",
+        "max-age=5, no-cache=\"a, private",
+        "private, a b",
+    ] {
+        let response = parse_cache_control(&[FieldLine::new("Cache-Control", value)]);
+        assert!(response.private, "{value:?}");
+        let e = rqp_credentialed(response);
+        assert_eq!(decide(&e), skip(SkipReason::Credentialed), "{value:?}");
+    }
+    let two_lines = parse_cache_control(&[
+        FieldLine::new("Cache-Control", "private"),
+        FieldLine::new("Cache-Control", "a b"),
+    ]);
+    assert_eq!(
+        decide(&rqp_credentialed(two_lines)),
+        skip(SkipReason::Credentialed)
+    );
+    // Twins: a valid `private`, bare or qualified, is consent.
+    for value in ["private", "private=\"set-cookie\"", "no-transform, private"] {
+        let response = parse_cache_control(&[FieldLine::new("Cache-Control", value)]);
+        let e = rqp_credentialed(response);
+        assert_eq!(decide(&e), StoreDecision::Store, "{value:?}");
+    }
+    // Legacy mode does not read the directive (CL-25).
+    let legacy = Exchange {
+        protocol: Protocol::Legacy,
+        ..rqp_credentialed(restrictive_only)
+    };
+    assert_eq!(decide(&legacy), StoreDecision::Store);
 }
 
 #[test]

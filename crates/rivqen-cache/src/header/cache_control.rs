@@ -22,6 +22,13 @@
 //!    record WP-07 S1, section 5). On a line with a syntax error,
 //!    `no-cache`, `private` and `must-revalidate` also count this way: the
 //!    broken member can hide them.
+//!
+//! A flag that restricts the cache may come from either reading. A flag that
+//! permits more (`public`, and `valid_private`: the consent of H-150) comes
+//! only from the grammar of step 1, and only when no member of any line has
+//! a syntax error. So `private` and `valid_private` differ: `private=`,
+//! `no-transform private` and an unclosed quote that holds `private` set
+//! `private` (restrictive) but not `valid_private`.
 
 use rivqen_model::http::FieldLine;
 
@@ -125,6 +132,9 @@ struct Reader<'a> {
     no_store: bool,
     no_cache: bool,
     private: bool,
+    /// The grammar read a `private` member (the split of DL-088 never sets
+    /// this flag).
+    grammar_private: bool,
     public: bool,
     must_revalidate: bool,
     /// Some member of some line does not match the grammar.
@@ -174,6 +184,9 @@ impl<'a> Reader<'a> {
         } else if name.eq_ignore_ascii_case("private") {
             // Also the qualified form (RFC 9111 section 5.2.2.7, note).
             self.private = true;
+            // Only the grammar sets the permission. An argument that is not
+            // valid is a syntax error, which clears it in `finish`.
+            self.grammar_private = true;
         } else if name.eq_ignore_ascii_case("must-revalidate") {
             // An argument is not allowed; the directive still counts.
             self.must_revalidate = true;
@@ -203,6 +216,8 @@ impl<'a> Reader<'a> {
             no_store: self.no_store,
             no_cache: self.no_cache,
             private: self.private,
+            // The permissive flags: no syntax error anywhere (H-150).
+            valid_private: self.grammar_private && !self.syntax_error,
             public: self.public && !self.syntax_error,
             must_revalidate: self.must_revalidate,
             max_age: self.max_age.seconds(),

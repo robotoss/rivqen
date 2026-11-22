@@ -358,5 +358,41 @@
     "credentials": "unknown",
     "authenticated_cache": true,
     "expect": {"store": false, "reason": "credentialed"}
+  },
+  {
+    "id": "POL-STORE-031",
+    "kind": "store",
+    "source": ["cache index §3", "DL-207"],
+    "note": "Credentials present, authenticated caching on, and private= with an empty argument: not a valid private, so no consent (H-150).",
+    "response_fields": [["cache-control", "private="]],
+    "request_fields": [],
+    "status": 200,
+    "credentials": "present",
+    "authenticated_cache": true,
+    "expect": {"store": false, "reason": "credentialed"}
+  },
+  {
+    "id": "POL-STORE-032",
+    "kind": "store",
+    "source": ["cache index §3", "DL-207"],
+    "note": "Credentials present, authenticated caching on, and no-transform private without a comma: not a valid private, so no consent (H-150).",
+    "response_fields": [["cache-control", "no-transform private"]],
+    "request_fields": [],
+    "status": 200,
+    "credentials": "present",
+    "authenticated_cache": true,
+    "expect": {"store": false, "reason": "credentialed"}
+  },
+  {
+    "id": "POL-STORE-033",
+    "kind": "store",
+    "source": ["cache index §3", "DL-207"],
+    "note": "Twin: credentials present, authenticated caching on, and the qualified form private=\"set-cookie\": a valid private, store (H-150).",
+    "response_fields": [["cache-control", "private=\"set-cookie\""]],
+    "request_fields": [],
+    "status": 200,
+    "credentials": "present",
+    "authenticated_cache": true,
+    "expect": {"store": true}
   }
 ]

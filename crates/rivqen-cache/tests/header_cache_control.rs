@@ -30,12 +30,28 @@ const INVALID: CacheControl = CacheControl {
     no_store: false,
     no_cache: false,
     private: false,
+    valid_private: false,
     public: false,
     must_revalidate: false,
     max_age: None,
     stale_while_revalidate: None,
     stale_if_error: None,
     invalid_freshness: true,
+};
+
+/// `private` read by the grammar on a field value with no syntax error: the
+/// restrictive and the permissive flag.
+const PRIVATE: CacheControl = CacheControl {
+    private: true,
+    valid_private: true,
+    no_store: false,
+    no_cache: false,
+    public: false,
+    must_revalidate: false,
+    max_age: None,
+    stale_while_revalidate: None,
+    stale_if_error: None,
+    invalid_freshness: false,
 };
 
 #[test]
@@ -58,6 +74,7 @@ fn header_cache_control_reads_each_directive() {
             no_store: true,
             no_cache: true,
             private: true,
+            valid_private: true,
             public: true,
             must_revalidate: true,
             max_age: Some(60),
@@ -81,13 +98,7 @@ fn header_cache_control_reads_each_directive() {
             ..CacheControl::default()
         }
     );
-    assert_eq!(
-        one("private"),
-        CacheControl {
-            private: true,
-            ..CacheControl::default()
-        }
-    );
+    assert_eq!(one("private"), PRIVATE);
     assert_eq!(
         one("public"),
         CacheControl {
@@ -202,13 +213,7 @@ fn header_cache_control_splits_at_commas_outside_quoted_strings() {
     assert_eq!(escaped.max_age, Some(3));
     assert!(!escaped.invalid_freshness);
     // RFC 9111 section 5.2.3 example: the unknown directive is ignored.
-    assert_eq!(
-        one("private, community=\"UCI\""),
-        CacheControl {
-            private: true,
-            ..CacheControl::default()
-        }
-    );
+    assert_eq!(one("private, community=\"UCI\""), PRIVATE);
 }
 
 #[test]
@@ -380,11 +385,11 @@ fn header_cache_control_invalid_leaves_the_other_directives() {
     assert_eq!(
         parsed,
         CacheControl {
-            private: true,
             max_age: Some(5),
             stale_while_revalidate: Some(6),
             invalid_freshness: true,
-            ..CacheControl::default()
+            // `stale-if-error=x` is valid grammar, not a syntax error.
+            ..PRIVATE
         }
     );
 }
@@ -415,43 +420,50 @@ fn header_cache_control_invalid_quoted_pair_in_a_number() {
     assert_eq!(one(r#"max-age="1\0""#), INVALID);
 }
 
+/// One member with a syntax error of each kind, after `{d}, ` where `{d}`
+/// is a directive that permits (`public` or `private`).
+const SYNTAX_ERRORS: [&str; 17] = [
+    // White space around `=` (no BWS in the grammar).
+    "max-age =5",
+    "max-age= 5",
+    // A name that is not a token.
+    "a b",
+    "x\"y\"",
+    "(comment)",
+    "max-age=5;foo",
+    // Text after the closing quote.
+    "no-cache=\"a\"b",
+    // An unclosed quoted-string.
+    "no-cache=\"a",
+    // A control byte or DEL inside a quoted-string.
+    "foo=\"a\u{1}\"",
+    "foo=\"a\u{7f}\"",
+    // A quoted-pair with a control byte or DEL.
+    "foo=\"a\\\u{1}\"",
+    "foo=\"a\\\u{7f}\"",
+    // An argument that is neither a token nor a quoted-string.
+    "foo=a b",
+    "foo=a\"b\"",
+    "foo=",
+    // No name.
+    "=5",
+    "=",
+];
+
+/// Each delimiter of RFC 9110 section 5.6.2 that does not split.
+const DELIMITERS: [&str; 14] = [
+    "(", ")", "/", ":", ";", "<", ">", "?", "@", "[", "\\", "]", "{", "}",
+];
+
 #[test]
 fn header_cache_control_invalid_syntax_sets_invalid_freshness_and_clears_public() {
-    for value in [
-        // White space around `=` (no BWS in the grammar).
-        "public, max-age =5",
-        "public, max-age= 5",
-        // A name that is not a token.
-        "public, a b",
-        "public, x\"y\"",
-        "public, (comment)",
-        "public, max-age=5;foo",
-        // Text after the closing quote.
-        "public, no-cache=\"a\"b",
-        // An unclosed quoted-string.
-        "public, no-cache=\"a",
-        // A control byte or DEL inside a quoted-string.
-        "public, foo=\"a\u{1}\"",
-        "public, foo=\"a\u{7f}\"",
-        // A quoted-pair with a control byte or DEL.
-        "public, foo=\"a\\\u{1}\"",
-        "public, foo=\"a\\\u{7f}\"",
-        // An argument that is neither a token nor a quoted-string.
-        "public, foo=a b",
-        "public, foo=a\"b\"",
-        "public, foo=",
-        // No name.
-        "public, =5",
-        "public, =",
-    ] {
-        let parsed = one(value);
+    for error in SYNTAX_ERRORS {
+        let value = format!("public, {error}");
+        let parsed = one(&value);
         assert!(parsed.invalid_freshness, "{value}");
         assert!(!parsed.public, "{value}");
     }
-    // Each delimiter of RFC 9110 section 5.6.2 that does not split.
-    for delimiter in [
-        "(", ")", "/", ":", ";", "<", ">", "?", "@", "[", "\\", "]", "{", "}",
-    ] {
+    for delimiter in DELIMITERS {
         let value = format!("public, a{delimiter}b");
         let parsed = one(&value);
         assert!(parsed.invalid_freshness, "{value}");
@@ -603,4 +615,129 @@ fn header_cache_control_unclosed_quote_keeps_the_directive_name() {
     assert!(parsed.private);
     assert!(parsed.invalid_freshness);
     assert_eq!(parsed.max_age, Some(5));
+}
+
+// `valid_private`: the consent of the server (H-150, DL-207, security review
+// L2). Only the list grammar sets it, and any syntax error clears it;
+// `private` keeps its restrictive reading.
+
+#[test]
+fn header_cache_control_valid_private_bare() {
+    for value in ["private", "PRIVATE", " private ", "max-age=60, private"] {
+        let parsed = one(value);
+        assert!(parsed.valid_private, "{value:?}");
+        assert!(parsed.private, "{value:?}");
+    }
+    // Twin: no `private` member.
+    for value in [
+        "",
+        "max-age=60",
+        "public",
+        "privat",
+        "private-x",
+        "x-private",
+    ] {
+        assert!(!one(value).valid_private, "{value:?}");
+    }
+}
+
+#[test]
+fn header_cache_control_valid_private_qualified() {
+    // RFC 9111 section 5.2.2.7: the qualified form, a token or a
+    // quoted-string argument, counts.
+    for value in [
+        "private=\"set-cookie\"",
+        "private=set-cookie",
+        "private=\"set-cookie, x-a\"",
+        "private=\"\"",
+    ] {
+        assert_eq!(one(value), PRIVATE, "{value:?}");
+    }
+}
+
+#[test]
+fn header_cache_control_valid_private_empty_argument() {
+    // `private=`: the argument is not valid, a syntax error.
+    let parsed = one("private=");
+    assert!(parsed.private);
+    assert!(!parsed.valid_private);
+    assert!(parsed.invalid_freshness);
+    // The same for `private` with a broken quoted-string argument.
+    for value in ["private=\"a\"b", "private=a b", "private =x"] {
+        let parsed = one(value);
+        assert!(parsed.private, "{value:?}");
+        assert!(!parsed.valid_private, "{value:?}");
+    }
+}
+
+#[test]
+fn header_cache_control_valid_private_no_transform_private_without_a_comma() {
+    // One member `no-transform private`, not a token: a syntax error; the
+    // DL-088 split finds `private`.
+    let parsed = one("no-transform private");
+    assert!(parsed.private);
+    assert!(!parsed.valid_private);
+    assert!(parsed.invalid_freshness);
+    // Twin with the comma: valid.
+    assert!(one("no-transform, private").valid_private);
+}
+
+#[test]
+fn header_cache_control_valid_private_unterminated_quote_with_private() {
+    for value in [
+        "max-age=5, no-cache=\"a, private",
+        "foo=\"a private",
+        "private, foo=\"a",
+    ] {
+        let parsed = one(value);
+        assert!(parsed.private, "{value:?}");
+        assert!(!parsed.valid_private, "{value:?}");
+    }
+    // The DL-088 name is the text before `=`: `foo="private` names `foo`.
+    // Neither flag.
+    let hidden = one("foo=\"private");
+    assert!(!hidden.private);
+    assert!(!hidden.valid_private);
+}
+
+#[test]
+fn header_cache_control_valid_private_two_lines_one_broken() {
+    // The error of any line clears the consent of every line.
+    for lines in [["private", "a b"], ["a b", "private"], ["private", "x=\"y"]] {
+        let parsed = cc(&lines);
+        assert!(parsed.private, "{lines:?}");
+        assert!(!parsed.valid_private, "{lines:?}");
+        assert!(parsed.invalid_freshness, "{lines:?}");
+    }
+    // Twin: two valid lines.
+    assert!(cc(&["private", "max-age=5"]).valid_private);
+    assert!(cc(&["max-age=5", "private"]).valid_private);
+}
+
+#[test]
+fn header_cache_control_valid_private_cleared_by_every_syntax_error() {
+    for error in SYNTAX_ERRORS {
+        for value in [format!("private, {error}"), format!("{error}, private")] {
+            let parsed = one(&value);
+            assert!(parsed.private, "{value}");
+            assert!(!parsed.valid_private, "{value}");
+            assert!(parsed.invalid_freshness, "{value}");
+        }
+    }
+    for delimiter in DELIMITERS {
+        let value = format!("private, a{delimiter}b");
+        assert!(!one(&value).valid_private, "{value}");
+    }
+}
+
+#[test]
+fn header_cache_control_valid_private_kept_by_a_freshness_value_that_is_not_valid() {
+    // `max-age=abc` and two different values are valid grammar (RFC 9111
+    // section 5.2): `invalid_freshness`, but no syntax error. The same holds
+    // for `public` (DL-197 item 2).
+    for value in ["private, max-age=abc", "private, max-age=1, max-age=2"] {
+        let parsed = one(value);
+        assert!(parsed.valid_private, "{value}");
+        assert!(parsed.invalid_freshness, "{value}");
+    }
 }

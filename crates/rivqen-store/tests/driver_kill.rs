@@ -381,6 +381,11 @@ fn run_and_kill_child(root: &Path, kind: Kind, step: CommitStep) {
         .spawn()
         .unwrap();
     let stdout = child.stdout.take().unwrap();
+    // `Child::wait` closes the stdin of the child before it waits. The
+    // child reads its stdin to block, so an early close lets it leave on
+    // its own before the signal ends it. Keep the handle until the child
+    // is gone.
+    let stdin = child.stdin.take();
     let (ready, wait) = mpsc::channel();
     let reader = std::thread::spawn(move || {
         for line in BufReader::new(stdout).lines() {
@@ -393,6 +398,7 @@ fn run_and_kill_child(root: &Path, kind: Kind, step: CommitStep) {
     let reached = wait.recv_timeout(CHILD_TIMEOUT);
     child.kill().unwrap();
     let status = child.wait().unwrap();
+    drop(stdin);
     reader.join().unwrap();
     assert!(
         reached.is_ok(),

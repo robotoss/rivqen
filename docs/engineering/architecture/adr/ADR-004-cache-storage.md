@@ -52,8 +52,12 @@ The steps are the values of `rivqen_cache::txn::CommitStep`.
 | `RemoveOld` | Unlinks the files that no row names; no sync | Not required: recovery removes them |
 
 - Only `Replace` writes a file. The other kinds do nothing in the first three steps.
-- The precondition check is inside the SQLite transaction of `CommitMeta` (DL-200). A refused transaction removes its promoted file.
-- `RevokePartition` first asks the key port to delete the key of the partition (ADR-011, crypto-shredding), then runs `CommitMeta`, then `RemoveOld`. A stop between the two leaves rows that no key can open: a read gives `CACHE_CORRUPTED` and removes the entry.
+- Before the first step the driver checks that the content and the row of a `Replace` decode with its limits and that the sealed row fits the `sealed` column ([DL-211](/engineering/plan/decision-log), DL-213). `UpdateFields` checks its new row inside its transaction. A failed check is `STORAGE_UNAVAILABLE` and writes nothing.
+- The precondition check is inside the SQLite transaction of `CommitMeta` (DL-200). A refused transaction removes its promoted file. A transaction that fails with a SQLite error keeps the file: SQLite can replay a commit at the next open, and recovery step 3 removes the file when no row names it.
+- `UpdateFields` on a row that does not open removes the row in the same transaction and gives `Refused(Entry)`.
+- `RevokePartition` first asks the key port to delete the key of the partition (ADR-011, crypto-shredding), then runs `CommitMeta`, then `RemoveOld`. `ClearSite` of all sites does the same with the key of `public`. When the key port fails, the driver still runs `CommitMeta` and `RemoveOld`: the rows go and the epoch grows. Then the call gives `STORAGE_UNAVAILABLE`, and the caller runs it again; the second run deletes the key. When the key is deleted and `CommitMeta` fails, the call gives `STORAGE_UNAVAILABLE` and the caller must run it again; until then the old rows stay, but no key opens them: a read gives `CACHE_CORRUPTED` and removes the entry.
+- After a transaction removes a row, a failed unlink of its file is not an error of the call: the file is an orphan for recovery.
+- On Unix the driver creates its directories with mode 0700 and its files, also `meta.sqlite`, with mode 0600.
 - All calls of one driver are serialized by `&mut self`. A second driver on the same directory is not supported; the adapter opens one.
 
 ### 3. Metadata
@@ -62,15 +66,19 @@ SQLite settings: `journal_mode=WAL`, `synchronous=FULL`, `fullfsync=ON`, `checkp
 
 | Table | Columns | Notes |
 |---|---|---|
-| `entry` | `partition` (blob: `00` for `public`, or `01` and the 32 id bytes), `key` (blob 32), `host` (text), `version` (integer), `file_id` (blob 16), `content_bytes` (integer), `stored_at`, `last_used_at` (integer), `sealed` (blob) | Primary key (`partition`, `key`). `sealed` holds the protocol, the `Vary` entries, the validators, the freshness inputs and the page fields, sealed as ADR-011 defines |
+| `entry` | `partition` (blob: `00` for `public`, or `01` and the 32 id bytes), `key` (blob 32), `host` (text), `version` (integer), `file_id` (blob 16), `content_bytes` (integer), `stored_at`, `last_used_at` (integer), `sealed` (blob) | Primary key (`partition`, `key`). `sealed` holds the host, the store time, the protocol, the `Vary` entries, the validators, the freshness inputs and the page fields, sealed as ADR-011 defines |
 | `partition_epoch` | `partition`, `epoch` | A row is never deleted |
 | `disabled_key` | `partition`, `key`, `until` | Recovery removes the rows whose time is before `now` |
 | `counter` | `name`, `value` | `version` (last entry version), `site_epoch`, `partition_epoch_base` (the epoch of a partition that has no row). Never reset while the database is kept |
 
 - The clear columns are what the driver needs without a key: the address, the host for the site clear ([DL-184](/engineering/plan/decision-log)), sizes and times for the quota. Everything else is in `sealed`.
+- Every open of a row (read, list, update) compares the host and the store time in `sealed` with the clear columns. A difference is `CACHE_CORRUPTED`. `content_bytes` is compared with the decoded file at a read. `version` and `last_used_at` are not authenticated (DL-214).
 - The driver refuses a `Replace` whose host is not a lower-case ASCII host name or an IP literal (S1 security review L4).
 - A decode failure of a row or of `sealed` is `CACHE_CORRUPTED`: the driver removes the entry and keeps every other entry (R-CACHE-06).
 - When `meta.sqlite` is not a database, fails `PRAGMA quick_check` or has an unknown format, the driver removes the content of the schema directory and starts empty. No counter of the failed database is kept: the version counter, the site epoch and the base epoch of the partitions start at random 62-bit values, so a writer with an old epoch is always refused (S1 security review R2, DL-209). A marker file (`meta.reset`) makes a reset that did not finish run again. A busy database or an I/O error is `STORAGE_UNAVAILABLE` and never starts a reset.
+- At open, `sqlite_schema` must hold exactly the four tables, with the text of their `CREATE TABLE` statements, and the automatic index of each primary key. Any other object (a trigger, a view, an index, a table) is handled as a database that fails its check. An epoch write or a counter write that does not change exactly one row is `STORAGE_UNAVAILABLE`, and nothing is committed.
+- When `meta.sqlite` does not exist or has no tables, and the schema directory holds anything other than an empty `tmp/` and empty directories in `files/`, the driver takes the reset path with random counters. Only a fresh directory starts at 0.
+- The reset marker is created with `create_new`. An existing marker that is not a regular file is `STORAGE_UNAVAILABLE`; it is never followed or truncated.
 - A `sealed` column is at most 1 MiB. A value above the SQLite integer range is refused; a time above it is stored as the largest value.
 
 ### 4. Recovery

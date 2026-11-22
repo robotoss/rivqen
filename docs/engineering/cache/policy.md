@@ -33,7 +33,7 @@ This page defines when a cached page is fresh, when Rivqen may show a stale page
 |---|---|
 | `no-store` | Counts with or without an argument (DL-088 item 3). Also counts when a split at every `,`, `;`, space and tab finds it (quotes not parsed; the name before `=` without `"` at its ends; legacy wire §10 item 5, DL-197, DL-202). So `private="a, no-store"` and `no-cache no-store` are `no-store` |
 | `no-cache` | Counts with or without field names (the qualified form counts as the plain form) |
-| `private` | Counts with or without field names |
+| `private` | Counts with or without field names. It restricts, and the DL-088 split of a line with a syntax error also finds it. `valid_private` (the consent of H-150) is set only when the list grammar reads a `private` member and no member of any line has a syntax error |
 | `must-revalidate` | Counts, also with an argument |
 | `public` | Counts only without an argument |
 | `max-age`, `stale-while-revalidate`, `stale-if-error` | delta-seconds, as a token or a quoted-string; a value over 2^31 is 2^31 (RFC 9111 §1.2.2) |
@@ -46,7 +46,7 @@ This page defines when a cached page is fresh, when Rivqen may show a stale page
 | Input | Result |
 |---|---|
 | `max-age`, `stale-while-revalidate` or `stale-if-error` without a value, with a value that is not digits, with a quoted-pair, or twice with two different values | No number for that directive, and `invalid_freshness`: the response is stale (RFC 9111 §4.2.1). The same value twice counts once |
-| A member that does not match the grammar (a name that is not a token, white space around `=`, an unclosed quoted-string, text after the closing quote) | `invalid_freshness`, `public` does not count, and the DL-088 split of that line also counts `no-cache`, `private` and `must-revalidate` |
+| A member that does not match the grammar (a name that is not a token, white space around `=`, an unclosed quoted-string, text after the closing quote) | `invalid_freshness`, `public` and `valid_private` do not count, and the DL-088 split of that line also counts `no-cache`, `private` and `must-revalidate` |
 | An HTTP-date that does not match one of the three forms of RFC 9110 §5.6.7 exactly; a zone other than `GMT`; a day that the month does not have; a time out of range; a year before 1970 | No date |
 | `Age` with no member that is delta-seconds | No age (RFC 9111 §5.1) |
 | A `Vary` member that is not a token | `Vary: *`: the response is not stored |
@@ -103,7 +103,7 @@ The manifest policy of an RQP page ([manifest and patch §1.4](/engineering/prot
 | `current_age` | The age of the table above; `None` when `now` is before the response time; each sum stops at the largest 64-bit value |
 | `lookup_use` | `no-store` or `no-cache`: revalidate. No age: revalidate. Age less than the lifetime: rule 4. Inside `stale-while-revalidate` with explicit freshness, no `must-revalidate`, a `ttl_seconds` that is not 0 and a route that is not sensitive: rule 5. Else rule 8 |
 | `serve_on_failure` | Rule 6 and §3 rule 2 |
-| `store_decision` | Rule 1 for a full document, in this order: `no-store` (request or response), `Vary: *`, credentials without `authenticated_cache` (R-CACHE-03), a status other than `200`. `private` and `no-cache` store |
+| `store_decision` | Rule 1 for a full document, in this order: `no-store` (request or response), `Vary: *`, credentials without consent (R-CACHE-03): `authenticated_cache`, and for an RQP response also `valid_private` or `public` (H-150, DL-207, DL-213); legacy mode needs `authenticated_cache` only (CL-25), a status other than `200`. `private` and `no-cache` store |
 | `legacy::legacy_cache_outcome` | Rule 7 (feature `legacy`), see below |
 
 <Badge type="tip" text="FACT" /> A `5xx`, `408` or `429` gives the skip reason `TransientStatus`: the entry of the key stays (legacy client CL-18 item 1). Another status gives `Status`: the entry is removed.

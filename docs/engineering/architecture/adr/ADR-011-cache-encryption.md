@@ -57,12 +57,15 @@ One format for a file and for the `sealed` column:
 - Algorithm: XChaCha20-Poly1305 (`chacha20poly1305` =0.11.0). The nonce is 24 random bytes for each seal.
 - Associated data, each part with a length of 8 bytes, big-endian, as in the cache key ([cache identity](/engineering/cache/identity) §1): `rivqen-seal-v1`, the role (`file` or `row`), the schema version (4 bytes, big-endian), the partition field of the cache key (`02`, or `01` and the id), the cache key, the file id.
 - So a file or a row that is moved to another partition, key, role or entry version does not open. The entry version is bound through the file id: each `Replace` has a new file id, and `UpdateFields` seals the row again with the same file id.
-- Plain text of a file: a format byte, the page, the template (absent or present) and the data blocks, each with a length. Plain text of a row: the protocol, the `Vary` entries, the validators, the freshness inputs and the page fields, in a format with a version byte. Both decoders read untrusted bytes: bounded, no panic, with fuzz targets.
+- Plain text of a file: a format byte, the page, the template (absent or present) and the data blocks, each with a length.
+- Plain text of a row (format 2): a format byte; the host (at most 253 bytes); the store time; the protocol; the `Vary` entries; the validators; the freshness inputs (the flags `no_store`, `no_cache`, `private`, `valid_private`, `public`, `must_revalidate`, then the numbers); the page fields. Only format 2 decodes, and each value has one encoding. The host and the store time are copies of the clear columns of ADR-004 §3: the seal authenticates them, and the driver compares them at every open of a row ([DL-213](/engineering/plan/decision-log)).
+- Both decoders read untrusted bytes: bounded, no panic, with fuzz targets. The driver stores nothing that its own decoders refuse.
 - Any failure to open (wrong magic, short input, tag mismatch, decode error) is `CACHE_CORRUPTED`. The error names no reason that helps an attacker and holds no byte of the data.
 
 ### 4. Logout and site clear
 
 - `RevokePartition`: the driver asks the key port to delete the key first, then commits the removal, then unlinks the files (ADR-004 §2). After the key is gone, files that a power loss brings back cannot be opened.
+- When the key port fails (a locked key store), the driver still removes the rows and increments the epoch, and gives `STORAGE_UNAVAILABLE`: the caller runs the revoke again to delete the key. Until then the unlinked files could come back at a power loss with a key that still exists; no row names them, so recovery removes them.
 - The `public` key is deleted when the app turns the `public` partition off or clears all sites.
 - A site clear of one domain removes rows and files; it does not change a key.
 

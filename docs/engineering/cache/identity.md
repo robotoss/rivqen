@@ -77,6 +77,8 @@ cache_key = SHA-256(partition ‖ origin ‖ canonical_url ‖ method ‖ vary_v
 
 <Badge type="tip" text="FACT" /> `rivqen_cache::partition::store_partition`, `delta_partition` and `readable` implement rules 2 and 3; `site_matches` implements the host match of rule 5. For a delta, the manifest condition is the policy of the stored snapshot ([DL-196](/engineering/plan/decision-log)). Tests: `crates/rivqen-cache/tests/partition_rules.rs` (one row for each row of section 4 that names a partition) and `partition_prop.rs`.
 
+<Badge type="tip" text="FACT" /> `rivqen_cache::partition::valid_host` accepts only a lower-case ASCII host name (labels of `a`-`z`, `0`-`9`, `-`, 1 to 63 bytes, at most 253 bytes, no empty label, no port, no trailing dot; a dotted IPv4 literal has this form) or an IPv6 literal in brackets in the text form of RFC 5952 §4: lower-case digits, no leading zero in a group, the first longest run of two or more zero groups written as `::`, and no `::` for one group. An embedded IPv4 form and a zone are not valid. A driver refuses a `Replace` with any other host (`Refused::InvalidHost`, DL-205, DL-208, DL-213). `site_matches` compares bytes, so a second text of one address could escape a site clear (rule 5). Tests: `partition_valid_host_*` in `partition_rules.rs` and `partition_prop_valid_host_*` in `partition_prop.rs`.
+
 ## 4. Verification
 
 | Test | Expected result |

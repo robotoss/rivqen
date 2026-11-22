@@ -1603,3 +1603,26 @@ fn meta_reset_marker_link_is_never_followed() {
         assert!(dir.db_path().exists(), "{name}");
     }
 }
+
+#[cfg(unix)]
+#[test]
+fn meta_open_refuses_a_database_that_is_a_link() {
+    // A real database in another directory, and a link to it at the place
+    // of `meta.sqlite`: the store never opens a database through a link.
+    let outside = TestDir::new("open_link_target");
+    drop(open(&outside));
+    let dir = TestDir::new("open_link");
+    std::os::unix::fs::symlink(outside.db_path(), dir.db_path()).unwrap();
+    assert!(MetaDb::open(dir.path()).is_err());
+}
+
+#[test]
+fn meta_rows_debug_writes_no_host_and_no_sealed_byte() {
+    let mut row = row(scoped(7), 3, 1);
+    row.sealed = b"sealed-secret".to_vec();
+    let text = format!("{row:?}");
+    assert!(text.contains("Row"), "{text}");
+    assert!(!text.contains("shop.example.com"), "{text}");
+    assert!(!text.contains("sealed-secret"), "{text}");
+    assert!(!text.contains("115, 101, 97"), "{text}");
+}

@@ -585,15 +585,19 @@ fn partition_valid_host_ipv6_literal() {
         "[2001:db8::1]",
         "[2001:db8::]",
         "[::ffff:c000:201]",
-        "[2001:db8:0:0:0:0:0:1]",
-        "[2001:0db8:0000:0000:0000:0000:0000:0001]",
-        "[1:2:3:4:5:6:7::]",
-        "[::2:3:4:5:6:7:8]",
         "[1:2:3::6:7:8]",
+        "[1:2:3:4:5:6:7:0]",
+        "[0:2:3:4:5:6:7:8]",
     ] {
         assert!(valid_host(host), "{host:?}");
     }
     for host in [
+        // A second form of a valid address above (DL-208 a, RFC 5952 section
+        // 4): zero groups written out, leading zeros, `::` for one group.
+        "[2001:db8:0:0:0:0:0:1]",
+        "[2001:0db8:0000:0000:0000:0000:0000:0001]",
+        "[1:2:3:4:5:6:7::]",
+        "[::2:3:4:5:6:7:8]",
         // No brackets.
         "::1",
         "2001:db8::1",
@@ -620,6 +624,117 @@ fn partition_valid_host_ipv6_literal() {
         "[fe80::1%eth0]",
         // A host name in brackets.
         "[example.com]",
+    ] {
+        assert!(!valid_host(host), "{host:?}");
+    }
+}
+
+// One text form for each IPv6 address (DL-208 a; RFC 5952 section 4; the
+// IPv6 serializer of the WHATWG URL Standard). Each test has both sides of
+// one rule; the expected values come from the rules, the groups of each
+// address are written out in the comments.
+
+#[test]
+fn partition_valid_host_ipv6_lower_case_only() {
+    assert!(valid_host("[2001:db8::1]"));
+    for host in ["[2001:DB8::1]", "[2001:Db8::1]", "[::A]", "[FE80::1]"] {
+        assert!(!valid_host(host), "{host:?}");
+    }
+}
+
+#[test]
+fn partition_valid_host_ipv6_no_leading_zero_in_a_group() {
+    // `0` itself is a group; `0db8`, `00`, `0001` have a leading zero.
+    for host in [
+        "[2001:db8::1]",
+        "[2001:db8:0:1:1:1:1:1]",
+        "[1:0:2:0:3:0:4:0]",
+    ] {
+        assert!(valid_host(host), "{host:?}");
+    }
+    for host in [
+        "[2001:0db8::1]",
+        "[2001:db8::01]",
+        "[2001:db8:00:1:1:1:1:1]",
+        "[2001:db8::0001]",
+        "[2001:db8::0a]",
+    ] {
+        assert!(!valid_host(host), "{host:?}");
+    }
+}
+
+#[test]
+fn partition_valid_host_ipv6_longest_zero_run_is_compressed() {
+    // 2001 db8 0 0 0 0 0 1: one run of 5, written `::`.
+    assert!(valid_host("[2001:db8::1]"));
+    assert!(!valid_host("[2001:db8:0:0:0:0:0:1]"));
+    // A part of the run written out next to `::`.
+    assert!(!valid_host("[2001:db8:0::1]"));
+    assert!(!valid_host("[2001:db8::0:1]"));
+    // 1 0 0 2 0 0 0 3: runs of 2 and 3; the run of 3 is `::`, the run of 2
+    // stays written out.
+    assert!(valid_host("[1:0:0:2::3]"));
+    assert!(!valid_host("[1:0:0:2:0:0:0:3]"));
+    assert!(!valid_host("[1::2:0:0:0:3]"));
+    // 1 0 0 0 2 0 0 3: runs of 3 and 2; the run of 3 (the first) is `::`.
+    assert!(valid_host("[1::2:0:0:3]"));
+    assert!(!valid_host("[1:0:0:0:2::3]"));
+}
+
+#[test]
+fn partition_valid_host_ipv6_first_of_two_equal_runs_is_compressed() {
+    // 1 0 0 2 3 0 0 4: two runs of 2; the first is `::`.
+    assert!(valid_host("[1::2:3:0:0:4]"));
+    assert!(!valid_host("[1:0:0:2:3::4]"));
+    assert!(!valid_host("[1:0:0:2:3:0:0:4]"));
+    // 0 0 1 0 0 2 0 0: three runs of 2; the first is `::`.
+    assert!(valid_host("[::1:0:0:2:0:0]"));
+    assert!(!valid_host("[0:0:1::2:0:0]"));
+    assert!(!valid_host("[0:0:1:0:0:2::]"));
+}
+
+#[test]
+fn partition_valid_host_ipv6_no_double_colon_for_one_group() {
+    // 2001 db8 0 1 1 1 1 1: one zero group is written `0`.
+    assert!(valid_host("[2001:db8:0:1:1:1:1:1]"));
+    assert!(!valid_host("[2001:db8::1:1:1:1:1]"));
+    // At the ends too: 1 2 3 4 5 6 7 0 and 0 2 3 4 5 6 7 8.
+    assert!(valid_host("[1:2:3:4:5:6:7:0]"));
+    assert!(!valid_host("[1:2:3:4:5:6:7::]"));
+    assert!(valid_host("[0:2:3:4:5:6:7:8]"));
+    assert!(!valid_host("[::2:3:4:5:6:7:8]"));
+}
+
+#[test]
+fn partition_valid_host_ipv6_all_zero_and_end_runs() {
+    // 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 1; 1 0 0 0 0 0 0 0.
+    for host in ["[::]", "[::1]", "[1::]"] {
+        assert!(valid_host(host), "{host:?}");
+    }
+    for host in [
+        "[0:0:0:0:0:0:0:0]",
+        "[0:0:0:0:0:0:0:1]",
+        "[1:0:0:0:0:0:0:0]",
+        "[0::]",
+        "[::0]",
+        "[0::1]",
+        "[::0:1]",
+        "[1:0::]",
+    ] {
+        assert!(!valid_host(host), "{host:?}");
+    }
+}
+
+#[test]
+fn partition_valid_host_ipv6_brackets_ipv4_and_zone_still_refused() {
+    for host in [
+        "2001:db8::1",
+        "[2001:db8::1",
+        "2001:db8::1]",
+        "[::ffff:192.0.2.1]",
+        "[::192.0.2.1]",
+        "[fe80::1%25eth0]",
+        "[fe80::1%eth0]",
     ] {
         assert!(!valid_host(host), "{host:?}");
     }

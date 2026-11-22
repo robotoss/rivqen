@@ -79,9 +79,10 @@ pub const PARTITIONS: [Partition; 3] = [
 
 /// Hosts that a driver must refuse in a `Replace` (DL-205): a port, upper
 /// case, an IDN in Unicode, an empty text, the URL form, a trailing or
-/// leading dot, an empty label, an IPv6 literal with a port or upper case,
-/// user information, a path and a space.
-pub const INVALID_HOSTS: [&str; 15] = [
+/// leading dot, an empty label, an IPv6 literal with a port, in upper case
+/// or with its zero groups written out (DL-208 a), user information, a path
+/// and a space.
+pub const INVALID_HOSTS: [&str; 16] = [
     "shop.example.com:443",
     "Shop.example.com",
     "SHOP.EXAMPLE.COM",
@@ -93,6 +94,7 @@ pub const INVALID_HOSTS: [&str; 15] = [
     "shop..example.com",
     "[::1]:443",
     "[2001:DB8::1]",
+    "[2001:db8:0:0:0:0:0:1]",
     "192.0.2.1:80",
     "user@shop.example.com",
     "shop.example.com/cart",

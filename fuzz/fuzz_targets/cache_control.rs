@@ -12,7 +12,8 @@
 //!   section 5.3);
 //! - a further `no-store` line sets only `no_store`; a further `max-age=x`
 //!   line sets only `invalid_freshness` and removes `max_age`;
-//! - a serialized result parses to the same result;
+//! - a serialized result parses to the same result (also `valid_private`);
+//! - `valid_private` implies `private`;
 //! - `Age` and `Vary` give the same result for the lines and the joined
 //!   line; `Vary` names are sorted, unique, lower case tokens, and a `*`
 //!   member gives `Any`;
@@ -66,12 +67,15 @@ fn serialize(value: &CacheControl) -> String {
             None => free = free.or(Some(name)),
         }
     }
+    // `private` without `valid_private`: only a syntax error gives it, and
+    // the parser cleared `public` for it.
+    let syntax_error = value.private && !value.valid_private;
     if value.invalid_freshness {
         match free {
-            Some(name) => members.push(format!("{name}=x")),
+            Some(name) if !syntax_error => members.push(format!("{name}=x")),
             // All three numbers and invalid: only a syntax error can say it,
             // and the parser cleared `public` for it.
-            None => members.push("a b".to_owned()),
+            _ => members.push("a b".to_owned()),
         }
     }
     members.join(", ")
@@ -89,6 +93,7 @@ fn check_cache_control(first: &str, second: &str) {
     {
         assert!(seconds <= CAP);
     }
+    assert!(!parsed.valid_private || parsed.private);
     assert_eq!(cc(&[second, first]), parsed);
     if !first.contains('"') && !second.contains('"') {
         assert_eq!(cc(&[&format!("{first}, {second}")]), parsed);

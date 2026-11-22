@@ -33,9 +33,16 @@ pub struct CacheControl {
     pub no_store: bool,
     /// `no-cache`, with or without field names.
     pub no_cache: bool,
-    /// `private`.
+    /// `private`, also when only the split of DL-088 found it on a line
+    /// with a syntax error: the restrictive reading (partition, freshness).
     pub private: bool,
-    /// `public`.
+    /// `private` as a permission (H-150, DL-207): the list grammar read a
+    /// `private` member, bare or with a token or quoted-string argument,
+    /// and no member of any `Cache-Control` line has a syntax error.
+    /// `valid_private` implies `private`.
+    pub valid_private: bool,
+    /// `public` without an argument, and no member of any `Cache-Control`
+    /// line has a syntax error.
     pub public: bool,
     /// `must-revalidate`.
     pub must_revalidate: bool,
@@ -77,8 +84,10 @@ pub enum Vary {
 ///   No value, a value that is not digits, or two different values of one
 ///   directive: no number and `invalid_freshness`.
 /// - A member that does not match the grammar sets `invalid_freshness`,
-///   clears `public`, and its line also counts `no-cache`, `private` and
-///   `must-revalidate` by the DL-088 split.
+///   clears `public` and `valid_private`, and its line also counts
+///   `no-cache`, `private` and `must-revalidate` by the DL-088 split.
+/// - `valid_private` is the permissive reading of `private`: only a
+///   `private` member of the grammar with no syntax error on any line.
 #[must_use]
 pub fn parse_cache_control(fields: &[FieldLine]) -> CacheControl {
     cache_control::parse(fields)

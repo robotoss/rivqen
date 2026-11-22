@@ -275,6 +275,7 @@ pub struct CacheTransaction {
 
 /// Why a driver refused a transaction. Nothing was written.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum Refused {
     /// The entry is not in the expected state.
     Entry,

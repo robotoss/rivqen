@@ -16,12 +16,16 @@
 //! | `WriteTemp` | writes the new content to a temporary file | no |
 //! | `SyncTemp` | syncs the temporary file | yes (as a temporary file) |
 //! | `Promote` | renames it to the entry place and syncs the directory | yes |
-//! | `CommitMeta` | checks the preconditions and commits the metadata: the commit point | yes |
+//! | `CommitMeta` | checks the preconditions (in the order of `rivqen_cache::txn`) and commits the metadata: the commit point | yes |
 //! | `RemoveOld` | deletes the files that the commit no longer references | no (recovery deletes them) |
 //!
 //! A transaction that writes no content (every kind except `Replace`) has
 //! nothing to do in `WriteTemp`, `SyncTemp` and `Promote`; a stop or a
 //! failure at such a step still happens there.
+//!
+//! [`StorageDriver::recover`] removes the files without a row, the rows
+//! without a fitting file and the disabled-key records whose time is
+//! before its `now` (DL-205), and syncs what it removes.
 //!
 //! [`contract`] holds the driver contract suite: checks that every driver
 //! passes, generic over a driver factory, through [`StorageDriver`] and
@@ -34,7 +38,7 @@ use rivqen_cache::driver::{
     EntrySummary, RecoveryReport, StorageDriver, StoreError, StoreErrorKind,
 };
 use rivqen_cache::key::Partition;
-use rivqen_cache::partition::site_matches;
+use rivqen_cache::partition::{site_matches, valid_host};
 use rivqen_cache::policy::EntryPolicy;
 use rivqen_cache::txn::{
     CacheTransaction, CommitStep, EntryMeta, EntryVersion, Epoch, Expect, Preconditions, Refused,
@@ -131,6 +135,14 @@ pub enum Defect {
     NoPreconditions,
     /// `read` finds an entry by its key in any partition.
     ReadIgnoresPartition,
+    /// `CommitMeta` does not check the epoch of the request partition
+    /// (DL-205).
+    NoRequestCheck,
+    /// `CommitMeta` stores a `Replace` with any host (DL-205).
+    AnyHost,
+    /// `recover` keeps the disabled-key records whose time has passed
+    /// (DL-205).
+    KeepsExpiredDisabledKeys,
 }
 
 /// The number of files in one layer of a [`FakeStore`].
@@ -586,13 +598,28 @@ impl FakeStore {
         }
     }
 
+    /// The checks of a keyed kind in the order of `rivqen_cache::txn`:
+    /// request partition epoch, target partition epoch, site epoch, host
+    /// (`Replace`), entry.
     fn refusal(&self, plan: &Plan, pre: &Preconditions) -> Option<Refused> {
         let slot = plan.slot()?;
+        if self.defect != Some(Defect::NoRequestCheck)
+            && let Some((request, epoch)) = pre.request
+            && self.epoch_of(&rank(Partition::Scoped(request))) != epoch
+        {
+            return Some(Refused::PartitionRevoked);
+        }
         if self.epoch_of(&slot.0) != pre.partition_epoch {
             return Some(Refused::PartitionRevoked);
         }
         if self.live.site_epoch != pre.site_epoch {
             return Some(Refused::SiteCleared);
+        }
+        if self.defect != Some(Defect::AnyHost)
+            && let Plan::Replace { meta, .. } = plan
+            && !valid_host(&meta.host)
+        {
+            return Some(Refused::InvalidHost);
         }
         let current = self.live.rows.get(&slot).map(|row| row.version);
         let holds = match pre.entry {
@@ -815,9 +842,13 @@ impl FakeStore {
 }
 
 impl StorageDriver for FakeStore {
-    fn recover(&mut self) -> Result<RecoveryReport, StoreError> {
+    fn recover(&mut self, now: UnixTime) -> Result<RecoveryReport, StoreError> {
         if self.life == Life::Stopped {
             return Err(unavailable("recover"));
+        }
+        if self.defect != Some(Defect::KeepsExpiredDisabledKeys) {
+            // A record whose time is `now` or later stays.
+            self.live.disabled.retain(|_, until| *until >= now);
         }
         let mut report = RecoveryReport::default();
         let broken: Vec<Slot> = self

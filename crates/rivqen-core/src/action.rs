@@ -223,6 +223,7 @@ mod tests {
             op: TxnOp::ClearSite { domain: None },
             pre: Preconditions {
                 entry: Expect::Any,
+                request: None,
                 partition_epoch: Epoch(0),
                 site_epoch: Epoch(0),
             },

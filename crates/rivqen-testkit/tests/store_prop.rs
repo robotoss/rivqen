@@ -102,7 +102,12 @@ fn store_prop_decode_reaches_every_case() {
     ] {
         assert!(ops.iter().any(|op| op.expect == expect), "{expect:?}");
     }
-    for stale in [Stale::Neither, Stale::Partition, Stale::Site] {
+    for stale in [
+        Stale::Neither,
+        Stale::Partition,
+        Stale::Site,
+        Stale::Request,
+    ] {
         assert!(ops.iter().any(|op| op.stale == stale), "{stale:?}");
     }
     for partition in 0..3 {
@@ -198,6 +203,7 @@ fn store_prop_scripts_find_each_defect() {
         Defect::UnsyncedPromote,
         Defect::NoPreconditions,
         Defect::ReadIgnoresPartition,
+        Defect::NoRequestCheck,
     ] {
         let found = all
             .iter()

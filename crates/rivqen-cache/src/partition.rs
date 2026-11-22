@@ -6,10 +6,25 @@
 //!
 //! Contract (architect): the public items of this file. Every function fails
 //! closed: an input that is not known gives the partition of the request.
+//! [`valid_host`] (DL-205) fails closed too: a host in any other form is not
+//! valid, and the driver stores no entry for it.
 
 use rivqen_model::ids::PartitionId;
 
 use crate::key::Partition;
+
+/// The longest host name in bytes, without a trailing dot (RFC 1035
+/// section 2.3.4).
+const MAX_HOST_NAME: usize = 253;
+
+/// The longest label of a host name in bytes (RFC 1035 section 2.3.4).
+const MAX_LABEL: usize = 63;
+
+/// The number of 16-bit groups of an IPv6 address.
+const IPV6_GROUPS: usize = 8;
+
+/// The most hexadecimal digits in one group of an IPv6 address.
+const MAX_GROUP_DIGITS: usize = 4;
 
 /// What the client knows about the credentials of a request (H-62).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -126,6 +141,82 @@ pub fn site_matches(host: &str, cleared_domain: &str) -> bool {
         return false;
     };
     tail.eq_ignore_ascii_case(domain) && (head.is_empty() || head.ends_with(b"."))
+}
+
+/// True when `host` is in a form that [`site_matches`] always reads the
+/// same way as a site clear does (DL-205; R-CACHE-09, S1 security review
+/// L4). A driver refuses a `Replace` with any other host
+/// ([`crate::txn::Refused::InvalidHost`]).
+///
+/// Valid forms:
+///
+/// - A lower-case ASCII host name: labels of `a` to `z`, `0` to `9` and
+///   `-`, each 1 to 63 bytes, at most 253 bytes in total, no empty label
+///   (so no leading or trailing dot), no port. A dotted-decimal IPv4
+///   literal (`192.0.2.1`) has this form too. An internationalized name is
+///   valid only in its ASCII (`xn--`) form; the adapter applies IDNA
+///   (cache identity section 2).
+/// - An IPv6 literal in brackets with lower-case hexadecimal digits:
+///   eight groups of 1 to 4 digits, or fewer groups with one `::`
+///   (`[2001:db8::1]`, `[::1]`). An embedded IPv4 form (`[::ffff:192.0.2.1]`)
+///   and a zone (`%25`) are not valid.
+///
+/// Not valid, for example: `Shop.example.com`, `shop.example.com:443`,
+/// `shop.example.com.`, a host with non-ASCII characters, an empty text,
+/// `https://shop.example.com/`. The time is linear in the length of `host`;
+/// the function allocates nothing.
+#[must_use]
+pub fn valid_host(host: &str) -> bool {
+    match host.as_bytes() {
+        [b'[', address @ .., b']'] => ipv6_address(address),
+        name => host_name(name),
+    }
+}
+
+/// A lower-case ASCII host name of [`valid_host`].
+fn host_name(name: &[u8]) -> bool {
+    name.len() <= MAX_HOST_NAME
+        && name.split(|&byte| byte == b'.').all(|label| {
+            (1..=MAX_LABEL).contains(&label.len())
+                && label
+                    .iter()
+                    .all(|&byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
+        })
+}
+
+/// An IPv6 address of [`valid_host`], without its brackets.
+fn ipv6_address(text: &[u8]) -> bool {
+    let Some(gap) = text.windows(2).position(|pair| pair == b"::") else {
+        return ipv6_groups(text) == Some(IPV6_GROUPS);
+    };
+    let head = text.get(..gap);
+    let tail = text.get(gap.saturating_add(2)..);
+    match (head.and_then(ipv6_groups), tail.and_then(ipv6_groups)) {
+        // `::` stands for at least one group of zeros.
+        (Some(before), Some(after)) => before.saturating_add(after) < IPV6_GROUPS,
+        _ => false,
+    }
+}
+
+/// The number of groups of `text`: groups of 1 to 4 lower-case hexadecimal
+/// digits with one `:` between two groups. `Some(0)` for an empty text;
+/// `None` for any other form, also for a second `::`.
+fn ipv6_groups(text: &[u8]) -> Option<usize> {
+    if text.is_empty() {
+        return Some(0);
+    }
+    let mut count: usize = 0;
+    for group in text.split(|&byte| byte == b':') {
+        let digits = (1..=MAX_GROUP_DIGITS).contains(&group.len())
+            && group
+                .iter()
+                .all(|&byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte));
+        if !digits {
+            return None;
+        }
+        count = count.checked_add(1)?;
+    }
+    Some(count)
 }
 
 /// The conditions of rule 3 that a full document and a delta share: all but

@@ -2,22 +2,34 @@
 // SPDX-FileCopyrightText: The Rivqen Authors
 
 //! Cache transactions (data model section 3; storage section 2; legacy
-//! client section 9.12; DL-181, DL-185). Contract of the architect: lanes do
-//! not change this file.
+//! client section 9.12; DL-181, DL-185, DL-205). Contract of the architect:
+//! lanes do not change this file.
 //!
 //! A transaction is one atomic change of the store. It carries its
 //! preconditions; a driver refuses a transaction whose precondition is
 //! false, and a refused transaction writes nothing.
 //!
-//! Rules that every driver follows (DL-200; the driver contract suite of
-//! `rivqen-testkit` checks them):
+//! Rules that every driver follows (DL-200, DL-205; the driver contract
+//! suite of `rivqen-testkit` checks them):
 //!
 //! - `RevokePartition` and `ClearSite` ignore the preconditions and are
 //!   never refused.
-//! - A keyed kind checks the partition epoch, then the site epoch, then the
-//!   entry, at the commit point (`CommitStep::CommitMeta`), not before the
-//!   first step. An epoch that differs from the current one is refused, also
-//!   a higher one.
+//! - A keyed kind (`Replace`, `UpdateFields`, `Remove`, `DisableKey`) runs
+//!   its checks at the commit point (`CommitStep::CommitMeta`), not before
+//!   the first step, in this order; the first false check gives the result:
+//!   1. the epoch of the request partition ([`Preconditions::request`],
+//!      when it is `Some`): [`Refused::PartitionRevoked`]. A session of a
+//!      revoked partition commits nothing, also not into `public` (cache
+//!      identity rule 4, RSK-06);
+//!   2. the epoch of the target partition: [`Refused::PartitionRevoked`];
+//!   3. the site epoch: [`Refused::SiteCleared`];
+//!   4. for `Replace` only, the host of the entry
+//!      ([`crate::partition::valid_host`]): [`Refused::InvalidHost`]. A
+//!      site clear matches every host that passes (R-CACHE-09);
+//!   5. the entry: [`Refused::Entry`].
+//!
+//!   An epoch that differs from the current one is refused, also a higher
+//!   one.
 //! - `UpdateFields` without an entry is `Refused::Entry` for every `Expect`;
 //!   it replaces the whole field list. `Remove` and `DisableKey` without an
 //!   entry are applied, with no version.
@@ -27,12 +39,13 @@
 //!   host and no page data. `ClearSite` of all sites and `RevokePartition`
 //!   remove them.
 //! - A `Replace` of a disabled key is stored; a read hides it until the time
-//!   of the record.
+//!   of the record. `StorageDriver::recover` removes the records whose time
+//!   is before its `now`.
 
 use std::fmt;
 
 use rivqen_model::http::FieldLine;
-use rivqen_model::ids::CacheKey;
+use rivqen_model::ids::{CacheKey, PartitionId};
 use rivqen_model::safe::PageBytes;
 use rivqen_model::time::UnixTime;
 use rivqen_proto::types::SnapshotMeta;
@@ -180,12 +193,19 @@ pub enum Expect {
 }
 
 /// The preconditions of a transaction (legacy client section 9.12,
-/// "Partition race").
+/// "Partition race"). The module documentation gives the order of the
+/// checks.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Preconditions {
     /// The state of the entry.
     pub entry: Expect,
-    /// The epoch of the partition that the writer saw.
+    /// The partition of the request of the writer and the epoch of
+    /// `Partition::Scoped(id)` when the session started (DL-205). A keyed
+    /// kind is refused with [`Refused::PartitionRevoked`] when the current
+    /// epoch of that partition differs, whatever the target partition is.
+    /// `None`: no check, for a change that no request session makes.
+    pub request: Option<(PartitionId, Epoch)>,
+    /// The epoch of the target partition that the writer saw.
     pub partition_epoch: Epoch,
     /// The epoch of the site clear that the writer saw.
     pub site_epoch: Epoch,
@@ -258,10 +278,15 @@ pub struct CacheTransaction {
 pub enum Refused {
     /// The entry is not in the expected state.
     Entry,
-    /// The partition was revoked after the writer read its epoch.
+    /// The partition of the request or the target partition was revoked
+    /// after the writer read its epoch.
     PartitionRevoked,
     /// The site was cleared after the writer read the site epoch.
     SiteCleared,
+    /// The host of a `Replace` is not a lower-case ASCII host name or an IP
+    /// literal ([`crate::partition::valid_host`]): a site clear could miss
+    /// it (R-CACHE-09).
+    InvalidHost,
 }
 
 /// The result of a transaction.

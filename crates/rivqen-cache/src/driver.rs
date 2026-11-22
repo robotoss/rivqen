@@ -7,6 +7,18 @@
 //! A driver is synchronous and is called from one logical thread (core API
 //! section 2, rule 1). The fake driver of `rivqen-testkit` and the reference
 //! driver `rivqen-store` pass the same contract tests (DL-181).
+//!
+//! The rules of [`StorageDriver::apply`] are in the module documentation of
+//! [`crate::txn`] (DL-200, DL-205). Three of them come from DL-205:
+//!
+//! - A keyed kind first checks the epoch of the request partition
+//!   ([`crate::txn::Preconditions::request`]); then the epoch of the target
+//!   partition, the site epoch, the host (`Replace` only) and the entry, all
+//!   at the commit point.
+//! - A `Replace` whose host fails [`crate::partition::valid_host`] is
+//!   [`crate::txn::Refused::InvalidHost`] and writes nothing.
+//! - [`StorageDriver::recover`] removes the disabled-key records whose time
+//!   is before its `now`; a record whose time is `now` or later stays.
 
 use std::error::Error;
 use std::fmt;
@@ -96,13 +108,15 @@ pub struct RecoveryReport {
 /// A store of cache entries.
 pub trait StorageDriver {
     /// Runs at start, before any other call: brings the store to a state
-    /// where each entry is one committed version.
+    /// where each entry is one committed version, and removes the
+    /// disabled-key records whose time is before `now` (storage section 2;
+    /// ADR-004 section 4). A record whose time is `now` or later stays.
     ///
     /// # Errors
     ///
     /// [`StoreErrorKind::Unavailable`] when the store cannot be read or
     /// written.
-    fn recover(&mut self) -> Result<RecoveryReport, StoreError>;
+    fn recover(&mut self, now: UnixTime) -> Result<RecoveryReport, StoreError>;
 
     /// The entry of `key` in `partition`, checked against its stored
     /// hashes. A key that is disabled at `now` has no entry.

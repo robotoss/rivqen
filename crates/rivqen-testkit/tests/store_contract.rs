@@ -81,6 +81,39 @@ fn store_contract_refused_site_cleared() {
 }
 
 #[test]
+fn store_contract_refused_request_partition_revoked() {
+    passes(contract::refused_request_partition_revoked(&mut power_loss));
+}
+
+#[test]
+fn store_contract_refused_request_partition_none_is_not_checked() {
+    passes(contract::refused_request_partition_none_is_not_checked(
+        &mut power_loss,
+    ));
+}
+
+#[test]
+fn store_contract_refusal_order() {
+    passes(contract::refusal_order(&mut power_loss));
+}
+
+#[test]
+fn store_contract_refused_invalid_host() {
+    passes(contract::refused_invalid_host(&mut power_loss));
+    passes(contract::refused_invalid_host(&mut process_kill));
+}
+
+#[test]
+fn store_contract_recover_removes_expired_disabled_keys() {
+    passes(contract::recover_removes_expired_disabled_keys(
+        &mut power_loss,
+    ));
+    passes(contract::recover_removes_expired_disabled_keys(
+        &mut process_kill,
+    ));
+}
+
+#[test]
 fn store_contract_refused_never_for_removals() {
     passes(contract::removals_are_never_refused(&mut power_loss));
 }

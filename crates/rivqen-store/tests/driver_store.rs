@@ -517,7 +517,180 @@ fn driver_commit_versions_differ_after_a_restart() {
     assert_ne!(first, second);
 }
 
+/// Makes the row of `key` in `partition` undecodable (a negative version).
+fn break_row(dir: &TestDir, partition: Partition, key: CacheKey) {
+    let changed = raw(dir)
+        .execute(
+            r#"UPDATE entry SET version = -1 WHERE "partition" = ?1 AND "key" = ?2"#,
+            rusqlite::params![partition_column(partition), key.as_bytes().as_slice()],
+        )
+        .unwrap();
+    assert_eq!(changed, 1);
+}
+
+#[test]
+fn driver_commit_over_a_row_that_does_not_decode() {
+    let dir = TestDir::new("commit_over_a_row_that_does_not_decode");
+    let mut store = store(&dir);
+    let scoped = Partition::Scoped(A);
+    put(&mut store, scoped, K1, "p0/a");
+    break_row(&dir, scoped, K1);
+    // An entry with no known version: `Absent`, a version and an update
+    // are refused.
+    for (entry, update) in [
+        (Expect::Absent, false),
+        (Expect::Version(EntryVersion(1)), false),
+        (Expect::Any, true),
+    ] {
+        let pre = fresh(&mut store, scoped, entry);
+        let op = if update {
+            TxnOp::UpdateFields {
+                partition: scoped,
+                key: K1,
+                fields: Vec::new(),
+                policy: rivqen_testkit::store::contract::sample_policy(1),
+            }
+        } else {
+            TxnOp::Remove {
+                partition: scoped,
+                key: K1,
+            }
+        };
+        assert_eq!(
+            store.apply(CacheTransaction { op, pre }).unwrap(),
+            TxnOutcome::Refused(Refused::Entry)
+        );
+    }
+    // `Any` replaces it.
+    put(&mut store, scoped, K1, "p0/b");
+    assert_eq!(page_of(&mut store, scoped, K1).unwrap(), b"p0/b/page");
+    // `Any` removes and disables it.
+    break_row(&dir, scoped, K1);
+    let removed = apply(
+        &mut store,
+        TxnOp::Remove {
+            partition: scoped,
+            key: K1,
+        },
+        scoped,
+    );
+    assert_eq!(removed, TxnOutcome::Applied { version: None });
+    assert!(page_of(&mut store, scoped, K1).is_none());
+    put(&mut store, scoped, K1, "p0/c");
+    break_row(&dir, scoped, K1);
+    let disabled = apply(
+        &mut store,
+        TxnOp::DisableKey {
+            partition: scoped,
+            key: K1,
+            until: NOW.plus(5),
+        },
+        scoped,
+    );
+    assert_eq!(disabled, TxnOutcome::Applied { version: None });
+    assert!(store.key_disabled(scoped, &K1, NOW).unwrap());
+    assert!(store.read(scoped, &K1, NOW.plus(5)).unwrap().is_none());
+}
+
+#[test]
+fn driver_commit_removals_remove_rows_that_do_not_decode() {
+    let dir = TestDir::new("commit_removals_remove_rows_that_do_not_decode");
+    let mut store = store(&dir);
+    put(&mut store, Partition::Scoped(A), K1, "p0/a");
+    put(&mut store, Partition::Scoped(A), K2, "p0/b");
+    put(&mut store, Partition::Public, K1, "p2/a");
+    put(&mut store, Partition::Public, K2, "p2/b");
+    break_row(&dir, Partition::Scoped(A), K1);
+    let revoked = apply(
+        &mut store,
+        TxnOp::RevokePartition {
+            partition: Partition::Scoped(A),
+        },
+        Partition::Scoped(A),
+    );
+    assert_eq!(revoked, TxnOutcome::Applied { version: None });
+    assert!(page_of(&mut store, Partition::Scoped(A), K2).is_none());
+    // A site clear removes a row whose host cannot be read.
+    break_row(&dir, Partition::Public, K1);
+    let cleared = apply(
+        &mut store,
+        TxnOp::ClearSite {
+            domain: Some("other.org".to_owned()),
+        },
+        Partition::Public,
+    );
+    assert_eq!(cleared, TxnOutcome::Applied { version: None });
+    assert_eq!(
+        store
+            .list()
+            .unwrap()
+            .into_iter()
+            .map(|summary| (summary.meta.partition, summary.meta.key))
+            .collect::<Vec<_>>(),
+        vec![(Partition::Public, K2)]
+    );
+    store.restart().unwrap();
+    // The files of the removed rows were orphans; nothing else is left.
+    let report = store.recover(NOW).unwrap();
+    assert_eq!(report.entries_removed, 0);
+    assert_eq!(entry_files(&dir).len(), 1);
+}
+
 // ---------------------------------------------------------------- read
+
+#[test]
+fn driver_read_list_removes_a_row_that_does_not_open() {
+    let dir = TestDir::new("read_list_removes_a_row_that_does_not_open");
+    let mut store = store(&dir);
+    put(&mut store, Partition::Scoped(A), K1, "p0/a");
+    put(&mut store, Partition::Scoped(B), K1, "p1/a");
+    let file = file_of(&dir, Partition::Scoped(A), K1);
+    // The key of A is gone: its row does not open any more.
+    store.keys_mut().delete_key(Partition::Scoped(A)).unwrap();
+    let listed = store.list().unwrap();
+    assert_eq!(listed.len(), 1);
+    assert_eq!(listed[0].meta.partition, Partition::Scoped(B));
+    assert!(!file.exists());
+    assert!(page_of(&mut store, Partition::Scoped(A), K1).is_none());
+}
+
+#[test]
+fn driver_read_entry_at_the_block_limit() {
+    let dir = TestDir::new("read_entry_at_the_block_limit");
+    let limits = DecodeLimits {
+        max_blocks: 3,
+        ..DecodeLimits::default()
+    };
+    let mut store =
+        FileStore::open_with_limits(&dir.root(), HostKeys::new().unwrap(), limits).unwrap();
+    store.recover(NOW).unwrap();
+    // Variant 7: a template and 3 data blocks, the most that the limits
+    // allow.
+    let (meta, body) = sample_entry(Partition::Public, K1, HOST, "p2/max", 7);
+    assert_eq!(body.data.len(), 3);
+    let pre = fresh(&mut store, Partition::Public, Expect::Any);
+    store.apply(replace_txn(meta, body.clone(), pre)).unwrap();
+    assert_eq!(
+        store
+            .read(Partition::Public, &K1, NOW)
+            .unwrap()
+            .unwrap()
+            .body,
+        body
+    );
+    store.restart().unwrap();
+    assert_eq!(store.recover(NOW).unwrap(), RecoveryReport::default());
+    // One block more: stored, but no file of that length fits the limits.
+    let (meta, mut body) = sample_entry(Partition::Public, K2, HOST, "p2/over", 7);
+    body.data
+        .push(("{b3}".to_owned(), PageBytes::new(b"x".to_vec())));
+    let pre = fresh(&mut store, Partition::Public, Expect::Any);
+    store.apply(replace_txn(meta, body, pre)).unwrap();
+    assert_eq!(
+        kind(store.read(Partition::Public, &K2, NOW)),
+        StoreErrorKind::Corrupted
+    );
+}
 
 #[test]
 fn driver_read_tampered_row_is_corrupted_and_removed() {

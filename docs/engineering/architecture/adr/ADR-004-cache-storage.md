@@ -5,7 +5,7 @@
 - Owner: Architect, WP-07
 - Reviewers: architecture lead, security reviewer
 
-**Status:** <Badge type="info" text="DESIGN" /> for the options and the decision. The section "Verification" gets <Badge type="tip" text="FACT" /> lines at the close of WP-07 S2.
+**Status:** <Badge type="info" text="DESIGN" /> for the options and the decision. The section "Verification" has the <Badge type="tip" text="FACT" /> evidence of WP-07 S2.
 
 [[toc]]
 
@@ -101,16 +101,19 @@ A read checks more than recovery: the seal of the file and of the row, and that 
 
 ## Verification
 
-<Badge type="danger" text="GATE" /> Evidence to collect in WP-07 S2:
+<Badge type="tip" text="FACT" /> Evidence of WP-07 S2 (2026-11-22, [sprint record](/engineering/plan/sprints/WP-07-S2) §4):
 
 | Check | Evidence |
 |---|---|
-| Old or new at every step, for every transaction kind | The driver contract suite of `rivqen-testkit` on the driver (in-process stop after each step) |
-| Kill at every step | A child process that the parent stops with `SIGKILL` at each step; then recovery and the old-or-new check |
-| A missing sync is found | A review of each sync against section 2, and the power-loss model of the fake (a `SIGKILL` test cannot find it) |
-| Partitions never mix; revoke; site clear | The suite and the multi-partition tests on the driver |
-| Corruption | Damaged file, damaged row, missing file, moved file: `CACHE_CORRUPTED`, other entries unchanged |
-| Cost | Time of one commit with `FULL` on the host; size of the store for N entries |
+| Old or new at every step, for every transaction kind | The driver contract suite of `rivqen-testkit` passes on `FileStore` (`crates/rivqen-store/tests/driver_contract.rs`, 25 tests, in-process stop after each step) |
+| Kill at every step | `driver_kill.rs`: 10 transaction kinds x 5 steps. A child process stops after the step, the parent ends it with `SIGKILL` (signal 9 checked), recovers and finds exactly the old or the new state; a second recovery removes nothing |
+| A missing sync is found | Review of each sync against section 2 (security review, 2026-11-22): all present. A `SIGKILL` test cannot find a missing sync; the power-loss model of the fake covers the contract |
+| Partitions never mix; revoke; site clear | The suite on the driver; `driver_partitions_*`, `driver_revoke_shreds`, `driver_commit_revoke_with_a_failing_key_port_still_revokes` |
+| Corruption | Damaged file, damaged row, row of another key, missing file, moved file, file of another length, host or store time that differs: `CACHE_CORRUPTED`, the entry is removed, other entries unchanged (`driver_read_*`) |
+| Cost | Host, release build, external SSD, median of 50: a `Replace` of 100 KiB 9.95 ms, a read 0.18 ms, a metadata commit 1.9 ms (0.33 ms without `fullfsync`). 50 entries of 100 KiB take 5.12 MB of files |
+| Mutation | `rivqen-store::driver` 169 of 200, `meta` 160 of 179 |
+
+<Badge type="danger" text="GATE" /> Not covered: a power cut on a real device and the cost on devices (WP-19).
 
 ## Related
 

@@ -5,7 +5,7 @@
 - Owner: Architect, WP-07
 - Reviewers: security reviewer
 
-**Status:** <Badge type="info" text="DESIGN" /> for the options and the decision. The section "Verification" gets <Badge type="tip" text="FACT" /> lines at the close of WP-07 S2.
+**Status:** <Badge type="info" text="DESIGN" /> for the options and the decision. The section "Verification" has the <Badge type="tip" text="FACT" /> evidence of WP-07 S2.
 
 [[toc]]
 
@@ -77,17 +77,21 @@ One format for a file and for the `sealed` column:
 
 ## Verification
 
-<Badge type="danger" text="GATE" /> Evidence to collect in WP-07 S2:
+<Badge type="tip" text="FACT" /> Evidence of WP-07 S2 (2026-11-22, [sprint record](/engineering/plan/sprints/WP-07-S2) §4):
 
 | Check | Evidence |
 |---|---|
-| Round trip | Seal and open of files and rows; property test over random content |
-| Tamper | One changed byte in the magic, the nonce, the ciphertext or the tag: `CACHE_CORRUPTED` |
-| Move | A file or a row of another partition, key, role or file id does not open |
-| Logout | After `RevokePartition` the old files do not open with the new key of the partition |
-| Nonces | Two seals of the same plain text differ; the nonce comes from the key port |
-| No key in output | `Debug` of the key type; no key byte in an error |
-| Decoders | Fuzz targets for the file decode and the row decode |
+| Round trip | `crypto_codec_prop_file_round_trip`, `crypto_codec_prop_row_round_trip` (512 cases each), `crypto_seal_prop_round_trip` (128 cases) |
+| Known answer | `crypto_seal_layout`: the ciphertext of draft-irtf-cfrg-xchacha-03 appendix A.3.1, and a tag for the associated data of this ADR that a second implementation computed (HChaCha20 from the draft and the ChaCha20-Poly1305 of OpenSSL) |
+| Tamper | `crypto_tamper_*`: every bit of the magic, the nonce, the ciphertext and the tag, and every shorter length: `CACHE_CORRUPTED` |
+| Move | `crypto_move_*`: another partition, cache key, role, file id, schema version or data key does not open; `driver_partitions_moved_file_is_corrupted`, `driver_partitions_moved_row_is_corrupted` |
+| Logout | `driver_revoke_shreds`: after `RevokePartition` the old files that stay on disk do not open with the new key of the partition. `driver_commit_revoke_with_a_failing_key_port_still_revokes`: a locked key store does not stop the removal |
+| Nonces | `crypto_seal_nonce_is_fresh`, `crypto_seal_nonce_comes_from_the_port` |
+| No key in output | `crypto_key_debug_writes_no_byte`; `DataKey` has no `Clone`; errors hold a kind and a fixed operation name |
+| Decoders | `store_file_decode` 252,853,878 runs and `store_row_decode` 189,375,683 runs in 1 hour each, no crash |
+| Mutation | `rivqen-store::crypto` 136 of 151 |
+
+<Badge type="danger" text="GATE" /> Not covered: the key wrap on the platforms (WP-10, WP-11) and the review against the threat model (WP-18).
 
 ## Related
 

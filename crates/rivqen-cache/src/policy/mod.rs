@@ -12,6 +12,7 @@
 use rivqen_model::time::UnixTime;
 
 use crate::header::{CacheControl, Vary};
+use crate::key::Protocol;
 use crate::partition::Credentials;
 
 #[cfg(feature = "legacy")]
@@ -125,6 +126,9 @@ pub struct StoreInput<'a> {
     /// The app allows the cache of authenticated pages (R-CACHE-03; off by
     /// default).
     pub authenticated_cache: bool,
+    /// The protocol of the exchange. It decides what consents to the store of
+    /// a credentialed exchange (H-150, CL-25).
+    pub protocol: Protocol,
 }
 
 /// The status code that the cache stores for a full document.
@@ -315,8 +319,12 @@ pub fn serve_on_failure(
 ///    (R-CACHE-02).
 /// 2. `Vary: *`: [`SkipReason::VaryAny`].
 /// 3. A credentialed exchange (credentials present or unknown, or a
-///    `Set-Cookie` or `Set-Cookie2` field; H-62) without
-///    `authenticated_cache`: [`SkipReason::Credentialed`] (R-CACHE-03).
+///    `Set-Cookie` or `Set-Cookie2` field; H-62) without consent:
+///    [`SkipReason::Credentialed`] (R-CACHE-03). For [`Protocol::Legacy`]
+///    the consent is `authenticated_cache`. For [`Protocol::Rqp`] it is
+///    `authenticated_cache` and a valid `private` or `public` directive of
+///    the response (H-150, DL-207). A directive that a syntax error cleared
+///    is no consent.
 /// 4. A status other than `200`: [`SkipReason::TransientStatus`] for a
 ///    `5xx`, `408` or `429`, else [`SkipReason::Status`].
 /// 5. Else [`StoreDecision::Store`]. `private` and `no-cache` allow the
@@ -332,13 +340,24 @@ pub fn store_decision(input: &StoreInput<'_>) -> StoreDecision {
         return StoreDecision::Skip(SkipReason::VaryAny);
     }
     let credentialed = input.credentials != Credentials::Absent || input.set_cookie;
-    if credentialed && !input.authenticated_cache {
+    if credentialed && !credentialed_consent(input) {
         return StoreDecision::Skip(SkipReason::Credentialed);
     }
     if input.status != STORED_STATUS {
         return StoreDecision::Skip(status_reason(input.status));
     }
     StoreDecision::Store
+}
+
+/// Consent of the app and the server for the store of a credentialed
+/// exchange (H-150).
+fn credentialed_consent(input: &StoreInput<'_>) -> bool {
+    match input.protocol {
+        Protocol::Legacy => input.authenticated_cache,
+        Protocol::Rqp => {
+            input.authenticated_cache && (input.response.private || input.response.public)
+        }
+    }
 }
 
 /// The skip reason of a status other than `200` (legacy client CL-18).

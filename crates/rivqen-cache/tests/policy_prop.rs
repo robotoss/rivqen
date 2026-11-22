@@ -11,6 +11,7 @@
 
 use proptest::prelude::*;
 use rivqen_cache::header::{CacheControl, Vary};
+use rivqen_cache::key::Protocol;
 use rivqen_cache::partition::Credentials;
 use rivqen_cache::policy::{
     EntryPolicy, Expires, Failure, SkipReason, StoreDecision, StoreInput, Use, current_age,
@@ -106,6 +107,18 @@ fn failure() -> impl Strategy<Value = Failure> {
     prop_oneof![Just(Failure::Network), Just(Failure::Tls)]
 }
 
+fn protocol() -> impl Strategy<Value = Protocol> {
+    prop_oneof![Just(Protocol::Rqp), Just(Protocol::Legacy)]
+}
+
+/// The consent of the server (H-150): only RQP asks for a directive.
+fn consent(protocol: Protocol, response: &CacheControl) -> bool {
+    match protocol {
+        Protocol::Legacy => true,
+        Protocol::Rqp => response.private || response.public,
+    }
+}
+
 fn credentials() -> impl Strategy<Value = Credentials> {
     prop_oneof![
         Just(Credentials::Absent),
@@ -173,6 +186,7 @@ proptest! {
         credentials in credentials(),
         set_cookie in any::<bool>(),
         authenticated_cache in any::<bool>(),
+        protocol in protocol(),
     ) {
         if in_request {
             request.no_store = true;
@@ -187,6 +201,7 @@ proptest! {
             credentials,
             set_cookie,
             authenticated_cache,
+            protocol,
         });
         prop_assert_eq!(decision, StoreDecision::Skip(SkipReason::NoStore));
     }
@@ -200,6 +215,7 @@ proptest! {
         credentials in credentials(),
         set_cookie in any::<bool>(),
         authenticated_cache in any::<bool>(),
+        protocol in protocol(),
     ) {
         let decision = store_decision(&StoreInput {
             status,
@@ -209,14 +225,43 @@ proptest! {
             credentials,
             set_cookie,
             authenticated_cache,
+            protocol,
         });
         let credentialed = credentials != Credentials::Absent || set_cookie;
         let store = status == 200
             && !request.no_store
             && !response.no_store
             && vary != Vary::Any
-            && (!credentialed || authenticated_cache);
+            && (!credentialed || (authenticated_cache && consent(protocol, &response)));
         prop_assert_eq!(decision == StoreDecision::Store, store);
+    }
+
+    #[test]
+    fn policy_prop_rqp_credentialed_without_a_directive_never_stores(
+        status in prop_oneof![Just(200_u16), any::<u16>()],
+        request in cache_control(),
+        mut response in cache_control(),
+        vary in vary(),
+        credentials in credentials(),
+        set_cookie in any::<bool>(),
+        authenticated_cache in any::<bool>(),
+    ) {
+        response.private = false;
+        response.public = false;
+        let credentialed = credentials != Credentials::Absent || set_cookie;
+        let decision = store_decision(&StoreInput {
+            status,
+            request: &request,
+            response: &response,
+            vary: &vary,
+            credentials,
+            set_cookie,
+            authenticated_cache,
+            protocol: Protocol::Rqp,
+        });
+        if credentialed {
+            prop_assert_ne!(decision, StoreDecision::Store);
+        }
     }
 
     #[test]

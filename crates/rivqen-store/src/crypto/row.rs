@@ -40,7 +40,8 @@
 //!     limits              option of:
 //!       max_patch_bytes   option of u32
 //! policy (EntryPolicy)
-//!   no_store, no_cache, private, public, must_revalidate    bool each
+//!   no_store, no_cache, private, valid_private, public, must_revalidate
+//!                     bool each (valid_private only with private)
 //!   max_age, stale_while_revalidate, stale_if_error         option of u64 each
 //!   invalid_freshness bool
 //!   expires           u8: 00 absent, 01 invalid, 02 and u64
@@ -56,7 +57,8 @@
 //! ```
 //!
 //! Only format 2 decodes. [`RowContent::fits`] answers, without an
-//! encode, whether the encoding of a value decodes with given limits.
+//! encode, whether the encoding of a value decodes with given limits (and
+//! does not set `valid_private` without `private`).
 
 use rivqen_cache::driver::StoreError;
 use rivqen_cache::header::CacheControl;
@@ -111,7 +113,8 @@ impl RowContent {
 
     /// True when the plain text of this row content decodes with `limits`:
     /// [`decode_row`] of [`Self::encode`] gives `Ok` exactly when this
-    /// gives `true`. One pass over the sizes, no encode.
+    /// gives `true`. One pass over the sizes and the `valid_private` rule,
+    /// no encode.
     #[must_use]
     pub fn fits(&self, limits: &DecodeLimits) -> bool {
         check_row(&self.parts(), limits).is_ok()
@@ -196,10 +199,11 @@ fn write_row(row: &Parts<'_>) -> Vec<u8> {
     w.into_bytes()
 }
 
-/// The size checks of [`read_row`] on the values, with the same limits.
-/// Every other part of an encoding always decodes: a text of a `String` is
-/// UTF-8, each tag is one that the reader knows, and each count is the
-/// number of the items that follow it.
+/// The checks of [`read_row`] on the values: the sizes with the same
+/// limits, and `valid_private` only with `private`. Every other part of an
+/// encoding always decodes: a text of a `String` is UTF-8, each tag is one
+/// that the reader knows, and each count is the number of the items that
+/// follow it.
 fn check_row(row: &Parts<'_>, limits: &DecodeLimits) -> Result<(), Bad> {
     within(row.host.len(), host_limit()?)?;
     let mut names = Budget::new(limits.max_headers_total_bytes);
@@ -221,6 +225,7 @@ fn check_row(row: &Parts<'_>, limits: &DecodeLimits) -> Result<(), Bad> {
             BlockId::parse(id).map_err(|_| Bad)?;
         }
     }
+    valid_private_holds(&row.policy.cache_control)?;
     let mut total = Budget::new(limits.max_headers_total_bytes);
     for line in row.fields {
         within(line.name.len(), limits.max_header_bytes)?;
@@ -230,6 +235,16 @@ fn check_row(row: &Parts<'_>, limits: &DecodeLimits) -> Result<(), Bad> {
         total.take(len)?;
     }
     Ok(())
+}
+
+/// `Ok` unless `valid_private` is set without `private`: a value that
+/// `parse_cache_control` never gives, so it has no encoding.
+fn valid_private_holds(cc: &CacheControl) -> Result<(), Bad> {
+    if cc.valid_private && !cc.private {
+        Err(Bad)
+    } else {
+        Ok(())
+    }
 }
 
 /// `Ok` when `len` is at most `limit`.
@@ -291,6 +306,7 @@ fn write_policy(w: &mut Writer, policy: &EntryPolicy) {
     w.bool(cc.no_store);
     w.bool(cc.no_cache);
     w.bool(cc.private);
+    w.bool(cc.valid_private);
     w.bool(cc.public);
     w.bool(cc.must_revalidate);
     w.option(cc.max_age, Writer::u64);
@@ -434,6 +450,7 @@ fn read_policy(r: &mut Reader<'_>) -> Result<EntryPolicy, Bad> {
         no_store: r.bool()?,
         no_cache: r.bool()?,
         private: r.bool()?,
+        valid_private: r.bool()?,
         public: r.bool()?,
         must_revalidate: r.bool()?,
         max_age: r.option(Reader::u64)?,
@@ -441,6 +458,8 @@ fn read_policy(r: &mut Reader<'_>) -> Result<EntryPolicy, Bad> {
         stale_if_error: r.option(Reader::u64)?,
         invalid_freshness: r.bool()?,
     };
+    // The parser never sets `valid_private` without `private`.
+    valid_private_holds(&cache_control)?;
     let expires = match r.u8()? {
         0 => Expires::Absent,
         1 => Expires::Invalid,

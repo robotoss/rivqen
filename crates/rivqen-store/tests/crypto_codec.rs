@@ -253,6 +253,7 @@ fn sample_policy() -> EntryPolicy {
             no_store: false,
             no_cache: true,
             private: false,
+            valid_private: false,
             public: true,
             must_revalidate: false,
             max_age: Some(60),
@@ -315,7 +316,8 @@ fn sample_row() -> RowContent {
 
 /// The policy part of `sample_policy`, by hand.
 fn sample_policy_bytes(out: &mut Vec<u8>) {
-    out.extend_from_slice(&[0, 1, 0, 1, 0]);
+    // no_store, no_cache, private, valid_private, public, must_revalidate.
+    out.extend_from_slice(&[0, 1, 0, 0, 1, 0]);
     out.push(1);
     u64be(out, 60);
     out.push(0);
@@ -433,6 +435,7 @@ fn crypto_codec_row_round_trip_of_each_variant() {
         no_store: true,
         no_cache: false,
         private: true,
+        valid_private: true,
         public: false,
         must_revalidate: true,
         max_age: None,
@@ -488,12 +491,41 @@ fn crypto_codec_row_rejects_unknown_tags() {
     assert_eq!(sample_row_bytes()[etag], 1);
     assert_bad_byte(etag, 2);
     let policy = etag + 1 + 8 + 3 + 1 + 1;
-    for at in [0, 1, 2, 3, 4, 5, 14, 15, 24] {
+    for at in [0, 1, 2, 3, 4, 5, 6, 15, 16, 25] {
         assert_bad_byte(policy + at, 2);
     }
     // The expires tag: 3.
-    assert_eq!(sample_row_bytes()[policy + 25], 2);
-    assert_bad_byte(policy + 25, 3);
+    assert_eq!(sample_row_bytes()[policy + 26], 2);
+    assert_bad_byte(policy + 26, 3);
+}
+
+#[test]
+fn crypto_codec_row_valid_private_only_with_private() {
+    // `private`, then `valid_private`: the bytes 2 and 3 of the policy.
+    let policy = PROTOCOL_AT + 1 + 8 + (8 + 15 + 1 + 32) + (8 + 1 + 1);
+    let policy = policy + (1 + 8 + 3) + 1 + 1;
+    let bytes = sample_row_bytes();
+    assert_eq!(bytes[policy..policy + 6], [0, 1, 0, 0, 1, 0]);
+    // Both set: decodes, and `fits` agrees.
+    let mut row = sample_row();
+    row.policy.cache_control.private = true;
+    row.policy.cache_control.valid_private = true;
+    assert_fits(&row, &limits(), true);
+    let mut both = bytes.clone();
+    both[policy + 2] = 1;
+    both[policy + 3] = 1;
+    assert_eq!(both, row.encode());
+    // `private` only: decodes.
+    row.policy.cache_control.valid_private = false;
+    assert_fits(&row, &limits(), true);
+    // `valid_private` without `private`: no value of the parser, no
+    // encoding.
+    row.policy.cache_control.private = false;
+    row.policy.cache_control.valid_private = true;
+    assert_fits(&row, &limits(), false);
+    let mut alone = bytes;
+    alone[policy + 3] = 1;
+    assert_eq!(decode_row(&alone, &limits()), Err(row_error()));
 }
 
 #[test]

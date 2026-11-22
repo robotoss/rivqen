@@ -68,7 +68,7 @@ fn file_content() -> impl Strategy<Value = FileContent> {
 
 fn cache_control() -> impl Strategy<Value = CacheControl> {
     (
-        any::<[bool; 6]>(),
+        any::<[bool; 7]>(),
         any::<Option<u64>>(),
         any::<Option<u64>>(),
         any::<Option<u64>>(),
@@ -77,6 +77,9 @@ fn cache_control() -> impl Strategy<Value = CacheControl> {
             no_store: flags[0],
             no_cache: flags[1],
             private: flags[2],
+            // Also without `private`: a value with no encoding, which
+            // `fits` and the decoder refuse together.
+            valid_private: flags[6],
             public: flags[3],
             must_revalidate: flags[4],
             max_age,

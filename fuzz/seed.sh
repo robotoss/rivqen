@@ -137,9 +137,11 @@ fs.writeFileSync(path.join(fileDir, "legacy"), file("P!", "T", [["k", "vv"], ["{
 fs.writeFileSync(path.join(fileDir, "rqp"), file("<html><div data-rq-block=\"main\">x</div></html>", null, []));
 fs.writeFileSync(path.join(fileDir, "empty"), file("", null, []));
 fs.writeFileSync(path.join(fileDir, "empty-blocks"), file("", "", [["", ""], ["", ""]]));
-const policy = cat(u8(0), u8(1), u8(0), u8(1), u8(0), some(u64(60)), none, some(u64(5)), u8(0),
+// Six booleans: no_store, no_cache, private, valid_private, public,
+// must_revalidate (valid_private only with private).
+const policy = cat(u8(0), u8(1), u8(1), u8(1), u8(0), u8(0), some(u64(60)), none, some(u64(5)), u8(0),
   u8(2), u64(1000), some(u64(990)), none, u64(980), u64(985), some(u32(30)), u8(1));
-const zeroPolicy = cat(Buffer.alloc(5), none, none, none, u8(0), u8(0), none, none, u64(0), u64(0), none, u8(0));
+const zeroPolicy = cat(Buffer.alloc(6), none, none, none, u8(0), u8(0), none, none, u64(0), u64(0), none, u8(0));
 // Row format 2: the host and the store time follow the format byte.
 const row = (protocol, vary, etag, rqp, pol, fields, host = "shop.example.com",
   storedAt = 1700000000) => cat(u8(2), lp(host), u64(storedAt), u8(protocol),

@@ -66,6 +66,7 @@ dependencies = [
  "cfg-if",
  "cipher",
  "cpufeatures",
+ "zeroize",
 ]
 
 [[package]]
@@ -78,6 +79,7 @@ dependencies = [
  "chacha20",
  "cipher",
  "poly1305",
+ "zeroize",
 ]
 
 [[package]]
@@ -288,6 +290,7 @@ version = "0.1.0"
 dependencies = [
  "chacha20poly1305",
  "rivqen-cache",
+ "rivqen-integrity",
  "rivqen-model",
  "rivqen-proto",
  "rusqlite",

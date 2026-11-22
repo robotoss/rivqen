@@ -256,6 +256,12 @@ fn driver_commit_replace_writes_one_sealed_file() {
     assert_eq!(bucket, &stem[..2]);
     let bytes = fs::read(file).unwrap();
     assert_eq!(bytes[..4], MAGIC);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mode = fs::metadata(file).unwrap().permissions().mode();
+        assert_eq!(mode & 0o777, 0o600);
+    }
     let clear = b"secret-page";
     assert!(!bytes.windows(clear.len()).any(|window| window == clear));
     assert_eq!(
@@ -504,6 +510,30 @@ fn driver_commit_clear_of_all_sites_deletes_the_public_key() {
     );
     assert_eq!(*keys.deleted.borrow(), vec![Partition::Public]);
     assert_eq!(entry_files(&dir), NO_FILES);
+}
+
+#[test]
+fn driver_commit_never_replaces_an_existing_file() {
+    let dir = TestDir::new("commit_never_replaces_an_existing_file");
+    // A random source that gives the same bytes every time: the second
+    // entry gets the file id of the first.
+    let keys = HostKeys::with_random_source(Box::new(std::io::repeat(0x3c)));
+    let mut store = FileStore::open(&dir.root(), keys).unwrap();
+    store.recover(NOW).unwrap();
+    put(&mut store, Partition::Public, K1, "p2/a");
+    let first = entry_files(&dir);
+    let (meta, body) = sample_entry(Partition::Public, K2, HOST, "p2/b", 0);
+    let pre = fresh(&mut store, Partition::Public, Expect::Any);
+    assert_eq!(
+        kind(store.apply(replace_txn(meta, body, pre))),
+        StoreErrorKind::Unavailable
+    );
+    assert_eq!(entry_files(&dir), first);
+    assert_eq!(temp_files(&dir), NO_FILES);
+    assert_eq!(
+        page_of(&mut store, Partition::Public, K1).unwrap(),
+        b"p2/a/page"
+    );
 }
 
 #[test]

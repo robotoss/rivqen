@@ -84,5 +84,8 @@ A new member needs a row in these tables first.
   `null`, so only the cache rules decide. `commit: true` means that the rules allow the
   commit of the entry. `remove_entry: true` means that the rules remove the entry of the
   key when one exists. `disable_key_ms` is the period of CL-19, or `null`.
+- A `store` row runs as an RQP response and a `legacy` row as a legacy response (H-150): a
+  credentialed `store` row is stored only with `authenticated_cache` and a `Cache-Control`
+  that has `public`, or `private` in a value with no syntax error (DL-207, DL-213).
 - A `store` row is the response to a request for a full document. A delta is not a row:
   its own `no-store` does not decide the store of the patched snapshot (DL-199).

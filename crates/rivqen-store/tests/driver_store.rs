@@ -1951,3 +1951,28 @@ fn driver_partitions_moved_row_is_corrupted() {
     assert!(page_of(&mut store, Partition::Scoped(A), K1).is_none());
     assert!(page_of(&mut store, Partition::Scoped(B), K2).is_some());
 }
+
+#[test]
+fn driver_list_removes_a_row_that_does_not_decode() {
+    let dir = TestDir::new("list_removes_a_row_that_does_not_decode");
+    let mut store = store(&dir);
+    put(&mut store, Partition::Scoped(A), K1, "p0/a");
+    put(&mut store, Partition::Scoped(A), K2, "p0/b");
+    raw(&dir)
+        .execute(
+            r#"UPDATE entry SET version = -1 WHERE "key" = ?1"#,
+            [K1.as_bytes().as_slice()],
+        )
+        .unwrap();
+    // The list removes the row that does not decode and gives the other.
+    let listed = store.list().unwrap();
+    assert_eq!(listed.len(), 1);
+    assert_eq!(listed[0].meta.key, K2);
+    assert!(
+        store
+            .read(Partition::Scoped(A), &K1, NOW)
+            .unwrap()
+            .is_none()
+    );
+    assert!(page_of(&mut store, Partition::Scoped(A), K2).is_some());
+}

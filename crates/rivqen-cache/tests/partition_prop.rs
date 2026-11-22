@@ -10,6 +10,9 @@
 
 #![allow(clippy::indexing_slicing, clippy::arithmetic_side_effects)]
 
+use std::net::Ipv6Addr;
+use std::str::FromStr;
+
 use proptest::prelude::*;
 use proptest::test_runner::RngSeed;
 use rivqen_cache::key::Partition;
@@ -70,6 +73,44 @@ fn a_shared_condition_fails(f: &StoreFacts) -> bool {
         || f.private
         || f.set_cookie
         || !f.manifest_public
+}
+
+/// A group of an IPv6 address; mostly zero, so that runs of zero groups of
+/// every length occur.
+fn ipv6_group() -> impl Strategy<Value = u16> {
+    prop_oneof![4 => Just(0_u16), 1 => Just(1_u16), 2 => any::<u16>()]
+}
+
+/// Other texts of the address with the groups `groups`: every group
+/// written out (shortest and with four digits), and `::` at every run of
+/// one or more zero groups. One of them can be the text of `Display`.
+fn ipv6_texts(groups: &[u16; 8]) -> Vec<String> {
+    let join = |part: &[u16]| {
+        part.iter()
+            .map(|group| format!("{group:x}"))
+            .collect::<Vec<_>>()
+            .join(":")
+    };
+    let mut texts = vec![
+        join(groups),
+        groups
+            .iter()
+            .map(|group| format!("{group:04x}"))
+            .collect::<Vec<_>>()
+            .join(":"),
+    ];
+    for start in 0..8 {
+        for end in start + 1..=8 {
+            if groups[start..end].iter().all(|&group| group == 0) {
+                texts.push(format!(
+                    "{}::{}",
+                    join(&groups[..start]),
+                    join(&groups[end..])
+                ));
+            }
+        }
+    }
+    texts
 }
 
 proptest! {
@@ -236,6 +277,45 @@ proptest! {
             if host.contains(':') {
                 prop_assert!(host.starts_with('[') && host.ends_with(']'));
                 prop_assert!(host.len() <= 41);
+            }
+        }
+    }
+
+    #[test]
+    fn partition_prop_valid_host_ipv6_accepts_only_the_display_form(
+        groups in proptest::array::uniform8(ipv6_group()),
+    ) {
+        // DL-208 a: one text for each address. `Display` of `Ipv6Addr`
+        // writes the form of RFC 5952 section 4; an address that it writes
+        // with an IPv4 tail has no text that `valid_host` accepts in this
+        // test's list, so it is skipped.
+        let display = Ipv6Addr::from(groups).to_string();
+        if !display.contains('.') {
+            prop_assert!(valid_host(&format!("[{display}]")), "{:?}", display);
+            let mut others = ipv6_texts(&groups);
+            others.push(display.to_ascii_uppercase());
+            for text in others {
+                prop_assert_eq!(
+                    valid_host(&format!("[{text}]")),
+                    text == display,
+                    "{:?} for {:?}", text, display
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn partition_prop_valid_host_ipv6_text_is_the_display_of_its_address(
+        text in "((0|0|0|[1-9a-f][0-9a-f]{0,3}|0[0-9a-f])?:){1,8}(0|[1-9a-f][0-9a-f]{0,3})?",
+    ) {
+        // Every IPv6 text that `valid_host` accepts is the text of `Display`
+        // for its address, when `Display` writes no IPv4 tail.
+        if valid_host(&format!("[{text}]")) {
+            let address = Ipv6Addr::from_str(&text);
+            prop_assert!(address.is_ok(), "{:?}", text);
+            if let Ok(address) = address {
+                let display = address.to_string();
+                prop_assert!(display.contains('.') || display == text, "{:?} {:?}", text, display);
             }
         }
     }

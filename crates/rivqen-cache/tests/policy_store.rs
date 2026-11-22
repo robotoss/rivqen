@@ -5,9 +5,11 @@
 //! freshness section 2 rule 1; R-CACHE-02, R-CACHE-03; legacy wire section
 //! 7; legacy client CL-13, CL-15, CL-18, CL-19, CL-25, CL-30, CL-39, CL-44).
 
-use rivqen_cache::header::{CacheControl, Vary};
+use rivqen_cache::header::{CacheControl, Vary, parse_cache_control};
+use rivqen_cache::key::Protocol;
 use rivqen_cache::partition::Credentials;
 use rivqen_cache::policy::{SkipReason, StoreDecision, StoreInput, store_decision};
+use rivqen_model::http::FieldLine;
 
 /// The inputs of a store decision that the test can change.
 #[derive(Clone)]
@@ -20,9 +22,11 @@ struct Exchange {
     credentials: Credentials,
     set_cookie: bool,
     authenticated_cache: bool,
+    protocol: Protocol,
 }
 
-/// A `200` without credentials and without directives: stored.
+/// A legacy `200` without credentials and without directives: stored. The
+/// tests of the RQP consent set `protocol` to `Protocol::Rqp`.
 fn base() -> Exchange {
     Exchange {
         status: 200,
@@ -32,6 +36,7 @@ fn base() -> Exchange {
         credentials: Credentials::Absent,
         set_cookie: false,
         authenticated_cache: false,
+        protocol: Protocol::Legacy,
     }
 }
 
@@ -44,6 +49,7 @@ fn decide(exchange: &Exchange) -> StoreDecision {
         credentials: exchange.credentials,
         set_cookie: exchange.set_cookie,
         authenticated_cache: exchange.authenticated_cache,
+        protocol: exchange.protocol,
     })
 }
 
@@ -214,6 +220,137 @@ fn policy_store_rule_order() {
         ..credentials
     };
     assert_eq!(decide(&status), skip(SkipReason::TransientStatus));
+}
+
+// ---- Consent of the server for an RQP response (H-150, DL-207) -------------
+
+fn rqp_credentialed(response: CacheControl) -> Exchange {
+    Exchange {
+        protocol: Protocol::Rqp,
+        credentials: Credentials::Present,
+        authenticated_cache: true,
+        response,
+        ..base()
+    }
+}
+
+fn directive(private: bool, public: bool) -> CacheControl {
+    CacheControl {
+        private,
+        public,
+        ..CacheControl::default()
+    }
+}
+
+#[test]
+fn policy_store_rqp_consent_needs_private_or_public() {
+    for response in [
+        CacheControl::default(),
+        CacheControl {
+            max_age: Some(600),
+            ..CacheControl::default()
+        },
+        no_cache_only(),
+    ] {
+        let e = rqp_credentialed(response);
+        assert_eq!(
+            decide(&e),
+            skip(SkipReason::Credentialed),
+            "{:?}",
+            e.response
+        );
+    }
+    for (private, public) in [(true, false), (false, true), (true, true)] {
+        let e = rqp_credentialed(directive(private, public));
+        assert_eq!(decide(&e), StoreDecision::Store, "{private} {public}");
+    }
+}
+
+fn no_cache_only() -> CacheControl {
+    CacheControl {
+        no_cache: true,
+        ..CacheControl::default()
+    }
+}
+
+#[test]
+fn policy_store_rqp_consent_needs_the_app_setting_too() {
+    let e = Exchange {
+        authenticated_cache: false,
+        ..rqp_credentialed(directive(true, false))
+    };
+    assert_eq!(decide(&e), skip(SkipReason::Credentialed));
+}
+
+#[test]
+fn policy_store_rqp_consent_covers_unknown_credentials_and_set_cookie() {
+    let unknown = Exchange {
+        credentials: Credentials::Unknown,
+        ..rqp_credentialed(directive(true, false))
+    };
+    assert_eq!(decide(&unknown), StoreDecision::Store);
+    let unknown_bare = Exchange {
+        credentials: Credentials::Unknown,
+        ..rqp_credentialed(CacheControl::default())
+    };
+    assert_eq!(decide(&unknown_bare), skip(SkipReason::Credentialed));
+    let cookie = Exchange {
+        credentials: Credentials::Absent,
+        set_cookie: true,
+        ..rqp_credentialed(CacheControl::default())
+    };
+    assert_eq!(decide(&cookie), skip(SkipReason::Credentialed));
+    let cookie_private = Exchange {
+        response: directive(true, false),
+        ..cookie
+    };
+    assert_eq!(decide(&cookie_private), StoreDecision::Store);
+}
+
+#[test]
+fn policy_store_rqp_consent_needs_a_valid_directive() {
+    // A syntax error clears `public` (and every other directive).
+    let response = parse_cache_control(&[FieldLine::new("Cache-Control", "public, max-age =5")]);
+    assert!(!response.public, "the parser clears public");
+    let e = rqp_credentialed(response);
+    assert_eq!(decide(&e), skip(SkipReason::Credentialed));
+}
+
+#[test]
+fn policy_store_rqp_without_credentials_needs_no_directive() {
+    let e = Exchange {
+        credentials: Credentials::Absent,
+        ..rqp_credentialed(CacheControl::default())
+    };
+    assert_eq!(decide(&e), StoreDecision::Store);
+}
+
+#[test]
+fn policy_store_rqp_consent_keeps_the_rule_order() {
+    let consent = directive(true, false);
+    let no_store_e = Exchange {
+        response: CacheControl {
+            no_store: true,
+            ..consent
+        },
+        ..rqp_credentialed(consent)
+    };
+    assert_eq!(decide(&no_store_e), skip(SkipReason::NoStore));
+    let vary = Exchange {
+        vary: Vary::Any,
+        ..rqp_credentialed(consent)
+    };
+    assert_eq!(decide(&vary), skip(SkipReason::VaryAny));
+    let status = Exchange {
+        status: 404,
+        ..rqp_credentialed(consent)
+    };
+    assert_eq!(decide(&status), skip(SkipReason::Status));
+    let credentialed_first = Exchange {
+        status: 404,
+        ..rqp_credentialed(CacheControl::default())
+    };
+    assert_eq!(decide(&credentialed_first), skip(SkipReason::Credentialed));
 }
 
 // ---- Legacy ----------------------------------------------------------------

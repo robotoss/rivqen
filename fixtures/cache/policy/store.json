@@ -286,5 +286,77 @@
     "credentials": "absent",
     "authenticated_cache": false,
     "expect": {"store": false, "reason": "no-store"}
+  },
+  {
+    "id": "POL-STORE-025",
+    "kind": "store",
+    "source": ["cache index §3", "DL-207"],
+    "note": "Credentials present, authenticated caching on, and no Cache-Control: the server gave no consent, do not store (H-150).",
+    "response_fields": [],
+    "request_fields": [],
+    "status": 200,
+    "credentials": "present",
+    "authenticated_cache": true,
+    "expect": {"store": false, "reason": "credentialed"}
+  },
+  {
+    "id": "POL-STORE-026",
+    "kind": "store",
+    "source": ["cache index §3", "DL-207"],
+    "note": "Credentials present, authenticated caching on, and max-age only: a lifetime is no consent, do not store (H-150).",
+    "response_fields": [["cache-control", "max-age=600"]],
+    "request_fields": [],
+    "status": 200,
+    "credentials": "present",
+    "authenticated_cache": true,
+    "expect": {"store": false, "reason": "credentialed"}
+  },
+  {
+    "id": "POL-STORE-027",
+    "kind": "store",
+    "source": ["cache index §3", "DL-207"],
+    "note": "Credentials present, authenticated caching on, and Cache-Control private: store (H-150).",
+    "response_fields": [["cache-control", "private, max-age=600"]],
+    "request_fields": [],
+    "status": 200,
+    "credentials": "present",
+    "authenticated_cache": true,
+    "expect": {"store": true}
+  },
+  {
+    "id": "POL-STORE-028",
+    "kind": "store",
+    "source": ["cache index §3", "DL-207"],
+    "note": "Unknown credentials count as present: private with authenticated caching on gives store (H-150).",
+    "response_fields": [["cache-control", "private"]],
+    "request_fields": [],
+    "status": 200,
+    "credentials": "unknown",
+    "authenticated_cache": true,
+    "expect": {"store": true}
+  },
+  {
+    "id": "POL-STORE-029",
+    "kind": "store",
+    "source": ["cache index §3", "DL-207"],
+    "note": "Credentials present and authenticated caching off: private does not replace the app policy, do not store.",
+    "response_fields": [["cache-control", "private, max-age=600"]],
+    "request_fields": [],
+    "status": 200,
+    "credentials": "present",
+    "authenticated_cache": false,
+    "expect": {"store": false, "reason": "credentialed"}
+  },
+  {
+    "id": "POL-STORE-030",
+    "kind": "store",
+    "source": ["cache index §3", "DL-207"],
+    "note": "Unknown credentials with authenticated caching on and no Cache-Control: do not store (H-150).",
+    "response_fields": [],
+    "request_fields": [],
+    "status": 200,
+    "credentials": "unknown",
+    "authenticated_cache": true,
+    "expect": {"store": false, "reason": "credentialed"}
   }
 ]

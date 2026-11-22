@@ -15,6 +15,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 
 use rivqen_cache::header::{parse_age, parse_cache_control, parse_http_date, parse_vary};
+use rivqen_cache::key::Protocol;
 use rivqen_cache::policy::{
     EntryPolicy, Expires, Failure, SkipReason, StoreDecision, StoreInput, Use, current_age,
     freshness_lifetime, lookup_use, serve_on_failure, store_decision,
@@ -120,6 +121,7 @@ impl StoreParts {
     }
 }
 
+/// A `store` row is an RQP exchange (H-150).
 fn decide_store(case: &StoreCase) -> StoreDecision {
     let parts = StoreParts::new(&case.request_fields, &case.response_fields);
     store_decision(&StoreInput {
@@ -130,6 +132,7 @@ fn decide_store(case: &StoreCase) -> StoreDecision {
         credentials: case.credentials,
         set_cookie: parts.set_cookie,
         authenticated_cache: case.authenticated_cache,
+        protocol: Protocol::Rqp,
     })
 }
 
@@ -147,6 +150,7 @@ fn run_legacy(case: &LegacyCase) -> Result<(), String> {
         credentials: case.credentials,
         set_cookie: parts.set_cookie,
         authenticated_cache: case.authenticated_cache,
+        protocol: Protocol::Legacy,
     });
     let offline = parse_cache_offline(case.cache_offline.as_deref());
     let got = legacy_cache_outcome(offline, store, case.unavailable_time_ms);

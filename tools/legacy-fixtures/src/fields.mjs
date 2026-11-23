@@ -74,13 +74,33 @@ export function listsMember(fields, name, member) {
   return false;
 }
 
-/** True when one of the cache-control lines has this directive (ASCII case-insensitive). */
+/** The characters that legacy wire section 10 item 5 removes at the ends of a directive name. */
+const NAME_EDGE = new Set([' ', '\t', '"']);
+
+/**
+ * Legacy wire section 10 items 3 and 5 (DL-088, DL-217): the name of one piece of a
+ * cache-control value: the text before the first `=`, without SP, HTAB and `"` at its ends,
+ * in ASCII lowercase. A quoted string is not parsed, so `private="a, no-store"` has the
+ * pieces `private="a` and ` no-store"`, and the second one is named `no-store`.
+ */
+export function directiveName(piece) {
+  const eq = piece.indexOf('=');
+  const name = eq < 0 ? piece : piece.slice(0, eq);
+  let start = 0;
+  let end = name.length;
+  while (start < end && NAME_EDGE.has(name[start])) start++;
+  while (end > start && NAME_EDGE.has(name[end - 1])) end--;
+  return asciiLower(name.slice(start, end));
+}
+
+/**
+ * True when one of the cache-control lines has this directive (lower-case name): each line is
+ * split at every `,` and every `;` (legacy wire section 10 item 5), and each piece is named by
+ * directiveName. The client model (CL-15, CL-25) and the server model (C-09) both use it.
+ */
 export function hasDirective(fields, directive) {
   for (const value of valuesOf(fields, 'cache-control')) {
-    for (const item of value.split(',')) {
-      const name = trimOws(item.split('=')[0]);
-      if (asciiLower(name) === directive) return true;
-    }
+    for (const piece of value.split(/[,;]/)) if (directiveName(piece) === directive) return true;
   }
   return false;
 }

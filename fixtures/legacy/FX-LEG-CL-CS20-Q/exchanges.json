@@ -1,0 +1,37 @@
+{
+  "id": "FX-LEG-CL-CS20-Q",
+  "format": 1,
+  "cache_before": [],
+  "exchanges": [
+    {
+      "exchange": 1,
+      "step": 1,
+      "session": 1,
+      "request": {
+        "method": "GET",
+        "target": "/catalog",
+        "fields": [
+          ["accept-diff","true"],
+          ["accept-encoding","gzip"]
+        ]
+      },
+      "response": {
+        "status": 200,
+        "fields": [
+          ["content-type","text/html; charset=utf-8"],
+          ["etag","da39a3ee5e6b4b0d3255bfef95601890afd80709"],
+          ["template-tag","da39a3ee5e6b4b0d3255bfef95601890afd80709"],
+          ["cache-offline","true"],
+          ["template-change","true"],
+          ["vary","template-tag"]
+        ],
+        "body": {
+          "page": "empty",
+          "len": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "stop": null
+    }
+  ]
+}

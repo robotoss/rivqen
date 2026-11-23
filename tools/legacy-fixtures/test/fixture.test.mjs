@@ -9,7 +9,7 @@ import { after, test } from 'node:test';
 import { CaseError, DEFAULT_APP, UPSTREAM, expectedOf, loadCase, profileOfName, resolve, resolvedRequest, tagOf } from '../src/fixture.mjs';
 import { sha1hex } from '../src/model.mjs';
 import { NOT_REPRODUCIBLE, bodyKindOf, compareNotReproduced, compareToTrace, mediaTypeKey, parseTrace, sameRequest, TraceError } from '../src/trace.mjs';
-import { first, hasDirective, normalizeFields, parseContentType, single, trimOws, valuesOf, without } from '../src/fields.mjs';
+import { directiveName, first, hasDirective, normalizeFields, parseContentType, single, trimOws, valuesOf, without } from '../src/fields.mjs';
 import { APP, CANONICAL, etagOf, legacy, page, pagesDir, tagOf as modelTag, traceText } from './helpers.mjs';
 
 const tmp = mkdtempSync(join(tmpdir(), 'legacy-fixtures-case-'));
@@ -385,4 +385,30 @@ test('field_helpers', () => {
   assert.equal(hasDirective([['cache-control', 'a'], ['cache-control', ' no-store']], 'no-store'), true);
   assert.equal(hasDirective([['cache-control', 'xno-store, no-store-x']], 'no-store'), false);
   assert.equal(hasDirective([], 'no-store'), false);
+});
+
+// Legacy wire section 10 item 5 (DL-217): the split at `,` and `;`; quotes are not parsed.
+test('has_directive_finds_no_store_inside_a_quoted_argument', () => {
+  assert.equal(hasDirective([['cache-control', 'private="a, no-store"']], 'no-store'), true);
+  assert.equal(hasDirective([['cache-control', 'private="a,no-store"']], 'no-store'), true);
+  assert.equal(hasDirective([['cache-control', 'private="no-store"']], 'no-store'), false);
+});
+
+test('has_directive_splits_at_semicolons', () => {
+  assert.equal(hasDirective([['cache-control', 'no-cache; no-store']], 'no-store'), true);
+  assert.equal(hasDirective([['cache-control', 'no-cache;no-store=1']], 'no-store'), true);
+  assert.equal(hasDirective([['cache-control', 'no-cache; private']], 'no-store'), false);
+});
+
+test('directive_name_removes_spaces_tabs_and_quotes_at_the_ends_only', () => {
+  assert.equal(directiveName(' \t" no-store"\t '), 'no-store');
+  assert.equal(directiveName('"NO-STORE"=1'), 'no-store');
+  assert.equal(directiveName('no"-store'), 'no"-store');
+  assert.equal(directiveName('no -store'), 'no -store');
+  assert.equal(directiveName('a=no-store'), 'a');
+  assert.equal(directiveName(' \t"" '), '');
+  assert.equal(directiveName(''), '');
+  // Only SP, HTAB and the quote: CR, LF and other white space stay in the name.
+  assert.equal(directiveName('\rno-store'), '\rno-store');
+  assert.equal(hasDirective([['cache-control', 'x-no-store, no-storex, "no-store-x"']], 'no-store'), false);
 });

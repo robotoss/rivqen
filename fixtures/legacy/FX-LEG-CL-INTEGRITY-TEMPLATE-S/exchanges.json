@@ -1,0 +1,60 @@
+{
+  "id": "FX-LEG-CL-INTEGRITY-TEMPLATE-S",
+  "format": 1,
+  "cache_before": [
+    {
+      "partition": "rq-test-account",
+      "url": "https://shop.example.com/catalog",
+      "vary": [],
+      "etag": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d",
+      "template_tag": "0000000000000000000000000000000000000000",
+      "page": {
+        "page": "a",
+        "len": 296,
+        "sha256": "a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb"
+      },
+      "template": "<!DOCTYPE html><html><head><meta charset=\"utf-8\">{title}</head><body><header>Static header</header>{price}{stock}<footer>Static footer</footer></body></html>",
+      "data": [
+        ["{title}","<title>Shop</title>"],
+        ["{price}","<!--sonicdiff-price--><p class=\"price\">120.00</p><!--sonicdiff-price-end-->"],
+        ["{stock}","<!--sonicdiff-stock--><p>In stock: 5</p><!--sonicdiff-stock-end-->"]
+      ],
+      "fields": [
+        ["content-type","text/html; charset=utf-8"]
+      ]
+    }
+  ],
+  "exchanges": [
+    {
+      "exchange": 1,
+      "step": 1,
+      "session": 1,
+      "request": {
+        "method": "GET",
+        "target": "/catalog",
+        "fields": [
+          ["accept-diff","true"],
+          ["accept-encoding","gzip"]
+        ]
+      },
+      "response": {
+        "status": 200,
+        "fields": [
+          ["content-type","text/html; charset=utf-8"],
+          ["etag","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+          ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+          ["template-change","true"],
+          ["cache-offline","true"],
+          ["cache-control","no-cache, private"],
+          ["vary","template-tag"]
+        ],
+        "body": {
+          "page": "a",
+          "len": 296,
+          "sha256": "a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb"
+        }
+      },
+      "stop": null
+    }
+  ]
+}

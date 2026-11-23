@@ -1,0 +1,62 @@
+{
+  "id": "FX-LEG-CL-NO-STORE-UPDATE-Q",
+  "format": 1,
+  "cache_before": [
+    {
+      "partition": "rq-test-account",
+      "url": "https://shop.example.com/catalog",
+      "vary": [],
+      "etag": "3e3184cbd12e5294959effe6f2d9985f50f4ea5d",
+      "template_tag": "3c771bf015df2c410a41a6012804f645b3acc1bc",
+      "page": {
+        "page": "a",
+        "len": 296,
+        "sha256": "a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb"
+      },
+      "template": "<!DOCTYPE html><html><head><meta charset=\"utf-8\">{title}</head><body><header>Static header</header>{price}{stock}<footer>Static footer</footer></body></html>",
+      "data": [
+        ["{title}","<title>Shop</title>"],
+        ["{price}","<!--sonicdiff-price--><p class=\"price\">120.00</p><!--sonicdiff-price-end-->"],
+        ["{stock}","<!--sonicdiff-stock--><p>In stock: 5</p><!--sonicdiff-stock-end-->"]
+      ],
+      "fields": [
+        ["content-type","text/html; charset=utf-8"]
+      ]
+    }
+  ],
+  "exchanges": [
+    {
+      "exchange": 1,
+      "step": 2,
+      "session": 1,
+      "request": {
+        "method": "GET",
+        "target": "/catalog",
+        "fields": [
+          ["accept-diff","true"],
+          ["if-none-match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+          ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+          ["accept-encoding","gzip"]
+        ]
+      },
+      "response": {
+        "status": 200,
+        "fields": [
+          ["content-type","text/html; charset=utf-8"],
+          ["cache-control","no-store"],
+          ["etag","4c33dabea7ea65c6255b9e6a6539976674886a2c"],
+          ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+          ["template-change","false"],
+          ["cache-offline","true"],
+          ["vary","template-tag"]
+        ],
+        "body": {
+          "base64": "eyJkYXRhIjp7Int0aXRsZX0iOiI8dGl0bGU+U2hvcDwvdGl0bGU+Iiwie3ByaWNlfSI6IjwhLS1zb25pY2RpZmYtcHJpY2UtLT48cCBjbGFzcz1cInByaWNlXCI+MTMwLjAwPC9wPjwhLS1zb25pY2RpZmYtcHJpY2UtZW5kLS0+Iiwie3N0b2NrfSI6IjwhLS1zb25pY2RpZmYtc3RvY2stLT48cD5JbiBzdG9jazogNTwvcD48IS0tc29uaWNkaWZmLXN0b2NrLWVuZC0tPiJ9LCJ0ZW1wbGF0ZS10YWciOiIzYzc3MWJmMDE1ZGYyYzQxMGE0MWE2MDEyODA0ZjY0NWIzYWNjMWJjIiwiaHRtbC1zaGExIjoiNGMzM2RhYmVhN2VhNjVjNjI1NWI5ZTZhNjUzOTk3NjY3NDg4NmEyYyIsImRpZmYiOiIifQ==",
+          "len": 334,
+          "sha256": "3d99e6aef45b69f689240e0fb0f1faac41cf273877d5f1b333ee908f4e11ec89"
+        }
+      },
+      "stop": null
+    }
+  ]
+}

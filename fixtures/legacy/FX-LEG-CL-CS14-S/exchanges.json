@@ -1,0 +1,68 @@
+{
+  "id": "FX-LEG-CL-CS14-S",
+  "format": 1,
+  "cache_before": [],
+  "exchanges": [
+    {
+      "exchange": 1,
+      "step": 1,
+      "session": 1,
+      "request": {
+        "method": "GET",
+        "target": "/catalog",
+        "fields": [
+          ["accept-diff","true"],
+          ["accept-encoding","gzip"]
+        ]
+      },
+      "response": {
+        "status": 200,
+        "fields": [
+          ["content-type","text/html; charset=utf-8"],
+          ["etag","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+          ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+          ["cache-offline","true"],
+          ["template-change","true"],
+          ["vary","template-tag"]
+        ],
+        "body": {
+          "page": "a",
+          "len": 296,
+          "sha256": "a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb"
+        }
+      },
+      "stop": null
+    },
+    {
+      "exchange": 2,
+      "step": 9,
+      "session": 2,
+      "request": {
+        "method": "GET",
+        "target": "/catalog",
+        "fields": [
+          ["accept-diff","true"],
+          ["if-none-match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+          ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+          ["accept-encoding","gzip"]
+        ]
+      },
+      "response": {
+        "status": 200,
+        "fields": [
+          ["content-type","text/html; charset=utf-8"],
+          ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+          ["cache-offline","true"],
+          ["template-change","false"],
+          ["vary","template-tag"]
+        ],
+        "body": {
+          "base64": "eyJkYXRhIjp7Int0aXRsZX0iOiI8dGl0bGU+U2hvcDwvdGl0bGU+Iiwie3ByaWNlfSI6IjwhLS1zb25pY2RpZmYtcHJpY2UtLT48cCBjbGFzcz1cInByaWNlXCI+MTMwLjAwPC9wPjwhLS1zb25pY2RpZmYtcHJpY2UtZW5kLS0+Iiwie3N0b2NrfSI6IjwhLS1zb25pY2RpZmYtc3RvY2stLT48cD5JbiBzdG9jazogNTwvcD48IS0tc29uaWNkaWZmLXN0b2NrLWVuZC0tPiJ9LCJ0ZW1wbGF0ZS10YWciOiIzYzc3MWJmMDE1ZGYyYzQxMGE0MWE2MDEyODA0ZjY0NWIzYWNjMWJjIiwiaHRtbC1zaGExIjoiNGMzM2RhYmVhN2VhNjVjNjI1NWI5ZTZhNjUzOTk3NjY3NDg4NmEyYyIsImRpZmYiOiIifQ==",
+          "len": 334,
+          "sha256": "3d99e6aef45b69f689240e0fb0f1faac41cf273877d5f1b333ee908f4e11ec89"
+        }
+      },
+      "stop": null
+    }
+  ]
+}

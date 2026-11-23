@@ -1,0 +1,69 @@
+{
+  "id": "FX-LEG-CL-CS21-S",
+  "format": 1,
+  "cache_before": [],
+  "exchanges": [
+    {
+      "exchange": 1,
+      "step": 1,
+      "session": 1,
+      "request": {
+        "method": "GET",
+        "target": "/catalog",
+        "fields": [
+          ["accept-diff","true"],
+          ["accept-encoding","gzip"]
+        ]
+      },
+      "response": {
+        "status": 200,
+        "fields": [
+          ["content-type","text/html; charset=utf-8"],
+          ["etag","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+          ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+          ["cache-offline","true"],
+          ["template-change","true"],
+          ["vary","template-tag"]
+        ],
+        "body": {
+          "page": "a",
+          "len": 296,
+          "sha256": "a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb"
+        }
+      },
+      "stop": null
+    },
+    {
+      "exchange": 2,
+      "step": 8,
+      "session": 2,
+      "request": {
+        "method": "GET",
+        "target": "/catalog",
+        "fields": [
+          ["accept-diff","true"],
+          ["if-none-match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+          ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+          ["accept-encoding","gzip"]
+        ]
+      },
+      "response": {
+        "status": 200,
+        "fields": [
+          ["content-type","text/html; charset=utf-8"],
+          ["etag","da39a3ee5e6b4b0d3255bfef95601890afd80709"],
+          ["template-tag","da39a3ee5e6b4b0d3255bfef95601890afd80709"],
+          ["cache-offline","true"],
+          ["template-change","true"],
+          ["vary","template-tag"]
+        ],
+        "body": {
+          "page": "empty",
+          "len": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "stop": null
+    }
+  ]
+}

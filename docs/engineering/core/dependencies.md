@@ -24,6 +24,7 @@ This page lists candidate dependencies for the Rust core with their license and 
 | `zeroize` | 1.9.1 | Apache-2.0 OR MIT | Key buffers | Use |
 | `chacha20poly1305` | 0.11.0 | Apache-2.0 OR MIT | AEAD (XChaCha20-Poly1305) | Use (H-147, ADR-011) |
 | `hmac` | 0.13.0 | MIT OR Apache-2.0 | Keyed digests (HMAC-SHA256) | Approved (H-147); not a dependency yet: the session and the adapters add it (WP-08, DL-206) |
+| `url` | 2.5.9 (2026-11-20) | MIT OR Apache-2.0 | WHATWG URL parser of `rivqen-url` | Use (H-156, WP-08). Not below 2.5.9: RUSTSEC-2026-0592. With the direct pin `idna_adapter` =1.0.0 (Apache-2.0 OR MIT): no Unicode data, a host that is not ASCII is rejected; 8 crates, +50 KB on the host ([WP-08 S1](/engineering/plan/sprints/WP-08-S1) §1) |
 | `aes-gcm` | 0.11.1 | Apache-2.0 OR MIT | AEAD | Not chosen (H-147) |
 | `ring` | 0.17.14 | Apache-2.0 AND ISC | Crypto | Not chosen for ADR-011 (C and assembly; H-147 chose `chacha20poly1305`) |
 | `aws-lc-rs` | 1.18.1 | ISC AND (Apache-2.0 OR ISC) | Crypto (FIPS option) | Candidate; larger build |

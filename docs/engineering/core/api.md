@@ -85,7 +85,7 @@ The upstream result codes map to these outcomes in [legacy client behavior](/eng
 
 - Property test: for any sequence of events, the core never returns an action for a cancelled session.
 - Property test: for any interleaving of `HttpBodyChunk` and `WebViewReady`, the final rendered bytes equal the network bytes.
-- Golden test: each legacy fixture produces the expected action list (`expected.actions.json`).
+- Golden test: each canonical legacy client fixture gives its expected result (`expected.json`, the projection of DL-110; DL-215).
 
 ## Related
 

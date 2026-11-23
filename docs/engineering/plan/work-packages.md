@@ -146,7 +146,7 @@ flowchart TD
 | Deliverables | `rivqen-session`, `rivqen-proto-legacy`, `rivqen-diff`. |
 | Acceptance | Every legacy fixture produces `expected.actions.json`; FSM property tests (cancel, stale generation, interleavings) pass. |
 | Inputs from WP-06 | [WP-06 S2](/engineering/plan/sprints/WP-06-S2) §5: `diff_v1` and the function fixtures `diff` and `etag` (DL-160); a `Rebuilt` type for `render_v1` (S1-5, DL-169); the end-to-end outcome of the 104 RQP client fixtures (H-142); the session builds `TemplateLimits` from the checked `EngineConfig` (DL-163); the UTF-8 check of manifest and patch §1.7 item 6 before `read_full_document`, as an exit criterion (S2-3, DL-177); the ledger test helpers move to `rivqen-testkit`; the size rule of F ([Q-25](/engineering/plan/open-questions)); the test `model_error_catalog_matches_errors_md` reads the code table of [errors](/engineering/core/errors) §2 (DL-179). |
-| Inputs from WP-07 | [WP-07 S2](/engineering/plan/sprints/WP-07-S2) §5, DL-214: every session write sets `Preconditions::request` (`Some`), with a test; an early read of the epochs before a `Replace`; batched or limited `touch` calls; a revoke or a clear of all sites that gives `STORAGE_UNAVAILABLE` runs again; the quota plan (`plan_eviction`) with `list`; a credentialed delta result uses `store_decision` with `Protocol::Rqp` (DL-199, DL-207); item-count limits when a real page reaches the 1 MiB row limit (DL-211); Q-26 and Q-28 at the kickoff; [WP-07 S1](/engineering/plan/sprints/WP-07-S1) §5 |
+| Inputs from WP-07 | [WP-07 S2](/engineering/plan/sprints/WP-07-S2) §5, DL-214: every session write sets `Preconditions::request` (`Some`), with a test; an early read of the epochs before a `Replace`; batched or limited `touch` calls; a revoke or a clear of all sites that gives `STORAGE_UNAVAILABLE` runs again; the quota plan (`plan_eviction`) with `list`; a credentialed delta result uses `store_decision` with `Protocol::Rqp` (DL-199, DL-207); item-count limits when a real page reaches the 1 MiB row limit (DL-211); the order of the size checks against the epoch checks of a `Replace` (DL-214 a); Q-26 and Q-28 at the kickoff; [WP-07 S1](/engineering/plan/sprints/WP-07-S1) §5 |
 
 ### WP-09 — Streaming and FFI {#wp-09}
 
@@ -173,6 +173,7 @@ flowchart TD
 | Goal | Swift SDK with WKWebView integration using the strategy chosen in ADR-003. |
 | Deliverables | `sdk/ios`: engine actor, session, WebView controller, message handlers, Keychain integration, privacy manifest. |
 | Acceptance | iOS requirements pass; iOS E2E suite passes; limits documented in the support matrix. |
+| Inputs from WP-07 | [WP-07 S2](/engineering/plan/sprints/WP-07-S2) §5, DL-214 (h): the same as WP-10: a root directory that only the store uses; the key port wraps the data keys with the iOS Keychain (`ThisDeviceOnly`, ADR-011 §2); a locked key store gives `STORAGE_UNAVAILABLE`, and a revoke runs again when the key store opens |
 
 ### WP-12 — Web core, React adapter, JS bridge {#wp-12}
 
@@ -225,7 +226,7 @@ flowchart TD
 | Goal | Reproducible measurement of correctness and performance. |
 | Deliverables | Network lab; device farm setup; benchmark harness; B0/B1 baselines; metric schema. |
 | Acceptance | Benchmark reports with method, raw data and confidence intervals. |
-| Inputs from WP-07 | [WP-07 S2](/engineering/plan/sprints/WP-07-S2) §4: the cost of a commit with `fullfsync` on devices (DL-209: 1.9 ms for the metadata and 10 ms for a `Replace` of 100 KiB on the host); the time of the driver contract tests in CI |
+| Inputs from WP-07 | [WP-07 S2](/engineering/plan/sprints/WP-07-S2) §4: the cost of a commit with `fullfsync` on devices (DL-209: 1.9 ms for the metadata and 10 ms for a `Replace` of 100 KiB on the host); the time of the driver contract tests in CI; a fault layer under the file system, so that tests can make the I/O errors that the mutation run of WP-07 could not reach |
 
 ### WP-20 — CI/CD and supply chain {#wp-20}
 

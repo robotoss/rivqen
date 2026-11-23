@@ -23,7 +23,7 @@ This page lists candidate dependencies for the Rust core with their license and 
 | `tracing` | 0.1.44 | MIT | Instrumentation | Use, behind a feature |
 | `zeroize` | 1.9.1 | Apache-2.0 OR MIT | Key buffers | Use |
 | `chacha20poly1305` | 0.11.0 | Apache-2.0 OR MIT | AEAD (XChaCha20-Poly1305) | Use (H-147, ADR-011) |
-| `hmac` | 0.13.0 | MIT OR Apache-2.0 | Keyed digests (HMAC-SHA256) | Use (H-147) |
+| `hmac` | 0.13.0 | MIT OR Apache-2.0 | Keyed digests (HMAC-SHA256) | Approved (H-147); not a dependency yet: the session and the adapters add it (WP-08, DL-206) |
 | `aes-gcm` | 0.11.1 | Apache-2.0 OR MIT | AEAD | Not chosen (H-147) |
 | `ring` | 0.17.14 | Apache-2.0 AND ISC | Crypto | Candidate for ADR-011 |
 | `aws-lc-rs` | 1.18.1 | ISC AND (Apache-2.0 OR ISC) | Crypto (FIPS option) | Candidate; larger build |

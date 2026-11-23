@@ -90,10 +90,10 @@ An **ADR** records one important decision: the context, the options, the decisio
 ## ADR-004: Cache storage format {#adr-004}
 
 - **Context.** The cache must survive crashes without mixing versions, and must be removable per partition.
-- **Recommendation.** Body files written as temp file → fsync → rename. Metadata in SQLite (WAL mode) with one transaction per commit. Each partition is a separate directory.
+- **Recommendation.** Body files written as temp file → fsync → rename. Metadata in SQLite (WAL mode) with one transaction per commit. (The first text also had a directory for each partition; the ADR file has one sealed file for each entry version, and a file name has no partition.)
 - **Verification.** Kill-9 fault injection at every write step; corruption tests.
 - **Status: Proposed.** File: [ADR-004](/engineering/architecture/adr/ADR-004-cache-storage) (2026-11-22, WP-07 S2).
-- **Direction (human, 2026-11-15, H-146, [WP-07 S1](/engineering/plan/sprints/WP-07-S1)).** <Badge type="info" text="DESIGN" /> One driver in Rust for both platforms: the crate `rivqen-store`, outside the dependency graph of `rivqen-core` (DL-180), with `rusqlite` =0.42.0 and bundled SQLite. Measured cost: +1.2 MB for each Android ABI. Not chosen: a Rust driver with files only; platform drivers in Kotlin and Swift on the system SQLite. Open for the ADR file (WP-07 S2): entry directories with a version, because a `rename` cannot replace a directory that is not empty; the delete of the old directory only after a durable commit. The status stays **Proposed** until the ADR file has the WP-07 evidence.
+- **Direction (human, 2026-11-15, H-146, [WP-07 S1](/engineering/plan/sprints/WP-07-S1)).** <Badge type="info" text="DESIGN" /> One driver in Rust for both platforms: the crate `rivqen-store`, outside the dependency graph of `rivqen-core` (DL-180), with `rusqlite` =0.42.0 and bundled SQLite. Measured cost: +1.2 MB for each Android ABI. Not chosen: a Rust driver with files only; platform drivers in Kotlin and Swift on the system SQLite. Closed by the ADR file (WP-07 S2, DL-203): one file for each entry version, because a `rename` cannot replace a directory that is not empty; an old file is removed only after a durable commit. The ADR file has the WP-07 evidence (2026-11-22); the status stays **Proposed** until the human accepts it.
 
 ## ADR-005: Legacy protocol exact semantics {#adr-005}
 
@@ -134,8 +134,8 @@ An **ADR** records one important decision: the context, the options, the decisio
 ## ADR-011: Cache encryption {#adr-011}
 
 - **Status: Proposed.** File: [ADR-011](/engineering/architecture/adr/ADR-011-cache-encryption) (2026-11-22, WP-07 S2; every entry is encrypted, H-151).
-- **Recommendation.** AEAD (AES-256-GCM or ChaCha20-Poly1305) from an audited crate. Data keys wrapped by Android Keystore / iOS Keychain keys. One key per partition, so logout revokes by key deletion.
-- **Direction (human, 2026-11-15, H-147, [WP-07 S1](/engineering/plan/sprints/WP-07-S1)).** <Badge type="info" text="DESIGN" /> XChaCha20-Poly1305 from `chacha20poly1305` =0.11.0, with a random 192-bit nonce for each file, `hmac` =0.13.0 for keyed digests and `zeroize` =1.9.1 for key buffers. WP-07 implements the encryption on the host with a test key provider; the platform key wrap is WP-10 and WP-11; WP-18 checks the design against the threat model. Not chosen: AES-256-GCM. The status stays **Proposed** until the ADR file has the WP-07 evidence.
+- **Recommendation.** AEAD from an audited crate (the first text named AES-256-GCM or ChaCha20-Poly1305; the direction below chose XChaCha20-Poly1305). Data keys wrapped by Android Keystore / iOS Keychain keys. One key per partition, so logout revokes by key deletion.
+- **Direction (human, 2026-11-15, H-147, [WP-07 S1](/engineering/plan/sprints/WP-07-S1)).** <Badge type="info" text="DESIGN" /> XChaCha20-Poly1305 from `chacha20poly1305` =0.11.0, with a random 192-bit nonce for each seal and `zeroize` =1.9.1 for key buffers; `hmac` =0.13.0 for keyed digests is approved and is added by the session and the adapters (WP-08, DL-206). WP-07 implements the encryption on the host with a test key provider; the platform key wrap is WP-10 and WP-11; WP-18 checks the design against the threat model. Not chosen: AES-256-GCM. The ADR file has the WP-07 evidence (2026-11-22); the status stays **Proposed** until the human accepts it.
 
 ## ADR-012: Release hardening profiles {#adr-012}
 

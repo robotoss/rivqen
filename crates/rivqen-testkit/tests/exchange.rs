@@ -19,6 +19,10 @@ use rivqen_testkit::fixtures::{FixtureError, load_json};
 use rivqen_testkit::fixtures_root;
 use serde_json::{Value, json};
 
+/// SHA-256 of `pages/a.html` and of the bytes `foobar` (from `shasum -a 256`).
+const PAGE_A_SHA256: &str = "a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb";
+const FOOBAR_SHA256: &str = "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2";
+
 fn legacy() -> PathBuf {
     fixtures_root().join("legacy")
 }
@@ -59,7 +63,7 @@ fn load_scratch(name: &str, file: &Value) -> Result<ClientExchanges, FixtureErro
 
 fn page_a() -> Value {
     let len = fs::metadata(legacy().join("pages/a.html")).unwrap().len();
-    json!({ "page": "a", "len": len, "sha256": "0".repeat(64) })
+    json!({ "page": "a", "len": len, "sha256": PAGE_A_SHA256 })
 }
 
 /// A valid file: one complete exchange with page `a`, one refused one.
@@ -81,7 +85,7 @@ fn valid() -> Value {
                 "response": {
                     "status": 200,
                     "fields": [["content-type", "text/html"]],
-                    "body": { "base64": "Zm9vYmFy", "len": 6, "sha256": "f".repeat(64) }
+                    "body": { "base64": "Zm9vYmFy", "len": 6, "sha256": FOOBAR_SHA256 }
                 },
                 "stop": { "kind": "cut", "at": 6 }
             }
@@ -484,6 +488,22 @@ fn exchange_rejects_a_body_that_breaks_a_rule() {
         "64 lowercase hex digits",
     );
     rejects(
+        "sha-wrong",
+        |f| f["exchanges"][1]["response"]["body"]["sha256"] = json!("f".repeat(64)),
+        "sha256 is not the hash of the body bytes",
+    );
+    rejects(
+        "page-sha-wrong",
+        |f| {
+            f["exchanges"][1]["response"]["body"] = json!({
+                "page": "a",
+                "len": fs::metadata(legacy().join("pages/a.html")).unwrap().len(),
+                "sha256": FOOBAR_SHA256
+            });
+        },
+        "sha256 is not the hash of the body bytes",
+    );
+    rejects(
         "both",
         |f| f["exchanges"][1]["response"]["body"]["page"] = json!("a"),
         "exactly one of `page` and `base64`",
@@ -521,4 +541,16 @@ fn exchange_record_with_a_null_partition_and_vary_loads() {
     // The data order of the file is kept (not the sorted order of a JSON object).
     assert_eq!(r.data[0].0, "{b}");
     assert_eq!(*r.page.source(), BodySource::Page("a".to_owned()));
+}
+
+#[test]
+fn exchange_wrong_sha256_error_names_the_file_and_holds_no_body_bytes() {
+    let mut file = valid();
+    file["exchanges"][1]["response"]["body"]["sha256"] = json!("f".repeat(64));
+    let message = load_scratch("exchange-bad-sha-message", &file)
+        .unwrap_err()
+        .to_string();
+    assert!(message.contains("exchanges.json"), "{message}");
+    assert!(!message.contains("foobar"), "{message}");
+    assert!(!message.contains("Zm9vYmFy"), "{message}");
 }

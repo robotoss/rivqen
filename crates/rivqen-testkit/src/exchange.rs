@@ -18,8 +18,7 @@
 //! inside the body, and the limits [`MAX_EXCHANGES`], [`MAX_RECORDS`],
 //! [`MAX_BODY_BYTES`] and [`MAX_FILE_BYTES`]. A file that fails a check is a
 //! [`FixtureError`] with its path; nothing panics. The SHA-256 of a body is
-//! kept as text: the generator check (`gen.mjs --check`) binds it to the
-//! bytes.
+//! kept as text; the loader checks it against the bytes.
 //!
 //! `serde_json` here keeps object members sorted by key, so the format puts
 //! every ordered list (field lines, data, Vary values) in arrays.
@@ -473,6 +472,10 @@ impl Reader<'_> {
         if bytes.len() != len {
             return Err(self.shape(format!("{what}: {} bytes, not len {len}", bytes.len())));
         }
+        let actual = hex(rivqen_integrity::sha256(&bytes).as_bytes());
+        if actual != sha256 {
+            return Err(self.shape(format!("{what}: sha256 is not the hash of the body bytes")));
+        }
         Ok(Body {
             source,
             bytes,
@@ -657,6 +660,20 @@ impl Reader<'_> {
             None => Err(self.shape(format!("{what} is missing"))),
         }
     }
+}
+
+/// The lowercase hex text of bytes.
+fn hex(bytes: &[u8]) -> String {
+    const DIGITS: &[u8; 16] = b"0123456789abcdef";
+    let mut out = String::with_capacity(bytes.len().saturating_mul(2));
+    for byte in bytes {
+        for nibble in [byte >> 4, byte & 0x0F] {
+            if let Some(digit) = DIGITS.get(usize::from(nibble)) {
+                out.push(char::from(*digit));
+            }
+        }
+    }
+    out
 }
 
 /// A page id as the generator reads it: `a-z`, `0-9`, `_`, `-`; 1 to 64 bytes.

@@ -2,7 +2,7 @@
 
 This page defines how cache data is written to disk, how it is protected, and how Rivqen reacts to memory pressure.
 
-**Status:** <Badge type="tip" text="FACT" /> for sections 1 to 3 (the reference driver of WP-07 S2) and for the items marked in section 4; <Badge type="info" text="DESIGN" /> for the platform directories, the key wrap and the memory signals. [ADR-004](/engineering/architecture/adr/ADR-004-cache-storage) (format) and [ADR-011](/engineering/architecture/adr/ADR-011-cache-encryption) (encryption) are proposed; the human accepts them with the evidence of [WP-07 S2](/engineering/plan/sprints/WP-07-S2).
+**Status:** <Badge type="tip" text="FACT" /> for sections 1 to 3 (the reference driver of WP-07 S2) and for the items marked in section 4; <Badge type="info" text="DESIGN" /> for the platform directories, the key wrap and the memory signals. [ADR-004](/engineering/architecture/adr/ADR-004-cache-storage) (format) and [ADR-011](/engineering/architecture/adr/ADR-011-cache-encryption) (encryption) are Accepted (H-152, H-153, [WP-07 S2](/engineering/plan/sprints/WP-07-S2)).
 
 [[toc]]
 

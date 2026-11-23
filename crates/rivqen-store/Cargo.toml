@@ -18,8 +18,15 @@ rivqen-proto.workspace = true
 rusqlite.workspace = true
 zeroize.workspace = true
 
+[features]
+# Test support (H-154): the fault points of `FileStore` (`stop_after`,
+# `fail_at`, `restart`) and the test key provider `HostKeys`. Only the tests of
+# this crate turn it on; a build without it has neither.
+test-support = []
+
 [dev-dependencies]
 proptest.workspace = true
+rivqen-store = { workspace = true, features = ["test-support"] }
 rivqen-testkit.workspace = true
 
 [lints]

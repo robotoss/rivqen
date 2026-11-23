@@ -7,7 +7,7 @@
 //! and the `sealed` column of its metadata row. This module gives:
 //!
 //! - the key port [`KeyProvider`] and the key type [`DataKey`];
-//! - [`HostKeys`], a key provider for tests and the host;
+//! - `HostKeys`, a key provider for tests (feature `test-support`, H-154);
 //! - [`FileId`], the 16 random bytes that name one entry version;
 //! - [`seal`] and [`open`] with the associated data [`Aad`];
 //! - the two plain-text codecs: [`encode_file`] / [`decode_file`] and
@@ -29,6 +29,7 @@
 
 mod codec;
 mod file;
+#[cfg(feature = "test-support")]
 mod host;
 mod row;
 mod seal;
@@ -41,6 +42,7 @@ use zeroize::{Zeroize, ZeroizeOnDrop};
 
 pub use codec::DecodeLimits;
 pub use file::{FILE_FORMAT, FileContent, decode_file, encode_file};
+#[cfg(feature = "test-support")]
 pub use host::HostKeys;
 pub use row::{ROW_FORMAT, RowContent, decode_row, encode_row};
 pub use seal::{Aad, MAGIC, NONCE_BYTES, Role, SEAL_DOMAIN, SEAL_OVERHEAD, TAG_BYTES, open, seal};
@@ -52,8 +54,8 @@ pub const KEY_BYTES: usize = 32;
 pub const FILE_ID_BYTES: usize = 16;
 
 /// The key port (ADR-011 section 2). The platform adapter implements it with
-/// the key store of the device (WP-10, WP-11); [`HostKeys`] implements it
-/// for tests and the host.
+/// the key store of the device (WP-10, WP-11); `HostKeys` implements it
+/// for tests (feature `test-support`).
 ///
 /// Every error of an implementation is [`StoreErrorKind::Unavailable`]
 /// (`STORAGE_UNAVAILABLE`): the cache is not usable and the page loads
@@ -103,11 +105,13 @@ impl DataKey {
     }
 
     /// A key of zero bytes, to be filled in place.
+    #[cfg(feature = "test-support")]
     fn zeroed() -> Self {
         Self(Box::new([0; KEY_BYTES]))
     }
 
     /// A second key with the same bytes (for a provider that keeps its keys).
+    #[cfg(feature = "test-support")]
     fn duplicate(&self) -> Self {
         Self(Box::new(*self.0))
     }

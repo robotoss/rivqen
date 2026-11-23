@@ -1,6 +1,6 @@
 # ADR-004: Cache storage format
 
-- Status: **Proposed** (direction: human, 2026-11-15, H-146; the human accepts the ADR with the evidence of WP-07 S2)
+- Status: **Accepted** (human, 2026-11-23, H-152, with the evidence of [WP-07 S2](/engineering/plan/sprints/WP-07-S2). Direction: H-146, H-147, H-151)
 - Date: 2026-11-22
 - Owner: Architect, WP-07
 - Reviewers: architecture lead, security reviewer

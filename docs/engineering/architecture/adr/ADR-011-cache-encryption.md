@@ -1,6 +1,6 @@
 # ADR-011: Cache encryption
 
-- Status: **Proposed** (direction: human, 2026-11-15, H-147, and 2026-11-22, H-151; the human accepts the ADR with the evidence of WP-07 S2; WP-18 checks it against the threat model)
+- Status: **Accepted** (human, 2026-11-23, H-153, with the evidence of [WP-07 S2](/engineering/plan/sprints/WP-07-S2); WP-18 checks it against the threat model and can open it again. Direction: H-146, H-147, H-151)
 - Date: 2026-11-22
 - Owner: Architect, WP-07
 - Reviewers: security reviewer
@@ -34,7 +34,7 @@ The driver seals every entry: the content file and the `sealed` column of its me
 | Data key of a scoped partition | Entries of that partition | The key port, by `PartitionId` |
 | Data key of `public` | Entries of the `public` partition | The key port |
 
-- A data key is 32 random bytes. The key port creates it at the first use and keeps it; on a device the platform adapter wraps it with a key of the Android Keystore or the iOS Keychain (`ThisDeviceOnly`) (WP-10, WP-11). WP-07 has a host key provider for tests only.
+- A data key is 32 random bytes. The key port creates it at the first use and keeps it; on a device the platform adapter wraps it with a key of the Android Keystore or the iOS Keychain (`ThisDeviceOnly`) (WP-10, WP-11). WP-07 has a host key provider for tests only (`HostKeys`, behind the feature `test-support` of `rivqen-store`, H-154).
 - The driver holds a key only for the time of one call, in a buffer that is set to zero on drop (`zeroize`); the cipher crate has its `zeroize` feature on, so its own copy of the key is set to zero too ([DL-210](/engineering/plan/decision-log)). `Debug` of a key prints no byte.
 - The key port also gives the random bytes for nonces and file ids. The driver has no random source of its own, so no new dependency.
 

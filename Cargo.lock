@@ -388,6 +388,7 @@ dependencies = [
  "rivqen-integrity",
  "rivqen-model",
  "rivqen-proto",
+ "rivqen-store",
  "rivqen-testkit",
  "rusqlite",
  "zeroize",

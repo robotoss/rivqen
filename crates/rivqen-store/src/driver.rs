@@ -88,9 +88,10 @@
 //!
 //! # Fault points
 //!
-//! [`FileStore::stop_after`] and [`FileStore::fail_at`] stop or fail the
+//! `FileStore::stop_after` and `FileStore::fail_at` stop or fail the
 //! next `apply` at one step, for the driver contract suite and the kill
-//! tests (DL-181). A stop returns at once, with no cleanup, as if the
+//! tests (DL-181). They and `FileStore::restart` exist only with the
+//! feature `test-support` (H-154): a build without it cannot stop a commit. A stop returns at once, with no cleanup, as if the
 //! process died there; the kill test kills the process right after it. No
 //! code of this crate kills a process.
 
@@ -129,7 +130,7 @@ enum Life {
     /// Recovered.
     Running,
     /// Stopped at a fault point; nothing is answered until
-    /// [`FileStore::restart`].
+    /// `FileStore::restart`.
     Stopped,
 }
 
@@ -221,6 +222,7 @@ impl<P: KeyProvider> FileStore<P> {
     ///
     /// As [`FileStore::open_with_limits`]; the store then answers nothing
     /// until a `restart` succeeds.
+    #[cfg(feature = "test-support")]
     pub fn restart(&mut self) -> Result<(), StoreError> {
         self.db = None;
         self.life = Life::NeedsRecover;
@@ -234,6 +236,7 @@ impl<P: KeyProvider> FileStore<P> {
     /// `step`, with no cleanup, and returns `Unavailable`; every later call
     /// gives `Unavailable` until [`FileStore::restart`]. For fault tests
     /// only (DL-181).
+    #[cfg(feature = "test-support")]
     pub fn stop_after(&mut self, step: CommitStep) {
         self.stop = Some(step);
     }
@@ -243,6 +246,7 @@ impl<P: KeyProvider> FileStore<P> {
     /// new file and returns `Unavailable` (at `CommitMeta` no metadata
     /// transaction and no key deletion ran); at `RemoveOld` the commit
     /// stands and the call succeeds. For fault tests only (DL-181).
+    #[cfg(feature = "test-support")]
     pub fn fail_at(&mut self, step: CommitStep) {
         self.fail = Some(step);
     }

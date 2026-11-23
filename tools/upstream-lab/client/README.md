@@ -126,7 +126,7 @@ The first real runs (2026-11-05) showed that some scenarios could not observe th
 
 ## Mutation testing
 
-Stryker 10.0.0 (command runner, as `tools/legacy-fixtures`) on `src/`. Run it in this directory, after `npm install`, one run at a time:
+Stryker 10.1.1 (command runner, as `tools/legacy-fixtures`) on `src/`. Run it in this directory, after `npm install`, one run at a time:
 
 ```bash
 npm install

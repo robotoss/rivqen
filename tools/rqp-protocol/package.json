@@ -16,9 +16,9 @@
     "mutation": "stryker run"
   },
   "devDependencies": {
-    "@stryker-mutator/core": "10.0.0"
+    "@stryker-mutator/core": "10.1.1"
   },
   "overrides": {
-    "qs": "6.16.0"
+    "qs": "6.16.2"
   }
 }

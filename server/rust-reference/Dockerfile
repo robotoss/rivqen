@@ -7,13 +7,13 @@
 #   docker build -f server/rust-reference/Dockerfile -t rivqen-reference:local .
 # The ignore list is server/rust-reference/Dockerfile.dockerignore (allow list).
 
-FROM rust:1.99.0-alpine3.22@sha256:c3a5ad77ff2e5ec99fffaf62cb518e61a9dcbd9e1d7526d281a380db0be3bb3b AS build
+FROM rust:1.99.1-alpine3.22@sha256:9a744dc47d1ac2a7d17fc3cedfc8b4928b1696dfcba3274ab25bfb40988a9ff0 AS build
 # musl is the target of this image. On x86_64 the default is a binary that needs the musl loader,
 # which the scratch image does not have, so crt-static is set on purpose. The image has no `file`,
 # and ldd cannot tell a static-pie binary from a dynamic one. The proof is that the binary starts
 # in the scratch stage: tools/reference-image/run.sh runs it there.
 # The image toolchain is the pinned one; do not let rustup fetch components for rust-toolchain.toml.
-ENV RUSTUP_TOOLCHAIN=1.99.0 \
+ENV RUSTUP_TOOLCHAIN=1.99.1 \
     RUSTFLAGS="-C target-feature=+crt-static"
 WORKDIR /src
 COPY tools/rqp-markup/rust tools/rqp-markup/rust

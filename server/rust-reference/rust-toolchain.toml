@@ -5,6 +5,6 @@
 # (DL-084; docs/engineering/standards/rust.md, section 2). A new Rust release can add
 # clippy lints; change this version on purpose, not through CI.
 [toolchain]
-channel = "1.99.0"
+channel = "1.99.1"
 profile = "minimal"
 components = ["clippy", "rustfmt"]

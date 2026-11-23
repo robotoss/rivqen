@@ -27,7 +27,7 @@ publish = false
 # Approved by the human: H-138 (WP-05 S1). Same pins as the reference server (H-113).
 [workspace.dependencies]
 base64 = { version = "=0.23.1", default-features = false, features = ["alloc"] }
-sha2 = { version = "=0.11.0", default-features = false }
+sha2 = { version = "=0.11.1", default-features = false }
 # Legacy only, behind the feature `legacy` (H-143, DL-164).
 sha1 = { version = "=0.11.0", default-features = false }
 # Tests and rivqen-testkit only (H-138).

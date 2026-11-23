@@ -3,8 +3,9 @@
 
 //! Properties of `rivqen-url` (WP-08 S1 T-04): no panic for any text; a
 //! result is ASCII and is its own parse; the origin and the path are parts of
-//! U; the canonical URL of the cache key is a fixed point; user information
-//! and a host byte over 0x7F are always rejected.
+//! U; the canonical URL of the cache key is a fixed point; user information,
+//! a host byte over 0x7F and a host label `xn--` (DL-225) are always
+//! rejected, and no accepted host has a label `xn--`.
 //!
 //! Fixed seeds; `PROPTEST_CASES` raises the case count.
 
@@ -151,7 +152,6 @@ fn host() -> impl Strategy<Value = String> {
             }),
         (0_u8..=255, 0_u8..=255).prop_map(|(a, b)| format!("10.{a}.{b}.1")),
         (0_u16..=0xffff).prop_map(|g| format!("[2001:DB8::{g:x}]")),
-        Just("xn--fa-hia.example".to_owned()),
     ]
 }
 
@@ -220,6 +220,15 @@ fn check_result(input: &str, parsed: &ParsedUrl) -> Result<(), TestCaseError> {
     prop_assert!(!binding.contains('#'), "{input:?}");
     prop_assert!(!binding.contains(['\t', '\n', '\r', ' ']), "{input:?}");
     prop_assert!(!parsed.origin().contains('@'), "{input:?}");
+    // DL-225: no label of the host starts with `xn--`. The text after the
+    // scheme, split at each dot, has every host label as the start of a part.
+    let after_scheme = parsed.origin().split_once("://").unwrap().1;
+    prop_assert!(
+        !after_scheme.split('.').any(|part| part
+            .get(..4)
+            .is_some_and(|p| p.eq_ignore_ascii_case("xn--"))),
+        "{input:?}"
+    );
     prop_assert!(binding.starts_with(parsed.origin()), "{input:?}");
     let rest = &binding[parsed.origin().len()..];
     prop_assert!(
@@ -387,5 +396,109 @@ proptest! {
             format!("{scheme}://{wide}{host}{tail}")
         };
         prop_assert_eq!(parse(&text), Err(UrlError::Host), "{:?}", text);
+    }
+}
+
+/// One form of the prefix `xn--`: each character in either case, and
+/// optionally as an escape with either hex case.
+fn punycode_prefix() -> impl Strategy<Value = String> {
+    let char_form = |c: char| {
+        let code = u32::from(c.to_ascii_lowercase());
+        let upper_code = u32::from(c.to_ascii_uppercase());
+        prop::sample::select(vec![
+            c.to_ascii_lowercase().to_string(),
+            c.to_ascii_uppercase().to_string(),
+            format!("%{code:02x}"),
+            format!("%{code:02X}"),
+            format!("%{upper_code:02x}"),
+        ])
+    };
+    (
+        char_form('x'),
+        char_form('n'),
+        char_form('-'),
+        char_form('-'),
+    )
+        .prop_map(|(a, b, c, d)| format!("{a}{b}{c}{d}"))
+}
+
+#[derive(Debug, Clone)]
+struct PunycodeHost {
+    text: String,
+}
+
+/// A URL whose host has a label `xn--…` at any place, with tab, LF and CR
+/// inserted at any places of the whole text.
+fn punycode_host_url() -> impl Strategy<Value = PunycodeHost> {
+    (
+        prop::sample::select(&["http", "https", "HTTP", "HtTpS"][..]),
+        prop::collection::vec(label(), 0..3),
+        0_usize..4,
+        punycode_prefix(),
+        "[a-zA-Z0-9-]{0,12}",
+        prop::option::of(prop::sample::select(&["%2E", "%2e", "."][..])),
+        prop::option::of(prop::sample::select(&["80", "443", "8080", ""][..])),
+        prop::sample::select(&["", "/", "/p?q", "?q", "#f", "\\p"][..]),
+        prop::collection::vec(
+            (
+                any::<prop::sample::Index>(),
+                prop::sample::select(&["\t", "\n", "\r"][..]),
+            ),
+            0..6,
+        ),
+    )
+        .prop_map(
+            |(scheme, mut labels, at, prefix, rest, dot, port, tail, inserts)| {
+                let at = at.min(labels.len());
+                labels.insert(at, format!("{prefix}{rest}"));
+                let mut host = labels.join(".");
+                // One more label after a dot, raw or as an escape.
+                if let Some(dot) = dot {
+                    host.push_str(dot);
+                    host.push_str("example");
+                }
+                let mut text = format!("{scheme}://{host}");
+                if let Some(port) = port {
+                    text.push(':');
+                    text.push_str(port);
+                }
+                text.push_str(tail);
+                // All bytes are ASCII, so every byte offset is a char
+                // boundary.
+                for (index, ws) in inserts {
+                    let offset = index.index(text.len() + 1);
+                    text.insert_str(offset, ws);
+                }
+                PunycodeHost { text }
+            },
+        )
+}
+
+proptest! {
+    #![proptest_config(config(2048, 0x5eed_0003))]
+
+    #[test]
+    fn url_prop_punycode_host_is_rejected(url in punycode_host_url()) {
+        prop_assert_eq!(parse(&url.text), Err(UrlError::Host), "{:?}", url.text);
+    }
+
+    /// Text made of the pieces around the prefix: no panic, and a result
+    /// never has a label `xn--` (checked in `check_result`).
+    #[test]
+    fn url_prop_punycode_pieces_never_accepted(
+        head in prop::sample::select(&["https://", "http:", "HTTPS:\\\\", " https://"][..]),
+        parts in prop::collection::vec(
+            prop::sample::select(&[
+                "x", "X", "n", "N", "-", "--", "%78", "%58", "%6e", "%4E", "%2d", "%2D",
+                "%2E", "%2e", ".", "a", "%", "%25", "\t", "\n", "\r", ":", "1", "@",
+                "/", "[", "]", "xn--", "XN--",
+            ][..]),
+            0..24,
+        ),
+    ) {
+        let text = format!("{head}{}", parts.concat());
+        if let Ok(parsed) = parse(&text) {
+            check_result(&text, &parsed)?;
+        }
     }
 }

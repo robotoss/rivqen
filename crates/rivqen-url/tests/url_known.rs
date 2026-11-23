@@ -171,8 +171,8 @@ fn url_errors_syntax() {
         "https://a<b/",
         "https://a%2fb/",
         "https://a%25/",
-        "https://xn--example-.org/",
-        "https://xn--/",
+        // One percent-decoding only: the host text `%78n--b` has a `%`.
+        "https://%2578n--b.example/",
     ] {
         assert_eq!(parse(input), Err(UrlError::Syntax), "{input:?}");
     }
@@ -241,19 +241,103 @@ fn url_errors_host_not_ascii() {
 }
 
 #[test]
-fn url_errors_punycode_label_passes() {
+fn url_errors_host_punycode_label() {
+    // DL-225: without Unicode data the parser cannot check the text of a
+    // punycode label, so every host with a label `xn--` is rejected, valid
+    // or not.
+    for input in [
+        "https://xn--fa-hia.example/catalog",
+        "https://XN--BCHER-KVA.Example/",
+        "https://xn--bcher-kva.example/",
+        "https://Xn--bcher-kva.example/",
+        "https://xN--bcher-kva.example/",
+        "https://shop.xn--bcher-kva.example/",
+        "https://a.example.xn--p1ai/",
+        "https://xn--fa-hia.example./",
+        "https://xn--fa-hia.example:8443/p?q#f",
+        "http://xn--fa-hia.example/",
+        "https://xn--example-.org/",
+        "https://xn--/",
+        "https://xn--a.xn--b/",
+        "https:xn--a.example/",
+        "https:\\\\xn--a.example\\p",
+        "https://xn--a.example\\@b.example/",
+    ] {
+        assert_eq!(parse(input), Err(UrlError::Host), "{input:?}");
+    }
+}
+
+#[test]
+fn url_errors_host_punycode_fuzz_regression() {
+    // The input of the fuzz finding of DL-225: `idna` 1.1.0 reached
+    // `debug_assert_ne!(c, '\u{200F}')` for it in a build with debug
+    // assertions.
     assert_eq!(
-        binding("https://xn--fa-hia.example/catalog"),
-        "https://xn--fa-hia.example/catalog"
+        parse("https://xn--TTgTggTTTggTPTTTPTTThtTTtpTTs"),
+        Err(UrlError::Host)
     );
-    assert_eq!(
-        binding("https://XN--BCHER-KVA.Example/"),
-        "https://xn--bcher-kva.example/"
-    );
-    assert_eq!(
-        ok("https://xn--bcher-kva.example/").origin(),
-        "https://xn--bcher-kva.example"
-    );
+}
+
+#[test]
+fn url_errors_host_punycode_label_smuggled() {
+    // The WHATWG parser removes tab, LF and CR and percent-decodes the host
+    // before IDNA; the scan does the same, so none of these forms passes.
+    for input in [
+        "https://%78n--b.example/",
+        "https://x%6E--b.example/",
+        "https://x%6e--b.example/",
+        "https://xn%2D-b.example/",
+        "https://xn-%2db.example/",
+        "https://%58%4E%2D%2Dbcher-kva.example/",
+        "https://a%2Exn--b/",
+        "https://a%2exn--b.example/",
+        "https://a%2E%78%6E%2D%2Db.example/",
+        "https://x\tn--b.example/",
+        "https://xn\n--b.example/",
+        "https://xn-\r-b.example/",
+        "https://a.\txn--b.example/",
+        "https://%7\t8n--b.example/",
+        "\t https://xn--b.example/",
+        "https://xn--b.example/ ",
+        "h\nttps://xn--b.example/",
+    ] {
+        assert_eq!(parse(input), Err(UrlError::Host), "{input:?}");
+    }
+    // The other dots of UTS 46 are not ASCII: rejected as such, raw or
+    // escaped.
+    for input in [
+        "https://a\u{3002}xn--b.example/",
+        "https://a\u{ff0e}xn--b.example/",
+        "https://a\u{ff61}xn--b.example/",
+        "https://a%E3%80%82xn--b.example/",
+        "https://a%EF%BC%8Exn--b.example/",
+    ] {
+        assert_eq!(parse(input), Err(UrlError::Host), "{input:?}");
+    }
+}
+
+#[test]
+fn url_host_punycode_lookalikes_pass() {
+    // Labels with `--` at other places, and labels that only look like the
+    // prefix, are not punycode labels.
+    for (input, expected) in [
+        ("https://ab--c.example/", "https://ab--c.example/"),
+        (
+            "https://r3---sn-abc.example/",
+            "https://r3---sn-abc.example/",
+        ),
+        ("https://axn--b.example/", "https://axn--b.example/"),
+        ("https://xn-b.example/", "https://xn-b.example/"),
+        ("https://xn.example/", "https://xn.example/"),
+        ("https://x-n--b.example/", "https://x-n--b.example/"),
+        ("https://%61%2E%62/", "https://a.b/"),
+        (
+            "https://a.example/xn--b?xn--c#xn--d",
+            "https://a.example/xn--b?xn--c",
+        ),
+    ] {
+        assert_eq!(binding(input), expected, "{input:?}");
+    }
 }
 
 #[test]
@@ -362,7 +446,7 @@ fn url_origin_path_equals_url_origin() {
         "https://a.example:8443/",
         "https://[2001:db8::1]:444/",
         "https://127.1/",
-        "https://xn--fa-hia.example./",
+        "https://a.example./",
         "https://a_b.example/",
     ] {
         let expected = url::Url::parse(input)

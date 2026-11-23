@@ -6,11 +6,14 @@
 //! The input is the URL text (UTF-8; other bytes are skipped). Invariants
 //! beyond "no panic" (also with debug assertions, which `cargo fuzz` turns
 //! on: `idna_adapter` 1.0.0 has a `debug_assert!` that a host with a byte over
-//! 0x7F can reach):
+//! 0x7F can reach, and `idna` 1.1.0 one that a host with a punycode label can
+//! reach, DL-225):
 //!
 //! - `TooLong` if and only if the text is over `MAX_URL_BYTES` bytes.
 //! - A result is ASCII, has no `#`, and is `origin`, `path`, then nothing or
 //!   `?` and the query; the origin has no `@`.
+//! - An accepted origin has no host label that starts with `xn--`, ASCII
+//!   case-insensitive (DL-225).
 //! - Idempotence: the parse of `binding_url` gives the same result.
 //! - `cache_url` with no names, and with the name of the first query
 //!   parameter: it is ASCII, at most 3 times U, the parse of it gives it back
@@ -41,6 +44,16 @@ fuzz_target!(|data: &[u8]| {
     assert!(!binding.contains('#'));
     let origin = parsed.origin();
     assert!(!origin.contains('@'));
+    // Each host label starts a part of the text after the scheme, split at
+    // the dots (the port has no dot).
+    let after_scheme = origin
+        .split_once("://")
+        .map(|(_, rest)| rest)
+        .expect("the origin has a scheme");
+    assert!(!after_scheme.split('.').any(|part| {
+        part.get(..4)
+            .is_some_and(|start| start.eq_ignore_ascii_case("xn--"))
+    }));
     let rest = binding
         .strip_prefix(origin)
         .expect("U starts with the origin");

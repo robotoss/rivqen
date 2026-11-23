@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: The Rivqen Authors
 
-//! Legacy response head and data body (WP-08 S1, T-01; legacy client CL-14
-//! to CL-17, CL-21, CL-24, CL-29).
+//! Legacy response head and data body (WP-08 S1, T-01 and F-03; legacy
+//! client CL-14 to CL-17, CL-21, CL-24, CL-29; DL-226).
 //!
 //! Input: the first byte selects the body limits; the rest is the head and
 //! the body, split at the first empty line (`\n\n`). Each head line is
@@ -15,10 +15,18 @@
 //!   true; then there is one `Content-Type` line, and each of the four
 //!   fields has lines whose values (without SP and HTAB at the ends) all
 //!   equal the non-empty value of the head.
-//! - `page_fields` gives lowercase names in order, never a name of
-//!   `NOT_PAGE_FIELDS` or the etag field, and each line is a line of the
-//!   head. The merge of the page fields with the same head gives the page
-//!   fields again.
+//! - A head that passes CL-14 follows DL-226: every name is a token, no
+//!   value has a control byte other than HTAB, no non-empty
+//!   `sonic-etag-key` value is a non-token, `Content-Type`, a protected
+//!   field, a `NOT_PAGE_FIELDS` name or `isReload`, and no `Connection`
+//!   token names `Content-Type` or a protected field.
+//! - `page_fields` gives lowercase token names in order and values without
+//!   a control byte other than HTAB, never a name of `NOT_PAGE_FIELDS` or
+//!   the etag field, and each line is a line of the head. Every valid
+//!   `Content-Type` or protected line of the head is in the page fields
+//!   (so no protected field of a legacy response is lost). The merge of the
+//!   page fields with the same head gives the page fields again; a merge
+//!   never gives a line that is not a valid field line.
 //! - `is_utf8_text` true means the body is UTF-8.
 //! - `read_data_body` passes only within the limits; the decoded data is
 //!   not longer than the body.
@@ -32,12 +40,66 @@ use rivqen_proto_legacy::body::{BodyLimits, read_data_body};
 use rivqen_proto_legacy::fields::{NOT_PAGE_FIELDS, merge_page_fields, page_fields};
 use rivqen_proto_legacy::message::{MessageInput, ResultCode, message};
 use rivqen_proto_legacy::response::{
-    LegacyHead, bare_etag, charset, etag_field_name, etag_value, is_legacy_response,
+    LegacyHead, bare_etag, charset, etag_field_name, etag_value, is_legacy_response, is_safe_head,
     is_template_change, is_utf8_text,
 };
 
 fn trimmed(value: &str) -> &str {
     value.trim_matches([' ', '\t'])
+}
+
+/// RFC 9110 `token`, written apart from the crate.
+fn is_token(text: &str) -> bool {
+    !text.is_empty()
+        && text
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"!#$%&'*+-.^_`|~".contains(&b))
+}
+
+/// No control byte other than HTAB, written apart from the crate.
+fn has_no_control(value: &str) -> bool {
+    !value.bytes().any(|b| (b < 0x20 && b != b'\t') || b == 0x7f)
+}
+
+fn is_valid_line(line: &FieldLine) -> bool {
+    is_token(&line.name) && has_no_control(&line.value)
+}
+
+/// DL-226 (a): `Content-Type` or a protected field (ASCII
+/// case-insensitive).
+fn is_kept_name(name: &str) -> bool {
+    let lower = name.to_ascii_lowercase();
+    lower == "content-type"
+        || lower.starts_with("cross-origin-")
+        || [
+            "content-security-policy",
+            "content-security-policy-report-only",
+            "x-frame-options",
+            "x-content-type-options",
+            "permissions-policy",
+            "referrer-policy",
+            "strict-transport-security",
+        ]
+        .contains(&lower.as_str())
+}
+
+/// The field rules of DL-226 for a head that passed CL-14.
+fn check_safe_head(fields: &[FieldLine]) {
+    for line in fields {
+        assert!(is_valid_line(line));
+        if line.is("sonic-etag-key") {
+            let key = trimmed(&line.value);
+            if !key.is_empty() {
+                assert!(is_token(key));
+                assert!(!is_kept_name(key));
+                assert!(!NOT_PAGE_FIELDS.iter().any(|n| key.eq_ignore_ascii_case(n)));
+                assert!(!key.eq_ignore_ascii_case("isReload"));
+            }
+        }
+        if line.is("connection") {
+            assert!(line.value.split(',').all(|t| !is_kept_name(trimmed(t))));
+        }
+    }
 }
 
 fn head_lines(head: &[u8]) -> Vec<FieldLine> {
@@ -63,6 +125,8 @@ fn check_head(fields: &[FieldLine]) {
     let Some(head) = head else {
         return;
     };
+    assert!(is_safe_head(fields));
+    check_safe_head(fields);
     assert_eq!(fields.iter().filter(|f| f.is("content-type")).count(), 1);
     for (field, value) in [
         (etag_field, head.etag()),
@@ -89,10 +153,23 @@ fn check_page_fields(fields: &[FieldLine]) {
     let etag_field = etag_field_name(fields).to_ascii_lowercase();
     let page = page_fields(fields);
     assert!(page.len() <= fields.len());
+    for line in fields
+        .iter()
+        .filter(|f| is_valid_line(f) && is_kept_name(&f.name))
+    {
+        let lower = line.name.to_ascii_lowercase();
+        assert!(
+            page.iter()
+                .any(|p| p.name == lower && p.value == line.value)
+        );
+    }
     for line in &page {
+        assert!(is_valid_line(line));
         assert_eq!(line.name, line.name.to_ascii_lowercase());
         assert!(!NOT_PAGE_FIELDS.contains(&line.name.as_str()));
-        assert_ne!(line.name, etag_field);
+        if !is_kept_name(&etag_field) {
+            assert_ne!(line.name, etag_field);
+        }
         assert!(
             fields
                 .iter()
@@ -104,6 +181,8 @@ fn check_page_fields(fields: &[FieldLine]) {
             .all(|w| w.first().map(|a| &a.name) <= w.get(1).map(|b| &b.name))
     );
     assert_eq!(merge_page_fields(&page, fields), page);
+    // The head as a stored record: a merge drops its invalid lines.
+    assert!(merge_page_fields(fields, &page).iter().all(is_valid_line));
 }
 
 fn check_body(selector: u8, body: &[u8]) {

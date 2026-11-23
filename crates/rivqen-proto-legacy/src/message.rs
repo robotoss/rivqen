@@ -29,6 +29,12 @@
 //! `local_refresh_time` is not part of the text (CONTRACT §6); the adapter
 //! adds it.
 //!
+//! [`message`] does not test the fields. A `sonic-etag-key` that names
+//! `template-tag`, `cache-offline` or `isReload` gives a member twice in
+//! `extra`. A legacy response never has such a key (DL-226 (a),
+//! `response::is_safe_head`); the session tests the fields of a response
+//! that CL-13 handles before CL-14 (a `304`) itself.
+//!
 //! # Safety
 //!
 //! The text is at most about six times the diff and field bytes (escapes).
@@ -44,6 +50,10 @@ use crate::response::{CACHE_OFFLINE, TEMPLATE_TAG, etag_field_name, first_value,
 
 /// The `extra` key of the etag field without `sonic-etag-key`.
 pub const DEFAULT_ETAG_KEY: &str = "eTag";
+
+/// The `extra` member of the refresh flag. A `sonic-etag-key` that names it
+/// makes the response not a legacy response (DL-226 (a)).
+pub(crate) const RELOAD_KEY: &str = "isReload";
 
 /// A result code of a legacy session (legacy client section 4, CL-22).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -207,7 +217,7 @@ pub fn message(input: &MessageInput<'_>) -> Option<String> {
     }
     push_member(
         &mut out,
-        "isReload",
+        RELOAD_KEY,
         if input.reload { "true" } else { "false" },
     );
     out.push_str("}}");

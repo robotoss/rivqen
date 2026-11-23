@@ -44,7 +44,7 @@ The build compiles against the **main** SDK (`~/Library/Android/sdk`, `platforms
 | Item | Version |
 |---|---|
 | JDK | Zulu 21.0.11 (`JAVA_HOME` in `lab-env.sh`) |
-| Gradle | 9.8.2 (wrapper; `distributionSha256Sum` pinned; wrapper JAR SHA-256 `3b8a2577…68e98` equals the published value) |
+| Gradle | 9.9.1 (wrapper; `distributionSha256Sum` pinned; DL-188). The traces of WP-01 used 9.8.2. The wrapper JAR is not changed: its SHA-256 `3b8a2577…68e98` equals the published value of 9.8.2 |
 | Android Gradle plugin | 9.5.0 (needs Gradle 9.6 or later) |
 | `compileSdk` / `minSdk` / `targetSdk` | 36 / 28 / 28 |
 | Library in the APK | `com.android.support:support-annotations:28.0.0` only (`build.sh` checks it; SHA-1 equals the Google Maven value) |

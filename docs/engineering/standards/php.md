@@ -18,9 +18,9 @@ PHP is used for the PHP server SDK (`server/php`, Composer package `rivqen/rivqe
 |---|---|---|---|
 | PHP | 8.2+ (final range in Q-09) | PHP License | — |
 | PHP-CS-Fixer | 3.95.27 | MIT | `vendor/bin/php-cs-fixer check --diff` with `'@PER-CS' => true` |
-| PHPStan | 2.3.1 | MIT | `vendor/bin/phpstan analyse --level=max` |
+| PHPStan | 2.3.5 | MIT | `vendor/bin/phpstan analyse --level=max` |
 | PHPUnit | 13.4.1 (latest) | BSD-3-Clause | `vendor/bin/phpunit` |
-| Infection | 0.35.6 | BSD-3-Clause | See [Mutation testing](/engineering/quality/mutation) |
+| Infection | 0.35.11 | BSD-3-Clause | See [Mutation testing](/engineering/quality/mutation) |
 
 ::: warning Check at WP-15 kickoff
 The newest PHPUnit major can require a newer PHP than our minimum. Pick the PHPUnit major that runs on the lowest supported PHP version, or test the lowest version with an older major. Decide together with Q-09.

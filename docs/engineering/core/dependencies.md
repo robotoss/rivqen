@@ -2,9 +2,9 @@
 
 This page lists candidate dependencies for the Rust core with their license and role. A dependency is approved only when a WP adds it with a benchmark or a clear need. Fewer dependencies is better.
 
-<Badge type="tip" text="FACT" /> **Approved for the core (human, H-138, 2026-11-09, [WP-05 S1](/engineering/plan/sprints/WP-05-S1)):** runtime `sha2` =0.11.0 and `base64` =0.23.1; tests and `rivqen-testkit` only: `serde_json` =1.0.151 and `proptest` =1.11.0; fuzz only (own workspace, nightly): `libfuzzer-sys` through `cargo-fuzz` 0.13.2. The same pins as the reference server (H-113). Not in WP-05: `serde`, `thiserror`, `sfv` (no `forbid(unsafe_code)`, no length limit, MSRV 1.95; DL-144) and `tracing` (with the log sink of WP-08/WP-09). **Added for WP-06 (human, H-143, 2026-11-12, [WP-06 S1](/engineering/plan/sprints/WP-06-S1)):** runtime `sha1` =0.11.0, `default-features = false`, in `rivqen-integrity` only, optional under the feature `legacy` (DL-164); it shares `digest`, `cpufeatures` and `cfg-if` with `sha2` 0.11.0. Not needed (measured, DL-162): `memchr`, `regex`. All other rows below are candidates.
+<Badge type="tip" text="FACT" /> **Approved for the core (human, H-138, 2026-11-09, [WP-05 S1](/engineering/plan/sprints/WP-05-S1)):** runtime `sha2` =0.11.1 (=0.11.0 until the human decision H-149 of 2026-11-15, DL-193) and `base64` =0.23.1; tests and `rivqen-testkit` only: `serde_json` =1.0.151 and `proptest` =1.11.0; fuzz only (own workspace, nightly): `libfuzzer-sys` through `cargo-fuzz` 0.13.2. The same pins as the reference server (H-113). Not in WP-05: `serde`, `thiserror`, `sfv` (no `forbid(unsafe_code)`, no length limit, MSRV 1.95; DL-144) and `tracing` (with the log sink of WP-08/WP-09). **Added for WP-06 (human, H-143, 2026-11-12, [WP-06 S1](/engineering/plan/sprints/WP-06-S1)):** runtime `sha1` =0.11.0, `default-features = false`, in `rivqen-integrity` only, optional under the feature `legacy` (DL-164); it shares `digest`, `cpufeatures` and `cfg-if` with `sha2`. Not needed (measured, DL-162): `memchr`, `regex`. All other rows below are candidates.
 
-**Status:** <Badge type="tip" text="FACT" /> versions and licenses from crates.io on 9 October 2026. <Badge type="info" text="DESIGN" /> recommendations.
+**Status:** <Badge type="tip" text="FACT" /> versions and licenses from crates.io on 9 October 2026; the rows `sha2`, `tokio` and `uniffi` were checked again on 15 November 2026 (DL-193, DL-195). <Badge type="info" text="DESIGN" /> recommendations.
 
 [[toc]]
 
@@ -12,11 +12,11 @@ This page lists candidate dependencies for the Rust core with their license and 
 
 | Crate | Version | License (SPDX) | Role | Recommendation |
 |---|---|---|---|---|
-| `uniffi` | 0.32.2 | **MPL-2.0** | Kotlin/Swift bindings | Use (see license note) |
+| `uniffi` | 0.32.2 | **MPL-2.0** | Kotlin/Swift bindings | Use (see license note). 0.32.2 takes `basic-toml` 0.1.10 (RUSTSEC-2026-0374, unmaintained): decide in WP-09 (DL-195) |
 | `serde` | 1.0.229 | MIT OR Apache-2.0 | Serialization | Use |
 | `serde_json` | 1.0.151 | MIT OR Apache-2.0 | JSON | Use |
 | `thiserror` | 2.0.21 | MIT OR Apache-2.0 | Error types | Use |
-| `sha2` | 0.11.0 | MIT OR Apache-2.0 | SHA-256 | Use |
+| `sha2` | 0.11.1 | MIT OR Apache-2.0 | SHA-256 | Use (MSRV 1.88) |
 | `sha1` (RustCrypto) | 0.11.0 | MIT OR Apache-2.0 | SHA-1 for legacy compatibility only | Use |
 | `bytes` | 1.12.1 | MIT | Ref-counted buffers | Use if FFI design benefits |
 | `rusqlite` (+ bundled SQLite) | 0.40.2 | MIT (SQLite: public domain) | Cache metadata | Use (ADR-004) |
@@ -31,11 +31,11 @@ This page lists candidate dependencies for the Rust core with their license and 
 | `bumpalo` | 3.20.3 | MIT OR Apache-2.0 | Arenas | Only if profiled |
 | `memmap2` | 0.9.11 | MIT OR Apache-2.0 | Memory-mapped reads | Not in MVP |
 | `blake3` | 1.8.7 | CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception | Fast hash | Not needed (SHA-256 for interop) |
-| `tokio` | 1.53.2 | MIT | Async runtime | **Avoid in core** (adapters own the executor) |
+| `tokio` | 1.54.1 | MIT | Async runtime | **Avoid in core** (adapters own the executor). Not below 1.53.3: RUSTSEC-2026-0386 |
 | `lol_html` | 3.0.1 | BSD-3-Clause | Streaming HTML rewriter | Candidate for RQP regions only |
 | `html5ever` | 0.40.1 | MIT OR Apache-2.0 | HTML parser | Not needed for legacy (textual grammar) |
 
-Reference server (`server/rust-reference`, WP-03): <Badge type="tip" text="FACT" /> human decision H-113 (2026-10-31): own HTTP/1.1 reader on `std`, no async runtime, and only `sha1` 0.11.0, `sha2` 0.11.0, `base64` 0.23.1, `serde_json` 1.0.151 plus the path dependency `tools/rqp-markup/rust` (DL-085); about 20 crates in all, every license MIT, Apache-2.0, BSD-3-Clause, Unicode-3.0 or `Unlicense OR MIT`. hyper and axum were measured and not taken: they lowercase request field names, and the `legacy-php` profile compares them byte for byte (D-01).
+Reference server (`server/rust-reference`, WP-03): <Badge type="tip" text="FACT" /> human decision H-113 (2026-10-31): own HTTP/1.1 reader on `std`, no async runtime, and only `sha1` 0.11.0, `sha2` 0.11.1 (0.11.0 until DL-193), `base64` 0.23.1, `serde_json` 1.0.151 plus the path dependency `tools/rqp-markup/rust` (DL-085); about 20 crates in all, every license MIT, Apache-2.0, BSD-3-Clause, Unicode-3.0 or `Unlicense OR MIT`. hyper and axum were measured and not taken: they lowercase request field names, and the `legacy-php` profile compares them byte for byte (D-01).
 
 Dev and test only:
 

@@ -29,7 +29,7 @@ iOS simulator (`ios-sim`):
 2. It creates and boots the device when it is missing (`lab/sim.sh`), and deletes it at the end, also after an error. `RQ_FFI_KEEP_SIM=1` keeps it. It never opens Simulator.app.
 3. It builds the Rust library for `aarch64-apple-ios-sim`, links the same `Bench.swift` and `main.swift` into `FfiBench.app` (iOS 18.0 and later, ad-hoc signature), installs it, and starts one app process per case with `simctl launch`.
 4. The app writes its result and a status file (`ok`, `FAIL: …`, `usage: …`) into its `Documents` folder. The status file is the verdict: `simctl launch` gives no exit code, and it reports "did not return a process handle" when the app exits before the launch returns.
-5. The pinned toolchain needs the target: `rustup target add --toolchain 1.99.0 aarch64-apple-ios-sim`.
+5. The pinned toolchain needs the target: `rustup target add --toolchain 1.99.1 aarch64-apple-ios-sim`.
 
 Android (`android`):
 
@@ -37,7 +37,7 @@ Android (`android`):
 2. It builds `libffi_bench.so` with `cargo ndk -t arm64-v8a -P 29` and NDK r30 from the lab SDK (`$RQ_FFI_NDK`; default `$LAB_SDK/ndk/30.0.16248370`), and stops when a `LOAD` segment of `libffi_bench.so` or `libjnidispatch.so` is not aligned to 16 KB.
 3. It converts the JVM harness to DEX with `d8` of build-tools 37.0.0 (`--min-api 29`). JNA for Android comes from the AAR of the same JNA release: its classes and its `arm64-v8a/libjnidispatch.so`.
 4. It pushes the files to `/data/local/tmp/rivqen-ffi` on `emulator-5602`, runs `--selfcheck` on ART first, then one `app_process` per case (the runtime starts as for an app, with the `dalvik.vm.*` heap limits), and removes the folder at the end. Every `adb` call has `-s emulator-5602`.
-5. The pinned toolchain needs the target: `rustup target add --toolchain 1.99.0 aarch64-linux-android`.
+5. The pinned toolchain needs the target: `rustup target add --toolchain 1.99.1 aarch64-linux-android`.
 6. Supplementary run on the human's own emulator with 16 KB pages (one-time human decision, 2026-11-08, FFI task only): `RQ_FFI_EMULATOR_SLOT=1 RQ_FFI_SERIAL=emulator-5554 RQ_FFI_HUMAN_DEVICE_OK=1 sh tools/platform-spikes/ffi-bench/run.sh android [selfcheck]`. The script refuses every other serial, refuses while the lab emulator runs, never starts, stops or changes that emulator, stops when `getconf PAGE_SIZE` is not 16384, writes only `/data/local/tmp/rivqen-ffi` and removes it on every exit. The result is a separate file `android-<sdk>-16k.json`, not the main `android-37` result.
 7. Every target prints the load average (1, 5, 15 min) before and after its cases (`load <target> start|end`). The result file has no member for it, so write it in `ffi.md`.
 
@@ -110,13 +110,13 @@ JNI rules (`src/abi/jni.rs`):
 | `proptest` | =1.11.0 | MIT OR Apache-2.0 | Property test (dev) |
 | JNA `net.java.dev.jna:jna` | 5.19.1 (`.jar` on the JVM, `.aar` on Android) | Apache-2.0 option of LGPL-2.1+ OR Apache-2.0 | UniFFI Kotlin runtime |
 | Kotlin Gradle plugin | 2.4.20 | Apache-2.0 | Local toolchain |
-| Gradle | 9.7.1 (wrapper) | Apache-2.0 | Local toolchain |
+| Gradle | 9.9.1 (wrapper) | Apache-2.0 | Local toolchain |
 
 Every transitive crate is MIT, Apache-2.0, `Unlicense OR MIT`, Unicode-3.0 or MPL-2.0 (`uniffi*` only). The crate has its own `[workspace]` and `Cargo.lock` (DL-084) and the toolchain pin 1.99.0.
 
 Supply chain of the JVM harness (review L-3):
 
-- `jvm/gradlew` is the Gradle 9.7.1 wrapper. `gradle-wrapper.properties` has `distributionSha256Sum` (`acd53f1e…`, from `services.gradle.org`), so the wrapper refuses another distribution. `gradle-wrapper.jar` has the published SHA-256 of the 9.7.1 wrapper (`7a9ce74c…`).
+- `jvm/gradlew` starts Gradle 9.9.1 (DL-188; the evidence runs of WP-04 used 9.7.1). `gradle-wrapper.properties` has `distributionSha256Sum` (`d8a18a7a…`, from `services.gradle.org`), so the wrapper refuses another distribution. `gradle-wrapper.jar` is not changed: it has the published SHA-256 of the 9.7.1 wrapper (`7a9ce74c…`).
 - `jvm/gradle/verification-metadata.xml` has the SHA-256 of every plugin, library and POM of the build (`--write-verification-metadata sha256`). Gradle stops when an artifact differs. The values came from the lab Gradle cache; the SHA-1 of the JNA jar and AAR, `kotlin-stdlib` and `annotations` were the same as on Maven Central (checked 2026-11-08). To add an artifact, run `./gradlew --write-verification-metadata sha256 installDist` with the `run.sh` properties and review the diff.
 
 Lab tools (not in the repository): NDK r30 (`ndk;30.0.16248370`, 2.8 GB) and build-tools 37.0.0 (192 MB), installed into the lab SDK with `sdkmanager`.

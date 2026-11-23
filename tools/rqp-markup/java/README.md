@@ -9,7 +9,7 @@ The Java 21 candidate of WP-17 S1 and S3 (tasks T-05, T-08, T-11, T-13, T-16 and
 
 ## 1. Build
 
-Requirements: JDK 21 and Gradle (`gradle` on `PATH`). T-13 and T-16 used Gradle 9.7.1; T-05 to T-11 used Gradle 8.14. There is no Gradle wrapper.
+Requirements: JDK 21 and Gradle (`gradle` on `PATH`). CI uses Gradle 9.9.1 (DL-188). T-13 and T-16 used Gradle 9.7.1; T-05 to T-11 used Gradle 8.14. There is no Gradle wrapper.
 
 1. Go to `tools/rqp-markup/java`.
 2. Run `gradle --quiet installDist`.

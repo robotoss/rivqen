@@ -21,10 +21,10 @@ The Rust core is the single implementation of Rivqen's logic for Android and iOS
 |---|---|---|---|
 | `rivqen-core` | Public facade: `Engine`, `Session`, configuration, event loop | all below | `SonicEngine` |
 | `rivqen-session` | Session state machine, deadlines, generations, cancellation, race handling | `proto-*`, `cache`, `stream`, `diff` | `SonicSession`, `QuickSonicSession`, `StandardSonicSession` |
-| `rivqen-proto-legacy` | Legacy protocol headers, normalization, decision tree, response parsing | `template`, `integrity` | Header handling in client and servers |
+| `rivqen-proto-legacy` | Legacy protocol headers, normalization, decision tree, response parsing. <Badge type="tip" text="FACT" /> WP-08 S1: the request fields, the response head, the data body, the page fields and the page message of the client ([legacy client](/engineering/protocol/legacy-client) §9.13); the decision tree is session work | `template`, `integrity` | Header handling in client and servers |
 | `rivqen-proto` | Rivqen protocol typed messages, capability negotiation, schemas | `integrity`, `model` | — (new) |
 | `rivqen-template` | Strict, bounded parser for data-block markers; template/data split; serializer; RQP markup analysis, manifest locator, build of the patched document and patch content rule (H-142) | `proto`, `integrity`, `model` | Marker regex code in clients and servers |
-| `rivqen-diff` | Data diff, patch validation, base-revision check, atomic apply plan | `template`, `integrity` | Data-diff code in clients |
+| `rivqen-diff` | Data diff, patch validation, base-revision check, atomic apply plan. <Badge type="tip" text="FACT" /> WP-08 S1: `legacy::{diff_v1, Rebuilt}` and `rqp::{validate, ValidatedPatch}` ([diff engine](/engineering/core/diff-engine)); the cache transaction of the apply plan is session work | `template`, `integrity` | Data-diff code in clients |
 | `rivqen-cache` | Cache keys, partitions, policy (RFC 9111 + legacy), snapshots, transactions, quotas | `integrity` | `SonicCacheInterceptor`, `SonicDataHelper` |
 | `rivqen-store` | <Badge type="tip" text="FACT" /> Reference storage driver (WP-07 S2): sealed entry files and SQLite metadata, atomic commit, recovery, encryption at rest with a key port (H-146, H-147, H-151; ADR-004, ADR-011). Not a core crate: it does I/O and is outside the graph of section 3 (DL-180) | `cache`, `model`, `proto`, `integrity` | `SonicFileUtils`, `SonicDataHelper` |
 | `rivqen-url` | <Badge type="tip" text="FACT" /> URL parser (WP-08, H-156, DL-218): the canonical URL of the cache key and the URL U of the delta binding, on the crate `url` with ASCII hosts only and no host label `xn--` (DL-225). The only crate with that dependency | — | — |
@@ -49,6 +49,7 @@ flowchart TD
   session --> cache[rivqen-cache]
   session --> stream[rivqen-stream]
   session --> diff[rivqen-diff]
+  session --> url[rivqen-url]
   p1 --> tpl[rivqen-template]
   p1 --> integ[rivqen-integrity]
   p2 --> integ

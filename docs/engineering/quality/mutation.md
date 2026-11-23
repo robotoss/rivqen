@@ -30,6 +30,7 @@ A test that kills a mutant must check a behavior that matters. If the only way t
 | Session state machine | `crates/rivqen-session` |
 | Cache keys, partitions, commit | `crates/rivqen-cache`, `crates/rivqen-store` (DL-186) |
 | Protocol codecs | `crates/rivqen-proto`, `crates/rivqen-proto-legacy` |
+| URL parser (the host of the cache key and of the allowlist) | `crates/rivqen-url` (DL-218) |
 | Integrity and revisions | `crates/rivqen-integrity` |
 | Bridge message validation | `sdk/web-core` (bridge), platform bridge adapters |
 | Server decision functions | Core decision code of `server/node`, `server/java`, `server/php` |

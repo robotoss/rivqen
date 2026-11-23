@@ -66,7 +66,8 @@ impl Scheme {
 /// origin and the path only, for example `https://shop.example.com/catalog`:
 /// never the query (it can hold a token) and never a fragment or user info.
 ///
-/// URL parsing is not here (WP-08); the adapter or the parser gives the parts.
+/// URL parsing is not here: the parser `rivqen_url::parse` or the adapter
+/// gives the parts.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct SafeUrl {
     scheme: Scheme,

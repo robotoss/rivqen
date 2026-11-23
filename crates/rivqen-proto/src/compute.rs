@@ -418,7 +418,7 @@ pub(crate) fn snapshot_revision_of(
 /// `"d1." ‖ B64U(SHA-256("rqp-d1" LF U LF B LF N LF R′ LF))`.
 ///
 /// `url` is U, the canonical final URL as text; this function does not parse
-/// or canonicalize it (WP-08). `base` is B, the page revision of the snapshot.
+/// or canonicalize it (`rivqen_url::parse` does). `base` is B, the page revision of the snapshot.
 /// N is the base64url text without padding of `nonce` (22 characters). `next`
 /// is R′. The URL is hashed in place; the function allocates only the three
 /// fixed-length texts.

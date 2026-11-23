@@ -77,7 +77,7 @@ pub struct KeyParts<'a> {
     /// The serialized origin (cache identity section 2, steps 1 and 2).
     pub origin: &'a str,
     /// The canonical URL of cache identity section 2 (steps 1 to 6), with
-    /// its query. The URL parser of WP-08 gives it.
+    /// its query. `rivqen_url::ParsedUrl::cache_url` gives it.
     pub canonical_url: &'a str,
     /// The `Vary` entries, sorted by name; no name twice.
     pub vary: &'a [VaryEntry],

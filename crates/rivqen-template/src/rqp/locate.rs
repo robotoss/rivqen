@@ -62,8 +62,8 @@ use rivqen_model::error::{ErrorCode, HasErrorCode};
 
 use crate::limits::TemplateLimits;
 use crate::rqp::analysis::Internal as _;
-use crate::rqp::scan::{Scanner, Span, Tag, Token, scan};
-use crate::rqp::{MarkupError, is_ascii_white_space};
+use crate::rqp::scan::{Scanner, Span, Tag, Token, scan, scan_bounded};
+use crate::rqp::{MarkupCode, MarkupError, is_ascii_white_space};
 
 /// The place of the manifest element in a full document. Contract.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -162,7 +162,13 @@ pub fn locate_manifest(
     full: &[u8],
     limits: &TemplateLimits,
 ) -> Result<ManifestLocation, LocateError> {
-    let mut tokens = scan(full, limits);
+    // H-158: F is read up to M-01 plus the largest manifest element, and O
+    // keeps M-01. The search only chooses the size limit; the scan decides
+    // whether a manifest exists.
+    if full.len() > limits.max_original_bytes() && !contains_manifest_type(full) {
+        return Err(size_error());
+    }
+    let mut tokens = scan_bounded(full, limits, limits.max_full_bytes());
     // The tokens of F before the manifest start tag are the tokens of O
     // before the same offset, so the walk on O runs in the same pass. When
     // the start tag is at offset 3 or later, O and F have the same first 3
@@ -203,6 +209,9 @@ pub fn locate_manifest(
 
     // Item 5: O is F without the bytes `start.start..end.end`.
     let removed = end.end.checked_sub(start.start).ok_or_else(internal)?;
+    if full.len().saturating_sub(removed) > limits.max_original_bytes() {
+        return Err(size_error());
+    }
     let before = full.get(..start.start).ok_or_else(internal)?;
     let after = full.get(end.end..).ok_or_else(internal)?;
     let walk = HeadWalk::new(before.iter().chain(after).take(BOM.len()).eq(BOM));
@@ -281,6 +290,19 @@ pub fn insertion_point(
 
 /// The type of the manifest element (item 1): 32 bytes.
 const MANIFEST_TYPE: &[u8] = b"application/rivqen-manifest+json";
+
+/// The M-01 error of a document over its size limit.
+fn size_error() -> LocateError {
+    LocateError::Markup(MarkupError::new(MarkupCode::Limit, "M-01"))
+}
+
+/// The manifest media type is in `bytes`, ASCII case-insensitive. It only
+/// chooses the size limit (H-158); it never decides that a manifest exists.
+fn contains_manifest_type(bytes: &[u8]) -> bool {
+    bytes
+        .windows(MANIFEST_TYPE.len())
+        .any(|window| window.eq_ignore_ascii_case(MANIFEST_TYPE))
+}
 
 /// The UTF-8 byte order mark. At offset 0 it counts as white space in the
 /// head walk.

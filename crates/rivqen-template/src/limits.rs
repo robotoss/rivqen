@@ -19,7 +19,7 @@
 use core::fmt;
 
 use rivqen_model::limits::{Limit, ResourceLimits};
-use rivqen_proto::types::{MAX_BLOCK_BYTES, MAX_BLOCKS};
+use rivqen_proto::types::{MAX_BLOCK_BYTES, MAX_BLOCKS, MAX_MANIFEST_BYTES};
 
 /// Maximum legacy block name length in bytes (legacy wire C-07).
 pub const MAX_LEGACY_NAME_BYTES: usize = 128;
@@ -27,6 +27,16 @@ pub const MAX_LEGACY_NAME_BYTES: usize = 128;
 pub const MAX_OPEN_ELEMENTS: usize = 256;
 /// Maximum input of the RQP markup analysis in bytes (markup M-01).
 pub const MAX_MARKUP_INPUT_BYTES: usize = 5 * 1024 * 1024;
+
+/// The length of the manifest start tag of the server form (manifest and
+/// patch section 1.7): `<script type="application/rivqen-manifest+json">`.
+pub const MANIFEST_START_TAG_BYTES: usize = 48;
+/// The length of the manifest end tag: `</script>`.
+pub const MANIFEST_END_TAG_BYTES: usize = 9;
+/// The largest manifest element of the server form: the start tag, a
+/// manifest text of [`MAX_MANIFEST_BYTES`] and the end tag (H-158).
+pub const MAX_MANIFEST_ELEMENT_BYTES: usize =
+    MANIFEST_START_TAG_BYTES + MAX_MANIFEST_BYTES + MANIFEST_END_TAG_BYTES;
 
 /// The cap of `max_document_bytes`: the top of the safe range of
 /// `maxDocumentBytes` (32 MiB). A literal, because a `const fn` cannot
@@ -84,6 +94,21 @@ impl TemplateLimits {
     #[must_use]
     pub const fn max_document_bytes(&self) -> usize {
         self.document_bytes
+    }
+
+    /// The size limit of an original document O (H-158): the smaller of
+    /// [`Self::max_document_bytes`] and [`MAX_MARKUP_INPUT_BYTES`] (M-01).
+    #[must_use]
+    pub const fn max_original_bytes(&self) -> usize {
+        cap(self.document_bytes, MAX_MARKUP_INPUT_BYTES)
+    }
+
+    /// The size limit of a full document F (H-158):
+    /// [`Self::max_original_bytes`] plus [`MAX_MANIFEST_ELEMENT_BYTES`].
+    #[must_use]
+    pub const fn max_full_bytes(&self) -> usize {
+        self.max_original_bytes()
+            .saturating_add(MAX_MANIFEST_ELEMENT_BYTES)
     }
 
     /// `maxBlocks`, at most [`MAX_BLOCKS`].

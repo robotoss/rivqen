@@ -14,10 +14,18 @@
 //! - [`etag_field_name`]: the first `sonic-etag-key` value when it is not
 //!   empty, else `etag` (CL-14, legacy wire §6).
 //! - [`is_legacy_response`] (function fixture `is_legacy_response`): exactly
-//!   one `Content-Type` line of media type `text/html` (DL-125), and each of
-//!   the etag field, `template-tag`, `template-change` and `cache-offline`
-//!   has at least one line, all its lines have the same value, and the value
-//!   is not empty (D-28, D-33). [`LegacyHead::read`] gives the four values.
+//!   one `Content-Type` line of media type `text/html` (DL-125), the field
+//!   rules of [`is_safe_head`] hold (DL-226), and each of the etag field,
+//!   `template-tag`, `template-change` and `cache-offline` has at least one
+//!   line, all its lines have the same value, and the value is not empty
+//!   (D-28, D-33). [`LegacyHead::read`] gives the four values.
+//! - [`is_safe_head`] (DL-226): every line is a valid field line (a token
+//!   name, no control byte other than HTAB in the value); no non-empty
+//!   `sonic-etag-key` value names `Content-Type`, a field of
+//!   `NOT_PAGE_FIELDS`, a protected field or the `extra` member `isReload`,
+//!   and each one is a token; no `Connection` token names `Content-Type` or
+//!   a protected field. `sonic-etag-key: etag` (the default name) is
+//!   allowed. Every `sonic-etag-key` line counts, not only the first one.
 //! - [`bare_etag`] (function fixture `etag`): one leading `W/` (exact case),
 //!   then one pair of outer `"` (D-31).
 //! - [`is_template_change`] (function fixture `template_change`): only
@@ -33,12 +41,18 @@
 //! # Safety
 //!
 //! No function panics or allocates more than its input. The work is linear
-//! in the field bytes. No `Debug` output holds a field value.
+//! in the field bytes ([`is_safe_head`] compares each name with fixed lists
+//! of constant size). No `Debug` output holds a field value.
 
 use core::fmt;
 use std::borrow::Cow;
 
 use rivqen_model::http::FieldLine;
+
+use crate::fields::{
+    CONNECTION, NOT_PAGE_FIELDS, is_protected_field, is_token, is_valid_field_line,
+};
+use crate::message::RELOAD_KEY;
 
 /// Field name `etag`, lower case: the etag field without `sonic-etag-key`.
 pub const ETAG: &str = "etag";
@@ -182,6 +196,48 @@ pub fn is_utf8_text(fields: &[FieldLine], body: &[u8]) -> bool {
     utf8 && core::str::from_utf8(body).is_ok()
 }
 
+/// DL-226 (a): true when `sonic-etag-key` must not give this name (trimmed,
+/// not empty): it is not a token, or it names `Content-Type`, a field of
+/// `NOT_PAGE_FIELDS`, a protected field or the message `extra` member
+/// `isReload` (ASCII case-insensitive). The other `extra` members
+/// (`template-tag`, `cache-offline`) are in `NOT_PAGE_FIELDS`.
+fn is_forbidden_etag_key(name: &str) -> bool {
+    !is_token(name)
+        || name.eq_ignore_ascii_case(CONTENT_TYPE)
+        || name.eq_ignore_ascii_case(RELOAD_KEY)
+        || NOT_PAGE_FIELDS
+            .iter()
+            .any(|not_page| name.eq_ignore_ascii_case(not_page))
+        || is_protected_field(name)
+}
+
+/// DL-226 (a): true when a `Connection` token (trimmed) names
+/// `Content-Type` or a protected field.
+fn is_forbidden_connection_token(token: &str) -> bool {
+    token.eq_ignore_ascii_case(CONTENT_TYPE) || is_protected_field(token)
+}
+
+/// DL-226 (a) and (b): the field rules of a legacy response head (part of
+/// CL-14). True when every line is a valid field line
+/// (`fields::is_valid_field_line`), every non-empty `sonic-etag-key` value
+/// is a token that names no `Content-Type`, no field of `NOT_PAGE_FIELDS`,
+/// no protected field (`fields::is_protected_field`) and not `isReload`,
+/// and no `Connection` token names `Content-Type` or a protected field.
+/// Names and tokens compare ASCII case-insensitively.
+///
+/// [`LegacyHead::read`] applies it. The session can also apply it to a
+/// response that CL-13 handles before CL-14 (a `304`, CL-17).
+#[must_use]
+pub fn is_safe_head(fields: &[FieldLine]) -> bool {
+    fields.iter().all(is_valid_field_line)
+        && values_of(fields, SONIC_ETAG_KEY)
+            .filter(|key| !key.is_empty())
+            .all(|key| !is_forbidden_etag_key(key))
+        && values_of(fields, CONNECTION)
+            .flat_map(|value| value.split(','))
+            .all(|token| !is_forbidden_connection_token(trim_ows(token)))
+}
+
 /// CL-14 (function `is_legacy_response`): the field test of a legacy
 /// response. The caller tests the status (`200`) and CL-16 itself.
 #[must_use]
@@ -214,12 +270,12 @@ pub struct LegacyHead<'a> {
 
 impl<'a> LegacyHead<'a> {
     /// The legacy fields, or `None` when the head is not a legacy response
-    /// (CL-14): not exactly one `Content-Type` line of type `text/html`, or
-    /// one of the four fields absent, empty, or on two lines with different
-    /// values.
+    /// (CL-14): not exactly one `Content-Type` line of type `text/html`, a
+    /// field rule of [`is_safe_head`] fails (DL-226), or one of the four
+    /// fields is absent, empty, or on two lines with different values.
     #[must_use]
     pub fn read(fields: &'a [FieldLine]) -> Option<Self> {
-        if !is_html_response(fields) {
+        if !is_html_response(fields) || !is_safe_head(fields) {
             return None;
         }
         let etag_field = etag_field_name(fields);
@@ -293,7 +349,10 @@ impl fmt::Debug for LegacyHead<'_> {
 
 #[cfg(test)]
 mod tests {
-    use super::{charset_parameter, media_type, one_value, trim_ows};
+    use super::{
+        charset_parameter, is_forbidden_connection_token, is_forbidden_etag_key, media_type,
+        one_value, trim_ows,
+    };
     use rivqen_model::http::FieldLine;
 
     #[test]
@@ -329,5 +388,39 @@ mod tests {
         assert_eq!(one_value(&f(&[("a", "")]), "a"), None);
         assert_eq!(one_value(&f(&[("a", "x"), ("a", "")]), "a"), None);
         assert_eq!(one_value(&f(&[]), "a"), None);
+    }
+
+    #[test]
+    fn forbidden_etag_keys_follow_dl_226() {
+        for name in [
+            "Content-Type",
+            "content-security-policy",
+            "Cross-Origin-Embedder-Policy",
+            "isReload",
+            "ISRELOAD",
+            "template-tag",
+            "Cache-Offline",
+            "sonic-etag-key",
+            "set-cookie",
+            "a b",
+            "set-cookie ",
+            "x\0",
+            "",
+        ] {
+            assert!(is_forbidden_etag_key(name), "{name:?}");
+        }
+        for name in ["etag", "ETag", "eTag", "custom-etag", "x-cross-origin-a"] {
+            assert!(!is_forbidden_etag_key(name), "{name:?}");
+        }
+    }
+
+    #[test]
+    fn forbidden_connection_tokens_follow_dl_226() {
+        for token in ["content-type", "X-Frame-Options", "cross-origin-x"] {
+            assert!(is_forbidden_connection_token(token), "{token}");
+        }
+        for token in ["", "close", "keep-alive", "x-hop", "etag", "content-length"] {
+            assert!(!is_forbidden_connection_token(token), "{token}");
+        }
     }
 }

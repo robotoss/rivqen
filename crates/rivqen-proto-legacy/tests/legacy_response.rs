@@ -3,13 +3,16 @@
 
 //! The legacy response head (legacy client CL-14, CL-15, CL-16): the cases
 //! that the function fixtures do not reach (every canonical
-//! `is_legacy_response` case has no `Content-Type`, so all are `false`).
+//! `is_legacy_response` case has no `Content-Type`, so all are `false`), and
+//! the field rules of DL-226.
 
 #![allow(clippy::unwrap_used, clippy::panic, clippy::indexing_slicing)]
 
 use rivqen_model::http::FieldLine;
+use rivqen_proto_legacy::fields::{NOT_PAGE_FIELDS, PROTECTED_FIELDS, page_fields};
 use rivqen_proto_legacy::response::{
-    LegacyHead, etag_field_name, etag_value, is_html_response, is_legacy_response, is_utf8_text,
+    LegacyHead, etag_field_name, etag_value, is_html_response, is_legacy_response, is_safe_head,
+    is_utf8_text,
 };
 
 fn lines(pairs: &[(&str, &str)]) -> Vec<FieldLine> {
@@ -210,4 +213,184 @@ fn legacy_head_debug_has_no_value() {
     let text = format!("{:?}", LegacyHead::read(&fields).unwrap());
     assert!(!text.contains("secret"), "{text}");
     assert!(text.contains("etag_len: 17"), "{text}");
+}
+
+/// A canonical head whose etag field is `custom-etag` and whose
+/// `sonic-etag-key` is `key`, with a line of the field `key`.
+fn keyed_head(key: &str) -> Vec<FieldLine> {
+    let mut fields = without(&head(&[]), "etag");
+    fields.extend(lines(&[
+        ("sonic-etag-key", key),
+        (key, "e1"),
+        ("x-keep", "k"),
+    ]));
+    fields
+}
+
+#[test]
+fn legacy_head_sonic_etag_key_may_name_etag_or_another_token() {
+    // `etag` is the default name; naming it is allowed (DL-226 (a)).
+    for key in [
+        "etag",
+        "ETag",
+        "eTag",
+        "custom-etag",
+        "x-cross-origin-a",
+        "x.~!",
+    ] {
+        let fields = keyed_head(key);
+        assert!(is_safe_head(&fields), "{key}");
+        let h = LegacyHead::read(&fields).unwrap();
+        assert_eq!(h.etag_field(), key);
+        assert_eq!(h.etag(), "e1");
+    }
+}
+
+#[test]
+fn legacy_head_sonic_etag_key_that_names_a_kept_or_control_field_fails() {
+    // DL-226 (a), L-1 and I-1. Each key has its own line with the etag
+    // value, so only the key rule rejects the head.
+    let mut keys: Vec<String> = ["content-type", "Content-Type", "isReload", "ISRELOAD"]
+        .iter()
+        .map(|k| (*k).to_owned())
+        .collect();
+    keys.extend(PROTECTED_FIELDS.iter().map(|k| k.to_ascii_uppercase()));
+    keys.extend([
+        "cross-origin-opener-policy".to_owned(),
+        "Cross-Origin-X".to_owned(),
+    ]);
+    keys.extend(NOT_PAGE_FIELDS.iter().map(|k| (*k).to_owned()));
+    for key in &keys {
+        let fields = keyed_head(key);
+        assert!(!is_safe_head(&fields), "{key}");
+        assert!(LegacyHead::read(&fields).is_none(), "{key}");
+        assert!(!is_legacy_response(&fields), "{key}");
+    }
+}
+
+#[test]
+fn legacy_head_sonic_etag_key_that_is_not_a_token_fails() {
+    for key in ["a b", "x:a", "\"x\"", "x,y", "caf\u{e9}"] {
+        let fields = keyed_head(key);
+        assert!(!is_legacy_response(&fields), "{key:?}");
+    }
+}
+
+#[test]
+fn legacy_head_every_sonic_etag_key_line_counts() {
+    // The first non-empty line names the etag field; a later line still
+    // may not name a protected field.
+    let fields = head(&[
+        ("sonic-etag-key", ""),
+        ("sonic-etag-key", "content-security-policy"),
+    ]);
+    assert_eq!(etag_field_name(&fields), "etag");
+    assert!(!is_legacy_response(&fields));
+    let fields = head(&[
+        ("sonic-etag-key", "etag"),
+        ("sonic-etag-key", "x-frame-options"),
+    ]);
+    assert!(!is_legacy_response(&fields));
+}
+
+#[test]
+fn legacy_head_l1_probe_keeps_the_policy_in_the_page_fields() {
+    // The probe of the review: the response is no longer legacy, and its
+    // page fields would still have the policy.
+    let fields = head(&[
+        ("sonic-etag-key", "Content-Security-Policy"),
+        ("Content-Security-Policy", "e1"),
+    ]);
+    assert!(!is_legacy_response(&fields));
+    let page = page_fields(&fields);
+    assert!(
+        page.iter()
+            .any(|f| f.name == "content-security-policy" && f.value == "e1")
+    );
+}
+
+#[test]
+fn legacy_head_connection_that_names_a_kept_field_fails() {
+    for token in [
+        "content-type",
+        "Content-Security-Policy",
+        "content-security-policy-report-only",
+        "X-Frame-Options",
+        "x-content-type-options",
+        "permissions-policy",
+        "referrer-policy",
+        "Strict-Transport-Security",
+        "cross-origin-embedder-policy",
+    ] {
+        let value = format!("close, {token}");
+        let fields = head(&[("Connection", value.as_str())]);
+        assert!(!is_safe_head(&fields), "{token}");
+        assert!(!is_legacy_response(&fields), "{token}");
+        // The token is found on every `Connection` line.
+        let fields = head(&[
+            ("connection", "close"),
+            ("CONNECTION", &format!(" {token}\t")),
+        ]);
+        assert!(!is_legacy_response(&fields), "{token}");
+    }
+}
+
+#[test]
+fn legacy_head_connection_with_other_tokens_passes() {
+    let fields = head(&[
+        (
+            "Connection",
+            "close, keep-alive, , x-hop, etag, cross-origin",
+        ),
+        ("x-hop", "1"),
+    ]);
+    assert!(is_safe_head(&fields));
+    assert!(is_legacy_response(&fields));
+}
+
+#[test]
+fn legacy_head_with_a_line_that_is_not_a_valid_field_line_fails() {
+    // DL-226 (b), L-2.
+    for name in ["Set-Cookie ", "set-cookie\0", "", "x a", "x\u{e9}"] {
+        let fields = head(&[(name, "v")]);
+        assert!(!is_safe_head(&fields), "{name:?}");
+        assert!(!is_legacy_response(&fields), "{name:?}");
+    }
+    for byte in (0_u8..0x20).chain([0x7f]) {
+        let value = format!("a{}b", char::from(byte));
+        let fields = head(&[("x-a", value.as_str())]);
+        assert_eq!(is_legacy_response(&fields), byte == b'\t', "{byte:#04x}");
+    }
+    // A control byte in a legacy field value fails too.
+    let mut fields = without(&head(&[]), "template-tag");
+    fields.push(FieldLine::new("template-tag", "t1\r\nx-a: 1"));
+    assert!(!is_legacy_response(&fields));
+}
+
+#[test]
+fn legacy_head_page_fields_keep_every_protected_line_of_a_legacy_response() {
+    let mut fields = head(&[
+        ("Connection", "close, x-hop"),
+        ("x-hop", "1"),
+        ("Content-Security-Policy", "default-src 'self'"),
+        ("X-Frame-Options", "DENY"),
+        ("Cross-Origin-Opener-Policy", "same-origin"),
+    ]);
+    fields.push(FieldLine::new("Referrer-Policy", "no-referrer"));
+    assert!(is_legacy_response(&fields));
+    let page = page_fields(&fields);
+    for line in fields.iter().filter(|f| {
+        f.is("content-type")
+            || f.is("content-security-policy")
+            || f.is("x-frame-options")
+            || f.is("cross-origin-opener-policy")
+            || f.is("referrer-policy")
+    }) {
+        let name = line.name.to_ascii_lowercase();
+        assert!(
+            page.iter().any(|p| p.name == name && p.value == line.value),
+            "{name}"
+        );
+    }
+    assert!(!page.iter().any(|p| p.name == "x-hop"));
 }

@@ -3,8 +3,10 @@
 
 //! Properties of the legacy wire codec: no function panics for any field
 //! list or body, a head that passes the legacy test has the four fields with
-//! one value each, and the codec keeps the content and the order of what it
-//! reads.
+//! one value each and follows the field rules of DL-226, page fields never
+//! hold a line that is not a valid field line and never lose `Content-Type`
+//! or a protected field, and the codec keeps the content and the order of
+//! what it reads.
 //!
 //! Fixed seeds; `PROPTEST_CASES` raises the case count.
 
@@ -23,7 +25,7 @@ use rivqen_proto_legacy::fields::{NOT_PAGE_FIELDS, merge_page_fields, page_field
 use rivqen_proto_legacy::message::{MessageInput, ResultCode, message};
 use rivqen_proto_legacy::request::{EntryValidators, LegacyRequest, request_fields};
 use rivqen_proto_legacy::response::{
-    LegacyHead, bare_etag, charset, etag_field_name, etag_value, is_legacy_response,
+    LegacyHead, bare_etag, charset, etag_field_name, etag_value, is_legacy_response, is_safe_head,
     is_template_change, is_utf8_text,
 };
 use rivqen_template::legacy::DataBlock;
@@ -62,6 +64,16 @@ fn name() -> impl Strategy<Value = String> {
         "x-a",
         "X-A",
         "link",
+        "Content-Security-Policy",
+        "x-frame-options",
+        "Cross-Origin-Opener-Policy",
+        "referrer-policy",
+        "isReload",
+        // DL-226 (b): names that are not tokens.
+        "Set-Cookie ",
+        "set-cookie\0",
+        "",
+        "x a",
     ])
     .prop_map(str::to_owned);
     prop_oneof![4 => known, 1 => "[ -~]{0,12}", 1 => any::<String>()]
@@ -90,9 +102,36 @@ fn value() -> impl Strategy<Value = String> {
         "custom-etag",
         "x-a, link",
         "etag",
+        // DL-226 (a): names that `sonic-etag-key` and `Connection` may not
+        // give.
+        "Content-Security-Policy",
+        "close, x-frame-options",
+        "content-type",
+        "cross-origin-resource-policy",
+        "isReload",
+        "template-tag",
+        // DL-226 (b): values with a control byte.
+        "a\r\nset-cookie: s=1",
+        "\0",
+        "a\tb",
     ])
     .prop_map(str::to_owned);
     prop_oneof![4 => known, 1 => "[ -~]{0,16}", 1 => any::<String>()]
+}
+
+/// Mostly valid field lines: an independent case reaches the accepted
+/// heads often enough.
+fn mostly_valid_field_list(max: usize) -> impl Strategy<Value = Vec<FieldLine>> {
+    let line = prop_oneof![
+        6 => ("[a-zA-Z][a-zA-Z0-9-]{0,10}", "[ -~]{0,12}"),
+        6 => (name(), value()),
+    ];
+    prop::collection::vec(line, 0..max).prop_map(|pairs| {
+        pairs
+            .into_iter()
+            .map(|(n, v)| FieldLine::new(n, v))
+            .collect()
+    })
 }
 
 fn field_list(max: usize) -> impl Strategy<Value = Vec<FieldLine>> {
@@ -104,9 +143,10 @@ fn field_list(max: usize) -> impl Strategy<Value = Vec<FieldLine>> {
     })
 }
 
-/// A canonical legacy head with extra lines mixed in: many pass the test.
+/// A canonical legacy head with extra lines mixed in: many pass the test
+/// (`legacy_prop_near_legacy_heads_reach_both_answers` counts them).
 fn near_legacy_head() -> impl Strategy<Value = Vec<FieldLine>> {
-    (field_list(6), any::<prop::sample::Index>()).prop_map(|(extra, at)| {
+    (mostly_valid_field_list(6), any::<prop::sample::Index>()).prop_map(|(extra, at)| {
         let mut fields = vec![
             FieldLine::new("content-type", "text/html"),
             FieldLine::new("etag", "e1"),
@@ -149,19 +189,87 @@ fn assert_one_value_each(fields: &[FieldLine], head: &LegacyHead<'_>) {
     }
 }
 
-/// The page fields property: lowercase names, sorted, no dropped name, each
-/// line from the input.
+/// RFC 9110 `token`, written apart from the crate.
+fn is_token(text: &str) -> bool {
+    !text.is_empty()
+        && text
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"!#$%&'*+-.^_`|~".contains(&b))
+}
+
+/// A value without a control byte other than HTAB, written apart from the
+/// crate.
+fn has_no_control(value: &str) -> bool {
+    !value.bytes().any(|b| (b < 0x20 && b != b'\t') || b == 0x7f)
+}
+
+/// DL-226 (a): `Content-Type` or a protected field, lower case.
+fn is_kept_name(lower: &str) -> bool {
+    lower == "content-type"
+        || lower.starts_with("cross-origin-")
+        || [
+            "content-security-policy",
+            "content-security-policy-report-only",
+            "x-frame-options",
+            "x-content-type-options",
+            "permissions-policy",
+            "referrer-policy",
+            "strict-transport-security",
+        ]
+        .contains(&lower)
+}
+
+/// The field rules of DL-226 for a head that passed CL-14.
+fn assert_safe_head(fields: &[FieldLine]) {
+    for line in fields {
+        assert!(is_token(&line.name), "{:?}", line.name);
+        assert!(has_no_control(&line.value));
+        if line.is("sonic-etag-key") {
+            let key = trimmed(&line.value).to_ascii_lowercase();
+            if !key.is_empty() {
+                assert!(is_token(&key));
+                assert!(!is_kept_name(&key), "{key}");
+                assert!(!NOT_PAGE_FIELDS.contains(&key.as_str()), "{key}");
+                assert_ne!(key, "isreload");
+            }
+        }
+        if line.is("connection") {
+            for token in line.value.split(',') {
+                assert!(!is_kept_name(&trimmed(token).to_ascii_lowercase()));
+            }
+        }
+    }
+}
+
+/// The page fields property: lowercase token names, values without a
+/// control byte, sorted, no dropped name, each line from the input, and
+/// every valid `Content-Type` or protected line of the input kept.
 fn assert_page_fields(input: &[FieldLine], output: &[FieldLine]) {
     let etag_field = etag_field_name(input).to_ascii_lowercase();
     assert!(output.len() <= input.len());
+    for line in input {
+        let lower = line.name.to_ascii_lowercase();
+        if is_kept_name(&lower) && is_token(&line.name) && has_no_control(&line.value) {
+            assert!(
+                output
+                    .iter()
+                    .any(|o| o.name == lower && o.value == line.value),
+                "{lower} lost"
+            );
+        }
+    }
     for line in output {
+        assert!(is_token(&line.name), "{:?}", line.name);
+        assert!(has_no_control(&line.value), "{}", line.name);
         assert_eq!(line.name, line.name.to_ascii_lowercase());
         assert!(
             !NOT_PAGE_FIELDS.contains(&line.name.as_str()),
             "{}",
             line.name
         );
-        assert_ne!(line.name, etag_field);
+        if !is_kept_name(&etag_field) {
+            assert_ne!(line.name, etag_field);
+        }
         assert!(
             input
                 .iter()
@@ -180,6 +288,7 @@ proptest! {
         prop_assert_eq!(head.is_some(), is_legacy_response(&fields));
         if let Some(head) = &head {
             assert_one_value_each(&fields, head);
+            assert_safe_head(&fields);
             prop_assert_eq!(head.is_template_change(), is_template_change(head.template_change()));
             prop_assert_eq!(head.bare_etag(), bare_etag(head.etag()));
         }
@@ -208,8 +317,23 @@ proptest! {
 
     #[test]
     fn legacy_prop_head_has_one_value_per_field(fields in near_legacy_head()) {
+        prop_assert_eq!(LegacyHead::read(&fields).is_some(), is_legacy_response(&fields));
         if let Some(head) = LegacyHead::read(&fields) {
             assert_one_value_each(&fields, &head);
+            assert_safe_head(&fields);
+            prop_assert!(is_safe_head(&fields));
+        }
+        assert_page_fields(&fields, &page_fields(&fields));
+    }
+
+    #[test]
+    fn legacy_prop_merge_never_passes_an_invalid_line(
+        stored in field_list(8),
+        response in field_list(8),
+    ) {
+        for line in merge_page_fields(&stored, &response) {
+            prop_assert!(is_token(&line.name));
+            prop_assert!(has_no_control(&line.value));
         }
     }
 
@@ -357,4 +481,28 @@ proptest! {
             Err(_) => prop_assert!(control),
         }
     }
+}
+
+/// The generator of `legacy_prop_head_has_one_value_per_field` reaches both
+/// answers: with the fixed seed and 512 cases, 229 heads pass and 283 fail
+/// (counted on 2026-11-23). The test asserts at least a quarter each way.
+#[test]
+fn legacy_prop_near_legacy_heads_reach_both_answers() {
+    use proptest::strategy::ValueTree;
+    use proptest::test_runner::TestRunner;
+
+    let mut runner = TestRunner::new(config(512, 0x1e9a_c001));
+    let strategy = near_legacy_head();
+    let mut accepted = 0_u32;
+    let mut rejected = 0_u32;
+    for _ in 0..512 {
+        let fields = strategy.new_tree(&mut runner).unwrap().current();
+        if is_legacy_response(&fields) {
+            accepted += 1;
+        } else {
+            rejected += 1;
+        }
+    }
+    assert!(accepted >= 128, "{accepted} accepted");
+    assert!(rejected >= 128, "{rejected} rejected");
 }

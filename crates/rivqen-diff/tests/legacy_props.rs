@@ -232,6 +232,8 @@ proptest! {
             server: data.clone(),
             html_sha1: &sha1,
             etag: &sha1,
+            response_template_tag: "tag",
+            stored_template_tag: "tag",
         };
         let rebuilt = Rebuilt::new(input, &TemplateLimits::default()).unwrap();
         prop_assert_eq!(rebuilt.page(), page.as_str());
@@ -253,6 +255,8 @@ proptest! {
             server: server.clone(),
             html_sha1: &sha1,
             etag: &sha1,
+            response_template_tag: "tag",
+            stored_template_tag: "tag",
         };
         let rebuilt = Rebuilt::new(input, &TemplateLimits::default()).unwrap();
         prop_assert_eq!(rebuilt.page(), new.as_str());
@@ -274,6 +278,8 @@ proptest! {
                 server,
                 html_sha1: &old_sha1,
                 etag: &old_sha1,
+                response_template_tag: "tag",
+                stored_template_tag: "tag",
             };
             prop_assert_eq!(
                 Rebuilt::new(input, &TemplateLimits::default()).unwrap_err(),
@@ -312,6 +318,8 @@ proptest! {
                 server: server.clone(),
                 html_sha1: &sha1,
                 etag: &sha1,
+                response_template_tag: "tag",
+                stored_template_tag: "tag",
             };
             if let Ok(rebuilt) = Rebuilt::new(input, &limits) {
                 prop_assert_eq!(rebuilt.page(), page.as_str());
@@ -364,6 +372,8 @@ proptest! {
             server,
             html_sha1: &hash,
             etag: &hash,
+            response_template_tag: "tag",
+            stored_template_tag: "tag",
         };
         match Rebuilt::new(input, &limits) {
             Ok(rebuilt) => {

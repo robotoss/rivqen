@@ -26,6 +26,9 @@ use rivqen_testkit::fixtures::{Fixture, load_legacy, load_malformed};
 /// A text that must never appear in an error or in a `Debug` output.
 const MARKER: &str = "SECRET-MARKER-7f3a";
 
+/// A template tag that must never appear in an error or in a `Debug` output.
+const TAG: &str = "TAG-MARKER-91c2";
+
 const PAGE: &str = "<html><head><title>Shop SECRET-MARKER-7f3a</title></head><body>\
 <!--sonicdiff-price-->10 EUR<!--sonicdiff-price-end-->\
 <!--sonicdiff-stock-->in stock<!--sonicdiff-stock-end--></body></html>";
@@ -79,6 +82,8 @@ fn rebuild(
             server,
             html_sha1,
             etag,
+            response_template_tag: TAG,
+            stored_template_tag: TAG,
         },
         &TemplateLimits::default(),
     )
@@ -134,6 +139,85 @@ fn legacy_rebuilt_into_parts_gives_the_checked_values() {
     assert_eq!(parts.etag.as_str(), sha1);
     assert_eq!(parts.data, server);
     assert_eq!(parts.diff, diff);
+}
+
+#[test]
+fn legacy_rebuilt_equal_template_tags_pass() {
+    let (template, data) = stored();
+    let sha1 = etag_v1(PAGE.as_bytes()).to_string();
+    assert!(rebuild(&template, &data, data.clone(), &sha1, &sha1).is_ok());
+}
+
+fn rebuild_with_tags(
+    template: &str,
+    stored: &[DataBlock],
+    server: Vec<DataBlock>,
+    hash: &str,
+    response_tag: &str,
+    stored_tag: &str,
+) -> Result<Rebuilt, RebuildError> {
+    Rebuilt::new(
+        RebuildInput {
+            template,
+            stored,
+            server,
+            html_sha1: hash,
+            etag: hash,
+            response_template_tag: response_tag,
+            stored_template_tag: stored_tag,
+        },
+        &TemplateLimits::default(),
+    )
+}
+
+#[test]
+fn legacy_rebuilt_different_template_tags_give_no_page() {
+    let (template, data) = stored();
+    let sha1 = etag_v1(PAGE.as_bytes()).to_string();
+    let upper = TAG.to_ascii_uppercase();
+    let padded = format!("{TAG} ");
+    for (response, stored_tag) in [
+        ("other-tag", TAG),
+        (TAG, "other-tag"),
+        (upper.as_str(), TAG),
+        (padded.as_str(), TAG),
+        ("", TAG),
+        (TAG, ""),
+        ("", ""),
+    ] {
+        let error = rebuild_with_tags(&template, &data, data.clone(), &sha1, response, stored_tag)
+            .unwrap_err();
+        assert_eq!(
+            error,
+            RebuildError::TemplateTagMismatch,
+            "{response:?} {stored_tag:?}"
+        );
+        assert_eq!(error.code(), ErrorCode::IntegrityError);
+        assert!(error.source().is_none());
+    }
+}
+
+#[test]
+fn legacy_rebuilt_checks_template_tags_before_the_render() {
+    let (_, data) = stored();
+    // A template that cannot render with this data, and wrong hashes.
+    let error =
+        rebuild_with_tags("<p>no block</p>", &data, data.clone(), "", "a", "b").unwrap_err();
+    assert_eq!(error, RebuildError::TemplateTagMismatch);
+    // With equal tags the same input fails at the render.
+    let error =
+        rebuild_with_tags("<p>no block</p>", &data, data.clone(), "", "a", "a").unwrap_err();
+    assert!(matches!(error, RebuildError::Render(_)), "{error:?}");
+}
+
+#[test]
+fn legacy_rebuilt_template_tag_error_text_has_no_tag() {
+    let text = RebuildError::TemplateTagMismatch.to_string();
+    assert!(!text.contains(TAG));
+    assert_eq!(
+        text,
+        "the legacy response template-tag is not the stored template tag"
+    );
 }
 
 #[test]
@@ -240,6 +324,8 @@ fn legacy_rebuilt_over_a_limit_gives_no_page() {
             server: data.clone(),
             html_sha1: &sha1,
             etag: &sha1,
+            response_template_tag: TAG,
+            stored_template_tag: TAG,
         };
         let error = Rebuilt::new(input, &limits).unwrap_err();
         assert_eq!(error, RebuildError::Render(RenderError::Limit(limit)));
@@ -253,6 +339,8 @@ fn legacy_rebuilt_over_a_limit_gives_no_page() {
         server: data.clone(),
         html_sha1: &sha1,
         etag: &sha1,
+        response_template_tag: TAG,
+        stored_template_tag: TAG,
     };
     assert_eq!(Rebuilt::new(input, &limits).unwrap().page(), PAGE);
 }
@@ -294,6 +382,7 @@ fn legacy_rebuilt_errors_have_no_content() {
     let errors = [
         RebuildError::Render(RenderError::Mismatch),
         RebuildError::Render(RenderError::Limit(LimitError::DocumentTooLarge)),
+        RebuildError::TemplateTagMismatch,
         RebuildError::HtmlSha1Mismatch,
         RebuildError::EtagMismatch,
         RebuildError::Diff(DiffError::DuplicateLocalKey),
@@ -329,6 +418,8 @@ fn legacy_rebuilt_debug() {
         server: server.clone(),
         html_sha1: &sha1,
         etag: &sha1,
+        response_template_tag: TAG,
+        stored_template_tag: TAG,
     };
     let input_debug = format!("{input:?}");
     let rebuilt = Rebuilt::new(input, &TemplateLimits::default()).unwrap();
@@ -338,6 +429,7 @@ fn legacy_rebuilt_debug() {
         assert!(!text.contains(MARKER), "{text}");
         assert!(!text.contains(&sha1), "{text}");
         assert!(!text.contains("EUR"), "{text}");
+        assert!(!text.contains(TAG), "{text}");
     }
     assert_eq!(
         rebuilt_debug,
@@ -357,8 +449,11 @@ fn legacy_rebuilt_debug() {
         input_debug,
         format!(
             "RebuildInput {{ template_bytes: {}, stored_entries: 3, server_entries: 3, \
-             html_sha1_bytes: 40, etag_bytes: 40 }}",
-            template.len()
+             html_sha1_bytes: 40, etag_bytes: 40, \
+             response_template_tag_bytes: {}, stored_template_tag_bytes: {} }}",
+            template.len(),
+            TAG.len(),
+            TAG.len()
         )
     );
 }
@@ -386,6 +481,8 @@ fn check_page(f: &Fixture, ok: &mut Vec<String>, refused: &mut Vec<String>) {
         server: split.data.clone(),
         html_sha1: &etag,
         etag: &etag,
+        response_template_tag: TAG,
+        stored_template_tag: TAG,
     };
     match Rebuilt::new(input, &limits) {
         Ok(rebuilt) => {

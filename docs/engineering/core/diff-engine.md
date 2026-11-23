@@ -19,12 +19,12 @@ The diff engine (`rivqen-diff`) computes which data blocks changed, validates in
 
 Normative rules: [legacy client](/engineering/protocol/legacy-client#_9-5-outcomes) CL-27 (data update), CL-28 (empty diff), CL-29 (rebuild check) and CL-42 (diff); DL-160, DL-169 (S1-5).
 
-<Badge type="info" text="DESIGN" /> Rivqen procedure for a data update. The session (WP-08 S2) runs steps 1 to 3 and 6; the module `rivqen_diff::legacy` (feature `legacy`) runs steps 4 and 5. The first failure stops the procedure.
+<Badge type="info" text="DESIGN" /> Rivqen procedure for a data update. The session (WP-08 S2) runs steps 1, 3 and 6; the module `rivqen_diff::legacy` (feature `legacy`) runs steps 2, 4 and 5 in `Rebuilt::new`, which does all three checks of CL-29. The first failure stops the procedure.
 
 1. The response passed the order of the tests of CL-13: a legacy response, a visible entry, and `template-change` `false` or `0`. Another `template-change` value is a template change (CL-31), not a data update.
-2. The first `template-tag` line of the response equals the stored template tag (CL-29). Else the update fails (step 7).
+2. `Rebuilt::new` first compares the first `template-tag` line of the response with the stored template tag (CL-29). The stored tag is the value of the cache record; the session checked it at the commit (CL-25), and `Rebuilt::new` does not compute it from the template. The comparison is exact text equality, and an empty tag never matches. Else the update fails (step 7).
 3. The body is a JSON object with a `data` member that is an object of string values, read in text order within the limits (CL-29; `rivqen-proto-legacy`, WP-08 S1 T-01). A value that is not a string fails the update (the token `value-not-string` of CL-42).
-4. `Rebuilt::new`: rebuild the page from the stored template and the **full** server data with `render_v1`, within `TemplateLimits`. The lowercase hex SHA-1 of the page must equal the `html-sha1` member **and** the bare response etag (CL-29). Both values are required; an absent value never matches.
+4. `Rebuilt::new`, after step 2: rebuild the page from the stored template and the **full** server data with `render_v1`, within `TemplateLimits`. The lowercase hex SHA-1 of the page must equal the `html-sha1` member **and** the bare response etag (CL-29). Both values are required; an absent value never matches.
 5. `diff_v1` of the stored data and the server data: each server entry whose value differs from the stored value, or whose key the stored data does not have, in **server order** (CL-42, D-25). A stored key that the server data does not have is not in the diff.
 6. Deliver and commit (CL-27): an empty diff sends no message and the final code is `304` (CL-28). The new entry has the rebuilt page, the full server data (D-35), the unchanged template, and the etag and template tag of the response.
 7. On any failure: discard the result, remove the stored entry, do not commit, and load the page normally; codes `-1 / -1` (CL-29, P-13).
@@ -38,12 +38,12 @@ Normative rules: [legacy client](/engineering/protocol/legacy-client#_9-5-outcom
 | Item | What it does |
 |---|---|
 | `diff_v1(local, server)` | `local` is `Option<&[DataBlock]>`; `None` gives the whole server list. Gives references to the server entries of the diff, in server order. Keys compare byte for byte. A repeated key is `DiffError::DuplicateLocalKey` (code `CACHE_CORRUPTED`) or `DiffError::DuplicateServerKey` (`INTEGRITY_ERROR`), never a choice of one value |
-| `RebuildInput` | The stored template and data, the server data (owned), `html_sha1` and the bare `etag` |
-| `Rebuilt::new(input, limits)` | Steps 4 and 5 in this order: `render_v1`, the `html-sha1` comparison, the etag comparison, `diff_v1`. The only constructor of `Rebuilt` (R-CORE-05) |
+| `RebuildInput` | The stored template and data, the server data (owned), `html_sha1`, the bare `etag`, `response_template_tag` and `stored_template_tag` |
+| `Rebuilt::new(input, limits)` | Steps 2, 4 and 5 in this order: the template tag comparison, `render_v1`, the `html-sha1` comparison, the etag comparison, `diff_v1`. All three checks of CL-29. The only constructor of `Rebuilt` (R-CORE-05) |
 | `Rebuilt` | `page`, `etag` (`Sha1Hex`), `data` (the full server data), `diff` (copies of the diff entries), `into_parts` (`RebuiltParts`) |
-| `RebuildError` | `Render(RenderError)`, `HtmlSha1Mismatch`, `EtagMismatch`, `Diff(DiffError)`. Codes: `DOCUMENT_TOO_LARGE` for a limit, `CACHE_CORRUPTED` for a repeated stored key, else `INTEGRITY_ERROR` |
+| `RebuildError` | `TemplateTagMismatch`, `Render(RenderError)`, `HtmlSha1Mismatch`, `EtagMismatch`, `Diff(DiffError)`. Codes: `DOCUMENT_TOO_LARGE` for a limit, `CACHE_CORRUPTED` for a repeated stored key, else `INTEGRITY_ERROR` |
 
-<Badge type="tip" text="FACT" /> The hash comparisons are plain text comparisons of public values: an uppercase, quoted, `W/` or padded value does not match. `Debug` of `RebuildInput`, `Rebuilt` and `RebuiltParts` gives lengths and counts only; the error texts are static and have no key, value, page byte or hash (tests `legacy_rebuilt_debug`, `legacy_rebuilt_errors_have_no_content`).
+<Badge type="tip" text="FACT" /> The tag and hash comparisons are plain text comparisons of public values: an uppercase, quoted, `W/` or padded value does not match. The page message of a data update takes its diff only from a `Rebuilt` (CL-27; the session rule of S2), so data that did not pass the three checks never reaches the page. `Debug` of `RebuildInput`, `Rebuilt` and `RebuiltParts` gives lengths and counts only; the error texts are static and have no key, value, page byte or hash (tests `legacy_rebuilt_debug`, `legacy_rebuilt_errors_have_no_content`).
 
 <Badge type="tip" text="FACT" /> A `DataBlock` value is always a string, so the token `value-not-string` of CL-42 cannot reach `diff_v1`: the body reader rejects such a body. The golden test makes the token when it converts a JSON object of a fixture to a data list.
 
@@ -56,7 +56,7 @@ Normative rules: [legacy client](/engineering/protocol/legacy-client#_9-5-outcom
 | Test | What it shows |
 |---|---|
 | `legacy_fn_diff` | The 24 canonical function fixtures `diff` pass, 2 of them with the token `value-not-string`; the order of each JSON object comes from the file text |
-| `legacy_rebuilt_*` | A data update, an empty diff, a key that the stored data does not have, each mismatch, the order of the two checks, exact comparison, data that does not fit the template, each limit, a repeated stored key, the error codes and texts, `Debug` |
+| `legacy_rebuilt_*` | A data update, an empty diff, a key that the stored data does not have, each mismatch, the template tag check (equal, different, empty, before the render), the order of the hash checks, exact comparison, data that does not fit the template, each limit, a repeated stored key, the error codes and texts, `Debug` |
 | `legacy_rebuilt_fixture_pages` | The split of each fixture page that the server splits (50 page and 17 malformed fixtures) as the stored entry and the server data, with the page hash: 66 give the page byte for byte; `FX-LEG-MAL-PLACEHOLDER-TEXT` (key text before its block, DL-166) gives an error |
 | `legacy_prop_diff_*` | `diff_v1(x, x)` is empty; the diff applied to the stored data gives every server value; the diff is exactly the changed entries in server order; repeated keys give the error |
 | `legacy_prop_rebuilt_*` | P-DIFF-5 through `Rebuilt`; a data update gives the new page and the changed entries; never another page; any input gives no panic |

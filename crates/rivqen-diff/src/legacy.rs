@@ -12,7 +12,12 @@
 //! - [`Rebuilt`] is a rebuilt page that exists only after its check: the
 //!   stored template with the server data ([`render_v1`]), and its SHA-1
 //!   equal to the `html-sha1` member of the body **and** to the bare response
-//!   etag (CL-29). Its only constructor is [`Rebuilt::new`].
+//!   etag (CL-29), after the response `template-tag` equals the stored
+//!   template tag (CL-29). Its only constructor is [`Rebuilt::new`], which
+//!   does all three checks of CL-29.
+//! - The page message of a data update takes its diff only from a
+//!   [`Rebuilt`] (CL-27; the session rule of S2), so that data that did not
+//!   pass the checks never reaches the page.
 //!
 //! # Invariants
 //!
@@ -147,6 +152,13 @@ pub struct RebuildInput<'a> {
     /// `W/` and quotes, CL-15). An absent etag is the empty text: it never
     /// matches.
     pub etag: &'a str,
+    /// The `template-tag` of the response (CL-29). An absent value is the
+    /// empty text: it never matches.
+    pub response_template_tag: &'a str,
+    /// The template tag of the stored entry: the value of the cache record.
+    /// The session checked it at the commit (CL-25); it is not computed
+    /// again here. An empty text never matches.
+    pub stored_template_tag: &'a str,
 }
 
 impl fmt::Debug for RebuildInput<'_> {
@@ -158,6 +170,11 @@ impl fmt::Debug for RebuildInput<'_> {
             .field("server_entries", &self.server.len())
             .field("html_sha1_bytes", &self.html_sha1.len())
             .field("etag_bytes", &self.etag.len())
+            .field(
+                "response_template_tag_bytes",
+                &self.response_template_tag.len(),
+            )
+            .field("stored_template_tag_bytes", &self.stored_template_tag.len())
             .finish()
     }
 }
@@ -168,6 +185,9 @@ impl fmt::Debug for RebuildInput<'_> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum RebuildError {
+    /// The response `template-tag` is not the stored template tag, or one of
+    /// them is empty. Code `INTEGRITY_ERROR`.
+    TemplateTagMismatch,
     /// [`render_v1`] failed: the data does not fit the template, or a limit.
     Render(RenderError),
     /// The SHA-1 of the rebuilt page is not the `html-sha1` member.
@@ -181,6 +201,9 @@ pub enum RebuildError {
 impl fmt::Display for RebuildError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::TemplateTagMismatch => {
+                f.write_str("the legacy response template-tag is not the stored template tag")
+            }
             Self::Render(error) => write!(f, "the legacy rebuild failed: {error}"),
             Self::HtmlSha1Mismatch => {
                 f.write_str("the SHA-1 of the rebuilt legacy page is not html-sha1")
@@ -198,7 +221,7 @@ impl core::error::Error for RebuildError {
         match self {
             Self::Render(error) => Some(error),
             Self::Diff(error) => Some(error),
-            Self::HtmlSha1Mismatch | Self::EtagMismatch => None,
+            Self::TemplateTagMismatch | Self::HtmlSha1Mismatch | Self::EtagMismatch => None,
         }
     }
 }
@@ -211,9 +234,10 @@ impl HasErrorCode for RebuildError {
         match self {
             Self::Render(RenderError::Limit(limit)) => limit.code(),
             Self::Diff(error) => error.code(),
-            Self::Render(_) | Self::HtmlSha1Mismatch | Self::EtagMismatch => {
-                ErrorCode::IntegrityError
-            }
+            Self::Render(_)
+            | Self::TemplateTagMismatch
+            | Self::HtmlSha1Mismatch
+            | Self::EtagMismatch => ErrorCode::IntegrityError,
         }
     }
 }
@@ -235,17 +259,20 @@ impl Rebuilt {
     ///
     /// Steps, in this order; the first failure stops:
     ///
-    /// 1. [`render_v1`] of the stored template with the server data, within
+    /// 1. `response_template_tag` equals `stored_template_tag`, byte for
+    ///    byte, and it is not empty. The stored tag is the value of the
+    ///    cache record (the session checked it at the commit, CL-25); this
+    ///    function does not compute it from the template.
+    /// 2. [`render_v1`] of the stored template with the server data, within
     ///    `limits`.
-    /// 2. The lowercase hex SHA-1 of the page ([`etag_v1`]) equals
+    /// 3. The lowercase hex SHA-1 of the page ([`etag_v1`]) equals
     ///    `html_sha1`, byte for byte.
-    /// 3. It equals `etag`, byte for byte.
-    /// 4. [`diff_v1`] of the stored data and the server data.
+    /// 4. It equals `etag`, byte for byte.
+    /// 5. [`diff_v1`] of the stored data and the server data.
     ///
-    /// The comparisons are plain: the values are public hashes of the page.
-    /// The caller checks the other CL-29 conditions before: the response
-    /// `template-tag` equals the stored template tag, and the body is a JSON
-    /// object whose `data` member is an object of strings.
+    /// The comparisons are plain: the values are public tags and hashes. The
+    /// caller checks only that the body is a JSON object whose `data` member
+    /// is an object of strings.
     ///
     /// # Errors
     ///
@@ -257,7 +284,12 @@ impl Rebuilt {
             server,
             html_sha1,
             etag,
+            response_template_tag,
+            stored_template_tag,
         } = input;
+        if response_template_tag.is_empty() || response_template_tag != stored_template_tag {
+            return Err(RebuildError::TemplateTagMismatch);
+        }
         let page = render_v1(template, &server, limits).map_err(RebuildError::Render)?;
         let sha1 = etag_v1(page.as_bytes());
         if sha1.as_str() != html_sha1 {
@@ -299,6 +331,10 @@ impl Rebuilt {
 
     /// The diff against the stored data ([`diff_v1`]), in server order.
     /// Empty: no message (CL-28).
+    ///
+    /// The page message of a data update takes its diff only from a
+    /// [`Rebuilt`] (CL-27; the session rule of S2), so that data that did not
+    /// pass the checks never reaches the page.
     #[must_use]
     pub fn diff(&self) -> &[DataBlock] {
         &self.diff

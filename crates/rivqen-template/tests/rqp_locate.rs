@@ -662,8 +662,11 @@ fn locate_position_bytes_before_element_and_after_merge_in_o() {
 
 #[test]
 fn locate_position_scan_stop_before_match_is_markup() {
+    // H-158: the scan of F reads up to the O limit plus the largest manifest
+    // element, so the input is one byte or more over that limit.
     let limits = TemplateLimits::new(32, 256, 1 << 20, 128, 256);
-    let full = insert("<head>", 6);
+    let mut full = insert("<head>", 6);
+    full.push_str(&" ".repeat(limits.max_full_bytes()));
     let error = locate_manifest(full.as_bytes(), &limits).unwrap_err();
     assert_eq!(
         error,

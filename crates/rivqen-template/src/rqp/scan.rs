@@ -155,8 +155,6 @@ pub fn scan<'a>(input: &'a [u8], limits: &TemplateLimits) -> Scanner<'a> {
 /// [`scan`] with an input limit that the caller gives (H-158: the scan of a
 /// full document F reads up to M-01 plus the largest manifest element). An
 /// input over `max_input` gives one error item and no token.
-// The locator of the full document uses it (WP-08 S1, T-07).
-#[allow(dead_code)]
 #[must_use]
 pub(crate) fn scan_bounded<'a>(
     input: &'a [u8],

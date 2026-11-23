@@ -6,6 +6,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { hasNoStore, offlineOf } from '../src/client-canonical.mjs';
 import { sha256hex } from '../src/client-engine.mjs';
 import { run } from '../src/client-model.mjs';
 import { sha1hex } from '../src/model.mjs';
@@ -401,6 +402,25 @@ test('cl39_no_store_gives_no_commit', () => {
   const app = { status: 200, headers: [['content-type', 'text/html; charset=utf-8'], ['cache-control', 'no-store']] };
   const c = go(cc({ responses: { a: { page: 'a', app } }, schedule: [{ case: 'a' }, ...FIRST, { do: 'snapshot_cache' }] }));
   assert.deepEqual(lastSnapshot(c), []);
+});
+
+// CL-15, CL-25 with legacy wire section 10 item 5 (DL-217): no-store inside a quoted argument counts.
+test('cl15_no_store_in_a_quoted_argument_counts_as_cache_offline_false', () => {
+  const h = (value) => [['content-type', 'text/html; charset=utf-8'], ['cache-offline', 'store'], ['cache-control', value]];
+  assert.equal(offlineOf(h('private="a, no-store"')), 'false');
+  assert.equal(offlineOf(h('no-cache; no-store')), 'false');
+  assert.equal(offlineOf(h('private="a"')), 'store');
+  assert.equal(offlineOf([['cache-offline', 'http'], ['cache-control', 'private="a, no-store"']]), 'http');
+  assert.equal(hasNoStore(h('private="a, no-store"')), true);
+  assert.equal(hasNoStore(h('private="no-store"')), false);
+});
+
+test('cl25_no_store_in_a_quoted_argument_gives_no_commit', () => {
+  const app = { status: 200, headers: [['content-type', 'text/html; charset=utf-8'], ['cache-control', 'private="a, no-store"']] };
+  const c = go(cc({ responses: { a: { page: 'a', app } }, schedule: [{ case: 'a' }, ...FIRST, { do: 'snapshot_cache' }] }));
+  assert.deepEqual(lastSnapshot(c), []);
+  // The page is still delivered (CL-25 forbids the commit only).
+  assert.equal(actions(c, 1).filter((a) => a.do === 'load_data').length + all(c, 'intercepts').filter((x) => x.null !== true).length, 1);
 });
 
 test('cl40_an_entry_that_fails_integrity_is_removed_and_not_used', () => {

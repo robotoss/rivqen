@@ -75,11 +75,18 @@ export class Sim {
     this.timers = [];
     this.stepNo = 0;
     this.store = profile.createStore(this);
+    // The bytes of the run (README "Client exchanges.json", DL-216): the seeded records and every
+    // request with its delivered response. Copies: the model changes its own objects later.
+    this.wire = { cacheBefore: [], exchanges: [] };
   }
 
   /** Run the schedule. Returns the `client` member. Throws ClientCaseError. */
   run() {
-    for (const entry of this.b.cache_before) this.store.seed(entry);
+    for (const entry of this.b.cache_before) {
+      const record = this.store.seed(entry);
+      const same = typeof record?.page === 'string' && Buffer.from(record.page, 'utf8').equals(this.pageBytes(entry.page));
+      this.wire.cacheBefore.push({ record: structuredClone(record), page: same ? entry.page : null });
+    }
     let close = false;
     for (const item of this.b.schedule) {
       if (item.case !== undefined) {
@@ -286,9 +293,9 @@ export class Sim {
     if (entry.fixture !== undefined) {
       const fx = this.env.fixture?.(entry.fixture) ?? null;
       if (fx === null) throw caseError('CASE_FIXTURE', `responses: server fixture ${entry.fixture} is not a canonical server fixture`);
-      return { app: fx.app, bytes: this.pageBytes(fx.page) };
+      return { app: fx.app, page: fx.page, bytes: this.pageBytes(fx.page) };
     }
-    return { app: entry.app, bytes: this.pageBytes(entry.page) };
+    return { app: entry.app, page: entry.page, bytes: this.pageBytes(entry.page) };
   }
 
   pageBytes(id) {
@@ -302,9 +309,15 @@ export class Sim {
    * connection is refused (server_down: no exchange, CONTRACT section 5).
    */
   send(session, gen, fields) {
-    if (this.serverDown) return null;
+    const target = new URL(session.url);
+    const request = { method: 'GET', target: `${target.pathname}${target.search}`, fields: fields.map(([n, v]) => [n, v]) };
+    const sent = { step: this.stepNo, session: session.index, request };
+    if (this.serverDown) {
+      this.wire.exchanges.push({ exchange: null, ...sent, response: null, stop: { kind: 'refused' } });
+      return null;
+    }
     if (this.current === null) throw caseError('CASE_NO_RESPONSE', `step ${this.stepNo}: a request is sent before the first case entry`);
-    const { app, bytes } = this.responseOf(this.current);
+    const { app, page, bytes } = this.responseOf(this.current);
     const response = respond(this.b.server_profile, { method: 'GET', headers: fields }, app, bytes);
     const faults = this.pending;
     this.pending = noFaults();
@@ -318,8 +331,7 @@ export class Sim {
       body = edit.body;
       this.bodyEdits.push({ exchange: this.exchangeNo + 1, name, value, applied: edit.applied, ...(edit.applied ? {} : { reason: edit.reason }) });
     }
-    const target = new URL(session.url);
-    const entry = { exchange: ++this.exchangeNo, method: 'GET', target: `${target.pathname}${target.search}`, fields: pick(fields, REQUEST_FIELDS), response: null };
+    const entry = { exchange: ++this.exchangeNo, method: 'GET', target: request.target, fields: pick(fields, REQUEST_FIELDS), response: null };
     this.phase.requests.push(entry);
     this.emit('proxy.request');
     const ops = [];
@@ -338,6 +350,14 @@ export class Sim {
       }
     }
     if (ops.at(-1).op !== 'cut') ops.push({ op: 'body', to: body.length }, { op: 'end' });
+    // The delivered form; `page` only when the delivered bytes are the page of the response entry.
+    const delivered = response.body === null && body.length === 0 ? null : { page: body.equals(bytes) ? page : null, bytes: Buffer.from(body) };
+    this.wire.exchanges.push({
+      exchange: entry.exchange,
+      ...sent,
+      response: { status: response.status, fields: headers.map(([n, v]) => [n, v]), body: delivered },
+      stop: faults.cut ? { kind: 'cut', at: Math.min(faults.cut.bytes, body.length) } : null,
+    });
     const ex = { n: entry.exchange, session, gen, status: response.status, headers, body, given: 0, ended: false, complete: false, entry, ops, at: 0, drop: faults.drop, set: faults.set, edits: faults.body.length };
     this.pump(ex);
     return ex;

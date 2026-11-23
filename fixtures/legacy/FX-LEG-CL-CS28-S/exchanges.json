@@ -1,0 +1,70 @@
+{
+  "id": "FX-LEG-CL-CS28-S",
+  "format": 1,
+  "cache_before": [],
+  "exchanges": [
+    {
+      "exchange": 1,
+      "step": 1,
+      "session": 1,
+      "request": {
+        "method": "GET",
+        "target": "/catalog",
+        "fields": [
+          ["accept-diff","true"],
+          ["accept-encoding","gzip"]
+        ]
+      },
+      "response": {
+        "status": 200,
+        "fields": [
+          ["content-type","text/html; charset=utf-8"],
+          ["etag","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+          ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+          ["cache-offline","true"],
+          ["template-change","true"],
+          ["vary","template-tag"]
+        ],
+        "body": {
+          "page": "a",
+          "len": 296,
+          "sha256": "a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb"
+        }
+      },
+      "stop": null
+    },
+    {
+      "exchange": 2,
+      "step": 11,
+      "session": 2,
+      "request": {
+        "method": "GET",
+        "target": "/catalog",
+        "fields": [
+          ["accept-diff","true"],
+          ["if-none-match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+          ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+          ["accept-encoding","gzip"]
+        ]
+      },
+      "response": {
+        "status": 200,
+        "fields": [
+          ["content-type","text/html; charset=utf-8"],
+          ["etag","4c33dabea7ea65c6255b9e6a6539976674886a2c"],
+          ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+          ["cache-offline","true"],
+          ["template-change","false"],
+          ["vary","template-tag"],
+          ["Content-Length","334"]
+        ],
+        "body": {
+          "base64": "eyJkYXRhIjp7Int0aXRsZX0iOiI8dGl0bGU+U2hvcDwvdGl0bGU+Iiwie3ByaWNlfSI6IjwhLS1zb25pY2RpZmYtcHJpY2UtLT48cCBjbGFzcz1cInByaWNlXCI+MTMwLjAwPC9wPjwhLS1zb25pY2RpZmYtcHJpY2UtZW5kLS0+Iiwie3N0b2NrfSI6IjwhLS1zb25pY2RpZmYtc3RvY2stLT48cD5JbiBzdG9jazogNTwvcD48IS0tc29uaWNkaWZmLXN0b2NrLWVuZC0tPiJ9LCJ0ZW1wbGF0ZS10YWciOiIzYzc3MWJmMDE1ZGYyYzQxMGE0MWE2MDEyODA0ZjY0NWIzYWNjMWJjIiwiaHRtbC1zaGExIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsImRpZmYiOiIifQ==",
+          "len": 334,
+          "sha256": "f5951670ee919663878b70fbf8b9f2b95917b0d8fb5fdfbc5824a451db8e3b1d"
+        }
+      },
+      "stop": null
+    }
+  ]
+}

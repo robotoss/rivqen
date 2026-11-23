@@ -1,0 +1,34 @@
+{
+  "id": "FX-LEG-CL-REDIRECT-Q",
+  "format": 1,
+  "cache_before": [],
+  "exchanges": [
+    {
+      "exchange": 1,
+      "step": 1,
+      "session": 1,
+      "request": {
+        "method": "GET",
+        "target": "/catalog",
+        "fields": [
+          ["accept-diff","true"],
+          ["accept-encoding","gzip"]
+        ]
+      },
+      "response": {
+        "status": 302,
+        "fields": [
+          ["content-type","text/html; charset=utf-8"],
+          ["location","https://shop.example.com/login"],
+          ["set-cookie","session=rq-test-cookie-1; Path=/"]
+        ],
+        "body": {
+          "page": "a",
+          "len": 296,
+          "sha256": "a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb"
+        }
+      },
+      "stop": null
+    }
+  ]
+}

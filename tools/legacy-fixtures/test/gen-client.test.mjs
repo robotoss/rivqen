@@ -65,6 +65,42 @@ test('check6_reports_a_stale_client_expected_json', () => {
   assert.deepEqual(gen(dir).problems, ['FX-LEG-CL-CS12-Q/expected.json: stale']);
 });
 
+// README "Client exchanges.json" (DL-216): check 6 covers the file of every canonical client fixture.
+test('check6_writes_exchanges_json_for_a_canonical_client_fixture_only', () => {
+  const dir = setup();
+  write(dir, fixture('CS-04', 'quick'));
+  write(dir, android('FX-LEG-CL-CS04-Q'));
+  assert.deepEqual(write_(dir).problems, []);
+  assert.deepEqual(readdirSync(join(dir, 'FX-LEG-CL-CS04-Q')).sort(), ['case.json', 'exchanges.json', 'expected.json']);
+  assert.deepEqual(readdirSync(join(dir, 'FX-LEG-CL-CS04-Q--ANDROID')).sort(), ['case.json', 'expected.json']);
+  const file = JSON.parse(readFileSync(join(dir, 'FX-LEG-CL-CS04-Q', 'exchanges.json'), 'utf8'));
+  assert.equal(file.id, 'FX-LEG-CL-CS04-Q');
+  assert.equal(file.exchanges.length, 2);
+});
+
+test('check6_reports_a_missing_or_stale_exchanges_json', () => {
+  const dir = setup();
+  write(dir, fixture('CS-12', 'quick'));
+  write_(dir);
+  const path = join(dir, 'FX-LEG-CL-CS12-Q', 'exchanges.json');
+  const bytes = readFileSync(path);
+  rmSync(path);
+  assert.deepEqual(gen(dir).problems, ['FX-LEG-CL-CS12-Q/exchanges.json: missing']);
+  writeFileSync(path, bytes.toString('utf8').replace('"format": 1', '"format": 2'));
+  assert.deepEqual(gen(dir).problems, ['FX-LEG-CL-CS12-Q/exchanges.json: stale']);
+  assert.deepEqual(write_(dir).problems, []);
+  assert.ok(readFileSync(path).equals(bytes));
+});
+
+test('check6_exchanges_json_in_an_android_directory_is_an_unknown_file', () => {
+  const dir = setup();
+  write(dir, fixture('CS-04', 'quick'));
+  write(dir, android('FX-LEG-CL-CS04-Q'));
+  write_(dir);
+  writeFileSync(join(dir, 'FX-LEG-CL-CS04-Q--ANDROID', 'exchanges.json'), '{}\n');
+  assert.deepEqual(gen(dir).problems, ['FX-LEG-CL-CS04-Q--ANDROID/exchanges.json: unknown file']);
+});
+
 test('check6_a_case_error_names_the_member', () => {
   const dir = setup();
   write(dir, { ...fixture('CS-12', 'quick'), extra: true });

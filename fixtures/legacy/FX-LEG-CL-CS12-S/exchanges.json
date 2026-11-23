@@ -1,0 +1,24 @@
+{
+  "id": "FX-LEG-CL-CS12-S",
+  "format": 1,
+  "cache_before": [],
+  "exchanges": [
+    {
+      "exchange": null,
+      "step": 2,
+      "session": 1,
+      "request": {
+        "method": "GET",
+        "target": "/catalog",
+        "fields": [
+          ["accept-diff","true"],
+          ["accept-encoding","gzip"]
+        ]
+      },
+      "response": null,
+      "stop": {
+        "kind": "refused"
+      }
+    }
+  ]
+}

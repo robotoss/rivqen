@@ -16,7 +16,7 @@ import { isUtf8 } from 'node:buffer';
 import { caseError, sha1hex, sha256hex } from './client-engine.mjs';
 import { DEFAULT_APP } from './client-case.mjs';
 import { sortRecords, sortedFields } from './client-trace.mjs';
-import { asciiLower, parseContentType, trimOws, valuesOf } from './fields.mjs';
+import { asciiLower, hasDirective, parseContentType, trimOws, valuesOf } from './fields.mjs';
 import { respond } from './model.mjs';
 import { rebuild, split } from './split.mjs';
 
@@ -73,11 +73,9 @@ export function isDataUpdateValue(value) {
   return value === 'false' || value === '0';
 }
 
-function hasNoStore(headers) {
-  for (const v of valuesOf(headers, 'cache-control')) {
-    for (const item of v.split(',')) if (asciiLower(trimOws(item.split('=')[0])) === 'no-store') return true;
-  }
-  return false;
+/** CL-15, CL-25: a cache-control line has `no-store`, by the split of legacy wire section 10 item 5 (DL-217). */
+export function hasNoStore(headers) {
+  return hasDirective(headers, 'no-store');
 }
 
 /** CL-15: the cache-offline value (`true`, `false`, `store`, `http`); `no-store` counts as `false`, `http` wins. */
@@ -253,7 +251,7 @@ export class CanonicalStore {
     return sortRecords(this.records.map(recordView));
   }
 
-  /** README "cache_before entry": the record of a canonical first load of the page, then the overrides. */
+  /** README "cache_before entry": the record of a canonical first load of the page, then the overrides. Returns the record. */
   seed(entry) {
     const sim = this.sim;
     const bytes = sim.pageBytes(entry.page);
@@ -272,6 +270,7 @@ export class CanonicalStore {
     if (entry.etag !== undefined) record.etag = entry.etag;
     if (entry.template_tag !== undefined) record.template_tag = entry.template_tag;
     this.commit(record);
+    return record;
   }
 }
 

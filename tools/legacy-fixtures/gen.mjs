@@ -21,7 +21,8 @@
 //   5. every rule of a fixture exists in legacy wire section 10; every rule is covered once
 //      the catalog is complete
 //   6-12. the client part (README "Generator checks of the client part"; src/client-fixture.mjs):
-//      client expected.json and functions/*.json current, client traces, OVERRIDE_NOT_NEEDED,
+//      client expected.json, canonical client exchanges.json (DL-216) and functions/*.json
+//      current, client traces, OVERRIDE_NOT_NEEDED,
 //      OVERRIDE_MISSING, CL rules and rows, stored runs used, function evidence; the coverage of
 //      check 10 and check 11 are problems only when CLIENT_FLOOR is above 0
 // Exit codes: 0 all current (or written), 1 a stale, missing or extra file or a failed

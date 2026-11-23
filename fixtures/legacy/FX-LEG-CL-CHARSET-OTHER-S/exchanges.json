@@ -1,0 +1,36 @@
+{
+  "id": "FX-LEG-CL-CHARSET-OTHER-S",
+  "format": 1,
+  "cache_before": [],
+  "exchanges": [
+    {
+      "exchange": 1,
+      "step": 1,
+      "session": 1,
+      "request": {
+        "method": "GET",
+        "target": "/catalog",
+        "fields": [
+          ["accept-diff","true"],
+          ["accept-encoding","gzip"]
+        ]
+      },
+      "response": {
+        "status": 200,
+        "fields": [
+          ["content-type","text/html; charset=iso-8859-1"],
+          ["etag","rq-etag-1"],
+          ["template-tag","rq-tag-1"],
+          ["template-change","true"],
+          ["cache-offline","true"]
+        ],
+        "body": {
+          "page": "a",
+          "len": 296,
+          "sha256": "a974949d36cafc9bb38082274d0e18e2aa815b94a30815778b8cd6b7741c15bb"
+        }
+      },
+      "stop": null
+    }
+  ]
+}

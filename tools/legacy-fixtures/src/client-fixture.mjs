@@ -2,8 +2,9 @@
 // SPDX-FileCopyrightText: The Rivqen Authors
 
 // The client part of the generator (fixtures/legacy/README.md "Generator checks of the client
-// part", checks 6 to 12): it writes the expected.json of every client fixture and the function
-// fixtures, and checks them against the stored client evidence. gen.mjs calls clientPart().
+// part", checks 6 to 12): it writes the expected.json of every client fixture, the
+// exchanges.json of every canonical client fixture (DL-216) and the function fixtures, and checks
+// them against the stored client evidence. gen.mjs calls clientPart().
 //
 // Every problem is a text that starts with the fixture ID or the file. A defect of a case or
 // of a stored file is a problem, never an exception; an I/O error other than a missing file
@@ -14,6 +15,7 @@ import { join } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { fileBytes } from '../../rqp-protocol/src/fixtures.mjs';
 import { ClientCaseError, validateClientCase } from './client-case.mjs';
+import { EXCHANGES, exchangeFile } from './client-exchanges.mjs';
 import { run as runModel } from './client-model.mjs';
 import { compareClient, parseRun, projectRuns, TraceProjectionError, traceSteps } from './client-trace.mjs';
 import { FUNCTION_PROFILES, functionFixture, parseCases, parseEvidence } from './functions.mjs';
@@ -100,6 +102,7 @@ export function clientPart(o) {
   }
   const env = { page: o.page, fixture: o.serverFixture };
   const expectedOf = new Map();
+  const exchangesOf = new Map(); // canonical fixtures only (DL-216)
   const traceOf = new Map();
   const used = new Map();
 
@@ -133,6 +136,7 @@ export function clientPart(o) {
       continue;
     }
     const expected = { id: c.id, kind: 'client', profile: c.profile, mode: c.mode, server_profile: c.server_profile, level: c.level, client: r.client, profiles_same: [] };
+    exchangesOf.set(c.id, exchangeFile(c.id, r.wire));
     if (c.evidence === 'trace') {
       const key = `${c.trace.scenario} ${c.trace.mode}`;
       if (used.has(key)) problems.push(`${c.id}: the stored runs of ${key} are already the trace of ${used.get(key)}`);
@@ -175,7 +179,14 @@ export function clientPart(o) {
     if (expected === undefined) continue;
     const p = o.sync(join(o.dir, name, GENERATED), fileBytes(expected), `${name}/${GENERATED}`);
     if (p !== null) problems.push(p);
-    for (const file of readdirSync(join(o.dir, name))) if (file !== 'case.json' && file !== GENERATED) problems.push(`${name}/${file}: unknown file`);
+    const known = new Set(['case.json', GENERATED]);
+    const exchanges = exchangesOf.get(name);
+    if (exchanges !== undefined) {
+      known.add(EXCHANGES);
+      const q = o.sync(join(o.dir, name, EXCHANGES), fileBytes(exchanges), `${name}/${EXCHANGES}`);
+      if (q !== null) problems.push(q);
+    }
+    for (const file of readdirSync(join(o.dir, name))) if (!known.has(file)) problems.push(`${name}/${file}: unknown file`);
     count++;
   }
 

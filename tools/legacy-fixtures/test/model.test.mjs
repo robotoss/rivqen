@@ -113,6 +113,18 @@ test('canonical_no_store_kept', () => {
   assert.deepEqual(fieldValues(notModified, 'cache-control'), ['Private, No-Store']);
 });
 
+// C-09 with legacy wire section 10 item 5 (DL-217): `no-store` inside a quoted argument and after
+// a `;` counts, so the lines of A stay.
+test('canonical_no_store_in_a_quoted_argument_keeps_the_lines_of_a', () => {
+  for (const value of ['private="a, no-store"', 'no-cache; no-store']) {
+    const app = { status: 200, headers: [...APP.headers, ['cache-control', value]] };
+    assert.deepEqual(fieldValues(run(CANONICAL, legacy(), 'a', app), 'cache-control'), [value]);
+    const notModified = run(CANONICAL, legacy(['If-None-Match', etagOf('a')]), 'a', app);
+    assert.equal(notModified.status, 304);
+    assert.deepEqual(fieldValues(notModified, 'cache-control'), [value]);
+  }
+});
+
 test('canonical_non_utf8_passes_through', () => {
   const bad = Buffer.concat([bytes('<html><body>'), Buffer.from([0xff]), bytes('</body></html>')]);
   assertPassThrough(respond(CANONICAL, legacy(), APP, bad), APP, bad);

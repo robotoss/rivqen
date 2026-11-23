@@ -27,7 +27,8 @@ export const CLIENT_MODEL_PROFILES = Object.freeze(Object.keys(PROFILES));
  * @param {string} mode quick or standard; must equal case.mode
  * @param {unknown} c the case (the members of a canonical client case.json)
  * @param {{ page?: (id: string) => Uint8Array | null, fixture?: (id: string) => { page: string, app: object } | null }} env
- * @returns {{ ok: true, client: object } | { ok: false, error: { code: string, message: string } }}
+ * @returns {{ ok: true, client: object, wire: { cacheBefore: object[], exchanges: object[] } } | { ok: false, error: { code: string, message: string } }}
+ *   `wire`: the bytes of the run (src/client-exchanges.mjs makes exchanges.json of them)
  */
 export function run(profile, mode, c, env = {}) {
   const p = PROFILES[profile];
@@ -36,7 +37,9 @@ export function run(profile, mode, c, env = {}) {
   try {
     const behavior = validateBehavior(c);
     if (behavior.mode !== mode) return { ok: false, error: { code: 'CASE_MODE', message: `the case mode is ${behavior.mode}, not ${mode}` } };
-    return { ok: true, client: new Sim(p, behavior, env).run() };
+    const sim = new Sim(p, behavior, env);
+    const client = sim.run();
+    return { ok: true, client, wire: sim.wire };
   } catch (error) {
     if (error instanceof ClientCaseError) return { ok: false, error: { code: error.code, message: error.message } };
     throw error;

@@ -7,7 +7,7 @@ Model and generator of the legacy golden fixtures in `fixtures/legacy/` (format:
 
 The model implements one server: `legacy-canonical` (rules C-01 to C-16 of `docs/engineering/protocol/legacy-wire.md` section 10) and the three upstream profiles `legacy-java`, `legacy-node` and `legacy-php` (divergences D-01 to D-15). No profile reproduces U-01, U-11, U-12 or U-13 (DL-069, H-111, DL-082): in every profile, a legacy response (`304`, data or full) drops the application `cdn-cache-control` and `surrogate-control` lines (C-13) and gets `vary: template-tag` after the application `vary` lines, unless one of them lists `template-tag` or `*` (C-15); and every profile keeps the scope of C-01 and C-03, so a `HEAD`, a `POST`, a 3xx or a 404 is pass-through. A pass-through response keeps every line. The generator writes `expected.json` from the model and proves that each profile result equals the stored upstream trace in `evidence/traces/server/`.
 
-The client part (WP-01 S2) has a second model: a legacy client with the profiles `legacy-canonical` (rules CL-01 to CL-43 of `docs/engineering/protocol/legacy-client.md` section 9) and `legacy-android` (the canonical client with the named differences that the FACT rows and the stored Android traces prove). The generator writes the client `expected.json` files and the function fixtures, and proves each `legacy-android` result against the stored client trace in `evidence/traces/client/android/`. See [Client part](#client-part).
+The client part (WP-01 S2) has a second model: a legacy client with the profiles `legacy-canonical` (rules CL-01 to CL-43 of `docs/engineering/protocol/legacy-client.md` section 9) and `legacy-android` (the canonical client with the named differences that the FACT rows and the stored Android traces prove). The generator writes the client `expected.json` files, the `exchanges.json` file of each canonical client fixture (DL-216) and the function fixtures, and proves each `legacy-android` result against the stored client trace in `evidence/traces/client/android/`. See [Client part](#client-part).
 
 ## Profile rules from the live upstream run (2026-10-31, DL-082)
 
@@ -45,12 +45,13 @@ Exit codes of `gen.mjs`: `0` all files current (or written), `1` a stale, missin
 | `src/server.mjs` | `handle(request, app, pageBytes, config)` for the conformance harness; `config.profile` defaults to `legacy-canonical` |
 | `src/fixture.mjs` | Reading and checking `case.json`, placeholders, `expected.json` builder |
 | `src/trace.mjs` | Reader of the trace files, the request comparison, the trace comparison and the checks of `not_reproduced` |
-| `src/fields.mjs` | Field-line helpers |
+| `src/fields.mjs` | Field-line helpers; `hasDirective` and `directiveName`: the `Cache-Control` split of legacy wire section 10 item 5 (DL-217), used by the server model (C-09) and the client model (CL-15, CL-25) |
 | `src/client-case.mjs` | Check of a client `case.json` (`validateClientCase`, `validateBehavior`): members, types, limits, step words |
 | `src/client-engine.mjs` | The step engine: schedule, phases, lab runtime, proxy faults (`hold`, `cut`, `drop_field`, `set_field`, `set_body_member`, `server_down`; the lab `setField`, `forwardFields` and `setBodyMember` by import), the `case` step, clock and timers |
 | `src/client-canonical.mjs` | The canonical session (CL-05 to CL-40, CL-44), the abstract cache (CL-38), the field rules (CL-14 to CL-16, CL-21) and the canonical functions (CL-24, CL-41, CL-42) |
 | `src/client-android.mjs` | The `legacy-android` differences A-01 to A-20 and the Android functions (session id, split, diff, etag, message) |
-| `src/client-model.mjs` | `run(profile, mode, case, env)`: the `client` member, or `{ ok: false, error: { code, message } }` |
+| `src/client-model.mjs` | `run(profile, mode, case, env)`: the `client` member and the `wire` member (the seeded records and every exchange of the run), or `{ ok: false, error: { code, message } }` |
+| `src/client-exchanges.mjs` | `exchangeFile(id, wire)`: the `exchanges.json` value (DL-216); `explainProjection(client, file, pageOf)`: the projection of a run follows from its stored bytes (format README rule 1) |
 | `src/client-trace.mjs` | The trace projection of a stored run (DL-104), the normalization and `compareClient` (phases and message normalization by import from `tools/upstream-lab/client/src/determinism.mjs`) |
 | `src/client-fixture.mjs` | The client part of the generator (checks 6 to 12) |
 | `src/functions.mjs` | The function fixtures and their evidence check |
@@ -115,7 +116,7 @@ Format: `fixtures/legacy/README.md` "Client fixtures". A fixture directory is a 
 
 ### Client model
 
-`run(profile, mode, case, env)` in `src/client-model.mjs` runs the schedule of a client case and returns the projection of DL-110 and DL-118: `sessions`, then `phases` (requests, cookies, actions, intercepts, results, snapshots). `env.page(id)` gives the page bytes and `env.fixture(id)` the `page` and `app` of a canonical server fixture. The server model of `server_profile` answers each request (`respond` in `src/model.mjs`).
+`run(profile, mode, case, env)` in `src/client-model.mjs` runs the schedule of a client case and returns the projection of DL-110 and DL-118: `sessions`, then `phases` (requests, cookies, actions, intercepts, results, snapshots). `env.page(id)` gives the page bytes and `env.fixture(id)` the `page` and `app` of a canonical server fixture. The server model of `server_profile` answers each request (`respond` in `src/model.mjs`). The result also has `wire`: a copy of each seeded `cache_before` record and, for each request in send order, the request, the delivered response (after `drop_field`, `set_field` and `set_body_member`) and its stop (`cut` or a refused connection). `exchangeFile` in `src/client-exchanges.mjs` writes it as `exchanges.json` (format: `fixtures/legacy/README.md` "Client `exchanges.json`").
 
 | Property | Rule |
 |---|---|
@@ -184,14 +185,14 @@ The error keeps the decoder or JSON error as its `cause`. `projectRuns` gives a 
 
 | Check | Problem text |
 |---|---|
-| 6. Client files current; a case error | `<id>/expected.json: stale`, `missing`; `functions/<file>: stale`; `<id>: <member message>`; `<id>: <CODE>: <message>` (model error) |
+| 6. Client files current; a case error | `<id>/expected.json: stale`, `missing`; `<id>/exchanges.json: stale`, `missing` (canonical client fixtures); `functions/<file>: stale`; `<id>: <member message>`; `<id>: <CODE>: <message>` (model error) |
 | 7. Client traces | `<id>: check 7: the steps differ from the steps of run <k> of <scenario> <mode>`; `<id>: check 7: the legacy-android result differs from the trace: first difference at item …` (with `not_reproduced: "U-13"`: `… U-13: the trace does not show the documented difference …`); `<id>: check 7: no stored run …`; `<id>: check 7: a stored run of <scenario> <mode>: <projection error>`. The runs are the files `run-<k>.jsonl` (other files are not read), in the order of `<k>` |
 | 8. `OVERRIDE_NOT_NEEDED` | `<id>--ANDROID: OVERRIDE_NOT_NEEDED: the client member equals <id>` |
 | 9. `OVERRIDE_MISSING` | `<id>: OVERRIDE_MISSING for legacy-android: first difference at item …` |
 | 10. Client rules and rows | `<id>: rule CL-nn is not in legacy client section 9`; `the catalog has <n> canonical client fixtures, fewer than <floor> (CLIENT_FLOOR)`; `rule CL-nn is not covered by any client or function fixture` |
 | 11. Stored runs used | `evidence/traces/client/android/<scenario>/<mode>: stored client runs are not used by any client fixture`; `<id>: the stored runs of <scenario> <mode> are already the trace of <id>` |
 | 12. Function evidence | `functions/<profile>.json: <case>: no evidence line`; `functions/legacy-android.json: <case>: the Android model gives …, the evidence …`; `functions/cases.json: <parse error>`; `evidence/traces/client/<path>: <parse error>` (a missing evidence file is skipped) |
-| Other | `<id>/<file>: unknown file` (a client fixture directory has only `case.json` and `expected.json`); `<client page>: no rule CL-nn found` (when client or function fixtures exist) |
+| Other | `<id>/<file>: unknown file` (a canonical client fixture directory has only `case.json`, `expected.json` and `exchanges.json`; a `--ANDROID` directory only `case.json` and `expected.json`); `<client page>: no rule CL-nn found` (when client or function fixtures exist) |
 
 `CLIENT_FLOOR` in `gen.mjs` (as `CATALOG_SIZE`) is the number of canonical client fixtures that `fixtures/legacy` must keep. It is 104: the 82 canonical client fixtures of T-06, the four of CS-28 and CS-29 (T-04c) and the 18 of T-09 (the rules of DL-123 to DL-131: `REDIRECT`, `REDIRECT-CACHED`, `ERROR-FORBIDDEN`, `NOT-HTML`, `NO-STORE-304`, `CREDENTIALED`, `CREDENTIALED-ALLOWED`, `ACTION-FIELDS`, `DIFF-AGE-RELOAD`, each `-Q` and `-S`). The lane that adds canonical client fixtures raises it; a test checks that it equals the number of canonical client fixture directories in `fixtures/legacy`. Above `0`, for `fixtures/legacy` only: fewer canonical client fixtures than the floor is a problem, and check 10 (coverage) and check 11 (stored runs used) give problems. At `0` they give one note each, also when client fixtures exist. So removing client fixtures cannot switch the checks off. The rule names of check 10 and the second line of check 11 (one stored mode, one fixture) always apply. A scenario with `webview: true` in `tools/upstream-lab/client/scenarios.json` (CS-19) is a note with its reason. When `fixtures/legacy/functions/` exists, the generator writes `cases.json` (a byte copy of `tools/upstream-lab/client/functions.json`) and the three profile files; the canonical entries cover CL-14, CL-15, CL-16, CL-23, CL-24, CL-28, CL-41, CL-42 and CL-43. A `trace` entry is the evidence line with the members of the README table; where the Android session model uses a function (session id, split, diff, etag), the model must also equal every evidence line of that function.
 
@@ -201,12 +202,12 @@ A new lab run needs no change in the generator: a new scenario mode in `evidence
 
 1. Write `case.json` by hand from `fixtures/legacy/README.md`.
 2. Run `node tools/legacy-fixtures/gen.mjs`.
-3. Read the new `expected.json` against the CL rules.
+3. Read the new `expected.json` against the CL rules. `exchanges.json` comes from the same run; `test/client-exchanges.test.mjs` checks that the two agree.
 4. If check 9 reports `OVERRIDE_MISSING`, write the `--ANDROID` fixture.
 5. Run `node tools/legacy-fixtures/gen.mjs --check`.
 
 ## Rules for this directory
 
-1. `case.json` is written by a person (`scaffold.mjs` only starts the files). `expected.json` is generated; never edit it by hand.
+1. `case.json` is written by a person (`scaffold.mjs` only starts the files). `expected.json` and `exchanges.json` are generated; never edit them by hand.
 2. Never change a fixture to make the model pass. Fix the model or ask the protocol owner.
 3. No upstream code, comments or sample HTML. The pages are Rivqen test pages.

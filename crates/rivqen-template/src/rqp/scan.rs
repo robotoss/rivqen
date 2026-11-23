@@ -149,6 +149,20 @@ pub use crate::rqp::tokenizer::Span;
 #[must_use]
 pub fn scan<'a>(input: &'a [u8], limits: &TemplateLimits) -> Scanner<'a> {
     let max_input = limits.max_document_bytes().min(MAX_MARKUP_INPUT_BYTES);
+    scan_bounded(input, limits, max_input)
+}
+
+/// [`scan`] with an input limit that the caller gives (H-158: the scan of a
+/// full document F reads up to M-01 plus the largest manifest element). An
+/// input over `max_input` gives one error item and no token.
+// The locator of the full document uses it (WP-08 S1, T-07).
+#[allow(dead_code)]
+#[must_use]
+pub(crate) fn scan_bounded<'a>(
+    input: &'a [u8],
+    limits: &TemplateLimits,
+    max_input: usize,
+) -> Scanner<'a> {
     let stop = (input.len() > max_input).then(|| MarkupError::new(MarkupCode::Limit, "M-01"));
     Scanner {
         input,

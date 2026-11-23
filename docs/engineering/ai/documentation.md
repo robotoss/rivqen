@@ -75,7 +75,7 @@ Do not run the full check before G3: WP-07 and WP-08 change the cache, data mode
 
 ### 4.3 A check that repeats becomes a test
 
-When the same comparison is needed more than one time, write a test that reads the page. Example: the row of `RQP_MARKUP_LIMIT` was missing in [errors](/engineering/core/errors) for two WPs, because the test `model_error_catalog_matches_errors_md` compares the code with a table in the test file, not with the page. Follow-up: [WP-08](/engineering/plan/work-packages#wp-08).
+When the same comparison is needed more than one time, write a test that reads the page. Example: the row of `RQP_MARKUP_LIMIT` was missing in [errors](/engineering/core/errors) for two WPs, because the test `model_error_catalog_matches_errors_md` compared the code with a table in the test file, not with the page. Since WP-08 S1 the test reads the code table of errors §2 and the hint table of §4 (`crates/rivqen-model/tests/model_error.rs`).
 
 ## Related
 

@@ -600,7 +600,7 @@ fn compute_next_revision_client_fixtures() {
         checked += 1;
     }
     // 26 patched, 34 PATCH_CONTENT_REJECTED and 13 INTEGRITY_ERROR binding
-    // comparisons and 4 operation failures. S1 ran 76 of these 77: the
-    // host-case fixture needs U from common::canonical_url.
+    // comparisons and 4 operation failures. The host-case fixture gets U
+    // from the URL parser of the product (common::canonical_url).
     assert_eq!(checked, 77);
 }

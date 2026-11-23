@@ -13,10 +13,12 @@
 //! - the canonical URL of the cache key (cache identity section 2, steps 1
 //!   to 6).
 //!
-//! A host that is not ASCII, a URL with user information (H-68), another
+//! A host that is not ASCII, a host with a punycode label (a label that
+//! starts with `xn--`, ASCII case-insensitive, also after the
+//! percent-decoding; DL-225), a URL with user information (H-68), another
 //! scheme and a text over [`MAX_URL_BYTES`] are errors: the caller opens no
 //! session and the web view loads normally; the session gives the catalog code
-//! (S2). No function panics. `Debug` and
+//! (S2). No function panics, also with debug assertions. `Debug` and
 //! the error texts never hold URL bytes.
 //!
 //! The public items are the contract of the lanes T-04 and T-06: T-04 writes
@@ -49,7 +51,10 @@ pub enum UrlError {
     Scheme,
     /// The URL has a user name or a password (H-68).
     UserInfo,
-    /// The host is absent, or it is not ASCII (H-156).
+    /// The host is absent, it is not ASCII (H-156), or it has a punycode
+    /// label: a label that starts with `xn--`, ASCII case-insensitive, also
+    /// in a percent-encoded form (DL-225). Without Unicode data the parser
+    /// cannot check such a label, so it rejects all of them.
     Host,
 }
 
@@ -60,7 +65,7 @@ impl fmt::Display for UrlError {
             Self::Syntax => "the text is not an absolute URL",
             Self::Scheme => "the scheme is not http or https",
             Self::UserInfo => "the URL has user information",
-            Self::Host => "the host is absent or not ASCII",
+            Self::Host => "the host is absent, not ASCII or punycode",
         })
     }
 }
@@ -147,13 +152,14 @@ impl ParsedUrl {
 /// # Errors
 ///
 /// A [`UrlError`] for every text that is not an absolute `http` or `https`
-/// URL with an ASCII host and without user information.
+/// URL with an ASCII host without a punycode label and without user
+/// information.
 pub fn parse(input: &str) -> Result<ParsedUrl, UrlError> {
     if input.len() > MAX_URL_BYTES {
         return Err(UrlError::TooLong);
     }
-    // No host byte over 0x7F and no user information reach the parser (see
-    // the module `scan`).
+    // No host byte over 0x7F, no host label `xn--` and no user information
+    // reach the parser (see the module `scan`).
     let scheme = scan::check(input)?;
     let mut url = url::Url::parse(input).map_err(|error| match error {
         url::ParseError::EmptyHost => UrlError::Host,
@@ -172,7 +178,7 @@ pub fn parse(input: &str) -> Result<ParsedUrl, UrlError> {
     if !url.username().is_empty() || url.password().is_some() {
         return Err(UrlError::UserInfo);
     }
-    if url.host_str().is_none_or(str::is_empty) {
+    if !host_is_accepted(&url) {
         return Err(UrlError::Host);
     }
 
@@ -206,4 +212,44 @@ pub fn parse(input: &str) -> Result<ParsedUrl, UrlError> {
         path_start,
         path_end,
     })
+}
+
+/// The host check after the parse: a host is present, and no label of it
+/// starts with `xn--` (DL-225; the scan already rejects such a host, so this
+/// is defense in depth).
+fn host_is_accepted(url: &url::Url) -> bool {
+    url.host_str()
+        .is_some_and(|host| !host.is_empty() && !scan::has_punycode_label(host.as_bytes()))
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::host_is_accepted;
+
+    #[test]
+    fn host_check_after_parse() {
+        // `url` alone accepts these hosts; the check after the parse rejects
+        // them. (A valid punycode label does not reach a debug assertion.)
+        for text in [
+            "https://xn--bcher-kva.example/",
+            "https://a.XN--BCHER-KVA.example/",
+            "https://a.xn--bcher-kva/",
+        ] {
+            let url = url::Url::parse(text).unwrap();
+            assert!(!host_is_accepted(&url), "{text}");
+        }
+        for text in [
+            "https://a.example/",
+            "https://ab--c.example/",
+            "https://[::1]/",
+            "https://127.1/",
+        ] {
+            let url = url::Url::parse(text).unwrap();
+            assert!(host_is_accepted(&url), "{text}");
+        }
+        // No host (a URL that `parse` never gives to this check).
+        assert!(!host_is_accepted(&url::Url::parse("data:x").unwrap()));
+        assert!(!host_is_accepted(&url::Url::parse("foo://").unwrap()));
+    }
 }

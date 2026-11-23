@@ -15,7 +15,7 @@ The cache lets Rivqen show a page at once and send only what changed. This secti
 | Freshness | Validators (`etag`, `template-tag`) and legacy `cache-offline` | RFC 9111 rules + legacy `cache-offline` in legacy mode only |
 | Writes | File writes | Atomic transaction: temp file → fsync → rename + metadata transaction |
 | Accounts | Optional account prefix in clear text (`IS_ACCOUNT_RELATED`, default on); no `no-store` check by default | Mandatory keyed-hash partition; `no-store` always wins; authenticated caching off by default |
-| Private data | Plain files | Encryption for authenticated entries (ADR-011) |
+| Private data | Plain files | Encryption of every entry (ADR-011, H-151) |
 
 ## 2. Layers
 
@@ -41,7 +41,7 @@ flowchart TD
 |---|---|---|---|
 | **L0** active session | Snapshot currently on screen | Bounded by session | Freed when the session ends |
 | **L1** memory (Rust) | Hot templates, data, metadata | 8–32 MiB per app | Shrinks on memory pressure |
-| **L2** private disk | Atomic HTML/template/data/manifest | 64–256 MiB per app | Encrypted for authenticated entries |
+| **L2** private disk | Atomic HTML/template/data/manifest | 64–256 MiB per app | Every entry encrypted (ADR-011, H-151) |
 | WebView HTTP cache | Subresources (CSS, JS, images) | Managed by the WebView | Rivqen does not duplicate it without benefit |
 | Offline package | Versioned set of trusted resources | Per manifest | Only from trusted origins with integrity |
 

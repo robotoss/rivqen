@@ -2,7 +2,7 @@
 
 Rivqen runs inside other companies' apps and handles their users' pages. Security is a product requirement, not a later phase. This section gives the threat model, the controls, and the evidence that proves each control.
 
-**Status:** <Badge type="info" text="DESIGN" /> All controls are **requirements**. None is implemented yet.
+**Status:** <Badge type="info" text="DESIGN" /> All controls are **requirements**. <Badge type="tip" text="FACT" /> WP-07 implements the cache parts of SEC-19 on the host (encryption at rest of every entry, a key for each partition, logout by key deletion; [ADR-011](/engineering/architecture/adr/ADR-011-cache-encryption)); the key wrap on the platforms is WP-10 and WP-11. The other controls are not implemented yet.
 
 ## Principles
 

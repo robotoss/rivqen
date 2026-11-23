@@ -228,3 +228,76 @@ fn rqp_full_size_one_mib_limit() {
     // A plain page over the lowered limit is rejected.
     assert_m01(read(&page(m + 1), &limits));
 }
+
+/// Many copies of the type text in a comment, then padding up to `len`.
+fn with_type_text(len: usize, copies: usize) -> Vec<u8> {
+    let mut out = page(M01 - 1000);
+    out.extend_from_slice(b"<!--");
+    for _ in 0..copies {
+        out.extend_from_slice(b" application/rivqen-manifest+json");
+    }
+    out.extend_from_slice(b" -->");
+    assert!(out.len() <= len);
+    out.resize(len, b' ');
+    out
+}
+
+#[test]
+fn rqp_full_size_over_f_limit_with_many_type_texts() {
+    let limits = TemplateLimits::default();
+    let huge = with_type_text(limits.max_full_bytes() + 1, 1000);
+    assert_m01(read(&huge, &limits));
+    assert!(matches!(
+        locate_manifest(&huge, &limits),
+        Err(LocateError::Markup(m)) if m.rule() == "M-01"
+    ));
+}
+
+#[test]
+fn rqp_full_size_over_f_limit_without_type_text() {
+    let limits = TemplateLimits::default();
+    let mut huge = page(M01);
+    huge.resize(limits.max_full_bytes() + 1, b' ');
+    assert_m01(read(&huge, &limits));
+}
+
+mod around_limits {
+    use super::*;
+    use proptest::prelude::*;
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(24))]
+
+        /// The error class of an input depends only on its length relative
+        /// to O and F, and on the type text between the two.
+        #[test]
+        fn rqp_full_size_class_by_length(
+            around_f in any::<bool>(),
+            delta in -3_isize..=3,
+            typed in any::<bool>(),
+            copies in 1_usize..20,
+        ) {
+            let limits = TemplateLimits::default();
+            let base = if around_f { limits.max_full_bytes() } else { limits.max_original_bytes() };
+            let len = base.checked_add_signed(delta).unwrap();
+            let input = if typed {
+                with_type_text(len, copies)
+            } else {
+                let mut v = page(M01);
+                v.resize(len, b' ');
+                v
+            };
+            let result = locate_manifest(&input, &limits);
+            let over_f = len > limits.max_full_bytes();
+            let over_o = len > limits.max_original_bytes();
+            if over_f || (over_o && !typed) {
+                prop_assert!(matches!(
+                    result,
+                    Err(LocateError::Markup(m)) if m.rule() == "M-01"
+                ));
+            } else {
+                prop_assert!(matches!(result, Err(LocateError::NoManifest)));
+            }
+        }
+    }
+}

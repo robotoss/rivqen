@@ -838,6 +838,20 @@ Catalog rows ([fixtures](/engineering/protocol/fixtures) §3): `FX-LEG-INTERRUPT
 - **Partition members.** The partition is the account and also `tenant_id`, `auth_scope` and `environment_id` (identity §1, policy §4); a change of any of them is a partition change (CL-06).
 - **Not changed (recorded):** a `Set-Cookie` of a response that arrives after `destroy` is dropped (CL-11 item 4, CL-34): the web view's own requests get the server cookies again. After CL-06 the old page stays on screen until the app navigates (the app owns the account switch, INV-15 is an app duty).
 
+### 9.13 Rust core: the legacy wire codec
+
+The crate `rivqen-proto-legacy` (WP-08 S1 T-01) gives the wire parts of the rules. The session (S2) calls them. The tests are in `crates/rivqen-proto-legacy/tests/`.
+
+- CL-09: <Badge type="tip" text="FACT" /> `request::request_fields` gives `accept-diff`, then `if-none-match` and `template-tag` of a visible entry (`EntryValidators`, two `Sha1Hex` values, so never empty), then `cookie` when it is not empty. No `sonic-sdk-version`. A cookie with a control character is `RequestError::CookieValue` (tests `legacy_request_*`).
+- CL-14: <Badge type="tip" text="FACT" /> `response::is_legacy_response` and `response::LegacyHead::read` (the four values); `response::etag_field_name` and `response::etag_value` read `sonic-etag-key`. The 15 canonical function fixtures `is_legacy_response` pass (`legacy_fn_is_legacy_response`; more cases in `legacy_head_*`).
+- CL-15: <Badge type="tip" text="FACT" /> `response::bare_etag` and `response::is_template_change`: the 37 `etag` and 25 `template_change` function fixtures pass (`legacy_fn_etag`, `legacy_fn_template_change`). `cache-offline` and `no-store` are read with `rivqen-cache` (`parse_cache_offline`, `parse_cache_control`), not in this crate.
+- CL-16: <Badge type="tip" text="FACT" /> `response::charset` and `response::is_utf8_text`: the 25 `charset` function fixtures pass (`legacy_fn_charset`).
+- CL-17 (merge by name): <Badge type="tip" text="FACT" /> `fields::merge_page_fields` (tests `legacy_merge_fields_*`). The cache rules of CL-17 are session rules.
+- CL-21: <Badge type="tip" text="FACT" /> `fields::page_fields` and the list `fields::NOT_PAGE_FIELDS`; names in lowercase, a stable order by name (tests `legacy_page_fields_*`).
+- CL-24: <Badge type="tip" text="FACT" /> `message::message` with `message::MessageInput` and `message::ResultCode`: the 25 `message` function fixtures pass, the two `null` cases included (`legacy_fn_message`, `legacy_message_*`).
+- CL-29 (body form): <Badge type="tip" text="FACT" /> `body::read_data_body` with `body::BodyLimits` reads the body with the strict JSON reader of `rivqen-proto`: `data` (string values in text order) and `html-sha1` are required, `template-tag` and `diff` are strings when present. A duplicate member, a value that is not a string, a text that is not UTF-8, a depth or a size over the limit is a `body::BodyError` without body bytes (tests `legacy_body_*`). The rebuild and the SHA-1 checks are `rivqen-diff` (T-02).
+- Properties and fuzz: <Badge type="tip" text="FACT" /> `legacy_prop_*` (no panic for any field list or body; a head that passes CL-14 has the four fields with one value each; the body and the message keep the content and the order). The fuzz target `legacy_response` checks the same invariants.
+
 ## Related
 
 - [Legacy protocol wire contract](/engineering/protocol/legacy-wire)

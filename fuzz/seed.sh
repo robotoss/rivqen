@@ -70,7 +70,7 @@ done
 
 # Template engine targets: HTML pages of the legacy and malformed fixtures,
 # the RQP markup inputs and the protocol pages (any file may be a seed).
-for t in split_v1 render_v1 split_rqp; do
+for t in split_v1 render_v1 diff_v1 split_rqp; do
     for d in "$root"/fixtures/legacy/pages "$root"/fixtures/malformed/legacy/pages \
         "$root"/fixtures/malformed/seeds/pages; do
         for f in "$d"/*; do

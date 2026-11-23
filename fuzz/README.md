@@ -20,6 +20,7 @@ Fuzz targets for the parsers of `rivqen-proto`, the template engine `rivqen-temp
 | `envelope` | `envelope::parse_envelope`, limit 65 536, manifest limits `None`, empty and 1 024 | `TooLarge` if and only if the body is over `envelope_limit` |
 | `split_v1` | `legacy::split_v1` with default limits, then `render_v1` on an applied split | `{title}` is the first entry; the rebuild equals the input when each key stands once in the template (P-TPL-1, DL-166, DL-167); outside that domain the rebuild may differ or give `Mismatch`; the page is at most `max_document_bytes` |
 | `render_v1` | `legacy::render_v1` on a template and data built from the bytes (split at U+0001 and U+0002), default and small limits | An `Ok` page is at most `max_document_bytes` |
+| `diff_v1` | `legacy::diff_v1` and `legacy::Rebuilt::new` on a template and two data lists built from the bytes (split at U+0003, then U+0001 and U+0002); the first byte selects default or small limits | The diff contains exactly the server entries that changed, in server order. Applied to the stored data, it gives every server value. A repeated key is the typed error. `Rebuilt` gives the rebuild of the template and the server data only with its own hash, and never a page other than the split input (P-DIFF-5) |
 | `split_rqp` | `rqp::split_rqp` with default limits | On `Ok`: blocks in order, not overlapping, in bounds, at most 256; the template and the contents give the input back |
 | `patch_content` | The input is the new content of the `price` block of `fixtures/rqp/protocol/pages/page-a.html` (embedded); `render_rqp`, `split_rqp`, then `check_patch_content` on the patched block | The rule gives the same result on a second call; an accepted content has no start tag with a `PATCH_FORBIDDEN` name in HTML context (by the scan) and no attribute name that starts with `on` |
 | `cache_control` | `header::parse_cache_control`, `parse_age` and `parse_vary` on two field lines (the first LF of the input splits them), and `parse_cache_offline` on the whole input | Each number is at most 2^31; the order of the lines does not matter; two lines without `"` equal one line joined with a comma; a further `no-store` line sets only `no_store`, a further `max-age=x` line sets only `invalid_freshness` and removes `max_age`; the serialized result parses to the same result; `Age` and `Vary` give the same result for the lines and the joined line; `Vary` names are sorted, unique, lower-case tokens, and a `*` member gives `Any`; `cache-offline` ignores ASCII case and is `False` for any other value |
@@ -51,7 +52,7 @@ Run the seed corpus once:
 
 ```sh
 cd fuzz
-for t in sf_fields json_reader manifest envelope split_v1 render_v1 split_rqp patch_content cache_control http_date store_file_decode store_row_decode; do cargo fuzz run $t -- -runs=0; done
+for t in sf_fields json_reader manifest envelope split_v1 render_v1 diff_v1 split_rqp patch_content cache_control http_date store_file_decode store_row_decode; do cargo fuzz run $t -- -runs=0; done
 ```
 
 Fuzz one target for 60 seconds. Run one target at a time:

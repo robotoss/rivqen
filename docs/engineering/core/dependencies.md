@@ -2,7 +2,7 @@
 
 This page lists candidate dependencies for the Rust core with their license and role. A dependency is approved only when a WP adds it with a benchmark or a clear need. Fewer dependencies is better.
 
-<Badge type="tip" text="FACT" /> **Approved for the core (human, H-138, 2026-11-09, [WP-05 S1](/engineering/plan/sprints/WP-05-S1)):** runtime `sha2` =0.11.1 (=0.11.0 until the human decision H-149 of 2026-11-15, DL-193) and `base64` =0.23.1; tests and `rivqen-testkit` only: `serde_json` =1.0.151 and `proptest` =1.11.0; fuzz only (own workspace, nightly): `libfuzzer-sys` through `cargo-fuzz` 0.13.2. The same pins as the reference server (H-113). Not in WP-05: `serde`, `thiserror`, `sfv` (no `forbid(unsafe_code)`, no length limit, MSRV 1.95; DL-144) and `tracing` (with the log sink of WP-08/WP-09). **Added for WP-06 (human, H-143, 2026-11-12, [WP-06 S1](/engineering/plan/sprints/WP-06-S1)):** runtime `sha1` =0.11.0, `default-features = false`, in `rivqen-integrity` only, optional under the feature `legacy` (DL-164); it shares `digest`, `cpufeatures` and `cfg-if` with `sha2`. Not needed (measured, DL-162): `memchr`, `regex`. All other rows below are candidates.
+<Badge type="tip" text="FACT" /> **Approved for the core (human, H-138, 2026-11-09, [WP-05 S1](/engineering/plan/sprints/WP-05-S1)):** runtime `sha2` =0.11.1 (=0.11.0 until the human decision H-149 of 2026-11-15, DL-193) and `base64` =0.23.1; tests and `rivqen-testkit` only: `serde_json` =1.0.151 and `proptest` =1.11.0; fuzz only (own workspace, nightly): `libfuzzer-sys` through `cargo-fuzz` 0.13.2. The same pins as the reference server (H-113). Not in WP-05: `serde`, `thiserror`, `sfv` (no `forbid(unsafe_code)`, no length limit, MSRV 1.95; DL-144) and `tracing` (with the log sink of WP-08/WP-09). **Added for WP-06 (human, H-143, 2026-11-12, [WP-06 S1](/engineering/plan/sprints/WP-06-S1)):** runtime `sha1` =0.11.0, `default-features = false`, in `rivqen-integrity` only, optional under the feature `legacy` (DL-164); it shares `digest`, `cpufeatures` and `cfg-if` with `sha2`. Not needed (measured, DL-162): `memchr`, `regex`. **Decided for WP-07 (human, H-146 and H-147, 2026-11-15, [WP-07 S1](/engineering/plan/sprints/WP-07-S1)):** `rusqlite` =0.42.0 with `default-features = false` and the feature `bundled`, in the storage driver crate `rivqen-store` only (DL-180); `chacha20poly1305` =0.11.0, `hmac` =0.13.0 and `zeroize` =1.9.1 for the cache encryption. `rusqlite`, `chacha20poly1305` (with its feature `zeroize`, DL-210) and `zeroize` are in `Cargo.toml` since WP-07 S2, for `rivqen-store` only; `hmac` comes with the code that uses it (WP-08, DL-206). Measured: `cargo deny check` passes for both sets; bundled SQLite adds 1.2 MB for each Android ABI, the encryption set 7 to 17 KB. All other rows below are candidates.
 
 **Status:** <Badge type="tip" text="FACT" /> versions and licenses from crates.io on 9 October 2026; the rows `sha2`, `tokio` and `uniffi` were checked again on 15 November 2026 (DL-193, DL-195). <Badge type="info" text="DESIGN" /> recommendations.
 
@@ -19,11 +19,13 @@ This page lists candidate dependencies for the Rust core with their license and 
 | `sha2` | 0.11.1 | MIT OR Apache-2.0 | SHA-256 | Use (MSRV 1.88) |
 | `sha1` (RustCrypto) | 0.11.0 | MIT OR Apache-2.0 | SHA-1 for legacy compatibility only | Use |
 | `bytes` | 1.12.1 | MIT | Ref-counted buffers | Use if FFI design benefits |
-| `rusqlite` (+ bundled SQLite) | 0.40.2 | MIT (SQLite: public domain) | Cache metadata | Use (ADR-004) |
+| `rusqlite` (+ bundled SQLite) | 0.42.0 (2026-11-11) | MIT (SQLite: public domain) | Cache metadata | Use (H-146, ADR-004). Not 0.40.2: its `libsqlite3-sys` 0.38.2 has RUSTSEC-2026-0459. 0.43.0 is of 2026-11-15 with the same `libsqlite3-sys` 0.40.0 (SQLite 3.54.1) |
 | `tracing` | 0.1.44 | MIT | Instrumentation | Use, behind a feature |
 | `zeroize` | 1.9.1 | Apache-2.0 OR MIT | Key buffers | Use |
-| `aes-gcm` / `chacha20poly1305` | 0.11.x | Apache-2.0 OR MIT | AEAD | Candidates for ADR-011 |
-| `ring` | 0.17.14 | Apache-2.0 AND ISC | Crypto | Candidate for ADR-011 |
+| `chacha20poly1305` | 0.11.0 | Apache-2.0 OR MIT | AEAD (XChaCha20-Poly1305) | Use (H-147, ADR-011) |
+| `hmac` | 0.13.0 | MIT OR Apache-2.0 | Keyed digests (HMAC-SHA256) | Approved (H-147); not a dependency yet: the session and the adapters add it (WP-08, DL-206) |
+| `aes-gcm` | 0.11.1 | Apache-2.0 OR MIT | AEAD | Not chosen (H-147) |
+| `ring` | 0.17.14 | Apache-2.0 AND ISC | Crypto | Not chosen for ADR-011 (C and assembly; H-147 chose `chacha20poly1305`) |
 | `aws-lc-rs` | 1.18.1 | ISC AND (Apache-2.0 OR ISC) | Crypto (FIPS option) | Candidate; larger build |
 | `sfv` | 0.16.0 | MIT / Apache-2.0 | Structured Field Values (RQP headers) | Candidate for WP-17 |
 | `moka` | 0.12.16 | (MIT OR Apache-2.0) AND Apache-2.0 | Concurrent memory cache | Compare with simple LRU |

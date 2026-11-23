@@ -98,11 +98,14 @@ pub enum ErrorCode {
     /// `CONFIG_INVALID`: the host app gave a configuration outside the safe
     /// ranges (resource-limits section 1.1, DL-158).
     ConfigInvalid,
+    /// `STORAGE_UNAVAILABLE`: the storage driver could not read or write
+    /// (disk full, I/O error, key of the partition not available; H-148).
+    StorageUnavailable,
 }
 
 impl ErrorCode {
     /// Every code, in catalog order.
-    pub const ALL: [ErrorCode; 19] = [
+    pub const ALL: [ErrorCode; 20] = [
         Self::ProtocolUnsupported,
         Self::ManifestInvalid,
         Self::PatchInvalid,
@@ -122,6 +125,7 @@ impl ErrorCode {
         Self::TimeoutTotal,
         Self::InternalError,
         Self::ConfigInvalid,
+        Self::StorageUnavailable,
     ];
 
     /// The stable code text, for example `"MANIFEST_INVALID"`.
@@ -147,6 +151,7 @@ impl ErrorCode {
             Self::TimeoutTotal => "TIMEOUT_TOTAL",
             Self::InternalError => "INTERNAL_ERROR",
             Self::ConfigInvalid => "CONFIG_INVALID",
+            Self::StorageUnavailable => "STORAGE_UNAVAILABLE",
         }
     }
 
@@ -172,6 +177,7 @@ impl ErrorCode {
             }
             Self::TimeoutFirstByte | Self::TimeoutTotal => Category::Timeout,
             Self::InternalError | Self::ConfigInvalid => Category::Internal,
+            Self::StorageUnavailable => Category::PlatformConstraint,
         }
     }
 
@@ -197,7 +203,8 @@ impl ErrorCode {
             | Self::TimeoutFirstByte
             | Self::TimeoutTotal
             | Self::InternalError
-            | Self::ConfigInvalid => FallbackHint::NormalLoad,
+            | Self::ConfigInvalid
+            | Self::StorageUnavailable => FallbackHint::NormalLoad,
         }
     }
 }

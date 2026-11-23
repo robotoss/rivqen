@@ -71,7 +71,7 @@ fn model_error_error_is_send_sync() {
 type Row = (ErrorCode, &'static str, Category, FallbackHint);
 
 /// errors.md section 2: code text, category, fallback hint.
-const CATALOG: [Row; 19] = [
+const CATALOG: [Row; 20] = [
     (
         ErrorCode::ProtocolUnsupported,
         "PROTOCOL_UNSUPPORTED",
@@ -184,6 +184,12 @@ const CATALOG: [Row; 19] = [
         ErrorCode::ConfigInvalid,
         "CONFIG_INVALID",
         Category::Internal,
+        FallbackHint::NormalLoad,
+    ),
+    (
+        ErrorCode::StorageUnavailable,
+        "STORAGE_UNAVAILABLE",
+        Category::PlatformConstraint,
         FallbackHint::NormalLoad,
     ),
 ];

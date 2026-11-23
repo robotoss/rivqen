@@ -157,6 +157,36 @@ impl fmt::Debug for PartitionId {
     }
 }
 
+/// The key of one cache entry: SHA-256 over the parts of cache identity
+/// section 1, each with a length prefix (DL-184). `rivqen-cache` computes it.
+///
+/// [`fmt::Debug`] writes the first 8 hex characters (4 bytes) only: the key
+/// hashes the URL with its query.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct CacheKey([u8; 32]);
+
+impl CacheKey {
+    /// A cache key from the 32 bytes of the hash.
+    #[must_use]
+    pub const fn from_bytes(bytes: [u8; 32]) -> Self {
+        Self(bytes)
+    }
+
+    /// The 32 bytes of the key.
+    #[must_use]
+    pub const fn as_bytes(&self) -> &[u8; 32] {
+        &self.0
+    }
+}
+
+impl fmt::Debug for CacheKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("CacheKey(")?;
+        write_hex_prefix(f, &self.0, 4)?;
+        f.write_str(")")
+    }
+}
+
 /// Version of a page or template, compared byte for byte.
 ///
 /// DESIGN: the text is 1 to [`Revision::MAX_LEN`] bytes of visible ASCII

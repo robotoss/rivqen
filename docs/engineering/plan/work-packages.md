@@ -16,8 +16,8 @@ This is the development plan of Rivqen, split into **work packages (WP)**. A wor
 | [WP-03](#wp-03) | Rust reference server (oracle) | P1 | Backend engineer | WP-02 | M | **Done (merged 2026-11-04, #6)** ([S1](/engineering/plan/sprints/WP-03-S1), [S2](/engineering/plan/sprints/WP-03-S2) closed; gate G1 passed) |
 | [WP-04](#wp-04) | Platform feasibility spikes | P2 | Android + iOS engineers | WP-01 | L | **Done (merged 2026-11-09, #9)** — [S1](/engineering/plan/sprints/WP-04-S1), [S2](/engineering/plan/sprints/WP-04-S2), [S3](/engineering/plan/sprints/WP-04-S3) closed (2026-11-09); gate **G2** passed (H-137); ADR-002 and ADR-003 accepted (H-135, H-136) |
 | [WP-05](#wp-05) | Core workspace, data model, errors, testkit | P3 | Rust core engineer | WP-02 | M | **Done (merged 2026-11-12, #10)** — [S1](/engineering/plan/sprints/WP-05-S1), [S2](/engineering/plan/sprints/WP-05-S2) closed (2026-11-11); ADR-001 and ADR-017 accepted (H-139, H-140); error code `CONFIG_INVALID` (H-141) |
-| [WP-06](#wp-06) | Template engine | P3 | Rust core engineer | WP-05 | M | **Complete, MR pending** — [S1](/engineering/plan/sprints/WP-06-S1) closed (2026-11-12), [S2](/engineering/plan/sprints/WP-06-S2) closed (2026-11-14); H-142…H-144 |
-| [WP-07](#wp-07) | Cache engine | P3 | Rust core engineer | WP-05 | L | Planned |
+| [WP-06](#wp-06) | Template engine | P3 | Rust core engineer | WP-05 | M | **Done (merged 2026-11-15, #11)** — [S1](/engineering/plan/sprints/WP-06-S1) closed (2026-11-12), [S2](/engineering/plan/sprints/WP-06-S2) closed (2026-11-14); H-142…H-144 |
+| [WP-07](#wp-07) | Cache engine | P3 | Rust core engineer | WP-05 | L | **Ready for merge** — [S1](/engineering/plan/sprints/WP-07-S1) closed 2026-11-18 (pure logic); [S2](/engineering/plan/sprints/WP-07-S2) closed 2026-11-22 (reference driver, encryption); H-146…H-148, H-150…H-155; ADR-004 and ADR-011 Accepted; `main` with the dependency updates is merged in (H-155) |
 | [WP-08](#wp-08) | Session state machine and diff | P3 | Rust core engineer | WP-06, WP-07 | L | Planned |
 | [WP-09](#wp-09) | Streaming and FFI | P3 | Rust core engineer | WP-04, WP-08 | L | Planned |
 | [WP-10](#wp-10) | Android SDK | P5 | Android engineer | WP-09 | XL | Planned |
@@ -126,7 +126,7 @@ flowchart TD
 | Deliverables | `rivqen-template`, `rivqen-integrity` (SHA-1 for legacy, SHA-256). |
 | Acceptance | All marker fixtures pass; round-trip property holds; fuzz target clean for the agreed time; limits enforced. |
 | Scope note | H-142: also the document part of the 104 RQP client fixtures of the ledger (manifest locator and head walk, `split_rqp` of the full and the patched document, patch content and attribute rule); the end-to-end outcome is WP-08. Canonical legacy profile only (DL-159); `diff_v1` goes to WP-08 (DL-160). "Agreed time" of the fuzz item: 1 h per target, one target at a time (H-144). |
-| Status | **Complete, MR pending.** [S1](/engineering/plan/sprints/WP-06-S1) closed (2026-11-12): canonical legacy split and rebuild with SHA-1, port of the RQP markup analysis, legacy golden tests, three fuzz targets. [S2](/engineering/plan/sprints/WP-06-S2) closed (2026-11-14): manifest locator and full document checks, build and check of the patched document, patch content and attribute rule; the document part of the 104 ledger fixtures passes; four fuzz targets ran 1 h each without a crash (H-144). Acceptance evidence: [S2](/engineering/plan/sprints/WP-06-S2) §4. Open for the human: the size rule of the full document F ([S2](/engineering/plan/sprints/WP-06-S2) §5). |
+| Status | **Done (merged 2026-11-15, #11).** [S1](/engineering/plan/sprints/WP-06-S1) closed (2026-11-12): canonical legacy split and rebuild with SHA-1, port of the RQP markup analysis, legacy golden tests, three fuzz targets. [S2](/engineering/plan/sprints/WP-06-S2) closed (2026-11-14): manifest locator and full document checks, build and check of the patched document, patch content and attribute rule; the document part of the 104 ledger fixtures passes; four fuzz targets ran 1 h each without a crash (H-144). Acceptance evidence: [S2](/engineering/plan/sprints/WP-06-S2) §4. Open for the human: the size rule of the full document F ([S2](/engineering/plan/sprints/WP-06-S2) §5). |
 
 ### WP-07 — Cache engine {#wp-07}
 
@@ -135,6 +135,8 @@ flowchart TD
 | Goal | Partitioned, atomic, quota-bound cache with RFC 9111 and legacy policy. |
 | Deliverables | `rivqen-cache`; storage driver interface; reference file + SQLite driver; ADR-004, ADR-011. |
 | Acceptance | Fault-injection tests (kill at every step) pass; multi-partition tests pass; policy matrix tests pass. |
+| Scope note | The driver is the crate `rivqen-store`, outside the dependency graph of `rivqen-core` (DL-180), with bundled SQLite (H-146). "Kill at every step": a fault model on a fake store, and real stops (in-process and `SIGKILL`) on the driver (DL-181). The policy matrix is a data file with the source of each expected value (DL-182). Encryption on the host with XChaCha20-Poly1305 and a test key provider (H-147); the platform key wrap is WP-10 and WP-11. The session use of the cache, the URL parser and the end-to-end run of the legacy and ledger client fixtures are WP-08 (DL-187). |
+| Status | **Ready for merge (the human opens the MR).** [S1](/engineering/plan/sprints/WP-07-S1) closed 2026-11-18: `rivqen-cache` (key, partition rules, field parsers, freshness and store policy with a policy matrix, transactions, quotas), the driver interface and the fake store with the fault model. [S2](/engineering/plan/sprints/WP-07-S2) closed 2026-11-22: the reference driver `rivqen-store` (sealed entry files, SQLite metadata, recovery, XChaCha20-Poly1305 with a key port), the driver contract suite and the `SIGKILL` table on the driver, the consent rule of H-150. ADR-004 and ADR-011 are Accepted (H-152, H-153). The test API of `rivqen-store` is the feature `test-support` (H-154). `main` with the dependency updates of `chore/deps-2026-11` is merged in, and the full repository run passed on it (H-155). Follow-ups for WP-08, WP-09, WP-10, WP-11, WP-18 and WP-19: [S2 record](/engineering/plan/sprints/WP-07-S2) §5 and DL-214. |
 
 ### WP-08 — Session state machine and diff {#wp-08}
 
@@ -144,6 +146,7 @@ flowchart TD
 | Deliverables | `rivqen-session`, `rivqen-proto-legacy`, `rivqen-diff`. |
 | Acceptance | Every legacy fixture produces `expected.actions.json`; FSM property tests (cancel, stale generation, interleavings) pass. |
 | Inputs from WP-06 | [WP-06 S2](/engineering/plan/sprints/WP-06-S2) §5: `diff_v1` and the function fixtures `diff` and `etag` (DL-160); a `Rebuilt` type for `render_v1` (S1-5, DL-169); the end-to-end outcome of the 104 RQP client fixtures (H-142); the session builds `TemplateLimits` from the checked `EngineConfig` (DL-163); the UTF-8 check of manifest and patch §1.7 item 6 before `read_full_document`, as an exit criterion (S2-3, DL-177); the ledger test helpers move to `rivqen-testkit`; the size rule of F ([Q-25](/engineering/plan/open-questions)); the test `model_error_catalog_matches_errors_md` reads the code table of [errors](/engineering/core/errors) §2 (DL-179). |
+| Inputs from WP-07 | [WP-07 S2](/engineering/plan/sprints/WP-07-S2) §5, DL-214: every session write sets `Preconditions::request` (`Some`), with a test; an early read of the epochs before a `Replace`; batched or limited `touch` calls; a revoke or a clear of all sites that gives `STORAGE_UNAVAILABLE` runs again; the quota plan (`plan_eviction`) with `list`; a credentialed delta result uses `store_decision` with `Protocol::Rqp` (DL-199, DL-207); item-count limits when a real page reaches the 1 MiB row limit (DL-211); the order of the size checks against the epoch checks of a `Replace` (DL-214 a); Q-26 and Q-28 at the kickoff; [WP-07 S1](/engineering/plan/sprints/WP-07-S1) §5 |
 
 ### WP-09 — Streaming and FFI {#wp-09}
 
@@ -152,6 +155,7 @@ flowchart TD
 | Goal | Bounded document streaming and the stable ABI for Kotlin and Swift. |
 | Deliverables | `rivqen-stream`, `rivqen-ffi`; generated bindings; Android `.so` and iOS XCFramework builds in CI. |
 | Acceptance | FFI lifecycle suite passes; Miri passes on handle code; smoke test runs on an Android emulator and an iOS simulator. |
+| Inputs from WP-07 | [WP-07 S2](/engineering/plan/sprints/WP-07-S2) §5, DL-212 (f), H-154: the test API of `rivqen-store` is the feature `test-support` (H-154): an FFI build must not turn it on; the platform form of the key port (`KeyProvider`) |
 
 ### WP-10 — Android SDK {#wp-10}
 
@@ -160,6 +164,7 @@ flowchart TD
 | Goal | Kotlin SDK with WebView integration. |
 | Deliverables | `sdk/android`: engine, session factory, WebView controller, request interceptor, bridge (WebMessageListener), cache directory, metrics; consumer R8 rules. |
 | Acceptance | Requirements `A-01`…`A-10` pass; Android E2E suite passes on the device matrix. |
+| Inputs from WP-07 | [WP-07 S2](/engineering/plan/sprints/WP-07-S2) §5, DL-214 (h): the root directory of the store is used by the store only; the key port wraps the data keys with the Android Keystore and the iOS Keychain (ADR-011 §2; WP-11 the same); a locked key store gives `STORAGE_UNAVAILABLE` |
 
 ### WP-11 — iOS SDK {#wp-11}
 
@@ -168,6 +173,7 @@ flowchart TD
 | Goal | Swift SDK with WKWebView integration using the strategy chosen in ADR-003. |
 | Deliverables | `sdk/ios`: engine actor, session, WebView controller, message handlers, Keychain integration, privacy manifest. |
 | Acceptance | iOS requirements pass; iOS E2E suite passes; limits documented in the support matrix. |
+| Inputs from WP-07 | [WP-07 S2](/engineering/plan/sprints/WP-07-S2) §5, DL-214 (h): the same as WP-10: a root directory that only the store uses; the key port wraps the data keys with the iOS Keychain (`ThisDeviceOnly`, ADR-011 §2); a locked key store gives `STORAGE_UNAVAILABLE`, and a revoke runs again when the key store opens |
 
 ### WP-12 — Web core, React adapter, JS bridge {#wp-12}
 
@@ -211,6 +217,7 @@ flowchart TD
 | Goal | The controls in [Security controls](/engineering/security/controls) are implemented and proven. |
 | Deliverables | Threat model updates per phase; security test suites; crypto ADR; release audit; pentest report. |
 | Acceptance | Gate `SECURITY-001`. |
+| Inputs from WP-07 | [WP-07 S2](/engineering/plan/sprints/WP-07-S2) §5, DL-214 (f, g): ADR-011 against the threat model; `version` and `last_used_at` are not authenticated and an older sealed row of the same entry version opens; the hardening list (memory per read, one-time keys of the cipher crate, `O_NOFOLLOW` for the entry read, files that stay after a failed unlink) |
 
 ### WP-19 — Test infrastructure, benchmarks, observability {#wp-19}
 
@@ -219,6 +226,7 @@ flowchart TD
 | Goal | Reproducible measurement of correctness and performance. |
 | Deliverables | Network lab; device farm setup; benchmark harness; B0/B1 baselines; metric schema. |
 | Acceptance | Benchmark reports with method, raw data and confidence intervals. |
+| Inputs from WP-07 | [WP-07 S2](/engineering/plan/sprints/WP-07-S2) §4: the cost of a commit with `fullfsync` on devices (DL-209: 1.9 ms for the metadata and 10 ms for a `Replace` of 100 KiB on the host); the time of the driver contract tests in CI; a fault layer under the file system, so that tests can make the I/O errors that the mutation run of WP-07 could not reach |
 
 ### WP-20 — CI/CD and supply chain {#wp-20}
 

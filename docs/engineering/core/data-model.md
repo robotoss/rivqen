@@ -28,13 +28,15 @@ This page defines the main data structures of the Rust core. Adapters, fixtures 
 | `SessionId` | `ids` | `from_bytes([u8; 16])` (the core has no random source; the adapter draws the bytes) | `SessionId(` first 8 hex characters `)` |
 | `Generation`, `RequestId` | `ids` | `new(u64)`, `FIRST`, `next() -> Option<Self>` (checked) | number |
 | `PartitionId` | `ids` | `from_bytes([u8; 32])` | `PartitionId(` first 8 hex characters `)` |
+| `CacheKey` | `ids` | `from_bytes([u8; 32])` (`rivqen-cache` computes the hash, DL-184; WP-07) | `CacheKey(` first 8 hex characters `)` |
+| `UnixTime` | `time` | `UnixTime(u64)`: wall-clock seconds, an input of the cache policy (DL-183; WP-07); `since`, `plus` | number |
 | `Revision` | `ids` | `new(&str) -> Result` | text (not secret) |
 | `Secret<T>` | `safe` | `new(T)`, `expose()`, `into_inner()`; no `Display` | `Secret(<redacted>)` |
 | `SafeUrl` | `safe` | `new(Scheme, host, port, path)`, `with_query(Secret<String>)` | `Display` and `Debug`: origin and path only |
 | `PageBytes` | `safe` | `new(Vec<u8>)` | `PageBytes(len=N)` (no hash: the crate has no dependency) |
 | `ResourceLimits` | `limits` | `Default`: the initial values of [resource limits §1](/engineering/core/resource-limits#_1-limits-table). `memoryL1Bytes` and `diskL2Bytes` use the lowest device class (8 MiB, 64 MiB). `Limit`, `LimitRange` and `get(limit)` give the safe ranges of §1.1 (DL-155); the limits fixed by `rqp/1` (`Rq-Have`, `Rq-Capabilities`, `Rq-Nonce`) are constants of `rivqen-proto`, not fields | fields |
 
-DESIGN: a `Revision` is 1 to 128 bytes of visible ASCII (0x21 to 0x7E: no space, no control byte). The RQP forms (`t1.…`, `r1.…`) and the legacy lowercase hex values fit. `SafeUrl` host is `[A-Za-z0-9.-]` (lowercased); the path starts with `/` and has no control byte, space, `?` or `#`; the query is kept as a `Secret`. `NavigationId`, `CacheKey` and `V1SessionKey` are not in S1.
+DESIGN: a `Revision` is 1 to 128 bytes of visible ASCII (0x21 to 0x7E: no space, no control byte). The RQP forms (`t1.…`, `r1.…`) and the legacy lowercase hex values fit. `SafeUrl` host is `[A-Za-z0-9.-]` (lowercased); the path starts with `/` and has no control byte, space, `?` or `#`; the query is kept as a `Secret`. `NavigationId` and `V1SessionKey` are not in the code.
 
 ## 2. Request context
 
@@ -139,6 +141,8 @@ The core is an event-driven state machine. The adapter sends **events**. The cor
 | `LoadNormally(url)` | Fall back to a normal WebView load. |
 | `EmitMetric(metric)` | Record this metric locally. |
 | `ScheduleTimer(deadline)` | Send a `Tick` at this time. |
+
+<Badge type="tip" text="FACT" /> WP-07 defines these payloads in `rivqen-core`: `snapshot` is a stored entry, `level` is `Moderate` or `Critical`, `ref` is a key and an entry version, `txn` is a cache transaction, and `key` is a partition and a key hash. Their `Debug` shows no URL, host, field value or page byte. The other payloads are placeholders until WP-08 and WP-09.
 
 ## 6. Serialization
 

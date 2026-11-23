@@ -8,6 +8,8 @@
 //! - [`ledger`]: the owner WP of each fixture (DL-145).
 //! - [`markup`]: the RQP markup fixtures (WP-06).
 //! - [`functions`]: the legacy function fixtures (WP-06).
+//! - [`cache_policy`]: the cache policy matrix (WP-07).
+//! - [`store`]: a fake storage driver with a fault model (WP-07).
 //! - [`clock`]: a fake [`rivqen_model::time::Clock`].
 //! - [`transport`]: a fake transport with scripted responses.
 //!
@@ -17,11 +19,13 @@
 
 use std::path::PathBuf;
 
+pub mod cache_policy;
 pub mod clock;
 pub mod fixtures;
 pub mod functions;
 pub mod ledger;
 pub mod markup;
+pub mod store;
 pub mod transport;
 
 /// The root directory of the repository.

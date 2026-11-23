@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+[package]
+name = "rivqen-store"
+description = "Rivqen reference storage driver: encrypted entry files and SQLite metadata, atomic commit and recovery (adapter code; not a core crate)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+chacha20poly1305.workspace = true
+rivqen-cache.workspace = true
+rivqen-integrity.workspace = true
+rivqen-model.workspace = true
+rivqen-proto.workspace = true
+rusqlite.workspace = true
+zeroize.workspace = true
+
+[features]
+# Test support (H-154): the fault points of `FileStore` (`stop_after`,
+# `fail_at`, `restart`) and the test key provider `HostKeys`. Only the tests of
+# this crate turn it on; a build without it has neither.
+test-support = []
+
+[dev-dependencies]
+proptest.workspace = true
+rivqen-store = { workspace = true, features = ["test-support"] }
+rivqen-testkit.workspace = true
+
+[lints]
+workspace = true

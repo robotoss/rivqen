@@ -16,7 +16,10 @@ cargo-fuzz = true
 # libfuzzer-sys is approved by H-138 (only through cargo-fuzz).
 [dependencies]
 libfuzzer-sys = "0.4"
+rivqen-cache = { path = "../crates/rivqen-cache" }
+rivqen-model = { path = "../crates/rivqen-model" }
 rivqen-proto = { path = "../crates/rivqen-proto" }
+rivqen-store = { path = "../crates/rivqen-store" }
 rivqen-template = { path = "../crates/rivqen-template" }
 
 [workspace]
@@ -73,6 +76,34 @@ bench = false
 [[bin]]
 name = "patch_content"
 path = "fuzz_targets/patch_content.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "cache_control"
+path = "fuzz_targets/cache_control.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "http_date"
+path = "fuzz_targets/http_date.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "store_file_decode"
+path = "fuzz_targets/store_file_decode.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "store_row_decode"
+path = "fuzz_targets/store_row_decode.rs"
 test = false
 doc = false
 bench = false

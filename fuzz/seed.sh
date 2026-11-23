@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: The Rivqen Authors
 #
-# Copies the seed inputs from the fixtures into fuzz/corpus/<target>/.
-# It only reads the fixtures. Run it again at any time.
+# Copies the seed inputs from the fixtures into fuzz/corpus/<target>/, and
+# writes the RFC examples of the cache field targets. It only reads the
+# fixtures. Run it again at any time.
 set -eu
 cd "$(dirname "$0")"
 root=..
@@ -16,9 +17,40 @@ copy() { # target source-file
     cp "$2" "$dest/$name"
 }
 
+put() { # target name text: writes one seed that no fixture has
+    mkdir -p "corpus/$1"
+    printf '%s' "$3" > "corpus/$1/$2"
+}
+
 for f in "$root"/fixtures/malformed/seeds/fields/*.txt; do
     copy sf_fields "$f"
 done
+
+# Cache field parsers (WP-07): the field seeds of the cache fields, and the
+# examples of RFC 9111, RFC 5861 and RFC 9110 section 5.6.7. In the
+# cache_control target the first LF splits two field lines.
+for f in "$root"/fixtures/malformed/seeds/fields/cache-*.txt \
+    "$root"/fixtures/malformed/seeds/fields/vary-*.txt; do
+    copy cache_control "$f"
+done
+put cache_control rfc5861-swr 'max-age=600, stale-while-revalidate=30'
+put cache_control rfc5861-sie 'max-age=600, stale-if-error=1200'
+put cache_control rfc9111-community 'private, community="UCI"'
+put cache_control quoted-no-cache 'no-cache="set-cookie, x-a", max-age="60"'
+put cache_control two-lines 'public, max-age=60
+no-store=1, private="a, no-store"'
+put cache_control dl088-split 'max-age=5; no-store, x"y, must-revalidate"'
+put cache_control space-separated-no-cache 'no-cache no-store'
+put cache_control space-separated-private 'private no-store'
+put cache_control age-list '5, 10'
+put cache_control vary-list 'Accept-Encoding, accept-language, *'
+put http_date imf-fixdate 'Sun, 06 Nov 1994 08:49:37 GMT'
+put http_date rfc850 'Sunday, 06-Nov-94 08:49:37 GMT'
+put http_date asctime 'Sun Nov  6 08:49:37 1994'
+put http_date leap-second 'Sat, 31 Dec 2016 23:59:60 GMT'
+put http_date leap-day 'Thu, 29 Feb 2024 00:00:00 GMT'
+put http_date last 'Fri, 31 Dec 9999 23:59:59 GMT'
+put http_date expires-zero '0'
 for d in "$root"/spec/rqp/examples/valid/manifest "$root"/spec/rqp/examples/invalid/manifest; do
     for f in "$d"/*.json; do
         copy manifest "$f"
@@ -81,3 +113,52 @@ for (const f of fs.readdirSync(pages)) {
   while ((m = re.exec(html)) !== null) put(`block__${f}__${i++}`, m[2]);
 }
 ' "$root" "corpus/patch_content"
+
+# store_file_decode and store_row_decode (WP-07 S2): plain texts of the entry
+# file and of the row of rivqen-store, written from the layouts in
+# crates/rivqen-store/src/crypto/file.rs and row.rs. Lengths and counts are
+# 8 bytes big-endian; an option is 00, or 01 and the value.
+node -e '
+const fs = require("fs"), path = require("path");
+const [fileDir, rowDir] = process.argv.slice(1);
+fs.mkdirSync(fileDir, { recursive: true });
+fs.mkdirSync(rowDir, { recursive: true });
+const u8 = (v) => Buffer.from([v]);
+const u32 = (v) => { const b = Buffer.alloc(4); b.writeUInt32BE(v); return b; };
+const u64 = (v) => { const b = Buffer.alloc(8); b.writeBigUInt64BE(BigInt(v)); return b; };
+const lp = (s) => { const b = Buffer.from(s); return Buffer.concat([u64(b.length), b]); };
+const some = (...parts) => Buffer.concat([u8(1), ...parts]);
+const none = u8(0);
+const cat = (...parts) => Buffer.concat(parts);
+const file = (page, template, blocks) => cat(u8(1), lp(page),
+  template === null ? none : some(lp(template)),
+  u64(blocks.length), ...blocks.map(([k, v]) => cat(lp(k), lp(v))));
+fs.writeFileSync(path.join(fileDir, "legacy"), file("P!", "T", [["k", "vv"], ["{b1}", "<b>x</b>"]]));
+fs.writeFileSync(path.join(fileDir, "rqp"), file("<html><div data-rq-block=\"main\">x</div></html>", null, []));
+fs.writeFileSync(path.join(fileDir, "empty"), file("", null, []));
+fs.writeFileSync(path.join(fileDir, "empty-blocks"), file("", "", [["", ""], ["", ""]]));
+// Six booleans: no_store, no_cache, private, valid_private, public,
+// must_revalidate (valid_private only with private).
+const policy = cat(u8(0), u8(1), u8(1), u8(1), u8(0), u8(0), some(u64(60)), none, some(u64(5)), u8(0),
+  u8(2), u64(1000), some(u64(990)), none, u64(980), u64(985), some(u32(30)), u8(1));
+const zeroPolicy = cat(Buffer.alloc(6), none, none, none, u8(0), u8(0), none, none, u64(0), u64(0), none, u8(0));
+// Row format 2: the host and the store time follow the format byte.
+const row = (protocol, vary, etag, rqp, pol, fields, host = "shop.example.com",
+  storedAt = 1700000000) => cat(u8(2), lp(host), u64(storedAt), u8(protocol),
+  u64(vary.length), ...vary.map(([n, d]) => cat(lp(n), d === null ? none : some(Buffer.alloc(32, d)))),
+  etag === null ? none : some(lp(etag)), none, rqp === null ? none : some(rqp), pol,
+  u64(fields.length), ...fields.map(([n, v]) => cat(lp(n), lp(v))));
+const snapshot = cat(Buffer.alloc(32, 1), Buffer.alloc(32, 2), u64(2),
+  lp("main"), u8(0), Buffer.alloc(32, 3), lp("price-1"), u8(1), Buffer.alloc(32, 4),
+  some(some(u8(1)), some(u32(600)), some(u8(1))), some(some(u32(65536))));
+fs.writeFileSync(path.join(rowDir, "legacy"),
+  row(0, [["accept-language", 7], ["x", null]], "abc", null, policy, [["content-type", "text/html"]]));
+fs.writeFileSync(path.join(rowDir, "rqp-snapshot"), row(1, [], null, snapshot, policy, []));
+fs.writeFileSync(path.join(rowDir, "minimal"), row(1, [], null, null, zeroPolicy, []));
+fs.writeFileSync(path.join(rowDir, "empty-items"),
+  row(0, [["", null]], "", null, zeroPolicy, [["", ""], ["", ""]], "", 0));
+fs.writeFileSync(path.join(rowDir, "host-at-limit"),
+  row(1, [], null, null, zeroPolicy, [], "a".repeat(253), "18446744073709551615"));
+fs.writeFileSync(path.join(rowDir, "ipv6-host"),
+  row(1, [], null, null, zeroPolicy, [], "[2001:db8::1]"));
+' "corpus/store_file_decode" "corpus/store_row_decode"

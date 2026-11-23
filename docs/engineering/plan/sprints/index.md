@@ -27,6 +27,8 @@ Each sprint has one record. The record is the shared memory of the work: the pla
 | [WP-05-S2](/engineering/plan/sprints/WP-05-S2) | WP-05 | Delta checks, fixture checks, core facade, fuzz targets | Closed (merged #10) |
 | [WP-06-S1](/engineering/plan/sprints/WP-06-S1) | WP-06 | Canonical legacy split and SHA-1, port of the RQP markup analysis, golden tests, three fuzz targets | Closed (2026-11-12) |
 | [WP-06-S2](/engineering/plan/sprints/WP-06-S2) | WP-06 | Manifest locator and full document checks, build and check of the patched document, patch content rule, the 104 ledger fixtures, fuzz target `patch_content` | Closed (2026-11-14) |
+| [WP-07-S1](/engineering/plan/sprints/WP-07-S1) | WP-07 | Cache key and partition rules, RFC 9111 and legacy policy with the policy matrix, transactions and quotas on a fake store with fault injection | Closed |
+| [WP-07-S2](/engineering/plan/sprints/WP-07-S2) | WP-07 | The reference driver `rivqen-store`: sealed entry files, SQLite metadata, recovery, kill tests; ADR-004 and ADR-011 | Closed |
 
 ## How to add a record
 

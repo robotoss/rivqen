@@ -17,7 +17,7 @@ Kotlin is used for the Android SDK (`sdk/android`). The SDK is a thin adapter ov
 
 | Tool | Version (2026-10-09) | License | Command |
 |---|---|---|---|
-| Kotlin | 2.4.21 | Apache-2.0 | Gradle Kotlin plugin |
+| Kotlin | 2.4.20 (the labs; 2.4.21 is a routine update, dependency review of 2026-11-15) | Apache-2.0 | Gradle Kotlin plugin |
 | ktlint (via `org.jlleitschuh.gradle.ktlint` 14.2.0) | 1.8.0 | MIT | `./gradlew ktlintCheck` |
 | detekt | 1.23.8 stable; 2.0.0-alpha.6 | Apache-2.0 | `./gradlew detekt` |
 | Android Lint | With AGP | Apache-2.0 | `./gradlew lint` with `warningsAsErrors = true`, `abortOnError = true` |

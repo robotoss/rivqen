@@ -17,3 +17,25 @@ pub trait Clock {
     /// The current time.
     fn now(&self) -> Instant;
 }
+
+/// A wall-clock time in whole seconds since 1970-01-01T00:00:00Z (DL-183).
+///
+/// The adapter gives it with each call that needs freshness. It can go back
+/// (the user changes the clock); the cache then treats an entry as stale.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct UnixTime(pub u64);
+
+impl UnixTime {
+    /// The seconds from `earlier` to `self`, or `None` when `earlier` is
+    /// after `self`.
+    #[must_use]
+    pub const fn since(self, earlier: Self) -> Option<u64> {
+        self.0.checked_sub(earlier.0)
+    }
+
+    /// `self` plus `seconds`; the largest time when the sum does not fit.
+    #[must_use]
+    pub const fn plus(self, seconds: u64) -> Self {
+        Self(self.0.saturating_add(seconds))
+    }
+}

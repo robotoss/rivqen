@@ -8,7 +8,7 @@ Every input to the core is bounded. Limits protect the app from memory exhaustio
 
 | Limit | Initial value | Applies to | On violation |
 |---|---|---|---|
-| `maxDocumentBytes` | 5 MiB (decoded) | Main HTML document; the RQP document after a patch ([manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), step 8) | `DOCUMENT_TOO_LARGE` → fallback; after a patch `PATCH_TOO_LARGE` |
+| `maxDocumentBytes` | 5 MiB (decoded) | Main HTML document (a full RQP document F: up to this limit, at most M-01, plus 65 593 bytes for the manifest element; the original document O keeps the limit, H-158); the RQP document after a patch ([manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), step 8) | `DOCUMENT_TOO_LARGE` → fallback; after a patch `PATCH_TOO_LARGE` |
 | `maxCompressedRatio` | 50 : 1 | gzip / br / zstd decoding | Abort decoding → fallback |
 | `prefixBufferBytes` | 512 KiB | Bridge stream prefix | Backpressure (stop reading) |
 | `maxChunkBytes` | 64 KiB | One stream chunk | Split chunk |

@@ -209,6 +209,8 @@ The template of a split is never longer than the input, so `split_v1` has no out
 | `locate_manifest(full, limits)` | F | `ManifestLocation`: the element range, the range of the manifest text M, and O (F without the element), or `LocateError` |
 | `read_full_document(full, origin, path, limits)` | F, the origin and the path of the final URL | `FullDocument`: O, the markup analysis of O and the checked manifest, or `FullDocumentError` |
 
+<Badge type="tip" text="FACT" /> **Size limits (H-158).** `TemplateLimits::max_original_bytes()` is the smaller of `max_document_bytes` and M-01 (5 MiB). `max_full_bytes()` is that value plus `MAX_MANIFEST_ELEMENT_BYTES` (65 593: 48 + 65 536 + 9). `locate_manifest` scans F with `scan_bounded` and the F limit. Order: a text over the O limit without the manifest media type gives M-01 before the scan; F over the F limit gives M-01 before any token; F without the element over the O limit gives M-01. The byte search only chooses the limit. A start tag longer than the server form with an O at the limit is rejected by size. `split_rqp(O)` keeps M-01. Tests: `rqp_full_size`.
+
 <Badge type="tip" text="FACT" /> `read_full_document` does the checks in this order. The first failed check is the error.
 
 1. `locate_manifest` (§1.7, client items 1, 4, 5 and 3):

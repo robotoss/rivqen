@@ -19,6 +19,8 @@ use rivqen_url::UrlError;
 /// The client fixtures whose URL `rivqen_url::parse` rejects, with the
 /// variant. `FX-RQ-C25-IDN-HOST` has the host `faß.example` (H-156: the
 /// product parser takes the ASCII form that the platform URL object gives).
+/// Its snapshot URL `https://xn--fa-hia.example/catalog` is also rejected
+/// (DL-225).
 /// The USERINFO fixtures carry user information (H-68). All five are
 /// session-outcome fixtures of S3; no check of S1 passes their URL to the
 /// helpers.

@@ -76,8 +76,17 @@ fn canonical_url(url: &str) -> String {
     rqp_client::canonical_url(url).unwrap_or_else(|e| panic!("{url}: {e}"))
 }
 
-/// Origin and path of a final URL (`rivqen_url::parse`).
+/// Origin and path of a final URL (`rivqen_url::parse`). `rivqen_url` rejects
+/// a host with a punycode label (DL-225), so the snapshot URL of
+/// `FX-RQ-C25-IDN-HOST` is split as text: this file tests only the document
+/// part of that fixture. Its session outcome is a subject of S3 (risk R-7).
 fn origin_and_path(url: &str) -> (String, String) {
+    if url == "https://xn--fa-hia.example/catalog" {
+        return (
+            "https://xn--fa-hia.example".to_owned(),
+            "/catalog".to_owned(),
+        );
+    }
     rqp_client::origin_and_path(url).unwrap_or_else(|e| panic!("{url}: {e}"))
 }
 

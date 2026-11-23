@@ -38,16 +38,24 @@ proptest = { version = "=1.11.0", default-features = false, features = ["std"] }
 rusqlite = { version = "=0.42.0", default-features = false, features = ["bundled"] }
 chacha20poly1305 = { version = "=0.11.0", default-features = false, features = ["alloc", "zeroize"] }
 zeroize = { version = "=1.9.1", default-features = false }
+# The URL parser `rivqen-url` only (H-156, DL-218). `idna_adapter` =1.0.0 is the
+# IDNA back end without Unicode data: a host that is not ASCII is rejected.
+url = { version = "=2.5.9", default-features = false, features = ["std"] }
+idna_adapter = "=1.0.0"
 # Workspace crates.
 rivqen-cache = { path = "crates/rivqen-cache", default-features = false }
 rivqen-core = { path = "crates/rivqen-core" }
+rivqen-diff = { path = "crates/rivqen-diff", default-features = false }
 # No default features: a crate that needs SHA-1 enables `legacy` (DL-164).
 rivqen-integrity = { path = "crates/rivqen-integrity", default-features = false }
 rivqen-model = { path = "crates/rivqen-model" }
 rivqen-proto = { path = "crates/rivqen-proto" }
+# Legacy as a whole (DL-222).
+rivqen-proto-legacy = { path = "crates/rivqen-proto-legacy" }
 rivqen-store = { path = "crates/rivqen-store" }
 rivqen-template = { path = "crates/rivqen-template", default-features = false }
 rivqen-testkit = { path = "crates/rivqen-testkit" }
+rivqen-url = { path = "crates/rivqen-url" }
 
 # docs/engineering/standards/rust.md section 3; docs/engineering/architecture/errors-logging.md 2.2.
 [workspace.lints.rust]

@@ -27,6 +27,7 @@ The Rust core is the single implementation of Rivqen's logic for Android and iOS
 | `rivqen-diff` | Data diff, patch validation, base-revision check, atomic apply plan | `template`, `integrity` | Data-diff code in clients |
 | `rivqen-cache` | Cache keys, partitions, policy (RFC 9111 + legacy), snapshots, transactions, quotas | `integrity` | `SonicCacheInterceptor`, `SonicDataHelper` |
 | `rivqen-store` | <Badge type="tip" text="FACT" /> Reference storage driver (WP-07 S2): sealed entry files and SQLite metadata, atomic commit, recovery, encryption at rest with a key port (H-146, H-147, H-151; ADR-004, ADR-011). Not a core crate: it does I/O and is outside the graph of section 3 (DL-180) | `cache`, `model`, `proto`, `integrity` | `SonicFileUtils`, `SonicDataHelper` |
+| `rivqen-url` | <Badge type="tip" text="FACT" /> URL parser (WP-08, H-156, DL-218): the canonical URL of the cache key and the URL U of the delta binding, on the crate `url` with ASCII hosts only. The only crate with that dependency | — | — |
 | `rivqen-stream` | Bounded chunk buffers, backpressure, split of cached prefix + network rest | — | `SonicSessionStream` |
 | `rivqen-integrity` | SHA-1 (legacy compatibility only), SHA-256 (RQP), revision identifiers | — | SHA-1 helpers |
 | `rivqen-model` | Identifiers, secret-safe wrappers, the error catalog, safe error context, resource limits, the clock contract (DL-143) | — | — |

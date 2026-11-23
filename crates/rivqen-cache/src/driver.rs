@@ -12,7 +12,7 @@
 //! [`crate::txn`] (DL-200, DL-205). Three of them come from DL-205:
 //!
 //! - A keyed kind first checks the epoch of the request partition
-//!   ([`crate::txn::Preconditions::request`]); then the epoch of the target
+//!   ([`crate::txn::Preconditions::writer`]); then the epoch of the target
 //!   partition, the site epoch, the host (`Replace` only) and the entry, all
 //!   at the commit point.
 //! - A `Replace` whose host fails [`crate::partition::valid_host`] is

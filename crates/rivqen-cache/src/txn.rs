@@ -17,7 +17,7 @@
 //! - A keyed kind (`Replace`, `UpdateFields`, `Remove`, `DisableKey`) runs
 //!   its checks at the commit point (`CommitStep::CommitMeta`), not before
 //!   the first step, in this order; the first false check gives the result:
-//!   1. the epoch of the request partition ([`Preconditions::request`],
+//!   1. the epoch of the request partition ([`Preconditions::writer`],
 //!      when it is `Some`): [`Refused::PartitionRevoked`]. A session of a
 //!      revoked partition commits nothing, also not into `public` (cache
 //!      identity rule 4, RSK-06);
@@ -192,6 +192,43 @@ pub enum Expect {
     Version(EntryVersion),
 }
 
+/// The writer of a transaction (DL-220). There is no default: each
+/// transaction names its writer, so a session write cannot leave out the
+/// check of its request partition (RSK-06).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Writer {
+    /// A request session. `partition` is the partition of its request and
+    /// `epoch` is the epoch of `Partition::Scoped(partition)` when the
+    /// session started.
+    Request {
+        /// The partition of the request.
+        partition: PartitionId,
+        /// The epoch of that partition at the session start.
+        epoch: Epoch,
+    },
+    /// A change that no request session makes (a revoke, a site clear,
+    /// eviction): no request partition is checked.
+    Maintenance,
+}
+
+impl Writer {
+    /// A request writer.
+    #[must_use]
+    pub const fn request(partition: PartitionId, epoch: Epoch) -> Self {
+        Self::Request { partition, epoch }
+    }
+
+    /// The request partition and its epoch, or `None` for
+    /// [`Writer::Maintenance`].
+    #[must_use]
+    pub const fn request_epoch(&self) -> Option<(PartitionId, Epoch)> {
+        match *self {
+            Self::Request { partition, epoch } => Some((partition, epoch)),
+            Self::Maintenance => None,
+        }
+    }
+}
+
 /// The preconditions of a transaction (legacy client section 9.12,
 /// "Partition race"). The module documentation gives the order of the
 /// checks.
@@ -199,12 +236,11 @@ pub enum Expect {
 pub struct Preconditions {
     /// The state of the entry.
     pub entry: Expect,
-    /// The partition of the request of the writer and the epoch of
-    /// `Partition::Scoped(id)` when the session started (DL-205). A keyed
-    /// kind is refused with [`Refused::PartitionRevoked`] when the current
-    /// epoch of that partition differs, whatever the target partition is.
-    /// `None`: no check, for a change that no request session makes.
-    pub request: Option<(PartitionId, Epoch)>,
+    /// Who makes the change (DL-205, DL-220). For a [`Writer::Request`] a
+    /// keyed kind is refused with [`Refused::PartitionRevoked`] when the
+    /// current epoch of the request partition differs, whatever the target
+    /// partition is.
+    pub writer: Writer,
     /// The epoch of the target partition that the writer saw.
     pub partition_epoch: Epoch,
     /// The epoch of the site clear that the writer saw.

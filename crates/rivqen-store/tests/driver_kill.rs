@@ -54,6 +54,7 @@ use rivqen_cache::driver::{RecoveryReport, StorageDriver, StoreError, StoreError
 use rivqen_cache::key::Partition;
 use rivqen_cache::txn::{
     CacheTransaction, CommitStep, EntryMeta, Epoch, Expect, Preconditions, SnapshotBody, TxnOp,
+    Writer,
 };
 use rivqen_model::http::FieldLine;
 use rivqen_model::ids::{CacheKey, PartitionId};
@@ -164,10 +165,10 @@ fn fresh<D: StorageDriver>(store: &mut D, partition: Partition) -> Preconditions
     };
     Preconditions {
         entry: Expect::Any,
-        request: Some((
+        writer: Writer::request(
             request,
             store.partition_epoch(Partition::Scoped(request)).unwrap(),
-        )),
+        ),
         partition_epoch: store.partition_epoch(partition).unwrap(),
         site_epoch: store.site_epoch().unwrap(),
     }

@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+[package]
+name = "rivqen-proto-legacy"
+description = "Rivqen legacy protocol on the client: request fields, response fields, the data body and the page message. Removed with legacy mode in 1.5"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+rivqen-integrity = { workspace = true, features = ["legacy"] }
+rivqen-model.workspace = true
+# The strict JSON reader (`rivqen_proto::json`).
+rivqen-proto.workspace = true
+rivqen-template = { workspace = true, features = ["legacy"] }
+
+[dev-dependencies]
+proptest.workspace = true
+rivqen-testkit.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

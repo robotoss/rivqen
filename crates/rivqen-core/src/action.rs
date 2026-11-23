@@ -212,7 +212,7 @@ pub enum Outcome {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rivqen_cache::txn::{Epoch, Expect, Preconditions};
+    use rivqen_cache::txn::{Epoch, Expect, Preconditions, Writer};
 
     fn key() -> CacheKey {
         CacheKey::new(Partition::Public, ModelCacheKey::from_bytes([7; 32]))
@@ -223,7 +223,7 @@ mod tests {
             op: TxnOp::ClearSite { domain: None },
             pre: Preconditions {
                 entry: Expect::Any,
-                request: None,
+                writer: Writer::Maintenance,
                 partition_epoch: Epoch(0),
                 site_epoch: Epoch(0),
             },

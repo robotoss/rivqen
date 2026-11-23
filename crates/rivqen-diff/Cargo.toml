@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+[package]
+name = "rivqen-diff"
+description = "Rivqen diff engine: the legacy data diff and the checked rebuild, the order of the RQP patch checks and the apply plan"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+rivqen-integrity.workspace = true
+rivqen-model.workspace = true
+rivqen-proto.workspace = true
+rivqen-template.workspace = true
+
+[features]
+default = ["legacy"]
+# Legacy data diff and checked rebuild (DL-160, DL-222). WP-23 removes it.
+legacy = ["rivqen-integrity/legacy", "rivqen-template/legacy"]
+
+[dev-dependencies]
+proptest.workspace = true
+rivqen-testkit.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

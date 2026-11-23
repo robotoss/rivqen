@@ -15,7 +15,7 @@
 use rivqen_cache::key::Partition;
 use rivqen_cache::memory::PressureLevel;
 use rivqen_cache::txn::{
-    CacheTransaction, EntryVersion, Epoch, Expect, Preconditions, StoredEntry, TxnOp,
+    CacheTransaction, EntryVersion, Epoch, Expect, Preconditions, StoredEntry, TxnOp, Writer,
 };
 use rivqen_core::action::{Action, CacheKey, CacheTxn, DocumentRef, Outcome};
 use rivqen_core::config::{ConfigError, Engine, EngineConfig, Violation};
@@ -43,7 +43,7 @@ fn core_types_cache_txn_debug_names_the_kind() {
     let (meta, body) = sample_entry(Partition::Public, key, "example.com", "tag", 7);
     let pre = Preconditions {
         entry: Expect::Any,
-        request: None,
+        writer: Writer::Maintenance,
         partition_epoch: Epoch(0),
         site_epoch: Epoch(0),
     };
@@ -89,7 +89,7 @@ fn core_types_debug_has_no_content() {
     let (meta, body) = sample_entry(Partition::Public, key, MARKER, MARKER, 7);
     let pre = Preconditions {
         entry: Expect::Any,
-        request: None,
+        writer: Writer::Maintenance,
         partition_epoch: Epoch(0),
         site_epoch: Epoch(0),
     };

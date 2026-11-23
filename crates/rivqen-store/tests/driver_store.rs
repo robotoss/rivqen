@@ -22,7 +22,7 @@ use rivqen_cache::driver::{RecoveryReport, StorageDriver, StoreError, StoreError
 use rivqen_cache::key::{Partition, VaryEntry};
 use rivqen_cache::txn::{
     CacheTransaction, CommitStep, EntryMeta, EntryVersion, Expect, Preconditions, Refused,
-    SCHEMA_VERSION, SnapshotBody, TxnOp, TxnOutcome,
+    SCHEMA_VERSION, SnapshotBody, TxnOp, TxnOutcome, Writer,
 };
 use rivqen_model::http::FieldLine;
 use rivqen_model::ids::{CacheKey, PartitionId};
@@ -89,7 +89,7 @@ fn store(dir: &TestDir) -> FileStore<HostKeys> {
 fn fresh<D: StorageDriver>(store: &mut D, partition: Partition, entry: Expect) -> Preconditions {
     Preconditions {
         entry,
-        request: Some((A, store.partition_epoch(Partition::Scoped(A)).unwrap())),
+        writer: Writer::request(A, store.partition_epoch(Partition::Scoped(A)).unwrap()),
         partition_epoch: store.partition_epoch(partition).unwrap(),
         site_epoch: store.site_epoch().unwrap(),
     }

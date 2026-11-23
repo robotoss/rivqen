@@ -19,7 +19,7 @@ use std::time::{Duration, Instant};
 
 use rivqen_cache::driver::StorageDriver;
 use rivqen_cache::key::Partition;
-use rivqen_cache::txn::{CacheTransaction, Expect, Preconditions, TxnOp, TxnOutcome};
+use rivqen_cache::txn::{CacheTransaction, Expect, Preconditions, TxnOp, TxnOutcome, Writer};
 use rivqen_model::ids::{CacheKey, PartitionId};
 use rivqen_model::safe::PageBytes;
 use rivqen_model::time::UnixTime;
@@ -78,7 +78,7 @@ fn driver_cost_replace_and_read_of_a_100_kib_page() {
         body.page = PageBytes::new(vec![b'x'; PAGE_BYTES]);
         let pre = Preconditions {
             entry: Expect::Any,
-            request: None,
+            writer: Writer::Maintenance,
             partition_epoch: store.partition_epoch(partition).unwrap(),
             site_epoch: store.site_epoch().unwrap(),
         };

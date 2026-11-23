@@ -13,7 +13,7 @@ use rivqen_cache::driver::{RecoveryReport, StorageDriver, StoreErrorKind};
 use rivqen_cache::key::Partition;
 use rivqen_cache::txn::{
     CacheTransaction, CommitStep, EntryVersion, Epoch, Expect, Preconditions, Refused, TxnOp,
-    TxnOutcome,
+    TxnOutcome, Writer,
 };
 use rivqen_model::ids::CacheKey;
 use rivqen_model::time::UnixTime;
@@ -34,13 +34,13 @@ fn ready(kind: StopKind) -> FakeStore {
 }
 
 fn pre(store: &mut FakeStore, partition: Partition, entry: Expect) -> Preconditions {
-    let request = match partition {
-        Partition::Scoped(id) => Some((id, store.partition_epoch(partition).unwrap())),
-        Partition::Public => None,
+    let writer = match partition {
+        Partition::Scoped(id) => Writer::request(id, store.partition_epoch(partition).unwrap()),
+        Partition::Public => Writer::Maintenance,
     };
     Preconditions {
         entry,
-        request,
+        writer,
         partition_epoch: store.partition_epoch(partition).unwrap(),
         site_epoch: store.site_epoch().unwrap(),
     }

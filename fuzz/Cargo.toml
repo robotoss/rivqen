@@ -17,10 +17,13 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 rivqen-cache = { path = "../crates/rivqen-cache" }
+rivqen-diff = { path = "../crates/rivqen-diff" }
 rivqen-model = { path = "../crates/rivqen-model" }
 rivqen-proto = { path = "../crates/rivqen-proto" }
+rivqen-proto-legacy = { path = "../crates/rivqen-proto-legacy" }
 rivqen-store = { path = "../crates/rivqen-store" }
 rivqen-template = { path = "../crates/rivqen-template" }
+rivqen-url = { path = "../crates/rivqen-url" }
 
 [workspace]
 
@@ -104,6 +107,27 @@ bench = false
 [[bin]]
 name = "store_row_decode"
 path = "fuzz_targets/store_row_decode.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "legacy_response"
+path = "fuzz_targets/legacy_response.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "diff_v1"
+path = "fuzz_targets/diff_v1.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "url_canonical"
+path = "fuzz_targets/url_canonical.rs"
 test = false
 doc = false
 bench = false

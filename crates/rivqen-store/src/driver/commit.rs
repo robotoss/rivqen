@@ -213,7 +213,7 @@ fn check(
     partition: Partition,
     key: &CacheKey,
 ) -> Result<Result<Current, Refused>, StoreError> {
-    if let Some((request, epoch)) = pre.request
+    if let Some((request, epoch)) = pre.writer.request_epoch()
         && txn.partition_epoch(Partition::Scoped(request))? != epoch
     {
         return Ok(Err(Refused::PartitionRevoked));

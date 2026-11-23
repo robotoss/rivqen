@@ -45,7 +45,7 @@ use rivqen_cache::partition::site_matches;
 use rivqen_cache::policy::{EntryPolicy, Expires};
 use rivqen_cache::txn::{
     CacheTransaction, CommitStep, EntryMeta, EntryVersion, Epoch, Expect, Preconditions, Refused,
-    SnapshotBody, StoredEntry, TxnOp, TxnOutcome, Validators,
+    SnapshotBody, StoredEntry, TxnOp, TxnOutcome, Validators, Writer,
 };
 use rivqen_model::http::FieldLine;
 use rivqen_model::ids::{CacheKey, PartitionId};
@@ -720,14 +720,14 @@ impl<'a, D: FaultInjection> Harness<'a, D> {
         };
         Ok(Preconditions {
             entry,
-            request: Some((
+            writer: Writer::request(
                 request,
                 if op.stale == Stale::Request {
                     older(request_epoch)
                 } else {
                     request_epoch
                 },
-            )),
+            ),
             partition_epoch: if op.stale == Stale::Partition {
                 older(partition)
             } else {
@@ -1013,7 +1013,7 @@ impl<'a, D: FaultInjection> Harness<'a, D> {
         let site = drive!(self, "site_epoch", site_epoch())?;
         Ok(Preconditions {
             entry,
-            request: Some((request, request_epoch)),
+            writer: Writer::request(request, request_epoch),
             partition_epoch: partition,
             site_epoch: site,
         })
@@ -1573,9 +1573,9 @@ where
         h.put_explicit((2, 2), meta, body, pre)?;
         // An epoch one above the current one.
         let mut ahead = h.current_pre((2, 0), Expect::Any)?;
-        ahead.request = ahead
-            .request
-            .map(|(id, epoch)| (id, Epoch(epoch.0.saturating_add(1))));
+        if let Some((id, epoch)) = ahead.writer.request_epoch() {
+            ahead.writer = Writer::request(id, Epoch(epoch.0.saturating_add(1)));
+        }
         h.expect_outcome(
             "request epoch ahead",
             CacheTransaction {
@@ -1591,7 +1591,7 @@ where
     })
 }
 
-/// A precondition without a request partition (`request: None`) is not
+/// A precondition without a request partition (`Writer::Maintenance`) is not
 /// checked for it: the change is applied after a revoke of any
 /// partition other than the target.
 ///
@@ -1606,7 +1606,7 @@ where
     with_driver(make, "refused_request_partition_none_is_not_checked", |h| {
         h.run(put(2, 0))?;
         let mut pre = h.current_pre((2, 0), Expect::Any)?;
-        pre.request = None;
+        pre.writer = Writer::Maintenance;
         h.run(ScriptOp::new(Action::RevokePartition, 0, 0))?;
         h.run(ScriptOp::new(Action::RevokePartition, 1, 0))?;
         let (meta, body) = sample_entry(Partition::Public, key_at(0), host_at(0), "p2/none", 3);
@@ -1633,7 +1633,10 @@ where
         let fresh = h.current_pre((2, 1), Expect::Version(WRONG_VERSION))?;
         let ahead = |epoch: Epoch| Epoch(epoch.0.saturating_add(1));
         let stale_request = Preconditions {
-            request: fresh.request.map(|(id, epoch)| (id, ahead(epoch))),
+            writer: match fresh.writer {
+                Writer::Request { partition, epoch } => Writer::request(partition, ahead(epoch)),
+                Writer::Maintenance => Writer::Maintenance,
+            },
             ..fresh
         };
         let stale_target = Preconditions {
@@ -2130,14 +2133,14 @@ fn apply_blind<D: FaultInjection>(
     let site_epoch = call(CHECK, "site_epoch", driver.site_epoch())?;
     let pre = Preconditions {
         entry,
-        request: Some((
+        writer: Writer::request(
             request,
             if op.stale == Stale::Request {
                 older(request_epoch)
             } else {
                 request_epoch
             },
-        )),
+        ),
         partition_epoch: if op.stale == Stale::Partition {
             older(partition_epoch)
         } else {

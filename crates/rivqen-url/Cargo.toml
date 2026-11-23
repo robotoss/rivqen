@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+[package]
+name = "rivqen-url"
+description = "Rivqen URL parser: the canonical URL of the cache key and of the delta binding (WHATWG, http and https only)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+# H-156: the WHATWG parser. `idna_adapter` =1.0.0 has no Unicode data, so a
+# host that is not ASCII is rejected; the direct pin keeps that back end.
+url.workspace = true
+idna_adapter.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

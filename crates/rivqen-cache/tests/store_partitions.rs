@@ -14,6 +14,7 @@ use rivqen_cache::driver::{RecoveryReport, StorageDriver};
 use rivqen_cache::key::{KeyParts, Partition, Protocol, cache_key};
 use rivqen_cache::txn::{
     CacheTransaction, CommitStep, Expect, Preconditions, Refused, StoredEntry, TxnOp, TxnOutcome,
+    Writer,
 };
 use rivqen_model::ids::{CacheKey, PartitionId};
 use rivqen_testkit::store::contract::{NOW, sample_entry};
@@ -51,7 +52,7 @@ fn session_start(store: &mut FakeStore, partition: Partition, entry: Expect) -> 
         Partition::Scoped(id) => session_of(store, id, partition, entry),
         Partition::Public => Preconditions {
             entry,
-            request: None,
+            writer: Writer::Maintenance,
             partition_epoch: store.partition_epoch(partition).unwrap(),
             site_epoch: store.site_epoch().unwrap(),
         },
@@ -68,10 +69,10 @@ fn session_of(
 ) -> Preconditions {
     Preconditions {
         entry,
-        request: Some((
+        writer: Writer::request(
             request,
             store.partition_epoch(Partition::Scoped(request)).unwrap(),
-        )),
+        ),
         partition_epoch: store.partition_epoch(target).unwrap(),
         site_epoch: store.site_epoch().unwrap(),
     }

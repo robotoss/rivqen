@@ -6,7 +6,7 @@
 
 use rivqen_cache::driver::{StoreError, StoreErrorKind};
 use rivqen_cache::key::{KeyParts, Partition, Protocol, VaryDigest, VaryEntry};
-use rivqen_cache::txn::{CommitStep, SnapshotBody, Validators};
+use rivqen_cache::txn::{CommitStep, Epoch, SnapshotBody, Validators, Writer};
 use rivqen_model::error::{Category, ErrorCode, FallbackHint, HasErrorCode};
 use rivqen_model::http::FieldLine;
 use rivqen_model::ids::PartitionId;
@@ -126,4 +126,21 @@ fn cache_commit_steps_are_in_the_order_of_storage_section_2() {
             CommitStep::RemoveOld,
         ]
     );
+}
+
+/// DL-220: a transaction names its writer; only a request writer has a
+/// request partition to check.
+#[test]
+fn cache_writer_names_the_request_partition() {
+    let id = PartitionId::from_bytes([3; 32]);
+    let writer = Writer::request(id, Epoch(7));
+    assert_eq!(
+        writer,
+        Writer::Request {
+            partition: id,
+            epoch: Epoch(7)
+        }
+    );
+    assert_eq!(writer.request_epoch(), Some((id, Epoch(7))));
+    assert_eq!(Writer::Maintenance.request_epoch(), None);
 }

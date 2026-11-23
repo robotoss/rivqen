@@ -604,7 +604,7 @@ impl FakeStore {
     fn refusal(&self, plan: &Plan, pre: &Preconditions) -> Option<Refused> {
         let slot = plan.slot()?;
         if self.defect != Some(Defect::NoRequestCheck)
-            && let Some((request, epoch)) = pre.request
+            && let Some((request, epoch)) = pre.writer.request_epoch()
             && self.epoch_of(&rank(Partition::Scoped(request))) != epoch
         {
             return Some(Refused::PartitionRevoked);

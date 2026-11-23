@@ -153,6 +153,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c66915cc5391097de7a2b0b972e8505aa33c0df401fd3a6811dbdb32881ba48"
 
 [[package]]
+name = "form_urlencoded"
+version = "1.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "afa489199eaffb1211795df1c6236ce1ad0d41a6fa45250add73e3b02420f06e"
+dependencies = [
+ "percent-encoding",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -172,6 +181,23 @@ checksum = "27f864f10dfb56725ce5ce5472bc52252c8f93a4ab86327122cebf62c5f59a17"
 dependencies = [
  "typenum",
 ]
+
+[[package]]
+name = "idna"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b0875f23caa03898994f6ddc501886a45c7d3d62d04d2d90788d47be1b1e4de"
+dependencies = [
+ "idna_adapter",
+ "smallvec",
+ "utf8_iter",
+]
+
+[[package]]
+name = "idna_adapter"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cfdf4f5d937a025381f5ab13624b1c5f51414bfe5c9885663226eae8d6d39560"
 
 [[package]]
 name = "inout"
@@ -219,6 +245,12 @@ checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
 ]
+
+[[package]]
+name = "percent-encoding"
+version = "2.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
 
 [[package]]
 name = "pkg-config"
@@ -351,6 +383,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "rivqen-diff"
+version = "0.1.0"
+dependencies = [
+ "proptest",
+ "rivqen-integrity",
+ "rivqen-model",
+ "rivqen-proto",
+ "rivqen-template",
+ "rivqen-testkit",
+ "serde_json",
+]
+
+[[package]]
 name = "rivqen-integrity"
 version = "0.1.0"
 dependencies = [
@@ -374,6 +419,19 @@ dependencies = [
  "proptest",
  "rivqen-integrity",
  "rivqen-model",
+ "rivqen-testkit",
+ "serde_json",
+]
+
+[[package]]
+name = "rivqen-proto-legacy"
+version = "0.1.0"
+dependencies = [
+ "proptest",
+ "rivqen-integrity",
+ "rivqen-model",
+ "rivqen-proto",
+ "rivqen-template",
  "rivqen-testkit",
  "serde_json",
 ]
@@ -414,6 +472,16 @@ dependencies = [
  "rivqen-cache",
  "rivqen-model",
  "serde_json",
+]
+
+[[package]]
+name = "rivqen-url"
+version = "0.1.0"
+dependencies = [
+ "idna_adapter",
+ "proptest",
+ "serde_json",
+ "url",
 ]
 
 [[package]]
@@ -554,6 +622,33 @@ dependencies = [
  "crypto-common",
  "ctutils",
 ]
+
+[[package]]
+name = "url"
+version = "2.5.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f00cd2407bb42c0ef17be88d4cf020f5cceffd121665bac9b8b9493a369b3b1a"
+dependencies = [
+ "form_urlencoded",
+ "idna",
+ "percent-encoding",
+ "serde",
+]
+
+[[package]]
+name = "utf8_iter"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af3bd9d3e571c26fcce9d033b87ea5ab061b8d2ffe9b7a5675d810d68f03edf0"
+dependencies = [
+ "utf_types",
+]
+
+[[package]]
+name = "utf_types"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a3b425286980a367278453f3b6d28cdcb134b574e5a35824a6ff5eebad50bb6"
 
 [[package]]
 name = "vcpkg"

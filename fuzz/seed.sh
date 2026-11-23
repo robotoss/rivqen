@@ -183,6 +183,22 @@ x-hop: 1
 set-cookie: a=1
 
 <html></html>'
+put legacy_response l1-etag-key 'xcontent-type: text/html
+sonic-etag-key: Content-Security-Policy
+content-security-policy: e1
+template-tag: t1
+template-change: false
+cache-offline: true
+'
+put legacy_response l1-connection 'xcontent-type: text/html
+connection: close, content-security-policy, x-frame-options
+content-security-policy: default-src
+x-frame-options: DENY
+etag: e1
+template-tag: t1
+template-change: false
+cache-offline: true
+'
 
 # Legacy data diff (WP-08 S1): a template, the stored data and the server data.
 put diff_v1 data-update "$(printf '<title>T</title>{title} <!--sonicdiff-a-->1<!--sonicdiff-a-end-->\003{title}\002<title>T</title>\001{a}\002x\003{title}\002<title>U</title>\001{a}\002y')"

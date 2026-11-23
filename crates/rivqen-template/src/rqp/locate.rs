@@ -164,7 +164,11 @@ pub fn locate_manifest(
 ) -> Result<ManifestLocation, LocateError> {
     // H-158: F is read up to M-01 plus the largest manifest element, and O
     // keeps M-01. The search only chooses the size limit; the scan decides
-    // whether a manifest exists.
+    // whether a manifest exists. An input over F is rejected first, so the
+    // search never runs on it (DL-226).
+    if full.len() > limits.max_full_bytes() {
+        return Err(size_error());
+    }
     if full.len() > limits.max_original_bytes() && !contains_manifest_type(full) {
         return Err(size_error());
     }

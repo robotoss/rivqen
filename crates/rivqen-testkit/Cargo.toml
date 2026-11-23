@@ -11,7 +11,11 @@ publish.workspace = true
 
 [dependencies]
 rivqen-cache.workspace = true
+# The values of an RQP client fixture (WP-08 S1, T-06).
+rivqen-integrity.workspace = true
 rivqen-model.workspace = true
+rivqen-proto.workspace = true
+rivqen-url.workspace = true
 # Tests and the testkit only (H-138).
 serde_json.workspace = true
 

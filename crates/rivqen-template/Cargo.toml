@@ -22,6 +22,7 @@ legacy = ["rivqen-integrity/legacy"]
 [dev-dependencies]
 proptest.workspace = true
 rivqen-testkit.workspace = true
+rivqen-url.workspace = true
 serde_json.workspace = true
 
 [lints]

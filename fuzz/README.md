@@ -27,6 +27,8 @@ Fuzz targets for the parsers of `rivqen-proto`, the template engine `rivqen-temp
 | `http_date` | `header::parse_http_date` | ASCII case and white space at both ends do not change the result; a date is at most 9999-12-31T23:59:59Z; the IMF-fixdate and the asctime text of a parsed date (from a calendar in the target) parse to the same second |
 | `store_file_decode` | `crypto::decode_file` (the plain text of an entry file of `rivqen-store`) with the default limits and with small limits | A decoded value encodes to the same bytes; a value that decodes with the small limits decodes to the same value with the default limits; the content is not larger than the input |
 | `store_row_decode` | `crypto::decode_row` (the plain text of the `sealed` column of a row) with the default limits and with small limits | A decoded value encodes to the same bytes; a value that decodes with the small limits decodes to the same value with the default limits; each page field line and each `Vary` name is at most `max_header_bytes`, all lines and all names at most `max_headers_total_bytes`; the host is at most 253 bytes; `RowContent::fits` accepts every decoded value |
+| `legacy_response` | `rivqen-proto-legacy`: the first byte selects the `BodyLimits` (low 4 bits × 256 bytes, high 4 bits depth); the rest is the head lines (`name:value`, LF) and the body after the first empty line. Calls `LegacyHead::read`, `is_legacy_response`, `etag_value`, `is_utf8_text`, `charset`, `page_fields`, `merge_page_fields`, `read_data_body`, `message` | A head that passes CL-14 has one `Content-Type` line and the four fields with one non-empty value each; page fields are lowercase, sorted, never a `NOT_PAGE_FIELDS` name or the etag field, and the merge with the same head gives them again; `is_utf8_text` true means UTF-8; a read body is within the limits and its decoded data is not longer than the body; a message is one JSON object with no raw control byte |
+| `url_canonical` | `rivqen_url::parse`, then `cache_url` with no names and with the name of the first query parameter | `TooLong` if and only if the text is over `MAX_URL_BYTES`; a result is ASCII, has no `#`, and is origin, path, then nothing or `?` and the query; the origin has no `@`; U parses to the same result, and the cache URL parses to itself as U with the same `cache_url` (both only when the text is within `MAX_URL_BYTES`); with the name, no parameter of that name is left; the cache URL is at most 3 times U |
 
 ## Build
 
@@ -52,7 +54,7 @@ Run the seed corpus once:
 
 ```sh
 cd fuzz
-for t in sf_fields json_reader manifest envelope split_v1 render_v1 diff_v1 split_rqp patch_content cache_control http_date store_file_decode store_row_decode; do cargo fuzz run $t -- -runs=0; done
+for t in sf_fields json_reader manifest envelope split_v1 render_v1 diff_v1 split_rqp patch_content cache_control http_date store_file_decode store_row_decode legacy_response url_canonical; do cargo fuzz run $t -- -runs=0; done
 ```
 
 Fuzz one target for 60 seconds. Run one target at a time:

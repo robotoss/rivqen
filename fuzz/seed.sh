@@ -162,3 +162,42 @@ fs.writeFileSync(path.join(rowDir, "host-at-limit"),
 fs.writeFileSync(path.join(rowDir, "ipv6-host"),
   row(1, [], null, null, zeroPolicy, [], "[2001:db8::1]"));
 ' "corpus/store_file_decode" "corpus/store_row_decode"
+
+# Legacy response (WP-08 S1): a selector byte (`x`: 2048 bytes, depth 7), the
+# head lines, an empty line, the body.
+put legacy_response data-update 'xcontent-type: text/html; charset=utf-8
+etag: e1
+template-tag: t1
+template-change: false
+cache-offline: true
+
+{"data":{"{title}":"<title>a</title>","{p}":"<!--sonicdiff-p-->1<!--sonicdiff-p-end-->"},"template-tag":"t1","html-sha1":"h","diff":""}'
+put legacy_response custom-etag 'xContent-Type: TEXT/HTML
+sonic-etag-key: My-ETag
+my-etag: W/"c1"
+template-tag: t1
+template-change: true
+cache-offline: store
+connection: x-hop
+x-hop: 1
+set-cookie: a=1
+
+<html></html>'
+
+# Legacy data diff (WP-08 S1): a template, the stored data and the server data.
+put diff_v1 data-update "$(printf '<title>T</title>{title} <!--sonicdiff-a-->1<!--sonicdiff-a-end-->\003{title}\002<title>T</title>\001{a}\002x\003{title}\002<title>U</title>\001{a}\002y')"
+
+# URL parser (WP-08 S1): the inputs of the URL interop spike and the known
+# answer of manifest and patch section 2.2.
+mkdir -p corpus/url_canonical
+node -e '
+const fs = require("fs");
+const [urls, dest] = process.argv.slice(1);
+const list = JSON.parse(fs.readFileSync(urls, "utf8"));
+const items = Array.isArray(list) ? list : (list.urls || list.cases || list.inputs || []);
+items.forEach((item, i) => {
+  const input = typeof item === "string" ? item : item.input;
+  if (typeof input === "string") fs.writeFileSync(`${dest}/interop-${String(i).padStart(3, "0")}`, input);
+});
+' "$root/tools/platform-spikes/url-interop/urls.json" corpus/url_canonical
+put url_canonical kat-binding-with-query 'https://SHOP.Example.com:443/catalog?sort=price&page=2#reviews'

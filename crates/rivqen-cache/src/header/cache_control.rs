@@ -16,10 +16,10 @@
 //!    cuts at SP and HTAB, so directives that a misconfigured server
 //!    separates with spaces (`no-cache no-store`) are found (stricter than
 //!    item 5). `no-store` always counts this way, so `private="a, no-store"`
-//!    and `foo="a no-store"` are `no-store`. That follows the text of item 5;
-//!    the two reference models of the legacy fixtures differ for this input
-//!    (they split only at commas and keep the quote in the name; sprint
-//!    record WP-07 S1, section 5). On a line with a syntax error,
+//!    and `foo="a no-store"` are `no-store`. That follows the text of item 5,
+//!    as the two reference models of the legacy fixtures do since DL-217
+//!    (`hasDirective` in `tools/legacy-fixtures/src/fields.mjs`). On a line
+//!    with a syntax error,
 //!    `no-cache`, `private` and `must-revalidate` also count this way: the
 //!    broken member can hide them.
 //!

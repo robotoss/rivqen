@@ -11,6 +11,8 @@
 //! - [`cache_policy`]: the cache policy matrix (WP-07).
 //! - [`store`]: a fake storage driver with a fault model (WP-07).
 //! - [`clock`]: a fake [`rivqen_model::time::Clock`].
+//! - [`exchange`]: the stored exchanges of the canonical legacy client
+//!   fixtures (`exchanges.json`, WP-08, DL-216).
 //! - [`transport`]: a fake transport with scripted responses.
 //!
 //! The test kit reads files; the core crates do not.
@@ -21,10 +23,12 @@ use std::path::PathBuf;
 
 pub mod cache_policy;
 pub mod clock;
+pub mod exchange;
 pub mod fixtures;
 pub mod functions;
 pub mod ledger;
 pub mod markup;
+pub mod rqp_client;
 pub mod store;
 pub mod transport;
 

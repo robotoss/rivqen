@@ -420,6 +420,7 @@ dependencies = [
  "rivqen-integrity",
  "rivqen-model",
  "rivqen-testkit",
+ "rivqen-url",
  "serde_json",
 ]
 
@@ -461,6 +462,7 @@ dependencies = [
  "rivqen-model",
  "rivqen-proto",
  "rivqen-testkit",
+ "rivqen-url",
  "serde_json",
 ]
 
@@ -470,7 +472,10 @@ version = "0.1.0"
 dependencies = [
  "proptest",
  "rivqen-cache",
+ "rivqen-integrity",
  "rivqen-model",
+ "rivqen-proto",
+ "rivqen-url",
  "serde_json",
 ]
 

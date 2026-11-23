@@ -114,6 +114,8 @@ fn rebuild(
         server,
         html_sha1: hash,
         etag: hash,
+        response_template_tag: "tag",
+        stored_template_tag: "tag",
     };
     Rebuilt::new(input, limits)
 }

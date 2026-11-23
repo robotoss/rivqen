@@ -16,7 +16,9 @@ use rivqen_url::{UrlError, parse};
 use serde_json::Value;
 
 /// The inputs whose result is not the stored WHATWG `href` without the
-/// fragment, with the expected error and the reason.
+/// fragment, with the expected error and the reason. A reason with
+/// `DL-225` means that the WHATWG host has a punycode label, so the stored
+/// `href` is rejected too.
 const EXCEPTIONS: &[(&str, UrlError, &str)] = &[
     ("host-space", UrlError::Syntax, "WHATWG failure"),
     ("port-too-big", UrlError::Syntax, "WHATWG failure"),
@@ -24,17 +26,22 @@ const EXCEPTIONS: &[(&str, UrlError, &str)] = &[
     (
         "host-idn",
         UrlError::Host,
-        "host not ASCII in the input (H-156)",
+        "host not ASCII in the input (H-156); the WHATWG host is punycode (DL-225)",
     ),
     (
         "host-idn-nfc",
         UrlError::Host,
-        "host not ASCII in the input (H-156)",
+        "host not ASCII in the input (H-156); the WHATWG host is punycode (DL-225)",
     ),
     (
         "host-idn-nfd",
         UrlError::Host,
-        "host not ASCII in the input (H-156)",
+        "host not ASCII in the input (H-156); the WHATWG host is punycode (DL-225)",
+    ),
+    (
+        "host-punycode",
+        UrlError::Host,
+        "host with a punycode label (DL-225)",
     ),
     (
         "host-fullwidth",
@@ -112,7 +119,10 @@ fn url_interop_table() {
                 // The WHATWG result itself is a URL that the parser reads
                 // as WHATWG does, unless it still has user information.
                 let href = reference["href"].as_str().unwrap();
-                if !id.starts_with("userinfo") || id == "userinfo-empty-pw" {
+                if why.contains("DL-225") {
+                    assert!(href.contains("://xn--"), "{id}");
+                    assert_eq!(parse(href), Err(UrlError::Host), "{id}");
+                } else if !id.starts_with("userinfo") || id == "userinfo-empty-pw" {
                     let parsed = parse(href).unwrap();
                     assert_eq!(parsed.binding_url(), without_fragment(href), "{id}");
                 }

@@ -277,3 +277,14 @@ fn legacy_body_debug_and_errors_hold_no_body_bytes() {
         "a member of the legacy data body is not a string: diff"
     );
 }
+
+/// The text of a JSON error has the reason of the body error and then the
+/// text of the reader error (its source).
+#[test]
+fn legacy_body_json_error_text_has_the_reader_error() {
+    let error = read_data_body(b"{", &LIMITS).unwrap_err();
+    let BodyError::Json(json) = error else {
+        panic!("{error:?}");
+    };
+    assert_eq!(error.to_string(), format!("{}: {json}", error.reason()));
+}

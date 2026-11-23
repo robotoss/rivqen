@@ -25,3 +25,31 @@ fn url_error_text_has_no_input_bytes() {
         assert!(!error.to_string().contains("example"));
     }
 }
+
+#[test]
+fn url_error_texts_are_distinct_and_not_empty() {
+    let texts: Vec<String> = [
+        UrlError::TooLong,
+        UrlError::Syntax,
+        UrlError::Scheme,
+        UrlError::UserInfo,
+        UrlError::Host,
+    ]
+    .iter()
+    .map(ToString::to_string)
+    .collect();
+    for (i, text) in texts.iter().enumerate() {
+        assert_ne!(text, "");
+        assert!(
+            !texts.iter().skip(i + 1).any(|other| other == text),
+            "{text}"
+        );
+    }
+}
+
+#[test]
+fn url_debug_of_a_parsed_url_has_the_scheme_and_the_length_only() {
+    let parsed = parse("https://a.example/secret?token=1").unwrap();
+    let text = format!("{parsed:?}");
+    assert_eq!(text, "ParsedUrl { scheme: Https, len: 32, .. }");
+}

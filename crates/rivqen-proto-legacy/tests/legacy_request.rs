@@ -180,4 +180,7 @@ fn legacy_request_debug_has_no_cookie_or_digest() {
     assert!(!text.contains(&e.etag.as_str()[..8]), "{text}");
     assert!(!text.contains(&e.template_tag.as_str()[..8]), "{text}");
     assert!(text.contains("cookie_len: Some(19)"), "{text}");
+    // The validators are named, without their digests.
+    assert!(text.contains("EntryValidators"), "{text}");
+    assert_eq!(format!("{e:?}"), "EntryValidators { .. }");
 }

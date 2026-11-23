@@ -91,9 +91,28 @@ A `304` is not a patch, but it confirms a snapshot as the current page, so the s
 
 The session uses a delta, a `304` or a full document only when the final request carried RQP fields: the origin of the final URL is in the allowlist (exact match of the serialized origin, DL-038), the final URL has no user name and no password (H-68), and the build allows its scheme (H-62). The origin comes from the URL object that the network stack used for the final request (DL-040). A delta or a `304` from an origin outside the allowlist never has the cache key of the snapshot, so check 1 rejects it.
 
-Bounds: steps 4 to 6 read at most `maxPatchBytes` bytes; steps 9 to 11 do work linear in the envelope size and in the number of blocks (≤ 256): at most 256 SHA-256 computations over at most `maxPatchBytes` content bytes in total, one over a page revision preimage of at most about 30 KiB, and one over a binding preimage of the URL length plus 125 bytes; step 12 is one markup pass over at most `maxDocumentBytes` and one copy of at most that size; step 13 reads only the patched content, which step 12 has already tokenized.
+Bounds: steps 4 to 6 read at most `maxPatchBytes` bytes (`rqp::PatchLimits` caps it at 5 MiB); steps 9 to 11 do work linear in the envelope size and in the number of blocks (≤ 256): at most 256 SHA-256 computations over at most `maxPatchBytes` content bytes in total, one over a page revision preimage of at most about 30 KiB, and one over a binding preimage of the URL length plus 125 bytes; step 12 is one markup pass over at most `maxDocumentBytes` and one copy of at most that size; step 13 reads only the patched content, which step 12 has already tokenized.
 
-<Badge type="info" text="DESIGN" /> Checks 12 and 13 use functions of `rivqen-template` (WP-06, H-142): the build of the patched document (`render_rqp`), the markup analysis (`split_rqp`) and the patch content and attribute rule. `rivqen-diff` keeps the order of the checks and the apply plan.
+<Badge type="tip" text="FACT" /> Checks 12 and 13 use functions of `rivqen-template` (WP-06, H-142): the build of the patched document (`render_rqp`), the markup analysis (`split_rqp`) and the patch content and attribute rule. `rivqen-diff` keeps the order of the checks (`rqp::validate`, below). <Badge type="info" text="DESIGN" /> The apply plan of section 4 (the partition and the cache transaction) is a session task (WP-08 S3).
+
+**One call for checks 4 to 13 (WP-08).** <Badge type="tip" text="FACT" /> The module `rivqen_diff::rqp` runs checks 4 to 13 with one function. The module is not behind the feature `legacy`.
+
+| Item | What it does |
+|---|---|
+| `validate(body, snapshot, request, limits)` | Calls `delta::verify_delta` (checks 4, 5, 6, 9, 10, 11), then `rqp::patch::check_patch` (checks 12 and 13), and stops at the first failure. The result is a `ValidatedPatch` (section 4) or a `ValidateError` |
+| `StoredSnapshot` | The snapshot of the delta: the original document O, its markup analysis and the checked snapshot values (`SnapshotMeta`: T, B, the blocks, `policy`, `limits`). When the three do not belong together, check 12 fails closed (`INTEGRITY_ERROR` or `PATCH_CONTENT_REJECTED`), never with another page |
+| `DeltaRequest` | U (the canonical final URL as text; `validate` does not parse it) and N (the nonce of the request). An absent U, an empty U or an absent N fails check 11 |
+| `PatchLimits` | `maxPatchBytes` (capped at 5 MiB, the top of its safe range; a configured value can only lower it) and the `TemplateLimits` of check 12. `maxBlockBytes` of check 10 is the value of the `TemplateLimits`, so checks 10 and 12 use one value. `PatchLimits::try_from(&ResourceLimits)` builds it from the engine configuration |
+| `ValidateError` | `Delta(DeltaError)` for checks 4 to 11, `Patch(PatchError)` for checks 12 and 13. `check()` gives the number of the table: 4, 5, 6, 9, 10, 11, 12 or 13 (`PatchError::Content` is 13; every other `PatchError` is 12, also `Snapshot`, the stored analysis that does not fit the snapshot values). The code is `PATCH_TOO_LARGE`, `PATCH_INVALID`, `INTEGRITY_ERROR` or `PATCH_CONTENT_REJECTED`. The texts have the check number, the code and a static reason with at most an operation index, a block index or a rule id |
+
+<Badge type="tip" text="FACT" /> Tests in `crates/rivqen-diff/tests/`:
+
+| Test | What it shows |
+|---|---|
+| `rqp_check_order_*` | One test per check; where the input also breaks a later check, the earlier check wins (4 before 5; 9 and 10 before 11; 11 before 13; in check 12 the size and the markup analysis before check 13). Each request input of check 11. The limit of check 4 is inclusive and capped. No error text, `Debug` text or source text has a block id, content, the URL or the nonce |
+| `rqp_validated_*` | What a `ValidatedPatch` gives (section 4), the decoded JSON content, the form with an operation for every block (H-7), `policy` and `limits` of the base, a second patch on the result, `Debug` without content |
+| `rqp_ledger_delta` | The 87 client fixtures with a `200` delta response: 26 patched; 56 rejected with the expected code (by check: 4: 1, 5: 1, 6: 4, 9: 3, 11: 13, 12: 6, 13: 28); 5 that checks 1 to 3 of the session reject (owner WP-08, S3) |
+| `rqp_prop_*` | Properties P-DIFF-1 to P-DIFF-4 (section 5) |
 
 **Checks in `rivqen-proto` (WP-05).** <Badge type="tip" text="FACT" /> Checks 4, 5, 6, 9, 10 and 11 of the table above are in the crate `rivqen-proto`. The session calls one function for all of them, `delta::verify_delta`, after checks 1 to 3 and before checks 12 and 13 (tests `delta_check_order_*`, `delta_prop_any_body`):
 
@@ -117,6 +136,22 @@ A validated patch becomes a `ValidatedPatch`. It contains:
 - The new `page_revision`: R′ of check 11, which the client computed (H-107; the envelope has no page revision).
 - A `CacheTransaction` for the new snapshot, with its cache key: the canonical URL of the snapshot and the partition below.
 
+<Badge type="tip" text="FACT" /> `rivqen_diff::rqp::ValidatedPatch` (WP-08 S1) has no public constructor: only `validate` makes one, after checks 4 to 13 passed (R-CORE-05, INV-13). A failed check gives no value, and `validate` reads the snapshot only through shared references, so a failure changes nothing. It gives:
+
+| Method | Value |
+|---|---|
+| `replacements()` | One `BlockReplacement` per operation, in document order (strictly increasing block index, check 9): the block index, the block id, the format of the block in the snapshot, and the decoded `content` string. Each content is the content of its block in `document()` |
+| `document()` | The patched document: the original document O of the new snapshot |
+| `analysis()` | The markup analysis of `document()`: the block offsets of the new snapshot |
+| `page_revision()` | R′ (check 11), which the patched document has (check 12) |
+| `base_revision()` | B, the page revision of the snapshot that the delta applies to |
+| `snapshot_meta()` | The values of the new snapshot: the template revision of the base, R′, the blocks of `analysis()` (equal to L′), and the `policy` and `limits` of the base ([manifest and patch §2.4](/engineering/protocol/manifest-patch#_2-4-client-verification-and-apply), "Apply") |
+| `into_parts()` | The replacements, the document, the analysis and the snapshot values, by value |
+
+<Badge type="tip" text="FACT" /> `Debug` of `ValidatedPatch`, `BlockReplacement`, `StoredSnapshot` and `DeltaRequest` gives lengths, counts, indices and formats only: no content, no block id, no revision, no URL, no nonce (test `rqp_validated_debug_has_no_content`).
+
+<Badge type="info" text="DESIGN" /> The `CacheTransaction`, its cache key and the partition below are not in `rivqen_diff::rqp::ValidatedPatch`: the session builds them from it (WP-08 S3). The payload of the action `ApplyDataPatch` in `rivqen-core` is still a placeholder.
+
 <Badge type="info" text="DESIGN" /> **Partition of the new snapshot (H-65).** The engine selects the partition before it builds the `CacheTransaction`:
 
 | Snapshot | Request and delta response | Partition of the new snapshot |
@@ -138,6 +173,17 @@ The adapter delivers the patch to the web SDK **and** commits the cache. The web
 | P-DIFF-3 | Applying the same patch twice gives the same result as applying it once: the second apply is on the snapshot n+1, its B is n, so it is rejected (`INTEGRITY_ERROR`, H-107) and changes nothing. |
 | P-DIFF-4 | For any malformed input, the engine returns an error within the time and memory budget. It never panics. |
 | P-DIFF-5 | legacy: `render(template, extract(html)) == html` for every document that the legacy grammar accepts. |
+
+<Badge type="tip" text="FACT" /> P-DIFF-1 to P-DIFF-4 are property tests of `rqp::validate` in `crates/rivqen-diff/tests/rqp_props.rs` (fixed seeds; `PROPTEST_CASES` raises the case count). The generator makes documents of one template with 1 to 5 `html` and `json` blocks, with or without the manifest members `policy` and `limits`. A server delta is built as a server builds it: the operations carry the content of the next document, and R′ is the page revision of the analysis of the next document.
+
+| Property | Test | What it checks |
+|---|---|---|
+| P-DIFF-1 | `rqp_prop_apply` | With the changed blocks or with every block (H-7): the result is the next document byte for byte, with its analysis and its snapshot values; the replacements are the operations in document order |
+| P-DIFF-2 | `rqp_prop_other_base` | A delta whose operations cover every block, on a snapshot with another base, on its own target (a stale replay), on another template, with another URL or with another nonce (A → B → A, a `public` replay): check 11, `INTEGRITY_ERROR`, and the snapshot does not change |
+| P-DIFF-3 | `rqp_prop_twice` | The same delta on the result of its first apply: check 11, `INTEGRITY_ERROR`; when n+1 equals n, the same document again |
+| P-DIFF-4 | `rqp_prop_malformed_*` | Any body; a valid body with one byte changed, removed or added; a stored original with one byte changed; operations with any ids, order and content, with a binding that fits them or not. No panic; an error has one of the four codes and a check number of the table; a `ValidatedPatch` is always the base with the operation contents in their blocks (or the page of the server), never another page |
+
+<Badge type="tip" text="FACT" /> The time and memory part of P-DIFF-4 follows from the bounds of section 3; no test measures it.
 
 ## Related
 

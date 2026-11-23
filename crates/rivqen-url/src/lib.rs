@@ -26,9 +26,12 @@
 
 use core::fmt;
 
-// The direct pin of H-156 (see Cargo.toml). The crate has no item to use.
+// The direct pin of H-156 (see Cargo.toml): `url` reads it through `idna`.
+// This crate names no item of it.
 use idna_adapter as _;
-use url as _;
+
+mod canon;
+mod scan;
 
 /// The longest input that [`parse`] reads, in bytes. A longer text is
 /// [`UrlError::TooLong`].
@@ -130,9 +133,12 @@ impl ParsedUrl {
     /// (step 6). The order of the other parameters does not change (step 5).
     #[must_use]
     pub fn cache_url(&self, ignored_query_params: &[&str]) -> String {
-        // Contract stub (T-04).
-        let _ = ignored_query_params;
-        self.binding.clone()
+        canon::cache_url(
+            &self.binding,
+            self.path_start,
+            self.path_end,
+            ignored_query_params,
+        )
     }
 }
 
@@ -143,9 +149,61 @@ impl ParsedUrl {
 /// A [`UrlError`] for every text that is not an absolute `http` or `https`
 /// URL with an ASCII host and without user information.
 pub fn parse(input: &str) -> Result<ParsedUrl, UrlError> {
-    // Contract stub (T-04): every input is rejected.
     if input.len() > MAX_URL_BYTES {
         return Err(UrlError::TooLong);
     }
-    Err(UrlError::Syntax)
+    // No host byte over 0x7F and no user information reach the parser (see
+    // the module `scan`).
+    let scheme = scan::check(input)?;
+    let mut url = url::Url::parse(input).map_err(|error| match error {
+        url::ParseError::EmptyHost => UrlError::Host,
+        _ => UrlError::Syntax,
+    })?;
+    // Fail closed when the parser and the scan disagree. With the scan above
+    // these checks do not fail; they keep the result safe if a later `url`
+    // reads the text in another way.
+    let scheme_name = match scheme {
+        Scheme::Http => "http",
+        Scheme::Https => "https",
+    };
+    if url.scheme() != scheme_name {
+        return Err(UrlError::Scheme);
+    }
+    if !url.username().is_empty() || url.password().is_some() {
+        return Err(UrlError::UserInfo);
+    }
+    if url.host_str().is_none_or(str::is_empty) {
+        return Err(UrlError::Host);
+    }
+
+    url.set_fragment(None);
+    let path_len = url.path().len();
+    let query_len = url
+        .query()
+        .map_or(Some(0), |query| query.len().checked_add(1));
+    let binding = String::from(url);
+    if !binding.is_ascii() {
+        return Err(UrlError::Syntax);
+    }
+    // U is `origin path [? query]`: with no user information, the text
+    // before the path is the serialized origin.
+    let tail_len = query_len
+        .and_then(|query_len| query_len.checked_add(path_len))
+        .ok_or(UrlError::Syntax)?;
+    let path_start = binding
+        .len()
+        .checked_sub(tail_len)
+        .ok_or(UrlError::Syntax)?;
+    let path_end = path_start.checked_add(path_len).ok_or(UrlError::Syntax)?;
+    let origin = binding
+        .get(..path_start)
+        .ok_or(UrlError::Syntax)?
+        .to_owned();
+    Ok(ParsedUrl {
+        scheme,
+        binding,
+        origin,
+        path_start,
+        path_end,
+    })
 }

@@ -936,10 +936,11 @@ impl<'f, E: SessionEngine> Runner<'f, E> {
             ));
         }
         let phase_at = self.done.len();
+        let number = self.exchange_no;
         let phase = self.phase();
         let request_at = phase.requests.len();
         phase.requests.push(RequestView {
-            exchange: stored.number.unwrap_or(0),
+            exchange: number,
             method: "GET".to_owned(),
             target: spec.target.clone(),
             fields: pick(&sent, &REQUEST_FIELDS),

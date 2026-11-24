@@ -57,6 +57,32 @@ fixtures/legacy/
 
 <Badge type="tip" text="FACT" /> Stored exchanges (DL-216, WP-08 S1 T-05). Each of the 104 canonical client fixtures also has a generated `exchanges.json`: for every request of the canonical client in send order, the sent field lines, the delivered response (status, field lines in order, the body as a reference to `pages/` or as base64, with its length and SHA-256) and its stop (a `cut` after `n` bytes, or a refused connection), and the expanded CL-38 record of each `cache_before` entry. With `case.json` and `expected.json`, a Rust test runs the fixture without Node.js. `gen.mjs --check` (check 6) fails when a file is missing or stale; a tool test (`every_canonical_client_fixture_projection_follows_from_its_exchanges_json`) checks that every request, status, listed field and body hash of `expected.json` follows from the stored bytes. `rivqen_testkit::exchange::load_all` reads the files as typed values (test `exchange_loads_all`). The files add 179 776 bytes. Format: `fixtures/legacy/README.md`, section "Client `exchanges.json`".
 
+#### The Rust runner (WP-08 S2 T-03)
+
+<Badge type="tip" text="FACT" /> The module `rivqen_testkit::legacy_client` (testkit feature `legacy`) runs a canonical client fixture on the legacy session of `rivqen-session` without Node.js (DL-216, DL-227). Tests: `crates/rivqen-testkit/tests/legacy_client.rs`.
+
+| Part | What it does |
+|---|---|
+| `fixture_ids` | Every `FX-LEG-CL-*` directory without `--`, sorted. The count comes from the directory list; the test `legacy_client_ids_are_the_canonical_client_fixtures` checks that it is the list of `exchange::load_all` |
+| `load` | `case.json` as `CaseSpec` (the steps of CONTRACT §3, the `config` keys, the README limits), the `client` member of `expected.json` as `Projection` (strict: no unknown or missing member), and `exchanges.json`. A fixture id is checked before it becomes a path |
+| `run`, `run_with` | Runs the steps on a `LegacyEngine` (or another `SessionEngine`) and gives the `Projection`. See the step rules below |
+| `compare` | The differences of DL-110. Each `Difference` names the phase, the member, the index and the path in the entry, and holds only the two differing values |
+
+<Badge type="tip" text="FACT" /> The runner runs a case as the model of `tools/legacy-fixtures/src/client-engine.mjs` (CL-01 to CL-04):
+
+1. Each step runs until no work is left. The work is a first-in, first-out queue: the answer of an effect (`Lookup`, `ReadCookie`, `Send`) is a later input, and an exchange gives one event at a time (the head, one body chunk to the next stop, the end or a cut).
+2. `Send` takes the next stored exchange of `exchanges.json`. The sent request (the fields of the session and `accept-encoding: gzip` of the fake platform), its step and its session must equal the stored request; else the run has a problem. The stored response is the delivered form: `drop_field`, `set_field`, `set_body_member` and `case` steps do nothing. A refused exchange gives `TransportFailed` with `Refused`; a cut gives the first `at` body bytes, then `TransportFailed` with `Read`.
+3. `hold` stops the delivery before the head (`request`, `head`) or after `bytes` body bytes (`body`); `release` continues it. `server_down` clears the armed faults.
+4. `ReadCookie` records `cookie_get` and answers with the cookie of the runtime. `Lookup` reads the fake store (entry, disabled key, partition epoch, site epoch). `Cache` runs the transaction on the fake store; a keyed write whose writer is not the request partition of the session is a problem (DL-220).
+5. The clock starts at 0 ms and moves only at `settle` (CL-04). The wall time is 2026-01-01T00:00:00Z plus the whole seconds of the clock. `settle` sends `Tick` to each session whose `ScheduleTimer` time has come.
+6. A session that gives only `Lookup` and then `Closed` at `create_session` did not open (`opened: false`). A `request_resource` on a closed session gets a `null` intercept (the web view loads the page). The codes of a `destroy` step are the last `Result` effect of the session, else `-1 / -1`.
+7. `cache_before` records go into the fake store through `rivqen_session::legacy::record::commit` with the epochs of the store, so the stored form is the form of the session. The runner then sets the stored `etag` and `template_tag` of the record, because the CL-40 fixtures store values that are not the SHA-1 of the page or the template.
+8. `snapshot_cache` maps each stored entry to the record view of README value rules 2 and 3 (the partition and the URL come from the keys that the runner saw in `Lookup` and in the seeds). A `Vary` entry with a stored digest cannot be shown as its value (DL-127); the runner gives the name with a marker value and a problem, never a silent pass. No canonical fixture has a `Vary` name that counts (CL-12).
+
+<Badge type="tip" text="FACT" /> The comparison follows the README: `sessions`, `requests`, `actions` and `snapshots` entry by entry in order; `cookies`, `intercepts` and `results` as multisets (equal entries match first, then the rest pairs in text order); `data_sha256` of a record by presence only (DL-118). Each problem of the runner (a step it cannot run, an effect after `Closed`, a request that differs from the stored request, a stored exchange that no request used) is a difference with the member `runner`. Bounds: 65 536 work items in one step, 1 024 timer inputs in one `settle`, 64 MiB in one answered stream, 256 problems.
+
+<Badge type="info" text="DESIGN" /> `legacy_client_fixtures_pass` runs every canonical client fixture and fails with the full list of differences. It is ignored until T-05 makes every fixture pass. On the stub engine of the S2 contracts every session closes at once, so every fixture differs.
+
 ### 1.3 Rivqen fixtures
 
 <Badge type="tip" text="FACT" /> The RQP fixtures (`fixtures/rqp/`) have their own layout. See section 4.

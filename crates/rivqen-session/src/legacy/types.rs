@@ -160,9 +160,12 @@ pub struct LookupResult {
     /// The key is disabled at this time (CL-08, CL-19).
     pub disabled: bool,
     /// The epoch of the partition of the session at this read (DL-205,
-    /// DL-220): every write of the session names it.
+    /// DL-220). Every write of the session names the epochs of its opening
+    /// lookup; a later lookup (a refresh, CL-35) with another partition
+    /// epoch or site epoch stops the session as CL-06 (DL-229 (a)).
     pub partition_epoch: Epoch,
-    /// The epoch of the site clear at this read (CL-45).
+    /// The epoch of the site clear at this read (CL-45); see
+    /// `partition_epoch`.
     pub site_epoch: Epoch,
 }
 
@@ -403,7 +406,8 @@ pub enum Effect {
     /// session replaces it (FSM-05).
     ScheduleTimer(Instant),
     /// The session did not open (CL-07, CL-08) or is closed (CL-34,
-    /// CL-06): no later effect names it. The web view loads normally when
+    /// CL-06, or a later lookup with other epochs, DL-229 (a)): no later
+    /// effect names it. The web view loads normally when
     /// the session did not open.
     Closed,
 }

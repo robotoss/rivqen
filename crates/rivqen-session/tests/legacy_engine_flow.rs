@@ -912,7 +912,12 @@ fn legacy_engine_classify_old_generation_end_runs_the_end_checks_quick() {
         let effects = run.step(id, Input::Refresh);
         assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
         assert_eq!(run.step(id, Input::BodyEnd { exchange }), Vec::new());
-        assert_eq!(run.client(id), vec![Effect::LoadUrl], "{} bytes", body.len());
+        assert_eq!(
+            run.client(id),
+            vec![Effect::LoadUrl],
+            "{} bytes",
+            body.len()
+        );
         assert_eq!(run.step(id, Input::Intercept(InterceptId(1))), Vec::new());
         // The current generation gives the document.
         let mut effects = run.step(id, lookup(None, false));
@@ -1468,8 +1473,7 @@ fn legacy_engine_stop_full_set_of_held_keys_fails_closed() {
     let mut stopped = Vec::new();
     for round in 0..4 {
         for n in 0..256 {
-            let (id, effects) =
-                run.open(context(&format!("{URL}/{round}/{n}"), PARTITION, true));
+            let (id, effects) = run.open(context(&format!("{URL}/{round}/{n}"), PARTITION, true));
             assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
             stopped.push(id);
         }

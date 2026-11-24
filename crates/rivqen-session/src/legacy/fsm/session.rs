@@ -496,13 +496,8 @@ impl Session {
             session_fields: &fields,
             platform_fields: &self.platform_fields,
         };
-        let visible = (env.port.check_visible)(
-            stored,
-            self.partition,
-            self.key,
-            &values,
-            &self.vary_key,
-        );
+        let visible =
+            (env.port.check_visible)(stored, self.partition, self.key, &values, &self.vary_key);
         match visible {
             Ok(mut record) => {
                 // DL-229 (d): the stored lines pass the filter of DL-226 (b)
@@ -689,13 +684,11 @@ impl Session {
         }
         exchange.end = End::Complete;
         match kind {
-            Some(kind) if fresh && kind.needs_body() => {
-                match kind {
-                    Kind::FirstLoad => self.first_load_end(env, id, out),
-                    Kind::TemplateChange => self.template_change_end(env, id, out),
-                    _ => self.data_update_end(env, id, out),
-                }
-            }
+            Some(kind) if fresh && kind.needs_body() => match kind {
+                Kind::FirstLoad => self.first_load_end(env, id, out),
+                Kind::TemplateChange => self.template_change_end(env, id, out),
+                _ => self.data_update_end(env, id, out),
+            },
             _ => {
                 exchange.finish_streams(true, out);
                 if self.doc_reads(id) && !self.waiting.is_empty() {

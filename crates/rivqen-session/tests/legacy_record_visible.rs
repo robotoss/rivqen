@@ -200,7 +200,10 @@ fn legacy_record_visible_in_another_partition_or_key_is_damaged() {
             Err(NotVisible::Damaged)
         );
         // Also for a request of another `Vary` value.
-        assert_eq!(check_in(partition, cache_key, &[]), Err(NotVisible::Damaged));
+        assert_eq!(
+            check_in(partition, cache_key, &[]),
+            Err(NotVisible::Damaged)
+        );
     }
     assert_eq!(
         check_in(own.partition, own.key, &[]),

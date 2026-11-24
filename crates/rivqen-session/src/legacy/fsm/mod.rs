@@ -24,10 +24,13 @@
 //! 1. A stopped session gives no effect (CL-06, CL-34); the engine keeps it
 //!    only to hold its key until `Destroy` (CL-07).
 //! 2. An input of an older generation acts only on the streams of its
-//!    exchange and on the cookies (CL-11 item 2, CL-35).
+//!    exchange, on the cookies of its first head (CL-11 item 2, CL-35) and,
+//!    when its body fails, on the current document that reads it
+//!    (DL-229 (c)); never on the cache or the result.
 //! 3. Every cache write goes through [`port::RecordPort`] with a
 //!    `WriteBasis` of the partition of the session and the epochs of its
-//!    last lookup (DL-220).
+//!    opening lookup (DL-220). A later lookup with other epochs stops the
+//!    session (DL-229 (a)).
 //! 4. A message takes its diff only from a `rivqen_diff::legacy::Rebuilt`
 //!    (DL-226).
 //!
@@ -37,8 +40,10 @@
 //! most up to the limit of `LegacyConfig` (`template.max_document_bytes`
 //! for a page, `body.max_bytes` for a data body); a larger body is a body
 //! failure (CL-33, fail closed). A session keeps at most
-//! [`session::MAX_EXCHANGES`] exchanges. The UTF-8 test is incremental, so
-//! the work per byte is constant.
+//! [`session::MAX_EXCHANGES`] exchanges, and the ids of at most
+//! [`session::MAX_AWAITED_HEADS`] dropped exchanges whose head is still
+//! due (for their cookies). The UTF-8 test is incremental, so the work per
+//! byte is constant, and a chunk that fails it is not kept.
 
 mod deliver;
 pub(crate) mod exchange;

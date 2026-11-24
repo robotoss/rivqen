@@ -1369,7 +1369,8 @@ fn legacy_engine_outcome_after_a_commit_no_removal_of_the_entry() {
         (200, data_head(&old, &new, "true"), &data),
     ];
     for (status, fields, body) in cases {
-        let mut session = Session::new(context(true), CacheKey::from_bytes([1; 32]), URL.to_owned());
+        let mut session =
+            Session::new(context(true), CacheKey::from_bytes([1; 32]), URL.to_owned());
         let mut out = Vec::new();
         let lookup = Input::Lookup(Box::new(LookupResult {
             entry: Some(stored(&old, "h")),

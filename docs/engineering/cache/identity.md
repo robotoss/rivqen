@@ -23,7 +23,7 @@ cache_key = SHA-256(partition ‖ origin ‖ canonical_url ‖ method ‖ vary_v
 | `auth_scope` | Host app | Changes when permissions change. |
 | `origin` | URL | Scheme + host + port. |
 | `canonical_url` | URL | See section 2. |
-| `vary_values` | Response `Vary` | Values of the request headers named in `Vary`. `Vary: *` → do not cache. |
+| `vary_values` | Response `Vary` | Values of the request headers named in `Vary`. `Vary: *` → do not cache. Legacy mode: empty in the key; the entry keeps them (H-160, below). |
 | `variant` | Protocol | `legacy` or `RQP`, plus language/region if the app declares them. |
 
 ### Byte layout
@@ -44,8 +44,36 @@ cache_key = SHA-256(partition ‖ origin ‖ canonical_url ‖ method ‖ vary_v
 
 - The function sorts the `Vary` entries: by the bytes of the name, then an absent value first, then by the digest bytes. So the order of the entries does not change the key. It does not change the case of a name: the parser gives lower case.
 - Every field has a length, and fields 2, 6 and the values start with a tag. So two different sets of parts give two different byte strings: `("ab","c")` and `("a","bc")` differ, the `public` field (1 byte) is never a scoped field (33 bytes), an absent value differs from any digest, and an absent locale differs from an empty one.
-- The inputs come from other parts: the `PartitionId` from the adapter (the HMAC of the first line), the canonical URL from the URL parser of WP-08 (section 2), the `Vary` digests from the key port (HMAC-SHA256, DL-127, H-147). `Vary: *` gives no entry, so it has no key.
+- The inputs come from other parts: the `PartitionId` from the adapter (the HMAC of the first line), the canonical URL from the URL parser of WP-08 (section 2), the `Vary` digests from the session (HMAC-SHA256 with a key of the key port, DL-127, H-147, DL-206). `Vary: *` gives no entry, so it has no key. A legacy key has no `Vary` entry (H-160, below).
 - Tests: `crates/rivqen-cache/tests/key_layout.rs` writes the bytes of each case by hand and compares the hash; two known answers are also checked with `shasum -a 256` outside Rust (`key_known_answers`). `key_prop.rs` checks that one changed part changes the key and that two partitions never share a key.
+
+### One entry per URL (H-160)
+
+<Badge type="info" text="DESIGN" /> The human decision H-160 ([WP-08 S2](/engineering/plan/sprints/WP-08-S2)): a session must find the entry of a URL before it knows the `Vary` names of that entry, and a driver reads by the exact key only. So a URL has **one entry** in a partition:
+
+- The key has no `Vary` entry (field 6 is `0`).
+- The entry stores the `Vary` names of its response with the keyed digests of the request values (`EntryMeta.vary`).
+- The entry is visible only to a request with the same values. A request with other values gets no entry (a miss, never another variant).
+- A commit for other values replaces the entry.
+- Cost: a page whose `Vary` value changes between requests keeps one variant. The store format does not change.
+- RQP follows the same rule unless WP-08 S3 decides otherwise.
+
+<Badge type="tip" text="FACT" /> Legacy mode, in `rivqen_session::legacy::record` (WP-08 S2 T-02):
+
+| Function | What it does |
+|---|---|
+| `entry_key` | `cache_key` with the partition (scoped), the origin and the canonical URL of the `ParsedUrl` (`cache_url` with no ignored names), no `Vary` entry, the protocol `legacy` and no locale |
+| `vary_entries` | The `Vary` entries of a commit: the names of every `Vary` line except `accept-diff`, `if-none-match` and `template-tag` (CL-12), in lower case, sorted, each name once; `None` for `Vary: *` or a member that is not a field name (no commit) |
+| `check_visible`, `visible` | The visible record of an entry. In order: the protocol is `legacy` and the stored `Vary` entries have the form that `vary_entries` gives, else `Damaged`; each stored digest equals the digest of this request, else `OtherVariant` (the entry stays); the page, the template and the data values are UTF-8, the SHA-1 of the page is the etag and the SHA-1 of the template is the template tag (CL-40), else `Damaged` (the session removes the entry) |
+| `commit`, `remove`, `disable` | `Replace`, `Remove` and `DisableKey` in the partition of the session, each with the request precondition of `WriteBasis` (DL-220) |
+
+<Badge type="tip" text="FACT" /> **The request value of a `Vary` name.** The lines of that name (ASCII case-insensitive): first the session request fields (CL-09, with `cookie`), then the fields that the platform adds, each group in its order. Several lines are one value, joined with `, ` (RFC 9110 §5.3). No line: the entry has no digest (`null` in the fixture projection). A line with an empty value has a digest, so an absent value never equals an empty one.
+
+<Badge type="tip" text="FACT" /> **The keyed digest (DL-127, H-147, DL-206).** HMAC-SHA256 with the 32-byte `VaryKey` of the key port over `len(tag) ‖ tag ‖ len(name) ‖ name ‖ value`. `tag` is the ASCII text `rivqen-vary-v1` (a domain tag: the digest never equals an HMAC of another use of the key). `name` is the lower-case name. `value` is the exact bytes of the value. `len` is 8 bytes big-endian. The name has a length and the value is last, so two different (name, value) pairs never give one input. The store keeps only the digest. `Debug` writes no digest, key byte or value.
+
+<Badge type="tip" text="FACT" /> **Commit.** The entry has the host of the URL, the protocol `legacy`, the `Vary` entries, the etag and the template tag, the page, the template, the data blocks in order and the page fields (CL-38). The freshness inputs come from the response fields with the parsers of `rivqen-cache`: `Cache-Control`, `Age`, `Expires` and `Date`. Every `Expires` line must give the same valid date, else `Expires` is not valid (already expired). Every `Date` line must give the same valid date, else there is no `Date`. The store time and the last use are the response time. Legacy mode has no `ttl_seconds` and no `offline`.
+
+<Badge type="tip" text="FACT" /> Tests: `crates/rivqen-session/tests/legacy_record_vary.rs` (`legacy_record_key_*`, `legacy_record_vary_*`, `legacy_record_debug_*`; a known answer of the digest from Python `hmac` and `openssl dgst -mac HMAC`), `legacy_record_visible.rs` (`legacy_record_visible_*`, with property tests), `legacy_record_commit.rs` (`legacy_record_commit_*`, `legacy_record_writes_*`: round trips through the fake driver of `rivqen-testkit`, refused writes after a revoke, a site clear or a changed entry).
 
 ## 2. URL canonicalization
 
@@ -56,7 +84,7 @@ cache_key = SHA-256(partition ‖ origin ‖ canonical_url ‖ method ‖ vary_v
 5. Keep **all** query parameters by default. Do not sort them unless the app declares that order is not significant.
 6. Remove only parameters that the app lists in `cache.ignoredQueryParams` (for example tracking parameters). Never remove a parameter that changes content or authorization.
 
-<Badge type="tip" text="FACT" /> `rivqen_url::parse` (crate `rivqen-url`, on `url` 2.5.9 with `idna_adapter` 1.0.0; H-156, DL-218) reads one absolute `http` or `https` URL of at most 8 192 bytes (`MAX_URL_BYTES`; a longer text is `UrlError::TooLong` before any parse). It gives U of [manifest and patch §2.2](/engineering/protocol/manifest-patch#_2-2-fields) (`ParsedUrl::binding_url`: steps 1 to 3, the path and the query as the WHATWG parser writes them), the serialized origin and the path of [manifest and patch §1.6](/engineering/protocol/manifest-patch#_1-6-origin-and-path) (`origin`, `path`), and the canonical URL of steps 1 to 6 (`ParsedUrl::cache_url`). Step 2 removes the port 80 of `http` in every build; the rule "debug builds only" for `http` is a session rule. Tests: `crates/rivqen-url/tests/url_known.rs`, `url_interop.rs` (the 67 inputs of the [URL interop spike](/research/url-interop) against the stored WHATWG results: 51 equal, 16 listed exceptions), `url_prop.rs`; fuzz target `url_canonical`.
+<Badge type="tip" text="FACT" /> `rivqen_url::parse` (crate `rivqen-url`, on `url` 2.5.9 with `idna_adapter` 1.0.0; H-156, DL-218) reads one absolute `http` or `https` URL of at most 8 192 bytes (`MAX_URL_BYTES`; a longer text is `UrlError::TooLong` before any parse). It gives U of [manifest and patch §2.2](/engineering/protocol/manifest-patch#_2-2-fields) (`ParsedUrl::binding_url`: steps 1 to 3, the path and the query as the WHATWG parser writes them), the serialized origin and the path of [manifest and patch §1.6](/engineering/protocol/manifest-patch#_1-6-origin-and-path) (`origin`, `path`), and the canonical URL of steps 1 to 6 (`ParsedUrl::cache_url`). Step 2 removes the port 80 of `http` in every build; the rule "debug builds only" for `http` is a session rule. The legacy session uses `cache_url` with no ignored names: step 6 has no configuration in WP-08 S2, so every parameter stays in the key (`legacy_record_key_keeps_every_query_parameter`). Tests: `crates/rivqen-url/tests/url_known.rs`, `url_interop.rs` (the 67 inputs of the [URL interop spike](/research/url-interop) against the stored WHATWG results: 51 equal, 16 listed exceptions), `url_prop.rs`; fuzz target `url_canonical`.
 
 <Badge type="tip" text="FACT" /> **Step 1, H-156 and DL-225.** The parser has no Unicode data. A host with a byte over `0x7F`, as a character or as an escape `%80` to `%FF`, is `UrlError::Host`: the session is not opened and the web view loads normally. A host with a label that starts with `xn--` (a punycode label, ASCII case-insensitive) is also `UrlError::Host` ([DL-225](/engineering/plan/decision-log)): `https://xn--fa-hia.example/` and `https://XN--BCHER-KVA.example/` are rejected, so a site on an internationalized domain loads normally. A scan of the input finds both before the WHATWG parser runs, because `idna_adapter` 1.0.0 and `idna` 1.1.0 have debug assertions that these hosts reach (a panic in a test or fuzz build): `Aé.example`, and a punycode label whose Unicode text the parser cannot check (`https://xn--TTgTggTTTggTPTTTPTTThtTTtpTTs`, a fuzz finding). The scan removes tab, LF and CR and percent-decodes the authority once, as the WHATWG parser does before IDNA, and then splits it at each `.`: `https://a%2Exn--b/`, `https://%78n--b.example/` and `https://xn--b.example/` with a tab inside `xn--` are rejected. A label with `--` at another place passes (`https://ab--c.example/`). After the parse, the host is checked again. For an ASCII host without a punycode label, `idna` 1.1.0 only changes upper-case letters to lower case and rejects the forbidden domain code points; it reaches no debug assertion.
 
@@ -94,7 +122,7 @@ cache_key = SHA-256(partition ‖ origin ‖ canonical_url ‖ method ‖ vary_v
 | Two profiles, same URL, concurrent loads | Two entries, no shared bytes |
 | Logout during a revalidation | Revalidation result is discarded; old entry is unreadable |
 | Query parameter order change | Different keys (default) / same key (if declared not significant) |
-| `Vary: Accept-Language` | Separate entries per language |
+| `Vary: Accept-Language` | One entry per URL (H-160): a request with another language does not see the entry; its commit replaces it (`legacy_record_visible_finds_the_value_in_the_platform_fields`, `legacy_record_commit_for_other_values_replaces_the_entry`) |
 | The app turned the `public` partition off; an entry of `public` from a time when the setting was on, and a `304` or a valid delta | The entry is not used: no `If-None-Match`, no `Rq-Have`; the `304` gives a normal load; the delta gives `PATCH_INVALID` (`FX-RQ-C27-PUBLIC-SNAPSHOT-NOT-ENABLED-304`, `-DELTA`; H-81, L1). The deletion of the entry: spec only, the protocol fixtures do not model it |
 | The app did not turn the `public` partition on; `"mode": "public"`, public origin, `Cache-Control: public` | Entry in the partition of the request (`FX-RQ-C24-PUBLIC-NOT-ENABLED`, H-81). The rows below have the setting on |
 | `"mode": "public"`, public origin, request with cookies, no `Cache-Control: public` | Entry in the partition of the request (protocol fixture `FX-RQ-C24-PUBLIC-NO-DIRECTIVE`) |

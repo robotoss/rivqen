@@ -172,6 +172,8 @@ fn stored(text: &str, host: &str) -> StoredEntry {
 
 fn fake_check_visible(
     entry: &StoredEntry,
+    _partition: PartitionId,
+    _cache_key: CacheKey,
     _values: &RequestValues<'_>,
     _key: &VaryKey,
 ) -> Result<LegacyRecord, NotVisible> {

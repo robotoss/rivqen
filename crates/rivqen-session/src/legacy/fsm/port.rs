@@ -10,13 +10,19 @@
 use rivqen_cache::key::VaryEntry;
 use rivqen_cache::txn::{CacheTransaction, StoredEntry};
 use rivqen_model::http::FieldLine;
+use rivqen_model::ids::{CacheKey, PartitionId};
 
 use crate::legacy::record::{self, LegacyRecord, NewRecord, NotVisible, RequestValues, WriteBasis};
 use crate::legacy::types::VaryKey;
 
-/// [`record::check_visible`].
-pub(crate) type CheckVisible =
-    fn(&StoredEntry, &RequestValues<'_>, &VaryKey) -> Result<LegacyRecord, NotVisible>;
+/// [`record::check_visible_in`].
+pub(crate) type CheckVisible = fn(
+    &StoredEntry,
+    PartitionId,
+    CacheKey,
+    &RequestValues<'_>,
+    &VaryKey,
+) -> Result<LegacyRecord, NotVisible>;
 /// [`record::vary_entries`].
 pub(crate) type VaryEntries =
     fn(&[FieldLine], &RequestValues<'_>, &VaryKey) -> Option<Vec<VaryEntry>>;
@@ -27,7 +33,8 @@ pub(crate) type Commit = fn(&WriteBasis, &NewRecord<'_>) -> CacheTransaction;
 /// always use `record::remove` and `record::disable`.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct RecordPort {
-    /// The visible entry (CL-12, CL-40).
+    /// The visible entry (CL-12, CL-40) of the partition and the key of
+    /// the session (DL-229 (f)).
     pub(crate) check_visible: CheckVisible,
     /// The `Vary` entries of a commit (CL-12).
     pub(crate) vary_entries: VaryEntries,
@@ -38,7 +45,7 @@ pub(crate) struct RecordPort {
 impl RecordPort {
     /// The functions of `crate::legacy::record`.
     pub(crate) const RECORD: Self = Self {
-        check_visible: record::check_visible,
+        check_visible: record::check_visible_in,
         vary_entries: record::vary_entries,
         commit: record::commit,
     };

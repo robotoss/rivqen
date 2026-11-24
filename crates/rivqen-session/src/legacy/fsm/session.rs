@@ -496,7 +496,14 @@ impl Session {
             session_fields: &fields,
             platform_fields: &self.platform_fields,
         };
-        match (env.port.check_visible)(stored, &values, &self.vary_key) {
+        let visible = (env.port.check_visible)(
+            stored,
+            self.partition,
+            self.key,
+            &values,
+            &self.vary_key,
+        );
+        match visible {
             Ok(mut record) => {
                 // DL-229 (d): the stored lines pass the filter of DL-226 (b)
                 // whatever the record port gives, so neither the cached

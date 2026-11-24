@@ -179,7 +179,9 @@ pub enum NotVisible {
     Damaged,
 }
 
-/// Like [`visible`], with the reason of a `None`.
+/// Like [`visible`], with the reason of a `None`. It does not compare the
+/// partition and the key of the entry with the reader:
+/// [`check_visible_in`] does, and the session uses it.
 ///
 /// The checks, in order; the first one that fails gives the result:
 ///
@@ -267,6 +269,27 @@ pub(crate) fn stored_page_fields(stored: &[FieldLine]) -> Vec<FieldLine> {
     let mut fields = merge_page_fields(stored, &[]);
     fields.retain(|line| !NOT_PAGE_FIELDS.contains(&line.name.as_str()));
     fields
+}
+
+/// Like [`check_visible`] for the session of `partition` and `cache_key`
+/// (DL-229 (f)): an entry whose stored partition or key is not the one of
+/// the session is [`NotVisible::Damaged`] (a lookup gave the session an
+/// entry that it did not ask for), before every other check.
+///
+/// # Errors
+///
+/// [`NotVisible`] when the entry is not visible.
+pub fn check_visible_in(
+    entry: &StoredEntry,
+    partition: PartitionId,
+    cache_key: CacheKey,
+    values: &RequestValues<'_>,
+    key: &VaryKey,
+) -> Result<LegacyRecord, NotVisible> {
+    if entry.meta.partition != Partition::Scoped(partition) || entry.meta.key != cache_key {
+        return Err(NotVisible::Damaged);
+    }
+    check_visible(entry, values, key)
 }
 
 /// The `Vary` entries of a commit for a response with `response_fields`

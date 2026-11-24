@@ -25,7 +25,8 @@ use rivqen_model::ids::{CacheKey, PartitionId};
 use rivqen_model::safe::{PageBytes, Secret};
 use rivqen_model::time::UnixTime;
 use rivqen_session::legacy::record::{
-    NewRecord, NotVisible, RequestValues, WriteBasis, check_visible, commit, vary_entries, visible,
+    NewRecord, NotVisible, RequestValues, WriteBasis, check_visible, check_visible_in, commit,
+    vary_entries, visible,
 };
 use rivqen_session::legacy::types::VaryKey;
 use rivqen_template::legacy::DataBlock;
@@ -168,6 +169,43 @@ fn legacy_record_visible_page_fields_pass_the_filter() {
     let clean = stored(PAGE, TEMPLATE, &[], &[]);
     let record = check_visible(&clean, &values(&[], &[]), &vary_key()).unwrap();
     assert_eq!(record.fields, clean.body.fields);
+}
+
+#[test]
+fn legacy_record_visible_in_another_partition_or_key_is_damaged() {
+    // DL-229 (f): the entry must be the one of the reader's partition and
+    // key; a mismatch is damage, before the `Vary` match.
+    let (entry, session) = cookie_entry();
+    let own = basis();
+    let check_in = |partition: PartitionId, cache_key: CacheKey, session: &[FieldLine]| {
+        check_visible_in(
+            &entry,
+            partition,
+            cache_key,
+            &values(session, &[]),
+            &vary_key(),
+        )
+        .map(|_| ())
+    };
+    assert_eq!(check_in(own.partition, own.key, &session), Ok(()));
+    let other_partition = PartitionId::from_bytes([9; 32]);
+    let other_key = CacheKey::from_bytes([9; 32]);
+    for (partition, cache_key) in [
+        (other_partition, own.key),
+        (own.partition, other_key),
+        (other_partition, other_key),
+    ] {
+        assert_eq!(
+            check_in(partition, cache_key, &session),
+            Err(NotVisible::Damaged)
+        );
+        // Also for a request of another `Vary` value.
+        assert_eq!(check_in(partition, cache_key, &[]), Err(NotVisible::Damaged));
+    }
+    assert_eq!(
+        check_in(own.partition, own.key, &[]),
+        Err(NotVisible::OtherVariant)
+    );
 }
 
 #[test]

@@ -29,6 +29,7 @@ use rivqen_model::safe::{PageBytes, Secret};
 use rivqen_model::time::{Instant, UnixTime};
 use rivqen_proto_legacy::body::{BodyLimits, DATA_BODY_DEPTH};
 use rivqen_session::legacy::engine::LegacyEngine;
+use rivqen_session::legacy::record::{self, NewRecord, WriteBasis};
 use rivqen_session::legacy::types::{
     DEFAULT_UNAVAILABLE_TIME_MS, Effect, ExchangeId, Input, InterceptId, LegacyConfig,
     LookupResult, Now, OpenContext, Presentation, SessionId, TransportError, VaryKey,
@@ -438,6 +439,83 @@ fn legacy_engine_open_damaged_entry_is_removed() {
         removals[0].pre.entry,
         rivqen_cache::txn::Expect::Version(EntryVersion(3))
     );
+}
+
+/// The entry that a commit of `page()` for `URL` in `PARTITION` stores.
+fn committed_entry() -> StoredEntry {
+    let text = page();
+    let SplitOutcome::Applied(split) =
+        split_v1(text.as_bytes(), &TemplateLimits::default()).unwrap()
+    else {
+        panic!("no split");
+    };
+    let basis = WriteBasis {
+        partition: PARTITION,
+        key: record::entry_key(PARTITION, &rivqen_url::parse(URL).unwrap()),
+        partition_epoch: PARTITION_EPOCH,
+        site_epoch: SITE_EPOCH,
+        expect: rivqen_cache::txn::Expect::Absent,
+    };
+    let txn = record::commit(
+        &basis,
+        &NewRecord {
+            host: "shop.example.com",
+            vary: &[],
+            page: &text,
+            template: &split.template,
+            data: &split.data,
+            fields: &[line("content-type", "text/html; charset=utf-8")],
+            etag: etag_v1(text.as_bytes()),
+            template_tag: template_tag_v1(&split.template),
+            response_fields: &[],
+            request_time: UnixTime(WALL),
+            response_time: UnixTime(WALL),
+        },
+    );
+    let TxnOp::Replace { meta, body } = txn.op else {
+        panic!("a commit is a replace");
+    };
+    StoredEntry {
+        meta: *meta,
+        version: EntryVersion(4),
+        body: *body,
+    }
+}
+
+#[test]
+fn legacy_engine_open_entry_of_another_partition_or_key_is_damaged() {
+    // DL-229 (f): the session uses only an entry of its own partition and
+    // key; another one is damage, removed, and the request has no
+    // validators.
+    let mut run = Run::new(Presentation::Quick);
+    let (_, _, effects) = run.start(Some(committed_entry()));
+    assert_eq!(writes(&effects), 0);
+    let Some(Effect::Send(spec)) = effects.last() else {
+        panic!("{effects:?}");
+    };
+    assert_eq!(spec.fields.len(), 3, "the validators of the visible entry");
+
+    let mut other_partition = committed_entry();
+    other_partition.meta.partition = Partition::Scoped(OTHER);
+    let mut other_key = committed_entry();
+    other_key.meta.key = CacheKey::from_bytes([9; 32]);
+    for entry in [other_partition, other_key] {
+        let mut run = Run::new(Presentation::Quick);
+        let (_, _, effects) = run.start(Some(entry));
+        let removals: Vec<_> = effects
+            .iter()
+            .filter_map(|effect| match effect {
+                Effect::Cache(txn) => Some(txn),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(removals.len(), 1);
+        assert!(matches!(removals[0].op, TxnOp::Remove { .. }));
+        let Some(Effect::Send(spec)) = effects.last() else {
+            panic!("{effects:?}");
+        };
+        assert_eq!(spec.fields, vec![line("accept-diff", "true")]);
+    }
 }
 
 #[test]

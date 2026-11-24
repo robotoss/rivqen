@@ -621,7 +621,7 @@ impl Session {
             push => {
                 exchange.end = End::Failed;
                 if !fresh {
-                    exchange.finish_streams(false, out);
+                    self.old_failed(id, out);
                 } else if push == super::exchange::Push::NotUtf8 {
                     self.not_text(id, out); // CL-16
                 } else {
@@ -632,6 +632,11 @@ impl Session {
     }
 
     /// The end of a body.
+    ///
+    /// Every buffered body (a page or a data body, of this generation or of
+    /// an older one) runs the end checks of CL-16 and CL-32 first: a body
+    /// that is empty or not UTF-8 ends [`End::Failed`], its streams end
+    /// incomplete and it is never a complete document (DL-229 (c)).
     fn on_end(&mut self, env: &Env<'_>, id: ExchangeId, out: &mut Vec<Effect>) {
         let fresh = self.is_fresh(id);
         let kind = self.kind;
@@ -641,13 +646,18 @@ impl Session {
         if exchange.head.is_none() || exchange.has_ended() {
             return;
         }
+        if exchange.is_buffered() && (exchange.body.is_empty() || !exchange.is_text()) {
+            exchange.end = End::Failed;
+            if fresh {
+                self.not_text(id, out); // CL-32, CL-16
+            } else {
+                self.old_failed(id, out);
+            }
+            return;
+        }
         exchange.end = End::Complete;
         match kind {
             Some(kind) if fresh && kind.needs_body() => {
-                if exchange.body.is_empty() || !exchange.is_text() {
-                    self.not_text(id, out); // CL-32, CL-16
-                    return;
-                }
                 match kind {
                     Kind::FirstLoad => self.first_load_end(env, id, out),
                     Kind::TemplateChange => self.template_change_end(env, id, out),
@@ -676,7 +686,7 @@ impl Session {
         exchange.end = End::Failed;
         let tls = error == TransportError::Tls;
         if !fresh {
-            exchange.finish_streams(false, out);
+            self.old_failed(id, out);
         } else if exchange.head.is_none() {
             self.decided = true;
             if tls {

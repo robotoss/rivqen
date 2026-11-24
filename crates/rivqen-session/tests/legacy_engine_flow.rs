@@ -682,6 +682,96 @@ fn legacy_engine_classify_failed_body_streams_only_the_valid_prefix() {
     }
 }
 
+#[test]
+fn legacy_engine_classify_old_generation_end_runs_the_end_checks_standard() {
+    // DL-229 (c): a stream of an older generation whose body ends with an
+    // incomplete UTF-8 sequence ends incomplete, then `load_url` (CL-16 as
+    // CL-33); no cache effect (CL-35).
+    let text = page();
+    let mut run = Run::new(Presentation::Standard);
+    let (id, exchange, _) = run.start(None);
+    let mut effects = run.client(id);
+    effects.extend(run.step(id, Input::Intercept(InterceptId(1))));
+    effects.extend(run.step(
+        id,
+        Input::ResponseHead {
+            exchange,
+            status: 200,
+            fields: legacy_head(&text),
+        },
+    ));
+    effects.extend(run.step(
+        id,
+        Input::BodyChunk {
+            exchange,
+            bytes: b"<html>\xc3".to_vec(),
+        },
+    ));
+    assert_eq!(
+        answer(&effects, InterceptId(1)),
+        Some(Answer::Open(b"<html>".to_vec()))
+    );
+    effects = run.step(id, Input::Refresh);
+    assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
+    effects = run.step(id, Input::BodyEnd { exchange });
+    assert_eq!(
+        effects,
+        vec![
+            Effect::StreamEnd {
+                intercept: InterceptId(1),
+                complete: false
+            },
+            Effect::LoadUrl
+        ]
+    );
+    // The next intercept waits for the head of the current generation.
+    assert_eq!(run.step(id, Input::Intercept(InterceptId(2))), Vec::new());
+}
+
+#[test]
+fn legacy_engine_classify_old_generation_end_runs_the_end_checks_quick() {
+    // DL-229 (c): an empty body (CL-32) or a body that is not UTF-8 (CL-16)
+    // of an older generation is never a complete document: Quick gives no
+    // `load_data` of it at `client_ready`.
+    let text = page();
+    for body in [b"".as_slice(), b"<html>\xc3"] {
+        let mut run = Run::new(Presentation::Quick);
+        let (id, exchange, _) = run.start(None);
+        let mut effects = run.step(
+            id,
+            Input::ResponseHead {
+                exchange,
+                status: 200,
+                fields: legacy_head(&text),
+            },
+        );
+        if !body.is_empty() {
+            effects.extend(run.step(
+                id,
+                Input::BodyChunk {
+                    exchange,
+                    bytes: body.to_vec(),
+                },
+            ));
+        }
+        assert_eq!(effects, Vec::new());
+        let effects = run.step(id, Input::Refresh);
+        assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
+        assert_eq!(run.step(id, Input::BodyEnd { exchange }), Vec::new());
+        assert_eq!(run.client(id), vec![Effect::LoadUrl], "{} bytes", body.len());
+        assert_eq!(run.step(id, Input::Intercept(InterceptId(1))), Vec::new());
+        // The current generation gives the document.
+        let mut effects = run.step(id, lookup(None, false));
+        effects.extend(run.step(id, Input::Cookie(None)));
+        let second = sent(&effects).unwrap();
+        effects = run.respond(id, second, 200, legacy_head(&text), text.as_bytes());
+        assert_eq!(
+            answer(&effects, InterceptId(1)),
+            Some(Answer::Doc(text.as_bytes().to_vec(), true))
+        );
+    }
+}
+
 // --- delivery and codes (CL-20 to CL-24) ---
 
 #[test]

@@ -462,6 +462,30 @@ impl Session {
         }
     }
 
+    /// DL-229 (c): the body of an exchange of an older generation (CL-35)
+    /// failed: not UTF-8 or empty at its end (CL-16, CL-32), over its
+    /// limit, or cut. Its streams end incomplete with the valid bytes only,
+    /// then `load_url` (as CL-33). When it is the current document, the
+    /// session has no document until the outcome of the current generation
+    /// gives one, and a waiting intercept gets `null`. No cache effect and
+    /// no result: CL-35 ignores a response of an older generation for the
+    /// cache and the codes.
+    pub(super) fn old_failed(&mut self, id: ExchangeId, out: &mut Vec<Effect>) {
+        let mut streaming = false;
+        if let Some(exchange) = self.exchange_mut(id) {
+            exchange.end = End::Failed;
+            streaming = !exchange.streams.is_empty();
+            exchange.finish_streams(false, out);
+        }
+        if self.doc_reads(id) {
+            self.doc = None;
+            self.resolve_waiting(out);
+        }
+        if streaming {
+            self.web_load_url(out);
+        }
+    }
+
     // --- codes and messages (CL-22 to CL-24, CL-28) ---
 
     /// CL-22: the final code of `src`: `304` when the web view has no

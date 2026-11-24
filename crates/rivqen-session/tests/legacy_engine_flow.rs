@@ -18,7 +18,7 @@
     clippy::arithmetic_side_effects
 )]
 
-use rivqen_cache::key::{Partition, Protocol};
+use rivqen_cache::key::{Partition, Protocol, VaryEntry};
 use rivqen_cache::policy::{EntryPolicy, Expires};
 use rivqen_cache::txn::{
     EntryMeta, EntryVersion, Epoch, SnapshotBody, StoredEntry, TxnOp, Validators, Writer,
@@ -29,7 +29,7 @@ use rivqen_model::safe::{PageBytes, Secret};
 use rivqen_model::time::{Instant, UnixTime};
 use rivqen_proto_legacy::body::{BodyLimits, DATA_BODY_DEPTH};
 use rivqen_session::legacy::engine::LegacyEngine;
-use rivqen_session::legacy::record::{self, NewRecord, WriteBasis};
+use rivqen_session::legacy::record::{self, NewRecord, RequestValues, WriteBasis};
 use rivqen_session::legacy::types::{
     DEFAULT_UNAVAILABLE_TIME_MS, Effect, ExchangeId, Input, InterceptId, LegacyConfig,
     LookupResult, Now, OpenContext, Presentation, SessionId, TransportError, VaryKey,
@@ -237,6 +237,42 @@ impl Run {
         effects.extend(self.step(id, Input::BodyEnd { exchange }));
         effects
     }
+
+    fn head(&mut self, id: SessionId, exchange: ExchangeId, fields: Vec<FieldLine>) -> Vec<Effect> {
+        self.step(
+            id,
+            Input::ResponseHead {
+                exchange,
+                status: 200,
+                fields,
+            },
+        )
+    }
+
+    fn chunk(&mut self, id: SessionId, exchange: ExchangeId, bytes: &[u8]) -> Vec<Effect> {
+        self.step(
+            id,
+            Input::BodyChunk {
+                exchange,
+                bytes: bytes.to_vec(),
+            },
+        )
+    }
+
+    /// CL-35: a refresh with no entry in the store; returns the exchange of
+    /// the new request.
+    fn refresh(&mut self, id: SessionId) -> ExchangeId {
+        assert!(matches!(
+            self.step(id, Input::Refresh).as_slice(),
+            [Effect::Lookup { .. }]
+        ));
+        assert_eq!(self.step(id, lookup(None, false)), vec![Effect::ReadCookie]);
+        let effects = self.step(id, Input::Cookie(None));
+        let [Effect::Send(spec)] = effects.as_slice() else {
+            panic!("{effects:?}");
+        };
+        spec.exchange
+    }
 }
 
 fn sent(effects: &[Effect]) -> Option<ExchangeId> {
@@ -443,6 +479,11 @@ fn legacy_engine_open_damaged_entry_is_removed() {
 
 /// The entry that a commit of `page()` for `URL` in `PARTITION` stores.
 fn committed_entry() -> StoredEntry {
+    committed_entry_with(&[])
+}
+
+/// [`committed_entry`] with the `Vary` entries `vary`.
+fn committed_entry_with(vary: &[VaryEntry]) -> StoredEntry {
     let text = page();
     let SplitOutcome::Applied(split) =
         split_v1(text.as_bytes(), &TemplateLimits::default()).unwrap()
@@ -460,7 +501,7 @@ fn committed_entry() -> StoredEntry {
         &basis,
         &NewRecord {
             host: "shop.example.com",
-            vary: &[],
+            vary,
             page: &text,
             template: &split.template,
             data: &split.data,
@@ -1519,4 +1560,422 @@ fn legacy_engine_writes_name_the_request_partition() {
         total += writes(&effects);
     }
     assert_eq!(total, 4);
+}
+
+// --- delivery of a body while it arrives (CL-20 items 4 and 7) ---
+
+/// A page with another template than [`page`].
+fn other_page() -> String {
+    "<html><head><title>New</title></head><body><!--sonicdiff-a-->2<!--sonicdiff-a-end--></body></html>"
+        .to_owned()
+}
+
+fn stream_chunk(intercept: u64, bytes: &[u8]) -> Effect {
+    Effect::StreamChunk {
+        intercept: InterceptId(intercept),
+        bytes: bytes.to_vec(),
+    }
+}
+
+fn stream_end(intercept: u64, complete: bool) -> Effect {
+    Effect::StreamEnd {
+        intercept: InterceptId(intercept),
+        complete,
+    }
+}
+
+#[test]
+fn legacy_engine_delivery_stream_gets_each_chunk_as_it_arrives() {
+    // CL-20 item 4: a stream gets the body bytes while they arrive, not
+    // only at the end of the body.
+    let text = page();
+    let bytes = text.as_bytes();
+    let mut run = Run::new(Presentation::Standard);
+    let (id, exchange, _) = run.start(None);
+    assert_eq!(run.client(id), vec![Effect::LoadUrl]);
+    assert_eq!(run.step(id, Input::Intercept(InterceptId(1))), Vec::new());
+    assert_eq!(run.head(id, exchange, legacy_head(&text)), Vec::new());
+    let effects = run.chunk(id, exchange, &bytes[..10]);
+    assert_eq!(
+        answer(&effects, InterceptId(1)),
+        Some(Answer::Open(bytes[..10].to_vec()))
+    );
+    assert_eq!(
+        run.chunk(id, exchange, &bytes[10..20]),
+        vec![stream_chunk(1, &bytes[10..20])]
+    );
+    assert_eq!(
+        run.chunk(id, exchange, &bytes[20..]),
+        vec![stream_chunk(1, &bytes[20..])]
+    );
+    let effects = run.step(id, Input::BodyEnd { exchange });
+    assert_eq!(
+        stream_of(&effects, InterceptId(1)),
+        vec![stream_end(1, true)]
+    );
+}
+
+#[test]
+fn legacy_engine_delivery_no_web_view_call_with_only_bind_or_only_ready() {
+    // CL-20 item 7: with only `bind_client` or only `client_ready`, a cut
+    // stream (CL-33) gives no `load_url`; the second call decides.
+    let text = page();
+    for (first, second) in [
+        (Input::BindClient, Input::ClientReady),
+        (Input::ClientReady, Input::BindClient),
+    ] {
+        let mut run = Run::new(Presentation::Standard);
+        let (id, exchange, _) = run.start(None);
+        assert_eq!(run.step(id, first), Vec::new());
+        assert_eq!(run.step(id, Input::Intercept(InterceptId(1))), Vec::new());
+        assert_eq!(run.head(id, exchange, legacy_head(&text)), Vec::new());
+        let effects = run.chunk(id, exchange, &text.as_bytes()[..10]);
+        assert_eq!(
+            answer(&effects, InterceptId(1)),
+            Some(Answer::Open(text.as_bytes()[..10].to_vec()))
+        );
+        let effects = run.step(
+            id,
+            Input::TransportFailed {
+                exchange,
+                error: TransportError::Read,
+            },
+        );
+        assert_eq!(effects, vec![stream_end(1, false)]);
+        assert_eq!(run.step(id, second), vec![Effect::LoadUrl]);
+        assert_eq!(
+            run.step(id, Input::Intercept(InterceptId(2))),
+            vec![Effect::AnswerNull(InterceptId(2))]
+        );
+    }
+}
+
+#[test]
+fn legacy_engine_delivery_template_change_reload_waits_for_client_ready() {
+    // CL-20 item 7 with CL-31: the cached page went to an intercept before
+    // `client_ready`; the reload of the new document waits for the client.
+    let new = other_page();
+    for presentation in [Presentation::Quick, Presentation::Standard] {
+        let mut run = Run::new(presentation);
+        let (id, exchange, _) = run.start(Some(committed_entry()));
+        assert_eq!(run.step(id, Input::BindClient), Vec::new());
+        let effects = run.step(id, Input::Intercept(InterceptId(1)));
+        assert_eq!(
+            answer(&effects, InterceptId(1)),
+            Some(Answer::Doc(page().into_bytes(), true))
+        );
+        let effects = run.respond(id, exchange, 200, legacy_head(&new), new.as_bytes());
+        assert_eq!(results(&effects), vec![(2000, 2000)]);
+        assert!(
+            !effects
+                .iter()
+                .any(|effect| matches!(effect, Effect::LoadUrl | Effect::LoadData { .. })),
+            "{presentation:?}: {effects:?}"
+        );
+        let effects = run.step(id, Input::ClientReady);
+        if presentation == Presentation::Quick {
+            let [Effect::LoadData { body, .. }] = effects.as_slice() else {
+                panic!("{effects:?}");
+            };
+            assert_eq!(body.as_slice(), new.as_bytes());
+        } else {
+            assert_eq!(effects, vec![Effect::LoadUrl]);
+            let effects = run.step(id, Input::Intercept(InterceptId(2)));
+            assert_eq!(
+                answer(&effects, InterceptId(2)),
+                Some(Answer::Doc(new.clone().into_bytes(), true))
+            );
+        }
+    }
+}
+
+// --- generations and their exchanges (CL-35) ---
+
+#[test]
+fn legacy_engine_delivery_after_a_refresh_the_old_document_is_still_given() {
+    // CL-35: until the new generation has an outcome, the document of the
+    // old generation is the current document, and the session keeps the
+    // exchange that holds its body.
+    let text = page();
+    let mut run = Run::new(Presentation::Standard);
+    let (id, first, _) = run.start(None);
+    let effects = run.respond(id, first, 200, legacy_head(&text), text.as_bytes());
+    assert_eq!(results(&effects), vec![(1000, 304)]);
+    let _ = run.refresh(id);
+    assert_eq!(run.client(id), vec![Effect::LoadUrl]);
+    let effects = run.step(id, Input::Intercept(InterceptId(1)));
+    assert_eq!(
+        answer(&effects, InterceptId(1)),
+        Some(Answer::Doc(text.into_bytes(), true))
+    );
+}
+
+/// Generations 0 and 1 of a session with an open stream each: intercept 1
+/// (before the client) streams the first load of generation 0, and
+/// intercept 2 (after `load_url`) streams the first load of generation 1.
+/// Both bodies are open with `<html>`.
+fn two_open_streams(run: &mut Run) -> (SessionId, ExchangeId, ExchangeId) {
+    let text = page();
+    let (id, first, _) = run.start(None);
+    assert_eq!(run.step(id, Input::Intercept(InterceptId(1))), Vec::new());
+    assert_eq!(run.head(id, first, legacy_head(&text)), Vec::new());
+    let effects = run.chunk(id, first, b"<html>");
+    assert_eq!(
+        answer(&effects, InterceptId(1)),
+        Some(Answer::Open(b"<html>".to_vec()))
+    );
+    let second = run.refresh(id);
+    assert_eq!(run.head(id, second, legacy_head(&text)), Vec::new());
+    assert_eq!(run.client(id), vec![Effect::LoadUrl]);
+    assert_eq!(run.step(id, Input::Intercept(InterceptId(2))), Vec::new());
+    let effects = run.chunk(id, second, b"<html>");
+    assert_eq!(
+        answer(&effects, InterceptId(2)),
+        Some(Answer::Open(b"<html>".to_vec()))
+    );
+    (id, first, second)
+}
+
+#[test]
+fn legacy_engine_delivery_older_streams_go_on_while_an_intercept_waits() {
+    // CL-35 with CL-20 item 4: the stream of an older generation gets the
+    // rest of its body; an intercept that waits for the head of the current
+    // generation gets no answer from an older body.
+    let text = page();
+    let mut run = Run::new(Presentation::Standard);
+    let (id, first, second) = two_open_streams(&mut run);
+    let third = run.refresh(id);
+    // The body of generation 1 is not UTF-8 (CL-16): its stream ends
+    // incomplete, then `load_url`; the session has no document now.
+    assert_eq!(
+        run.chunk(id, second, b"\xff"),
+        vec![stream_end(2, false), Effect::LoadUrl]
+    );
+    assert_eq!(run.step(id, Input::Intercept(InterceptId(3))), Vec::new());
+    // The body of generation 0 goes on: only its own stream gets it.
+    assert_eq!(
+        run.chunk(id, first, b"<body>"),
+        vec![stream_chunk(1, b"<body>")]
+    );
+    assert_eq!(
+        run.step(id, Input::BodyEnd { exchange: first }),
+        vec![stream_end(1, true)]
+    );
+    // The first load of generation 2 answers intercept 3.
+    let effects = run.respond(id, third, 200, legacy_head(&text), text.as_bytes());
+    assert_eq!(
+        answer(&effects, InterceptId(3)),
+        Some(Answer::Doc(text.into_bytes(), true))
+    );
+}
+
+#[test]
+fn legacy_engine_delivery_four_exchanges_stay_open() {
+    // The session keeps four exchanges (its bound): here two older
+    // streams, the document of generation 2 and the current request. None
+    // of them ends.
+    let text = page();
+    let mut run = Run::new(Presentation::Standard);
+    let (id, first, second) = two_open_streams(&mut run);
+    let third = run.refresh(id);
+    assert_eq!(run.head(id, third, legacy_head(&text)), Vec::new());
+    // `refresh` checks that the request of generation 3 is the only effect.
+    let _ = run.refresh(id);
+    assert_eq!(
+        run.chunk(id, first, b"<body>"),
+        vec![stream_chunk(1, b"<body>")]
+    );
+    assert_eq!(
+        run.chunk(id, second, b"<body>"),
+        vec![stream_chunk(2, b"<body>")]
+    );
+}
+
+// --- codes (CL-22) ---
+
+#[test]
+fn legacy_engine_codes_first_load_after_a_refresh_is_a_new_document() {
+    // CL-22, CL-35: after a refresh the document of the old generation
+    // counts as delivered, so the first load of the new generation is
+    // another document: 1000 / 1000.
+    let text = page();
+    let mut run = Run::new(Presentation::Standard);
+    let (id, first, _) = run.start(None);
+    let effects = run.respond(id, first, 200, legacy_head(&text), text.as_bytes());
+    assert_eq!(results(&effects), vec![(1000, 304)]);
+    let second = run.refresh(id);
+    let effects = run.respond(id, second, 200, legacy_head(&text), text.as_bytes());
+    assert_eq!(results(&effects), vec![(1000, 1000)]);
+}
+
+// --- body checks (CL-01, CL-16, CL-33) ---
+
+#[test]
+fn legacy_engine_classify_chunk_after_the_end_changes_nothing() {
+    // CL-01: the body ends once; a later chunk is not part of the document.
+    let text = page();
+    let mut run = Run::new(Presentation::Standard);
+    let (id, exchange, _) = run.start(None);
+    let _ = run.respond(id, exchange, 200, legacy_head(&text), text.as_bytes());
+    assert_eq!(
+        run.chunk(id, exchange, b"<script>late</script>"),
+        Vec::new()
+    );
+    assert_eq!(run.client(id), vec![Effect::LoadUrl]);
+    let effects = run.step(id, Input::Intercept(InterceptId(1)));
+    assert_eq!(
+        answer(&effects, InterceptId(1)),
+        Some(Answer::Doc(text.into_bytes(), true))
+    );
+}
+
+#[test]
+fn legacy_engine_classify_template_change_body_not_utf8_removes_the_entry() {
+    // CL-16 found at the body is a normal load as CL-14: the entry is
+    // removed and the next intercept gets `null`. (A cut body, CL-33,
+    // keeps the cached page and the entry.)
+    let new = other_page();
+    let mut run = Run::new(Presentation::Standard);
+    let (id, exchange, _) = run.start(Some(committed_entry()));
+    let mut effects = run.head(id, exchange, legacy_head(&new));
+    effects.extend(run.chunk(id, exchange, b"<html>\xff"));
+    let [Effect::Cache(txn)] = effects.as_slice() else {
+        panic!("{effects:?}");
+    };
+    assert!(matches!(txn.op, TxnOp::Remove { .. }), "{txn:?}");
+    assert_eq!(
+        txn.pre.entry,
+        rivqen_cache::txn::Expect::Version(EntryVersion(4))
+    );
+    assert_eq!(run.client(id), vec![Effect::LoadUrl]);
+    assert_eq!(
+        run.step(id, Input::Intercept(InterceptId(1))),
+        vec![Effect::AnswerNull(InterceptId(1))]
+    );
+    let effects = run.step(id, Input::Destroy);
+    assert_eq!(results(&effects), vec![(-1, -1)]);
+}
+
+// --- the `Vary` of the entry (CL-12, CL-17) ---
+
+/// The `Vary` entries of `vary` for a request with the session fields
+/// `session` and the platform fields and the vary key of [`context`].
+fn vary_of(vary: &str, session: &[FieldLine]) -> Vec<VaryEntry> {
+    let platform = [line("accept-encoding", "gzip")];
+    record::vary_entries(
+        &[line("vary", vary)],
+        &RequestValues {
+            session_fields: session,
+            platform_fields: &platform,
+        },
+        &VaryKey(Secret::new([1; 32])),
+    )
+    .unwrap()
+}
+
+#[test]
+fn legacy_engine_open_vary_match_reads_the_cookie() {
+    // CL-12: the `Vary` match at the open uses the cookie of the request:
+    // the entry of the same cookie is visible (validators), the entry of
+    // another cookie is another variant (no validators, no write).
+    let vary = vary_of("cookie", &[line("cookie", "sid=1")]);
+    assert!(vary[0].value.is_some());
+    for (cookie, visible) in [("sid=1", true), ("sid=2", false)] {
+        let mut run = Run::new(Presentation::Quick);
+        let (id, _) = run.open(context(URL, PARTITION, true));
+        assert_eq!(
+            run.step(id, lookup(Some(committed_entry_with(&vary)), false)),
+            vec![Effect::ReadCookie]
+        );
+        let effects = run.step(id, Input::Cookie(Some(cookie.to_owned())));
+        let [Effect::Send(spec)] = effects.as_slice() else {
+            panic!("{effects:?}");
+        };
+        assert_eq!(
+            spec.fields.iter().any(|line| line.name == "if-none-match"),
+            visible,
+            "{cookie}"
+        );
+    }
+}
+
+/// The `Vary` entries of the one commit in `effects`.
+fn committed_vary(effects: &[Effect]) -> Vec<VaryEntry> {
+    let commits: Vec<&TxnOp> = effects
+        .iter()
+        .filter_map(|effect| match effect {
+            Effect::Cache(txn) => Some(&txn.op),
+            _ => None,
+        })
+        .collect();
+    let [TxnOp::Replace { meta, .. }] = commits.as_slice() else {
+        panic!("{effects:?}");
+    };
+    meta.vary.clone()
+}
+
+#[test]
+fn legacy_engine_classify_304_keeps_or_recomputes_the_vary_of_the_entry() {
+    // CL-17 (DL-126): the field update of a `304` without `Vary` keeps the
+    // `Vary` entries of the entry; a `Vary` field recomputes them from the
+    // names of the response and the values of this request (CL-12).
+    let encoding = vary_of("accept-encoding", &[]);
+    assert!(encoding[0].value.is_some());
+    let absent = vary_of("x-absent", &[]);
+    assert_eq!(absent[0].value, None);
+    let offline = line("cache-offline", "true");
+    for (stored_vary, fields, expected) in [
+        (encoding.clone(), vec![offline.clone()], encoding.clone()),
+        (
+            Vec::new(),
+            vec![offline.clone(), line("Vary", "Accept-Encoding")],
+            encoding.clone(),
+        ),
+        (
+            encoding.clone(),
+            vec![offline.clone(), line("vary", "x-absent")],
+            absent.clone(),
+        ),
+    ] {
+        let mut run = Run::new(Presentation::Quick);
+        let (id, exchange, effects) = run.start(Some(committed_entry_with(&stored_vary)));
+        let Some(Effect::Send(spec)) = effects.last() else {
+            panic!("{effects:?}");
+        };
+        assert_eq!(spec.fields.len(), 3, "the entry is visible");
+        let effects = run.respond(id, exchange, 304, fields, b"");
+        assert_eq!(results(&effects), vec![(304, 304)]);
+        assert_eq!(committed_vary(&effects), expected);
+    }
+}
+
+// --- `Debug` of the engine state (DL-227) ---
+
+#[test]
+fn legacy_engine_debug_texts_of_a_session_and_a_held_key_are_exact() {
+    // A session writes its flags and counts; a held key writes the length
+    // of its URL. Neither writes the URL.
+    let mut run = Run::new(Presentation::Standard);
+    let (id, _, _) = run.start(None);
+    let second = run.refresh(id);
+    assert_eq!(run.client(id), vec![Effect::LoadUrl]);
+    assert_eq!(run.step(id, Input::Intercept(InterceptId(1))), Vec::new());
+    assert_eq!(run.head(id, second, legacy_head(&page())), Vec::new());
+    let text = format!("{:?}", run.engine);
+    assert!(
+        text.contains(
+            "Session { stopped: false, generation: 1, kind: Some(FirstLoad), exchanges: 1, waiting: 1, .. }"
+        ),
+        "{text}"
+    );
+    assert!(!text.contains("shop.example"), "{text}");
+    let now = run.now();
+    let _ = run.engine.partition_changed(now, PARTITION);
+    let text = format!("{:?}", run.engine);
+    let url_len = rivqen_url::parse(URL).unwrap().cache_url(&[]).len();
+    assert!(
+        text.contains(&format!("HeldKey {{ url_len: {url_len}, .. }}")),
+        "{text}"
+    );
+    assert!(!text.contains("shop.example"), "{text}");
 }

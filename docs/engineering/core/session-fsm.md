@@ -117,6 +117,56 @@ The required results above are Rivqen design. They are stricter than upstream in
 | `cancel` | Upstream `destroy()` blocks no I/O completion; it drops later messages and waits up to 6 s for open saves. A forced destroy does not disconnect | §2.6 |
 | `PartitionChanged` | No upstream counterpart: the account is fixed at session creation and no code detects a change | §2.8 |
 
+## 5. The legacy session (WP-08 S2)
+
+<Badge type="tip" text="FACT" /> The crate `rivqen-session` (feature `legacy`) runs the rules of the Rivqen canonical client ([legacy client](/engineering/protocol/legacy-client) §9, CL-05 to CL-37) as a sans-I/O state machine. `legacy::engine::LegacyEngine` holds the sessions of one engine; the private module `legacy::fsm` holds the logic of one session. Inputs are `legacy::types::Input`; effects are `legacy::types::Effect`, in order.
+
+<Badge type="tip" text="FACT" /> The session is a product of small parts, not one enum: the request flow (lookup, cookie read, request), the current document and its delivery (CL-20), the result (CL-22) and the exchanges (one per request). The 13 states of section 1 are views of these parts.
+
+### 5.1 States
+
+| State | Legacy session | CL rules | Effects |
+|---|---|---|---|
+| `New` | Before `LegacyEngine::open` | CL-05 | — |
+| `CacheLookup` | Waiting for the lookup, then for the cookie; the cookie answer decides the visible entry | CL-07, CL-08, CL-12, CL-40 | `Lookup`, `ReadCookie`, `Closed`, `Cache` (remove a damaged entry) |
+| `ShowingCache` | The current document is the cached page | CL-10, CL-20 | `LoadData`, `AnswerDocument` |
+| `Fetching` | A request without a head, no visible entry | CL-09, CL-11, CL-18 | `Send`, `StoreCookies` |
+| `Revalidating` | A request without a head, with the validators of a visible entry | CL-09, CL-13 | `Send`, `StoreCookies` |
+| `Streaming` | A first load or a template change whose body is open | CL-16, CL-20, CL-32, CL-33 | `AnswerDocument`, `StreamChunk` |
+| `NotModified` | A `304` (or a `200` with the stored etag) that passed `is_safe_head` | CL-17, DL-226 | `Cache`, `Result` |
+| `DataPatch` | A data update until the end of its body, then a `Rebuilt` | CL-27 to CL-30 | `Message`, `Result`, `Cache` |
+| `TemplateChanged` | A template change after the delivery of the cached page | CL-30, CL-31 | `LoadData` or `LoadUrl` |
+| `FullReady` | The body ended complete, is not empty and is valid UTF-8 | CL-16, CL-25, CL-32 | `StreamEnd` |
+| `Commit` | A transaction of `record::commit` | CL-26, CL-38 | `Cache` |
+| `Fallback` | A normal load | CL-14, CL-18, CL-19, CL-29, CL-32, CL-33, CL-44 | `LoadUrl`, `AnswerNull`, `Cache` |
+| `Ready` | The result is set; the end is `Closed` | CL-22, CL-34, CL-06 | `Result`, `Closed` |
+
+### 5.2 Rules FSM-01 to FSM-07
+
+| Rule | Legacy session |
+|---|---|
+| FSM-01 | <Badge type="tip" text="FACT" /> Only `Input::Refresh` starts a generation (CL-35). `Destroy` and `partition_changed` end the session with `Closed` |
+| FSM-02 | <Badge type="tip" text="FACT" /> Each response input names its exchange. An exchange of an older generation gives only `StoreCookies` (CL-11 item 2) and the bytes of its own streams |
+| FSM-03 | <Badge type="tip" text="FACT" /> Not used: the legacy request is the revalidation (CL-39), there is no background request |
+| FSM-04 | <Badge type="tip" text="FACT" /> `Destroy`: `Result`, `AnswerNull` for each waiting intercept, `StreamEnd` with `complete: false` for each open stream, then `Closed`. After `Closed` an input of the session gives no effect |
+| FSM-05 | <Badge type="info" text="DESIGN" /> S3. In S2 the engine gives no `ScheduleTimer`, and `Input::Tick` gives no effect |
+| FSM-06 | <Badge type="tip" text="FACT" /> Every failure ends in a normal load: `LoadUrl` after a delivery, `AnswerNull` for an intercept |
+| FSM-07 | <Badge type="tip" text="FACT" /> A commit comes only from a complete page that passed CL-25 (`page_commit`), from a `Rebuilt` (`data_commit`), or from the field update of a checked `304` (CL-17) |
+
+### 5.3 Contract readings
+
+- <Badge type="tip" text="FACT" /> **Open.** `open` gives `Closed` only when the key (partition and canonical URL) has a session that is not destroyed (CL-07). A disabled key closes the session at the lookup answer (CL-08). The cookie answer decides the visible entry; without a valid network the `Vary` match has no cookie (CL-10 reads no cookie).
+- <Badge type="tip" text="FACT" /> **Result.** `Effect::Result` comes each time the result is set or changed (CL-22, CL-28), and once more before `Closed`. The last `Result` before `Closed` is the result of the session.
+- <Badge type="tip" text="FACT" /> **Closed session.** An intercept of a closed session gives no effect: the adapter answers it with no document (CL-20 item 5).
+- <Badge type="tip" text="FACT" /> **Partition change.** `partition_changed` gives one `RevokePartition` first (a maintenance write, DL-220), named by the first stopped session or by no session, then the stop effects of each session. A stopped session keeps its key until its `Destroy` (CL-07).
+- <Badge type="tip" text="FACT" /> **Body tests.** The session tests CL-16 (valid UTF-8) and CL-32 (not empty) while the body arrives. A stream gets only bytes of the valid UTF-8 prefix. An intercept waits for the first body byte, so an empty body gives `AnswerNull`. A body that fails a test after a stream started ends the stream incomplete, then `LoadUrl` (as CL-33).
+- <Badge type="tip" text="FACT" /> **CL-33 scope.** A body error ends a first load, a template change or a data update (CL-33). A body error after an outcome that the head decided (CL-17, CL-18, CL-19, CL-44, CL-14) changes nothing.
+- <Badge type="tip" text="FACT" /> **Bounds.** A body is buffered only for an outcome that needs it: at most `template.max_document_bytes` for a page and `body.max_bytes` for a data body. A larger body is a body failure (CL-33). An engine holds at most 256 sessions; a session keeps at most 4 exchanges.
+
+### 5.4 Tests
+
+<Badge type="tip" text="FACT" /> `crates/rivqen-session/tests/legacy_engine_flow.rs` (`legacy_engine_open_*`, `legacy_engine_classify_*`, `legacy_engine_delivery_*`, `legacy_engine_codes_*`, `legacy_engine_outcome_*`, `legacy_engine_stop_*`, `legacy_engine_writes_name_the_request_partition`) tests the public API with `record.rs`. The unit tests in `src/legacy/fsm/tests.rs` give fake record functions for the paths with a visible entry (CL-17, CL-27 to CL-31, CL-40) and check the commit content. Every test checks that each `Cache` effect names the request partition and the epochs of its lookup. `legacy_engine_prop_*` (both files) runs random input sequences: no panic, no effect after `Closed`, no timer, the same effects for the same inputs. The canonical client fixtures run in WP-08 S2 T-05.
+
 ## Related
 
 - [Core API](/engineering/core/api)

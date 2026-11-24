@@ -144,6 +144,33 @@ fn legacy_record_visible_gives_the_stored_record() {
 }
 
 #[test]
+fn legacy_record_visible_page_fields_pass_the_filter() {
+    // DL-229 (d): a stored line that is not a valid field line or whose
+    // name never goes to the web view is not in the record; a clean record
+    // keeps its lines.
+    let mut entry = stored(PAGE, TEMPLATE, &[], &[]);
+    entry.body.fields = vec![
+        line("Set-Cookie", "sid=1"),
+        line("Connection", "close"),
+        line("keep-alive", "timeout=5"),
+        line("x-bad", "a\u{0}b"),
+        line("X-Page", "1"),
+        line("content-type", "text/html; charset=utf-8"),
+    ];
+    let record = check_visible(&entry, &values(&[], &[]), &vary_key()).unwrap();
+    assert_eq!(
+        record.fields,
+        [
+            line("content-type", "text/html; charset=utf-8"),
+            line("x-page", "1")
+        ]
+    );
+    let clean = stored(PAGE, TEMPLATE, &[], &[]);
+    let record = check_visible(&clean, &values(&[], &[]), &vary_key()).unwrap();
+    assert_eq!(record.fields, clean.body.fields);
+}
+
+#[test]
 fn legacy_record_visible_without_vary_for_every_request() {
     let entry = stored(PAGE, TEMPLATE, &[], &[]);
     assert_eq!(check(&entry, &[], &[]), Ok(()));

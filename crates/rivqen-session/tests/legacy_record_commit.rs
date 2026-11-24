@@ -72,10 +72,12 @@ fn data() -> Vec<DataBlock> {
     ]
 }
 
+/// Page fields in the form of CL-21 (lower case, sorted by name), as the
+/// session commits them.
 fn page_fields() -> Vec<FieldLine> {
     vec![
-        line("content-type", "text/html; charset=utf-8"),
         line("content-security-policy", "default-src 'self'"),
+        line("content-type", "text/html; charset=utf-8"),
     ]
 }
 

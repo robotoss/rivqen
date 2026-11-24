@@ -76,6 +76,7 @@ use rivqen_model::http::FieldLine;
 use rivqen_model::ids::{CacheKey, PartitionId};
 use rivqen_model::safe::PageBytes;
 use rivqen_model::time::UnixTime;
+use rivqen_proto_legacy::fields::{NOT_PAGE_FIELDS, merge_page_fields};
 use rivqen_template::legacy::DataBlock;
 use rivqen_url::ParsedUrl;
 use sha2::Sha256;
@@ -193,6 +194,11 @@ pub enum NotVisible {
 ///    SHA-1 of the page and the template tag is the SHA-1 of the template
 ///    (CL-40). Else [`NotVisible::Damaged`].
 ///
+/// The page fields of the record are the stored lines after the filter of
+/// DL-226 (b) and CL-21 (DL-229 (d)): a stored line that is not a valid
+/// field line, or whose name never goes to the web view (`Set-Cookie`, a
+/// hop-by-hop field, ...), is not in the record.
+///
 /// # Errors
 ///
 /// [`NotVisible`] when the entry is not visible.
@@ -241,11 +247,26 @@ pub fn check_visible(
         page,
         template,
         data,
-        fields: body.fields.clone(),
+        fields: stored_page_fields(&body.fields),
         vary: meta.vary.clone(),
         etag,
         template_tag,
     })
+}
+
+/// The page fields of a stored record as the web view may get them
+/// (DL-229 (d)): the filter of DL-226 (b) over the stored lines
+/// (`merge_page_fields` with no response line drops a line that is not a
+/// valid field line, writes the names in ASCII lowercase and sorts them by
+/// name), and no line of a name of `NOT_PAGE_FIELDS` (`Set-Cookie`, the
+/// hop-by-hop fields, the legacy control fields, ...). A record that a
+/// commit of the session wrote holds only page fields of CL-21, so it does
+/// not change. The filter does not read the `sonic-etag-key` and
+/// `Connection` lines of the response: the record has no such lines.
+pub(crate) fn stored_page_fields(stored: &[FieldLine]) -> Vec<FieldLine> {
+    let mut fields = merge_page_fields(stored, &[]);
+    fields.retain(|line| !NOT_PAGE_FIELDS.contains(&line.name.as_str()));
+    fields
 }
 
 /// The `Vary` entries of a commit for a response with `response_fields`

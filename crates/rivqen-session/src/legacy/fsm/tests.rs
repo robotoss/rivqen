@@ -575,6 +575,91 @@ fn legacy_engine_open_without_network_shows_the_cached_page() {
     assert_eq!(results(&effects), vec![(-1, -1)]);
 }
 
+/// A stored entry whose page fields hold lines that never go to the web
+/// view: `Set-Cookie`, a hop-by-hop field, a line with a control byte, a
+/// name that is not a token.
+fn stored_with_unsafe_fields(text: &str) -> StoredEntry {
+    let mut entry = stored(text, "h");
+    entry.body.fields = vec![
+        line("X-Stored", "s"),
+        line("Set-Cookie", "sid=other-account"),
+        line("transfer-encoding", "chunked"),
+        line("x-bad", "a\u{1}b"),
+        line("bad name", "v"),
+        line("content-type", "text/html; charset=utf-8"),
+    ];
+    entry
+}
+
+/// The clean page fields of [`stored_with_unsafe_fields`].
+fn clean_fields() -> Vec<FieldLine> {
+    vec![
+        line("content-type", "text/html; charset=utf-8"),
+        line("x-stored", "s"),
+    ]
+}
+
+#[test]
+fn legacy_engine_open_cached_document_fields_pass_the_filter() {
+    // DL-229 (d): the stored lines pass the filter of DL-226 (b) and CL-21
+    // before they reach `DocumentHead`.
+    let text = page("10");
+    let (mut run, _, _) = Run::start(
+        Presentation::Quick,
+        Some(stored_with_unsafe_fields(&text)),
+        false,
+    );
+    let effects = run.client();
+    let Some(Effect::LoadData { head, .. }) = effects.first() else {
+        panic!("{effects:?}");
+    };
+    assert_eq!(head.fields, clean_fields());
+
+    // Standard: the intercept gets the same fields.
+    let (mut run, _, _) = Run::start(
+        Presentation::Standard,
+        Some(stored_with_unsafe_fields(&text)),
+        false,
+    );
+    let _ = run.client();
+    let effects = run.step(Input::Intercept(InterceptId(1)));
+    let Some(Effect::AnswerDocument { head, .. }) = effects.first() else {
+        panic!("{effects:?}");
+    };
+    assert_eq!(head.fields, clean_fields());
+}
+
+#[test]
+fn legacy_engine_classify_304_field_update_never_keeps_an_unsafe_stored_line() {
+    // DL-229 (d): the field update of CL-17 merges the filtered lines, so
+    // the commit and the cached document hold none of the unsafe lines.
+    let text = page("10");
+    let (mut run, _, exchange) = Run::start(
+        Presentation::Quick,
+        Some(stored_with_unsafe_fields(&text)),
+        true,
+    );
+    let effects = run.respond(
+        exchange.unwrap(),
+        304,
+        vec![line("cache-offline", "true"), line("x-new", "n")],
+        b"",
+    );
+    let writes = writes(&effects);
+    assert_eq!(writes.len(), 1);
+    let merged = vec![
+        line("content-type", "text/html; charset=utf-8"),
+        line("x-new", "n"),
+        line("x-stored", "s"),
+    ];
+    assert_eq!(replaced_body(writes[0]).fields, merged);
+    let effects = run.client();
+    let Some(Effect::LoadData { head, .. }) = effects.first() else {
+        panic!("{effects:?}");
+    };
+    assert_eq!(head.fields, merged);
+}
+
 // --- classification (CL-13 to CL-19, CL-44) ---
 
 #[test]

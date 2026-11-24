@@ -476,7 +476,11 @@ impl Session {
             platform_fields: &self.platform_fields,
         };
         match (env.port.check_visible)(stored, &values, &self.vary_key) {
-            Ok(record) => {
+            Ok(mut record) => {
+                // DL-229 (d): the stored lines pass the filter of DL-226 (b)
+                // whatever the record port gives, so neither the cached
+                // document nor the field update of CL-17 holds such a line.
+                record.fields = record::stored_page_fields(&record.fields);
                 self.seen = Expect::Version(record.version);
                 self.entry_stored = true;
                 let doc = self.cached_doc(&record);
@@ -494,19 +498,14 @@ impl Session {
     }
 
     /// The document of the cached page of `record` (CL-20, CL-21: the stored
-    /// page fields, lower case, in a stable order by name).
+    /// page fields after the filter of DL-229 (d), lower case, in a stable
+    /// order by name).
     pub(super) fn cached_doc(&mut self, record: &LegacyRecord) -> Doc {
-        let mut fields: Vec<FieldLine> = record
-            .fields
-            .iter()
-            .map(|line| FieldLine::new(line.name.to_ascii_lowercase(), line.value.clone()))
-            .collect();
-        fields.sort_by(|a, b| a.name.cmp(&b.name));
         Doc {
             id: self.next_doc_id(),
             cached: true,
             source: Source::Bytes(record.page.as_bytes().to_vec()),
-            fields,
+            fields: record::stored_page_fields(&record.fields),
         }
     }
 

@@ -297,12 +297,17 @@ struct Run {
 }
 
 /// Every cache write of a session names the request partition and the
-/// epochs of its lookup (DL-220).
+/// epochs of its lookup (DL-220); no removal uses `Expect::Any`
+/// (DL-229 (g)).
 fn check_writes(effects: &[Effect]) {
     for effect in effects {
         let Effect::Cache(txn) = effect else {
             continue;
         };
+        assert!(
+            !matches!(txn.op, TxnOp::Remove { .. }) || txn.pre.entry != Expect::Any,
+            "{txn:?}"
+        );
         assert_eq!(
             txn.pre.writer,
             Writer::request(PARTITION, PARTITION_EPOCH),
@@ -1336,6 +1341,69 @@ fn legacy_engine_codes_refresh_data_update_sends_a_diff() {
     let (body, _) = data_body(&old, &new);
     effects = run.respond(second, 200, data_head(&old, &new, "true"), &body);
     assert_eq!(results(&effects), vec![(200, 200)]);
+}
+
+#[test]
+fn legacy_engine_outcome_after_a_commit_no_removal_of_the_entry() {
+    // DL-229 (g): after a commit or a field update the version of the
+    // entry is not known; a later removal in the same generation (here
+    // called directly: no input path reaches it today) gives no effect, so
+    // it never uses `Expect::Any`.
+    use super::session::{Env, Session};
+
+    let old = page("10");
+    let new = page("12");
+    let (data, _) = data_body(&old, &new);
+    let config = config(Presentation::Quick);
+    let now = Now {
+        mono: Instant(0),
+        wall: UnixTime(WALL),
+    };
+    let env = Env {
+        config: &config,
+        port: &FAKE,
+        now,
+    };
+    let cases: [(u16, Vec<FieldLine>, &[u8]); 2] = [
+        (304, vec![line("cache-offline", "true")], b""),
+        (200, data_head(&old, &new, "true"), &data),
+    ];
+    for (status, fields, body) in cases {
+        let mut session = Session::new(context(true), CacheKey::from_bytes([1; 32]), URL.to_owned());
+        let mut out = Vec::new();
+        let lookup = Input::Lookup(Box::new(LookupResult {
+            entry: Some(stored(&old, "h")),
+            disabled: false,
+            partition_epoch: PARTITION_EPOCH,
+            site_epoch: SITE_EPOCH,
+        }));
+        for input in [lookup, Input::Cookie(None)] {
+            let _ = session.handle(&env, input, &mut out);
+        }
+        let exchange = sent(&out).unwrap();
+        out.clear();
+        let mut inputs = vec![Input::ResponseHead {
+            exchange,
+            status,
+            fields,
+        }];
+        if !body.is_empty() {
+            inputs.push(Input::BodyChunk {
+                exchange,
+                bytes: body.to_vec(),
+            });
+        }
+        inputs.push(Input::BodyEnd { exchange });
+        for input in inputs {
+            let _ = session.handle(&env, input, &mut out);
+        }
+        let commits = writes(&out);
+        assert_eq!(commits.len(), 1, "{status}");
+        assert!(matches!(commits[0].op, TxnOp::Replace { .. }));
+        let mut later = Vec::new();
+        session.remove_visible(&mut later);
+        assert_eq!(later, Vec::new(), "{status}");
+    }
 }
 
 // --- stop ---

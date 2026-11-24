@@ -117,10 +117,13 @@ impl Session {
     }
 
     /// A commit or a field update replaced the entry: its version is not
-    /// known any more.
+    /// known any more, so the session has no stored entry that it may
+    /// remove in this generation (DL-229 (g)): a removal never uses
+    /// `Expect::Any`.
     fn committed(&mut self, txn: CacheTransaction, out: &mut Vec<Effect>) {
         out.push(cache(txn));
         self.seen = Expect::Any;
+        self.entry_stored = false;
     }
 
     /// CL-19: the entry removed, the key disabled for the `http` period, a

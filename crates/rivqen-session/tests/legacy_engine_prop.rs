@@ -4,9 +4,10 @@
 //! Properties of the legacy session engine (WP-08 S2, T-01): for random
 //! sequences of opens, inputs and partition changes over several sessions,
 //! the engine never panics, gives no effect for a session after its
-//! `Closed`, never uses the timers of S3, names the request partition in
-//! every session write (DL-220), and gives the same effects for the same
-//! inputs.
+//! `Closed`, never uses the timers of S3, names the request partition and
+//! the epochs of the opening lookup in every session write (DL-220,
+//! DL-229 (a): a later lookup with other epochs never heals a write), and
+//! gives the same effects for the same inputs.
 #![cfg(feature = "legacy")]
 #![allow(
     clippy::unwrap_used,
@@ -16,7 +17,7 @@
     clippy::arithmetic_side_effects
 )]
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use proptest::prelude::*;
 use rivqen_cache::key::Partition;
@@ -91,12 +92,14 @@ fn input() -> impl Strategy<Value = Input> {
     ];
     let bodies = vec![page().as_bytes().to_vec(), b"\xf0\x9f".to_vec(), Vec::new()];
     prop_oneof![
-        any::<bool>().prop_map(|disabled| Input::Lookup(Box::new(LookupResult {
-            entry: None,
-            disabled,
-            partition_epoch: EPOCH,
-            site_epoch: EPOCH,
-        }))),
+        (any::<bool>(), 0_u64..2, 0_u64..2).prop_map(|(disabled, p, s)| {
+            Input::Lookup(Box::new(LookupResult {
+                entry: None,
+                disabled,
+                partition_epoch: Epoch(EPOCH.0 + p),
+                site_epoch: Epoch(EPOCH.0 + s),
+            }))
+        }),
         prop::option::of("[a-z=;\r]{0,5}").prop_map(Input::Cookie),
         (
             exchange.clone(),
@@ -154,12 +157,16 @@ fn config(quick: bool) -> LegacyConfig {
     }
 }
 
+/// The epochs of the opening lookup of each session.
+type Opening = BTreeMap<SessionId, (Epoch, Epoch)>;
+
 /// Checks of one list of effects of `session` (of `partition`).
 fn check(
     session: SessionId,
     partition: Option<PartitionId>,
     effects: &[Effect],
     closed: &mut BTreeSet<SessionId>,
+    opening: &Opening,
 ) {
     if closed.contains(&session) {
         assert_eq!(effects, &[] as &[Effect], "an effect after Closed");
@@ -172,7 +179,10 @@ fn check(
         }
         if let Effect::Cache(txn) = effect {
             let partition = partition.unwrap();
-            assert_eq!(txn.pre.writer, Writer::request(partition, EPOCH));
+            let (partition_epoch, site_epoch) = opening[&session];
+            assert_eq!(txn.pre.writer, Writer::request(partition, partition_epoch));
+            assert_eq!(txn.pre.partition_epoch, partition_epoch);
+            assert_eq!(txn.pre.site_epoch, site_epoch);
             assert!(!matches!(
                 txn.op,
                 TxnOp::RevokePartition { .. } | TxnOp::ClearSite { .. }
@@ -195,6 +205,7 @@ fn run(quick: bool, steps: &[Step]) -> Vec<(Option<SessionId>, Effect)> {
     let mut engine = LegacyEngine::new(config(quick));
     let mut partitions: Vec<(SessionId, PartitionId)> = Vec::new();
     let mut closed = BTreeSet::new();
+    let mut opening = Opening::new();
     let mut all = Vec::new();
     for (index, step) in steps.iter().enumerate() {
         let now = Now {
@@ -218,17 +229,29 @@ fn run(quick: bool, steps: &[Step]) -> Vec<(Option<SessionId>, Effect)> {
                 let (id, effects) = engine.open(now, context);
                 assert!(!closed.contains(&id) && partitions.iter().all(|(s, _)| *s != id));
                 partitions.push((id, PARTITIONS[*partition]));
-                check(id, Some(PARTITIONS[*partition]), &effects, &mut closed);
+                check(
+                    id,
+                    Some(PARTITIONS[*partition]),
+                    &effects,
+                    &mut closed,
+                    &opening,
+                );
                 all.extend(effects.into_iter().map(|effect| (Some(id), effect)));
             }
             Step::Input { session, input } => {
                 let id = SessionId(*session);
                 let partition = partitions.iter().find(|(s, _)| *s == id).map(|(_, p)| *p);
+                // The first lookup answer of a session is its opening lookup.
+                if let (Some(_), Input::Lookup(result)) = (partition, input) {
+                    opening
+                        .entry(id)
+                        .or_insert((result.partition_epoch, result.site_epoch));
+                }
                 let effects = engine.handle(now, id, input.clone());
                 if partition.is_none() {
                     assert_eq!(effects, Vec::new(), "an unknown session");
                 }
-                check(id, partition, &effects, &mut closed);
+                check(id, partition, &effects, &mut closed, &opening);
                 all.extend(effects.into_iter().map(|effect| (Some(id), effect)));
             }
             Step::PartitionChanged(partition) => {
@@ -259,7 +282,7 @@ fn run(quick: bool, steps: &[Step]) -> Vec<(Option<SessionId>, Effect)> {
                     let partition = partitions.iter().find(|(s, _)| *s == id).map(|(_, p)| *p);
                     assert_eq!(partition, Some(old));
                     assert_eq!(mine.last(), Some(&Effect::Closed));
-                    check(id, partition, &mine, &mut closed);
+                    check(id, partition, &mine, &mut closed, &opening);
                 }
                 all.extend(effects);
             }

@@ -54,6 +54,9 @@ pub(crate) struct Env<'a> {
 pub(crate) enum Fate {
     /// The session stays.
     Stays,
+    /// The session stopped as CL-06 and gave [`Effect::Closed`]: it gives
+    /// no more effects, but it holds its key until its `Destroy` (CL-07).
+    Stopped,
     /// The session gave [`Effect::Closed`] and is gone (it did not open, or
     /// it was destroyed): the engine removes it.
     Gone,
@@ -154,7 +157,8 @@ pub(crate) struct Session {
     pub(super) step: Step,
     /// The session stopped (CL-06, CL-34): it gives no effect.
     pub(crate) stopped: bool,
-    /// The epochs of the last lookup (DL-220).
+    /// The epochs of the opening lookup (DL-220, DL-229 (a)). A later
+    /// lookup with other epochs stops the session; these never change.
     partition_epoch: Epoch,
     site_epoch: Epoch,
     /// What the session knows of the stored entry of the key.
@@ -313,7 +317,7 @@ impl Session {
     }
 
     /// The write basis of the session with `expect` (DL-220): the request
-    /// partition and the epochs of the last lookup.
+    /// partition and the epochs of the opening lookup (DL-229 (a)).
     pub(super) const fn basis(&self, expect: Expect) -> WriteBasis {
         WriteBasis {
             partition: self.partition,
@@ -362,8 +366,9 @@ impl Session {
     pub(crate) fn handle(&mut self, env: &Env<'_>, input: Input, out: &mut Vec<Effect>) -> Fate {
         match input {
             Input::Lookup(result) => {
-                if self.on_lookup(env, *result, out) == Fate::Gone {
-                    return Fate::Gone;
+                let fate = self.on_lookup(env, *result, out);
+                if fate != Fate::Stays {
+                    return fate;
                 }
             }
             Input::Cookie(cookie) => self.on_cookie(env, cookie.as_deref(), out),
@@ -405,18 +410,31 @@ impl Session {
     // --- request flow (CL-08 to CL-12) ---
 
     /// The answer to the lookup.
+    ///
+    /// The opening lookup sets the epochs of every write of the session
+    /// (DL-220). A later lookup (CL-35) that reports another partition
+    /// epoch or site epoch means a revoke or a site clear that the engine
+    /// did not see: the session stops as CL-06 and writes nothing
+    /// (DL-229 (a), RSK-06).
     fn on_lookup(&mut self, env: &Env<'_>, result: LookupResult, out: &mut Vec<Effect>) -> Fate {
         let Step::Lookup { opening } = self.step else {
             return Fate::Stays;
         };
-        if opening && result.disabled {
-            // CL-08: the session does not open; nothing else.
-            self.stopped = true;
-            out.push(Effect::Closed);
-            return Fate::Gone;
+        if opening {
+            if result.disabled {
+                // CL-08: the session does not open; nothing else.
+                self.stopped = true;
+                out.push(Effect::Closed);
+                return Fate::Gone;
+            }
+            self.partition_epoch = result.partition_epoch;
+            self.site_epoch = result.site_epoch;
+        } else if result.partition_epoch != self.partition_epoch
+            || result.site_epoch != self.site_epoch
+        {
+            self.close(out);
+            return Fate::Stopped;
         }
-        self.partition_epoch = result.partition_epoch;
-        self.site_epoch = result.site_epoch;
         if self.network_valid {
             self.step = Step::Cookie {
                 stored: result.entry.map(Box::new),

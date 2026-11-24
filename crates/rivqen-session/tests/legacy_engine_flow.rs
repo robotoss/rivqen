@@ -996,6 +996,120 @@ fn legacy_engine_stop_partition_changed_revokes_and_stops_the_sessions() {
     );
 }
 
+fn lookup_at(partition_epoch: Epoch, site_epoch: Epoch) -> Input {
+    Input::Lookup(Box::new(LookupResult {
+        entry: None,
+        disabled: false,
+        partition_epoch,
+        site_epoch,
+    }))
+}
+
+#[test]
+fn legacy_engine_stop_refresh_lookup_with_other_epochs_stops_without_a_write() {
+    // DL-229 (a), RSK-06: a revoke or a site clear that the engine did not
+    // see is never healed by a refresh. `Run::step` checks that every write
+    // names the epochs of the opening lookup.
+    let text = page();
+    for (partition_epoch, site_epoch) in [
+        (Epoch(9), SITE_EPOCH),
+        (PARTITION_EPOCH, Epoch(9)),
+        (Epoch(9), Epoch(9)),
+    ] {
+        let mut run = Run::new(Presentation::Standard);
+        let (id, first, _) = run.start(None);
+        let mut effects = run.client(id);
+        effects.extend(run.respond(id, first, 200, legacy_head(&text), text.as_bytes()));
+        assert_eq!(writes(&effects), 1, "the first load commits");
+        effects = run.step(id, Input::Refresh);
+        assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
+        effects = run.step(id, lookup_at(partition_epoch, site_epoch));
+        assert_eq!(
+            effects,
+            vec![
+                Effect::Result {
+                    src: rivqen_proto_legacy::message::ResultCode::NoResult,
+                    final_code: rivqen_proto_legacy::message::ResultCode::NoResult,
+                },
+                Effect::Closed
+            ]
+        );
+        // No cookie read, no request, no write after the stop.
+        assert_eq!(run.step(id, Input::Cookie(None)), Vec::new());
+        assert_eq!(
+            run.respond(id, ExchangeId(2), 200, legacy_head(&text), text.as_bytes()),
+            Vec::new()
+        );
+        // The key stays taken until the destroy (CL-07).
+        let (_, effects) = run.open(context(URL, PARTITION, true));
+        assert_eq!(effects, vec![Effect::Closed]);
+        assert_eq!(run.step(id, Input::Destroy), Vec::new());
+        let (_, effects) = run.open(context(URL, PARTITION, true));
+        assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
+    }
+}
+
+#[test]
+fn legacy_engine_stop_refresh_with_other_epochs_ends_an_old_stream() {
+    // CL-06: an open stream ends incomplete, then `Closed`.
+    let text = page();
+    let mut run = Run::new(Presentation::Standard);
+    let (id, exchange, _) = run.start(None);
+    let mut effects = run.client(id);
+    effects.extend(run.step(id, Input::Intercept(InterceptId(1))));
+    effects.extend(run.step(
+        id,
+        Input::ResponseHead {
+            exchange,
+            status: 200,
+            fields: legacy_head(&text),
+        },
+    ));
+    effects.extend(run.step(
+        id,
+        Input::BodyChunk {
+            exchange,
+            bytes: b"<html>".to_vec(),
+        },
+    ));
+    assert_eq!(
+        answer(&effects, InterceptId(1)),
+        Some(Answer::Open(b"<html>".to_vec()))
+    );
+    let _ = run.step(id, Input::Refresh);
+    let effects = run.step(id, lookup_at(Epoch(9), SITE_EPOCH));
+    assert_eq!(
+        effects,
+        vec![
+            Effect::Result {
+                src: rivqen_proto_legacy::message::ResultCode::NoResult,
+                final_code: rivqen_proto_legacy::message::ResultCode::NoResult,
+            },
+            Effect::StreamEnd {
+                intercept: InterceptId(1),
+                complete: false
+            },
+            Effect::Closed
+        ]
+    );
+    assert_eq!(run.step(id, Input::BodyEnd { exchange }), Vec::new());
+}
+
+#[test]
+fn legacy_engine_stop_refresh_lookup_with_the_same_epochs_goes_on() {
+    let mut run = Run::new(Presentation::Quick);
+    let (id, _, _) = run.start(None);
+    assert!(matches!(
+        run.step(id, Input::Refresh).as_slice(),
+        [Effect::Lookup { .. }]
+    ));
+    assert_eq!(
+        run.step(id, lookup_at(PARTITION_EPOCH, SITE_EPOCH)),
+        vec![Effect::ReadCookie]
+    );
+    assert!(sent(&run.step(id, Input::Cookie(None))).is_some());
+}
+
 #[test]
 fn legacy_engine_stop_partition_changed_without_a_session() {
     let mut engine = LegacyEngine::new(config(Presentation::Quick));

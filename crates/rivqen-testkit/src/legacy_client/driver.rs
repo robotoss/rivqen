@@ -315,7 +315,7 @@ impl<'f, E: SessionEngine> Runner<'f, E> {
         }
         if self.cursor < self.fixture.exchanges.exchanges.len() {
             self.problem(&format!(
-                "{} stored exchanges were not requested",
+                "stored exchanges that no request used: {}",
                 self.fixture
                     .exchanges
                     .exchanges
@@ -752,6 +752,11 @@ impl<'f, E: SessionEngine> Runner<'f, E> {
             }
             self.index_of(slot);
         }
+        self.session_effect(slot, effect);
+    }
+
+    /// One effect of the open session of `slot`.
+    fn session_effect(&mut self, slot: usize, effect: Effect) {
         match effect {
             Effect::Lookup { partition, key } => self.lookup(slot, partition, key),
             Effect::ReadCookie => {
@@ -799,7 +804,7 @@ impl<'f, E: SessionEngine> Runner<'f, E> {
                 }
             }
             Effect::AnswerDocument { intercept, head } => {
-                self.answer_document(slot, intercept, &head)
+                self.answer_document(slot, intercept, &head);
             }
             Effect::StreamChunk { intercept, bytes } => self.stream_chunk(slot, intercept, &bytes),
             Effect::StreamEnd {

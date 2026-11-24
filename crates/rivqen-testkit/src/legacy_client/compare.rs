@@ -18,6 +18,7 @@
 
 use std::fmt;
 
+use super::json;
 use super::projection::{
     Action, CookieCall, InterceptView, Member, Phase, Projection, RecordView, RequestView,
     ResultView, Snapshot,
@@ -54,6 +55,11 @@ impl fmt::Display for Difference {
         }
         if !self.path.is_empty() {
             write!(f, ".{}", self.path)?;
+        }
+        if self.member == "runner"
+            && let Some(problem) = &self.actual
+        {
+            return write!(f, ": {problem}");
         }
         match (&self.expected, &self.actual) {
             (Some(e), Some(a)) => write!(f, ": expected {e}, actual {a}"),
@@ -195,34 +201,70 @@ fn phase(number: usize, e: &Phase, a: &Phase, out: &mut Vec<Difference>) {
         &entries(&a.results, ResultView::text, ResultView::members),
         out,
     );
-    ordered(
-        &place("snapshots"),
-        &entries(&e.snapshots, snapshot_text, snapshot_members),
-        &entries(&a.snapshots, snapshot_text, snapshot_members),
-        out,
-    );
+    snapshots(&place("snapshots"), &e.snapshots, &a.snapshots, out);
 }
 
-/// The comparison text of a snapshot: its members (so `data_sha256` counts
-/// by presence only).
-fn snapshot_text(s: &Snapshot) -> String {
-    snapshot_members(s)
-        .into_iter()
-        .map(|(p, v)| format!("{p}={v}"))
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
-/// The members of a snapshot: `entries.length`, then each member of each
-/// record as `entries[i].member`.
-fn snapshot_members(s: &Snapshot) -> Vec<Member> {
-    let mut out = vec![("entries.length".to_owned(), s.entries.len().to_string())];
-    for (i, record) in s.entries.iter().enumerate() {
-        for (name, value) in RecordView::members(record) {
-            out.push((format!("entries[{i}].{name}"), value));
+/// Snapshots in step order; the records of one snapshot in their sorted
+/// order: a record of both sides gives one difference for each member that
+/// differs (path `entries[i].member`), a missing or extra record one
+/// difference (path `entries[i]`).
+fn snapshots(place: &Place, expected: &[Snapshot], actual: &[Snapshot], out: &mut Vec<Difference>) {
+    let text = |snapshot: &Snapshot| {
+        json::array(
+            &snapshot
+                .entries
+                .iter()
+                .map(RecordView::text)
+                .collect::<Vec<_>>(),
+        )
+    };
+    for index in 0..expected.len().max(actual.len()) {
+        match (expected.get(index), actual.get(index)) {
+            (Some(want), Some(got)) => records(place, index, want, got, out),
+            (Some(want), None) => {
+                out.push(place.difference(Some(index), String::new(), Some(text(want)), None));
+            }
+            (None, Some(got)) => {
+                out.push(place.difference(Some(index), String::new(), None, Some(text(got))));
+            }
+            (None, None) => {}
         }
     }
-    out
+}
+
+fn records(
+    place: &Place,
+    index: usize,
+    want: &Snapshot,
+    got: &Snapshot,
+    out: &mut Vec<Difference>,
+) {
+    for record in 0..want.entries.len().max(got.entries.len()) {
+        let path = format!("entries[{record}]");
+        match (want.entries.get(record), got.entries.get(record)) {
+            (Some(left), Some(right)) => {
+                let prefix = |list: Vec<Member>| {
+                    list.into_iter()
+                        .map(|(name, value)| (format!("{path}.{name}"), value))
+                        .collect::<Vec<_>>()
+                };
+                members(
+                    place,
+                    index,
+                    &prefix(left.members()),
+                    &prefix(right.members()),
+                    out,
+                );
+            }
+            (Some(left), None) => {
+                out.push(place.difference(Some(index), path, Some(left.text()), None));
+            }
+            (None, Some(right)) => {
+                out.push(place.difference(Some(index), path, None, Some(right.text())));
+            }
+            (None, None) => {}
+        }
+    }
 }
 
 /// The member differences of two entries (members of both, in the order of
@@ -252,10 +294,10 @@ fn ordered(place: &Place, e: &[Entry], a: &[Entry], out: &mut Vec<Difference>) {
         match (e.get(i), a.get(i)) {
             (Some(x), Some(y)) => members(place, i, &x.1, &y.1, out),
             (Some(x), None) => {
-                out.push(place.difference(Some(i), String::new(), Some(x.0.clone()), None))
+                out.push(place.difference(Some(i), String::new(), Some(x.0.clone()), None));
             }
             (None, Some(y)) => {
-                out.push(place.difference(Some(i), String::new(), None, Some(y.0.clone())))
+                out.push(place.difference(Some(i), String::new(), None, Some(y.0.clone())));
             }
             (None, None) => {}
         }
@@ -307,7 +349,7 @@ fn multiset(place: &Place, expected: &[Entry], actual: &[Entry], out: &mut Vec<D
         match extra.next().and_then(|other| actual.get(other)) {
             Some(got) => members(place, index, &want.1, &got.1, out),
             None => {
-                out.push(place.difference(Some(index), String::new(), Some(want.0.clone()), None))
+                out.push(place.difference(Some(index), String::new(), Some(want.0.clone()), None));
             }
         }
     }

@@ -3,9 +3,8 @@
 
 //! Unit tests of the legacy session with a fake record port: the paths with
 //! a visible entry (CL-17, CL-27 to CL-31, CL-40) and the content of the
-//! commits. `record.rs` is a stub until the record lane is integrated (no
-//! entry is visible, every write is a removal), so these paths need fakes
-//! here; the fixture run (T-05) checks them with the real record.
+//! commits. A fake record port reaches every path directly; the fixture
+//! run (`legacy_client_fixtures_pass`) checks them with the real record.
 //!
 //! Every effect of every test passes `Run::check_writes`: each cache write
 //! names the request partition and the epochs of the lookup (DL-220,
@@ -757,8 +756,7 @@ fn legacy_engine_classify_304_cache_rules_remove_or_disable() {
         let writes = writes(&effects);
         assert_eq!(writes.len(), 1, "{effects:?}");
         if disabled {
-            // CL-19: normal load, no result (the stub of record::disable is
-            // a removal until the record lane is integrated).
+            // CL-19: normal load, no result.
             assert_eq!(results(&effects), Vec::<(i32, i32)>::new());
         } else {
             assert!(is_remove(writes[0], Expect::Version(STORED_VERSION)));

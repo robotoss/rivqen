@@ -3,9 +3,9 @@
 
 //! The legacy session engine through its public API (WP-08 S2, T-01;
 //! legacy client CL-05 to CL-37). The record functions are those of
-//! `record.rs` (stubs until the record lane is integrated: no entry is
-//! visible, every write is a removal); the paths with a visible entry are
-//! unit tests of `legacy::fsm`, and the fixture run (T-05) checks the whole.
+//! `record.rs`; a visible entry comes from `record::commit`. More paths with
+//! a visible entry are unit tests of `legacy::fsm`, and the fixture run
+//! (`legacy_client_fixtures_pass`) checks the whole.
 //!
 //! Every effect of every test passes `check_writes`: each cache write names
 //! the request partition (DL-220, RSK-06).
@@ -90,7 +90,8 @@ fn context(url: &str, partition: PartitionId, network_valid: bool) -> OpenContex
     }
 }
 
-/// An entry under the key; the record stub never shows it.
+/// An entry under the key that `record::commit` did not write: the record
+/// never shows it (CL-40).
 fn stored() -> StoredEntry {
     StoredEntry {
         meta: EntryMeta {
@@ -461,7 +462,8 @@ fn legacy_engine_open_without_network_sends_nothing_and_loads_normally() {
 fn legacy_engine_open_damaged_entry_is_removed() {
     let mut run = Run::new(Presentation::Quick);
     let (_, _, effects) = run.start(Some(stored()));
-    // The record stub sees no visible entry and calls it damaged (CL-40).
+    // The record finds an entry that the session cannot have written and
+    // calls it damaged (CL-40).
     let removals: Vec<_> = effects
         .iter()
         .filter_map(|effect| match effect {
@@ -728,8 +730,7 @@ fn legacy_engine_classify_http_disables_the_key() {
     let mut run = Run::new(Presentation::Quick);
     let (id, exchange, _) = run.start(None);
     let effects = run.respond(id, exchange, 200, fields, text.as_bytes());
-    // One write (record::disable; the stub gives a removal until the
-    // record lane is integrated).
+    // One write: record::disable (CL-19).
     assert_eq!(writes(&effects), 1);
     assert_eq!(results(&effects), Vec::<(i32, i32)>::new());
 }

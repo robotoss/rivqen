@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: The Rivqen Authors
+[package]
+name = "rivqen-session"
+description = "Rivqen session state machine: the legacy session (Quick and Standard) and, later, the RQP session (no I/O)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+rivqen-cache.workspace = true
+rivqen-diff.workspace = true
+rivqen-integrity.workspace = true
+rivqen-model.workspace = true
+rivqen-proto.workspace = true
+rivqen-template.workspace = true
+rivqen-url.workspace = true
+# Legacy as a whole (DL-222): only with the feature `legacy`.
+rivqen-proto-legacy = { workspace = true, optional = true }
+# The keyed digests of the Vary values (H-147, DL-206, H-160).
+hmac.workspace = true
+sha2.workspace = true
+
+[features]
+default = ["legacy"]
+# The legacy session (DL-222). WP-23 removes it.
+legacy = [
+    "dep:rivqen-proto-legacy",
+    "rivqen-cache/legacy",
+    "rivqen-diff/legacy",
+    "rivqen-integrity/legacy",
+    "rivqen-template/legacy",
+]
+
+[dev-dependencies]
+proptest.workspace = true
+rivqen-testkit.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

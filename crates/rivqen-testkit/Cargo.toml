@@ -16,8 +16,24 @@ rivqen-integrity.workspace = true
 rivqen-model.workspace = true
 rivqen-proto.workspace = true
 rivqen-url.workspace = true
+# The legacy session and its codec: the fixture runner, feature `legacy`
+# only, so that the checks without legacy stay without it (DL-222).
+rivqen-session = { workspace = true, optional = true }
+rivqen-proto-legacy = { workspace = true, optional = true }
+rivqen-template = { workspace = true, optional = true }
 # Tests and the testkit only (H-138).
 serde_json.workspace = true
+
+[features]
+# The runner of the canonical legacy client fixtures (WP-08 S2). Not a
+# default: `tools/fulltest.sh` turns it on for the workspace tests.
+legacy = [
+    "dep:rivqen-session",
+    "rivqen-session/legacy",
+    "dep:rivqen-proto-legacy",
+    "dep:rivqen-template",
+    "rivqen-template/legacy",
+]
 
 [dev-dependencies]
 proptest.workspace = true

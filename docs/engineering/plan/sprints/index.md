@@ -30,6 +30,7 @@ Each sprint has one record. The record is the shared memory of the work: the pla
 | [WP-07-S1](/engineering/plan/sprints/WP-07-S1) | WP-07 | Cache key and partition rules, RFC 9111 and legacy policy with the policy matrix, transactions and quotas on a fake store with fault injection | Closed (2026-11-18) |
 | [WP-07-S2](/engineering/plan/sprints/WP-07-S2) | WP-07 | The reference driver `rivqen-store`: sealed entry files, SQLite metadata, recovery, kill tests; ADR-004 and ADR-011 | Closed (merged 2026-11-23, #13) |
 | [WP-08-S1](/engineering/plan/sprints/WP-08-S1) | WP-08 | Foundations of the session: legacy wire codec, legacy data diff and patch plan, URL parser, session contracts, client fixtures that run without Node.js | Closed (2026-11-24) |
+| [WP-08-S2](/engineering/plan/sprints/WP-08-S2) | WP-08 | The legacy session (Quick and Standard) in `rivqen-session`, one cache entry per URL (H-160), the runner of the canonical legacy client fixtures | Planned |
 
 ## How to add a record
 

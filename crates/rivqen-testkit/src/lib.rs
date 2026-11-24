@@ -5,6 +5,8 @@
 //!
 //! - [`fixtures`]: loads the committed fixtures of `fixtures/rqp/protocol`,
 //!   `fixtures/legacy` and `fixtures/malformed` as data.
+//! - `legacy_client` (feature `legacy`): the runner of the canonical legacy
+//!   client fixtures (WP-08 S2).
 //! - [`ledger`]: the owner WP of each fixture (DL-145).
 //! - [`markup`]: the RQP markup fixtures (WP-06).
 //! - [`functions`]: the legacy function fixtures (WP-06).
@@ -27,6 +29,8 @@ pub mod exchange;
 pub mod fixtures;
 pub mod functions;
 pub mod ledger;
+#[cfg(feature = "legacy")]
+pub mod legacy_client;
 pub mod markup;
 pub mod rqp_client;
 pub mod store;

@@ -342,8 +342,18 @@ impl Run {
         entry: Option<StoredEntry>,
         network_valid: bool,
     ) -> (Self, Vec<Effect>, Option<ExchangeId>) {
+        Self::start_with(FAKE, presentation, entry, network_valid)
+    }
+
+    /// [`Run::start`] with the record functions `port`.
+    fn start_with(
+        port: RecordPort,
+        presentation: Presentation,
+        entry: Option<StoredEntry>,
+        network_valid: bool,
+    ) -> (Self, Vec<Effect>, Option<ExchangeId>) {
         let mut run = Self {
-            engine: LegacyEngine::with_port(config(presentation), FAKE),
+            engine: LegacyEngine::with_port(config(presentation), port),
             id: SessionId(0),
             mono: 0,
         };
@@ -1242,6 +1252,76 @@ fn legacy_engine_outcome_cut_with_an_entry_keeps_the_cached_page_except_tls() {
     }
 }
 
+/// `vary_entries` that also gives entries for `Vary: *` (it breaks the
+/// contract of `record::vary_entries`).
+fn permissive_vary_entries(
+    _fields: &[FieldLine],
+    _values: &RequestValues<'_>,
+    _key: &VaryKey,
+) -> Option<Vec<VaryEntry>> {
+    Some(Vec::new())
+}
+
+const PERMISSIVE: RecordPort = RecordPort {
+    check_visible: fake_check_visible,
+    vary_entries: permissive_vary_entries,
+    commit: fake_commit,
+};
+
+#[test]
+fn legacy_engine_outcome_vary_star_never_commits_whatever_the_record_port() {
+    // CL-12: `Vary: *` forbids every commit of the session (CL-25 first
+    // load, CL-17 field update, CL-27 data update), also when the record
+    // port gives `Vary` entries for it.
+    let text = page("10");
+    let new = page("12");
+    let star = || vec![line("vary", "*")];
+    let (mut run, _, exchange) = Run::start_with(PERMISSIVE, Presentation::Standard, None, true);
+    let effects = run.respond(
+        exchange.unwrap(),
+        200,
+        [legacy_head(&text, "true", "true"), star()].concat(),
+        text.as_bytes(),
+    );
+    assert_eq!(writes(&effects).len(), 0, "{effects:?}");
+    assert_eq!(results(&effects), vec![(1000, 304)]);
+
+    let (mut run, _, exchange) = Run::start_with(
+        PERMISSIVE,
+        Presentation::Quick,
+        Some(stored(&text, "h")),
+        true,
+    );
+    let effects = run.respond(
+        exchange.unwrap(),
+        304,
+        [vec![line("cache-offline", "true")], star()].concat(),
+        b"",
+    );
+    let found = writes(&effects);
+    assert_eq!(found.len(), 1, "{effects:?}");
+    assert!(is_remove(found[0], Expect::Version(STORED_VERSION)));
+    assert_eq!(results(&effects), vec![(304, 304)]);
+
+    let (body, _) = data_body(&text, &new);
+    let (mut run, _, exchange) = Run::start_with(
+        PERMISSIVE,
+        Presentation::Quick,
+        Some(stored(&text, "h")),
+        true,
+    );
+    let effects = run.respond(
+        exchange.unwrap(),
+        200,
+        [data_head(&text, &new, "true"), star()].concat(),
+        &body,
+    );
+    let found = writes(&effects);
+    assert_eq!(found.len(), 1, "{effects:?}");
+    assert!(is_remove(found[0], Expect::Version(STORED_VERSION)));
+    assert_eq!(results(&effects), vec![(200, 304)]);
+}
+
 // --- codes and messages (CL-22 to CL-24, CL-28, CL-35) ---
 
 #[test]
@@ -1274,6 +1354,25 @@ fn legacy_engine_codes_old_diff_is_not_sent_and_the_page_reloads() {
     assert_eq!(answer(&effects, InterceptId(1)), Some(Answer::Null));
     let effects = run.step(Input::Destroy);
     assert_eq!(results(&effects), vec![(200, -1)]);
+}
+
+#[test]
+fn legacy_engine_codes_expired_diff_stays_expired_when_the_clock_steps_back() {
+    // CL-28: after the diff is too old no later message follows. The
+    // session keeps the expiry; a later call with a smaller monotonic time
+    // does not compute the age again.
+    let old = page("10");
+    let new = page("12");
+    let (mut run, _, exchange) = Run::start(Presentation::Quick, Some(stored(&old, "h")), true);
+    let mut effects = run.client();
+    let (body, _) = data_body(&old, &new);
+    effects.extend(run.respond(exchange.unwrap(), 200, data_head(&old, &new, "true"), &body));
+    assert_eq!(results(&effects), vec![(200, 200)]);
+    assert_eq!(messages(&run.step(Input::GetDiff)).len(), 1);
+    run.mono += 30_001;
+    assert_eq!(run.step(Input::GetDiff), Vec::new());
+    run.mono = 0;
+    assert_eq!(run.step(Input::GetDiff), Vec::new());
 }
 
 #[test]

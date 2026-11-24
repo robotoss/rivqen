@@ -270,6 +270,24 @@ fn legacy_record_visible_absent_and_present_values_differ() {
 }
 
 #[test]
+fn legacy_record_visible_digests_with_two_changed_bytes_differ() {
+    // The compare in constant time collects every changed bit: two bytes
+    // that change by the same bit do not cancel out.
+    let (mut entry, session) = cookie_entry();
+    let cookie = entry
+        .meta
+        .vary
+        .iter_mut()
+        .find(|entry| entry.name == "cookie")
+        .unwrap();
+    let mut bytes = *cookie.value.unwrap().as_bytes();
+    bytes[0] ^= 0x01;
+    bytes[1] ^= 0x01;
+    cookie.value = Some(VaryDigest::from_bytes(bytes));
+    assert_eq!(check(&entry, &session, &[]), Err(NotVisible::OtherVariant));
+}
+
+#[test]
 fn legacy_record_visible_needs_the_same_key() {
     let (entry, session) = cookie_entry();
     let other = VaryKey(Secret::new([0x43; 32]));

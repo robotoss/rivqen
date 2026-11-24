@@ -28,6 +28,75 @@ export function etagFieldName(headers) {
   return key.length > 0 && key[0] !== '' ? asciiLower(key[0]) : 'etag';
 }
 
+// --- DL-226: the field rules of the head (CL-14, CL-21). Written from the decision, one helper per rule. ---
+
+/** CL-21: the names that never go to the web view or the cache (lowercase); the etag field and the `Connection` names are added for each response. */
+export const NOT_PAGE_FIELDS = Object.freeze([
+  'set-cookie', 'set-cookie2', 'connection', 'keep-alive', 'proxy-connection', 'te', 'trailer', 'transfer-encoding', 'upgrade',
+  'cache-control', 'expires', 'content-encoding', 'content-length',
+  'sonic-etag-key', 'template-tag', 'template-change', 'cache-offline',
+  'vary', 'cdn-cache-control', 'surrogate-control',
+  'clear-site-data', 'refresh', 'www-authenticate', 'authentication-info',
+]);
+
+/** DL-226 (a): the protected fields (lowercase). Every name that starts with PROTECTED_FIELD_PREFIX is protected too. */
+export const PROTECTED_FIELDS = Object.freeze([
+  'content-security-policy', 'content-security-policy-report-only', 'x-frame-options', 'x-content-type-options',
+  'permissions-policy', 'referrer-policy', 'strict-transport-security',
+]);
+export const PROTECTED_FIELD_PREFIX = 'cross-origin-';
+
+/** The member of the page message `extra` that a field name must not take (DL-226 (a)). */
+const RELOAD_KEY = 'isReload';
+
+/** DL-226 (a): a protected field name (ASCII case-insensitive, not trimmed). */
+export function isProtectedField(name) {
+  const lower = asciiLower(name);
+  return PROTECTED_FIELDS.includes(lower) || lower.startsWith(PROTECTED_FIELD_PREFIX);
+}
+
+/** RFC 9110 section 5.6.2: a token is one or more `tchar`. */
+export function isToken(text) {
+  return /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/.test(text);
+}
+
+/** DL-226 (b): a value with a control byte other than HTAB (0x00 to 0x08, 0x0A to 0x1F, 0x7F). */
+export function hasControlByte(value) {
+  return /[\x00-\x08\x0A-\x1F\x7F]/.test(value);
+}
+
+/** DL-226 (b): the name is a token and the value has no control byte other than HTAB. */
+export function isValidFieldLine([name, value]) {
+  return isToken(name) && !hasControlByte(value);
+}
+
+/** DL-226 (a): `Content-Type` or a protected field: `sonic-etag-key` and `Connection` never remove it from the page fields. */
+export function isAlwaysKept(name) {
+  return asciiLower(name) === 'content-type' || isProtectedField(name);
+}
+
+/** DL-226 (a): a `sonic-etag-key` value (not empty) that must not name the etag field. */
+export function isForbiddenEtagKey(name) {
+  const lower = asciiLower(name);
+  return !isToken(name) || lower === 'content-type' || lower === asciiLower(RELOAD_KEY) || NOT_PAGE_FIELDS.includes(lower) || isProtectedField(name);
+}
+
+/** DL-226 (a): a `Connection` token (trimmed) that names `Content-Type` or a protected field. */
+export function isForbiddenConnectionToken(token) {
+  return isAlwaysKept(token);
+}
+
+/**
+ * DL-226 (a) and (b): the field rules of a response head. Every line is valid, no non-empty
+ * `sonic-etag-key` line (each line counts) is a forbidden name, and no `Connection` token is forbidden.
+ * Also applied to a `304` and to a `200` with the stored etag before CL-17 (CL-13 item 2).
+ */
+export function isSafeHead(headers) {
+  if (!headers.every(isValidFieldLine)) return false;
+  if (valuesOf(headers, 'sonic-etag-key').some((key) => key !== '' && isForbiddenEtagKey(key))) return false;
+  return !valuesOf(headers, 'connection').some((v) => v.split(',').some((t) => isForbiddenConnectionToken(trimOws(t))));
+}
+
 /** CL-14 (DL-125): exactly one `Content-Type` line, and its media type is `text/html` (ASCII case-insensitive). */
 export function isHtmlResponse(headers) {
   const types = valuesOf(headers, 'content-type');
@@ -35,11 +104,11 @@ export function isHtmlResponse(headers) {
 }
 
 /**
- * CL-14: an HTML response (isHtmlResponse), and each of the four fields has a line, every line
+ * CL-14: an HTML response (isHtmlResponse), the field rules of DL-226 (isSafeHead), and each of the four fields has a line, every line
  * has one value, and the value is not empty.
  */
 export function isLegacyResponse(headers) {
-  if (!isHtmlResponse(headers)) return false;
+  if (!isHtmlResponse(headers) || !isSafeHead(headers)) return false;
   for (const name of [etagFieldName(headers), 'template-tag', 'template-change', 'cache-offline']) {
     const values = valuesOf(headers, name);
     if (values.length === 0 || values[0] === '' || values.some((v) => v !== values[0])) return false;
@@ -87,18 +156,25 @@ export function offlineOf(headers) {
   return v === 'true' || v === 'store' ? v : 'false';
 }
 
-const HOP_BY_HOP = ['connection', 'keep-alive', 'proxy-connection', 'te', 'trailer', 'transfer-encoding', 'upgrade'];
-/** CL-21 (DL-129): the action fields of one response; replayed from the cache they would act again. */
-const ACTION_FIELDS = ['clear-site-data', 'refresh', 'www-authenticate', 'authentication-info'];
-
-/** CL-21: the page fields of a response (lowercase names, sorted by name, stable). */
+/** CL-21: the page fields of a response (lowercase names, sorted by name, stable). Invalid lines (DL-226 (b)) are dropped. */
 export function pageFields(headers) {
-  const drop = new Set([
-    'set-cookie', 'set-cookie2', ...HOP_BY_HOP, 'cache-control', 'expires', 'content-encoding', 'content-length',
-    etagFieldName(headers), 'sonic-etag-key', 'template-tag', 'template-change', 'cache-offline', 'vary', 'cdn-cache-control', 'surrogate-control', ...ACTION_FIELDS,
-  ]);
-  for (const v of valuesOf(headers, 'connection')) for (const t of v.split(',')) if (trimOws(t) !== '') drop.add(asciiLower(trimOws(t)));
-  return sortedFields(headers.filter(([n]) => !drop.has(asciiLower(n))));
+  const drop = new Set(NOT_PAGE_FIELDS);
+  const etagField = etagFieldName(headers);
+  if (!isAlwaysKept(etagField)) drop.add(etagField);
+  for (const v of valuesOf(headers, 'connection')) {
+    for (const t of v.split(',')) {
+      const token = trimOws(t);
+      if (token !== '' && !isAlwaysKept(token)) drop.add(asciiLower(token));
+    }
+  }
+  return sortedFields(headers.filter((line) => isValidFieldLine(line) && !drop.has(asciiLower(line[0]))));
+}
+
+/** CL-17 (RFC 9111 section 4.3.4, DL-226 (b)): the stored lines, without the lines that fail rule (b) and the names of the update, then the update. */
+export function mergePageFields(stored, response) {
+  const update = pageFields(response);
+  const names = new Set(update.map(([n]) => n));
+  return [...stored.filter((line) => isValidFieldLine(line) && !names.has(asciiLower(line[0]))), ...update];
 }
 
 const LEGACY_REQUEST = new Set(['accept-diff', 'if-none-match', 'template-tag']);
@@ -416,7 +492,8 @@ export class CanonicalSession {
     const h = ex.headers;
     const etag = valuesOf(h, etagFieldName(h))[0];
     const sameEtag = ex.status === 200 && etag !== undefined && this.entry !== null && bareEtag(etag) === this.entry.etag;
-    if (this.entry !== null && (ex.status === 304 || sameEtag)) return 'not-modified';
+    // CL-13 item 2 with the head test of DL-226: a 304 (or a 200 with the stored etag) whose head fails it is a normal load (CL-14).
+    if (this.entry !== null && (ex.status === 304 || sameEtag)) return isSafeHead(h) ? 'not-modified' : 'normal';
     if (ex.status >= 300 && ex.status <= 399) return 'redirect'; // CL-44: the request does not follow it
     if (ex.status !== 200) return keepsCachedPage(ex.status) ? 'error' : 'refused'; // CL-18 items 1 and 2
     if (!isLegacyResponse(h) || !isUtf8Text(h, ex.body) || ex.body.length === 0) return 'normal'; // CL-14, CL-16, CL-32
@@ -508,9 +585,7 @@ export class CanonicalSession {
       // The values come from this request, so the request matches the recomputed entry: the
       // removal of an entry that the request no longer matches (CL-17) cannot occur here.
       if (valuesOf(h, 'vary').length > 0) this.sim.store.rekey(this.entry, vary.names.map((n) => [n, requestValue(this.requestFields, n)]));
-      const update = pageFields(h);
-      const names = new Set(update.map(([n]) => n));
-      this.entry.fields = [...this.entry.fields.filter(([n]) => !names.has(asciiLower(n))), ...update];
+      this.entry.fields = mergePageFields(this.entry.fields, h);
     }
     this.setResult(304, 304, null, h);
     this.resolveWaiting();

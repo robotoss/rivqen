@@ -1,0 +1,153 @@
+{
+  "id": "FX-LEG-CL-HEAD-RULES-S",
+  "kind": "client",
+  "profile": "legacy-canonical",
+  "mode": "standard",
+  "server_profile": "legacy-canonical",
+  "level": "must",
+  "client": {
+    "sessions": [
+      {
+        "step": 2,
+        "opened": true,
+        "session": 1,
+        "partition": "rq-test-account",
+        "url": "https://shop.example.com/catalog"
+      },
+      {
+        "step": 12,
+        "opened": true,
+        "session": 2,
+        "partition": "rq-test-account",
+        "url": "https://shop.example.com/catalog"
+      }
+    ],
+    "phases": [
+      {
+        "steps": [1,7],
+        "requests": [
+          {
+            "exchange": 1,
+            "method": "GET",
+            "target": "/catalog",
+            "fields": [
+              ["accept-diff","true"],
+              ["if-none-match","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+              ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"]
+            ],
+            "response": {
+              "status": 304,
+              "fields": [
+                ["cache-offline","store"]
+              ],
+              "complete": true
+            }
+          }
+        ],
+        "cookies": [
+          {
+            "call": "get",
+            "url": "https://shop.example.com/catalog",
+            "value": null
+          }
+        ],
+        "actions": [
+          {
+            "do": "load_url",
+            "session": 1,
+            "url": "https://shop.example.com/catalog"
+          }
+        ],
+        "intercepts": [
+          {
+            "session": 1,
+            "null": true
+          }
+        ],
+        "results": [],
+        "snapshots": []
+      },
+      {
+        "steps": [8,17],
+        "requests": [
+          {
+            "exchange": 2,
+            "method": "GET",
+            "target": "/catalog",
+            "fields": [
+              ["accept-diff","true"]
+            ],
+            "response": {
+              "status": 200,
+              "fields": [
+                ["etag","3e3184cbd12e5294959effe6f2d9985f50f4ea5d"],
+                ["template-tag","3c771bf015df2c410a41a6012804f645b3acc1bc"],
+                ["template-change","true"],
+                ["cache-offline","true"],
+                ["sonic-etag-key","Content-Security-Policy"]
+              ],
+              "complete": true
+            }
+          }
+        ],
+        "cookies": [
+          {
+            "call": "get",
+            "url": "https://shop.example.com/catalog",
+            "value": null
+          }
+        ],
+        "actions": [
+          {
+            "do": "load_url",
+            "session": 2,
+            "url": "https://shop.example.com/catalog"
+          }
+        ],
+        "intercepts": [
+          {
+            "session": 1,
+            "null": true
+          },
+          {
+            "session": 2,
+            "null": true
+          }
+        ],
+        "results": [
+          {
+            "session": 1,
+            "src_code": -1,
+            "final_code": -1
+          }
+        ],
+        "snapshots": []
+      },
+      {
+        "steps": [18,21],
+        "requests": [],
+        "cookies": [],
+        "actions": [],
+        "intercepts": [
+          {
+            "session": 2,
+            "null": true
+          }
+        ],
+        "results": [
+          {
+            "session": 2,
+            "src_code": -1,
+            "final_code": -1
+          }
+        ],
+        "snapshots": [
+          {
+            "entries": []
+          }
+        ]
+      }
+    ]
+  },
+  "profiles_same": []
+}

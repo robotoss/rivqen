@@ -1254,6 +1254,7 @@ fn legacy_engine_outcome_cut_with_an_entry_keeps_the_cached_page_except_tls() {
 
 /// `vary_entries` that also gives entries for `Vary: *` (it breaks the
 /// contract of `record::vary_entries`).
+#[allow(clippy::unnecessary_wraps)] // the signature of `RecordPort::vary_entries`
 fn permissive_vary_entries(
     _fields: &[FieldLine],
     _values: &RequestValues<'_>,

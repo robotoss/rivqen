@@ -362,8 +362,9 @@ fn legacy_client_runs_all() {
     }
 }
 
+/// Every canonical legacy client fixture gives its expected result (the
+/// acceptance of WP-08 for legacy, DL-215).
 #[test]
-#[ignore = "T-05 makes every canonical legacy client fixture pass"]
 fn legacy_client_fixtures_pass() {
     let mut lines = Vec::new();
     let mut failing = 0_usize;

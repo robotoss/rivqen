@@ -96,7 +96,9 @@ fn valid() -> Value {
 #[test]
 fn exchange_loads_all() {
     let all = load_all().unwrap();
-    assert_eq!(all.len(), 104);
+    // CLIENT_FLOOR of tools/legacy-fixtures/gen.mjs: 104 fixtures of WP-01 and
+    // the two head-rule fixtures of WP-08 S2 (DL-226).
+    assert_eq!(all.len(), 106);
     for fixture in &all {
         assert!(fixture.id.starts_with("FX-LEG-CL-"), "{}", fixture.id);
         assert!(!fixture.id.contains("--"), "{}", fixture.id);
@@ -107,7 +109,7 @@ fn exchange_loads_all() {
     }
     let mut ids: Vec<&str> = all.iter().map(|f| f.id.as_str()).collect();
     ids.dedup();
-    assert_eq!(ids.len(), 104);
+    assert_eq!(ids.len(), 106);
     assert!(ids.is_sorted());
     // The catalog uses each form: records, refused connections, cuts, page and inline bodies.
     let exchanges = || all.iter().flat_map(|f| &f.exchanges);

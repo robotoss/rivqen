@@ -33,6 +33,7 @@ legacy = [
     "dep:rivqen-proto-legacy",
     "dep:rivqen-template",
     "rivqen-template/legacy",
+    "rivqen-integrity/legacy",
 ]
 
 [dev-dependencies]

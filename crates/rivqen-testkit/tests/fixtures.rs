@@ -112,7 +112,7 @@ fn testkit_reads_client_result() {
 #[test]
 fn testkit_loads_all_legacy() {
     let all = load_legacy().unwrap();
-    assert_eq!(all.len(), 335);
+    assert_eq!(all.len(), 337);
     for f in &all {
         assert!(f.case.is_object() && f.expected.is_object(), "{}", f.id);
         if f.case.get("page").is_some() {

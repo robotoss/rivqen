@@ -97,7 +97,8 @@ pub struct OpenContext {
     /// The partition of the account (the adapter computes it, identity
     /// section 1). The account `null` has a partition of its own.
     pub partition: PartitionId,
-    /// The account is `null` (CL-05): a commit is never allowed (CL-25).
+    /// The account is `null` (CL-05): a credentialed exchange never commits
+    /// (CL-25, DL-123); a first load without credentials commits.
     pub anonymous: bool,
     /// The network is valid (CL-10).
     pub network_valid: bool,

@@ -482,6 +482,82 @@ fn legacy_engine_classify_cookies_go_first_for_every_status() {
     }
 }
 
+fn cookie_head(exchange: ExchangeId, value: &str) -> Input {
+    Input::ResponseHead {
+        exchange,
+        status: 500,
+        fields: vec![line("set-cookie", value)],
+    }
+}
+
+fn stored_cookies(value: &str) -> Effect {
+    Effect::StoreCookies(vec![value.to_owned()])
+}
+
+#[test]
+fn legacy_engine_classify_cookies_once_per_exchange() {
+    // DL-229 (e): a second head of an exchange gives no effect.
+    let mut run = Run::new(Presentation::Quick);
+    let (id, exchange, _) = run.start(None);
+    let effects = run.step(id, cookie_head(exchange, "a=1"));
+    assert_eq!(count(&effects, &stored_cookies("a=1")), 1);
+    assert_eq!(run.step(id, cookie_head(exchange, "b=2")), Vec::new());
+
+    // A head after the end of the exchange gives no effect.
+    let mut run = Run::new(Presentation::Quick);
+    let (id, exchange, _) = run.start(None);
+    let _ = run.step(
+        id,
+        Input::TransportFailed {
+            exchange,
+            error: TransportError::Read,
+        },
+    );
+    assert_eq!(run.step(id, cookie_head(exchange, "a=1")), Vec::new());
+}
+
+#[test]
+fn legacy_engine_classify_cookies_of_an_older_generation_once() {
+    // CL-11 item 2: a head of an older generation stores its cookies once,
+    // also after the session dropped that exchange (DL-229 (e)).
+    let mut run = Run::new(Presentation::Quick);
+    let (id, first, _) = run.start(None);
+    let _ = run.step(id, Input::Refresh);
+    let _ = run.step(id, lookup(None, false));
+    let second = sent(&run.step(id, Input::Cookie(None))).unwrap();
+    assert_ne!(first, second);
+    assert_eq!(
+        run.step(id, cookie_head(first, "old=1")),
+        vec![stored_cookies("old=1")]
+    );
+    assert_eq!(run.step(id, cookie_head(first, "old=2")), Vec::new());
+    // The current exchange still stores its own cookies.
+    let effects = run.step(id, cookie_head(second, "new=1"));
+    assert_eq!(effects.first(), Some(&stored_cookies("new=1")));
+}
+
+#[test]
+fn legacy_engine_classify_cookies_of_dropped_exchanges_are_bounded() {
+    // The session remembers at most 16 dropped exchanges whose head is due;
+    // the oldest one is forgotten first.
+    let mut run = Run::new(Presentation::Quick);
+    let (id, first, _) = run.start(None);
+    let mut exchanges = vec![first];
+    for _ in 0..17 {
+        let _ = run.step(id, Input::Refresh);
+        let _ = run.step(id, lookup(None, false));
+        exchanges.push(sent(&run.step(id, Input::Cookie(None))).unwrap());
+    }
+    // 17 exchanges were dropped before their head; the first one is gone.
+    assert_eq!(run.step(id, cookie_head(exchanges[0], "a=0")), Vec::new());
+    for exchange in &exchanges[1..17] {
+        assert_eq!(
+            run.step(id, cookie_head(*exchange, "a=1")),
+            vec![stored_cookies("a=1")]
+        );
+    }
+}
+
 #[test]
 fn legacy_engine_classify_normal_loads_without_an_entry() {
     let text = page();

@@ -14,6 +14,7 @@
 //! it. Session FSM section 5 maps these parts to the 13 states of section 1.
 
 use core::fmt;
+use std::collections::VecDeque;
 
 use rivqen_cache::key::Partition;
 use rivqen_cache::txn::{CacheTransaction, Epoch, Expect, StoredEntry};
@@ -38,6 +39,12 @@ use crate::legacy::types::{
 /// ones that a document or a stream still reads. Over this number the
 /// oldest one ends (its streams end incomplete).
 pub(crate) const MAX_EXCHANGES: usize = 4;
+
+/// The most exchanges of older generations that the session dropped before
+/// their head arrived and whose head still gives `StoreCookies` (CL-11
+/// item 2). Over this number the oldest id is forgotten: its head then
+/// gives no effect.
+pub(crate) const MAX_AWAITED_HEADS: usize = 16;
 
 /// What a call of the session needs from its engine.
 pub(crate) struct Env<'a> {
@@ -177,6 +184,10 @@ pub(crate) struct Session {
     pub(super) current: Option<ExchangeId>,
     /// The number of requests sent: the last exchange id.
     sent: u64,
+    /// The dropped exchanges whose head did not arrive yet, oldest first
+    /// (at most [`MAX_AWAITED_HEADS`]): their head gives only
+    /// `StoreCookies` (CL-11 item 2, DL-229 (e)).
+    awaited_heads: VecDeque<ExchangeId>,
 
     // --- generation (CL-35) ---
     pub(super) generation: u64,
@@ -258,6 +269,15 @@ fn match_fields(accept_diff: bool, cookie: Option<&str>) -> Vec<FieldLine> {
     })
 }
 
+/// CL-11 item 2: the `Set-Cookie` and `Set-Cookie2` values of a head, if
+/// any, as one effect.
+fn store_cookies(fields: &[FieldLine], out: &mut Vec<Effect>) {
+    let cookies = super::head::set_cookie_values(fields);
+    if !cookies.is_empty() {
+        out.push(Effect::StoreCookies(cookies));
+    }
+}
+
 /// A cache effect.
 pub(super) fn cache(txn: CacheTransaction) -> Effect {
     Effect::Cache(Box::new(txn))
@@ -288,6 +308,7 @@ impl Session {
             exchanges: Vec::new(),
             current: None,
             sent: 0,
+            awaited_heads: VecDeque::new(),
             generation: 0,
             refreshed: false,
             kind: None,
@@ -549,6 +570,11 @@ impl Session {
     // --- response (CL-13) ---
 
     /// A response head.
+    ///
+    /// CL-11 item 2 (DL-229 (e)): `StoreCookies` comes once per exchange,
+    /// for its first head, before the session acts on it, also for an
+    /// exchange of an older generation. A head of an unknown exchange, of
+    /// an exchange that already has a head or that ended, gives no effect.
     fn on_head(
         &mut self,
         env: &Env<'_>,
@@ -560,20 +586,20 @@ impl Session {
         if id.0 == 0 || id.0 > self.sent {
             return; // not an exchange of this session
         }
-        let cookies = super::head::set_cookie_values(&fields);
-        if !cookies.is_empty() {
-            // CL-11 item 2: before the session acts on the response, also
-            // for an older generation.
-            out.push(Effect::StoreCookies(cookies));
-        }
         let fresh = self.is_fresh(id);
         let entry_etag = self.entry.as_ref().map(|entry| entry.etag);
-        let Some(exchange) = self.exchange_mut(id) else {
+        let Some(exchange) = self.exchanges.iter_mut().find(|exchange| exchange.id == id) else {
+            // A dropped exchange of an older generation: only its cookies.
+            if self.awaited_heads.contains(&id) {
+                self.awaited_heads.retain(|awaited| *awaited != id);
+                store_cookies(&fields, out);
+            }
             return;
         };
         if exchange.head.is_some() || exchange.has_ended() {
             return;
         }
+        store_cookies(&fields, out);
         let kind = fresh.then(|| {
             super::head::classify(
                 status,
@@ -750,6 +776,7 @@ impl Session {
         }
         self.stopped = true;
         self.exchanges = Vec::new();
+        self.awaited_heads = VecDeque::new();
         self.doc = None;
         self.pending_new = None;
         self.entry = None;
@@ -760,16 +787,25 @@ impl Session {
     }
 
     /// Drop the exchanges that nothing reads; keep at most
-    /// [`MAX_EXCHANGES`].
+    /// [`MAX_EXCHANGES`]. A dropped exchange whose head did not arrive and
+    /// that did not end is remembered for its cookies (CL-11 item 2).
     fn prune(&mut self, out: &mut Vec<Effect>) {
         let current = self.current;
         let doc = self.doc_exchange();
         let pending = self.pending_new.as_ref().and_then(Doc::exchange);
+        let awaited = &mut self.awaited_heads;
         self.exchanges.retain(|exchange| {
-            Some(exchange.id) == current
+            let keep = Some(exchange.id) == current
                 || Some(exchange.id) == doc
                 || Some(exchange.id) == pending
-                || !exchange.streams.is_empty()
+                || !exchange.streams.is_empty();
+            if !keep && exchange.head.is_none() && !exchange.has_ended() {
+                if awaited.len() >= MAX_AWAITED_HEADS {
+                    awaited.pop_front();
+                }
+                awaited.push_back(exchange.id);
+            }
+            keep
         });
         while self.exchanges.len() > MAX_EXCHANGES {
             let Some(index) = self

@@ -1294,12 +1294,11 @@ fn legacy_engine_codes_refresh_starts_a_generation_with_is_reload() {
     assert_eq!(spec.fields.len(), 4);
     let second = spec.exchange;
     assert_ne!(first, second);
-    // A late response of the old generation: cookies only.
+    // A second head of the old exchange (it had its `304`): no effect, also
+    // no cookie (DL-229 (e)); `legacy_engine_classify_cookies_of_an_older_
+    // generation_once` tests the first head of an older generation.
     effects = run.head(first, 200, vec![line("Set-Cookie", "old=1")]);
-    assert_eq!(
-        effects,
-        vec![Effect::StoreCookies(vec!["old=1".to_owned()])]
-    );
+    assert_eq!(effects, Vec::new());
     effects = run.step(Input::GetDiff);
     assert_eq!(effects, Vec::new(), "the result was reset");
     effects = run.respond(second, 304, vec![line("cache-offline", "true")], b"");

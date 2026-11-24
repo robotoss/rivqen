@@ -594,12 +594,92 @@ fn legacy_engine_classify_body_that_is_not_utf8_is_a_normal_load() {
             bytes: b"(".to_vec(),
         },
     ));
+    // DL-229 (b): the incomplete tail and the invalid byte never reach the
+    // stream.
     assert_eq!(
         answer(&effects, InterceptId(2)),
-        Some(Answer::Doc(b"ab\xc3(".to_vec(), false))
+        Some(Answer::Doc(b"ab".to_vec(), false))
     );
     assert_eq!(count(&effects, &Effect::LoadUrl), 2);
     assert_eq!(run.step(id, Input::BodyEnd { exchange }), Vec::new());
+}
+
+/// The stream effects of `intercept` in `effects`, in order.
+fn stream_of(effects: &[Effect], intercept: InterceptId) -> Vec<Effect> {
+    effects
+        .iter()
+        .filter(|effect| {
+            matches!(effect,
+                Effect::StreamChunk { intercept: id, .. } | Effect::StreamEnd { intercept: id, .. }
+                    if *id == intercept)
+        })
+        .cloned()
+        .collect()
+}
+
+#[test]
+fn legacy_engine_classify_failed_body_streams_only_the_valid_prefix() {
+    // DL-229 (b): a chunk with an invalid byte, a cut and a body over the
+    // limit give a stream only the bytes of the valid UTF-8 prefix: never
+    // the invalid bytes and never an incomplete tail.
+    let text = page();
+    // Over every document limit (the cap is 32 MiB).
+    let over = vec![b'a'; 33 << 20];
+    let cases: [(&[&[u8]], bool); 4] = [
+        (&[b"\xff<script>x</script>"], false),
+        (&[b"\xc3", b"(<script>x</script>"], false),
+        (&[b"\xc3"], true),
+        (&[b"\xc3", &over], false),
+    ];
+    for (chunks, cut) in cases {
+        let mut run = Run::new(Presentation::Standard);
+        let (id, exchange, _) = run.start(None);
+        let mut effects = run.client(id);
+        effects.extend(run.step(id, Input::Intercept(InterceptId(1))));
+        effects.extend(run.step(
+            id,
+            Input::ResponseHead {
+                exchange,
+                status: 200,
+                fields: legacy_head(&text),
+            },
+        ));
+        for bytes in [b"<html>".as_slice()].iter().chain(chunks) {
+            effects.extend(run.step(
+                id,
+                Input::BodyChunk {
+                    exchange,
+                    bytes: bytes.to_vec(),
+                },
+            ));
+        }
+        if cut {
+            effects.extend(run.step(
+                id,
+                Input::TransportFailed {
+                    exchange,
+                    error: TransportError::Read,
+                },
+            ));
+        }
+        assert_eq!(
+            stream_of(&effects, InterceptId(1)),
+            vec![
+                Effect::StreamChunk {
+                    intercept: InterceptId(1),
+                    bytes: b"<html>".to_vec()
+                },
+                Effect::StreamEnd {
+                    intercept: InterceptId(1),
+                    complete: false
+                }
+            ],
+            "cut: {cut}, chunks: {}",
+            chunks.len()
+        );
+        assert_eq!(effects.last(), Some(&Effect::LoadUrl));
+        assert_eq!(writes(&effects), 0);
+    }
 }
 
 // --- delivery and codes (CL-20 to CL-24) ---

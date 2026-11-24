@@ -362,7 +362,7 @@ impl Session {
     pub(crate) fn handle(&mut self, env: &Env<'_>, input: Input, out: &mut Vec<Effect>) -> Fate {
         match input {
             Input::Lookup(result) => {
-                if self.on_lookup(env, &result, out) == Fate::Gone {
+                if self.on_lookup(env, *result, out) == Fate::Gone {
                     return Fate::Gone;
                 }
             }
@@ -405,7 +405,7 @@ impl Session {
     // --- request flow (CL-08 to CL-12) ---
 
     /// The answer to the lookup.
-    fn on_lookup(&mut self, env: &Env<'_>, result: &LookupResult, out: &mut Vec<Effect>) -> Fate {
+    fn on_lookup(&mut self, env: &Env<'_>, result: LookupResult, out: &mut Vec<Effect>) -> Fate {
         let Step::Lookup { opening } = self.step else {
             return Fate::Stays;
         };
@@ -419,7 +419,7 @@ impl Session {
         self.site_epoch = result.site_epoch;
         if self.network_valid {
             self.step = Step::Cookie {
-                stored: result.entry.clone().map(Box::new),
+                stored: result.entry.map(Box::new),
             };
             out.push(Effect::ReadCookie);
         } else {

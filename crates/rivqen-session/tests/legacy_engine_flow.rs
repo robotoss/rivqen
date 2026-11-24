@@ -29,6 +29,7 @@ use rivqen_model::safe::{PageBytes, Secret};
 use rivqen_model::time::{Instant, UnixTime};
 use rivqen_proto_legacy::body::{BodyLimits, DATA_BODY_DEPTH};
 use rivqen_session::legacy::engine::LegacyEngine;
+use rivqen_session::legacy::record::{self, NewRecord, WriteBasis};
 use rivqen_session::legacy::types::{
     DEFAULT_UNAVAILABLE_TIME_MS, Effect, ExchangeId, Input, InterceptId, LegacyConfig,
     LookupResult, Now, OpenContext, Presentation, SessionId, TransportError, VaryKey,
@@ -440,6 +441,83 @@ fn legacy_engine_open_damaged_entry_is_removed() {
     );
 }
 
+/// The entry that a commit of `page()` for `URL` in `PARTITION` stores.
+fn committed_entry() -> StoredEntry {
+    let text = page();
+    let SplitOutcome::Applied(split) =
+        split_v1(text.as_bytes(), &TemplateLimits::default()).unwrap()
+    else {
+        panic!("no split");
+    };
+    let basis = WriteBasis {
+        partition: PARTITION,
+        key: record::entry_key(PARTITION, &rivqen_url::parse(URL).unwrap()),
+        partition_epoch: PARTITION_EPOCH,
+        site_epoch: SITE_EPOCH,
+        expect: rivqen_cache::txn::Expect::Absent,
+    };
+    let txn = record::commit(
+        &basis,
+        &NewRecord {
+            host: "shop.example.com",
+            vary: &[],
+            page: &text,
+            template: &split.template,
+            data: &split.data,
+            fields: &[line("content-type", "text/html; charset=utf-8")],
+            etag: etag_v1(text.as_bytes()),
+            template_tag: template_tag_v1(&split.template),
+            response_fields: &[],
+            request_time: UnixTime(WALL),
+            response_time: UnixTime(WALL),
+        },
+    );
+    let TxnOp::Replace { meta, body } = txn.op else {
+        panic!("a commit is a replace");
+    };
+    StoredEntry {
+        meta: *meta,
+        version: EntryVersion(4),
+        body: *body,
+    }
+}
+
+#[test]
+fn legacy_engine_open_entry_of_another_partition_or_key_is_damaged() {
+    // DL-229 (f): the session uses only an entry of its own partition and
+    // key; another one is damage, removed, and the request has no
+    // validators.
+    let mut run = Run::new(Presentation::Quick);
+    let (_, _, effects) = run.start(Some(committed_entry()));
+    assert_eq!(writes(&effects), 0);
+    let Some(Effect::Send(spec)) = effects.last() else {
+        panic!("{effects:?}");
+    };
+    assert_eq!(spec.fields.len(), 3, "the validators of the visible entry");
+
+    let mut other_partition = committed_entry();
+    other_partition.meta.partition = Partition::Scoped(OTHER);
+    let mut other_key = committed_entry();
+    other_key.meta.key = CacheKey::from_bytes([9; 32]);
+    for entry in [other_partition, other_key] {
+        let mut run = Run::new(Presentation::Quick);
+        let (_, _, effects) = run.start(Some(entry));
+        let removals: Vec<_> = effects
+            .iter()
+            .filter_map(|effect| match effect {
+                Effect::Cache(txn) => Some(txn),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(removals.len(), 1);
+        assert!(matches!(removals[0].op, TxnOp::Remove { .. }));
+        let Some(Effect::Send(spec)) = effects.last() else {
+            panic!("{effects:?}");
+        };
+        assert_eq!(spec.fields, vec![line("accept-diff", "true")]);
+    }
+}
+
 #[test]
 fn legacy_engine_open_cookie_with_a_control_character_is_a_normal_load() {
     let mut run = Run::new(Presentation::Quick);
@@ -478,6 +556,82 @@ fn legacy_engine_classify_cookies_go_first_for_every_status() {
                 "b=2".to_owned()
             ])),
             "{status}"
+        );
+    }
+}
+
+fn cookie_head(exchange: ExchangeId, value: &str) -> Input {
+    Input::ResponseHead {
+        exchange,
+        status: 500,
+        fields: vec![line("set-cookie", value)],
+    }
+}
+
+fn stored_cookies(value: &str) -> Effect {
+    Effect::StoreCookies(vec![value.to_owned()])
+}
+
+#[test]
+fn legacy_engine_classify_cookies_once_per_exchange() {
+    // DL-229 (e): a second head of an exchange gives no effect.
+    let mut run = Run::new(Presentation::Quick);
+    let (id, exchange, _) = run.start(None);
+    let effects = run.step(id, cookie_head(exchange, "a=1"));
+    assert_eq!(count(&effects, &stored_cookies("a=1")), 1);
+    assert_eq!(run.step(id, cookie_head(exchange, "b=2")), Vec::new());
+
+    // A head after the end of the exchange gives no effect.
+    let mut run = Run::new(Presentation::Quick);
+    let (id, exchange, _) = run.start(None);
+    let _ = run.step(
+        id,
+        Input::TransportFailed {
+            exchange,
+            error: TransportError::Read,
+        },
+    );
+    assert_eq!(run.step(id, cookie_head(exchange, "a=1")), Vec::new());
+}
+
+#[test]
+fn legacy_engine_classify_cookies_of_an_older_generation_once() {
+    // CL-11 item 2: a head of an older generation stores its cookies once,
+    // also after the session dropped that exchange (DL-229 (e)).
+    let mut run = Run::new(Presentation::Quick);
+    let (id, first, _) = run.start(None);
+    let _ = run.step(id, Input::Refresh);
+    let _ = run.step(id, lookup(None, false));
+    let second = sent(&run.step(id, Input::Cookie(None))).unwrap();
+    assert_ne!(first, second);
+    assert_eq!(
+        run.step(id, cookie_head(first, "old=1")),
+        vec![stored_cookies("old=1")]
+    );
+    assert_eq!(run.step(id, cookie_head(first, "old=2")), Vec::new());
+    // The current exchange still stores its own cookies.
+    let effects = run.step(id, cookie_head(second, "new=1"));
+    assert_eq!(effects.first(), Some(&stored_cookies("new=1")));
+}
+
+#[test]
+fn legacy_engine_classify_cookies_of_dropped_exchanges_are_bounded() {
+    // The session remembers at most 16 dropped exchanges whose head is due;
+    // the oldest one is forgotten first.
+    let mut run = Run::new(Presentation::Quick);
+    let (id, first, _) = run.start(None);
+    let mut exchanges = vec![first];
+    for _ in 0..17 {
+        let _ = run.step(id, Input::Refresh);
+        let _ = run.step(id, lookup(None, false));
+        exchanges.push(sent(&run.step(id, Input::Cookie(None))).unwrap());
+    }
+    // 17 exchanges were dropped before their head; the first one is gone.
+    assert_eq!(run.step(id, cookie_head(exchanges[0], "a=0")), Vec::new());
+    for exchange in &exchanges[1..17] {
+        assert_eq!(
+            run.step(id, cookie_head(*exchange, "a=1")),
+            vec![stored_cookies("a=1")]
         );
     }
 }
@@ -594,12 +748,187 @@ fn legacy_engine_classify_body_that_is_not_utf8_is_a_normal_load() {
             bytes: b"(".to_vec(),
         },
     ));
+    // DL-229 (b): the incomplete tail and the invalid byte never reach the
+    // stream.
     assert_eq!(
         answer(&effects, InterceptId(2)),
-        Some(Answer::Doc(b"ab\xc3(".to_vec(), false))
+        Some(Answer::Doc(b"ab".to_vec(), false))
     );
     assert_eq!(count(&effects, &Effect::LoadUrl), 2);
     assert_eq!(run.step(id, Input::BodyEnd { exchange }), Vec::new());
+}
+
+/// The stream effects of `intercept` in `effects`, in order.
+fn stream_of(effects: &[Effect], intercept: InterceptId) -> Vec<Effect> {
+    effects
+        .iter()
+        .filter(|effect| {
+            matches!(effect,
+                Effect::StreamChunk { intercept: id, .. } | Effect::StreamEnd { intercept: id, .. }
+                    if *id == intercept)
+        })
+        .cloned()
+        .collect()
+}
+
+#[test]
+fn legacy_engine_classify_failed_body_streams_only_the_valid_prefix() {
+    // DL-229 (b): a chunk with an invalid byte, a cut and a body over the
+    // limit give a stream only the bytes of the valid UTF-8 prefix: never
+    // the invalid bytes and never an incomplete tail.
+    let text = page();
+    // Over every document limit (the cap is 32 MiB).
+    let over = vec![b'a'; 33 << 20];
+    let cases: [(&[&[u8]], bool); 4] = [
+        (&[b"\xff<script>x</script>"], false),
+        (&[b"\xc3", b"(<script>x</script>"], false),
+        (&[b"\xc3"], true),
+        (&[b"\xc3", &over], false),
+    ];
+    for (chunks, cut) in cases {
+        let mut run = Run::new(Presentation::Standard);
+        let (id, exchange, _) = run.start(None);
+        let mut effects = run.client(id);
+        effects.extend(run.step(id, Input::Intercept(InterceptId(1))));
+        effects.extend(run.step(
+            id,
+            Input::ResponseHead {
+                exchange,
+                status: 200,
+                fields: legacy_head(&text),
+            },
+        ));
+        for bytes in [b"<html>".as_slice()].iter().chain(chunks) {
+            effects.extend(run.step(
+                id,
+                Input::BodyChunk {
+                    exchange,
+                    bytes: bytes.to_vec(),
+                },
+            ));
+        }
+        if cut {
+            effects.extend(run.step(
+                id,
+                Input::TransportFailed {
+                    exchange,
+                    error: TransportError::Read,
+                },
+            ));
+        }
+        assert_eq!(
+            stream_of(&effects, InterceptId(1)),
+            vec![
+                Effect::StreamChunk {
+                    intercept: InterceptId(1),
+                    bytes: b"<html>".to_vec()
+                },
+                Effect::StreamEnd {
+                    intercept: InterceptId(1),
+                    complete: false
+                }
+            ],
+            "cut: {cut}, chunks: {}",
+            chunks.len()
+        );
+        assert_eq!(effects.last(), Some(&Effect::LoadUrl));
+        assert_eq!(writes(&effects), 0);
+    }
+}
+
+#[test]
+fn legacy_engine_classify_old_generation_end_runs_the_end_checks_standard() {
+    // DL-229 (c): a stream of an older generation whose body ends with an
+    // incomplete UTF-8 sequence ends incomplete, then `load_url` (CL-16 as
+    // CL-33); no cache effect (CL-35).
+    let text = page();
+    let mut run = Run::new(Presentation::Standard);
+    let (id, exchange, _) = run.start(None);
+    let mut effects = run.client(id);
+    effects.extend(run.step(id, Input::Intercept(InterceptId(1))));
+    effects.extend(run.step(
+        id,
+        Input::ResponseHead {
+            exchange,
+            status: 200,
+            fields: legacy_head(&text),
+        },
+    ));
+    effects.extend(run.step(
+        id,
+        Input::BodyChunk {
+            exchange,
+            bytes: b"<html>\xc3".to_vec(),
+        },
+    ));
+    assert_eq!(
+        answer(&effects, InterceptId(1)),
+        Some(Answer::Open(b"<html>".to_vec()))
+    );
+    effects = run.step(id, Input::Refresh);
+    assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
+    effects = run.step(id, Input::BodyEnd { exchange });
+    assert_eq!(
+        effects,
+        vec![
+            Effect::StreamEnd {
+                intercept: InterceptId(1),
+                complete: false
+            },
+            Effect::LoadUrl
+        ]
+    );
+    // The next intercept waits for the head of the current generation.
+    assert_eq!(run.step(id, Input::Intercept(InterceptId(2))), Vec::new());
+}
+
+#[test]
+fn legacy_engine_classify_old_generation_end_runs_the_end_checks_quick() {
+    // DL-229 (c): an empty body (CL-32) or a body that is not UTF-8 (CL-16)
+    // of an older generation is never a complete document: Quick gives no
+    // `load_data` of it at `client_ready`.
+    let text = page();
+    for body in [b"".as_slice(), b"<html>\xc3"] {
+        let mut run = Run::new(Presentation::Quick);
+        let (id, exchange, _) = run.start(None);
+        let mut effects = run.step(
+            id,
+            Input::ResponseHead {
+                exchange,
+                status: 200,
+                fields: legacy_head(&text),
+            },
+        );
+        if !body.is_empty() {
+            effects.extend(run.step(
+                id,
+                Input::BodyChunk {
+                    exchange,
+                    bytes: body.to_vec(),
+                },
+            ));
+        }
+        assert_eq!(effects, Vec::new());
+        let effects = run.step(id, Input::Refresh);
+        assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
+        assert_eq!(run.step(id, Input::BodyEnd { exchange }), Vec::new());
+        assert_eq!(
+            run.client(id),
+            vec![Effect::LoadUrl],
+            "{} bytes",
+            body.len()
+        );
+        assert_eq!(run.step(id, Input::Intercept(InterceptId(1))), Vec::new());
+        // The current generation gives the document.
+        let mut effects = run.step(id, lookup(None, false));
+        effects.extend(run.step(id, Input::Cookie(None)));
+        let second = sent(&effects).unwrap();
+        effects = run.respond(id, second, 200, legacy_head(&text), text.as_bytes());
+        assert_eq!(
+            answer(&effects, InterceptId(1)),
+            Some(Answer::Doc(text.as_bytes().to_vec(), true))
+        );
+    }
 }
 
 // --- delivery and codes (CL-20 to CL-24) ---
@@ -994,6 +1323,168 @@ fn legacy_engine_stop_partition_changed_revokes_and_stops_the_sessions() {
         run.step(other, lookup(None, false)),
         vec![Effect::ReadCookie]
     );
+}
+
+fn lookup_at(partition_epoch: Epoch, site_epoch: Epoch) -> Input {
+    Input::Lookup(Box::new(LookupResult {
+        entry: None,
+        disabled: false,
+        partition_epoch,
+        site_epoch,
+    }))
+}
+
+#[test]
+fn legacy_engine_stop_refresh_lookup_with_other_epochs_stops_without_a_write() {
+    // DL-229 (a), RSK-06: a revoke or a site clear that the engine did not
+    // see is never healed by a refresh. `Run::step` checks that every write
+    // names the epochs of the opening lookup.
+    let text = page();
+    for (partition_epoch, site_epoch) in [
+        (Epoch(9), SITE_EPOCH),
+        (PARTITION_EPOCH, Epoch(9)),
+        (Epoch(9), Epoch(9)),
+    ] {
+        let mut run = Run::new(Presentation::Standard);
+        let (id, first, _) = run.start(None);
+        let mut effects = run.client(id);
+        effects.extend(run.respond(id, first, 200, legacy_head(&text), text.as_bytes()));
+        assert_eq!(writes(&effects), 1, "the first load commits");
+        effects = run.step(id, Input::Refresh);
+        assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
+        effects = run.step(id, lookup_at(partition_epoch, site_epoch));
+        assert_eq!(
+            effects,
+            vec![
+                Effect::Result {
+                    src: rivqen_proto_legacy::message::ResultCode::NoResult,
+                    final_code: rivqen_proto_legacy::message::ResultCode::NoResult,
+                },
+                Effect::Closed
+            ]
+        );
+        // No cookie read, no request, no write after the stop.
+        assert_eq!(run.step(id, Input::Cookie(None)), Vec::new());
+        assert_eq!(
+            run.respond(id, ExchangeId(2), 200, legacy_head(&text), text.as_bytes()),
+            Vec::new()
+        );
+        // The key stays taken until the destroy (CL-07).
+        let (_, effects) = run.open(context(URL, PARTITION, true));
+        assert_eq!(effects, vec![Effect::Closed]);
+        assert_eq!(run.step(id, Input::Destroy), Vec::new());
+        let (_, effects) = run.open(context(URL, PARTITION, true));
+        assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
+    }
+}
+
+#[test]
+fn legacy_engine_stop_refresh_with_other_epochs_ends_an_old_stream() {
+    // CL-06: an open stream ends incomplete, then `Closed`.
+    let text = page();
+    let mut run = Run::new(Presentation::Standard);
+    let (id, exchange, _) = run.start(None);
+    let mut effects = run.client(id);
+    effects.extend(run.step(id, Input::Intercept(InterceptId(1))));
+    effects.extend(run.step(
+        id,
+        Input::ResponseHead {
+            exchange,
+            status: 200,
+            fields: legacy_head(&text),
+        },
+    ));
+    effects.extend(run.step(
+        id,
+        Input::BodyChunk {
+            exchange,
+            bytes: b"<html>".to_vec(),
+        },
+    ));
+    assert_eq!(
+        answer(&effects, InterceptId(1)),
+        Some(Answer::Open(b"<html>".to_vec()))
+    );
+    let _ = run.step(id, Input::Refresh);
+    let effects = run.step(id, lookup_at(Epoch(9), SITE_EPOCH));
+    assert_eq!(
+        effects,
+        vec![
+            Effect::Result {
+                src: rivqen_proto_legacy::message::ResultCode::NoResult,
+                final_code: rivqen_proto_legacy::message::ResultCode::NoResult,
+            },
+            Effect::StreamEnd {
+                intercept: InterceptId(1),
+                complete: false
+            },
+            Effect::Closed
+        ]
+    );
+    assert_eq!(run.step(id, Input::BodyEnd { exchange }), Vec::new());
+}
+
+#[test]
+fn legacy_engine_stop_refresh_lookup_with_the_same_epochs_goes_on() {
+    let mut run = Run::new(Presentation::Quick);
+    let (id, _, _) = run.start(None);
+    assert!(matches!(
+        run.step(id, Input::Refresh).as_slice(),
+        [Effect::Lookup { .. }]
+    ));
+    assert_eq!(
+        run.step(id, lookup_at(PARTITION_EPOCH, SITE_EPOCH)),
+        vec![Effect::ReadCookie]
+    );
+    assert!(sent(&run.step(id, Input::Cookie(None))).is_some());
+}
+
+#[test]
+fn legacy_engine_stop_stopped_sessions_do_not_count_in_the_session_bound() {
+    // DL-229 (h): 256 sessions that `partition_changed` stopped and the app
+    // never destroyed do not block a new session; each still holds its key
+    // until its `Destroy` (CL-07).
+    let mut run = Run::new(Presentation::Quick);
+    let mut first = None;
+    for n in 0..256 {
+        let (id, effects) = run.open(context(&format!("{URL}/{n}"), PARTITION, true));
+        assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]), "{n}");
+        first.get_or_insert(id);
+    }
+    let (_, effects) = run.open(context(&format!("{URL}/256"), PARTITION, true));
+    assert_eq!(effects, vec![Effect::Closed], "256 open sessions");
+    let now = run.now();
+    let _ = run.engine.partition_changed(now, PARTITION);
+    let (_, effects) = run.open(context(&format!("{URL}/256"), PARTITION, true));
+    assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
+    // A stopped session holds its key until its `Destroy`.
+    let (_, effects) = run.open(context(&format!("{URL}/0"), PARTITION, true));
+    assert_eq!(effects, vec![Effect::Closed]);
+    assert_eq!(run.step(first.unwrap(), Input::Destroy), Vec::new());
+    let (_, effects) = run.open(context(&format!("{URL}/0"), PARTITION, true));
+    assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
+}
+
+#[test]
+fn legacy_engine_stop_full_set_of_held_keys_fails_closed() {
+    // DL-229 (h): at 1024 keys of stopped sessions that are not destroyed,
+    // a new session does not open (`Closed`) until a `Destroy`.
+    let mut run = Run::new(Presentation::Quick);
+    let mut stopped = Vec::new();
+    for round in 0..4 {
+        for n in 0..256 {
+            let (id, effects) = run.open(context(&format!("{URL}/{round}/{n}"), PARTITION, true));
+            assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
+            stopped.push(id);
+        }
+        let now = run.now();
+        let _ = run.engine.partition_changed(now, PARTITION);
+    }
+    let (_, effects) = run.open(context(&format!("{URL}/x"), OTHER, true));
+    assert_eq!(effects, vec![Effect::Closed]);
+    assert_eq!(run.step(stopped[0], Input::Destroy), Vec::new());
+    let (_, effects) = run.open(context(&format!("{URL}/x"), OTHER, true));
+    assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
 }
 
 #[test]

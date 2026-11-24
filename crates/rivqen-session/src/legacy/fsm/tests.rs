@@ -172,6 +172,8 @@ fn stored(text: &str, host: &str) -> StoredEntry {
 
 fn fake_check_visible(
     entry: &StoredEntry,
+    _partition: PartitionId,
+    _cache_key: CacheKey,
     _values: &RequestValues<'_>,
     _key: &VaryKey,
 ) -> Result<LegacyRecord, NotVisible> {
@@ -295,12 +297,17 @@ struct Run {
 }
 
 /// Every cache write of a session names the request partition and the
-/// epochs of its lookup (DL-220).
+/// epochs of its lookup (DL-220); no removal uses `Expect::Any`
+/// (DL-229 (g)).
 fn check_writes(effects: &[Effect]) {
     for effect in effects {
         let Effect::Cache(txn) = effect else {
             continue;
         };
+        assert!(
+            !matches!(txn.op, TxnOp::Remove { .. }) || txn.pre.entry != Expect::Any,
+            "{txn:?}"
+        );
         assert_eq!(
             txn.pre.writer,
             Writer::request(PARTITION, PARTITION_EPOCH),
@@ -573,6 +580,91 @@ fn legacy_engine_open_without_network_shows_the_cached_page() {
     );
     let effects = run.step(Input::Destroy);
     assert_eq!(results(&effects), vec![(-1, -1)]);
+}
+
+/// A stored entry whose page fields hold lines that never go to the web
+/// view: `Set-Cookie`, a hop-by-hop field, a line with a control byte, a
+/// name that is not a token.
+fn stored_with_unsafe_fields(text: &str) -> StoredEntry {
+    let mut entry = stored(text, "h");
+    entry.body.fields = vec![
+        line("X-Stored", "s"),
+        line("Set-Cookie", "sid=other-account"),
+        line("transfer-encoding", "chunked"),
+        line("x-bad", "a\u{1}b"),
+        line("bad name", "v"),
+        line("content-type", "text/html; charset=utf-8"),
+    ];
+    entry
+}
+
+/// The clean page fields of [`stored_with_unsafe_fields`].
+fn clean_fields() -> Vec<FieldLine> {
+    vec![
+        line("content-type", "text/html; charset=utf-8"),
+        line("x-stored", "s"),
+    ]
+}
+
+#[test]
+fn legacy_engine_open_cached_document_fields_pass_the_filter() {
+    // DL-229 (d): the stored lines pass the filter of DL-226 (b) and CL-21
+    // before they reach `DocumentHead`.
+    let text = page("10");
+    let (mut run, _, _) = Run::start(
+        Presentation::Quick,
+        Some(stored_with_unsafe_fields(&text)),
+        false,
+    );
+    let effects = run.client();
+    let Some(Effect::LoadData { head, .. }) = effects.first() else {
+        panic!("{effects:?}");
+    };
+    assert_eq!(head.fields, clean_fields());
+
+    // Standard: the intercept gets the same fields.
+    let (mut run, _, _) = Run::start(
+        Presentation::Standard,
+        Some(stored_with_unsafe_fields(&text)),
+        false,
+    );
+    let _ = run.client();
+    let effects = run.step(Input::Intercept(InterceptId(1)));
+    let Some(Effect::AnswerDocument { head, .. }) = effects.first() else {
+        panic!("{effects:?}");
+    };
+    assert_eq!(head.fields, clean_fields());
+}
+
+#[test]
+fn legacy_engine_classify_304_field_update_never_keeps_an_unsafe_stored_line() {
+    // DL-229 (d): the field update of CL-17 merges the filtered lines, so
+    // the commit and the cached document hold none of the unsafe lines.
+    let text = page("10");
+    let (mut run, _, exchange) = Run::start(
+        Presentation::Quick,
+        Some(stored_with_unsafe_fields(&text)),
+        true,
+    );
+    let effects = run.respond(
+        exchange.unwrap(),
+        304,
+        vec![line("cache-offline", "true"), line("x-new", "n")],
+        b"",
+    );
+    let writes = writes(&effects);
+    assert_eq!(writes.len(), 1);
+    let merged = vec![
+        line("content-type", "text/html; charset=utf-8"),
+        line("x-new", "n"),
+        line("x-stored", "s"),
+    ];
+    assert_eq!(replaced_body(writes[0]).fields, merged);
+    let effects = run.client();
+    let Some(Effect::LoadData { head, .. }) = effects.first() else {
+        panic!("{effects:?}");
+    };
+    assert_eq!(head.fields, merged);
 }
 
 // --- classification (CL-13 to CL-19, CL-44) ---
@@ -1209,12 +1301,11 @@ fn legacy_engine_codes_refresh_starts_a_generation_with_is_reload() {
     assert_eq!(spec.fields.len(), 4);
     let second = spec.exchange;
     assert_ne!(first, second);
-    // A late response of the old generation: cookies only.
+    // A second head of the old exchange (it had its `304`): no effect, also
+    // no cookie (DL-229 (e)); `legacy_engine_classify_cookies_of_an_older_
+    // generation_once` tests the first head of an older generation.
     effects = run.head(first, 200, vec![line("Set-Cookie", "old=1")]);
-    assert_eq!(
-        effects,
-        vec![Effect::StoreCookies(vec!["old=1".to_owned()])]
-    );
+    assert_eq!(effects, Vec::new());
     effects = run.step(Input::GetDiff);
     assert_eq!(effects, Vec::new(), "the result was reset");
     effects = run.respond(second, 304, vec![line("cache-offline", "true")], b"");
@@ -1250,6 +1341,70 @@ fn legacy_engine_codes_refresh_data_update_sends_a_diff() {
     let (body, _) = data_body(&old, &new);
     effects = run.respond(second, 200, data_head(&old, &new, "true"), &body);
     assert_eq!(results(&effects), vec![(200, 200)]);
+}
+
+#[test]
+fn legacy_engine_outcome_after_a_commit_no_removal_of_the_entry() {
+    // DL-229 (g): after a commit or a field update the version of the
+    // entry is not known; a later removal in the same generation (here
+    // called directly: no input path reaches it today) gives no effect, so
+    // it never uses `Expect::Any`.
+    use super::session::{Env, Session};
+
+    let old = page("10");
+    let new = page("12");
+    let (data, _) = data_body(&old, &new);
+    let config = config(Presentation::Quick);
+    let now = Now {
+        mono: Instant(0),
+        wall: UnixTime(WALL),
+    };
+    let env = Env {
+        config: &config,
+        port: &FAKE,
+        now,
+    };
+    let cases: [(u16, Vec<FieldLine>, &[u8]); 2] = [
+        (304, vec![line("cache-offline", "true")], b""),
+        (200, data_head(&old, &new, "true"), &data),
+    ];
+    for (status, fields, body) in cases {
+        let mut session =
+            Session::new(context(true), CacheKey::from_bytes([1; 32]), URL.to_owned());
+        let mut out = Vec::new();
+        let lookup = Input::Lookup(Box::new(LookupResult {
+            entry: Some(stored(&old, "h")),
+            disabled: false,
+            partition_epoch: PARTITION_EPOCH,
+            site_epoch: SITE_EPOCH,
+        }));
+        for input in [lookup, Input::Cookie(None)] {
+            let _ = session.handle(&env, input, &mut out);
+        }
+        let exchange = sent(&out).unwrap();
+        out.clear();
+        let mut inputs = vec![Input::ResponseHead {
+            exchange,
+            status,
+            fields,
+        }];
+        if !body.is_empty() {
+            inputs.push(Input::BodyChunk {
+                exchange,
+                bytes: body.to_vec(),
+            });
+        }
+        inputs.push(Input::BodyEnd { exchange });
+        for input in inputs {
+            let _ = session.handle(&env, input, &mut out);
+        }
+        let commits = writes(&out);
+        assert_eq!(commits.len(), 1, "{status}");
+        assert!(matches!(commits[0].op, TxnOp::Replace { .. }));
+        let mut later = Vec::new();
+        session.remove_visible(&mut later);
+        assert_eq!(later, Vec::new(), "{status}");
+    }
 }
 
 // --- stop ---

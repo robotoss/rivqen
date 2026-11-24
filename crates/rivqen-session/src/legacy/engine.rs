@@ -18,16 +18,25 @@
 //!   gives no effect (FSM-02, CL-34). The session logic is the private
 //!   module `crate::legacy::fsm`.
 //! - [`LegacyEngine::partition_changed`] (CL-06, CL-45): one revoke of the
-//!   old partition, then every open session of it stops at once. A stopped
-//!   session keeps its key until its `Destroy` (CL-07) and gives no effect.
+//!   old partition, then every open session of it stops at once. A session
+//!   also stops when a later lookup reports other epochs (DL-229 (a)). A
+//!   stopped session keeps its key until its `Destroy` (CL-07) and gives no
+//!   effect.
 //!
 //! # Bounds
 //!
-//! At most [`MAX_SESSIONS`] sessions (open or stopped and not yet
-//! destroyed); over it a new session does not open (a normal load).
-//! Sessions are in a `BTreeMap`, so every walk over them is in id order and
-//! the effects are deterministic.
+//! At most [`MAX_SESSIONS`] open sessions. A stopped session does not count
+//! in that bound (DL-229 (h)): the engine drops its state and keeps only
+//! its key (partition and canonical URL) in a separate set until its
+//! `Destroy`. When that set holds [`MAX_HELD_KEYS`] keys, a new session
+//! does not open (fail closed: `Closed`, a normal load) until the app
+//! destroys a stopped session. A stop is never refused, so the set holds
+//! fewer than `MAX_HELD_KEYS + MAX_SESSIONS` keys. Over [`MAX_SESSIONS`]
+//! open sessions a new session does not open either. Both are `BTreeMap`s,
+//! so every walk over them is in id order and the effects are
+//! deterministic.
 
+use core::fmt;
 use std::collections::BTreeMap;
 
 use rivqen_cache::key::Partition;
@@ -39,18 +48,58 @@ use crate::legacy::fsm::session::{Env, Fate, Session};
 use crate::legacy::record;
 use crate::legacy::types::{Effect, Input, LegacyConfig, Now, OpenContext, SessionId};
 
-/// The most sessions of one engine (open, or stopped and not destroyed).
-/// A web view has one main frame, so a real app has few; the limit bounds
-/// the memory when an adapter never destroys its sessions.
+/// The most open sessions of one engine. A web view has one main frame, so
+/// a real app has few; the limit bounds the memory when an adapter never
+/// destroys its sessions.
 const MAX_SESSIONS: usize = 256;
+
+/// The number of keys of stopped sessions (not yet destroyed) at which a
+/// new session does not open. A held key is small (a partition id and a
+/// canonical URL), so the bound is larger than [`MAX_SESSIONS`].
+const MAX_HELD_KEYS: usize = 1024;
+
+/// The key of a stopped session that is not destroyed yet (CL-07).
+struct HeldKey {
+    partition: PartitionId,
+    url_id: String,
+}
+
+impl fmt::Debug for HeldKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("HeldKey")
+            .field("url_len", &self.url_id.len())
+            .finish_non_exhaustive()
+    }
+}
 
 /// The legacy sessions of one engine (CL-05 to CL-37).
 #[derive(Debug)]
 pub struct LegacyEngine {
     config: LegacyConfig,
     next_id: u64,
+    /// The open sessions.
     sessions: BTreeMap<SessionId, Session>,
+    /// The keys of the stopped sessions until their `Destroy`.
+    held: BTreeMap<SessionId, HeldKey>,
     port: RecordPort,
+}
+
+/// Move the stopped session `id` from `sessions` to `held`: its state is
+/// dropped, its key stays taken (CL-07).
+fn hold(
+    sessions: &mut BTreeMap<SessionId, Session>,
+    held: &mut BTreeMap<SessionId, HeldKey>,
+    id: SessionId,
+) {
+    if let Some(session) = sessions.remove(&id) {
+        held.insert(
+            id,
+            HeldKey {
+                partition: session.partition,
+                url_id: session.url_id,
+            },
+        );
+    }
 }
 
 impl LegacyEngine {
@@ -66,6 +115,7 @@ impl LegacyEngine {
             config,
             next_id: 0,
             sessions: BTreeMap::new(),
+            held: BTreeMap::new(),
             port,
         }
     }
@@ -83,7 +133,7 @@ impl LegacyEngine {
         let _ = now; // the open reads nothing; the lookup answer carries the store state
         let id = SessionId(self.next_id);
         self.next_id = self.next_id.saturating_add(1);
-        if self.sessions.len() >= MAX_SESSIONS {
+        if self.sessions.len() >= MAX_SESSIONS || self.held.len() >= MAX_HELD_KEYS {
             return (id, vec![Effect::Closed]);
         }
         let url_id = context.url.cache_url(&[]);
@@ -91,7 +141,11 @@ impl LegacyEngine {
         let taken = self
             .sessions
             .values()
-            .any(|session| session.partition == partition && session.url_id == url_id);
+            .any(|session| session.partition == partition && session.url_id == url_id)
+            || self
+                .held
+                .values()
+                .any(|key| key.partition == partition && key.url_id == url_id);
         if taken {
             return (id, vec![Effect::Closed]); // CL-07
         }
@@ -108,23 +162,28 @@ impl LegacyEngine {
         let Self {
             config,
             sessions,
+            held,
             port,
             ..
         } = self;
-        let Some(state) = sessions.get_mut(&session) else {
-            return Vec::new();
-        };
-        if state.stopped {
+        if held.contains_key(&session) {
             // CL-06 then `destroy`: the key is free again (CL-07).
             if input == Input::Destroy {
-                sessions.remove(&session);
+                held.remove(&session);
             }
             return Vec::new();
         }
+        let Some(state) = sessions.get_mut(&session) else {
+            return Vec::new();
+        };
         let env = Env { config, port, now };
         let mut out = Vec::new();
-        if state.handle(&env, input, &mut out) == Fate::Gone {
-            sessions.remove(&session);
+        match state.handle(&env, input, &mut out) {
+            Fate::Stays => {}
+            Fate::Stopped => hold(sessions, held, session),
+            Fate::Gone => {
+                sessions.remove(&session);
+            }
         }
         out
     }
@@ -142,12 +201,15 @@ impl LegacyEngine {
         let _ = now; // the stop reads no time
         let mut stopped = Vec::new();
         for (id, session) in &mut self.sessions {
-            if session.stopped || session.partition != old {
+            if session.partition != old {
                 continue;
             }
             let mut effects = Vec::new();
             session.close(&mut effects);
             stopped.push((*id, effects));
+        }
+        for (id, _) in &stopped {
+            hold(&mut self.sessions, &mut self.held, *id);
         }
         let first = stopped.first().map(|(id, _)| *id);
         let mut out = vec![(first, Effect::Cache(Box::new(revoke(old))))];

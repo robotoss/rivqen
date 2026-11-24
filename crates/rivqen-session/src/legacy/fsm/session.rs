@@ -14,6 +14,7 @@
 //! it. Session FSM section 5 maps these parts to the 13 states of section 1.
 
 use core::fmt;
+use std::collections::VecDeque;
 
 use rivqen_cache::key::Partition;
 use rivqen_cache::txn::{CacheTransaction, Epoch, Expect, StoredEntry};
@@ -39,6 +40,12 @@ use crate::legacy::types::{
 /// oldest one ends (its streams end incomplete).
 pub(crate) const MAX_EXCHANGES: usize = 4;
 
+/// The most exchanges of older generations that the session dropped before
+/// their head arrived and whose head still gives `StoreCookies` (CL-11
+/// item 2). Over this number the oldest id is forgotten: its head then
+/// gives no effect.
+pub(crate) const MAX_AWAITED_HEADS: usize = 16;
+
 /// What a call of the session needs from its engine.
 pub(crate) struct Env<'a> {
     /// The configuration of the engine.
@@ -54,6 +61,9 @@ pub(crate) struct Env<'a> {
 pub(crate) enum Fate {
     /// The session stays.
     Stays,
+    /// The session stopped as CL-06 and gave [`Effect::Closed`]: it gives
+    /// no more effects, but it holds its key until its `Destroy` (CL-07).
+    Stopped,
     /// The session gave [`Effect::Closed`] and is gone (it did not open, or
     /// it was destroyed): the engine removes it.
     Gone,
@@ -154,7 +164,8 @@ pub(crate) struct Session {
     pub(super) step: Step,
     /// The session stopped (CL-06, CL-34): it gives no effect.
     pub(crate) stopped: bool,
-    /// The epochs of the last lookup (DL-220).
+    /// The epochs of the opening lookup (DL-220, DL-229 (a)). A later
+    /// lookup with other epochs stops the session; these never change.
     partition_epoch: Epoch,
     site_epoch: Epoch,
     /// What the session knows of the stored entry of the key.
@@ -173,6 +184,10 @@ pub(crate) struct Session {
     pub(super) current: Option<ExchangeId>,
     /// The number of requests sent: the last exchange id.
     sent: u64,
+    /// The dropped exchanges whose head did not arrive yet, oldest first
+    /// (at most [`MAX_AWAITED_HEADS`]): their head gives only
+    /// `StoreCookies` (CL-11 item 2, DL-229 (e)).
+    awaited_heads: VecDeque<ExchangeId>,
 
     // --- generation (CL-35) ---
     pub(super) generation: u64,
@@ -254,6 +269,15 @@ fn match_fields(accept_diff: bool, cookie: Option<&str>) -> Vec<FieldLine> {
     })
 }
 
+/// CL-11 item 2: the `Set-Cookie` and `Set-Cookie2` values of a head, if
+/// any, as one effect.
+fn store_cookies(fields: &[FieldLine], out: &mut Vec<Effect>) {
+    let cookies = super::head::set_cookie_values(fields);
+    if !cookies.is_empty() {
+        out.push(Effect::StoreCookies(cookies));
+    }
+}
+
 /// A cache effect.
 pub(super) fn cache(txn: CacheTransaction) -> Effect {
     Effect::Cache(Box::new(txn))
@@ -284,6 +308,7 @@ impl Session {
             exchanges: Vec::new(),
             current: None,
             sent: 0,
+            awaited_heads: VecDeque::new(),
             generation: 0,
             refreshed: false,
             kind: None,
@@ -313,7 +338,7 @@ impl Session {
     }
 
     /// The write basis of the session with `expect` (DL-220): the request
-    /// partition and the epochs of the last lookup.
+    /// partition and the epochs of the opening lookup (DL-229 (a)).
     pub(super) const fn basis(&self, expect: Expect) -> WriteBasis {
         WriteBasis {
             partition: self.partition,
@@ -362,8 +387,9 @@ impl Session {
     pub(crate) fn handle(&mut self, env: &Env<'_>, input: Input, out: &mut Vec<Effect>) -> Fate {
         match input {
             Input::Lookup(result) => {
-                if self.on_lookup(env, *result, out) == Fate::Gone {
-                    return Fate::Gone;
+                let fate = self.on_lookup(env, *result, out);
+                if fate != Fate::Stays {
+                    return fate;
                 }
             }
             Input::Cookie(cookie) => self.on_cookie(env, cookie.as_deref(), out),
@@ -405,18 +431,31 @@ impl Session {
     // --- request flow (CL-08 to CL-12) ---
 
     /// The answer to the lookup.
+    ///
+    /// The opening lookup sets the epochs of every write of the session
+    /// (DL-220). A later lookup (CL-35) that reports another partition
+    /// epoch or site epoch means a revoke or a site clear that the engine
+    /// did not see: the session stops as CL-06 and writes nothing
+    /// (DL-229 (a), RSK-06).
     fn on_lookup(&mut self, env: &Env<'_>, result: LookupResult, out: &mut Vec<Effect>) -> Fate {
         let Step::Lookup { opening } = self.step else {
             return Fate::Stays;
         };
-        if opening && result.disabled {
-            // CL-08: the session does not open; nothing else.
-            self.stopped = true;
-            out.push(Effect::Closed);
-            return Fate::Gone;
+        if opening {
+            if result.disabled {
+                // CL-08: the session does not open; nothing else.
+                self.stopped = true;
+                out.push(Effect::Closed);
+                return Fate::Gone;
+            }
+            self.partition_epoch = result.partition_epoch;
+            self.site_epoch = result.site_epoch;
+        } else if result.partition_epoch != self.partition_epoch
+            || result.site_epoch != self.site_epoch
+        {
+            self.close(out);
+            return Fate::Stopped;
         }
-        self.partition_epoch = result.partition_epoch;
-        self.site_epoch = result.site_epoch;
         if self.network_valid {
             self.step = Step::Cookie {
                 stored: result.entry.map(Box::new),
@@ -457,8 +496,14 @@ impl Session {
             session_fields: &fields,
             platform_fields: &self.platform_fields,
         };
-        match (env.port.check_visible)(stored, &values, &self.vary_key) {
-            Ok(record) => {
+        let visible =
+            (env.port.check_visible)(stored, self.partition, self.key, &values, &self.vary_key);
+        match visible {
+            Ok(mut record) => {
+                // DL-229 (d): the stored lines pass the filter of DL-226 (b)
+                // whatever the record port gives, so neither the cached
+                // document nor the field update of CL-17 holds such a line.
+                record.fields = record::stored_page_fields(&record.fields);
                 self.seen = Expect::Version(record.version);
                 self.entry_stored = true;
                 let doc = self.cached_doc(&record);
@@ -476,19 +521,14 @@ impl Session {
     }
 
     /// The document of the cached page of `record` (CL-20, CL-21: the stored
-    /// page fields, lower case, in a stable order by name).
+    /// page fields after the filter of DL-229 (d), lower case, in a stable
+    /// order by name).
     pub(super) fn cached_doc(&mut self, record: &LegacyRecord) -> Doc {
-        let mut fields: Vec<FieldLine> = record
-            .fields
-            .iter()
-            .map(|line| FieldLine::new(line.name.to_ascii_lowercase(), line.value.clone()))
-            .collect();
-        fields.sort_by(|a, b| a.name.cmp(&b.name));
         Doc {
             id: self.next_doc_id(),
             cached: true,
             source: Source::Bytes(record.page.as_bytes().to_vec()),
-            fields,
+            fields: record::stored_page_fields(&record.fields),
         }
     }
 
@@ -532,6 +572,11 @@ impl Session {
     // --- response (CL-13) ---
 
     /// A response head.
+    ///
+    /// CL-11 item 2 (DL-229 (e)): `StoreCookies` comes once per exchange,
+    /// for its first head, before the session acts on it, also for an
+    /// exchange of an older generation. A head of an unknown exchange, of
+    /// an exchange that already has a head or that ended, gives no effect.
     fn on_head(
         &mut self,
         env: &Env<'_>,
@@ -543,20 +588,20 @@ impl Session {
         if id.0 == 0 || id.0 > self.sent {
             return; // not an exchange of this session
         }
-        let cookies = super::head::set_cookie_values(&fields);
-        if !cookies.is_empty() {
-            // CL-11 item 2: before the session acts on the response, also
-            // for an older generation.
-            out.push(Effect::StoreCookies(cookies));
-        }
         let fresh = self.is_fresh(id);
         let entry_etag = self.entry.as_ref().map(|entry| entry.etag);
-        let Some(exchange) = self.exchange_mut(id) else {
+        let Some(exchange) = self.exchanges.iter_mut().find(|exchange| exchange.id == id) else {
+            // A dropped exchange of an older generation: only its cookies.
+            if self.awaited_heads.contains(&id) {
+                self.awaited_heads.retain(|awaited| *awaited != id);
+                store_cookies(&fields, out);
+            }
             return;
         };
         if exchange.head.is_some() || exchange.has_ended() {
             return;
         }
+        store_cookies(&fields, out);
         let kind = fresh.then(|| {
             super::head::classify(
                 status,
@@ -603,7 +648,7 @@ impl Session {
             push => {
                 exchange.end = End::Failed;
                 if !fresh {
-                    exchange.finish_streams(false, out);
+                    self.old_failed(id, out);
                 } else if push == super::exchange::Push::NotUtf8 {
                     self.not_text(id, out); // CL-16
                 } else {
@@ -614,6 +659,11 @@ impl Session {
     }
 
     /// The end of a body.
+    ///
+    /// Every buffered body (a page or a data body, of this generation or of
+    /// an older one) runs the end checks of CL-16 and CL-32 first: a body
+    /// that is empty or not UTF-8 ends [`End::Failed`], its streams end
+    /// incomplete and it is never a complete document (DL-229 (c)).
     fn on_end(&mut self, env: &Env<'_>, id: ExchangeId, out: &mut Vec<Effect>) {
         let fresh = self.is_fresh(id);
         let kind = self.kind;
@@ -623,19 +673,22 @@ impl Session {
         if exchange.head.is_none() || exchange.has_ended() {
             return;
         }
+        if exchange.is_buffered() && (exchange.body.is_empty() || !exchange.is_text()) {
+            exchange.end = End::Failed;
+            if fresh {
+                self.not_text(id, out); // CL-32, CL-16
+            } else {
+                self.old_failed(id, out);
+            }
+            return;
+        }
         exchange.end = End::Complete;
         match kind {
-            Some(kind) if fresh && kind.needs_body() => {
-                if exchange.body.is_empty() || !exchange.is_text() {
-                    self.not_text(id, out); // CL-32, CL-16
-                    return;
-                }
-                match kind {
-                    Kind::FirstLoad => self.first_load_end(env, id, out),
-                    Kind::TemplateChange => self.template_change_end(env, id, out),
-                    _ => self.data_update_end(env, id, out),
-                }
-            }
+            Some(kind) if fresh && kind.needs_body() => match kind {
+                Kind::FirstLoad => self.first_load_end(env, id, out),
+                Kind::TemplateChange => self.template_change_end(env, id, out),
+                _ => self.data_update_end(env, id, out),
+            },
             _ => {
                 exchange.finish_streams(true, out);
                 if self.doc_reads(id) && !self.waiting.is_empty() {
@@ -658,7 +711,7 @@ impl Session {
         exchange.end = End::Failed;
         let tls = error == TransportError::Tls;
         if !fresh {
-            exchange.finish_streams(false, out);
+            self.old_failed(id, out);
         } else if exchange.head.is_none() {
             self.decided = true;
             if tls {
@@ -723,6 +776,7 @@ impl Session {
         }
         self.stopped = true;
         self.exchanges = Vec::new();
+        self.awaited_heads = VecDeque::new();
         self.doc = None;
         self.pending_new = None;
         self.entry = None;
@@ -733,16 +787,25 @@ impl Session {
     }
 
     /// Drop the exchanges that nothing reads; keep at most
-    /// [`MAX_EXCHANGES`].
+    /// [`MAX_EXCHANGES`]. A dropped exchange whose head did not arrive and
+    /// that did not end is remembered for its cookies (CL-11 item 2).
     fn prune(&mut self, out: &mut Vec<Effect>) {
         let current = self.current;
         let doc = self.doc_exchange();
         let pending = self.pending_new.as_ref().and_then(Doc::exchange);
+        let awaited = &mut self.awaited_heads;
         self.exchanges.retain(|exchange| {
-            Some(exchange.id) == current
+            let keep = Some(exchange.id) == current
                 || Some(exchange.id) == doc
                 || Some(exchange.id) == pending
-                || !exchange.streams.is_empty()
+                || !exchange.streams.is_empty();
+            if !keep && exchange.head.is_none() && !exchange.has_ended() {
+                if awaited.len() >= MAX_AWAITED_HEADS {
+                    awaited.pop_front();
+                }
+                awaited.push_back(exchange.id);
+            }
+            keep
         });
         while self.exchanges.len() > MAX_EXCHANGES {
             let Some(index) = self

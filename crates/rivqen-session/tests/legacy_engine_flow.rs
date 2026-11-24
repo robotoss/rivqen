@@ -1435,6 +1435,55 @@ fn legacy_engine_stop_refresh_lookup_with_the_same_epochs_goes_on() {
 }
 
 #[test]
+fn legacy_engine_stop_stopped_sessions_do_not_count_in_the_session_bound() {
+    // DL-229 (h): 256 sessions that `partition_changed` stopped and the app
+    // never destroyed do not block a new session; each still holds its key
+    // until its `Destroy` (CL-07).
+    let mut run = Run::new(Presentation::Quick);
+    let mut first = None;
+    for n in 0..256 {
+        let (id, effects) = run.open(context(&format!("{URL}/{n}"), PARTITION, true));
+        assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]), "{n}");
+        first.get_or_insert(id);
+    }
+    let (_, effects) = run.open(context(&format!("{URL}/256"), PARTITION, true));
+    assert_eq!(effects, vec![Effect::Closed], "256 open sessions");
+    let now = run.now();
+    let _ = run.engine.partition_changed(now, PARTITION);
+    let (_, effects) = run.open(context(&format!("{URL}/256"), PARTITION, true));
+    assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
+    // A stopped session holds its key until its `Destroy`.
+    let (_, effects) = run.open(context(&format!("{URL}/0"), PARTITION, true));
+    assert_eq!(effects, vec![Effect::Closed]);
+    assert_eq!(run.step(first.unwrap(), Input::Destroy), Vec::new());
+    let (_, effects) = run.open(context(&format!("{URL}/0"), PARTITION, true));
+    assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
+}
+
+#[test]
+fn legacy_engine_stop_full_set_of_held_keys_fails_closed() {
+    // DL-229 (h): at 1024 keys of stopped sessions that are not destroyed,
+    // a new session does not open (`Closed`) until a `Destroy`.
+    let mut run = Run::new(Presentation::Quick);
+    let mut stopped = Vec::new();
+    for round in 0..4 {
+        for n in 0..256 {
+            let (id, effects) =
+                run.open(context(&format!("{URL}/{round}/{n}"), PARTITION, true));
+            assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
+            stopped.push(id);
+        }
+        let now = run.now();
+        let _ = run.engine.partition_changed(now, PARTITION);
+    }
+    let (_, effects) = run.open(context(&format!("{URL}/x"), OTHER, true));
+    assert_eq!(effects, vec![Effect::Closed]);
+    assert_eq!(run.step(stopped[0], Input::Destroy), Vec::new());
+    let (_, effects) = run.open(context(&format!("{URL}/x"), OTHER, true));
+    assert!(matches!(effects.as_slice(), [Effect::Lookup { .. }]));
+}
+
+#[test]
 fn legacy_engine_stop_partition_changed_without_a_session() {
     let mut engine = LegacyEngine::new(config(Presentation::Quick));
     let now = Now {
